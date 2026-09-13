@@ -4,7 +4,7 @@ Provisions a full Arch Linux desktop from a fresh Minimal install with one
 command. Clone, run, log in to Hyprland.
 
 ```bash
-git clone https://github.com/<you>/singularity.git
+git clone https://github.com/unihermes/singularity.git
 cd singularity
 ./install.sh
 ```
