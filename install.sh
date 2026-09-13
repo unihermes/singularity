@@ -105,7 +105,7 @@ BOOT_VERBOSE=${BOOT_VERBOSE:-0}
 set_boot_verbosity() {
   local f=$1 mode=$2 want=$3 tmp
   [[ -f $f ]] || return 1
-  [[ -f $f.neutrino.bak ]] || sudo cp "$f" "$f.neutrino.bak"
+  [[ -f $f.singularity.bak ]] || sudo cp "$f" "$f.singularity.bak"
   tmp=$(mktemp)
   # Filter the cmdline token by token rather than substituting patterns out of
   # it. Adjacent options share the space between them, so a global s/// can
@@ -174,7 +174,7 @@ fi
 log "loading vfat from the initramfs"
 mkconf=/etc/mkinitcpio.conf
 if [[ -f $mkconf ]] && ! grep -Eq '^MODULES=\(.*\<vfat\>' "$mkconf"; then
-  [[ -f $mkconf.neutrino.bak ]] || sudo cp "$mkconf" "$mkconf.neutrino.bak"
+  [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
   if grep -q '^MODULES=(' "$mkconf"; then
     sudo sed -i -E 's/^MODULES=\(([^)]*)\)/MODULES=(\1 vfat)/; s/^MODULES=\( vfat\)/MODULES=(vfat)/' "$mkconf"
   else
@@ -218,7 +218,7 @@ sudo systemctl enable --now iwd systemd-networkd systemd-resolved
 # stub. Done after resolved is running so DNS is never pointed at nothing. A
 # resolv.conf that is already a symlink is left alone.
 if [[ ! -L /etc/resolv.conf ]]; then
-  [[ -f /etc/resolv.conf ]] && sudo cp /etc/resolv.conf /etc/resolv.conf.neutrino.bak
+  [[ -f /etc/resolv.conf ]] && sudo cp /etc/resolv.conf /etc/resolv.conf.singularity.bak
   sudo ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 fi
 systemctl --user enable --now pipewire pipewire-pulse wireplumber
@@ -261,7 +261,7 @@ fi
 if have_unit iwd.service; then
   log "stopping ly from waiting on iwd"
   sudo mkdir -p /etc/systemd/system/iwd.service.d
-  printf '[Service]\nType=exec\n' | sudo tee /etc/systemd/system/iwd.service.d/neutrino.conf >/dev/null
+  printf '[Service]\nType=exec\n' | sudo tee /etc/systemd/system/iwd.service.d/singularity.conf >/dev/null
   sudo systemctl daemon-reload
 fi
 

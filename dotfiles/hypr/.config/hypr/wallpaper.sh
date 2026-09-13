@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Neutrino - wallpaper
+# Singularity - wallpaper
 # ~/.config/hypr/wallpaper.sh
 #
 #   wallpaper.sh            at login: the saved wallpaper, or a random one when
@@ -9,7 +9,7 @@
 #   wallpaper.sh current    the image swaybg is showing
 #
 # The choice is saved by Quickshell's Appearance page (Wallpaper.qml) to
-# ~/.local/state/neutrino/wallpaper.state as key=value lines rather than JSON,
+# ~/.local/state/singularity/wallpaper.state as key=value lines rather than JSON,
 # so this can read it without jq.
 set -euo pipefail
 

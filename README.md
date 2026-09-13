@@ -1,11 +1,11 @@
-# Neutrino
+# Singularity
 
 Provisions a full Arch Linux desktop from a fresh Minimal install with one
 command. Clone, run, log in to Hyprland.
 
 ```bash
-git clone https://github.com/<you>/neutrino.git
-cd neutrino
+git clone https://github.com/<you>/singularity.git
+cd singularity
 ./install.sh
 ```
 
@@ -50,7 +50,7 @@ what you wrote.
 ## Layout
 
 ```
-neutrino/
+singularity/
 ├── install.sh
 ├── link.sh              # dotfiles only, no packages or services
 ├── wallpapers/          # what wallpaper.sh picks from
@@ -109,7 +109,7 @@ BOOT_VERBOSE=1 ./install.sh
 ```
 
 Run it again without the variable to go back to quiet. Either way the
-bootloader entry is backed up to `*.neutrino.bak` first, and a result that has
+bootloader entry is backed up to `*.singularity.bak` first, and a result that has
 lost its `root=` is refused rather than written.
 
 ## Boot speed
@@ -121,10 +121,10 @@ things the greeter was waiting on around the stall:
 
 - **`/boot` mount.** The ESP is vfat, and vfat is a module, so the mount sat in
   the stall and held up `sysinit.target`. `vfat` is now in `MODULES=()` in
-  `/etc/mkinitcpio.conf` (backed up to `*.neutrino.bak`).
+  `/etc/mkinitcpio.conf` (backed up to `*.singularity.bak`).
 - **iwd.** It is `Type=dbus` and needs crypto modules before it claims its bus
   name, and ly waits on `network.target`. A drop-in at
-  `/etc/systemd/system/iwd.service.d/neutrino.conf` sets `Type=exec`.
+  `/etc/systemd/system/iwd.service.d/singularity.conf` sets `Type=exec`.
 
 It also masks `systemd-tpm2-setup-early` and `systemd-tpm2-setup`, about 2s,
 unless `/etc/crypttab` asks for a TPM unlock. That stops the setup running and
@@ -212,8 +212,8 @@ The point of the repo is that it works on a machine that has never seen it:
 
 ```bash
 sudo pacman -S --needed git
-git clone https://github.com/unihermes/neutrino.git ~/neutrino
-cd ~/neutrino && ./install.sh
+git clone https://github.com/unihermes/singularity.git ~/singularity
+cd ~/singularity && ./install.sh
 ```
 
 Clone to a path you intend to keep. Stow's symlinks point at the repo's

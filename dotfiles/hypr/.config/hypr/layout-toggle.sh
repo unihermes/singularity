@@ -21,7 +21,7 @@
 # fixes that.
 set -euo pipefail
 
-STATE="${XDG_RUNTIME_DIR:-/tmp}/neutrino-layout"
+STATE="${XDG_RUNTIME_DIR:-/tmp}/singularity-layout"
 # absent means monocle -- the state hyprland.lua starts in
 current=$(cat "$STATE" 2>/dev/null || echo monocle)
 
@@ -34,13 +34,13 @@ is_full() {
 
 if [[ $current == monocle ]]; then
   echo dwindle > "$STATE"
-  hyprctl eval 'NeutrinoMonocleRule:set_enabled(false)' >/dev/null
+  hyprctl eval 'SingularityMonocleRule:set_enabled(false)' >/dev/null
   # drop the focused window out of maximized, otherwise the tiling it just
   # switched to is invisible
   [[ $(is_full) != 0 ]] && hyprctl dispatch 'hl.dsp.window.fullscreen({mode="maximized"})' >/dev/null
 else
   echo monocle > "$STATE"
-  hyprctl eval 'NeutrinoMonocleRule:set_enabled(true)' >/dev/null
+  hyprctl eval 'SingularityMonocleRule:set_enabled(true)' >/dev/null
   [[ $(is_full) == 0 ]] && hyprctl dispatch 'hl.dsp.window.fullscreen({mode="maximized"})' >/dev/null
 fi
 

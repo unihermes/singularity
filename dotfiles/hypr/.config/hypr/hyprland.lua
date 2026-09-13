@@ -1,4 +1,4 @@
--- Neutrino - Hyprland
+-- Singularity - Hyprland
 -- ~/.config/hypr/hyprland.lua
 --
 -- Lua config. Hyprland loads this in preference to hyprland.conf, which is
@@ -26,21 +26,21 @@ local floorp      = "floorp"
 -- another instance behind it. The stylesheet is Quickshell's copy with the bar's
 -- corner radius applied (AppearanceSync.qml), falling back to the repo's own
 -- until the shell has written one.
-local menu        = "pkill wofi || { s=~/.local/state/neutrino/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
+local menu        = "pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
 
 -- Animation Speed from the bar's Appearance page. Quickshell writes the choice
 -- to a state file and runs `hyprctl reload config-only`, which re-runs this
 -- file -- so the setting survives a restart without the repo's config being
 -- rewritten. "fast" halves every speed below (speed is a duration, so lower is
 -- quicker) and "off" turns animations off entirely.
-local function neutrinoState(name, default)
+local function singularityState(name, default)
     local f = io.open(os.getenv("HOME") .. "/.local/state/neutrino/" .. name)
     if not f then return default end
     local v = f:read("l")
     f:close()
     return v or default
 end
-local animMode   = neutrinoState("animations", "normal")
+local animMode   = singularityState("animations", "normal")
 local animFactor = animMode == "fast" and 0.5 or 1
 
 local function animation(t)
@@ -224,7 +224,7 @@ hl.config({
         touchpad = {
             natural_scroll       = false,
             disable_while_typing = true,
-            scroll_factor        = 1,
+            scroll_factor        = 0.8,
             -- the .conf spelling is tap-to-click; the lua schema takes the
             -- underscored form, since dashes are not a bare Lua identifier
             tap_to_click         = true,

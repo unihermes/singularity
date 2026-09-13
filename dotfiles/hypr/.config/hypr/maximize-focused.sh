@@ -7,7 +7,7 @@
 # flag alone is not a sufficient test.
 set -euo pipefail
 
-state="${XDG_RUNTIME_DIR:-/tmp}/neutrino-layout"
+state="${XDG_RUNTIME_DIR:-/tmp}/singularity-layout"
 [[ $(cat "$state" 2>/dev/null || echo monocle) == monocle ]] || exit 0
 
 # Focus does not move until after the closing window is gone, so callers
