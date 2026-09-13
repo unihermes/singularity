@@ -1,13 +1,36 @@
 # Singularity
 
-Provisions a full Arch Linux desktop from a fresh Minimal install with one
-command. Clone, run, log in to Hyprland.
+Provisions a full Arch Linux desktop — Hyprland, theme, fonts, services, the
+lot — from a fresh Minimal install with one command.
+
+![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?logo=arch-linux&logoColor=white)
+![Hyprland](https://img.shields.io/badge/Hyprland-58E1FF?logo=wayland&logoColor=black)
+![Shell](https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnu-bash&logoColor=white)
+![Idempotent](https://img.shields.io/badge/Idempotent-yes-brightgreen)
+
+## Install
 
 ```bash
-git clone https://github.com/unihermes/singularity.git
-cd singularity
-./install.sh
+git clone https://github.com/unihermes/singularity.git && cd singularity && ./install.sh
 ```
+
+Clone it somewhere you intend to keep — dotfiles are symlinked from this
+location, so moving the folder afterward leaves everything in `~/.config`
+dangling. Every step is idempotent; rerun `./install.sh` any time.
+
+## Table of contents
+
+- [What it does](#what-it-does)
+- [Dotfiles only](#dotfiles-only)
+- [Layout](#layout)
+- [Starting a session](#starting-a-session)
+- [Boot output](#boot-output)
+- [Boot speed](#boot-speed)
+- [Theme](#theme)
+- [Regenerating the package lists](#regenerating-the-package-lists)
+- [Verifying names before trusting them](#verifying-names-before-trusting-them)
+- [Notes](#notes)
+- [Testing from zero](#testing-from-zero)
 
 ## What it does
 
@@ -29,23 +52,23 @@ rerun as many times as you like.
 
 ## Dotfiles only
 
-`link.sh` does step 4 and nothing else -- no packages, no services, no sudo.
+`link.sh` does step 4 and nothing else — no packages, no services, no sudo.
 Use it on a machine where you only want the configs, or to relink after adding
 a new directory under `dotfiles/`.
-
-Apps write their own config when none exists -- Hyprland regenerates
-`~/.config/hypr/hyprland.lua` on every start without one -- and that real file
-then blocks stow from linking yours, so the app goes on reading its own default
-and your repo config is never used. `link.sh` moves such files into a
-timestamped `~/.config-backup-*` first. Nothing is deleted. This is the safe
-inverse of `stow --adopt`, which would pull the app's file into the repo over
-what you wrote.
 
 ```bash
 ./link.sh
 ```
 
 `install.sh` calls it rather than duplicating the logic.
+
+Apps write their own config when none exists — Hyprland regenerates
+`~/.config/hypr/hyprland.lua` on every start without one — and that real file
+then blocks stow from linking yours, so the app goes on reading its own default
+and your repo config is never used. `link.sh` moves such files into a
+timestamped `~/.config-backup-*` first. Nothing is deleted. This is the safe
+inverse of `stow --adopt`, which would pull the app's file into the repo over
+what you wrote.
 
 ## Layout
 
@@ -76,8 +99,8 @@ singularity/
 ```
 
 Each directory under `dotfiles/` mirrors its own path relative to `$HOME`, and
-`link.sh` stows every one of them into place.
-Because they are symlinks, editing a config on the live system edits the repo.
+`link.sh` stows every one of them into place. Because they are symlinks,
+editing a config on the live system edits the repo.
 
 ## Starting a session
 
@@ -101,7 +124,7 @@ hyprctl configerrors
 
 ## Boot output
 
-Boot and shutdown are quiet by default. To see systemd's `[ OK ]` lines --
+Boot and shutdown are quiet by default. To see systemd's `[ OK ]` lines —
 worth it when a boot hangs and you need to know which unit it hung on:
 
 ```bash
@@ -109,8 +132,8 @@ BOOT_VERBOSE=1 ./install.sh
 ```
 
 Run it again without the variable to go back to quiet. Either way the
-bootloader entry is backed up to `*.singularity.bak` first, and a result that has
-lost its `root=` is refused rather than written.
+bootloader entry is backed up to `*.singularity.bak` first, and a result that
+has lost its `root=` is refused rather than written.
 
 ## Boot speed
 
@@ -144,14 +167,14 @@ systemd-analyze critical-chain ly@tty2.service
 Everything is on one grayscale ramp. No hues anywhere: emphasis is carried by
 lightness and weight instead.
 
-```
-#0b0b0b base     #121212 bar      #1a1a1a surface   #242424 overlay
-#303030 border   #4d4d4d muted    #7a7a7a subtext   #c2c2c2 text
-#ebebeb bright
-```
+| | | | |
+|---|---|---|---|
+| `#0b0b0b` base | `#121212` bar | `#1a1a1a` surface | `#242424` overlay |
+| `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext | `#c2c2c2` text |
+| `#ebebeb` bright | | | |
 
 Alacritty's 16 ANSI slots are a lightness ramp rather than hues, so coloured
-output stays legible but monochrome -- you lose red-for-error in `git diff`,
+output stays legible but monochrome — you lose red-for-error in `git diff`,
 compiler output and `ls`. The `[colors.normal]` and `[colors.bright]` blocks in
 `alacritty.toml` are the only place to change if that trade is not worth it.
 
@@ -161,9 +184,9 @@ there is nothing to install and nothing to keep in sync.
 Fonts are Ubuntu Nerd Font for sans-serif, serif and UI text, and UbuntuMono
 Nerd Font for everything monospace: terminals, the editor, the bar and its
 flyouts, wofi and notifications. One font that owns every glyph, icons and
-powerline caps included, means nothing is drawn by fallback at another
-font's metrics. Alacritty and the editor use the "Nerd Font Mono" variant,
-which holds every glyph to one cell; the bar uses the proportional one.
+powerline caps included, means nothing is drawn by fallback at another font's
+metrics. Alacritty and the editor use the "Nerd Font Mono" variant, which holds
+every glyph to one cell; the bar uses the proportional one.
 
 ## Regenerating the package lists
 
