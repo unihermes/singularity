@@ -4,6 +4,14 @@
     "workspace": 0,
     "fullscreen": false,
     "pin": false,
+    "class": "com.anthropic.Claude",
+    "size": "1240 690"
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
     "class": "Toplevel"
   },
   {

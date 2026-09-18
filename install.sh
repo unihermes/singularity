@@ -243,6 +243,10 @@ set_cmdline_token() {
 # which is why it varied between boots (5s, 10s, 20s+). Marking just that
 # driver for async probing lets the kernel move on to unrelated devices
 # while it waits, instead of blocking the whole queue on it.
+# (Async probing only hides a slow probe while no other module is loading:
+# every module's init ends in async_synchronize_full(), which waits on all
+# outstanding async probes system-wide. It doesn't help the webcam controller
+# below, which is why that one is deferred instead.)
 for kv in "deferred_probe_timeout=1" "driver_async_probe=intel_ish_ipc"; do
   key=${kv%%=*}; value=${kv#*=}
   if [[ -f /etc/kernel/cmdline ]]; then
@@ -296,6 +300,45 @@ psrconf=/etc/modprobe.d/singularity-i915.conf
 if ! grep -qs 'enable_psr=0' "$psrconf"; then
   log "disabling i915 panel self refresh"
   echo 'options i915 enable_psr=0' | sudo tee "$psrconf" >/dev/null
+  sudo mkinitcpio -P
+fi
+
+# --- webcam controller ---------------------------------------------------
+# The webcam's Visual Sensing Controller (mei_vsc, platform:intel_vsc) spends
+# ~11s in a firmware handshake at boot (5s -> 16s). While it runs, every other
+# module load waits on it, udev's workers pile up behind those loads, and udev
+# finishes nothing else -- including the touchpad, whose evdev nodes exist at
+# 5s but whose udev entries weren't written until 16s. libinput skips a
+# device udev hasn't finished ("skip unconfigured input device"), so Hyprland
+# came up with the keyboard (configured at 3.7s) but no touchpad, and the
+# cursor was dead until the handshake ended. Async probing it doesn't help,
+# see above. Instead the alias autoload is blacklisted and a timer loads it
+# 30s into boot, after login: the stall still happens, but only delays module
+# loads for anything hotplugged in that window, and the webcam still works.
+vscconf=/etc/modprobe.d/singularity-vsc.conf
+if ! grep -qs 'blacklist mei_vsc' "$vscconf"; then
+  log "deferring the webcam controller until after login"
+  echo 'blacklist mei_vsc' | sudo tee "$vscconf" >/dev/null
+  sudo tee /etc/systemd/system/singularity-vsc.service >/dev/null <<'UNIT'
+[Unit]
+Description=Load the webcam's Visual Sensing Controller after login
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/modprobe mei_vsc
+UNIT
+  sudo tee /etc/systemd/system/singularity-vsc.timer >/dev/null <<'UNIT'
+[Unit]
+Description=Load the webcam's Visual Sensing Controller 30s into boot
+
+[Timer]
+OnBootSec=30s
+
+[Install]
+WantedBy=timers.target
+UNIT
+  sudo systemctl daemon-reload
+  sudo systemctl enable singularity-vsc.timer
   sudo mkinitcpio -P
 fi
 
