@@ -193,8 +193,10 @@ hl.on("hyprland.start", function()
     -- for what it does and why, and the alt-tab bind block below for how
     -- it's used. Order relative to `quickshell` above does not matter: it
     -- reconnects lazily on first use rather than requiring quickshell to
-    -- already be up.
-    hl.exec_cmd("~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
+    -- already be up. QT_FORCE_STDERR_LOGGING keeps its log in that file:
+    -- Qt otherwise decides for itself between stderr and the journal, and
+    -- the startup self-test's failure message needs a place to be found.
+    hl.exec_cmd("QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
     -- env alone does not retheme the cursor Hyprland draws over the desktop
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 20")
     -- the saved wallpaper, or a random one from wallpapers/ when shuffle is on
@@ -695,6 +697,30 @@ end
 -- reboot.
 local monocleEnabled = true
 
+-- Workspaces pinned to one layout whatever SUPER+M says, from
+-- ~/.config/singularity/workspace-layouts.json -- { "1": "monocle",
+-- "3": "dwindle" } -- which the Settings window's Window Rules page writes.
+-- Anything not listed follows monocleEnabled. Read on every load, like
+-- window-rules.json.
+local workspaceLayouts = {}
+do
+    local f = io.open(os.getenv("HOME") .. "/.config/singularity/workspace-layouts.json")
+    local pins = f and decodeJson(f:read("a")) or {}
+    if f then f:close() end
+    if type(pins) == "table" then
+        for ws, mode in pairs(pins) do
+            if mode == "monocle" or mode == "dwindle" then workspaceLayouts[tostring(ws)] = mode end
+        end
+    end
+end
+
+-- Whether monocle applies on this workspace: its pin, else the global mode.
+local function monocleOn(ws)
+    local pin = ws and workspaceLayouts[tostring(ws.id)]
+    if pin then return pin == "monocle" end
+    return monocleEnabled
+end
+
 -- Per-window state this config keeps on top of Hyprland's own, by address,
 -- in memory for the same reason as monocleEnabled above:
 --   small     -- unmaximized on purpose (SUPER+equal), so refocusing it does
@@ -808,12 +834,72 @@ end
 -- already focused can fire this before the active pointer has moved on to
 -- it, which silently sized the *previous* window a second time instead --
 -- confirmed with a real pair of test windows before landing on this.
+-- Moves one window into or out of monocle. SUPER+M's sweep, and any window
+-- that lands on a workspace whose layout isn't the one the rules were set
+-- for when it mapped (see applyLayoutRules below). Windows opened before
+-- monocle was ever turned on have no "monocle" tag yet (the rule was
+-- disabled when they mapped), so going into monocle falls back to the
+-- exemption list for those; going out can trust the tag, since anything
+-- wearing it was floated by this same machinery at some point.
+local function setWindowMonocle(w, on, mon)
+    local addr = "address:" .. w.address
+    if on then
+        -- class "" is a window that hasn't said what it is yet; leave it
+        if not w.floating and w.class and w.class ~= "" and not isMonocleExempt(w) then
+            hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
+            hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
+            sizeToFullFloat(w, mon)
+        end
+    elseif w.floating and hasTag(w, "monocle") then
+        hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
+        hl.dispatch(hl.dsp.window.tag({ tag = "-monocle", window = addr }))
+        stateOf(w.address).small = nil
+    end
+end
+
+-- In monocle right now: floated by the monocle machinery. The tag alone
+-- isn't enough -- monocleRule's tag is re-applied whenever Hyprland
+-- re-evaluates a window's rules, so a tiled window on a workspace pinned to
+-- dwindle can pick it up while monocle is the active workspace's layout.
+-- Floating isn't re-applied that way; it's set once, at map time.
+local function isMonocleWin(w)
+    return w.floating and hasTag(w, "monocle")
+end
+
 local function onMonocleOpen(win)
-    if not monocleEnabled then return end
-    if not win or not hasTag(win, "monocle") then return end
-    sizeToFullFloat(win)
+    if not win then return end
+    -- The rules follow the *active* workspace's layout, so a window that
+    -- mapped somewhere else (a window-rules.json workspace entry, an app
+    -- restoring its own session) can come up in the wrong one.
+    --
+    -- Only then, though. On the active workspace the rules were already
+    -- right, and a window's own state isn't settled yet at this point:
+    -- Quickshell's Settings/System windows map before their class and the
+    -- quickshell-windows rule's float have landed, so they looked like a
+    -- tiled app due for monocle and were blown up to full screen.
+    local on = monocleOn(win.workspace)
+    local active = hl.get_active_workspace()
+    local elsewhere = win.workspace and active and win.workspace.id ~= active.id
+    if elsewhere and on ~= isMonocleWin(win) and not (on and isMonocleExempt(win)) then
+        setWindowMonocle(win, on, win.monitor)
+        return
+    end
+    -- Only the windows monocleRule floated. Exempt ones -- Quickshell's own
+    -- Settings/System/Keybinds windows, window-rules.json entries -- keep
+    -- the size they open at.
+    if on and hasTag(win, "monocle") then sizeToFullFloat(win) end
 end
 hl.on("window.open", onMonocleOpen)
+
+-- SUPER+SHIFT+n and dragging between workspaces: the window takes on the
+-- destination's layout. This fires before workspace.active does, so the
+-- rules may still be set for the workspace it left -- which is fine, since
+-- the conversion below is done by dispatch rather than by the rules.
+hl.on("window.move_to_workspace", function(win, ws)
+    if not win or not ws or ws.special then return end
+    local on = monocleOn(ws)
+    if on ~= isMonocleWin(win) then setWindowMonocle(win, on, ws.monitor or win.monitor) end
+end)
 
 local function maximizeFocused()
     local win = hl.get_active_window()
@@ -827,8 +913,8 @@ local function maximizeFocused()
     -- Ahead of the monocle check since SUPER+C works in dwindle mode too.
     if win and stateOf(win.address).minimized then restoreMinimized(win) end
 
-    if not monocleEnabled then return end
     if not win or not win.class or win.fullscreen ~= 0 then return end
+    if not monocleOn(win.workspace) then return end
 
     if win.floating then
         -- Unlike a tiled window, Hyprland does not raise a floating one to the
@@ -910,9 +996,8 @@ end)
 -- leaving a screen of wrong-sized windows to fix by visiting each. Windows
 -- made small on purpose keep that size -- same rule as everywhere else.
 local function refitMonocle()
-    if not monocleEnabled then return end
     for _, w in ipairs(hl.get_windows()) do
-        if w.floating and hasTag(w, "monocle") and not stateOf(w.address).small then
+        if w.floating and hasTag(w, "monocle") and not stateOf(w.address).small and monocleOn(w.workspace) then
             local mon = w.monitor
             if mon and not isFitted(w, usableArea(mon)) then sizeToFullFloat(w, mon) end
         end
@@ -971,7 +1056,8 @@ function toggleMaximize()
     -- Hyprland decides where the toggle actually lands (window rules and
     -- monocle's own maximize=true can override it), so read the state back
     -- rather than assume it went the way this predicted.
-    local after = hl.get_window(win.address)
+    -- by selector: hl.get_window() returns nil for a bare address
+    local after = hl.get_window("address:" .. win.address)
     if after and after.fullscreen ~= 0 then
         stateOf(win.address).small = nil
     else
@@ -1007,38 +1093,52 @@ function toggleMinimize()
     hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
 end
 
--- SUPER+M switches between monocle and dwindle. monocleRule only applies to
--- windows as they map, so switching modes has to also walk every window
--- already open on the workspace -- otherwise only new windows would notice
--- the change. Windows opened before monocle was ever turned on have no
--- "monocle" tag yet either (the rule was disabled when they mapped), so the
--- monocle-on branch falls back to the class list for those; monocle-off
--- can trust the tag since anything wearing it was floated by this same
--- rule at some point.
+-- monocleRule and the dwindle maximize rule only act on windows as they
+-- map, and new windows nearly always map on the active workspace -- so the
+-- rules are switched to match whichever workspace is active, on every
+-- workspace change as well as on SUPER+M. That's what lets a pinned
+-- workspace get its own layout at map time, with no float-then-tile flicker.
+-- The bar's layout toast is only told when the layout actually changes.
+local rulesMonocle = nil
+local function applyLayoutRules()
+    local ws = hl.get_active_workspace()
+    if ws and ws.special then return end
+    local on = monocleOn(ws)
+    monocleRule:set_enabled(on)
+    maximizePrimaryDwindleRule:set_enabled(not on)
+    if rulesMonocle ~= nil and rulesMonocle ~= on then
+        hl.exec_cmd("qs ipc call layout set " .. (on and "monocle" or "dwindle"))
+    end
+    rulesMonocle = on
+end
+applyLayoutRules()
+hl.on("workspace.active", applyLayoutRules)
+
+-- SUPER+M switches between monocle and dwindle everywhere that isn't
+-- pinned. monocleRule only applies to windows as they map, so switching
+-- also has to walk every window already open on the workspace -- otherwise
+-- only new windows would notice the change. On a pinned workspace nothing
+-- here moves; the toast says it's pinned instead of claiming a switch.
 local function toggleLayout()
     monocleEnabled = not monocleEnabled
-    monocleRule:set_enabled(monocleEnabled)
-    maximizePrimaryDwindleRule:set_enabled(not monocleEnabled)
-    hl.exec_cmd("qs ipc call layout set " .. (monocleEnabled and "monocle" or "dwindle"))
+
+    local ws = hl.get_active_workspace()
+    local pin = ws and workspaceLayouts[tostring(ws.id)]
+    if pin then
+        hl.exec_cmd("notify-send -a Hyprland -t 3000 'Layout' 'Workspace " .. ws.id
+            .. " is pinned to " .. (pin == "monocle" and "monocle" or "tiled")
+            .. "; the others switched'")
+        return
+    end
+
+    rulesMonocle = nil   -- always announce this one
+    applyLayoutRules()
 
     local win = hl.get_active_window()
     if not win or not win.workspace then return end
     local mon = win.monitor or hl.get_active_monitor()
-
     for _, w in ipairs(win.workspace:get_windows()) do
-        local addr = "address:" .. w.address
-        if monocleEnabled then
-            if not w.floating and w.class and not isMonocleExempt(w) then
-                hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
-                hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
-                sizeToFullFloat(w, mon)
-            end
-        else
-            if w.floating and hasTag(w, "monocle") then
-                hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
-                stateOf(w.address).small = nil
-            end
-        end
+        setWindowMonocle(w, monocleEnabled, mon)
     end
 end
 hl.bind(mod .. " + M", toggleLayout)

@@ -36,6 +36,12 @@ FlyoutRow {
     highlighted: device.connected
     enabled: !device.pairing
 
+    // Unpair and drop it from BlueZ entirely, so it moves back to nearby
+    // (or vanishes, if it's off) and has to be paired again to reconnect.
+    actionIcon: device.paired ? "󰆴" : ""
+    actionHint: "Remove " + label + "?"
+    onAction: device.forget()
+
     onActivated: {
         if (device.connected) {
             device.disconnect()

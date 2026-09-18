@@ -27,7 +27,7 @@ SettingsPage {
     id: page
 
     title: "Window Rules"
-    description: "How each app's windows and popouts open, saved to ~/.config/singularity/window-rules.json. Applies to windows opened after a change."
+    description: "How each app's windows and popouts open, saved to ~/.config/singularity/window-rules.json, and which layout each workspace uses. Rules apply to windows opened after a change."
 
     readonly property string rulesPath:
         (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/window-rules.json"
@@ -38,6 +38,39 @@ SettingsPage {
     property var openWindows: []
 
     readonly property var sizes: ["", "960 540", "1240 690"]
+
+    // Workspaces pinned to one layout whatever SUPER+M says, as
+    // { "1": "monocle", "3": "dwindle" }. hyprland.lua reads the file on
+    // load; a workspace not listed follows SUPER+M.
+    readonly property string layoutsPath:
+        (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/workspace-layouts.json"
+    property var layouts: ({})
+
+    // Set one workspace's pin ("" to unpin) on top of whatever the file
+    // holds when the write runs, so a pin set by hand isn't lost.
+    function setLayout(ws, mode) {
+        var key = String(ws)
+        AtomicFileWrite.write({
+            path: layoutsPath,
+            transform: text => {
+                var cur = {}
+                try { cur = text.trim() === "" ? {} : JSON.parse(text) } catch (e) { return null }
+                if (typeof cur !== "object" || Array.isArray(cur)) return null
+                if (mode === "") delete cur[key]
+                else cur[key] = mode
+                return JSON.stringify(cur, null, 2) + "\n"
+            },
+            refusal: "workspace-layouts.json isn't valid JSON; fix it by hand first",
+            after: "hyprctl reload config-only >/dev/null",
+            done: (status, detail) => {
+                if (status === "ok" || status === "unchanged")
+                    page.say("Workspace " + key + (mode === "" ? " follows SUPER+M"
+                        : " pinned to " + (mode === "monocle" ? "monocle" : "tiled")), false)
+                else page.say(status === "refused" ? detail : "Couldn't write " + page.layoutsPath, true)
+                layoutsFile.reload()
+            }
+        })
+    }
 
     readonly property string typed: classInput.text.trim()
     readonly property var suggestions: {
@@ -178,6 +211,17 @@ SettingsPage {
         }
     }
 
+    FileView {
+        id: layoutsFile
+        path: page.layoutsPath
+        blockLoading: true
+        printErrors: false
+        onLoaded: {
+            try { page.layouts = JSON.parse(text()) || {} } catch (e) { page.layouts = {} }
+        }
+        onLoadFailed: page.layouts = {}
+    }
+
     Process {
         id: clientsProc
         command: ["hyprctl", "clients", "-j"]
@@ -196,6 +240,39 @@ SettingsPage {
         running: true
         repeat: true
         onTriggered: clientsProc.running = true
+    }
+
+    FlyoutHeading { text: "WORKSPACE LAYOUTS" }
+
+    Repeater {
+        // MAX_WORKSPACES in hyprland.lua
+        model: 5
+
+        SettingsField {
+            id: wsField
+            required property int index
+            readonly property string key: String(index + 1)
+            readonly property string mode: page.layouts[key] || ""
+            label: "Workspace " + key
+            hint: index === 0 ? "Pinned workspaces keep their layout when SUPER+M switches the rest" : ""
+
+            Row {
+                anchors.right: parent.right
+                spacing: 4
+
+                Repeater {
+                    model: [{ id: "", text: "Follow SUPER+M" }, { id: "monocle", text: "Monocle" },
+                        { id: "dwindle", text: "Tiled" }]
+                    FlyoutChip {
+                        required property var modelData
+                        text: modelData.text
+                        selected: wsField.mode === modelData.id
+                        enabled: !AtomicFileWrite.busy
+                        onClicked: if (!selected) page.setLayout(wsField.key, modelData.id)
+                    }
+                }
+            }
+        }
     }
 
     FlyoutHeading { text: "ADD A RULE" }

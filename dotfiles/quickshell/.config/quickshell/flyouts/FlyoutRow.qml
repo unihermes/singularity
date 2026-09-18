@@ -23,6 +23,15 @@ Item {
 
     signal activated()
 
+    // An optional second action (forget a network, remove a device), shown
+    // on hover in place of the trailing text. Two clicks, since what it does
+    // can't be undone from here: the first arms it -- the icon turns into a
+    // red check -- and the second confirms. Disarms itself after 3s.
+    property string actionIcon: ""
+    property string actionHint: ""
+    readonly property bool actionArmed: actionDisarm.running
+    signal action()
+
     width: parent ? parent.width : 0
     implicitHeight: Theme.fs(24)
 
@@ -52,9 +61,9 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: root.highlighted ? 6 : 0
         anchors.verticalCenter: parent.verticalCenter
-        anchors.right: trailingText.left
+        anchors.right: root.showAction ? actionBtn.left : trailingText.left
         anchors.rightMargin: 8
-        text: root.label
+        text: root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
         elide: Text.ElideRight
         color: {
             if (!root.enabled) return Theme.subtext
@@ -65,8 +74,12 @@ Item {
         font.pixelSize: Theme.fontBody
     }
 
+    HoverHandler { id: rowHover }
+    readonly property bool showAction: actionIcon !== "" && enabled && (rowHover.hovered || actionArmed)
+
     Text {
         id: trailingText
+        visible: !root.showAction
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         text: root.trailing
@@ -88,5 +101,41 @@ Item {
         enabled: root.enabled
         cursorShape: Qt.PointingHandCursor
         onClicked: root.activated()
+    }
+
+    Timer { id: actionDisarm; interval: 3000 }
+
+    // after the row's MouseArea, so it sits on top and takes its own clicks
+    Rectangle {
+        id: actionBtn
+        visible: root.showAction
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.fs(22)
+        height: parent.height - 4
+        radius: Theme.radiusInner
+        color: root.actionArmed ? Theme.alert
+            : actionMouse.containsMouse ? Theme.surface : "transparent"
+
+        Text {
+            anchors.centerIn: parent
+            text: root.actionArmed ? "󰄬" : root.actionIcon
+            color: root.actionArmed ? Theme.base
+                : actionMouse.containsMouse ? Theme.bright : Theme.muted
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontBody
+        }
+
+        MouseArea {
+            id: actionMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                if (!root.actionArmed) { actionDisarm.restart(); return }
+                actionDisarm.stop()
+                root.action()
+            }
+        }
     }
 }

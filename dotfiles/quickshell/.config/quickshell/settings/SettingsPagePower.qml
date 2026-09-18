@@ -53,6 +53,8 @@ SettingsPage {
         if (/brightnessctl/.test(cmd)) return "Dim the screen"
         if (/lock-session|hyprlock/.test(cmd)) return "Lock"
         if (/dpms/.test(cmd)) return "Turn screens off"
+        // hypridle.conf's battery-only step: suspends unless a charger is online
+        if (/power_supply/.test(cmd) && /suspend/.test(cmd)) return "Suspend on battery"
         if (/suspend|hibernate/.test(cmd)) return /hibernate/.test(cmd) ? "Hibernate" : "Suspend"
         return cmd
     }

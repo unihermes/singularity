@@ -14,10 +14,9 @@ import Quickshell.Wayland
 import QtQuick
 import "../services"
 
-PanelWindow {
+OverlayWindow {
     id: root
 
-    required property var scope
     required property var bar
     // Kept true and re-armed by the timer rather than toggling window
     // `visible` -- see LayoutToast for why an opacity fade needs the surface
@@ -32,19 +31,10 @@ PanelWindow {
         ? (bar.volumeIsMuted ? "󰖁" : "󰕾")
         : "󰃠"
 
-    screen: scope.modelData
     visible: true
-    anchors { top: true; left: true; right: true; bottom: true }
-    implicitWidth: screen ? screen.width : 1920
-    implicitHeight: screen ? screen.height : 1080
-    // Nothing here is interactive, so it should never steal input from
-    // whatever's underneath.
-    exclusionMode: ExclusionMode.Ignore
-    color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    WlrLayershell.namespace: "singularity-toast"
-    // Clicks fall straight through to whatever's beneath the toast.
+    layerNamespace: "singularity-toast"
+    // Nothing here is interactive: no keyboard (the base's default), and
+    // clicks fall straight through to whatever's beneath the toast.
     mask: Region {}
 
     // Brightness loads asynchronously from sysfs and volume settles once the

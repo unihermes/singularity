@@ -17,10 +17,11 @@
 //
 // Two exceptions, both because no service exists to use:
 //   - brightness shells out to brightnessctl (there is no backlight service)
-//   - network shells out to iwctl. Quickshell.Networking's only backend is
-//     NetworkManager, and this machine runs iwd instead -- with NM absent
-//     the module loads but reports "could not find an available backend",
-//     so nothing would ever populate.
+//   - network shells out to iwctl and busctl (services/Network.qml).
+//     Quickshell.Networking's only backend is NetworkManager, and this
+//     machine runs iwd instead -- with NM absent the module loads but
+//     reports "could not find an available backend", so nothing would ever
+//     populate.
 //
 // Quickshell's QML API moves quickly. If the bar does not appear, run
 // `quickshell` from a terminal inside the session: QML errors go to stderr
@@ -163,6 +164,10 @@ ShellRoot {
         function prev(): void { root.altTabStep(-1) }
         function commit(): void { root.altTabCommit() }
         function cancel(): void { root.altTabCancel() }
+        // alttab-relay's startup self-test: the one call here with a reply,
+        // so the relay can tell its hand-built wire format still matches
+        // this Quickshell's (see alttab-relay.cpp)
+        function ping(): string { return "singularity-relay-pong" }
     }
 
     // A new/closed/moved window's class (and so its icon) doesn't show up
@@ -437,32 +442,6 @@ ShellRoot {
                 return "󰁺"
             }
 
-            // iwd state, refreshed by the Processes at the bottom
-            property string netDevice: ""
-            property string netSsid: ""
-            // iwd's Powered flag for the radio. Read from `device list`, not
-            // `station show`: a powered-off device has no station at all
-            // ("No station on device"), but still appears in the list.
-            property bool netPowered: true
-
-            function setWifiPowered(on) {
-                if (netDevice === "") return
-                netPowered = on    // optimistic; netPowerProc settles it
-                if (!on) netSsid = ""
-                netPowerSet.command = ["iwctl", "device", netDevice,
-                    "set-property", "Powered", on ? "on" : "off"]
-                netPowerSet.running = true
-            }
-
-            // scan on open rather than on a timer: the radio should not
-            // sweep while nobody is looking at it
-            function scanNetworks() { netScan.running = true }
-
-            function connectNetwork(cmd) {
-                netConnect.command = cmd
-                netConnect.running = true
-            }
-
             // adapter.enabled mirrors BlueZ's "Powered" property, but
             // Quickshell writes it optimistically and never reverts it if
             // the D-Bus Set call errors or is a no-op -- if that ever
@@ -491,11 +470,6 @@ ShellRoot {
                 }
                 return ""
             }
-            // [{ connected, ssid, security, bars, known }]
-            property var netList: []
-            // why the list couldn't be read, or "" -- see netListProc
-            property string netListError: ""
-
             // {source, address} for every window open on the focused
             // workspace, via each window's wmClass -> .desktop entry -> icon.
             // address lets the icon's click handler focus that exact window.
@@ -783,166 +757,6 @@ ShellRoot {
                 }
             }
 
-            // --- iwd ---------------------------------------------
-            // iwctl draws tables for humans: ANSI colour, a banner, and
-            // fixed-width columns. The device and status reads below strip
-            // the escapes and pick fields out of that; the network list,
-            // where SSIDs with spaces make field splitting unsafe, reads
-            // iwd over D-Bus instead (see netListProc).
-
-            Process {
-                id: netDeviceProc
-                command: ["sh", "-c",
-                    "iwctl device list 2>/dev/null | sed 's/\\x1b\\[[0-9;]*m//g' "
-                    + "| awk 'NR>4 && $5==\"station\" {print $1; exit}'"]
-                running: true
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        bar.netDevice = text.trim()
-                        if (bar.netDevice !== "") {
-                            netStatus.running = true
-                            netPowerProc.running = true
-                        }
-                    }
-                }
-            }
-
-            Process {
-                id: netStatus
-                command: ["sh", "-c",
-                    "iwctl station " + bar.netDevice + " show 2>/dev/null "
-                    + "| sed 's/\\x1b\\[[0-9;]*m//g' "
-                    + "| awk -F'  +' '/Connected network/ {print $3}'"]
-                stdout: StdioCollector {
-                    onStreamFinished: bar.netSsid = text.trim()
-                }
-            }
-
-            Process {
-                id: netScan
-                command: ["sh", "-c",
-                    "iwctl station " + bar.netDevice + " scan 2>/dev/null; sleep 2"]
-                onExited: {
-                    netStatus.running = true
-                    netListProc.running = true
-                }
-            }
-
-            // The network list comes from iwd's D-Bus API rather than
-            // `iwctl station get-networks`: that table had to be cut up by
-            // fixed column offsets, which any iwd release that reflowed its
-            // columns would break silently, and its signal column marks the
-            // empty bars with colour alone -- stripping the escapes left
-            // every network at full signal. busctl hands back JSON.
-            //
-            // Two calls, since the second needs a path out of the first:
-            // every iwd object (names, security, connected, known), then
-            // the station's networks in iwd's own order with signal
-            // strength. A failure at either step lands in netListError for
-            // the flyout to show, instead of an empty list that looks like
-            // there's simply nothing in range.
-            property var netObjects: ({})
-
-            function netListFailed(why) {
-                console.warn("network list: " + why)
-                bar.netListError = "Couldn't read networks from iwd"
-                bar.netList = []
-            }
-
-            Process {
-                id: netListProc
-                command: ["busctl", "--json=short", "call", "net.connman.iwd", "/",
-                    "org.freedesktop.DBus.ObjectManager", "GetManagedObjects"]
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        var objs
-                        try { objs = JSON.parse(text).data[0] }
-                        catch (e) { bar.netListFailed("GetManagedObjects gave no JSON"); return }
-                        var station = ""
-                        for (var path in objs) {
-                            var dev = objs[path]["net.connman.iwd.Device"]
-                            if (dev && dev.Name.data === bar.netDevice && objs[path]["net.connman.iwd.Station"]) station = path
-                        }
-                        if (station === "") { bar.netListFailed("no station object for " + bar.netDevice); return }
-                        bar.netObjects = objs
-                        netOrderProc.command = ["busctl", "--json=short", "call", "net.connman.iwd", station,
-                            "net.connman.iwd.Station", "GetOrderedNetworks"]
-                        netOrderProc.running = true
-                    }
-                }
-            }
-
-            Process {
-                id: netOrderProc
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        var ordered
-                        try { ordered = JSON.parse(text).data[0] }
-                        catch (e) { bar.netListFailed("GetOrderedNetworks gave no JSON"); return }
-                        var out = []
-                        for (var i = 0; i < ordered.length; i++) {
-                            var obj = bar.netObjects[ordered[i][0]]
-                            var net = obj && obj["net.connman.iwd.Network"]
-                            if (!net || !net.Name) continue
-                            // signal is in hundredths of a dBm; these are
-                            // the cut-offs iwctl's own bars use
-                            var dbm = ordered[i][1] / 100
-                            out.push({
-                                connected: !!(net.Connected && net.Connected.data),
-                                ssid: net.Name.data,
-                                security: net.Type ? net.Type.data : "",
-                                bars: dbm >= -60 ? 4 : dbm >= -67 ? 3 : dbm >= -75 ? 2 : 1,
-                                known: !!net.KnownNetwork
-                            })
-                        }
-                        bar.netListError = ""
-                        bar.netList = out
-                    }
-                }
-            }
-
-            Process {
-                id: netPowerProc
-                command: ["sh", "-c",
-                    "iwctl device list 2>/dev/null | sed 's/\\x1b\\[[0-9;]*m//g' "
-                    + "| awk 'NR>4 && $1==\"" + bar.netDevice + "\" {print $3; exit}'"]
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        var v = text.trim()
-                        if (v !== "") bar.netPowered = (v === "on")
-                    }
-                }
-            }
-
-            // Powering the radio back on doesn't hand back an SSID at once:
-            // iwd reconnects to a known network about a second later. So the
-            // status is re-read after a short wait instead of on exit, or the
-            // row would say "Not connected" until the next 15s refresh.
-            Process {
-                id: netPowerSet
-                command: ["true"]
-                onExited: {
-                    netPowerProc.running = true
-                    netPowerSettle.restart()
-                }
-            }
-
-            Timer {
-                id: netPowerSettle
-                interval: 2500
-                onTriggered: netStatus.running = true
-            }
-
-            // command is rewritten per click, so it starts out empty
-            Process {
-                id: netConnect
-                command: ["true"]
-                onExited: {
-                    netStatus.running = true
-                    netListProc.running = true
-                }
-            }
-
             Timer {
                 interval: 1000
                 running: true
@@ -950,20 +764,6 @@ ShellRoot {
                 onTriggered: {
                     barModules.clock.label = Qt.formatDateTime(new Date(), "HH:mm:ss  |  MM/dd/yy")
                     bar.tick++
-                    // iwd reports itself active before its interfaces are
-                    // registered, so the one-shot probe at startup can come
-                    // back empty. The SSID refresh below is gated on having a
-                    // device, so without this retry that empty result sticks
-                    // for the whole session and the bar insists it is offline
-                    // while the machine is plainly online.
-                    if (bar.netDevice === "") {
-                        if (bar.tick % 5 === 0) netDeviceProc.running = true
-                    } else if (bar.tick % 15 === 0) {
-                        // the SSID only changes when you move between
-                        // networks, so it doesn't need a per-second iwctl call
-                        netStatus.running = true
-                        netPowerProc.running = true
-                    }
                 }
             }
 

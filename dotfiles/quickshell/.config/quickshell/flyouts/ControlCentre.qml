@@ -316,14 +316,14 @@ FlyoutPanel {
         spacing: 6
 
         FlyoutAction {
-            icon: bar.netPowered ? "󰖩" : "󰖪"
+            icon: Network.powered ? "󰖩" : "󰖪"
             label: "Wi-Fi"
-            status: bar.netDevice === "" ? "No wifi device"
-                : !bar.netPowered ? "Off"
-                : (bar.netSsid !== "" ? bar.netSsid : "Not connected")
-            enabled: bar.netDevice !== ""
-            checked: bar.netPowered
-            onActivated: bar.setWifiPowered(!bar.netPowered)
+            status: Network.device === "" ? "No wifi device"
+                : !Network.powered ? "Off"
+                : (Network.ssid !== "" ? Network.ssid : "Not connected")
+            enabled: Network.device !== ""
+            checked: Network.powered
+            onActivated: Network.setPowered(!Network.powered)
         }
 
         FlyoutAction {

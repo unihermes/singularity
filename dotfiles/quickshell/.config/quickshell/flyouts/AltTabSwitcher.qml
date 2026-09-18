@@ -26,10 +26,9 @@ import Quickshell.Widgets
 import QtQuick
 import "../services"
 
-PanelWindow {
+OverlayWindow {
     id: root
 
-    required property var scope
     readonly property bool open: scope.openFlyout === "alttab"
 
     // The window list is captured once, by begin(), rather than tracked live.
@@ -157,15 +156,7 @@ PanelWindow {
 
     function cancel() { scope.openFlyout = "" }
 
-    screen: scope.modelData
     visible: open && windows.length > 0
-    anchors { top: true; left: true; right: true; bottom: true }
-    // As in FlyoutPanel: anchors alone leave a PanelWindow at 100x100.
-    implicitWidth: screen ? screen.width : 1920
-    implicitHeight: screen ? screen.height : 1080
-    exclusionMode: ExclusionMode.Ignore
-    color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
     // Exclusive, because this is the only way to see the ALT release: Hyprland
     // will not deliver a modifier release to a bind (verified by probe -- an
     // Alt_L release bind, with ignore_mods, never fired once), but a focused
@@ -182,8 +173,8 @@ PanelWindow {
     // remaining fix for a fast tap missing this grab is cutting latency out
     // of alt-tab.sh's round trip (see its own comments), not a second catch
     // for the release itself.
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    WlrLayershell.namespace: "singularity-alttab"
+    focusMode: WlrKeyboardFocus.Exclusive
+    layerNamespace: "singularity-alttab"
 
     // Focus has to land on the item for Keys handlers to see anything, and
     // only once the window is actually up -- grabbing before that silently

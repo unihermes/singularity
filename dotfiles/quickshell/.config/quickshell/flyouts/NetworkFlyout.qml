@@ -1,10 +1,8 @@
 // Neutrino - Quickshell
 // ~/.config/quickshell/NetworkFlyout.qml
 //
-// The iwd network list and passphrase prompt, split out of shell.qml.
-// Connecting runs through bar.connectNetwork(), since the Process that
-// actually runs iwctl is owned by the bar (it also drives the post-connect
-// status refresh other bar state depends on).
+// The iwd network list and passphrase prompt. The state and the iwctl
+// calls live in services/Network.qml.
 
 import QtQuick
 import "../services"
@@ -23,14 +21,7 @@ FlyoutPanel {
     onOpenChanged: if (!open) { pendingSsid = ""; pass.text = "" }
 
     function connectTo(ssid, passphrase) {
-        // --passphrase rather than iwd's interactive prompt, which
-        // needs a tty. It does put the passphrase in this process's
-        // argv for the lifetime of the call, where anything running
-        // as this user could read it out of ps.
-        var cmd = ["iwctl"]
-        if (passphrase !== "") cmd.push("--passphrase", passphrase)
-        cmd.push("station", bar.netDevice, "connect", ssid)
-        bar.connectNetwork(cmd)
+        Network.connect(ssid, passphrase)
         pendingSsid = ""
         pass.text = ""
         scope.openFlyout = ""
@@ -39,7 +30,7 @@ FlyoutPanel {
     FlyoutHeading {
         text: netFlyout.pendingSsid !== ""
             ? "PASSPHRASE"
-            : (bar.netSsid !== "" ? "NETWORK  " + bar.netSsid : "NETWORK  offline")
+            : (Network.ssid !== "" ? "NETWORK  " + Network.ssid : "NETWORK  offline")
     }
 
     // --- passphrase prompt ---
@@ -73,14 +64,14 @@ FlyoutPanel {
     FlyoutRow {
         visible: netFlyout.pendingSsid === ""
         label: "Rescan"
-        trailing: bar.netDevice
-        onActivated: bar.scanNetworks()
+        trailing: Network.device
+        onActivated: Network.scan()
     }
 
     Repeater {
         // iwctl already orders by signal, so the cap keeps the ten
         // strongest rather than an arbitrary ten
-        model: netFlyout.pendingSsid === "" ? bar.netList.slice(0, 10) : []
+        model: netFlyout.pendingSsid === "" ? Network.networks.slice(0, 10) : []
 
         FlyoutRow {
             required property var modelData
@@ -93,6 +84,10 @@ FlyoutPanel {
                 return "•".repeat(Math.max(1, modelData.bars))
             }
             highlighted: modelData.connected
+            // only a saved network has anything to forget
+            actionIcon: modelData.known ? "󰆴" : ""
+            actionHint: "Forget " + modelData.ssid + "?"
+            onAction: Network.forget(modelData.ssid)
             onActivated: {
                 if (modelData.connected) return
                 // a known or open network needs no passphrase: iwd
@@ -109,15 +104,15 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        label: bar.netDevice === "" ? "No wifi device"
-            : bar.netListError !== "" ? bar.netListError : "No networks found"
+        label: Network.device === "" ? "No wifi device"
+            : Network.listError !== "" ? Network.listError : "No networks found"
         enabled: false
-        visible: netFlyout.pendingSsid === "" && bar.netList.length === 0
+        visible: netFlyout.pendingSsid === "" && Network.networks.length === 0
     }
 
     FlyoutRow {
-        label: "+ " + (bar.netList.length - 10) + " weaker"
+        label: "+ " + (Network.networks.length - 10) + " weaker"
         enabled: false
-        visible: netFlyout.pendingSsid === "" && bar.netList.length > 10
+        visible: netFlyout.pendingSsid === "" && Network.networks.length > 10
     }
 }

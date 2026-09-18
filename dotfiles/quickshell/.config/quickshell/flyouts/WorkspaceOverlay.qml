@@ -17,10 +17,9 @@ import Quickshell.Widgets
 import QtQuick
 import "../services"
 
-PanelWindow {
+OverlayWindow {
     id: root
 
-    required property var scope
     readonly property bool open: scope.openFlyout === "workspaceoverlay"
 
     function requestClose() { scope.openFlyout = "" }
@@ -40,21 +39,11 @@ PanelWindow {
         return !!(tl.lastIpcObject && tl.lastIpcObject.class === "org.quickshell")
     }
 
-    screen: scope.modelData
     visible: open
-    anchors { top: true; left: true; right: true; bottom: true }
-    // As in FlyoutPanel: anchoring alone leaves a PanelWindow at 100x100, so
-    // the backdrop would only cover a corner and click-off-to-close would only
-    // work there. The size has to be explicit.
-    implicitWidth: screen ? screen.width : 1920
-    implicitHeight: screen ? screen.height : 1080
-    exclusionMode: ExclusionMode.Ignore
-    color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
     // Exclusive, not OnDemand: Escape has to work without clicking into the
     // overlay first, and it is transient, so focus returns when it closes.
-    WlrLayershell.keyboardFocus: root.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    WlrLayershell.namespace: "singularity-overlay"
+    focusMode: root.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    layerNamespace: "singularity-overlay"
 
     // Dim, and close on a click that misses every cell.
     Rectangle {

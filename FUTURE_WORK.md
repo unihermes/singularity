@@ -286,7 +286,9 @@ This backlog contains concrete, actionable improvements to the Hyprland desktop 
 
 ---
 
-#### 19. Split System.qml into focused components
+#### ~~19. Split System.qml into focused components~~ ✅
+
+**Done:** `System.qml` (1,334 → 100 lines) is now the window and grid. Sampling lives in `services/SystemStats.qml` (430) plus `services/SystemSpecs.qml` (172), formatting in `services/Format.js`, the columns in `windows/system/{Usage,Process,Specs}Column.qml`, and `Gauge`, `Spark` and `InfoRow` in `flyouts/` for reuse. Still only polls while the window is open. Checked by screenshot: every section populated with live data. Also fixed Signal always reading "0 dBm": `iw` isn't installed, and `Number("")` is 0. It now reads `/proc/net/wireless`.
 
 **Goal:** Reduce System.qml from 1,334 lines to ~300-400 line files; make stats sampling and UI reusable independently.
 
@@ -300,7 +302,9 @@ This backlog contains concrete, actionable improvements to the Hyprland desktop 
 
 ---
 
-#### 20. Extract network service to services/Network.qml
+#### ~~20. Extract network service to services/Network.qml~~ ✅
+
+**Done:** `services/Network.qml` singleton owns every iwd process and all Wi-Fi state. The bar, Network flyout and Control Centre read `Network.*`. Connect requests queue instead of dropping. `shell.qml` is down about 150 lines, and polling no longer runs once per monitor. Tested standalone: device, SSID, power and scan list all populate. Pipewire/UPower/Bluetooth/brightness helpers are still in `shell.qml`.
 
 **Goal:** Move shell.qml's inline network/brightness/battery logic into the existing services singleton pattern.
 
@@ -314,7 +318,9 @@ This backlog contains concrete, actionable improvements to the Hyprland desktop 
 
 ---
 
-#### 21. Factor out OverlayWindow base component
+#### ~~21. Factor out OverlayWindow base component~~ ✅
+
+**Done:** `flyouts/OverlayWindow.qml` holds the screen/anchors/size/exclusion/layer setup. `FlyoutPanel`, `AltTabSwitcher`, `WorkspaceOverlay`, `LevelToast` and `LayoutToast` set only `layerNamespace` and `focusMode`. Verified with `hyprctl layers`: toasts, the workspace overlay (IPC toggle) and ALT+Tab (IPC tab/cancel) all map at 1920×1200 with their original namespaces.
 
 **Goal:** Eliminate duplicated full-screen overlay boilerplate across 4-5 flyout files.
 
@@ -332,7 +338,9 @@ This backlog contains concrete, actionable improvements to the Hyprland desktop 
 
 ### Hyprland / System Layer
 
-#### 22. Alt-tab relay wire-format health check
+#### ~~22. Alt-tab relay wire-format health check~~ ✅
+
+**Done:** `shell.qml`'s `alttab` IPC target gained `ping()`. The relay pings every live Quickshell instance through its hand-built encoding until one answers, then sends commands only to that instance. That also fixes commands going to a second instance, such as a test config. If no instance answers for three 5 s rounds, it logs to `~/.cache/alttab-relay.log` (now always the file, via `QT_FORCE_STDERR_LOGGING`) and sends a critical notification. Tested against the live shell (pass), shell plus a bare instance (picks the shell), and a bare instance alone (fails and notifies).
 
 **Goal:** Detect silent breakage from future Quickshell updates; log failures clearly instead of letting them pass silently.
 
@@ -346,7 +354,9 @@ This backlog contains concrete, actionable improvements to the Hyprland desktop 
 
 ---
 
-#### 23. AC/battery-aware hypridle timeout
+#### ~~23. AC/battery-aware hypridle timeout~~ ✅
+
+**Done:** A 10-minute listener in `hypridle.conf` runs `grep -qsx 1 /sys/class/power_supply/*/online || systemctl suspend`, so it only suspends with no charger online. The 20-minute one stays for AC. The check runs when the listener fires, so plugging in or unplugging mid-idle is respected with no restarts or udev changes. The Power page labels it "Suspend on battery". hypridle reloaded with 5 rules. The condition was checked on battery, but a real 10-minute idle hasn't been sat through.
 
 **Goal:** Shorten idle timeout on battery power (e.g. 10 min suspend vs 20 min on AC) to improve battery life.
 
@@ -360,7 +370,9 @@ This backlog contains concrete, actionable improvements to the Hyprland desktop 
 
 ---
 
-#### 24. Per-workspace monocle-vs-tiled override
+#### ~~24. Per-workspace monocle-vs-tiled override~~ ✅
+
+**Done:** Pins live in `~/.config/singularity/workspace-layouts.json` and are set from Settings → Window Rules → Workspace Layouts (Follow SUPER+M / Monocle / Tiled). `monocleOn(ws)` replaces the global flag everywhere. The monocle and dwindle-maximize rules follow the active workspace's effective layout, windows moved (or opened) onto a workspace are converted to its layout, and SUPER+M on a pinned workspace leaves it alone and says so. Tested live with workspace 5 pinned to tiled: move in → tiles, open there → tiles side by side, move back to 1 → full-size monocle. Also fixed `hl.get_window()` being called with a bare address, which always returned nil. That affected `toggleMaximize`'s read-back too.
 
 **Goal:** Allow pinning specific workspaces to always-tiled or always-monocle, independent of SUPER+M global toggle.
 
@@ -410,7 +422,9 @@ This backlog contains concrete, actionable improvements to the Hyprland desktop 
 
 ### Quickshell Bar, Flyouts & Windows
 
-#### 27. Add forget action for Wi-Fi and Bluetooth
+#### ~~27. Add forget action for Wi-Fi and Bluetooth~~ ✅
+
+**Done:** `FlyoutRow` gained an optional hover action button with a two-click confirm (arms, then a red check, disarms after 3 s). Known Wi-Fi networks get Forget (`iwctl known-networks <ssid> forget`, via `Network.forget`), and paired Bluetooth devices get Remove (`BluetoothDevice.forget()`). Not exercised on a real network or device, to avoid losing saved credentials.
 
 **Goal:** Let users remove stale/one-off networks and unpair devices from the UI without dropping to a terminal.
 

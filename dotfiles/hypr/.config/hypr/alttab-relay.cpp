@@ -34,6 +34,20 @@
 // this file. If alt-tab stops responding after a quickshell update, this is
 // the first place to check.
 //
+// So it checks itself. Until it has found the bar's instance (at startup,
+// and again whenever that instance goes away), it sends every live
+// Quickshell instance a `ping` call -- the one function on the "alttab"
+// target with a return value -- through the same hand-built encoding every
+// real command uses, and looks for the reply string in whatever comes back.
+// That doesn't depend on the reply's own layout: if the request encoding has
+// drifted, Quickshell can't decode it, never calls ping, and the string never
+// appears. The instance that answers is also the one commands go to, so a
+// second Quickshell (a test config, `qs -p` on something else) can't steal
+// them. If no reachable instance answers for three rounds running -- long
+// enough that a shell still loading its config isn't mistaken for it -- that
+// is logged to ~/.cache/alttab-relay.log and raised as a desktop
+// notification, instead of alt-tab just quietly doing nothing.
+//
 // Deliberately fire-and-forget: every "alttab" IPC function this relays
 // (tab/prev/commit/cancel) returns void, and Quickshell executes a command
 // before it ever tries to write a response back -- so there's nothing worth
@@ -54,8 +68,11 @@
 // correctly. Using lambdas as slots on Qt's own signals needs no
 // Q_OBJECT/moc of our own, so this still builds as one file with plain g++.
 
+#include <QBuffer>
 #include <QCoreApplication>
 #include <QDataStream>
+#include <QProcess>
+#include <QTimer>
 #include <QDir>
 #include <QLocalServer>
 #include <QLocalSocket>
@@ -95,15 +112,16 @@ QString xdgRuntimeDir() {
 	return dir;
 }
 
-// Finds the one live Quickshell instance for this user by the same
-// mechanism Quickshell's own instance lock does (QsPaths::checkLock in
+// Finds the live Quickshell instances for this user by the same mechanism
+// Quickshell's own instance lock does (QsPaths::checkLock in
 // core/paths.cpp): each instance directory under quickshell's `by-id`
 // holds an `instance.lock` file that the live process holds an flock-style
 // fcntl write lock on for as long as it runs. No lock held means the
 // directory is a leftover from a process that has since exited.
-QString findLiveIpcSocket() {
+QStringList findLiveIpcSockets() {
 	QDir byId(xdgRuntimeDir() + "/quickshell/by-id");
 	const auto entries = byId.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+	QStringList live;
 
 	for (const auto& entry : entries) {
 		auto lockPath = byId.filePath(entry) + "/instance.lock";
@@ -116,12 +134,40 @@ QString findLiveIpcSocket() {
 		fcntl(fd, F_GETLK, &lock);
 		close(fd);
 
-		if (lock.l_type != F_UNLCK) {
-			return byId.filePath(entry) + "/ipc.sock";
-		}
+		if (lock.l_type != F_UNLCK) live.push_back(byId.filePath(entry) + "/ipc.sock");
 	}
 
-	return QString();
+	return live;
+}
+
+// The bytes QDataStream writes for a QString, minus its length prefix:
+// what the ping reply's string looks like on the wire, whatever surrounds it.
+QByteArray wireString(const QString& text) {
+	QByteArray bytes;
+	QBuffer buffer(&bytes);
+	buffer.open(QIODevice::WriteOnly);
+	QDataStream stream(&buffer);
+	stream << text;
+	return bytes.mid(4);
+}
+
+// "ok", "no" (connected, but no reply string), or "unreachable".
+QString selfTest(const QString& sockPath) {
+	QLocalSocket sock;
+	sock.connectToServer(sockPath);
+	if (!sock.waitForConnected(500)) return "unreachable";
+
+	QDataStream stream(&sock);
+	stream << kStringCallCommandIndex;
+	stream << StringCallCommand { .target = "alttab", .function = "ping", .arguments = {} };
+	sock.flush();
+
+	// Quickshell hangs up once it has answered; read until then.
+	QByteArray reply;
+	while (sock.waitForReadyRead(1000)) reply += sock.readAll();
+	reply += sock.readAll();
+
+	return reply.contains(wireString("singularity-relay-pong")) ? "ok" : "no";
 }
 
 } // namespace
@@ -158,11 +204,19 @@ int main(int argc, char** argv) {
 	// fine: it runs inside a request that's already being handled from
 	// within the running event loop, not as the entire program's control
 	// flow the way every wait in the old design was.
+	// the instance that answered the self-test's ping (see below), or "" --
+	// before one has, the first live instance, as this always did
+	auto* shellSock = new QString();
+
 	auto ensureConnected = [=]() -> bool {
 		if (qsConn->state() == QLocalSocket::ConnectedState) return true;
 
-		auto sockPath = findLiveIpcSocket();
-		if (sockPath.isEmpty()) return false;
+		auto sockPath = *shellSock;
+		if (sockPath.isEmpty()) {
+			auto live = findLiveIpcSockets();
+			if (live.isEmpty()) return false;
+			sockPath = live.first();
+		}
 
 		qsConn->connectToServer(sockPath);
 		return qsConn->waitForConnected(200);
@@ -209,6 +263,51 @@ int main(int argc, char** argv) {
 			});
 		}
 	});
+
+	// Polled rather than hooked into ensureConnected(): a round takes up to a
+	// second per instance, and that path is a live Tab press. Every 5s is
+	// plenty to catch a Quickshell restart. Nothing runs while the bar's
+	// instance is known and still alive.
+	auto* failRounds = new int(0);
+	auto runSelfTest = [=]() {
+		auto live = findLiveIpcSockets();
+		if (!shellSock->isEmpty()) {
+			if (live.contains(*shellSock)) return;
+			qInfo() << "alttab-relay: Quickshell instance gone:" << *shellSock;
+			shellSock->clear();
+			qsConn->abort();
+		}
+
+		bool reachable = false;
+		for (const auto& sockPath : live) {
+			auto result = selfTest(sockPath);
+			if (result == "unreachable") continue;
+			reachable = true;
+			if (result == "ok") {
+				*shellSock = sockPath;
+				*failRounds = 0;
+				qsConn->abort();   // the next command connects to this one
+				qInfo() << "alttab-relay: self-test passed against" << sockPath;
+				return;
+			}
+		}
+		if (!reachable || ++*failRounds != 3) return;
+
+		qCritical().noquote() << "alttab-relay: SELF-TEST FAILED -- none of the"
+			<< live.size() << "running Quickshell instance(s) answered the relay's ping."
+			<< "If the bar is running, its private IPC wire format has probably changed"
+			<< "in an update; alt-tab won't respond until alttab-relay.cpp is brought in"
+			<< "line with it (or the relay is stopped, so alt-tab.sh falls back to"
+			<< "`qs ipc call`).";
+		QProcess::startDetached("notify-send", {
+			"-a", "alttab-relay", "-u", "critical", "ALT+Tab relay out of date",
+			"Quickshell isn't answering alttab-relay's IPC. See ~/.cache/alttab-relay.log",
+		});
+	};
+	auto* selfTestTimer = new QTimer(&app);
+	QObject::connect(selfTestTimer, &QTimer::timeout, runSelfTest);
+	selfTestTimer->start(5000);
+	QTimer::singleShot(0, &app, runSelfTest);
 
 	qInfo() << "alttab-relay: listening on" << relaySockPath;
 

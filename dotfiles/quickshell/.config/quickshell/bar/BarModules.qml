@@ -184,13 +184,13 @@ Item {
         // the filled strength glyph, not the outlined md-wifi
         // arcs: its neighbours (volume, battery, power) are all
         // solid, and the thin one read as a different weight
-        icon: barModules.bar.netSsid !== "" ? "󰤨" : "󰤮"
+        icon: Network.ssid !== "" ? "󰤨" : "󰤮"
         active: screenScope.openFlyout === "network"
-        dimmed: barModules.bar.netSsid === ""
+        dimmed: Network.ssid === ""
         onActivated: {
             // scan on open rather than on a timer: the radio
             // should not sweep while nobody is looking at it
-            barModules.bar.scanNetworks()
+            Network.scan()
             screenScope.toggleFlyout("network", netBtn)
         }
     }

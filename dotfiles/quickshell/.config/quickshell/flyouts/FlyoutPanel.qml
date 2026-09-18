@@ -14,16 +14,14 @@ import Quickshell.Wayland
 import QtQuick
 import "../services"
 
-PanelWindow {
+OverlayWindow {
     id: root
 
-    // The bar's per-screen scope (shell.qml) and this flyout's name in it.
-    // The scope holds which flyout is open and where it was clicked, so the
+    // This flyout's name in the bar's per-screen scope (shell.qml). The
+    // scope holds which flyout is open and where it was clicked, so the
     // panel follows it rather than keeping any state of its own.
-    required property var scope
     required property string flyout
 
-    screen: scope.modelData
     readonly property bool open: scope.openFlyout === flyout
     // screen-local x (relative to this panel, which spans the whole
     // screen) that the box centres itself under
@@ -61,24 +59,10 @@ PanelWindow {
     property alias contentColumn: contentColumn
 
     visible: open
-    anchors { top: true; left: true; right: true; bottom: true }
-    // Anchoring to all four edges does NOT stretch a PanelWindow -- it stays
-    // at its default 100x100 and the flyout renders as a clipped sliver in
-    // the corner. The size has to be given explicitly for the backdrop to
-    // actually cover the screen (which is what makes click-off-to-close work).
-    implicitWidth: screen ? screen.width : 1920
-    implicitHeight: screen ? screen.height : 1080
-    // Ignore, not a zero zone: with a plain exclusiveZone the compositor
-    // still lays this surface out *below* the bar's reserved strip, so its
-    // y=0 is the bar's bottom edge and topOffset would push the flyout down
-    // by the bar's height twice over.
-    exclusionMode: ExclusionMode.Ignore
-    color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
+    focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
         : root.wantsKeyboard ? WlrKeyboardFocus.OnDemand
         : WlrKeyboardFocus.None
-    WlrLayershell.namespace: "neutrino-flyout"
+    layerNamespace: "neutrino-flyout"
 
     // backdrop: anywhere that isn't the box
     MouseArea {
