@@ -45,7 +45,7 @@ SettingsPage {
     function value(sub, key) { return field(sub, key).value }
 
     function set(sub, key, v, label) {
-        writer.patch(src => HyprTables.setInput(src, sub, key, v),
+        patchLua(src => HyprTables.setInput(src, sub, key, v),
             label + " set to " + (typeof v === "boolean" ? (v ? "on" : "off") : (v === "" ? "none" : v)),
             (sub ? sub + "." : "") + key + " isn't a plain value in hyprland.lua, edit it by hand")
     }
@@ -61,20 +61,20 @@ SettingsPage {
 
     FileView {
         id: luaFile
-        path: writer.confPath
+        path: HyprLuaWrite.confPath
         blockLoading: true
         watchChanges: true
         printErrors: false
-        onFileChanged: if (!writer.busy) page.reread()
+        onFileChanged: if (!HyprLuaWrite.busy) page.reread()
     }
 
-    HyprLuaWrite {
-        id: writer
-        visible: false
-        onPatched: (ok, message) => {
-            page.say(message, !ok)
+    // HyprLuaWrite is shared with the Keybinds editor and the other pages;
+    // each result comes back to the page that asked for it
+    function patchLua(transform, message, refusal) {
+        HyprLuaWrite.patch(transform, message, refusal, (ok, msg) => {
+            page.say(msg, !ok)
             page.reread()
-        }
+        })
     }
 
     // --- pieces --------------------------------------------------------------

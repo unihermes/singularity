@@ -19,6 +19,12 @@
 -- the assignment down below implicitly global instead of filling this
 -- upvalue, and the binds would keep calling a nil function.
 local toggleMaximize
+local toggleMinimize
+
+-- Workspaces 1..MAX_WORKSPACES get SUPER+n binds, and are the only ones a
+-- window-rules.json entry may send a window to. The Settings window's Window
+-- Rules page has its own copy of this limit (SettingsPageWindowRules.qml).
+local MAX_WORKSPACES = 5
 
 ------------------
 ---- PROGRAMS ----
@@ -358,6 +364,7 @@ hl.bind(mod .. " + X", function() toggleMaximize() end)
 hl.bind(mod .. " + CTRL + F",  hl.dsp.window.fullscreen())
 -- same action as double-clicking a window's titlebar
 hl.bind(mod .. " + equal",     function() toggleMaximize() end)
+hl.bind(mod .. " + C",         function() toggleMinimize() end)
 hl.bind(mod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mod .. " + SHIFT + E", hl.dsp.exit())
 hl.bind(mod .. " + P",         hl.dsp.window.pseudo())
@@ -419,7 +426,7 @@ hl.bind("ALT + grave",       hl.dsp.exec_cmd("~/.config/hypr/alttab-ipc.sh prev"
 -- what alt-tab had selected. Not worth it.
 
 -- --- Workspaces ---
-for i = 1, 5 do
+for i = 1, MAX_WORKSPACES do
     hl.bind(mod .. " + " .. i,         hl.dsp.focus({ workspace = i }))
     hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
 end
@@ -577,79 +584,13 @@ maximizePrimaryDwindleRule:set_enabled(false)
 -- parent app's class, so only the title tells them apart, and the list of
 -- titles will need extending as things slip through.
 --
--- Hyprland's Lua has no JSON library, hence the small decoder. It covers the
--- whole of JSON except null inside arrays, which the page never writes. A
--- file that fails to parse is treated as having no rules, never as an error
--- that takes the rest of the config down with it.
-local function decodeJson(s)
-    local i = 1
-    local function skip() i = s:find("[^ \t\r\n]", i) or #s + 1 end
-    local function str()
-        local out, j = {}, i + 1
-        while true do
-            local c = s:sub(j, j)
-            if c == "" then error("unterminated string") end
-            if c == '"' then i = j + 1; return table.concat(out) end
-            if c == "\\" then
-                local e = s:sub(j + 1, j + 1)
-                if e == "u" then
-                    out[#out + 1] = utf8.char(tonumber(s:sub(j + 2, j + 5), 16))
-                    j = j + 6
-                else
-                    out[#out + 1] = ({ b = "\b", f = "\f", n = "\n", r = "\r", t = "\t" })[e] or e
-                    j = j + 2
-                end
-            else
-                out[#out + 1] = c
-                j = j + 1
-            end
-        end
-    end
-    local value
-    local function list(close, item)
-        i = i + 1
-        skip()
-        if s:sub(i, i) == close then i = i + 1; return end
-        while true do
-            item()
-            skip()
-            local d = s:sub(i, i)
-            i = i + 1
-            if d == close then return end
-            if d ~= "," then error("expected , or " .. close) end
-        end
-    end
-    function value()
-        skip()
-        local c = s:sub(i, i)
-        if c == "{" then
-            local t = {}
-            list("}", function()
-                skip()
-                if s:sub(i, i) ~= '"' then error("expected a key") end
-                local k = str()
-                skip()
-                if s:sub(i, i) ~= ":" then error("expected :") end
-                i = i + 1
-                t[k] = value()
-            end)
-            return t
-        elseif c == "[" then
-            local t = {}
-            list("]", function() t[#t + 1] = value() end)
-            return t
-        elseif c == '"' then return str()
-        elseif s:sub(i, i + 3) == "true" then i = i + 4; return true
-        elseif s:sub(i, i + 4) == "false" then i = i + 5; return false
-        elseif s:sub(i, i + 3) == "null" then i = i + 4; return nil
-        end
-        local n = s:match("^-?%d+%.?%d*[eE]?[-+]?%d*", i)
-        if not n then error("unexpected character at " .. i) end
-        i = i + #n
-        return tonumber(n)
-    end
-    local ok, result = pcall(value)
-    return ok and result or nil
+-- JSON comes from json.lua beside this file (Hyprland's Lua has no JSON
+-- library). Loaded with pcall: if it's missing or broken the rules file is
+-- treated as empty, never as an error that takes the rest of the config down.
+local decodeJson
+do
+    local ok, decoder = pcall(dofile, os.getenv("HOME") .. "/.config/hypr/json.lua")
+    decodeJson = ok and decoder or function() return nil end
 end
 
 -- Classes are matched whole and literally: "org.pwmt.zathura" must not also
@@ -707,7 +648,7 @@ do
             if r.pin then rule.pin = true end
             if r.fullscreen then rule.fullscreen = true end
             local ws = tonumber(r.workspace)
-            if ws and ws >= 1 and ws <= 5 then rule.workspace = tostring(math.floor(ws)) end
+            if ws and ws >= 1 and ws <= MAX_WORKSPACES then rule.workspace = tostring(math.floor(ws)) end
             hl.window_rule(rule)
             -- A second rule, because one rule carries one tag: this marks the
             -- window as exempt for SUPER+M's sweep (toggleLayout), which has
@@ -754,11 +695,31 @@ end
 -- reboot.
 local monocleEnabled = true
 
--- Windows unmaximized on purpose (SUPER+SHIFT+F / SUPER+equal below) are
--- tracked by address so refocusing them does not immediately undo the
--- choice -- see toggleMaximize() below. An in-memory set, for the same
--- reason as monocleEnabled above.
-local keptSmall = {}
+-- Per-window state this config keeps on top of Hyprland's own, by address,
+-- in memory for the same reason as monocleEnabled above:
+--   small     -- unmaximized on purpose (SUPER+equal), so refocusing it does
+--                not immediately undo the choice; see toggleMaximize() below
+--   minimized -- the {x, y} SUPER+C hid it from; see toggleMinimize() below
+-- One table, cleared by one window.close hook further down: addresses are
+-- pointer values Hyprland reuses once a window is gone, so anything left
+-- behind would land on some unrelated window that opens later.
+local windowState = {}
+local function stateOf(addr)
+    local st = windowState[addr]
+    if not st then
+        st = {}
+        windowState[addr] = st
+    end
+    return st
+end
+
+-- Puts a SUPER+C-hidden window back where it was and forgets it was hidden.
+local function restoreMinimized(win)
+    local st = stateOf(win.address)
+    local saved = st.minimized
+    st.minimized = nil
+    hl.dispatch(hl.dsp.window.move({ x = saved.x, y = saved.y, window = "address:" .. win.address }))
+end
 
 -- The monitor's usable rect (its resolution minus whatever the bar and any
 -- other layer-shell surface has reserved), in the same logical-pixel units
@@ -855,9 +816,18 @@ end
 hl.on("window.open", onMonocleOpen)
 
 local function maximizeFocused()
-    if not monocleEnabled then return end
-
     local win = hl.get_active_window()
+
+    -- A hidden window that gets focus by any route other than SUPER+C
+    -- (ALT+Tab, the workspace overlay, its bar entry) is being asked for, so
+    -- bring it back. Left to the refit below, a monocle window would come
+    -- back on-screen but keep its stale minimized entry -- the next SUPER+C
+    -- then took the restore branch and threw it to its old position -- and a
+    -- window made small on purpose, which the refit skips, would stay hidden.
+    -- Ahead of the monocle check since SUPER+C works in dwindle mode too.
+    if win and stateOf(win.address).minimized then restoreMinimized(win) end
+
+    if not monocleEnabled then return end
     if not win or not win.class or win.fullscreen ~= 0 then return end
 
     if win.floating then
@@ -877,7 +847,7 @@ local function maximizeFocused()
             -- the monitor hooks below for the cases where Hyprland has not
             -- settled the new layout by the time those fire.
             local mon = win.monitor
-            if mon and not keptSmall[win.address] and not isFitted(win, usableArea(mon)) then
+            if mon and not stateOf(win.address).small and not isFitted(win, usableArea(mon)) then
                 sizeToFullFloat(win, mon)
             end
             hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
@@ -894,7 +864,7 @@ local function maximizeFocused()
     -- its fixed content size inside a maximized surface -- cut off rather
     -- than centred.
     if win.class == "org.quickshell" then return end
-    if keptSmall[win.address] then return end
+    if stateOf(win.address).small then return end
 
     local mon = hl.get_active_monitor()
     if not mon then return end
@@ -921,6 +891,11 @@ hl.on("window.active", maximizeFocused)
 -- matter against.
 hl.on("window.close", maximizeFocused)
 
+-- window.close hands the closing window over, same as window.open does.
+hl.on("window.close", function(win)
+    if win then windowState[win.address] = nil end
+end)
+
 -- Docking, undocking, or changing a display's resolution or arrangement (the
 -- Settings window's Display page writes those and reloads) moves and resizes
 -- the monitors under every window that is already open. Monocle windows are
@@ -937,7 +912,7 @@ hl.on("window.close", maximizeFocused)
 local function refitMonocle()
     if not monocleEnabled then return end
     for _, w in ipairs(hl.get_windows()) do
-        if w.floating and hasTag(w, "monocle") and not keptSmall[w.address] then
+        if w.floating and hasTag(w, "monocle") and not stateOf(w.address).small then
             local mon = w.monitor
             if mon and not isFitted(w, usableArea(mon)) then sizeToFullFloat(w, mon) end
         end
@@ -959,7 +934,7 @@ hl.on("monitor.layout_changed", refitMonocle)
 -- it also swallowed SUPER+SHIFT+F: the unmaximize landed and was immediately
 -- undone, so there was no way to make a window small on purpose.
 --
--- toggleMaximize() below records deliberate shrinks in keptSmall so
+-- toggleMaximize() below records deliberate shrinks in windowState so
 -- maximizeFocused() leaves them alone, and double-clicking a titlebar (which
 -- does not go through toggleMaximize) still gets re-maximized on the next
 -- focus, via the window.active hook above -- matching the old behaviour.
@@ -976,9 +951,9 @@ function toggleMaximize()
 
     if win.floating and hasTag(win, "monocle") then
         local addr = "address:" .. win.address
-        if keptSmall[win.address] then
+        if stateOf(win.address).small then
             sizeToFullFloat(win)
-            keptSmall[win.address] = nil
+            stateOf(win.address).small = nil
         else
             local mon = win.monitor or hl.get_active_monitor()
             if not mon then return end
@@ -986,7 +961,7 @@ function toggleMaximize()
             hl.dispatch(hl.dsp.window.resize({
                 x = math.floor(area.w * 0.7), y = math.floor(area.h * 0.7), window = addr }))
             hl.dispatch(hl.dsp.window.center({ window = addr }))
-            keptSmall[win.address] = true
+            stateOf(win.address).small = true
         end
         return
     end
@@ -998,10 +973,38 @@ function toggleMaximize()
     -- rather than assume it went the way this predicted.
     local after = hl.get_window(win.address)
     if after and after.fullscreen ~= 0 then
-        keptSmall[win.address] = nil
+        stateOf(win.address).small = nil
     else
-        keptSmall[win.address] = true
+        stateOf(win.address).small = true
     end
+end
+
+-- Hides window below screen or restores it. Refocusing a hidden window any
+-- other way restores it too -- see maximizeFocused() above.
+function toggleMinimize()
+    local win = hl.get_active_window()
+    if not win then return end
+    local st = stateOf(win.address)
+
+    if st.minimized then
+        restoreMinimized(win)
+        return
+    end
+
+    -- window.move only places floating windows; on a tiled one (dwindle
+    -- mode, or a monocle-exempt window) it does nothing, and recording a
+    -- position anyway left the next press "restoring" a window that never
+    -- moved. Say so rather than silently ignore the key.
+    if not win.floating then
+        hl.exec_cmd("notify-send -a Hyprland -t 3000 'Minimize' 'Only floating windows can be minimized'")
+        return
+    end
+
+    local mon = win.monitor or hl.get_active_monitor()
+    if not mon then return end
+    st.minimized = { x = win.at.x, y = win.at.y }
+    local belowScreen = mon.y + mon.height + 100
+    hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
 end
 
 -- SUPER+M switches between monocle and dwindle. monocleRule only applies to
@@ -1033,7 +1036,7 @@ local function toggleLayout()
         else
             if w.floating and hasTag(w, "monocle") then
                 hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
-                keptSmall[w.address] = nil
+                stateOf(w.address).small = nil
             end
         end
     end

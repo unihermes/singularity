@@ -37,18 +37,48 @@ Singleton {
     function restart(u) { act(u, "restart") }
     function clear(u)   { act(u, "reset-failed") }
 
+    // Queued, one at a time: assigning a new command to a Process that is
+    // still running does nothing, so a second click before the first action
+    // finished (a polkit prompt can hold one open for a while) used to be
+    // dropped without a word.
+    property var pending: []
+
     function act(u, verb) {
         var cmd = ["systemctl"]
         if (u.user) cmd.push("--user")
         cmd.push(verb, u.name)
-        actProc.command = cmd
+        pending.push(cmd)
+        next()
+    }
+
+    function next() {
+        if (actProc.running || pending.length === 0) return
+        actProc.command = pending.shift()
         actProc.running = true
     }
 
     Process {
         id: actProc
         command: ["true"]
-        onExited: root.refresh()
+        onExited: {
+            root.refresh()
+            root.next()
+        }
+    }
+
+    // A bar glyph alone is easy to miss -- screen off, a fullscreen app, away
+    // from the desk -- so a unit that wasn't failed on the last poll also gets
+    // a notification. Includes the first poll after the shell starts, since a
+    // compositor crash (which restarts the shell) is what took polkit down.
+    function notifyNew(out) {
+        var seen = {}
+        for (var i = 0; i < units.length; i++) seen[(units[i].user ? "u:" : "s:") + units[i].name] = true
+        for (var j = 0; j < out.length; j++) {
+            var u = out[j]
+            if (seen[(u.user ? "u:" : "s:") + u.name]) continue
+            Quickshell.execDetached(["notify-send", "-a", "systemd", "-u", "critical",
+                "Unit failed", (u.user ? "User unit " : "System unit ") + u.name + " has failed"])
+        }
     }
 
     Process {
@@ -64,6 +94,7 @@ Singleton {
                     var f = lines[i].trim().split(" ")
                     if (f.length === 2 && f[1] !== "") out.push({ name: f[1], user: f[0] === "user" })
                 }
+                root.notifyNew(out)
                 root.units = out
             }
         }

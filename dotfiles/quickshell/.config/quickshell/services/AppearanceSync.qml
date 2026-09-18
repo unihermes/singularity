@@ -83,11 +83,6 @@ Scope {
         function onFontScaleChanged() { debounce.restart() }
     }
 
-    Process {
-        running: true
-        command: ["mkdir", "-p", root.dir]
-        onExited: debounce.restart()
-    }
 
     // watched, so editing the repo stylesheet regenerates the copy wofi uses
     FileView {
@@ -109,10 +104,12 @@ Scope {
     // the write lands. At startup the file is only written, not reloaded:
     // Hyprland read the same value when it started.
     function writeHyprAnimations(reload) {
-        hyprAnim.command = ["sh", "-c",
-            'mkdir -p "$1" && printf "%s\\n" "$2" > "$1/animations"' + (reload ? " && hyprctl reload config-only" : ""),
-            "sh", root.dir, Settings.animSpeed]
-        hyprAnim.running = true
+        var speed = String(Settings.animSpeed)
+        AtomicFileWrite.write({
+            path: root.dir + "/animations",
+            transform: () => speed + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
     }
 
     Connections {
@@ -120,9 +117,12 @@ Scope {
         function onAnimSpeedChanged() { root.writeHyprAnimations(true) }
     }
 
-    Component.onCompleted: writeHyprAnimations(false)
-
-    Process { id: hyprAnim }
+    // Plus the first sync. root.dir needn't exist yet: FileView.setText and
+    // AtomicFileWrite both create missing parent directories.
+    Component.onCompleted: {
+        writeHyprAnimations(false)
+        debounce.restart()
+    }
 
     Process {
         id: swayncReload

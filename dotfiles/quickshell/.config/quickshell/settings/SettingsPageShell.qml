@@ -158,36 +158,23 @@ SettingsPage {
 
     // --- shared --------------------------------------------------------------
 
-    // `cat >` rather than a rename: ~/.bashrc is a stow symlink into the
-    // repo, and a rename would replace the link with a plain file.
-    // .bashrc edits are checked with `bash -n` first.
+    // .bashrc edits are checked with `bash -n` first. The callers build the
+    // whole file from a read made just before, so a second write can't be
+    // queued behind the first -- it would be built on the text the first one
+    // is about to replace.
     function writeFile(path, text, message, checkBash) {
-        if (writeProc.running) { say("Still writing the last change", true); return }
-        writeProc.message = message
-        writeProc.command = ["sh", "-c", `
-            exec 2>&1
-            printf %s "$2" > "$1.new" || { echo write; exit; }
-            if [ "$3" = 1 ]; then
-                out=$(bash -n "$1.new" 2>&1) || { echo syntax; printf "%s\\n" "$out"; rm -f -- "$1.new"; exit; }
-            fi
-            cat -- "$1.new" > "$1" && rm -f -- "$1.new" || { echo write; exit; }
-            echo ok`, "sh", path, text, checkBash ? "1" : "0"]
-        writeProc.running = true
-    }
-
-    Process {
-        id: writeProc
-        property string message: ""
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var lines = text.trim().split("\n")
-                var status = lines.shift()
-                if (status === "ok") page.say(writeProc.message, false)
-                else if (status === "syntax") page.say("Not written, bash -n says: " + (lines[0] || "syntax error").replace(/^.*?: line/, "line"), true)
+        if (AtomicFileWrite.busy) { say("Still writing the last change", true); return }
+        AtomicFileWrite.write({
+            path: path,
+            transform: () => text,
+            check: checkBash ? "bash" : "",
+            done: (status, detail) => {
+                if (status === "ok" || status === "unchanged") page.say(message, false)
+                else if (status === "syntax") page.say("Not written, bash -n says: " + (detail.split("\n")[0] || "syntax error").replace(/^.*?: line/, "line"), true)
                 else page.say("Couldn't write the file", true)
                 page.reread()
             }
-        }
+        })
     }
 
     function reread() {
@@ -364,7 +351,7 @@ SettingsPage {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Remove"
-                enabled: !writeProc.running
+                enabled: !AtomicFileWrite.busy
                 onClicked: page.removeAlias(aliasRow.modelData)
             }
         }
@@ -400,7 +387,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             text: page.aliases.some(a => a.name === aliasName.text.trim()) ? "Save" : "+ Add"
-            enabled: !writeProc.running && aliasName.text.trim() !== ""
+            enabled: !AtomicFileWrite.busy && aliasName.text.trim() !== ""
             onClicked: if (page.addAlias(aliasName.text, aliasValue.text)) {
                 aliasName.text = ""
                 aliasValue.text = ""

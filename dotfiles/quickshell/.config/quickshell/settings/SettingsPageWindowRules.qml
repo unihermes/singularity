@@ -84,7 +84,7 @@ SettingsPage {
         var ws = Math.floor(Number(r.workspace) || 0)
         var out = {
             float: !!r.float,
-            workspace: ws >= 1 && ws <= 5 ? ws : 0,
+            workspace: ws >= 1 && ws <= 5 ? ws : 0,   // MAX_WORKSPACES in hyprland.lua
             fullscreen: !!r.fullscreen,
             pin: !!r.pin,
         }
@@ -97,27 +97,44 @@ SettingsPage {
         return out
     }
 
-    // A write already running when another change comes in would ignore
-    // being started again and drop it, so the change is held and written,
-    // as whatever the rules are by then, the moment the first one exits.
-    function save(next, message) {
-        rules = next
-        writeProc.message = message
-        if (writeProc.running) {
-            writeProc.pending = true
-            return
+    // The file as the page would write it: every rule normalised, so a
+    // file hand-edited into a different but equivalent shape still compares
+    // equal. null for a file that won't parse.
+    function parseRules(text) {
+        if (text.trim() === "") return []
+        try {
+            var data = JSON.parse(text)
+            return Array.isArray(data) ? data.filter(r => r && (r.class || r.title)).map(normalise) : null
+        } catch (e) {
+            return null
         }
-        write()
     }
 
-    // Resolved first: the file is a stow symlink into the repo, and moving
-    // the temp file onto the link would replace the link with a plain file,
-    // quietly cutting the page off from the copy the repo tracks.
-    function write() {
-        writeProc.command = ["sh", "-c",
-            't=$(readlink -f -- "$1") && mkdir -p "${t%/*}" && printf "%s\\n" "$2" > "$t.tmp" && mv -f -- "$t.tmp" "$t" && hyprctl reload config-only >/dev/null',
-            "sh", rulesPath, JSON.stringify(rules, null, 2)]
-        writeProc.running = true
+    // Each change is made against the rules the page is showing, so it only
+    // goes to disk if the file still holds exactly those. A rule added by
+    // hand, or a `git pull`, while the page was open used to be overwritten
+    // by the next click; now that click is refused and the page reloads to
+    // show what's really there. Changes queue behind each other in
+    // AtomicFileWrite, and each one's `base` is the previous one's result,
+    // so a quick run of clicks still lands in order.
+    function save(next, message) {
+        var base = JSON.stringify(rules)
+        rules = next
+        AtomicFileWrite.write({
+            path: rulesPath,
+            transform: text => {
+                var onDisk = parseRules(text)
+                if (onDisk === null || JSON.stringify(onDisk) !== base) return null
+                return JSON.stringify(next, null, 2) + "\n"
+            },
+            refusal: "window-rules.json changed on disk; reloaded it, nothing written",
+            after: "hyprctl reload config-only >/dev/null",
+            done: (status, detail) => {
+                if (status === "ok" || status === "unchanged") { page.say(message, false); return }
+                page.say(status === "refused" ? detail : "Couldn't write " + page.rulesPath, true)
+                rulesFile.reload()
+            }
+        })
     }
 
     function addRule(cls) {
@@ -150,31 +167,14 @@ SettingsPage {
     Component.onCompleted: clientsProc.running = true
 
     FileView {
+        id: rulesFile
         path: page.rulesPath
         blockLoading: true
         printErrors: false
         onLoaded: {
-            try {
-                var data = JSON.parse(text())
-                page.rules = Array.isArray(data) ? data.filter(r => r && (r.class || r.title)).map(page.normalise) : []
-            } catch (e) {
-                page.rules = []
-                page.say("window-rules.json isn't valid JSON, so no rules are shown", true)
-            }
-        }
-    }
-
-    Process {
-        id: writeProc
-        property string message: ""
-        property bool pending: false
-        onExited: code => {
-            if (pending) {
-                pending = false
-                page.write()
-                return
-            }
-            page.say(code === 0 ? message : "Couldn't write " + page.rulesPath, code !== 0)
+            var parsed = page.parseRules(text())
+            page.rules = parsed || []
+            if (parsed === null) page.say("window-rules.json isn't valid JSON, so no rules are shown", true)
         }
     }
 
@@ -220,7 +220,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             text: "+ Add"
-            enabled: !writeProc.running && page.typed !== ""
+            enabled: !AtomicFileWrite.busy && page.typed !== ""
             onClicked: if (page.addRule(page.typed)) classInput.text = ""
         }
     }
@@ -299,7 +299,7 @@ SettingsPage {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     text: "Remove"
-                    enabled: !writeProc.running
+                    enabled: !AtomicFileWrite.busy
                     onClicked: page.removeRule(ruleCol.index)
                 }
             }

@@ -109,7 +109,8 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        label: bar.netDevice === "" ? "No wifi device" : "No networks found"
+        label: bar.netDevice === "" ? "No wifi device"
+            : bar.netListError !== "" ? bar.netListError : "No networks found"
         enabled: false
         visible: netFlyout.pendingSsid === "" && bar.netList.length === 0
     }

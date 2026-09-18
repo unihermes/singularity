@@ -37,22 +37,29 @@ SettingsPage {
     // "key": value on a line of its own. Only top-level keys are set here,
     // and none of them share a name with a nested one.
     function setKey(key, value, message) {
-        confFile.reload()
-        confFile.waitForJob()
-        var text = confFile.text()
         var re = new RegExp('^(\\s*"' + key + '"\\s*:\\s*)("[^"]*"|-?[0-9.]+|true|false)', "m")
         var json = JSON.stringify(value)
-        var next
-        if (re.test(text)) {
-            next = text.replace(re, (m, head) => head + json)
-        } else {
-            // not set yet: add it after the opening brace
-            next = text.replace(/^\{\s*\n/, m => m + '  "' + key + '": ' + json + ",\n")
-        }
-        try { JSON.parse(next) } catch (e) { say("Not written, the edit would break config.json", true); return }
-        writeProc.message = message
-        writeProc.command = ["sh", "-c", 'printf %s "$2" > "$1" && swaync-client -R -sw >/dev/null', "sh", confPath, next]
-        writeProc.running = true
+        AtomicFileWrite.write({
+            path: confPath,
+            transform: text => {
+                var next
+                if (re.test(text)) {
+                    next = text.replace(re, (m, head) => head + json)
+                } else {
+                    // not set yet: add it after the opening brace
+                    next = text.replace(/^\{\s*\n/, m => m + '  "' + key + '": ' + json + ",\n")
+                }
+                try { JSON.parse(next) } catch (e) { return null }
+                return next
+            },
+            refusal: "Not written, the edit would break config.json",
+            after: "swaync-client -R -sw >/dev/null",
+            done: (status, detail) => {
+                if (status === "ok" || status === "unchanged") page.say(message, false)
+                else page.say(status === "refused" ? detail : "Couldn't write config.json", true)
+                page.reread()
+            }
+        })
     }
 
     FileView {
@@ -60,15 +67,6 @@ SettingsPage {
         path: page.confPath
         blockLoading: true
         printErrors: false
-    }
-
-    Process {
-        id: writeProc
-        property string message: ""
-        onExited: code => {
-            page.say(code === 0 ? message : "Couldn't write config.json", code !== 0)
-            page.reread()
-        }
     }
 
     component Seconds: SettingsField {

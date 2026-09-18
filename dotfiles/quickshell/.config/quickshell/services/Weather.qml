@@ -113,4 +113,15 @@ Singleton {
         triggeredOnStart: true
         onTriggered: root.refresh()
     }
+
+    // After a failed fetch, try again every 3 minutes instead of waiting out
+    // the full half hour -- one dropped request (waking from suspend before
+    // Wi-Fi is back, say) otherwise left the module stale that long. Stops by
+    // itself once a fetch succeeds and clears `failed`.
+    Timer {
+        interval: 180000
+        repeat: true
+        running: root.failed
+        onTriggered: root.refresh()
+    }
 }

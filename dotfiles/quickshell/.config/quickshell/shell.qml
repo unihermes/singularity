@@ -493,6 +493,8 @@ ShellRoot {
             }
             // [{ connected, ssid, security, bars, known }]
             property var netList: []
+            // why the list couldn't be read, or "" -- see netListProc
+            property string netListError: ""
 
             // {source, address} for every window open on the focused
             // workspace, via each window's wmClass -> .desktop entry -> icon.
@@ -587,7 +589,14 @@ ShellRoot {
             // at the x its saved order gives it. Bound here once rather than
             // on each module, so a module only declares what it shows.
             Component.onCompleted: {
-                for (const key in barModules.widgetItems) {
+                const items = barModules.widgetItems
+                const defaults = [].concat(...Settings.widgetSections.map(s => Settings.widgetDefaults[s]))
+                for (const key in items)
+                    if (!Settings.widgetMeta[key] || defaults.indexOf(key) < 0)
+                        console.warn("bar widget " + key + " is missing from Settings.widgetMeta or widgetDefaults")
+                for (const key in Settings.widgetMeta)
+                    if (!items[key]) console.warn("Settings.widgetMeta lists " + key + ", which has no item in BarModules.widgetItems")
+                for (const key in items) {
                     const it = barModules.widgetItems[key]
                     it.parent = Qt.binding(() => slotsFor(Settings.widgetSection(key)))
                     it.x = Qt.binding(() => slotX(it.parent, key))
@@ -776,9 +785,10 @@ ShellRoot {
 
             // --- iwd ---------------------------------------------
             // iwctl draws tables for humans: ANSI colour, a banner, and
-            // fixed-width columns. Everything below strips the escapes and
-            // cuts by column offset rather than by whitespace, because SSIDs
-            // are allowed to contain spaces and would break field splitting.
+            // fixed-width columns. The device and status reads below strip
+            // the escapes and pick fields out of that; the network list,
+            // where SSIDs with spaces make field splitting unsafe, reads
+            // iwd over D-Bus instead (see netListProc).
 
             Process {
                 id: netDeviceProc
@@ -818,38 +828,74 @@ ShellRoot {
                 }
             }
 
+            // The network list comes from iwd's D-Bus API rather than
+            // `iwctl station get-networks`: that table had to be cut up by
+            // fixed column offsets, which any iwd release that reflowed its
+            // columns would break silently, and its signal column marks the
+            // empty bars with colour alone -- stripping the escapes left
+            // every network at full signal. busctl hands back JSON.
+            //
+            // Two calls, since the second needs a path out of the first:
+            // every iwd object (names, security, connected, known), then
+            // the station's networks in iwd's own order with signal
+            // strength. A failure at either step lands in netListError for
+            // the flyout to show, instead of an empty list that looks like
+            // there's simply nothing in range.
+            property var netObjects: ({})
+
+            function netListFailed(why) {
+                console.warn("network list: " + why)
+                bar.netListError = "Couldn't read networks from iwd"
+                bar.netList = []
+            }
+
             Process {
                 id: netListProc
-                command: ["sh", "-c",
-                    "known=$(iwctl known-networks list 2>/dev/null "
-                    + "| sed 's/\\x1b\\[[0-9;]*m//g' | awk 'NR>4 {n=substr($0,3,34); "
-                    + "gsub(/^ +| +$/,\"\",n); if (n!=\"\") print n}'); "
-                    + "iwctl station " + bar.netDevice + " get-networks 2>/dev/null "
-                    + "| sed 's/\\x1b\\[[0-9;]*m//g' "
-                    + "| awk -v known=\"$known\" 'BEGIN{split(known,k,\"\\n\")} "
-                    + "NR>4 && length($0)>10 { "
-                    + "marker=substr($0,1,6); name=substr($0,7,34); "
-                    + "sec=substr($0,41,20); sig=substr($0,61); "
-                    + "gsub(/^ +| +$/,\"\",marker); gsub(/^ +| +$/,\"\",name); "
-                    + "gsub(/^ +| +$/,\"\",sec); gsub(/^ +| +$/,\"\",sig); "
-                    + "if (name==\"\") next; kn=0; for (i in k) if (k[i]==name) kn=1; "
-                    + "printf \"%s|%s|%s|%d|%s\\n\", (marker==\">\"?\"1\":\"0\"), "
-                    + "name, sec, length(sig), kn }'"]
+                command: ["busctl", "--json=short", "call", "net.connman.iwd", "/",
+                    "org.freedesktop.DBus.ObjectManager", "GetManagedObjects"]
                 stdout: StdioCollector {
                     onStreamFinished: {
+                        var objs
+                        try { objs = JSON.parse(text).data[0] }
+                        catch (e) { bar.netListFailed("GetManagedObjects gave no JSON"); return }
+                        var station = ""
+                        for (var path in objs) {
+                            var dev = objs[path]["net.connman.iwd.Device"]
+                            if (dev && dev.Name.data === bar.netDevice && objs[path]["net.connman.iwd.Station"]) station = path
+                        }
+                        if (station === "") { bar.netListFailed("no station object for " + bar.netDevice); return }
+                        bar.netObjects = objs
+                        netOrderProc.command = ["busctl", "--json=short", "call", "net.connman.iwd", station,
+                            "net.connman.iwd.Station", "GetOrderedNetworks"]
+                        netOrderProc.running = true
+                    }
+                }
+            }
+
+            Process {
+                id: netOrderProc
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        var ordered
+                        try { ordered = JSON.parse(text).data[0] }
+                        catch (e) { bar.netListFailed("GetOrderedNetworks gave no JSON"); return }
                         var out = []
-                        var lines = text.split("\n")
-                        for (var i = 0; i < lines.length; i++) {
-                            var f = lines[i].split("|")
-                            if (f.length < 5) continue
+                        for (var i = 0; i < ordered.length; i++) {
+                            var obj = bar.netObjects[ordered[i][0]]
+                            var net = obj && obj["net.connman.iwd.Network"]
+                            if (!net || !net.Name) continue
+                            // signal is in hundredths of a dBm; these are
+                            // the cut-offs iwctl's own bars use
+                            var dbm = ordered[i][1] / 100
                             out.push({
-                                connected: f[0] === "1",
-                                ssid: f[1],
-                                security: f[2],
-                                bars: parseInt(f[3]) || 0,
-                                known: f[4] === "1"
+                                connected: !!(net.Connected && net.Connected.data),
+                                ssid: net.Name.data,
+                                security: net.Type ? net.Type.data : "",
+                                bars: dbm >= -60 ? 4 : dbm >= -67 ? 3 : dbm >= -75 ? 2 : 1,
+                                known: !!net.KnownNetwork
                             })
                         }
+                        bar.netListError = ""
                         bar.netList = out
                     }
                 }

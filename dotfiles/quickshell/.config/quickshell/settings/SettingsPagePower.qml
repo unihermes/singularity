@@ -93,30 +93,35 @@ SettingsPage {
         idleDebounce.restart()
     }
 
+    // Applied to the file as it is when the write runs. Only the timeout
+    // values change, by listener position, so a file whose listeners were
+    // added or removed since the page read it is left alone.
     function writeIdle() {
-        idleFile.reload()
-        idleFile.waitForJob()
-        var lines = idleFile.text().split("\n")
-        var fresh = parseIdle(lines.join("\n"))
-        if (fresh.length !== listeners.length) {
-            say("hypridle.conf changed on disk; nothing written", true)
-            reread()
-            return
-        }
-        listeners.forEach((l, i) => {
-            var line = fresh[i].line
-            lines[line] = lines[line].replace(/(timeout\s*=\s*)\d+/, "$1" + l.timeout)
+        var want = listeners.map(l => l.timeout)
+        AtomicFileWrite.write({
+            path: idlePath,
+            transform: text => {
+                var fresh = parseIdle(text)
+                if (text === "" || fresh.length !== want.length) return null
+                var lines = text.split("\n")
+                fresh.forEach((l, i) => {
+                    lines[l.line] = lines[l.line].replace(/(timeout\s*=\s*)\d+/, "$1" + want[i])
+                })
+                return lines.join("\n")
+            },
+            refusal: "hypridle.conf changed on disk; nothing written",
+            // whichever way it was started -- the unit, or the bare fallback
+            // hyprland.lua uses when the unit won't start
+            after: "pkill -x hypridle; "
+                + "systemctl --user reset-failed hypridle.service 2>/dev/null; "
+                + "systemctl --user restart hypridle.service 2>/dev/null || setsid -f hypridle >/dev/null 2>&1",
+            done: (status, detail) => {
+                if (status === "ok" || status === "unchanged") page.say("Saved, hypridle restarted", false)
+                else page.say(status === "refused" ? detail : "Couldn't write hypridle.conf" + (detail ? ": " + detail : ""), true)
+                page.reread()
+                idleCheck.running = true
+            }
         })
-        idleWrite.command = ["sh", "-c", `
-            exec 2>&1
-            printf %s "$2" > "$1.new" && cat -- "$1.new" > "$1" && rm -f -- "$1.new" || { echo write; exit; }
-            # whichever way it was started -- the unit, or the bare fallback
-            # hyprland.lua uses when the unit won't start
-            pkill -x hypridle
-            systemctl --user reset-failed hypridle.service 2>/dev/null
-            systemctl --user restart hypridle.service 2>/dev/null || setsid -f hypridle >/dev/null 2>&1
-            echo ok`, "sh", idlePath, lines.join("\n")]
-        idleWrite.running = true
     }
 
     function minutes(s) {
@@ -140,18 +145,6 @@ SettingsPage {
         id: idleDebounce
         interval: 700
         onTriggered: page.writeIdle()
-    }
-
-    Process {
-        id: idleWrite
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var ok = text.trim().split("\n").pop() === "ok"
-                page.say(ok ? "Saved, hypridle restarted" : "Couldn't write hypridle.conf: " + text.trim(), !ok)
-                page.reread()
-                idleCheck.running = true
-            }
-        }
     }
 
     Process {

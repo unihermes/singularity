@@ -35,7 +35,7 @@ Column {
     property bool standalone: true
     signal closeRequested()
 
-    readonly property string confPath: writer.confPath
+    readonly property string confPath: HyprLuaWrite.confPath
 
     // total height of the list and editor together, so opening the editor
     // shrinks the list instead of resizing (and re-centring) the window
@@ -45,7 +45,7 @@ Column {
     property string query: ""
     property string notice: ""
     property bool noticeIsError: false
-    readonly property bool busy: writer.busy
+    readonly property bool busy: HyprLuaWrite.busy
     // what the last write put on disk; undo only runs while the file still says it
     property string lastWritten: ""
     property string pendingMessage: ""
@@ -212,7 +212,7 @@ Column {
         if (newText === model.src) { closeEditor(); return }
         pendingMessage = message
         lastWritten = newText
-        writer.write(newText)
+        HyprLuaWrite.write(newText, root.written)
     }
 
     function undo() {
@@ -225,32 +225,28 @@ Column {
         }
         pendingMessage = "Undone"
         lastWritten = ""
-        writer.undo()
+        HyprLuaWrite.undo(root.written)
     }
 
-    HyprLuaWrite {
-        id: writer
-        // not laid out: a zero-size Item still takes a spacing slot
-        visible: false
-        onFinished: (status, detail) => {
-            luaFile.reload()
-            root.reparse(false)
+    // HyprLuaWrite's result for a write or undo started here
+    function written(status, detail) {
+        luaFile.reload()
+        reparse(false)
 
-            if (status === "syntax") {
-                root.lastWritten = ""
-                root.editError = writer.syntaxMessage(detail)
-                return
-            }
-            if (status !== "ok") {
-                root.lastWritten = ""
-                root.say("Couldn't write hyprland.lua" + (detail ? ": " + detail.split("\n")[0] : ""), true)
-                return
-            }
-            root.closeEditor()
-            var complaint = writer.reloadComplaint(detail)
-            if (complaint !== "") root.say("Written, but Hyprland reports: " + complaint, true)
-            else root.say(root.pendingMessage, false)
+        if (status === "syntax") {
+            lastWritten = ""
+            editError = HyprLuaWrite.syntaxMessage(detail)
+            return
         }
+        if (status !== "ok") {
+            lastWritten = ""
+            say("Couldn't write hyprland.lua" + (detail ? ": " + detail.split("\n")[0] : ""), true)
+            return
+        }
+        closeEditor()
+        var complaint = HyprLuaWrite.reloadComplaint(detail)
+        if (complaint !== "") say("Written, but Hyprland reports: " + complaint, true)
+        else say(pendingMessage, false)
     }
 
     // --- key capture -----------------------------------------------------

@@ -226,15 +226,29 @@ PanelWindow {
         opacity: 0.35
     }
 
+    // Cards wrap onto more rows once a row would be wider than the screen,
+    // rather than one row that runs past the frame and off both edges --
+    // which left windows beyond the 13th or so unseen and reachable only by
+    // tapping Tab blind. Columns are however many fit; a short list is still
+    // one centred row.
+    readonly property int cardW: 128
+    readonly property int cardH: 116
+    readonly property int maxColumns: Math.max(1, Math.floor((width - 80 - 40 + list.spacing) / (cardW + list.spacing)))
+
     PanelFrame {
         anchors.centerIn: parent
-        width: Math.min(root.width - 80, list.width + 40)
-        height: list.height + 40
+        width: list.width + 40
+        height: Math.min(root.height - 80, list.height + 40)
+        // only matters past what even a wrapped grid can show (several
+        // dozen windows): the rows that don't fit are cut off inside the
+        // frame instead of spilling out of it
+        clip: true
 
-        Row {
+        Grid {
             id: list
             anchors.centerIn: parent
             spacing: 8
+            columns: Math.min(root.windows.length, root.maxColumns)
 
             Repeater {
                 model: root.windows
@@ -246,8 +260,8 @@ PanelWindow {
                     readonly property bool active: index === root.selected
                     readonly property string cls: modelData.lastIpcObject.class || ""
 
-                    width: 128
-                    height: 116
+                    width: root.cardW
+                    height: root.cardH
                     radius: Theme.radiusInner
                     color: active ? Theme.overlay : Theme.surface
                     border.width: 1

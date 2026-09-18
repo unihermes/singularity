@@ -4,6 +4,12 @@
 // The one write path into hyprland.lua, shared by the Keybinds editor and the
 // Settings window's Input and Display pages.
 //
+// A singleton, so there is exactly one of it however many of those are open:
+// as a per-page instance, each kept its own queue, and the standalone Keybinds
+// window and Settings > Input could both read the file, and whichever wrote
+// last threw away the other's change. It sits on AtomicFileWrite, whose queue
+// is shared with every other config write in the shell.
+//
 // A write never goes straight at the config. The new text is syntax-checked
 // with luac first, the current file is copied to a backup, and only then
 // replaced -- followed by `hyprctl reload config-only` and a read of
@@ -14,14 +20,18 @@
 // check to the caller (Keybinds, whose edits are offsets into the text it
 // parsed). patch() takes a function of the current text instead -- for the
 // Settings pages, which set one field by name and so can always be applied
-// to whatever is on disk now. Patches made while a write is running queue
-// up and apply in order.
+// to whatever is on disk at the moment the write runs.
+//
+// Both report through a callback rather than a signal: with one shared
+// instance, a signal would hand every open page every other page's result.
+
+pragma Singleton
 
 import Quickshell
 import Quickshell.Io
 import QtQuick
 
-Item {
+Singleton {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
@@ -29,76 +39,63 @@ Item {
     readonly property string backupPath:
         (Quickshell.env("XDG_STATE_HOME") || home + "/.local/state") + "/neutrino/hyprland.lua.bak"
 
-    readonly property bool busy: proc.running
+    // hyprland.lua writes queued or running; pages hold off re-reading the
+    // file on change notifications while their own write lands
+    property int pending: 0
+    readonly property bool busy: pending > 0
 
-    // status: "ok" | "syntax" | "write". detail: luac's complaint for
-    // syntax, the first error for write, `hyprctl configerrors` for ok.
-    signal finished(string status, string detail)
-    // patch()'s outcome, as one line for a status bar
-    signal patched(bool ok, string message)
+    readonly property string afterWrite:
+        "hyprctl reload config-only >/dev/null; sleep 0.3; hyprctl configerrors"
 
-    property var queue: []
-
-    FileView {
-        id: confFile
-        path: root.confPath
-        blockLoading: true
-        printErrors: false
+    function enqueue(transform, backup, done) {
+        pending++
+        AtomicFileWrite.write({
+            path: confPath,
+            transform: transform,
+            check: "lua",
+            backup: backup ? backupPath : "",
+            after: afterWrite,
+            done: (status, detail) => {
+                pending--
+                done(status, detail)
+            }
+        })
     }
 
     // transform(text) returns the new text, or null when it can't make the
-    // change (the field isn't a plain value); refusal is the message given
-    function patch(transform, message, refusal) {
-        queue = queue.concat([{ transform: transform, message: message, refusal: refusal }])
-        if (!proc.running) next()
+    // change (the field isn't a plain value); refusal is the message given.
+    // done(ok, message) gets one line for a status bar.
+    function patch(transform, message, refusal, done) {
+        enqueue(src => src === "" ? null : transform(src), true, (status, detail) => {
+            if (status === "refused") done(false, refusal || "Not a plain value in hyprland.lua, edit it by hand")
+            else if (status === "unchanged") done(true, message)
+            else if (status === "syntax") done(false, syntaxMessage(detail))
+            else if (status !== "ok") done(false, "Couldn't write hyprland.lua" + (detail ? ": " + detail.split("\n")[0] : ""))
+            else if (reloadComplaint(detail) !== "") done(false, "Written, but Hyprland reports: " + reloadComplaint(detail))
+            else done(true, message)
+        })
     }
 
-    // Runs from both ends of a write -- the output collected and the process
-    // reaped arrive in either order -- and goes ahead once both have.
-    function next() {
-        if (proc.running || current !== null) return
-        while (queue.length > 0) {
-            var job = queue[0]
-            queue = queue.slice(1)
-            confFile.reload()
-            confFile.waitForJob()
-            var src = confFile.text()
-            if (src === "") { patched(false, "Couldn't read " + confPath); continue }
-            var out = job.transform(src)
-            if (out === null) { patched(false, job.refusal || "Not a plain value in hyprland.lua, edit it by hand"); continue }
-            if (out === src) continue
-            current = job
-            write(out)
-            return
-        }
+    // done(status, detail): status "ok" | "syntax" | "write". detail: luac's
+    // complaint for syntax, the first error for write, `hyprctl configerrors`
+    // for ok.
+    function write(newText, done) {
+        enqueue(() => newText, true, (status, detail) => done(status === "unchanged" ? "ok" : status, detail))
     }
 
-    property var current: null
-
-    onFinished: (status, detail) => {
-        var job = current
-        current = null
-        if (job) {
-            if (status === "syntax") patched(false, syntaxMessage(detail))
-            else if (status !== "ok") patched(false, "Couldn't write hyprland.lua" + (detail ? ": " + detail.split("\n")[0] : ""))
-            else if (reloadComplaint(detail) !== "") patched(false, "Written, but Hyprland reports: " + reloadComplaint(detail))
-            else patched(true, job.message)
-        }
-        next()
+    function undo(done) {
+        backupFile.reload()
+        backupFile.waitForJob()
+        var saved = backupFile.text()
+        if (saved === "") { done("write", "No backup at " + backupPath); return }
+        enqueue(() => saved, false, (status, detail) => done(status === "unchanged" ? "ok" : status, detail))
     }
 
-    function write(newText) {
-        if (proc.running) return false
-        proc.command = ["sh", "-c", writeScript, "sh", confPath, backupPath, newText]
-        proc.running = true
-        return true
-    }
-
-    function undo() {
-        if (proc.running) return false
-        proc.command = ["sh", "-c", undoScript, "sh", confPath, backupPath]
-        proc.running = true
-        return true
+    FileView {
+        id: backupFile
+        path: root.backupPath
+        blockLoading: true
+        printErrors: false
     }
 
     // "Written, but Hyprland reports: ..." or "" when the reload was clean
@@ -110,42 +107,5 @@ Item {
     function syntaxMessage(detail) {
         var m = detail.match(/:(\d+):\s*(.*)/)
         return "Not written, Lua syntax error" + (m ? " on line " + m[1] + ": " + m[2] : "")
-    }
-
-    // Output's first line is a status word -- ok, syntax or write -- and the
-    // rest is detail. Everything goes to stdout so one collector sees it all
-    // in order.
-    readonly property string writeScript: `
-        exec 2>&1
-        mkdir -p "\${2%/*}" && printf %s "$3" > "$2.new" || { echo write; exit; }
-        if command -v luac >/dev/null 2>&1; then
-            out=$(luac -p "$2.new" 2>&1) || { echo syntax; printf "%s\\n" "$out"; rm -f -- "$2.new"; exit; }
-        fi
-        cp -- "$1" "$2" && cat -- "$2.new" > "$1" || { echo write; exit; }
-        rm -f -- "$2.new"
-        hyprctl reload config-only >/dev/null
-        sleep 0.3
-        echo ok
-        hyprctl configerrors`
-
-    readonly property string undoScript: `
-        exec 2>&1
-        cat -- "$2" > "$1" || { echo write; exit; }
-        hyprctl reload config-only >/dev/null
-        sleep 0.3
-        echo ok
-        hyprctl configerrors`
-
-    Process {
-        id: proc
-        command: ["true"]
-        onRunningChanged: if (!running) root.next()
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var lines = text.split("\n")
-                var status = lines.shift().trim()
-                root.finished(status, lines.join("\n").trim())
-            }
-        }
     }
 }

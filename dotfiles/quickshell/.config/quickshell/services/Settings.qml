@@ -84,6 +84,31 @@ Singleton {
                  "bluetooth", "network", "volume", "brightness", "battery"],
     })
 
+    // Every module's name and icon on the Bar Widgets page. A new module
+    // needs an entry here, one in widgetDefaults above, and its item in
+    // BarModules.widgetItems -- shell.qml warns at load when the three
+    // disagree, rather than the page showing a blank icon and a raw key.
+    readonly property var widgetMeta: ({
+        controlcentre: { label: "Control Centre", icon: "󰣇" },
+        workspaces:    { label: "Workspaces",     icon: "󰇘" },
+        overview:      { label: "Window Overview", icon: "󰕰" },
+        windows:       { label: "Open Windows",   icon: "󰀻" },
+        clock:         { label: "Clock",          icon: "󰅐" },
+        bluetooth:     { label: "Bluetooth",      icon: "󰂯" },
+        network:       { label: "Network",        icon: "󰤨" },
+        volume:        { label: "Volume",         icon: "󰕾" },
+        brightness:    { label: "Brightness",     icon: "󰃠" },
+        battery:       { label: "Battery",        icon: "󰁹" },
+        tray:          { label: "System Tray",    icon: "󰀻" },
+        media:         { label: "Media Player",   icon: "󰝚" },
+        visualizer:    { label: "Audio Visualizer", icon: "󰺢" },
+        weather:       { label: "Weather",        icon: "󰖐" },
+        notifications: { label: "Notifications",  icon: "󰂚" },
+        privacy:       { label: "Privacy",        icon: "󰍬" },
+        failed:        { label: "Failed Services", icon: "󰀦" },
+        updates:       { label: "Updates",        icon: "󰚰" },
+    })
+
     // Can't be hidden: the control centre button is the only way back to
     // the page that would un-hide it.
     readonly property var lockedWidgets: ["controlcentre"]
@@ -243,13 +268,9 @@ Singleton {
     readonly property bool isDefault:
         Object.keys(defaults).filter(key => adapter[key] !== defaults[key]).length === 0
 
-    // Quickshell hands out the state path but does not create the directory,
-    // and an atomic write needs somewhere to put its temp file -- without
-    // this the first save fails and the settings silently never persist.
-    Process {
-        running: true
-        command: ["mkdir", "-p", view.path.substring(0, view.path.lastIndexOf("/"))]
-    }
+    // No mkdir for the state directory: FileView's writes (writeAdapter and
+    // setText, atomic or not) create any missing parent directories
+    // themselves -- checked against Quickshell on 2026-09-18.
 
     // Writes are held until the first read has landed. Without this the
     // adapter's declared defaults count as an update the moment it is

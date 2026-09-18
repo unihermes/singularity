@@ -64,12 +64,12 @@ SettingsPage {
     function setField(mon, rule, key, value, message) {
         if (!rule) {
             // no rule matches at all: write one for this output
-            writer.patch(src => HyprTables.addMonitor(src,
+            patchLua(src => HyprTables.addMonitor(src,
                 { output: mon.name, mode: "preferred", position: "auto", scale: 1, [key]: value }), message)
             return
         }
         var index = rule.index
-        writer.patch(src => HyprTables.setMonitor(src, index, key, value), message,
+        patchLua(src => HyprTables.setMonitor(src, index, key, value), message,
             key + " in that hl.monitor() rule isn't a plain value, edit it by hand")
     }
 
@@ -84,7 +84,7 @@ SettingsPage {
     function setArrangement(duplicate) {
         if (primary === "" || monitors.length < 2) return
         var names = monitors.map(m => m.name)
-        writer.patch(function(src) {
+        patchLua(function(src) {
             names.forEach(function(name) {
                 if (src === null) return
                 // re-read each time: an addMonitor() in an earlier pass
@@ -121,30 +121,45 @@ SettingsPage {
     // run before the write lands. The reload applies the workspace rule and
     // the cursor's default display, but a rule only places a workspace when
     // it is created, so workspace 1 is also moved over explicitly.
+    //
+    // Success is only reported once the write and reload have actually
+    // happened; any output from the after-command is a failure message.
     function setPrimary(name) {
+        var previous = savedPrimary
         savedPrimary = name
+        var move = ""
         if (duplicating) {
             // re-point the copies at the new primary; the displays all show
             // the same thing, so there is no workspace to move
             setArrangement(true)
-            primaryProc.move = ""
         } else {
-            primaryProc.move = "hl.dispatch(hl.dsp.workspace.move({ workspace = \"1\", monitor = "
+            move = "hl.dispatch(hl.dsp.workspace.move({ workspace = \"1\", monitor = "
                 + JSON.stringify(name) + " }))"
         }
-        primaryProc.command = ["sh", "-c",
-            'mkdir -p "$1" && printf "%s\\n" "$2" > "$1/primary-display" && hyprctl reload config-only >/dev/null'
-                + ' && { [ -z "$3" ] || hyprctl eval "$3" >/dev/null; }',
-            "sh", stateDir, name, primaryProc.move]
-        primaryProc.running = true
-        say(name + " is the primary display")
+        AtomicFileWrite.write({
+            path: stateDir + "/primary-display",
+            transform: () => name + "\n",
+            after: "hyprctl reload config-only >/dev/null || echo \"Hyprland didn't reload\""
+                + (move === "" ? "" : "; hyprctl eval '" + move.replace(/'/g, "'\\''")
+                    + "' >/dev/null || echo \"couldn't move workspace 1\""),
+            done: (status, detail) => {
+                if ((status === "ok" || status === "unchanged") && detail === "") {
+                    page.say(name + " is the primary display", false)
+                } else if (status === "ok" || status === "unchanged") {
+                    page.say(name + " saved as primary, but " + detail.split("\n")[0], true)
+                } else {
+                    page.savedPrimary = previous
+                    page.say("Couldn't save the primary display", true)
+                }
+            }
+        })
     }
 
     // copy the catch-all's fields into a rule naming this output
     function ownRule(mon, rule) {
         var fields = { output: mon.name }
         ;["mode", "position", "scale"].forEach(k => fields[k] = fieldValue(rule, k, k === "scale" ? 1 : k === "mode" ? "preferred" : "auto"))
-        writer.patch(src => HyprTables.addMonitor(src, fields), mon.name + " has its own rule now")
+        patchLua(src => HyprTables.addMonitor(src, fields), mon.name + " has its own rule now")
     }
 
     Process {
@@ -181,11 +196,6 @@ SettingsPage {
         }
     }
 
-    Process {
-        id: primaryProc
-        property string move: ""
-    }
-
     FileView {
         path: page.stateDir + "/primary-display"
         printErrors: false
@@ -195,20 +205,20 @@ SettingsPage {
 
     FileView {
         id: luaFile
-        path: writer.confPath
+        path: HyprLuaWrite.confPath
         blockLoading: true
         watchChanges: true
         printErrors: false
-        onFileChanged: if (!writer.busy) page.reread()
+        onFileChanged: if (!HyprLuaWrite.busy) page.reread()
     }
 
-    HyprLuaWrite {
-        id: writer
-        visible: false
-        onPatched: (ok, message) => {
-            page.say(message, !ok)
+    // HyprLuaWrite is shared with the Keybinds editor and the other pages;
+    // each result comes back to the page that asked for it
+    function patchLua(transform, message, refusal) {
+        HyprLuaWrite.patch(transform, message, refusal, (ok, msg) => {
+            page.say(msg, !ok)
             page.reread()
-        }
+        })
     }
 
     // Only worth showing with somewhere to send the picture.

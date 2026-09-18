@@ -283,27 +283,6 @@ FlyoutPanel {
 
     // --- Bar Widgets ------------------------------------------
 
-    readonly property var widgetMeta: ({
-        controlcentre: { label: "Control Centre", icon: "󰣇" },
-        workspaces:    { label: "Workspaces",     icon: "󰇘" },
-        overview:      { label: "Window Overview", icon: "󰕰" },
-        windows:       { label: "Open Windows",   icon: "󰀻" },
-        clock:         { label: "Clock",          icon: "󰅐" },
-        bluetooth:     { label: "Bluetooth",      icon: "󰂯" },
-        network:       { label: "Network",        icon: "󰤨" },
-        volume:        { label: "Volume",         icon: "󰕾" },
-        brightness:    { label: "Brightness",     icon: "󰃠" },
-        battery:       { label: "Battery",        icon: "󰁹" },
-        tray:          { label: "System Tray",    icon: "󰀻" },
-        media:         { label: "Media Player",   icon: "󰝚" },
-        visualizer:    { label: "Audio Visualizer", icon: "󰺢" },
-        weather:       { label: "Weather",        icon: "󰖐" },
-        notifications: { label: "Notifications",  icon: "󰂚" },
-        privacy:       { label: "Privacy",        icon: "󰍬" },
-        failed:        { label: "Failed Services", icon: "󰀦" },
-        updates:       { label: "Updates",        icon: "󰚰" },
-    })
-
     Column {
         visible: controlCentre.page === "widgets"
         width: parent.width
@@ -311,7 +290,7 @@ FlyoutPanel {
 
         BarWidgetList {
             id: widgetsList
-            meta: controlCentre.widgetMeta
+            meta: Settings.widgetMeta
         }
 
         FlyoutDivider {}

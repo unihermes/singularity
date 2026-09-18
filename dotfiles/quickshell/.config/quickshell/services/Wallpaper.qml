@@ -92,11 +92,6 @@ Singleton {
 
     Process {
         running: true
-        command: ["mkdir", "-p", root.stateDir]
-    }
-
-    Process {
-        running: true
         command: [root.script, "list"]
         stdout: StdioCollector {
             onStreamFinished: root.images = text.split("\n").filter(l => l !== "")
