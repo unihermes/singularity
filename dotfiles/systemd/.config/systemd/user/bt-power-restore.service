@@ -1,0 +1,27 @@
+# Singularity - restore/save Bluetooth adapter power across logins
+#
+# rfkill's own soft-block state is saved and restored by systemd-rfkill,
+# and wireplumber/systemd-backlight already do the equivalent job for volume
+# and brightness -- all three survive a reboot with no help from this repo.
+# BlueZ's adapter-level Powered property is the one piece nothing else
+# restores: AutoEnable is unset in main.conf (defaults to false), so the
+# controller always comes up powered off after a reboot regardless of how
+# the last session left it.
+#
+# RemainAfterExit means ExecStop actually runs when the user session tears
+# this unit down at logout/shutdown, so what gets saved is how the user left
+# the adapter rather than a stale boot-time snapshot. ExecStart's `|| true`
+# covers the first-ever run, when the state file does not exist yet.
+[Unit]
+Description=Restore and save Bluetooth power state across logins
+After=bluetooth.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStopSec=5s
+ExecStart=/bin/sh -c 'f="$HOME/.local/state/neutrino/bluetooth.state"; [ -r "$f" ] && bluetoothctl power "$(cat "$f")" || true'
+ExecStop=/bin/sh -c 'mkdir -p "$HOME/.local/state/neutrino"; case "$(timeout 3 bluetoothctl show)" in *"Powered: yes"*) echo on ;; *) echo off ;; esac > "$HOME/.local/state/neutrino/bluetooth.state"'
+
+[Install]
+WantedBy=default.target

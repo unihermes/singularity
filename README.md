@@ -44,7 +44,8 @@ dangling. Every step is idempotent; rerun `./install.sh` any time.
 6. Applies the boot speed fixes: vfat in the initramfs, iwd no longer blocking
    the greeter, and systemd's unused TPM setup masked
 7. Enables iwd, systemd-networkd, systemd-resolved, pipewire, bluetooth,
-   power-profiles-daemon, the Bluetooth pairing agent, and the ly greeter
+   power-profiles-daemon, the Bluetooth pairing agent, Bluetooth power
+   restore, the AC-power profile switch, and the ly greeter
 
 Every step is idempotent. `--needed` skips installed packages, `stow -R`
 restows cleanly, `enable --now` is a no-op on an already-running unit. Safe to
@@ -83,6 +84,7 @@ singularity/
 └── dotfiles/
     ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
+    ├── singularity/.config/singularity/window-rules.json  # per-app/popout rules, edited from Settings
     ├── swaync/.config/swaync/{config.json,style.css}
     ├── systemd/.config/systemd/user/   # bt-agent, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
@@ -228,6 +230,16 @@ fc-match monospace
   Adwaita. `install.sh` sets both. Change one, change the other.
 - **Kora 2.0.0** dropped upstream symlinks and icons half-resolve in some
   panels. Check the AUR comments if theming looks wrong.
+- **State that survives a reboot.** rfkill (Wi-Fi/Bluetooth radio block),
+  volume and brightness already persist on their own, via systemd-rfkill,
+  wireplumber and systemd-backlight respectively. The one gap was BlueZ's own
+  adapter power, which always comes back on powered off; `bt-power-restore.service`
+  saves it at logout and restores it at login.
+- **Power profile follows the charger.** A udev rule
+  (`/etc/udev/rules.d/99-singularity-power-profile.rules`) runs
+  `/usr/local/bin/singularity-power-profile` on every `power_supply` change,
+  which switches `power-profiles-daemon` to `performance` while any supply
+  reports `online`, `balanced` otherwise.
 
 ## Testing from zero
 

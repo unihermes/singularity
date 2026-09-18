@@ -64,6 +64,28 @@ fi
 log "linking dotfiles"
 ./link.sh
 
+log "building alttab-relay"
+# The ALT+Tab switcher's fast path (see hyprland.lua and
+# dotfiles/hypr/.config/hypr/alttab-relay.cpp for why it exists) talks to
+# Quickshell over a private, unversioned wire format, and needs
+# -mno-direct-extern-access to work around a protected-symbol linking issue
+# between this machine's GCC and its Qt6 build (see the flag in this same
+# command -- without it, linking fails with a "copy relocation against
+# non-copyable protected symbol" error). Both of those are exactly the kind
+# of thing that can stop working on some future toolchain or Quickshell
+# update, so a failure here is a warning, not a fatal error: alt-tab.sh and
+# alttab-ipc.sh both fall back to the slower `qs ipc call` path on their own
+# whenever this binary or its socket isn't there, so ALT+Tab still works
+# (just without the extra latency cut) if this step fails.
+alttab_dir="dotfiles/hypr/.config/hypr"
+if g++ -std=c++20 -O2 -mno-direct-extern-access \
+    "$alttab_dir/alttab-relay.cpp" -o "$alttab_dir/alttab-relay" \
+    $(pkg-config --cflags --libs Qt6Core Qt6Network); then
+  log "alttab-relay built"
+else
+  warn "alttab-relay failed to build -- alt-tab.sh will fall back to \`qs ipc call\` (slower, but works)"
+fi
+
 log "applying system settings"
 fc-cache -f
 gtk-update-icon-cache -f /usr/share/icons/kora 2>/dev/null || true
@@ -165,25 +187,132 @@ else
   warn "no systemd-boot entry or /etc/kernel/cmdline found, leaving boot alone"
 fi
 
+# set_cmdline_token FILE MODE KEY VALUE -- replace (or append) a single
+# key=value kernel cmdline token, leaving every other token untouched.
+# Adjacent options share the space between them, so a global s/// can only
+# ever delete every other one; splitting into tokens first avoids that.
+set_cmdline_token() {
+  local f=$1 mode=$2 key=$3 value=$4 tmp
+  [[ -f $f ]] || return 1
+  grep -Eq "(^|[[:space:]])${key}=${value}([[:space:]]|\$)" "$f" && return 0
+  [[ -f $f.singularity.bak ]] || sudo cp "$f" "$f.singularity.bak"
+  tmp=$(mktemp)
+  awk -v mode="$mode" -v key="$key" -v value="$value" '
+    function fix(s,   i, n, a, out) {
+      n = split(s, a, /[ \t]+/)
+      out = ""
+      for (i = 1; i <= n; i++) {
+        if (a[i] == "" || a[i] ~ ("^" key "=")) continue
+        out = out (out == "" ? "" : " ") a[i]
+      }
+      return out " " key "=" value
+    }
+    mode == "options" && /^[[:space:]]*options[[:space:]]/ {
+      sub(/^[[:space:]]*options[[:space:]]+/, "")
+      print "options " fix($0)
+      next
+    }
+    mode == "plain" && NF { print fix($0); next }
+    { print }
+  ' "$f" > "$tmp"
+  if [[ -s $tmp ]] && grep -q 'root=' "$tmp"; then
+    sudo cp "$tmp" "$f"
+    rm -f "$tmp"
+    return 0
+  fi
+  warn "refusing to write $f, the result had no root= in it"
+  rm -f "$tmp"
+  return 1
+}
+
+# The IPU6 webcam's sensor never satisfies its firmware dependency (missing
+# fwnode graph endpoint), so the kernel spends its default ~10s deferred-probe
+# window waiting on it every boot before giving up. Telling it to give up in
+# 1s instead shrinks whatever else queues up behind that wait.
+#
+# Separately, and the bigger one in practice: the Intel Sensor Hub
+# (intel_ish_ipc, PCI 00:12.0) does a firmware handshake on every boot that
+# takes a genuinely variable few seconds, and the kernel probes devices on a
+# single serialized thread by default -- so everything else waiting its turn
+# in ACPI enumeration order, including the touchpad's entire i2c controller,
+# sits frozen behind it too. That's the actual cursor-freeze-at-startup
+# cause: udevadm monitor traced across a boot shows total silence in the
+# device tree for ~8s, then the touchpad's i2c bus, the touchscreen, and the
+# sensor hub's own clients all burst in together the instant it clears --
+# and the freeze length tracks how long that handshake happened to take,
+# which is why it varied between boots (5s, 10s, 20s+). Marking just that
+# driver for async probing lets the kernel move on to unrelated devices
+# while it waits, instead of blocking the whole queue on it.
+for kv in "deferred_probe_timeout=1" "driver_async_probe=intel_ish_ipc"; do
+  key=${kv%%=*}; value=${kv#*=}
+  if [[ -f /etc/kernel/cmdline ]]; then
+    log "setting kernel cmdline: $kv"
+    set_cmdline_token /etc/kernel/cmdline plain "$key" "$value" && sudo mkinitcpio -P
+  elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
+    log "setting kernel cmdline: $kv"
+    for entry in /boot/loader/entries/*.conf; do
+      grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value"
+    done
+  fi
+done
+
 # --- boot speed ----------------------------------------------------------
 # /boot (the ESP) is vfat, and vfat is a module. On this laptop the IPU6 camera
 # stack stalls kernel module loading for ~10s at boot, until the kernel gives
 # up waiting on the ov01a10 sensor. Mounting /boot has to load vfat, so it sits
 # in that stall, and sysinit.target, ly and everything after it wait on the
 # mount. Loading vfat from the initramfs means the mount needs no module load.
-log "loading vfat from the initramfs"
+#
+# mac_hid, mousedev and joydev are autoloaded for every pointer device and hit
+# the same module-loading queue, so preloading them from the initramfs saves
+# a little of that same stall. (The cursor freeze itself turned out to be a
+# separate logind race -- see the deferred-probe fix below.)
+log "loading vfat and input modules from the initramfs"
 mkconf=/etc/mkinitcpio.conf
-if [[ -f $mkconf ]] && ! grep -Eq '^MODULES=\(.*\<vfat\>' "$mkconf"; then
-  [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
-  if grep -q '^MODULES=(' "$mkconf"; then
-    sudo sed -i -E 's/^MODULES=\(([^)]*)\)/MODULES=(\1 vfat)/; s/^MODULES=\( vfat\)/MODULES=(vfat)/' "$mkconf"
-  else
-    echo 'MODULES=(vfat)' | sudo tee -a "$mkconf" >/dev/null
+early_modules=(vfat mac_hid mousedev joydev)
+if [[ -f $mkconf ]]; then
+  missing=()
+  for m in "${early_modules[@]}"; do
+    grep -Eq "^MODULES=\(.*\<$m\>" "$mkconf" || missing+=("$m")
+  done
+  if (( ${#missing[@]} )); then
+    [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
+    if grep -q '^MODULES=(' "$mkconf"; then
+      sudo sed -i -E "s/^MODULES=\(([^)]*)\)/MODULES=(\1 ${missing[*]})/; s/^MODULES=\( /MODULES=(/" "$mkconf"
+    else
+      echo "MODULES=(${missing[*]})" | sudo tee -a "$mkconf" >/dev/null
+    fi
+    sudo mkinitcpio -P
   fi
+fi
+
+# --- panel self refresh --------------------------------------------------
+# With PSR on, this Alder Lake eDP panel stops taking new frames after a
+# resume: the machine is awake and hyprlock takes the password, but the
+# screen stays black. A modprobe.d option rather than i915.enable_psr=0 on
+# the cmdline, so the boot-verbosity rewrite above can never drop it. The
+# modconf hook copies it into the initramfs, where i915 loads (kms hook).
+psrconf=/etc/modprobe.d/singularity-i915.conf
+if ! grep -qs 'enable_psr=0' "$psrconf"; then
+  log "disabling i915 panel self refresh"
+  echo 'options i915 enable_psr=0' | sudo tee "$psrconf" >/dev/null
   sudo mkinitcpio -P
 fi
 
 log "enabling services"
+
+# Without seatd running, libseat falls back to talking to logind directly,
+# and logind's own device enumeration for a fresh session is not guaranteed
+# to be done by the time Hyprland asks for the touchpad/touchscreen: it can
+# answer "No such device" for a device that exists but that logind hasn't
+# cataloged yet, and Hyprland does not retry -- the cursor stays dead until
+# something else happens to re-announce the device, which on this laptop is
+# whatever else is still settling ten-plus seconds into boot. seatd hands
+# devices over directly with no such race, and Hyprland/aquamarine prefer it
+# over logind automatically whenever its socket exists.
+sudo systemctl enable --now seatd.service
+sudo usermod -aG seat "$USER"
+
 # Network: iwd for Wi-Fi, systemd-networkd for addresses, systemd-resolved for
 # DNS. iwd's own DHCP stays off (its default), so it and networkd never fight
 # over the interface. networkd does nothing without a .network file and a
@@ -242,6 +371,47 @@ have_unit() {
 if have_unit power-profiles-daemon.service; then
   log "enabling power-profiles-daemon"
   sudo systemctl enable --now power-profiles-daemon.service
+
+  # performance on AC, balanced on battery. PPD has no such rule of its own --
+  # it only exposes ActiveProfile for something else to drive, which the bar
+  # already does on demand via busctl (see PpdProfile.qml) -- so a udev rule
+  # drives the same property on every charger plug/unplug. Its bus policy lets
+  # anyone set ActiveProfile with no polkit prompt, so udev running this as
+  # root needs nothing extra. Every power_supply device is checked rather than
+  # trusting whichever one fired the rule, since a USB-C-only laptop like this
+  # one can expose the charger as more than one power_supply.
+  #
+  # power_supply RUN+= rules fire on far more than plug/unplug -- this
+  # machine's USB-C controller reports a "change" uevent roughly once a
+  # second even while idle -- so the script only writes ActiveProfile when
+  # the computed target actually differs from what it last wrote. Without
+  # that guard, any manual profile pick made from the bar or Settings gets
+  # overwritten within a second by this script re-asserting the same AC-based
+  # value. The stamp lives in /run so a reboot (or AC state actually
+  # changing) is what invalidates it, not time.
+  log "installing AC-power profile switch"
+  sudo tee /usr/local/bin/singularity-power-profile >/dev/null <<'PROFILE'
+#!/bin/sh
+set -eu
+profile=balanced
+for f in /sys/class/power_supply/*/online; do
+  [ "$(cat "$f" 2>/dev/null)" = "1" ] && { profile=performance; break; }
+done
+stamp=/run/singularity-power-profile.last
+[ "$(cat "$stamp" 2>/dev/null || true)" = "$profile" ] && exit 0
+busctl set-property org.freedesktop.UPower.PowerProfiles \
+  /org/freedesktop/UPower/PowerProfiles \
+  org.freedesktop.UPower.PowerProfiles ActiveProfile s "$profile"
+printf %s "$profile" > "$stamp"
+PROFILE
+  sudo chmod +x /usr/local/bin/singularity-power-profile
+
+  sudo tee /etc/udev/rules.d/99-singularity-power-profile.rules >/dev/null <<'RULES'
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", RUN+="/usr/local/bin/singularity-power-profile"
+SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/local/bin/singularity-power-profile"
+RULES
+  sudo udevadm control --reload-rules
+  sudo /usr/local/bin/singularity-power-profile || true
 fi
 
 # Pairing agent. Without one BlueZ cannot complete a pairing at all -- see the
@@ -252,6 +422,12 @@ if command -v bt-agent &>/dev/null; then
   log "enabling the bluetooth pairing agent"
   systemctl --user enable --now bt-agent.service
 fi
+
+# See the unit's own comment: rfkill, volume and brightness already survive a
+# reboot on their own (systemd-rfkill, wireplumber, systemd-backlight); this
+# is the missing piece for Bluetooth's own adapter power.
+log "enabling Bluetooth power state restore"
+systemctl --user enable --now bt-power-restore.service
 
 # iwd is Type=dbus, so systemd waits for it to claim its bus name before
 # reaching network.target, and ly waits on network.target via

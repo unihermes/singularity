@@ -1,0 +1,97 @@
+[
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "class": "Toplevel"
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "File chooser portal",
+    "class": "xdg-desktop-portal-gtk",
+    "size": "960 540"
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Browser sign-in popups",
+    "class": "^(zen-browser|firefox|floorp)$",
+    "title": "about:blank",
+    "regex": true,
+    "size": "960 540"
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Sign-in and account popups",
+    "title": "^(Sign in|Log in|Sign Up|Login|Authentication|Authenticate|Verify|Connect Account|Allow|Confirm|Choose a profile|Select account|Password|Reset password|Authorize)$",
+    "regex": true,
+    "size": "960 540"
+  },
+  {
+    "float": false,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": true,
+    "label": "Picture-in-picture",
+    "title": "^(Picture-in-Picture|Picture in picture)$",
+    "regex": true
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "File and settings dialogs",
+    "title": "^(Open|Open File|Open Files|Open Folder|Save|Save As|Save File|Choose file|Select file|Select Folder|File Upload|About|Preferences|Settings)$",
+    "regex": true,
+    "size": "960 540"
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Spotify",
+    "class": "^(?i)(spotify)$",
+    "regex": true,
+    "size": "960 540"
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Thunar",
+    "class": "^(?i)(thunar)$",
+    "regex": true,
+    "size": "1240 690"
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "LBSZUI dialogs",
+    "class": "^(Lbszui)$",
+    "title": "negative:^(LBSZUI v)",
+    "regex": true
+  },
+  {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "LBSZUI",
+    "class": "Lbszui",
+    "size": "1240 690"
+  }
+]

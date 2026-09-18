@@ -15,6 +15,10 @@ unzip
 wget
 xdg-user-dirs
 fastfetch
+# alt-tab.sh's fast path to alttab-relay (see hyprland.lua/alttab-relay.cpp):
+# a small, non-Qt binary to hand it one line over a local socket, instead of
+# spawning a whole shell (and its own process-startup cost) to do the same.
+socat
 
 # compositor + session
 # ly is a TUI greeter that reads the wayland-sessions entry hyprland ships,

@@ -1,15 +1,28 @@
 #!/usr/bin/env bash
-# ALT+Tab: cycle focus by recency on the current workspace, then hand off to
-# maximize-focused.sh, which maximizes what you landed on -- but only in
-# monocle mode, and only if it isn't already filling the screen.
+# Opens the ALT+Tab switcher (Quickshell, AltTabSwitcher.qml), or steps it if
+# it is already up. The switcher takes keyboard focus and catches the ALT
+# release itself; see the alt-tab comment in hyprland.lua for why there is no
+# submap.
 #
-# That guard matters more than it looks. Testing the fullscreen *flag* is not
-# enough: a window that is the only one on its workspace already occupies the
-# whole usable area while still reporting fullscreen=0, so a flag-based guard
-# re-maximizes it on every single alt-tab. The geometry never changes, but it
-# is still a state change, so the window animates and its contents reflow --
-# a visible resize for no reason.
+# Every Tab of a held ALT+Tab runs this, not just the first: Hyprland matches
+# its binds before forwarding keys to any client, so the ALT+Tab bind wins over
+# the switcher's own keyboard grab. shell.qml's onAltTabTab decides whether
+# that means opening the switcher or just stepping it -- see the `tab()`
+# comment on its IpcHandler for why that decision lives there rather than in
+# a separate "is it open yet" probe run from here first.
 set -euo pipefail
 
-hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null
-exec "$(dirname "$0")/maximize-focused.sh"
+# Wrapped in an object rather than handed over as the bare array `hyprctl`
+# prints: `qs ipc call` (alttab-ipc.sh's fallback path) splits a top-level
+# JSON array argument into one positional argument per element instead of
+# passing it through as one string, so `tab` (which takes exactly one) would
+# reject every call with "too many arguments provided". An object isn't an
+# array, so it goes through as the single argument it is.
+#
+# The list still has to be read fresh here rather than trusted to
+# Quickshell's own cache of it -- see AltTabSwitcher.begin() for why -- even
+# on a repeat Tab where the shell ends up ignoring it because the switcher is
+# already open.
+clients=$(hyprctl clients -j 2>/dev/null) || exit 0
+
+"$(dirname "$0")/alttab-ipc.sh" tab "{\"clients\":$clients}"
