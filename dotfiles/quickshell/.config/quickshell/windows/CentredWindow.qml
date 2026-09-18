@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/CentredWindow.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/windows/CentredWindow.qml
 //
 // A standalone window opened from the Control Centre (System, Keybinds): a
 // real toplevel rather than a layer-shell flyout, so it can be focused,
@@ -31,14 +31,14 @@ FloatingWindow {
     title: heading.charAt(0) + heading.slice(1).toLowerCase()
     color: "transparent"
 
-    implicitWidth: contentWidth + 2 * 16
-    // 40, not 16: the panel's outer border is rounded (Theme.radius), and a
+    implicitWidth: contentWidth + 2 * Theme.windowPad
+    // 40, not the 16 pad: the panel's outer border is rounded (Theme.radius), and a
     // content block whose own corners are square sitting right at a 16px
     // inset could still poke past that curve into the double border near the
     // very bottom -- happened with System's network graph, the tallest
     // column's last element and the one nearest a corner. 24 wasn't enough
     // once the network column grew a Type/IP/Signal block above the graph.
-    implicitHeight: body.implicitHeight + chrome.contentY + 40
+    implicitHeight: body.implicitHeight + chrome.contentY + Theme.sp(40)
 
     function open() { visible = true }
     function close() { visible = false }
@@ -55,9 +55,10 @@ FloatingWindow {
 
     Column {
         id: body
-        x: 16
+        x: Theme.windowPad
         y: chrome.contentY
+
         width: root.contentWidth
-        spacing: 6
+        spacing: Theme.spaceM
     }
 }

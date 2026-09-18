@@ -1,4 +1,4 @@
-// Neutrino - Quickshell
+// Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspacesFlyout.qml
 //
 // The window-overview flyout: every window on every workspace. Needs

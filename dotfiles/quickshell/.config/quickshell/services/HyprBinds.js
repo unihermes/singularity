@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/HyprBinds.js
+// Singularity - Quickshell
+// ~/.config/quickshell/services/HyprBinds.js
 //
 // Reads and rewrites the hl.bind() calls in Hyprland's Lua config, for the
 // Keybinds window. Plain functions over the source text, no QML, so the
@@ -173,42 +173,65 @@ function substituted(src, toks, env) {
     return out
 }
 
+// "toggleMaximize" -> "Toggle maximize"
+function humanize(ident) {
+    var w = ident.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[._-]+/g, " ").toLowerCase()
+    return w.charAt(0).toUpperCase() + w.slice(1)
+}
+
 function describeRaw(path, inner) {
     var p = path.replace(/^hl\.dsp\./, "")
     function kv(key) {
         var m = inner.match(new RegExp(key + "\\s*=\\s*\"?([\\w.-]+)\"?"))
         return m ? m[1] : null
     }
+    var where = { left: "to the left", right: "to the right", up: "above", down: "below",
+                  l: "to the left", r: "to the right", u: "above", d: "below" }
     switch (p) {
     case "window.close":      return "Close window"
-    case "window.fullscreen": return kv("mode") === "maximized" ? "Maximize window" : "Fullscreen window"
-    case "window.float":      return "Toggle floating"
-    case "window.pseudo":     return "Toggle pseudotile"
-    case "window.drag":       return "Drag window"
-    case "window.resize":     return "Resize window"
-    case "exit":              return "Exit Hyprland"
+    case "window.fullscreen": return kv("mode") === "maximized" ? "Maximize or restore window" : "Fullscreen window"
+    case "window.float":      return "Float or tile window"
+    case "window.pseudo":     return "Keep window's own size in its tile"
+    case "window.drag":       return "Move window by dragging"
+    case "window.resize":     return "Resize window by dragging"
+    case "exit":              return "Log out"
     case "window.move":
         if (kv("workspace")) return "Move window to workspace " + kv("workspace")
+        if (kv("direction")) return "Move window " + (where[kv("direction")] || kv("direction"))
         break
     case "focus":
         if (kv("workspace")) return "Go to workspace " + kv("workspace")
-        if (kv("direction")) return "Focus " + kv("direction")
+        if (kv("direction")) return "Focus window " + (where[kv("direction")] || kv("direction"))
         break
     case "layout":
         var m = inner.match(/"([^"]+)"/)
-        if (m) return "Layout: " + m[1]
+        if (m && m[1] === "togglesplit") return "Split side by side or stacked"
+        if (m) return humanize(m[1])
         break
+    case "function":
+        // an inline closure: name it after the function it calls
+        var f = inner.match(/([A-Za-z_]\w*)\s*\(/g)
+        if (f) return humanize(f[f.length - 1].replace(/\s*\($/, ""))
+        return "Custom action"
     }
-    var words = p.replace(/[._]/g, " ")
-    return words.charAt(0).toUpperCase() + words.slice(1)
+    return humanize(p.replace(/^window\./, ""))
 }
 
 function describeExec(cmd, ident) {
-    if (ident) return "Launch " + ident.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()
-    var w = cmd.trim().split(/\s+/)
-    var first = (w[0] || "").replace(/^.*\//, "")
-    if (w[1] && /^[a-z][a-z-]*$/.test(w[1])) first += " " + w[1]
-    return "Run " + first
+    if (ident) return "Open " + humanize(ident).toLowerCase()
+    var c = cmd.trim(), m
+    if ((m = c.match(/wpctl set-volume .*@DEFAULT_AUDIO_(SINK|SOURCE)@ [\d.]+%?([+-])/)))
+        return (m[1] === "SOURCE" ? "Microphone " : "Volume ") + (m[2] === "+" ? "up" : "down")
+    if ((m = c.match(/wpctl set-mute @DEFAULT_AUDIO_(SINK|SOURCE)@/)))
+        return m[1] === "SOURCE" ? "Mute or unmute microphone" : "Mute or unmute sound"
+    if ((m = c.match(/brightnessctl .*set [\d.]+%?([+-])/)))
+        return "Brightness " + (m[1] === "+" ? "up" : "down")
+    if ((m = c.match(/^qs ipc call (\S+)(?: (\S+))?/)))
+        return humanize(((m[2] || "") + " " + m[1]).trim())
+    var w = c.split(/\s+/)
+    var first = (w[0] || "").replace(/^.*\//, "").replace(/\.(sh|py)$/, "")
+    if (/\//.test(w[0] || "")) return "Run " + first.replace(/[-_]/g, " ") + " script"
+    return "Open " + first
 }
 
 // --- keys ----------------------------------------------------------------
@@ -289,14 +312,21 @@ function parse(src) {
         case "for":
             var frame = { kind: "for" }
             var c = code
-            if (isName(c[ci + 1]) && isOp(c[ci + 2], "=") && c[ci + 3] && c[ci + 3].t === "num"
-                    && isOp(c[ci + 4], ",") && c[ci + 5] && c[ci + 5].t === "num") {
+            // a loop bound is a number literal or a top-level numeric local
+            // (`for i = 1, MAX_WORKSPACES do`)
+            var num = function(t) {
+                if (t && t.t === "num") return Number(t.v)
+                if (isName(t) && typeof locals[t.v] === "number") return locals[t.v]
+                return NaN
+            }
+            if (isName(c[ci + 1]) && isOp(c[ci + 2], "=") && !isNaN(num(c[ci + 3]))
+                    && isOp(c[ci + 4], ",") && !isNaN(num(c[ci + 5]))) {
                 var step = 1, doAt = ci + 6
-                if (isOp(c[ci + 6], ",") && c[ci + 7] && c[ci + 7].t === "num") { step = Number(c[ci + 7].v); doAt = ci + 8 }
+                if (isOp(c[ci + 6], ",") && !isNaN(num(c[ci + 7]))) { step = num(c[ci + 7]); doAt = ci + 8 }
                 if (isName(c[doAt], "do") && step !== 0) {
                     frame.var = c[ci + 1].v
-                    frame.from = Number(c[ci + 3].v)
-                    frame.to = Number(c[ci + 5].v)
+                    frame.from = num(c[ci + 3])
+                    frame.to = num(c[ci + 5])
                     frame.step = step
                 }
             }
@@ -313,8 +343,12 @@ function parse(src) {
             break
         case "local":
             if (stack.length === 0 && isName(code[ci + 1]) && isOp(code[ci + 2], "=")
-                    && code[ci + 3] && code[ci + 3].t === "str" && !isOp(code[ci + 4], ".."))
-                locals[code[ci + 1].v] = code[ci + 3].v
+                    && code[ci + 3] && !isOp(code[ci + 4], "..")) {
+                if (code[ci + 3].t === "str") locals[code[ci + 1].v] = code[ci + 3].v
+                else if (code[ci + 3].t === "num" && !isOp(code[ci + 4], "+") && !isOp(code[ci + 4], "-")
+                        && !isOp(code[ci + 4], "*") && !isOp(code[ci + 4], "/"))
+                    locals[code[ci + 1].v] = Number(code[ci + 3].v)
+            }
             break
         case "hl":
             if (!(isOp(code[ci + 1], ".") && isName(code[ci + 2], "bind") && isOp(code[ci + 3], "("))) break
@@ -365,7 +399,7 @@ function parse(src) {
 
         var k0 = a[0]
         var keysForm = k0.length === 1 && k0[0].t === "str" ? "literal"
-            : k0.length === 3 && isName(k0[0]) && locals[k0[0].v] !== undefined && isOp(k0[1], "..") && k0[2].t === "str" ? "prefixed"
+            : k0.length === 3 && isName(k0[0]) && typeof locals[k0[0].v] === "string" && isOp(k0[1], "..") && k0[2].t === "str" ? "prefixed"
             : "expr"
         if (keysForm === "prefixed") prefixCounts[k0[0].v] = (prefixCounts[k0[0].v] || 0) + 1
 
@@ -375,7 +409,7 @@ function parse(src) {
         var inner = isExec ? d.slice(6, d.length - 1) : []
         var cmdForm = !isExec ? "raw"
             : inner.length === 1 && inner[0].t === "str" ? "literal"
-            : inner.length === 1 && isName(inner[0]) && locals[inner[0].v] !== undefined ? "ident"
+            : inner.length === 1 && isName(inner[0]) && typeof locals[inner[0].v] === "string" ? "ident"
             : "expr"
 
         var path = ""
@@ -409,12 +443,12 @@ function parse(src) {
         }
 
         var reason = ""
-        if (loops.length) reason = "Generated by a loop"
-        else if (call.frames.length) reason = "Inside a block"
-        else if (!isExec) reason = "Not a command bind"
-        else if (keysForm === "expr") reason = "Keys are built from an expression"
-        else if (cmdForm === "expr") reason = "Command is built from an expression"
-        else if (!ownLines) reason = "Shares a line with other code"
+        if (loops.length) reason = "Made by a loop"
+        else if (call.frames.length) reason = "Inside other code"
+        else if (!isExec) reason = "Runs a Hyprland action rather than a command"
+        else if (keysForm === "expr") reason = "Its keys are worked out in code"
+        else if (cmdForm === "expr") reason = "Its command is worked out in code"
+        else if (!ownLines) reason = "Shares its line with other code"
 
         var outer = call.frames.length ? call.frames[0] : null
 
@@ -510,7 +544,7 @@ function oneLine(s) {
 
 // keeps the file's `mod .. " + Q"` style when the combo starts with mod's value
 function keysSource(keys, ident, locals) {
-    if (ident && locals[ident] !== undefined) {
+    if (ident && typeof locals[ident] === "string") {
         var p = locals[ident] + " + "
         if (keys.indexOf(p) === 0 && keys.length > p.length)
             return ident + " .. " + luaString(" + " + keys.slice(p.length))

@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/ControlCentre.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/ControlCentre.qml
 //
 // The control centre flyout, split out of shell.qml: every page, menu
 // entry, and submenu it drills into. Needs the bar and root's state
@@ -223,9 +223,10 @@ FlyoutPanel {
         visible: controlCentre.page === "apps"
         width: parent.width
         // 14 rows, or fewer if there are fewer apps
-        height: visible ? Math.min(contentHeight, 14 * 28) : 0
+        height: visible ? Math.min(contentHeight, 14 * (Theme.rowHeightTall + spacing)) : 0
+
         clip: true
-        spacing: 2
+        spacing: Theme.spaceXs
         boundsBehavior: Flickable.StopAtBounds
         model: visible ? controlCentre.appList(controlCentre.appQuery) : []
         // keeps the arrow-key selection scrolled into view
@@ -238,20 +239,20 @@ FlyoutPanel {
             required property var modelData
             required property int index
             width: appView.width
-            height: 26
+            height: Theme.rowHeightTall
 
             Rectangle {
                 anchors.fill: parent
                 radius: Theme.radiusInner
-                color: appRow.ListView.isCurrentItem ? Theme.overlay : "transparent"
+                color: appRow.ListView.isCurrentItem ? Theme.hoverFill : "transparent"
             }
 
             IconImage {
                 id: appIcon
                 anchors.left: parent.left
-                anchors.leftMargin: 2
+                anchors.leftMargin: Theme.spaceXs
                 anchors.verticalCenter: parent.verticalCenter
-                implicitSize: 18
+                implicitSize: Theme.fs(18)
                 source: Quickshell.iconPath(appRow.modelData.icon, true)
             }
 
@@ -259,11 +260,11 @@ FlyoutPanel {
                 anchors.left: appIcon.right
                 anchors.leftMargin: 9
                 anchors.right: parent.right
-                anchors.rightMargin: 4
+                anchors.rightMargin: Theme.spaceS
                 anchors.verticalCenter: parent.verticalCenter
                 text: appRow.modelData.name
                 elide: Text.ElideRight
-                color: appRow.ListView.isCurrentItem ? Theme.bright : Theme.text
+                color: appRow.ListView.isCurrentItem ? Theme.textStrong : Theme.text
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
@@ -286,7 +287,7 @@ FlyoutPanel {
     Column {
         visible: controlCentre.page === "widgets"
         width: parent.width
-        spacing: 6
+        spacing: Theme.spaceM
 
         BarWidgetList {
             id: widgetsList
@@ -297,6 +298,7 @@ FlyoutPanel {
 
         FlyoutRow {
             label: "Reset to Defaults"
+
             enabled: !Settings.widgetsDefault
             onActivated: {
                 Settings.resetWidgets()
@@ -313,7 +315,7 @@ FlyoutPanel {
     Column {
         visible: controlCentre.page === "quick"
         width: parent.width
-        spacing: 6
+        spacing: Theme.spaceM
 
         FlyoutAction {
             icon: Network.powered ? "󰖩" : "󰖪"
@@ -340,12 +342,12 @@ FlyoutPanel {
         }
 
         FlyoutAction {
-            icon: bar.volumeMuted() ? "󰖁" : "󰕾"
+            icon: Audio.muted ? "󰖁" : "󰕾"
             label: "Mute"
-            status: bar.volumeMuted() ? "Muted" : bar.volumePercent() + "%"
-            enabled: bar.sink && bar.sink.ready
-            checked: bar.volumeMuted()
-            onActivated: if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
+            status: Audio.muted ? "Muted" : Audio.percent + "%"
+            enabled: Audio.ready
+            checked: Audio.muted
+            onActivated: Audio.toggleMute()
         }
 
         FlyoutAction {
@@ -417,9 +419,59 @@ FlyoutPanel {
         id: appearancePage
         visible: controlCentre.page === "appearance"
         width: parent.width
-        spacing: 6
+        spacing: Theme.spaceM
 
-        function label(v) { return Settings.choiceLabels[v] || v }
+        function label(v) { return Settings.choiceLabel(v) }
+
+        FlyoutHeading { text: "LOOK" }
+
+        Item {
+            width: parent.width
+            height: Theme.chipHeight
+
+            Text {
+                anchors.left: parent.left
+                anchors.right: lookButtons.left
+                anchors.rightMargin: Theme.spaceL
+                anchors.verticalCenter: parent.verticalCenter
+                text: appearancePage.label(Settings.look) + (Settings.lookPristine ? "" : " *")
+                elide: Text.ElideRight
+                color: Theme.text
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
+            }
+
+            Row {
+                id: lookButtons
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spaceS
+
+                FlyoutChip { glyph: true; text: "󰒮"; onClicked: Settings.cycle("look", -1) }
+                FlyoutChip { glyph: true; text: "󰒭"; onClicked: Settings.cycle("look", 1) }
+            }
+        }
+
+        FlyoutRow {
+            label: "Frames"
+            trailingIsValue: true
+            trailing: appearancePage.label(Settings.frameStyle)
+            onActivated: Settings.cycle("frameStyle")
+        }
+
+        FlyoutRow {
+            label: "Density"
+            trailingIsValue: true
+            trailing: appearancePage.label(Settings.density)
+            onActivated: Settings.cycle("density")
+        }
+
+        FlyoutRow {
+            label: "Font"
+            trailingIsValue: true
+            trailing: appearancePage.label(Settings.fontFamily)
+            onActivated: Settings.cycle("fontFamily")
+        }
 
         FlyoutHeading { text: "WALLPAPER" }
 
@@ -429,8 +481,8 @@ FlyoutPanel {
             height: Math.round(width * 9 / 16)
             radius: Theme.radiusInner
             color: Theme.base
-            border.width: 1
-            border.color: previewMouse.containsMouse ? Theme.subtext : Theme.border
+            border.width: Theme.borderWidth
+            border.color: previewMouse.containsMouse ? Theme.strokeFocus : Theme.stroke
 
             Image {
                 anchors.fill: parent
@@ -453,12 +505,12 @@ FlyoutPanel {
 
         Item {
             width: parent.width
-            height: Theme.fs(20)
+            height: Theme.chipHeight
 
             Text {
                 anchors.left: parent.left
                 anchors.right: wpButtons.left
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.spaceL
                 anchors.verticalCenter: parent.verticalCenter
                 text: Wallpaper.name !== "" ? Wallpaper.name : "No wallpaper"
                 elide: Text.ElideRight
@@ -471,7 +523,7 @@ FlyoutPanel {
                 id: wpButtons
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
+                spacing: Theme.spaceS
 
                 FlyoutChip { glyph: true; text: "󰒮"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.step(-1) }
                 FlyoutChip { glyph: true; text: "󰒝"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.shuffle() }
@@ -554,12 +606,13 @@ FlyoutPanel {
 
         FlyoutStepper {
             label: "Font Size"
-            value: Settings.fontScale
-            minimum: Settings.limits.fontScale.min
-            maximum: Settings.limits.fontScale.max
-            suffix: "%"
+            value: Settings.fontSize
+            minimum: Settings.limits.fontSize.min
+            maximum: Settings.limits.fontSize.max
+            suffix: "px"
             valueWidth: 44
-            onStepped: d => Settings.step("fontScale", d * 5)
+            onStepped: d => Settings.step("fontSize", d)
+
         }
 
         FlyoutRow {
@@ -572,11 +625,52 @@ FlyoutPanel {
         FlyoutDivider {}
 
         FlyoutRow {
-            label: "Reset to Defaults"
+            label: "Reset Look"
+            enabled: !Settings.lookPristine
+            onActivated: Settings.resetLook()
+        }
+
+        // Save the current appearance as the default Reset returns to. Asks
+        // twice, like FlyoutRow's other destructive actions: the first click
+        // arms it, a second within a few seconds saves.
+        FlyoutRow {
+            id: saveDefaultRow
+            property bool armed: false
+            label: armed ? "Click again to save" : "Set as Default"
+            trailing: Settings.isDefault ? "saved" : ""
+            enabled: !Settings.isDefault
+            onActivated: {
+                if (!armed) { armed = true; saveDisarm.restart(); return }
+                armed = false
+                Settings.saveAsDefault()
+            }
+            Timer { id: saveDisarm; interval: 3000; onTriggered: saveDefaultRow.armed = false }
+        }
+
+        FlyoutRow {
+            label: "Reset to Default"
+
             // greyed out when there is nothing to reset, so the row
-            // doubles as a "this is stock" indicator
+            // doubles as a "this is the default" indicator
             enabled: !Settings.isDefault
             onActivated: Settings.reset()
+        }
+
+        FlyoutRow {
+            label: "Factory Reset"
+            visible: Settings.hasUserDefault
+            onActivated: Settings.factoryReset()
+        }
+
+
+        // the full page: every wallpaper at once, and Hyprland's windows
+        FlyoutRow {
+            label: "More in Settings"
+            trailing: "󰁔"
+            onActivated: {
+                scope.openFlyout = ""
+                settingsWin.open("appearance")
+            }
         }
     }
 

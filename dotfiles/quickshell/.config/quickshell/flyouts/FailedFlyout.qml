@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FailedFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FailedFlyout.qml
 //
 // Split out of shell.qml. Self-contained: only needs the FailedUnits singleton.
 
@@ -24,17 +24,17 @@ FlyoutPanel {
         Item {
             required property var modelData
             width: parent ? parent.width : 0
-            height: 46
+            height: Theme.row(46)
 
             Text {
                 id: unitName
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.topMargin: 2
+                anchors.topMargin: Theme.spaceXs
                 text: modelData.name
                 elide: Text.ElideMiddle
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
@@ -42,7 +42,7 @@ FlyoutPanel {
             Text {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 4
+                anchors.bottomMargin: Theme.spaceS
                 text: modelData.user ? "user" : "system"
                 color: Theme.subtext
                 font.family: Theme.fontText
@@ -53,7 +53,7 @@ FlyoutPanel {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 1
-                spacing: 4
+                spacing: Theme.spaceS
                 FlyoutChip { text: "Log";     onClicked: { FailedUnits.showLog(modelData); scope.openFlyout = "" } }
                 FlyoutChip { text: "Restart"; onClicked: FailedUnits.restart(modelData) }
                 FlyoutChip { text: "Clear";   onClicked: FailedUnits.clear(modelData) }

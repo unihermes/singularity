@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/BarModule.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/bar/BarModule.qml
 //
 // One clickable module in the bar: an icon, an optional readout next to it
 // (volume/brightness percentages, battery level, the clock), and the click
@@ -27,6 +27,7 @@ Item {
     property real fillValue: -1
     property color fillColor: Theme.muted
     property int fixedWidth: 0
+    property bool animateWidth: false
     // caps the label and elides it, for text of unbounded length (a track
     // title); 0 lets the label take whatever width it needs
     property int labelMaxWidth: 0
@@ -41,7 +42,7 @@ Item {
     property bool slideX: false
     Behavior on x {
         enabled: root.slideX
-        NumberAnimation { duration: Theme.dur(160); easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
     }
     signal middleClicked()
     signal rightClicked()
@@ -50,8 +51,9 @@ Item {
     // Gauge icons are always bright: they sit on top of the fill, and the
     // fill sweeps under them, so anything dimmer loses contrast as it passes.
     readonly property color fg: (active || fillValue >= 0)
-        ? Theme.bright
-        : (dimmed ? Theme.muted : Theme.text)
+        ? Theme.textStrong
+        : (dimmed ? Theme.textDisabled : Theme.text)
+
 
     implicitWidth: frame.implicitWidth
     implicitHeight: Theme.barHeight
@@ -64,6 +66,7 @@ Item {
         fillValue: root.fillValue
         fillColor: root.fillColor
         fixedWidth: root.fixedWidth
+        animateWidth: root.animateWidth
 
         Text {
             id: iconText

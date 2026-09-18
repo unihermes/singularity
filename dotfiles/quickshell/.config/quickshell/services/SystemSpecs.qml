@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/SystemSpecs.qml
+// ~/.config/quickshell/services/SystemSpecs.qml
 //
 // The System window's static facts: kernel, hostname, package counts, CPU,
 // GPU, board, storage and displays, plus the copy-to-clipboard summary of

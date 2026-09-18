@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FlyoutPanel.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FlyoutPanel.qml
 //
 // Shared shell for every bar flyout: a full-screen, transparent,
 // click-through-everywhere-except-the-box layer-shell surface. The
@@ -44,13 +44,14 @@ OverlayWindow {
     // Distance from the bar's screen edge to the near edge of the box.
     // Matches the bar's height exactly so the flyout sits flush against it
     // rather than floating away from it.
-    property real topOffset: Theme.barHeight
+    property real topOffset: Theme.barExtent
+
     // How close the box may come to the left/right screen edge once the
     // clamp below catches it. The panels whose trigger sits at the very end
     // of the bar (control centre at the far left, battery at the far right)
     // set this to 0 so they run into the corner instead of leaving a sliver
     // of desktop showing beside them.
-    property int edgeMargin: 6
+    property int edgeMargin: Theme.edgeMargin
 
     // data, not children, so a panel can hold non-visual helpers (a Timer,
     // a QsMenuOpener) alongside its rows; the Column still lays out only the
@@ -83,10 +84,10 @@ OverlayWindow {
             ? root.height - root.topOffset - height
             : root.topOffset
         width: Math.round(root.menuWidth * Theme.fontScale)
-        height: contentColumn.implicitHeight + 20
+        height: contentColumn.implicitHeight + Theme.panelPad * 2
 
         Behavior on height {
-            NumberAnimation { duration: Theme.dur(90); easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Theme.dur(90); easing.type: Theme.ease }
         }
 
         // absorbs clicks so they don't fall through to the backdrop
@@ -97,10 +98,11 @@ OverlayWindow {
 
         Column {
             id: contentColumn
-            x: 10
-            y: 10
-            width: parent.width - 20
-            spacing: 6
+            x: Theme.panelPad
+            y: Theme.panelPad
+            width: parent.width - Theme.panelPad * 2
+            spacing: Theme.spaceM
+
         }
     }
 }

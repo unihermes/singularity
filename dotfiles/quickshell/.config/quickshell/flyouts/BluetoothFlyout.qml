@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/BluetoothFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/BluetoothFlyout.qml
 //
 // Split out of shell.qml. Needs bar's adapter-state helpers.
 

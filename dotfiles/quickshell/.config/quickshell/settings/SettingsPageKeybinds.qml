@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPageKeybinds.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPageKeybinds.qml
 //
 // The Keybinds editor, embedded. Same component as the standalone Keybinds
 // window, so the two can't drift; it keeps its own list scrolling, and its
@@ -21,6 +21,7 @@ SettingsPage {
         active: true
         standalone: false
         // toolbar, spacing, status line, spacing -- the rest is the list
-        bodyHeight: page.bodyHeight - Theme.fs(26) - Theme.fs(16) - 12
+        bodyHeight: page.bodyHeight - Theme.rowHeightTall - Theme.headingHeight - Theme.spaceM * 2
+
     }
 }

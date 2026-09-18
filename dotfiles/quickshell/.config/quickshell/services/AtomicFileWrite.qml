@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/AtomicFileWrite.qml
+// ~/.config/quickshell/services/AtomicFileWrite.qml
 //
 // The one way the shell writes a config file. Every settings page and
 // HyprLuaWrite go through it, so they all get the same guarantees:

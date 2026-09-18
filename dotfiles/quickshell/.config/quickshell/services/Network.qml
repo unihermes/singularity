@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/Network.qml
+// ~/.config/quickshell/services/Network.qml
 //
 // Wi-Fi through iwd, for the bar's network module, its flyout and the
 // Control Centre's Wi-Fi toggle. Quickshell.Networking's only backend is
@@ -33,6 +33,8 @@ Singleton {
     property var networks: []
     // why the list couldn't be read, or ""
     property string listError: ""
+    // the SSID an iwctl connect is running for, or ""
+    property string connecting: ""
 
     function setPowered(on) {
         if (device === "") return
@@ -60,7 +62,8 @@ Singleton {
         var cmd = ["iwctl"]
         if (passphrase) cmd.push("--passphrase", passphrase)
         cmd.push("station", device, "connect", name)
-        if (connectProc.running) { pendingConnect = cmd; return }
+        if (connectProc.running) { pendingConnect = { cmd: cmd, ssid: name }; return }
+        connecting = name
         connectProc.command = cmd
         connectProc.running = true
     }
@@ -223,11 +226,13 @@ Singleton {
         command: ["true"]
         onExited: {
             if (root.pendingConnect) {
-                connectProc.command = root.pendingConnect
+                connectProc.command = root.pendingConnect.cmd
+                root.connecting = root.pendingConnect.ssid
                 root.pendingConnect = null
                 connectProc.running = true
                 return
             }
+            root.connecting = ""
             root.refreshStatus()
             root.refreshList()
         }

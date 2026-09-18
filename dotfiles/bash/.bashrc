@@ -18,4 +18,5 @@ eval "$(starship init bash)"
 # unihermes edits
 alias nbash='nvim .bashrc && source ~/.bashrc'
 alias ff='clear && fastfetch'
+alias clean='~/.config/singularity/clean.sh'
 

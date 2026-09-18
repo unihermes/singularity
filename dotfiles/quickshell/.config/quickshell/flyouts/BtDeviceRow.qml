@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/BtDeviceRow.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/BtDeviceRow.qml
 //
 // One Bluetooth device in the flyout. Extends FlyoutRow rather than wrapping
 // one so it still behaves like a plain row inside the flyout's Column --
@@ -8,6 +8,7 @@
 // Shared by the saved and nearby sections, which differ only in which
 // devices they feed it.
 
+import Quickshell.Bluetooth
 import QtQuick
 import "../services"
 
@@ -22,8 +23,14 @@ FlyoutRow {
     label: device.deviceName !== "" ? device.deviceName
         : (device.name !== "" ? device.name : device.address)
 
+    readonly property bool connecting: device.state === BluetoothDeviceState.Connecting
+    readonly property bool disconnecting: device.state === BluetoothDeviceState.Disconnecting
+    busy: device.pairing || connecting || disconnecting
+
     trailing: {
         if (device.pairing) return "pairing"
+        if (connecting) return "connecting"
+        if (disconnecting) return "disconnecting"
         // BlueZ reports battery as a 0..1 fraction despite the name, the
         // same as UPower -- rounding it directly shows a full headset as 1%
         if (device.connected && device.batteryAvailable)
@@ -34,7 +41,7 @@ FlyoutRow {
     }
 
     highlighted: device.connected
-    enabled: !device.pairing
+    enabled: !busy
 
     // Unpair and drop it from BlueZ entirely, so it moves back to nearby
     // (or vanishes, if it's off) and has to be paired again to reconnect.

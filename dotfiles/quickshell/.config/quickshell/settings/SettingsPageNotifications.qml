@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPageNotifications.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPageNotifications.qml
 //
 // swaync: Do Not Disturb and the queue, through the Notifications singleton
 // the bar module already uses, and a few of config.json's top-level options.
@@ -76,7 +76,7 @@ SettingsPage {
 
         FlyoutStepper {
             anchors.right: parent.right
-            width: 170
+            width: Theme.fs(170)
             readonly property int current: page.conf[sec.key] !== undefined ? Number(page.conf[sec.key]) : sec.fallback
             value: current
             minimum: 0
@@ -88,7 +88,7 @@ SettingsPage {
         }
     }
 
-    FlyoutHeading { text: "NOW" }
+    FlyoutHeading { text: "QUICK ACTIONS" }
 
     FlyoutAction {
         icon: Notifications.dnd ? "󰂛" : "󰂚"
@@ -117,19 +117,19 @@ SettingsPage {
         onActivated: Notifications.togglePanel()
     }
 
-    Item { width: 1; height: 6 }
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "POPUPS" }
 
     SettingsField {
         label: "Position"
-        hint: "where popups and the panel appear"
+        hint: "Where popups and the panel appear"
 
         Row {
             anchors.right: parent.right
-            spacing: 10
+            spacing: Theme.sp(10)
 
             Row {
-                spacing: 4
+                spacing: Theme.spaceS
                 Repeater {
                     model: ["top", "bottom"]
                     FlyoutChip {
@@ -141,7 +141,7 @@ SettingsPage {
                 }
             }
             Row {
-                spacing: 4
+                spacing: Theme.spaceS
                 Repeater {
                     model: ["left", "center", "right"]
                     FlyoutChip {
@@ -155,10 +155,12 @@ SettingsPage {
         }
     }
 
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "HOW LONG POPUPS STAY" }
+
     Seconds {
         key: "timeout"
         label: "Normal"
-        hint: "how long a popup stays"
         fallback: 10
     }
     Seconds {
@@ -169,7 +171,7 @@ SettingsPage {
     Seconds {
         key: "timeout-critical"
         label: "Critical"
-        hint: "never means it stays until dismissed"
+        hint: "Never means it stays until dismissed"
         fallback: 0
     }
 }

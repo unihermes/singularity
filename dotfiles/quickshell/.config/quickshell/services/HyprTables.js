@@ -1,10 +1,10 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/HyprTables.js
+// Singularity - Quickshell
+// ~/.config/quickshell/services/HyprTables.js
 //
 // Reads and rewrites plain `key = value` fields in hyprland.lua's table
-// constructors, for the Settings window: the `input = { ... }` table inside
-// hl.config (and its `touchpad` sub-table), and the table each hl.monitor()
-// call takes. Plain functions over source text, like HyprBinds.js, whose
+// constructors, for the Settings window: the tables inside hl.config
+// (`input` and its `touchpad`, `general`, `decoration`), and the table each
+// hl.monitor() call takes. Plain functions over source text, like HyprBinds.js, whose
 // tokenizer this uses so strings and comments can't fool it.
 //
 // Only a field whose value is one literal token (a number, a string, true or
@@ -130,18 +130,44 @@ function setIn(src, toks, open, key, value) {
         + indentAt(src, brace.s) + src.slice(brace.s)
 }
 
-// --- input ---------------------------------------------------------------
+// --- hl.config tables ----------------------------------------------------
 
-// The `input = { }` table: the first one passed inside an hl.config({ }).
-function inputTable(toks) {
+// The table at `path` in the first hl.config({ }) call that has one:
+// ["input"], ["general"], ["decoration", "blur"]. The config is split over
+// several hl.config calls by section, so each is tried in turn.
+function configTable(toks, path) {
     for (var i = 0; i + 3 < toks.length; i++) {
         if (toks[i].v === "hl" && toks[i + 1].v === "." && toks[i + 2].v === "config"
                 && toks[i + 3].v === "(" && toks[i + 4] && toks[i + 4].v === "{") {
-            var open = descend(toks, i + 4, ["input"])
+            var open = descend(toks, i + 4, path)
             if (open >= 0) return open
         }
     }
     return -1
+}
+
+// { key: {editable, value} } for the table at `path`, or null if the file
+// has no such table
+function readConfig(src, path) {
+    var toks = code(src)
+    var open = configTable(toks, path)
+    return open < 0 ? null : read(toks, open)
+}
+
+// Set key in the table at `path`. null when there is no such table (it isn't
+// created: a missing section is more likely a hand-restructured file than
+// one to add to) or the existing value isn't a literal.
+function setConfig(src, path, key, value) {
+    var toks = code(src)
+    var open = configTable(toks, path)
+    return open < 0 ? null : setIn(src, toks, open, key, value)
+}
+
+// --- input ---------------------------------------------------------------
+
+// The `input = { }` table: the first one passed inside an hl.config({ }).
+function inputTable(toks) {
+    return configTable(toks, ["input"])
 }
 
 // { found, fields: { key: {editable, value} }, touchpad: {...} }

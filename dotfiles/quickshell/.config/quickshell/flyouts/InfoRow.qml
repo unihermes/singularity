@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/InfoRow.qml
+// ~/.config/quickshell/flyouts/InfoRow.qml
 //
 // A label on the left and its value on the right, elided to fit. Used by
 // the System window.
@@ -16,7 +16,7 @@ Item {
     property var valueColor: undefined
 
     width: parent ? parent.width : 0
-    height: 20
+    height: Theme.chipHeight
 
     Text {
         id: infoLabel
@@ -30,13 +30,14 @@ Item {
 
     Text {
         anchors.left: infoLabel.right
-        anchors.leftMargin: 8
+        anchors.leftMargin: Theme.spaceL
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         horizontalAlignment: Text.AlignRight
         elide: Text.ElideRight
         text: info.value
-        color: info.valueColor !== undefined ? info.valueColor : Theme.bright
+        color: info.valueColor !== undefined ? info.valueColor : Theme.textStrong
+
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
     }

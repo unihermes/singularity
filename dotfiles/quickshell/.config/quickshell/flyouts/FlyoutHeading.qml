@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FlyoutHeading.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FlyoutHeading.qml
 //
 // Section label for a flyout: small caps, then a rule that runs out to the
 // right edge -- the same "label cut into a border" motif the rest of the
@@ -14,26 +14,29 @@ Item {
     property string text: ""
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.fs(16)
+    implicitHeight: Theme.headingHeight
 
     Text {
         id: label
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        text: root.text
-        color: Theme.bright
+        text: Theme.heading(root.text)
+        color: Theme.headingColor
         font.family: Theme.fontText
         font.pixelSize: Theme.fontSmall
-        font.bold: true
-        font.letterSpacing: 1
+        font.bold: Theme.headingBold
+        font.letterSpacing: Theme.headingSpacing
     }
 
     Rectangle {
+        visible: Theme.headingRule
         anchors.left: label.right
-        anchors.leftMargin: 8
+
+        anchors.leftMargin: Theme.spaceL
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        height: 1
-        color: Theme.border
+        height: Theme.borderWidth
+        color: Theme.stroke
+
     }
 }

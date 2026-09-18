@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPagePower.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPagePower.qml
 //
 // Power profile, and the idle ladder in hypridle.conf.
 //
@@ -165,7 +165,7 @@ SettingsPage {
 
         Row {
             anchors.right: parent.right
-            spacing: 4
+            spacing: Theme.spaceS
             Repeater {
                 model: [{ id: "power-saver", text: "Power saver" }, { id: "balanced", text: "Balanced" },
                     { id: "performance", text: "Performance" }]
@@ -183,7 +183,7 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: 6 }
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "WHEN IDLE" }
 
     Text {
@@ -208,7 +208,7 @@ SettingsPage {
 
             FlyoutStepper {
                 anchors.right: parent.right
-                width: 170
+                width: Theme.fs(170)
                 // in 30-second steps
                 value: Math.round(modelData.timeout / 30)
                 minimum: 1

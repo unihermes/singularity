@@ -314,11 +314,18 @@ fi
 # cursor was dead until the handshake ended. Async probing it doesn't help,
 # see above. Instead the alias autoload is blacklisted and a timer loads it
 # 30s into boot, after login: the stall still happens, but only delays module
-# loads for anything hotplugged in that window, and the webcam still works.
+# loads for anything hotplugged in that window.
+#
+# The camera itself also needs that order. ipu_bridge (in intel_ipu6) wires the
+# sensor through the VSC's CSI device only if that device already exists when
+# ipu6 probes; otherwise ivsc_csi logs "mei-csi probed without device fwnode!"
+# and the sensor never shows up in the media graph. So intel_ipu6 and ivsc_csi
+# are held back too and loaded after mei_vsc, in order. (Unloading ipu6 to
+# re-probe it later oopses the kernel, so it has to be right the first time.)
 vscconf=/etc/modprobe.d/singularity-vsc.conf
-if ! grep -qs 'blacklist mei_vsc' "$vscconf"; then
+if ! grep -qs 'blacklist intel_ipu6' "$vscconf"; then
   log "deferring the webcam controller until after login"
-  echo 'blacklist mei_vsc' | sudo tee "$vscconf" >/dev/null
+  printf 'blacklist %s\n' mei_vsc intel_ipu6 ivsc_csi | sudo tee "$vscconf" >/dev/null
   sudo tee /etc/systemd/system/singularity-vsc.service >/dev/null <<'UNIT'
 [Unit]
 Description=Load the webcam's Visual Sensing Controller after login
@@ -326,6 +333,8 @@ Description=Load the webcam's Visual Sensing Controller after login
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/modprobe mei_vsc
+ExecStart=/usr/bin/modprobe intel_ipu6
+ExecStart=/usr/bin/modprobe ivsc_csi
 UNIT
   sudo tee /etc/systemd/system/singularity-vsc.timer >/dev/null <<'UNIT'
 [Unit]
@@ -340,6 +349,40 @@ UNIT
   sudo systemctl daemon-reload
   sudo systemctl enable singularity-vsc.timer
   sudo mkinitcpio -P
+fi
+
+# --- virtual webcam ------------------------------------------------------
+# The IPU6 camera only works through libcamera. PipeWire apps (browsers)
+# reach it that way, but Discord's voice engine opens /dev/video* directly and
+# finds only the IPU6's raw capture nodes, which never deliver a frame (it
+# reports the camera as "in use"). v4l2-relayd bridges the gap: it owns a
+# v4l2loopback device called "Laptop Webcam" and starts libcamerasrc only
+# while some app has that device open, so the camera light is off otherwise.
+# The sensor's native 1284x812 is cropped to 1280x720, which every app takes.
+if [[ ! -f /etc/v4l2-relayd.d/webcam.conf ]]; then
+  log "setting up the virtual webcam"
+  echo 'v4l2loopback' | sudo tee /etc/modules-load.d/v4l2loopback.conf >/dev/null
+  echo 'options v4l2loopback exclusive_caps=1 card_label="Laptop Webcam"' \
+    | sudo tee /etc/modprobe.d/v4l2loopback.conf >/dev/null
+  sudo mkdir -p /etc/v4l2-relayd.d /etc/systemd/system/v4l2-relayd@.service.d
+  sudo tee /etc/v4l2-relayd.d/webcam.conf >/dev/null <<'CONF'
+VIDEOSRC="libcamerasrc ! videoconvert ! videocrop left=2 right=2 top=46 bottom=46 ! videoscale ! videorate"
+FORMAT=YUY2
+WIDTH=1280
+HEIGHT=720
+FRAMERATE=30/1
+CARD_LABEL="Laptop Webcam"
+CONF
+  # The unit's device sandbox predates libcamera's software ISP, which
+  # allocates its frame buffers from these two.
+  sudo tee /etc/systemd/system/v4l2-relayd@.service.d/libcamera.conf >/dev/null <<'UNIT'
+[Service]
+DeviceAllow=/dev/dma_heap/system rw
+DeviceAllow=/dev/udmabuf rw
+UNIT
+  sudo systemctl daemon-reload
+  sudo modprobe v4l2loopback
+  sudo systemctl enable --now v4l2-relayd@webcam.service
 fi
 
 log "enabling services"

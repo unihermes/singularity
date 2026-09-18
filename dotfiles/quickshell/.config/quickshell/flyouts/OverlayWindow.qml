@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/OverlayWindow.qml
+// ~/.config/quickshell/flyouts/OverlayWindow.qml
 //
 // A transparent layer-shell surface covering one whole screen, above
 // everything. The base for every full-screen surface the shell puts up:

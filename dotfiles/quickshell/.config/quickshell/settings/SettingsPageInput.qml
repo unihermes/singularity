@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPageInput.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPageInput.qml
 //
 // Keyboard, mouse and touchpad: the `input = { }` table in hyprland.lua.
 //
@@ -89,7 +89,7 @@ SettingsPage {
         readonly property var current: page.value(sub, key)
 
         anchors.right: parent.right
-        spacing: 4
+        spacing: Theme.spaceS
 
         Repeater {
             model: choice.options
@@ -130,8 +130,8 @@ SettingsPage {
 
         Item {
             anchors.right: parent.right
-            width: 140
-            height: Theme.fs(24)
+            width: Theme.fs(140)
+            height: Theme.rowHeight
 
             FlyoutStepper {
                 width: parent.width
@@ -159,7 +159,7 @@ SettingsPage {
 
         FlyoutStepper {
             anchors.right: parent.right
-            width: 160
+            width: Theme.fs(160)
             value: Number(page.value(int_.sub, int_.key))
             minimum: int_.min
             maximum: int_.max
@@ -179,7 +179,7 @@ SettingsPage {
         FlyoutInput {
             id: input
             anchors.right: parent.right
-            width: 220
+            width: Theme.fs(220)
             echoPassword: false
             placeholder: tx.placeholder
             text: String(page.value(tx.sub, tx.key))
@@ -203,32 +203,32 @@ SettingsPage {
     Text_ {
         key: "kb_layout"
         label: "Layout"
-        hint: "xkb layouts, comma-separated: us,de. Enter to apply"
+        hint: "XKB layouts, comma-separated: us,de. Enter to apply"
         placeholder: "us"
     }
     Text_ {
         key: "kb_variant"
         label: "Variant"
-        hint: "per layout, e.g. colemak. Enter to apply"
+        hint: "Per layout, e.g. colemak. Enter to apply"
         placeholder: "none"
     }
     Text_ {
         key: "kb_options"
         label: "Options"
-        hint: "xkb options, e.g. caps:escape. Enter to apply"
+        hint: "XKB options, e.g. caps:escape. Enter to apply"
         placeholder: "none"
     }
     Integer {
         key: "repeat_rate"
         label: "Repeat rate"
-        hint: "repeats per second while a key is held"
+        hint: "Repeats per second while a key is held"
         min: 5; max: 80; step: 5
         suffix: "/s"
     }
     Integer {
         key: "repeat_delay"
         label: "Repeat delay"
-        hint: "how long a key is held before it repeats"
+        hint: "How long a key is held before it repeats"
         min: 100; max: 1500; step: 50
         suffix: "ms"
     }
@@ -237,7 +237,7 @@ SettingsPage {
         label: "Num Lock on at login"
     }
 
-    Item { width: 1; height: 6 }
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "MOUSE" }
 
     Decimal {
@@ -248,7 +248,7 @@ SettingsPage {
     }
     SettingsField {
         label: "Acceleration"
-        hint: "flat moves the pointer exactly as far as the hand does"
+        hint: "Flat moves the pointer exactly as far as the hand does"
         Choice {
             key: "accel_profile"
             label: "Acceleration"
@@ -267,10 +267,10 @@ SettingsPage {
     Toggle {
         key: "left_handed"
         label: "Left-handed"
-        hint: "swaps the primary and secondary buttons"
+        hint: "Swaps the primary and secondary buttons"
     }
 
-    Item { width: 1; height: 6 }
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "TOUCHPAD" }
 
     Toggle {
@@ -280,7 +280,7 @@ SettingsPage {
     Toggle {
         sub: "touchpad"; key: "natural_scroll"
         label: "Natural scrolling"
-        hint: "content follows the fingers, as on a phone"
+        hint: "Content follows the fingers, as on a phone"
     }
     Toggle {
         sub: "touchpad"; key: "disable_while_typing"
@@ -289,22 +289,22 @@ SettingsPage {
     Decimal {
         sub: "touchpad"; key: "scroll_factor"
         label: "Scroll speed"
-        hint: "multiplier on two-finger scroll distance"
+        hint: "Multiplier on two-finger scroll distance"
         min: 0.1; max: 3; step: 0.1
     }
     Toggle {
         sub: "touchpad"; key: "clickfinger_behavior"
         label: "Click by finger count"
-        hint: "two-finger press is right click, three is middle"
+        hint: "Two-finger press is right click, three is middle"
     }
     Toggle {
         sub: "touchpad"; key: "drag_lock"
         label: "Drag lock"
-        hint: "lifting a finger mid-drag doesn't drop what's held"
+        hint: "Lifting a finger mid-drag doesn't drop what's held"
     }
     Toggle {
         sub: "touchpad"; key: "middle_button_emulation"
         label: "Middle-click emulation"
-        hint: "left and right pressed together"
+        hint: "Left and right pressed together"
     }
 }

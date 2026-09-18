@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FlyoutDivider.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FlyoutDivider.qml
 //
 // A plain rule between groups of rows, for menus that split into sections
 // without wanting a label on each one. FlyoutHeading is the labelled
@@ -16,15 +16,16 @@ Item {
     id: root
 
     width: parent ? parent.width : 0
-    implicitHeight: 9
+    implicitHeight: Theme.spaceL + 1
 
     Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: -4
-        anchors.rightMargin: -4
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
         anchors.verticalCenter: parent.verticalCenter
-        height: 1
-        color: Theme.border
+        height: Theme.borderWidth
+        color: Theme.stroke
+
     }
 }

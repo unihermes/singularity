@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/PpdProfile.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/PpdProfile.qml
 //
 // power-profiles-daemon's active profile, for the battery flyout and the
 // Settings window's Power page.

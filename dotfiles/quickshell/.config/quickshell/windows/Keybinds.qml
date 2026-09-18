@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Keybinds.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/windows/Keybinds.qml
 //
 // Keybinds as its own window. The editor is KeybindsBody.qml, which the
 // Settings window's Keybinds page hosts as well.
@@ -11,7 +11,7 @@ CentredWindow {
     id: root
 
     heading: "KEYBINDS"
-    contentWidth: 720
+    contentWidth: Theme.fs(720)
 
     KeybindsBody {
         active: root.visible

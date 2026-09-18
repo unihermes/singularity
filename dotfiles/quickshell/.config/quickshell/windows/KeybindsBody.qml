@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/KeybindsBody.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/windows/KeybindsBody.qml
 //
 // The Keybinds editor itself: every hl.bind() in hyprland.lua, grouped by the
 // config's `-- --- Section ---` markers, searchable, with add / edit / delete
@@ -24,8 +24,14 @@ import "../flyouts"
 Column {
     id: root
 
+    // hl.bind options, as a person would say them
+    readonly property var flagLabels: ({
+        locked: "works when locked", repeating: "repeats when held", mouse: "mouse",
+        release: "on release", long_press: "hold", non_consuming: "passes key on",
+    })
+
     width: parent ? parent.width : 0
-    spacing: 6
+    spacing: Theme.spaceM
 
     // true while whatever hosts this is on screen: the standalone window's
     // visible, or the Settings page existing at all
@@ -39,7 +45,7 @@ Column {
 
     // total height of the list and editor together, so opening the editor
     // shrinks the list instead of resizing (and re-centring) the window
-    property int bodyHeight: 520
+    property int bodyHeight: Theme.fs(520)
 
     property var model: null
     property string query: ""
@@ -315,8 +321,8 @@ Column {
     }
 
     component FieldLabel: Label {
-        width: 90
-        height: Theme.fs(26)
+        width: Theme.fs(90)
+        height: Theme.rowHeightTall
         verticalAlignment: Text.AlignVCenter
         color: Theme.subtext
     }
@@ -326,14 +332,14 @@ Column {
     // toolbar: search, then actions
     Item {
         width: parent.width
-        height: Theme.fs(26)
+        height: Theme.rowHeightTall
 
         FlyoutInput {
             id: search
             anchors.left: parent.left
-            anchors.leftMargin: 4
+            anchors.leftMargin: Theme.spaceS
             anchors.right: toolbar.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.spaceXl
             anchors.verticalCenter: parent.verticalCenter
             placeholder: "Search keys, descriptions, commands"
             echoPassword: false
@@ -348,7 +354,7 @@ Column {
             id: toolbar
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
+            spacing: Theme.spaceM
 
             FlyoutChip {
                 text: "Undo"
@@ -371,7 +377,7 @@ Column {
 
     Label {
         width: parent.width
-        height: Theme.fs(16)
+        height: Theme.headingHeight
         verticalAlignment: Text.AlignVCenter
         font.pixelSize: Theme.fontSmall
         color: root.notice !== "" ? (root.noticeIsError ? Theme.alert : Theme.text) : Theme.subtext
@@ -387,18 +393,18 @@ Column {
         id: editor
         visible: root.editMode !== ""
         width: parent.width
-        height: visible ? editorCol.implicitHeight + 20 : 0
+        height: visible ? editorCol.implicitHeight + Theme.panelPad * 2 : 0
         radius: Theme.radiusInner
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.border
+        color: Theme.fieldFill
+        border.width: Theme.borderWidth
+        border.color: Theme.stroke
 
         Column {
             id: editorCol
-            x: 12
-            y: 10
-            width: parent.width - 24
-            spacing: 6
+            x: Theme.spaceXl
+            y: Theme.panelPad
+            width: parent.width - Theme.spaceXl * 2
+            spacing: Theme.spaceM
 
             FlyoutHeading {
                 text: root.editMode === "add" ? "NEW BIND"
@@ -408,19 +414,19 @@ Column {
             // combo: typed, or recorded from the keyboard
             Row {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.spaceL
 
                 FieldLabel { text: "Keys" }
 
                 Item {
-                    width: parent.width - 90 - 8 - recordChip.width - 8
-                    height: Theme.fs(26)
+                    width: parent.width - Theme.fs(90) - Theme.spaceL - recordChip.width - Theme.spaceL
+                    height: Theme.rowHeightTall
 
                     FlyoutInput {
                         id: keysInput
                         anchors.fill: parent
-                        anchors.leftMargin: 4
-                        anchors.rightMargin: 4
+                        anchors.leftMargin: Theme.spaceS
+                        anchors.rightMargin: Theme.spaceS
                         visible: !root.capturing
                         echoPassword: false
                         placeholder: "SUPER + SHIFT + T"
@@ -435,14 +441,15 @@ Column {
                         visible: root.capturing
                         radius: Theme.radiusInner
                         color: Theme.base
-                        border.width: 1
-                        border.color: Theme.text
+                        border.width: Theme.borderWidth
+                        border.color: Theme.strokeFocus
+
 
                         Label {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
+                            anchors.leftMargin: Theme.spaceL
                             verticalAlignment: Text.AlignVCenter
-                            color: root.captureMods !== "" ? Theme.bright : Theme.subtext
+                            color: root.captureMods !== "" ? Theme.textStrong : Theme.subtext
                             text: root.captureMods !== "" ? root.captureMods + " + …"
                                 : "Press a combination · Escape to type it instead"
                         }
@@ -491,16 +498,16 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.spaceL
                 FieldLabel { text: "Command" }
                 Item {
-                    width: parent.width - 98
-                    height: Theme.fs(26)
+                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    height: Theme.rowHeightTall
                     FlyoutInput {
                         id: cmdInput
                         anchors.fill: parent
-                        anchors.leftMargin: 4
-                        anchors.rightMargin: 4
+                        anchors.leftMargin: Theme.spaceS
+                        anchors.rightMargin: Theme.spaceS
                         echoPassword: false
                         placeholder: "shell command, run through exec_cmd"
                         onTextChanged: root.editError = ""
@@ -512,16 +519,16 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.spaceL
                 FieldLabel { text: "Description" }
                 Item {
-                    width: parent.width - 98
-                    height: Theme.fs(26)
+                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    height: Theme.rowHeightTall
                     FlyoutInput {
                         id: descInput
                         anchors.fill: parent
-                        anchors.leftMargin: 4
-                        anchors.rightMargin: 4
+                        anchors.leftMargin: Theme.spaceS
+                        anchors.rightMargin: Theme.spaceS
                         echoPassword: false
                         // what the list shows when there's no comment
                         placeholder: root.editRow ? root.editRow.autoDesc + " (optional, saved as a comment)"
@@ -534,11 +541,11 @@ Column {
 
             Row {
                 width: parent.width
-                spacing: 8
+                spacing: Theme.spaceL
                 FieldLabel { text: "Section" }
                 Flow {
-                    width: parent.width - 98
-                    spacing: 4
+                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    spacing: Theme.spaceS
                     Repeater {
                         model: root.model ? root.model.categories.map(c => c.name) : []
                         FlyoutChip {
@@ -587,7 +594,7 @@ Column {
                 Row {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
+                    spacing: Theme.spaceM
                     FlyoutChip { text: "Cancel"; onClicked: root.closeEditor() }
                     FlyoutChip {
                         text: root.conflicts.length > 0
@@ -605,21 +612,21 @@ Column {
     // ---- list ----
     Item {
         width: parent.width
-        height: root.bodyHeight - (editor.visible ? editor.height + 6 : 0)
+        height: root.bodyHeight - (editor.visible ? editor.height + Theme.spaceM : 0)
 
         Flickable {
             id: list
             anchors.fill: parent
-            anchors.rightMargin: 10
+            anchors.rightMargin: Theme.sp(10)
             contentHeight: listCol.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
             Column {
                 id: listCol
-                x: 4
-                width: list.width - 8
-                spacing: 2
+                x: Theme.spaceS
+                width: list.width - Theme.spaceS * 2
+                spacing: Theme.spaceXs
 
                 Repeater {
                     model: root.groups
@@ -628,9 +635,9 @@ Column {
                         id: group
                         required property var modelData
                         width: listCol.width
-                        spacing: 2
+                        spacing: Theme.spaceXs
 
-                        Item { width: 1; height: 4 }
+                        Item { width: 1; height: Theme.spaceS }
                         FlyoutHeading { text: group.modelData.name.toUpperCase() }
 
                         Repeater {
@@ -643,33 +650,33 @@ Column {
                                     && root.editRow.callStart === modelData.callStart
 
                                 width: group.width
-                                height: Theme.fs(36)
+                                height: Theme.row(36)
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    anchors.leftMargin: -4
-                                    anchors.rightMargin: -4
+                                    anchors.leftMargin: -Theme.spaceS
+                                    anchors.rightMargin: -Theme.spaceS
                                     radius: Theme.radiusInner
-                                    color: row.editing ? Theme.surface
-                                        : rowMouse.containsMouse ? Theme.overlay : "transparent"
-                                    border.width: row.editing ? 1 : 0
-                                    border.color: Theme.muted
+                                    color: row.editing ? Theme.selectedFill
+                                        : rowMouse.containsMouse ? Theme.hoverFill : "transparent"
+                                    border.width: row.editing ? Theme.borderWidth : 0
+                                    border.color: Theme.selectedStroke
                                 }
 
                                 Label {
                                     id: keysText
                                     anchors.left: parent.left
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 200
+                                    width: Theme.fs(200)
                                     text: (row.modelData.conflict ? "󰀦 " : "") + row.modelData.keys
-                                    color: row.modelData.conflict ? Theme.alert : Theme.bright
+                                    color: row.modelData.conflict ? Theme.alert : Theme.textStrong
                                 }
 
                                 Column {
                                     anchors.left: keysText.right
-                                    anchors.leftMargin: 12
+                                    anchors.leftMargin: Theme.spaceXl
                                     anchors.right: flagsText.left
-                                    anchors.rightMargin: 12
+                                    anchors.rightMargin: Theme.spaceXl
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 1
 
@@ -688,9 +695,9 @@ Column {
                                 Label {
                                     id: flagsText
                                     anchors.right: stateIcon.left
-                                    anchors.rightMargin: 10
+                                    anchors.rightMargin: Theme.sp(10)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: row.modelData.flags.join(" · ")
+                                    text: row.modelData.flags.map(f => root.flagLabels[f] || f).join(" · ")
                                     color: Theme.subtext
                                     font.pixelSize: Theme.fontSmall
                                 }
@@ -700,11 +707,11 @@ Column {
                                     id: stateIcon
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 18
+                                    width: Theme.fs(18)
                                     horizontalAlignment: Text.AlignHCenter
                                     text: row.modelData.editable ? "󰏫" : "󰌾"
                                     visible: !row.modelData.editable || rowMouse.containsMouse || row.editing
-                                    color: row.modelData.editable ? Theme.bright : Theme.muted
+                                    color: row.modelData.editable ? Theme.textStrong : Theme.textDisabled
                                     font.family: Theme.fontIcon
                                     font.pixelSize: Theme.fontIconSize
                                 }
@@ -729,7 +736,7 @@ Column {
                 Label {
                     visible: root.model !== null && root.groups.length === 0
                     width: parent.width
-                    topPadding: 12
+                    topPadding: Theme.spaceXl
                     horizontalAlignment: Text.AlignHCenter
                     color: Theme.subtext
                     text: root.query !== "" ? "No binds match \"" + root.query + "\"" : "No hl.bind() calls found"
@@ -738,14 +745,9 @@ Column {
         }
 
         // scroll indicator
-        Rectangle {
+        ScrollBar {
             anchors.right: parent.right
-            width: 3
-            radius: 1.5
-            color: Theme.muted
-            visible: list.contentHeight > list.height
-            height: Math.max(20, list.height * list.height / Math.max(1, list.contentHeight))
-            y: (list.height - height) * (list.contentY / Math.max(1, list.contentHeight - list.height))
+            flickable: list
         }
     }
 }

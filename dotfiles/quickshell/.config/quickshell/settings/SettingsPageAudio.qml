@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPageAudio.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPageAudio.qml
 //
 // Output and input devices: which one is the default, its volume, mute.
 //
@@ -41,10 +41,10 @@ SettingsPage {
 
         Row {
             anchors.right: parent.right
-            spacing: 10
+            spacing: Theme.sp(10)
 
             Slider {
-                width: 220
+                width: Theme.fs(220)
                 anchors.verticalCenter: parent.verticalCenter
                 value: lvl.ready ? lvl.node.audio.volume * 100 : 0
                 onMoved: v => { if (lvl.ready) lvl.node.audio.volume = v / 100 }
@@ -54,7 +54,7 @@ SettingsPage {
                 anchors.verticalCenter: parent.verticalCenter
                 horizontalAlignment: Text.AlignRight
                 text: lvl.ready ? Math.round(lvl.node.audio.volume * 100) + "%" : "--"
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
@@ -75,7 +75,7 @@ SettingsPage {
         signal picked(var node)
 
         width: parent.width
-        spacing: 2
+        spacing: Theme.spaceXs
 
         Repeater {
             model: dl.nodes
@@ -110,7 +110,7 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: 6 }
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "INPUT" }
 
     Level { node: Pipewire.defaultAudioSource }

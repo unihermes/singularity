@@ -1,9 +1,9 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Slider.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/Slider.qml
 //
 // Hand-rolled rather than QtQuick.Controls' Slider: Controls pulls in a
 // style plugin and its own theming, which would fight the grayscale ramp
-// for the sake of one widget. This is a track, a fill, and a drag.
+// for the sake of one widget. This is a Meter, and a drag.
 
 import QtQuick
 import "../services"
@@ -17,30 +17,23 @@ Item {
     // handle instead of only catching up on release.
     signal moved(real value)
 
-    implicitHeight: 16
+    implicitHeight: Theme.meterHeight + 10
 
     function valueAt(px) {
         return Math.round(Math.max(0, Math.min(1, px / width)) * 100)
     }
 
-    Rectangle {
+    // a touch taller than a read-only meter, since this one is grabbed
+    Meter {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
-        height: 10
-        radius: 5
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.muted
-
-        Rectangle {
-            x: 1
-            y: 1
-            height: parent.height - 2
-            width: Math.max(0, Math.min(1, root.value / 100)) * (parent.width - 2)
-            radius: 4
-            color: Theme.text
-        }
+        height: Theme.meterHeight + 4
+        fraction: root.value / 100
+        // the fill follows the pointer; easing it would make it lag
+        animated: false
+        border.color: Theme.strokeHover
     }
+
 
     MouseArea {
         anchors.fill: parent

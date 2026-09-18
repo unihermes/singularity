@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/BarWidgetList.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/bar/BarWidgetList.qml
 //
 // The Bar Widgets page's list: every bar module with a drag handle and a
 // show/hide switch, grouped under LEFT / CENTRE / RIGHT headers.
@@ -99,7 +99,7 @@ Column {
 
         // the rows being pushed aside slide rather than jump
         displaced: Transition {
-            NumberAnimation { properties: "y"; duration: Theme.dur(120); easing.type: Easing.OutCubic }
+            NumberAnimation { properties: "y"; duration: Theme.dur(120); easing.type: Theme.ease }
         }
 
         delegate: Item {
@@ -120,16 +120,16 @@ Column {
                 visible: row.header
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 5
-                spacing: 8
+                anchors.bottomMargin: Theme.sp(5)
+                spacing: Theme.spaceL
 
                 Text {
-                    text: root.sectionTitles[row.key] || row.key
+                    text: Theme.heading(root.sectionTitles[row.key] || row.key)
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontSmall
-                    font.bold: true
-                    font.letterSpacing: 1
+                    font.bold: Theme.headingBold
+                    font.letterSpacing: Theme.headingSpacing
                 }
 
                 Text {
@@ -149,10 +149,10 @@ Column {
                 // lifted look while held, so it's clear which row is moving
                 Rectangle {
                     anchors.fill: parent
-                    anchors.leftMargin: -4
-                    anchors.rightMargin: -4
+                    anchors.leftMargin: -Theme.spaceS
+                    anchors.rightMargin: -Theme.spaceS
                     radius: Theme.radiusInner
-                    color: row.dragging ? Theme.overlay : "transparent"
+                    color: row.dragging ? Theme.hoverFill : "transparent"
                     border.width: row.dragging ? 1 : 0
                     border.color: Theme.muted
                 }
@@ -161,13 +161,13 @@ Column {
                     id: handle
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 14
+                    width: Theme.fs(14)
                     height: parent.height
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰇝"
-                        color: row.dragging ? Theme.bright
+                        color: row.dragging ? Theme.textStrong
                             : grip.containsMouse ? Theme.text : Theme.muted
                         font.family: Theme.fontIcon
                         font.pixelSize: Theme.fontIconSize
@@ -201,15 +201,16 @@ Column {
                     z: 2
                     anchors.right: parent.right
                     // clears the FlyoutAction's switch, which sits flush right
-                    anchors.rightMargin: 26 + 8
+                    anchors.rightMargin: Theme.fs(26) + Theme.spaceL
+
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 18
-                    height: 18
+                    width: Theme.fs(18)
+                    height: Theme.controlSize
 
                     Text {
                         anchors.centerIn: parent
                         text: pin.pinned ? "󰐃" : "󰤰"
-                        color: pin.pinned ? Theme.bright
+                        color: pin.pinned ? Theme.textStrong
                             : pinMouse.containsMouse ? Theme.text : Theme.muted
                         font.family: Theme.fontIcon
                         font.pixelSize: Theme.fontIconSize
@@ -226,7 +227,7 @@ Column {
 
                 FlyoutAction {
                     anchors.left: handle.right
-                    anchors.leftMargin: 4
+                    anchors.leftMargin: Theme.spaceS
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     icon: row.info.icon

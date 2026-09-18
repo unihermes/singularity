@@ -1,9 +1,10 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/AppearanceSync.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/AppearanceSync.qml
 //
 // Carries the Appearance page's settings out to the apps that draw the same
-// chrome as the bar -- corner radius, the palette (grayscale or wallpaper)
-// and font size -- so the launcher and the notifications change with it.
+// chrome as the bar -- corner radius, the palette (the look's or the
+// wallpaper's), font, font size and frame style -- so the launcher and the
+// notifications change with it.
 //
 // Everything lands in ~/.local/state/neutrino/, never in ~/.config: those
 // directories are stow links into the repo, and generated files there would
@@ -11,8 +12,10 @@
 //
 //   wofi.css    -- wofi's own stylesheet, rewritten. wofi parses CSS from a
 //                  string, so it can't @import anything; hyprland.lua
-//                  launches it with --style pointed here. Every grayscale
-//                  ramp hex becomes the current colour for that role, and
+//                  launches it with --style pointed here. Every hex from the
+//                  reference look's ramp (Looks.reference -- the one the
+//                  template is written in) becomes the current colour for
+//                  that role, the font family becomes the current one, and
 //                  values tagged `@radius` / `@font` are recomputed.
 //   swaync.css  -- CSS variables only. swaync loads its stylesheet from a
 //                  path, so its style.css @imports this and uses var().
@@ -20,6 +23,7 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import "Looks.js" as Looks
 
 Scope {
     id: root
@@ -30,6 +34,16 @@ Scope {
                                       "border", "muted", "subtext", "text", "bright"]
 
     function hex(c) { return String(c).substring(0, 7) }
+    function rgba(c, a) {
+        return "rgba(" + Math.round(c.r * 255) + ", " + Math.round(c.g * 255) + ", "
+            + Math.round(c.b * 255) + ", " + a + ")"
+    }
+    // Replace the value just before a `/* @tag */` comment, keeping the tag
+    // so the next render finds it again.
+    function tagged(src, tag, valuePattern, value) {
+        var re = new RegExp("(" + valuePattern + ")(\\s*)\\/\\*\\s*@" + tag + "\\s*\\*\\/", "g")
+        return src.replace(re, (m, v, sp) => value + sp + "/* @" + tag + " */")
+    }
     function px(offset) { return Math.max(0, Theme.radius - offset) + "px" }
 
     function renderWofi() {
@@ -39,19 +53,42 @@ Scope {
             (m, sp, off) => px(parseInt(off || "0")) + sp + "/* @radius" + (off ? "-" + off : "") + " */")
         out = out.replace(/(\d+)px(\s*)\/\*\s*@font\s*\*\//g,
             (m, n, sp) => Theme.fs(parseInt(n)) + "px" + sp + "/* @font */")
+        var ref = Looks.looks[Looks.reference].palette
         out = out.replace(/#[0-9a-fA-F]{6}\b/g, m => {
             var lower = m.toLowerCase()
             for (var i = 0; i < roleNames.length; i++)
-                if (Theme.gray[roleNames[i]] === lower) return hex(Theme[roleNames[i]])
+                if (ref[roleNames[i]] === lower) return hex(Theme[roleNames[i]])
             return m
         })
+        out = out.replace(/font-family:\s*"[^"]*"/g, 'font-family: "' + Theme.fontText + '"')
+        out = tagged(out, "frame", "#[0-9a-fA-F]{6}",
+            Theme.frameDouble ? hex(Theme.frameStroke) : hex(Theme.panel))
+        out = tagged(out, "accent", "#[0-9a-fA-F]{6}", hex(Theme.accent))
+        out = tagged(out, "focus", "#[0-9a-fA-F]{6}", hex(Theme.strokeFocus))
+        out = tagged(out, "hover", "#[0-9a-fA-F]{6}", hex(Theme.hoverFill))
+        out = tagged(out, "panel-bg", "#[0-9a-fA-F]{6}|rgba\\([^)]*\\)", rgba(Theme.panel, Theme.panelOpacity))
+        out = tagged(out, "bw", "\\d+px", Theme.borderWidth + "px")
         wofiOut.setText(out)
     }
 
     function renderSwaync() {
         var lines = [":root {",
             "  --neutrino-radius: " + px(0) + ";",
-            "  --neutrino-radius-inner: " + px(2) + ";"]
+            "  --neutrino-radius-inner: " + px(2) + ";",
+            // the inner stroke's colour, or nothing when the frame is single
+            "  --n-frame: " + (Theme.frameDouble ? hex(Theme.frameStroke) : hex(Theme.panel)) + ";",
+            '  --n-font: "' + Theme.fontText + '";',
+            // the look's structure: its hue, stroke weight, glassiness,
+            // meter colour and heading style
+            "  --n-accent: " + hex(Theme.accent) + ";",
+            "  --n-focus: " + hex(Theme.strokeFocus) + ";",
+            "  --n-meter: " + hex(Theme.meterFill) + ";",
+            "  --n-bw: " + Theme.borderWidth + "px;",
+            "  --n-panel-bg: " + rgba(Theme.panel, Theme.panelOpacity) + ";",
+            "  --n-heading: " + hex(Theme.headingColor) + ";",
+            "  --n-heading-weight: " + (Theme.headingBold ? "bold" : "normal") + ";",
+            "  --n-heading-spacing: " + Theme.headingSpacing + "px;",
+            "  --n-heading-case: " + (Theme.headingUpper ? "uppercase" : "none") + ";"]
         for (var i = 0; i < roleNames.length; i++)
             lines.push("  --n-" + roleNames[i] + ": " + hex(Theme[roleNames[i]]) + ";")
         // swaync's own sheet wants this one as a bare "r, g, b" triple
@@ -81,6 +118,12 @@ Scope {
         function onRadiusChanged() { debounce.restart() }
         function onRolesChanged() { debounce.restart() }
         function onFontScaleChanged() { debounce.restart() }
+        function onFontTextChanged() { debounce.restart() }
+        function onFrameDoubleChanged() { debounce.restart() }
+        function onLookChanged() { debounce.restart() }
+        function onAccentChanged() { debounce.restart() }
+
+
     }
 
 

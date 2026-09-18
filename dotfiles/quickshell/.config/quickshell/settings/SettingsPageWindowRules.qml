@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/SettingsPageWindowRules.qml
+// ~/.config/quickshell/settings/SettingsPageWindowRules.qml
 //
 // Every per-app and popout window rule: float and size, workspace,
 // fullscreen and pin.
@@ -27,7 +27,7 @@ SettingsPage {
     id: page
 
     title: "Window Rules"
-    description: "How each app's windows and popouts open, saved to ~/.config/singularity/window-rules.json, and which layout each workspace uses. Rules apply to windows opened after a change."
+    description: "Which layout each workspace uses, and how each app's windows and popouts open. Saved to window-rules.json and workspace-layouts.json in ~/.config/singularity. Rules apply to windows opened after a change."
 
     readonly property string rulesPath:
         (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/window-rules.json"
@@ -258,7 +258,7 @@ SettingsPage {
 
             Row {
                 anchors.right: parent.right
-                spacing: 4
+                spacing: Theme.spaceS
 
                 Repeater {
                     model: [{ id: "", text: "Follow SUPER+M" }, { id: "monocle", text: "Monocle" },
@@ -279,14 +279,14 @@ SettingsPage {
 
     Item {
         width: parent.width
-        height: Theme.fs(26)
+        height: Theme.rowHeightTall
 
         FlyoutInput {
             id: classInput
             anchors.left: parent.left
-            anchors.leftMargin: 4
+            anchors.leftMargin: Theme.spaceS
             anchors.right: addChip.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.spaceXl
             anchors.verticalCenter: parent.verticalCenter
             echoPassword: false
             placeholder: "window class, e.g. org.pwmt.zathura"
@@ -304,8 +304,8 @@ SettingsPage {
 
     Text {
         readonly property int n: page.openCount({ class: page.typed })
-        x: 4
-        width: parent.width - 8
+        x: Theme.spaceS
+        width: parent.width - Theme.spaceS * 2
         visible: page.typed !== ""
         text: n > 0 ? n + " open window" + (n === 1 ? "" : "s") + " match"
             : "No open windows match -- the class has to be exact"
@@ -322,7 +322,7 @@ SettingsPage {
         Flow {
             anchors.right: parent.right
             width: parent.width
-            spacing: 4
+            spacing: Theme.spaceS
             layoutDirection: Qt.RightToLeft
 
             Repeater {
@@ -336,10 +336,10 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: 8 }
+    Item { width: 1; height: Theme.spaceL }
 
     Text {
-        x: 4
+        x: Theme.spaceS
         visible: page.rules.length === 0
         text: "No rules yet."
         color: Theme.subtext
@@ -358,7 +358,7 @@ SettingsPage {
             readonly property bool floats: rule.float || rule.pin
 
             width: parent.width
-            spacing: 6
+            spacing: Theme.spaceM
 
             Item {
                 width: parent.width
@@ -384,8 +384,8 @@ SettingsPage {
             // what the rule actually matches, whenever the heading is a label
             // or a pattern rather than the plain class
             Text {
-                x: 4
-                width: parent.width - 8
+                x: Theme.spaceS
+                width: parent.width - Theme.spaceS * 2
                 visible: text !== ""
                 text: {
                     var r = ruleCol.rule
@@ -407,7 +407,7 @@ SettingsPage {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 4
+                    spacing: Theme.spaceS
                     Repeater {
                         model: [{ label: "Auto", value: false }, { label: "Float", value: true }]
                         FlyoutChip {
@@ -428,7 +428,7 @@ SettingsPage {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 4
+                    spacing: Theme.spaceS
                     Repeater {
                         // the presets, plus whatever the file holds if it's none of them
                         model: page.sizes.concat(page.sizes.indexOf(ruleCol.rule.size || "") < 0 ? [ruleCol.rule.size] : [])
@@ -448,7 +448,7 @@ SettingsPage {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 4
+                    spacing: Theme.spaceS
                     Repeater {
                         model: [0, 1, 2, 3, 4, 5]
                         FlyoutChip {
@@ -467,7 +467,7 @@ SettingsPage {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 4
+                    spacing: Theme.spaceS
                     Repeater {
                         model: [false, true]
                         FlyoutChip {
@@ -486,7 +486,7 @@ SettingsPage {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 4
+                    spacing: Theme.spaceS
                     Repeater {
                         model: [false, true]
                         FlyoutChip {
@@ -499,7 +499,7 @@ SettingsPage {
                 }
             }
 
-            Item { width: 1; height: 8 }
+            Item { width: 1; height: Theme.spaceL }
         }
     }
 }

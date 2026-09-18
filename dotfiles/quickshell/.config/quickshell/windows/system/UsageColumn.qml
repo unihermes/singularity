@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/system/UsageColumn.qml
+// ~/.config/quickshell/windows/system/UsageColumn.qml
 //
 // The System window's left column: live usage gauges, per-core bars and
 // the 60s CPU graph, then the network interface and throughput.
@@ -16,7 +16,7 @@ Column {
 
     required property var stats
 
-    spacing: 6
+    spacing: Theme.spaceM
 
     FlyoutHeading { text: "USAGE" }
 
@@ -29,14 +29,14 @@ Column {
     // one bar per core, under the CPU gauge's bar
     Item {
         width: parent.width
-        height: 26
+        height: Theme.rowHeightTall
 
         Row {
             id: coreRow
-            x: 48
-            width: parent.width - 48 - 90 - 12
+            x: Theme.fs(48)
+            width: parent.width - Theme.fs(48) - Theme.fs(90) - Theme.spaceXl
             height: parent.height
-            spacing: 3
+            spacing: Theme.sp(3)
             readonly property int n: Math.max(1, column.stats.cores.length)
 
             Repeater {
@@ -46,20 +46,21 @@ Column {
                     required property var modelData
                     width: (coreRow.width - (coreRow.n - 1) * coreRow.spacing) / coreRow.n
                     height: coreRow.height
-                    radius: 2
-                    color: Theme.base
-                    border.width: 1
-                    border.color: Theme.surface
+                    radius: Math.min(2, Theme.radius)
+                    color: Theme.meterTrack
+                    border.width: Theme.borderWidth
+                    border.color: Theme.meterStroke
 
                     Rectangle {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
                         anchors.right: parent.right
                         height: Math.max(modelData > 0 ? 2 : 0, parent.height * modelData)
-                        radius: 2
-                        color: Theme.text
+                        radius: Math.min(2, Theme.radius)
+                        color: Theme.meterFill
 
-                        Behavior on height { NumberAnimation { duration: Theme.dur(250); easing.type: Easing.OutCubic } }
+
+                        Behavior on height { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
                     }
                 }
             }
@@ -68,7 +69,7 @@ Column {
         Text {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 90
+            width: Theme.fs(90)
             horizontalAlignment: Text.AlignRight
             // the busiest core, since an average hides a single
             // pinned thread
@@ -117,7 +118,7 @@ Column {
         critical: column.stats.tempC >= 90
     }
 
-    Item { width: 1; height: 4 }
+    Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "NETWORK" }
 
     InfoRow { label: "Interface"; value: column.stats.iface !== "" ? column.stats.iface : "offline" }

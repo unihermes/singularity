@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/system/SortButton.qml
+// ~/.config/quickshell/windows/system/SortButton.qml
 //
 // One of the process list's CPU / MEM sort toggles.
 
@@ -12,25 +12,26 @@ Item {
     property bool on: false
     signal clicked()
 
-    width: sbText.implicitWidth + 12
-    height: 18
+    width: sbText.implicitWidth + Theme.spaceXl
+    height: Theme.controlSize
 
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: sb.on ? Theme.overlay : (sbMouse.containsMouse ? Theme.surface : "transparent")
-        border.width: 1
-        border.color: sb.on ? Theme.muted : "transparent"
+        color: sb.on ? Theme.selectedFill : (sbMouse.containsMouse ? Theme.hoverFillSoft : "transparent")
+        border.width: Theme.borderWidth
+        border.color: sb.on ? Theme.selectedStroke : "transparent"
     }
 
     Text {
         id: sbText
         anchors.centerIn: parent
         text: sb.label
-        color: sb.on ? Theme.bright : Theme.subtext
+        color: sb.on ? Theme.textStrong : Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontSmall
-        font.bold: true
+        font.bold: Theme.headingBold
+
     }
 
     MouseArea {

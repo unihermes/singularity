@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsField.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsField.qml
 //
 // One setting on a Settings page: a label with an optional hint under it on
 // the left, and whatever controls it on the right (chips, a stepper's
@@ -15,16 +15,17 @@ Item {
     property string label: ""
     property string hint: ""
     // width of the label column; controls get the rest
-    property int labelWidth: 240
+    property int labelWidth: Theme.fs(240)
 
     default property alias control: slot.data
 
     width: parent ? parent.width : 0
-    implicitHeight: Math.max(Theme.fs(28), labels.implicitHeight + 6, slot.childrenRect.height + 6)
+    implicitHeight: Math.max(Theme.fieldHeight, labels.implicitHeight + Theme.spaceM, slot.childrenRect.height + Theme.spaceM)
 
     Column {
         id: labels
-        width: root.labelWidth - 12
+        width: root.labelWidth - Theme.spaceXl
+
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 

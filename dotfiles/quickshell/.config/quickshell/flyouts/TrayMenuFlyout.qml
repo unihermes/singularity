@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/TrayMenuFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/TrayMenuFlyout.qml
 //
 // The system tray's own D-Bus menu, drawn as flyout rows so it matches
 // everything else rather than popping a native Qt menu. Submenus drill down

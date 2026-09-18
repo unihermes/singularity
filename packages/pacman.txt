@@ -1,9 +1,6 @@
 # Repo (native) packages. One per line, # comments allowed.
 # Regenerate from a known-good system with:  pacman -Qqen > packages/pacman.txt
 
-# networking
-networkmanager
-
 # base tooling
 neovim
 alacritty
@@ -51,10 +48,18 @@ qt6ct
 # does DNS. networkd and resolved ship with systemd, so only iwd is listed.
 iwd
 
-# audio
+# audio + camera (libcamera drives the IPU6 webcam through pipewire)
 pipewire
 pipewire-pulse
 wireplumber
+pipewire-libcamera
+libcamera-ipa
+libcamera-tools
+# virtual webcam for apps that skip pipewire (Discord); see install.sh
+gst-plugin-libcamera
+gst-plugins-good
+linux-headers
+v4l2loopback-dkms
 pavucontrol
 
 # file manager + its extras
@@ -104,6 +109,20 @@ gnome-themes-extra
 # fonts
 ttf-ubuntu-nerd
 ttf-ubuntu-mono-nerd
+otf-commit-mono-nerd
+otf-geist-mono-nerd
+ttf-cascadia-code-nerd
+ttf-firacode-nerd
+ttf-hack-nerd
+ttf-iosevka-nerd
+ttf-ibmplex-mono-nerd
+ttf-jetbrains-mono-nerd
+ttf-martian-mono-nerd
+ttf-mononoki-nerd
+ttf-sourcecodepro-nerd
+ttf-space-mono-nerd
+ttf-terminus-nerd
+ttf-victor-mono-nerd
 noto-fonts
 noto-fonts-emoji
 
@@ -133,6 +152,3 @@ power-profiles-daemon
 
 # shell prompt
 starship
-
-# layout-toggle.sh and maximize-focused.sh read hyprctl's JSON with it
-python

@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/NetworkFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/NetworkFlyout.qml
 //
 // The iwd network list and passphrase prompt. The state and the iwctl
 // calls live in services/Network.qml.
@@ -24,7 +24,7 @@ FlyoutPanel {
         Network.connect(ssid, passphrase)
         pendingSsid = ""
         pass.text = ""
-        scope.openFlyout = ""
+        // stays open so the row can show it connecting
     }
 
     FlyoutHeading {
@@ -78,7 +78,10 @@ FlyoutPanel {
             label: modelData.ssid
             // "key" marks the ones that will ask for a passphrase
             // rather than connecting straight away
+            readonly property bool connecting: Network.connecting === modelData.ssid
+            busy: connecting
             trailing: {
+                if (connecting) return "connecting"
                 if (modelData.connected) return ""
                 if (!modelData.known && modelData.security !== "open") return "key"
                 return "•".repeat(Math.max(1, modelData.bars))
@@ -89,7 +92,7 @@ FlyoutPanel {
             actionHint: "Forget " + modelData.ssid + "?"
             onAction: Network.forget(modelData.ssid)
             onActivated: {
-                if (modelData.connected) return
+                if (modelData.connected || connecting) return
                 // a known or open network needs no passphrase: iwd
                 // either has the key already or there is none
                 if (modelData.known || modelData.security === "open") {

@@ -1,0 +1,558 @@
+{
+    "soft": {
+        "name": "Soft",
+        "description": "Cool slate, solid chips, round corners, room to breathe",
+        "palette": {
+            "base": "#0f1013",
+            "bar": "#15161a",
+            "panel": "#181a1e",
+            "surface": "#1f2126",
+            "overlay": "#292b32",
+            "border": "#33363e",
+            "muted": "#4f535d",
+            "subtext": "#80858f",
+            "text": "#c6c9d0",
+            "bright": "#eceef3"
+        },
+        "good": "#84a38a",
+        "alert": "#b47f80",
+        "heading": {
+            "upper": false,
+            "bold": false,
+            "spacing": 0.5,
+            "rule": true,
+            "accent": false
+        },
+        "scrim": 0.35,
+        "settings": {
+            "radius": 10,
+            "barHeight": 36,
+            "moduleGap": 4,
+            "barOpacity": 92,
+            "frameStyle": "single",
+            "density": "roomy",
+            "fontFamily": "JetBrainsMono Nerd Font",
+            "moduleStyle": "filled",
+            "barStyle": "full"
+        }
+    },
+    "paper": {
+        "name": "Paper",
+        "description": "Light and warm, terracotta accents, a floating bar",
+        "palette": {
+            "base": "#dcd5c8",
+            "bar": "#f3efe7",
+            "panel": "#f8f5ef",
+            "surface": "#eee9df",
+            "overlay": "#e4ddd0",
+            "border": "#cfc6b6",
+            "muted": "#a59b8a",
+            "subtext": "#6f675a",
+            "text": "#39352e",
+            "bright": "#171512"
+        },
+        "accent": "#b8532b",
+        "meterAccent": true,
+        "good": "#4c7a4f",
+        "alert": "#b3402f",
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0,
+            "rule": false,
+            "accent": true
+        },
+        "scrim": 0.25,
+        "settings": {
+            "radius": 8,
+            "barHeight": 34,
+            "moduleGap": 4,
+            "barOpacity": 96,
+            "frameStyle": "single",
+            "density": "normal",
+            "fontFamily": "BlexMono Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "floating"
+        }
+    },
+    "frost": {
+        "name": "Frost",
+        "description": "Arctic blue-grey, pill chips, translucent glassy panels",
+        "palette": {
+            "base": "#1c2028",
+            "bar": "#232833",
+            "panel": "#282e3a",
+            "surface": "#2f3644",
+            "overlay": "#39414f",
+            "border": "#434c5e",
+            "muted": "#5b667a",
+            "subtext": "#8f9aae",
+            "text": "#d8dee9",
+            "bright": "#eceff4"
+        },
+        "accent": "#88c0d0",
+        "meterAccent": true,
+        "good": "#a3be8c",
+        "alert": "#bf616a",
+        "panelOpacity": 0.9,
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0.3,
+            "rule": false,
+            "accent": true
+        },
+        "scrim": 0.3,
+        "settings": {
+            "radius": 14,
+            "barHeight": 36,
+            "moduleGap": 4,
+            "barOpacity": 88,
+            "frameStyle": "single",
+            "density": "roomy",
+            "fontFamily": "GeistMono Nerd Font",
+            "moduleStyle": "pill",
+            "barStyle": "floating"
+        }
+    },
+    "win95dark": {
+        "name": "Win95 Dark",
+        "description": "Chiselled 3D chrome, navy accent, square and chunky",
+        "palette": {
+            "base": "#141417",
+            "bar": "#26262b",
+            "panel": "#2c2c32",
+            "surface": "#232328",
+            "overlay": "#3a3a42",
+            "border": "#0c0c0e",
+            "muted": "#57575f",
+            "subtext": "#9a9aa4",
+            "text": "#d6d6da",
+            "bright": "#ffffff"
+        },
+        "accent": "#2a52a0",
+        "meterAccent": true,
+        "good": "#3f8f4a",
+        "alert": "#b33a3a",
+        "borderWidth": 2,
+        "bevel": {
+            "light": "#6e6e78",
+            "dark": "#050506"
+        },
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0,
+            "rule": true,
+            "accent": false
+        },
+        "scrim": 0.5,
+        "settings": {
+            "radius": 0,
+            "barHeight": 30,
+            "moduleGap": 0,
+            "barOpacity": 100,
+            "frameStyle": "bevel",
+            "density": "compact",
+            "fontFamily": "Mononoki Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full"
+        }
+    },
+    "platinum": {
+        "name": "Platinum",
+        "description": "Mac OS 9: light grey bevels, lavender highlight, compact",
+        "palette": {
+            "base": "#a8a8a8",
+            "bar": "#dddddd",
+            "panel": "#e3e3e3",
+            "surface": "#d2d2d2",
+            "overlay": "#ccccf0",
+            "border": "#7a7a7a",
+            "muted": "#8e8e8e",
+            "subtext": "#555555",
+            "text": "#1f1f1f",
+            "bright": "#000000"
+        },
+        "accent": "#5555c8",
+        "meterAccent": true,
+        "good": "#2f7d32",
+        "alert": "#c62828",
+        "bevel": {
+            "light": "#ffffff",
+            "dark": "#6f6f6f"
+        },
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0,
+            "rule": true,
+            "accent": false
+        },
+        "scrim": 0.3,
+        "settings": {
+            "radius": 2,
+            "barHeight": 30,
+            "moduleGap": 3,
+            "barOpacity": 100,
+            "frameStyle": "bevel",
+            "density": "compact",
+            "fontFamily": "CommitMono Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full"
+        }
+    },
+    "nextstep": {
+        "name": "NeXTSTEP",
+        "description": "Mid-grey panels, hard black-and-white bevels, no colour at all",
+        "palette": {
+            "base": "#858585",
+            "bar": "#9a9a9a",
+            "panel": "#aaaaaa",
+            "surface": "#bcbcbc",
+            "overlay": "#ffffff",
+            "border": "#000000",
+            "muted": "#6a6a6a",
+            "subtext": "#333333",
+            "text": "#161616",
+            "bright": "#000000"
+        },
+        "good": "#1f5f1f",
+        "alert": "#8a0000",
+        "borderWidth": 2,
+        "bevel": {
+            "light": "#ffffff",
+            "dark": "#000000"
+        },
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0,
+            "rule": false,
+            "accent": false
+        },
+        "scrim": 0.45,
+        "settings": {
+            "radius": 0,
+            "barHeight": 30,
+            "moduleGap": 2,
+            "barOpacity": 100,
+            "frameStyle": "bevel",
+            "density": "normal",
+            "fontFamily": "SauceCodePro Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full"
+        }
+    },
+    "phosphor": {
+        "name": "Phosphor",
+        "description": "Amber CRT: every role one hue, double-boxed like a terminal UI",
+        "palette": {
+            "base": "#000000",
+            "bar": "#070401",
+            "panel": "#0a0602",
+            "surface": "#141005",
+            "overlay": "#221906",
+            "border": "#3a2a0a",
+            "muted": "#6b4f16",
+            "subtext": "#b07f22",
+            "text": "#f0b04a",
+            "bright": "#ffd98a"
+        },
+        "accent": "#ffb000",
+        "meterAccent": true,
+        "good": "#ffd060",
+        "alert": "#ff5a1f",
+        "heading": {
+            "upper": true,
+            "bold": true,
+            "spacing": 2,
+            "rule": true,
+            "accent": true
+        },
+        "scrim": 0.6,
+        "settings": {
+            "radius": 0,
+            "barHeight": 28,
+            "moduleGap": 2,
+            "barOpacity": 100,
+            "frameStyle": "double",
+            "density": "compact",
+            "fontFamily": "Terminess Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full"
+        }
+    },
+    "eink": {
+        "name": "E-ink",
+        "description": "Black on white, hairline strokes, no motion at all",
+        "palette": {
+            "base": "#d6d6d6",
+            "bar": "#ffffff",
+            "panel": "#ffffff",
+            "surface": "#f0f0f0",
+            "overlay": "#e2e2e2",
+            "border": "#000000",
+            "muted": "#9a9a9a",
+            "subtext": "#555555",
+            "text": "#1a1a1a",
+            "bright": "#000000"
+        },
+        "good": "#4a4a4a",
+        "alert": "#000000",
+        "motion": 0,
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0,
+            "rule": true,
+            "accent": false
+        },
+        "scrim": 0.15,
+        "settings": {
+            "radius": 4,
+            "barHeight": 34,
+            "moduleGap": 4,
+            "barOpacity": 100,
+            "frameStyle": "single",
+            "density": "roomy",
+            "fontFamily": "BlexMono Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full"
+        }
+    },
+    "braun": {
+        "name": "Braun",
+        "description": "Warm off-white, soft pills, one orange mark for what's active",
+        "palette": {
+            "base": "#d8d4cc",
+            "bar": "#efece6",
+            "panel": "#f4f2ee",
+            "surface": "#e8e5df",
+            "overlay": "#dedad2",
+            "border": "#c2bdb3",
+            "muted": "#9d978c",
+            "subtext": "#6b665e",
+            "text": "#2e2c29",
+            "bright": "#111111"
+        },
+        "accent": "#e8590c",
+        "meterAccent": false,
+        "good": "#5f7f4f",
+        "alert": "#c43d2b",
+        "heading": {
+            "upper": true,
+            "bold": false,
+            "spacing": 1.5,
+            "rule": false,
+            "accent": false
+        },
+        "scrim": 0.2,
+        "settings": {
+            "radius": 12,
+            "barHeight": 34,
+            "moduleGap": 6,
+            "barOpacity": 100,
+            "frameStyle": "none",
+            "density": "roomy",
+            "fontFamily": "GeistMono Nerd Font",
+            "moduleStyle": "pill",
+            "barStyle": "floating"
+        }
+    },
+    "blueprint": {
+        "name": "Blueprint",
+        "description": "Navy ground, cyan hairlines, wide-spaced drafting headings",
+        "palette": {
+            "base": "#0a1f3d",
+            "bar": "#0d2547",
+            "panel": "#0f2a52",
+            "surface": "#14335f",
+            "overlay": "#1b3f72",
+            "border": "#3d6fa8",
+            "muted": "#4f7fb5",
+            "subtext": "#8fb4dc",
+            "text": "#d4e6fa",
+            "bright": "#ffffff"
+        },
+        "accent": "#6fd3ff",
+        "meterAccent": true,
+        "good": "#7fe0a8",
+        "alert": "#ff7a6b",
+        "heading": {
+            "upper": true,
+            "bold": true,
+            "spacing": 3,
+            "rule": true,
+            "accent": true
+        },
+        "scrim": 0.45,
+        "settings": {
+            "radius": 0,
+            "barHeight": 32,
+            "moduleGap": 4,
+            "barOpacity": 100,
+            "frameStyle": "double",
+            "density": "normal",
+            "fontFamily": "SpaceMono Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "floating"
+        }
+    },
+    "gruvbox": {
+        "name": "Gruvbox",
+        "description": "Retro warm dark, cream text, yellow accent",
+        "palette": {
+            "base": "#1d2021",
+            "bar": "#282828",
+            "panel": "#32302f",
+            "surface": "#3c3836",
+            "overlay": "#504945",
+            "border": "#665c54",
+            "muted": "#7c6f64",
+            "subtext": "#a89984",
+            "text": "#ebdbb2",
+            "bright": "#fbf1c7"
+        },
+        "accent": "#fabd2f",
+        "meterAccent": true,
+        "good": "#b8bb26",
+        "alert": "#fb4934",
+        "heading": {
+            "upper": true,
+            "bold": true,
+            "spacing": 1,
+            "rule": true,
+            "accent": true
+        },
+        "scrim": 0.45,
+        "settings": {
+            "radius": 4,
+            "barHeight": 34,
+            "moduleGap": 3,
+            "barOpacity": 100,
+            "frameStyle": "single",
+            "density": "normal",
+            "fontFamily": "UbuntuMono Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full"
+        }
+    },
+    "kanagawa": {
+        "name": "Kanagawa",
+        "description": "Ink-wash indigo, parchment text, double frames",
+        "palette": {
+            "base": "#16161d",
+            "bar": "#1f1f28",
+            "panel": "#24242f",
+            "surface": "#2a2a37",
+            "overlay": "#363646",
+            "border": "#54546d",
+            "muted": "#727169",
+            "subtext": "#938aa9",
+            "text": "#dcd7ba",
+            "bright": "#f2ecbc"
+        },
+        "accent": "#7e9cd8",
+        "meterAccent": true,
+        "good": "#98bb6c",
+        "alert": "#ff5d62",
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0.5,
+            "rule": true,
+            "accent": false
+        },
+        "scrim": 0.45,
+        "settings": {
+            "radius": 6,
+            "barHeight": 34,
+            "moduleGap": 2,
+            "barOpacity": 100,
+            "frameStyle": "double",
+            "density": "normal",
+            "fontFamily": "CommitMono Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full"
+        }
+    },
+    "tokyonight": {
+        "name": "Tokyo Night",
+        "description": "Deep blue night, periwinkle accent, solid floating chips",
+        "palette": {
+            "base": "#16161e",
+            "bar": "#1a1b26",
+            "panel": "#1f2335",
+            "surface": "#24283b",
+            "overlay": "#292e42",
+            "border": "#3b4261",
+            "muted": "#565f89",
+            "subtext": "#737aa2",
+            "text": "#c0caf5",
+            "bright": "#e6ebff"
+        },
+        "accent": "#7aa2f7",
+        "meterAccent": true,
+        "good": "#9ece6a",
+        "alert": "#f7768e",
+        "heading": {
+            "upper": true,
+            "bold": true,
+            "spacing": 1.5,
+            "rule": false,
+            "accent": true
+        },
+        "scrim": 0.4,
+        "settings": {
+            "radius": 10,
+            "barHeight": 34,
+            "moduleGap": 4,
+            "barOpacity": 92,
+            "frameStyle": "single",
+            "density": "normal",
+            "fontFamily": "JetBrainsMono Nerd Font",
+            "moduleStyle": "filled",
+            "barStyle": "floating"
+        }
+    },
+    "nordlight": {
+        "name": "Nord Light",
+        "description": "Snow Storm greys, frost-blue accent, light and airy",
+        "palette": {
+            "base": "#c9d0dc",
+            "bar": "#e5e9f0",
+            "panel": "#eceff4",
+            "surface": "#e1e6ee",
+            "overlay": "#d8dee9",
+            "border": "#c0c8d6",
+            "muted": "#9aa5b8",
+            "subtext": "#5e6a80",
+            "text": "#3b4252",
+            "bright": "#2e3440"
+        },
+        "accent": "#5e81ac",
+        "meterAccent": true,
+        "good": "#5f8a4a",
+        "alert": "#bf616a",
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0.3,
+            "rule": false,
+            "accent": true
+        },
+        "scrim": 0.25,
+        "settings": {
+            "radius": 8,
+            "barHeight": 34,
+            "moduleGap": 4,
+            "barOpacity": 96,
+            "frameStyle": "single",
+            "density": "normal",
+            "fontFamily": "FiraCode Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "floating"
+        }
+    }
+}

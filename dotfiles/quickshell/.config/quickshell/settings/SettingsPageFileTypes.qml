@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPageFileTypes.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPageFileTypes.qml
 //
 // Which app opens what. The common kinds of file are grouped (a browser is
 // http, https and html at once; images are a handful of types), and every
@@ -199,7 +199,7 @@ SettingsPage {
         readonly property var apps: page.candidates(types)
         readonly property string chosen: page.groupCurrent(types)
 
-        labelWidth: 200
+        labelWidth: Theme.fs(200)
         hint: chosen === "mixed" ? "Mixed -- pick one to set them all"
             : chosen === "" ? "Nothing set"
             : page.names[chosen] ? page.appName(chosen)
@@ -208,7 +208,7 @@ SettingsPage {
         Flow {
             anchors.right: parent.right
             width: parent.width
-            spacing: 4
+            spacing: Theme.spaceS
 
             Repeater {
                 model: hr.apps
@@ -223,7 +223,7 @@ SettingsPage {
 
             Text {
                 visible: hr.apps.length === 0
-                height: Theme.fs(20)
+                height: Theme.chipHeight
                 verticalAlignment: Text.AlignVCenter
                 text: page.loaded ? "No installed app declares this" : "Reading apps…"
                 color: Theme.muted
@@ -232,6 +232,8 @@ SettingsPage {
             }
         }
     }
+
+    FlyoutHeading { text: "COMMON" }
 
     Repeater {
         model: page.groups
@@ -242,7 +244,7 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: 6 }
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "EVERY TYPE" }
 
     FlyoutInput {
@@ -266,7 +268,7 @@ SettingsPage {
         visible: page.query.trim() !== "" && page.allTypes.length === 0
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        topPadding: 8
+        topPadding: Theme.spaceL
         text: "No installed app declares a type matching \"" + page.query.trim() + "\""
         color: Theme.subtext
         font.family: Theme.fontText

@@ -1,19 +1,21 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsWindow.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/windows/SettingsWindow.qml
 //
 // Settings: a sidebar of sections and a pane showing one of them. Changes
 // apply as they're made -- there is no Save -- and each page writes straight
 // to the thing it controls (mimeapps.list, hyprland.lua, hypridle.conf,
-// pipewire, swaync) rather than to a store of its own. Appearance stays in
-// the Control Centre, where it already lives; its entry here opens it.
+// pipewire, swaync) rather than to a store of its own -- except Appearance,
+// whose shell half is Settings.qml, shared with the Control Centre's
+// Appearance page.
 //
 // Its own FloatingWindow rather than a CentredWindow: that one is a single
 // content-sized Column, and a fixed-size sidebar + pane doesn't fit it. The
 // chrome is the same WindowChrome.qml.
 //
-// No memory: every open starts on File Types, and the page is a Loader that
-// only exists while the window is visible, so nothing a page read or ran
-// survives a close -- and nothing runs at all while Settings is shut.
+// No memory: every open starts on Appearance (or the page open() is asked
+// for), and the page is a Loader that only exists while the window is
+// visible, so nothing a page read or ran survives a close -- and nothing runs
+// at all while Settings is shut.
 //
 // Floating and centring come from the "quickshell-windows" rule in
 // hyprland.lua, as for System and Keybinds.
@@ -26,56 +28,48 @@ import "../settings"
 FloatingWindow {
     id: root
 
-    readonly property string defaultPage: "filetypes"
+    readonly property string defaultPage: "appearance"
     property string currentPage: defaultPage
 
-    readonly property int sidebarWidth: 190
+    // scaled with Font Size, since the pages' own columns are
+    readonly property int sidebarWidth: Theme.fs(190)
     // Keybinds' list is laid out for 720; the page frame adds its margin
-    readonly property int paneWidth: 740
-    readonly property int paneHeight: 600
-
-    // The Appearance entry: shell.qml opens the Control Centre on that page,
-    // on the focused screen, since the Control Centre is per screen and
-    // this window isn't.
-    signal appearanceRequested()
+    readonly property int paneWidth: Theme.fs(740)
+    readonly property int paneHeight: Theme.fs(600)
 
     visible: false
     title: "Settings"
     color: "transparent"
 
-    implicitWidth: 16 + sidebarWidth + 12 + 1 + 12 + paneWidth + 16
-    implicitHeight: chrome.contentY + paneHeight + 16
+    implicitWidth: Theme.windowPad + sidebarWidth + Theme.spaceXl + 1 + Theme.spaceXl + paneWidth + Theme.windowPad
+    implicitHeight: chrome.contentY + paneHeight + Theme.windowPad
 
-    function open() { visible = true }
+    // an unknown or empty page opens the default one
+    function open(page) {
+        currentPage = pages.some(p => p.id === page) ? page : defaultPage
+        visible = true
+    }
     function close() { visible = false }
 
     // the compositor closing it has to clear visible, or the next open()
     // would be a no-op
     onClosed: visible = false
-    onVisibleChanged: if (visible) {
-        currentPage = defaultPage
-        chrome.keySink.forceActiveFocus()
-    }
+    onVisibleChanged: if (visible) chrome.keySink.forceActiveFocus()
 
     readonly property var pages: [
-        { id: "filetypes",     label: "File Types",    icon: "󰈔", source: "../settings/SettingsPageFileTypes.qml" },
-        { id: "appearance",    label: "Appearance",    icon: "󰏘", external: true },
-        { id: "input",         label: "Input",         icon: "󰌌", source: "../settings/SettingsPageInput.qml" },
-        { id: "audio",         label: "Audio",         icon: "󰕾", source: "../settings/SettingsPageAudio.qml" },
+        { id: "appearance",    label: "Appearance",    icon: "󰏘", source: "../settings/SettingsPageAppearance.qml" },
         { id: "display",       label: "Display",       icon: "󰍹", source: "../settings/SettingsPageDisplay.qml" },
-        { id: "windowrules",   label: "Window Rules",  icon: "󰖲", source: "../settings/SettingsPageWindowRules.qml" },
+        { id: "audio",         label: "Audio",         icon: "󰕾", source: "../settings/SettingsPageAudio.qml" },
+        { id: "input",         label: "Input",         icon: "󰌌", source: "../settings/SettingsPageInput.qml" },
         { id: "power",         label: "Power & Idle",  icon: "󰂄", source: "../settings/SettingsPagePower.qml" },
         { id: "notifications", label: "Notifications", icon: "󰂚", source: "../settings/SettingsPageNotifications.qml" },
-        { id: "shell",         label: "Terminal",      icon: "󰆍", source: "../settings/SettingsPageShell.qml" },
+        { id: "windowrules",   label: "Window Rules",  icon: "󰖲", source: "../settings/SettingsPageWindowRules.qml" },
         { id: "keybinds",      label: "Keybinds",      icon: "󰘳", source: "../settings/SettingsPageKeybinds.qml" },
+        { id: "shell",         label: "Terminal",      icon: "󰆍", source: "../settings/SettingsPageShell.qml" },
+        { id: "filetypes",     label: "File Types",    icon: "󰈔", source: "../settings/SettingsPageFileTypes.qml" },
     ]
 
     function select(page) {
-        if (page.external) {
-            close()
-            appearanceRequested()
-            return
-        }
         currentPage = page.id
         // a page's field may have had focus; give Escape back to the window
         chrome.keySink.forceActiveFocus()
@@ -91,10 +85,10 @@ FloatingWindow {
 
     Column {
         id: sidebar
-        x: 16
+        x: Theme.windowPad
         y: chrome.contentY
         width: root.sidebarWidth
-        spacing: 2
+        spacing: Theme.spaceXs
 
         Repeater {
             model: root.pages
@@ -103,7 +97,6 @@ FloatingWindow {
                 required property var modelData
                 icon: modelData.icon
                 label: modelData.label
-                external: !!modelData.external
                 selected: root.currentPage === modelData.id
                 onClicked: root.select(modelData)
             }
@@ -113,11 +106,12 @@ FloatingWindow {
     Rectangle {
         id: rule
         anchors.left: sidebar.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.spaceXl
         y: chrome.contentY
-        width: 1
+        width: Theme.borderWidth
         height: root.paneHeight
-        color: Theme.border
+        color: Theme.stroke
+
     }
 
     // --- pane --------------------------------------------------------------
@@ -125,7 +119,7 @@ FloatingWindow {
     Loader {
         id: pane
         anchors.left: rule.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Theme.spaceXl
         y: chrome.contentY
         width: root.paneWidth
         height: root.paneHeight

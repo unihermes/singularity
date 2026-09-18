@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/MediaFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/MediaFlyout.qml
 //
 // Split out of shell.qml. Self-contained: only needs the Media singleton.
 
@@ -28,16 +28,16 @@ FlyoutPanel {
 
     Item {
         width: parent.width
-        height: 64
+        height: artFrame.height
 
         Rectangle {
             id: artFrame
-            width: 64
-            height: 64
+            width: Theme.fs(64)
+            height: width
             radius: Theme.radiusInner
-            color: Theme.base
-            border.width: 1
-            border.color: Theme.border
+            color: Theme.meterTrack
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
             clip: true
 
             Image {
@@ -56,22 +56,23 @@ FlyoutPanel {
                 text: "󰝚"
                 color: Theme.muted
                 font.family: Theme.fontIcon
-                font.pixelSize: Theme.fs(26)
+                font.pixelSize: Theme.fontDisplay
+
             }
         }
 
         Column {
             anchors.left: artFrame.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Theme.sp(10)
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.spaceXs
 
             Text {
                 width: parent.width
                 text: mediaFlyout.player ? (mediaFlyout.player.trackTitle || "Nothing playing") : ""
                 elide: Text.ElideRight
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
                 font.bold: true
@@ -99,35 +100,27 @@ FlyoutPanel {
     // progress, and click-to-seek where the player allows it
     Item {
         width: parent.width
-        height: 24
+        height: Theme.rowHeight
         visible: mediaFlyout.player && mediaFlyout.player.lengthSupported && mediaFlyout.player.length > 0
 
         readonly property real frac: mediaFlyout.player && mediaFlyout.player.length > 0
             ? Math.max(0, Math.min(1, mediaFlyout.player.position / mediaFlyout.player.length)) : 0
 
-        Rectangle {
+        Meter {
             id: track
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.topMargin: 4
-            height: 6
-            radius: 3
-            color: Theme.base
-            border.width: 1
-            border.color: Theme.surface
+            anchors.topMargin: Theme.spaceS
+            fraction: parent.frac
+            // position ticks once a second; easing each step reads as lag
+            animated: false
 
-            Rectangle {
-                height: parent.height
-                radius: 3
-                width: Math.max(parent.frac > 0 ? height : 0, parent.width * parent.parent.frac)
-                color: Theme.text
-            }
 
             MouseArea {
                 anchors.fill: parent
-                anchors.topMargin: -6
-                anchors.bottomMargin: -6
+                anchors.topMargin: -Theme.spaceM
+                anchors.bottomMargin: -Theme.spaceM
                 enabled: mediaFlyout.player && mediaFlyout.player.canSeek
                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: mouse => mediaFlyout.player.position =
@@ -155,7 +148,7 @@ FlyoutPanel {
 
     Row {
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 8
+        spacing: Theme.spaceL
 
         FlyoutChip {
             glyph: true

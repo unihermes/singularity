@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Updates.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Updates.qml
 //
 // Pending package updates, repo and AUR, for a bar module that only appears
 // when there are some.

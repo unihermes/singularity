@@ -1,7 +1,7 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/BatteryFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/BatteryFlyout.qml
 //
-// Split out of shell.qml. Needs bar's battery readouts.
+// Split out of shell.qml.
 
 import Quickshell.Services.UPower
 import QtQuick
@@ -14,8 +14,6 @@ FlyoutPanel {
     // last module in the bar -- run it into the right corner
     edgeMargin: 0
 
-    required property var bar
-
     function fmtSeconds(s) {
         if (!s || s <= 0) return "--"
         var h = Math.floor(s / 3600)
@@ -24,27 +22,27 @@ FlyoutPanel {
     }
 
     FlyoutHeading {
-        text: "BATTERY  " + (bar.hasBattery ? bar.batteryPercent() + "%" : "--")
+        text: "BATTERY  " + (Battery.present ? Battery.percent + "%" : "--")
     }
 
     FlyoutRow {
         label: UPower.onBattery ? "Discharging" : "Charging"
         trailing: UPower.onBattery
-            ? batteryFlyout.fmtSeconds(bar.batt ? bar.batt.timeToEmpty : 0) + " left"
-            : batteryFlyout.fmtSeconds(bar.batt ? bar.batt.timeToFull : 0) + " to full"
+            ? batteryFlyout.fmtSeconds(Battery.device ? Battery.device.timeToEmpty : 0) + " left"
+            : batteryFlyout.fmtSeconds(Battery.device ? Battery.device.timeToFull : 0) + " to full"
         enabled: false
     }
 
     FlyoutRow {
         label: "Draw"
-        trailing: bar.batt ? Math.abs(bar.batt.changeRate).toFixed(1) + " W" : "--"
+        trailing: Battery.device ? Math.abs(Battery.device.changeRate).toFixed(1) + " W" : "--"
         enabled: false
     }
 
     FlyoutRow {
         label: "Health"
-        trailing: (bar.batt && bar.batt.healthSupported)
-            ? Math.round(bar.batt.healthPercentage) + "%"
+        trailing: (Battery.device && Battery.device.healthSupported)
+            ? Math.round(Battery.device.healthPercentage) + "%"
             : "n/a"
         enabled: false
     }

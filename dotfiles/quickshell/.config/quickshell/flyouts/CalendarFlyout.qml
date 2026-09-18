@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/CalendarFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/CalendarFlyout.qml
 //
 // The clock module's calendar flyout, split out of shell.qml. Self-contained:
 // no bar or root state needed, just Theme.
@@ -26,7 +26,7 @@ FlyoutPanel {
 
     Item {
         width: parent.width
-        height: 20
+        height: Theme.chipHeight
 
         Text {
             anchors.left: parent.left
@@ -37,7 +37,7 @@ FlyoutPanel {
             font.pixelSize: Theme.fontLarge
             MouseArea {
                 anchors.fill: parent
-                anchors.margins: -6
+                anchors.margins: -Theme.spaceM
                 cursorShape: Qt.PointingHandCursor
                 onClicked: calendarFlyout.monthOffset--
             }
@@ -46,7 +46,7 @@ FlyoutPanel {
         Text {
             anchors.centerIn: parent
             text: Qt.formatDateTime(calendarFlyout.shown, "MMMM yyyy").toUpperCase()
-            color: Theme.bright
+            color: Theme.textStrong
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
             font.bold: true
@@ -61,7 +61,7 @@ FlyoutPanel {
             font.pixelSize: Theme.fontLarge
             MouseArea {
                 anchors.fill: parent
-                anchors.margins: -6
+                anchors.margins: -Theme.spaceM
                 cursorShape: Qt.PointingHandCursor
                 onClicked: calendarFlyout.monthOffset++
             }
@@ -95,7 +95,7 @@ FlyoutPanel {
             Item {
                 required property int index
                 width: calendarFlyout.contentColumn.width / 7
-                height: 22
+                height: Theme.row(22)
 
                 // Monday-first: JS getDay() is Sunday-first, so
                 // Sunday (0) becomes 6 and everything else shifts
@@ -119,9 +119,11 @@ FlyoutPanel {
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 20
-                    height: 18
-                    color: parent.isToday ? Theme.text : "transparent"
+                    width: Theme.fs(20)
+                    height: Theme.controlSize
+                    radius: Theme.radiusSmall
+                    color: parent.isToday ? Theme.meterFill : "transparent"
+
                     visible: parent.inMonth
 
                     Text {

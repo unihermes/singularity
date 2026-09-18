@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsNavRow.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsNavRow.qml
 //
 // One entry in the Settings window's sidebar: an icon column, a label, and
 // the left-edge tick FlyoutRow uses for the current entry -- a fill would
@@ -14,41 +14,41 @@ Item {
     property string icon: ""
     property string label: ""
     property bool selected: false
-    // a trailing arrow for entries that open somewhere else (Appearance)
-    property bool external: false
 
     signal clicked()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.fs(28)
+    implicitHeight: Theme.fieldHeight
 
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: root.selected ? Theme.surface
-            : mouse.containsMouse ? Theme.overlay : "transparent"
+        color: root.selected ? Theme.selectedFill
+            : mouse.containsMouse ? Theme.hoverFillSoft : "transparent"
     }
 
     Rectangle {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        width: 2
+        width: Theme.indicatorWidth
         height: parent.height - 8
-        radius: 1
-        color: Theme.bright
+        radius: width / 2
+        color: Theme.accent
         visible: root.selected
     }
 
     Item {
         id: iconCell
-        x: 8
-        width: 20
+        x: Theme.spaceL
+        width: Theme.iconCell
+
         height: parent.height
 
         Text {
             anchors.centerIn: parent
             text: root.icon
-            color: root.selected || mouse.containsMouse ? Theme.bright : Theme.subtext
+            color: root.selected ? Theme.accent : mouse.containsMouse ? Theme.textStrong : Theme.subtext
+
             font.family: Theme.fontIcon
             font.pixelSize: Theme.fontIconSize
         }
@@ -56,26 +56,15 @@ Item {
 
     Text {
         anchors.left: iconCell.right
-        anchors.leftMargin: 8
-        anchors.right: arrow.left
-        anchors.rightMargin: 4
+        anchors.leftMargin: Theme.spaceL
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spaceL
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
         elide: Text.ElideRight
-        color: root.selected || mouse.containsMouse ? Theme.bright : Theme.text
+        color: root.selected || mouse.containsMouse ? Theme.textStrong : Theme.text
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
-    }
-
-    Text {
-        id: arrow
-        anchors.right: parent.right
-        anchors.rightMargin: 8
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.external ? "󰁔" : ""
-        color: Theme.muted
-        font.family: Theme.fontIcon
-        font.pixelSize: Theme.fontSmall
     }
 
     MouseArea {

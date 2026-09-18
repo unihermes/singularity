@@ -1,9 +1,13 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/ModuleFrame.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/bar/ModuleFrame.qml
 //
-// The bar's double-bordered chip: an outer stroke plus a second stroke
-// inset inside it, wrapped around whatever you put in it. Children are laid
-// out in a centred Row.
+// The bar's chip, wrapped around whatever you put in it. Children are laid
+// out in a centred Row. How it's drawn is Theme.moduleStyle:
+//   outline  an outer stroke, plus an inset inner one when frames are double
+//            or a chiselled Bevel pair when frames are bevel
+//   filled   a solid ground, no stroke
+//   flat     nothing until active, then an accent underline
+//   pill     filled, fully rounded
 //
 // This exists so the chrome has one definition. BarModule draws an
 // icon/label pair in it, and the open-window icons draw a whole row of
@@ -12,13 +16,14 @@
 
 import QtQuick
 import "../services"
+import "../flyouts"
 
 Item {
     id: root
 
     // lit state: brighter strokes and a filled ground
     property bool active: false
-    property int spacing: 5
+    property int spacing: Theme.sp(5)
     // per-chip override, for the ones that look cramped at the shared value
     property int padH: Theme.modulePadH
 
@@ -30,6 +35,9 @@ Item {
     property color fillColor: Theme.muted
     // when > 0 the chip is pinned to this width instead of hugging content
     property int fixedWidth: 0
+    // eases between widths instead of jumping, for a chip whose content
+    // swaps wholesale (the clock island)
+    property bool animateWidth: false
 
     default property alias content: contentRow.children
 
@@ -38,7 +46,7 @@ Item {
     property bool slideX: false
     Behavior on x {
         enabled: root.slideX
-        NumberAnimation { duration: Theme.dur(160); easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
     }
 
     implicitWidth: frame.width
@@ -50,22 +58,69 @@ Item {
         width: root.fixedWidth > 0
             ? root.fixedWidth
             : contentRow.implicitWidth + root.padH * 2
-        height: Theme.moduleHeight
-        radius: Theme.radius
-        color: root.active ? Theme.overlay : "transparent"
-        border.width: 1
-        border.color: root.active ? Theme.subtext : Theme.border
+        readonly property string style: Theme.moduleStyle
+        readonly property bool solid: style === "filled" || style === "pill"
 
-        Behavior on color { ColorAnimation { duration: Theme.dur(110) } }
+        Behavior on width {
+            enabled: root.animateWidth
+            NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease }
+        }
+        // content swaps before the width has caught up with it
+        clip: root.animateWidth
+
+        readonly property bool bevel: Theme.frameBevel && style === "outline"
+
+        height: Theme.moduleHeight
+        radius: style === "pill" ? height / 2 : Theme.radius
+        color: style === "flat" ? "transparent"
+            : root.active ? Theme.selectedFill
+            : solid ? Theme.surface : "transparent"
+
+        border.width: style === "outline" && !bevel && !Theme.frameNone ? Theme.borderWidth : 0
+        border.color: root.active ? Theme.strokeFocus : Theme.stroke
+
+        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+
+        Bevel {
+            visible: frame.bevel
+            anchors.fill: parent
+            light: Theme.bevelLight
+            dark: Theme.bevelDark
+            thickness: Theme.borderWidth
+        }
 
         // inner stroke, inset -- the second half of the double border
         Rectangle {
             anchors.fill: parent
+            visible: Theme.frameDouble && frame.style === "outline"
             anchors.margins: 2
             radius: Theme.radiusInner
             color: "transparent"
-            border.width: 1
-            border.color: root.active ? Theme.muted : Theme.surface
+            border.width: Theme.borderWidth
+            border.color: root.active ? Theme.frameStroke : Theme.surface
+        }
+
+        // the bevel's own second level: a sunken groove just inside the
+        // raised outer edge
+        Bevel {
+            visible: frame.bevel
+            anchors.fill: parent
+            anchors.margins: 2
+            raised: false
+            light: Theme.surface
+            dark: Theme.base
+            thickness: Theme.borderWidth
+        }
+
+        // the flat style's only mark: an underline under the active chip
+        Rectangle {
+            visible: frame.style === "flat" && root.active
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width - Theme.spaceL
+            height: Theme.indicatorWidth
+            radius: height / 2
+            color: Theme.accent
         }
 
         // Flush inside the double border: the outer stroke sits at 0..1, the
@@ -83,8 +138,9 @@ Item {
             // one less than the inner stroke's radius, being one pixel
             // further in, so the curves stay concentric -- floored because
             // the radius is user-settable down to square
-            radius: Math.max(0, Theme.radiusInner - 1)
-            color: Theme.base
+            radius: frame.style === "pill" ? height / 2 : Theme.radiusSmall
+            color: Theme.meterTrack
+
 
             Rectangle {
                 anchors.left: parent.left
@@ -99,9 +155,10 @@ Item {
                 color: root.fillColor
 
                 Behavior on width {
-                    NumberAnimation { duration: Theme.dur(120); easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: Theme.dur(120); easing.type: Theme.ease }
                 }
-                Behavior on color { ColorAnimation { duration: Theme.dur(110) } }
+                Behavior on color { ColorAnimation { duration: Theme.durFast } }
+
             }
         }
 

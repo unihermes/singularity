@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/HyprLuaWrite.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/HyprLuaWrite.qml
 //
 // The one write path into hyprland.lua, shared by the Keybinds editor and the
 // Settings window's Input and Display pages.

@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/system/ProcessColumn.qml
+// ~/.config/quickshell/windows/system/ProcessColumn.qml
 //
 // The System window's middle column: the heaviest processes with a
 // two-step kill, battery and systemd health, and quick actions.
@@ -16,16 +16,16 @@ Column {
 
     required property var stats
 
-    spacing: 6
+    spacing: Theme.spaceM
 
     Item {
         width: parent.width
-        height: 18
+        height: Theme.controlSize
 
         FlyoutHeading {
             anchors.left: parent.left
             anchors.right: sortRow.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
             text: "PROCESSES"
         }
@@ -34,7 +34,7 @@ Column {
             id: sortRow
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 4
+            spacing: Theme.spaceS
             SortButton { label: "CPU"; on: column.stats.procSort === "cpu"; onClicked: column.stats.procSort = "cpu" }
             SortButton { label: "MEM"; on: column.stats.procSort === "mem"; onClicked: column.stats.procSort = "mem" }
         }
@@ -43,7 +43,7 @@ Column {
     // column headings
     Item {
         width: parent.width
-        height: 16
+        height: Theme.headingHeight
 
         Text {
             anchors.left: parent.left
@@ -55,9 +55,9 @@ Column {
         }
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: 22 + 8 + 60 + 8
+            anchors.rightMargin: Theme.fs(22) + Theme.spaceL + Theme.fs(60) + Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            width: 48
+            width: Theme.fs(48)
             horizontalAlignment: Text.AlignRight
             text: "CPU"
             color: column.stats.procSort === "cpu" ? Theme.text : Theme.subtext
@@ -66,9 +66,9 @@ Column {
         }
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: 22 + 8
+            anchors.rightMargin: Theme.fs(22) + Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            width: 60
+            width: Theme.fs(60)
             horizontalAlignment: Text.AlignRight
             text: "MEM"
             color: column.stats.procSort === "mem" ? Theme.text : Theme.subtext
@@ -80,10 +80,10 @@ Column {
     Column {
         id: procList
         width: parent.width
-        spacing: 2
+        spacing: Theme.spaceXs
         // five rows' worth, so the column doesn't jump while a sort
         // change is loading
-        height: 5 * 24 + 4 * spacing
+        height: 5 * Theme.rowHeight + 4 * spacing
 
         HoverHandler { id: procHover }
         Binding { target: column.stats; property: "holdProcs"; value: procHover.hovered }
@@ -98,21 +98,21 @@ Column {
                 readonly property bool armed: column.stats.killPid === modelData.pid
 
                 width: procList.width
-                height: 24
+                height: Theme.rowHeight
 
                 Rectangle {
                     anchors.fill: parent
-                    anchors.leftMargin: -4
-                    anchors.rightMargin: -4
+                    anchors.leftMargin: -Theme.spaceS
+                    anchors.rightMargin: -Theme.spaceS
                     radius: Theme.radiusInner
-                    color: prHover.hovered ? Theme.overlay : "transparent"
+                    color: prHover.hovered ? Theme.hoverFill : "transparent"
                 }
                 HoverHandler { id: prHover }
 
                 Text {
                     anchors.left: parent.left
                     anchors.right: cpuText.left
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Theme.spaceL
                     anchors.verticalCenter: parent.verticalCenter
                     text: pr.modelData.name
                     elide: Text.ElideRight
@@ -124,12 +124,12 @@ Column {
                 Text {
                     id: cpuText
                     anchors.right: memText.left
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Theme.spaceL
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 48
+                    width: Theme.fs(48)
                     horizontalAlignment: Text.AlignRight
                     text: pr.modelData.cpu.toFixed(1) + "%"
-                    color: column.stats.procSort === "cpu" ? Theme.bright : Theme.subtext
+                    color: column.stats.procSort === "cpu" ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontBody
                 }
@@ -137,12 +137,12 @@ Column {
                 Text {
                     id: memText
                     anchors.right: killBtn.left
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Theme.spaceL
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 60
+                    width: Theme.fs(60)
                     horizontalAlignment: Text.AlignRight
                     text: Format.kib(pr.modelData.memKb)
-                    color: column.stats.procSort === "mem" ? Theme.bright : Theme.subtext
+                    color: column.stats.procSort === "mem" ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontBody
                 }
@@ -154,22 +154,22 @@ Column {
                     id: killBtn
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 22
-                    height: 20
+                    width: Theme.fs(22)
+                    height: Theme.chipHeight
                     radius: Theme.radiusInner
                     visible: pr.mine
                     color: pr.armed ? Theme.alert
-                        : killMouse.containsMouse ? Theme.surface : "transparent"
-                    border.width: 1
+                        : killMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
+                    border.width: Theme.borderWidth
                     border.color: pr.armed ? Theme.alert
-                        : killMouse.containsMouse ? Theme.muted : "transparent"
+                        : killMouse.containsMouse ? Theme.strokeHover : "transparent"
 
                     Text {
                         anchors.centerIn: parent
                         // a check to confirm once armed, an x before
                         text: pr.armed ? "󰄬" : "󰅖"
                         color: pr.armed ? Theme.base
-                            : killMouse.containsMouse ? Theme.bright : Theme.muted
+                            : killMouse.containsMouse ? Theme.textStrong : Theme.muted
                         font.family: Theme.fontIcon
                         font.pixelSize: Theme.fontIconSize
                     }
@@ -192,19 +192,20 @@ Column {
         color: Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontSmall
-        height: 12
+        height: Theme.fs(12)
     }
 
-    Item { width: 1; height: 4 }
+    Item { width: 1; height: Theme.spaceS }
+
     FlyoutHeading { text: "HEALTH" }
 
     InfoRow {
         label: "Battery"
-        visible: column.stats.hasBattery
-        value: column.stats.batt.healthSupported
-            ? Math.round(column.stats.batt.healthPercentage) + "% health" : "n/a"
+        visible: Battery.present
+        value: Battery.device.healthSupported
+            ? Math.round(Battery.device.healthPercentage) + "% health" : "n/a"
     }
-    InfoRow { visible: !column.stats.hasBattery; label: "Battery"; value: "no battery" }
+    InfoRow { visible: !Battery.present; label: "Battery"; value: "no battery" }
 
     InfoRow {
         label: "Failed units"
@@ -213,12 +214,13 @@ Column {
         valueColor: FailedUnits.count === 0 ? undefined : Theme.alert
     }
 
-    Item { width: 1; height: 4 }
+    Item { width: 1; height: Theme.spaceS }
+
     FlyoutHeading { text: "QUICK ACTIONS" }
 
     Row {
         width: parent.width
-        spacing: 6
+        spacing: Theme.spaceM
 
         FlyoutChip {
             text: "Restart Audio"

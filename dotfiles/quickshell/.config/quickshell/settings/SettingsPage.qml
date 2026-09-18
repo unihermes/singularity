@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPage.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPage.qml
 //
 // The frame every Settings page shares: a heading, one line saying what the
 // page changes and where it lands, a status line, and a scrolling column for
@@ -26,7 +26,7 @@ Item {
 
     default property alias content: col.data
     // height available to content below the header, for non-scrolling pages
-    readonly property real bodyHeight: height - header.height - 10
+    readonly property real bodyHeight: height - header.height - Theme.sp(10)
 
     function say(msg, isError) {
         notice = msg
@@ -36,7 +36,7 @@ Item {
     Column {
         id: header
         width: parent.width
-        spacing: 4
+        spacing: Theme.spaceS
 
         FlyoutHeading { text: root.title.toUpperCase() }
 
@@ -52,7 +52,7 @@ Item {
 
         Text {
             width: parent.width
-            height: Theme.fs(16)
+            height: Theme.headingHeight
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             text: root.notice
@@ -64,14 +64,14 @@ Item {
 
     Item {
         anchors.top: header.bottom
-        anchors.topMargin: 10
+        anchors.topMargin: Theme.sp(10)
         anchors.bottom: parent.bottom
         width: parent.width
 
         Flickable {
             id: flick
             anchors.fill: parent
-            anchors.rightMargin: root.scrolls ? 10 : 0
+            anchors.rightMargin: root.scrolls ? Theme.sp(10) : 0
             contentHeight: col.implicitHeight
             interactive: root.scrolls && contentHeight > height
             clip: true
@@ -79,21 +79,18 @@ Item {
 
             Column {
                 id: col
-                x: 4
-                width: flick.width - 8
-                spacing: 6
+                x: Theme.spaceS
+                width: flick.width - Theme.spaceS * 2
+
+                spacing: Theme.spaceM
             }
         }
 
         // scroll indicator, as in the Keybinds list
-        Rectangle {
+        ScrollBar {
             anchors.right: parent.right
-            width: 3
-            radius: 1.5
-            color: Theme.muted
-            visible: root.scrolls && flick.contentHeight > flick.height
-            height: Math.max(20, flick.height * flick.height / Math.max(1, flick.contentHeight))
-            y: (flick.height - height) * (flick.contentY / Math.max(1, flick.contentHeight - flick.height))
+            flickable: flick
+            visible: root.scrolls && overflow > 0
         }
     }
 }

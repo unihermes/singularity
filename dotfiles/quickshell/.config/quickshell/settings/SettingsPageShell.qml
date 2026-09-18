@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPageShell.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPageShell.qml
 //
 // Alacritty's look, and the aliases in ~/.bashrc.
 //
@@ -194,10 +194,10 @@ SettingsPage {
 
     SettingsField {
         label: "Font size"
-        hint: "points"
+        hint: "In points"
         FlyoutStepper {
             anchors.right: parent.right
-            width: 170
+            width: Theme.fs(170)
             readonly property real current: Number(page.tomlValue("font.size", 11.25))
             value: Math.round(current * 2)
             minimum: 12
@@ -210,10 +210,10 @@ SettingsPage {
 
     SettingsField {
         label: "Opacity"
-        hint: "of the background; text stays solid"
+        hint: "Background only; text stays solid"
         FlyoutStepper {
             anchors.right: parent.right
-            width: 170
+            width: Theme.fs(170)
             readonly property real current: Number(page.tomlValue("window.opacity", 1))
             value: Math.round(current * 20)
             minimum: 6
@@ -226,11 +226,11 @@ SettingsPage {
 
     SettingsField {
         label: "Cursor"
-        hint: "shape, and whether it blinks"
+        hint: "Shape, and whether it blinks"
 
         Row {
             anchors.right: parent.right
-            spacing: 10
+            spacing: Theme.sp(10)
 
             // style = { shape = "Beam", blinking = "On" } is an inline
             // table, so it's read by pattern rather than parsed
@@ -240,7 +240,7 @@ SettingsPage {
 
             Row {
                 id: shapes
-                spacing: 4
+                spacing: Theme.spaceS
                 Repeater {
                     model: ["Block", "Beam", "Underline"]
                     FlyoutChip {
@@ -281,8 +281,8 @@ SettingsPage {
         writeFile(alacrittyPath, lines.join("\n"), "Cursor: " + shape, false)
     }
 
-    Item { width: 1; height: 6 }
-    FlyoutHeading { text: "BASH ALIASES · NEW TERMINALS ONLY" }
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "BASH ALIASES" }
 
     Text {
         width: parent.width
@@ -300,14 +300,14 @@ SettingsPage {
             id: aliasRow
             required property var modelData
             width: parent.width
-            height: Theme.fs(26)
+            height: Theme.rowHeightTall
 
             Rectangle {
                 anchors.fill: parent
-                anchors.leftMargin: -4
-                anchors.rightMargin: -4
+                anchors.leftMargin: -Theme.spaceS
+                anchors.rightMargin: -Theme.spaceS
                 radius: Theme.radiusInner
-                color: aliasMouse.containsMouse ? Theme.overlay : "transparent"
+                color: aliasMouse.containsMouse ? Theme.hoverFill : "transparent"
             }
 
             MouseArea {
@@ -327,18 +327,18 @@ SettingsPage {
                 id: aliasNameText
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: 120
+                width: Theme.fs(120)
                 elide: Text.ElideRight
                 text: aliasRow.modelData.name
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
             Text {
                 anchors.left: aliasNameText.right
-                anchors.leftMargin: 12
+                anchors.leftMargin: Theme.spaceXl
                 anchors.right: removeChip.left
-                anchors.rightMargin: 12
+                anchors.rightMargin: Theme.spaceXl
                 anchors.verticalCenter: parent.verticalCenter
                 elide: Text.ElideRight
                 text: aliasRow.modelData.value
@@ -359,14 +359,14 @@ SettingsPage {
 
     Item {
         width: parent.width
-        height: Theme.fs(26)
+        height: Theme.rowHeightTall
 
         FlyoutInput {
             id: aliasName
             anchors.left: parent.left
-            anchors.leftMargin: 4
+            anchors.leftMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
-            width: 112
+            width: Theme.fs(112)
             echoPassword: false
             placeholder: "name"
             onAccepted: aliasValue.forceFocus()
@@ -374,9 +374,9 @@ SettingsPage {
         FlyoutInput {
             id: aliasValue
             anchors.left: aliasName.right
-            anchors.leftMargin: 16
+            anchors.leftMargin: Theme.spaceXxl
             anchors.right: saveChip.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Theme.spaceXl
             anchors.verticalCenter: parent.verticalCenter
             echoPassword: false
             placeholder: "command, e.g. git status"

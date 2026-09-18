@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/Spark.qml
+// ~/.config/quickshell/flyouts/Spark.qml
 //
 // A history line graph. Newest sample at the right edge; while history is
 // still filling, the line starts partway across rather than stretching a
@@ -19,7 +19,7 @@ Item {
     property int historyLength: 60
 
     width: parent ? parent.width : 0
-    height: 44
+    height: Theme.row(44)
 
     onSeriesChanged: canvas.requestPaint()
     onCeilingChanged: canvas.requestPaint()
@@ -27,15 +27,15 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: Theme.base
-        border.width: 1
-        border.color: Theme.surface
+        color: Theme.meterTrack
+        border.width: Theme.borderWidth
+        border.color: Theme.meterStroke
     }
 
     Canvas {
         id: canvas
         anchors.fill: parent
-        anchors.margins: 3
+        anchors.margins: Theme.sp(3)
         onWidthChanged: requestPaint()
 
         onPaint: {
@@ -73,8 +73,9 @@ Item {
     Text {
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 4
+        anchors.margins: Theme.spaceS
         text: sp.caption
+
         color: Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontSmall

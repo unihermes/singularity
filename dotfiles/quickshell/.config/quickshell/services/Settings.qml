@@ -1,9 +1,10 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Settings.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Settings.qml
 //
 // The handful of shell values the user can change at runtime, persisted to
 // JSON so they survive a restart. Everything here is written from the
-// control centre's Appearance page; nothing else should assign to it.
+// Appearance pages (the Control Centre's, and the Settings window's) and the
+// few flyouts noted below; nothing else should assign to it.
 //
 // Theme reads these rather than exposing them directly, so the rest of the
 // shell keeps importing one geometry source (Theme.barHeight) and doesn't
@@ -20,6 +21,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import "Looks.js" as Looks
 
 Singleton {
     id: root
@@ -30,7 +32,10 @@ Singleton {
     readonly property alias moduleGap:   adapter.moduleGap
     readonly property alias radius:      adapter.radius
     readonly property alias barOpacity:  adapter.barOpacity
-    readonly property alias fontScale:   adapter.fontScale
+    // The base text size in px -- the size of body text, which every other
+    // size in the shell, wofi and swaync is scaled from (Theme.fontScale).
+    readonly property alias fontSize:    adapter.fontSize
+    readonly property int fontSizeBase: 16
     // "normal", "fast" or "off"
     readonly property alias animSpeed:   adapter.animSpeed
     // "grayscale" or "wallpaper"
@@ -41,26 +46,68 @@ Singleton {
     // Mirrored into the wallpaper state file by Wallpaper.qml, since the
     // login script can't read this JSON.
     readonly property alias wallpaperShuffle: adapter.wallpaperShuffle
+    // The active look (Looks.js), and the parts of it the Appearance page can
+    // override. Choosing a look writes all four of these, plus the bar and
+    // radius values it carries, so a look always arrives whole.
+    readonly property alias look:        adapter.look
+    // "double" or "single" -- the inner stroke on panels and bar modules
+    readonly property alias frameStyle:  adapter.frameStyle
+    // "compact", "normal" or "roomy"
+    readonly property alias density:     adapter.density
+    readonly property alias fontFamily:  adapter.fontFamily
+    // "outline", "filled", "flat" or "pill"
+    readonly property alias moduleStyle: adapter.moduleStyle
+    // "full" or "floating"
+    readonly property alias barStyle:    adapter.barStyle
 
     // Cycled through by the Appearance page's choice rows, in this order.
     readonly property var choices: ({
         animSpeed:    ["normal", "fast", "off"],
         colourMode:   ["grayscale", "wallpaper"],
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
+        look:         LookStore.order,
+        frameStyle:   ["double", "single", "bevel", "none"],
+        density:      ["compact", "normal", "roomy"],
+        fontFamily:   Fonts.available,
+        moduleStyle:  ["outline", "filled", "flat", "pill"],
+        barStyle:     ["full", "floating"],
     })
     readonly property var choiceLabels: ({
         "normal": "Normal", "fast": "Fast", "off": "Off",
         "grayscale": "Grayscale", "wallpaper": "Wallpaper",
         "scheme-neutral": "Subtle", "scheme-tonal-spot": "Balanced",
         "scheme-vibrant": "Vivid", "scheme-expressive": "Expressive",
+        "double": "Double", "single": "Single", "bevel": "Bevel", "none": "None",
+        "compact": "Compact", "roomy": "Roomy",
+        "outline": "Outline", "filled": "Filled", "flat": "Flat", "pill": "Pill",
+        "full": "Full width", "floating": "Floating",
     })
 
-    function cycle(key) {
+    // A choice's display name: the table above, then the look's or font's
+    // own name, then the raw value.
+    function choiceLabel(v) {
+        if (choiceLabels[v]) return choiceLabels[v]
+        if (LookStore.looks[v]) return LookStore.looks[v].name
+        return Looks.fontLabels[v] || v
+    }
+
+    function cycle(key, direction) {
         var list = choices[key]
-        adapter[key] = list[(list.indexOf(adapter[key]) + 1) % list.length]
+        direction = direction || 1
+        var currentIndex = list.indexOf(adapter[key])
+        var newIndex = (currentIndex + direction) % list.length
+        if (newIndex < 0) newIndex += list.length
+        set(key, list[newIndex])
     }
 
     function setWallpaperShuffle(on) { adapter.wallpaperShuffle = on }
+    // The clock chip briefly turns into the volume/brightness level, the
+    // layout just switched to, a new track or new notifications -- instead
+    // of those showing as separate toasts under the bar.
+    readonly property alias clockIsland: adapter.clockIsland
+    function setClockIsland(on) { adapter.clockIsland = on }
+    // whether the island is actually showing those, rather than the toasts
+    readonly property bool islandActive: clockIsland && widgetVisible("clock")
     // Night Light colour temperature in kelvin. Lower is warmer. Lives here
     // for persistence only -- it isn't part of Appearance, so reset() and
     // isDefault below leave it alone.
@@ -228,21 +275,75 @@ Singleton {
         moduleGap: { min: 0,  max: 12 },
         radius:    { min: 0,  max: 14 },
         barOpacity: { min: 40, max: 100 },
-        fontScale: { min: 80, max: 130 },
+        fontSize:  { min: 12, max: 22 },
         nightLightKelvin: { min: 2500, max: 6000 },
     })
 
-    readonly property var defaults: ({
-        barPosition: "top",
-        barHeight: 34,
-        moduleGap: 2,
-        radius: 6,
-        barOpacity: 100,
-        fontScale: 100,
-        animSpeed: "normal",
-        colourMode: "grayscale",
-        colourScheme: "scheme-tonal-spot",
-    })
+    // Stock: the fallback look, with its own settings layered over the values
+    // no look sets.
+    readonly property var stockDefaults: {
+        var d = {
+            look: Looks.fallback,
+            barPosition: "top",
+            fontSize: 16,
+            animSpeed: "normal",
+            colourMode: "grayscale",
+            colourScheme: "scheme-tonal-spot",
+        }
+        var ls = Looks.looks[Looks.fallback].settings
+        for (var k in ls) d[k] = ls[k]
+        return d
+    }
+
+    // What Reset returns to: stock, overlaid with whatever was last saved
+    // with "Set as default". Only keys stock knows are taken from the saved
+    // set, so a hand-edited or outdated file can't smuggle in anything else,
+    // and a key added to stock later still has a value.
+    readonly property var defaults: {
+        var d = {}, u = adapter.userDefaults || {}
+        for (var k in stockDefaults)
+            d[k] = u[k] !== undefined ? u[k] : stockDefaults[k]
+        return d
+    }
+
+    readonly property bool hasUserDefault: Object.keys(adapter.userDefaults || {}).length > 0
+
+    // The current appearance becomes the default. A fresh object, so the
+    // adapter notices and writes it.
+    function saveAsDefault() {
+        var snap = {}
+        for (var k in stockDefaults) snap[k] = adapter[k]
+        adapter.userDefaults = snap
+    }
+
+    // Forget the saved default and go back to stock.
+    function factoryReset() {
+        adapter.userDefaults = {}
+        for (var k in stockDefaults) adapter[k] = stockDefaults[k]
+    }
+
+    // Everything the look carries, written at once. The bar's opacity is only
+    // taken in grayscale mode: in wallpaper mode it keeps the lower wallpaper
+    // default (see barOpacityDefaults), which a look's value would undo.
+    function applyLook(name) {
+        var l = LookStore.looks[name]
+        if (!l) return
+        adapter.look = name
+        for (var k in l.settings) {
+            if (k === "barOpacity" && adapter.colourMode === "wallpaper") continue
+            adapter[k] = l.settings[k]
+        }
+    }
+
+    // true while every value the look carries is still the look's own --
+    // what the Appearance page shows as "as designed" vs "customised"
+    readonly property bool lookPristine: {
+        var l = LookStore.looks[adapter.look]
+        if (!l) return false
+        var diffs = Object.keys(l.settings).filter(k =>
+            !(k === "barOpacity" && adapter.colourMode === "wallpaper") && adapter[k] !== l.settings[k])
+        return diffs.length === 0
+    }
 
     function clamp(key, v) {
         var l = limits[key]
@@ -253,14 +354,55 @@ Singleton {
     // call site and every write goes through one place.
     function set(key, v) {
         if (key === "barPosition") adapter.barPosition = (v === "bottom") ? "bottom" : "top"
+        else if (key === "colourMode") setColourMode(v)
+        else if (key === "look") applyLook(v)
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
         else adapter[key] = clamp(key, v)
+    }
+
+    // The bar's opacity defaults lower on the wallpaper palette, so the
+    // wallpaper shows through a bar tinted to match it. Switching palette
+    // carries the opacity along only while it's still at the old palette's
+    // default -- one you've set yourself is left alone. Here rather than in
+    // an on-changed handler, which would also fire on a reload of the file.
+    // Grayscale's default is the look's own.
+    readonly property var barOpacityDefaults: ({
+        grayscale: (LookStore.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.barOpacity,
+        wallpaper: 85,
+    })
+
+    function setColourMode(v) {
+        if (choices.colourMode.indexOf(v) === -1 || v === adapter.colourMode) return
+        if (adapter.barOpacity === barOpacityDefaults[adapter.colourMode])
+            adapter.barOpacity = barOpacityDefaults[v]
+        adapter.colourMode = v
     }
 
     function step(key, delta) { set(key, adapter[key] + delta) }
 
     function reset() {
         for (var key in defaults) adapter[key] = defaults[key]
+    }
+
+    // Back to the current look as designed, keeping the look itself and the
+    // values no look sets (position, font size, motion, colour mode).
+    function resetLook() { applyLook(adapter.look) }
+
+    // Deletes a look from looks.json. Anything still pointing at it -- the
+    // look in use, or the saved default -- moves to the fallback first, so
+    // nothing is left naming a look that no longer exists.
+    // done(ok, message)
+    function removeLook(name, done) {
+        if (!LookStore.removable(name)) return
+        if (adapter.look === name) applyLook(Looks.fallback)
+        var u = adapter.userDefaults || {}
+        if (u.look === name) {
+            var c = {}
+            for (var k in u) c[k] = u[k]
+            c.look = Looks.fallback
+            adapter.userDefaults = c
+        }
+        LookStore.remove(name, done)
     }
 
     // filter, not every(): every() stops at the first difference, and a
@@ -316,7 +458,15 @@ Singleton {
         // is no file yet and the declared defaults are already correct.
         // (Neither this object nor the singleton root has a Component
         // attached object to hook instead.)
-        onLoaded: root.ready = true
+        onLoaded: {
+            root.ready = true
+            // Font size used to be a percentage. Carried over once, then the
+            // old key is parked at 100 so this never runs again.
+            if (adapter.fontScale !== 100) {
+                adapter.fontSize = root.clamp("fontSize", root.fontSizeBase * adapter.fontScale / 100)
+                adapter.fontScale = 100
+            }
+        }
         onLoadFailed: root.ready = true
 
         onFileChanged: reload()
@@ -329,16 +479,30 @@ Singleton {
             property int moduleGap: 2
             property int radius: 6
             property int barOpacity: 100
+            property int fontSize: 16
+            // superseded by fontSize; read once to migrate (see onLoaded)
             property int fontScale: 100
+
             property string animSpeed: "normal"
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
+            property string look: "neutrino"
+            property string frameStyle: "double"
+            property string density: "normal"
+            property string fontFamily: "UbuntuMono Nerd Font"
+            property string moduleStyle: "outline"
+            property string barStyle: "full"
+
             property bool wallpaperShuffle: true
+            property bool clockIsland: true
             property int nightLightKelvin: 4000
             property string weatherUnits: "F"
             property string centreAnchor: "clock"
             property var barLayout: ({})
             property var barHidden: []
+            // the appearance saved with "Set as default"; {} means stock
+            property var userDefaults: ({})
+
         }
     }
 }

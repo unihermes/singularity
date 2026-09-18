@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/BarModules.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/bar/BarModules.qml
 //
 // The bar's 18 modules (and the widgetItems registry shell.qml's Bar
 // Widgets reordering keys off of), split out of shell.qml so the bar's
@@ -26,13 +26,9 @@ Item {
     required property var bar
     required property var screenScope
     // the tray icon's right-click opens this flyout, which lives outside
-    // the bar entirely (it's a sibling flyout in the screen's Scope)
+    // the bar entirely (it's a sibling flyout in the screen's Scope). It's
+    // the flyout's LazyFlyout loader: ensure() builds it if needed.
     required property var trayMenu
-
-    // exposed for the two references shell.qml still needs by id: the
-    // appearance-page shortcut's anchor point, and the per-second clock tick
-    property alias ccBtn: ccBtn
-    property alias clock: clock
 
     readonly property var widgetItems: ({
         controlcentre: ccBtn, workspaces: wsFrame, overview: wsOverviewBtn,
@@ -63,7 +59,7 @@ Item {
         id: wsFrame
         visible: Settings.widgetVisible("workspaces")
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 4
+        spacing: Theme.spaceS
         padH: 8
 
         Repeater {
@@ -91,11 +87,11 @@ Item {
                     // fully rounded: half the height makes a pill
                     // at any width, and a circle at the stub size
                     radius: height / 2
-                    color: parent.current ? Theme.bright
+                    color: parent.current ? Theme.accent
                         : (parent.occupied ? Theme.subtext : Theme.muted)
 
                     Behavior on width {
-                        NumberAnimation { duration: Theme.dur(130); easing.type: Easing.OutCubic }
+                        NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
                     }
                     Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
                 }
@@ -127,7 +123,7 @@ Item {
     ModuleFrame {
         id: windowIcons
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 6
+        spacing: Theme.spaceM
         // an empty chip on a bare workspace would be a floating
         // rectangle with nothing in it
         visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
@@ -140,7 +136,7 @@ Item {
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
                 source: modelData.source
-                implicitSize: 18
+                implicitSize: Theme.fs(18)
 
                 MouseArea {
                     anchors.fill: parent
@@ -157,15 +153,12 @@ Item {
         }
     }
 
-    // Time and date in one chip. Everything except "|" in the format
-    // string is a QDateTime specifier; the pipe and spaces pass
-    // through untouched.
-    BarModule {
+    // Time and date in one chip, which briefly shows volume, layout, track
+    // and notification changes instead (see ClockIsland.qml).
+    ClockIsland {
         id: clock
         visible: Settings.widgetVisible("clock")
-        label: Qt.formatDateTime(new Date(), "HH:mm:ss  |  MM/dd/yy")
-        active: screenScope.openFlyout === "calendar"
-        onActivated: screenScope.toggleFlyout("calendar", clock)
+        screenScope: barModules.screenScope
     }
 
     BarModule {
@@ -202,16 +195,13 @@ Item {
         // the bar carries the level now, so the icon only has
         // to say muted or not -- and those two glyphs are the
         // same width, so the chip no longer resizes as you scroll
-        icon: barModules.bar.volumeMuted() ? "󰖁" : "󰕾"
-        fillValue: barModules.bar.volumeMuted() ? 0 : barModules.bar.volumePercent() / 100
+        icon: Audio.muted ? "󰖁" : "󰕾"
+        fillValue: Audio.muted ? 0 : Audio.percent / 100
         active: screenScope.openFlyout === "volume"
         acceptWheel: true
         onActivated: screenScope.toggleFlyout("volume", volBtn)
-        onMiddleClicked: {
-            if (barModules.bar.sink && barModules.bar.sink.ready && barModules.bar.sink.audio)
-                barModules.bar.sink.audio.muted = !barModules.bar.sink.audio.muted
-        }
-        onWheeled: d => barModules.bar.setVolume(barModules.bar.volumePercent() + d * 5)
+        onMiddleClicked: Audio.toggleMute()
+        onWheeled: d => Audio.setVolume(Audio.percent + d * 5)
     }
 
     BarModule {
@@ -219,26 +209,26 @@ Item {
         visible: Settings.widgetVisible("brightness")
         fixedWidth: Theme.moduleWidth
         icon: "󰃠"
-        fillValue: barModules.bar.brightness / 100
+        fillValue: Brightness.level / 100
         active: screenScope.openFlyout === "brightness"
         acceptWheel: true
         onActivated: screenScope.toggleFlyout("brightness", brightBtn)
-        onWheeled: d => barModules.bar.setBrightness(barModules.bar.brightness + d * 5)
+        onWheeled: d => Brightness.set(Brightness.level + d * 5)
     }
 
     BarModule {
         id: battBtn
         fixedWidth: Theme.moduleWidth
-        visible: barModules.bar.hasBattery && Settings.widgetVisible("battery")
+        visible: Battery.present && Settings.widgetVisible("battery")
         // charging is all the glyph still needs to say; the
         // level is the bar's job
         icon: UPower.onBattery ? "󰁹" : "󰂄"
-        fillValue: barModules.bar.batteryPercent() / 100
+        fillValue: Battery.percent / 100
         // Charging wins over the low warning on purpose: at 8%
         // and plugged in, the useful fact is that it's recovering.
         fillColor: {
             if (!UPower.onBattery) return Theme.good
-            if (barModules.bar.batteryPercent() <= 15) return Theme.alert
+            if (Battery.percent <= 15) return Theme.alert
             return Theme.muted
         }
         active: screenScope.openFlyout === "battery"
@@ -262,7 +252,7 @@ Item {
     ModuleFrame {
         id: trayFrame
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 6
+        spacing: Theme.spaceM
         visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
         active: screenScope.openFlyout === "traymenu"
 
@@ -275,7 +265,7 @@ Item {
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
                 source: modelData.icon
-                implicitSize: 16
+                implicitSize: Theme.fs(16)
 
                 MouseArea {
                     anchors.fill: parent
@@ -287,8 +277,9 @@ Item {
                             item.secondaryActivate()
                         } else if (mouse.button === Qt.RightButton || item.onlyMenu) {
                             if (!item.hasMenu) return
-                            barModules.trayMenu.item = item
-                            barModules.trayMenu.stack = []
+                            var menu = barModules.trayMenu.ensure()
+                            menu.item = item
+                            menu.stack = []
                             screenScope.toggleFlyout("traymenu", trayIcon)
                         } else {
                             item.activate()
@@ -317,7 +308,7 @@ Item {
     ModuleFrame {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
+        spacing: Theme.spaceXs
         padH: 8
         visible: Visualizer.playing && Settings.widgetVisible("visualizer")
 

@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/UpdatesFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/UpdatesFlyout.qml
 //
 // Split out of shell.qml. Self-contained: only needs the Updates singleton.
 
@@ -18,7 +18,7 @@ FlyoutPanel {
     ListView {
         id: updList
         width: parent.width
-        height: Math.min(contentHeight, 12 * 22)
+        height: Math.min(contentHeight, 12 * Theme.row(22))
         clip: true
         interactive: contentHeight > height
         boundsBehavior: Flickable.StopAtBounds
@@ -27,12 +27,12 @@ FlyoutPanel {
         delegate: Item {
             required property var modelData
             width: updList.width
-            height: 22
+            height: Theme.row(22)
 
             Text {
                 anchors.left: parent.left
                 anchors.right: ver.left
-                anchors.rightMargin: 8
+                anchors.rightMargin: Theme.spaceL
                 anchors.verticalCenter: parent.verticalCenter
                 text: modelData.name + (modelData.aur ? "  ·aur" : "")
                 elide: Text.ElideRight
@@ -44,7 +44,8 @@ FlyoutPanel {
                 id: ver
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, 150)
+                width: Math.min(implicitWidth, Theme.fs(150))
+
                 horizontalAlignment: Text.AlignRight
                 text: modelData.to
                 elide: Text.ElideLeft

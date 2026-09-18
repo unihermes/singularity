@@ -37,12 +37,15 @@ dangling. Every step is idempotent; rerun `./install.sh` any time.
 1. Full system sync, installs `base-devel git stow`
 2. Bootstraps `yay` from `yay-bin` if it is not already present
 3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`
-4. Symlinks `dotfiles/` into `$HOME` with GNU stow
+4. Symlinks `dotfiles/` into `$HOME` with GNU stow, and builds the
+   `alttab-relay` helper from its C++ source
 5. Rebuilds font and icon caches, sets Thunar as the directory handler,
    writes the theme, icons and fonts to gsettings, and quiets the kernel
    command line
 6. Applies the boot speed fixes: vfat in the initramfs, iwd no longer blocking
-   the greeter, and systemd's unused TPM setup masked
+   the greeter, the webcam controller deferred until after login, and
+   systemd's unused TPM setup masked; then sets up a virtual webcam for apps
+   that bypass PipeWire (Discord)
 7. Enables iwd, systemd-networkd, systemd-resolved, pipewire, bluetooth,
    power-profiles-daemon, the Bluetooth pairing agent, Bluetooth power
    restore, the AC-power profile switch, and the ly greeter
@@ -84,9 +87,9 @@ singularity/
 └── dotfiles/
     ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
-    ├── singularity/.config/singularity/window-rules.json  # per-app/popout rules, edited from Settings
+    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh
     ├── swaync/.config/swaync/{config.json,style.css}
-    ├── systemd/.config/systemd/user/   # bt-agent, wireplumber drop-in
+    ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
     ├── wofi/.config/wofi/{config,style.css}
     ├── nvim/.config/nvim/init.lua
@@ -155,6 +158,11 @@ It also masks `systemd-tpm2-setup-early` and `systemd-tpm2-setup`, about 2s,
 unless `/etc/crypttab` asks for a TPM unlock. That stops the setup running and
 leaves the TPM's contents alone, so Windows and BitLocker are unaffected.
 
+The stall itself comes from the webcam's controller (`mei_vsc`), so that is
+blacklisted from autoloading and `singularity-vsc.timer` loads it 30s after
+boot, followed by `intel_ipu6` and `ivsc_csi` — the camera only appears if
+they load in that order.
+
 Wi-Fi, Bluetooth and audio still finish loading about 10s in, after the greeter
 is up. To see where time goes:
 
@@ -166,14 +174,31 @@ systemd-analyze critical-chain ly@tty2.service
 
 ## Theme
 
-Everything is on one grayscale ramp. No hues anywhere: emphasis is carried by
-lightness and weight instead.
+The default look, **Neutrino**, is one grayscale ramp. No hues anywhere:
+emphasis is carried by lightness and weight instead.
 
 | | | | |
 |---|---|---|---|
-| `#0b0b0b` base | `#121212` bar | `#1a1a1a` surface | `#242424` overlay |
-| `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext | `#c2c2c2` text |
-| `#ebebeb` bright | | | |
+| `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
+| `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
+| `#c2c2c2` text | `#ebebeb` bright | | |
+
+The shell (bar, flyouts, windows, settings), wofi and swaync all draw from one
+stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
+`services/LookStore.qml`. A look sets the palette and accent colour, corner
+radius, stroke weight, frame style (double, single, bevel or none), module
+style (outline, filled, flat or pill), bar style (full width or floating),
+panel translucency, heading style, density, font and bar geometry.
+
+Neutrino is built into `services/Looks.js` and is what everything falls back
+to. The other shipped looks are data in `services/looks.json`: Soft, Paper,
+Frost, Win95 Dark, Platinum, NeXTSTEP, Phosphor, E-ink, Braun, Blueprint,
+Gruvbox, Kanagawa, Tokyo Night and Nord Light. Pick one from the carousel under
+Settings → Appearance or in the Control Centre, where each value can then be
+adjusted, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
+set <name>`. To add a look, copy an entry in `looks.json`. Removing one from
+the Appearance page deletes it from that file; `git checkout --
+services/looks.json` brings it back.
 
 Alacritty's 16 ANSI slots are a lightness ramp rather than hues, so coloured
 output stays legible but monochrome — you lose red-for-error in `git diff`,
@@ -235,6 +260,11 @@ fc-match monospace
   wireplumber and systemd-backlight respectively. The one gap was BlueZ's own
   adapter power, which always comes back on powered off; `bt-power-restore.service`
   saves it at logout and restores it at login.
+- **Closing the lid** turns the screen off, and suspends after 5 minutes if it
+  stays shut, even with a video playing or Keep Awake on. A wake-up with the
+  lid still shut goes back to sleep after a minute. With an external monitor
+  connected only the laptop's panel turns off and nothing suspends. All of it
+  is `~/.config/hypr/lid.sh`; `journalctl -t singularity-lid` shows what it did.
 - **Power profile follows the charger.** A udev rule
   (`/etc/udev/rules.d/99-singularity-power-profile.rules`) runs
   `/usr/local/bin/singularity-power-profile` on every `power_supply` change,

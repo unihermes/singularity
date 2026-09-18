@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Privacy.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Privacy.qml
 //
 // Which apps are recording the microphone, the camera, or the screen right
 // now, for a bar indicator that only appears while one is.

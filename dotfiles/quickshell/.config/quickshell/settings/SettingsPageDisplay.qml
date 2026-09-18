@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/SettingsPageDisplay.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPageDisplay.qml
 //
 // Connected displays, and the hl.monitor() rule each one falls under.
 //
@@ -231,7 +231,7 @@ SettingsPage {
 
         Row {
             anchors.right: parent.right
-            spacing: 4
+            spacing: Theme.spaceS
 
             FlyoutChip {
                 text: "Extend"
@@ -253,7 +253,7 @@ SettingsPage {
 
         Row {
             anchors.right: parent.right
-            spacing: 4
+            spacing: Theme.spaceS
 
             Repeater {
                 model: page.monitors
@@ -280,7 +280,7 @@ SettingsPage {
             readonly property bool mirrored: modelData.mirrorOf !== "none"
 
             width: parent.width
-            spacing: 6
+            spacing: Theme.spaceM
 
             FlyoutHeading { text: mon.modelData.name + " · " + mon.modelData.description.toUpperCase() }
 
@@ -292,10 +292,10 @@ SettingsPage {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 8
+                    spacing: Theme.spaceL
 
                     Text {
-                        height: Theme.fs(20)
+                        height: Theme.chipHeight
                         verticalAlignment: Text.AlignVCenter
                         // a mirrored output reports the geometry it is
                         // copying, so its own numbers would just be the
@@ -303,7 +303,7 @@ SettingsPage {
                         text: mon.mirrored ? "Copying " + page.primary
                             : mon.modelData.width + "×" + mon.modelData.height + " @ "
                             + mon.modelData.hz.toFixed(2) + " Hz · scale " + mon.modelData.scale
-                        color: Theme.bright
+                        color: Theme.textStrong
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontBody
                     }
@@ -322,7 +322,7 @@ SettingsPage {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 4
+                    spacing: Theme.spaceS
                     Repeater {
                         model: page.scales
                         FlyoutChip {
@@ -344,7 +344,7 @@ SettingsPage {
                 Flow {
                     anchors.right: parent.right
                     width: parent.width
-                    spacing: 4
+                    spacing: Theme.spaceS
 
                     Repeater {
                         model: ["preferred", "highres", "highrr"].concat(mon.modelData.modes)
@@ -359,7 +359,7 @@ SettingsPage {
                 }
             }
 
-            Item { width: 1; height: 8 }
+            Item { width: 1; height: Theme.spaceL }
         }
     }
 }

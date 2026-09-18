@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Notifications.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Notifications.qml
 //
 // swaync's state, for the bar's notification module: unread count and Do Not
 // Disturb. swaync stays the notification daemon -- this only watches it.

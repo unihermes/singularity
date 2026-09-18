@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Visualizer.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Visualizer.qml
 //
 // Audio spectrum bars from cava, for a bar module that only appears while
 // sound is actually playing.

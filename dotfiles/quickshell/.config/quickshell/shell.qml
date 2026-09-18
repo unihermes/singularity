@@ -1,4 +1,4 @@
-// Neutrino - Quickshell
+// Singularity - Quickshell
 // ~/.config/quickshell/shell.qml
 //
 // Status bar: workspaces + window icons on the left, clock in the middle,
@@ -16,7 +16,8 @@
 // changes instead of up to a poll interval later.
 //
 // Two exceptions, both because no service exists to use:
-//   - brightness shells out to brightnessctl (there is no backlight service)
+//   - brightness shells out to brightnessctl (services/Brightness.qml;
+//     there is no backlight service)
 //   - network shells out to iwctl and busctl (services/Network.qml).
 //     Quickshell.Networking's only backend is NetworkManager, and this
 //     machine runs iwd instead -- with NM absent the module loads but
@@ -37,8 +38,6 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Bluetooth
-import Quickshell.Services.UPower
-import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
 import Quickshell.Services.Mpris
 import QtQuick
@@ -92,18 +91,35 @@ ShellRoot {
     // Standalone windows opened from the Control Centre. One each for the
     // whole session, not per screen: they're ordinary toplevels, and
     // Hyprland maps them on whichever monitor has focus.
-    System { id: system }
-    Keybinds { id: keybinds }
-    SettingsWindow { id: settingsWindow }
+    // built on first open, see LazyWindow.qml
+    LazyWindow { id: system; System {} }
+    LazyWindow { id: keybinds; Keybinds {} }
+    LazyWindow { id: settingsWindow; SettingsWindow {} }
+
+    // `qs ipc call settings open appearance`, for a keybind or a script;
+    // an unknown or empty page opens the default one
+    IpcHandler {
+        target: "settings"
+        function open(page: string): void { settingsWindow.open(page) }
+    }
+
+    // `qs ipc call look cycle` / `qs ipc call look set soft` -- for a keybind
+    // that steps through the looks without opening anything
+    IpcHandler {
+        target: "look"
+        function cycle(): void { Settings.cycle("look") }
+        function set(name: string): void { Settings.set("look", name) }
+        function get(): string { return Settings.look }
+        // the appearance's saved default (Settings.saveAsDefault)
+        function saveDefault(): void { Settings.saveAsDefault() }
+        function resetToDefault(): void { Settings.reset() }
+        function isDefault(): bool { return Settings.isDefault }
+        // deletes the look from looks.json; the fallback look can't be removed
+        function remove(name: string): void { Settings.removeLook(name) }
+
+    }
 
     AppearanceSync {}
-
-    // Pipewire nodes are unbound by default: audio.volume / audio.muted stay
-    // invalid until the node is tracked, so the sink has to be listed here
-    // for the volume module to read or write anything at all.
-    PwObjectTracker {
-        objects: [Pipewire.defaultAudioSink]
-    }
 
     // SUPER+W, arriving from hyprland.lua via `qs ipc call overlay toggle`.
     // A signal rather than a direct call because the overlays live inside
@@ -199,6 +215,12 @@ ShellRoot {
 
             // name of the open flyout, "" for none
             property string openFlyout: ""
+
+            // The bar, for the lazily built flyouts. `bar: bar` inside a
+            // LazyFlyout would bind the flyout's own `bar` property to
+            // itself: in a nested component the object's own properties are
+            // looked up before the outer file's ids.
+            readonly property var barWindow: bar
 
             // screen-local x the open flyout centres itself under
             property real flyoutAnchorX: 0
@@ -298,19 +320,6 @@ ShellRoot {
                 }
             }
 
-            // Settings' Appearance entry opens this screen's Control Centre
-            // on that page -- only on the focused screen, since every
-            // screen's scope hears the one window's signal.
-            Connections {
-                target: settingsWindow
-                function onAppearanceRequested() {
-                    if (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name !== screenScope.modelData.name) return
-                    screenScope.flyoutAnchorX = barModules.ccBtn.mapToItem(null, barModules.ccBtn.width / 2, 0).x
-                    screenScope.openFlyout = "controlcentre"
-                    controlCentre.page = "appearance"
-                }
-            }
-
         PanelWindow {
             id: bar
             screen: screenScope.modelData
@@ -325,7 +334,9 @@ ShellRoot {
                 left: true
                 right: true
             }
-            implicitHeight: Theme.barHeight
+            // a floating bar's window also holds the gap between it and the
+            // screen edge, so windows tile clear of the whole thing
+            implicitHeight: Theme.barHeight + Theme.barMargin
             // Transparent, with the ground drawn by the Rectangle below. A
             // Wayland surface decides whether it has an alpha channel when
             // it's created, so a window that starts opaque stays opaque --
@@ -333,113 +344,27 @@ ShellRoot {
             // window that starts transparent can show any opacity after.
             color: "transparent"
 
-            // Bar Opacity. Only the ground fades: the chips and their text
-            // stay solid so the bar is still readable over a busy wallpaper.
+            // Where the bar is drawn: the whole window when full width, inset
+            // from the screen edge and sides when floating. The modules lay
+            // out inside this, not the window.
+            Item {
+                id: barBody
+                x: Theme.barMargin
+                y: Theme.barPosition === "bottom" ? 0 : Theme.barMargin
+                width: parent.width - Theme.barMargin * 2
+                height: Theme.barHeight
+            }
+
+            // Bar Opacity. Only the ground fades -- by its colour's alpha,
+            // so a floating bar's stroke stays solid -- and the chips and
+            // their text stay solid so the bar is still readable over a busy
+            // wallpaper.
             Rectangle {
-                anchors.fill: parent
-                color: Theme.bar
-                opacity: Theme.barOpacity
-            }
-
-            readonly property PwNode sink: Pipewire.defaultAudioSink
-
-            // UPower's DisplayDevice is a synthetic aggregate: it reports a
-            // percentage but not necessarily powerSupply, so isLaptopBattery
-            // is false on it and it can't be used to decide whether this
-            // machine even has a battery. Prefer the real one, fall back to
-            // the aggregate.
-            readonly property UPowerDevice batt: {
-                var ds = UPower.devices ? UPower.devices.values : []
-                for (var i = 0; i < ds.length; i++) {
-                    if (ds[i].isLaptopBattery) return ds[i]
-                }
-                return UPower.displayDevice
-            }
-            readonly property bool hasBattery: batt && batt.ready && batt.isPresent
-
-            function batteryPercent() {
-                return batt && batt.ready ? Math.round(batt.percentage * 100) : 0
-            }
-
-            property int brightness: 0
-            property int tick: 0
-
-            function volumePercent() {
-                if (!sink || !sink.ready || !sink.audio) return 0
-                return Math.round(sink.audio.volume * 100)
-            }
-
-            function volumeMuted() {
-                return sink && sink.ready && sink.audio ? sink.audio.muted : false
-            }
-
-            // Bound (":"), not assigned once, so these track sink.audio.volume
-            // / .muted live -- LevelToast watches their onChanged to catch a
-            // volume move from anywhere (hardware keys, the flyout slider,
-            // scroll-on-chip) without each of those call sites having to say
-            // so itself.
-            readonly property int volumeLevel: volumePercent()
-            readonly property bool volumeIsMuted: volumeMuted()
-
-            function setVolume(pct) {
-                if (!sink || !sink.ready || !sink.audio) return
-                sink.audio.volume = Math.max(0, Math.min(1, pct / 100))
-            }
-
-            // A drag or a fast scroll can call this dozens of times a
-            // second. Spawning a brightnessctl process on every single one
-            // used to be what made both jumpy: forking that often is real
-            // overhead on its own, and with several of those processes
-            // in flight at once there's no guarantee they finish writing
-            // to sysfs in the order they were launched -- so the watched
-            // brightnessFile below could echo back an *older* call's value
-            // after a newer one, snapping the bar backwards mid-drag.
-            // brightnessWriteDebounce coalesces the actual writes to one
-            // in flight at a time; brightnessEcho tells brightnessFile's
-            // reload to trust this optimistic value over a stale echo
-            // while an adjustment is still active.
-            property int pendingBrightnessWrite: -1
-            property bool brightnessEcho: false
-
-            function setBrightness(pct) {
-                // clamped at 1, not 0: brightnessctl will happily set a
-                // laptop panel to fully black and leave you guessing
-                var v = Math.max(1, Math.min(100, Math.round(pct)))
-                brightness = v
-                brightnessEcho = true
-                brightnessEchoGuard.restart()
-                pendingBrightnessWrite = v
-                brightnessWriteDebounce.restart()
-            }
-
-            Timer {
-                id: brightnessWriteDebounce
-                interval: 35
-                onTriggered: {
-                    if (bar.pendingBrightnessWrite < 0) return
-                    Quickshell.execDetached(["brightnessctl", "set", bar.pendingBrightnessWrite + "%"])
-                    bar.pendingBrightnessWrite = -1
-                }
-            }
-
-            // Cleared a little after the last setBrightness call, not right
-            // after the debounced write fires -- the write is detached, so
-            // there's no signal for when it (and its resulting file event)
-            // has actually landed.
-            Timer {
-                id: brightnessEchoGuard
-                interval: 350
-                onTriggered: bar.brightnessEcho = false
-            }
-
-            function batteryIcon() {
-                if (!hasBattery) return "󰁹"
-                if (!UPower.onBattery) return "󰂄"
-                var p = batteryPercent()
-                if (p >= 90) return "󰁹"
-                if (p >= 55) return "󰂀"
-                if (p >= 25) return "󰁽"
-                return "󰁺"
+                anchors.fill: barBody
+                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                radius: Theme.barFloating ? Theme.radius : 0
+                border.width: Theme.barFloating ? Theme.borderWidth : 0
+                border.color: Theme.stroke
             }
 
             // adapter.enabled mirrors BlueZ's "Powered" property, but
@@ -655,22 +580,24 @@ ShellRoot {
                 onTriggered: bar.slotsAnimate = true
             }
 
-            // hairline under the bar, so it reads as a surface rather than a
-            // strip of background
+            // hairline on the bar's inner edge, so it reads as a surface
+            // rather than a strip of background
             Rectangle {
-                anchors.bottom: parent.bottom
+                visible: !Theme.barFloating
+                y: Theme.barPosition === "bottom" ? 0 : parent.height - height
                 width: parent.width
-                height: 1
-                color: Theme.border
+                height: Theme.borderWidth
+                color: Theme.stroke
             }
+
 
             // --- left: workspaces -------------------------------------
             Item {
                 id: leftSlots
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.moduleGap
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
+                anchors.left: barBody.left
+                anchors.leftMargin: Theme.moduleGap + (Theme.barFloating ? Theme.spaceXs : 0)
+                anchors.top: barBody.top
+                anchors.bottom: barBody.bottom
                 width: bar.slotsWidth(leftSlots)
 
                 readonly property var order: Settings.widgetOrder("left")
@@ -685,7 +612,7 @@ ShellRoot {
             // handlers of its own, so it doesn't block clicks on either side.
             Item {
                 id: centreSlots
-                anchors.fill: parent
+                anchors.fill: barBody
 
                 readonly property var order: Settings.widgetOrder("centre")
                 function itemFor(k) { return bar.widgetItem(k) }
@@ -700,71 +627,15 @@ ShellRoot {
             // a wide gap on top of that just scatters the row.
             Item {
                 id: rightSlots
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.moduleGap
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
+                anchors.right: barBody.right
+                anchors.rightMargin: Theme.moduleGap + (Theme.barFloating ? Theme.spaceXs : 0)
+                anchors.top: barBody.top
+                anchors.bottom: barBody.bottom
+
                 width: bar.slotsWidth(rightSlots)
 
                 readonly property var order: Settings.widgetOrder("right")
                 function itemFor(k) { return bar.widgetItem(k) }
-            }
-
-            // --- data -------------------------------------------------
-            // Brightness is read straight from sysfs and *watched*, not
-            // polled: the backlight attribute emits change notifications, so
-            // the readout follows the XF86MonBrightness keys (and anything
-            // else that writes to it) the same way the Pipewire-backed volume
-            // readout follows external volume changes. brightnessctl is still
-            // used to write, since sysfs isn't user-writable.
-            property string backlightDir: ""
-            property int brightnessMax: 0
-
-            Process {
-                id: backlightFind
-                command: ["sh", "-c", "ls -d /sys/class/backlight/*/ 2>/dev/null | head -1"]
-                running: true
-                stdout: StdioCollector {
-                    onStreamFinished: bar.backlightDir = text.trim().replace(/\/$/, "")
-                }
-            }
-
-            FileView {
-                id: brightnessMaxFile
-                path: bar.backlightDir !== "" ? bar.backlightDir + "/max_brightness" : ""
-                onLoaded: {
-                    var v = parseInt(text().trim())
-                    if (!isNaN(v) && v > 0) {
-                        bar.brightnessMax = v
-                        brightnessFile.reload()
-                    }
-                }
-            }
-
-            FileView {
-                id: brightnessFile
-                path: bar.backlightDir !== "" ? bar.backlightDir + "/brightness" : ""
-                watchChanges: true
-                onFileChanged: reload()
-                onLoaded: {
-                    // Ignore echoes of our own writes while an adjustment is
-                    // active -- see brightnessEcho above for why trusting
-                    // every one of these here is what made dragging jumpy.
-                    if (bar.brightnessEcho) return
-                    var raw = parseInt(text().trim())
-                    if (!isNaN(raw) && bar.brightnessMax > 0)
-                        bar.brightness = Math.round(raw / bar.brightnessMax * 100)
-                }
-            }
-
-            Timer {
-                interval: 1000
-                running: true
-                repeat: true
-                onTriggered: {
-                    barModules.clock.label = Qt.formatDateTime(new Date(), "HH:mm:ss  |  MM/dd/yy")
-                    bar.tick++
-                }
             }
 
             // Keep Awake. The Wayland idle-inhibit protocol, rather than
@@ -782,12 +653,18 @@ ShellRoot {
         // Each is its own layer-shell surface rather than something drawn
         // inside the bar: a panel clips to its own surface, so a dropdown
         // drawn in the bar would be cut off at the bar's bottom edge.
+        //
+        // Wrapped in LazyFlyout, which builds each one the first time it
+        // opens rather than at login. The toasts and the alt-tab switcher
+        // are the exceptions: the toasts react to events while nothing is
+        // open, and alt-tab has to be ready for a fast tap.
 
         // SUPER+W: the workspace grid. Not anchored to the bar like the
         // flyouts, but it shares openFlyout so opening it closes them (and
         // vice versa) without any extra bookkeeping.
-        WorkspaceOverlay {
-            scope: screenScope
+        LazyFlyout {
+            name: "workspaceoverlay"; scope: screenScope
+            WorkspaceOverlay { scope: screenScope }
         }
 
         // SUPER+M: brief top-of-screen toast naming the layout just switched
@@ -798,15 +675,13 @@ ShellRoot {
             scope: screenScope
         }
 
-        // Volume/brightness OSD. Watches bar.volumeLevel/volumeIsMuted and
-        // bar.brightness directly rather than through an IPC relay like the
-        // two toasts above -- those two both already push live updates into
-        // bar's own properties (Pipewire for volume, a watched sysfs file for
-        // brightness), so hardware keys, the flyout sliders and scroll-on-chip
-        // all surface here for free with no new signal plumbing.
+        // Volume/brightness OSD. Watches the Audio and Brightness services
+        // directly rather than through an IPC relay like the two toasts
+        // above -- both already push live updates (Pipewire for volume, a
+        // watched sysfs file for brightness), so hardware keys, the flyout
+        // sliders and scroll-on-chip all surface here for free.
         LevelToast {
             scope: screenScope
-            bar: bar
         }
 
         // ALT+Tab. Shares openFlyout like everything else, so opening it
@@ -817,55 +692,61 @@ ShellRoot {
         }
 
         // workspaces / windows
-        WorkspacesFlyout { scope: screenScope; bar: bar }
+        LazyFlyout { name: "workspaces"; scope: screenScope; WorkspacesFlyout { scope: screenScope; bar: screenScope.barWindow } }
 
         // calendar
-        CalendarFlyout { scope: screenScope }
+        LazyFlyout { name: "calendar"; scope: screenScope; CalendarFlyout { scope: screenScope } }
 
         // brightness
-        BrightnessFlyout { scope: screenScope; bar: bar; shellRoot: root }
+        LazyFlyout { name: "brightness"; scope: screenScope; BrightnessFlyout { scope: screenScope; shellRoot: root } }
 
         // volume
-        VolumeFlyout { scope: screenScope; bar: bar }
+        LazyFlyout { name: "volume"; scope: screenScope; VolumeFlyout { scope: screenScope } }
 
         // network (iwd)
-        NetworkFlyout { id: netFlyout; scope: screenScope; bar: bar }
+        LazyFlyout { name: "network"; scope: screenScope; NetworkFlyout { scope: screenScope; bar: screenScope.barWindow } }
 
         // bluetooth
-        BluetoothFlyout { id: btFlyout; scope: screenScope; bar: bar }
+        LazyFlyout { name: "bluetooth"; scope: screenScope; BluetoothFlyout { scope: screenScope; bar: screenScope.barWindow } }
 
         // battery
-        BatteryFlyout { id: batteryFlyout; scope: screenScope; bar: bar }
+        LazyFlyout { name: "battery"; scope: screenScope; BatteryFlyout { scope: screenScope } }
 
         // tray menu: the app's own menu, drawn as flyout rows so it matches
         // everything else rather than popping a native Qt menu. Submenus
         // drill down in place, like the control centre.
-        TrayMenuFlyout { id: trayMenu; scope: screenScope }
+        LazyFlyout {
+            id: trayMenu
+            name: "traymenu"; scope: screenScope
+            TrayMenuFlyout { scope: screenScope }
+        }
 
         // media
-        MediaFlyout { id: mediaFlyout; scope: screenScope }
+        LazyFlyout { name: "media"; scope: screenScope; MediaFlyout { scope: screenScope } }
 
         // weather
-        WeatherFlyout { id: weatherFlyout; scope: screenScope }
+        LazyFlyout { name: "weather"; scope: screenScope; WeatherFlyout { scope: screenScope } }
 
         // privacy
-        PrivacyFlyout { scope: screenScope }
+        LazyFlyout { name: "privacy"; scope: screenScope; PrivacyFlyout { scope: screenScope } }
 
         // failed units
-        FailedFlyout { scope: screenScope }
+        LazyFlyout { name: "failed"; scope: screenScope; FailedFlyout { scope: screenScope } }
 
         // updates
-        UpdatesFlyout { scope: screenScope }
+        LazyFlyout { name: "updates"; scope: screenScope; UpdatesFlyout { scope: screenScope } }
 
         // control centre
-        ControlCentre {
-            id: controlCentre
-            scope: screenScope
-            bar: bar
-            shellRoot: root
-            settingsWin: settingsWindow
-            systemWin: system
-            keybindsWin: keybinds
+        LazyFlyout {
+            name: "controlcentre"; scope: screenScope
+            ControlCentre {
+                scope: screenScope
+                bar: screenScope.barWindow
+                shellRoot: root
+                settingsWin: settingsWindow
+                systemWin: system
+                keybindsWin: keybinds
+            }
         }
 
         }

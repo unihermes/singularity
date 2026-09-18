@@ -1,4 +1,4 @@
--- Neutrino - nvim
+-- Singularity - nvim
 -- ~/.config/nvim/init.lua
 
 vim.g.mapleader = " "

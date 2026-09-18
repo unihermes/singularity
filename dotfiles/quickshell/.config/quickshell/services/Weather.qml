@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Weather.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Weather.qml
 //
 // Current conditions and a 3-day forecast from wttr.in, for the bar's
 // weather module and its flyout.

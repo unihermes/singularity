@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Wallpaper.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Wallpaper.qml
 //
 // The wallpaper, and the colours taken from it.
 //
@@ -11,7 +11,9 @@
 // In wallpaper colour mode, matugen turns the image into a Material palette,
 // which is mapped onto the grayscale ramp's roles -- dark surface tones for
 // the grounds, outlines for the strokes, the primary tone for "bright" -- so
-// every component keeps asking Theme for the same names. The result is
+// every component keeps asking Theme for the same names. Material's surface
+// and outline tones are close to neutral grey whatever the image, so each
+// role is then recoloured towards the wallpaper (see tint()). The result is
 // cached with the image and scheme it came from: matugen takes about half a
 // second, and without the cache every shell start would draw one grey frame
 // before the colours arrived.
@@ -66,9 +68,37 @@ Singleton {
         stateFile.setText("shuffle=" + (Settings.wallpaperShuffle ? 1 : 0) + "\nwallpaper=" + current + "\n")
     }
 
+    // Bumped whenever the mapping below changes, so a palette cached by an
+    // older mapping is regenerated rather than shown.
+    readonly property int mappingVersion: 3
+    function cacheValid(c) {
+        return c.version === mappingVersion && c.scheme === scheme && !!c.colors
+    }
+
+    // How much of the wallpaper's colour each Intensity lets into the
+    // grounds, strokes and text, as a fraction of the source colour's own
+    // saturation.
+    readonly property var tintStrength: ({
+        "scheme-neutral": 0.3,
+        "scheme-tonal-spot": 0.55,
+        "scheme-vibrant": 0.8,
+        "scheme-expressive": 0.8,
+    })
+
+    // Each role keeps its lightness -- the ramp's contrast is what makes
+    // text readable against its ground -- and takes the source's hue, with
+    // `amount` of its saturation (never less than the role already had).
+    function tint(hex, source, amount) {
+        var c = Qt.color(hex), src = Qt.color(source)
+        var sat = Math.min(1, Math.max(c.hslSaturation, src.hslSaturation * amount))
+        var out = Qt.hsla(src.hslHue, sat, c.hslLightness, 1)
+        function h2(v) { return ("0" + Math.round(v * 255).toString(16)).slice(-2) }
+        return "#" + h2(out.r) + h2(out.g) + h2(out.b)
+    }
+
     function refresh() {
         if (!wanted || current === "") return
-        if (cache.image === current && cache.scheme === scheme && cache.colors) {
+        if (cacheValid(cache) && cache.image === current) {
             palette = cache.colors
             return
         }
@@ -115,20 +145,28 @@ Singleton {
                 try { c = JSON.parse(text).colors } catch (e) { return }
                 if (!c) return
                 function pick(k) { return c[k].dark.color }
+                // The grounds take their colour from primary_container, the
+                // most saturated dark tone matugen gives; strokes and text
+                // from primary, a little less of it so text stays near-white.
+                // The neutral scheme greys those out too, so there the
+                // wallpaper's own seed colour stands in for both.
+                var ground = pick("primary_container"), accent = pick("primary")
+                if (Qt.color(ground).hslSaturation < 0.15) ground = accent = pick("source_color")
+                var k = root.tintStrength[root.scheme] || 0.55
                 var colors = {
-                    base:    pick("surface_container_lowest"),
-                    bar:     pick("surface"),
-                    panel:   pick("surface_container_low"),
-                    surface: pick("surface_container"),
-                    overlay: pick("surface_container_high"),
-                    border:  pick("surface_container_highest"),
-                    muted:   pick("outline_variant"),
-                    subtext: pick("outline"),
-                    text:    pick("on_surface_variant"),
-                    bright:  pick("primary"),
+                    base:    root.tint(pick("surface_container_lowest"),  ground, k),
+                    bar:     root.tint(pick("surface"),                   ground, k),
+                    panel:   root.tint(pick("surface_container_low"),     ground, k),
+                    surface: root.tint(pick("surface_container"),         ground, k),
+                    overlay: root.tint(pick("surface_container_high"),    ground, k),
+                    border:  root.tint(pick("surface_container_highest"), ground, k),
+                    muted:   root.tint(pick("outline_variant"),           accent, k * 0.8),
+                    subtext: root.tint(pick("outline"),                   accent, k * 0.7),
+                    text:    root.tint(pick("on_surface_variant"),        accent, k * 0.5),
+                    bright:  accent,
                 }
                 root.palette = colors
-                root.cache = { image: root.current, scheme: root.scheme, colors: colors }
+                root.cache = { version: root.mappingVersion, image: root.current, scheme: root.scheme, colors: colors }
                 cacheFile.setText(JSON.stringify(root.cache))
             }
         }
@@ -149,7 +187,7 @@ Singleton {
             try { root.cache = JSON.parse(text()) } catch (e) { root.cache = {} }
             // trust the cache for the scheme before swaybg has been asked
             // which image it's showing; refresh() re-checks the image after
-            if (root.wanted && root.cache.scheme === root.scheme && root.cache.colors)
+            if (root.wanted && root.cacheValid(root.cache))
                 root.palette = root.cache.colors
         }
     }

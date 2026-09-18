@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FlyoutInput.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FlyoutInput.qml
 //
 // A single-line text field sized like a FlyoutRow, for the one thing in the
 // bar that needs typing: a Wi-Fi passphrase.
@@ -27,7 +27,7 @@ Item {
     signal escapePressed()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.fs(26)
+    implicitHeight: Theme.rowHeightTall
 
     function forceFocus() {
         field.forceActiveFocus()
@@ -36,12 +36,12 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        anchors.leftMargin: -4
-        anchors.rightMargin: -4
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
         radius: Theme.radiusInner
-        color: Theme.surface
-        border.width: 1
-        border.color: field.activeFocus ? Theme.subtext : Theme.border
+        color: Theme.fieldFill
+        border.width: Theme.borderWidth
+        border.color: field.activeFocus ? Theme.strokeFocus : Theme.stroke
     }
 
     Text {
@@ -49,7 +49,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         visible: field.text === ""
         text: root.placeholder
-        color: Theme.muted
+        color: Theme.textDisabled
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
     }
@@ -57,12 +57,13 @@ Item {
     TextInput {
         id: field
         anchors.fill: parent
-        anchors.leftMargin: 2
-        anchors.rightMargin: 2
+        anchors.leftMargin: Theme.spaceXs
+        anchors.rightMargin: Theme.spaceXs
         verticalAlignment: TextInput.AlignVCenter
-        color: Theme.bright
+        color: Theme.textStrong
         selectionColor: Theme.muted
-        selectedTextColor: Theme.bright
+        selectedTextColor: Theme.textStrong
+
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
         echoMode: root.echoPassword ? TextInput.Password : TextInput.Normal

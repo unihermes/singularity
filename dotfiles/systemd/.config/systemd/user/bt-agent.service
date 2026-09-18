@@ -1,4 +1,4 @@
-# Neutrino - BlueZ pairing agent
+# Singularity - BlueZ pairing agent
 #
 # BlueZ will not complete a pairing without an agent registered on the bus to
 # answer its confirmation request; without one it fails with

@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FailedUnits.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/FailedUnits.qml
 //
 // systemd units in the failed state, system and user, for a bar module that
 // only appears when there are any. It exists because a failed unit is

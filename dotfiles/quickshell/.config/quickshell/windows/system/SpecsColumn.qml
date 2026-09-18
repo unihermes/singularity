@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/system/SpecsColumn.qml
+// ~/.config/quickshell/windows/system/SpecsColumn.qml
 //
 // The System window's right column: kernel, uptime and packages, hardware
 // specs with a copy-to-clipboard summary, and quick links.
@@ -16,7 +16,7 @@ Column {
 
     required property var stats
 
-    spacing: 6
+    spacing: Theme.spaceM
 
     FlyoutHeading { text: "SYSTEM" }
 
@@ -28,15 +28,15 @@ Column {
         value: column.stats.specs.pkgCount < 0 ? "--" : column.stats.specs.pkgCount + "  (" + column.stats.specs.aurCount + " AUR)"
     }
 
-    Item { width: 1; height: 4 }
+    Item { width: 1; height: Theme.spaceS }
     Item {
         width: parent.width
-        height: 18
+        height: Theme.controlSize
 
         FlyoutHeading {
             anchors.left: parent.left
             anchors.right: copyBtn.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
             text: "SPECS"
         }
@@ -45,18 +45,19 @@ Column {
             id: copyBtn
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: copyLabel.implicitWidth + 16
-            height: 18
+            width: copyLabel.implicitWidth + Theme.spaceXxl
+
+            height: Theme.controlSize
             radius: Theme.radiusInner
-            color: copyMouse.containsMouse ? Theme.overlay : "transparent"
-            border.width: 1
-            border.color: Theme.border
+            color: copyMouse.containsMouse ? Theme.hoverFill : "transparent"
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
 
             Text {
                 id: copyLabel
                 anchors.centerIn: parent
                 text: column.stats.specs.copied ? "Copied" : "Copy"
-                color: column.stats.specs.copied ? Theme.bright : Theme.subtext
+                color: column.stats.specs.copied ? Theme.textStrong : Theme.subtext
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontSmall
             }
@@ -100,12 +101,12 @@ Column {
     }
     InfoRow { visible: column.stats.specs.storage.length === 0; label: "Storage"; value: "--" }
 
-    Item { width: 1; height: 4 }
+    Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "QUICK LINKS" }
 
     Row {
         width: parent.width
-        spacing: 6
+        spacing: Theme.spaceM
 
         FlyoutChip {
             text: "hyprland.lua"

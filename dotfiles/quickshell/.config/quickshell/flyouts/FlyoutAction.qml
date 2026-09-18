@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FlyoutAction.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FlyoutAction.qml
 //
 // One Quick Actions row: an icon, a label, an optional status line under it,
 // and -- for toggles -- a switch on the right.
@@ -36,14 +36,14 @@ Item {
     signal activated()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.fs(status !== "" ? 36 : 26)
+    implicitHeight: status !== "" ? Theme.row(36) : Theme.rowHeightTall
 
     Rectangle {
         anchors.fill: parent
-        anchors.leftMargin: -4
-        anchors.rightMargin: -4
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
         radius: Theme.radiusInner
-        color: (root.enabled && mouse.containsMouse) ? Theme.overlay : "transparent"
+        color: (root.enabled && mouse.containsMouse) ? Theme.hoverFill : "transparent"
     }
 
     // Fixed-width icon column, so labels line up whatever the glyph's own
@@ -52,15 +52,15 @@ Item {
         id: iconCell
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        width: 20
+        width: Theme.iconCell
         height: parent.height
 
         Text {
             anchors.centerIn: parent
             text: root.icon
-            color: !root.enabled ? Theme.muted
+            color: !root.enabled ? Theme.textDisabled
                 : (root.checkable && !root.checked) ? Theme.subtext
-                : Theme.bright
+                : Theme.textStrong
             font.family: Theme.fontIcon
             font.pixelSize: Theme.fontIconSize
         }
@@ -68,10 +68,10 @@ Item {
 
     Column {
         anchors.left: iconCell.right
-        anchors.leftMargin: 8
+        anchors.leftMargin: Theme.spaceL
         anchors.right: root.checkable ? toggle.left
             : (root.trailingIcon !== "" ? trailing.left : parent.right)
-        anchors.rightMargin: 8
+        anchors.rightMargin: Theme.spaceL
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 
@@ -80,7 +80,7 @@ Item {
             text: root.label
             elide: Text.ElideRight
             color: !root.enabled ? Theme.subtext
-                : mouse.containsMouse ? Theme.bright
+                : mouse.containsMouse ? Theme.textStrong
                 : Theme.text
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
@@ -104,24 +104,24 @@ Item {
         visible: root.checkable
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        width: 26
-        height: 14
-        radius: height / 2
-        color: root.checked ? Theme.text : Theme.surface
-        border.width: 1
-        border.color: root.checked ? Theme.text : Theme.border
+        width: Theme.fs(26)
+        height: Theme.fs(14)
+        radius: Math.min(height / 2, Theme.radius)
+        color: root.checked ? Theme.meterFill : Theme.fieldFill
+        border.width: Theme.borderWidth
+        border.color: root.checked ? Theme.meterFill : Theme.stroke
 
-        Behavior on color { ColorAnimation { duration: Theme.dur(110) } }
+        Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
         Rectangle {
-            width: 8
-            height: 8
-            radius: 4
+            width: parent.height - 6
+            height: width
+            radius: Math.min(width / 2, Theme.radiusSmall)
             anchors.verticalCenter: parent.verticalCenter
             x: root.checked ? parent.width - width - 3 : 3
             color: root.checked ? Theme.base : Theme.muted
 
-            Behavior on x { NumberAnimation { duration: Theme.dur(110); easing.type: Easing.OutCubic } }
+            Behavior on x { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
         }
     }
 
@@ -129,9 +129,10 @@ Item {
         id: trailing
         visible: !root.checkable && root.trailingIcon !== ""
         anchors.right: parent.right
-        anchors.rightMargin: 6
+        anchors.rightMargin: Theme.spaceM
         anchors.verticalCenter: parent.verticalCenter
         text: root.trailingIcon
+
         color: Theme.muted
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontIconSize

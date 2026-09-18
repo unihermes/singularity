@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/Media.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Media.qml
 //
 // The MPRIS player the bar's media module follows: whichever is playing,
 // else the last one that was, else the first one there is. Browsers expose

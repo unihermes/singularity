@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/SystemStats.qml
+// ~/.config/quickshell/services/SystemStats.qml
 //
 // Everything the System window shows, sampled: CPU (overall and per core),
 // memory, swap, disk, temperature, network throughput and addresses, the
@@ -26,7 +26,6 @@
 
 import Quickshell
 import Quickshell.Io
-import Quickshell.Services.UPower
 import QtQuick
 import "Format.js" as Format
 
@@ -64,17 +63,6 @@ Item {
     property string ipAddr: ""
     property string connType: ""     // "Wi-Fi" | "Ethernet" | "Other" | ""
     property int signalDbm: 1000     // 1000 = n/a (not wifi, or no reading yet)
-
-    // real battery only, same rule as the bar: UPower's DisplayDevice is a
-    // synthetic aggregate that can't tell you whether a battery exists at all
-    readonly property UPowerDevice batt: {
-        var ds = UPower.devices ? UPower.devices.values : []
-        for (var i = 0; i < ds.length; i++) {
-            if (ds[i].isLaptopBattery) return ds[i]
-        }
-        return UPower.displayDevice
-    }
-    readonly property bool hasBattery: batt && batt.ready && batt.isPresent
 
     // Histories are replaced, never mutated in place: a push onto the same
     // array doesn't notify, and the graphs would never repaint.

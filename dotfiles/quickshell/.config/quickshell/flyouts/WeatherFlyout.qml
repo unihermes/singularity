@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/WeatherFlyout.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/WeatherFlyout.qml
 //
 // Split out of shell.qml. Self-contained: only needs the Weather singleton.
 
@@ -15,28 +15,28 @@ FlyoutPanel {
 
     Item {
         width: parent.width
-        height: 46
+        height: Theme.row(46)
 
         Text {
             id: bigIcon
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             text: Weather.iconFor(Weather.code, Weather.isNight)
-            color: Theme.bright
+            color: Theme.textStrong
             font.family: Theme.fontIcon
-            font.pixelSize: Theme.fs(34)
+            font.pixelSize: Theme.fontHero
         }
 
         Column {
             anchors.left: bigIcon.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Theme.spaceXl
             anchors.verticalCenter: parent.verticalCenter
 
             Text {
                 text: Weather.temp(Weather.tempF, Weather.tempC)
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
-                font.pixelSize: Theme.fs(22)
+                font.pixelSize: Theme.fontTitle
                 font.bold: true
             }
             Text {
@@ -61,12 +61,12 @@ FlyoutPanel {
             required property var modelData
             required property int index
             width: parent ? parent.width : 0
-            height: 24
+            height: Theme.rowHeight
 
             Text {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: 56
+                width: Theme.fs(56)
                 text: index === 0 ? "Today"
                     : Qt.formatDate(new Date(modelData.date + "T12:00:00"), "ddd")
                 color: Theme.text
@@ -74,7 +74,8 @@ FlyoutPanel {
                 font.pixelSize: Theme.fontBody
             }
             Text {
-                x: 60
+                x: Theme.fs(60)
+
                 anchors.verticalCenter: parent.verticalCenter
                 text: Weather.iconFor(modelData.code, false)
                 color: Theme.text
@@ -85,7 +86,7 @@ FlyoutPanel {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 text: Weather.temp(modelData.hiF, modelData.hiC) + "  /  " + Weather.temp(modelData.loF, modelData.loC)
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
@@ -96,7 +97,7 @@ FlyoutPanel {
 
     Item {
         width: parent.width
-        height: 22
+        height: Theme.row(22)
 
         Text {
             anchors.left: parent.left
@@ -111,7 +112,7 @@ FlyoutPanel {
         Row {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 4
+            spacing: Theme.spaceS
             FlyoutChip { text: "°F"; selected: !Weather.metric; onClicked: Settings.setWeatherUnits("F") }
             FlyoutChip { text: "°C"; selected: Weather.metric;  onClicked: Settings.setWeatherUnits("C") }
             FlyoutChip { glyph: true; text: "󰑐"; onClicked: Weather.refresh() }

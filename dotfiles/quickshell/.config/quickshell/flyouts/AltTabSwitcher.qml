@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/AltTabSwitcher.qml
+// ~/.config/quickshell/flyouts/AltTabSwitcher.qml
 //
 // The ALT+Tab switcher: a row of the open windows, most-recently-used first,
 // with one highlighted. Hold ALT and tap Tab to step the highlight along,
@@ -213,8 +213,7 @@ OverlayWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
-        opacity: 0.35
+        color: Theme.scrim
     }
 
     // Cards wrap onto more rows once a row would be wider than the screen,
@@ -222,8 +221,8 @@ OverlayWindow {
     // which left windows beyond the 13th or so unseen and reachable only by
     // tapping Tab blind. Columns are however many fit; a short list is still
     // one centred row.
-    readonly property int cardW: 128
-    readonly property int cardH: 116
+    readonly property int cardW: Theme.fs(128)
+    readonly property int cardH: Theme.fs(116)
     readonly property int maxColumns: Math.max(1, Math.floor((width - 80 - 40 + list.spacing) / (cardW + list.spacing)))
 
     PanelFrame {
@@ -238,7 +237,7 @@ OverlayWindow {
         Grid {
             id: list
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Theme.spaceL
             columns: Math.min(root.windows.length, root.maxColumns)
 
             Repeater {
@@ -254,9 +253,9 @@ OverlayWindow {
                     width: root.cardW
                     height: root.cardH
                     radius: Theme.radiusInner
-                    color: active ? Theme.overlay : Theme.surface
-                    border.width: 1
-                    border.color: active ? Theme.bright : Theme.border
+                    color: active ? Theme.selectedFill : Theme.surface
+                    border.width: Theme.borderWidth
+                    border.color: active ? Theme.accent : Theme.stroke
 
                     // No Behavior on colour here: the highlight has to keep up
                     // with held-Tab autorepeat, and a fade would smear it.
@@ -264,8 +263,8 @@ OverlayWindow {
                     IconImage {
                         id: ico
                         anchors.horizontalCenter: parent.horizontalCenter
-                        y: 16
-                        implicitSize: 48
+                        y: Theme.spaceXxl
+                        implicitSize: Theme.fs(48)
                         opacity: card.active ? 1 : 0.55
                         source: {
                             const e = DesktopEntries.heuristicLookup(card.cls)
@@ -276,14 +275,15 @@ OverlayWindow {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: ico.bottom
-                        anchors.topMargin: 10
+                        anchors.topMargin: Theme.sp(10)
                         width: parent.width - 16
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
                         maximumLineCount: 2
                         wrapMode: Text.WordWrap
                         text: card.modelData.lastIpcObject.title || card.cls
-                        color: card.active ? Theme.text : Theme.muted
+                        color: card.active ? Theme.text : Theme.textDisabled
+
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontSmall
                     }

@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/LayoutToast.qml
+// ~/.config/quickshell/flyouts/LayoutToast.qml
 //
 // SUPER+M: a small "MONOCLE" / "DWINDLE" toast at the top centre of the
 // screen, naming the layout just switched to. Self-dismissing rather than a
@@ -32,6 +32,8 @@ OverlayWindow {
     Connections {
         target: root.scope
         function onLayoutToastSeqChanged() {
+            // the clock island shows this itself
+            if (Settings.islandActive) return
             root.active = true
             hideTimer.restart()
         }
@@ -48,25 +50,27 @@ OverlayWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         // Flush against the bar, whichever edge it's on -- no gap.
         y: Theme.barPosition === "bottom"
-            ? root.height - Theme.barHeight - height
-            : Theme.barHeight
-        width: label.implicitWidth + 36
-        height: label.implicitHeight + 18
+            ? root.height - Theme.barExtent - height
+            : Theme.barExtent
+
+        width: label.implicitWidth + Theme.sp(36)
+        height: label.implicitHeight + Theme.sp(18)
 
         opacity: root.active ? 1 : 0
         Behavior on opacity {
-            NumberAnimation { duration: Theme.dur(150); easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
         }
 
         Text {
             id: label
             anchors.centerIn: parent
-            text: root.scope.layoutToastMode === "monocle" ? "MONOCLE" : "DWINDLE"
+            text: Theme.heading(root.scope.layoutToastMode === "monocle" ? "MONOCLE" : "DWINDLE")
+
             color: Theme.text
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
-            font.letterSpacing: 2
-            font.bold: true
+            font.letterSpacing: Theme.headingSpacing * 2
+            font.bold: Theme.headingBold
         }
     }
 }

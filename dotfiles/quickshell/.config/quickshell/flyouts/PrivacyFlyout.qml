@@ -1,4 +1,4 @@
-// Neutrino - Quickshell
+// Singularity - Quickshell
 // ~/.config/quickshell/flyouts/PrivacyFlyout.qml
 //
 // Self-contained: only needs the Privacy singleton.

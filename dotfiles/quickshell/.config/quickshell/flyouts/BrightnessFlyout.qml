@@ -1,7 +1,7 @@
-// Neutrino - Quickshell
+// Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BrightnessFlyout.qml
 //
-// Needs bar's brightness readout/setter, and root's Night Light state --
+// Needs root's Night Light state --
 // see the toggle in ControlCentre's Quick Actions for the same fields.
 
 import "../services"
@@ -11,15 +11,14 @@ FlyoutPanel {
     flyout: "brightness"
     menuWidth: 220
 
-    required property var bar
     required property var shellRoot
 
-    FlyoutHeading { text: "BRIGHTNESS  " + bar.brightness + "%" }
+    FlyoutHeading { text: "BRIGHTNESS  " + Brightness.level + "%" }
 
     Slider {
         width: parent.width
-        value: bar.brightness
-        onMoved: v => bar.setBrightness(v)
+        value: Brightness.level
+        onMoved: v => Brightness.set(v)
     }
 
     FlyoutDivider {}

@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FlyoutChip.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FlyoutChip.qml
 //
 // A small bordered button for inline actions inside a flyout row -- the
 // Log / Restart / Clear on a failed unit, the media transport controls --
@@ -21,24 +21,25 @@ Item {
     signal clicked()
 
     implicitWidth: label.implicitWidth + (glyph ? 14 : 12)
-    implicitHeight: Theme.fs(20)
+    implicitHeight: Theme.chipHeight
 
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: root.selected ? Theme.overlay
-            : (root.enabled && mouse.containsMouse) ? Theme.surface : "transparent"
-        border.width: 1
-        border.color: root.selected ? Theme.muted
-            : (root.enabled && mouse.containsMouse) ? Theme.muted : Theme.border
+        color: root.selected ? Theme.selectedFill
+            : (root.enabled && mouse.containsMouse) ? Theme.hoverFillSoft : "transparent"
+        border.width: Theme.borderWidth
+        border.color: root.selected ? Theme.selectedStroke
+            : (root.enabled && mouse.containsMouse) ? Theme.strokeHover : Theme.stroke
     }
 
     Text {
         id: label
         anchors.centerIn: parent
         text: root.text
-        color: !root.enabled ? Theme.muted
-            : (root.selected || mouse.containsMouse) ? Theme.bright : Theme.text
+        color: !root.enabled ? Theme.textDisabled
+            : (root.selected || mouse.containsMouse) ? Theme.textStrong : Theme.text
+
         font.family: root.glyph ? Theme.fontIcon : Theme.fontText
         font.pixelSize: root.glyph ? Theme.fontIconSize : Theme.fontBody
     }

@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/System.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/windows/System.qml
 //
 // System: live usage gauges with per-core bars and 60-second history,
 // network throughput, the heaviest processes, static facts, hardware specs
@@ -15,6 +15,7 @@ import Quickshell
 import QtQuick
 import "../services"
 import "system"
+import "../flyouts"
 
 CentredWindow {
     id: root
@@ -26,10 +27,10 @@ CentredWindow {
     // model, board vendor+product, monitor list) and was clipping its own
     // values against the window edge at a uniform width -- the graphs and
     // gauges in column 1 need far less room than that text does.
-    readonly property int col1Width: 300
-    readonly property int col2Width: 320
-    readonly property int col3Width: 420
-    readonly property int colGap: 24
+    readonly property int col1Width: Theme.fs(300)
+    readonly property int col2Width: Theme.fs(320)
+    readonly property int col3Width: Theme.fs(420)
+    readonly property int colGap: Theme.sp(24)
     // Caps the window's height to whatever the shortest connected screen
     // actually has room for, so it can never end up taller than the
     // display -- a fixed guess here was still cut off on a smaller panel.
@@ -86,15 +87,9 @@ CentredWindow {
         }
 
         // scroll indicator, shown only once the grid actually overflows
-        Rectangle {
+        ScrollBar {
             anchors.right: parent.right
-            width: 3
-            radius: 1.5
-            color: Theme.muted
-            visible: gridFlick.contentHeight > gridFlick.height
-            height: Math.max(20, gridFlick.height * gridFlick.height / Math.max(1, gridFlick.contentHeight))
-            y: (gridFlick.height - height)
-                * (gridFlick.contentY / Math.max(1, gridFlick.contentHeight - gridFlick.height))
+            flickable: gridFlick
         }
     }
 }

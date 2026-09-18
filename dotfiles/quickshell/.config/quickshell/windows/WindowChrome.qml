@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/WindowChrome.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/windows/WindowChrome.qml
 //
 // Chrome for the standalone windows (System, Keybinds, Settings): the panel
 // ground, a title row that drags the window, a close button, and Escape to
@@ -18,7 +18,7 @@ Item {
     // the FloatingWindow this dresses; needs close()
     required property var window
     property string heading: ""
-    readonly property int contentY: header.y + header.height + 6
+    readonly property int contentY: header.y + header.height + Theme.spaceM
     // takes Escape; focus it after anything else in the window had focus
     readonly property alias keySink: keySink
 
@@ -38,10 +38,10 @@ Item {
 
     Item {
         id: header
-        x: 16
-        y: 12
-        width: parent.width - 32
-        height: 24
+        x: Theme.windowPad
+        y: Theme.spaceXl
+        width: parent.width - Theme.windowPad * 2
+        height: Theme.rowHeight
 
         // drag the window by its title row
         MouseArea {
@@ -52,7 +52,7 @@ Item {
         FlyoutHeading {
             anchors.left: parent.left
             anchors.right: closeBtn.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
             text: root.heading
         }
@@ -61,15 +61,16 @@ Item {
             id: closeBtn
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 20
-            height: 20
+            width: Theme.controlSize + 2
+            height: width
+
             radius: Theme.radiusInner
-            color: closeMouse.containsMouse ? Theme.overlay : "transparent"
+            color: closeMouse.containsMouse ? Theme.hoverFill : "transparent"
 
             Text {
                 anchors.centerIn: parent
                 text: "󰅖"
-                color: closeMouse.containsMouse ? Theme.bright : Theme.subtext
+                color: closeMouse.containsMouse ? Theme.textStrong : Theme.subtext
                 font.family: Theme.fontIcon
                 font.pixelSize: Theme.fontIconSize
             }

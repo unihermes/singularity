@@ -29,3 +29,7 @@ claude-desktop
 # as the zen-browser warning above -- these packages run arbitrary code
 # inside your Discord client.
 equicord
+
+# Relays libcamera into a v4l2loopback webcam, only while an app has it
+# open. Needed for Discord, see install.sh.
+v4l2-relayd

@@ -1,5 +1,5 @@
-// Neutrino - Quickshell
-// ~/.config/quickshell/FlyoutStepper.qml
+// Singularity - Quickshell
+// ~/.config/quickshell/flyouts/FlyoutStepper.qml
 //
 // An integer setting in a flyout: a label, a minus, the value, a plus.
 //
@@ -34,7 +34,7 @@ Item {
     signal stepped(int delta)
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.fs(24)
+    implicitHeight: Theme.rowHeight
 
     Text {
         anchors.left: parent.left
@@ -50,7 +50,7 @@ Item {
         id: controls
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
+        spacing: Theme.spaceXs
 
         component Button: Rectangle {
             id: btn
@@ -60,17 +60,17 @@ Item {
             property bool live: true
             signal pressed()
 
-            width: Theme.fs(18)
-            height: Theme.fs(18)
-            radius: Math.max(0, Theme.radiusInner - 1)
-            color: (btn.live && ma.containsMouse) ? Theme.overlay : "transparent"
-            border.width: 1
-            border.color: btn.live ? Theme.border : Theme.surface
+            width: Theme.controlSize
+            height: Theme.controlSize
+            radius: Theme.radiusSmall
+            color: (btn.live && ma.containsMouse) ? Theme.hoverFill : "transparent"
+            border.width: Theme.borderWidth
+            border.color: btn.live ? Theme.stroke : Theme.surface
 
             Text {
                 anchors.centerIn: parent
                 text: btn.glyph
-                color: btn.live ? (ma.containsMouse ? Theme.bright : Theme.text) : Theme.surface
+                color: btn.live ? (ma.containsMouse ? Theme.textStrong : Theme.text) : Theme.textDisabled
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
@@ -96,13 +96,14 @@ Item {
         // sideways every time the number gained or lost a digit.
         Item {
             width: root.scaledValueWidth
-            height: Theme.fs(18)
+            height: Theme.controlSize
 
             Text {
                 anchors.centerIn: parent
                 text: root.displayValue !== "" ? root.displayValue : root.value + root.suffix
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
+
                 font.pixelSize: Theme.fontBody
             }
         }

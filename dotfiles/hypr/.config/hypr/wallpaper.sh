@@ -9,7 +9,7 @@
 #   wallpaper.sh current    the image swaybg is showing
 #
 # The choice is saved by Quickshell's Appearance page (Wallpaper.qml) to
-# ~/.local/state/singularity/wallpaper.state as key=value lines rather than JSON,
+# ~/.local/state/neutrino/wallpaper.state as key=value lines rather than JSON,
 # so this can read it without jq.
 set -euo pipefail
 

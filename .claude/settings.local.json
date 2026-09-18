@@ -4,7 +4,8 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(hyprctl clients *)",
-      "Bash(hyprctl reload *)"
+      "Bash(hyprctl reload *)",
+      "WebSearch"
     ]
   },
   "outputStyle": "Concise"

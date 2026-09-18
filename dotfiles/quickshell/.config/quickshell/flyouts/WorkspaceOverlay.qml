@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/WorkspaceOverlay.qml
+// ~/.config/quickshell/flyouts/WorkspaceOverlay.qml
 //
 // SUPER+W: every workspace at once, as a grid of cells. Click a cell to jump
 // to that workspace, click a window inside one to focus just that window, or
@@ -48,8 +48,7 @@ OverlayWindow {
     // Dim, and close on a click that misses every cell.
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
-        opacity: 0.45
+        color: Theme.scrim
 
         MouseArea {
             anchors.fill: parent
@@ -81,8 +80,8 @@ OverlayWindow {
     PanelFrame {
         id: box
         anchors.centerIn: parent
-        width: grid.width + 40
-        height: heading.height + grid.height + 52
+        width: grid.width + Theme.sp(40)
+        height: heading.height + grid.height + Theme.sp(52)
 
         // absorbs clicks so they don't reach the backdrop and close the overlay
         MouseArea {
@@ -93,20 +92,22 @@ OverlayWindow {
         Text {
             id: heading
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 18
-            text: "WORKSPACES"
+            y: Theme.sp(18)
+            text: Theme.heading("WORKSPACES")
+
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
-            font.letterSpacing: 1.5
+            font.bold: Theme.headingBold
+            font.letterSpacing: Theme.headingSpacing
         }
 
         Grid {
             id: grid
             anchors.horizontalCenter: parent.horizontalCenter
-            y: heading.y + heading.height + 14
+            y: heading.y + heading.height + Theme.sp(14)
             columns: Math.min(3, root.workspaceCount)
-            spacing: 10
+            spacing: Theme.sp(10)
 
             Repeater {
                 model: root.workspaceCount
@@ -127,18 +128,18 @@ OverlayWindow {
                         return ws.toplevels.values.filter(tl => !root.isShellWindow(tl))
                     }
 
-                    width: 200
-                    height: 132
+                    width: Theme.fs(200)
+                    height: Theme.fs(132)
                     radius: Theme.radiusInner
-                    color: isDropTarget ? Theme.overlay : Theme.surface
-                    border.width: 1
-                    border.color: isDropTarget ? Theme.bright
+                    color: isDropTarget ? Theme.selectedFill : Theme.surface
+                    border.width: Theme.borderWidth
+                    border.color: isDropTarget ? Theme.accent
                         : cell.isFocused ? Theme.text
-                        : wsMouse.containsMouse ? Theme.muted
+                        : wsMouse.containsMouse ? Theme.strokeHover
                         : Theme.border
 
                     Behavior on border.color {
-                        ColorAnimation { duration: Theme.dur(70) }
+                        ColorAnimation { duration: Theme.durFast }
                     }
 
                     // Jump to this workspace. Sits behind the window rows, so a
@@ -155,10 +156,10 @@ OverlayWindow {
                     }
 
                     Text {
-                        x: 8
-                        y: 6
+                        x: Theme.spaceL
+                        y: Theme.spaceM
                         text: cell.wsId
-                        color: cell.isFocused ? Theme.bright : Theme.text
+                        color: cell.isFocused ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontBody
                         font.bold: cell.isFocused
@@ -166,8 +167,8 @@ OverlayWindow {
 
                     Text {
                         anchors.right: parent.right
-                        anchors.rightMargin: 8
-                        y: 6
+                        anchors.rightMargin: Theme.spaceL
+                        y: Theme.spaceM
                         text: cell.windows.length === 0 ? "empty"
                             : cell.windows.length + (cell.windows.length === 1 ? " window" : " windows")
                         color: Theme.muted
@@ -176,10 +177,10 @@ OverlayWindow {
                     }
 
                     Column {
-                        x: 8
-                        y: 30
-                        width: parent.width - 16
-                        spacing: 2
+                        x: Theme.spaceL
+                        y: Theme.spaceM + Theme.rowHeight
+                        width: parent.width - Theme.spaceL * 2
+                        spacing: Theme.spaceXs
 
                         Repeater {
                             model: cell.windows
@@ -191,21 +192,21 @@ OverlayWindow {
                                     (modelData.lastIpcObject && modelData.lastIpcObject.class) || ""
 
                                 width: parent.width
-                                height: 22
-                                radius: Math.max(0, Theme.radiusInner - 2)
-                                color: winDrag.dragging ? Theme.overlay
-                                    : winDrag.containsMouse ? Theme.panel
+                                height: Theme.row(22)
+                                radius: Theme.radiusSmall
+                                color: winDrag.dragging ? Theme.selectedFill
+                                    : winDrag.containsMouse ? Theme.hoverFill
                                     : "transparent"
 
                                 Row {
                                     anchors.fill: parent
-                                    anchors.leftMargin: 4
-                                    anchors.rightMargin: 4
-                                    spacing: 6
+                                    anchors.leftMargin: Theme.spaceS
+                                    anchors.rightMargin: Theme.spaceS
+                                    spacing: Theme.spaceM
 
                                     IconImage {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        implicitSize: 14
+                                        implicitSize: Theme.fs(14)
                                         source: {
                                             const e = DesktopEntries.heuristicLookup(winRow.cls)
                                             return e && e.icon ? Quickshell.iconPath(e.icon, true) : ""
@@ -214,7 +215,8 @@ OverlayWindow {
 
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        width: parent.width - 20
+                                        width: parent.width - Theme.fs(14) - parent.spacing
+
                                         elide: Text.ElideRight
                                         text: (winRow.modelData.lastIpcObject
                                                && winRow.modelData.lastIpcObject.title) || winRow.cls
@@ -316,7 +318,7 @@ OverlayWindow {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: Theme.spaceL
             text: "click to jump · drag a window to move it · esc to close"
             color: Theme.muted
             font.family: Theme.fontText

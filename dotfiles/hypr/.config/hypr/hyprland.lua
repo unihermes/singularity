@@ -40,7 +40,7 @@ local floorp      = "floorp"
 -- another instance behind it. The stylesheet is Quickshell's copy with the bar's
 -- corner radius applied (AppearanceSync.qml), falling back to the repo's own
 -- until the shell has written one.
-local menu        = "pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
+local menu        = "pkill wofi || { s=~/.local/state/neutrino/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
 
 -- Animation Speed from the bar's Appearance page. Quickshell writes the choice
 -- to a state file and runs `hyprctl reload config-only`, which re-runs this
@@ -236,6 +236,7 @@ hl.config({
         rounding_power   = 2,
         active_opacity   = 1.0,
         inactive_opacity = 0.96,
+        dim_inactive = true,
 
         shadow = {
             enabled      = true,
@@ -321,6 +322,17 @@ hl.config({
     },
 })
 
+-- Hyprland inverts the workspace swipe by default, so a 3-finger swipe
+-- left goes to the workspace on the right. That reads backwards next to
+-- natural_scroll = false above, which already puts the touchpad's own
+-- vertical scrolling in the traditional (uninverted) direction -- so this
+-- un-inverts the horizontal one to match: swipe left, go left.
+hl.config({
+    gestures = {
+        workspace_swipe_invert = false,
+    },
+})
+
 -- Replaces gestures:workspace_swipe, which no longer exists.
 hl.gesture({
     fingers   = 3,
@@ -338,17 +350,17 @@ hl.gesture({
 local mod = "SUPER"
 
 -- --- Launchers ---
-hl.bind("CTRL + SPACE",      hl.dsp.exec_cmd(menu))
-hl.bind(mod .. " + Return",  hl.dsp.exec_cmd(terminal))
-hl.bind(mod .. " + A",       hl.dsp.exec_cmd(terminal))
-hl.bind(mod .. " + E",       hl.dsp.exec_cmd(fileManager))
-hl.bind(mod .. " + V",       hl.dsp.exec_cmd(editor))
-hl.bind(mod .. " + Z",       hl.dsp.exec_cmd(zen))
-hl.bind(mod .. " + F",       hl.dsp.exec_cmd(floorp))
+hl.bind("CTRL + SPACE",      hl.dsp.exec_cmd(menu))  -- Open app launcher
+hl.bind(mod .. " + Return",  hl.dsp.exec_cmd(terminal))  -- Open terminal
+hl.bind(mod .. " + A",       hl.dsp.exec_cmd(terminal))  -- Open terminal
+hl.bind(mod .. " + E",       hl.dsp.exec_cmd(fileManager))  -- Open file manager
+hl.bind(mod .. " + V",       hl.dsp.exec_cmd(editor))  -- Open code editor
+hl.bind(mod .. " + Z",       hl.dsp.exec_cmd(zen))  -- Open Zen Browser
+hl.bind(mod .. " + F",       hl.dsp.exec_cmd(floorp))  -- Open Floorp
 
 -- --- Window Management ---
--- fullscreen and float sit on SHIFT, since plain F and V launch apps
-hl.bind(mod .. " + Q",         hl.dsp.window.close())
+-- fullscreen sits on CTRL and float on SHIFT, since plain F and V launch apps
+hl.bind(mod .. " + Q",         hl.dsp.window.close())  -- Close window
 -- Two different things, deliberately on separate binds:
 --   maximize  fills the usable area, stopping below the Quickshell bar
 --   fullscreen covers the entire output, bar included
@@ -362,26 +374,27 @@ hl.bind(mod .. " + Q",         hl.dsp.window.close())
 -- closures exist because these binds are registered before that function is
 -- assigned further down -- Lua resolves the upvalue when the key is actually
 -- pressed, not when the bind is registered, so the forward reference is fine.
-hl.bind(mod .. " + X", function() toggleMaximize() end)
-hl.bind(mod .. " + CTRL + F",  hl.dsp.window.fullscreen())
+hl.bind(mod .. " + X", function() toggleMaximize() end)  -- Maximize or restore window
+hl.bind(mod .. " + CTRL + F",  hl.dsp.window.fullscreen())  -- Fullscreen window, covering the bar
 -- same action as double-clicking a window's titlebar
-hl.bind(mod .. " + equal",     function() toggleMaximize() end)
-hl.bind(mod .. " + C",         function() toggleMinimize() end)
-hl.bind(mod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mod .. " + SHIFT + E", hl.dsp.exit())
-hl.bind(mod .. " + P",         hl.dsp.window.pseudo())
-hl.bind(mod .. " + J",         hl.dsp.layout("togglesplit"))
+hl.bind(mod .. " + equal",     function() toggleMaximize() end)  -- Maximize or restore window
+hl.bind(mod .. " + C",         function() toggleMinimize() end)  -- Minimize or restore window
+hl.bind(mod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))  -- Float or tile window
+hl.bind(mod .. " + SHIFT + E", hl.dsp.exit())  -- Log out
+hl.bind(mod .. " + P",         hl.dsp.window.pseudo())  -- Keep window's own size in its tile
+hl.bind(mod .. " + J",         hl.dsp.layout("togglesplit"))  -- Split side by side or stacked
+hl.bind(mod .. " + M",         function() toggleLayout() end)  -- Switch between tiled and one-window layout
 
 -- Workspace grid: every workspace and its windows at once. Click a cell to
 -- jump, click a window to focus it, drag a window between cells to move it.
 -- Drawn by Quickshell (WorkspaceOverlay.qml), so this only pokes the shell.
-hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))
+hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))  -- Show all workspaces
 
 -- --- Focus ---
-hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }))
-hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))
-hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }))
-hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))
+hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }))  -- Focus window to the left
+hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))  -- Focus window to the right
+hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }))  -- Focus window above
+hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus window below
 
 -- Windows-style alt-tab, with the switcher drawn by Quickshell
 -- (AltTabSwitcher.qml). Hold ALT and tap Tab to move the highlight, release
@@ -415,9 +428,9 @@ hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))
 -- (~45ms measured on this machine) to lose the race against a fast
 -- tap-and-release, on top of everything above about catching the release at
 -- all. Falls back to `qs` itself if the relay isn't reachable.
-hl.bind("ALT + Tab",         hl.dsp.exec_cmd("~/.config/hypr/alt-tab.sh"),        { repeating = true })
-hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })
-hl.bind("ALT + grave",       hl.dsp.exec_cmd("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })
+hl.bind("ALT + Tab",         hl.dsp.exec_cmd("~/.config/hypr/alt-tab.sh"),        { repeating = true })  -- Switch windows
+hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
+hl.bind("ALT + grave",       hl.dsp.exec_cmd("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
 
 -- A bare Alt_L/Alt_R `global` bind (hyprland-global-shortcuts-v1) was tried
 -- here as a second route to the ALT release, alongside the keyboard grab in
@@ -434,33 +447,31 @@ for i = 1, MAX_WORKSPACES do
 end
 
 -- --- Mouse ---
-hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
-hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })  -- Move window by dragging
+hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- Resize window by dragging
 
 -- --- Screenshot ---
 -- saves to ~/Pictures/Screenshots and copies to the clipboard
-hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh"))
+hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh"))  -- Screenshot an area
 
 -- --- Lid ---
--- Close blanks the screen, open lights it; suspend is hypridle's 20 min step
--- (logind's lid handling is inhibited in autostart). The firmware bounces
--- open/closed a few times within a couple of seconds of the real change on
--- this laptop (see "Unexpected lid state reported by firmware" in dmesg),
--- so both events go through lid-debounce.sh rather than dispatching dpms
--- directly: it waits for the lid to sit still, then acts on whatever it
--- actually reads by then. misc:key_press_enables_dpms and
--- mouse_move_enables_dpms are the backstop -- any key or mouse movement
--- wakes a wrongly-blanked screen regardless.
-hl.bind("switch:on:Lid Switch",  hl.dsp.exec_cmd("~/.config/hypr/lid-debounce.sh"), { locked = true })
-hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("~/.config/hypr/lid-debounce.sh"), { locked = true })
+-- Close turns the screen off and suspends after 5 min if it's still shut;
+-- open turns it back on and cancels that. logind's own lid handling is
+-- inhibited in autostart so this is the only thing acting on the lid. All of
+-- it -- the debounce for this laptop's bouncing lid switch, the suspend
+-- timer, re-suspending after a wake with the lid shut, docked mode -- lives
+-- in lid.sh. misc:key_press_enables_dpms and mouse_move_enables_dpms are the
+-- backstop: any key or mouse movement wakes a wrongly-blanked screen.
+hl.bind("switch:on:Lid Switch",  hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid closed: screen off, suspend after 5 min
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid opened: screen on
 
 -- --- Function Keys ---
-hl.bind("XF86AudioRaiseVolume",  hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume",  hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })
-hl.bind("XF86AudioMute",         hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true })
-hl.bind("XF86AudioMicMute",      hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true })
-hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl -n1 set 5%+"),                     { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -n1 set 5%-"),                     { locked = true, repeating = true })
+hl.bind("XF86AudioRaiseVolume",  hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })  -- Volume up
+hl.bind("XF86AudioLowerVolume",  hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })  -- Volume down
+hl.bind("XF86AudioMute",         hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true })  -- Mute or unmute sound
+hl.bind("XF86AudioMicMute",      hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true })  -- Mute or unmute microphone
+hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl -n1 set 5%+"),                     { locked = true, repeating = true })  -- Brightness up
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -n1 set 5%-"),                     { locked = true, repeating = true })  -- Brightness down
 
 ----------------------
 ---- WINDOW RULES ----
@@ -1091,6 +1102,22 @@ function toggleMinimize()
     st.minimized = { x = win.at.x, y = win.at.y }
     local belowScreen = mon.y + mon.height + 100
     hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
+
+    -- Moving it off-screen doesn't move focus, so keys would keep going to a
+    -- window you can't see. Hand focus to the most recently used window left
+    -- on this workspace instead -- never another hidden one, since focusing
+    -- that would bring it straight back (see maximizeFocused() above). With
+    -- nothing else there, focus stays put.
+    local next
+    for _, w in ipairs(hl.get_windows()) do
+        if w.address ~= win.address and w.mapped and not w.hidden
+                and w.workspace and win.workspace and w.workspace.id == win.workspace.id
+                and not stateOf(w.address).minimized
+                and (not next or w.focus_history_id < next.focus_history_id) then
+            next = w
+        end
+    end
+    if next then hl.dispatch(hl.dsp.focus({ window = "address:" .. next.address })) end
 end
 
 -- monocleRule and the dwindle maximize rule only act on windows as they
@@ -1119,7 +1146,8 @@ hl.on("workspace.active", applyLayoutRules)
 -- also has to walk every window already open on the workspace -- otherwise
 -- only new windows would notice the change. On a pinned workspace nothing
 -- here moves; the toast says it's pinned instead of claiming a switch.
-local function toggleLayout()
+-- Global, like toggleMaximize(), so SUPER+M up in the keybinds can reach it.
+function toggleLayout()
     monocleEnabled = not monocleEnabled
 
     local ws = hl.get_active_workspace()
@@ -1141,4 +1169,3 @@ local function toggleLayout()
         setWindowMonocle(w, monocleEnabled, mon)
     end
 end
-hl.bind(mod .. " + M", toggleLayout)
