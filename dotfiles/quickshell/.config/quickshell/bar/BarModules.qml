@@ -228,7 +228,7 @@ Item {
         // and plugged in, the useful fact is that it's recovering.
         fillColor: {
             if (!UPower.onBattery) return Theme.good
-            if (Battery.percent <= 15) return Theme.alert
+            if (Battery.percent <= 20) return Theme.alert
             return Theme.muted
         }
         active: screenScope.openFlyout === "battery"
@@ -389,5 +389,13 @@ Item {
         label: String(Updates.count)
         active: screenScope.openFlyout === "updates"
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
+    }
+
+    BarModule {
+        id: clipBtn
+        visible: Settings.widgetVisible("clipboard")
+        icon: "󰅍"
+        active: screenScope.openFlyout === "clipboard"
+        onActivated: screenScope.toggleFlyout("clipboard", clipBtn)
     }
 }

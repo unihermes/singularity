@@ -201,6 +201,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 20")
     -- the saved wallpaper, or a random one from wallpapers/ when shuffle is on
     hl.exec_cmd("~/.config/hypr/wallpaper.sh")
+    -- clipboard history daemon (cliphist needs this to capture every copy)
+    hl.exec_cmd("wl-paste --watch cliphist store")
     -- A terminal waiting on workspace 2. The custom title (not class) is what
     -- scopes the "send it to 2, silently" rule below to this one instance:
     -- matching on Alacritty's class would banish every terminal you ever
@@ -449,6 +451,9 @@ end
 -- --- Mouse ---
 hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })  -- Move window by dragging
 hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- Resize window by dragging
+
+-- --- Clipboard ---
+hl.bind(mod .. " + V", hl.dsp.exec_cmd("qs ipc call clipboard toggle"))  -- Clipboard history
 
 -- --- Screenshot ---
 -- saves to ~/Pictures/Screenshots and copies to the clipboard

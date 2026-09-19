@@ -265,6 +265,13 @@ fc-match monospace
   lid still shut goes back to sleep after a minute. With an external monitor
   connected only the laptop's panel turns off and nothing suspends. All of it
   is `~/.config/hypr/lid.sh`; `journalctl -t singularity-lid` shows what it did.
+- **Webcam colour.** The sensor is raw Bayer with no colour controls, so the
+  virtual webcam (`v4l2-relayd`, what Discord sees) corrects it with a
+  `videobalance` stage in its GStreamer pipeline. Tune brightness, contrast,
+  saturation and hue in `install.sh`'s `webcam_conf` and rerun it; it
+  rewrites `/etc/v4l2-relayd.d/webcam.conf` and restarts the relay only when
+  the result differs. Browsers read the camera through PipeWire and are not
+  affected.
 - **Power profile follows the charger.** A udev rule
   (`/etc/udev/rules.d/99-singularity-power-profile.rules`) runs
   `/usr/local/bin/singularity-power-profile` on every `power_supply` change,

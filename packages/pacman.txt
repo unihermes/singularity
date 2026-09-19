@@ -84,6 +84,8 @@ libnotify
 # wayland utilities
 wofi
 wl-clipboard
+# clipboard history manager: persistent history of copied text/images
+cliphist
 grim
 slurp
 hyprpicker

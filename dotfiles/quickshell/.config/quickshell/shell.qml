@@ -142,6 +142,15 @@ ShellRoot {
         function set(mode: string): void { root.layoutModeChanged(mode) }
     }
 
+    // Clipboard history flyout. SUPER+V from hyprland.lua via `qs ipc call
+    // clipboard toggle`. Centred on screen, no bar anchor.
+    signal clipboardToggled()
+
+    IpcHandler {
+        target: "clipboard"
+        function toggle(): void { root.clipboardToggled() }
+    }
+
     // The ALT+Tab switcher. hyprland.lua binds ALT+Tab globally and that bind
     // wins over the switcher's own keyboard grab -- Hyprland matches binds
     // before forwarding keys to any client, layershell included -- so every
@@ -273,6 +282,17 @@ ShellRoot {
                     if (!screenScope.isFocusedScreen()) return
                     screenScope.layoutToastMode = mode
                     screenScope.layoutToastSeq++
+                }
+            }
+
+            // SUPER+V: clipboard history flyout. Like SUPER+W, it has no bar
+            // module to anchor to, so it centres itself.
+            Connections {
+                target: root
+                function onClipboardToggled() {
+                    if (!screenScope.isFocusedScreen()) return
+                    screenScope.openFlyout =
+                        screenScope.openFlyout === "clipboard" ? "" : "clipboard"
                 }
             }
 
@@ -711,6 +731,9 @@ ShellRoot {
 
         // battery
         LazyFlyout { name: "battery"; scope: screenScope; BatteryFlyout { scope: screenScope } }
+
+        // clipboard history
+        LazyFlyout { name: "clipboard"; scope: screenScope; ClipboardFlyout { scope: screenScope } }
 
         // tray menu: the app's own menu, drawn as flyout rows so it matches
         // everything else rather than popping a native Qt menu. Submenus

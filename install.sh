@@ -359,20 +359,22 @@ fi
 # v4l2loopback device called "Laptop Webcam" and starts libcamerasrc only
 # while some app has that device open, so the camera light is off otherwise.
 # The sensor's native 1284x812 is cropped to 1280x720, which every app takes.
-if [[ ! -f /etc/v4l2-relayd.d/webcam.conf ]]; then
+#
+# The sensor is raw Bayer with no colour controls of its own, so colour is
+# corrected by videobalance in the pipeline. Tune the values here, not in
+# /etc: a rerun rewrites webcam.conf and restarts the relay when it differs.
+webcam_conf='VIDEOSRC="libcamerasrc ! videoconvert ! videobalance brightness=0.0 contrast=1.0 saturation=1.0 hue=0.0 ! videocrop left=2 right=2 top=46 bottom=46 ! videoscale ! videorate"
+FORMAT=YUY2
+WIDTH=1280
+HEIGHT=720
+FRAMERATE=30/1
+CARD_LABEL="Laptop Webcam"'
+if [[ ! -f /etc/modprobe.d/v4l2loopback.conf ]]; then
   log "setting up the virtual webcam"
   echo 'v4l2loopback' | sudo tee /etc/modules-load.d/v4l2loopback.conf >/dev/null
   echo 'options v4l2loopback exclusive_caps=1 card_label="Laptop Webcam"' \
     | sudo tee /etc/modprobe.d/v4l2loopback.conf >/dev/null
   sudo mkdir -p /etc/v4l2-relayd.d /etc/systemd/system/v4l2-relayd@.service.d
-  sudo tee /etc/v4l2-relayd.d/webcam.conf >/dev/null <<'CONF'
-VIDEOSRC="libcamerasrc ! videoconvert ! videocrop left=2 right=2 top=46 bottom=46 ! videoscale ! videorate"
-FORMAT=YUY2
-WIDTH=1280
-HEIGHT=720
-FRAMERATE=30/1
-CARD_LABEL="Laptop Webcam"
-CONF
   # The unit's device sandbox predates libcamera's software ISP, which
   # allocates its frame buffers from these two.
   sudo tee /etc/systemd/system/v4l2-relayd@.service.d/libcamera.conf >/dev/null <<'UNIT'
@@ -382,7 +384,12 @@ DeviceAllow=/dev/udmabuf rw
 UNIT
   sudo systemctl daemon-reload
   sudo modprobe v4l2loopback
-  sudo systemctl enable --now v4l2-relayd@webcam.service
+fi
+if [[ "$(cat /etc/v4l2-relayd.d/webcam.conf 2>/dev/null)" != "$webcam_conf" ]]; then
+  log "writing the virtual webcam pipeline"
+  printf '%s\n' "$webcam_conf" | sudo tee /etc/v4l2-relayd.d/webcam.conf >/dev/null
+  sudo systemctl enable v4l2-relayd@webcam.service
+  sudo systemctl restart v4l2-relayd@webcam.service
 fi
 
 log "enabling services"

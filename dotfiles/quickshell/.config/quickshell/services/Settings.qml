@@ -141,6 +141,7 @@ Singleton {
         overview:      { label: "Window Overview", icon: "󰕰" },
         windows:       { label: "Open Windows",   icon: "󰀻" },
         clock:         { label: "Clock",          icon: "󰅐" },
+        clipboard:     { label: "Clipboard",      icon: "󰅍" },
         bluetooth:     { label: "Bluetooth",      icon: "󰂯" },
         network:       { label: "Network",        icon: "󰤨" },
         volume:        { label: "Volume",         icon: "󰕾" },
