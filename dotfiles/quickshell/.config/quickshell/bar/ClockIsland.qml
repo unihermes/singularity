@@ -6,7 +6,6 @@
 //
 //   volume / brightness  the chip keeps its width and becomes a level meter
 //   layout (SUPER+M)     the mode just switched to
-//   track change         artist and title, while a player is playing
 //   notifications        how many new ones arrived (not during DND)
 //
 // Settings.clockIsland turns it off, and LevelToast/LayoutToast step aside
@@ -31,13 +30,22 @@ BarModule {
 
     SystemClock {
         id: clockSource
-        // ticks on the second boundary, so the seconds never skip or stall
-        precision: SystemClock.Seconds
+        // ticks on the second boundary, so the seconds never skip or stall;
+        // on the minute when the clock style doesn't show seconds
+        precision: Theme.clockStyle === "stamp" ? SystemClock.Seconds : SystemClock.Minutes
         enabled: root.visible
     }
-    // thin spaces around the divider: in a monospace font an ordinary space
-    // is a full character wide, which left the time and date far apart
-    readonly property string timeText: Qt.formatDateTime(clockSource.date, "HH:mm:ss\u2009|\u2009MM/dd/yy")
+    // Thin spaces around the divider: in a monospace font an ordinary space
+    // is a full character wide, which left the time and date far apart.
+    // One format per clock style (Looks.js).
+    readonly property var formats: ({
+        stamp: "HH:mm:ss\u2009|\u2009MM/dd/yy",
+        time:  "HH:mm",
+        day:   "ddd d MMM\u2002HH:mm",
+        long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
+    })
+    readonly property string timeText: Qt.formatDateTime(clockSource.date,
+        formats[Theme.clockStyle] || formats.stamp)
 
     // the time's own width, so a level can take the chip over without the
     // modules either side of it moving
@@ -90,8 +98,8 @@ BarModule {
         onTriggered: root.morphing = false
     }
 
-    // Brightness loads from sysfs, the sink settles, swaync and the player
-    // report in -- all of it looks like a change shortly after startup.
+    // Brightness loads from sysfs, the sink settles, and swaync reports
+    // in -- all of it looks like a change shortly after startup.
     property bool ready: false
     Timer { interval: 2000; running: true; onTriggered: root.ready = true }
 
@@ -123,33 +131,6 @@ BarModule {
         function onLayoutToastSeqChanged() {
             var monocle = root.screenScope.layoutToastMode === "monocle"
             root.show("layout", monocle ? "󰊓" : "󰕴", Theme.heading(monocle ? "MONOCLE" : "DWINDLE"), -1, 1100)
-        }
-    }
-
-    // --- track ----------------------------------------------------------------
-    // Title and artist arrive as separate property changes, so a change is
-    // settled for a moment before showing -- otherwise the island would show
-    // the new title under the old artist first.
-
-    property string lastTrack: ""
-
-    Connections {
-        target: Media.player
-        function onTrackTitleChanged() { trackSettle.restart() }
-        function onTrackArtistChanged() { trackSettle.restart() }
-        function onIsPlayingChanged() { trackSettle.restart() }
-    }
-
-    Timer {
-        id: trackSettle
-        interval: 250
-        onTriggered: {
-            var p = Media.player
-            if (!p || !p.isPlaying || !p.trackTitle) return
-            var t = (p.trackArtist ? p.trackArtist + " – " : "") + p.trackTitle
-            if (t === root.lastTrack) return
-            root.lastTrack = t
-            root.show("track", "󰝚", t, -1, 3500)
         }
     }
 

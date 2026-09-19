@@ -5,7 +5,7 @@
  * ground, a 1px #303030 outer stroke with a #4d4d4d stroke inset inside it,
  * no shadows, UbuntuMono, and the same grayscale ramp:
  *   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
- *   #303030 border #4d4d4d muted  #7a7a7a subtext  #c2c2c2 text
+ *   #303030 border #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text
  *   #ebebeb bright #a87676 alert
  *
  * swaync loads its stock /etc/xdg sheet first and this one over it, so this
@@ -36,7 +36,7 @@
   --noti-bg-focus: var(--n-surface, #1a1a1a);
   --noti-close-bg: transparent;
   --noti-close-bg-hover: var(--n-overlay, #242424);
-  --text-color: var(--n-text, #c2c2c2);
+  --text-color: var(--n-text, #d4e4f4);
   --text-color-disabled: var(--n-muted, #4d4d4d);
   --bg-selected: var(--n-subtext, #7a7a7a);
   --border: 1px solid var(--n-border, #303030);
@@ -108,7 +108,7 @@
 }
 
 .notification-row .notification-background .notification .notification-default-action .notification-content .text-box .body {
-  color: var(--n-text, #c2c2c2);
+  color: var(--n-text, #d4e4f4);
 }
 
 .notification-row .notification-background .notification .notification-default-action .notification-content .body-image {
@@ -125,7 +125,7 @@
 }
 
 .notification-row .notification-background .notification progressbar progress {
-  background: var(--n-meter, #c2c2c2);
+  background: var(--n-meter, #d4e4f4);
   border-radius: 3px;
   min-height: 6px;
 }
@@ -167,7 +167,7 @@
 .notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button,
 .widget-title > button {
   background: transparent;
-  color: var(--n-text, #c2c2c2);
+  color: var(--n-text, #d4e4f4);
   border: 1px solid var(--n-border, #303030);
   border-radius: var(--r-inner);
   box-shadow: none;
@@ -238,7 +238,7 @@
 }
 
 .widget-dnd label {
-  color: var(--n-text, #c2c2c2);
+  color: var(--n-text, #d4e4f4);
   font-size: var(--n-fs-label, 13px);
 }
 
@@ -251,8 +251,8 @@
 }
 
 .widget-dnd switch:checked {
-  background: var(--n-meter, #c2c2c2);
-  border-color: var(--n-meter, #c2c2c2);
+  background: var(--n-meter, #d4e4f4);
+  border-color: var(--n-meter, #d4e4f4);
 }
 
 .widget-dnd switch slider {

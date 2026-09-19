@@ -8,6 +8,8 @@
 //   filled   a solid ground, no stroke
 //   flat     nothing until active, then an accent underline
 //   pill     filled, fully rounded
+//   bracket  bare, between [ and ] in the text face -- a terminal status line
+//   underline bare over a rule; a gauge fills the rule itself
 //
 // This exists so the chrome has one definition. BarModule draws an
 // icon/label pair in it, and the open-window icons draw a whole row of
@@ -57,9 +59,14 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: root.fixedWidth > 0
             ? root.fixedWidth
-            : contentRow.implicitWidth + root.padH * 2
+            : contentRow.implicitWidth + root.padH * 2 + bracketW * 2
         readonly property string style: Theme.moduleStyle
         readonly property bool solid: style === "filled" || style === "pill"
+        readonly property bool brackets: style === "bracket"
+        readonly property bool underline: style === "underline"
+        readonly property int bracketW: brackets ? Math.ceil(bracketMetrics.advanceWidth) : 0
+        // the gauge draws in the chip's interior, except under a rule
+        readonly property bool track: root.gauge && !underline
 
         Behavior on width {
             enabled: root.animateWidth
@@ -72,7 +79,7 @@ Item {
 
         height: Theme.moduleHeight
         radius: style === "pill" ? height / 2 : Theme.radius
-        color: style === "flat" ? "transparent"
+        color: style === "flat" || brackets || underline ? "transparent"
             : root.active ? Theme.selectedFill
             : solid ? Theme.surface : "transparent"
 
@@ -123,6 +130,50 @@ Item {
             color: Theme.accent
         }
 
+        TextMetrics {
+            id: bracketMetrics
+            font: leftBracket.font
+            text: "["
+        }
+
+        Text {
+            id: leftBracket
+            visible: frame.brackets
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: "["
+            color: root.active ? Theme.accent : Theme.muted
+            font.family: Theme.fontText
+            font.pixelSize: Theme.barLabelSize
+        }
+
+        Text {
+            visible: frame.brackets
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: "]"
+            color: leftBracket.color
+            font: leftBracket.font
+        }
+
+        // the underline style's rule, which doubles as the gauge
+        Rectangle {
+            visible: frame.underline
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Math.max(2, Theme.borderWidth * 2)
+            color: root.active ? Theme.accent : root.gauge ? Theme.meterTrack : Theme.stroke
+            Behavior on color { ColorAnimation { duration: Theme.durFast } }
+
+            Rectangle {
+                visible: root.gauge
+                height: parent.height
+                width: parent.width * Math.max(0, Math.min(1, root.fillValue))
+                color: root.fillColor
+                Behavior on width { NumberAnimation { duration: Theme.dur(120); easing.type: Theme.ease } }
+            }
+        }
+
         // Flush inside the double border: the outer stroke sits at 0..1, the
         // inner one at 2..3, so 3 is the first clear pixel. Matching that
         // exactly is what makes the bar touch the border with no gap.
@@ -132,9 +183,11 @@ Item {
         // it rather than beside it.
         Rectangle {
             id: track
-            visible: root.gauge
+            visible: frame.track
             anchors.fill: parent
             anchors.margins: frame.barInset
+            anchors.leftMargin: frame.barInset + frame.bracketW
+            anchors.rightMargin: frame.barInset + frame.bracketW
             // one less than the inner stroke's radius, being one pixel
             // further in, so the curves stay concentric -- floored because
             // the radius is user-settable down to square
@@ -167,9 +220,9 @@ Item {
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter
-            anchors.left: root.gauge ? parent.left : undefined
-            anchors.leftMargin: root.gauge ? root.padH : 0
-            anchors.horizontalCenter: root.gauge ? undefined : parent.horizontalCenter
+            anchors.left: frame.track ? parent.left : undefined
+            anchors.leftMargin: frame.track ? root.padH + frame.bracketW : 0
+            anchors.horizontalCenter: frame.track ? undefined : parent.horizontalCenter
             spacing: root.spacing
         }
     }

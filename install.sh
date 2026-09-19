@@ -572,6 +572,60 @@ if [[ -n $dm_unit ]]; then
     log "switching default boot target to graphical.target"
     sudo systemctl set-default graphical.target
   fi
+
+  # Theme the greeter as Neutrino. ly draws on a Linux VT, and the VT has no
+  # true colour: a 24-bit escape is squashed onto the nearest of its 16 palette
+  # slots, so full_color with the ramp's hexes would come out as plain black
+  # and white. Instead the palette itself becomes the ramp -- the same slots
+  # alacritty uses, except red and green, which carry the shell's alert and
+  # good tints so a failed login still reads as one -- and ly picks slots by
+  # index. The palette is per-VT and only on the greeter's.
+  if [[ -f /etc/ly/config.ini ]]; then
+    log "theming ly"
+    sudo tee /etc/ly/singularity.sh >/dev/null <<'LY'
+#!/bin/sh
+# Written by singularity's install.sh. Run by ly (start_cmd) before it takes
+# the TTY: loads the Neutrino ramp into the VT palette, slots 0-15.
+[ "$TERM" = linux ] || exit 0
+i=0
+for c in 0b0b0b a87676 7d9b7d 969696 a0a0a0 aeaeae b8b8b8 d4e4f4 \
+         303030 a87676 7d9b7d adadad b8b8b8 c8c8c8 d8d8d8 ebebeb; do
+  printf '\033]P%x%s' "$i" "$c"
+  i=$((i + 1))
+done
+# repaint with the new slot 0, or the old black shows through until ly draws
+clear
+LY
+    sudo chmod 755 /etc/ly/singularity.sh
+    # Edit keys in place rather than shipping a whole config.ini: pacman keeps
+    # a modified config and drops upstream's as .pacnew, so a full copy would
+    # quietly stop picking up new options. 8-colour ids are 1-based (0x0001
+    # black .. 0x0008 white); a 0x01 top byte is bold, which the VT draws from
+    # the bright half of the palette, so bold black is slot 8, the border grey.
+    set_ly() {
+      local key=$1 value=$2 esc
+      # the clock format has a | in it, the sed delimiter
+      esc=${value//\\/\\\\}; esc=${esc//|/\\|}; esc=${esc//&/\\&}
+      if sudo grep -q "^$key = " /etc/ly/config.ini; then
+        sudo sed -i "s|^$key = .*|$key = $esc|" /etc/ly/config.ini
+      else
+        echo "$key = $value" | sudo tee -a /etc/ly/config.ini >/dev/null
+      fi
+    }
+    [[ -f /etc/ly/config.ini.singularity.bak ]] ||
+      sudo cp /etc/ly/config.ini /etc/ly/config.ini.singularity.bak
+    set_ly start_cmd /etc/ly/singularity.sh
+    set_ly full_color false
+    set_ly bg 0x00000001            # slot 0, base   #0b0b0b
+    set_ly fg 0x00000008            # slot 7, text   #d4e4f4 (pale blue)
+    set_ly border_fg 0x01000001     # slot 8, border #303030
+    set_ly error_bg 0x00000001
+    set_ly error_fg 0x00000002      # slot 1, alert  #a87676
+    # the bar clock's format, minus the thin spaces the VT font lacks
+    set_ly clock '%H:%M:%S | %m/%d/%y'
+    set_ly hide_version_string true
+    set_ly animation none
+  fi
 else
   warn "no ly unit found. Units the package ships:"
   pacman -Ql ly 2>/dev/null | grep '\.service$' || warn "  (none)"

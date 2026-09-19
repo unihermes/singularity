@@ -17,8 +17,8 @@
 // A look has two halves:
 //
 //   settings  -- the values the Appearance page can also change: radius, the
-//                bar's height/gap/opacity/style, module style, frame style,
-//                density, font. Picking a look writes these into Settings;
+//                bar's height/gap/opacity/style/position, module style,
+//                frame style, density, font, workspace and clock style. Picking a look writes these into Settings;
 //                after that they're the user's to adjust, and the look only
 //                comes back on a re-pick.
 //   the rest  -- fixed per look:
@@ -41,23 +41,48 @@
 //     scrim          how dark full-screen overlays dim the desktop
 //     motion         a factor on every animation; 0 for a look that should
 //                    never move (e-ink)
+//     layout         optional: the bar's arrangement, as Bar Widgets stores
+//                    it -- { left, centre, right: [module keys], hidden:
+//                    [keys], anchor: the pinned centre module or "" }.
+//                    Picking the look replaces Bar Widgets' arrangement;
+//                    leaving it for a look without one restores the user's.
+//                    Keys a section omits go back to their default section.
 //
 // The style switches in `settings`:
 //     moduleStyle  "outline"  stroked chips (the double frame applies here)
 //                  "filled"   solid chips, no stroke
 //                  "flat"     bare glyphs; the active one is underlined
 //                  "pill"     solid, fully rounded
+//                  "bracket"  bare, between [ and ], like a tmux status line
+//                  "underline" bare over a rule, lit when active; a gauge
+//                             fills the rule instead of the chip
 //     barStyle     "full"     edge to edge, a hairline on its inner edge
 //                  "floating" inset from the screen edges, rounded, stroked
+//                  "islands"  no bar at all between the groups: left, centre
+//                             and right each float on a ground of their own
+//                  "bare"     no ground anywhere -- the chips sit straight
+//                             on the wallpaper
+//                  "notch"    only the centre group has a ground, hanging
+//                             flush from the screen edge; the sides are bare
+//     barPosition  "top" or "bottom"
+//     workspaceStyle "pills"  the current workspace a long pill, others stubs
+//                  "numbers"  1 2 3, the current one lit
+//                  "blocks"   squares: filled when occupied, lit when current
+//                  "roman"    I II III, the current one lit
+//     clockStyle   "stamp"    23:50:02 | 09/18/26
+//                  "time"     23:50
+//                  "day"      Fri 19 Sep  23:50
+//                  "long"     Friday, September 19 · 23:50
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
 //                             Windows 95's chrome
 //
 // Adding a look: copy an entry in looks.json and rename its key. Every key in
-// `settings` and `palette` must be present; the rest of the fixed half falls
-// back to `base` below. Fonts must be installed (fc-list : family); the
-// families here are all in packages/.
+// `palette` must be present, and in `settings` all but the layout ones in
+// `settingsBase` below; the rest of the fixed half falls back to `base`.
+// Fonts must be installed (fc-list : family); the families here are all in
+// packages/.
 
 //
 // The palette's roles are semantic, not literal lightness: base is the most
@@ -90,22 +115,35 @@ var looks = {
         description: "Grayscale, double-stroked frames, tight spacing",
         palette: {
             base: "#0b0b0b", bar: "#121212", panel: "#141414", surface: "#1a1a1a", overlay: "#242424",
-            border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#c2c2c2", bright: "#ebebeb",
+            border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#d4e4f4", bright: "#ebebeb",
         },
         // desaturated hard, so they read as a tinted grey rather than alerts
         good: "#7d9b7d", alert: "#a87676",
         settings: {
-            radius: 6, barHeight: 34, moduleGap: 2, barOpacity: 100,
+            radius: 6, barHeight: 32, moduleGap: 2, barOpacity: 100,
             frameStyle: "double", density: "normal", fontFamily: "UbuntuMono Nerd Font",
             moduleStyle: "outline", barStyle: "full",
         },
     },
 }
 
-// a look with its fixed half filled in from `base`
+// The layout half of `settings`, which the looks from before these existed
+// don't state. Filled in rather than left out so picking any look sets all
+// of them -- otherwise leaving a bottom-bar look for one of those would keep
+// the bar at the bottom.
+var settingsBase = {
+    barPosition: "top",
+    workspaceStyle: "pills",
+    clockStyle: "stamp",
+}
+
+// a look with its fixed half filled in from `base`, and its settings from
+// `settingsBase`
 function complete(look) {
     for (var b in base)
         if (look[b] === undefined) look[b] = base[b]
+    for (var s in settingsBase)
+        if (look.settings[s] === undefined) look.settings[s] = settingsBase[s]
     return look
 }
 complete(looks[fallback])

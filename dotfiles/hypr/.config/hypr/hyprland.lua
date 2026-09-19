@@ -456,6 +456,10 @@ hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- Res
 -- --- Clipboard ---
 hl.bind(mod .. " + H", hl.dsp.exec_cmd("qs ipc call launcher toggle clipboard"))  -- Clipboard history
 
+-- --- Claude ---
+-- Quickshell's Claude flyout (flyouts/ClaudeFlyout.qml)
+hl.bind(mod .. " + I", hl.dsp.exec_cmd("qs ipc call claude toggle"))  -- Ask Claude to change the desktop
+
 -- --- Screenshot ---
 -- saves to ~/Pictures/Screenshots and copies to the clipboard
 hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh"))  -- Screenshot an area
@@ -559,9 +563,9 @@ hl.window_rule({
     -- Intentionally no size constraint — QML code defines window dimensions
 })
 
--- Apps that are always worth the whole screen: the editor and the browsers.
--- Always maximize-on-open in dwindle mode, so switching to dwindle tiles
--- everything else while leaving these full. In monocle mode this rule is
+-- Apps that are always worth the whole screen: the editor, the browsers, and
+-- zathura. Always maximize-on-open in dwindle mode, so switching to dwindle
+-- tiles everything else while leaving these full. In monocle mode this rule is
 -- disabled (see toggleLayout) and monocleRule's ordinary float+size handles
 -- them instead -- they used to be exempted from that and kept this
 -- maximize=true unconditionally, which seemed right (they open already
@@ -571,11 +575,19 @@ hl.window_rule({
 -- exactly like the problem this was all meant to fix. Floating both like
 -- everything else is what actually keeps them both full at the same time.
 --
--- Matched on class, not title: browser and editor titles change with whatever
--- is open in them.
+-- zathura joined this list rather than staying tiled because maximizeFocused()
+-- re-issues a fullscreen dispatch on every focus for tiled windows, and
+-- zathura's cairo rendering is slow enough to repaint at the new size that,
+-- with blur enabled, the still-unpainted region showed the blur-behind
+-- wallpaper through it for a moment -- alt-tabbing to it looked like the
+-- window had gone almost transparent. Floating windows only get bring_to_top
+-- on focus, not a resize, so they never hit that repaint gap.
+--
+-- Matched on class, not title: browser, editor and zathura titles change with
+-- whatever is open in them.
 local maximizePrimaryDwindleRule = hl.window_rule({
     name     = "maximize-primary-dwindle",
-    match    = { class = "^(codium|VSCodium|floorp|zen|zen-browser)$" },
+    match    = { class = "^(codium|VSCodium|floorp|zen|zen-browser|org\\.pwmt\\.zathura)$" },
     maximize = true,
 })
 maximizePrimaryDwindleRule:set_enabled(false)

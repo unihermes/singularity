@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/BarModules.qml
 //
-// The bar's 18 modules (and the widgetItems registry shell.qml's Bar
+// The bar's 19 modules (and the widgetItems registry shell.qml's Bar
 // Widgets reordering keys off of), split out of shell.qml so the bar's
 // layout plumbing isn't buried under every module's own logic.
 //
@@ -29,6 +29,8 @@ Item {
     // the bar entirely (it's a sibling flyout in the screen's Scope). It's
     // the flyout's LazyFlyout loader: ensure() builds it if needed.
     required property var trayMenu
+    // same, for the open-windows strip's right-click menu
+    required property var windowMenu
 
     readonly property var widgetItems: ({
         controlcentre: ccBtn, workspaces: wsFrame, overview: wsOverviewBtn,
@@ -37,7 +39,7 @@ Item {
         battery: battBtn, tray: trayFrame, media: mediaBtn,
         visualizer: vizFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn,
-        failed: failedBtn, updates: updatesBtn })
+        failed: failedBtn, updates: updatesBtn, claude: claudeBtn })
 
     // Control centre. Sits left of the workspaces, where a
     // distro/menu button conventionally lives.
@@ -74,26 +76,52 @@ Item {
                 readonly property bool occupied: barModules.bar.workspaceHasWindows(wsId)
 
                 anchors.verticalCenter: parent.verticalCenter
-                // a little wider than the pill so an empty
+                // a little wider than the mark so an empty
                 // workspace is still a comfortable click target
-                implicitWidth: pip.width + 4
+                readonly property bool textual: Theme.workspaceStyle === "numbers" || Theme.workspaceStyle === "roman"
+                implicitWidth: (textual ? num.width : pip.width) + 4
                 implicitHeight: Theme.moduleHeight - 8
 
+                // pills and blocks: the same three states, drawn
+                // as a pill that stretches or a square that fills
                 Rectangle {
                     id: pip
+                    readonly property bool blocks: Theme.workspaceStyle === "blocks"
+                    visible: !parent.textual
                     anchors.centerIn: parent
-                    height: 7
-                    width: parent.current ? 22 : (parent.occupied ? 11 : 7)
+                    height: blocks ? 10 : 7
+                    width: blocks ? 10 : parent.current ? 22 : (parent.occupied ? 11 : 7)
                     // fully rounded: half the height makes a pill
                     // at any width, and a circle at the stub size
-                    radius: height / 2
+                    radius: blocks ? Math.min(2, Theme.radiusSmall) : height / 2
                     color: parent.current ? Theme.accent
+                        : blocks ? (parent.occupied ? Theme.subtext : "transparent")
                         : (parent.occupied ? Theme.subtext : Theme.muted)
+                    border.width: blocks && !parent.current && !parent.occupied ? Theme.borderWidth : 0
+                    border.color: Theme.muted
 
                     Behavior on width {
                         NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
                     }
                     Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                }
+
+                Text {
+                    id: num
+                    visible: parent.textual
+                    anchors.centerIn: parent
+                    // a touch wider than a digit, so the row doesn't
+                    // shift as the current one turns bold
+                    width: Math.max(implicitWidth, Theme.fs(12))
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Theme.workspaceStyle === "roman"
+                        ? ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][parent.wsId - 1] || parent.wsId
+                        : parent.wsId
+                    color: parent.current ? Theme.accent
+                        : parent.occupied ? Theme.text : Theme.muted
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.barLabelSize
+                    font.bold: parent.current
                 }
 
                 MouseArea {
@@ -133,6 +161,7 @@ Item {
             model: barModules.bar.focusedWorkspaceIcons()
 
             IconImage {
+                id: winIcon
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
                 source: modelData.source
@@ -140,13 +169,32 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        // focus and bring to top -- so floating windows stay
-                        // accessible even when behind a monocle-maximized window
-                        var addr = "address:0x" + parent.modelData.address
-                        Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-                        Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+                    onClicked: mouse => {
+                        var addr = "address:0x" + winIcon.modelData.address
+                        if (mouse.button === Qt.RightButton) {
+                            var menu = barModules.windowMenu.ensure()
+                            // a different window's icon while the menu is
+                            // open retargets it rather than closing it
+                            if (screenScope.openFlyout === "windowmenu"
+                                    && menu.address !== winIcon.modelData.address) {
+                                menu.address = winIcon.modelData.address
+                                menu.movePage = false
+                                screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
+                                return
+                            }
+                            menu.address = winIcon.modelData.address
+                            menu.movePage = false
+                            screenScope.toggleFlyout("windowmenu", winIcon)
+                        } else if (mouse.button === Qt.MiddleButton) {
+                            Hyprland.dispatch("hl.dsp.window.close({window=\"" + addr + "\"})")
+                        } else {
+                            // focus and bring to top -- so floating windows stay
+                            // accessible even when behind a monocle-maximized window
+                            Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
+                            Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+                        }
                     }
                 }
             }
@@ -247,8 +295,9 @@ Item {
     // Bar Widgets can still turn any of them off entirely.
 
     // system tray: one frame around every app's icon, like the
-    // open-windows strip. Left activates, right opens the app's
-    // menu in a flyout, middle is the app's secondary action.
+    // open-windows strip. Left raises the app's window (or activates
+    // the app if it has none open), right opens the app's menu in a
+    // flyout, middle is the app's secondary action.
     ModuleFrame {
         id: trayFrame
         anchors.verticalCenter: parent.verticalCenter
@@ -282,7 +331,18 @@ Item {
                             menu.stack = []
                             screenScope.toggleFlyout("traymenu", trayIcon)
                         } else {
-                            item.activate()
+                            // raise the app's own window when it has one
+                            // open (on any workspace); only fall back to the
+                            // app's activate() -- usually "show/hide main
+                            // window" -- when there's nothing to raise
+                            var win = barModules.bar.trayItemWindow(item)
+                            if (win) {
+                                var addr = "address:0x" + win.address
+                                Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
+                                Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+                            } else {
+                                item.activate()
+                            }
                         }
                     }
                 }
@@ -389,5 +449,29 @@ Item {
         label: String(Updates.count)
         active: screenScope.openFlyout === "updates"
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
+    }
+
+    // Claude, editing the desktop itself (services/ClaudeShell.qml). The
+    // label says it's working, then how many files are waiting for review;
+    // the icon takes the accent while there's a reply or a diff not yet seen.
+    BarModule {
+        id: claudeBtn
+        visible: ClaudeShell.available && Settings.widgetVisible("claude")
+        icon: "󰚩"
+        label: ClaudeShell.running ? spinner.frames[spinner.frame]
+            : ClaudeShell.hasChanges ? String(ClaudeShell.files.length) : ""
+        iconColor: ClaudeShell.unseen || ClaudeShell.hasChanges ? Theme.accent : "transparent"
+        active: screenScope.openFlyout === "claude"
+        onActivated: screenScope.toggleFlyout("claude", claudeBtn)
+
+        Timer {
+            id: spinner
+            readonly property var frames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+            property int frame: 0
+            interval: 90
+            repeat: true
+            running: ClaudeShell.running && claudeBtn.visible
+            onTriggered: frame = (frame + 1) % frames.length
+        }
     }
 }

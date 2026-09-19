@@ -57,8 +57,12 @@ Singleton {
     readonly property alias fontFamily:  adapter.fontFamily
     // "outline", "filled", "flat" or "pill"
     readonly property alias moduleStyle: adapter.moduleStyle
-    // "full" or "floating"
+    // "full", "floating", "islands" or "bare"
     readonly property alias barStyle:    adapter.barStyle
+    // "pills", "numbers" or "blocks" -- the workspace indicator
+    readonly property alias workspaceStyle: adapter.workspaceStyle
+    // "stamp", "time" or "day" -- what the clock chip shows
+    readonly property alias clockStyle:  adapter.clockStyle
 
     // Cycled through by the Appearance page's choice rows, in this order.
     readonly property var choices: ({
@@ -69,8 +73,10 @@ Singleton {
         frameStyle:   ["double", "single", "bevel", "none"],
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
-        moduleStyle:  ["outline", "filled", "flat", "pill"],
-        barStyle:     ["full", "floating"],
+        moduleStyle:  ["outline", "filled", "flat", "pill", "bracket", "underline"],
+        barStyle:     ["full", "floating", "islands", "bare", "notch"],
+        workspaceStyle: ["pills", "numbers", "blocks", "roman"],
+        clockStyle:   ["stamp", "time", "day", "long"],
     })
     readonly property var choiceLabels: ({
         "normal": "Normal", "fast": "Fast", "off": "Off",
@@ -80,7 +86,11 @@ Singleton {
         "double": "Double", "single": "Single", "bevel": "Bevel", "none": "None",
         "compact": "Compact", "roomy": "Roomy",
         "outline": "Outline", "filled": "Filled", "flat": "Flat", "pill": "Pill",
-        "full": "Full width", "floating": "Floating",
+        "bracket": "Brackets", "underline": "Underline",
+        "full": "Full width", "floating": "Floating", "islands": "Islands", "bare": "Bare",
+        "notch": "Notch",
+        "pills": "Pills", "numbers": "Numbers", "blocks": "Blocks", "roman": "Roman",
+        "stamp": "Time + date", "time": "Time", "day": "Day + time", "long": "Full date",
     })
 
     // A choice's display name: the table above, then the look's or font's
@@ -127,7 +137,7 @@ Singleton {
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "overview", "windows"],
         centre: ["visualizer", "media", "clock", "weather"],
-        right:  ["privacy", "failed", "updates", "notifications", "tray",
+        right:  ["privacy", "failed", "updates", "claude", "notifications", "tray",
                  "bluetooth", "network", "volume", "brightness", "battery"],
     })
 
@@ -154,6 +164,7 @@ Singleton {
         privacy:       { label: "Privacy",        icon: "󰍬" },
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },
+        claude:        { label: "Claude",         icon: "󰚩" },
     })
 
     // Can't be hidden: the control centre button is the only way back to
@@ -288,7 +299,6 @@ Singleton {
     readonly property var stockDefaults: {
         var d = {
             look: Looks.fallback,
-            barPosition: "top",
             fontSize: 16,
             animSpeed: "normal",
             colourMode: "grayscale",
@@ -323,6 +333,7 @@ Singleton {
     // Forget the saved default and go back to stock.
     function factoryReset() {
         adapter.userDefaults = {}
+        root.applyLayout(adapter.look, stockDefaults.look)
         for (var k in stockDefaults) adapter[k] = stockDefaults[k]
     }
 
@@ -332,11 +343,37 @@ Singleton {
     function applyLook(name) {
         var l = LookStore.looks[name]
         if (!l) return
+        root.applyLayout(adapter.look, name)
         adapter.look = name
         for (var k in l.settings) {
             if (k === "barOpacity" && adapter.colourMode === "wallpaper") continue
             adapter[k] = l.settings[k]
         }
+    }
+
+    // A look's own module layout (Looks.js `layout`) replaces Bar Widgets'.
+    // The user's arrangement is set aside on the way in and put back on the
+    // way out to a look without one.
+    function applyLayout(from, to) {
+        var a = LookStore.looks[from], b = LookStore.looks[to]
+        var lay = b && b.layout
+        var hadOwn = !(a && a.layout)
+        if (!lay) {
+            if (hadOwn) return
+            var own = adapter.ownLayout || {}
+            if (!own.barLayout) { resetWidgets(); return }
+            adapter.barLayout = own.barLayout
+            adapter.barHidden = own.barHidden || []
+            adapter.centreAnchor = own.centreAnchor !== undefined ? own.centreAnchor : "clock"
+            adapter.ownLayout = {}
+            return
+        }
+        if (hadOwn)
+            adapter.ownLayout = { barLayout: adapter.barLayout, barHidden: adapter.barHidden,
+                                  centreAnchor: adapter.centreAnchor }
+        setWidgetLayout(lay)
+        adapter.barHidden = (lay.hidden || []).slice()
+        adapter.centreAnchor = lay.anchor !== undefined ? lay.anchor : "clock"
     }
 
     // true while every value the look carries is still the look's own --
@@ -385,11 +422,12 @@ Singleton {
     function step(key, delta) { set(key, adapter[key] + delta) }
 
     function reset() {
+        root.applyLayout(adapter.look, defaults.look)
         for (var key in defaults) adapter[key] = defaults[key]
     }
 
     // Back to the current look as designed, keeping the look itself and the
-    // values no look sets (position, font size, motion, colour mode).
+    // values no look sets (font size, motion, colour mode).
     function resetLook() { applyLook(adapter.look) }
 
     // Deletes a look from looks.json. Anything still pointing at it -- the
@@ -421,7 +459,7 @@ Singleton {
     // Writes are held until the first read has landed. Without this the
     // adapter's declared defaults count as an update the moment it is
     // constructed, so the very first thing the shell does on startup is
-    // save 34/top/2/6 over whatever the user had -- the settings appear to
+    // save 32/top/2/6 over whatever the user had -- the settings appear to
     // work until you restart, then silently reset. blockLoading makes that
     // first read synchronous, so by the time this component is complete the
     // adapter already holds the file's values and writing is safe.
@@ -479,7 +517,7 @@ Singleton {
         JsonAdapter {
             id: adapter
             property string barPosition: "top"
-            property int barHeight: 34
+            property int barHeight: 32
             property int moduleGap: 2
             property int radius: 6
             property int barOpacity: 100
@@ -496,6 +534,8 @@ Singleton {
             property string fontFamily: "UbuntuMono Nerd Font"
             property string moduleStyle: "outline"
             property string barStyle: "full"
+            property string workspaceStyle: "pills"
+            property string clockStyle: "stamp"
 
             property bool wallpaperShuffle: true
             property bool clockIsland: true
@@ -504,6 +544,9 @@ Singleton {
             property string centreAnchor: "clock"
             property var barLayout: ({})
             property var barHidden: []
+            // Bar Widgets' arrangement, held while a look with its own
+            // layout is on (applyLayout)
+            property var ownLayout: ({})
             // the appearance saved with "Set as default"; {} means stock
             property var userDefaults: ({})
 

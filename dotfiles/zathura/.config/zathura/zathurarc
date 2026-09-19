@@ -10,8 +10,9 @@ set window-title-basename true
 set statusbar-h-padding 10
 set statusbar-v-padding 6
 
-# dark, on the same ramp as everything else
-set recolor true
+# UI chrome is dark regardless of recolor; recolor itself inverts document
+# content too, which isn't wanted here, so it stays off by default.
+set recolor false
 set recolor-keephue false
 set recolor-darkcolor  "#c2c2c2"
 set recolor-lightcolor "#0b0b0b"
@@ -23,9 +24,11 @@ set inputbar-bg    "#121212"
 set inputbar-fg    "#ebebeb"
 set notification-bg "#121212"
 set notification-fg "#c2c2c2"
-set highlight-color        "#4d4d4d"
-set highlight-active-color "#ebebeb"
+set highlight-color        "rgba(255,214,0,0.3)"
+set highlight-active-color "rgba(255,140,0,0.45)"
 set render-loading false
 
 # toggle the dark inversion, for documents that invert badly
 map <C-i> recolor
+
+map b file_chooser

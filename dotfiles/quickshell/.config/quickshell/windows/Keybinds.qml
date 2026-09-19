@@ -15,6 +15,8 @@ CentredWindow {
 
     KeybindsBody {
         active: root.visible
+        // toolbar, spacing, status line, spacing -- the rest is the list
+        bodyHeight: root.bodyHeight - Theme.rowHeightTall - Theme.headingHeight - Theme.spaceM * 2
         onCloseRequested: root.close()
     }
 }

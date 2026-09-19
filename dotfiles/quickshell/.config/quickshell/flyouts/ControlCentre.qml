@@ -11,7 +11,7 @@
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Widgets
-import Quickshell.Bluetooth
+import Quickshell.Io
 import QtQuick
 import "../services"
 import "../bar"
@@ -23,7 +23,6 @@ FlyoutPanel {
     // first module in the bar -- run it into the left corner
     edgeMargin: 0
 
-    required property var bar
     required property var shellRoot
     required property var settingsWin
     required property var systemWin
@@ -42,7 +41,9 @@ FlyoutPanel {
     property point lastPointer: Qt.point(-1, -1)
     // Re-read the saved layout each time the page opens, so the
     // lists never show an order from before a reset or a hand edit.
-    onPageChanged: if (page === "widgets") {
+    onPageChanged: if (page === "quick") {
+        rfkillRead.running = true
+    } else if (page === "widgets") {
         widgetsList.refill()
     } else if (page === "apps") {
         appQuery = ""
@@ -59,6 +60,33 @@ FlyoutPanel {
         "apps": "APPLICATIONS",
         "widgets": "BAR WIDGETS"
     })
+
+    // Airplane mode is an rfkill soft block on every radio. Read on open
+    // and after each toggle rather than watched: nothing else here
+    // changes it often enough to be worth a poll.
+    property bool airplane: false
+
+    function setAirplane(on) {
+        airplane = on
+        rfkillSet.command = ["rfkill", on ? "block" : "unblock", "all"]
+        rfkillSet.running = true
+    }
+
+    Process {
+        id: rfkillRead
+        command: ["rfkill", "-rn", "-o", "SOFT"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var lines = text.trim().split("\n").filter(l => l !== "")
+                controlCentre.airplane = lines.length > 0 && lines.every(l => l.trim() === "blocked")
+            }
+        }
+    }
+
+    Process {
+        id: rfkillSet
+        onExited: rfkillRead.running = true
+    }
 
     function launch(entry) {
         scope.openFlyout = ""
@@ -89,6 +117,9 @@ FlyoutPanel {
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/screenshot.sh"])
         else if (act === "colourpick")
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/colour-pick.sh"])
+        // relaunched the way hyprland.lua starts it, so the log stays in one place
+        else if (act === "restartshell")
+            Quickshell.execDetached(["sh", "-c", "qs kill; sleep 0.3; exec quickshell > ~/.cache/quickshell.log 2>&1"])
     }
 
     FlyoutHeading {
@@ -103,40 +134,48 @@ FlyoutPanel {
         onActivated: controlCentre.page = ""
     }
 
-    // root, first group: the things that open a submenu
+    // root: everyday things, then customising the shell, then the
+    // standalone windows, and Power on its own at the bottom where it
+    // can't be hit on the way to something else. `sub` opens a submenu,
+    // `act` runs straight away.
     Repeater {
         model: controlCentre.page === "" ? [
-            { label: "Applications",   sub: "apps" },
-            { label: "Power",          sub: "power" },
-            { label: "Bar Widgets",    sub: "widgets" },
-            { label: "Quick Actions",  sub: "quick" },
-            { label: "Appearance",     sub: "appearance" },
+            [
+                { label: "Quick Actions", sub: "quick" },
+                { label: "Applications",  sub: "apps" },
+            ], [
+                { label: "Appearance",    sub: "appearance" },
+                { label: "Bar Widgets",   sub: "widgets" },
+            ], [
+                { label: "Settings",      act: "settings" },
+                { label: "System",        act: "system" },
+                { label: "Keybinds",      act: "keybinds" },
+            ], [
+                { label: "Power",         sub: "power" },
+            ],
         ] : []
 
-        FlyoutRow {
+        Column {
+            id: group
             required property var modelData
-            label: modelData.label
-            trailing: "󰅂"
-            onActivated: controlCentre.page = modelData.sub
-        }
-    }
+            required property int index
+            width: parent.width
+            spacing: controlCentre.contentColumn.spacing
 
-    FlyoutDivider {
-        visible: controlCentre.page === ""
-    }
+            FlyoutDivider { visible: group.index > 0 }
 
-    // root, second group: the leaf entries
-    Repeater {
-        model: controlCentre.page === "" ? [
-            { label: "Settings",   act: "settings" },
-            { label: "System",     act: "system" },
-            { label: "Keybinds",   act: "keybinds" },
-        ] : []
+            Repeater {
+                model: group.modelData
 
-        FlyoutRow {
-            required property var modelData
-            label: modelData.label
-            onActivated: controlCentre.run(modelData.act)
+                FlyoutRow {
+                    required property var modelData
+                    label: modelData.label
+                    trailing: modelData.sub ? "󰅂" : ""
+                    onActivated: modelData.sub
+                        ? controlCentre.page = modelData.sub
+                        : controlCentre.run(modelData.act)
+                }
+            }
         }
     }
 
@@ -276,36 +315,11 @@ FlyoutPanel {
         spacing: Theme.spaceM
 
         FlyoutAction {
-            icon: Network.powered ? "󰖩" : "󰖪"
-            label: "Wi-Fi"
-            status: Network.device === "" ? "No wifi device"
-                : !Network.powered ? "Off"
-                : (Network.ssid !== "" ? Network.ssid : "Not connected")
-            enabled: Network.device !== ""
-            checked: Network.powered
-            onActivated: Network.setPowered(!Network.powered)
-        }
-
-        FlyoutAction {
-            readonly property var adapter: Bluetooth.defaultAdapter
-            icon: checked ? "󰂯" : "󰂲"
-            label: "Bluetooth"
-            status: !adapter ? "No adapter"
-                : bar.btAdapterBlocked(adapter) ? "Blocked (rfkill)"
-                : !bar.btAdapterOn(adapter) ? "Off"
-                : (bar.btConnectedName() !== "" ? bar.btConnectedName() : "No device connected")
-            enabled: adapter !== null
-            checked: bar.btAdapterOn(adapter)
-            onActivated: bar.setBtPowered(adapter, !bar.btAdapterOn(adapter))
-        }
-
-        FlyoutAction {
-            icon: Audio.muted ? "󰖁" : "󰕾"
-            label: "Mute"
-            status: Audio.muted ? "Muted" : Audio.percent + "%"
-            enabled: Audio.ready
-            checked: Audio.muted
-            onActivated: Audio.toggleMute()
+            icon: controlCentre.airplane ? "󰀝" : "󰀞"
+            label: "Airplane Mode"
+            status: controlCentre.airplane ? "Wi-Fi and Bluetooth off" : ""
+            checked: controlCentre.airplane
+            onActivated: controlCentre.setAirplane(!controlCentre.airplane)
         }
 
         FlyoutAction {
@@ -367,6 +381,13 @@ FlyoutPanel {
             label: "Colour Picker"
             onActivated: controlCentre.run("colourpick")
         }
+
+        FlyoutAction {
+            checkable: false
+            icon: "󰑓"
+            label: "Restart Shell"
+            onActivated: controlCentre.run("restartshell")
+        }
     }
 
     // --- Appearance -------------------------------------------
@@ -424,11 +445,45 @@ FlyoutPanel {
             onActivated: Settings.cycle("density")
         }
 
-        FlyoutRow {
-            label: "Font"
-            trailingIsValue: true
-            trailing: appearancePage.label(Settings.fontFamily)
-            onActivated: Settings.cycle("fontFamily")
+        // arrows rather than click-to-cycle: with a dozen fonts, going back
+        // one shouldn't mean clicking through all the others
+        Item {
+            width: parent.width
+            height: Theme.chipHeight
+
+            Text {
+                id: fontLabel
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Font"
+                color: Theme.text
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
+            }
+
+            Text {
+                anchors.left: fontLabel.right
+                anchors.leftMargin: Theme.spaceL
+                anchors.right: fontButtons.left
+                anchors.rightMargin: Theme.spaceS
+                anchors.verticalCenter: parent.verticalCenter
+                horizontalAlignment: Text.AlignRight
+                text: appearancePage.label(Settings.fontFamily)
+                elide: Text.ElideRight
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
+            }
+
+            Row {
+                id: fontButtons
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spaceS
+
+                FlyoutChip { glyph: true; text: "󰒮"; onClicked: Settings.cycle("fontFamily", -1) }
+                FlyoutChip { glyph: true; text: "󰒭"; onClicked: Settings.cycle("fontFamily", 1) }
+            }
         }
 
         FlyoutHeading { text: "WALLPAPER" }

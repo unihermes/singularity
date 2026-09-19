@@ -201,6 +201,11 @@ Singleton {
     // inside a flyout's frame, and inside a window's
     readonly property int panelPad:  sp(10)
     readonly property int windowPad: sp(16)
+    // Every standalone window (Settings, System, Keybinds) is this tall
+    // below its title, whatever it holds. A window sized by its content
+    // was centred for its first frame's size and hung off-centre once a
+    // list loaded in; a fixed size opens centred and stays there.
+    readonly property int windowBodyHeight: fs(600)
     // between a flyout and the screen edge it's clamped against
     readonly property int edgeMargin: 6
 
@@ -248,9 +253,24 @@ Singleton {
     // stroked ground; barMargin is that inset. barExtent is how far from the
     // screen edge anything anchored to the bar (flyouts, toasts) starts --
     // with a floating bar, the same gap again below it.
+    //
+    // Islands and bare are inset the same way. Islands give each group of
+    // modules its own floating ground instead of one bar; bare draws no
+    // ground at all.
     readonly property bool barFloating: Settings.barStyle === "floating"
-    readonly property int barMargin:  barFloating ? 6 : 0
+    readonly property bool barIslands:  Settings.barStyle === "islands"
+    readonly property bool barBare:     Settings.barStyle === "bare"
+    // Notch: only the centre group has a ground, hanging flush from the
+    // screen edge; the sides sit bare on the wallpaper.
+    readonly property bool barNotch:    Settings.barStyle === "notch"
+    readonly property bool barFull:     !barFloating && !barIslands && !barBare && !barNotch
+    readonly property int barMargin:  barFull || barNotch ? 0 : 6
     readonly property int barExtent:  barHeight + barMargin * 2
+    // between the bar's (or an island's) edge and its outermost module
+    readonly property int barInset: barFloating ? spaceXs : barIslands || barNotch ? spaceM : 0
+    // "pills", "numbers" or "blocks" / "stamp", "time" or "day" -- Looks.js
+    readonly property string workspaceStyle: Settings.workspaceStyle
+    readonly property string clockStyle: Settings.clockStyle
     // "outline", "filled", "flat" or "pill" -- see Looks.js
     readonly property string moduleStyle: Settings.moduleStyle
 

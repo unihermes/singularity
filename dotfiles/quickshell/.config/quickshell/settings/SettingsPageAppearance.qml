@@ -99,6 +99,11 @@ SettingsPage {
         readonly property int r: ls.radius
         readonly property int bw: look.borderWidth
         readonly property bool floating: ls.barStyle === "floating"
+        // islands and bare: no one bar ground, just what's behind the chips
+        readonly property bool notch: ls.barStyle === "notch"
+        readonly property bool groundless: ls.barStyle === "islands" || ls.barStyle === "bare" || notch
+        readonly property bool inset: ls.barStyle !== "full" && !notch
+        readonly property bool atBottom: ls.barPosition === "bottom"
         readonly property string mod: ls.moduleStyle
         readonly property bool bevelled: ls.frameStyle === "bevel"
         readonly property var bv: look.bevel || { light: Qt.lighter(pal.border, 1.8), dark: Qt.darker(pal.border, 1.8) }
@@ -110,12 +115,12 @@ SettingsPage {
         // bar
         Rectangle {
             id: miniBar
-            x: pv.floating ? 5 : 0
-            y: pv.floating ? 5 : 0
+            x: pv.inset ? 5 : 0
+            y: pv.atBottom ? parent.height - height - x : x
             width: parent.width - x * 2
             height: Theme.fs(18)
             radius: pv.floating ? Math.min(pv.r, height / 2) : 0
-            color: pv.pal.bar
+            color: pv.groundless ? "transparent" : pv.pal.bar
             border.width: pv.floating && !pv.bevelled ? pv.bw : 0
             border.color: pv.pal.border
 
@@ -128,24 +133,53 @@ SettingsPage {
             }
 
             Rectangle {
-                visible: !pv.floating && !pv.bevelled
-                anchors.bottom: parent.bottom
+                visible: !pv.inset && !pv.bevelled
+                y: pv.atBottom ? 0 : parent.height - height
                 width: parent.width
                 height: pv.bw
                 color: pv.pal.border
             }
 
             Bevel {
-                visible: !pv.floating && pv.bevelled
+                visible: !pv.inset && pv.bevelled
                 anchors.fill: parent
                 light: pv.bv.light
                 dark: pv.bv.dark
                 thickness: pv.bw
             }
 
+            // an island: its own ground around the chips
+            Rectangle {
+                visible: pv.ls.barStyle === "islands"
+                x: miniChips.x - 3
+                width: miniChips.width + 6
+                height: parent.height
+                radius: Math.min(pv.r, height / 2)
+                color: pv.pal.bar
+                border.width: pv.bw
+                border.color: pv.pal.border
+            }
+
+            // the notch: a centre ground flush with the screen edge
+            Rectangle {
+                visible: pv.notch
+                x: miniChips.x - 8
+                width: miniChips.width + 16
+                height: parent.height
+                radius: Math.min(pv.r, height / 2)
+                color: pv.pal.bar
+                Rectangle {
+                    y: pv.atBottom ? parent.height - height : 0
+                    width: parent.width
+                    height: parent.radius
+                    color: parent.color
+                }
+            }
+
             Row {
+                id: miniChips
                 anchors.verticalCenter: parent.verticalCenter
-                x: 4
+                x: pv.notch ? Math.round((parent.width - width) / 2) : pv.ls.barStyle === "islands" ? 6 : 4
                 spacing: 3
                 Repeater {
                     model: [false, true, false]
@@ -154,17 +188,26 @@ SettingsPage {
                         width: modelData ? 22 : 14
                         height: miniBar.height - 6
                         radius: pv.mod === "pill" ? height / 2 : Math.min(pv.r, 4)
-                        color: pv.mod === "flat" ? "transparent"
+                        readonly property bool bare: pv.mod === "flat" || pv.mod === "bracket" || pv.mod === "underline"
+                        color: bare ? "transparent"
                             : modelData ? pv.pal.overlay
                             : pv.mod === "outline" ? "transparent" : pv.pal.surface
                         border.width: pv.mod === "outline" ? pv.bw : 0
                         border.color: modelData ? pv.accent : pv.pal.border
                         Rectangle {
-                            visible: pv.mod === "flat" && parent.modelData
+                            visible: (pv.mod === "flat" && parent.modelData) || pv.mod === "underline"
                             anchors.bottom: parent.bottom
                             width: parent.width
                             height: 2
-                            color: pv.accent
+                            color: parent.modelData ? pv.accent : pv.pal.border
+                        }
+                        Text {
+                            visible: pv.mod === "bracket"
+                            anchors.centerIn: parent
+                            text: "[" + " ".repeat(parent.modelData ? 2 : 1) + "]"
+                            color: parent.modelData ? pv.accent : pv.pal.muted
+                            font.family: pv.ls.fontFamily
+                            font.pixelSize: parent.height
                         }
                     }
                 }
@@ -174,9 +217,10 @@ SettingsPage {
         // flyout
         Rectangle {
             id: miniPanel
-            x: pv.floating ? 14 : 10
-            anchors.top: miniBar.bottom
-            anchors.topMargin: pv.floating ? 5 : 0
+            x: pv.inset ? 14 : 10
+            // hangs off the bar, on whichever edge it's on
+            y: pv.atBottom ? miniBar.y - height - (pv.inset ? 5 : 0)
+                : miniBar.y + miniBar.height + (pv.inset ? 5 : 0)
             width: parent.width * 0.62
             height: miniCol.implicitHeight + 12
             radius: pv.r
@@ -475,8 +519,20 @@ SettingsPage {
 
     SettingsField {
         label: "Bar"
-        hint: "Edge to edge, or floating clear of the screen edges"
+        hint: "Edge to edge, floating, an island per group, or no bar at all"
         Choices { key: "barStyle" }
+    }
+
+    SettingsField {
+        label: "Workspaces"
+        hint: "How the workspace indicator marks each one"
+        Choices { key: "workspaceStyle" }
+    }
+
+    SettingsField {
+        label: "Clock"
+        hint: "What the clock chip shows"
+        Choices { key: "clockStyle" }
     }
 
     SettingsField {
@@ -832,7 +888,7 @@ SettingsPage {
     SettingsField {
         label: "Clock island"
         hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar -- toasts show until then"
-            : Settings.clockIsland ? "Volume, brightness, layout, tracks and notifications show in the clock for a moment"
+            : Settings.clockIsland ? "Volume, brightness, layout and notifications show in the clock for a moment"
             : "Those show as separate toasts under the bar"
 
         Row {

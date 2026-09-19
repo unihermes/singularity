@@ -35,7 +35,7 @@ FloatingWindow {
     readonly property int sidebarWidth: Theme.fs(190)
     // Keybinds' list is laid out for 720; the page frame adds its margin
     readonly property int paneWidth: Theme.fs(740)
-    readonly property int paneHeight: Theme.fs(600)
+    readonly property int paneHeight: Theme.windowBodyHeight
 
     visible: false
     title: "Settings"

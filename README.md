@@ -27,6 +27,7 @@ dangling. Every step is idempotent; rerun `./install.sh` any time.
 - [Boot output](#boot-output)
 - [Boot speed](#boot-speed)
 - [Theme](#theme)
+- [Editor](#editor)
 - [Regenerating the package lists](#regenerating-the-package-lists)
 - [Verifying names before trusting them](#verifying-names-before-trusting-them)
 - [Notes](#notes)
@@ -91,7 +92,7 @@ singularity/
     ├── swaync/.config/swaync/{config.json,style.css}
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
-    ├── nvim/.config/nvim/init.lua
+    ├── nvim/.config/nvim/       # LazyVim: lua/config/, lua/plugins/, colors/neutrino.lua
     ├── alacritty/.config/alacritty/alacritty.toml
     ├── zathura/.config/zathura/zathurarc
     ├── gtk/.config/gtk-3.0/settings.ini
@@ -173,17 +174,17 @@ systemd-analyze critical-chain ly@tty2.service
 
 ## Theme
 
-The default look, **Neutrino**, is one grayscale ramp. No hues anywhere:
-emphasis is carried by lightness and weight instead.
+The default look, **Neutrino**, is one grayscale ramp with pale blue text. No
+other hues: emphasis is carried by lightness and weight instead.
 
 | | | | |
 |---|---|---|---|
 | `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
-| `#c2c2c2` text | `#ebebeb` bright | | |
+| `#d4e4f4` text | `#ebebeb` bright | | |
 
-The shell (bar, flyouts, windows, settings, the launcher) and swaync all draw from one
-stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
+The shell (bar, flyouts, windows, settings, the launcher), swaync and Alacritty
+all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
 `services/LookStore.qml`. A look sets the palette and accent colour, corner
 radius, stroke weight, frame style (double, single, bevel or none), module
 style (outline, filled, flat or pill), bar style (full width or floating),
@@ -199,20 +200,48 @@ set <name>`. To add a look, copy an entry in `looks.json`. Removing one from
 the Appearance page deletes it from that file; `git checkout --
 services/looks.json` brings it back.
 
-Alacritty's 16 ANSI slots are a lightness ramp rather than hues, so coloured
-output stays legible but monochrome — you lose red-for-error in `git diff`,
-compiler output and `ls`. The `[colors.normal]` and `[colors.bright]` blocks in
-`alacritty.toml` are the only place to change if that trade is not worth it.
+Alacritty follows the shell too: `AppearanceSync.qml` writes its colours to
+`~/.local/state/neutrino/alacritty.toml`, which `alacritty.toml` imports, and
+open terminals recolour live when the look changes. The 16 ANSI slots are a
+lightness ramp in the look's own tones rather than hues, so coloured output
+stays legible but monochrome — you lose red-for-error in `git diff`, compiler
+output and `ls`. `renderAlacritty()` is the only place to change if that trade
+is not worth it.
 
-nvim carries its own scheme in `init.lua` rather than pulling a plugin, so
-there is nothing to install and nothing to keep in sync.
+ly, the greeter, runs on a Linux VT, which can't show true colour, so it gets
+Neutrino by other means. `install.sh` writes `/etc/ly/singularity.sh`, which
+loads the ramp into the VT's 16-colour palette before ly draws, and points
+ly's colours at those palette slots. Red and green become the shell's muted
+alert and good tints, so a failed login still stands out. It always uses
+Neutrino, whichever look the shell has, because it runs before anyone logs in.
 
-Fonts are Ubuntu Nerd Font for sans-serif, serif and UI text, and UbuntuMono
-Nerd Font for everything monospace: terminals, the editor, the bar and its
-flyouts, the launcher and notifications. One font that owns every glyph, icons and
-powerline caps included, means nothing is drawn by fallback at another font's
-metrics. Alacritty and the editor use the "Nerd Font Mono" variant, which holds
-every glyph to one cell; the bar uses the proportional one.
+nvim follows the shell the same way. `AppearanceSync.qml` writes the look's
+ten roles plus its accent, good and alert hues to
+`~/.local/state/neutrino/nvim.lua`, and `colors/neutrino.lua` builds every
+highlight from them, plugins included: file tree, tabs, statusline,
+completion menu and git signs. Open editors watch the file and recolour
+live. Syntax stays in lightness and weight; the accent marks the current
+line number, tab, search hit and editing modes, and good/alert colour added
+and removed lines and errors. Without the file, nvim uses Neutrino's ramp.
+
+## Editor
+
+nvim is [LazyVim](https://lazyvim.org), copied from its official starter,
+with the shell's look on top: a file tree, tabs, fuzzy finder, completion,
+language servers, a problems panel, lazygit and a start screen. Press
+`Space` and wait to see every binding. Shortcuts from other editors are added
+on top of LazyVim's own (`lua/config/keymaps.lua`): `Ctrl+P` find a file,
+`Ctrl+Shift+F` search text, `Ctrl+B` file tree, `Ctrl+/` comment,
+`` Ctrl+` `` terminal, `F2` rename, `F12` go to definition, `Alt+Shift+F`
+format.
+
+The first start clones lazy.nvim and every plugin; `lazy-lock.json` pins
+them and `:Lazy` updates them. Language support comes from LazyVim's extras,
+listed in `lua/config/lazy.lua` (Python, C/C++, TypeScript, JSON, YAML, TOML,
+Markdown); `:LazyExtras` adds more, and Mason installs their servers on
+first use. QML uses the `qmlls` that ships with Qt (`lua/plugins/lsp.lua`).
+LazyVim's bundled themes are disabled in favour of `colors/neutrino.lua`
+(see Theme above).
 
 ## Regenerating the package lists
 

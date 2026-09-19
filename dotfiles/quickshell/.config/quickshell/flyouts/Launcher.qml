@@ -29,7 +29,7 @@ OverlayWindow {
             : Clipboard.history.filter(e => e.preview.toLowerCase().indexOf(q) !== -1)
     }
 
-    readonly property int visibleRows: 12
+    readonly property int visibleRows: 8
 
     // Rows scroll under a still pointer when the arrow keys move the list,
     // and that counts as hovering a new row. Only real pointer movement
@@ -82,10 +82,10 @@ OverlayWindow {
         id: box
         width: Theme.fs(760)
         height: body.implicitHeight + Theme.sp(40)
-        anchors.horizontalCenter: parent.horizontalCenter
-        // pinned from the top so the box grows downward as the list
-        // fills, instead of re-centring on every keystroke
-        y: Math.round(root.height * 0.18)
+        // Centred on the screen, at a fixed size: the list area is always
+        // visibleRows tall, however many results there are, so the box
+        // doesn't shrink and re-centre on every keystroke.
+        anchors.centerIn: parent
 
         MouseArea {
             anchors.fill: parent
@@ -113,9 +113,14 @@ OverlayWindow {
                     font.letterSpacing: Theme.headingSpacing
                 }
 
+                // the key hints sit inline with the title rather than in a
+                // footer, so the box is only as tall as its rows
                 Text {
                     anchors.right: parent.right
-                    text: "Tab  " + (root.clipMode ? "Applications" : "Clipboard")
+                    text: (root.clipMode
+                            ? "Enter copy   Shift+Del remove   Esc close"
+                            : "Enter open   Esc close")
+                        + "   Tab " + (root.clipMode ? "Applications" : "Clipboard")
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontSmall
@@ -139,104 +144,98 @@ OverlayWindow {
                 onShiftDeletePressed: root.removeCurrent()
             }
 
-            Text {
-                visible: list.count === 0
+            Item {
                 width: parent.width
-                height: Theme.rowHeightTall
-                verticalAlignment: Text.AlignVCenter
-                text: root.query !== "" ? "No matches"
-                    : root.clipMode ? "Clipboard history is empty" : "No applications"
-                color: Theme.textDisabled
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontBody
-            }
+                height: root.visibleRows * (Theme.rowHeightTall + list.spacing)
 
-            ListView {
-                id: list
-                visible: count > 0
-                width: parent.width
-                height: Math.min(count, root.visibleRows) * (Theme.rowHeightTall + spacing)
-                clip: true
-                spacing: Theme.spaceXs
-                boundsBehavior: Flickable.StopAtBounds
-                model: root.items
-                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-
-                delegate: Item {
-                    id: row
-                    required property var modelData
-                    required property int index
-                    width: list.width
+                Text {
+                    visible: list.count === 0
+                    width: parent.width
                     height: Theme.rowHeightTall
+                    verticalAlignment: Text.AlignVCenter
+                    text: root.query !== "" ? "No matches"
+                        : root.clipMode ? "Clipboard history is empty" : "No applications"
+                    color: Theme.textDisabled
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontBody
+                }
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Theme.radiusInner
-                        color: row.ListView.isCurrentItem ? Theme.hoverFill : "transparent"
-                    }
+                ListView {
+                    id: list
+                    visible: count > 0
+                    width: parent.width
+                    height: parent.height
+                    clip: true
+                    spacing: Theme.spaceXs
+                    boundsBehavior: Flickable.StopAtBounds
+                    model: root.items
+                    onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
-                    IconImage {
-                        id: appIcon
-                        visible: !root.clipMode
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.spaceS
-                        anchors.verticalCenter: parent.verticalCenter
-                        implicitSize: Theme.fs(18)
-                        source: root.clipMode ? "" : Quickshell.iconPath(row.modelData.icon, true)
-                    }
+                    delegate: Item {
+                        id: row
+                        required property var modelData
+                        required property int index
+                        width: list.width
+                        height: Theme.rowHeightTall
 
-                    Text {
-                        id: glyph
-                        visible: root.clipMode
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.spaceS
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Theme.fs(18)
-                        horizontalAlignment: Text.AlignHCenter
-                        text: root.clipMode && row.modelData.isImage ? "󰋩" : "󰅍"
-                        color: Theme.subtext
-                        font.family: Theme.fontIcon
-                        font.pixelSize: Theme.fontBody
-                    }
-
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.spaceS + Theme.fs(18) + Theme.sp(10)
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.spaceS
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root.clipMode
-                            ? (row.modelData.isImage ? "Image" : row.modelData.preview)
-                            : row.modelData.name
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        color: row.ListView.isCurrentItem ? Theme.textStrong : Theme.text
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontBody
-                    }
-
-                    MouseArea {
-                        id: rowMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPositionChanged: mouse => {
-                            if (root.pointerMoved(rowMouse, mouse.x, mouse.y)) list.currentIndex = row.index
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.radiusInner
+                            color: row.ListView.isCurrentItem ? Theme.hoverFill : "transparent"
                         }
-                        onClicked: root.activate(row.modelData)
+
+                        IconImage {
+                            id: appIcon
+                            visible: !root.clipMode
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.spaceS
+                            anchors.verticalCenter: parent.verticalCenter
+                            implicitSize: Theme.fs(18)
+                            source: root.clipMode ? "" : Quickshell.iconPath(row.modelData.icon, true)
+                        }
+
+                        Text {
+                            id: glyph
+                            visible: root.clipMode
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.spaceS
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Theme.fs(18)
+                            horizontalAlignment: Text.AlignHCenter
+                            text: root.clipMode && row.modelData.isImage ? "󰋩" : "󰅍"
+                            color: Theme.subtext
+                            font.family: Theme.fontIcon
+                            font.pixelSize: Theme.fontBody
+                        }
+
+                        Text {
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.spaceS + Theme.fs(18) + Theme.sp(10)
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.spaceS
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.clipMode
+                                ? (row.modelData.isImage ? "Image" : row.modelData.preview)
+                                : row.modelData.name
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            color: row.ListView.isCurrentItem ? Theme.textStrong : Theme.text
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontBody
+                        }
+
+                        MouseArea {
+                            id: rowMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onPositionChanged: mouse => {
+                                if (root.pointerMoved(rowMouse, mouse.x, mouse.y)) list.currentIndex = row.index
+                            }
+                            onClicked: root.activate(row.modelData)
+                        }
                     }
                 }
-            }
-
-            Text {
-                width: parent.width
-                horizontalAlignment: Text.AlignRight
-                text: root.clipMode
-                    ? "Enter copy   Shift+Del remove   Esc close"
-                    : "Enter open   Esc close"
-                color: Theme.textDisabled
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontSmall
             }
         }
     }

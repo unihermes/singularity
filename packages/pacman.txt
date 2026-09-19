@@ -3,6 +3,15 @@
 
 # base tooling
 neovim
+# what nvim's IDE setup leans on: rg and fd for the file/text pickers,
+# tree-sitter-cli to build syntax parsers, lazygit for <space>gg, and node
+# because Mason installs the bash/json/yaml/html/css/ts servers through npm
+ripgrep
+fd
+tree-sitter-cli
+lazygit
+nodejs
+npm
 alacritty
 stow
 git
@@ -16,6 +25,9 @@ fastfetch
 # a small, non-Qt binary to hand it one line over a local socket, instead of
 # spawning a whole shell (and its own process-startup cost) to do the same.
 socat
+# the bar's Claude module merges its settings edits key by key
+# (quickshell/scripts/claude-shell.sh)
+python
 
 # compositor + session
 # ly is a TUI greeter that reads the wayland-sessions entry hyprland ships,

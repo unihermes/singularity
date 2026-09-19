@@ -31,22 +31,6 @@ CentredWindow {
     readonly property int col2Width: Theme.fs(320)
     readonly property int col3Width: Theme.fs(420)
     readonly property int colGap: Theme.sp(24)
-    // Caps the window's height to whatever the shortest connected screen
-    // actually has room for, so it can never end up taller than the
-    // display -- a fixed guess here was still cut off on a smaller panel.
-    // 760 was that guess's fallback for when no screen size is known yet;
-    // it stays as a floor via Math.min below so this never grows unbounded
-    // either. Leaves room for the bar, this window's own chrome, and gaps
-    // on every side. Anything past this scrolls (see grid below).
-    readonly property real shortestScreen: {
-        var ss = Quickshell.screens
-        if (!ss || ss.length === 0) return 1080
-        var min = ss[0].height
-        for (var i = 1; i < ss.length; i++) min = Math.min(min, ss[i].height)
-        return min
-    }
-    readonly property int maxGridHeight: Math.min(760,
-        Math.max(320, shortestScreen - Theme.barHeight - 140))
 
     SystemStats {
         id: stats
@@ -55,14 +39,13 @@ CentredWindow {
 
     // --- layout ----------------------------------------------------------
 
-    // The three-column grid can run taller than a 1080p screen once every
-    // section is populated (a laptop with plenty of storage entries, a
-    // dozen input devices, etc.), so it scrolls past root.maxGridHeight
-    // instead of pushing the window off-screen -- same pattern as the
-    // Keybinds list.
+    // The three-column grid runs taller than the window once every section
+    // is populated (a laptop with plenty of storage entries, a dozen input
+    // devices, etc.), so it scrolls inside the window's fixed height --
+    // same pattern as the Keybinds list.
     Item {
         width: parent.width
-        height: Math.min(grid.implicitHeight, root.maxGridHeight)
+        height: root.bodyHeight
 
         Flickable {
             id: gridFlick

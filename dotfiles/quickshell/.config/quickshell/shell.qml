@@ -103,6 +103,17 @@ ShellRoot {
         function open(page: string): void { settingsWindow.open(page) }
     }
 
+    // `qs ipc call system open` / `qs ipc call keybinds open`, likewise
+    IpcHandler {
+        target: "system"
+        function open(): void { system.open() }
+    }
+
+    IpcHandler {
+        target: "keybinds"
+        function open(): void { keybinds.open() }
+    }
+
     // `qs ipc call look cycle` / `qs ipc call look set soft` -- for a keybind
     // that steps through the looks without opening anything
     IpcHandler {
@@ -150,6 +161,15 @@ ShellRoot {
     IpcHandler {
         target: "launcher"
         function toggle(mode: string): void { root.launcherToggled(mode) }
+    }
+
+    // Claude (flyouts/ClaudeFlyout.qml): `qs ipc call claude toggle` from
+    // SUPER+I. Same per-screen signal relay as the overlay above.
+    signal claudeToggled()
+
+    IpcHandler {
+        target: "claude"
+        function toggle(): void { root.claudeToggled() }
     }
 
     // The ALT+Tab switcher. hyprland.lua binds ALT+Tab globally and that bind
@@ -303,6 +323,22 @@ ShellRoot {
                 }
             }
 
+            // SUPER+I opens Claude under its bar module, as a click would;
+            // with the module hidden, centred instead
+            Connections {
+                target: root
+                function onClaudeToggled() {
+                    if (!screenScope.isFocusedScreen()) return
+                    const it = screenScope.barWindow.widgetItem("claude")
+                    if (it && it.visible) {
+                        screenScope.toggleFlyout("claude", it)
+                        return
+                    }
+                    screenScope.flyoutAnchorX = screenScope.modelData.width / 2
+                    screenScope.openFlyout = screenScope.openFlyout === "claude" ? "" : "claude"
+                }
+            }
+
             // ALT+Tab, on the focused monitor only. The first Tab of a
             // gesture opens the switcher and preselects the previous window,
             // so a single tap-and-release is a straight there-and-back swap;
@@ -387,11 +423,76 @@ ShellRoot {
             // their text stay solid so the bar is still readable over a busy
             // wallpaper.
             Rectangle {
+                visible: Theme.barFull || Theme.barFloating
                 anchors.fill: barBody
                 color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
                 radius: Theme.barFloating ? Theme.radius : 0
                 border.width: Theme.barFloating ? Theme.borderWidth : 0
                 border.color: Theme.stroke
+            }
+
+            // Islands: the same ground, but one per group of modules, each
+            // hugging its group with the gap between them left open. The
+            // left and right ones reach the bar's edge; the centre one
+            // follows its modules as they appear and hide.
+            Repeater {
+                model: Theme.barIslands ? Settings.widgetSections : []
+
+                Rectangle {
+                    required property string modelData
+                    readonly property var span: bar.islandSpan(modelData)
+                    readonly property int pad: Theme.moduleGap + Theme.barInset
+                    visible: span.w > 0
+                    x: span.x - pad
+                    y: barBody.y
+                    width: span.w + pad * 2
+                    height: barBody.height
+                    radius: Theme.radius
+                    color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                    border.width: Theme.borderWidth
+                    border.color: Theme.stroke
+                }
+            }
+
+            // Notch: the centre group's ground, flush against the screen
+            // edge with only its far corners rounded, growing and shrinking
+            // as the centre's modules come and go.
+            Rectangle {
+                readonly property var span: Theme.barNotch ? bar.islandSpan("centre") : ({ x: 0, w: 0 })
+                readonly property int pad: Theme.moduleGap + Theme.spaceXl
+                readonly property bool atBottom: Theme.barPosition === "bottom"
+                visible: Theme.barNotch && span.w > 0
+                x: span.x - pad
+                y: barBody.y
+                width: span.w + pad * 2
+                height: barBody.height
+                radius: Theme.radius
+                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                Behavior on x { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
+                Behavior on width { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
+
+                // squares off the corners on the screen edge
+                Rectangle {
+                    y: parent.atBottom ? parent.height - height : 0
+                    width: parent.width
+                    height: Math.min(parent.radius, parent.height / 2)
+                    color: parent.color
+                }
+            }
+
+            // {x, w} of a section's visible modules, in the bar's coordinates
+            function islandSpan(section) {
+                if (section === "left") return { x: leftSlots.x, w: leftSlots.width }
+                if (section === "right") return { x: rightSlots.x, w: rightSlots.width }
+                var lo = Infinity, hi = -Infinity
+                var o = centreSlots.order
+                for (var i = 0; i < o.length; i++) {
+                    var it = widgetItem(o[i])
+                    if (!it || !it.visible) continue
+                    lo = Math.min(lo, it.x)
+                    hi = Math.max(hi, it.x + it.width)
+                }
+                return hi < lo ? { x: 0, w: 0 } : { x: centreSlots.x + lo, w: hi - lo }
             }
 
             // adapter.enabled mirrors BlueZ's "Powered" property, but
@@ -451,6 +552,39 @@ ShellRoot {
                 return icons
             }
 
+            // The open window belonging to a tray item, if any, so clicking
+            // the tray icon can raise that window instead of asking the app
+            // to (which many ignore, or answer by toggling it hidden). Tray
+            // ids and titles are loose -- "spotify-client", "Discord",
+            // "chrome_status_icon_1" -- so both sides are reduced to bare
+            // lowercase letters and digits and matched on either one
+            // containing the other.
+            function trayItemWindow(item) {
+                function norm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]/g, "") }
+                var keys = [norm(item.id), norm(item.title)].filter(function(k) { return k.length >= 3 })
+                if (keys.length === 0) return null
+                var tls = Hyprland.toplevels.values
+                for (var pass = 0; pass < 2; pass++) {
+                    for (var i = 0; i < tls.length; i++) {
+                        var ipc = tls[i].lastIpcObject
+                        if (!ipc || isShellWindow(tls[i])) continue
+                        var names = [norm(ipc.class), norm(ipc.initialClass)]
+                        for (var n = 0; n < names.length; n++) {
+                            var c = names[n]
+                            if (c.length < 3) continue
+                            for (var k = 0; k < keys.length; k++) {
+                                // exact matches first, so "code" can't take
+                                // a tray item meant for "codeblocks"
+                                if (pass === 0 ? c === keys[k]
+                                        : (c.indexOf(keys[k]) !== -1 || keys[k].indexOf(c) !== -1))
+                                    return tls[i]
+                            }
+                        }
+                    }
+                }
+                return null
+            }
+
             // The shell's own standalone windows (System, Keybinds)
             // are part of the bar, not apps you're running, so they're left
             // out of everything that lists windows: no Quickshell icon in the
@@ -500,13 +634,14 @@ ShellRoot {
             // of the visible modules before it. A hidden module takes no
             // space, so the rest close up around it.
 
-            // The bar's 18 modules, in BarModules.qml -- split out since
+            // The bar's 19 modules, in BarModules.qml -- split out since
             // each module's own logic buried the layout plumbing below.
             BarModules {
                 id: barModules
                 bar: bar
                 screenScope: screenScope
                 trayMenu: trayMenu
+                windowMenu: windowMenu
             }
 
             function widgetItem(key) { return barModules.widgetItems[key] }
@@ -610,7 +745,7 @@ ShellRoot {
             // hairline on the bar's inner edge, so it reads as a surface
             // rather than a strip of background
             Rectangle {
-                visible: !Theme.barFloating
+                visible: Theme.barFull
                 y: Theme.barPosition === "bottom" ? 0 : parent.height - height
                 width: parent.width
                 height: Theme.borderWidth
@@ -622,7 +757,7 @@ ShellRoot {
             Item {
                 id: leftSlots
                 anchors.left: barBody.left
-                anchors.leftMargin: Theme.moduleGap + (Theme.barFloating ? Theme.spaceXs : 0)
+                anchors.leftMargin: Theme.moduleGap + Theme.barInset
                 anchors.top: barBody.top
                 anchors.bottom: barBody.bottom
                 width: bar.slotsWidth(leftSlots)
@@ -655,7 +790,7 @@ ShellRoot {
             Item {
                 id: rightSlots
                 anchors.right: barBody.right
-                anchors.rightMargin: Theme.moduleGap + (Theme.barFloating ? Theme.spaceXs : 0)
+                anchors.rightMargin: Theme.moduleGap + Theme.barInset
                 anchors.top: barBody.top
                 anchors.bottom: barBody.bottom
 
@@ -751,6 +886,13 @@ ShellRoot {
             TrayMenuFlyout { scope: screenScope }
         }
 
+        // right-click menu for a window in the bar's open-windows strip
+        LazyFlyout {
+            id: windowMenu
+            name: "windowmenu"; scope: screenScope
+            WindowMenuFlyout { scope: screenScope }
+        }
+
         // media
         LazyFlyout { name: "media"; scope: screenScope; MediaFlyout { scope: screenScope } }
 
@@ -766,12 +908,14 @@ ShellRoot {
         // updates
         LazyFlyout { name: "updates"; scope: screenScope; UpdatesFlyout { scope: screenScope } }
 
+        // Claude: SUPER+I or the bar module
+        LazyFlyout { name: "claude"; scope: screenScope; ClaudeFlyout { scope: screenScope } }
+
         // control centre
         LazyFlyout {
             name: "controlcentre"; scope: screenScope
             ControlCentre {
                 scope: screenScope
-                bar: screenScope.barWindow
                 shellRoot: root
                 settingsWin: settingsWindow
                 systemWin: system
