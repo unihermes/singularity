@@ -25,6 +25,8 @@ Item {
     signal upPressed()
     signal downPressed()
     signal escapePressed()
+    signal tabPressed()
+    signal shiftDeletePressed()
 
     width: parent ? parent.width : 0
     implicitHeight: Theme.rowHeightTall
@@ -73,5 +75,12 @@ Item {
         Keys.onUpPressed: root.upPressed()
         Keys.onDownPressed: root.downPressed()
         Keys.onEscapePressed: root.escapePressed()
+        Keys.onTabPressed: root.tabPressed()
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {
+                root.shiftDeletePressed()
+                event.accepted = true
+            }
+        }
     }
 }

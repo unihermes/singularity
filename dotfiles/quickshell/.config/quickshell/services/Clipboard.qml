@@ -1,9 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Clipboard.qml
 //
-// Clipboard history via cliphist. Exposed as a list of {id, preview, isImage}
-// for the ClipboardFlyout. Actions: select() to paste an entry,
-// remove() to delete it, and refresh() to re-read the history.
+// Clipboard history from cliphist, for the launcher (Launcher.qml). The history is
+// captured by `wl-paste --watch cliphist store`, started from hyprland.lua.
 
 pragma Singleton
 
@@ -12,57 +11,49 @@ import Quickshell.Io
 import QtQuick
 
 Singleton {
-	id: root
+    id: root
 
-	// [ { id, preview, isImage } ], newest first
-	property var history: []
+    // [{ id, preview, isImage }], newest first
+    property var history: []
 
-	function refresh() {
-		if (!listProc.running) listProc.running = true
-	}
+    function refresh() {
+        if (!listProc.running) listProc.running = true
+    }
 
-	function select(id) {
-		selectProc.command = ["sh", "-c", "cliphist decode '" + id.replace(/'/g, "'\\''") + "' | wl-copy --type image/png 2>/dev/null || cliphist decode '" + id.replace(/'/g, "'\\''") + "' | wl-copy"]
-		selectProc.running = true
-	}
+    // cliphist decode takes the whole list line on stdin; wl-copy picks the
+    // mime type from the content, so images stay images and text stays text.
+    function select(entry) {
+        Quickshell.execDetached(["sh", "-c",
+            "printf '%s\\t%s\\n' \"$1\" \"$2\" | cliphist decode | wl-copy",
+            "sh", entry.id, entry.preview])
+    }
 
-	function remove(id) {
-		removeProc.command = ["cliphist", "delete", id]
-		removeProc.running = true
-	}
+    function remove(entry) {
+        history = history.filter(e => e.id !== entry.id)
+        Quickshell.execDetached(["sh", "-c",
+            "printf '%s\\t%s\\n' \"$1\" \"$2\" | cliphist delete",
+            "sh", entry.id, entry.preview])
+    }
 
-	Process {
-		id: listProc
-		command: ["cliphist", "list"]
-		running: false
-		stdout: StdioCollector {
-			onStreamFinished: {
-				var lines = text.trim().split("\n")
-				var items = []
-				for (var i = 0; i < lines.length; i++) {
-					var parts = lines[i].split("\t")
-					if (parts.length >= 2) {
-						var id = parts[0]
-						var preview = parts.slice(1).join("\t")
-						var isImage = preview.startsWith("󰷏") || preview.includes("image")
-						items.push({ id: id, preview: preview, isImage: isImage })
-					}
-				}
-				root.history = items
-			}
-		}
-	}
-
-	Process {
-		id: selectProc
-		command: []
-		running: false
-	}
-
-	Process {
-		id: removeProc
-		command: []
-		running: false
-		onExited: root.refresh()
-	}
+    Process {
+        id: listProc
+        command: ["cliphist", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var items = []
+                var lines = text.split("\n")
+                for (var i = 0; i < lines.length; i++) {
+                    var tab = lines[i].indexOf("\t")
+                    if (tab < 0) continue
+                    var preview = lines[i].slice(tab + 1)
+                    items.push({
+                        id: lines[i].slice(0, tab),
+                        preview: preview,
+                        isImage: preview.startsWith("[[ binary data")
+                    })
+                }
+                root.history = items
+            }
+        }
+    }
 }

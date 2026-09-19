@@ -142,13 +142,14 @@ ShellRoot {
         function set(mode: string): void { root.layoutModeChanged(mode) }
     }
 
-    // Clipboard history flyout. SUPER+V from hyprland.lua via `qs ipc call
-    // clipboard toggle`. Centred on screen, no bar anchor.
-    signal clipboardToggled()
+    // The launcher (flyouts/Launcher.qml): `qs ipc call launcher toggle apps`
+    // from CTRL+SPACE, `... toggle clipboard` from SUPER+H. Same per-screen
+    // signal relay as the overlay above.
+    signal launcherToggled(string mode)
 
     IpcHandler {
-        target: "clipboard"
-        function toggle(): void { root.clipboardToggled() }
+        target: "launcher"
+        function toggle(mode: string): void { root.launcherToggled(mode) }
     }
 
     // The ALT+Tab switcher. hyprland.lua binds ALT+Tab globally and that bind
@@ -285,14 +286,20 @@ ShellRoot {
                 }
             }
 
-            // SUPER+V: clipboard history flyout. Like SUPER+W, it has no bar
-            // module to anchor to, so it centres itself.
+            // The launcher, on the focused monitor. The same key again closes
+            // it; the other mode's key switches it over in place.
+            property string launcherMode: "apps"
+
             Connections {
                 target: root
-                function onClipboardToggled() {
+                function onLauncherToggled(mode) {
                     if (!screenScope.isFocusedScreen()) return
-                    screenScope.openFlyout =
-                        screenScope.openFlyout === "clipboard" ? "" : "clipboard"
+                    if (screenScope.openFlyout === "launcher" && screenScope.launcherMode === mode) {
+                        screenScope.openFlyout = ""
+                        return
+                    }
+                    screenScope.launcherMode = mode
+                    screenScope.openFlyout = "launcher"
                 }
             }
 
@@ -732,8 +739,8 @@ ShellRoot {
         // battery
         LazyFlyout { name: "battery"; scope: screenScope; BatteryFlyout { scope: screenScope } }
 
-        // clipboard history
-        LazyFlyout { name: "clipboard"; scope: screenScope; ClipboardFlyout { scope: screenScope } }
+        // CTRL+SPACE / SUPER+H: the launcher, centred like the workspace grid
+        LazyFlyout { name: "launcher"; scope: screenScope; Launcher { scope: screenScope } }
 
         // tray menu: the app's own menu, drawn as flyout rows so it matches
         // everything else rather than popping a native Qt menu. Submenus

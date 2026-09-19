@@ -19,6 +19,7 @@
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import QtQuick
 import "../services"
 import "../flyouts"
@@ -35,7 +36,12 @@ SettingsPage {
     // [{ label, class, title, regex, float, size, workspace (0 = any), fullscreen, pin }]
     property var rules: []
     // [{ class, title }] of the windows open right now
-    property var openWindows: []
+    // Event-driven: shell.qml refreshes the toplevels on every window
+    // open/close, so this follows windows coming and going without polling.
+    readonly property var openWindows: Hyprland.toplevels.values.map(tl => ({
+        class: (tl.lastIpcObject && tl.lastIpcObject.class) || "",
+        title: tl.title || ""
+    }))
 
     readonly property var sizes: ["", "960 540", "1240 690"]
 
@@ -117,7 +123,7 @@ SettingsPage {
         var ws = Math.floor(Number(r.workspace) || 0)
         var out = {
             float: !!r.float,
-            workspace: ws >= 1 && ws <= 5 ? ws : 0,   // MAX_WORKSPACES in hyprland.lua
+            workspace: ws >= 1 && ws <= Settings.workspaceCount ? ws : 0,
             fullscreen: !!r.fullscreen,
             pin: !!r.pin,
         }
@@ -197,8 +203,6 @@ SettingsPage {
         save(rules.filter((r, i) => i !== index), "Rule for " + name + " removed")
     }
 
-    Component.onCompleted: clientsProc.running = true
-
     FileView {
         id: rulesFile
         path: page.rulesPath
@@ -222,31 +226,10 @@ SettingsPage {
         onLoadFailed: page.layouts = {}
     }
 
-    Process {
-        id: clientsProc
-        command: ["hyprctl", "clients", "-j"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    page.openWindows = JSON.parse(text).map(c => ({ class: c.class || "", title: c.title || "" }))
-                } catch (e) {}
-            }
-        }
-    }
-
-    // windows come and go while the page is open
-    Timer {
-        interval: 3000
-        running: true
-        repeat: true
-        onTriggered: clientsProc.running = true
-    }
-
     FlyoutHeading { text: "WORKSPACE LAYOUTS" }
 
     Repeater {
-        // MAX_WORKSPACES in hyprland.lua
-        model: 5
+        model: Settings.workspaceCount
 
         SettingsField {
             id: wsField

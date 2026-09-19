@@ -13,3 +13,6 @@ dotfiles/nvim/.local/
 # alttab-relay is compiled by install.sh from alttab-relay.cpp; the binary
 # itself is a build artifact, not a dotfile.
 dotfiles/hypr/.config/hypr/alttab-relay
+
+# per-machine Claude Code settings
+.claude/settings.local.json

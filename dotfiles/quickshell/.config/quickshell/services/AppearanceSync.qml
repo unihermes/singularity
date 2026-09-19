@@ -127,7 +127,8 @@ Scope {
     }
 
 
-    // watched, so editing the repo stylesheet regenerates the copy wofi uses
+    // watched, so editing ~/.config/wofi/style.css (not in the repo; wofi is
+    // only the fallback launcher) regenerates the copy wofi uses
     FileView {
         id: wofiTemplate
         path: Quickshell.env("HOME") + "/.config/wofi/style.css"

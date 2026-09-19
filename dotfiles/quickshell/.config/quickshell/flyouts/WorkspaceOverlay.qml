@@ -24,10 +24,10 @@ OverlayWindow {
 
     function requestClose() { scope.openFlyout = "" }
 
-    // Hyprland reports workspace ids, but the grid should show the five fixed
+    // Hyprland reports workspace ids, but the grid should show the fixed
     // workspaces the binds use whether or not they currently exist -- an empty
     // workspace has no id to enumerate, and jumping to one is still valid.
-    readonly property int workspaceCount: 5
+    readonly property int workspaceCount: Settings.workspaceCount
 
     // Which cell a drag is currently hovering, so it can highlight. -1 for none.
     property int dropTarget: -1

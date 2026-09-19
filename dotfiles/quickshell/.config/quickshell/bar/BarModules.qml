@@ -63,7 +63,7 @@ Item {
         padH: 8
 
         Repeater {
-            model: 5
+            model: Settings.workspaceCount
 
             Item {
                 required property int index
@@ -206,7 +206,7 @@ Item {
 
     BarModule {
         id: brightBtn
-        visible: Settings.widgetVisible("brightness")
+        visible: Brightness.available && Settings.widgetVisible("brightness")
         fixedWidth: Theme.moduleWidth
         icon: "󰃠"
         fillValue: Brightness.level / 100
@@ -389,13 +389,5 @@ Item {
         label: String(Updates.count)
         active: screenScope.openFlyout === "updates"
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
-    }
-
-    BarModule {
-        id: clipBtn
-        visible: Settings.widgetVisible("clipboard")
-        icon: "󰅍"
-        active: screenScope.openFlyout === "clipboard"
-        onActivated: screenScope.toggleFlyout("clipboard", clipBtn)
     }
 }

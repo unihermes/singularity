@@ -91,7 +91,6 @@ singularity/
     ├── swaync/.config/swaync/{config.json,style.css}
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
-    ├── wofi/.config/wofi/{config,style.css}
     ├── nvim/.config/nvim/init.lua
     ├── alacritty/.config/alacritty/alacritty.toml
     ├── zathura/.config/zathura/zathurarc
@@ -183,7 +182,7 @@ emphasis is carried by lightness and weight instead.
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
 | `#c2c2c2` text | `#ebebeb` bright | | |
 
-The shell (bar, flyouts, windows, settings), wofi and swaync all draw from one
+The shell (bar, flyouts, windows, settings, the launcher) and swaync all draw from one
 stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
 `services/LookStore.qml`. A look sets the palette and accent colour, corner
 radius, stroke weight, frame style (double, single, bevel or none), module
@@ -210,7 +209,7 @@ there is nothing to install and nothing to keep in sync.
 
 Fonts are Ubuntu Nerd Font for sans-serif, serif and UI text, and UbuntuMono
 Nerd Font for everything monospace: terminals, the editor, the bar and its
-flyouts, wofi and notifications. One font that owns every glyph, icons and
+flyouts, the launcher and notifications. One font that owns every glyph, icons and
 powerline caps included, means nothing is drawn by fallback at another font's
 metrics. Alacritty and the editor use the "Nerd Font Mono" variant, which holds
 every glyph to one cell; the bar uses the proportional one.

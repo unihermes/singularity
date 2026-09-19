@@ -22,8 +22,8 @@ local toggleMaximize
 local toggleMinimize
 
 -- Workspaces 1..MAX_WORKSPACES get SUPER+n binds, and are the only ones a
--- window-rules.json entry may send a window to. The Settings window's Window
--- Rules page has its own copy of this limit (SettingsPageWindowRules.qml).
+-- window-rules.json entry may send a window to. Quickshell's copy is
+-- Settings.workspaceCount (services/Settings.qml); keep the two equal.
 local MAX_WORKSPACES = 5
 
 ------------------
@@ -36,11 +36,12 @@ local fileManager = "thunar"
 local editor      = "codium"
 local zen         = "zen-browser"
 local floorp      = "floorp"
--- pkill first, so a second press dismisses the launcher instead of stacking
+-- The Quickshell launcher (flyouts/Launcher.qml); wofi only if the shell
+-- isn't running to answer. pkill first, so a second press dismisses wofi instead of stacking
 -- another instance behind it. The stylesheet is Quickshell's copy with the bar's
 -- corner radius applied (AppearanceSync.qml), falling back to the repo's own
 -- until the shell has written one.
-local menu        = "pkill wofi || { s=~/.local/state/neutrino/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
+local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/neutrino/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
 
 -- Animation Speed from the bar's Appearance page. Quickshell writes the choice
 -- to a state file and runs `hyprctl reload config-only`, which re-runs this
@@ -453,7 +454,7 @@ hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })  -- Mov
 hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- Resize window by dragging
 
 -- --- Clipboard ---
-hl.bind(mod .. " + V", hl.dsp.exec_cmd("qs ipc call clipboard toggle"))  -- Clipboard history
+hl.bind(mod .. " + H", hl.dsp.exec_cmd("qs ipc call launcher toggle clipboard"))  -- Clipboard history
 
 -- --- Screenshot ---
 -- saves to ~/Pictures/Screenshots and copies to the clipboard

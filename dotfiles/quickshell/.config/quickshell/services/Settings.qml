@@ -141,7 +141,6 @@ Singleton {
         overview:      { label: "Window Overview", icon: "󰕰" },
         windows:       { label: "Open Windows",   icon: "󰀻" },
         clock:         { label: "Clock",          icon: "󰅐" },
-        clipboard:     { label: "Clipboard",      icon: "󰅍" },
         bluetooth:     { label: "Bluetooth",      icon: "󰂯" },
         network:       { label: "Network",        icon: "󰤨" },
         volume:        { label: "Volume",         icon: "󰕾" },
@@ -160,6 +159,10 @@ Singleton {
     // Can't be hidden: the control centre button is the only way back to
     // the page that would un-hide it.
     readonly property var lockedWidgets: ["controlcentre"]
+
+    // Workspaces 1..n have SUPER+n binds and are the only valid targets for a
+    // window rule. Must match MAX_WORKSPACES in hyprland.lua.
+    readonly property int workspaceCount: 5
 
     readonly property var widgetSections: ["left", "centre", "right"]
 

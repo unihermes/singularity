@@ -39,6 +39,7 @@ FlyoutPanel {
     keyboardExclusive: open && page === "apps"
 
     property string appQuery: ""
+    property point lastPointer: Qt.point(-1, -1)
     // Re-read the saved layout each time the page opens, so the
     // lists never show an order from before a reset or a hand edit.
     onPageChanged: if (page === "widgets") {
@@ -51,21 +52,6 @@ FlyoutPanel {
         Qt.callLater(appSearch.forceFocus)
     }
 
-    // Desktop entry ids kept out of the list: system tools that
-    // arrived as dependencies of something else and aren't ever
-    // launched by hand. Ids rather than names, so a translation or a
-    // package renaming its Name= line doesn't let one back in.
-    readonly property var hiddenApps: [
-        "avahi-discover", "bssh", "bvnc",   // avahi
-        "lstopo",                           // hwloc
-        "qv4l2", "qvidcap",                 // v4l-utils
-        "xfce4-about",                      // xfce4-about
-        "jconsole-java25-openjdk",          // jdk
-        "jshell-java25-openjdk",
-        "thunar-settings",                  // thunar extras
-        "thunar-volman-settings",
-        "thunar-bulk-rename",
-    ]
     readonly property var pageTitles: ({
         "power": "POWER",
         "appearance": "APPEARANCE",
@@ -74,44 +60,9 @@ FlyoutPanel {
         "widgets": "BAR WIDGETS"
     })
 
-    // Every launchable desktop entry, A-Z. Case-insensitive, or
-    // lowercase names ("htop", "nvim") would all sort after Z.
-    //
-    // With a query, names that *start* with it come first, then any
-    // other match, each group still A-Z. genericName is searched too,
-    // so "browser" finds Zen and Floorp.
-    function appList(query) {
-        var all = DesktopEntries.applications.values
-        var q = (query || "").trim().toLowerCase()
-        var starts = [], rest = []
-        for (var i = 0; i < all.length; i++) {
-            var e = all[i]
-            if (e.noDisplay || hiddenApps.indexOf(e.id) !== -1) continue
-            var name = e.name.toLowerCase()
-            if (q === "") { rest.push(e); continue }
-            if (name.startsWith(q)) starts.push(e)
-            else if (name.indexOf(q) !== -1
-                || (e.genericName || "").toLowerCase().indexOf(q) !== -1) rest.push(e)
-        }
-        var byName = (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-        starts.sort(byName)
-        rest.sort(byName)
-        return starts.concat(rest)
-    }
-
     function launch(entry) {
         scope.openFlyout = ""
-        // execute() runs the Exec line as-is, which for a terminal
-        // app (htop, nvim) means a process with no terminal to draw
-        // in -- it starts and dies unseen. Those get wrapped.
-        if (entry.runInTerminal) {
-            // command is a Qt list, not a JS array: concat() would
-            // push it as one nested element instead of spreading it
-            var cmd = ["alacritty", "-e"]
-            for (var i = 0; i < entry.command.length; i++) cmd.push(entry.command[i])
-            Quickshell.execDetached(cmd)
-        } else
-            entry.execute()
+        Apps.launch(entry)
     }
 
     function run(act) {
@@ -228,7 +179,7 @@ FlyoutPanel {
         clip: true
         spacing: Theme.spaceXs
         boundsBehavior: Flickable.StopAtBounds
-        model: visible ? controlCentre.appList(controlCentre.appQuery) : []
+        model: visible ? Apps.list(controlCentre.appQuery) : []
         // keeps the arrow-key selection scrolled into view
         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
         // back to the top each time the page opens
@@ -276,7 +227,14 @@ FlyoutPanel {
                 cursorShape: Qt.PointingHandCursor
                 // one highlight shared by mouse and keys: hovering
                 // moves the selection rather than drawing a second one
-                onContainsMouseChanged: if (containsMouse) appView.currentIndex = appRow.index
+                // position, not containsMouse: arrow keys scroll rows under a
+                // still pointer, which would otherwise pull the selection back
+                onPositionChanged: mouse => {
+                    var p = appMouse.mapToGlobal(mouse.x, mouse.y)
+                    if (p.x === controlCentre.lastPointer.x && p.y === controlCentre.lastPointer.y) return
+                    controlCentre.lastPointer = p
+                    appView.currentIndex = appRow.index
+                }
                 onClicked: controlCentre.launch(appRow.modelData)
             }
         }
