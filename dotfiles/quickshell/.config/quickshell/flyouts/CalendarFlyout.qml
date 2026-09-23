@@ -1,8 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/CalendarFlyout.qml
 //
-// The clock module's calendar flyout, split out of shell.qml. Self-contained:
-// no bar or root state needed, just Theme.
+// The clock module's calendar flyout, split out of shell.qml. Needs only
+// Theme -- no bar or root state.
+//
+// A plain month view: page back and forth, and today is highlighted.
 
 import QtQuick
 import "../services"
@@ -22,7 +24,8 @@ FlyoutPanel {
 
     // reset to this month every time it opens, so it never comes
     // back up three months deep from last time
-    onOpenChanged: if (open) monthOffset = 0
+    onOpenChanged: if (open)
+        monthOffset = 0
 
     Item {
         width: parent.width

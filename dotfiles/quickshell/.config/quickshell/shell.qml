@@ -103,10 +103,12 @@ ShellRoot {
         function open(page: string): void { settingsWindow.open(page) }
     }
 
-    // `qs ipc call system open` / `qs ipc call keybinds open`, likewise
+    // `qs ipc call system open` / `qs ipc call keybinds open`, likewise.
+    // System takes a page the way Settings does -- `... open network` -- so a
+    // keybind can go straight to the one page it is about.
     IpcHandler {
         target: "system"
-        function open(): void { system.open() }
+        function open(page: string): void { system.open(page) }
     }
 
     IpcHandler {
@@ -339,6 +341,19 @@ ShellRoot {
                 }
             }
 
+            // When a commit arrived with no switcher open, so onAltTabTab
+            // can apply it to the one it is about to build. 0 for none.
+            property double altTabCommitAt: 0
+
+            // When the switcher last actually committed (set by
+            // AltTabSwitcher.commit(), whichever route got there), so the
+            // second commit of an ordinary gesture isn't mistaken for an early
+            // one. Both routes to the ALT release fire on every gesture -- the
+            // keyboard grab and hyprland.lua's key-state poll -- and the loser
+            // arrives with the switcher already closed, which is the same
+            // shape as a genuinely early commit.
+            property double altTabCommittedAt: 0
+
             // ALT+Tab, on the focused monitor only. The first Tab of a
             // gesture opens the switcher and preselects the previous window,
             // so a single tap-and-release is a straight there-and-back swap;
@@ -367,14 +382,40 @@ ShellRoot {
                     }
                     altTab.begin(clientsJson)
                     // Nothing to switch between: nothing to show.
-                    if (altTab.windows.length > 1) screenScope.openFlyout = "alttab"
+                    if (altTab.windows.length <= 1) return
+
+                    // A commit that beat this Tab there: the compositor-side
+                    // ALT watch (hyprland.lua) saw ALT come up while this
+                    // first Tab was still on its way through hyprctl and the
+                    // relay, so the gesture was already over before there was
+                    // a switcher to commit. Honour it now rather than opening
+                    // a switcher nobody is holding ALT for -- the selection
+                    // begin() just made is the previous window, so this is the
+                    // straight there-and-back swap a fast tap asks for.
+                    if (Date.now() - screenScope.altTabCommitAt < 250) {
+                        screenScope.altTabCommitAt = 0
+                        altTab.commit()
+                        return
+                    }
+                    screenScope.openFlyout = "alttab"
                 }
                 function onAltTabStep(delta) {
                     if (screenScope.openFlyout !== "alttab") return
                     altTab.step(delta)
                 }
                 function onAltTabCommit() {
-                    if (screenScope.openFlyout !== "alttab") return
+                    if (screenScope.openFlyout !== "alttab") {
+                        // Remembered rather than dropped, for the case above:
+                        // the ALT release can land before the switcher exists.
+                        // Only on the screen the gesture is happening on, so a
+                        // stray one cannot sit on another screen waiting to
+                        // swallow its next ALT+Tab.
+                        if (screenScope.isFocusedScreen()
+                                && Date.now() - screenScope.altTabCommittedAt > 300)
+                            screenScope.altTabCommitAt = Date.now()
+                        return
+                    }
+                    screenScope.altTabCommitAt = 0
                     altTab.commit()
                 }
                 function onAltTabCancel() {
@@ -542,10 +583,15 @@ ShellRoot {
                     var tls = wss[i].toplevels.values
                     for (var j = 0; j < tls.length; j++) {
                         var cls = tls[j].lastIpcObject ? tls[j].lastIpcObject.class : ""
-                        if (!cls || isShellWindow(tls[j])) continue
-                        var entry = DesktopEntries.heuristicLookup(cls)
-                        var path = entry ? Quickshell.iconPath(entry.icon, true) : ""
-                        if (path) icons.push({ source: path, address: tls[j].address })
+                        if (!cls) continue
+                        var ipc = tls[j].lastIpcObject
+                        icons.push({
+                            source: Apps.iconForClass(cls),
+                            // drawn instead when nothing resolved, so a
+                            // window is never silently missing from the strip
+                            glyph: Apps.glyphForWindow(cls, ipc ? ipc.title : ""),
+                            address: tls[j].address,
+                        })
                     }
                     break
                 }
@@ -585,11 +631,14 @@ ShellRoot {
                 return null
             }
 
-            // The shell's own standalone windows (System, Keybinds)
-            // are part of the bar, not apps you're running, so they're left
-            // out of everything that lists windows: no Quickshell icon in the
-            // window strip, no entry in the workspace flyout, and a workspace
-            // holding only one of them still reads as empty.
+            // The shell's own standalone windows (System, Keybinds).
+            // They show up in the window strip and in ALT+Tab like anything
+            // else you have open -- they are real toplevels you can focus and
+            // work in. What they stay out of is the shell's own bookkeeping:
+            // the workspace flyout, and counting towards whether a workspace
+            // has anything on it (a workspace holding only a Settings window
+            // still reads as empty), and tray-icon matching, which is looking
+            // for the app a tray item belongs to.
             function isShellWindow(tl) {
                 return !!(tl.lastIpcObject && tl.lastIpcObject.class === "org.quickshell")
             }
@@ -926,3 +975,5 @@ ShellRoot {
         }
     }
 }
+
+

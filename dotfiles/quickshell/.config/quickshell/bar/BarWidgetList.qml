@@ -29,7 +29,7 @@ Column {
 
     width: parent ? parent.width : 0
 
-    readonly property int rowHeight: 28
+    readonly property int rowHeight: Theme.fieldHeight
     readonly property var sectionTitles: ({ left: "LEFT", centre: "CENTRE", right: "RIGHT" })
 
     // bumped on every change to the rows, so per-row bindings that look at
@@ -153,7 +153,7 @@ Column {
                     anchors.rightMargin: -Theme.spaceS
                     radius: Theme.radiusInner
                     color: row.dragging ? Theme.hoverFill : "transparent"
-                    border.width: row.dragging ? 1 : 0
+                    border.width: row.dragging ? Theme.borderWidth : 0
                     border.color: Theme.muted
                 }
 

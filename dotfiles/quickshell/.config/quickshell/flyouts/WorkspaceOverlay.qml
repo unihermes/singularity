@@ -204,12 +204,29 @@ OverlayWindow {
                                     anchors.rightMargin: Theme.spaceS
                                     spacing: Theme.spaceM
 
-                                    IconImage {
+                                    Item {
+                                        id: winIco
                                         anchors.verticalCenter: parent.verticalCenter
-                                        implicitSize: Theme.fs(14)
-                                        source: {
-                                            const e = DesktopEntries.heuristicLookup(winRow.cls)
-                                            return e && e.icon ? Quickshell.iconPath(e.icon, true) : ""
+                                        implicitWidth: Theme.fs(14)
+                                        implicitHeight: Theme.fs(14)
+
+                                        readonly property string iconPath: Apps.iconForClass(winRow.cls)
+
+                                        IconImage {
+                                            anchors.fill: parent
+                                            visible: winIco.iconPath !== ""
+                                            source: winIco.iconPath
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            visible: winIco.iconPath === ""
+                                            text: Apps.glyphForWindow(winRow.cls,
+                                                winRow.modelData.lastIpcObject
+                                                    ? winRow.modelData.lastIpcObject.title : "")
+                                            color: Theme.subtext
+                                            font.family: Theme.fontIcon
+                                            font.pixelSize: Theme.fs(13)
                                         }
                                     }
 

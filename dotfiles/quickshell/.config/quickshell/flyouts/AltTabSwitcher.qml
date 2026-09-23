@@ -70,7 +70,10 @@ OverlayWindow {
         let clients
         try { clients = JSON.parse(clientsJson).clients } catch (e) { clients = [] }
 
-        const cs = (clients || []).filter(c => c.class && c.class !== "org.quickshell")
+        // the shell's own windows (Settings, System, Keybinds) are in here
+        // like any other toplevel: they can be focused and worked in, so
+        // ALT+Tab reaches them
+        const cs = (clients || []).filter(c => c.class)
 
         // Only offer windows on the workspace you're actually looking at.
         // That's the focused window's workspace (focusHistoryID 0) rather
@@ -85,7 +88,7 @@ OverlayWindow {
         const byAddr = {}
         for (const tl of Hyprland.toplevels.values) {
             const o = tl.lastIpcObject
-            if (o && o.class && o.class !== "org.quickshell") byAddr["0x" + tl.address] = tl
+            if (o && o.class) byAddr["0x" + tl.address] = tl
         }
 
         const out = []
@@ -131,6 +134,11 @@ OverlayWindow {
     function commit() {
         const win = windows[selected]
         scope.openFlyout = ""
+        // Both routes to the ALT release fire on every gesture, so one of them
+        // always arrives after this has closed; shell.qml reads this to tell
+        // that straggler apart from a release that genuinely beat the switcher
+        // onto the screen.
+        scope.altTabCommittedAt = Date.now()
         if (win) {
             const addr = win.address
             const addr_str = "address:0x" + addr
@@ -170,9 +178,15 @@ OverlayWindow {
     // just here -- ALT is also the window drag/resize mod, and releasing it
     // after any of that started tearing down the switcher and refocusing
     // whatever the mouse was over instead of the selected window. The
-    // remaining fix for a fast tap missing this grab is cutting latency out
-    // of alt-tab.sh's round trip (see its own comments), not a second catch
-    // for the release itself.
+    // second catch for the release is instead compositor-side, in
+    // hyprland.lua: the alt-tab binds poll hl.is_key_down("Alt_L"/"Alt_R")
+    // from the moment they fire and send `commit` when ALT comes up, which
+    // works whether or not this window ever got the keyboard in time. That
+    // is what fixes the release landing inside the gap -- the switcher used
+    // to sit here holding the keyboard until some later key press knocked it
+    // loose. This grab stays as the fast path: it sees the release with no
+    // poll interval and no process spawn, and whichever route notices first
+    // wins.
     focusMode: WlrKeyboardFocus.Exclusive
     layerNamespace: "singularity-alttab"
 
@@ -203,6 +217,10 @@ OverlayWindow {
         // Alt is no longer held. The latter catches the case where Tab is
         // released after Alt, or where Alt is released before Tab and Tab's
         // release event needs to close the switcher anyway.
+        //
+        // A release that happened before this window had the keyboard never
+        // arrives here at all; hyprland.lua's key-state poll is what covers
+        // that (see the focusMode comment above).
         Keys.onReleased: event => {
             if (event.key === Qt.Key_Alt || !(event.modifiers & Qt.AltModifier)) {
                 root.commit()
@@ -260,15 +278,32 @@ OverlayWindow {
                     // No Behavior on colour here: the highlight has to keep up
                     // with held-Tab autorepeat, and a fade would smear it.
 
-                    IconImage {
+                    Item {
                         id: ico
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: Theme.spaceXxl
-                        implicitSize: Theme.fs(48)
+                        implicitWidth: Theme.fs(48)
+                        implicitHeight: Theme.fs(48)
                         opacity: card.active ? 1 : 0.55
-                        source: {
-                            const e = DesktopEntries.heuristicLookup(card.cls)
-                            return e && e.icon ? Quickshell.iconPath(e.icon, true) : ""
+
+                        readonly property string iconPath: Apps.iconForClass(card.cls)
+
+                        IconImage {
+                            anchors.fill: parent
+                            visible: ico.iconPath !== ""
+                            source: ico.iconPath
+                        }
+
+                        // the shell's own windows, and anything else with no
+                        // themed icon: a glyph rather than an empty card
+                        Text {
+                            anchors.centerIn: parent
+                            visible: ico.iconPath === ""
+                            text: Apps.glyphForWindow(card.cls,
+                                card.modelData.lastIpcObject ? card.modelData.lastIpcObject.title : "")
+                            color: Theme.text
+                            font.family: Theme.fontIcon
+                            font.pixelSize: Theme.fs(40)
                         }
                     }
 

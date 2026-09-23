@@ -160,12 +160,28 @@ Item {
             id: iconRepeater
             model: barModules.bar.focusedWorkspaceIcons()
 
-            IconImage {
+            Item {
                 id: winIcon
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
-                source: modelData.source
-                implicitSize: Theme.fs(18)
+                implicitWidth: Theme.fs(18)
+                implicitHeight: Theme.fs(18)
+
+                IconImage {
+                    anchors.fill: parent
+                    visible: winIcon.modelData.source !== ""
+                    source: winIcon.modelData.source
+                }
+
+                // apps with no themed icon, and the shell's own windows
+                Text {
+                    anchors.centerIn: parent
+                    visible: winIcon.modelData.source === ""
+                    text: winIcon.modelData.glyph
+                    color: Theme.text
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fs(17)
+                }
 
                 MouseArea {
                     anchors.fill: parent
@@ -369,7 +385,7 @@ Item {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceXs
-        padH: 8
+        padH: Theme.fs(8)
         visible: Visualizer.playing && Settings.widgetVisible("visualizer")
 
         Repeater {
@@ -378,13 +394,13 @@ Item {
             Item {
                 required property int index
                 anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: 3
+                implicitWidth: Theme.fs(3)
                 implicitHeight: Theme.moduleHeight - 10
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 3
-                    radius: 1.5
+                    width: Theme.fs(3)
+                    radius: Theme.fs(1.5)
                     readonly property real v: (Visualizer.bars[parent.index] || 0) / 100
                     height: Math.max(3, parent.height * v)
                     color: Theme.text
