@@ -38,6 +38,16 @@ SettingsPage {
     // --- shell pieces --------------------------------------------------------
 
     // One chip per value of a Settings choice, lit on the current one.
+    // Past four values the row runs out of room, so those are a dropdown.
+    component Choice: SettingsDropdown {
+        property string key: ""
+        anchors.right: parent.right
+        model: Settings.choices[key] || []
+        current: Settings[key]
+        labelFor: v => page.label(v)
+        onPicked: v => Settings.set(key, v)
+    }
+
     component Choices: Row {
         id: ch
         property string key: ""
@@ -495,9 +505,9 @@ SettingsPage {
                 Rectangle {
                     required property string modelData
                     required property int index
-                    width: Settings.look === modelData ? 14 : 6
-                    height: 6
-                    radius: 3
+                    width: Settings.look === modelData ? Theme.fs(14) : Theme.fs(6)
+                    height: Theme.fs(6)
+                    radius: Theme.fs(3)
                     color: Settings.look === modelData ? Theme.accent : Theme.muted
                     Behavior on width { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                     MouseArea {
@@ -514,13 +524,13 @@ SettingsPage {
     SettingsField {
         label: "Modules"
         hint: "How the bar's chips are drawn"
-        Choices { key: "moduleStyle" }
+        Choice { key: "moduleStyle" }
     }
 
     SettingsField {
         label: "Bar"
         hint: "Edge to edge, floating, an island per group, or no bar at all"
-        Choices { key: "barStyle" }
+        Choice { key: "barStyle" }
     }
 
     SettingsField {
@@ -547,133 +557,38 @@ SettingsPage {
         Choices { key: "density" }
     }
 
-    // A dropdown: the box shows the font in use, set in itself, and opens a
-    // list of every installed choice, each set in its own font. The list
-    // floats over the rows below rather than pushing them down, so the field
-    // is raised above its siblings while it's open.
+    // The box shows the font in use, set in itself, and the list sets every
+    // installed choice in its own font.
     SettingsField {
-        id: fontField
-        z: fontMenu.open ? 10 : 0
         label: "Font"
         hint: Theme.fontText !== Settings.fontFamily
             ? page.label(Settings.fontFamily) + " isn't available, so " + page.label(Theme.fontText) + " stands in"
             : "Monospace only. Text and icons alike, across the shell, launcher and notifications"
 
-        Item {
-            id: fontMenu
-            property bool open: false
+        SettingsDropdown {
             anchors.right: parent.right
-            width: Theme.fs(240)
-            height: fontBox.height
+            model: Fonts.available
+            current: Theme.fontText
+            labelFor: v => page.label(v)
+            fontFor: v => v
+            onPicked: v => Settings.set("fontFamily", v)
+        }
+    }
 
-            Rectangle {
-                id: fontBox
-                width: parent.width
-                height: Theme.fieldHeight
-                radius: Theme.radiusInner
-                color: Theme.fieldFill
-                border.width: Theme.borderWidth
-                border.color: fontMenu.open ? Theme.strokeFocus
-                    : fontBoxMouse.containsMouse ? Theme.strokeHover : Theme.stroke
+    // GTK/Qt apps' own font -- independent of the shell's font above. Every
+    // choice here is always installed (see Looks.systemFonts), so there's no
+    // pending/restart state to show like the shell font has.
+    SettingsField {
+        label: "System font"
+        hint: "GTK and Qt apps outside the shell -- terminal, file manager, and the rest. Doesn't change the bar, launcher or notifications"
 
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spaceL
-                    anchors.right: fontChevron.left
-                    anchors.rightMargin: Theme.spaceS
-                    anchors.verticalCenter: parent.verticalCenter
-                    elide: Text.ElideRight
-                    text: page.label(Theme.fontText)
-                    color: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontBody
-                }
-
-                Text {
-                    id: fontChevron
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spaceL
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: fontMenu.open ? "󰅃" : "󰅀"
-                    color: Theme.subtext
-                    font.family: Theme.fontIcon
-                    font.pixelSize: Theme.fontIconSize
-                }
-
-                MouseArea {
-                    id: fontBoxMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: fontMenu.open = !fontMenu.open
-                }
-            }
-
-            Rectangle {
-                visible: fontMenu.open
-                y: fontBox.height + Theme.spaceXs
-                width: parent.width
-                height: fontList.implicitHeight + Theme.spaceXs * 2
-                radius: Theme.radiusInner
-                color: Theme.panel
-                border.width: Theme.borderWidth
-                border.color: Theme.stroke
-
-                Column {
-                    id: fontList
-                    x: Theme.spaceXs
-                    y: Theme.spaceXs
-                    width: parent.width - Theme.spaceXs * 2
-
-                    Repeater {
-                        model: Fonts.available
-
-                        Rectangle {
-                            id: fontItem
-                            required property string modelData
-                            readonly property bool current: Theme.fontText === modelData
-
-                            width: fontList.width
-                            height: Theme.rowHeight
-                            radius: Theme.radiusSmall
-                            color: fontItemMouse.containsMouse ? Theme.hoverFill : "transparent"
-
-                            // the current font's tick, as in a flyout list
-                            Rectangle {
-                                visible: fontItem.current
-                                x: Theme.spaceXs
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Theme.indicatorWidth
-                                height: parent.height - 6
-                                radius: width / 2
-                                color: Theme.accent
-                            }
-
-                            Text {
-                                x: Theme.spaceL
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - Theme.spaceL * 2
-                                elide: Text.ElideRight
-                                text: page.label(fontItem.modelData)
-                                color: fontItem.current || fontItemMouse.containsMouse ? Theme.textStrong : Theme.text
-                                font.family: fontItem.modelData
-                                font.pixelSize: Theme.fontBody
-                            }
-
-                            MouseArea {
-                                id: fontItemMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    Settings.set("fontFamily", fontItem.modelData)
-                                    fontMenu.open = false
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: Looks.systemFonts
+            current: Settings.systemFontFamily
+            labelFor: v => page.label(v)
+            fontFor: v => v
+            onPicked: v => Settings.set("systemFontFamily", v)
         }
     }
 

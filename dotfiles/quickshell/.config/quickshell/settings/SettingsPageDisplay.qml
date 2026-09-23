@@ -320,19 +320,14 @@ SettingsPage {
                 hint: mon.mirrored ? "Saved to its rule, and applies once this display is extended again"
                     : "1 is native; fractions that don't divide the resolution cleanly get rounded"
 
-                Row {
+                SettingsDropdown {
                     anchors.right: parent.right
-                    spacing: Theme.spaceS
-                    Repeater {
-                        model: page.scales
-                        FlyoutChip {
-                            required property var modelData
-                            text: String(modelData)
-                            selected: Math.abs(mon.ruleScale - modelData) < 0.001
-                            onClicked: if (!selected)
-                                page.setField(mon.modelData, mon.rule, "scale", modelData, mon.modelData.name + " scale set to " + modelData)
-                        }
-                    }
+                    width: Theme.fs(160)
+                    // the rule's own value too, if it's none of the presets
+                    model: page.scales.some(v => Math.abs(v - mon.ruleScale) < 0.001)
+                        ? page.scales : page.scales.concat([mon.ruleScale])
+                    current: model.find(v => Math.abs(v - mon.ruleScale) < 0.001)
+                    onPicked: v => page.setField(mon.modelData, mon.rule, "scale", v, mon.modelData.name + " scale set to " + v)
                 }
             }
 
@@ -341,21 +336,13 @@ SettingsPage {
                 hint: mon.mirrored ? "Saved to its rule, and applies once this display is extended again"
                     : "preferred is what the display asks for"
 
-                Flow {
+                SettingsDropdown {
                     anchors.right: parent.right
-                    width: parent.width
-                    spacing: Theme.spaceS
-
-                    Repeater {
-                        model: ["preferred", "highres", "highrr"].concat(mon.modelData.modes)
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData
-                            selected: mon.mode === modelData
-                            onClicked: if (!selected)
-                                page.setField(mon.modelData, mon.rule, "mode", modelData, mon.modelData.name + " mode set to " + modelData)
-                        }
-                    }
+                    // the rule's own mode too, if the display doesn't list it
+                    readonly property var known: ["preferred", "highres", "highrr"].concat(mon.modelData.modes)
+                    model: known.indexOf(mon.mode) < 0 ? known.concat([mon.mode]) : known
+                    current: mon.mode
+                    onPicked: v => page.setField(mon.modelData, mon.rule, "mode", v, mon.modelData.name + " mode set to " + v)
                 }
             }
 

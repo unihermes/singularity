@@ -239,21 +239,13 @@ SettingsPage {
             label: "Workspace " + key
             hint: index === 0 ? "Pinned workspaces keep their layout when SUPER+M switches the rest" : ""
 
-            Row {
+            SettingsDropdown {
                 anchors.right: parent.right
-                spacing: Theme.spaceS
-
-                Repeater {
-                    model: [{ id: "", text: "Follow SUPER+M" }, { id: "monocle", text: "Monocle" },
-                        { id: "dwindle", text: "Tiled" }]
-                    FlyoutChip {
-                        required property var modelData
-                        text: modelData.text
-                        selected: wsField.mode === modelData.id
-                        enabled: !AtomicFileWrite.busy
-                        onClicked: if (!selected) page.setLayout(wsField.key, modelData.id)
-                    }
-                }
+                enabled: !AtomicFileWrite.busy
+                model: ["", "monocle", "dwindle"]
+                current: wsField.mode
+                labelFor: v => ({ "": "Follow SUPER+M", "monocle": "Monocle", "dwindle": "Tiled" })[v]
+                onPicked: v => page.setLayout(wsField.key, v)
             }
         }
     }
@@ -429,18 +421,14 @@ SettingsPage {
                 label: "Workspace"
                 hint: "Where it opens; Any means wherever you are"
 
-                Row {
+                SettingsDropdown {
                     anchors.right: parent.right
-                    spacing: Theme.spaceS
-                    Repeater {
-                        model: [0, 1, 2, 3, 4, 5]
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData === 0 ? "Any" : String(modelData)
-                            selected: ruleCol.rule.workspace === modelData
-                            onClicked: if (!selected) page.setRule(ruleCol.index, "workspace", modelData)
-                        }
-                    }
+                    width: Theme.fs(160)
+                    // Any, then every workspace the bar shows
+                    model: [0].concat(Array.from({ length: Settings.workspaceCount }, (_, i) => i + 1))
+                    current: ruleCol.rule.workspace || 0
+                    labelFor: v => v === 0 ? "Any" : "Workspace " + v
+                    onPicked: v => page.setRule(ruleCol.index, "workspace", v)
                 }
             }
 

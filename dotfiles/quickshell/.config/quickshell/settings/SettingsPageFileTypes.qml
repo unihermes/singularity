@@ -205,31 +205,26 @@ SettingsPage {
             : page.names[chosen] ? page.appName(chosen)
             : chosen + " (not installed)"
 
-        Flow {
+        SettingsDropdown {
             anchors.right: parent.right
-            width: parent.width
-            spacing: Theme.spaceS
+            visible: hr.apps.length > 0
+            enabled: !setProc.running
+            model: hr.apps.map(a => a.id)
+            current: hr.chosen
+            labelFor: id => (hr.apps.find(a => a.id === id) || { name: id }).name
+            placeholder: hr.chosen === "mixed" ? "Mixed" : "Choose an app"
+            onPicked: id => page.setDefault(id, hr.types)
+        }
 
-            Repeater {
-                model: hr.apps
-                FlyoutChip {
-                    required property var modelData
-                    text: modelData.name
-                    selected: hr.chosen === modelData.id
-                    enabled: !setProc.running
-                    onClicked: page.setDefault(modelData.id, hr.types)
-                }
-            }
-
-            Text {
-                visible: hr.apps.length === 0
-                height: Theme.chipHeight
-                verticalAlignment: Text.AlignVCenter
-                text: page.loaded ? "No installed app declares this" : "Reading apps…"
-                color: Theme.muted
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontSmall
-            }
+        Text {
+            anchors.right: parent.right
+            visible: hr.apps.length === 0
+            height: Theme.chipHeight
+            verticalAlignment: Text.AlignVCenter
+            text: page.loaded ? "No installed app declares this" : "Reading apps…"
+            color: Theme.muted
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontSmall
         }
     }
 
