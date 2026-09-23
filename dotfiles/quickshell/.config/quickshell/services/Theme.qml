@@ -60,6 +60,12 @@ Singleton {
     readonly property color text:    roles.text
     readonly property color bright:  roles.bright
 
+    // Whether the ramp reads as a light theme overall -- some looks (and the
+    // wallpaper palette, on a pale image) run light rather than dark. Base is
+    // the deepest ground in a dark look and the palest in a light one, so its
+    // own lightness is the one signal that always tells the two apart.
+    readonly property bool isLight: base.hslLightness > 0.5
+
     // The only hues that don't follow the wallpaper, and deliberately so:
     // charging and critical are states you want to catch without reading
     // anything, and a red or green wallpaper would otherwise camouflage them.
@@ -126,6 +132,8 @@ Singleton {
     // size of its own, so a label reads the same size in every flyout and
     // window. Pixel sizes, not point: points scale with the screen's DPI
     // while the rows and chips around them are laid out in pixels.
+    readonly property int fontEyebrow:  fs(11)   // the spaced-out line over a window's title
+    readonly property int fontCaption:  fs(12)   // a row's second line, key hints
     readonly property int fontSmall:    fs(14)   // headings, captions, secondary lines
     readonly property int fontBody:     fs(16)   // labels, values, chips, inputs
     readonly property int fontLarge:    fs(19)   // the odd emphasised glyph (calendar arrows)
@@ -217,6 +225,11 @@ Singleton {
     readonly property int chipHeight:    fs(20)
     readonly property int controlSize:   fs(18)    // square +/- and close buttons
     readonly property int headingHeight: fs(16)
+    // the faint surface a window's framed panels sit on (WindowPanel.qml)
+    readonly property color panelTint: Qt.rgba(surface.r, surface.g, surface.b, 0.35)
+    // the scrim a caption bar sits on over an image, so its text reads
+    // whatever's behind it (the Appearance wallpaper preview)
+    readonly property color captionScrim: Qt.rgba(base.r, base.g, base.b, 0.75)
     // the column an icon sits in at the start of a row
     readonly property int iconCell:      fs(20)
 

@@ -7,6 +7,9 @@
 //
 // Content can't anchor to `header` (it isn't a sibling), so it positions
 // itself at `contentY` instead.
+//
+// `bare` drops the title row for a window that draws its own (Settings):
+// the ground and Escape stay, and contentY is just the window's top pad.
 
 import QtQuick
 import "../services"
@@ -18,7 +21,8 @@ Item {
     // the FloatingWindow this dresses; needs close()
     required property var window
     property string heading: ""
-    readonly property int contentY: header.y + header.height + Theme.spaceM
+    property bool bare: false
+    readonly property int contentY: bare ? Theme.windowPad : header.y + header.height + Theme.spaceM
     // takes Escape; focus it after anything else in the window had focus
     readonly property alias keySink: keySink
 
@@ -38,6 +42,7 @@ Item {
 
     Item {
         id: header
+        visible: !root.bare
         x: Theme.windowPad
         y: Theme.spaceXl
         width: parent.width - Theme.windowPad * 2
