@@ -94,6 +94,30 @@ xdg-mime default thunar.desktop inode/directory
 xdg-mime default org.pwmt.zathura.desktop application/pdf
 xdg-settings set default-url-scheme-handler file thunar.desktop || true
 
+# Images and media have to be claimed by name, not left to whoever asks
+# first: zathura's mupdf plugin lists the common image types in its own
+# .desktop, so without this a screenshot opens in the PDF viewer.
+#
+# The entry is only written once the .desktop is actually on disk. xdg-mime
+# will happily record a handler that doesn't exist, and that reads as a
+# working default right up until something tries to open the file, so a
+# renamed or missing desktop file should be a warning here rather than a
+# mystery later.
+set_default() {
+  local desktop=$1; shift
+  if ! [[ -f /usr/share/applications/$desktop || -f $HOME/.local/share/applications/$desktop ]]; then
+    warn "$desktop is not installed -- leaving ${*} to whatever claims them"
+    return
+  fi
+  local type
+  for type in "$@"; do xdg-mime default "$desktop" "$type" || true; done
+}
+
+set_default imv.desktop image/png image/jpeg image/gif image/webp image/bmp \
+  image/tiff image/svg+xml
+set_default mpv.desktop video/mp4 video/x-matroska video/webm video/quicktime \
+  video/x-msvideo audio/mpeg audio/flac audio/ogg audio/x-wav audio/mp4
+
 # On Wayland, GTK3 apps (Thunar included) read their theme, icons and fonts from
 # gsettings and ignore settings.ini, which only GTK4 and tools like fastfetch
 # go by. Keep both in step with gtk/.config/gtk-3.0/settings.ini. With no

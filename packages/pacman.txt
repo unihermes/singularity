@@ -147,6 +147,24 @@ noto-fonts-emoji
 zathura
 zathura-pdf-mupdf
 
+# images + video
+# Same reasoning as zathura, and the same shape: imv and mpv are both
+# keyboard-driven, both Wayland-native, and neither drags in a toolkit the
+# rest of the desktop doesn't already use. VLC would work and is a one-line
+# swap, but it brings its own Qt UI and its own idea of theming.
+#
+# These are also what stops the PDF viewer answering for images: zathura's
+# mupdf plugin claims image/png, image/jpeg, image/bmp, image/svg+xml and
+# image/tiff in its .desktop, so with nothing else installed it wins every
+# image by default. install.sh hands those to imv explicitly.
+imv
+mpv
+
+# xdg-open, used by the launcher's file mode (quickshell/scripts/open-file.sh)
+# and the System window's config links. It arrives anyway as a hard dependency
+# of qt6-base, but nothing here should rely on that to keep being true.
+xdg-utils
+
 # apps
 obsidian
 
