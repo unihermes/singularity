@@ -13,7 +13,7 @@ SettingsPage {
     id: page
 
     title: "Keybinds"
-    description: "Every hl.bind() in hyprland.lua. Saving checks the Lua, backs the file up and reloads Hyprland."
+    description: "Every hl.bind() in hyprland.lua, plus presets to add. Saving checks the Lua, backs the file up and reloads Hyprland."
     scrolls: false
 
     KeybindsBody {

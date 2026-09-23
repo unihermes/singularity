@@ -489,6 +489,7 @@ function parse(src) {
                 cmdSpan: [d[0].s, d[d.length - 1].e],
                 cmdSrc: src.slice(d[0].s, d[d.length - 1].e),
                 optsSrc: opts,
+                optsSpan: a.length >= 3 ? [a[2][0].s, a[2][a[2].length - 1].e] : null,
                 callEnd: call.e,
                 commentSpan: call.comment ? [call.comment.s, call.comment.e] : null,
                 insertLine: outer && outer.endLine ? outer.endLine : call.endLine,
@@ -562,10 +563,14 @@ function callSource(keysSrc, cmdSrc, optsSrc) {
     return "hl.bind(" + [keysSrc, cmdSrc].concat(optsSrc ? [optsSrc] : []).join(", ") + ")"
 }
 
+// A section the config doesn't have yet gets one, rather than the bind
+// landing under whatever section happens to be last: presets come with the
+// section they belong in, and "Groups" or "Session" may be new here.
 function insertCall(model, category, text) {
     var cat = null
     for (var i = 0; i < model.categories.length; i++)
         if (model.categories[i].name === category) cat = model.categories[i]
+    var newSection = !cat && category !== "" && model.rows.length > 0
     var line = cat ? cat.insertLine
         : model.rows.length ? model.rows[model.rows.length - 1].insertLine
         : model.lineStarts.length
@@ -574,16 +579,69 @@ function insertCall(model, category, text) {
     var at = r[1]
     var indent = (src.slice(r[0], r[1]).match(/^[ \t]*/) || [""])[0]
     if (at === src.length && src.length > 0 && src[src.length - 1] !== "\n") { src += "\n"; at++ }
-    return src.slice(0, at) + indent + text + "\n" + src.slice(at)
+    var head = newSection ? "\n" + indent + "-- --- " + category + " ---\n" : ""
+    return src.slice(0, at) + head + indent + text + "\n" + src.slice(at)
 }
 
-// fields: { keys, command, desc, category }
+// The second argument to hl.bind(): a command wrapped in exec_cmd, or a
+// dispatcher expression written out as given (presets, and the editor's Lua
+// mode). Never guessed at -- whatever it is, luac sees it before the file does.
+function actionSource(fields) {
+    if (fields.kind === "lua") return oneLine(fields.src)
+    return "hl.dsp.exec_cmd(" + luaString(fields.command) + ")"
+}
+
+// hl.bind's options table from a set of boolean flags, or "" for none
+var FLAG_ORDER = ["locked", "repeating", "mouse", "release", "long_press", "non_consuming"]
+
+function optsSource(flags) {
+    var parts = []
+    for (var i = 0; i < FLAG_ORDER.length; i++)
+        if (flags && flags[FLAG_ORDER[i]]) parts.push(FLAG_ORDER[i] + " = true")
+    return parts.length ? "{ " + parts.join(", ") + " }" : ""
+}
+
+// The reverse, for prefilling the editor: { simple, flags }. simple is false
+// for an options table holding anything but `name = true`, which the editor
+// then leaves alone rather than rewriting into something shorter.
+function readOpts(optsSrc) {
+    var s = String(optsSrc || "").trim()
+    if (s === "") return { simple: true, flags: {} }
+    var m = s.match(/^\{([^{}]*)\}$/)
+    if (!m) return { simple: false, flags: {} }
+    var body = m[1].trim()
+    var flags = {}
+    if (body !== "") {
+        var parts = body.split(",")
+        for (var i = 0; i < parts.length; i++) {
+            var p = parts[i].trim()
+            if (p === "") continue
+            var kv = p.match(/^([A-Za-z_]\w*)\s*=\s*true$/)
+            if (!kv) return { simple: false, flags: {} }
+            flags[kv[1]] = true
+        }
+    }
+    return { simple: true, flags: flags }
+}
+
+// fields: { keys, command, desc, category, kind, src, opts }
 function addBind(model, fields) {
     var keys = tidyKeys(fields.keys).text
     var desc = oneLine(fields.desc)
     var text = callSource(keysSource(keys, model.prefixIdent, model.locals),
-        "hl.dsp.exec_cmd(" + luaString(fields.command) + ")", "")
+        actionSource(fields), oneLine(fields.opts))
     return insertCall(model, fields.category, text + (desc ? " -- " + desc : ""))
+}
+
+// Several at once (a preset pack), as one new file: each insert moves every
+// offset after it, so the text is re-read between them.
+function addBinds(model, list) {
+    var m = model, src = model.src
+    for (var i = 0; i < list.length; i++) {
+        src = addBind(m, list[i])
+        if (i < list.length - 1) m = parse(src)
+    }
+    return src
 }
 
 function removeBind(model, row) {
@@ -594,21 +652,32 @@ function removeBind(model, row) {
 function editBind(model, row, fields) {
     var keys = tidyKeys(fields.keys).text
     var desc = oneLine(fields.desc)
+    var kind = fields.kind === "lua" ? "lua" : "exec"
     var keysChanged = keys !== row.keys
-    var cmdChanged = fields.command !== row.command
+    // for a command, compare the command rather than the source: unchanged
+    // text keeps `exec_cmd(terminal)` as the ident it was written as
+    var cmdChanged = kind === "lua" ? oneLine(fields.src) !== row.cmdSrc
+        : !row.isExec || fields.command !== row.command
     var newKeys = keysChanged ? keysSource(keys, row.keysIdent || model.prefixIdent, model.locals) : row.keysSrc
-    var newCmd = cmdChanged ? "hl.dsp.exec_cmd(" + luaString(fields.command) + ")" : row.cmdSrc
+    var newCmd = cmdChanged ? actionSource(fields) : row.cmdSrc
+    var newOpts = fields.opts === undefined ? row.optsSrc : oneLine(fields.opts)
 
     if (fields.category !== row.category) {
         var moved = parse(removeBind(model, row))
         return insertCall(moved, fields.category,
-            callSource(newKeys, newCmd, row.optsSrc) + (desc ? " -- " + desc : ""))
+            callSource(newKeys, newCmd, newOpts) + (desc ? " -- " + desc : ""))
     }
 
     // in place, span by span, so the file's column alignment survives
     var reps = []
     if (keysChanged) reps.push([row.keysSpan[0], row.keysSpan[1], newKeys])
     if (cmdChanged) reps.push([row.cmdSpan[0], row.cmdSpan[1], newCmd])
+    if (newOpts !== row.optsSrc) {
+        // the options table, the comma before it, or neither
+        if (row.optsSpan && newOpts === "") reps.push([row.cmdSpan[1], row.optsSpan[1], ""])
+        else if (row.optsSpan) reps.push([row.optsSpan[0], row.optsSpan[1], newOpts])
+        else reps.push([row.callEnd - 1, row.callEnd - 1, ", " + newOpts])
+    }
     if (desc !== row.comment) {
         if (row.commentSpan && desc === "") reps.push([row.callEnd, row.commentSpan[1], ""])
         else if (row.commentSpan) reps.push([row.commentSpan[0], row.commentSpan[1], "-- " + desc])

@@ -11,6 +11,8 @@ CentredWindow {
     id: root
 
     heading: "KEYBINDS"
+    eyebrow: "HYPRLAND SHORTCUTS"
+    subtitle: "Every binding in hyprland.lua, and the presets they come from"
     contentWidth: Theme.fs(720)
 
     KeybindsBody {
