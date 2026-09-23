@@ -20,6 +20,20 @@ function kib(kb) {
     return Math.round(kb / 1024) + "M"
 }
 
+// Any size, picking the unit from the number rather than fixing it at GiB:
+// gib() reads "0.0G" for a 250MB boot partition, which looks like a bug.
+function bytes(b) {
+    if (b < 0) return "--"
+    if (b >= 1099511627776) return (b / 1099511627776).toFixed(1) + "T"
+    if (b >= 1073741824) {
+        var g = b / 1073741824
+        return g >= 100 ? g.toFixed(0) + "G" : g.toFixed(1) + "G"
+    }
+    if (b >= 1048576) return Math.round(b / 1048576) + "M"
+    if (b >= 1024) return Math.round(b / 1024) + "K"
+    return Math.round(b) + "B"
+}
+
 function rate(bps) {
     if (bps < 0) return "--"
     if (bps >= 1048576) return (bps / 1048576).toFixed(1) + " MB/s"

@@ -90,4 +90,41 @@ Singleton {
         } else
             entry.execute()
     }
+
+    // The icon for an open window's class, for everything that lists
+    // windows: the bar's window strip, ALT+Tab, the workspace overlay.
+    //
+    // heuristicLookup() alone isn't enough. It goes through the desktop
+    // entries, and an entry marked NoDisplay=true isn't among them -- which
+    // is exactly the case for org.quickshell.desktop, so the shell's own
+    // windows (Settings, System, Keybinds) came out iconless. The class is
+    // tried as an icon name of its own after that, which is where
+    // org.quickshell.svg in hicolor gets found, and then the bare last
+    // segment of it, lowercased, for apps whose class is reverse-DNS but
+    // whose icon isn't.
+    function iconForClass(cls) {
+        if (!cls) return ""
+        var entry = DesktopEntries.heuristicLookup(cls)
+        var path = entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : ""
+        if (path === "") path = Quickshell.iconPath(cls, true)
+        if (path === "") path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
+        return path
+    }
+
+    // When no icon file can be found, something still has to be drawn: an
+    // IconImage with an empty source is a hole in the row. The shell's own
+    // windows are that case -- org.quickshell.desktop is NoDisplay, so it
+    // isn't among the desktop entries, and its themed icon doesn't resolve
+    // either -- and they get a glyph for what the window actually is, so
+    // Settings, System and Keybinds are told apart at a glance. Anything
+    // else falls back to a plain window outline.
+    readonly property var shellGlyphs: ({
+        keybinds: "󰌌", settings: "󰒓", system: "󰨇",
+    })
+
+    function glyphForWindow(cls, title) {
+        if (String(cls) === "org.quickshell")
+            return shellGlyphs[String(title || "").toLowerCase()] || "󰖯"
+        return "󰖯"
+    }
 }
