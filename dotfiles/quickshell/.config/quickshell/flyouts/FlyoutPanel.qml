@@ -103,6 +103,10 @@ OverlayWindow {
             width: parent.width - Theme.panelPad * 2
             spacing: Theme.spaceM
 
+            // Marks where FlyoutSelect's open-dropdown z-raise (see that
+            // file) should stop climbing -- the same marker SettingsPage
+            // gives SettingsDropdown.
+            readonly property bool isFlyoutPage: true
         }
     }
 }

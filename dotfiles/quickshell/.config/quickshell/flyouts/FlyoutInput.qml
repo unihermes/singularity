@@ -26,7 +26,11 @@ Item {
     signal downPressed()
     signal escapePressed()
     signal tabPressed()
+    signal backTabPressed()
     signal shiftDeletePressed()
+    // Shift+Enter, for a field whose list has a second action on a row
+    // (the launcher's file mode opens the containing folder with it)
+    signal shiftReturnPressed()
 
     width: parent ? parent.width : 0
     implicitHeight: Theme.rowHeightTall
@@ -34,6 +38,14 @@ Item {
     function forceFocus() {
         field.forceActiveFocus()
         field.selectAll()
+    }
+
+    // After inserting text programmatically: keep typing where the insert
+    // left off rather than with the whole field selected, which the next
+    // keystroke would replace.
+    function moveToEnd() {
+        field.forceActiveFocus()
+        field.cursorPosition = field.text.length
     }
 
     Rectangle {
@@ -76,9 +88,17 @@ Item {
         Keys.onDownPressed: root.downPressed()
         Keys.onEscapePressed: root.escapePressed()
         Keys.onTabPressed: root.tabPressed()
+        Keys.onBacktabPressed: root.backTabPressed()
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {
                 root.shiftDeletePressed()
+                event.accepted = true
+            }
+            // caught here rather than in onAccepted, which can't tell a
+            // plain Enter from a shifted one
+            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                    && (event.modifiers & Qt.ShiftModifier)) {
+                root.shiftReturnPressed()
                 event.accepted = true
             }
         }

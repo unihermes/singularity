@@ -43,6 +43,8 @@ FlyoutPanel {
     // lists never show an order from before a reset or a hand edit.
     onPageChanged: if (page === "quick") {
         rfkillRead.running = true
+    } else if (page === "power") {
+        hibernateCheck.running = true
     } else if (page === "widgets") {
         widgetsList.refill()
     } else if (page === "apps") {
@@ -88,6 +90,20 @@ FlyoutPanel {
         onExited: rfkillRead.running = true
     }
 
+    // Hibernate is only offered once logind says it can: that needs a
+    // swapfile, the resume hook and resume= on the cmdline (install.sh's
+    // hibernation step), none of which link.sh alone sets up.
+    property bool canHibernate: false
+
+    Process {
+        id: hibernateCheck
+        command: ["busctl", "call", "org.freedesktop.login1", "/org/freedesktop/login1",
+                  "org.freedesktop.login1.Manager", "CanHibernate"]
+        stdout: StdioCollector {
+            onStreamFinished: controlCentre.canHibernate = text.trim() === 's "yes"'
+        }
+    }
+
     function launch(entry) {
         scope.openFlyout = ""
         Apps.launch(entry)
@@ -100,6 +116,7 @@ FlyoutPanel {
         else if (act === "keybinds") keybindsWin.open()
         else if (act === "lock") Quickshell.execDetached(["hyprlock"])
         else if (act === "suspend") Quickshell.execDetached(["systemctl", "suspend"])
+        else if (act === "hibernate") Quickshell.execDetached(["systemctl", "hibernate"])
         // hl.dsp.exit() only kills the compositor -- start-hyprland (the
         // hyprland package's own session wrapper, PID 1 of the logind
         // session scope) treats that as a crash and immediately relaunches
@@ -248,7 +265,7 @@ FlyoutPanel {
 
             Text {
                 anchors.left: appIcon.right
-                anchors.leftMargin: 9
+                anchors.leftMargin: Theme.spaceL
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spaceS
                 anchors.verticalCenter: parent.verticalCenter
@@ -391,8 +408,15 @@ FlyoutPanel {
     }
 
     // --- Appearance -------------------------------------------
-    // One Column per page, so its rows share a single visibility
-    // switch.
+    // Quick changes only -- the few things worth flipping without opening
+    // a window: the look, the wallpaper and the colours it feeds, where the
+    // bar sits and how solid it is, text size and motion. Everything else
+    // (bar and module styles, frames, fonts, geometry, defaults) is on
+    // Settings > Appearance, one row away at the bottom.
+    //
+    // Short choices are segmented strips, so every option is one click and
+    // on show; the looks are a FlyoutSelect, which opens in place with each
+    // look's palette beside its name; numbers are sliders.
 
     Column {
         id: appearancePage
@@ -401,94 +425,39 @@ FlyoutPanel {
         spacing: Theme.spaceM
 
         function label(v) { return Settings.choiceLabel(v) }
+        function seg(key) {
+            return (Settings.choices[key] || []).map(v => ({ value: v, text: label(v) }))
+        }
+        // a look's palette, dark to light, then its accent if it has one
+        function swatches(name) {
+            var l = LookStore.looks[name]
+            if (!l) return []
+            var p = l.palette
+            return [p.base, p.border, p.subtext, p.text].concat(l.accent ? [l.accent] : [])
+        }
+
+        // one open select at a time; closed on the way out
+        QtObject { id: selects; property var open: null }
+        onVisibleChanged: if (!visible) selects.open = null
+
+        // --- Look ---
 
         FlyoutHeading { text: "LOOK" }
 
-        Item {
-            width: parent.width
-            height: Theme.chipHeight
-
-            Text {
-                anchors.left: parent.left
-                anchors.right: lookButtons.left
-                anchors.rightMargin: Theme.spaceL
-                anchors.verticalCenter: parent.verticalCenter
-                text: appearancePage.label(Settings.look) + (Settings.lookPristine ? "" : " *")
-                elide: Text.ElideRight
-                color: Theme.text
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontBody
-            }
-
-            Row {
-                id: lookButtons
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.spaceS
-
-                FlyoutChip { glyph: true; text: "󰒮"; onClicked: Settings.cycle("look", -1) }
-                FlyoutChip { glyph: true; text: "󰒭"; onClicked: Settings.cycle("look", 1) }
-            }
+        FlyoutSelect {
+            label: "Preset"
+            group: selects
+            model: LookStore.order
+            current: Settings.look
+            // a look with hand edits on top of it is no longer quite that look
+            valueSuffix: Settings.lookPristine ? "" : " *"
+            labelFor: v => LookStore.looks[v] ? LookStore.looks[v].name : v
+            swatchesFor: v => appearancePage.swatches(v)
+            onPicked: v => Settings.set("look", v)
         }
 
-        FlyoutRow {
-            label: "Frames"
-            trailingIsValue: true
-            trailing: appearancePage.label(Settings.frameStyle)
-            onActivated: Settings.cycle("frameStyle")
-        }
-
-        FlyoutRow {
-            label: "Density"
-            trailingIsValue: true
-            trailing: appearancePage.label(Settings.density)
-            onActivated: Settings.cycle("density")
-        }
-
-        // arrows rather than click-to-cycle: with a dozen fonts, going back
-        // one shouldn't mean clicking through all the others
-        Item {
-            width: parent.width
-            height: Theme.chipHeight
-
-            Text {
-                id: fontLabel
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Font"
-                color: Theme.text
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontBody
-            }
-
-            Text {
-                anchors.left: fontLabel.right
-                anchors.leftMargin: Theme.spaceL
-                anchors.right: fontButtons.left
-                anchors.rightMargin: Theme.spaceS
-                anchors.verticalCenter: parent.verticalCenter
-                horizontalAlignment: Text.AlignRight
-                text: appearancePage.label(Settings.fontFamily)
-                elide: Text.ElideRight
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontBody
-            }
-
-            Row {
-                id: fontButtons
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.spaceS
-
-                FlyoutChip { glyph: true; text: "󰒮"; onClicked: Settings.cycle("fontFamily", -1) }
-                FlyoutChip { glyph: true; text: "󰒭"; onClicked: Settings.cycle("fontFamily", 1) }
-            }
-        }
-
-        FlyoutHeading { text: "WALLPAPER" }
-
-        // click-through preview: the fastest way to flick through
+        // The preview is the control: click it for the next wallpaper, or
+        // use the chips in its corner.
         ClippingRectangle {
             width: parent.width
             height: Math.round(width * 9 / 16)
@@ -502,8 +471,8 @@ FlyoutPanel {
                 source: Wallpaper.current !== "" ? "file://" + Wallpaper.current : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                // decoded at preview size, not the wallpaper's own
-                // 4K, which would hold tens of MB for a thumbnail
+                // decoded at preview size, not the wallpaper's own 4K,
+                // which would hold tens of MB for a thumbnail
                 sourceSize.width: 480
             }
 
@@ -514,126 +483,106 @@ FlyoutPanel {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: Wallpaper.step(1)
             }
-        }
 
-        Item {
-            width: parent.width
-            height: Theme.chipHeight
-
-            Text {
+            // the name and the transport along the bottom, on a scrim so
+            // they read over any image
+            Rectangle {
                 anchors.left: parent.left
-                anchors.right: wpButtons.left
-                anchors.rightMargin: Theme.spaceL
-                anchors.verticalCenter: parent.verticalCenter
-                text: Wallpaper.name !== "" ? Wallpaper.name : "No wallpaper"
-                elide: Text.ElideRight
-                color: Theme.text
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontBody
-            }
-
-            Row {
-                id: wpButtons
                 anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.spaceS
+                anchors.bottom: parent.bottom
+                height: Theme.chipHeight + Theme.spaceS * 2
+                color: Theme.captionScrim
 
-                FlyoutChip { glyph: true; text: "󰒮"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.step(-1) }
-                FlyoutChip { glyph: true; text: "󰒝"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.shuffle() }
-                FlyoutChip { glyph: true; text: "󰒭"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.step(1) }
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spaceM
+                    anchors.right: transport.left
+                    anchors.rightMargin: Theme.spaceS
+                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                    text: Wallpaper.name !== "" ? Wallpaper.name : "No wallpaper"
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontCaption
+                }
+
+                Row {
+                    id: transport
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spaceS
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.spaceXs
+                    readonly property bool many: Wallpaper.images.length > 1
+
+                    FlyoutChip { glyph: true; text: "󰒮"; enabled: transport.many; onClicked: Wallpaper.step(-1) }
+                    FlyoutChip { glyph: true; text: "󰒝"; enabled: transport.many; onClicked: Wallpaper.shuffle() }
+                    FlyoutChip { glyph: true; text: "󰒭"; enabled: transport.many; onClicked: Wallpaper.step(1) }
+                }
             }
         }
 
-        FlyoutRow {
-            // Random: a different wallpaper every login. Static: the
-            // one showing now, kept until you pick another.
-            label: "At Login"
-            trailingIsValue: true
-            trailing: Settings.wallpaperShuffle ? "Random" : "Static"
-            onActivated: Settings.setWallpaperShuffle(!Settings.wallpaperShuffle)
-        }
-
-        FlyoutHeading { text: "COLOURS" }
-
-        FlyoutRow {
-            label: "Palette"
-            trailingIsValue: true
-            trailing: appearancePage.label(Settings.colourMode)
-            onActivated: Settings.cycle("colourMode")
+        // colours: grey, or taken from the image above
+        FlyoutSegmented {
+            model: appearancePage.seg("colourMode")
+            current: Settings.colourMode
+            onPicked: v => Settings.set("colourMode", v)
         }
 
         // only means anything once the colours come from the image
-        FlyoutRow {
-            label: "Intensity"
-            trailingIsValue: true
+        FlyoutSelect {
             visible: Settings.colourMode === "wallpaper"
-            trailing: Wallpaper.generating ? "…" : appearancePage.label(Settings.colourScheme)
-            onActivated: Settings.cycle("colourScheme")
+            label: "Intensity"
+            group: selects
+            enabled: !Wallpaper.generating
+            model: Settings.choices.colourScheme
+            current: Settings.colourScheme
+            labelFor: v => appearancePage.label(v)
+            valueSuffix: Wallpaper.generating ? " …" : ""
+            onPicked: v => Settings.set("colourScheme", v)
         }
+
+        // --- Bar ---
 
         FlyoutHeading { text: "BAR" }
 
-        FlyoutRow {
+        FlyoutSegmented {
             label: "Position"
-            trailingIsValue: true
-            trailing: Settings.barPosition === "bottom" ? "Bottom" : "Top"
-            onActivated: Settings.set("barPosition",
-                Settings.barPosition === "top" ? "bottom" : "top")
+            model: [{ value: "top", text: "Top" }, { value: "bottom", text: "Bottom" }]
+            current: Settings.barPosition
+            onPicked: v => Settings.set("barPosition", v)
         }
 
-        FlyoutStepper {
-            label: "Height"
-            value: Settings.barHeight
-            minimum: Settings.limits.barHeight.min
-            maximum: Settings.limits.barHeight.max
-            onStepped: d => Settings.step("barHeight", d)
-        }
-
-        FlyoutStepper {
-            label: "Module Gap"
-            value: Settings.moduleGap
-            minimum: Settings.limits.moduleGap.min
-            maximum: Settings.limits.moduleGap.max
-            onStepped: d => Settings.step("moduleGap", d)
-        }
-
-        FlyoutStepper {
-            label: "Corner Radius"
-            value: Settings.radius
-            minimum: Settings.limits.radius.min
-            maximum: Settings.limits.radius.max
-            onStepped: d => Settings.step("radius", d)
-        }
-
-        FlyoutStepper {
+        FlyoutSliderRow {
             label: "Opacity"
+            suffix: "%"
+            // fives: nothing between two of them is visible anyway
+            step: 5
             value: Settings.barOpacity
             minimum: Settings.limits.barOpacity.min
             maximum: Settings.limits.barOpacity.max
-            suffix: "%"
-            valueWidth: 44
-            onStepped: d => Settings.step("barOpacity", d * 5)
+            onMoved: v => Settings.set("barOpacity", v)
         }
+
+        // --- Text & motion ---
 
         FlyoutHeading { text: "TEXT & MOTION" }
 
-        FlyoutStepper {
-            label: "Font Size"
+        FlyoutSliderRow {
+            label: "Font size"
+            suffix: "px"
             value: Settings.fontSize
             minimum: Settings.limits.fontSize.min
             maximum: Settings.limits.fontSize.max
-            suffix: "px"
-            valueWidth: 44
-            onStepped: d => Settings.step("fontSize", d)
-
+            onMoved: v => Settings.set("fontSize", v)
         }
 
-        FlyoutRow {
-            label: "Animations"
-            trailingIsValue: true
-            trailing: appearancePage.label(Settings.animSpeed)
-            onActivated: Settings.cycle("animSpeed")
+        FlyoutSegmented {
+            model: appearancePage.seg("animSpeed")
+            current: Settings.animSpeed
+            onPicked: v => Settings.set("animSpeed", v)
         }
+
+        // --- the way out ---
 
         FlyoutDivider {}
 
@@ -643,40 +592,7 @@ FlyoutPanel {
             onActivated: Settings.resetLook()
         }
 
-        // Save the current appearance as the default Reset returns to. Asks
-        // twice, like FlyoutRow's other destructive actions: the first click
-        // arms it, a second within a few seconds saves.
-        FlyoutRow {
-            id: saveDefaultRow
-            property bool armed: false
-            label: armed ? "Click again to save" : "Set as Default"
-            trailing: Settings.isDefault ? "saved" : ""
-            enabled: !Settings.isDefault
-            onActivated: {
-                if (!armed) { armed = true; saveDisarm.restart(); return }
-                armed = false
-                Settings.saveAsDefault()
-            }
-            Timer { id: saveDisarm; interval: 3000; onTriggered: saveDefaultRow.armed = false }
-        }
-
-        FlyoutRow {
-            label: "Reset to Default"
-
-            // greyed out when there is nothing to reset, so the row
-            // doubles as a "this is the default" indicator
-            enabled: !Settings.isDefault
-            onActivated: Settings.reset()
-        }
-
-        FlyoutRow {
-            label: "Factory Reset"
-            visible: Settings.hasUserDefault
-            onActivated: Settings.factoryReset()
-        }
-
-
-        // the full page: every wallpaper at once, and Hyprland's windows
+        // everything this page leaves out
         FlyoutRow {
             label: "More in Settings"
             trailing: "󰁔"
@@ -692,10 +608,13 @@ FlyoutPanel {
         model: controlCentre.page === "power" ? [
             { label: "Lock",      act: "lock" },
             { label: "Suspend",   act: "suspend" },
+        ].concat(controlCentre.canHibernate ? [
+            { label: "Hibernate", act: "hibernate" },
+        ] : []).concat([
             { label: "Log Out",   act: "logout" },
             { label: "Reboot",    act: "reboot" },
             { label: "Shut Down", act: "poweroff" },
-        ] : []
+        ]) : []
 
         FlyoutRow {
             required property var modelData

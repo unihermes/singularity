@@ -22,7 +22,9 @@ Item {
         id: gLabel
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.fs(48)
+        // wide enough for the longest label a gauge is given ("Health"),
+        // so the bars all start at the same x whatever the page
+        width: Theme.fs(58)
         text: g.label
         color: Theme.text
         font.family: Theme.fontText
