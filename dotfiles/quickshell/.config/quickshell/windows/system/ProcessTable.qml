@@ -1,33 +1,55 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/windows/system/ProcessColumn.qml
+// ~/.config/quickshell/windows/system/ProcessTable.qml
 //
-// The System window's middle column: the heaviest processes with a
-// two-step kill, battery and systemd health, and quick actions.
+// The heaviest processes, with a two-step kill on your own. Shared by the
+// Overview (a five-row summary, no sort buttons) and the Processes page
+// (the full table, sortable, with the pid and owner shown).
+//
+// How many rows arrive is SystemStats.procLimit's business, not this
+// file's -- the window sets it from the current page, so the summary isn't
+// paying `top` for rows it won't draw.
 
-import Quickshell
-import Quickshell.Io
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
 import "../../flyouts"
 
 Column {
-    id: column
+    id: root
 
-    required property var stats
+    // the CPU / MEM toggles and the pid+user columns: the full table on the
+    // Processes page, off for the Overview's summary
+    property bool detailed: false
+    // the CPU / MEM toggles on their own, for a page that cares about the
+    // ranking but not about pids and owners (Memory)
+    property bool showSort: detailed
+    // reserve space for this many rows, so the column doesn't jump while a
+    // sort change is loading
+    property int reserveRows: 5
 
+    width: parent ? parent.width : 0
     spacing: Theme.spaceM
+
+    readonly property int pidW:  Theme.fs(52)
+    readonly property int userW: Theme.fs(74)
+    readonly property int cpuW:  Theme.fs(52)
+    readonly property int memW:  Theme.fs(62)
+    readonly property int killW: Theme.fs(22)
+    // where the name column has to stop, counting back from the right edge
+    readonly property int tailW: cpuW + memW + killW + Theme.spaceL * 3
+        + (detailed ? userW + Theme.spaceL : 0)
 
     Item {
         width: parent.width
         height: Theme.controlSize
+        visible: root.showSort
 
         FlyoutHeading {
             anchors.left: parent.left
             anchors.right: sortRow.left
             anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            text: "PROCESSES"
+            text: "SORT BY"
         }
 
         Row {
@@ -35,8 +57,8 @@ Column {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spaceS
-            SortButton { label: "CPU"; on: column.stats.procSort === "cpu"; onClicked: column.stats.procSort = "cpu" }
-            SortButton { label: "MEM"; on: column.stats.procSort === "mem"; onClicked: column.stats.procSort = "mem" }
+            SortButton { label: "CPU"; on: SystemStats.procSort === "cpu"; onClicked: SystemStats.procSort = "cpu" }
+            SortButton { label: "MEM"; on: SystemStats.procSort === "mem"; onClicked: SystemStats.procSort = "mem" }
         }
     }
 
@@ -48,30 +70,42 @@ Column {
         Text {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            text: "Name"
+            text: root.detailed ? "PID   Process" : "Process"
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontSmall
+        }
+        Text {
+            visible: root.detailed
+            anchors.right: parent.right
+            anchors.rightMargin: root.killW + Theme.spaceL + root.memW + Theme.spaceL
+                + root.cpuW + Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.userW
+            text: "User"
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
         }
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: Theme.fs(22) + Theme.spaceL + Theme.fs(60) + Theme.spaceL
+            anchors.rightMargin: root.killW + Theme.spaceL + root.memW + Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fs(48)
+            width: root.cpuW
             horizontalAlignment: Text.AlignRight
             text: "CPU"
-            color: column.stats.procSort === "cpu" ? Theme.text : Theme.subtext
+            color: SystemStats.procSort === "cpu" ? Theme.text : Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
         }
         Text {
             anchors.right: parent.right
-            anchors.rightMargin: Theme.fs(22) + Theme.spaceL
+            anchors.rightMargin: root.killW + Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fs(60)
+            width: root.memW
             horizontalAlignment: Text.AlignRight
             text: "MEM"
-            color: column.stats.procSort === "mem" ? Theme.text : Theme.subtext
+            color: SystemStats.procSort === "mem" ? Theme.text : Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
         }
@@ -81,21 +115,19 @@ Column {
         id: procList
         width: parent.width
         spacing: Theme.spaceXs
-        // five rows' worth, so the column doesn't jump while a sort
-        // change is loading
-        height: 5 * Theme.rowHeight + 4 * spacing
+        height: root.reserveRows * Theme.rowHeight + (root.reserveRows - 1) * spacing
 
         HoverHandler { id: procHover }
-        Binding { target: column.stats; property: "holdProcs"; value: procHover.hovered }
+        Binding { target: SystemStats; property: "holdProcs"; value: procHover.hovered }
 
         Repeater {
-            model: column.stats.procs
+            model: SystemStats.procs
 
             Item {
                 id: pr
                 required property var modelData
-                readonly property bool mine: modelData.user === column.stats.me
-                readonly property bool armed: column.stats.killPid === modelData.pid
+                readonly property bool mine: modelData.user === SystemStats.me
+                readonly property bool armed: SystemStats.killPid === modelData.pid
 
                 width: procList.width
                 height: Theme.rowHeight
@@ -110,8 +142,20 @@ Column {
                 HoverHandler { id: prHover }
 
                 Text {
+                    id: pidText
+                    visible: root.detailed
                     anchors.left: parent.left
-                    anchors.right: cpuText.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root.pidW
+                    text: pr.modelData.pid
+                    color: Theme.muted
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontBody
+                }
+
+                Text {
+                    anchors.left: root.detailed ? pidText.right : parent.left
+                    anchors.right: userText.left
                     anchors.rightMargin: Theme.spaceL
                     anchors.verticalCenter: parent.verticalCenter
                     text: pr.modelData.name
@@ -122,14 +166,29 @@ Column {
                 }
 
                 Text {
+                    id: userText
+                    visible: root.detailed
+                    // zero-width when hidden, so the name column runs on
+                    width: root.detailed ? root.userW : 0
+                    anchors.right: cpuText.left
+                    anchors.rightMargin: root.detailed ? Theme.spaceL : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: pr.modelData.user
+                    elide: Text.ElideRight
+                    color: pr.mine ? Theme.subtext : Theme.muted
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontSmall
+                }
+
+                Text {
                     id: cpuText
                     anchors.right: memText.left
                     anchors.rightMargin: Theme.spaceL
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.fs(48)
+                    width: root.cpuW
                     horizontalAlignment: Text.AlignRight
                     text: pr.modelData.cpu.toFixed(1) + "%"
-                    color: column.stats.procSort === "cpu" ? Theme.textStrong : Theme.subtext
+                    color: SystemStats.procSort === "cpu" ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontBody
                 }
@@ -139,22 +198,21 @@ Column {
                     anchors.right: killBtn.left
                     anchors.rightMargin: Theme.spaceL
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.fs(60)
+                    width: root.memW
                     horizontalAlignment: Text.AlignRight
                     text: Format.kib(pr.modelData.memKb)
-                    color: column.stats.procSort === "mem" ? Theme.textStrong : Theme.subtext
+                    color: SystemStats.procSort === "mem" ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontBody
                 }
 
-                // Only on your own processes: kill as a user can't
-                // touch root's, and a button that silently fails is
-                // worse than none.
+                // Only on your own processes: kill as a user can't touch
+                // root's, and a button that silently fails is worse than none.
                 Rectangle {
                     id: killBtn
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.fs(22)
+                    width: root.killW
                     height: Theme.chipHeight
                     radius: Theme.radiusInner
                     visible: pr.mine
@@ -179,7 +237,7 @@ Column {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: column.stats.requestKill(pr.modelData.pid)
+                        onClicked: SystemStats.requestKill(pr.modelData.pid)
                     }
                 }
             }
@@ -188,53 +246,11 @@ Column {
 
     Text {
         width: parent.width
-        text: column.stats.killPid > 0 ? "Click again to end that process" : ""
+        height: Theme.fs(12)
+        text: SystemStats.killPid > 0 ? "Click again to end that process"
+            : SystemStats.procs.length === 0 ? "Sampling…" : ""
         color: Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontSmall
-        height: Theme.fs(12)
-    }
-
-    Item { width: 1; height: Theme.spaceS }
-
-    FlyoutHeading { text: "HEALTH" }
-
-    InfoRow {
-        label: "Battery"
-        visible: Battery.present
-        value: Battery.device.healthSupported
-            ? Math.round(Battery.device.healthPercentage) + "% health" : "n/a"
-    }
-    InfoRow { visible: !Battery.present; label: "Battery"; value: "no battery" }
-
-    InfoRow {
-        label: "Failed units"
-        value: FailedUnits.count === 0 ? "none"
-            : FailedUnits.units.map(u => u.name).join(", ")
-        valueColor: FailedUnits.count === 0 ? undefined : Theme.alert
-    }
-
-    Item { width: 1; height: Theme.spaceS }
-
-    FlyoutHeading { text: "QUICK ACTIONS" }
-
-    Row {
-        width: parent.width
-        spacing: Theme.spaceM
-
-        FlyoutChip {
-            text: "Restart Audio"
-            onClicked: audioRestartProc.running = true
-        }
-        FlyoutChip {
-            text: Updates.checking ? "Checking…" : "Check Updates"
-            enabled: !Updates.checking
-            onClicked: Updates.refresh()
-        }
-    }
-
-    Process {
-        id: audioRestartProc
-        command: ["systemctl", "--user", "restart", "wireplumber", "pipewire", "pipewire-pulse"]
     }
 }

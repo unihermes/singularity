@@ -1,78 +1,178 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/System.qml
 //
-// System: live usage gauges with per-core bars and 60-second history,
-// network throughput, the heaviest processes, static facts, hardware specs
-// and config shortcuts, in one standalone window opened from the Control
-// Centre. Appearance settings are deliberately not duplicated here -- they
-// live on the Appearance page.
+// System: what this machine is and what it is doing, as a sidebar of pages
+// rather than one wall of columns. Overview answers "is anything wrong" at a
+// glance; the pages behind it go as deep as the kernel will let us on the
+// CPU, memory, storage, network, processes, hardware, power and -- since
+// every answer here ends in "where do I change that" -- the config files
+// themselves.
 //
-// This file is the window and its three-column layout. The numbers come from
-// services/SystemStats.qml, which only samples while this window is visible;
-// each column is its own file under system/.
+// The numbers come from services/SystemStats.qml (live, sampled only while
+// this window is visible) and services/SystemSpecs.qml (static, gathered
+// once per session). Appearance settings are deliberately not duplicated
+// here -- they live in Settings.
+//
+// Laid out like Settings: the shared WindowHeader, then two framed panels
+// -- the numbered Sections on the left, the open page on the right. The
+// ground and Escape are a bare WindowChrome.qml, and the page's height is
+// Theme.windowBodyHeight like every other window's.
+//
+// Floating and centring come from the "quickshell-windows" rule in
+// hyprland.lua, as for Settings and Keybinds.
 
 import Quickshell
 import QtQuick
 import "../services"
-import "system"
+import "../settings"
 import "../flyouts"
+// the pages are loaded by URL below, but naming the directory here is what
+// registers its types -- without it a page cannot reach its own siblings
+import "system"
 
-CentredWindow {
+FloatingWindow {
     id: root
 
-    heading: "SYSTEM"
-    contentWidth: col1Width + col2Width + col3Width + 2 * colGap
+    readonly property string defaultPage: "overview"
+    property string currentPage: defaultPage
 
-    // uneven on purpose: column 3 carries the longest static strings (GPU
-    // model, board vendor+product, monitor list) and was clipping its own
-    // values against the window edge at a uniform width -- the graphs and
-    // gauges in column 1 need far less room than that text does.
-    readonly property int col1Width: Theme.fs(300)
-    readonly property int col2Width: Theme.fs(320)
-    readonly property int col3Width: Theme.fs(420)
-    readonly property int colGap: Theme.sp(24)
+    // scaled with Font Size, since the pages' own rows are
+    readonly property int sidebarWidth: Theme.fs(220)
+    // wide enough for the Processes table (name, user, CPU, MEM, kill) and
+    // for a config file's full path on one line
+    readonly property int paneWidth: Theme.fs(640)
+    readonly property int paneHeight: Theme.windowBodyHeight
 
-    SystemStats {
-        id: stats
-        active: root.visible
+    visible: false
+    title: "System"
+    color: "transparent"
+
+    implicitWidth: Theme.windowPad * 2 + sidebarWidth + Theme.spaceXl + paneWidth + Theme.panelPad * 2
+    implicitHeight: panels.y + panels.height + Theme.windowPad
+
+    // an unknown or empty page opens the default one
+    function open(page) {
+        currentPage = pages.some(p => p.id === page) ? page : defaultPage
+        visible = true
+    }
+    function close() { visible = false }
+
+    // the compositor closing it has to clear visible, or the next open()
+    // would be a no-op
+    onClosed: visible = false
+    onVisibleChanged: if (visible) chrome.keySink.forceActiveFocus()
+
+    // Sampling follows the window, not the page: switching pages shouldn't
+    // reset the 60-second graphs, and a page that isn't on screen costs
+    // nothing beyond the numbers the Overview needed anyway.
+    Binding { target: SystemStats; property: "active"; value: root.visible }
+    Binding { target: SystemSpecs; property: "active"; value: root.visible }
+    // The Processes page wants a full table; everywhere else five rows is
+    // the summary. Asking `top` for fewer rows is the cheaper default.
+    Binding {
+        target: SystemStats
+        property: "procLimit"
+        value: root.currentPage === "processes" ? 18 : 5
     }
 
-    // --- layout ----------------------------------------------------------
+    readonly property var pages: [
+        { id: "overview",  label: "Overview",  icon: "󰍹", blurb: "Health at a glance",       source: "system/PageOverview.qml" },
+        { id: "cpu",       label: "CPU",       icon: "󰻠", blurb: "Load, cores and clocks",   source: "system/PageCpu.qml" },
+        { id: "memory",    label: "Memory",    icon: "󰘚", blurb: "RAM, swap and zram",       source: "system/PageMemory.qml" },
+        { id: "storage",   label: "Storage",   icon: "󰋊", blurb: "Disks and mounts",         source: "system/PageStorage.qml" },
+        { id: "network",   label: "Network",   icon: "󰖩", blurb: "Links and throughput",     source: "system/PageNetwork.qml" },
+        { id: "processes", label: "Processes", icon: "󰅐", blurb: "What's running",           source: "system/PageProcesses.qml" },
+        { id: "hardware",  label: "Hardware",  icon: "󰢻", blurb: "Devices and sensors",      source: "system/PageHardware.qml" },
+        { id: "power",     label: "Power",     icon: "󰂄", blurb: "Battery and profile",      source: "system/PagePower.qml" },
+        { id: "config",    label: "Config",    icon: "󰈔", blurb: "The files behind it all",  source: "system/PageConfig.qml" },
+    ]
+    function select(id) {
+        currentPage = id
+        // a page's field may have had focus; give Escape back to the window
+        chrome.keySink.forceActiveFocus()
+    }
 
-    // The three-column grid runs taller than the window once every section
-    // is populated (a laptop with plenty of storage entries, a dozen input
-    // devices, etc.), so it scrolls inside the window's fixed height --
-    // same pattern as the Keybinds list.
+    WindowChrome {
+        id: chrome
+        window: root
+        bare: true
+    }
+
+    WindowHeader {
+        id: header
+        window: root
+        eyebrow: "MACHINE STATUS"
+        title: "System"
+        subtitle: (SystemSpecs.hostname || "--") + " / " + (SystemSpecs.distro || "Linux")
+    }
+
+    // --- panels ------------------------------------------------------------
+
     Item {
-        width: parent.width
-        height: root.bodyHeight
+        id: panels
+        anchors.top: header.bottom
+        anchors.topMargin: Theme.spaceXl
+        x: Theme.windowPad
+        width: root.width - Theme.windowPad * 2
+        height: root.paneHeight + Theme.panelPad * 2
 
-        Flickable {
-            id: gridFlick
-            // fills the whole Item -- exactly grid's own width, so there's
-            // no horizontal slack to accidentally scroll into and clip a
-            // column against the edge
-            anchors.fill: parent
-            contentWidth: grid.implicitWidth
-            contentHeight: grid.implicitHeight
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
+        // the pages
+        WindowPanel {
+            id: sidebar
+            width: root.sidebarWidth
+            height: parent.height
 
+            FlyoutHeading {
+                id: listHeading
+                x: Theme.panelPad
+                y: Theme.panelPad
+                width: parent.width - Theme.panelPad * 2
+                text: "SECTIONS"
+            }
 
-            Row {
-                id: grid
-                spacing: root.colGap
+            Column {
+                anchors.top: listHeading.bottom
+                anchors.topMargin: Theme.spaceL
+                x: Theme.panelPad
+                width: parent.width - Theme.panelPad * 2
+                spacing: Theme.spaceXs
 
-                UsageColumn   { stats: stats; width: root.col1Width }
-                ProcessColumn { stats: stats; width: root.col2Width }
-                SpecsColumn   { stats: stats; width: root.col3Width }
+                Repeater {
+                    model: root.pages
+
+                    SettingsSectionRow {
+                        required property var modelData
+                        required property int index
+                        number: (index < 9 ? "0" : "") + (index + 1)
+                        icon: modelData.icon
+                        label: modelData.label
+                        blurb: modelData.blurb
+                        selected: root.currentPage === modelData.id
+                        onClicked: root.select(modelData.id)
+                    }
+                }
             }
         }
 
-        // scroll indicator, shown only once the grid actually overflows
-        ScrollBar {
+        // the open page
+        WindowPanel {
+            anchors.left: sidebar.right
+            anchors.leftMargin: Theme.spaceXl
             anchors.right: parent.right
-            flickable: gridFlick
+            height: parent.height
+
+            Loader {
+                id: pane
+                x: Theme.panelPad
+                y: Theme.panelPad
+                width: root.paneWidth
+                height: root.paneHeight
+                active: root.visible
+                source: {
+                    var p = root.pages.find(p => p.id === root.currentPage)
+                    return p && p.source ? p.source : ""
+                }
+            }
         }
     }
 }
