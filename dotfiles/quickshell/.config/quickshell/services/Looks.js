@@ -175,6 +175,16 @@ var fontLabels = {
     "Iosevka Nerd Font": "Iosevka",
 }
 
+// The system font: what GTK and Qt apps draw everywhere outside the shell
+// itself (AppearanceSync.renderGtk/renderQt) -- independent of `fonts` above,
+// which is the shell's own monospace-only face. Proportional, general-purpose
+// faces only, each one a package pacman.txt already installs, so every entry
+// here is always selectable. The first is the fallback.
+var systemFonts = ["Ubuntu Nerd Font", "Noto Sans"]
+var systemFontLabels = {
+    "Ubuntu Nerd Font": "Ubuntu", "Noto Sans": "Noto Sans",
+}
+
 // Density, as a factor on every gap and padding (Theme.sp) and, at half
 // strength, on row heights (Theme.row) -- so compact rows tighten a little
 // while the space between them tightens more.

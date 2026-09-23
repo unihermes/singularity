@@ -55,6 +55,11 @@ Singleton {
     // "compact", "normal" or "roomy"
     readonly property alias density:     adapter.density
     readonly property alias fontFamily:  adapter.fontFamily
+    // GTK/Qt apps' font -- independent of fontFamily above, which is only the
+    // shell's own (bar, launcher, notifications). Not part of a look and not
+    // touched by reset()/isDefault, same as nightLightKelvin: it's a system
+    // preference, not an appearance the shell designs.
+    readonly property alias systemFontFamily: adapter.systemFontFamily
     // "outline", "filled", "flat" or "pill"
     readonly property alias moduleStyle: adapter.moduleStyle
     // "full", "floating", "islands" or "bare"
@@ -73,6 +78,7 @@ Singleton {
         frameStyle:   ["double", "single", "bevel", "none"],
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
+        systemFontFamily: Looks.systemFonts,
         moduleStyle:  ["outline", "filled", "flat", "pill", "bracket", "underline"],
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
         workspaceStyle: ["pills", "numbers", "blocks", "roman"],
@@ -98,7 +104,7 @@ Singleton {
     function choiceLabel(v) {
         if (choiceLabels[v]) return choiceLabels[v]
         if (LookStore.looks[v]) return LookStore.looks[v].name
-        return Looks.fontLabels[v] || v
+        return Looks.fontLabels[v] || Looks.systemFontLabels[v] || v
     }
 
     function cycle(key, direction) {
@@ -403,10 +409,12 @@ Singleton {
 
     // The bar's opacity defaults lower on the wallpaper palette, so the
     // wallpaper shows through a bar tinted to match it. Switching palette
-    // carries the opacity along only while it's still at the old palette's
-    // default -- one you've set yourself is left alone. Here rather than in
-    // an on-changed handler, which would also fire on a reload of the file.
-    // Grayscale's default is the look's own.
+    // always moves to the new palette's opacity: a see-through bar kept
+    // after switching to grayscale still shows the wallpaper's colours
+    // through it, which reads as the switch not having happened. Opacity
+    // sits right under the palette switch to adjust afterwards. Here rather
+    // than in an on-changed handler, which would also fire on a reload of
+    // the file. Grayscale's default is the look's own.
     readonly property var barOpacityDefaults: ({
         grayscale: (LookStore.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.barOpacity,
         wallpaper: 85,
@@ -414,8 +422,7 @@ Singleton {
 
     function setColourMode(v) {
         if (choices.colourMode.indexOf(v) === -1 || v === adapter.colourMode) return
-        if (adapter.barOpacity === barOpacityDefaults[adapter.colourMode])
-            adapter.barOpacity = barOpacityDefaults[v]
+        adapter.barOpacity = barOpacityDefaults[v]
         adapter.colourMode = v
     }
 
@@ -532,6 +539,7 @@ Singleton {
             property string frameStyle: "double"
             property string density: "normal"
             property string fontFamily: "UbuntuMono Nerd Font"
+            property string systemFontFamily: "Ubuntu Nerd Font"
             property string moduleStyle: "outline"
             property string barStyle: "full"
             property string workspaceStyle: "pills"

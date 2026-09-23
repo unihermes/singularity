@@ -23,6 +23,24 @@
 //                  alacritty watches imports, so open windows follow along.
 //   nvim.lua    -- the editor's palette, read by nvim's colors/neutrino.lua.
 //                  nvim watches it and recolours open sessions.
+//
+// Dark/light also reaches outside quickshell's own widgets, to GTK and Qt
+// apps -- install.sh's one-time `gsettings set` only matched whatever look
+// was current at install time, so a look picked afterwards left every GTK app
+// on the old shade. Font is deliberately NOT synced here: GTK/Qt keep their
+// own systemFontFamily/systemFontSize below, independent of the bar's font
+// picker (Settings.fontFamily/Theme.fontText), which only affects the shell's
+// own chrome (wofi, swaync, the bar itself).
+//   gsettings   -- gtk-theme/color-scheme, written live to dconf (no file, so
+//                  nothing to watch -- GTK apps read dconf directly, and
+//                  xdg-desktop-portal-gtk forwards color-scheme to portal-aware
+//                  Qt/GTK4 apps).
+//   qt6ct.conf  -- Qt apps (QT_QPA_PLATFORMTHEME=qt6ct, hyprland.lua) have no
+//                  live dconf-style path, so this is a real file, read at each
+//                  Qt app's next launch. It switches between two of qt6ct's
+//                  own stock colour schemes rather than a palette built from
+//                  Theme's roles -- close enough for light vs dark, and far
+//                  less to get wrong than hand-mapping all 21 QPalette roles.
 
 import Quickshell
 import Quickshell.Io
@@ -164,12 +182,80 @@ Scope {
         AtomicFileWrite.write({ path: root.dir + "/nvim.lua", transform: () => text })
     }
 
+    // GTK/Qt apps' font size, and the fixed monospace face used for both
+    // toolkits' "fixed"/monospace slot. Independent of the bar's own font
+    // picker (Theme.fontText) -- only the family for general/UI text
+    // (Settings.systemFontFamily, set from Settings -> Appearance) is
+    // user-editable; everything else here stays put.
+    readonly property int systemFontSize: 11
+    readonly property string systemMonoFontFamily: "UbuntuMono Nerd Font"
+
+    // GTK apps read font-name/document-font-name/gtk-theme/color-scheme
+    // straight from dconf -- so a value written here sticks live, the same
+    // way install.sh's one-time `gsettings set` did at install. Only the
+    // general-text keys follow Settings.systemFontFamily; monospace-font-name
+    // stays on systemMonoFontFamily regardless, and neither follows the bar's
+    // own font (Theme.fontText).
+    // One shell command, like writeHyprAnimations: several `gsettings set`
+    // calls in a row each start a fresh dbus round trip, and a change made
+    // mid-burst (a slider dragged across several steps) would otherwise
+    // launch one per step.
+    function renderGtk() {
+        var font = Settings.systemFontFamily + " " + systemFontSize
+        var monoFont = systemMonoFontFamily + " " + systemFontSize
+        var scheme = Theme.isLight ? "prefer-light" : "prefer-dark"
+        var gtkTheme = Theme.isLight ? "Adwaita" : "Adwaita-dark"
+        var iface = "org.gnome.desktop.interface"
+        var q = s => "'" + String(s).replace(/'/g, "'\\''") + "'"
+        gtkSync.command = ["sh", "-c",
+            "gsettings set " + iface + " font-name " + q(font) + "; " +
+            "gsettings set " + iface + " document-font-name " + q(font) + "; " +
+            "gsettings set " + iface + " monospace-font-name " + q(monoFont) + "; " +
+            "gsettings set " + iface + " gtk-theme " + q(gtkTheme) + "; " +
+            "gsettings set " + iface + " color-scheme " + q(scheme)]
+        gtkSync.running = true
+    }
+
+    // Qt apps (QT_QPA_PLATFORMTHEME=qt6ct) have no dconf-style live path, so
+    // this is a real file -- picked up at each Qt app's next launch. `general`
+    // follows Settings.systemFontFamily the same way GTK's font-name does;
+    // `fixed` stays on systemMonoFontFamily. Neither follows the bar's own
+    // font picker -- only the colour scheme follows Theme.
+    // custom_palette has to be on, or qt6ct falls back to its style's own
+    // palette and color_scheme_path is ignored. The scheme itself is one of
+    // qt6ct's own stock files (see the file header), not a palette built from
+    // Theme's roles.
+    readonly property string qtDarkScheme:  "/usr/share/qt6ct/colors/darker.conf"
+    readonly property string qtLightScheme: "/usr/share/qt6ct/colors/ia_ora.conf"
+
+    function renderQt() {
+        var generalSpec = Settings.systemFontFamily + "," + systemFontSize + ",-1,5,50,0,0,0,0,0"
+        var fixedSpec = systemMonoFontFamily + "," + systemFontSize + ",-1,5,50,0,0,0,0,0"
+        var lines = ["[Appearance]",
+            "color_scheme_path=" + (Theme.isLight ? qtLightScheme : qtDarkScheme),
+            "custom_palette=true",
+            "icon_theme=kora",
+            "style=Fusion",
+            "",
+            "[Fonts]",
+            "fixed=\"" + fixedSpec + "\"",
+            "general=\"" + generalSpec + "\""]
+        var text = lines.join("\n") + "\n"
+        AtomicFileWrite.write({
+            path: Quickshell.env("HOME") + "/.config/qt6ct/qt6ct.conf",
+            transform: () => text,
+        })
+    }
+
     // Coalesced like Settings' own save: the steppers fire several steps in
     // a row, and each swaync reload re-parses its whole stylesheet.
     Timer {
         id: debounce
         interval: 200
-        onTriggered: { root.renderWofi(); root.renderSwaync(); root.renderAlacritty(); root.renderNvim() }
+        onTriggered: {
+            root.renderWofi(); root.renderSwaync(); root.renderAlacritty(); root.renderNvim()
+            root.renderGtk(); root.renderQt()
+        }
     }
 
     Connections {
@@ -181,9 +267,10 @@ Scope {
         function onFrameDoubleChanged() { debounce.restart() }
         function onLookChanged() { debounce.restart() }
         function onAccentChanged() { debounce.restart() }
-
-
+        function onIsLightChanged() { debounce.restart() }
     }
+
+    Process { id: gtkSync }
 
 
     // watched, so editing ~/.config/wofi/style.css (not in the repo; wofi is
@@ -218,6 +305,7 @@ Scope {
     Connections {
         target: Settings
         function onAnimSpeedChanged() { root.writeHyprAnimations(true) }
+        function onSystemFontFamilyChanged() { debounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
