@@ -16,11 +16,44 @@ Item {
     property string hint: ""
     // width of the label column; controls get the rest
     property int labelWidth: Theme.fs(240)
+    readonly property bool isSettingsField: true
+
+    // The page a search result landed on rings the field it named. Found by
+    // walking up rather than passed in, so no page has to thread it through.
+    // named for what it is rather than `page`, which every Settings page
+    // already uses as its own id -- a property here would shadow it inside
+    // any field the page declares
+    readonly property var hostPage: {
+        var p = parent
+        while (p) {
+            if (p.isSettingsPage === true) return p
+            p = p.parent
+        }
+        return null
+    }
+    readonly property bool lit: hostPage !== null && root.label !== ""
+        && hostPage.highlight === root.label
 
     default property alias control: slot.data
 
     width: parent ? parent.width : 0
     implicitHeight: Math.max(Theme.fieldHeight, labels.implicitHeight + Theme.spaceM, slot.childrenRect.height + Theme.spaceM)
+
+    // the ring: sized past the row's edges so it reads as around the
+    // setting, not as another control in it
+    Rectangle {
+        anchors.fill: parent
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
+        radius: Theme.radiusInner
+        color: Theme.selectedFill
+        border.width: Theme.borderWidth
+        border.color: Theme.accent
+        opacity: root.lit ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity { NumberAnimation { duration: Theme.dur(180); easing.type: Theme.ease } }
+    }
 
     Column {
         id: labels
