@@ -3,7 +3,7 @@
 //
 // Same grayscale ramp as the rest of the repo -- no hues, emphasis is
 // lightness and weight instead.
-//   #4d4d4d muted  #7a7a7a subtext  #c2c2c2 text  #ebebeb bright
+//   #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text  #ebebeb bright
 //
 // A fully closed box (not just a left border) drawn with box-drawing
 // characters around the info block. Every data line is a "command" module

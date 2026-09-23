@@ -5,7 +5,7 @@
 # lightness and weight instead. Error draws the eye by being bold and
 # bright rather than red; a clean prompt stays plain.
 #   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
-#   #303030 border #4d4d4d muted  #7a7a7a subtext  #c2c2c2 text
+#   #303030 border #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text
 #   #ebebeb bright
 #
 # Two lines: the path on its own, then the prompt character. Nothing else
@@ -25,7 +25,7 @@ palette = "neutrino"
 overlay = "#242424"
 muted   = "#4d4d4d"
 subtext = "#7a7a7a"
-text    = "#c2c2c2"
+text    = "#d4e4f4"
 bright  = "#ebebeb"
 
 # The path is drawn by custom.path, not this module: starship's directory

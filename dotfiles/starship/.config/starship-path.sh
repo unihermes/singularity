@@ -17,7 +17,7 @@ SEP='38;2;77;77;77'         # muted   #4d4d4d, the slashes
 RAMP=(
   '38;2;77;77;77'           # muted   #4d4d4d
   '38;2;122;122;122'        # subtext #7a7a7a
-  '38;2;194;194;194'        # text    #c2c2c2
+  '38;2;212;228;244'        # text    #d4e4f4
 )
 LAST='1;38;2;235;235;235'   # bright  #ebebeb, bold -- where you actually are
 
