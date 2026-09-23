@@ -9,7 +9,7 @@
 --
 -- grayscale ramp, shared with every other config in this repo:
 --   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
---   #303030 border #4d4d4d muted  #7a7a7a subtext  #c2c2c2 text
+--   #303030 border #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text
 --   #ebebeb bright
 
 -- Forward-declared so the SUPER+SHIFT+F / SUPER+equal binds (Window
@@ -188,8 +188,12 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' tail --pid=$(pidof -s Hyprland) -f /dev/null")
     -- Quickshell's QML warnings (binding loops, null-property access) go to
     -- stderr with nowhere to land but the TTY Hyprland was launched from --
-    -- redirected to a log file so startup and logout stay clean.
-    hl.exec_cmd("quickshell > ~/.cache/quickshell.log 2>&1")
+    -- redirected to a log file so startup and logout stay clean. `exec` so
+    -- the /bin/sh hl.exec_cmd wraps this in is replaced rather than left
+    -- sitting around the whole session as quickshell's parent: without it
+    -- both this and the relay below leave an idle shell in the process tree,
+    -- and signals aimed at the tree hit the shell instead of the program.
+    hl.exec_cmd("exec quickshell > ~/.cache/quickshell.log 2>&1")
     -- Persistent IPC relay for the ALT+Tab switcher -- see alttab-relay.cpp
     -- for what it does and why, and the alt-tab bind block below for how
     -- it's used. Order relative to `quickshell` above does not matter: it
@@ -197,7 +201,7 @@ hl.on("hyprland.start", function()
     -- already be up. QT_FORCE_STDERR_LOGGING keeps its log in that file:
     -- Qt otherwise decides for itself between stderr and the journal, and
     -- the startup self-test's failure message needs a place to be found.
-    hl.exec_cmd("QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
+    hl.exec_cmd("exec env QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
     -- env alone does not retheme the cursor Hyprland draws over the desktop
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 20")
     -- the saved wallpaper, or a random one from wallpapers/ when shuffle is on
@@ -225,7 +229,7 @@ hl.config({
         border_size = 0,
 
         col = {
-            active_border   = "rgba(c2c2c266)",
+            active_border   = "rgba(d4e4f466)",
             inactive_border = "rgba(303030aa)",
         },
 
@@ -355,7 +359,6 @@ local mod = "SUPER"
 -- --- Launchers ---
 hl.bind("CTRL + SPACE",      hl.dsp.exec_cmd(menu))  -- Open app launcher
 hl.bind(mod .. " + Return",  hl.dsp.exec_cmd(terminal))  -- Open terminal
-hl.bind(mod .. " + A",       hl.dsp.exec_cmd(terminal))  -- Open terminal
 hl.bind(mod .. " + E",       hl.dsp.exec_cmd(fileManager))  -- Open file manager
 hl.bind(mod .. " + V",       hl.dsp.exec_cmd(editor))  -- Open code editor
 hl.bind(mod .. " + Z",       hl.dsp.exec_cmd(zen))  -- Open Zen Browser
@@ -431,9 +434,63 @@ hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus windo
 -- (~45ms measured on this machine) to lose the race against a fast
 -- tap-and-release, on top of everything above about catching the release at
 -- all. Falls back to `qs` itself if the relay isn't reachable.
-hl.bind("ALT + Tab",         hl.dsp.exec_cmd("~/.config/hypr/alt-tab.sh"),        { repeating = true })  -- Switch windows
-hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
-hl.bind("ALT + grave",       hl.dsp.exec_cmd("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
+--
+-- The ALT release is also watched here, in-process, not just by the
+-- switcher's keyboard grab. The grab can only see a release that happens
+-- after the switcher is up, and the first Tab has to travel out through
+-- alt-tab.sh, hyprctl and the relay before that is true -- so an ALT
+-- released inside that window (tapping ALT+Tab and letting ALT go before
+-- Tab) was never delivered to anyone, and the switcher sat on screen
+-- holding the keyboard until some later key press knocked it loose. That
+-- is the "stuck switcher" bug.
+--
+-- hl.is_key_down answers the question the grab could not: it reads
+-- Hyprland's own key state, so it is true whether or not any client has
+-- focus and whatever the timing was. altTabWatch polls it from the moment
+-- the bind fires -- when ALT is by definition still down -- and sends the
+-- commit as soon as it comes up. The switcher's own Keys.onReleased stays
+-- as the fast path for the ordinary case (no poll interval, no process
+-- spawn); whichever notices first wins, and the second commit is dropped
+-- by the shell because the switcher is no longer open.
+--
+-- Chained oneshots rather than one `repeat` timer: a Lua timer here is
+-- stopped only by dropping the last reference to it and waiting for the
+-- collector, so a repeating one keeps firing for an unbounded while after
+-- we are done with it. A oneshot that only re-arms while ALT is still held
+-- ends the chain itself. `gen` retires any chain left over from an earlier
+-- gesture, since a stale timer can still fire once before it is collected.
+local altTabWatchGen = 0
+local altTabWatchTimer = nil
+
+local function altTabWatch(gen)
+    if gen ~= altTabWatchGen then return end
+
+    if hl.is_key_down("Alt_L") or hl.is_key_down("Alt_R") then
+        altTabWatchTimer = hl.timer(function() altTabWatch(gen) end,
+            { timeout = 24, type = "oneshot" })
+        return
+    end
+
+    altTabWatchTimer = nil
+    hl.exec_cmd("~/.config/hypr/alttab-ipc.sh commit")
+end
+
+-- Armed by every alt-tab bind, not just the first Tab: re-arming is what
+-- keeps the chain alive across a long cycle, and the generation bump means
+-- the previous chain retires instead of running alongside this one.
+local function altTabKey(cmd)
+    return function()
+        hl.exec_cmd(cmd)
+        altTabWatchGen = altTabWatchGen + 1
+        local gen = altTabWatchGen
+        altTabWatchTimer = hl.timer(function() altTabWatch(gen) end,
+            { timeout = 24, type = "oneshot" })
+    end
+end
+
+hl.bind("ALT + Tab",         altTabKey("~/.config/hypr/alt-tab.sh"),         { repeating = true })  -- Switch windows
+hl.bind("ALT + SHIFT + Tab", altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
+hl.bind("ALT + grave",       altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
 
 -- A bare Alt_L/Alt_R `global` bind (hyprland-global-shortcuts-v1) was tried
 -- here as a second route to the ALT release, alongside the keyboard grab in
@@ -456,6 +513,12 @@ hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- Res
 -- --- Clipboard ---
 hl.bind(mod .. " + H", hl.dsp.exec_cmd("qs ipc call launcher toggle clipboard"))  -- Clipboard history
 
+-- --- Calculator and file search ---
+-- Two more launcher modes (flyouts/Launcher.qml). Tab cycles between all
+-- four, so either key reaches the others; these are just the direct ways in.
+hl.bind(mod .. " + slash", hl.dsp.exec_cmd("qs ipc call launcher toggle calc"))   -- Calculator
+hl.bind(mod .. " + S",     hl.dsp.exec_cmd("qs ipc call launcher toggle files"))  -- Search files
+
 -- --- Claude ---
 -- Quickshell's Claude flyout (flyouts/ClaudeFlyout.qml)
 hl.bind(mod .. " + I", hl.dsp.exec_cmd("qs ipc call claude toggle"))  -- Ask Claude to change the desktop
@@ -471,7 +534,9 @@ hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh"))  -- Screenshot
 -- it -- the debounce for this laptop's bouncing lid switch, the suspend
 -- timer, re-suspending after a wake with the lid shut, docked mode -- lives
 -- in lid.sh. misc:key_press_enables_dpms and mouse_move_enables_dpms are the
--- backstop: any key or mouse movement wakes a wrongly-blanked screen.
+-- backstop: any key or mouse movement wakes a wrongly-blanked screen. lid.sh
+-- turns both off while the lid is shut, or the keyboard and touchpad the
+-- closing lid presses on would wake the panel it just blanked.
 hl.bind("switch:on:Lid Switch",  hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid closed: screen off, suspend after 5 min
 hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid opened: screen on
 
@@ -1143,21 +1208,26 @@ end
 -- rules are switched to match whichever workspace is active, on every
 -- workspace change as well as on SUPER+M. That's what lets a pinned
 -- workspace get its own layout at map time, with no float-then-tile flicker.
--- The bar's layout toast is only told when the layout actually changes.
+-- On a workspace change the bar's layout toast is only told when the layout
+-- actually changes; SUPER+M passes announce = true, since pressing it should
+-- always say what the layout is now even when the answer is the same as
+-- before (two quick presses, or a workspace whose layout didn't move).
 local rulesMonocle = nil
-local function applyLayoutRules()
+local function applyLayoutRules(announce)
     local ws = hl.get_active_workspace()
     if ws and ws.special then return end
     local on = monocleOn(ws)
     monocleRule:set_enabled(on)
     maximizePrimaryDwindleRule:set_enabled(not on)
-    if rulesMonocle ~= nil and rulesMonocle ~= on then
+    if announce or (rulesMonocle ~= nil and rulesMonocle ~= on) then
         hl.exec_cmd("qs ipc call layout set " .. (on and "monocle" or "dwindle"))
     end
     rulesMonocle = on
 end
 applyLayoutRules()
-hl.on("workspace.active", applyLayoutRules)
+-- wrapped: the event handler is called with the workspace, and anything
+-- truthy in that first argument would toast on every workspace change
+hl.on("workspace.active", function() applyLayoutRules() end)
 
 -- SUPER+M switches between monocle and dwindle everywhere that isn't
 -- pinned. monocleRule only applies to windows as they map, so switching
@@ -1177,8 +1247,7 @@ function toggleLayout()
         return
     end
 
-    rulesMonocle = nil   -- always announce this one
-    applyLayoutRules()
+    applyLayoutRules(true)
 
     local win = hl.get_active_window()
     if not win or not win.workspace then return end

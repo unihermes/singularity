@@ -351,6 +351,93 @@ UNIT
   sudo mkinitcpio -P
 fi
 
+# --- hibernation ---------------------------------------------------------
+# The only swap here is zram, which lives in RAM and can't hold a hibernation
+# image. So hibernation gets a swapfile on / sized to RAM (the image is
+# compressed, but a busy machine can still need most of it). zram keeps its
+# priority of 100, so the swapfile only takes pages once zram is full, and in
+# practice is only written when hibernating.
+#
+# Resuming needs two things before root is mounted: the initramfs `resume`
+# hook, and resume=/resume_offset= on the cmdline to say where the image is. A
+# swapfile is found by its filesystem's UUID plus the physical offset of its
+# first block, so the offset is re-read every run -- recreating the file
+# moves it, and a stale offset means a normal boot instead of a resume.
+swapfile=/swapfile
+ram_gib=$(awk '/^MemTotal:/ { print int($2 / 1048576) + 1 }' /proc/meminfo)
+if [[ ! -f $swapfile ]]; then
+  log "creating a ${ram_gib}G swapfile for hibernation"
+  sudo mkswap -U clear --size "${ram_gib}G" --file "$swapfile" >/dev/null
+fi
+if ! grep -Eq "^$swapfile[[:space:]]" /etc/fstab; then
+  [[ -f /etc/fstab.singularity.bak ]] || sudo cp /etc/fstab /etc/fstab.singularity.bak
+  printf '%s none swap defaults 0 0\n' "$swapfile" | sudo tee -a /etc/fstab >/dev/null
+fi
+swapon --show=NAME --noheadings | grep -qx "$swapfile" || sudo swapon "$swapfile"
+
+if [[ -f $mkconf ]] && ! grep -Eq '^HOOKS=\(.*\<resume\>' "$mkconf"; then
+  log "adding the resume hook to the initramfs"
+  [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
+  # after filesystems and before fsck: the image has to be read back before
+  # anything checks or mounts the disk it came from
+  if grep -Eq '^HOOKS=\(.*\<fsck\>' "$mkconf"; then
+    sudo sed -i -E '/^HOOKS=/ s/\<fsck\>/resume fsck/' "$mkconf"
+  else
+    sudo sed -i -E '/^HOOKS=/ s/\)/ resume)/' "$mkconf"
+  fi
+  sudo mkinitcpio -P
+fi
+
+resume_uuid=$(findmnt -no UUID -T "$swapfile")
+resume_offset=$(sudo filefrag -v "$swapfile" | awk '$1 == "0:" { sub(/\.\.$/, "", $4); print $4; exit }')
+if [[ -n $resume_uuid && -n $resume_offset ]]; then
+  for kv in "resume=UUID=$resume_uuid" "resume_offset=$resume_offset"; do
+    key=${kv%%=*}; value=${kv#*=}
+    if [[ -f /etc/kernel/cmdline ]]; then
+      grep -Eq "(^|[[:space:]])$kv([[:space:]]|\$)" /etc/kernel/cmdline && continue
+      log "setting kernel cmdline: $kv"
+      set_cmdline_token /etc/kernel/cmdline plain "$key" "$value" && sudo mkinitcpio -P
+    elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
+      log "setting kernel cmdline: $kv"
+      for entry in /boot/loader/entries/*.conf; do
+        grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value"
+      done
+    fi
+  done
+else
+  warn "couldn't locate $swapfile on disk, hibernation won't resume"
+fi
+
+# How long a closed lid's suspend lasts before it hibernates. lid.sh suspends
+# 5 min after the lid shuts and wants hibernation at 1 h, so 55 min here;
+# change both together (close_delay and hibernate_after in lid.sh).
+sleepconf=/etc/systemd/sleep.conf.d/singularity.conf
+if ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
+  log "hibernating after 55 min of lid-closed suspend"
+  sudo mkdir -p "${sleepconf%/*}"
+  printf '[Sleep]\nHibernateDelaySec=55min\n' | sudo tee "$sleepconf" >/dev/null
+fi
+
+# Keep the touchpad from waking the machine. This laptop only has s2idle and
+# the I2C touchpad's GPIO interrupt stays live in it, so every idle suspend
+# bounced straight back out within seconds -- the machine never actually
+# stayed asleep on battery, and hypridle's ladder restarted from zero on each
+# wake, dimming and blanking again every ten minutes forever. The keyboard,
+# the lid and the power button are still wake sources; only tapping the
+# touchpad no longer wakes it. Matched on the driver rather than this
+# machine's VEN_0488:00 so it holds for any I2C-HID touchpad.
+# lid.sh's stay_dark() is the in-session net for the strays this stops here.
+touchpadrule=/etc/udev/rules.d/90-singularity-touchpad-wake.rules
+if ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
+  log "disarming the touchpad as a wake source"
+  sudo mkdir -p "${touchpadrule%/*}"
+  printf '%s\n' \
+    'ACTION=="add|change", SUBSYSTEM=="i2c", DRIVER=="i2c_hid_acpi", ATTR{power/wakeup}="disabled"' \
+    | sudo tee "$touchpadrule" >/dev/null
+  sudo udevadm control --reload
+  sudo udevadm trigger --subsystem-match=i2c --action=change
+fi
+
 # --- virtual webcam ------------------------------------------------------
 # The IPU6 camera only works through libcamera. PipeWire apps (browsers)
 # reach it that way, but Discord's voice engine opens /dev/video* directly and
@@ -521,6 +608,7 @@ fi
 # is the missing piece for Bluetooth's own adapter power.
 log "enabling Bluetooth power state restore"
 systemctl --user enable --now bt-power-restore.service
+
 
 # iwd is Type=dbus, so systemd waits for it to claim its bus name before
 # reaching network.target, and ly waits on network.target via
