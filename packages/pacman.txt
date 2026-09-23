@@ -57,6 +57,9 @@ qt6ct
 # iwd handles Wi-Fi, systemd-networkd hands out addresses, systemd-resolved
 # does DNS. networkd and resolved ship with systemd, so only iwd is listed.
 iwd
+# iw reads the live link's bitrate and signal for the Network settings page.
+# Only that one row needs it, and the row hides itself when it isn't there.
+iw
 
 # audio + camera (libcamera drives the IPU6 webcam through pipewire)
 pipewire
@@ -164,3 +167,4 @@ power-profiles-daemon
 
 # shell prompt
 starship
+

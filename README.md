@@ -26,6 +26,7 @@ dangling. Every step is idempotent; rerun `./install.sh` any time.
 - [Starting a session](#starting-a-session)
 - [Boot output](#boot-output)
 - [Boot speed](#boot-speed)
+- [Launcher](#launcher)
 - [Theme](#theme)
 - [Editor](#editor)
 - [Regenerating the package lists](#regenerating-the-package-lists)
@@ -88,7 +89,7 @@ singularity/
 └── dotfiles/
     ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
-    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh
+    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh
     ├── swaync/.config/swaync/{config.json,style.css}
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
@@ -171,6 +172,41 @@ systemd-analyze
 systemd-analyze blame | head
 systemd-analyze critical-chain ly@tty2.service
 ```
+
+## Launcher
+
+One box, four modes, cycled with Tab (Shift+Tab goes back). Each has its own
+way in:
+
+| Mode | Key | What it does |
+|---|---|---|
+| Applications | `CTRL+SPACE` | Desktop entries; Enter launches |
+| Files | `SUPER+S` | Recent files, or names under `~` via `fd`; Enter opens, `Shift+Enter` opens the folder |
+| Clipboard | `SUPER+H` | cliphist history; Enter copies, `Shift+Del` removes |
+| Calculator | `SUPER+/` | Arithmetic; Enter copies the result, the box stays open |
+
+The calculator is `services/Calc.js`: its own tokeniser and parser, not
+`eval()`, which would run whatever was typed into a box that is one hotkey
+away at all times. It handles `+ - * / ^`, parentheses, `mod`, a trailing `%`
+(just `/100`), `pi`/`e`/`tau`, hex and binary literals, `_` digit separators,
+and the usual functions — `sqrt`, `ln`, `log`, `sin`, `min`, `max` and so on.
+Anything else is an error rather than something executed. The list under the
+result is that syntax, filtered to whatever is being typed — `sq` narrows it
+to `sqrt` — so Enter on a row inserts it into the expression and the list
+doubles as completion.
+
+File search (`services/Files.qml`) searches hidden files too, since half of
+what is worth finding lives in `~/.config`, but skips the application data
+dumps (`.steam`, `.mozilla`, `.cargo`, caches, `node_modules`, …). It asks
+`fd` for many more matches than it shows and ranks them itself — prefix
+matches first, then paths not buried in a dot directory, then the shallowest
+— because `fd` walks in directory order, so a small cap would just return
+whatever sorts first alphabetically.
+
+With nothing typed it lists recent files instead, read from
+`~/.local/share/recently-used.xbel` — the XDG recent-files list Thunar and
+every other GTK app already maintains, so there is no second log to keep and
+it agrees with those apps' own Recent views.
 
 ## Theme
 
@@ -289,10 +325,19 @@ fc-match monospace
   adapter power, which always comes back on powered off; `bt-power-restore.service`
   saves it at logout and restores it at login.
 - **Closing the lid** turns the screen off, and suspends after 5 minutes if it
-  stays shut, even with a video playing or Keep Awake on. A wake-up with the
+  stays shut, even with a video playing or Keep Awake on. An hour after it
+  shut, the machine wakes itself and hibernates (once hibernation is set up;
+  see below). A wake-up with the
   lid still shut goes back to sleep after a minute. With an external monitor
   connected only the laptop's panel turns off and nothing suspends. All of it
   is `~/.config/hypr/lid.sh`; `journalctl -t singularity-lid` shows what it did.
+- **Hibernate** is in the Control Centre's Power menu. zram can't hold a
+  hibernation image, so `install.sh` creates a RAM-sized `/swapfile` (below
+  zram in priority, so it's only really written when hibernating), adds the
+  `resume` hook to the initramfs and points `resume=`/`resume_offset=` at the
+  file. The menu entry only appears once logind reports hibernation as
+  possible, so a `link.sh`-only machine won't offer it. Deleting and
+  recreating the swapfile moves it on disk; rerun `./install.sh` afterwards.
 - **Webcam colour.** The sensor is raw Bayer with no colour controls, so the
   virtual webcam (`v4l2-relayd`, what Discord sees) corrects it with a
   `videobalance` stage in its GStreamer pipeline. Tune brightness, contrast,
