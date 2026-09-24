@@ -48,6 +48,7 @@ var entries = [
     { page: "appearance", section: "Bar",   label: "Corner radius",     keywords: "bar rounding" },
     { page: "appearance", section: "Bar",   label: "Opacity",           keywords: "bar transparency alpha" },
     { page: "appearance", section: "Text & motion", label: "Font size", keywords: "text scale px" },
+    { page: "appearance", section: "Text & motion", label: "Bar text size", keywords: "bar font icons scale px" },
     { page: "appearance", section: "Text & motion", label: "Animations", keywords: "motion transitions speed" },
     { page: "appearance", section: "System", label: "System font",     keywords: "typeface family gtk qt apps interface ui" },
     { page: "appearance", section: "System", label: "Icons",           keywords: "icon theme kora apps gtk qt" },

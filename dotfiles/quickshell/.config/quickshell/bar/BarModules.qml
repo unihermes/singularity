@@ -112,7 +112,7 @@ Item {
                     anchors.centerIn: parent
                     // a touch wider than a digit, so the row doesn't
                     // shift as the current one turns bold
-                    width: Math.max(implicitWidth, Theme.fs(12))
+                    width: Math.max(implicitWidth, Theme.barFs(12))
                     horizontalAlignment: Text.AlignHCenter
                     text: Theme.workspaceStyle === "roman"
                         ? ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][parent.wsId - 1] || parent.wsId
@@ -164,8 +164,8 @@ Item {
                 id: winIcon
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: Theme.fs(18)
-                implicitHeight: Theme.fs(18)
+                implicitWidth: Theme.barFs(18)
+                implicitHeight: Theme.barFs(18)
 
                 IconImage {
                     anchors.fill: parent
@@ -180,7 +180,7 @@ Item {
                     text: winIcon.modelData.glyph
                     color: Theme.text
                     font.family: Theme.fontIcon
-                    font.pixelSize: Theme.fs(17)
+                    font.pixelSize: Theme.barFs(17)
                 }
 
                 MouseArea {
@@ -330,7 +330,7 @@ Item {
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
                 source: modelData.icon
-                implicitSize: Theme.fs(16)
+                implicitSize: Theme.barFs(16)
 
                 MouseArea {
                     anchors.fill: parent
@@ -385,7 +385,7 @@ Item {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceXs
-        padH: Theme.fs(8)
+        padH: Theme.barFs(8)
         visible: Visualizer.playing && Settings.widgetVisible("visualizer")
 
         Repeater {
@@ -394,13 +394,13 @@ Item {
             Item {
                 required property int index
                 anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: Theme.fs(3)
+                implicitWidth: Theme.barFs(3)
                 implicitHeight: Theme.moduleHeight - 10
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: Theme.fs(3)
-                    radius: Theme.fs(1.5)
+                    width: Theme.barFs(3)
+                    radius: Theme.barFs(1.5)
                     readonly property real v: (Visualizer.bars[parent.index] || 0) / 100
                     height: Math.max(3, parent.height * v)
                     color: Theme.text

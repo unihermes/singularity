@@ -898,6 +898,7 @@ SettingsPage {
     FlyoutHeading { text: "TEXT & MOTION" }
 
     Stepper { label: "Font size"; hint: "Body text size for the shell, launcher and notifications. Headings, captions and rows scale with it."; key: "fontSize"; suffix: "px" }
+    Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
 
 
     SettingsField {

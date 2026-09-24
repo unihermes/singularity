@@ -129,6 +129,11 @@ Singleton {
 
     function fs(n) { return Math.round(n * fontScale) }
 
+    // The bar's own text size, set apart from the rest: its labels, glyphs
+    // and icons go through barFs() instead of fs().
+    readonly property real barFontScale: Settings.barFontSize / Settings.fontSizeBase
+    function barFs(n) { return Math.round(n * barFontScale) }
+
     // The type scale. Everything with text uses one of these rather than a
     // size of its own, so a label reads the same size in every flyout and
     // window. Pixel sizes, not point: points scale with the screen's DPI
@@ -317,7 +322,7 @@ Singleton {
     // The double frame eats 8px of the chip (outer stroke + a 2px-inset inner
     // one), so the icon is sized to the space left inside it. Capped to the
     // chip, so a large Font Size can't push icons out of it.
-    readonly property int iconSize:     Math.min(moduleHeight - 8, fs(17))
+    readonly property int iconSize:     Math.min(moduleHeight - 8, barFs(17))
     // one size for every bar label (clock, media, counts), capped the same way
-    readonly property int barLabelSize: Math.min(moduleHeight - 8, fs(15))
+    readonly property int barLabelSize: Math.min(moduleHeight - 8, barFs(15))
 }

@@ -36,6 +36,8 @@ Singleton {
     // size in the shell, wofi and swaync is scaled from (Theme.fontScale).
     readonly property alias fontSize:    adapter.fontSize
     readonly property int fontSizeBase: 16
+    // the same for the bar's labels and icons alone (Theme.barFs)
+    readonly property alias barFontSize: adapter.barFontSize
     // "normal", "fast" or "off"
     readonly property alias animSpeed:   adapter.animSpeed
     // "grayscale" or "wallpaper"
@@ -331,6 +333,7 @@ Singleton {
         radius:    { min: 0,  max: 14 },
         barOpacity: { min: 40, max: 100 },
         fontSize:  { min: 12, max: 22 },
+        barFontSize: { min: 12, max: 22 },
         panelOpacity: { min: 50, max: 100 },
         borderWidth:  { min: 1,  max: 3 },
         scrim:        { min: 0,  max: 80 },
@@ -345,6 +348,7 @@ Singleton {
         var d = {
             look: Looks.fallback,
             fontSize: 16,
+            barFontSize: 16,
             animSpeed: "normal",
             colourMode: "grayscale",
             colourScheme: "scheme-tonal-spot",
@@ -587,6 +591,7 @@ Singleton {
             property int radius: 6
             property int barOpacity: 100
             property int fontSize: 16
+            property int barFontSize: 16
             // superseded by fontSize; read once to migrate (see onLoaded)
             property int fontScale: 100
 

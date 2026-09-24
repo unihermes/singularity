@@ -62,7 +62,7 @@ BarModule {
     fillValue: showing ? evFill : -1
     fillColor: Theme.muted
     fixedWidth: showing && evFill >= 0 ? idleWidth : 0
-    labelMaxWidth: showing ? Theme.fs(320) : 0
+    labelMaxWidth: showing ? Theme.barFs(320) : 0
     // Only while switching between the time and an event: in a proportional
     // font the time itself changes width every second, and easing (and
     // clipping) that would keep its first digit permanently cut off.
