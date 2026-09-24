@@ -49,6 +49,7 @@ SettingsPage {
     }
 
     component Choices: FlyoutSegmented {
+        id: ch
         property string key: ""
         property bool live: true
 
@@ -58,7 +59,10 @@ SettingsPage {
         model: Settings.choices[key] || []
         labelFor: v => page.label(v)
         current: Settings[key]
-        onPicked: v => Settings.set(key, v)
+        onPicked: v => {
+            page.holdInPlace(ch)
+            Settings.set(key, v)
+        }
     }
 
     // A Settings integer, stepped by `step` and clamped by Settings.limits.
@@ -77,7 +81,10 @@ SettingsPage {
             maximum: (Settings.limits[st.key] || { max: 0 }).max
             suffix: st.suffix
             valueWidth: 56
-            onStepped: d => Settings.step(st.key, d * st.step)
+            onStepped: d => {
+                page.holdInPlace(st)
+                Settings.step(st.key, d * st.step)
+            }
         }
     }
 

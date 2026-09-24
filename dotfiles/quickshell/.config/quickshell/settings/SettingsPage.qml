@@ -61,6 +61,41 @@ Item {
         }
     }
 
+    // Keeps `item` at the same place on screen through a change that
+    // re-lays out the page above it: Font Size and Density rescale every
+    // row, so the control you just clicked moved out from under the pointer
+    // and the next click missed it. Called before the change; the page
+    // then scrolls by however far the item moved. Text re-measures over a
+    // frame or two, so it's corrected a few times rather than once.
+    property Item holdItem: null
+    property real holdY: 0
+    property int holdTries: 0
+
+    function holdInPlace(item) {
+        if (!scrolls || !item) return
+        holdItem = item
+        holdY = item.mapToItem(root, 0, 0).y
+        holdTries = 0
+        hold.restart()
+    }
+
+    Timer {
+        id: hold
+        interval: 16
+        repeat: true
+        onTriggered: {
+            if (!root.holdItem || ++root.holdTries > 8) {
+                stop()
+                root.holdItem = null
+                return
+            }
+            var dy = root.holdItem.mapToItem(root, 0, 0).y - root.holdY
+            if (Math.abs(dy) < 1) return
+            var max = Math.max(0, flick.contentHeight - flick.height)
+            flick.contentY = Math.max(0, Math.min(max, flick.contentY + dy))
+        }
+    }
+
     // the ring is a hint, not a state: it clears itself
     Timer {
         id: fade
