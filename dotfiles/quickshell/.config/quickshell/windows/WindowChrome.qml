@@ -1,18 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/WindowChrome.qml
 //
-// Chrome for the standalone windows (System, Keybinds, Settings): the panel
-// ground, a title row that drags the window, a close button, and Escape to
-// close. Declared first in the window so the content draws over it.
-//
-// Content can't anchor to `header` (it isn't a sibling), so it positions
-// itself at `contentY` instead.
-//
-// `bare` drops the title row for a window that draws its own (Settings):
-// the ground and Escape stay, and contentY is just the window's top pad.
+// The ground of a standalone window (Settings, System) and Escape to close
+// it. Declared first in the window so the content draws over it; the title
+// row is WindowHeader.qml.
 
 import QtQuick
-import "../services"
 import "../flyouts"
 
 Item {
@@ -20,9 +13,6 @@ Item {
 
     // the FloatingWindow this dresses; needs close()
     required property var window
-    property string heading: ""
-    property bool bare: false
-    readonly property int contentY: bare ? Theme.windowPad : header.y + header.height + Theme.spaceM
     // takes Escape; focus it after anything else in the window had focus
     readonly property alias keySink: keySink
 
@@ -38,55 +28,5 @@ Item {
         anchors.fill: parent
         focus: true
         Keys.onEscapePressed: root.window.close()
-    }
-
-    Item {
-        id: header
-        visible: !root.bare
-        x: Theme.windowPad
-        y: Theme.spaceXl
-        width: parent.width - Theme.windowPad * 2
-        height: Theme.rowHeight
-
-        // drag the window by its title row
-        MouseArea {
-            anchors.fill: parent
-            onPressed: root.window.startSystemMove()
-        }
-
-        FlyoutHeading {
-            anchors.left: parent.left
-            anchors.right: closeBtn.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.heading
-        }
-
-        Rectangle {
-            id: closeBtn
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.controlSize + 2
-            height: width
-
-            radius: Theme.radiusInner
-            color: closeMouse.containsMouse ? Theme.hoverFill : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "󰅖"
-                color: closeMouse.containsMouse ? Theme.textStrong : Theme.subtext
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontIconSize
-            }
-
-            MouseArea {
-                id: closeMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.window.close()
-            }
-        }
     }
 }

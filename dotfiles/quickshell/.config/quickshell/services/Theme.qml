@@ -221,15 +221,13 @@ Singleton {
     // inside a flyout's frame, and inside a window's
     readonly property int panelPad:  sp(10)
     readonly property int windowPad: sp(16)
-    // The size every standalone window opens at: the Normal-density layout
-    // with a 600px body, scaled by Font Size only. A window sized by its
+    // The size Settings and System open at: the Normal-density layout with
+    // a 600px body, scaled by Font Size only. A window sized by its
     // content was centred for its first frame and hung off-centre once a
     // list loaded in, and one sized by density changed size under you.
     // Density re-lays out the inside instead. Each is rebuilt on every open
     // (LazyWindow.qml), so a size you drag one to lasts until it closes.
-    readonly property size settingsWindowSize: Qt.size(fs(1044), fs(755))
-    readonly property size systemWindowSize:   Qt.size(fs(944), fs(711))
-    readonly property size keybindsWindowSize: Qt.size(fs(772), fs(711))
+    readonly property size windowSize: Qt.size(fs(1044), fs(755))
     // between a flyout and the screen edge it's clamped against
     readonly property int edgeMargin: 6
 

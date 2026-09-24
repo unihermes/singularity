@@ -26,7 +26,6 @@ FlyoutPanel {
     required property var shellRoot
     required property var settingsWin
     required property var systemWin
-    required property var keybindsWin
 
     // Drill-down rather than nested pop-out panels: "" is the root
     // list and anything else is a submenu drawn in the same box. A
@@ -113,7 +112,7 @@ FlyoutPanel {
         scope.openFlyout = ""
         if (act === "settings") settingsWin.open()
         else if (act === "system") systemWin.open()
-        else if (act === "keybinds") keybindsWin.open()
+        else if (act === "keybinds") settingsWin.open("keybinds")
         else if (act === "lock") Quickshell.execDetached(["hyprlock"])
         else if (act === "suspend") Quickshell.execDetached(["systemctl", "suspend"])
         else if (act === "hibernate") Quickshell.execDetached(["systemctl", "hibernate"])

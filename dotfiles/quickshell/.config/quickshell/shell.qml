@@ -93,7 +93,6 @@ ShellRoot {
     // Hyprland maps them on whichever monitor has focus.
     // built on first open, see LazyWindow.qml
     LazyWindow { id: system; System {} }
-    LazyWindow { id: keybinds; Keybinds {} }
     LazyWindow { id: settingsWindow; SettingsWindow {} }
 
     // `qs ipc call settings open appearance`, for a keybind or a script;
@@ -103,7 +102,7 @@ ShellRoot {
         function open(page: string): void { settingsWindow.open(page) }
     }
 
-    // `qs ipc call system open` / `qs ipc call keybinds open`, likewise.
+    // `qs ipc call system open`, likewise.
     // System takes a page the way Settings does -- `... open network` -- so a
     // keybind can go straight to the one page it is about.
     IpcHandler {
@@ -113,7 +112,7 @@ ShellRoot {
 
     IpcHandler {
         target: "keybinds"
-        function open(): void { keybinds.open() }
+        function open(): void { settingsWindow.open("keybinds") }
     }
 
     // `qs ipc call look cycle` / `qs ipc call look set soft` -- for a keybind
@@ -970,7 +969,6 @@ ShellRoot {
                 shellRoot: root
                 settingsWin: settingsWindow
                 systemWin: system
-                keybindsWin: keybinds
             }
         }
 

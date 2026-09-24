@@ -7,7 +7,6 @@
 
 import QtQuick
 import "../services"
-import "../windows"
 
 SettingsPage {
     id: page

@@ -9,10 +9,7 @@
 // except Appearance, whose shell half is Settings.qml, shared with the
 // Control Centre's Appearance page.
 //
-// Its own FloatingWindow rather than a CentredWindow: that one is a single
-// content-sized Column, and a fixed-size sidebar + pane doesn't fit it. The
-// ground and Escape come from WindowChrome.qml, bare, since the header here
-// is taller than its title row.
+// The ground and Escape come from WindowChrome.qml.
 //
 // Search: `/` (or a click) puts the cursor in the bar. Empty, the arrow keys
 // walk the sections and Enter opens one; typed into, the Sections panel lists
@@ -27,7 +24,7 @@
 // at all while Settings is shut.
 //
 // Floating and centring come from the "quickshell-windows" rule in
-// hyprland.lua, as for System and Keybinds.
+// hyprland.lua, as for System.
 
 import Quickshell
 import Quickshell.Io
@@ -53,8 +50,8 @@ FloatingWindow {
     title: "Settings"
     color: "transparent"
 
-    implicitWidth: Theme.settingsWindowSize.width
-    implicitHeight: Theme.settingsWindowSize.height
+    implicitWidth: Theme.windowSize.width
+    implicitHeight: Theme.windowSize.height
 
     // an unknown or empty page opens the default one
     function open(page) {
@@ -141,7 +138,14 @@ FloatingWindow {
         }
     }
 
-    // the distribution's own name for itself, for the subtitle
+    // this machine and the distribution's own name for itself, for the
+    // subtitle, as System shows them
+    FileView {
+        id: hostFile
+        path: "/proc/sys/kernel/hostname"
+        printErrors: false
+        blockLoading: true
+    }
     FileView {
         id: osRelease
         path: "/etc/os-release"
@@ -156,7 +160,6 @@ FloatingWindow {
     WindowChrome {
         id: chrome
         window: root
-        bare: true
 
         // `/` anywhere in the window, as long as no page field is typing:
         // the sink only sees keys nothing more local wanted, same as Escape
@@ -175,7 +178,7 @@ FloatingWindow {
         window: root
         eyebrow: "DESKTOP CONFIGURATION"
         title: "Settings"
-        subtitle: root.osName + " / common desktop controls"
+        subtitle: hostFile.text().trim() + " / " + root.osName
     }
 
     // --- search bar --------------------------------------------------------

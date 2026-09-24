@@ -16,10 +16,10 @@
 // Laid out like Settings: the shared WindowHeader, then two framed panels
 // -- the numbered Sections on the left, the open page on the right. The
 // ground and Escape are a bare WindowChrome.qml, and the window opens at
-// Theme.systemWindowSize.
+// Theme.windowSize, the same size as Settings.
 //
 // Floating and centring come from the "quickshell-windows" rule in
-// hyprland.lua, as for Settings and Keybinds.
+// hyprland.lua, as for Settings.
 
 import Quickshell
 import QtQuick
@@ -44,8 +44,8 @@ FloatingWindow {
     title: "System"
     color: "transparent"
 
-    implicitWidth: Theme.systemWindowSize.width
-    implicitHeight: Theme.systemWindowSize.height
+    implicitWidth: Theme.windowSize.width
+    implicitHeight: Theme.windowSize.height
 
     // an unknown or empty page opens the default one
     function open(page) {
@@ -93,7 +93,6 @@ FloatingWindow {
     WindowChrome {
         id: chrome
         window: root
-        bare: true
     }
 
     WindowHeader {

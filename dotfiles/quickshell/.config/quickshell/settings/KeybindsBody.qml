@@ -1,5 +1,5 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/windows/KeybindsBody.qml
+// ~/.config/quickshell/settings/KeybindsBody.qml
 //
 // The Keybinds editor. Two tabs over one list area, so the window is the
 // same height whichever is showing:

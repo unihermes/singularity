@@ -32,7 +32,7 @@ already built here, often further than dwm-titus takes it.
 | Settings search | No | **Yes** | `/` box, backed by `services/SettingsIndex.js` |
 | Control Centre | Yes | **Yes** | `flyouts/ControlCentre.qml` |
 | Launcher | Yes | **Yes** | `flyouts/Launcher.qml`, `services/Apps.qml` |
-| Keybind viewer | Yes (Super+/) | **Yes** | `windows/Keybinds.qml`, `KeybindsBody.qml` — editable, not just a cheatsheet |
+| Keybind viewer | Yes (Super+/) | **Yes** | `settings/SettingsPageKeybinds.qml`, `KeybindsBody.qml` — editable, not just a cheatsheet |
 | Bar widget show/hide + reorder | Yes | **Yes** | `bar/BarWidgetList.qml`, drag-reorder across LEFT/CENTRE/RIGHT |
 | Theme / look system | `themes.toml` | **Yes**, richer | `services/Looks.js`, `LookStore.qml`, `Theme.qml`, user looks in `looks.json` |
 | Theme push to GTK/Qt/terminal/editor | gsettings + qt6ct | **Yes**, wider | `services/AppearanceSync.qml` → gsettings, qt6ct, alacritty, nvim, wofi, swaync |

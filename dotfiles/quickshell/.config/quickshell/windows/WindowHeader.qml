@@ -1,12 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/WindowHeader.qml
 //
-// The header the standalone windows (Settings, System, Keybinds) share: an
+// The header the standalone windows (Settings, System) share: an
 // accent bar, a small spaced-out eyebrow over the window's name and a line
 // under it, and a Close button. Dragging it moves the window.
 //
-// Pair it with a `bare` WindowChrome, which keeps the ground and Escape but
-// leaves the title row to this.
+// Sits over a WindowChrome, which draws the ground and takes Escape.
 
 import QtQuick
 import "../services"
