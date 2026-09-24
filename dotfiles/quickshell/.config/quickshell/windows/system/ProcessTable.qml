@@ -26,11 +26,13 @@ Column {
     // reserve space for this many rows, so the column doesn't jump while a
     // sort change is loading
     property int reserveRows: 5
+    // the section heading, with the sort toggles on its line
+    property string heading: "PROCESSES"
 
     width: parent ? parent.width : 0
     spacing: Theme.spaceM
 
-    readonly property int pidW:  Theme.fs(52)
+    readonly property int pidW:  Theme.fs(64)
     readonly property int userW: Theme.fs(74)
     readonly property int cpuW:  Theme.fs(52)
     readonly property int memW:  Theme.fs(62)
@@ -41,19 +43,19 @@ Column {
 
     Item {
         width: parent.width
-        height: Theme.controlSize
-        visible: root.showSort
+        height: Math.max(Theme.headingHeight, root.showSort ? sortRow.height : 0)
 
         FlyoutHeading {
             anchors.left: parent.left
-            anchors.right: sortRow.left
-            anchors.rightMargin: Theme.spaceL
+            anchors.right: root.showSort ? sortRow.left : parent.right
+            anchors.rightMargin: root.showSort ? Theme.spaceL : 0
             anchors.verticalCenter: parent.verticalCenter
-            text: "SORT BY"
+            text: root.heading
         }
 
         FlyoutSegmented {
             id: sortRow
+            visible: root.showSort
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             fill: false
@@ -71,7 +73,16 @@ Column {
         Text {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            text: root.detailed ? "PID   Process" : "Process"
+            visible: root.detailed
+            text: "PID"
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontSmall
+        }
+        Text {
+            x: root.detailed ? root.pidW : 0
+            anchors.verticalCenter: parent.verticalCenter
+            text: "Process"
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall

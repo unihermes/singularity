@@ -23,6 +23,8 @@ SystemPage {
         + " runnable  ·  sampled every 3 seconds, ranked over a real 1-second window"
 
     ProcessTable {
+        // the page is already called Processes
+        heading: SystemStats.procSort === "mem" ? "BY MEMORY" : "BY CPU"
         detailed: true
         reserveRows: 18
     }

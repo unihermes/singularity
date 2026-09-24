@@ -231,9 +231,7 @@ SystemPage {
     // --- top processes ------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "HEAVIEST PROCESSES" }
-
-    ProcessTable { reserveRows: 5 }
+    ProcessTable { heading: "HEAVIEST PROCESSES"; reserveRows: 5 }
 
     // --- actions ------------------------------------------------------------
 

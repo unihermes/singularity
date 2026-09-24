@@ -127,18 +127,30 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "SENSORS" }
 
-    Repeater {
-        model: SystemStats.sensors
+    // two columns, hottest first down the left, as the CPU page's threads
+    Grid {
+        id: sensorGrid
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        rowSpacing: Theme.spaceM
+        flow: Grid.TopToBottom
+        rows: Math.ceil(SystemStats.sensors.length / 2)
 
-        BarRow {
-            required property var modelData
-            label: modelData.label
-            sublabel: modelData.chip
-            value: Math.round(modelData.c) + "°C"
-            // the same 100C full scale the CPU tile uses, so two sensors
-            // side by side are comparable at a glance
-            fraction: modelData.c / 100
-            critical: modelData.c >= 90
+        Repeater {
+            model: SystemStats.sensors
+
+            BarRow {
+                required property var modelData
+                width: (sensorGrid.width - sensorGrid.columnSpacing) / 2
+                label: modelData.label
+                sublabel: modelData.chip
+                value: Math.round(modelData.c) + "°C"
+                // the same 100C full scale the CPU tile uses, so two sensors
+                // side by side are comparable at a glance
+                fraction: modelData.c / 100
+                critical: modelData.c >= 90
+            }
         }
     }
 

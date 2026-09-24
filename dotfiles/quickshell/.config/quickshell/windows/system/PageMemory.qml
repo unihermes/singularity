@@ -155,7 +155,5 @@ SystemPage {
     // --- heaviest -----------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "LARGEST PROCESSES" }
-
-    ProcessTable { reserveRows: 5; showSort: true }
+    ProcessTable { heading: "LARGEST PROCESSES"; reserveRows: 5; showSort: true }
 }
