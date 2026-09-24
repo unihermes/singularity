@@ -5,7 +5,8 @@
     "fullscreen": false,
     "pin": false,
     "class": "com.anthropic.Claude",
-    "size": "1240 690"
+    "size": "1240 690",
+    "label": "Claude Desktop"
   },
   {
     "float": true,

@@ -81,17 +81,6 @@ var entries = [
     { page: "display", section: "",  label: "Scale",        keywords: "monitor hidpi fractional" },
     { page: "display", section: "",  label: "Mode",         keywords: "monitor resolution refresh rate hz" },
 
-    // --- Audio -------------------------------------------------------------
-    { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute speakers" },
-    { page: "audio", section: "Output", label: "Device",    keywords: "default sink source speakers headphones hdmi microphone" },
-    { page: "audio", section: "Output", label: "Output",    keywords: "sink speakers headphones device" },
-    { page: "audio", section: "Input",  label: "Input",     keywords: "source microphone mic device" },
-    // The mixer's rows are named after whatever happens to be running, so
-    // there is no fixed field label to point at. These name their heading
-    // instead: the result opens the page, and highlights nothing.
-    { page: "audio", section: "", label: "Playing",   keywords: "mixer per app volume application stream" },
-    { page: "audio", section: "", label: "Recording", keywords: "mixer capture app stream microphone" },
-
     // --- Network -----------------------------------------------------------
     { page: "network", section: "Status", label: "Wi-Fi",      keywords: "wifi wireless radio iwd on off" },
     { page: "network", section: "Status", label: "Interface",  keywords: "device wlan adapter" },
@@ -108,6 +97,17 @@ var entries = [
     { page: "bluetooth", section: "Adapter", label: "Discoverable", keywords: "visible advertise findable" },
     { page: "bluetooth", section: "Adapter", label: "Pairable",     keywords: "accept pairing requests" },
     { page: "bluetooth", section: "Nearby",  label: "Nearby",       keywords: "scan discover pair headphones mouse keyboard unnamed" },
+
+    // --- Audio -------------------------------------------------------------
+    { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute speakers" },
+    { page: "audio", section: "Output", label: "Device",    keywords: "default sink source speakers headphones hdmi microphone" },
+    { page: "audio", section: "Output", label: "Output",    keywords: "sink speakers headphones device" },
+    { page: "audio", section: "Input",  label: "Input",     keywords: "source microphone mic device" },
+    // The mixer's rows are named after whatever happens to be running, so
+    // there is no fixed field label to point at. These name their heading
+    // instead: the result opens the page, and highlights nothing.
+    { page: "audio", section: "", label: "Playing",   keywords: "mixer per app volume application stream" },
+    { page: "audio", section: "", label: "Recording", keywords: "mixer capture app stream microphone" },
 
     // --- Input -------------------------------------------------------------
     { page: "input", section: "Keyboard", label: "Layout",            keywords: "xkb us de language" },
@@ -128,23 +128,8 @@ var entries = [
     { page: "input", section: "Touchpad", label: "Drag lock",         keywords: "trackpad" },
     { page: "input", section: "Touchpad", label: "Middle-click emulation", keywords: "trackpad paste" },
 
-    // --- Power & Idle ------------------------------------------------------
-    { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
-    { page: "power", section: "When idle", label: "Dim the screen",    keywords: "idle brightness timeout hypridle" },
-    { page: "power", section: "When idle", label: "Lock",              keywords: "idle hyprlock timeout screen lock" },
-    { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },
-    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout" },
-    { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger" },
-    { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
-
-    // --- Notifications -----------------------------------------------------
-    { page: "notifications", section: "Quick actions", label: "Do Not Disturb", keywords: "dnd silence mute" },
-    { page: "notifications", section: "Quick actions", label: "Clear all",      keywords: "dismiss history" },
-    { page: "notifications", section: "Quick actions", label: "Open the panel", keywords: "swaync centre center" },
-    { page: "notifications", section: "Popups", label: "Position",              keywords: "corner where popups appear" },
-    { page: "notifications", section: "How long popups stay", label: "Normal",  keywords: "timeout duration" },
-    { page: "notifications", section: "How long popups stay", label: "Low priority", keywords: "timeout duration" },
-    { page: "notifications", section: "How long popups stay", label: "Critical", keywords: "timeout duration urgent" },
+    // --- Keybinds ----------------------------------------------------------
+    { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },
 
     // --- Window Rules ------------------------------------------------------
     { page: "windowrules", section: "Add a rule", label: "Open now",     keywords: "app class pick running" },
@@ -156,14 +141,28 @@ var entries = [
     { page: "windowrules", section: "Rules", label: "Always on top",     keywords: "pin float above" },
     { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
 
-    // --- Keybinds ----------------------------------------------------------
-    { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },
+    // --- Notifications -----------------------------------------------------
+    { page: "notifications", section: "Quick actions", label: "Do Not Disturb", keywords: "dnd silence mute" },
+    { page: "notifications", section: "Quick actions", label: "Clear all",      keywords: "dismiss history" },
+    { page: "notifications", section: "Quick actions", label: "Open the panel", keywords: "swaync centre center" },
+    { page: "notifications", section: "Popups", label: "Position",              keywords: "corner where popups appear" },
+    { page: "notifications", section: "How long popups stay", label: "Normal",  keywords: "timeout duration" },
+    { page: "notifications", section: "How long popups stay", label: "Low priority", keywords: "timeout duration" },
+    { page: "notifications", section: "How long popups stay", label: "Critical", keywords: "timeout duration urgent" },
 
-    // --- Terminal ----------------------------------------------------------
-    { page: "shell", section: "Alacritty", label: "Font size",  keywords: "terminal points" },
-    { page: "shell", section: "Alacritty", label: "Opacity",    keywords: "terminal transparency background" },
-    { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam blink" },
-    { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc shortcut command" },
+    // --- Power & Idle ------------------------------------------------------
+    { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
+    { page: "power", section: "When idle", label: "Dim the screen",    keywords: "idle brightness timeout hypridle" },
+    { page: "power", section: "When idle", label: "Lock",              keywords: "idle hyprlock timeout screen lock" },
+    { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },
+    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout" },
+    { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger" },
+    { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
+
+    // --- Startup -----------------------------------------------------------
+    { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
+    { page: "autostart", section: "Add",      label: "Application",  keywords: "autostart add app start login" },
+    { page: "autostart", section: "Packages", label: "From installed packages", keywords: "xdg autostart system entry keyring" },
 
     // --- File Types --------------------------------------------------------
     { page: "filetypes", section: "Common", label: "Web browser",  keywords: "default http https url link mimeapps" },
@@ -175,10 +174,12 @@ var entries = [
     { page: "filetypes", section: "Common", label: "Audio",        keywords: "default player mp3 flac mimeapps" },
     { page: "filetypes", section: "Common", label: "Archives",     keywords: "default zip tar mimeapps" },
     { page: "filetypes", section: "Common", label: "Email links",  keywords: "default mailto mimeapps" },
-    // --- Startup -----------------------------------------------------------
-    { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
-    { page: "autostart", section: "Add",      label: "Application",  keywords: "autostart add app start login" },
-    { page: "autostart", section: "Packages", label: "From installed packages", keywords: "xdg autostart system entry keyring" },
+
+    // --- Terminal ----------------------------------------------------------
+    { page: "shell", section: "Alacritty", label: "Font size",  keywords: "terminal points" },
+    { page: "shell", section: "Alacritty", label: "Opacity",    keywords: "terminal transparency background" },
+    { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam blink" },
+    { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc shortcut command" },
 ]
 
 // Every entry, with its page's name and number folded in, so a result row
