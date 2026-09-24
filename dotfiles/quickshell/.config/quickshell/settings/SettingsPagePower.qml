@@ -48,6 +48,9 @@ SettingsPage {
     // `timeout = N` line in the file
     property var listeners: []
     property bool idleRunning: false
+    // the listeners' indices, soonest first: taken once when the page opens,
+    // so a row doesn't jump past its neighbour while its time is stepped
+    property var ladder: []
 
     function describe(cmd) {
         if (/brightnessctl/.test(cmd)) return "Dim the screen"
@@ -142,6 +145,7 @@ SettingsPage {
 
     Component.onCompleted: {
         reread()
+        ladder = listeners.map((l, i) => i).sort((a, b) => listeners[a].timeout - listeners[b].timeout)
         idleCheck.running = true
         PpdProfile.refresh()
     }
@@ -202,23 +206,25 @@ SettingsPage {
     }
 
     Repeater {
-        model: page.listeners
+        // a file whose listeners changed under the page shows in file order
+        model: page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i)
 
         SettingsField {
-            required property var modelData
-            required property int index
-            label: modelData.label
-            hint: page.stepHints[modelData.label] || ""
+            required property int modelData
+            readonly property int index: modelData
+            readonly property var step: page.listeners[index]
+            label: step.label
+            hint: page.stepHints[step.label] || ""
 
             FlyoutStepper {
                 anchors.right: parent.right
                 width: Theme.fit(170)
                 // in 30-second steps
-                value: Math.round(modelData.timeout / 30)
+                value: Math.round(step.timeout / 30)
                 minimum: 1
                 maximum: 240
                 valueWidth: 64
-                displayValue: page.minutes(modelData.timeout)
+                displayValue: page.minutes(step.timeout)
                 onStepped: delta => page.setTimeout_(index, Math.max(30, (value + delta) * 30))
             }
         }

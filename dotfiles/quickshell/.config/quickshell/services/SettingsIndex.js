@@ -147,13 +147,13 @@ var entries = [
     { page: "notifications", section: "How long popups stay", label: "Critical", keywords: "timeout duration urgent" },
 
     // --- Window Rules ------------------------------------------------------
-    { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
     { page: "windowrules", section: "Add a rule", label: "Open now",     keywords: "app class pick running" },
     { page: "windowrules", section: "Rules", label: "Layout",            keywords: "float tiled auto" },
     { page: "windowrules", section: "Rules", label: "Size",              keywords: "natural window dimensions" },
     { page: "windowrules", section: "Rules", label: "Workspace",         keywords: "where it opens" },
     { page: "windowrules", section: "Rules", label: "Open fullscreen",   keywords: "maximise maximize" },
     { page: "windowrules", section: "Rules", label: "Always on top",     keywords: "pin float above" },
+    { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
 
     // --- Keybinds ----------------------------------------------------------
     { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },

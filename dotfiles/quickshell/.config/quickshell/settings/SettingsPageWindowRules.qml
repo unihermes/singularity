@@ -28,7 +28,7 @@ SettingsPage {
     id: page
 
     title: "Window Rules"
-    description: "Which layout each workspace uses, and how each app's windows and popouts open. Saved to window-rules.json and workspace-layouts.json in ~/.config/singularity. Rules apply to windows opened after a change."
+    description: "How each app's windows and popouts open, and which layout each workspace uses. Saved to window-rules.json and workspace-layouts.json in ~/.config/singularity. Rules apply to windows opened after a change."
 
     readonly property string rulesPath:
         (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/window-rules.json"
@@ -249,30 +249,6 @@ SettingsPage {
             try { page.layouts = JSON.parse(text()) || {} } catch (e) { page.layouts = {} }
         }
         onLoadFailed: page.layouts = {}
-    }
-
-    FlyoutHeading { text: "WORKSPACE LAYOUTS" }
-
-    Repeater {
-        model: Settings.workspaceCount
-
-        SettingsField {
-            id: wsField
-            required property int index
-            readonly property string key: String(index + 1)
-            readonly property string mode: page.layouts[key] || ""
-            label: "Workspace " + key
-            hint: index === 0 ? "Pinned workspaces keep their layout when SUPER+M switches the rest" : ""
-
-            SettingsDropdown {
-                anchors.right: parent.right
-                enabled: !AtomicFileWrite.busy
-                model: ["", "monocle", "dwindle"]
-                current: wsField.mode
-                labelFor: v => ({ "": "Follow SUPER+M", "monocle": "Monocle", "dwindle": "Tiled" })[v]
-                onPicked: v => page.setLayout(wsField.key, v)
-            }
-        }
     }
 
     FlyoutHeading { text: "ADD A RULE" }
@@ -546,6 +522,31 @@ SettingsPage {
             }
 
             Item { width: 1; height: Theme.spaceL; visible: ruleCol.expanded }
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "WORKSPACE LAYOUTS" }
+
+    Repeater {
+        model: Settings.workspaceCount
+
+        SettingsField {
+            id: wsField
+            required property int index
+            readonly property string key: String(index + 1)
+            readonly property string mode: page.layouts[key] || ""
+            label: "Workspace " + key
+            hint: index === 0 ? "Pinned workspaces keep their layout when SUPER+M switches the rest" : ""
+
+            SettingsDropdown {
+                anchors.right: parent.right
+                enabled: !AtomicFileWrite.busy
+                model: ["", "monocle", "dwindle"]
+                current: wsField.mode
+                labelFor: v => ({ "": "Follow SUPER+M", "monocle": "Monocle", "dwindle": "Tiled" })[v]
+                onPicked: v => page.setLayout(wsField.key, v)
+            }
         }
     }
 }
