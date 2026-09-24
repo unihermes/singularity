@@ -124,26 +124,18 @@ set_default mpv.desktop video/mp4 video/x-matroska video/webm video/quicktime \
 # Naming them keeps JSON and friends in the editor.
 set_default codium.desktop application/json application/xml application/x-yaml
 
-# On Wayland, GTK3 apps (Thunar included) read their theme, icons and fonts from
-# gsettings and ignore settings.ini, which only GTK4 and tools like fastfetch
-# go by. Keep both in step with gtk/.config/gtk-3.0/settings.ini. With no
-# session bus, gsettings silently writes to a throwaway in-memory backend, so
-# read one key back to catch that.
-iface=org.gnome.desktop.interface
-gsettings set $iface icon-theme          'kora'
-gsettings set $iface gtk-theme           'Adwaita-dark'
-gsettings set $iface color-scheme        'prefer-dark'
-gsettings set $iface cursor-theme        'Bibata-Modern-Classic'
-gsettings set $iface font-name           'Ubuntu Nerd Font 11'
-gsettings set $iface document-font-name  'Ubuntu Nerd Font 11'
-gsettings set $iface monospace-font-name 'UbuntuMono Nerd Font Mono 11'
-# Strip the close/minimise/maximise buttons out of GTK headerbars. GTK4 and
-# libadwaita apps take this from the portal, which reads gsettings, and ignore
-# gtk-decoration-layout in settings.ini -- without it they keep drawing an X.
+# The theme, dark or light, icons, cursor and fonts are the shell's to set:
+# Quickshell's AppearanceSync writes them to gsettings from the Appearance
+# page at every start. This is the one key it doesn't manage -- no close,
+# minimise or maximise buttons in GTK headerbars. GTK4 and libadwaita apps take
+# it from the portal, which reads gsettings, and ignore gtk-decoration-layout
+# in settings.ini, so without it they keep drawing an X. With no session bus,
+# gsettings silently writes to a throwaway in-memory backend, so read it back
+# to catch that.
 gsettings set org.gnome.desktop.wm.preferences button-layout ':'
-if [[ $(gsettings get $iface icon-theme 2>/dev/null) != "'kora'" ]]; then
+if [[ $(gsettings get org.gnome.desktop.wm.preferences button-layout 2>/dev/null) != "':'" ]]; then
   warn "gsettings did not stick (no session bus?). Rerun ./install.sh from a"
-  warn "logged-in session or Thunar will ignore the icon theme and fonts."
+  warn "logged-in session or GTK4 apps will keep their headerbar buttons."
 fi
 
 # --- boot verbosity ------------------------------------------------------
@@ -853,7 +845,7 @@ fc-match monospace
 if [[ ! -d /usr/share/icons/Bibata-Modern-Classic ]]; then
   warn "Bibata-Modern-Classic not found. Variants actually installed:"
   ls /usr/share/icons 2>/dev/null | grep -i bibata || warn "  (none)"
-  warn "correct the name in hyprland.lua, gtk settings.ini and .icons/default"
+  warn "pick one under Settings > Appearance > System > Cursor"
 fi
 
 if (( aur_failed )); then

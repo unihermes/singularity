@@ -76,6 +76,16 @@ backup_conflicts
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
 
+# Links into packages since removed from dotfiles/. stow only touches the
+# packages it's handed, so it never clears these, and they're left dangling.
+#   ~/.icons  the XCursor fallback, now written by the shell (AppearanceSync)
+for old in "$HOME/.icons"; do
+  if [[ -L $old && ! -e $old && $(readlink -- "$old") == *dotfiles/* ]]; then
+    rm -- "$old"
+    log "  removed stale link ${old#"$HOME/"}"
+  fi
+done
+
 # The repo's own hooks (tools/git-hooks): the pre-commit check that keeps
 # Settings search in step with the Settings pages.
 [[ -d .git ]] && git config core.hooksPath tools/git-hooks

@@ -24,14 +24,13 @@
 //   nvim.lua    -- the editor's palette, read by nvim's colors/neutrino.lua.
 //                  nvim watches it and recolours open sessions.
 //
-// Dark/light also reaches outside quickshell's own widgets, to GTK and Qt
-// apps -- install.sh's one-time `gsettings set` only matched whatever look
-// was current at install time, so a look picked afterwards left every GTK app
-// on the old shade. Font is deliberately NOT synced here: GTK/Qt keep their
-// own systemFontFamily/systemFontSize below, independent of the bar's font
-// picker (Settings.fontFamily/Theme.fontText), which only affects the shell's
-// own chrome (wofi, swaync, the bar itself).
-//   gsettings   -- gtk-theme/color-scheme, written live to dconf (no file, so
+// GTK and Qt apps get dark or light, the icon and cursor themes, and the
+// system font -- this is the only place any of those are set. Not the
+// shell's own font (Settings.fontFamily/Theme.fontText), which is for the
+// shell's chrome alone (wofi, swaync, the bar): GTK/Qt use systemFontFamily
+// and systemFontSize below.
+//   gsettings   -- gtk-theme/color-scheme, the icon and cursor themes, and the
+//                  system font, written live to dconf (no file, so
 //                  nothing to watch -- GTK apps read dconf directly, and
 //                  xdg-desktop-portal-gtk forwards color-scheme to portal-aware
 //                  Qt/GTK4 apps).
@@ -41,6 +40,8 @@
 //                  own stock colour schemes rather than a palette built from
 //                  Theme's roles -- close enough for light vs dark, and far
 //                  less to get wrong than hand-mapping all 21 QPalette roles.
+//   ~/.local/share/icons/default/index.theme -- the XCursor fallback,
+//                  inheriting the cursor theme (writeCursor).
 
 import Quickshell
 import Quickshell.Io
@@ -322,6 +323,17 @@ Scope {
             transform: () => line + "\n",
             after: apply ? "hyprctl setcursor '" + String(Settings.cursorTheme).replace(/'/g, "'\\''") + "' "
                 + Settings.cursorSize + " >/dev/null" : "",
+        })
+        // The XCursor fallback, for apps that read neither gsettings nor
+        // XCURSOR_THEME -- older X11 clients, some Qt and Electron apps under
+        // XWayland -- which would otherwise draw Adwaita's pointer. libXcursor
+        // searches ~/.local/share/icons before ~/.icons, and this one isn't a
+        // link into the repo.
+        var index = "[Icon Theme]\nName=Default\nComment=Default cursor theme\nInherits="
+            + Settings.cursorTheme + "\n"
+        AtomicFileWrite.write({
+            path: Quickshell.env("HOME") + "/.local/share/icons/default/index.theme",
+            transform: () => index,
         })
     }
     function writeIcons() {

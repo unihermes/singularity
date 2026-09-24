@@ -42,7 +42,7 @@ dangling. Every step is idempotent; rerun `./install.sh` any time.
 4. Symlinks `dotfiles/` into `$HOME` with GNU stow, and builds the
    `alttab-relay` helper from its C++ source
 5. Rebuilds font and icon caches, sets Thunar as the directory handler,
-   writes the theme, icons and fonts to gsettings, and quiets the kernel
+   strips the GTK headerbar buttons through gsettings, and quiets the kernel
    command line
 6. Applies the boot speed fixes: vfat in the initramfs, iwd no longer blocking
    the greeter, the webcam controller deferred until after login, and
@@ -99,7 +99,6 @@ singularity/
     ├── gtk/.config/gtk-3.0/settings.ini
     ├── gtk/.config/gtk-4.0/settings.ini
     ├── fontconfig/.config/fontconfig/fonts.conf
-    ├── icons/.icons/default/index.theme   # cursor fallback
     ├── bash/.bashrc
     └── starship/.config/{starship.toml,starship-path.sh}
 ```
@@ -313,10 +312,13 @@ fc-match monospace
   `iwctl station wlan0 connect <SSID>` (`iwctl device list` if the interface
   has another name). `install.sh` writes DHCP configs to
   `/etc/systemd/network` only when that directory has none.
-- **Wayland ignores settings.ini for GTK3.** Thunar and other GTK3 apps take
-  their theme, icons and fonts from gsettings, while fastfetch and GTK4 read
-  `settings.ini`. That is how fastfetch can report kora while Thunar shows
-  Adwaita. `install.sh` sets both. Change one, change the other.
+- **The theme, icons, cursor and fonts live in gsettings, set by the shell.**
+  The Appearance page's System section (and Shade, for dark or light) writes
+  them through AppearanceSync every time it starts, along with qt6ct's config
+  and the XCursor fallback in `~/.local/share/icons/default`. GTK3 on Wayland
+  reads gsettings directly, and GTK4 through the settings portal, so
+  `settings.ini` keeps only what the shell doesn't manage. Change them on the
+  page rather than by hand: a hand edit is overwritten at the next start.
 - **Kora 2.0.0** dropped upstream symlinks and icons half-resolve in some
   panels. Check the AUR comments if theming looks wrong.
 - **State that survives a reboot.** rfkill (Wi-Fi/Bluetooth radio block),
