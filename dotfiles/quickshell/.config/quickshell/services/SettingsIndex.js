@@ -38,6 +38,7 @@ var entries = [
     { page: "appearance", section: "Colours", label: "Intensity",       keywords: "colour color saturation" },
     { page: "appearance", section: "Colours", label: "Shade",           keywords: "light dark mode theme variant" },
     { page: "appearance", section: "Colours", label: "Accent",          keywords: "colour color highlight hue" },
+    { page: "appearance", section: "Colours", label: "Custom accent",   keywords: "colour color hex rgb highlight" },
     { page: "appearance", section: "Colours", label: "Panel opacity",   keywords: "transparency translucent glass flyouts" },
     { page: "appearance", section: "Colours", label: "Overlay dimming", keywords: "scrim dark backdrop" },
     { page: "appearance", section: "Bar",   label: "Position",          keywords: "bar top bottom edge" },

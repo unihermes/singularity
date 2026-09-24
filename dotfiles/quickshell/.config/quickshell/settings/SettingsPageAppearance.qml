@@ -804,7 +804,8 @@ SettingsPage {
         }
     }
 
-    // Every look's accent as a swatch, and None. The wallpaper palette
+    // Every look's accent as a swatch, and None -- plus the accent in use,
+    // when it's a custom one none of the looks has. The wallpaper palette
     // brings its own, so the picker rests while that's on.
     SettingsField {
         label: "Accent"
@@ -818,7 +819,8 @@ SettingsPage {
             opacity: enabled ? 1 : 0.4
 
             Repeater {
-                model: Settings.accents
+                model: Settings.accent === "" || Settings.accents.indexOf(Settings.accent) !== -1
+                    ? Settings.accents : Settings.accents.concat([Settings.accent])
 
                 Rectangle {
                     id: swatch
@@ -846,6 +848,64 @@ SettingsPage {
                 text: "None"
                 selected: Settings.accent === ""
                 onClicked: Settings.set("accent", "")
+            }
+        }
+    }
+
+    // Any colour as #rrggbb (or #rgb, with or without the #), applied on
+    // Enter. The swatch beside it previews what's typed while it parses.
+    SettingsField {
+        id: customField
+        label: "Custom accent"
+        hint: Settings.colourMode === "wallpaper" ? "Grayscale palette only"
+            : "Type a hex colour and press Enter"
+
+        function parse(t) {
+            var h = String(t).trim().replace(/^#/, "")
+            if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.split("").map(c => c + c).join("")
+            return /^[0-9a-fA-F]{6}$/.test(h) ? "#" + h.toLowerCase() : ""
+        }
+
+        Row {
+            id: customRow
+            anchors.right: parent.right
+            spacing: Theme.spaceL
+            enabled: Settings.colourMode !== "wallpaper"
+            opacity: enabled ? 1 : 0.4
+            readonly property string typed: customField.parse(hexInput.text)
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.chipHeight
+                height: Theme.chipHeight
+                radius: Theme.radiusSmall
+                color: customRow.typed !== "" ? customRow.typed : "transparent"
+                border.width: Theme.borderWidth
+                border.color: Theme.stroke
+            }
+
+            FlyoutInput {
+                id: hexInput
+                width: Theme.fit(110)
+                echoPassword: false
+                placeholder: "#rrggbb"
+                text: Settings.accent
+                onAccepted: {
+                    if (customRow.typed === "") {
+                        page.say("\"" + text.trim() + "\" isn't a hex colour", true)
+                        return
+                    }
+                    Settings.set("accent", customRow.typed)
+                    text = customRow.typed
+                    page.say("Accent set to " + customRow.typed, false)
+                }
+                onEscapePressed: text = Settings.accent
+
+                // typing breaks the binding; follow a swatch picked above
+                Connections {
+                    target: Settings
+                    function onAccentChanged() { hexInput.text = Settings.accent }
+                }
             }
         }
     }
