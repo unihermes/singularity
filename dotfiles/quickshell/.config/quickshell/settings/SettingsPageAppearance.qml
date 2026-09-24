@@ -551,10 +551,46 @@ SettingsPage {
         Choices { key: "frameStyle" }
     }
 
+    Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }
+
     SettingsField {
         label: "Density"
         hint: "Space between and inside rows, panels and windows"
         Choices { key: "density" }
+    }
+
+    // Case as a pair, the rest as chips that toggle -- they're independent
+    SettingsField {
+        label: "Headings"
+        hint: "Section titles in flyouts, windows and here"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+
+            FlyoutSegmented {
+                fill: false
+                model: [{ value: true, text: "CAPS" }, { value: false, text: "Title" }]
+                current: Settings.headingUpper
+                onPicked: v => Settings.set("headingUpper", v)
+            }
+            FlyoutChip {
+                text: "Bold"
+                selected: Settings.headingBold
+                onClicked: Settings.set("headingBold", !Settings.headingBold)
+            }
+            FlyoutChip {
+                text: "Rule"
+                selected: Settings.headingRule
+                onClicked: Settings.set("headingRule", !Settings.headingRule)
+            }
+            FlyoutChip {
+                text: "Accent"
+                enabled: Theme.hasAccent
+                selected: Settings.headingAccent && Theme.hasAccent
+                onClicked: Settings.set("headingAccent", !Settings.headingAccent)
+            }
+        }
     }
 
     // The box shows the font in use, set in itself, and the list sets every
@@ -609,7 +645,7 @@ SettingsPage {
     SettingsField {
         label: "Reset look"
         hint: Settings.lookPristine ? "Everything here and under Bar is as the look was designed"
-            : "Frames, density, font, corners and the bar back to " + page.label(Settings.look) + "'s own"
+            : "Frames, density, font, headings, accent, corners and the bar back to " + page.label(Settings.look) + "'s own"
 
         FlyoutChip {
             anchors.right: parent.right
@@ -765,6 +801,55 @@ SettingsPage {
             }
         }
     }
+
+    // Every look's accent as a swatch, and None. The wallpaper palette
+    // brings its own, so the picker rests while that's on.
+    SettingsField {
+        label: "Accent"
+        hint: Settings.colourMode === "wallpaper" ? "The wallpaper palette's own tone is used instead"
+            : "Selection, focus and the current item"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+            enabled: Settings.colourMode !== "wallpaper"
+            opacity: enabled ? 1 : 0.4
+
+            Repeater {
+                model: Settings.accents
+
+                Rectangle {
+                    id: swatch
+                    required property string modelData
+                    readonly property bool current: Settings.accent === modelData
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.chipHeight
+                    height: Theme.chipHeight
+                    radius: Theme.radiusSmall
+                    color: modelData
+                    border.width: current ? 2 : swatchMouse.containsMouse ? Theme.borderWidth : 0
+                    border.color: Theme.textStrong
+
+                    MouseArea {
+                        id: swatchMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Settings.set("accent", swatch.modelData)
+                    }
+                }
+            }
+
+            FlyoutChip {
+                text: "None"
+                selected: Settings.accent === ""
+                onClicked: Settings.set("accent", "")
+            }
+        }
+    }
+
+    Stepper { label: "Panel opacity"; hint: "Flyouts, the shell's windows, wofi and notifications. Below 100% the blur behind shows through"; key: "panelOpacity"; step: 5; suffix: "%" }
+    Stepper { label: "Overlay dimming"; hint: "How dark the desktop goes behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
 
     // --- bar -----------------------------------------------------------------
 

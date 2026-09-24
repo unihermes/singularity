@@ -14,7 +14,8 @@
 // Three layers, most specific wins:
 //   LookStore    the active look's palette and fixed style (see Looks.js)
 //   Settings     what the Appearance page edits -- radius, bar geometry,
-//                frame, density, font, colour mode -- seeded by the look
+//                frame, density, font, accent, headings, colour mode --
+//                seeded by the look
 //   this file    semantic roles derived from both. Components ask for
 //                Theme.hoverFill, not Theme.overlay, so a look can remap
 //                what "hovered" means without touching any component.
@@ -75,8 +76,8 @@ Singleton {
     // The look's one hue, for marks rather than text: selection ticks, focus
     // strokes, the current item, and meters in looks that ask for it. In
     // wallpaper mode it's the wallpaper's primary tone (the ramp's bright).
-    readonly property bool hasAccent: !!look.accent && Settings.colourMode !== "wallpaper"
-    readonly property color accent: hasAccent ? look.accent : bright
+    readonly property bool hasAccent: Settings.accent !== "" && Settings.colourMode !== "wallpaper"
+    readonly property color accent: hasAccent ? Settings.accent : bright
 
     // --- semantic colours -----------------------------------------------------
     // What each state looks like, named for the state. Components use these
@@ -103,10 +104,10 @@ Singleton {
     readonly property color meterStroke:   surface
     readonly property color meterFill:     look.meterAccent && hasAccent ? accent : text
     // the dimming behind full-screen overlays
-    readonly property color scrim:         Qt.rgba(0, 0, 0, look.scrim)
+    readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // Flyouts', windows' and cards' ground, translucent in glassy looks. The
     // desktop shows through only where Hyprland blurs or nothing's behind.
-    readonly property real panelOpacity:   look.panelOpacity
+    readonly property real panelOpacity:   Settings.panelOpacity / 100
     readonly property color panelFill:     Qt.rgba(panel.r, panel.g, panel.b, panelOpacity)
 
     // --- type ------------------------------------------------------------------
@@ -144,11 +145,11 @@ Singleton {
 
     // Section headings (FlyoutHeading and its kin). Headings are written in
     // caps in the source; title-case looks lower them with heading().
-    readonly property bool headingBold:    look.heading.bold
+    readonly property bool headingBold:    Settings.headingBold
     readonly property real headingSpacing: look.heading.spacing
-    readonly property bool headingUpper:   look.heading.upper
-    readonly property bool headingRule:    look.heading.rule
-    readonly property color headingColor:  look.heading.accent && hasAccent ? accent : bright
+    readonly property bool headingUpper:   Settings.headingUpper
+    readonly property bool headingRule:    Settings.headingRule
+    readonly property color headingColor:  Settings.headingAccent && hasAccent ? accent : bright
     // acronyms title case leaves alone
     readonly property var headingKeep: ["AUR", "CPU", "GPU", "RAM", "MEM", "IP", "DND", "USB",
                                         "HDMI", "VPN", "UI", "SSD", "OS", "WIFI"]
@@ -177,7 +178,7 @@ Singleton {
     readonly property bool frameDouble: Settings.frameStyle === "double"
     readonly property bool frameBevel:  Settings.frameStyle === "bevel"
     readonly property bool frameNone:   Settings.frameStyle === "none"
-    readonly property int borderWidth: look.borderWidth
+    readonly property int borderWidth: Settings.borderWidth
     // how far the inner stroke sits inside a panel's outer one
     readonly property int frameInset:  3
     // The bevel's own highlight/shadow pair, for looks that ask for one.

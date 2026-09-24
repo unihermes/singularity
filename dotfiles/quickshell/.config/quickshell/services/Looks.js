@@ -18,7 +18,9 @@
 //
 //   settings  -- the values the Appearance page can also change: radius, the
 //                bar's height/gap/opacity/style/position, module style,
-//                frame style, density, font, workspace and clock style. Picking a look writes these into Settings;
+//                frame style, density, font, workspace and clock style,
+//                plus the adjustable part of the fixed half (adjustable()
+//                below). Picking a look writes these into Settings;
 //                after that they're the user's to adjust, and the look only
 //                comes back on a re-pick.
 //   the rest  -- fixed per look:
@@ -137,13 +139,31 @@ var settingsBase = {
     clockStyle: "stamp",
 }
 
+// The parts of the fixed half the Appearance page can also adjust. The look
+// states them where they always were; they're copied into `settings` in the
+// units Settings stores (percentages, "" for no accent), so picking the look
+// sets them like the rest, and Reset look puts them back.
+function adjustable(look) {
+    var h = look.heading
+    return {
+        accent: look.accent || "",
+        panelOpacity: Math.round(look.panelOpacity * 100),
+        borderWidth: look.borderWidth,
+        scrim: Math.round(look.scrim * 100),
+        headingUpper: h.upper, headingBold: h.bold, headingRule: h.rule, headingAccent: h.accent,
+    }
+}
+
 // a look with its fixed half filled in from `base`, and its settings from
-// `settingsBase`
+// `settingsBase` and adjustable()
 function complete(look) {
     for (var b in base)
         if (look[b] === undefined) look[b] = base[b]
     for (var s in settingsBase)
         if (look.settings[s] === undefined) look.settings[s] = settingsBase[s]
+    var a = adjustable(look)
+    for (var k in a)
+        if (look.settings[k] === undefined) look.settings[k] = a[k]
     return look
 }
 complete(looks[fallback])

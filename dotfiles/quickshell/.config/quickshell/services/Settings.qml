@@ -68,6 +68,28 @@ Singleton {
     readonly property alias workspaceStyle: adapter.workspaceStyle
     // "stamp", "time" or "day" -- what the clock chip shows
     readonly property alias clockStyle:  adapter.clockStyle
+    // The look's adjustable fixed half (Looks.adjustable): its accent as a
+    // hex, "" for none; flyouts' and windows' ground opacity and the
+    // overlay dimming, both in percent; every stroke's width in px; and how
+    // section headings are set.
+    readonly property alias accent:       adapter.accent
+    readonly property alias panelOpacity: adapter.panelOpacity
+    readonly property alias borderWidth:  adapter.borderWidth
+    readonly property alias scrim:        adapter.scrim
+    readonly property alias headingUpper: adapter.headingUpper
+    readonly property alias headingBold:  adapter.headingBold
+    readonly property alias headingRule:  adapter.headingRule
+    readonly property alias headingAccent: adapter.headingAccent
+
+    // What the accent picker offers: every look's own accent, in look order.
+    readonly property var accents: {
+        var out = []
+        for (var i = 0; i < LookStore.order.length; i++) {
+            var a = LookStore.looks[LookStore.order[i]].accent
+            if (a && out.indexOf(a) === -1) out.push(a)
+        }
+        return out
+    }
 
     // Cycled through by the Appearance page's choice rows, in this order.
     readonly property var choices: ({
@@ -297,6 +319,9 @@ Singleton {
         radius:    { min: 0,  max: 14 },
         barOpacity: { min: 40, max: 100 },
         fontSize:  { min: 12, max: 22 },
+        panelOpacity: { min: 50, max: 100 },
+        borderWidth:  { min: 1,  max: 3 },
+        scrim:        { min: 0,  max: 80 },
         nightLightKelvin: { min: 2500, max: 6000 },
     })
 
@@ -403,6 +428,8 @@ Singleton {
         if (key === "barPosition") adapter.barPosition = (v === "bottom") ? "bottom" : "top"
         else if (key === "colourMode") setColourMode(v)
         else if (key === "look") applyLook(v)
+        else if (key === "accent") adapter.accent = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
+        else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
         else adapter[key] = clamp(key, v)
     }
@@ -427,6 +454,18 @@ Singleton {
     }
 
     function step(key, delta) { set(key, adapter[key] + delta) }
+
+    // A file written before the look's fixed half was adjustable has none of
+    // those keys, so the adapter's declared defaults -- Neutrino's -- would
+    // strip another look of its accent and headings. Filled in once from the
+    // look in use; `adjustableSeeded` stops it redoing that over later edits.
+    function seedAdjustable() {
+        if (adapter.adjustableSeeded) return
+        var l = LookStore.looks[adapter.look] || Looks.looks[Looks.fallback]
+        var a = Looks.adjustable(l)
+        for (var k in a) adapter[k] = a[k]
+        adapter.adjustableSeeded = true
+    }
 
     function reset() {
         root.applyLayout(adapter.look, defaults.look)
@@ -515,8 +554,12 @@ Singleton {
                 adapter.fontSize = root.clamp("fontSize", root.fontSizeBase * adapter.fontScale / 100)
                 adapter.fontScale = 100
             }
+            root.seedAdjustable()
         }
-        onLoadFailed: root.ready = true
+        onLoadFailed: {
+            root.ready = true
+            root.seedAdjustable()
+        }
 
         onFileChanged: reload()
         onAdapterUpdated: if (root.ready) saveTimer.restart()
@@ -544,6 +587,15 @@ Singleton {
             property string barStyle: "full"
             property string workspaceStyle: "pills"
             property string clockStyle: "stamp"
+            property string accent: ""
+            property int panelOpacity: 100
+            property int borderWidth: 1
+            property int scrim: 40
+            property bool headingUpper: true
+            property bool headingBold: true
+            property bool headingRule: true
+            property bool headingAccent: false
+            property bool adjustableSeeded: false
 
             property bool wallpaperShuffle: true
             property bool clockIsland: true
