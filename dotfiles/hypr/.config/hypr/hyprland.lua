@@ -227,6 +227,7 @@ hl.config({
         active_opacity   = 1.0,
         inactive_opacity = 0.96,
         dim_inactive = true,
+        dim_strength = 0.4,
 
         shadow = {
             enabled      = true,
@@ -238,7 +239,7 @@ hl.config({
 
         blur = {
             enabled    = true,
-            size       = 6,
+            size       = 12,
             passes     = 2,
             noise      = 0.015,
             contrast   = 0.9,
