@@ -20,6 +20,32 @@
 .pragma library
 
 var entries = [
+    // --- Network -----------------------------------------------------------
+    { page: "network", section: "Status", label: "Wi-Fi",      keywords: "wifi wireless radio iwd on off" },
+    { page: "network", section: "Status", label: "Interface",  keywords: "device wlan adapter" },
+    { page: "network", section: "Status", label: "IP address", keywords: "ipv4 dhcp address" },
+    { page: "network", section: "Status", label: "Gateway",    keywords: "router default route" },
+    { page: "network", section: "Status", label: "MAC",        keywords: "hardware address ethernet" },
+    { page: "network", section: "Status", label: "Link",       keywords: "bitrate signal strength speed" },
+    { page: "network", section: "Networks", label: "Networks", keywords: "wifi scan ssid connect join forget passphrase" },
+
+    // --- Bluetooth ---------------------------------------------------------
+    { page: "bluetooth", section: "Adapter", label: "Bluetooth",    keywords: "bt radio bluez power on off rfkill" },
+    { page: "bluetooth", section: "Adapter", label: "Name",         keywords: "adapter hostname identity" },
+    { page: "bluetooth", section: "Adapter", label: "Interface",    keywords: "hci adapter id mac address" },
+    { page: "bluetooth", section: "Adapter", label: "Discoverable", keywords: "visible advertise findable" },
+    { page: "bluetooth", section: "Adapter", label: "Pairable",     keywords: "accept pairing requests" },
+    { page: "bluetooth", section: "Nearby",  label: "Nearby",       keywords: "scan discover pair headphones mouse keyboard unnamed" },
+
+    // --- Power & Idle ------------------------------------------------------
+    { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
+    { page: "power", section: "When idle", label: "Dim the screen",    keywords: "idle brightness timeout hypridle" },
+    { page: "power", section: "When idle", label: "Lock",              keywords: "idle hyprlock timeout screen lock" },
+    { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },
+    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout" },
+    { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger" },
+    { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
+
     // --- Appearance --------------------------------------------------------
     { page: "appearance", section: "Look",          label: "Look",                 keywords: "theme preset style" },
     { page: "appearance", section: "Look",          label: "Reset look",           keywords: "revert default" },
@@ -74,6 +100,16 @@ var entries = [
     { page: "appearance", section: "Default",       label: "Reset to default",     keywords: "revert" },
     { page: "appearance", section: "Default",       label: "Factory reset",        keywords: "stock wipe" },
 
+    // --- Window Rules ------------------------------------------------------
+    { page: "windowrules", section: "Add a rule", label: "Open now",     keywords: "app class pick running" },
+    { page: "windowrules", section: "Rules", label: "Name",              keywords: "alias rename label title" },
+    { page: "windowrules", section: "Rules", label: "Layout",            keywords: "float tiled auto" },
+    { page: "windowrules", section: "Rules", label: "Size",              keywords: "natural window dimensions" },
+    { page: "windowrules", section: "Rules", label: "Workspace",         keywords: "where it opens" },
+    { page: "windowrules", section: "Rules", label: "Open fullscreen",   keywords: "maximise maximize" },
+    { page: "windowrules", section: "Rules", label: "Always on top",     keywords: "pin float above" },
+    { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
+
     // --- Display -----------------------------------------------------------
     { page: "display", section: "",  label: "Arrangement",  keywords: "monitor position extend duplicate mirror" },
     { page: "display", section: "",  label: "Primary",      keywords: "monitor main workspace 1" },
@@ -81,22 +117,14 @@ var entries = [
     { page: "display", section: "",  label: "Scale",        keywords: "monitor hidpi fractional" },
     { page: "display", section: "",  label: "Mode",         keywords: "monitor resolution refresh rate hz" },
 
-    // --- Network -----------------------------------------------------------
-    { page: "network", section: "Status", label: "Wi-Fi",      keywords: "wifi wireless radio iwd on off" },
-    { page: "network", section: "Status", label: "Interface",  keywords: "device wlan adapter" },
-    { page: "network", section: "Status", label: "IP address", keywords: "ipv4 dhcp address" },
-    { page: "network", section: "Status", label: "Gateway",    keywords: "router default route" },
-    { page: "network", section: "Status", label: "MAC",        keywords: "hardware address ethernet" },
-    { page: "network", section: "Status", label: "Link",       keywords: "bitrate signal strength speed" },
-    { page: "network", section: "Networks", label: "Networks", keywords: "wifi scan ssid connect join forget passphrase" },
-
-    // --- Bluetooth ---------------------------------------------------------
-    { page: "bluetooth", section: "Adapter", label: "Bluetooth",    keywords: "bt radio bluez power on off rfkill" },
-    { page: "bluetooth", section: "Adapter", label: "Name",         keywords: "adapter hostname identity" },
-    { page: "bluetooth", section: "Adapter", label: "Interface",    keywords: "hci adapter id mac address" },
-    { page: "bluetooth", section: "Adapter", label: "Discoverable", keywords: "visible advertise findable" },
-    { page: "bluetooth", section: "Adapter", label: "Pairable",     keywords: "accept pairing requests" },
-    { page: "bluetooth", section: "Nearby",  label: "Nearby",       keywords: "scan discover pair headphones mouse keyboard unnamed" },
+    // --- Notifications -----------------------------------------------------
+    { page: "notifications", section: "Quick actions", label: "Do Not Disturb", keywords: "dnd silence mute" },
+    { page: "notifications", section: "Quick actions", label: "Clear all",      keywords: "dismiss history" },
+    { page: "notifications", section: "Quick actions", label: "Open the panel", keywords: "swaync centre center" },
+    { page: "notifications", section: "Popups", label: "Position",              keywords: "corner where popups appear" },
+    { page: "notifications", section: "How long popups stay", label: "Normal",  keywords: "timeout duration" },
+    { page: "notifications", section: "How long popups stay", label: "Low priority", keywords: "timeout duration" },
+    { page: "notifications", section: "How long popups stay", label: "Critical", keywords: "timeout duration urgent" },
 
     // --- Audio -------------------------------------------------------------
     { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute speakers" },
@@ -108,56 +136,6 @@ var entries = [
     // instead: the result opens the page, and highlights nothing.
     { page: "audio", section: "", label: "Playing",   keywords: "mixer per app volume application stream" },
     { page: "audio", section: "", label: "Recording", keywords: "mixer capture app stream microphone" },
-
-    // --- Input -------------------------------------------------------------
-    { page: "input", section: "Keyboard", label: "Layout",            keywords: "xkb us de language" },
-    { page: "input", section: "Keyboard", label: "Variant",           keywords: "xkb colemak dvorak" },
-    { page: "input", section: "Keyboard", label: "Options",           keywords: "xkb caps escape" },
-    { page: "input", section: "Keyboard", label: "Repeat rate",       keywords: "key held" },
-    { page: "input", section: "Keyboard", label: "Repeat delay",      keywords: "key held" },
-    { page: "input", section: "Keyboard", label: "Num Lock on at login", keywords: "numlock numpad" },
-    { page: "input", section: "Mouse", label: "Sensitivity",          keywords: "pointer speed" },
-    { page: "input", section: "Mouse", label: "Acceleration",         keywords: "accel flat pointer" },
-    { page: "input", section: "Mouse", label: "Focus follows mouse",  keywords: "sloppy focus hover" },
-    { page: "input", section: "Mouse", label: "Left-handed",          keywords: "buttons swap" },
-    { page: "input", section: "Touchpad", label: "Tap to click",      keywords: "trackpad" },
-    { page: "input", section: "Touchpad", label: "Natural scrolling", keywords: "trackpad reverse invert" },
-    { page: "input", section: "Touchpad", label: "Disable while typing", keywords: "trackpad dwt palm" },
-    { page: "input", section: "Touchpad", label: "Scroll speed",      keywords: "trackpad two finger" },
-    { page: "input", section: "Touchpad", label: "Click by finger count", keywords: "trackpad right middle" },
-    { page: "input", section: "Touchpad", label: "Drag lock",         keywords: "trackpad" },
-    { page: "input", section: "Touchpad", label: "Middle-click emulation", keywords: "trackpad paste" },
-
-    // --- Keybinds ----------------------------------------------------------
-    { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },
-
-    // --- Window Rules ------------------------------------------------------
-    { page: "windowrules", section: "Add a rule", label: "Open now",     keywords: "app class pick running" },
-    { page: "windowrules", section: "Rules", label: "Name",              keywords: "alias rename label title" },
-    { page: "windowrules", section: "Rules", label: "Layout",            keywords: "float tiled auto" },
-    { page: "windowrules", section: "Rules", label: "Size",              keywords: "natural window dimensions" },
-    { page: "windowrules", section: "Rules", label: "Workspace",         keywords: "where it opens" },
-    { page: "windowrules", section: "Rules", label: "Open fullscreen",   keywords: "maximise maximize" },
-    { page: "windowrules", section: "Rules", label: "Always on top",     keywords: "pin float above" },
-    { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
-
-    // --- Notifications -----------------------------------------------------
-    { page: "notifications", section: "Quick actions", label: "Do Not Disturb", keywords: "dnd silence mute" },
-    { page: "notifications", section: "Quick actions", label: "Clear all",      keywords: "dismiss history" },
-    { page: "notifications", section: "Quick actions", label: "Open the panel", keywords: "swaync centre center" },
-    { page: "notifications", section: "Popups", label: "Position",              keywords: "corner where popups appear" },
-    { page: "notifications", section: "How long popups stay", label: "Normal",  keywords: "timeout duration" },
-    { page: "notifications", section: "How long popups stay", label: "Low priority", keywords: "timeout duration" },
-    { page: "notifications", section: "How long popups stay", label: "Critical", keywords: "timeout duration urgent" },
-
-    // --- Power & Idle ------------------------------------------------------
-    { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
-    { page: "power", section: "When idle", label: "Dim the screen",    keywords: "idle brightness timeout hypridle" },
-    { page: "power", section: "When idle", label: "Lock",              keywords: "idle hyprlock timeout screen lock" },
-    { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },
-    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout" },
-    { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger" },
-    { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
     // --- Startup -----------------------------------------------------------
     { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
@@ -180,6 +158,28 @@ var entries = [
     { page: "shell", section: "Alacritty", label: "Opacity",    keywords: "terminal transparency background" },
     { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam blink" },
     { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc shortcut command" },
+
+    // --- Input -------------------------------------------------------------
+    { page: "input", section: "Keyboard", label: "Layout",            keywords: "xkb us de language" },
+    { page: "input", section: "Keyboard", label: "Variant",           keywords: "xkb colemak dvorak" },
+    { page: "input", section: "Keyboard", label: "Options",           keywords: "xkb caps escape" },
+    { page: "input", section: "Keyboard", label: "Repeat rate",       keywords: "key held" },
+    { page: "input", section: "Keyboard", label: "Repeat delay",      keywords: "key held" },
+    { page: "input", section: "Keyboard", label: "Num Lock on at login", keywords: "numlock numpad" },
+    { page: "input", section: "Mouse", label: "Sensitivity",          keywords: "pointer speed" },
+    { page: "input", section: "Mouse", label: "Acceleration",         keywords: "accel flat pointer" },
+    { page: "input", section: "Mouse", label: "Focus follows mouse",  keywords: "sloppy focus hover" },
+    { page: "input", section: "Mouse", label: "Left-handed",          keywords: "buttons swap" },
+    { page: "input", section: "Touchpad", label: "Tap to click",      keywords: "trackpad" },
+    { page: "input", section: "Touchpad", label: "Natural scrolling", keywords: "trackpad reverse invert" },
+    { page: "input", section: "Touchpad", label: "Disable while typing", keywords: "trackpad dwt palm" },
+    { page: "input", section: "Touchpad", label: "Scroll speed",      keywords: "trackpad two finger" },
+    { page: "input", section: "Touchpad", label: "Click by finger count", keywords: "trackpad right middle" },
+    { page: "input", section: "Touchpad", label: "Drag lock",         keywords: "trackpad" },
+    { page: "input", section: "Touchpad", label: "Middle-click emulation", keywords: "trackpad paste" },
+
+    // --- Keybinds ----------------------------------------------------------
+    { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },
 ]
 
 // Every entry, with its page's name and number folded in, so a result row

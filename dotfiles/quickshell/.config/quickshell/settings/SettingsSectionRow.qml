@@ -7,6 +7,9 @@
 // it lives on, with that page's icon -- so the list looks the same whether
 // it's the sections or what matched.
 //
+// Sections come in groups, set apart by `gapAbove` on each group's first
+// row.
+//
 // Two ways to be lit: `selected` is the page on show (a stroke and a
 // chevron), `current` is where the arrow keys are while the search field
 // has focus (a fill). They differ because both can be true of different
@@ -25,96 +28,106 @@ Item {
     property bool selected: false
     property bool current: false
 
+    // space over the row, to set it apart from the group above; not part
+    // of what lights up or takes the click
+    property int gapAbove: 0
+
     signal clicked()
     signal hovered()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.fieldHeight + Theme.spaceL
-
-    Rectangle {
-        anchors.fill: parent
-        radius: Theme.radiusInner
-        color: root.selected || root.current ? Theme.selectedFill
-            : mouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-        border.width: Theme.borderWidth
-        border.color: root.selected ? Theme.selectedStroke
-            : root.current ? Theme.strokeHover : "transparent"
-    }
-
-    Text {
-        id: num
-        x: Theme.spaceL
-        width: Theme.fs(20)
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.number
-        color: root.selected ? Theme.accent : Theme.subtext
-        font.family: Theme.fontText
-        font.pixelSize: Theme.fontCaption
-    }
+    implicitHeight: Theme.fieldHeight + Theme.spaceL + gapAbove
 
     Item {
-        id: iconCell
-        anchors.left: num.right
-        anchors.leftMargin: Theme.spaceS
-        width: Theme.iconCell
-        height: parent.height
+        y: root.gapAbove
+        width: parent.width
+        height: parent.height - root.gapAbove
 
-        Text {
-            anchors.centerIn: parent
-            text: root.icon
-            color: root.selected ? Theme.accent
-                : root.current || mouse.containsMouse ? Theme.textStrong : Theme.subtext
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontIconSize
-        }
-    }
-
-    Column {
-        anchors.left: iconCell.right
-        anchors.leftMargin: Theme.spaceM
-        anchors.right: chevron.left
-        anchors.rightMargin: Theme.spaceS
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 1
-
-        Text {
-            width: parent.width
-            text: root.label
-            elide: Text.ElideRight
-            color: root.selected || root.current || mouse.containsMouse ? Theme.textStrong : Theme.text
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.radiusInner
+            color: root.selected || root.current ? Theme.selectedFill
+                : mouse.containsMouse ? Theme.hoverFillSoft : "transparent"
+            border.width: Theme.borderWidth
+            border.color: root.selected ? Theme.selectedStroke
+                : root.current ? Theme.strokeHover : "transparent"
         }
 
         Text {
-            width: parent.width
-            visible: text !== ""
-            text: root.blurb
-            elide: Text.ElideRight
-            color: Theme.subtext
+            id: num
+            x: Theme.spaceL
+            width: Theme.fs(20)
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.number
+            color: root.selected ? Theme.accent : Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontCaption
         }
-    }
 
-    Text {
-        id: chevron
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.spaceL
-        anchors.verticalCenter: parent.verticalCenter
-        text: ">"
-        visible: root.selected || root.current
-        color: root.selected ? Theme.accent : Theme.subtext
-        font.family: Theme.fontText
-        font.pixelSize: Theme.fontSmall
-    }
+        Item {
+            id: iconCell
+            anchors.left: num.right
+            anchors.leftMargin: Theme.spaceS
+            width: Theme.iconCell
+            height: parent.height
 
-    MouseArea {
-        id: mouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onEntered: root.hovered()
-        onClicked: root.clicked()
+            Text {
+                anchors.centerIn: parent
+                text: root.icon
+                color: root.selected ? Theme.accent
+                    : root.current || mouse.containsMouse ? Theme.textStrong : Theme.subtext
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontIconSize
+            }
+        }
+
+        Column {
+            anchors.left: iconCell.right
+            anchors.leftMargin: Theme.spaceM
+            anchors.right: chevron.left
+            anchors.rightMargin: Theme.spaceS
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 1
+
+            Text {
+                width: parent.width
+                text: root.label
+                elide: Text.ElideRight
+                color: root.selected || root.current || mouse.containsMouse ? Theme.textStrong : Theme.text
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
+            }
+
+            Text {
+                width: parent.width
+                visible: text !== ""
+                text: root.blurb
+                elide: Text.ElideRight
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontCaption
+            }
+        }
+
+        Text {
+            id: chevron
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            text: ">"
+            visible: root.selected || root.current
+            color: root.selected ? Theme.accent : Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontSmall
+        }
+
+        MouseArea {
+            id: mouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onEntered: root.hovered()
+            onClicked: root.clicked()
+        }
     }
 }

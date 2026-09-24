@@ -72,16 +72,18 @@ FloatingWindow {
         value: root.currentPage === "processes" ? 18 : 5
     }
 
+    // in groups: the summary, what's running, where things live, the
+    // machine itself. `gap` starts a group.
     readonly property var pages: [
         { id: "overview",  label: "Overview",  icon: "󰍹", blurb: "Health at a glance",       source: "system/PageOverview.qml" },
         { id: "health",    label: "Health",    icon: "󰓙", blurb: "Problems and fixes", source: "system/PageHealth.qml" },
-        { id: "cpu",       label: "CPU",       icon: "󰻠", blurb: "Load, cores and clocks",   source: "system/PageCpu.qml" },
+        { id: "cpu",       label: "CPU",       icon: "󰻠", blurb: "Load, cores and clocks",   source: "system/PageCpu.qml", gap: true },
         { id: "memory",    label: "Memory",    icon: "󰘚", blurb: "RAM, swap and zram",       source: "system/PageMemory.qml" },
         { id: "processes", label: "Processes", icon: "󰅐", blurb: "What's running",           source: "system/PageProcesses.qml" },
-        { id: "storage",   label: "Storage",   icon: "󰋊", blurb: "Disks and mounts",         source: "system/PageStorage.qml" },
+        { id: "storage",   label: "Storage",   icon: "󰋊", blurb: "Disks and mounts",         source: "system/PageStorage.qml", gap: true },
         { id: "network",   label: "Network",   icon: "󰖩", blurb: "Links and throughput",     source: "system/PageNetwork.qml" },
         { id: "power",     label: "Power",     icon: "󰂄", blurb: "Battery and profile",      source: "system/PagePower.qml" },
-        { id: "hardware",  label: "Hardware",  icon: "󰢻", blurb: "Devices and sensors",      source: "system/PageHardware.qml" },
+        { id: "hardware",  label: "Hardware",  icon: "󰢻", blurb: "Devices and sensors",      source: "system/PageHardware.qml", gap: true },
         { id: "config",    label: "Config",    icon: "󰈔", blurb: "The files behind it all",  source: "system/PageConfig.qml" },
     ]
     function select(id) {
@@ -147,6 +149,7 @@ FloatingWindow {
                         icon: modelData.icon
                         label: modelData.label
                         blurb: modelData.blurb
+                        gapAbove: modelData.gap ? Theme.spaceXl : 0
                         selected: root.currentPage === modelData.id
                         onClicked: root.select(modelData.id)
                     }

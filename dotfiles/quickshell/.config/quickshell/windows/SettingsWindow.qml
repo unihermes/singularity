@@ -67,20 +67,23 @@ FloatingWindow {
     onClosed: visible = false
     onVisibleChanged: if (visible) chrome.keySink.forceActiveFocus()
 
+    // in groups, after macOS's System Settings: connections and battery,
+    // the desktop's look, alerts and sound, apps, then input. `gap` starts
+    // a group.
     readonly property var pages: [
-        { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Look, colours and bar",             source: "../settings/SettingsPageAppearance.qml" },
-        { id: "display",       label: "Display",       icon: "󰍹", blurb: "Resolution and scale",              source: "../settings/SettingsPageDisplay.qml" },
         { id: "network",       label: "Network",       icon: "󰤨", blurb: "Wi-Fi and the link",               source: "../settings/SettingsPageNetwork.qml" },
         { id: "bluetooth",     label: "Bluetooth",     icon: "󰂯", blurb: "Adapter and devices",              source: "../settings/SettingsPageBluetooth.qml" },
-        { id: "audio",         label: "Audio",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
-        { id: "input",         label: "Input",         icon: "󰌌", blurb: "Keyboard and pointer",              source: "../settings/SettingsPageInput.qml" },
-        { id: "keybinds",      label: "Keybinds",      icon: "󰘳", blurb: "Shortcuts and presets",             source: "../settings/SettingsPageKeybinds.qml" },
-        { id: "windowrules",   label: "Window Rules",  icon: "󰖲", blurb: "App rules and layouts",             source: "../settings/SettingsPageWindowRules.qml" },
-        { id: "notifications", label: "Notifications", icon: "󰂚", blurb: "Do Not Disturb, popups",            source: "../settings/SettingsPageNotifications.qml" },
         { id: "power",         label: "Power & Idle",  icon: "󰂄", blurb: "Profile, idle and sleep",           source: "../settings/SettingsPagePower.qml" },
-        { id: "autostart",     label: "Startup",       icon: "󰐊", blurb: "What runs at login",                source: "../settings/SettingsPageAutostart.qml" },
+        { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Look, colours and bar",             source: "../settings/SettingsPageAppearance.qml", gap: true },
+        { id: "windowrules",   label: "Window Rules",  icon: "󰖲", blurb: "App rules and layouts",             source: "../settings/SettingsPageWindowRules.qml" },
+        { id: "display",       label: "Display",       icon: "󰍹", blurb: "Resolution and scale",              source: "../settings/SettingsPageDisplay.qml" },
+        { id: "notifications", label: "Notifications", icon: "󰂚", blurb: "Do Not Disturb, popups",            source: "../settings/SettingsPageNotifications.qml", gap: true },
+        { id: "audio",         label: "Audio",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
+        { id: "autostart",     label: "Startup",       icon: "󰐊", blurb: "What runs at login",                source: "../settings/SettingsPageAutostart.qml", gap: true },
         { id: "filetypes",     label: "File Types",    icon: "󰈔", blurb: "Default apps",                      source: "../settings/SettingsPageFileTypes.qml" },
         { id: "shell",         label: "Terminal",      icon: "󰆍", blurb: "Alacritty and aliases",             source: "../settings/SettingsPageShell.qml" },
+        { id: "input",         label: "Input",         icon: "󰌌", blurb: "Keyboard and pointer",              source: "../settings/SettingsPageInput.qml", gap: true },
+        { id: "keybinds",      label: "Keybinds",      icon: "󰘳", blurb: "Shortcuts and presets",             source: "../settings/SettingsPageKeybinds.qml" },
     ]
 
     function select(pageId) {
@@ -96,7 +99,7 @@ FloatingWindow {
     readonly property var index: SettingsIndex.build(pages)
     // the Sections panel's rows: the sections themselves, or what matched
     readonly property var rows: query === ""
-        ? pages.map((p, i) => ({ page: p.id, label: p.label, blurb: p.blurb, icon: p.icon, number: SettingsIndex.number(i), isPage: true }))
+        ? pages.map((p, i) => ({ page: p.id, label: p.label, blurb: p.blurb, icon: p.icon, number: SettingsIndex.number(i), isPage: true, gap: !!p.gap }))
         : SettingsIndex.search(index, query, 30).map(e => ({
             page: e.page, label: e.label, icon: e.icon, number: e.number, isPage: e.isPage,
             blurb: e.isPage ? "Section"
@@ -323,13 +326,12 @@ FloatingWindow {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
 
-                // keep the arrow keys' row on screen; rows are all one height
+                // keep the arrow keys' row on screen
                 function reveal(i) {
-                    if (listCol.children.length === 0) return
-                    var h = listCol.children[0].height + listCol.spacing
-                    var top = i * h
-                    if (top < contentY) contentY = top
-                    else if (top + h > contentY + height) contentY = top + h - height
+                    var row = listCol.children[i]
+                    if (!row) return
+                    if (row.y < contentY) contentY = row.y
+                    else if (row.y + row.height > contentY + height) contentY = row.y + row.height - height
                 }
 
                 Column {
@@ -347,6 +349,7 @@ FloatingWindow {
                             number: modelData.number
                             label: modelData.label
                             blurb: modelData.blurb
+                            gapAbove: modelData.gap ? Theme.spaceXl : 0
                             selected: modelData.isPage && root.currentPage === modelData.page
                             current: root.searchFocused && root.cursor === index
                             onHovered: if (root.searchFocused) root.cursor = index
