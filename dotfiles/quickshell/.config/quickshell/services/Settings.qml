@@ -48,6 +48,8 @@ Singleton {
     // Mirrored into the wallpaper state file by Wallpaper.qml, since the
     // login script can't read this JSON.
     readonly property alias wallpaperShuffle: adapter.wallpaperShuffle
+    // minutes between random wallpapers while logged in; 0 never changes it
+    readonly property alias wallpaperInterval: adapter.wallpaperInterval
     // The active look (Looks.js), and the parts of it the Appearance page can
     // override. Choosing a look writes all four of these, plus the bar and
     // radius values it carries, so a look always arrives whole.
@@ -334,6 +336,7 @@ Singleton {
         scrim:        { min: 0,  max: 80 },
         nightLightKelvin: { min: 2500, max: 6000 },
         cursorSize:   { min: 16, max: 48 },
+        wallpaperInterval: { min: 0, max: 1440 },
     })
 
     // Stock: the fallback look, with its own settings layered over the values
@@ -614,6 +617,7 @@ Singleton {
             property bool adjustableSeeded: false
 
             property bool wallpaperShuffle: true
+            property int wallpaperInterval: 0
             property bool clockIsland: true
             property int nightLightKelvin: 4000
             property string weatherUnits: "F"

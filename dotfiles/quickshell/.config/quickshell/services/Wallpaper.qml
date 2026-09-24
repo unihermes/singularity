@@ -116,11 +116,25 @@ Singleton {
     onWantedChanged: refresh()
     onSchemeChanged: refresh()
     onVariantChanged: refresh()
-    onCurrentChanged: refresh()
+    onCurrentChanged: {
+        refresh()
+        if (rotate.running) rotate.restart()
+    }
 
     Connections {
         target: Settings
         function onWallpaperShuffleChanged() { root.saveState() }
+    }
+
+    // A fresh random wallpaper every Settings.wallpaperInterval minutes.
+    // Any change of wallpaper starts the wait over (onCurrentChanged), so
+    // one picked by hand isn't replaced moments after being chosen.
+    Timer {
+        id: rotate
+        interval: Math.max(1, Settings.wallpaperInterval) * 60000
+        running: Settings.wallpaperInterval > 0 && root.images.length > 1
+        repeat: true
+        onTriggered: root.shuffle()
     }
 
     Process {

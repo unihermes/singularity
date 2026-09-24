@@ -674,6 +674,21 @@ SettingsPage {
         }
     }
 
+    SettingsField {
+        label: "Change every"
+        hint: Settings.wallpaperInterval > 0 ? "A random wallpaper on this interval, counted from the last change"
+            : "The wallpaper stays until you pick another"
+
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: [{ value: 0, text: "Never" }, { value: 15, text: "15 min" }, { value: 30, text: "30 min" },
+                    { value: 60, text: "1 hour" }, { value: 180, text: "3 hours" }]
+            current: Settings.wallpaperInterval
+            onPicked: v => Settings.set("wallpaperInterval", v)
+        }
+    }
+
     // Every image, four to a row; click one to show it.
     Flow {
         id: grid

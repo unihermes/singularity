@@ -34,6 +34,7 @@ var entries = [
     { page: "appearance", section: "Look",  label: "Reset look",        keywords: "revert default" },
     { page: "appearance", section: "Wallpaper", label: "Current",       keywords: "wallpaper background image" },
     { page: "appearance", section: "Wallpaper", label: "At login",      keywords: "wallpaper shuffle random" },
+    { page: "appearance", section: "Wallpaper", label: "Change every",  keywords: "wallpaper rotate slideshow interval timer" },
     { page: "appearance", section: "Colours", label: "Palette",         keywords: "colour color grayscale wallpaper" },
     { page: "appearance", section: "Colours", label: "Intensity",       keywords: "colour color saturation" },
     { page: "appearance", section: "Colours", label: "Shade",           keywords: "light dark mode theme variant" },
