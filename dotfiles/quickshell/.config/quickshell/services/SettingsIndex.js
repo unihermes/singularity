@@ -155,6 +155,10 @@ var entries = [
     { page: "filetypes", section: "Common", label: "Audio",        keywords: "default player mp3 flac mimeapps" },
     { page: "filetypes", section: "Common", label: "Archives",     keywords: "default zip tar mimeapps" },
     { page: "filetypes", section: "Common", label: "Email links",  keywords: "default mailto mimeapps" },
+    // --- Startup -----------------------------------------------------------
+    { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
+    { page: "autostart", section: "Add",      label: "Application",  keywords: "autostart add app start login" },
+    { page: "autostart", section: "Packages", label: "From packages", keywords: "xdg autostart system entry keyring" },
 ]
 
 // Every entry, with its page's name and number folded in, so a result row

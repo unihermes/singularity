@@ -216,6 +216,13 @@ hl.on("hyprland.start", function()
     -- ALT+Tab switcher, workspace overlay) looked up "neutrino-startup" in
     -- DesktopEntries instead of "Alacritty" and came back with no icon.
     hl.exec_cmd(terminal .. " --title neutrino-startup")
+    -- XDG autostart, which Hyprland does not run itself: the .desktop files
+    -- in ~/.config/autostart, managed from Settings > Startup. Last, so a
+    -- user entry starts against a session that already has its bar, its
+    -- notification daemon and its wallpaper -- an entry that opens a window
+    -- otherwise races the bar for the screen. See the script's header for
+    -- which entries it runs and why a package's own entry is opt-in.
+    hl.exec_cmd("~/.config/singularity/autostart.sh run")
 end)
 
 -----------------------
