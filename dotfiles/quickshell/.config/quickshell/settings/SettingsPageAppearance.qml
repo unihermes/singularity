@@ -522,112 +522,8 @@ SettingsPage {
     }
 
     SettingsField {
-        label: "Modules"
-        hint: "How the bar's chips are drawn"
-        Choice { key: "moduleStyle" }
-    }
-
-    SettingsField {
-        label: "Bar"
-        hint: "Edge to edge, floating, an island per group, or no bar at all"
-        Choice { key: "barStyle" }
-    }
-
-    SettingsField {
-        label: "Workspaces"
-        hint: "How the workspace indicator marks each one"
-        Choices { key: "workspaceStyle" }
-    }
-
-    SettingsField {
-        label: "Clock"
-        hint: "What the clock chip shows"
-        Choices { key: "clockStyle" }
-    }
-
-    SettingsField {
-        label: "Frames"
-        hint: "Double draws a second stroke inside every panel and bar module"
-        Choices { key: "frameStyle" }
-    }
-
-    Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }
-
-    SettingsField {
-        label: "Density"
-        hint: "Space between and inside rows, panels and windows"
-        Choices { key: "density" }
-    }
-
-    // Case as a pair, the rest as chips that toggle -- they're independent
-    SettingsField {
-        label: "Headings"
-        hint: "Section titles in flyouts, windows and here"
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            FlyoutSegmented {
-                fill: false
-                model: [{ value: true, text: "CAPS" }, { value: false, text: "Title" }]
-                current: Settings.headingUpper
-                onPicked: v => Settings.set("headingUpper", v)
-            }
-            FlyoutChip {
-                text: "Bold"
-                selected: Settings.headingBold
-                onClicked: Settings.set("headingBold", !Settings.headingBold)
-            }
-            FlyoutChip {
-                text: "Rule"
-                selected: Settings.headingRule
-                onClicked: Settings.set("headingRule", !Settings.headingRule)
-            }
-            FlyoutChip {
-                text: "Accent"
-                enabled: Theme.hasAccent
-                selected: Settings.headingAccent && Theme.hasAccent
-                onClicked: Settings.set("headingAccent", !Settings.headingAccent)
-            }
-        }
-    }
-
-    // The box shows the font in use, set in itself, and the list sets every
-    // installed choice in its own font.
-    SettingsField {
-        label: "Font"
-        hint: Theme.fontText !== Settings.fontFamily
-            ? page.label(Settings.fontFamily) + " isn't available, so " + page.label(Theme.fontText) + " stands in"
-            : "Monospace only. Text and icons alike, across the shell, launcher and notifications"
-
-        SettingsDropdown {
-            anchors.right: parent.right
-            model: Fonts.available
-            current: Theme.fontText
-            labelFor: v => page.label(v)
-            fontFor: v => v
-            onPicked: v => Settings.set("fontFamily", v)
-        }
-    }
-
-    // Fonts installed since the shell started, which Qt can't draw until
-    // it's restarted (see Fonts.qml)
-    SettingsField {
-        visible: Fonts.pending.length > 0
-        label: Fonts.pending.length === 1 ? "1 new font" : Fonts.pending.length + " new fonts"
-        hint: Fonts.pending.map(f => page.label(f)).join(", ") + " -- installed since the shell started, and usable after a restart"
-
-        FlyoutChip {
-            anchors.right: parent.right
-            text: "Restart shell"
-            onClicked: Fonts.restartShell()
-        }
-    }
-
-    SettingsField {
         label: "Reset look"
-        hint: Settings.lookPristine ? "Everything here and under Bar is as the look was designed"
+        hint: Settings.lookPristine ? "Everything here is as the look was designed"
             : "Frames, density, font, headings, accent, corners and the bar back to " + page.label(Settings.look) + "'s own"
 
         FlyoutChip {
@@ -910,8 +806,107 @@ SettingsPage {
         }
     }
 
+    // --- style ---------------------------------------------------------------
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "STYLE" }
+
+    SettingsField {
+        label: "Frames"
+        hint: "Double draws a second stroke inside every panel and bar module"
+        Choices { key: "frameStyle" }
+    }
+
+    Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }
+    Stepper { label: "Corner radius"; hint: "Modules, flyouts, windows of the shell, wofi and notifications"; key: "radius"; suffix: "px" }
+
+    SettingsField {
+        label: "Density"
+        hint: "Space between and inside rows, panels and windows"
+        Choices { key: "density" }
+    }
+
+    // Case as a pair, the rest as chips that toggle -- they're independent
+    SettingsField {
+        label: "Headings"
+        hint: "Section titles in flyouts, windows and here"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+
+            FlyoutSegmented {
+                fill: false
+                model: [{ value: true, text: "CAPS" }, { value: false, text: "Title" }]
+                current: Settings.headingUpper
+                onPicked: v => Settings.set("headingUpper", v)
+            }
+            FlyoutChip {
+                text: "Bold"
+                selected: Settings.headingBold
+                onClicked: Settings.set("headingBold", !Settings.headingBold)
+            }
+            FlyoutChip {
+                text: "Rule"
+                selected: Settings.headingRule
+                onClicked: Settings.set("headingRule", !Settings.headingRule)
+            }
+            FlyoutChip {
+                text: "Accent"
+                enabled: Theme.hasAccent
+                selected: Settings.headingAccent && Theme.hasAccent
+                onClicked: Settings.set("headingAccent", !Settings.headingAccent)
+            }
+        }
+    }
+
     Stepper { label: "Panel opacity"; hint: "Flyouts, the shell's windows, wofi and notifications. Below 100% the blur behind shows through"; key: "panelOpacity"; step: 5; suffix: "%" }
     Stepper { label: "Overlay dimming"; hint: "How dark the desktop goes behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
+
+    // --- text & motion -------------------------------------------------------
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "TEXT & MOTION" }
+
+    // The box shows the font in use, set in itself, and the list sets every
+    // installed choice in its own font.
+    SettingsField {
+        label: "Font"
+        hint: Theme.fontText !== Settings.fontFamily
+            ? page.label(Settings.fontFamily) + " isn't available, so " + page.label(Theme.fontText) + " stands in"
+            : "Monospace only. Text and icons alike, across the shell, launcher and notifications"
+
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: Fonts.available
+            current: Theme.fontText
+            labelFor: v => page.label(v)
+            fontFor: v => v
+            onPicked: v => Settings.set("fontFamily", v)
+        }
+    }
+
+    // Fonts installed since the shell started, which Qt can't draw until
+    // it's restarted (see Fonts.qml)
+    SettingsField {
+        visible: Fonts.pending.length > 0
+        label: Fonts.pending.length === 1 ? "1 new font" : Fonts.pending.length + " new fonts"
+        hint: Fonts.pending.map(f => page.label(f)).join(", ") + " -- installed since the shell started, and usable after a restart"
+
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Restart shell"
+            onClicked: Fonts.restartShell()
+        }
+    }
+
+    Stepper { label: "Font size"; hint: "Body text size for the shell, launcher and notifications. Headings, captions and rows scale with it."; key: "fontSize"; suffix: "px" }
+
+    SettingsField {
+        label: "Animations"
+        hint: "The shell's and Hyprland's alike"
+        Choices { key: "animSpeed" }
+    }
 
     // --- bar -----------------------------------------------------------------
 
@@ -932,6 +927,30 @@ SettingsPage {
     }
 
     SettingsField {
+        label: "Shape"
+        hint: "Edge to edge, floating, an island per group, or no bar at all"
+        Choice { key: "barStyle" }
+    }
+
+    SettingsField {
+        label: "Modules"
+        hint: "How the bar's chips are drawn"
+        Choice { key: "moduleStyle" }
+    }
+
+    SettingsField {
+        label: "Workspaces"
+        hint: "How the workspace indicator marks each one"
+        Choices { key: "workspaceStyle" }
+    }
+
+    SettingsField {
+        label: "Clock"
+        hint: "What the clock chip shows"
+        Choices { key: "clockStyle" }
+    }
+
+    SettingsField {
         label: "Clock island"
         hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar -- toasts show until then"
             : Settings.clockIsland ? "Volume, brightness, layout and notifications show in the clock for a moment"
@@ -946,23 +965,8 @@ SettingsPage {
 
     Stepper { label: "Height"; key: "barHeight"; suffix: "px" }
     Stepper { label: "Module gap"; hint: "Space between modules"; key: "moduleGap"; suffix: "px" }
-    Stepper { label: "Corner radius"; hint: "Modules, flyouts, windows of the shell, wofi and notifications"; key: "radius"; suffix: "px" }
     Stepper { label: "Opacity"; hint: "The bar's background only"; key: "barOpacity"; step: 5; suffix: "%" }
-
-    // --- text & motion -------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "TEXT & MOTION" }
-
-    Stepper { label: "Font size"; hint: "Body text size for the shell, launcher and notifications. Headings, captions and rows scale with it."; key: "fontSize"; suffix: "px" }
     Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
-
-
-    SettingsField {
-        label: "Animations"
-        hint: "The shell's and Hyprland's alike"
-        Choices { key: "animSpeed" }
-    }
 
     // --- system --------------------------------------------------------------
     // Preferences for the apps outside the shell. Not part of a look, and
@@ -971,7 +975,7 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SYSTEM" }
 
-    // GTK/Qt apps' own font -- independent of the shell's Font under Look. Every
+    // GTK/Qt apps' own font -- independent of the shell's Font under Text & Motion. Every
     // choice here is always installed (see Looks.systemFonts), so there's no
     // pending/restart state to show like the shell font has.
     SettingsField {
