@@ -268,6 +268,11 @@ Scope {
         function onLookChanged() { debounce.restart() }
         function onAccentChanged() { debounce.restart() }
         function onIsLightChanged() { debounce.restart() }
+        function onBorderWidthChanged() { debounce.restart() }
+        function onPanelOpacityChanged() { debounce.restart() }
+        function onHeadingColorChanged() { debounce.restart() }
+        function onHeadingBoldChanged() { debounce.restart() }
+        function onHeadingUpperChanged() { debounce.restart() }
     }
 
     Process { id: gtkSync }
