@@ -876,7 +876,14 @@ local function restoreMinimized(win)
     local st = stateOf(win.address)
     local saved = st.minimized
     st.minimized = nil
-    hl.dispatch(hl.dsp.window.move({ x = saved.x, y = saved.y, window = "address:" .. win.address }))
+    local addr = "address:" .. win.address
+    hl.dispatch(hl.dsp.window.move({ x = saved.x, y = saved.y, window = addr }))
+    -- Maximized when it was hidden (see toggleMinimize()): raise it before
+    -- putting the flag back, since bring_to_top is ignored once it is set.
+    if saved.maximized then
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "set", window = addr }))
+    end
 end
 
 -- The monitor's usable rect (its resolution minus whatever the bar and any
@@ -1044,6 +1051,21 @@ local function maximizeFocused()
     -- window made small on purpose, which the refit skips, would stay hidden.
     -- Ahead of the monocle check since SUPER+C works in dwindle mode too.
     if win and stateOf(win.address).minimized then restoreMinimized(win) end
+
+    -- A floating window that is also maximized (fullscreen == 1) -- a
+    -- window-rules.json float maximized with SUPER+X, or an Electron app like
+    -- Claude restoring its own maximized state -- can't be raised:
+    -- bring_to_top is silently ignored while the maximized flag is set. So
+    -- ALT+Tab focused it but left whatever floater was over it (Zen) drawn
+    -- on top. Dropping the flag, raising, and setting it again keeps the
+    -- window maximized and puts it in front.
+    if win and win.floating and win.fullscreen == 1 then
+        local addr = "address:" .. win.address
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = addr }))
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "set", window = addr }))
+        return
+    end
 
     if not win or not win.class or win.fullscreen ~= 0 then return end
     if not monocleOn(win.workspace) then return end
@@ -1221,7 +1243,17 @@ function toggleMinimize()
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
 
-    st.minimized = { x = win.at.x, y = win.at.y }
+    -- A maximized window (a floater maximized with SUPER+X) has its geometry
+    -- pinned by the flag, so window.move below did nothing to it. Drop the
+    -- flag first and put it back on restore.
+    local wasMaximized = win.fullscreen == 1
+    if wasMaximized then
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = "address:" .. win.address }))
+        -- by selector: hl.get_window() returns nil for a bare address
+        win = hl.get_window("address:" .. win.address) or win
+    end
+
+    st.minimized = { x = win.at.x, y = win.at.y, maximized = wasMaximized }
     local belowScreen = mon.y + mon.height + 100
     hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
 
