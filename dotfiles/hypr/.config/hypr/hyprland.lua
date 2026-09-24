@@ -1,23 +1,17 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/hyprland.lua
 --
--- Lua config. Hyprland loads this in preference to hyprland.conf, which is
--- deprecated -- and several options in the old file no longer exist at all:
--- gestures:workspace_swipe, gestures:workspace_swipe_fingers,
--- dwindle:pseudotile and misc:vfr, plus `togglesplit`, which is a layout
--- message here rather than a dispatcher.
+-- Lua config; Hyprland loads this in preference to the deprecated
+-- hyprland.conf.
 --
 -- grayscale ramp, shared with every other config in this repo:
 --   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
 --   #303030 border #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text
 --   #ebebeb bright
 
--- Forward-declared so the SUPER+SHIFT+F / SUPER+equal binds (Window
--- Management, below) can close over it ahead of its real definition further
--- down in Window Rules, next to the rest of the monocle logic it belongs
--- with. Lua locals are not hoisted -- omitting this `local` here would make
--- the assignment down below implicitly global instead of filling this
--- upvalue, and the binds would keep calling a nil function.
+-- Forward-declared so the binds below can close over them ahead of their
+-- definitions in Window Rules. Without these `local`s the later assignments
+-- would be globals and the binds would call nil.
 local toggleMaximize
 local toggleMinimize
 
@@ -37,10 +31,9 @@ local editor      = "codium"
 local zen         = "zen-browser"
 local floorp      = "floorp"
 -- The Quickshell launcher (flyouts/Launcher.qml); wofi only if the shell
--- isn't running to answer. pkill first, so a second press dismisses wofi instead of stacking
--- another instance behind it. The stylesheet is Quickshell's copy with the bar's
--- corner radius applied (AppearanceSync.qml), falling back to the repo's own
--- until the shell has written one.
+-- isn't running. pkill first so a second press dismisses wofi rather than
+-- stacking another. Its stylesheet is Quickshell's copy with the bar's corner
+-- radius applied (AppearanceSync.qml), else the repo's own.
 local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/neutrino/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
 
 -- Animation Speed from the bar's Appearance page. Quickshell writes the choice
@@ -145,62 +138,33 @@ hl.env("QS_ICON_THEME", "kora")
 -------------------
 
 hl.on("hyprland.start", function()
-    -- Not UWSM, so graphical-session.target is never reached on its own --
-    -- nothing here ever calls `systemctl --user start` on it, so anything
-    -- that relies purely on the target (rather than D-Bus activation) to
-    -- launch just sits enabled and dead for the whole session. That was
-    -- silently true of the polkit agent: this used to point at
-    -- /usr/lib/polkit-kde-authentication-agent-1, a KDE path that doesn't
-    -- exist on this system, so the exec failed instantly and quietly and
-    -- no agent ever ran -- any privileged action (mounting a drive, a
-    -- NetworkManager prompt) would hang waiting on a dialog that could
-    -- never appear. hyprpolkitagent is the one actually installed, and
-    -- it's already enabled against graphical-session.target, so starting
-    -- it here rather than execing the binary directly reuses that unit
-    -- (respawn-on-crash, proper cgroup) instead of running it bare.
+    -- Not UWSM, so graphical-session.target is never reached, and units
+    -- that hang off it (rather than D-Bus activation) have to be started by
+    -- hand. Starting the unit rather than the binary keeps its
+    -- respawn-on-crash and cgroup.
     --
-    -- reset-failed first, for when this runs after Hyprland has crashed and
-    -- been restarted by its watchdog. In the seconds with no compositor the
-    -- unit's Restart=on-failure respawns the agent into a missing Wayland
-    -- socket until systemd's start limit trips, and from then on a plain
-    -- `start` is refused ("Start request repeated too quickly") -- which left
-    -- the session with no polkit agent after a crash.
+    -- reset-failed first: after Hyprland crashes and is restarted, the unit
+    -- has usually hit its start limit respawning into a missing Wayland
+    -- socket, and a plain `start` is then refused.
     hl.exec_cmd("systemctl --user reset-failed hyprpolkitagent.service; systemctl --user start hyprpolkitagent.service")
-    -- Same trap as the polkit agent: hypridle's packaged unit hangs off
-    -- graphical-session.target, which never activates here, so it has to
-    -- be started by hand (reset-failed for the same crash-restart reason).
-    -- The fallback runs the binary bare if the unit ever goes missing,
-    -- rather than leaving the machine with no idle.
+    -- Same for hypridle; the fallback runs it bare if the unit is missing.
     hl.exec_cmd("systemctl --user reset-failed hypridle.service; systemctl --user start hypridle.service || hypridle")
-    -- Same trap again, and it bites harder here: swaync.service is also
-    -- D-Bus-activated (BusName=org.freedesktop.Notifications), so the first
-    -- notification of a session can trigger it before WAYLAND_DISPLAY has
-    -- propagated to the systemd --user environment, which fails it,
-    -- restarts it, fails again, and hits systemd's start-limit within a
-    -- couple seconds -- logging in shows a real "failed" unit even though
-    -- it recovers a moment later. Starting it explicitly here, once the
-    -- environment this hook runs in already has WAYLAND_DISPLAY, avoids the
-    -- race instead of racing dbus activation for it.
+    -- swaync is also D-Bus-activated, and the session's first notification
+    -- can start it before WAYLAND_DISPLAY reaches the systemd --user
+    -- environment, failing it into its start limit. Starting it here, where
+    -- WAYLAND_DISPLAY is already set, gets there first.
     hl.exec_cmd("systemctl --user reset-failed swaync.service; systemctl --user start swaync.service")
     -- Stop logind suspending on lid close: the lid binds below just blank the
     -- screen, and hypridle suspends after 20 min idle. Released when
     -- Hyprland exits.
     hl.exec_cmd("systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' tail --pid=$(pidof -s Hyprland) -f /dev/null")
-    -- Quickshell's QML warnings (binding loops, null-property access) go to
-    -- stderr with nowhere to land but the TTY Hyprland was launched from --
-    -- redirected to a log file so startup and logout stay clean. `exec` so
-    -- the /bin/sh hl.exec_cmd wraps this in is replaced rather than left
-    -- sitting around the whole session as quickshell's parent: without it
-    -- both this and the relay below leave an idle shell in the process tree,
-    -- and signals aimed at the tree hit the shell instead of the program.
+    -- QML warnings go to a log rather than the TTY. `exec` replaces the
+    -- /bin/sh that hl.exec_cmd wraps this in, so no idle shell sits in the
+    -- tree as quickshell's parent (same for the relay below).
     hl.exec_cmd("exec quickshell > ~/.cache/quickshell.log 2>&1")
-    -- Persistent IPC relay for the ALT+Tab switcher -- see alttab-relay.cpp
-    -- for what it does and why, and the alt-tab bind block below for how
-    -- it's used. Order relative to `quickshell` above does not matter: it
-    -- reconnects lazily on first use rather than requiring quickshell to
-    -- already be up. QT_FORCE_STDERR_LOGGING keeps its log in that file:
-    -- Qt otherwise decides for itself between stderr and the journal, and
-    -- the startup self-test's failure message needs a place to be found.
+    -- The ALT+Tab switcher's IPC relay (alttab-relay.cpp). It finds
+    -- Quickshell lazily, so order doesn't matter. QT_FORCE_STDERR_LOGGING
+    -- keeps its self-test messages in the log file rather than the journal.
     hl.exec_cmd("exec env QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
     -- env alone does not retheme the cursor Hyprland draws over the desktop
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 20")
@@ -208,13 +172,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("~/.config/hypr/wallpaper.sh")
     -- clipboard history daemon (cliphist needs this to capture every copy)
     hl.exec_cmd("wl-paste --watch cliphist store")
-    -- A terminal waiting on workspace 2. The custom title (not class) is what
-    -- scopes the "send it to 2, silently" rule below to this one instance:
-    -- matching on Alacritty's class would banish every terminal you ever
-    -- open, and overriding the class instead of the title used to do exactly
-    -- that -- it also meant every Quickshell component (bar's window strip,
-    -- ALT+Tab switcher, workspace overlay) looked up "neutrino-startup" in
-    -- DesktopEntries instead of "Alacritty" and came back with no icon.
+    -- A terminal waiting on workspace 2. The rule below matches this title,
+    -- not the class: a class match would catch every terminal, and a custom
+    -- class would cost it its icon everywhere Quickshell looks one up.
     hl.exec_cmd(terminal .. " --title neutrino-startup")
     -- XDG autostart, which Hyprland does not run itself: the .desktop files
     -- in ~/.config/autostart, managed from Settings > Startup. Last, so a
@@ -298,11 +258,9 @@ animation({ leaf = "windowsOut", enabled = true, speed = 1.5, bezier = "neutrino
 animation({ leaf = "fade",       enabled = true, speed = 1.5, bezier = "neutrino" })
 animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "neutrino", style = "slidefade 12%" })
 
--- Layer surfaces: wofi, and the bar's flyouts. These inherit `global` unless
--- set, so the launcher was taking the same 300ms a window does just to appear
--- -- long enough to feel like a delay on something you open to type into.
--- fade rather than popin: the bar is a layer too, and scaling it on every
--- start looks wrong.
+-- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which
+-- they'd otherwise inherit, since a launcher should appear at once. fade
+-- rather than popin, since the bar is a layer too.
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "neutrino", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "neutrino", style = "fade" })
 
@@ -336,18 +294,13 @@ hl.config({
     },
 })
 
--- Hyprland inverts the workspace swipe by default, so a 3-finger swipe
--- left goes to the workspace on the right. That reads backwards next to
--- natural_scroll = false above, which already puts the touchpad's own
--- vertical scrolling in the traditional (uninverted) direction -- so this
--- un-inverts the horizontal one to match: swipe left, go left.
+-- Swipe left, go left: uninverted, to match natural_scroll = false above.
 hl.config({
     gestures = {
         workspace_swipe_invert = false,
     },
 })
 
--- Replaces gestures:workspace_swipe, which no longer exists.
 hl.gesture({
     fingers   = 3,
     direction = "horizontal",
@@ -378,15 +331,10 @@ hl.bind(mod .. " + Q",         hl.dsp.window.close())  -- Close window
 --   maximize  fills the usable area, stopping below the Quickshell bar
 --   fullscreen covers the entire output, bar included
 --
--- Routed through toggleMaximize() (defined down in the window rules section,
--- alongside the rest of the monocle logic it coordinates with) rather than
--- dispatched directly, so that unmaximizing on purpose sticks: in monocle,
--- focusing a window maximizes it, which would otherwise undo this the moment
--- you alt-tabbed away and back. toggleMaximize() records the window as
--- deliberately small and the focus hook leaves those alone. The wrapper
--- closures exist because these binds are registered before that function is
--- assigned further down -- Lua resolves the upvalue when the key is actually
--- pressed, not when the bind is registered, so the forward reference is fine.
+-- Maximize goes through toggleMaximize() (Window Rules) so that shrinking a
+-- window on purpose sticks: it records the choice, and the focus hook that
+-- re-maximizes in monocle leaves such windows alone. Wrapped in closures
+-- because the function is assigned further down.
 hl.bind(mod .. " + X", function() toggleMaximize() end)  -- Maximize or restore window
 hl.bind(mod .. " + CTRL + F",  hl.dsp.window.fullscreen())  -- Fullscreen window, covering the bar
 -- same action as double-clicking a window's titlebar
@@ -418,14 +366,10 @@ hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus windo
 -- keeping the selection in Quickshell makes stepping free, and gives
 -- SHIFT+Tab a working reverse direction, which the dispatcher never had.
 --
--- There is no submap. Hyprland 0.56.2 does not deliver a modifier-key
--- *release* to a submap bind -- an Alt_L release bind inside one, with
--- ignore_mods, registered correctly and never fired once under test, while the
--- submap's catchall swallowed the release instead. That is what made the
--- switcher sit on screen and commit on whatever key came next: the "press Tab
--- again to open it" bug. The switcher takes the keyboard itself and catches
--- the release in Keys.onReleased, which also retires the catchall dead man's
--- switch -- with no submap there is no mode to get the keyboard stuck in.
+-- There is no submap: Hyprland (0.56.2) never delivers a modifier release
+-- to a submap bind. The switcher takes the keyboard itself and catches the
+-- release in Keys.onReleased, and with no submap there's no mode for the
+-- keyboard to get stuck in.
 --
 -- Every Tab of a held ALT+Tab comes through these binds, not just the first:
 -- Hyprland matches its own binds before forwarding keys to any client, so they
@@ -436,61 +380,30 @@ hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus windo
 -- `repeating` on each so holding the key autorepeats.
 --
 -- alttab-ipc.sh reaches the shell through alttab-relay (started above),
--- which also reads the window list from Hyprland itself, rather than `qs ipc call` directly -- see alttab-relay.cpp
--- and alttab-ipc.sh for why: `qs` is expensive enough to start on its own
--- (~45ms measured on this machine) to lose the race against a fast
--- tap-and-release, on top of everything above about catching the release at
--- all. Falls back to `qs` itself if the relay isn't reachable.
+-- which also reads the window list from Hyprland; `qs ipc call` (~45ms just
+-- to start) is only the fallback. See alttab-relay.cpp.
 --
--- The ALT release is also watched here, in-process, not just by the
--- switcher's keyboard grab. The grab can only see a release that happens
--- after the switcher is up, and the first Tab has to travel out through
--- alttab-ipc.sh and the relay before that is true -- so an ALT
--- released inside that window (tapping ALT+Tab and letting ALT go before
--- Tab) was never delivered to anyone, and the switcher sat on screen
--- holding the keyboard until some later key press knocked it loose. That
--- is the "stuck switcher" bug.
+-- The ALT release is also watched here, in-process. The switcher's grab
+-- only sees a release that happens after it is up, and an ALT let go while
+-- the first Tab is still on its way would otherwise reach no one, leaving
+-- the switcher holding the keyboard. hl.is_key_down reads Hyprland's own key
+-- state, so altTabWatch polls it from the moment the bind fires and sends
+-- the commit when ALT comes up. Keys.onReleased stays the fast path;
+-- whichever notices first wins, and the shell drops the second.
 --
--- hl.is_key_down answers the question the grab could not: it reads
--- Hyprland's own key state, so it is true whether or not any client has
--- focus and whatever the timing was. altTabWatch polls it from the moment
--- the bind fires -- when ALT is by definition still down -- and sends the
--- commit as soon as it comes up. The switcher's own Keys.onReleased stays
--- as the fast path for the ordinary case (no poll interval, no process
--- spawn); whichever notices first wins, and the second commit is dropped
--- by the shell because the switcher is no longer open.
+-- Chained oneshots rather than a `repeat` timer: a Lua timer only stops
+-- once collected, so a repeating one fires on long after it's wanted.
 --
--- Chained oneshots rather than one `repeat` timer: a Lua timer here is
--- stopped only by dropping the last reference to it and waiting for the
--- collector, so a repeating one keeps firing for an unbounded while after
--- we are done with it. A oneshot that only re-arms while ALT is still held
--- ends the chain itself. `gen` retires any chain left over from an earlier
--- gesture, since a stale timer can still fire once before it is collected.
---
--- The generation number is not just local bookkeeping: it is sent along with
--- every command, so the shell can match a release to the exact gesture it
--- came from. That is what makes "never open a switcher nobody is holding ALT
--- for" a rule rather than a race the shell has to guess at on timing alone.
--- It used to guess -- a commit arriving with no switcher open was applied to
--- the next Tab only if it landed inside a 250ms window, and was thrown away
--- as a duplicate if it landed within 300ms of the last commit. A second
--- ALT+Tab started soon after a first hit both windows at once: its genuinely
--- early release looked like the previous gesture's straggler, got dropped,
--- and the Tab behind it then opened a switcher with ALT already up -- which
--- sits there holding the keyboard until some later keypress knocks it loose.
--- That is the hang. With the gesture id attached there are no windows to fall
--- between: a release carries the same id as the Tab it belongs to, and the
--- shell drops it only when it has already committed that exact gesture.
+-- Each gesture gets a generation number, sent with every command, so the
+-- shell matches a release to the exact Tab it belongs to and never opens a
+-- switcher for a gesture whose ALT is already up. It also retires any chain
+-- left over from an earlier gesture.
 local altTabWatchGen = 0
 local altTabWatchTimer = nil
 
--- `sends` counts the commits already sent for this gesture's release. The
--- first one is the gesture ending normally. The extras exist because a Tab
--- can still be in flight (hyprctl, then the relay) when ALT comes up: the
--- shell already refuses to open for a gesture it has seen the release of, so
--- an extra commit is only insurance against the first one being lost
--- outright, and costs nothing when it is redundant -- the shell drops a
--- repeat for a gesture it has committed.
+-- `sends` counts commits already sent for this release. Two extras follow
+-- the first, as insurance against it being lost while the Tab is still in
+-- flight; the shell drops repeats for a gesture it has committed.
 local function altTabWatch(gen, sends)
     if gen ~= altTabWatchGen then return end
 
@@ -511,11 +424,8 @@ local function altTabWatch(gen, sends)
         { timeout = 90, type = "oneshot" })
 end
 
--- Armed by every alt-tab bind, not just the first Tab: re-arming is what
--- keeps the chain alive across a long cycle, and the generation bump means
--- the previous chain retires instead of running alongside this one. The bump
--- happens before the command is spawned, so the command carries the same
--- generation the watch will later commit with.
+-- Armed by every alt-tab bind, retiring the previous chain. The generation
+-- is bumped before the command runs, so both carry the same id.
 local function altTabKey(cmd)
     return function()
         altTabWatchGen = altTabWatchGen + 1
@@ -530,13 +440,8 @@ hl.bind("ALT + Tab",         altTabKey("~/.config/hypr/alttab-ipc.sh tab"),  { r
 hl.bind("ALT + SHIFT + Tab", altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
 hl.bind("ALT + grave",       altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
 
--- A bare Alt_L/Alt_R `global` bind (hyprland-global-shortcuts-v1) was tried
--- here as a second route to the ALT release, alongside the keyboard grab in
--- AltTabSwitcher.qml. Reverted: registering it made Hyprland treat bare ALT
--- differently everywhere, not just during alt-tab -- ALT is also the mod for
--- window drag/resize, and releasing it after any of that started closing the
--- switcher's layer state and refocusing whatever the mouse was over, not
--- what alt-tab had selected. Not worth it.
+-- Not a bare Alt_L/Alt_R `global` bind for the release: that changes how
+-- Hyprland treats ALT everywhere, including the drag/resize mod.
 
 -- --- Workspaces ---
 for i = 1, MAX_WORKSPACES do
@@ -590,11 +495,9 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -n1 set 5%-"),  
 ---- WINDOW RULES ----
 ----------------------
 
--- Deliberately NOT suppressing maximize events. Hyprland's own example config
--- ships a `suppress_event = "maximize"` rule matching class ".*", but that is
--- what double-clicking a titlebar sends: with it in place, double-click stops
--- maximizing anything. Leaving it out keeps that working, and maximize honours
--- the Quickshell bar's reserved zone, so the window fills the space below it.
+-- Deliberately NOT suppressing maximize events (Hyprland's example config
+-- does): that's what double-clicking a titlebar sends. On a floating window
+-- the window.fullscreen hook turns it into a fill; see fillFloating().
 
 hl.window_rule({
     -- Fixes dragging issues with XWayland
@@ -624,19 +527,13 @@ hl.window_rule({
 -- window that would tile is floated and sized to fill the usable area
 -- instead of maximized.
 --
--- Floating rather than maximized on purpose: Hyprland allows exactly one
--- maximized (or tiled-fullscreen) window per workspace, so a maximize-based
--- monocle can only ever keep the *focused* window full -- everything else
--- sits at its dwindle-tile size until it is focused, which is what made
--- alt-tab visibly grow the landed-on window every single time. Floating
--- windows have independent geometry, so every one of them can be full-size
--- at once; switching focus is then just a raise, with nothing to resize.
+-- Floating rather than maximized: Hyprland allows one maximized window per
+-- workspace, so only the focused one could be full and switching would
+-- resize. Floaters each keep their own geometry, so switching is a raise.
 --
--- tag "+monocle" on the rule (removed by "-monocle" on every rule below
--- this shares a window with) is what tells the window.open hook further
--- down which windows it owns: without it, sizing would have to duplicate
--- every one of those rules' class/title matches here instead of just
--- deferring to whichever of them wins.
+-- The "+monocle" tag (taken off again by "-monocle" on the rules below)
+-- tells the window.open hook which windows it owns, without repeating
+-- those rules' matches here.
 local monocleRule = hl.window_rule({
     name  = "monocle",
     match = { float = false },
@@ -645,17 +542,13 @@ local monocleRule = hl.window_rule({
     tag = "+monocle",
 })
 
--- The bar's standalone windows (System, Keybinds, Settings) are
--- Quickshell FloatingWindows, class org.quickshell. They size themselves to
--- their content, so they float at that size, centred on the focused monitor.
--- DO NOT apply generic floating window sizing (50%, centered) — let them use
--- their own size logic defined in QML code.
+-- The bar's standalone windows (System, Keybinds, Settings): Quickshell
+-- FloatingWindows, class org.quickshell, which size themselves in QML. They
+-- float centred at that size -- no size here.
 --
--- Two things here are load-bearing. maximize = false: the monocle rule
--- matches `float = false`, and at map time these aren't floating *yet*, so
--- it catches them too. And this rule has to come *after* the monocle rule:
--- when two rules set the same property the later one wins, so above it,
--- monocle's maximize = true overrides this and they float at full size.
+-- maximize = false and coming *after* the monocle rule are both
+-- load-bearing: at map time these aren't floating yet, so monocle matches
+-- them too, and the later rule wins.
 hl.window_rule({
     name     = "quickshell-windows",
     tag      = "-monocle",
@@ -666,28 +559,15 @@ hl.window_rule({
     -- Intentionally no size constraint — QML code defines window dimensions
 })
 
--- Apps that are always worth the whole screen: the editor, the browsers, and
--- zathura. Always maximize-on-open in dwindle mode, so switching to dwindle
--- tiles everything else while leaving these full. In monocle mode this rule is
--- disabled (see toggleLayout) and monocleRule's ordinary float+size handles
--- them instead -- they used to be exempted from that and kept this
--- maximize=true unconditionally, which seemed right (they open already
--- full) but wasn't: with two of them open at once, Hyprland's one-tiled-
--- maximized-window-per-workspace limit still means only one can hold that
--- state, so alt-tabbing *between* them, e.g. the editor and a browser, jarred
--- exactly like the problem this was all meant to fix. Floating both like
--- everything else is what actually keeps them both full at the same time.
+-- Apps always worth the whole screen: the editor, the browsers, zathura.
+-- In dwindle mode they maximize on open while everything else tiles. In
+-- monocle this rule is disabled (see toggleLayout) and monocleRule floats
+-- them like anything else -- only one window per workspace can hold
+-- maximize, so two of these would resize on every switch between them.
+-- zathura is here because it repaints slowly enough that a resize on focus
+-- flashed the blurred wallpaper through it.
 --
--- zathura joined this list rather than staying tiled because maximizeFocused()
--- re-issues a fullscreen dispatch on every focus for tiled windows, and
--- zathura's cairo rendering is slow enough to repaint at the new size that,
--- with blur enabled, the still-unpainted region showed the blur-behind
--- wallpaper through it for a moment -- alt-tabbing to it looked like the
--- window had gone almost transparent. Floating windows only get bring_to_top
--- on focus, not a resize, so they never hit that repaint gap.
---
--- Matched on class, not title: browser, editor and zathura titles change with
--- whatever is open in them.
+-- Matched on class: their titles change with what's open in them.
 local maximizePrimaryDwindleRule = hl.window_rule({
     name     = "maximize-primary-dwindle",
     match    = { class = "^(codium|VSCodium|floorp|zen|zen-browser|org\\.pwmt\\.zathura)$" },
@@ -695,32 +575,22 @@ local maximizePrimaryDwindleRule = hl.window_rule({
 })
 maximizePrimaryDwindleRule:set_enabled(false)
 
--- Every per-app and popout exception lives in one place:
--- ~/.config/singularity/window-rules.json (the repo's dotfiles/singularity
--- package, so the defaults ship with it), edited from the Settings window's
--- Window Rules page. What stays in this file is the machinery the shell
--- itself depends on -- monocle, Quickshell's own windows, the XWayland drag
--- fix, the startup terminal -- not preferences about particular apps.
+-- Per-app and popout exceptions live in
+-- ~/.config/singularity/window-rules.json, edited from Settings > Window
+-- Rules. This file keeps only the machinery the shell depends on.
 --
--- Read on every load, so the page's save-then-reload is all it takes; like
--- any window rule they apply to windows as they open. Placed after every rule
--- above on purpose: when two rules set the same property the later one wins,
--- so an entry here overrides this file's defaults for that app. Within the
--- file it's the other way round -- the entry nearer the top wins.
+-- Read on every load, after every rule above so an entry overrides this
+-- file's defaults (the later rule wins); within the file, the entry nearer
+-- the top wins.
 --
--- Entries match by class, title or both. Written from the page they are
--- literal and whole ("org.pwmt.zathura" matches that class and nothing else);
--- with "regex": true they are passed to Hyprland as written, which is what
--- the popout entries need. Lookaheads never match there (see below); a
--- "negative:" prefix is how an entry says "anything but this".
+-- Entries match by class, title or both, literally and whole unless
+-- "regex": true, which the popout entries need. Hyprland's regex has no
+-- lookaheads -- one silently never matches -- so "negative:" says "anything
+-- but this". Popouts are matched by title, since dialogs inherit their
+-- app's class.
 --
--- Popouts are a heuristic, not a rule: GTK and Qt dialogs inherit their
--- parent app's class, so only the title tells them apart, and the list of
--- titles will need extending as things slip through.
---
--- JSON comes from json.lua beside this file (Hyprland's Lua has no JSON
--- library). Loaded with pcall: if it's missing or broken the rules file is
--- treated as empty, never as an error that takes the rest of the config down.
+-- JSON comes from json.lua beside this file, loaded with pcall: missing or
+-- broken, the rules are treated as empty rather than breaking the config.
 local decodeJson
 do
     local ok, decoder = pcall(dofile, os.getenv("HOME") .. "/.config/hypr/json.lua")
@@ -753,14 +623,8 @@ do
         end
         if next(match) then
             -- A rule that doesn't name a class never reaches Quickshell's own
-            -- windows. They size themselves in QML, and a title rule handing
-            -- one a size cut it off: the Settings window carries the title
-            -- "Settings", which the dialog entry matches, and lost a chunk of
-            -- its content to a smaller surface than it was laid out for.
-            --
-            -- "negative:", not a (?!...) lookahead: Hyprland's regex engine
-            -- has no lookaheads, and a pattern using one doesn't error, it
-            -- just never matches -- which silently disabled the whole rule.
+            -- windows, which size themselves in QML (the Settings window's
+            -- title would otherwise match the dialog entry).
             match.class = match.class or "negative:^(org\\.quickshell)$"
             local name = "settings-rule-" .. n
             local rule = { name = name, match = match }
@@ -795,38 +659,12 @@ do
     end
 end
 
--- What actually keeps monocle coherent.
+-- The global layout mode, toggled by SUPER+M. In memory only: nothing
+-- outside this file reads it, and it resets to monocle on a reload.
 --
--- Hyprland allows exactly one maximized window per workspace, so the window
--- rule alone cannot hold the illusion: it fires as a window maps, the new
--- window takes the maximized state, and every window opened before it silently
--- drops back to its dwindle size. What you get is not monocle but a normal
--- tiled layout where only the newest window is big -- which is why double
--- clicking a titlebar looked like it "shrank the window into its tile": the
--- window really was tiled, and maximize was toggling it out of full.
---
--- Maximizing on focus instead of on map is what fixes that. Whatever you land
--- on is full by the time you see it, from any route -- alt-tab, the taskbar,
--- SUPER+arrow, closing the window in front.
---
--- This used to shell out to a bash+python script over `hyprctl -j` for every
--- focus change. That round trip (spawn a process, open a new hyprctl IPC
--- socket, parse JSON, dispatch back) was slow enough relative to Hyprland's
--- own event ordering that a second, unrelated focus event -- notably the
--- keyboard grab release when the ALT+Tab switcher closes, which bounces focus
--- back to whichever window was active before the switcher opened -- could
--- land in the middle of it and steal the maximize meant for the real target.
--- Chasing that race with retries treated the symptom. Running the whole check
--- in Lua, in-process, on Hyprland's own event thread removes it at the root:
--- there is no subprocess and no IPC round trip for another event to land
--- inside of, so this always finishes inside the same tick as the focus event
--- that triggered it.
---
--- windowsInMonocle tracks layout mode as a Lua boolean rather than a runtime
--- file: nothing outside this config needs to read it, so there is no reason
--- to leave process boundaries. It resets to monocle (this default) on a
--- config reload or Hyprland restart, same as the file it replaces did on
--- reboot.
+-- The rest of monocle is hooks, run in-process on Hyprland's event thread so
+-- no other event can land mid-way: window.open sizes each new window,
+-- window.active (maximizeFocused) keeps whatever you land on full and on top.
 local monocleEnabled = true
 
 -- Workspaces pinned to one layout whatever SUPER+M says, from
@@ -853,16 +691,14 @@ local function monocleOn(ws)
     return monocleEnabled
 end
 
--- Per-window state this config keeps on top of Hyprland's own, by address,
--- in memory for the same reason as monocleEnabled above:
+-- Per-window state this config keeps on top of Hyprland's own, by address:
 --   small     -- unmaximized on purpose (SUPER+equal), so refocusing it does
 --                not immediately undo the choice; see toggleMaximize() below
 --   minimized -- the {x, y} SUPER+C hid it from; see toggleMinimize() below
 --   restore   -- the {x, y, w, h} a non-monocle floater had before it was
 --                filled; see fillFloating() below
--- One table, cleared by one window.close hook further down: addresses are
--- pointer values Hyprland reuses once a window is gone, so anything left
--- behind would land on some unrelated window that opens later.
+-- Cleared by a window.close hook further down: Hyprland reuses addresses,
+-- so leftovers would land on some later window.
 local windowState = {}
 local function stateOf(addr)
     local st = windowState[addr]
@@ -881,19 +717,10 @@ local function restoreMinimized(win)
     hl.dispatch(hl.dsp.window.move({ x = saved.x, y = saved.y, window = "address:" .. win.address }))
 end
 
--- The monitor's usable rect (its resolution minus whatever the bar and any
--- other layer-shell surface has reserved), in the same logical-pixel units
--- as win.size/win.at. Shared by isAlreadyFull() below (the maximize-based
--- path, for dwindle mode) and the floating-monocle sizer.
---
--- x/y are the monitor's own origin plus its reserved edge, NOT the reserved
--- edge alone: hl.dsp.window.move places a window at an absolute point in the
--- whole layout, not an offset within its monitor (verified by moving the same
--- window to the same coordinates twice -- it does not drift). Returning a
--- monitor-local origin put every window on the second monitor at the *first*
--- monitor's top-left while still sized to the second's resolution, so a
--- display sitting to the right of another had its windows land on the wrong
--- screen and hang off the far edge of it.
+-- The monitor's usable rect (its resolution minus what the bar and other
+-- layer surfaces reserve), in the logical pixels of win.size/win.at. x/y
+-- are absolute layout coordinates -- the monitor's origin plus its reserved
+-- edge -- since window.move places windows in the whole layout.
 local function usableArea(mon)
     local reserved = mon.reserved or { left = 0, top = 0, right = 0, bottom = 0 }
     return {
@@ -904,10 +731,8 @@ local function usableArea(mon)
     }
 end
 
--- Whether a floating-monocle window still fills the monitor it is actually
--- on. isAlreadyFull() below compares size alone, which is all the maximize
--- path needs; this one compares position too, since the whole failure it
--- guards against is a window that is the right size on the wrong screen.
+-- Whether a floater fills the monitor it is on: position as well as size,
+-- unlike isAlreadyFull(), since the right size on the wrong screen isn't.
 local function isFitted(win, area)
     return math.abs(win.size.x - area.w) <= 4 and math.abs(win.size.y - area.h) <= 4
         and math.abs(win.at.x - area.x) <= 4 and math.abs(win.at.y - area.y) <= 4
@@ -919,14 +744,9 @@ local function isAlreadyFull(win, mon)
     return math.abs(w - area.w) <= 4 and math.abs(h - area.h) <= 4
 end
 
--- True if `win` currently carries the given Hyprland tag. Tags are real,
--- queryable window state (not just a match-time flag), so this works
--- whenever it's checked, not only right after the window maps.
--- A tag applied by a window rule (monocleRule, here) comes back with a
--- trailing "*" -- Hyprland's marker for a "dynamic" tag that gets
--- re-evaluated, versus a plain "static" one set by a one-off dispatch
--- (hl.dsp.window.tag, in toggleLayout's sweep below) which has none. Both
--- are the same tag as far as this config cares, so both compare equal here.
+-- True if `win` carries the Hyprland tag `name`. A tag set by a window rule
+-- comes back with a trailing "*" (dynamic) and one set by dispatch without;
+-- both count.
 local function hasTag(win, name)
     if not win.tags then return false end
     if type(win.tags) == "table" then
@@ -959,14 +779,12 @@ local function sizeToFullFloat(win, mon)
 end
 
 -- A floating window is maximized by filling the usable area, never with
--- Hyprland's maximized flag. A floater carrying that flag ignores
--- bring_to_top and window.move, which broke ALT+Tab (focused, but left
--- under whatever floater was on top) and SUPER+C (couldn't be hidden) for
--- every window that got it -- SUPER+X on a window-rules.json float, or an
--- Electron app like Claude asking to be maximized itself. So the flag is
--- taken off wherever it turns up (the window.fullscreen hook, and on focus
--- in case that was missed), and the window is filled instead. Filling
--- remembers the geometry it had, which toggleMaximize() puts back.
+-- Hyprland's maximized flag: a floater carrying that flag ignores
+-- bring_to_top and window.move, so ALT+Tab left it covered and SUPER+C
+-- couldn't hide it. The flag is taken off wherever it turns up (the
+-- window.fullscreen hook, and on focus as a backstop) -- SUPER+X, a titlebar
+-- double-click, an app asking for it -- and the window filled instead.
+-- Filling remembers the geometry it had, which toggleMaximize() puts back.
 --
 -- Returns the window re-read, since its geometry has changed.
 local function fillFloating(win)
@@ -994,16 +812,6 @@ local function unflagFloating(win)
 end
 hl.on("window.fullscreen", function(win) unflagFloating(win) end)
 
--- Sizes every window the monocle rule just floated, the moment it maps --
--- once, on open, rather than on every focus change. That's the entire fix
--- for alt-tab's resize jank: by the time anything can be focused, it's
--- already full, so switching to it is just a raise.
--- window.open hands the window that just mapped as its first argument.
--- hl.get_active_window() is NOT a reliable substitute here (unlike in
--- maximizeFocused()'s hooks): a second window opening while another is
--- already focused can fire this before the active pointer has moved on to
--- it, which silently sized the *previous* window a second time instead --
--- confirmed with a real pair of test windows before landing on this.
 -- Moves one window into or out of monocle. SUPER+M's sweep, and any window
 -- that lands on a workspace whose layout isn't the one the rules were set
 -- for when it mapped (see applyLayoutRules below). Windows opened before
@@ -1036,17 +844,19 @@ local function isMonocleWin(w)
     return w.floating and hasTag(w, "monocle")
 end
 
+-- Sizes every window the monocle rule just floated, once, as it maps, so
+-- switching to it later is just a raise. Uses the window window.open hands
+-- over, not hl.get_active_window(), which can still be the previous window
+-- when a second one opens.
 local function onMonocleOpen(win)
     if not win then return end
     -- The rules follow the *active* workspace's layout, so a window that
     -- mapped somewhere else (a window-rules.json workspace entry, an app
     -- restoring its own session) can come up in the wrong one.
     --
-    -- Only then, though. On the active workspace the rules were already
-    -- right, and a window's own state isn't settled yet at this point:
-    -- Quickshell's Settings/System windows map before their class and the
-    -- quickshell-windows rule's float have landed, so they looked like a
-    -- tiled app due for monocle and were blown up to full screen.
+    -- Only then: on the active workspace the rules were right, and a
+    -- window's state isn't settled yet (Quickshell's windows map before
+    -- their class and float land, and looked like tiled apps).
     local on = monocleOn(win.workspace)
     local active = hl.get_active_workspace()
     local elsewhere = win.workspace and active and win.workspace.id ~= active.id
@@ -1074,13 +884,9 @@ end)
 local function maximizeFocused()
     local win = hl.get_active_window()
 
-    -- A hidden window that gets focus by any route other than SUPER+C
-    -- (ALT+Tab, the workspace overlay, its bar entry) is being asked for, so
-    -- bring it back. Left to the refit below, a monocle window would come
-    -- back on-screen but keep its stale minimized entry -- the next SUPER+C
-    -- then took the restore branch and threw it to its old position -- and a
-    -- window made small on purpose, which the refit skips, would stay hidden.
-    -- Ahead of the monocle check since SUPER+C works in dwindle mode too.
+    -- A hidden window focused by any route (ALT+Tab, the overlay, the bar)
+    -- is being asked for, so bring it back. Ahead of the monocle check since
+    -- SUPER+C works in dwindle mode too.
     if win and stateOf(win.address).minimized then restoreMinimized(win) end
 
     -- normally already done by the window.fullscreen hook
@@ -1090,21 +896,13 @@ local function maximizeFocused()
     if not monocleOn(win.workspace) then return end
 
     if win.floating then
-        -- Unlike a tiled window, Hyprland does not raise a floating one to the
-        -- top of its own stack just because it got focus. Without this,
-        -- alt-tab correctly changed which window has focus but whatever was
-        -- already on top visually stayed there, covering it. Other floaters
-        -- (dialogs, quickshell, thunar) are left alone, same as before --
-        -- they're not part of the monocle stack, so there's no stacking order
-        -- to fix for them.
+        -- Hyprland doesn't raise a floater just because it got focus, so a
+        -- monocle window is raised here. Other floaters (dialogs, Quickshell)
+        -- aren't part of the monocle stack and are left alone.
         if hasTag(win, "monocle") then
-            -- sizeToFullFloat() runs once, on open, so a window keeps the
-            -- geometry the layout had at that moment. Sending it to a
-            -- workspace on another monitor, or docking and undocking, leaves
-            -- it fitted to a monitor it is no longer on. Re-fitting here
-            -- catches that on the next focus whatever caused it, and backs up
-            -- the monitor hooks below for the cases where Hyprland has not
-            -- settled the new layout by the time those fire.
+            -- Re-fit a window left sized for a monitor it's no longer on
+            -- (moved across, docked, undocked); backs up the monitor hooks
+            -- below for when the layout hadn't settled as they fired.
             local mon = win.monitor
             if mon and not stateOf(win.address).small and not isFitted(win, usableArea(mon)) then
                 sizeToFullFloat(win, mon)
@@ -1113,27 +911,16 @@ local function maximizeFocused()
         end
         return
     end
-    -- win.floating above is not enough on its own for a window that has
-    -- just mapped: it races the quickshell-windows rule the same way the
-    -- monocle rule's own `float = false` match does (see its comment above),
-    -- and window.active can fire before that rule's `float = true` has
-    -- landed. Caught here by class rather than waiting it out, since a
-    -- Quickshell standalone window (Settings, System, Keybinds) sizes
-    -- itself in QML and a maximize in that gap left it stuck rendering at
-    -- its fixed content size inside a maximized surface -- cut off rather
-    -- than centred.
+    -- By class too: a Quickshell window can be focused before its rule's
+    -- float lands, and must never be maximized (it sizes itself in QML).
     if win.class == "org.quickshell" then return end
     if stateOf(win.address).small then return end
 
     local mon = hl.get_active_monitor()
     if not mon then return end
 
-    -- Testing the fullscreen *flag* above is not enough on its own: a window
-    -- that is the only one on its workspace already fills the usable area
-    -- while still reporting fullscreen=0, so a flag-only guard would
-    -- re-maximize it every time it is focused. The geometry compare here
-    -- catches that case so an already-full window does not animate and
-    -- reflow its contents for no reason.
+    -- A window alone on its workspace fills the area with fullscreen=0, so
+    -- compare geometry too rather than re-maximize it on every focus.
     if isAlreadyFull(win, mon) then return end
 
     hl.dispatch(hl.dsp.window.fullscreen({mode="maximized"}))
@@ -1141,13 +928,8 @@ end
 
 hl.on("window.active", maximizeFocused)
 
--- Closing is its own case: focus does not move until the closing window is
--- actually gone. window.active already covers the window that receives focus
--- next, but the sequencing around a close is Hyprland's internal detail, not
--- something to rely on -- re-checking explicitly here is what the old script's
--- --settle argument did, and needs no such flag now since there is no
--- subprocess spawn latency left for a window.active firing "too early" to
--- matter against.
+-- Re-checked on close too, rather than relying on how Hyprland sequences
+-- the focus change around it.
 hl.on("window.close", maximizeFocused)
 
 -- window.close hands the closing window over, same as window.open does.
@@ -1155,19 +937,10 @@ hl.on("window.close", function(win)
     if win then windowState[win.address] = nil end
 end)
 
--- Docking, undocking, or changing a display's resolution or arrangement (the
--- Settings window's Display page writes those and reloads) moves and resizes
--- the monitors under every window that is already open. Monocle windows are
--- floating, so nothing re-lays them out: each keeps the rect it was given on
--- open, which now belongs to a monitor that has moved, shrunk or gone away --
--- windows sized for a large external display hang off the edge of a laptop
--- panel after undocking, and windows opened on the laptop stop short of
--- filling a bigger screen after docking.
---
--- The focus hook above re-fits one window at a time, but only once you get to
--- it; this puts them all right at the moment the layout changes, rather than
--- leaving a screen of wrong-sized windows to fix by visiting each. Windows
--- made small on purpose keep that size -- same rule as everywhere else.
+-- Docking, undocking, or changing a display's resolution or arrangement
+-- moves the monitors under every open window, and floaters aren't re-laid
+-- out. This re-fits every monocle window at once when that happens (the
+-- focus hook only catches one at a time). Windows made small keep that size.
 local function refitMonocle()
     for _, w in ipairs(hl.get_windows()) do
         if w.floating and hasTag(w, "monocle") and not stateOf(w.address).small and monocleOn(w.workspace) then
@@ -1177,34 +950,20 @@ local function refitMonocle()
     end
 end
 
--- All three, because they answer different questions and Hyprland does not
--- promise the layout has settled by the time any one of them fires: added and
--- removed catch a display appearing or going, layout_changed catches a
--- rearrangement of the ones already there (and fires last when a dock does
--- several of those at once).
+-- All three: added/removed for a display appearing or going,
+-- layout_changed for a rearrangement (it fires last when docking).
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
 
--- The window.fullscreen hook above (unflagFloating) only ever takes the
--- maximized flag *off* a floater. There is deliberately no hook forcing a
--- window back to maximized
--- when it leaves that state. There used to be one, on the reasoning that
--- monocle means one window filling the screen with nothing to toggle to, but
--- it also swallowed SUPER+SHIFT+F: the unmaximize landed and was immediately
--- undone, so there was no way to make a window small on purpose.
+-- SUPER+X. Deliberately no hook forcing a window back to maximized when it
+-- leaves that state (the window.fullscreen hook only takes the flag *off*
+-- floaters): that would make shrinking a window impossible. Instead this
+-- records deliberate shrinks in windowState and maximizeFocused() leaves
+-- them alone.
 --
--- toggleMaximize() below records deliberate shrinks in windowState so
--- maximizeFocused() leaves them alone, and double-clicking a titlebar (which
--- does not go through toggleMaximize) still gets re-maximized on the next
--- focus, via the window.active hook above -- matching the old behaviour.
---
--- That's still exactly right for a tiled window (an editor/browser in dwindle mode via maximize-primary-dwindle, or
--- anything while monocle is off): fullscreen's own toggle semantics do the
--- job. A floating-monocle window doesn't have an "unmaximize" to toggle --
--- it's just floating at whatever size sizeToFullFloat() gave it -- so for
--- those this shrinks to 70% centred instead, and grows back the same way
--- on the next press.
+-- A tiled window uses Hyprland's own maximize toggle. A monocle floater has
+-- nothing to toggle, so it shrinks to 70% centred and grows back.
 function toggleMaximize()
     local win = hl.get_active_window()
     if not win then return end
@@ -1279,10 +1038,8 @@ function toggleMinimize()
         return
     end
 
-    -- window.move only places floating windows; on a tiled one (dwindle
-    -- mode, or a monocle-exempt window) it does nothing, and recording a
-    -- position anyway left the next press "restoring" a window that never
-    -- moved. Say so rather than silently ignore the key.
+    -- window.move only places floating windows, so say so rather than
+    -- silently ignore the key.
     if not win.floating then
         hl.exec_cmd("notify-send -a Hyprland -t 3000 'Minimize' 'Only floating windows can be minimized'")
         return
@@ -1296,11 +1053,9 @@ function toggleMinimize()
     local belowScreen = mon.y + mon.height + 100
     hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
 
-    -- Moving it off-screen doesn't move focus, so keys would keep going to a
-    -- window you can't see. Hand focus to the most recently used window left
-    -- on this workspace instead -- never another hidden one, since focusing
-    -- that would bring it straight back (see maximizeFocused() above). With
-    -- nothing else there, focus stays put.
+    -- Moving it off-screen doesn't move focus, so hand focus to the most
+    -- recently used window left on this workspace -- never another hidden
+    -- one, since focusing that would bring it back.
     local next
     for _, w in ipairs(hl.get_windows()) do
         if w.address ~= win.address and w.mapped and not w.hidden
@@ -1313,15 +1068,12 @@ function toggleMinimize()
     if next then hl.dispatch(hl.dsp.focus({ window = "address:" .. next.address })) end
 end
 
--- monocleRule and the dwindle maximize rule only act on windows as they
--- map, and new windows nearly always map on the active workspace -- so the
--- rules are switched to match whichever workspace is active, on every
--- workspace change as well as on SUPER+M. That's what lets a pinned
--- workspace get its own layout at map time, with no float-then-tile flicker.
--- On a workspace change the bar's layout toast is only told when the layout
--- actually changes; SUPER+M passes announce = true, since pressing it should
--- always say what the layout is now even when the answer is the same as
--- before (two quick presses, or a workspace whose layout didn't move).
+-- monocleRule and the dwindle maximize rule act on windows as they map,
+-- nearly always on the active workspace, so they're switched to match it on
+-- every workspace change and on SUPER+M. That's what gives a pinned
+-- workspace its layout at map time, with no float-then-tile flicker. The
+-- bar's layout toast hears of a workspace change only when the layout
+-- changes; SUPER+M always announces.
 local rulesMonocle = nil
 local function applyLayoutRules(announce)
     local ws = hl.get_active_workspace()
@@ -1339,12 +1091,10 @@ applyLayoutRules()
 -- truthy in that first argument would toast on every workspace change
 hl.on("workspace.active", function() applyLayoutRules() end)
 
--- SUPER+M switches between monocle and dwindle everywhere that isn't
--- pinned. monocleRule only applies to windows as they map, so switching
--- also has to walk every window already open on the workspace -- otherwise
--- only new windows would notice the change. On a pinned workspace nothing
--- here moves; the toast says it's pinned instead of claiming a switch.
--- Global, like toggleMaximize(), so SUPER+M up in the keybinds can reach it.
+-- SUPER+M: monocle or dwindle everywhere that isn't pinned. The rules only
+-- act at map time, so the windows already open on the workspace are
+-- converted here too. On a pinned workspace nothing moves and the toast
+-- says so. Global so the SUPER+M bind can reach it.
 function toggleLayout()
     monocleEnabled = not monocleEnabled
 
