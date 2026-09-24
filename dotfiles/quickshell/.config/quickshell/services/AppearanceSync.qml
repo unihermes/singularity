@@ -329,6 +329,41 @@ Scope {
         AtomicFileWrite.write({ path: root.dir + "/icons", transform: () => theme + "\n" })
     }
 
+    // The window animation style and, when they follow the shell, the border
+    // colours: state files hyprland.lua reads on load, then a config-only
+    // reload. An empty borders file leaves hyprland.lua's own colours.
+    function writeWindowAnim(reload) {
+        var style = Settings.windowAnim
+        AtomicFileWrite.write({
+            path: root.dir + "/window-anim",
+            transform: () => style + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+    function writeBorders(reload) {
+        var line = Settings.borderFollowsTheme
+            ? "rgba(" + hex(Theme.strokeFocus).slice(1) + "ff) rgba(" + hex(Theme.border).slice(1) + "ff)" : ""
+        AtomicFileWrite.write({
+            path: root.dir + "/borders",
+            transform: () => line + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+
+    // A look switch changes both colours at once; one reload is enough.
+    Timer {
+        id: bordersDebounce
+        interval: 200
+        onTriggered: root.writeBorders(true)
+    }
+
+    Connections {
+        target: Theme
+        enabled: Settings.borderFollowsTheme
+        function onStrokeFocusChanged() { bordersDebounce.restart() }
+        function onBorderChanged() { bordersDebounce.restart() }
+    }
+
     // Stepping the size fires once per step; one setcursor at the end is enough.
     Timer {
         id: cursorDebounce
@@ -343,6 +378,8 @@ Scope {
         function onCursorThemeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onCursorSizeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onIconThemeChanged() { root.writeIcons(); debounce.restart() }
+        function onWindowAnimChanged() { root.writeWindowAnim(true) }
+        function onBorderFollowsThemeChanged() { bordersDebounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
@@ -351,6 +388,8 @@ Scope {
         writeHyprAnimations(false)
         writeCursor(false)
         writeIcons()
+        writeWindowAnim(false)
+        writeBorders(false)
         debounce.restart()
     }
 

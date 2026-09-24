@@ -968,8 +968,31 @@ SettingsPage {
     HyprPercent { label: "Focused opacity"; path: ["decoration"]; key: "active_opacity" }
     HyprPercent { label: "Unfocused opacity"; path: ["decoration"]; key: "inactive_opacity" }
     HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
+    HyprPercent { label: "Dim strength"; path: ["decoration"]; key: "dim_strength"; min: 0 }
     HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
+    HyprInt { label: "Blur size"; note: "How far each pass spreads"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
+    HyprInt { label: "Blur passes"; note: "More is smoother and costs more"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
     HyprToggle { label: "Shadows"; path: ["decoration", "shadow"]; key: "enabled" }
+    HyprInt { label: "Shadow size"; path: ["decoration", "shadow"]; key: "range"; max: 40 }
+    ShadowDarkness { label: "Shadow darkness" }
+
+    SettingsField {
+        label: "Border colours"
+        hint: Settings.borderFollowsTheme ? "The focused window in the accent, the rest in the shell's stroke colour"
+            : "As set in hyprland.lua"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.borderFollowsTheme
+            onToggled: Settings.set("borderFollowsTheme", !Settings.borderFollowsTheme)
+        }
+    }
+
+    SettingsField {
+        label: "Window animation"
+        hint: "How windows open and close"
+        Choices { key: "windowAnim" }
+    }
 
     // --- default --------------------------------------------------------------
     // "Default" is what Reset returns to: stock until something is saved over
@@ -1053,6 +1076,8 @@ SettingsPage {
         "decoration.rounding": 0, "decoration.active_opacity": 1, "decoration.inactive_opacity": 1,
         "decoration.dim_inactive": false,
         "decoration.blur.enabled": true, "decoration.shadow.enabled": true,
+        "decoration.dim_strength": 0.5, "decoration.blur.size": 8, "decoration.blur.passes": 1,
+        "decoration.shadow.range": 4, "decoration.shadow.color": 0xee1a1a1a,
     })
 
     function hyprField(path, key) {
@@ -1103,6 +1128,7 @@ SettingsPage {
         property string key: ""
         property int min: 0
         property int max: 20
+        property string suffix: "px"
         // the hint when the value is editable
         property string note: ""
         readonly property var field: page.hyprField(path, key)
@@ -1118,10 +1144,10 @@ SettingsPage {
             value: hi.live ? hi.field.value : 0
             minimum: hi.live ? hi.min : 0
             maximum: hi.live ? hi.max : 0
-            suffix: "px"
+            suffix: hi.suffix
             valueWidth: 56
             onStepped: d => page.setHypr(hi.path, hi.key,
-                Math.max(hi.min, Math.min(hi.max, value + d)), hi.label + " " + (value + d) + "px")
+                Math.max(hi.min, Math.min(hi.max, value + d)), hi.label + " " + (value + d) + hi.suffix)
         }
     }
 
@@ -1149,6 +1175,38 @@ SettingsPage {
             onStepped: d => {
                 var p = Math.max(hp.min, Math.min(100, (value + d) * 5))
                 page.setHypr(hp.path, hp.key, p / 100, hp.label + " " + p + "%")
+            }
+        }
+    }
+
+    // The shadow colour's alpha, its hue left as it is. Read from an
+    // rgba(RRGGBBAA) string or a 0xAARRGGBB number, written as the string.
+    component ShadowDarkness: SettingsField {
+        id: sd
+        readonly property var field: page.hyprField(["decoration", "shadow"], "color")
+        readonly property var rgba: {
+            var v = field.value
+            if (typeof v === "number") return { rgb: (v & 0xffffff).toString(16).padStart(6, "0"), a: (v >>> 24) / 255 }
+            var m = /^rgba\(([0-9a-fA-F]{6})([0-9a-fA-F]{2})\)$/.exec(String(v))
+            return m ? { rgb: m[1], a: parseInt(m[2], 16) / 255 } : null
+        }
+        readonly property bool live: field.editable && rgba !== null
+        readonly property int pct: live ? Math.round(rgba.a * 100) : 0
+
+        hint: live ? "" : "Not a plain colour in hyprland.lua"
+
+        FlyoutStepper {
+            anchors.right: parent.right
+            width: Theme.fit(160)
+            value: Math.round(sd.pct / 5)
+            minimum: 0
+            maximum: sd.live ? 20 : 0
+            displayValue: sd.pct + "%"
+            valueWidth: 56
+            onStepped: d => {
+                var p = Math.max(0, Math.min(100, (value + d) * 5))
+                var a = ("0" + Math.round(p / 100 * 255).toString(16)).slice(-2)
+                page.setHypr(["decoration", "shadow"], "color", "rgba(" + sd.rgba.rgb + a + ")", "Shadow darkness " + p + "%")
             }
         }
     }

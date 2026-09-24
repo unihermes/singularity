@@ -51,6 +51,16 @@ end
 local animMode   = singularityState("animations", "normal")
 local animFactor = animMode == "fast" and 0.5 or 1
 
+-- How windows open and close, picked on the Appearance page. "fade" is
+-- popin at full size, so the window only fades.
+local windowStyles = { popin = "popin 92%", slide = "slide", fade = "popin 100%" }
+local windowStyle  = windowStyles[singularityState("window-anim", "popin")] or windowStyles.popin
+
+-- "<active> <inactive>" border colours, written by the Appearance page when
+-- borders follow the shell's accent; otherwise absent, and the colours
+-- under general below apply.
+local borderActive, borderInactive = singularityState("borders", ""):match("^(%S+)%s+(%S+)$")
+
 local function animation(t)
     t.speed   = t.speed * animFactor
     t.enabled = t.enabled and animMode ~= "off"
@@ -202,8 +212,8 @@ hl.config({
         border_size = 0,
 
         col = {
-            active_border   = "rgba(d4e4f466)",
-            inactive_border = "rgba(303030aa)",
+            active_border   = borderActive or "rgba(d4e4f466)",
+            inactive_border = borderInactive or "rgba(303030aa)",
         },
 
         resize_on_border = true,
@@ -222,8 +232,8 @@ hl.config({
             enabled      = true,
             range        = 18,
             render_power = 3,
-            -- 0xAARRGGBB, so this is black at 40 percent
-            color        = 0x66000000,
+            -- rgba(RRGGBBAA): black at 40 percent
+            color        = "rgba(00000066)",
         },
 
         blur = {
@@ -259,8 +269,8 @@ hl.curve("neutrino", { type = "bezier", points = { {0.22, 1}, {0.36, 1} } })
 -- speed is in 100ms units (3 = 300ms), so lower is faster
 animation({ leaf = "global",     enabled = true, speed = 3, bezier = "neutrino" })
 animation({ leaf = "border",     enabled = true, speed = 3, bezier = "neutrino" })
-animation({ leaf = "windows",    enabled = true, speed = 2, bezier = "neutrino", style = "popin 92%" })
-animation({ leaf = "windowsOut", enabled = true, speed = 1.5, bezier = "neutrino", style = "popin 92%" })
+animation({ leaf = "windows",    enabled = true, speed = 2, bezier = "neutrino", style = windowStyle })
+animation({ leaf = "windowsOut", enabled = true, speed = 1.5, bezier = "neutrino", style = windowStyle })
 animation({ leaf = "fade",       enabled = true, speed = 1.5, bezier = "neutrino" })
 animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "neutrino", style = "slidefade 12%" })
 

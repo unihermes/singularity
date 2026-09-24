@@ -71,6 +71,13 @@ Singleton {
     readonly property alias cursorTheme: adapter.cursorTheme
     readonly property alias cursorSize:  adapter.cursorSize
     readonly property alias iconTheme:   adapter.iconTheme
+    // Hyprland's window look beyond the plain fields in hyprland.lua, which
+    // AppearanceSync hands it through state files: how windows open
+    // ("popin", "slide" or "fade"), and whether their borders take the
+    // shell's focus and stroke colours rather than hyprland.lua's own.
+    // Like the rest of the Windows section, kept by Reset.
+    readonly property alias windowAnim:  adapter.windowAnim
+    readonly property alias borderFollowsTheme: adapter.borderFollowsTheme
     // "outline", "filled", "flat" or "pill"
     readonly property alias moduleStyle: adapter.moduleStyle
     // "full", "floating", "islands" or "bare"
@@ -115,6 +122,7 @@ Singleton {
         systemFontFamily: Looks.systemFonts,
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
+        windowAnim:   ["popin", "slide", "fade"],
         moduleStyle:  ["outline", "filled", "flat", "pill", "bracket", "underline"],
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
         workspaceStyle: ["pills", "numbers", "blocks", "roman"],
@@ -132,6 +140,7 @@ Singleton {
         "full": "Full width", "floating": "Floating", "islands": "Islands", "bare": "Bare",
         "notch": "Notch",
         "pills": "Pills", "numbers": "Numbers", "blocks": "Blocks", "roman": "Roman",
+        "popin": "Pop", "slide": "Slide", "fade": "Fade",
         "stamp": "Time + date", "time": "Time", "day": "Day + time", "long": "Full date",
     })
 
@@ -607,6 +616,8 @@ Singleton {
             property string cursorTheme: "Bibata-Modern-Classic"
             property int cursorSize: 20
             property string iconTheme: "kora"
+            property string windowAnim: "popin"
+            property bool borderFollowsTheme: false
             property string moduleStyle: "outline"
             property string barStyle: "full"
             property string workspaceStyle: "pills"
