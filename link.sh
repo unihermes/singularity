@@ -76,4 +76,8 @@ backup_conflicts
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
 
+# The repo's own hooks (tools/git-hooks): the pre-commit check that keeps
+# Settings search in step with the Settings pages.
+[[ -d .git ]] && git config core.hooksPath tools/git-hooks
+
 log "done. verify a link with: ls -l ~/.config/hypr/hyprland.lua"

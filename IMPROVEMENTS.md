@@ -56,8 +56,10 @@ of it turned out to be deliberate design, and moved to Decisions below.)*
 
 A standing chore, not a feature: **`services/SettingsIndex.js` is maintained by
 hand** and silently drifts. Two entries were already wrong by the time it was
-checked, both introduced earlier in the same day's work. Re-run the drift check
-in the session log below after adding or renaming any `SettingsField`.
+checked, both introduced earlier in the same day's work. The drift check is
+now `tools/check-settings-index.py`, run by the pre-commit hook
+(`tools/git-hooks/pre-commit`, enabled by `link.sh`) whenever a Settings page or
+the index is staged.
 
 ---
 

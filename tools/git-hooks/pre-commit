@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Enabled by link.sh (git config core.hooksPath tools/git-hooks).
+#
+# Settings search is a hand-written index; when a Settings page or the index
+# itself is part of a commit, make sure the two still agree.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+if git diff --cached --name-only | grep -qE 'quickshell/settings/SettingsPage|services/SettingsIndex\.js'; then
+    if ! python3 tools/check-settings-index.py; then
+        echo
+        echo "Settings search index is out of step with the pages (above)."
+        echo "Fix services/SettingsIndex.js, or add a reasoned ALLOW entry in"
+        echo "tools/check-settings-index.py. git commit --no-verify skips this."
+        exit 1
+    fi
+fi
