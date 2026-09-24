@@ -77,11 +77,11 @@ FloatingWindow {
         { id: "health",    label: "Health",    icon: "󰓙", blurb: "Problems and fixes", source: "system/PageHealth.qml" },
         { id: "cpu",       label: "CPU",       icon: "󰻠", blurb: "Load, cores and clocks",   source: "system/PageCpu.qml" },
         { id: "memory",    label: "Memory",    icon: "󰘚", blurb: "RAM, swap and zram",       source: "system/PageMemory.qml" },
+        { id: "processes", label: "Processes", icon: "󰅐", blurb: "What's running",           source: "system/PageProcesses.qml" },
         { id: "storage",   label: "Storage",   icon: "󰋊", blurb: "Disks and mounts",         source: "system/PageStorage.qml" },
         { id: "network",   label: "Network",   icon: "󰖩", blurb: "Links and throughput",     source: "system/PageNetwork.qml" },
-        { id: "processes", label: "Processes", icon: "󰅐", blurb: "What's running",           source: "system/PageProcesses.qml" },
-        { id: "hardware",  label: "Hardware",  icon: "󰢻", blurb: "Devices and sensors",      source: "system/PageHardware.qml" },
         { id: "power",     label: "Power",     icon: "󰂄", blurb: "Battery and profile",      source: "system/PagePower.qml" },
+        { id: "hardware",  label: "Hardware",  icon: "󰢻", blurb: "Devices and sensors",      source: "system/PageHardware.qml" },
         { id: "config",    label: "Config",    icon: "󰈔", blurb: "The files behind it all",  source: "system/PageConfig.qml" },
     ]
     function select(id) {

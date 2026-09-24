@@ -1,10 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/PageOverview.qml
 //
-// The page the window opens on: four headline figures, the facts worth
-// knowing without asking, the two graphs that show whether a spike is
-// happening now or just happened, anything currently wrong, and the
-// handful of actions worth reaching for from here.
+// The page the window opens on: four headline figures, the two graphs that
+// show whether a spike is happening now or just happened, anything
+// currently wrong, the heaviest processes, the facts worth knowing without
+// asking, and the handful of actions worth reaching for from here.
 //
 // Everything on it is a summary of a page behind it, and each tile clicks
 // through to the page it summarises.
@@ -99,43 +99,6 @@ SystemPage {
                     ? Format.bytes(SystemStats.diskSize - SystemStats.diskUsed) + " free" : "--"
             onActivated: page.go(SystemStats.batNowWh > 0 ? "power" : "storage")
         }
-    }
-
-    // --- at a glance -------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "AT A GLANCE" }
-
-    InfoRow { label: "Kernel"; value: SystemSpecs.kernel || "--" }
-    InfoRow {
-        label: "Booted"
-        // the wall-clock moment, since "up 3d 4h" is already in the
-        // subtitle and the two answer different questions
-        value: Qt.formatDateTime(SystemStats.bootTime, "ddd d MMM, HH:mm")
-    }
-    InfoRow {
-        label: "Load"
-        value: SystemStats.load1.toFixed(2) + "  " + SystemStats.load5.toFixed(2)
-            + "  " + SystemStats.load15.toFixed(2)
-        // one core's worth of work per core is a full machine; past that
-        // things are queueing
-        valueColor: SystemStats.cores.length > 0 && SystemStats.load1 > SystemStats.cores.length
-            ? Theme.alert : undefined
-    }
-    InfoRow {
-        label: "Tasks"
-        value: SystemStats.threadTotal + " threads, " + SystemStats.procRunning + " running"
-    }
-    InfoRow {
-        label: "Packages"
-        value: SystemSpecs.pkgCount < 0 ? "--"
-            : SystemSpecs.pkgCount + "  (" + SystemSpecs.aurCount + " AUR)"
-    }
-    InfoRow {
-        label: "Network"
-        value: SystemStats.iface === "" ? "offline"
-            : SystemStats.iface + "  ·  " + (SystemStats.ipAddr || "no address")
-        valueColor: SystemStats.iface === "" ? Theme.alert : undefined
     }
 
     // --- graphs -------------------------------------------------------------
@@ -233,8 +196,46 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     ProcessTable { heading: "HEAVIEST PROCESSES"; reserveRows: 5 }
 
+    // --- at a glance -------------------------------------------------------
+
+    Item { width: 1; height: Theme.spaceS }
+    FlyoutHeading { text: "AT A GLANCE" }
+
+    InfoRow { label: "Kernel"; value: SystemSpecs.kernel || "--" }
+    InfoRow {
+        label: "Booted"
+        // the wall-clock moment, since "up 3d 4h" is already in the
+        // subtitle and the two answer different questions
+        value: Qt.formatDateTime(SystemStats.bootTime, "ddd d MMM, HH:mm")
+    }
+    InfoRow {
+        label: "Load"
+        value: SystemStats.load1.toFixed(2) + "  " + SystemStats.load5.toFixed(2)
+            + "  " + SystemStats.load15.toFixed(2)
+        // one core's worth of work per core is a full machine; past that
+        // things are queueing
+        valueColor: SystemStats.cores.length > 0 && SystemStats.load1 > SystemStats.cores.length
+            ? Theme.alert : undefined
+    }
+    InfoRow {
+        label: "Tasks"
+        value: SystemStats.threadTotal + " threads, " + SystemStats.procRunning + " running"
+    }
+    InfoRow {
+        label: "Packages"
+        value: SystemSpecs.pkgCount < 0 ? "--"
+            : SystemSpecs.pkgCount + "  (" + SystemSpecs.aurCount + " AUR)"
+    }
+    InfoRow {
+        label: "Network"
+        value: SystemStats.iface === "" ? "offline"
+            : SystemStats.iface + "  ·  " + (SystemStats.ipAddr || "no address")
+        valueColor: SystemStats.iface === "" ? Theme.alert : undefined
+    }
+
     // --- actions ------------------------------------------------------------
 
+    Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "QUICK ACTIONS" }
 
     Flow {
