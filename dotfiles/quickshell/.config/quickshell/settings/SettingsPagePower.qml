@@ -62,6 +62,16 @@ SettingsPage {
     // Blocks are found line by line: `listener {` opens one, `}` closes it,
     // and `#` comments are skipped -- hyprlang has no strings to hide a brace
     // in, so nothing more is needed.
+    // what a step does, in words; a command it doesn't recognise shows as is
+    readonly property var stepHints: ({
+        "Dim the screen": "Lowers the backlight",
+        "Lock": "Locks the session",
+        "Turn screens off": "Wakes on any input",
+        "Suspend on battery": "Only while unplugged",
+        "Suspend": "Sleeps the whole machine",
+        "Hibernate": "Saves to disk and powers off",
+    })
+
     function parseIdle(text) {
         var lines = text.split("\n")
         var out = [], cur = null
@@ -198,7 +208,7 @@ SettingsPage {
             required property var modelData
             required property int index
             label: modelData.label
-            hint: modelData.label === modelData.action ? "" : modelData.action
+            hint: page.stepHints[modelData.label] || ""
 
             FlyoutStepper {
                 anchors.right: parent.right
