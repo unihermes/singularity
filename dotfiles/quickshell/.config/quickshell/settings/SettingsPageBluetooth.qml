@@ -171,11 +171,10 @@ SettingsPage {
             spacing: Theme.spaceS
 
             FlyoutChip {
-                text: page.unnamedCount === 0 ? "Unnamed"
-                    : page.showUnnamed ? "Hide " + page.unnamedCount
-                    : "Show " + page.unnamedCount
+                // only once there are nameless devices to show
+                visible: page.unnamedCount > 0
+                text: (page.showUnnamed ? "Hide " : "Show ") + page.unnamedCount + " unnamed"
                 selected: page.showUnnamed
-                enabled: page.unnamedCount > 0 || page.showUnnamed
                 onClicked: page.showUnnamed = !page.showUnnamed
             }
             FlyoutChip {
