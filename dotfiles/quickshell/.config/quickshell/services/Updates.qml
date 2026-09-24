@@ -24,7 +24,7 @@ Singleton {
     property var packages: []
     readonly property int count: packages.length
     readonly property int aurCount: packages.filter(p => p.aur).length
-    property bool available: false      // checkupdates is installed
+    readonly property bool available: availProbe.found      // checkupdates is installed
     property bool checking: false
     property var lastChecked: null
 
@@ -49,21 +49,7 @@ Singleton {
         updateProc.running = true
     }
 
-    // Re-checked until found, for the same reason as the visualizer's cava
-    // check: pacman-contrib tends to be installed with the bar already up.
-    Process {
-        id: availProbe
-        running: true
-        command: ["sh", "-c", "command -v checkupdates"]
-        onExited: code => root.available = (code === 0)
-    }
-
-    Timer {
-        interval: 10000
-        repeat: true
-        running: !root.available
-        onTriggered: availProbe.running = true
-    }
+    CommandProbe { id: availProbe; name: "checkupdates" }
 
     Process {
         id: checkProc

@@ -24,7 +24,7 @@ Singleton {
     // the shell's own settings file, which rides along in the staging copy
     readonly property var env: ({ SINGULARITY_SETTINGS: Quickshell.statePath("appearance.json") })
 
-    property bool available: false      // the claude CLI is installed
+    readonly property bool available: availProbe.found      // the claude CLI is installed
     property bool running: false
     property string sessionId: ""
     // [{ kind: "user" | "assistant" | "tool" | "error", text }]
@@ -161,20 +161,7 @@ Singleton {
         return out
     }
 
-    Process {
-        id: availProbe
-        running: true
-        command: ["sh", "-c", "command -v claude"]
-        onExited: code => root.available = (code === 0)
-    }
-
-    // re-checked until found, like the updates and visualizer probes
-    Timer {
-        interval: 10000
-        repeat: true
-        running: !root.available
-        onTriggered: availProbe.running = true
-    }
+    CommandProbe { id: availProbe; name: "claude" }
 
     // a previous shell may have left a staging copy with changes in it
     Component.onCompleted: refreshDiff()

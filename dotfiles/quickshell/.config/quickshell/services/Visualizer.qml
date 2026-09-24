@@ -28,7 +28,7 @@ Singleton {
     // CPU use scales with it (about 4% of a core at 30)
     readonly property int fps: 20
     property var bars: []
-    property bool hasCava: false
+    readonly property bool hasCava: cavaProbe.found
     // sound in the last couple of seconds
     property bool playing: false
 
@@ -39,22 +39,7 @@ Singleton {
         return false
     }
 
-    // Re-checked every 10s until found, not just once at startup: cava is
-    // often installed while the bar is already running, and a one-off check
-    // would leave the visualizer dead until the next login.
-    Process {
-        id: cavaProbe
-        running: true
-        command: ["sh", "-c", "command -v cava"]
-        onExited: code => root.hasCava = (code === 0)
-    }
-
-    Timer {
-        interval: 10000
-        repeat: true
-        running: !root.hasCava
-        onTriggered: cavaProbe.running = true
-    }
+    CommandProbe { id: cavaProbe; name: "cava" }
 
     Process {
         id: cava
