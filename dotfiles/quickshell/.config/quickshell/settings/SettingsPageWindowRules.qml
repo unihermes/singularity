@@ -119,6 +119,29 @@ SettingsPage {
         return rule.label || rule.class || rule.title
     }
 
+    // which rule is expanded, by what it matches, so adding one on top
+    // doesn't open a different one
+    property string openKey: ""
+    function ruleKey(rule) { return (rule.class || "") + "\n" + (rule.title || "") }
+
+    // a search for one of a rule's settings unfolds the top rule, so there
+    // is a field on screen to ring
+    onHighlightChanged: {
+        if (openKey === "" && rules.length > 0
+                && ["Layout", "Size", "Workspace", "Open fullscreen", "Always on top"].indexOf(highlight) >= 0)
+            openKey = ruleKey(rules[0])
+    }
+
+    // a rule's settings in one line, for when it's folded
+    function summary(rule) {
+        var parts = [rule.float || rule.pin
+            ? "Float" + (rule.size ? " " + rule.size.replace(" ", "×") : "") : "Auto layout"]
+        if (rule.workspace) parts.push("workspace " + rule.workspace)
+        if (rule.fullscreen) parts.push("fullscreen")
+        if (rule.pin) parts.push("always on top")
+        return parts.join(" · ")
+    }
+
     function normalise(r) {
         var ws = Math.floor(Number(r.workspace) || 0)
         var out = {
@@ -184,7 +207,9 @@ SettingsPage {
             return false
         }
         // on top: newest first, and nearer the top wins a conflict
-        save([normalise({ class: cls })].concat(rules), "Rule added for " + cls)
+        var rule = normalise({ class: cls })
+        save([rule].concat(rules), "Rule added for " + cls)
+        openKey = ruleKey(rule)
         return true
     }
 
@@ -311,7 +336,8 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceL }
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "RULES" }
 
     Text {
         x: Theme.spaceS
@@ -331,28 +357,100 @@ SettingsPage {
             required property int index
             readonly property var rule: modelData
             readonly property bool floats: rule.float || rule.pin
+            readonly property bool expanded: page.openKey === page.ruleKey(rule)
+            readonly property int open: page.openCount(rule)
 
             width: parent.width
             spacing: Theme.spaceM
 
+            // folded: the app, its settings in a line, and how many of its
+            // windows are open; click to unfold
             Item {
                 width: parent.width
-                height: Math.max(heading.implicitHeight, removeChip.height)
+                height: Theme.fieldHeight + Theme.spaceM
 
-                FlyoutHeading {
-                    id: heading
-                    anchors.left: parent.left
-                    anchors.right: removeChip.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: page.describe(ruleCol.rule).toUpperCase() + " · " + page.openCount(ruleCol.rule) + " OPEN"
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.leftMargin: -Theme.spaceS
+                    anchors.rightMargin: -Theme.spaceS
+                    radius: Theme.radiusInner
+                    color: ruleCol.expanded ? Theme.selectedFill
+                        : headMouse.containsMouse ? Theme.hoverFill : "transparent"
+                    border.width: ruleCol.expanded ? Theme.borderWidth : 0
+                    border.color: Theme.selectedStroke
                 }
+
+                MouseArea {
+                    id: headMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: page.openKey = ruleCol.expanded ? "" : page.ruleKey(ruleCol.rule)
+                }
+
+                Text {
+                    id: chevron
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.fs(16)
+                    text: ruleCol.expanded ? "󰅀" : "󰅂"
+                    color: Theme.subtext
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontIconSize
+                }
+
+                Column {
+                    anchors.left: chevron.right
+                    anchors.leftMargin: Theme.spaceM
+                    anchors.right: openText.left
+                    anchors.rightMargin: Theme.spaceL
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
+
+                    Text {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        text: page.describe(ruleCol.rule)
+                        color: Theme.textStrong
+                        font.family: Theme.fontText
+                        font.pixelSize: Theme.fontBody
+                    }
+                    Text {
+                        width: parent.width
+                        elide: Text.ElideRight
+                        text: page.summary(ruleCol.rule)
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.pixelSize: Theme.fontSmall
+                    }
+                }
+
+                Text {
+                    id: openText
+                    anchors.right: removeChip.left
+                    anchors.rightMargin: Theme.spaceL
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: ruleCol.open > 0 ? ruleCol.open + " open" : ""
+                    color: Theme.good
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontSmall
+                }
+
                 FlyoutChip {
                     id: removeChip
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: ruleCol.expanded || headMouse.containsMouse || removeMouse.containsMouse
                     text: "Remove"
                     enabled: !AtomicFileWrite.busy
                     onClicked: page.removeRule(ruleCol.index)
+
+                    // only to keep the chip showing while pointed at
+                    MouseArea {
+                        id: removeMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.NoButton
+                    }
                 }
             }
 
@@ -361,7 +459,7 @@ SettingsPage {
             Text {
                 x: Theme.spaceS
                 width: parent.width - Theme.spaceS * 2
-                visible: text !== ""
+                visible: ruleCol.expanded && text !== ""
                 text: {
                     var r = ruleCol.rule
                     if (!r.regex && !r.title && !r.label) return ""
@@ -377,6 +475,7 @@ SettingsPage {
             }
 
             SettingsField {
+                visible: ruleCol.expanded
                 label: "Layout"
                 hint: "Auto follows the current layout: full screen in monocle, tiled in dwindle"
 
@@ -391,7 +490,7 @@ SettingsPage {
             }
 
             SettingsField {
-                visible: ruleCol.floats
+                visible: ruleCol.expanded && ruleCol.floats
                 label: "Size"
                 hint: "Natural is whatever size the app asks for"
 
@@ -407,6 +506,7 @@ SettingsPage {
             }
 
             SettingsField {
+                visible: ruleCol.expanded
                 label: "Workspace"
                 hint: "Where it opens; Any means wherever you are"
 
@@ -422,6 +522,7 @@ SettingsPage {
             }
 
             SettingsField {
+                visible: ruleCol.expanded
                 label: "Open fullscreen"
                 hint: "Covers the whole display, bar included"
 
@@ -433,6 +534,7 @@ SettingsPage {
             }
 
             SettingsField {
+                visible: ruleCol.expanded
                 label: "Always on top"
                 hint: "Pinned: floats above other windows and stays on every workspace"
 
@@ -443,7 +545,7 @@ SettingsPage {
                 }
             }
 
-            Item { width: 1; height: Theme.spaceL }
+            Item { width: 1; height: Theme.spaceL; visible: ruleCol.expanded }
         }
     }
 }
