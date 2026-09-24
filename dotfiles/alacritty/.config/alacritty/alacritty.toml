@@ -41,3 +41,8 @@ history = 10000
 # compiler errors -- stays legible but monochrome. Anything set in this file
 # overrides the import, which is why there is no [colors] block here. Until the
 # shell has run once the file doesn't exist and alacritty uses its defaults.
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"
