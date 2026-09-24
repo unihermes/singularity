@@ -3,7 +3,9 @@
 //
 // The frame every Settings page shares: a heading with its rule running
 // out beside it, one line saying what the page changes and where it lands,
-// a status line, and a scrolling column for the page's own rows.
+// and a scrolling column for the page's own rows. What a change did comes
+// back as a toast over the bottom of the page: a success fades on its own,
+// an error stays until clicked or replaced.
 //
 // Pages are created by the window's Loader when shown and destroyed when
 // left, so a page reads its backing store fresh in Component.onCompleted and
@@ -33,11 +35,12 @@ Item {
 
     default property alias content: col.data
     // height available to content below the header, for non-scrolling pages
-    readonly property real bodyHeight: height - header.height - Theme.sp(10)
+    readonly property real bodyHeight: height - header.height - Theme.spaceXl
 
     function say(msg, isError) {
         notice = msg
         noticeIsError = !!isError
+        toast.show()
     }
 
     // The field isn't there yet on the frame the page loads -- Repeaters and
@@ -137,22 +140,11 @@ Item {
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
         }
-
-        Text {
-            width: parent.width
-            height: Theme.headingHeight
-            verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-            text: root.notice
-            color: root.noticeIsError ? Theme.alert : Theme.text
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontSmall
-        }
     }
 
     Item {
         anchors.top: header.bottom
-        anchors.topMargin: Theme.sp(10)
+        anchors.topMargin: Theme.spaceXl
         anchors.bottom: parent.bottom
         width: parent.width
 
@@ -169,8 +161,9 @@ Item {
                 id: col
                 x: Theme.spaceS
                 width: flick.width - Theme.spaceS * 2
-
                 spacing: Theme.spaceM
+                // clear of the panel's rounded bottom border, as on System
+                bottomPadding: Theme.spaceXl
             }
         }
 
@@ -179,6 +172,73 @@ Item {
             anchors.right: parent.right
             flickable: flick
             visible: root.scrolls && overflow > 0
+        }
+    }
+
+    // the page's last result
+    Rectangle {
+        id: toast
+
+        property bool shown: false
+
+        function show() {
+            shown = root.notice !== ""
+            if (shown && !root.noticeIsError) toastTimer.restart()
+            else toastTimer.stop()
+        }
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: shown ? Theme.spaceL : 0
+        width: Math.min(toastRow.implicitWidth + Theme.spaceXl * 2, parent.width - Theme.spaceXl * 2)
+        height: toastRow.implicitHeight + Theme.spaceL * 2
+        radius: Theme.radiusInner
+        color: Theme.surface
+        border.width: Theme.borderWidth
+        border.color: root.noticeIsError ? Theme.alert : Theme.strokeHover
+        opacity: shown ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity { NumberAnimation { duration: Theme.dur(180); easing.type: Theme.ease } }
+        Behavior on anchors.bottomMargin { NumberAnimation { duration: Theme.dur(180); easing.type: Theme.ease } }
+
+        Timer {
+            id: toastTimer
+            interval: 4000
+            onTriggered: toast.shown = false
+        }
+
+        Row {
+            id: toastRow
+            x: Theme.spaceXl
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceM
+
+            Text {
+                id: toastIcon
+                text: root.noticeIsError ? "󰀦" : "󰄬"
+                color: root.noticeIsError ? Theme.alert : Theme.good
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontIconSize
+            }
+
+            Text {
+                width: Math.min(implicitWidth, toast.parent.width - Theme.spaceXl * 4 - toastIcon.width - toastRow.spacing)
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.notice
+                wrapMode: Text.WordWrap
+                maximumLineCount: 3
+                elide: Text.ElideRight
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontSmall
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: toast.shown = false
         }
     }
 }
