@@ -47,6 +47,24 @@ SettingsPage {
         return n ? (n.description || n.nickname || n.name) : ""
     }
 
+    // The words every device's name starts with -- usually the sound card,
+    // "Alder Lake Smart Sound Technology Audio Controller" -- shown once as
+    // the hint rather than at the front of every choice.
+    readonly property string cardName: {
+        var names = devices.map(n => nodeName(n).split(" "))
+        if (names.length < 2) return ""
+        var n = 0
+        while (names.every(w => w.length > n + 1 && w[n] === names[0][n])) n++
+        return names[0].slice(0, n).join(" ")
+    }
+
+    // a device's name without the card's
+    function shortName(n) {
+        var name = nodeName(n)
+        return cardName !== "" && name.indexOf(cardName + " ") === 0
+            ? name.slice(cardName.length + 1) : name
+    }
+
     // An app's own name for itself, falling back to the node's. Pipewire fills
     // application.name for anything launched normally; a bare node (a script
     // piping into pw-play, the visualiser's capture) may only have a name.
@@ -79,10 +97,8 @@ SettingsPage {
         // the device rows are always "Volume"; an app row names the app
         property string title: "Volume"
         property string subtitle: ""
-        // What stands in when there is no subtitle. A device row says which
-        // device it is; an app row says nothing, because its title is already
-        // the app's name and the node name would only repeat it.
-        property string subtitleFallback: ready ? page.nodeName(node) : "No device"
+        // what stands in when there is no subtitle
+        property string subtitleFallback: ready ? "" : "No device"
         readonly property bool ready: node !== null && node.ready && node.audio !== null
 
         label: title
@@ -117,61 +133,54 @@ SettingsPage {
         }
     }
 
-    component DeviceList: Column {
-        id: dl
+    // which device is the default, by its short name
+    component Device: SettingsField {
+        id: dev
         property var nodes: []
         property var current: null
-        signal picked(var node)
+        signal chosen(var node)
 
-        width: parent.width
-        spacing: Theme.spaceXs
+        label: "Device"
+        hint: page.cardName
 
-        Repeater {
-            model: dl.nodes
-            FlyoutRow {
-                required property var modelData
-                label: page.nodeName(modelData)
-                highlighted: dl.current === modelData
-                trailing: highlighted ? "󰄬" : ""
-                onActivated: if (!highlighted) dl.picked(modelData)
-            }
-        }
-
-        Text {
-            visible: dl.nodes.length === 0
-            text: "None found"
-            color: Theme.subtext
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
+        SettingsDropdown {
+            anchors.right: parent.right
+            width: Theme.fit(320)
+            model: dev.nodes
+            current: dev.current
+            enabled: dev.nodes.length > 0
+            placeholder: dev.nodes.length > 0 ? "Choose…" : "None found"
+            labelFor: n => page.shortName(n)
+            onPicked: n => { if (n !== dev.current) dev.chosen(n) }
         }
     }
 
     FlyoutHeading { text: "OUTPUT" }
 
-    Level { node: Pipewire.defaultAudioSink }
-
-    DeviceList {
+    Device {
         nodes: page.sinks
         current: Pipewire.defaultAudioSink
-        onPicked: node => {
+        onChosen: node => {
             Pipewire.preferredDefaultAudioSink = node
-            page.say("Output: " + page.nodeName(node), false)
+            page.say("Output: " + page.shortName(node), false)
         }
     }
+
+    Level { node: Pipewire.defaultAudioSink }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "INPUT" }
 
-    Level { node: Pipewire.defaultAudioSource }
-
-    DeviceList {
+    Device {
         nodes: page.sources
         current: Pipewire.defaultAudioSource
-        onPicked: node => {
+        onChosen: node => {
             Pipewire.preferredDefaultAudioSource = node
-            page.say("Input: " + page.nodeName(node), false)
+            page.say("Input: " + page.shortName(node), false)
         }
     }
+
+    Level { node: Pipewire.defaultAudioSource }
 
     // --- per-application mixer -------------------------------------------
     //

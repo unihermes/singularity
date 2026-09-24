@@ -83,6 +83,7 @@ var entries = [
 
     // --- Audio -------------------------------------------------------------
     { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute speakers" },
+    { page: "audio", section: "Output", label: "Device",    keywords: "default sink source speakers headphones hdmi microphone" },
     { page: "audio", section: "Output", label: "Output",    keywords: "sink speakers headphones device" },
     { page: "audio", section: "Input",  label: "Input",     keywords: "source microphone mic device" },
     // The mixer's rows are named after whatever happens to be running, so
