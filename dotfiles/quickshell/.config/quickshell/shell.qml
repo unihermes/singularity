@@ -182,9 +182,17 @@ ShellRoot {
     // the first time and steps it on each Tab after, which is what makes
     // holding ALT and tapping Tab cycle. commit() when ALT comes up.
     // Same per-screen signal relay as the overlay above.
+    // `gen` on each of these is the gesture id minted by the ALT+Tab bind
+    // (hyprland.lua's altTabWatchGen): every command of one hold-ALT gesture
+    // carries the id of the Tab press that sent it, and the ALT release
+    // carries the id of the last Tab of the gesture it ends. Matching on it
+    // is what lets a release that arrives before its own switcher exists be
+    // applied to that switcher -- and only that one -- instead of being
+    // guessed at from arrival times. tab()'s id rides inside the JSON, since
+    // a call carries exactly one argument.
     signal altTabTab(string clientsJson)
-    signal altTabStep(int delta)
-    signal altTabCommit()
+    signal altTabStep(int delta, string gen)
+    signal altTabCommit(string gen)
     signal altTabCancel()
 
     IpcHandler {
@@ -209,8 +217,8 @@ ShellRoot {
         // up unused -- a fair trade, since repeat taps were never the ones
         // losing the race.
         function tab(clientsJson: string): void { root.altTabTab(clientsJson) }
-        function prev(): void { root.altTabStep(-1) }
-        function commit(): void { root.altTabCommit() }
+        function prev(gen: string): void { root.altTabStep(-1, gen) }
+        function commit(gen: string): void { root.altTabCommit(gen) }
         function cancel(): void { root.altTabCancel() }
         // alttab-relay's startup self-test: the one call here with a reply,
         // so the relay can tell its hand-built wire format still matches
@@ -341,18 +349,52 @@ ShellRoot {
                 }
             }
 
-            // When a commit arrived with no switcher open, so onAltTabTab
-            // can apply it to the one it is about to build. 0 for none.
-            property double altTabCommitAt: 0
+            // The gesture the open switcher belongs to; -1 when none is up.
+            property int altTabOpenGen: -1
 
-            // When the switcher last actually committed (set by
-            // AltTabSwitcher.commit(), whichever route got there), so the
-            // second commit of an ordinary gesture isn't mistaken for an early
-            // one. Both routes to the ALT release fire on every gesture -- the
-            // keyboard grab and hyprland.lua's key-state poll -- and the loser
-            // arrives with the switcher already closed, which is the same
-            // shape as a genuinely early commit.
-            property double altTabCommittedAt: 0
+            // A gesture whose ALT release arrived before there was a switcher
+            // to close -- the Tab that opens it is still travelling out
+            // through hyprctl and the relay. onAltTabTab applies it when that
+            // Tab lands, and otherwise never opens a switcher for that
+            // gesture at all: ALT is already up, so nothing on screen could
+            // be held. -1 for none.
+            //
+            // Held by gesture id rather than by arrival time, which is the
+            // whole point: a pending release only ever matches its own Tab,
+            // so it can sit here indefinitely without a deadline and still
+            // can't swallow the next gesture (whose id is higher).
+            property int altTabPendingCommitGen: -1
+
+            // The last gesture actually committed (set by
+            // AltTabSwitcher.commit(), whichever route to the ALT release got
+            // there first). Both routes fire on every gesture -- the keyboard
+            // grab and hyprland.lua's key-state poll, plus that poll's repeat
+            // sends -- so the losers arrive with the switcher already closed,
+            // which is the same shape as a genuinely early release. Same id,
+            // though, and that tells them apart exactly.
+            property int altTabCommittedGen: -1
+
+            // -1 for anything unparseable, e.g. a hand-run `qs ipc call`
+            // with no id: such a call gets the plain, unmatched behaviour.
+            function altTabGen(raw) {
+                const n = parseInt(raw)
+                return isNaN(n) ? -1 : n
+            }
+
+            // Gesture ids only count up within one Hyprland session: a config
+            // reload restarts them at 1 while this shell keeps running with
+            // the old, much higher numbers remembered. Everything above then
+            // reads every new gesture as ancient history and drops its
+            // release -- which is the hang again, until the shell happens to
+            // restart. An id below the last committed one can only mean the
+            // numbering restarted (a gesture's own late messages carry its
+            // own id, never a lower one, since a new Tab retires the previous
+            // watch chain), so that is the signal to forget the old epoch.
+            function altTabCheckEpoch(gen) {
+                if (gen < 0 || gen >= altTabCommittedGen) return
+                altTabCommittedGen = -1
+                altTabPendingCommitGen = -1
+            }
 
             // ALT+Tab, on the focused monitor only. The first Tab of a
             // gesture opens the switcher and preselects the previous window,
@@ -384,41 +426,62 @@ ShellRoot {
                     // Nothing to switch between: nothing to show.
                     if (altTab.windows.length <= 1) return
 
-                    // A commit that beat this Tab there: the compositor-side
-                    // ALT watch (hyprland.lua) saw ALT come up while this
-                    // first Tab was still on its way through hyprctl and the
-                    // relay, so the gesture was already over before there was
-                    // a switcher to commit. Honour it now rather than opening
-                    // a switcher nobody is holding ALT for -- the selection
-                    // begin() just made is the previous window, so this is the
-                    // straight there-and-back swap a fast tap asks for.
-                    if (Date.now() - screenScope.altTabCommitAt < 250) {
-                        screenScope.altTabCommitAt = 0
+                    screenScope.altTabCheckEpoch(altTab.gen)
+                    screenScope.altTabOpenGen = altTab.gen
+
+                    // The release for this very gesture already arrived: the
+                    // compositor-side ALT watch (hyprland.lua) saw ALT come up
+                    // while this Tab was still on its way out through hyprctl
+                    // and the relay, so the gesture was over before there was
+                    // a switcher to close. Honour it now instead of opening a
+                    // switcher nobody is holding ALT for -- which would sit
+                    // there holding the keyboard, the hang this matching
+                    // exists to make impossible. The selection begin() just
+                    // made is the previous window, so this is the straight
+                    // there-and-back swap a fast tap asks for.
+                    //
+                    // `>=` rather than `===`: a gesture's release carries the
+                    // id of its *last* Tab, so an earlier Tab of the same
+                    // gesture arriving after it has a lower id and is just as
+                    // dead. A later gesture's Tab has a higher id and is
+                    // unaffected.
+                    if (altTab.gen >= 0 && screenScope.altTabPendingCommitGen >= altTab.gen) {
+                        screenScope.altTabPendingCommitGen = -1
                         altTab.commit()
                         return
                     }
                     screenScope.openFlyout = "alttab"
                 }
-                function onAltTabStep(delta) {
+                function onAltTabStep(delta, gen) {
                     if (screenScope.openFlyout !== "alttab") return
                     altTab.step(delta)
                 }
-                function onAltTabCommit() {
+                function onAltTabCommit(gen) {
+                    const g = screenScope.altTabGen(gen)
                     if (screenScope.openFlyout !== "alttab") {
+                        screenScope.altTabCheckEpoch(g)
                         // Remembered rather than dropped, for the case above:
                         // the ALT release can land before the switcher exists.
-                        // Only on the screen the gesture is happening on, so a
-                        // stray one cannot sit on another screen waiting to
-                        // swallow its next ALT+Tab.
-                        if (screenScope.isFocusedScreen()
-                                && Date.now() - screenScope.altTabCommittedAt > 300)
-                            screenScope.altTabCommitAt = Date.now()
+                        // Unless this gesture has already been committed, in
+                        // which case this is one of the duplicate releases
+                        // every gesture produces and there is nothing left to
+                        // do. Only on the screen the gesture is happening on,
+                        // so a stray one cannot sit on another screen waiting
+                        // to swallow its next ALT+Tab.
+                        if (screenScope.isFocusedScreen() && g > screenScope.altTabCommittedGen)
+                            screenScope.altTabPendingCommitGen = Math.max(
+                                screenScope.altTabPendingCommitGen, g)
                         return
                     }
-                    screenScope.altTabCommitAt = 0
+                    // Any release closes an open switcher, whatever id it
+                    // carries -- the ids exist to decide whether to *open*
+                    // one, and erring towards closing is the whole point:
+                    // a switcher up with ALT not held is the hang.
+                    screenScope.altTabPendingCommitGen = -1
                     altTab.commit()
                 }
                 function onAltTabCancel() {
+                    screenScope.altTabPendingCommitGen = -1
                     if (screenScope.openFlyout !== "alttab") return
                     altTab.cancel()
                 }

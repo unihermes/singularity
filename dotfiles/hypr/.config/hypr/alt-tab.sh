@@ -25,4 +25,12 @@ set -euo pipefail
 # already open.
 clients=$(hyprctl clients -j 2>/dev/null) || exit 0
 
-"$(dirname "$0")/alttab-ipc.sh" tab "{\"clients\":$clients}"
+# $1 is the gesture id the ALT+Tab bind minted for this press (hyprland.lua's
+# altTabWatchGen). It travels inside the same object as the client list
+# because the relay hands the shell exactly one argument per call. The shell
+# matches it against the id on the ALT release, so a switcher is never opened
+# for a gesture whose ALT is already back up -- see the altTabWatch comment in
+# hyprland.lua.
+gen=${1:--1}
+
+"$(dirname "$0")/alttab-ipc.sh" tab "{\"gen\":$gen,\"clients\":$clients}"

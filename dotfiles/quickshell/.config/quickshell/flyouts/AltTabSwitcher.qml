@@ -39,6 +39,12 @@ OverlayWindow {
 
     property int selected: 0
 
+    // The gesture this switcher belongs to, from the Tab press that opened
+    // it (hyprland.lua's altTabWatchGen, carried through alt-tab.sh). -1 when
+    // the caller sent none. shell.qml matches the ALT release against it --
+    // see the altTabPendingCommitGen comment there.
+    property int gen: -1
+
     // MRU order: Hyprland's focusHistoryID counts 0 = focused, 1 = the one
     // before it, and so on -- exactly the order alt-tab should walk.
     // Start on the previous window, not the current one, so a single
@@ -68,7 +74,10 @@ OverlayWindow {
     // fresh and hands over the answer.
     function begin(clientsJson) {
         let clients
-        try { clients = JSON.parse(clientsJson).clients } catch (e) { clients = [] }
+        let parsed
+        try { parsed = JSON.parse(clientsJson) } catch (e) { parsed = {} }
+        clients = parsed.clients
+        gen = parsed.gen === undefined ? -1 : parsed.gen
 
         // the shell's own windows (Settings, System, Keybinds) are in here
         // like any other toplevel: they can be focused and worked in, so
@@ -137,8 +146,10 @@ OverlayWindow {
         // Both routes to the ALT release fire on every gesture, so one of them
         // always arrives after this has closed; shell.qml reads this to tell
         // that straggler apart from a release that genuinely beat the switcher
-        // onto the screen.
-        scope.altTabCommittedAt = Date.now()
+        // onto the screen. By gesture id, so it is a fact about which gesture
+        // is finished rather than a guess from how long ago one was.
+        scope.altTabCommittedGen = Math.max(scope.altTabCommittedGen, scope.altTabOpenGen)
+        scope.altTabOpenGen = -1
         if (win) {
             const addr = win.address
             const addr_str = "address:0x" + addr
@@ -162,7 +173,15 @@ OverlayWindow {
         onTriggered: if (action) action()
     }
 
-    function cancel() { scope.openFlyout = "" }
+    // Escape. The gesture is over as far as the switcher is concerned, so it
+    // is marked committed too -- otherwise the ALT release still to come
+    // would be remembered as a release waiting for a switcher that is never
+    // going to be asked for again.
+    function cancel() {
+        scope.openFlyout = ""
+        scope.altTabCommittedGen = Math.max(scope.altTabCommittedGen, scope.altTabOpenGen)
+        scope.altTabOpenGen = -1
+    }
 
     visible: open && windows.length > 0
     // Exclusive, because this is the only way to see the ALT release: Hyprland

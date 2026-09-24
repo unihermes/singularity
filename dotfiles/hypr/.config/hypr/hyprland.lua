@@ -459,31 +459,62 @@ hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus windo
 -- we are done with it. A oneshot that only re-arms while ALT is still held
 -- ends the chain itself. `gen` retires any chain left over from an earlier
 -- gesture, since a stale timer can still fire once before it is collected.
+--
+-- The generation number is not just local bookkeeping: it is sent along with
+-- every command, so the shell can match a release to the exact gesture it
+-- came from. That is what makes "never open a switcher nobody is holding ALT
+-- for" a rule rather than a race the shell has to guess at on timing alone.
+-- It used to guess -- a commit arriving with no switcher open was applied to
+-- the next Tab only if it landed inside a 250ms window, and was thrown away
+-- as a duplicate if it landed within 300ms of the last commit. A second
+-- ALT+Tab started soon after a first hit both windows at once: its genuinely
+-- early release looked like the previous gesture's straggler, got dropped,
+-- and the Tab behind it then opened a switcher with ALT already up -- which
+-- sits there holding the keyboard until some later keypress knocks it loose.
+-- That is the hang. With the gesture id attached there are no windows to fall
+-- between: a release carries the same id as the Tab it belongs to, and the
+-- shell drops it only when it has already committed that exact gesture.
 local altTabWatchGen = 0
 local altTabWatchTimer = nil
 
-local function altTabWatch(gen)
+-- `sends` counts the commits already sent for this gesture's release. The
+-- first one is the gesture ending normally. The extras exist because a Tab
+-- can still be in flight (hyprctl, then the relay) when ALT comes up: the
+-- shell already refuses to open for a gesture it has seen the release of, so
+-- an extra commit is only insurance against the first one being lost
+-- outright, and costs nothing when it is redundant -- the shell drops a
+-- repeat for a gesture it has committed.
+local function altTabWatch(gen, sends)
     if gen ~= altTabWatchGen then return end
 
     if hl.is_key_down("Alt_L") or hl.is_key_down("Alt_R") then
-        altTabWatchTimer = hl.timer(function() altTabWatch(gen) end,
+        altTabWatchTimer = hl.timer(function() altTabWatch(gen, 0) end,
             { timeout = 24, type = "oneshot" })
         return
     end
 
-    altTabWatchTimer = nil
-    hl.exec_cmd("~/.config/hypr/alttab-ipc.sh commit")
+    hl.exec_cmd("~/.config/hypr/alttab-ipc.sh commit " .. gen)
+
+    if sends >= 2 then
+        altTabWatchTimer = nil
+        return
+    end
+
+    altTabWatchTimer = hl.timer(function() altTabWatch(gen, sends + 1) end,
+        { timeout = 90, type = "oneshot" })
 end
 
 -- Armed by every alt-tab bind, not just the first Tab: re-arming is what
 -- keeps the chain alive across a long cycle, and the generation bump means
--- the previous chain retires instead of running alongside this one.
+-- the previous chain retires instead of running alongside this one. The bump
+-- happens before the command is spawned, so the command carries the same
+-- generation the watch will later commit with.
 local function altTabKey(cmd)
     return function()
-        hl.exec_cmd(cmd)
         altTabWatchGen = altTabWatchGen + 1
         local gen = altTabWatchGen
-        altTabWatchTimer = hl.timer(function() altTabWatch(gen) end,
+        hl.exec_cmd(cmd .. " " .. gen)
+        altTabWatchTimer = hl.timer(function() altTabWatch(gen, 0) end,
             { timeout = 24, type = "oneshot" })
     end
 end
@@ -1182,6 +1213,7 @@ function toggleMinimize()
 
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
+
     st.minimized = { x = win.at.x, y = win.at.y }
     local belowScreen = mon.y + mon.height + 100
     hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
