@@ -746,6 +746,13 @@ SettingsPage {
         Choices { key: "colourScheme"; live: Settings.colourMode === "wallpaper" }
     }
 
+    SettingsField {
+        label: "Shade"
+        hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only -- a look sets its own"
+            : "Dark or light grounds from the wallpaper. GTK and Qt apps follow"
+        Choices { key: "colourVariant"; live: Settings.colourMode === "wallpaper" }
+    }
+
     // The palette in use, role by role, darkest to brightest.
     Row {
         id: swatches

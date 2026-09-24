@@ -42,6 +42,8 @@ Singleton {
 
     readonly property bool wanted: Settings.colourMode === "wallpaper"
     readonly property string scheme: Settings.colourScheme
+    // "dark" or "light": which of matugen's two schemes the ramp is built from
+    readonly property string variant: Settings.colourVariant
 
     function set(path) {
         if (!path || path === current) return
@@ -72,7 +74,7 @@ Singleton {
     // older mapping is regenerated rather than shown.
     readonly property int mappingVersion: 3
     function cacheValid(c) {
-        return c.version === mappingVersion && c.scheme === scheme && !!c.colors
+        return c.version === mappingVersion && c.scheme === scheme && c.variant === variant && !!c.colors
     }
 
     // How much of the wallpaper's colour each Intensity lets into the
@@ -105,7 +107,7 @@ Singleton {
         // a run already in flight is for a stale image or scheme; restarting
         // it drops that result instead of letting it land over this one
         matugen.running = false
-        matugen.command = ["matugen", "image", current, "--mode", "dark", "--type", scheme,
+        matugen.command = ["matugen", "image", current, "--mode", variant, "--type", scheme,
                            "--prefer", "saturation", "--json", "hex", "--dry-run", "--quiet"]
         generating = true
         matugen.running = true
@@ -113,6 +115,7 @@ Singleton {
 
     onWantedChanged: refresh()
     onSchemeChanged: refresh()
+    onVariantChanged: refresh()
     onCurrentChanged: refresh()
 
     Connections {
@@ -144,7 +147,8 @@ Singleton {
                 var c
                 try { c = JSON.parse(text).colors } catch (e) { return }
                 if (!c) return
-                function pick(k) { return c[k].dark.color }
+                var v = root.variant
+                function pick(k) { return c[k][v].color }
                 // The grounds take their colour from primary_container, the
                 // most saturated dark tone matugen gives; strokes and text
                 // from primary, a little less of it so text stays near-white.
@@ -153,7 +157,23 @@ Singleton {
                 var ground = pick("primary_container"), accent = pick("primary")
                 if (Qt.color(ground).hslSaturation < 0.15) ground = accent = pick("source_color")
                 var k = root.tintStrength[root.scheme] || 0.55
-                var colors = {
+                // Dark: the grounds climb matugen's surface containers from
+                // the lowest, and the foreground its outline and on-surface
+                // tones. Light runs the other way, the way the light looks'
+                // ramps do: the panel palest, the base a step darker than the
+                // bar, strokes and text dark.
+                var colors = v === "light" ? {
+                    base:    root.tint(pick("surface_dim"),               ground, k),
+                    bar:     root.tint(pick("surface_container_low"),     ground, k),
+                    panel:   root.tint(pick("surface"),                   ground, k),
+                    surface: root.tint(pick("surface_container"),         ground, k),
+                    overlay: root.tint(pick("surface_container_highest"), ground, k),
+                    border:  root.tint(pick("outline_variant"),           accent, k * 0.8),
+                    muted:   root.tint(pick("outline"),                   accent, k * 0.8),
+                    subtext: root.tint(pick("on_surface_variant"),        accent, k * 0.7),
+                    text:    root.tint(pick("on_surface"),                accent, k * 0.5),
+                    bright:  accent,
+                } : {
                     base:    root.tint(pick("surface_container_lowest"),  ground, k),
                     bar:     root.tint(pick("surface"),                   ground, k),
                     panel:   root.tint(pick("surface_container_low"),     ground, k),
@@ -166,7 +186,8 @@ Singleton {
                     bright:  accent,
                 }
                 root.palette = colors
-                root.cache = { version: root.mappingVersion, image: root.current, scheme: root.scheme, colors: colors }
+                root.cache = { version: root.mappingVersion, image: root.current, scheme: root.scheme,
+                               variant: v, colors: colors }
                 cacheFile.setText(JSON.stringify(root.cache))
             }
         }

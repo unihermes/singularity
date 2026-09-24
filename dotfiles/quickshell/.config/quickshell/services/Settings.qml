@@ -42,6 +42,8 @@ Singleton {
     readonly property alias colourMode:  adapter.colourMode
     // a matugen scheme type; only read in wallpaper mode
     readonly property alias colourScheme: adapter.colourScheme
+    // "dark" or "light", likewise
+    readonly property alias colourVariant: adapter.colourVariant
     // pick a random wallpaper at login instead of restoring the last one.
     // Mirrored into the wallpaper state file by Wallpaper.qml, since the
     // login script can't read this JSON.
@@ -101,6 +103,7 @@ Singleton {
         animSpeed:    ["normal", "fast", "off"],
         colourMode:   ["grayscale", "wallpaper"],
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
+        colourVariant: ["dark", "light"],
         look:         LookStore.order,
         frameStyle:   ["double", "single", "bevel", "none"],
         density:      ["compact", "normal", "roomy"],
@@ -115,7 +118,7 @@ Singleton {
     })
     readonly property var choiceLabels: ({
         "normal": "Normal", "fast": "Fast", "off": "Off",
-        "grayscale": "Grayscale", "wallpaper": "Wallpaper",
+        "grayscale": "Grayscale", "wallpaper": "Wallpaper", "dark": "Dark", "light": "Light",
         "scheme-neutral": "Subtle", "scheme-tonal-spot": "Balanced",
         "scheme-vibrant": "Vivid", "scheme-expressive": "Expressive",
         "double": "Double", "single": "Single", "bevel": "Bevel", "none": "None",
@@ -342,6 +345,7 @@ Singleton {
             animSpeed: "normal",
             colourMode: "grayscale",
             colourScheme: "scheme-tonal-spot",
+            colourVariant: "dark",
         }
         var ls = Looks.looks[Looks.fallback].settings
         for (var k in ls) d[k] = ls[k]
@@ -586,6 +590,7 @@ Singleton {
             property string animSpeed: "normal"
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
+            property string colourVariant: "dark"
             property string look: "neutrino"
             property string frameStyle: "double"
             property string density: "normal"

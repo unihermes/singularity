@@ -36,6 +36,7 @@ var entries = [
     { page: "appearance", section: "Wallpaper", label: "At login",      keywords: "wallpaper shuffle random" },
     { page: "appearance", section: "Colours", label: "Palette",         keywords: "colour color grayscale wallpaper" },
     { page: "appearance", section: "Colours", label: "Intensity",       keywords: "colour color saturation" },
+    { page: "appearance", section: "Colours", label: "Shade",           keywords: "light dark mode theme variant" },
     { page: "appearance", section: "Colours", label: "Accent",          keywords: "colour color highlight hue" },
     { page: "appearance", section: "Colours", label: "Panel opacity",   keywords: "transparency translucent glass flyouts" },
     { page: "appearance", section: "Colours", label: "Overlay dimming", keywords: "scrim dark backdrop" },
