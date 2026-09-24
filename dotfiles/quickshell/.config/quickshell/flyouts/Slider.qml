@@ -16,6 +16,9 @@ Item {
     // Fired continuously while dragging, so the backend follows the
     // handle instead of only catching up on release.
     signal moved(real value)
+    // The drag let go (or a click ended), for callers that apply on release.
+    signal released()
+    readonly property bool dragging: drag.pressed
 
     // The handle: the switch's knob, so the two controls you grab read as
     // one family. The track runs between the handle's centres at either
@@ -59,5 +62,7 @@ Item {
         onPositionChanged: mouse => {
             if (pressed) root.moved(root.valueAt(mouse.x))
         }
+        onReleased: root.released()
+        onCanceled: root.released()
     }
 }

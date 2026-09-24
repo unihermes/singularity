@@ -570,6 +570,8 @@ FlyoutPanel {
         FlyoutSliderRow {
             label: "Font size"
             suffix: "px"
+            // applied on release: it rescales this panel, slider included
+            live: false
             value: Settings.fontSize
             minimum: Settings.limits.fontSize.min
             maximum: Settings.limits.fontSize.max

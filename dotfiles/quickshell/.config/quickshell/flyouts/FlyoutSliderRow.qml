@@ -8,6 +8,12 @@
 //
 // `step` snaps the value (opacity moves in fives); the slider itself is
 // Slider.qml's 0..100, mapped onto minimum..maximum here.
+//
+// `live: false` holds the value back until the drag lets go, with the
+// handle and readout following the pointer meanwhile. For Font Size: every
+// step rescales the whole panel, which moved the slider out from under the
+// pointer mid-drag, so each step landed somewhere other than where you
+// were aiming.
 
 import QtQuick
 import "../services"
@@ -22,9 +28,14 @@ Column {
     property real step: 1
     property string suffix: ""
     property bool enabled: true
+    property bool live: true
 
-    // fired while dragging, already snapped and clamped
+    // fired while dragging (on release when !live), already snapped and clamped
     signal moved(real value)
+
+    // the value mid-drag when !live; NaN otherwise
+    property real pending: NaN
+    readonly property real shown: isNaN(pending) ? value : pending
 
     width: parent ? parent.width : 0
     spacing: 0
@@ -46,7 +57,7 @@ Column {
         Text {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: root.value + root.suffix
+            text: root.shown + root.suffix
             color: Theme.textStrong
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
@@ -56,12 +67,18 @@ Column {
     Slider {
         width: parent.width
         enabled: root.enabled
-        value: (root.value - root.minimum) / Math.max(1, root.maximum - root.minimum) * 100
+        value: (root.shown - root.minimum) / Math.max(1, root.maximum - root.minimum) * 100
         onMoved: pct => {
             var v = root.minimum + (root.maximum - root.minimum) * pct / 100
             v = Math.round(v / root.step) * root.step
             v = Math.max(root.minimum, Math.min(root.maximum, v))
-            if (v !== root.value) root.moved(v)
+            if (!root.live) root.pending = v
+            else if (v !== root.value) root.moved(v)
+        }
+        onReleased: {
+            var v = root.pending
+            root.pending = NaN
+            if (!isNaN(v) && v !== root.value) root.moved(v)
         }
     }
 }
