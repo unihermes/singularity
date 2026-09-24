@@ -121,17 +121,23 @@ hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 hl.env("GDK_BACKEND", "wayland,x11")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
-hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
-hl.env("XCURSOR_SIZE", "20")
-hl.env("HYPRCURSOR_THEME", "Bibata-Modern-Classic")
-hl.env("HYPRCURSOR_SIZE", "20")
+-- The pointer and icon themes picked on the Appearance page, which writes
+-- them to state files like the animation speed above.
+local cursorTheme, cursorSize = singularityState("cursor", ""):match("^(%S+)%s+(%d+)$")
+cursorTheme = cursorTheme or "Bibata-Modern-Classic"
+cursorSize  = cursorSize or "20"
+local iconTheme = singularityState("icons", "kora")
+hl.env("XCURSOR_THEME", cursorTheme)
+hl.env("XCURSOR_SIZE", cursorSize)
+hl.env("HYPRCURSOR_THEME", cursorTheme)
+hl.env("HYPRCURSOR_SIZE", cursorSize)
 -- Icon theme for Quickshell's window icons and Applications list. GTK and
--- wofi get kora from gtk settings.ini, but Quickshell is Qt and Qt has no
--- theme configured here, so without this it falls back to each app's stock
+-- wofi get it from gsettings, but Quickshell is Qt and Qt has no theme
+-- configured here, so without this it falls back to each app's stock
 -- hicolor icon (Thunar's hammer instead of kora's folder). It has to be in
 -- the environment at launch: Quickshell reads it before its own
 -- `//@ pragma Env` lines are applied, so setting it from shell.qml is ignored.
-hl.env("QS_ICON_THEME", "kora")
+hl.env("QS_ICON_THEME", iconTheme)
 
 -------------------
 ---- AUTOSTART ----
@@ -167,7 +173,7 @@ hl.on("hyprland.start", function()
     -- keeps its self-test messages in the log file rather than the journal.
     hl.exec_cmd("exec env QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
     -- env alone does not retheme the cursor Hyprland draws over the desktop
-    hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 20")
+    hl.exec_cmd("hyprctl setcursor " .. cursorTheme .. " " .. cursorSize)
     -- the saved wallpaper, or a random one from wallpapers/ when shuffle is on
     hl.exec_cmd("~/.config/hypr/wallpaper.sh")
     -- clipboard history daemon (cliphist needs this to capture every copy)

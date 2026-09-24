@@ -60,6 +60,11 @@ Singleton {
     // touched by reset()/isDefault, same as nightLightKelvin: it's a system
     // preference, not an appearance the shell designs.
     readonly property alias systemFontFamily: adapter.systemFontFamily
+    // The pointer and the apps' icons, system preferences in the same way:
+    // a theme's directory name (DesktopThemes), and the pointer's size in px.
+    readonly property alias cursorTheme: adapter.cursorTheme
+    readonly property alias cursorSize:  adapter.cursorSize
+    readonly property alias iconTheme:   adapter.iconTheme
     // "outline", "filled", "flat" or "pill"
     readonly property alias moduleStyle: adapter.moduleStyle
     // "full", "floating", "islands" or "bare"
@@ -101,6 +106,8 @@ Singleton {
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
         systemFontFamily: Looks.systemFonts,
+        cursorTheme:  DesktopThemes.cursors,
+        iconTheme:    DesktopThemes.icons,
         moduleStyle:  ["outline", "filled", "flat", "pill", "bracket", "underline"],
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
         workspaceStyle: ["pills", "numbers", "blocks", "roman"],
@@ -323,6 +330,7 @@ Singleton {
         borderWidth:  { min: 1,  max: 3 },
         scrim:        { min: 0,  max: 80 },
         nightLightKelvin: { min: 2500, max: 6000 },
+        cursorSize:   { min: 16, max: 48 },
     })
 
     // Stock: the fallback look, with its own settings layered over the values
@@ -583,6 +591,9 @@ Singleton {
             property string density: "normal"
             property string fontFamily: "UbuntuMono Nerd Font"
             property string systemFontFamily: "Ubuntu Nerd Font"
+            property string cursorTheme: "Bibata-Modern-Classic"
+            property int cursorSize: 20
+            property string iconTheme: "kora"
             property string moduleStyle: "outline"
             property string barStyle: "full"
             property string workspaceStyle: "pills"

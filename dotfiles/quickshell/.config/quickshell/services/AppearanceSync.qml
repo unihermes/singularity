@@ -212,7 +212,10 @@ Scope {
             "gsettings set " + iface + " document-font-name " + q(font) + "; " +
             "gsettings set " + iface + " monospace-font-name " + q(monoFont) + "; " +
             "gsettings set " + iface + " gtk-theme " + q(gtkTheme) + "; " +
-            "gsettings set " + iface + " color-scheme " + q(scheme)]
+            "gsettings set " + iface + " color-scheme " + q(scheme) + "; " +
+            "gsettings set " + iface + " icon-theme " + q(Settings.iconTheme) + "; " +
+            "gsettings set " + iface + " cursor-theme " + q(Settings.cursorTheme) + "; " +
+            "gsettings set " + iface + " cursor-size " + Settings.cursorSize]
         gtkSync.running = true
     }
 
@@ -234,7 +237,7 @@ Scope {
         var lines = ["[Appearance]",
             "color_scheme_path=" + (Theme.isLight ? qtLightScheme : qtDarkScheme),
             "custom_palette=true",
-            "icon_theme=kora",
+            "icon_theme=" + Settings.iconTheme,
             "style=Fusion",
             "",
             "[Fonts]",
@@ -307,16 +310,47 @@ Scope {
         })
     }
 
+    // The pointer and icon themes reach Hyprland the same way, for the
+    // environment it gives apps at login: `cursor` holds "<theme> <size>",
+    // `icons` the icon theme. The pointer Hyprland draws itself changes live
+    // through setcursor; apps take a new cursor or icon theme from gsettings
+    // (renderGtk) or qt6ct (renderQt).
+    function writeCursor(apply) {
+        var line = Settings.cursorTheme + " " + Settings.cursorSize
+        AtomicFileWrite.write({
+            path: root.dir + "/cursor",
+            transform: () => line + "\n",
+            after: apply ? "hyprctl setcursor '" + String(Settings.cursorTheme).replace(/'/g, "'\\''") + "' "
+                + Settings.cursorSize + " >/dev/null" : "",
+        })
+    }
+    function writeIcons() {
+        var theme = Settings.iconTheme
+        AtomicFileWrite.write({ path: root.dir + "/icons", transform: () => theme + "\n" })
+    }
+
+    // Stepping the size fires once per step; one setcursor at the end is enough.
+    Timer {
+        id: cursorDebounce
+        interval: 200
+        onTriggered: root.writeCursor(true)
+    }
+
     Connections {
         target: Settings
         function onAnimSpeedChanged() { root.writeHyprAnimations(true) }
         function onSystemFontFamilyChanged() { debounce.restart() }
+        function onCursorThemeChanged() { cursorDebounce.restart(); debounce.restart() }
+        function onCursorSizeChanged() { cursorDebounce.restart(); debounce.restart() }
+        function onIconThemeChanged() { root.writeIcons(); debounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
     // AtomicFileWrite both create missing parent directories.
     Component.onCompleted: {
         writeHyprAnimations(false)
+        writeCursor(false)
+        writeIcons()
         debounce.restart()
     }
 

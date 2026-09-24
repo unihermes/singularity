@@ -611,23 +611,6 @@ SettingsPage {
         }
     }
 
-    // GTK/Qt apps' own font -- independent of the shell's font above. Every
-    // choice here is always installed (see Looks.systemFonts), so there's no
-    // pending/restart state to show like the shell font has.
-    SettingsField {
-        label: "System font"
-        hint: "GTK and Qt apps outside the shell -- terminal, file manager, and the rest. Doesn't change the bar, launcher or notifications"
-
-        SettingsDropdown {
-            anchors.right: parent.right
-            model: Looks.systemFonts
-            current: Settings.systemFontFamily
-            labelFor: v => page.label(v)
-            fontFor: v => v
-            onPicked: v => Settings.set("systemFontFamily", v)
-        }
-    }
-
     // Fonts installed since the shell started, which Qt can't draw until
     // it's restarted (see Fonts.qml)
     SettingsField {
@@ -901,6 +884,58 @@ SettingsPage {
         Choices { key: "animSpeed" }
     }
 
+    // --- system --------------------------------------------------------------
+    // Preferences for the apps outside the shell. Not part of a look, and
+    // kept by Reset and Set as default, like the wallpaper.
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "SYSTEM" }
+
+    // GTK/Qt apps' own font -- independent of the shell's Font under Look. Every
+    // choice here is always installed (see Looks.systemFonts), so there's no
+    // pending/restart state to show like the shell font has.
+    SettingsField {
+        label: "System font"
+        hint: "GTK and Qt apps outside the shell -- terminal, file manager, and the rest. Doesn't change the bar, launcher or notifications"
+
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: Looks.systemFonts
+            current: Settings.systemFontFamily
+            labelFor: v => page.label(v)
+            fontFor: v => v
+            onPicked: v => Settings.set("systemFontFamily", v)
+        }
+    }
+
+    SettingsField {
+        label: "Icons"
+        hint: "GTK apps change now, Qt apps when next opened, and the shell's own app icons at the next login"
+
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: DesktopThemes.icons
+            current: Settings.iconTheme
+            labelFor: v => DesktopThemes.label(v)
+            onPicked: v => Settings.set("iconTheme", v)
+        }
+    }
+
+    SettingsField {
+        label: "Cursor"
+        hint: "Changes on the desktop now, and in apps when they're next opened"
+
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: DesktopThemes.cursors
+            current: Settings.cursorTheme
+            labelFor: v => DesktopThemes.label(v)
+            onPicked: v => Settings.set("cursorTheme", v)
+        }
+    }
+
+    Stepper { label: "Cursor size"; key: "cursorSize"; step: 4; suffix: "px" }
+
     // --- windows -------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
@@ -919,7 +954,8 @@ SettingsPage {
     // --- default --------------------------------------------------------------
     // "Default" is what Reset returns to: stock until something is saved over
     // it. Covers the look and everything under Look, Colours, Bar and Text &
-    // Motion; wallpaper and the Windows section are kept either way.
+    // Motion; the wallpaper and the System and Windows sections are kept
+    // either way.
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "DEFAULT" }
@@ -1027,8 +1063,9 @@ SettingsPage {
 
     Component.onCompleted: {
         reread()
-        // picks up fonts installed since the shell started
+        // picks up fonts and themes installed since the shell started
         Fonts.refresh()
+        DesktopThemes.refresh()
     }
 
     FileView {
