@@ -170,7 +170,27 @@ SystemPage {
     // --- health -------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "HEALTH" }
+
+    // The heading doubles as the way through to the Health page, which runs
+    // the checks these two lines are the headline of. It only reports what
+    // the last scan found: opening Health is what runs one, since a scan
+    // forks a couple of dozen processes and this page is on screen by
+    // default every time the window opens.
+    Row {
+        width: parent.width
+        spacing: Theme.spaceL
+
+        FlyoutHeading { text: "HEALTH" }
+
+        FlyoutChip {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Health.lastScan === "" ? "Run checks"
+                : Health.problems > 0 ? Health.problems + " to fix"
+                : Health.warnings > 0 ? Health.warnings + " to look at"
+                : "All clear"
+            onClicked: page.go("health")
+        }
+    }
 
     InfoRow {
         label: "Failed units"

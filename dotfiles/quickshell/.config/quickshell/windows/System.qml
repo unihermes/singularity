@@ -77,6 +77,7 @@ FloatingWindow {
 
     readonly property var pages: [
         { id: "overview",  label: "Overview",  icon: "󰍹", blurb: "Health at a glance",       source: "system/PageOverview.qml" },
+        { id: "health",    label: "Health",    icon: "󰓙", blurb: "Problems and fixes", source: "system/PageHealth.qml" },
         { id: "cpu",       label: "CPU",       icon: "󰻠", blurb: "Load, cores and clocks",   source: "system/PageCpu.qml" },
         { id: "memory",    label: "Memory",    icon: "󰘚", blurb: "RAM, swap and zram",       source: "system/PageMemory.qml" },
         { id: "storage",   label: "Storage",   icon: "󰋊", blurb: "Disks and mounts",         source: "system/PageStorage.qml" },
