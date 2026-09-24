@@ -128,7 +128,7 @@ SettingsPage {
     // is a field on screen to ring
     onHighlightChanged: {
         if (openKey === "" && rules.length > 0
-                && ["Layout", "Size", "Workspace", "Open fullscreen", "Always on top"].indexOf(highlight) >= 0)
+                && ["Name", "Layout", "Size", "Workspace", "Open fullscreen", "Always on top"].indexOf(highlight) >= 0)
             openKey = ruleKey(rules[0])
     }
 
@@ -220,7 +220,8 @@ SettingsPage {
             if (value === "" || value === undefined) delete n[key]
             else n[key] = value
             return n
-        }), describe(rules[index]) + " updated")
+        }), key !== "label" ? describe(rules[index]) + " updated"
+            : value ? "Renamed to " + value : "Name cleared")
     }
 
     function removeRule(index) {
@@ -448,6 +449,30 @@ SettingsPage {
                 color: Theme.subtext
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontSmall
+            }
+
+            // an alias for the list, in place of the class; empty goes back
+            // to the class
+            SettingsField {
+                visible: ruleCol.expanded
+                label: "Name"
+                hint: "What the list calls it. Enter to apply"
+
+                FlyoutInput {
+                    id: nameInput
+                    anchors.right: parent.right
+                    width: Theme.fit(240)
+                    echoPassword: false
+                    placeholder: ruleCol.rule.class || ruleCol.rule.title || ""
+                    text: ruleCol.rule.label || ""
+                    enabled: !AtomicFileWrite.busy
+                    onAccepted: {
+                        var name = text.trim()
+                        if (name === (ruleCol.rule.label || "")) return
+                        page.setRule(ruleCol.index, "label", name)
+                    }
+                    onEscapePressed: text = ruleCol.rule.label || ""
+                }
             }
 
             SettingsField {

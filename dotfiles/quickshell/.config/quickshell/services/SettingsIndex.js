@@ -148,6 +148,7 @@ var entries = [
 
     // --- Window Rules ------------------------------------------------------
     { page: "windowrules", section: "Add a rule", label: "Open now",     keywords: "app class pick running" },
+    { page: "windowrules", section: "Rules", label: "Name",              keywords: "alias rename label title" },
     { page: "windowrules", section: "Rules", label: "Layout",            keywords: "float tiled auto" },
     { page: "windowrules", section: "Rules", label: "Size",              keywords: "natural window dimensions" },
     { page: "windowrules", section: "Rules", label: "Workspace",         keywords: "where it opens" },
