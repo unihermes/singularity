@@ -89,7 +89,7 @@ singularity/
 └── dotfiles/
     ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
-    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh
+    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh, autostart.sh
     ├── swaync/.config/swaync/{config.json,style.css}
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
@@ -338,6 +338,25 @@ fc-match monospace
   file. The menu entry only appears once logind reports hibernation as
   possible, so a `link.sh`-only machine won't offer it. Deleting and
   recreating the swapfile moves it on disk; rerun `./install.sh` afterwards.
+- **Resume speed.** The image is capped at 4G via `/sys/power/image_size`
+  (a `tmpfiles.d` drop-in). The kernel's own default is 2/5 of RAM and it
+  fills it, mostly with page cache, and all of it is decompressed
+  single-threaded with LZO before the desktop appears. Capping it makes the
+  kernel drop that cache up front instead, so those pages fault back in from
+  the NVMe once you're already logged in. Raise the cap if hibernating starts
+  taking longer than resuming saves.
+- **Camera across hibernation.** The MEI stack re-enumerates on resume, so
+  `ivsc_csi` probes again *after* `ipu_bridge` has run and comes back without
+  its fwnode — the v4l2 subdevs behind the fds userspace still holds are gone.
+  WirePlumber's libcamera monitor keeps `/dev/v4l-subdev*` open all session,
+  and closing one of those stale fds is a general protection fault in
+  `subdev_close`, which leaves the task unkillable and hangs the next
+  shutdown. `/usr/lib/systemd/system-sleep/singularity-camera` stops
+  WirePlumber (and any running `v4l2-relayd`) before the image is written and
+  starts WirePlumber again after, so there is nothing stale left to close.
+  Suspend is unaffected and isn't touched. The camera itself stays dead until
+  you reboot: reloading `intel_ipu6` on a running machine oopses the kernel,
+  so the hook doesn't try.
 - **Webcam colour.** The sensor is raw Bayer with no colour controls, so the
   virtual webcam (`v4l2-relayd`, what Discord sees) corrects it with a
   `videobalance` stage in its GStreamer pipeline. Tune brightness, contrast,
@@ -345,6 +364,29 @@ fc-match monospace
   rewrites `/etc/v4l2-relayd.d/webcam.conf` and restarts the relay only when
   the result differs. Browsers read the camera through PipeWire and are not
   affected.
+- **System > Health** runs the checks in
+  `~/.config/quickshell/scripts/health-scan.sh` and puts the fix next to the
+  finding: a restart for an enabled unit that isn't running, a disable for one
+  whose unit file is gone, `clean.sh` for a full disk or a pile of orphans,
+  `link.sh` for a dotfile symlink that no longer resolves, an install for a
+  missing tool. systemctl repairs run directly, prompting through the polkit
+  agent for system units; the ones that ask questions or print a lot open a
+  terminal so you can see what runs. The script only reads, so it is safe to
+  run by hand, and it is the machine-readable half of what `diagnose` prints.
+  Nothing scans in the background: opening the page is what runs a scan.
+- **What runs at login.** Hyprland runs no XDG autostart of its own, so
+  `~/.config/singularity/autostart.sh run` — the last `exec` in
+  `hyprland.lua` — is what launches the desktop entries in
+  `~/.config/autostart`. Settings > Startup manages them: turn one off
+  (`Hidden=true`), remove it, or add any installed application. Entries in
+  `/etc/xdg/autostart` are listed too but are **off until you turn one on**,
+  which copies it into `~/.config/autostart`; the spec says those should run
+  by default, but none of them ever has on this machine and two of them
+  duplicate a systemd user unit that already starts the same program.
+  `TryExec` and `OnlyShowIn`/`NotShowIn` are honoured, so an entry meant for
+  another desktop is shown as unavailable rather than run. Anything that
+  should come back after a crash belongs in `dotfiles/systemd` as a user unit
+  instead. `~/.cache/autostart.log` records what ran.
 - **Power profile follows the charger.** A udev rule
   (`/etc/udev/rules.d/99-singularity-power-profile.rules`) runs
   `/usr/local/bin/singularity-power-profile` on every `power_supply` change,

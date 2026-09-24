@@ -118,6 +118,12 @@ set_default imv.desktop image/png image/jpeg image/gif image/webp image/bmp \
 set_default mpv.desktop video/mp4 video/x-matroska video/webm video/quicktime \
   video/x-msvideo audio/mpeg audio/flac audio/ogg audio/x-wav audio/mp4
 
+# Structured text is only *inherited* from text/plain, so an editor's
+# MimeType=text/plain doesn't register it for these and the browser -- which
+# does name application/json outright -- wins the mimeinfo.cache fallback.
+# Naming them keeps JSON and friends in the editor.
+set_default codium.desktop application/json application/xml application/x-yaml
+
 # On Wayland, GTK3 apps (Thunar included) read their theme, icons and fonts from
 # gsettings and ignore settings.ini, which only GTK4 and tools like fastfetch
 # go by. Keep both in step with gtk/.config/gtk-3.0/settings.ini. With no
@@ -131,6 +137,10 @@ gsettings set $iface cursor-theme        'Bibata-Modern-Classic'
 gsettings set $iface font-name           'Ubuntu Nerd Font 11'
 gsettings set $iface document-font-name  'Ubuntu Nerd Font 11'
 gsettings set $iface monospace-font-name 'UbuntuMono Nerd Font Mono 11'
+# Strip the close/minimise/maximise buttons out of GTK headerbars. GTK4 and
+# libadwaita apps take this from the portal, which reads gsettings, and ignore
+# gtk-decoration-layout in settings.ini -- without it they keep drawing an X.
+gsettings set org.gnome.desktop.wm.preferences button-layout ':'
 if [[ $(gsettings get $iface icon-theme 2>/dev/null) != "'kora'" ]]; then
   warn "gsettings did not stick (no session bus?). Rerun ./install.sh from a"
   warn "logged-in session or Thunar will ignore the icon theme and fonts."
@@ -442,6 +452,32 @@ if ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
   printf '[Sleep]\nHibernateDelaySec=55min\n' | sudo tee "$sleepconf" >/dev/null
 fi
 
+# How much of RAM the hibernation image is allowed to hold. The kernel
+# defaults to 2/5 of RAM -- 13G here -- and cheerfully fills it, mostly with
+# page cache nobody needs back. Everything in the image is compressed going
+# down and decompressed coming up with LZO, single-threaded, before the
+# desktop appears; observed images ran 4-13G and the big ones roughly doubled
+# the resume. Capping the image makes the kernel drop cache and swap out
+# anonymous pages before it snapshots, so those pages fault back in lazily
+# from the NVMe once you are already logged in -- on demand and in parallel,
+# instead of serialized in front of you.
+#
+# 4G, not a fraction of RAM: what matters is the live working set, and this
+# machine's sits well under that even with a browser and an editor up. Raise
+# it if hibernating ever starts taking noticeably longer (the kernel is then
+# working to free memory it would rather keep).
+#
+# LZ4 would decompress about twice as fast, but Arch's kernel is built with
+# CONFIG_HIBERNATION_COMP_LZ4 unset, so hibernate.compressor= only takes lzo.
+imageconf=/etc/tmpfiles.d/singularity-hibernate.conf
+image_size=4294967296
+if ! grep -qs "image_size .* $image_size\$" "$imageconf"; then
+  log "capping the hibernation image at $((image_size / 1024 ** 3))G"
+  printf 'w /sys/power/image_size - - - - %s\n' "$image_size" \
+    | sudo tee "$imageconf" >/dev/null
+  sudo systemd-tmpfiles --create "$imageconf"
+fi
+
 # Keep the touchpad from waking the machine. This laptop only has s2idle and
 # the I2C touchpad's GPIO interrupt stays live in it, so every idle suspend
 # bounced straight back out within seconds -- the machine never actually
@@ -460,6 +496,71 @@ if ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
     | sudo tee "$touchpadrule" >/dev/null
   sudo udevadm control --reload
   sudo udevadm trigger --subsystem-match=i2c --action=change
+fi
+
+# --- camera across hibernation -------------------------------------------
+# Resuming from hibernation kills a shutdown. What happens, in order:
+#
+#   PM: hibernation: hibernation exit
+#   ivsc_csi intel_vsc-...: mei-csi probed without device fwnode!
+#   Oops: general protection fault ... RIP: subdev_close+0x2a [videodev]
+#   Comm: CameraManager
+#
+# The MEI stack re-enumerates on resume, so ivsc_csi probes again -- and by
+# then ipu_bridge has long since run, so the CSI device comes back without its
+# fwnode and the v4l2 subdevs behind the fds userspace already holds are gone.
+# WirePlumber's libcamera monitor keeps half a dozen /dev/v4l-subdev* fds open
+# for the whole session; the oops is its CameraManager thread closing one of
+# them, which is why it lands at shutdown, when everything gets terminated.
+# (The faulting pointer reads "REASON=0" in ASCII -- freed memory reused for a
+# systemd environment string.) The oops leaves the task unkillable and systemd
+# waits on it forever, so the machine never powers off.
+#
+# So the fds are dropped before the image is written and WirePlumber is
+# started again afterwards: nothing stale is left to close. Only hibernation
+# needs this -- plain s2idle keeps the MEI clients alive and resumes fine.
+#
+# The camera itself does NOT come back after a resume: ivsc_csi is stuck
+# fwnode-less until the modules are reloaded, and reloading intel_ipu6 while
+# the machine is up oopses the kernel a different way (see the webcam
+# controller step), so this doesn't try. Reboot to get the webcam back.
+camhook=/usr/lib/systemd/system-sleep/singularity-camera
+if [[ ! -f $camhook ]]; then
+  log "installing the hibernation camera hook"
+  sudo tee "$camhook" >/dev/null <<'HOOK'
+#!/bin/sh
+# $1 pre|post, $2 suspend|hibernate|hybrid-sleep|suspend-then-hibernate
+set -eu
+case "$2" in
+  hibernate|hybrid-sleep|suspend-then-hibernate) ;;
+  *) exit 0 ;;
+esac
+
+# Nothing here is allowed to fail: a sleep hook that exits non-zero delays or
+# blocks the sleep itself.
+#
+# v4l2-relayd only runs while something is watching the loopback device, but
+# when it is running it holds camera fds of its own. It is started on demand
+# by its device unit, so it only has to be stopped.
+if [ "$1" = pre ]; then
+  for unit in $(systemctl list-units --state=active --plain --no-legend \
+                  'v4l2-relayd*' | awk '{ print $1 }'); do
+    systemctl stop "$unit" || true
+  done
+fi
+
+# Sleep hooks run as root outside any session, so each logged-in user's own
+# manager is addressed through the --user -M user@ form.
+for uid in $(loginctl list-sessions --no-legend | awk '{ print $2 }' | sort -u); do
+  user=$(id -nu "$uid" 2>/dev/null) || continue
+  case "$1" in
+    pre)  systemctl --user -M "$user@" stop wireplumber.service || true ;;
+    post) systemctl --user -M "$user@" start wireplumber.service || true ;;
+  esac
+done
+exit 0
+HOOK
+  sudo chmod +x "$camhook"
 fi
 
 # --- virtual webcam ------------------------------------------------------
