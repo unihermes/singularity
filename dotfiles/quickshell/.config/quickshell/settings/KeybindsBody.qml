@@ -1,8 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/KeybindsBody.qml
 //
-// The Keybinds editor. Two tabs over one list area, so the window is the
-// same height whichever is showing:
+// The Keybinds editor. Two tabs over one list area:
 //
 //   Binds    every hl.bind() in hyprland.lua, grouped by the config's
 //            `-- --- Section ---` markers, searchable, with add / edit /
@@ -14,11 +13,8 @@
 //
 // Parsing and rewriting live in HyprBinds.js, the safe write in
 // HyprLuaWrite.qml, the catalogue in HyprPresets.js. Nothing here builds Lua
-// by hand.
-//
-// Hosted twice: by Keybinds.qml as its own window, and by the Settings
-// window's Keybinds page. Anything that used to hang off the window's
-// visibility hangs off `active` instead.
+// by hand. Hosted by SettingsPageKeybinds.qml, whose toast carries the
+// results.
 //
 // The file is re-read right before writing: if it changed on disk since it
 // was parsed (an nvim session, git), nothing is written, since the edit's
@@ -46,13 +42,8 @@ Column {
     width: parent ? parent.width : 0
     spacing: Theme.spaceM
 
-    // true while whatever hosts this is on screen: the standalone window's
-    // visible, or the Settings page existing at all
-    property bool active: false
-    // Escape in an empty search closes the host only when the host is the
-    // Keybinds window; inside Settings it would take the whole window with it
-    property bool standalone: true
-    signal closeRequested()
+    // the SettingsPage this sits on, for its toast
+    required property var page
 
     readonly property string confPath: HyprLuaWrite.confPath
     readonly property string home: Quickshell.env("HOME")
@@ -60,9 +51,8 @@ Column {
     readonly property string shortConfPath: confPath.indexOf(home) === 0
         ? "~" + confPath.slice(home.length) : confPath
 
-    // the line the link and the toolbar chip would open: the bind in the
-    // editor, or the one a notice is about
-    readonly property int linkLine: editRow ? editRow.line : noticeLine
+    // the line the path link opens at: the bind in the editor, if any
+    readonly property int linkLine: editRow ? editRow.line : 0
 
     // The config itself, straight from here. With a line it goes to the
     // editor at that line; without one it goes through open-file.sh, which
@@ -74,14 +64,11 @@ Column {
     }
 
     // total height of the list, editor and preset bar together, so opening
-    // any of them shrinks the list instead of resizing (and re-centring) the
-    // window
+    // either of the others shrinks the list
     property int bodyHeight: Theme.fit(520)
 
     property var model: null
     property string query: ""
-    property string notice: ""
-    property bool noticeIsError: false
     readonly property bool busy: HyprLuaWrite.busy
     // what the last write put on disk; undo only runs while the file still says it
     property string lastWritten: ""
@@ -119,14 +106,7 @@ Column {
     // binaries a preset asked for that are actually installed
     property var present: ({})
 
-    // the line the notice is about, so the path link can jump to it
-    property int noticeLine: 0
-
-    function say(msg, isError) {
-        notice = msg
-        noticeIsError = isError
-        noticeLine = 0
-    }
+    function say(msg, isError) { page.say(msg, isError) }
 
     function reparse(fromDisk) {
         var text = luaFile.text()
@@ -146,7 +126,7 @@ Column {
         printErrors: false
         onFileChanged: {
             reload()
-            if (root.active && !root.busy) root.reparse(true)
+            if (!root.busy) root.reparse(true)
         }
     }
 
@@ -167,32 +147,17 @@ Column {
         }
     }
 
-    onActiveChanged: activate()
-    Component.onCompleted: if (active) activate()
-
-    // load fresh on show, drop the editor, selection and search on hide
-    function activate() {
-        if (active) {
-            luaFile.reload()
-            model = null
-            reparse(false)
-            if (luaFile.text() === "") say("Couldn't read " + confPath, true)
-            haveProc.running = true
-            search.forceFocus()
-        } else {
-            closeEditor()
-            clearSelection()
-            search.text = ""
-            notice = ""
-            tab = "binds"
-            packFilter = ""
-        }
+    // the page is built each time it's shown, so this is a fresh load
+    Component.onCompleted: {
+        reparse(false)
+        if (luaFile.text() === "") say("Couldn't read " + confPath, true)
+        haveProc.running = true
+        search.forceFocus()
     }
 
     function showTab(name) {
         if (tab === name) return
         tab = name
-        notice = ""
         closeEditor()
         search.forceFocus()
     }
@@ -286,7 +251,6 @@ Column {
         selection = next
         selectionCount = Object.keys(next).length
         presetAck = false
-        notice = ""
     }
 
     function selectPack(group, on) {
@@ -405,7 +369,6 @@ Column {
         conflictAck = ""
         deleteArmed = false
         editError = ""
-        notice = ""
         editFlags = ({})
         editFlagsSimple = true
         editOptsSrc = ""
@@ -591,12 +554,11 @@ Column {
         elide: Text.ElideRight
     }
 
-    component FieldLabel: Label {
-        width: Theme.fit(90)
-        height: Theme.rowHeightTall
-        verticalAlignment: Text.AlignVCenter
-        color: Theme.subtext
-    }
+    // the editor's label column, narrower than a page's: its controls are
+    // text fields that want the room
+    readonly property int editLabelWidth: Theme.fit(170)
+    // the keycaps column, in both lists
+    readonly property int keysWidth: Theme.fit(200)
 
     // A pack heading: the name, the rule, what the pack is for, and the one
     // chip that ticks or unticks the lot.
@@ -687,7 +649,6 @@ Column {
             onEscapePressed: {
                 if (text !== "") text = ""
                 else if (root.selectionCount > 0) root.clearSelection()
-                else if (root.standalone) root.closeRequested()
             }
         }
 
@@ -709,11 +670,6 @@ Column {
                 onClicked: root.hideBound = !root.hideBound
             }
             FlyoutChip {
-                // straight to the bind being edited, when there is one
-                text: root.linkLine > 0 ? "Open at line " + root.linkLine : "Open file"
-                onClicked: root.openConf(root.linkLine)
-            }
-            FlyoutChip {
                 text: "+ Add"
                 visible: root.tab === "binds"
                 selected: root.editMode === "add"
@@ -723,8 +679,8 @@ Column {
         }
     }
 
-    // status line, and the file all of this is about: the path is a link,
-    // and while a bind is open in the editor it opens on that bind's line
+    // counts, and the file all of this is about: the path is a link, and
+    // while a bind is open in the editor it opens on that bind's line
     Item {
         width: parent.width
         height: Theme.headingHeight
@@ -735,15 +691,14 @@ Column {
             anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
             font.pixelSize: Theme.fontSmall
-            color: root.notice !== "" ? (root.noticeIsError ? Theme.alert : Theme.text) : Theme.subtext
+            color: Theme.subtext
             text: root.busy ? "Writing…"
-                : root.notice !== "" ? root.notice
                 : !root.model ? ""
                 : root.tab === "presets"
-                    ? root.presetTotal + " presets, " + root.presetBound + " already added"
+                    ? root.presetTotal + " presets · " + root.presetBound + " already added"
                         + " · tick to add, 󰏫 to change one first"
-                    : root.model.rows.length + " binds, " + root.editableCount
-                        + " editable here · the rest are generated or not plain commands"
+                    : root.model.rows.length + " binds · " + root.editableCount
+                        + " editable here, the rest open in the file"
         }
 
         Label {
@@ -782,7 +737,7 @@ Column {
             x: Theme.spaceXl
             y: Theme.panelPad
             width: parent.width - Theme.spaceXl * 2
-            spacing: Theme.spaceM
+            spacing: Theme.spaceS
 
             FlyoutHeading {
                 text: root.editMode === "add" ? "NEW BIND"
@@ -790,21 +745,22 @@ Column {
             }
 
             // combo: typed, or recorded from the keyboard
-            Row {
-                width: parent.width
-                spacing: Theme.spaceL
-
-                FieldLabel { text: "Keys" }
+            SettingsField {
+                labelWidth: root.editLabelWidth
+                label: "Keys"
+                hint: root.capturing ? "Escape to type it instead" : ""
 
                 Item {
-                    width: parent.width - Theme.fit(90) - Theme.spaceL - recordChip.width - Theme.spaceL
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     height: Theme.rowHeightTall
 
                     FlyoutInput {
                         id: keysInput
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.spaceS
-                        anchors.rightMargin: Theme.spaceS
+                        anchors.left: parent.left
+                        anchors.right: recordChip.left
+                        anchors.rightMargin: Theme.spaceM
+                        anchors.verticalCenter: parent.verticalCenter
                         visible: !root.capturing
                         echoPassword: false
                         placeholder: "SUPER + SHIFT + T"
@@ -815,7 +771,7 @@ Column {
 
                     // stands in for the field while recording
                     Rectangle {
-                        anchors.fill: parent
+                        anchors.fill: keysInput
                         visible: root.capturing
                         radius: Theme.radiusInner
                         color: Theme.base
@@ -827,8 +783,7 @@ Column {
                             anchors.leftMargin: Theme.spaceL
                             verticalAlignment: Text.AlignVCenter
                             color: root.captureMods !== "" ? Theme.textStrong : Theme.subtext
-                            text: root.captureMods !== "" ? root.captureMods + " + …"
-                                : "Press a combination · Escape to type it instead"
+                            text: root.captureMods !== "" ? root.captureMods + " + …" : "Press a combination"
                         }
                     }
 
@@ -859,100 +814,88 @@ Column {
                             if (root.capturing) root.captureMods = root.modsText(event.modifiers)
                         }
                     }
-                }
 
-                FlyoutChip {
-                    id: recordChip
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.capturing ? "Stop" : "Record"
-                    selected: root.capturing
-                    onClicked: {
-                        if (root.capturing) { root.capturing = false; keysInput.forceFocus() }
-                        else root.startCapture()
+                    FlyoutChip {
+                        id: recordChip
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.capturing ? "Stop" : "Record"
+                        selected: root.capturing
+                        onClicked: {
+                            if (root.capturing) { root.capturing = false; keysInput.forceFocus() }
+                            else root.startCapture()
+                        }
                     }
                 }
             }
 
             // what it does: a shell command, or a dispatcher written in Lua
-            Row {
-                width: parent.width
-                spacing: Theme.spaceL
-                FieldLabel { text: "Does" }
-                Row {
-                    spacing: Theme.spaceS
-                    height: Theme.rowHeightTall
-                    FlyoutSegmented {
-                        anchors.verticalCenter: parent.verticalCenter
-                        fill: false
-                        model: [{ value: "exec", text: "Command" }, { value: "lua", text: "Lua action" }]
-                        current: root.editKind
-                        onPicked: v => { root.editKind = v; root.editError = "" }
-                    }
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        leftPadding: Theme.spaceM
-                        color: Theme.subtext
-                        font.pixelSize: Theme.fontSmall
-                        text: root.editKind === "lua" ? "a hl.dsp dispatcher, written out"
-                            : "run through hl.dsp.exec_cmd()"
-                    }
-                }
-            }
+            SettingsField {
+                labelWidth: root.editLabelWidth
+                label: "Does"
 
-            Row {
-                width: parent.width
-                spacing: Theme.spaceL
-                FieldLabel { text: root.editKind === "lua" ? "Action" : "Command" }
                 Item {
-                    width: parent.width - Theme.fit(90) - Theme.spaceL
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     height: Theme.rowHeightTall
+
                     FlyoutInput {
                         id: cmdInput
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.spaceS
-                        anchors.rightMargin: Theme.spaceS
+                        anchors.left: parent.left
+                        anchors.right: kindPick.left
+                        anchors.rightMargin: Theme.spaceM
+                        anchors.verticalCenter: parent.verticalCenter
                         echoPassword: false
-                        placeholder: root.editKind === "lua" ? "hl.dsp.window.close()"
-                            : "shell command, run through exec_cmd"
+                        placeholder: root.editKind === "lua" ? "hl.dsp.window.close()" : "alacritty -e btop"
                         onTextChanged: root.editError = ""
                         onAccepted: descInput.forceFocus()
                         onEscapePressed: root.closeEditor()
                     }
+
+                    // a shell command run through hl.dsp.exec_cmd(), or a
+                    // hl.dsp dispatcher written out
+                    FlyoutSegmented {
+                        id: kindPick
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        fill: false
+                        model: [{ value: "exec", text: "Command" }, { value: "lua", text: "Lua" }]
+                        current: root.editKind
+                        onPicked: v => { root.editKind = v; root.editError = "" }
+                    }
                 }
             }
 
-            Row {
-                width: parent.width
-                spacing: Theme.spaceL
-                FieldLabel { text: "Description" }
-                Item {
-                    width: parent.width - Theme.fit(90) - Theme.spaceL
-                    height: Theme.rowHeightTall
-                    FlyoutInput {
-                        id: descInput
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.spaceS
-                        anchors.rightMargin: Theme.spaceS
-                        echoPassword: false
-                        // what the list shows when there's no comment
-                        placeholder: root.editRow ? root.editRow.autoDesc + " (optional, saved as a comment)"
-                            : "optional, saved as a comment on the line"
-                        onAccepted: root.save()
-                        onEscapePressed: root.closeEditor()
-                    }
+            SettingsField {
+                labelWidth: root.editLabelWidth
+                label: "Description"
+
+                FlyoutInput {
+                    id: descInput
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    echoPassword: false
+                    // what the list shows when there's no comment
+                    placeholder: (root.editRow ? root.editRow.autoDesc : "What it does")
+                        + " · saved as a comment"
+                    onAccepted: root.save()
+                    onEscapePressed: root.closeEditor()
                 }
             }
 
             // hl.bind's options, as toggles -- unless the call's table holds
             // something these chips can't say, in which case it's left alone
-            Row {
-                width: parent.width
-                spacing: Theme.spaceL
-                FieldLabel { text: "Options" }
+            SettingsField {
+                labelWidth: root.editLabelWidth
+                label: "Options"
+                hint: root.editFlagsSimple ? "" : "Kept as written"
+
                 Flow {
-                    width: parent.width - Theme.fit(90) - Theme.spaceL
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     spacing: Theme.spaceS
                     visible: root.editFlagsSimple
+
                     Repeater {
                         model: root.flagOrder
                         FlyoutChip {
@@ -963,24 +906,26 @@ Column {
                         }
                     }
                 }
+
                 Label {
-                    width: parent.width - Theme.fit(90) - Theme.spaceL
-                    height: Theme.rowHeightTall
-                    verticalAlignment: Text.AlignVCenter
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     visible: !root.editFlagsSimple
                     color: Theme.subtext
                     font.pixelSize: Theme.fontSmall
-                    text: "kept as written: " + root.editOptsSrc
+                    text: root.editOptsSrc
                 }
             }
 
-            Row {
-                width: parent.width
-                spacing: Theme.spaceL
-                FieldLabel { text: "Section" }
+            SettingsField {
+                labelWidth: root.editLabelWidth
+                label: "Section"
+
                 Flow {
-                    width: parent.width - Theme.fit(90) - Theme.spaceL
+                    anchors.left: parent.left
+                    anchors.right: parent.right
                     spacing: Theme.spaceS
+
                     Repeater {
                         model: root.editCategories
                         FlyoutChip {
@@ -996,6 +941,7 @@ Column {
             // conflict warning, validation, luac's complaint
             Label {
                 width: parent.width
+                topPadding: Theme.spaceS
                 visible: text !== ""
                 wrapMode: Text.WordWrap
                 elide: Text.ElideNone
@@ -1014,11 +960,11 @@ Column {
 
             Item {
                 width: parent.width
-                height: Theme.fs(22)
+                height: Theme.rowHeightTall + Theme.spaceS
 
                 FlyoutChip {
                     anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.bottom: parent.bottom
                     visible: root.editMode === "edit"
                     text: root.deleteArmed ? "Click again to delete" : "Delete"
                     selected: root.deleteArmed
@@ -1028,7 +974,7 @@ Column {
 
                 Row {
                     anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.bottom: parent.bottom
                     spacing: Theme.spaceM
                     FlyoutChip { text: "Cancel"; onClicked: root.closeEditor() }
                     FlyoutChip {
@@ -1143,13 +1089,19 @@ Column {
                                     border.color: Theme.selectedStroke
                                 }
 
-                                Label {
+                                Item {
                                     id: keysText
                                     anchors.left: parent.left
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Theme.fit(200)
-                                    text: (row.modelData.conflict ? "󰀦 " : "") + row.modelData.keys
-                                    color: row.modelData.conflict ? Theme.alert : Theme.textStrong
+                                    width: root.keysWidth
+                                    height: caps.height
+                                    clip: true
+
+                                    Keycaps {
+                                        id: caps
+                                        keys: row.modelData.keys
+                                        alert: row.modelData.conflict
+                                    }
                                 }
 
                                 Column {
@@ -1182,32 +1134,36 @@ Column {
                                     font.pixelSize: Theme.fontSmall
                                 }
 
-                                // pencil on hover when editable, a lock when not
-                                Text {
+                                // on hover: a pencil to edit it here, or the
+                                // line number it opens the file at
+                                Label {
                                     id: stateIcon
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Theme.fs(18)
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: row.modelData.editable ? "󰏫" : "󰌾"
-                                    visible: !row.modelData.editable || rowMouse.containsMouse || row.editing
-                                    color: row.modelData.editable ? Theme.textStrong : Theme.textDisabled
-                                    font.family: Theme.fontIcon
-                                    font.pixelSize: Theme.fontIconSize
+                                    width: Math.max(Theme.fs(18), implicitWidth)
+                                    horizontalAlignment: Text.AlignRight
+                                    elide: Text.ElideNone
+                                    text: row.modelData.editable ? "󰏫" : "line " + row.modelData.line + " 󰏌"
+                                    visible: rowMouse.containsMouse || row.editing
+                                    color: Theme.textStrong
+                                    font.family: row.modelData.editable ? Theme.fontIcon : Theme.fontText
+                                    font.pixelSize: row.modelData.editable ? Theme.fontIconSize : Theme.fontSmall
                                 }
 
+                                // editable binds open in the editor; the rest
+                                // open hyprland.lua at their line, with why
                                 MouseArea {
                                     id: rowMouse
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    cursorShape: row.modelData.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                    cursorShape: Qt.PointingHandCursor
                                     onClicked: {
                                         if (root.busy) return
                                         if (row.modelData.editable) root.openEdit(row.modelData)
                                         else {
-                                            root.say("Line " + row.modelData.line + ": " + row.modelData.reason
-                                                + " -- open the file to edit it", false)
-                                            root.noticeLine = row.modelData.line
+                                            root.openConf(row.modelData.line)
+                                            root.say("Opened line " + row.modelData.line + ": "
+                                                + row.modelData.reason, false)
                                         }
                                     }
                                 }
@@ -1335,16 +1291,21 @@ Column {
                                     font.pixelSize: Theme.fontIconSize
                                 }
 
-                                Label {
+                                Item {
                                     id: pKeys
                                     anchors.left: mark.right
                                     anchors.leftMargin: Theme.spaceM
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Theme.fit(180)
-                                    text: pRow.modelData.keys
-                                    color: pRow.done ? Theme.subtext
-                                        : pRow.modelData.state === "taken" ? Theme.alert
-                                        : Theme.textStrong
+                                    width: root.keysWidth - mark.width - Theme.spaceM
+                                    height: pCaps.height
+                                    clip: true
+
+                                    Keycaps {
+                                        id: pCaps
+                                        keys: pRow.modelData.keys
+                                        dim: pRow.done
+                                        alert: pRow.modelData.state === "taken"
+                                    }
                                 }
 
                                 Column {
@@ -1386,8 +1347,10 @@ Column {
                                         : pRow.modelData.state === "taken"
                                             ? "taken: " + pRow.modelData.other.desc.toLowerCase()
                                         : pRow.modelData.state === "elsewhere"
-                                            ? "you have this on " + pRow.modelData.other.keys
-                                        : "goes in " + pRow.modelData.section
+                                            ? "already on " + pRow.modelData.other.keys
+                                        // the ordinary case, only while pointed at
+                                        : pMouse.containsMouse || editMouse.containsMouse
+                                            ? "goes in " + pRow.modelData.section : ""
                                 }
 
                                 // open it in the editor instead of ticking it
