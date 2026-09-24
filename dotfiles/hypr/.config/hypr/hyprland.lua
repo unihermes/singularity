@@ -858,6 +858,8 @@ end
 --   small     -- unmaximized on purpose (SUPER+equal), so refocusing it does
 --                not immediately undo the choice; see toggleMaximize() below
 --   minimized -- the {x, y} SUPER+C hid it from; see toggleMinimize() below
+--   restore   -- the {x, y, w, h} a non-monocle floater had before it was
+--                filled; see fillFloating() below
 -- One table, cleared by one window.close hook further down: addresses are
 -- pointer values Hyprland reuses once a window is gone, so anything left
 -- behind would land on some unrelated window that opens later.
@@ -876,14 +878,7 @@ local function restoreMinimized(win)
     local st = stateOf(win.address)
     local saved = st.minimized
     st.minimized = nil
-    local addr = "address:" .. win.address
-    hl.dispatch(hl.dsp.window.move({ x = saved.x, y = saved.y, window = addr }))
-    -- Maximized when it was hidden (see toggleMinimize()): raise it before
-    -- putting the flag back, since bring_to_top is ignored once it is set.
-    if saved.maximized then
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
-        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "set", window = addr }))
-    end
+    hl.dispatch(hl.dsp.window.move({ x = saved.x, y = saved.y, window = "address:" .. win.address }))
 end
 
 -- The monitor's usable rect (its resolution minus whatever the bar and any
@@ -962,6 +957,42 @@ local function sizeToFullFloat(win, mon)
     hl.dispatch(hl.dsp.window.resize({ x = math.floor(area.w), y = math.floor(area.h), window = addr }))
     hl.dispatch(hl.dsp.window.move({ x = math.floor(area.x), y = math.floor(area.y), window = addr }))
 end
+
+-- A floating window is maximized by filling the usable area, never with
+-- Hyprland's maximized flag. A floater carrying that flag ignores
+-- bring_to_top and window.move, which broke ALT+Tab (focused, but left
+-- under whatever floater was on top) and SUPER+C (couldn't be hidden) for
+-- every window that got it -- SUPER+X on a window-rules.json float, or an
+-- Electron app like Claude asking to be maximized itself. So the flag is
+-- taken off wherever it turns up (the window.fullscreen hook, and on focus
+-- in case that was missed), and the window is filled instead. Filling
+-- remembers the geometry it had, which toggleMaximize() puts back.
+--
+-- Returns the window re-read, since its geometry has changed.
+local function fillFloating(win)
+    local addr = "address:" .. win.address
+    local st = stateOf(win.address)
+    if hasTag(win, "monocle") then
+        st.small = nil
+    elseif not st.restore then
+        st.restore = { x = win.at.x, y = win.at.y, w = win.size.x, h = win.size.y }
+    end
+    sizeToFullFloat(win)
+    hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+    -- by selector: hl.get_window() returns nil for a bare address
+    return hl.get_window(addr) or win
+end
+
+local function unflagFloating(win)
+    if not (win and win.floating and win.fullscreen == 1) then return win end
+    local addr = "address:" .. win.address
+    hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = addr }))
+    win = hl.get_window(addr) or win
+    -- Quickshell's own windows size themselves in QML; just unflag them
+    if win.class == "org.quickshell" then return win end
+    return fillFloating(win)
+end
+hl.on("window.fullscreen", function(win) unflagFloating(win) end)
 
 -- Sizes every window the monocle rule just floated, the moment it maps --
 -- once, on open, rather than on every focus change. That's the entire fix
@@ -1052,20 +1083,8 @@ local function maximizeFocused()
     -- Ahead of the monocle check since SUPER+C works in dwindle mode too.
     if win and stateOf(win.address).minimized then restoreMinimized(win) end
 
-    -- A floating window that is also maximized (fullscreen == 1) -- a
-    -- window-rules.json float maximized with SUPER+X, or an Electron app like
-    -- Claude restoring its own maximized state -- can't be raised:
-    -- bring_to_top is silently ignored while the maximized flag is set. So
-    -- ALT+Tab focused it but left whatever floater was over it (Zen) drawn
-    -- on top. Dropping the flag, raising, and setting it again keeps the
-    -- window maximized and puts it in front.
-    if win and win.floating and win.fullscreen == 1 then
-        local addr = "address:" .. win.address
-        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = addr }))
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
-        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "set", window = addr }))
-        return
-    end
+    -- normally already done by the window.fullscreen hook
+    win = unflagFloating(win)
 
     if not win or not win.class or win.fullscreen ~= 0 then return end
     if not monocleOn(win.workspace) then return end
@@ -1167,7 +1186,9 @@ hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
 
--- Deliberately no window.fullscreen hook to force a window back to maximized
+-- The window.fullscreen hook above (unflagFloating) only ever takes the
+-- maximized flag *off* a floater. There is deliberately no hook forcing a
+-- window back to maximized
 -- when it leaves that state. There used to be one, on the reasoning that
 -- monocle means one window filling the screen with nothing to toggle to, but
 -- it also swallowed SUPER+SHIFT+F: the unmaximize landed and was immediately
@@ -1201,6 +1222,33 @@ function toggleMaximize()
                 x = math.floor(area.w * 0.7), y = math.floor(area.h * 0.7), window = addr }))
             hl.dispatch(hl.dsp.window.center({ window = addr }))
             stateOf(win.address).small = true
+        end
+        return
+    end
+
+    -- Any other floater: fill it, or put back what filling it replaced.
+    -- One opened already full (nothing to put back) shrinks to 70% centred,
+    -- the same as a monocle window.
+    if win.floating then
+        win = unflagFloating(win)
+        local st = stateOf(win.address)
+        local addr = "address:" .. win.address
+        local mon = win.monitor or hl.get_active_monitor()
+        if not mon then return end
+        local area = usableArea(mon)
+        if not isFitted(win, area) then
+            -- whatever size it is now is the one to come back to
+            st.restore = nil
+            fillFloating(win)
+        elseif st.restore then
+            local r = st.restore
+            st.restore = nil
+            hl.dispatch(hl.dsp.window.resize({ x = r.w, y = r.h, window = addr }))
+            hl.dispatch(hl.dsp.window.move({ x = r.x, y = r.y, window = addr }))
+        else
+            hl.dispatch(hl.dsp.window.resize({
+                x = math.floor(area.w * 0.7), y = math.floor(area.h * 0.7), window = addr }))
+            hl.dispatch(hl.dsp.window.center({ window = addr }))
         end
         return
     end
@@ -1243,17 +1291,8 @@ function toggleMinimize()
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
 
-    -- A maximized window (a floater maximized with SUPER+X) has its geometry
-    -- pinned by the flag, so window.move below did nothing to it. Drop the
-    -- flag first and put it back on restore.
-    local wasMaximized = win.fullscreen == 1
-    if wasMaximized then
-        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = "address:" .. win.address }))
-        -- by selector: hl.get_window() returns nil for a bare address
-        win = hl.get_window("address:" .. win.address) or win
-    end
-
-    st.minimized = { x = win.at.x, y = win.at.y, maximized = wasMaximized }
+    win = unflagFloating(win)
+    st.minimized = { x = win.at.x, y = win.at.y }
     local belowScreen = mon.y + mon.height + 100
     hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
 
