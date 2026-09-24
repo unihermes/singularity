@@ -661,31 +661,28 @@ SettingsPage {
         }
     }
 
+    // One choice over two settings: whether login picks a random wallpaper
+    // (Settings.wallpaperShuffle, which wallpaper.sh reads) and whether one
+    // is picked on a timer while logged in (wallpaperInterval). A timer
+    // implies a random one at login too.
     SettingsField {
-        label: "At login"
-        hint: Settings.wallpaperShuffle ? "A different wallpaper every login" : "The one showing now, until you pick another"
+        label: "New wallpaper"
+        hint: Settings.wallpaperInterval > 0 ? "A random one at login, then on this interval, counted from the last change"
+            : Settings.wallpaperShuffle ? "A random one every login"
+            : "The one showing now stays until you pick another"
 
         FlyoutSegmented {
             anchors.right: parent.right
             fill: false
-            model: [{ value: true, text: "Random" }, { value: false, text: "Static" }]
-            current: Settings.wallpaperShuffle
-            onPicked: v => Settings.setWallpaperShuffle(v)
-        }
-    }
-
-    SettingsField {
-        label: "Change every"
-        hint: Settings.wallpaperInterval > 0 ? "A random wallpaper on this interval, counted from the last change"
-            : "The wallpaper stays until you pick another"
-
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: [{ value: 0, text: "Never" }, { value: 15, text: "15 min" }, { value: 30, text: "30 min" },
+            model: [{ value: "never", text: "Never" }, { value: "login", text: "At login" },
+                    { value: 15, text: "15 min" }, { value: 30, text: "30 min" },
                     { value: 60, text: "1 hour" }, { value: 180, text: "3 hours" }]
-            current: Settings.wallpaperInterval
-            onPicked: v => Settings.set("wallpaperInterval", v)
+            current: Settings.wallpaperInterval > 0 ? Settings.wallpaperInterval
+                : Settings.wallpaperShuffle ? "login" : "never"
+            onPicked: v => {
+                Settings.setWallpaperShuffle(v !== "never")
+                Settings.set("wallpaperInterval", typeof v === "number" ? v : 0)
+            }
         }
     }
 
