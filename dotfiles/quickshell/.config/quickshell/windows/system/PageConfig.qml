@@ -77,7 +77,7 @@ SystemPage {
                 { label: "lid.sh", path: home + "/.config/hypr/lid.sh", note: "Lid open and close" },
                 { label: "screenshot.sh", path: home + "/.config/hypr/screenshot.sh", note: "Region, window and full captures" },
                 { label: "wallpaper.sh", path: home + "/.config/hypr/wallpaper.sh", note: "Setting and cycling the wallpaper" },
-                { label: "alt-tab.sh", path: home + "/.config/hypr/alt-tab.sh", note: "The window switcher's driver" },
+                { label: "alttab-ipc.sh", path: home + "/.config/hypr/alttab-ipc.sh", note: "The window switcher's driver" },
                 { label: "colour-pick.sh", path: home + "/.config/hypr/colour-pick.sh", note: "Screen colour picker" },
             ],
         },

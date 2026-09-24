@@ -24,6 +24,16 @@ if [[ -S $relay_sock ]] && echo "$message" | socat - "UNIX-CONNECT:$relay_sock" 
     exit 0
 fi
 
+# No relay, so no window list: `tab <gen>` from the bind gets it here, from
+# hyprctl, in the form the relay would have built. Wrapped in an object
+# rather than handed over as the bare array hyprctl prints, because `qs ipc
+# call` splits a top-level JSON array argument into one argument per element
+# and `tab` takes exactly one.
+if [[ $function == tab && $arg != "{"* ]]; then
+    clients=$(hyprctl clients -j 2>/dev/null) || exit 0
+    arg="{\"gen\":${arg:--1},\"clients\":$clients}"
+fi
+
 if [[ -n $arg ]]; then
     qs ipc call alttab "$function" "$arg" >/dev/null 2>&1
 else

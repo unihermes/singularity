@@ -73,8 +73,8 @@ log "building alttab-relay"
 # command -- without it, linking fails with a "copy relocation against
 # non-copyable protected symbol" error). Both of those are exactly the kind
 # of thing that can stop working on some future toolchain or Quickshell
-# update, so a failure here is a warning, not a fatal error: alt-tab.sh and
-# alttab-ipc.sh both fall back to the slower `qs ipc call` path on their own
+# update, so a failure here is a warning, not a fatal error: alttab-ipc.sh
+# falls back to the slower `qs ipc call` path on their own
 # whenever this binary or its socket isn't there, so ALT+Tab still works
 # (just without the extra latency cut) if this step fails.
 alttab_dir="dotfiles/hypr/.config/hypr"
@@ -83,7 +83,7 @@ if g++ -std=c++20 -O2 -mno-direct-extern-access \
     $(pkg-config --cflags --libs Qt6Core Qt6Network); then
   log "alttab-relay built"
 else
-  warn "alttab-relay failed to build -- alt-tab.sh will fall back to \`qs ipc call\` (slower, but works)"
+  warn "alttab-relay failed to build -- alttab-ipc.sh will fall back to \`qs ipc call\` (slower, but works)"
 fi
 
 log "applying system settings"

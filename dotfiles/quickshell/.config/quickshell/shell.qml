@@ -177,7 +177,7 @@ ShellRoot {
     // The ALT+Tab switcher. hyprland.lua binds ALT+Tab globally and that bind
     // wins over the switcher's own keyboard grab -- Hyprland matches binds
     // before forwarding keys to any client, layershell included -- so every
-    // Tab of a held ALT+Tab re-runs alt-tab.sh rather than reaching
+    // Tab of a held ALT+Tab re-runs alttab-ipc.sh rather than reaching
     // Keys.onPressed. tab() is therefore idempotent: it opens the switcher
     // the first time and steps it on each Tab after, which is what makes
     // holding ALT and tapping Tab cycle. commit() when ALT comes up.
@@ -197,8 +197,8 @@ ShellRoot {
 
     IpcHandler {
         target: "alttab"
-        // `clientsJson`: the raw, unparsed output of `hyprctl clients -j`,
-        // from alt-tab.sh. See AltTabSwitcher.begin() for why it comes from
+        // `clientsJson`: the gesture id and the raw, unparsed client list
+        // (what `hyprctl clients -j` prints), from alttab-relay. See AltTabSwitcher.begin() for why it comes from
         // there, and why it's handed over raw instead of pre-filtered.
         //
         // One function, always fetching and forwarding the client list,
@@ -399,10 +399,10 @@ ShellRoot {
             // ALT+Tab, on the focused monitor only. The first Tab of a
             // gesture opens the switcher and preselects the previous window,
             // so a single tap-and-release is a straight there-and-back swap;
-            // every Tab after that just steps it. alt-tab.sh can't tell
+            // every Tab after that just steps it. The bind can't tell
             // those two cases apart without asking (there's no state kept
             // between its invocations), so onAltTabTab decides it here,
-            // against openFlyout, instead of alt-tab.sh spending a separate
+            // against openFlyout, instead of the bind spending a separate
             // IPC round trip on a "is it open yet" probe first -- see the
             // `tab()` comment on the IpcHandler above for why that round trip
             // was worth cutting.

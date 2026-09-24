@@ -435,8 +435,8 @@ hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus windo
 -- binds for the same reason; they would otherwise never reach the shell.
 -- `repeating` on each so holding the key autorepeats.
 --
--- alt-tab.sh and alttab-ipc.sh both reach the shell through alttab-relay
--- (started above) rather than `qs ipc call` directly -- see alttab-relay.cpp
+-- alttab-ipc.sh reaches the shell through alttab-relay (started above),
+-- which also reads the window list from Hyprland itself, rather than `qs ipc call` directly -- see alttab-relay.cpp
 -- and alttab-ipc.sh for why: `qs` is expensive enough to start on its own
 -- (~45ms measured on this machine) to lose the race against a fast
 -- tap-and-release, on top of everything above about catching the release at
@@ -445,7 +445,7 @@ hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus windo
 -- The ALT release is also watched here, in-process, not just by the
 -- switcher's keyboard grab. The grab can only see a release that happens
 -- after the switcher is up, and the first Tab has to travel out through
--- alt-tab.sh, hyprctl and the relay before that is true -- so an ALT
+-- alttab-ipc.sh and the relay before that is true -- so an ALT
 -- released inside that window (tapping ALT+Tab and letting ALT go before
 -- Tab) was never delivered to anyone, and the switcher sat on screen
 -- holding the keyboard until some later key press knocked it loose. That
@@ -526,7 +526,7 @@ local function altTabKey(cmd)
     end
 end
 
-hl.bind("ALT + Tab",         altTabKey("~/.config/hypr/alt-tab.sh"),         { repeating = true })  -- Switch windows
+hl.bind("ALT + Tab",         altTabKey("~/.config/hypr/alttab-ipc.sh tab"),  { repeating = true })  -- Switch windows
 hl.bind("ALT + SHIFT + Tab", altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
 hl.bind("ALT + grave",       altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
 

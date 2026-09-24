@@ -14,7 +14,7 @@
 // Keys arrive by two routes, which is a constraint rather than a choice.
 // Hyprland matches its own binds before forwarding keys to any client, so
 // ALT+Tab, SHIFT+Tab and grave never reach this window at all -- they run
-// alt-tab.sh, which steps an already-open switcher over IPC. The ALT
+// alttab-ipc.sh, which steps an already-open switcher over IPC. The ALT
 // *release* is the opposite case: Hyprland will not deliver a modifier
 // release to a bind, so this window takes the keyboard and catches it in
 // Keys.onReleased. Escape is handled here too, being unbound on that side.
@@ -40,7 +40,7 @@ OverlayWindow {
     property int selected: 0
 
     // The gesture this switcher belongs to, from the Tab press that opened
-    // it (hyprland.lua's altTabWatchGen, carried through alt-tab.sh). -1 when
+    // it (hyprland.lua's altTabWatchGen, carried through the relay). -1 when
     // the caller sent none. shell.qml matches the ALT release against it --
     // see the altTabPendingCommitGen comment there.
     property int gen: -1
@@ -49,8 +49,8 @@ OverlayWindow {
     // before it, and so on -- exactly the order alt-tab should walk.
     // Start on the previous window, not the current one, so a single
     // tap-and-release is a straight there-and-back swap.
-    // `clientsJson` is `{"clients": <raw output of hyprctl clients -j>}`,
-    // handed over unparsed by alt-tab.sh. Wrapped in an object because `qs
+    // `clientsJson` is `{"gen": N, "clients": <what hyprctl clients -j
+    // prints>}`, built by alttab-relay (or alttab-ipc.sh without it). Wrapped in an object because `qs
     // ipc call` splits a bare top-level JSON array argument into multiple
     // positional arguments instead of passing it through as one string --
     // begin() only takes one, so the call itself would fail before any QML
@@ -191,7 +191,7 @@ OverlayWindow {
     //
     // A `hyprland-global-shortcuts-v1` GlobalShortcut on bare Alt_L/Alt_R was
     // tried here as a second, focus-independent route to the release, to
-    // close the gap between alt-tab.sh's IPC round trip and this window
+    // close the gap between the Tab's IPC round trip and this window
     // actually holding the keyboard. Reverted: registering a global shortcut
     // on a bare modifier changed how Hyprland treats that key everywhere, not
     // just here -- ALT is also the window drag/resize mod, and releasing it

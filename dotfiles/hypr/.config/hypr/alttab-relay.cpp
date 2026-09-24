@@ -1,7 +1,7 @@
 // Minimal persistent relay for the ALT+Tab switcher's IPC calls.
 //
-// alt-tab.sh needs to reach Quickshell's IPC target "alttab" once per Tab
-// press. Doing that with the `qs` CLI works, but `qs` is the same monolithic
+// Each ALT+Tab press needs to reach Quickshell's IPC target "alttab" (via
+// alttab-ipc.sh, which hyprland.lua's binds run). Doing that with the `qs` CLI works, but `qs` is the same monolithic
 // binary as the shell itself -- it links Widgets/Quick/Qml/Gui/DBus/OpenGL
 // on top of Core/Network, and the dynamic linker pays for all of that on
 // every single invocation even though `ipc call` only ever touches Core and
@@ -89,8 +89,8 @@ namespace {
 // Mirrors qs::io::ipc::comm::StringCallCommand (ipccomm.hpp): target
 // function name, and its arguments as strings -- Quickshell's own IPC
 // functions take/return only string-shaped values over this protocol,
-// which is exactly what alt-tab.sh already sends (plain text and JSON
-// handed through as a string).
+// which is exactly what alttab-ipc.sh sends (plain text and JSON handed
+// through as a string).
 struct StringCallCommand {
 	QString target;
 	QString function;
@@ -168,6 +168,27 @@ QString selfTest(const QString& sockPath) {
 	reply += sock.readAll();
 
 	return reply.contains(wireString("singularity-relay-pong")) ? "ok" : "no";
+}
+
+// The window list a Tab opens the switcher with, straight from Hyprland's
+// own socket: what `hyprctl clients -j` prints, without starting hyprctl.
+// That process used to run on every Tab press (alt-tab.sh, gone now) and was
+// the single slowest step between the key and the switcher -- ~12ms of a
+// ~30ms path, against a tap-and-release that can be over in less. The list
+// has to be read fresh for each Tab rather than kept up to date here; see
+// AltTabSwitcher.begin() for why. Hyprland closes the connection once it has
+// answered, so reading until then gets the whole reply.
+QByteArray hyprClients() {
+	auto sig = qEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE");
+	if (sig.isEmpty()) return {};
+	QLocalSocket sock;
+	sock.connectToServer(xdgRuntimeDir() + "/hypr/" + sig + "/.socket.sock");
+	if (!sock.waitForConnected(100)) return {};
+	sock.write("j/clients");
+	sock.flush();
+	QByteArray reply;
+	while (sock.waitForReadyRead(200)) reply += sock.readAll();
+	return reply + sock.readAll();
 }
 
 } // namespace
@@ -248,6 +269,22 @@ int main(int argc, char** argv) {
 						args.push_back(QString::fromUtf8(message.mid(spaceIdx + 1)));
 					}
 
+					// `tab <gen>`: the bare gesture id from the bind. The
+					// switcher wants it with the window list, as one JSON
+					// argument (see alttab-ipc.sh's fallback, which builds the
+					// same thing with hyprctl when this relay isn't running).
+					if (function == "tab" && !(args.size() == 1 && args[0].startsWith('{'))) {
+						bool ok = false;
+						auto gen = args.isEmpty() ? -1 : args[0].toInt(&ok);
+						auto clients = hyprClients().trimmed();
+						if (clients.isEmpty()) {
+							qWarning() << "alttab-relay: couldn't read clients from Hyprland";
+							clients = "[]";
+						}
+						args = { QString("{\"gen\":%1,\"clients\":").arg(ok ? gen : -1)
+						         + QString::fromUtf8(clients) + "}" };
+					}
+
 					if (ensureConnected()) {
 						*qsStream << kStringCallCommandIndex;
 						*qsStream << StringCallCommand {
@@ -297,7 +334,7 @@ int main(int argc, char** argv) {
 			<< live.size() << "running Quickshell instance(s) answered the relay's ping."
 			<< "If the bar is running, its private IPC wire format has probably changed"
 			<< "in an update; alt-tab won't respond until alttab-relay.cpp is brought in"
-			<< "line with it (or the relay is stopped, so alt-tab.sh falls back to"
+			<< "line with it (or the relay is stopped, so alttab-ipc.sh falls back to"
 			<< "`qs ipc call`).";
 		QProcess::startDetached("notify-send", {
 			"-a", "alttab-relay", "-u", "critical", "ALT+Tab relay out of date",
