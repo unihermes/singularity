@@ -203,22 +203,12 @@ Singleton {
     }
 
     // Powering the radio back on doesn't hand back an SSID at once: iwd
-    // reconnects to a known network about a second later. So the status is
-    // re-read after a short wait instead of on exit, or the row would say
-    // "Not connected" until the next 15s refresh.
+    // reconnects to a known network about a second later. The iwd watch
+    // below catches that reconnect when it lands.
     Process {
         id: powerSet
         command: ["true"]
-        onExited: {
-            powerProc.running = true
-            powerSettle.restart()
-        }
-    }
-
-    Timer {
-        id: powerSettle
-        interval: 2500
-        onTriggered: root.refreshStatus()
+        onExited: powerProc.running = true
     }
 
     Process {
@@ -259,12 +249,51 @@ Singleton {
         onTriggered: if (!deviceProc.running) deviceProc.running = true
     }
 
-    // The SSID only changes when you move between networks, so it doesn't
-    // need a per-second iwctl call.
+    // The status is re-read when iwd says it changed, not on a timer: a
+    // gdbus monitor on iwd's signals, filtered down to the ones that move
+    // what the bar shows -- the station's State and ConnectedNetwork, the
+    // device's Powered, and a station appearing or going (the radio powering
+    // on or off, iwd restarting). Scanning and the BSS churn that comes with
+    // it are ignored. A connect, disconnect or radio toggle made anywhere --
+    // iwctl in a terminal, the network roaming on its own -- shows at once,
+    // instead of up to fifteen seconds later from what used to be a poll.
+    //
+    // Changes arrive in bursts (State steps through connecting to connected),
+    // so they're gathered for a moment and read once.
+    function iwdChanged(line) {
+        if (line.indexOf("InterfacesAdded") !== -1 || line.indexOf("InterfacesRemoved") !== -1) {
+            if (line.indexOf("net.connman.iwd.Station") === -1 && line.indexOf("net.connman.iwd.Device") === -1) return
+        } else if (line.indexOf("is now owned by") !== -1) {
+            // iwd restarted: its objects, device name included, start over
+            root.device = ""
+        } else if (!/'(State|ConnectedNetwork|Powered)'/.test(line)) {
+            return
+        }
+        iwdSettle.restart()
+    }
+
+    Process {
+        id: iwdWatch
+        command: ["gdbus", "monitor", "--system", "--dest", "net.connman.iwd"]
+        running: true
+        stdout: SplitParser { onRead: line => root.iwdChanged(line) }
+        // gdbus itself went away; a monitor that's not running would leave
+        // the status frozen, so it comes back
+        onExited: iwdRewatch.restart()
+    }
+
     Timer {
-        interval: 15000
-        repeat: true
-        running: root.device !== ""
-        onTriggered: root.refreshStatus()
+        id: iwdRewatch
+        interval: 5000
+        onTriggered: iwdWatch.running = true
+    }
+
+    Timer {
+        id: iwdSettle
+        interval: 300
+        onTriggered: {
+            if (root.device === "") { if (!deviceProc.running) deviceProc.running = true }
+            else root.refreshStatus()
+        }
     }
 }
