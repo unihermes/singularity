@@ -5,19 +5,15 @@
 // with one highlighted. Hold ALT and tap Tab to step the highlight along,
 // release ALT to focus what you landed on.
 //
-// The selection lives here, not in Hyprland. Hyprland's own cycle_next walks
-// windows as it focuses them, so every tap would raise a window and resize the
-// layout just to preview it -- and its reverse direction does not work. Here
-// nothing is focused until ALT comes up, so stepping through is free and
-// SHIFT+Tab is just -1.
+// The selection lives here, not in Hyprland: cycle_next focuses (and
+// raises) each window as it walks. Here nothing is focused until ALT comes
+// up, and SHIFT+Tab is just -1.
 //
-// Keys arrive by two routes, which is a constraint rather than a choice.
-// Hyprland matches its own binds before forwarding keys to any client, so
-// ALT+Tab, SHIFT+Tab and grave never reach this window at all -- they run
-// alttab-ipc.sh, which steps an already-open switcher over IPC. The ALT
-// *release* is the opposite case: Hyprland will not deliver a modifier
-// release to a bind, so this window takes the keyboard and catches it in
-// Keys.onReleased. Escape is handled here too, being unbound on that side.
+// Keys arrive by two routes. Hyprland's binds win over any client, so
+// ALT+Tab, SHIFT+Tab and grave never reach this window -- they run
+// alttab-ipc.sh, which steps it over IPC. But Hyprland won't deliver a
+// modifier release to a bind, so this window takes the keyboard to catch
+// the ALT release in Keys.onReleased. Escape is handled here too.
 
 import Quickshell
 import Quickshell.Wayland
@@ -45,33 +41,17 @@ OverlayWindow {
     // see the altTabPendingCommitGen comment there.
     property int gen: -1
 
-    // MRU order: Hyprland's focusHistoryID counts 0 = focused, 1 = the one
-    // before it, and so on -- exactly the order alt-tab should walk.
-    // Start on the previous window, not the current one, so a single
-    // tap-and-release is a straight there-and-back swap.
+    // MRU order: focusHistoryID 0 is the focused window, 1 the one before.
+    // Start on 1, so a single tap-and-release swaps back and forth.
+    //
     // `clientsJson` is `{"gen": N, "clients": <what hyprctl clients -j
-    // prints>}`, built by alttab-relay (or alttab-ipc.sh without it). Wrapped in an object because `qs
-    // ipc call` splits a bare top-level JSON array argument into multiple
-    // positional arguments instead of passing it through as one string --
-    // begin() only takes one, so the call itself would fail before any QML
-    // here even ran.
+    // prints>}`, from alttab-relay (or alttab-ipc.sh without it) -- an
+    // object, because `qs ipc call` splits a top-level array into several
+    // arguments.
     //
-    // The filtering and ordering happen here, in the already-running shell
-    // process, rather than in a subprocess on the bash side. Shelling out
-    // (previously to python3) added a process start to the critical path
-    // between the ALT+Tab bind firing and this window actually holding the
-    // keyboard -- and that gap is the only window in which a fast ALT release
-    // can be missed (see Keys.onReleased below), so it needs to be as short as
-    // possible.
-    //
-    // The list still has to come from hyprctl rather than Hyprland.toplevels,
-    // though: Quickshell caches each toplevel's lastIpcObject and only
-    // refetches on request, and refreshToplevels() is asynchronous -- so
-    // focusHistoryID (and workspace membership) read from here would be
-    // whatever it was at the last refresh, not what it is now. Sorting on
-    // that works exactly once and then sticks, always offering the same
-    // window back. hyprctl is the source of truth, so the caller reads it
-    // fresh and hands over the answer.
+    // Read fresh from Hyprland for each gesture rather than from
+    // Hyprland.toplevels: Quickshell's cached lastIpcObject only refreshes
+    // on request, asynchronously, so its focusHistoryID is stale.
     function begin(clientsJson) {
         let clients
         let parsed
@@ -113,41 +93,19 @@ OverlayWindow {
         selected = ((selected + delta) % n + n) % n
     }
 
-    // Focus the highlighted window. Close first, focus second.
+    // Focus the highlighted window. Close first, focus second: releasing
+    // this window's keyboard grab hands focus back to whoever had it before,
+    // which would undo a focus made while still open.
     //
-    // The order matters and is not cosmetic. This window holds an exclusive
-    // keyboard grab while it is up, and a layershell releasing that grab hands
-    // focus back to whatever held it before -- so focusing while still on
-    // screen got immediately undone, which is why the commit looked like it
-    // did nothing even though the dispatch was correct. Dropping `open` first
-    // lets the grab go, and the focus then lands for good.
-    //
-    // That grab release also fires its own focus event, bouncing focus back to
-    // whatever was active before the switcher opened -- and the timing of that
-    // bounce-back is Hyprland's, not ours, so it can land either before or
-    // after the real focus dispatch below. When it lands after, it silently
-    // steals focus back to the old window: hyprland.lua's window.active hook
-    // still maximizes whatever ends up focused, so nothing is left half-sized,
-    // but you end up looking at the wrong window -- the one from before the
-    // switcher opened, not the one you actually selected. retryTimer redoes
-    // the same focus dispatch once more, shortly after, so whichever window
-    // the bounce-back leaves focused gets corrected back to the real target.
-    //
-    // Maximizing itself is no longer this file's problem: that used to be
-    // dispatched from here too, straight after focus, because the old
-    // implementation shelled a script out over hyprctl for every focus change
-    // and that round trip was slow enough for the bounce-back to land in the
-    // middle of it. hyprland.lua's hook now runs in-process on Hyprland's own
-    // event thread, so it always finishes maximizing inside the same tick as
-    // the focus event that triggered it -- there is nothing left here to race.
+    // That release also bounces focus back on Hyprland's own timing, which
+    // can land after the focus below; retryTimer repeats the focus once,
+    // shortly after, to correct it. Maximizing is hyprland.lua's focus hook.
     function commit() {
         const win = windows[selected]
         scope.openFlyout = ""
-        // Both routes to the ALT release fire on every gesture, so one of them
-        // always arrives after this has closed; shell.qml reads this to tell
-        // that straggler apart from a release that genuinely beat the switcher
-        // onto the screen. By gesture id, so it is a fact about which gesture
-        // is finished rather than a guess from how long ago one was.
+        // Both routes to the ALT release fire on every gesture; this marks
+        // the gesture done, so shell.qml can tell the second from a release
+        // that beat the switcher onto the screen.
         scope.altTabCommittedGen = Math.max(scope.altTabCommittedGen, scope.altTabOpenGen)
         scope.altTabOpenGen = -1
         if (win) {
@@ -173,10 +131,8 @@ OverlayWindow {
         onTriggered: if (action) action()
     }
 
-    // Escape. The gesture is over as far as the switcher is concerned, so it
-    // is marked committed too -- otherwise the ALT release still to come
-    // would be remembered as a release waiting for a switcher that is never
-    // going to be asked for again.
+    // Escape. Marks the gesture committed too, so the ALT release still to
+    // come isn't kept as one waiting for a switcher.
     function cancel() {
         scope.openFlyout = ""
         scope.altTabCommittedGen = Math.max(scope.altTabCommittedGen, scope.altTabOpenGen)
@@ -184,28 +140,11 @@ OverlayWindow {
     }
 
     visible: open && windows.length > 0
-    // Exclusive, because this is the only way to see the ALT release: Hyprland
-    // will not deliver a modifier release to a bind (verified by probe -- an
-    // Alt_L release bind, with ignore_mods, never fired once), but a focused
-    // Wayland client gets raw key events including modifier releases.
-    //
-    // A `hyprland-global-shortcuts-v1` GlobalShortcut on bare Alt_L/Alt_R was
-    // tried here as a second, focus-independent route to the release, to
-    // close the gap between the Tab's IPC round trip and this window
-    // actually holding the keyboard. Reverted: registering a global shortcut
-    // on a bare modifier changed how Hyprland treats that key everywhere, not
-    // just here -- ALT is also the window drag/resize mod, and releasing it
-    // after any of that started tearing down the switcher and refocusing
-    // whatever the mouse was over instead of the selected window. The
-    // second catch for the release is instead compositor-side, in
-    // hyprland.lua: the alt-tab binds poll hl.is_key_down("Alt_L"/"Alt_R")
-    // from the moment they fire and send `commit` when ALT comes up, which
-    // works whether or not this window ever got the keyboard in time. That
-    // is what fixes the release landing inside the gap -- the switcher used
-    // to sit here holding the keyboard until some later key press knocked it
-    // loose. This grab stays as the fast path: it sees the release with no
-    // poll interval and no process spawn, and whichever route notices first
-    // wins.
+    // Exclusive, because a focused client is the only thing that sees a
+    // modifier release. A release before this window has the keyboard is
+    // caught by hyprland.lua's key-state poll instead; this grab is the fast
+    // path, and whichever notices first wins. (Not a GlobalShortcut on bare
+    // ALT: that changes how Hyprland treats ALT everywhere.)
     focusMode: WlrKeyboardFocus.Exclusive
     layerNamespace: "singularity-alttab"
 
@@ -220,9 +159,7 @@ OverlayWindow {
         focus: true
 
         // Only Escape: Tab, SHIFT+Tab and grave are bound in hyprland.lua and
-        // Hyprland consumes them before this window ever sees them, so
-        // handling them here would be dead code. Escape is not bound there, so
-        // it reaches the client and is handled here.
+        // never reach this window.
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape) {
                 root.cancel()
@@ -230,16 +167,8 @@ OverlayWindow {
             }
         }
 
-        // The ALT release commits -- the event Hyprland would not hand over,
-        // and the reason this window takes the keyboard at all. Close if the
-        // Alt key itself is released, OR if any other key is released while
-        // Alt is no longer held. The latter catches the case where Tab is
-        // released after Alt, or where Alt is released before Tab and Tab's
-        // release event needs to close the switcher anyway.
-        //
-        // A release that happened before this window had the keyboard never
-        // arrives here at all; hyprland.lua's key-state poll is what covers
-        // that (see the focusMode comment above).
+        // The ALT release commits: ALT itself coming up, or any other key
+        // coming up once ALT is no longer held (Tab released after ALT).
         Keys.onReleased: event => {
             if (event.key === Qt.Key_Alt || !(event.modifiers & Qt.AltModifier)) {
                 root.commit()
@@ -253,11 +182,8 @@ OverlayWindow {
         color: Theme.scrim
     }
 
-    // Cards wrap onto more rows once a row would be wider than the screen,
-    // rather than one row that runs past the frame and off both edges --
-    // which left windows beyond the 13th or so unseen and reachable only by
-    // tapping Tab blind. Columns are however many fit; a short list is still
-    // one centred row.
+    // Cards wrap onto more rows once a row would be wider than the screen;
+    // a short list is still one centred row.
     readonly property int cardW: Theme.fs(128)
     readonly property int cardH: Theme.fs(116)
     readonly property int maxColumns: Math.max(1, Math.floor((width - 80 - 40 + list.spacing) / (cardW + list.spacing)))

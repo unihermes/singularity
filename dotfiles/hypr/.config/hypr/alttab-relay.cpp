@@ -54,19 +54,10 @@
 // waiting to read, and skipping that wait is exactly the latency this
 // exists to cut.
 //
-// Built entirely on QObject::connect to Qt's own signals (QLocalServer's
-// newConnection, QLocalSocket's disconnected) with plain lambdas, and a real
-// running event loop (app.exec()) -- not, as an earlier version of this file
-// was, on a hand-rolled loop of blocking wait*() calls with no event loop
-// running at all. That version looked like it worked in isolated one-off
-// tests but silently dropped commands under any real repeated use: with
-// nothing ever pumping Qt's event loop, a flush() had nothing driving it to
-// completion once it couldn't write everything synchronously in one go, so
-// a command could be sent and simply never actually leave the process.
-// None of that needs solving by hand -- it is exactly what Qt's
-// asynchronous, signal-driven model and a running event loop already do
-// correctly. Using lambdas as slots on Qt's own signals needs no
-// Q_OBJECT/moc of our own, so this still builds as one file with plain g++.
+// Built on QObject::connect to Qt's own signals with plain lambdas and a
+// real event loop (app.exec()): with no loop running, a flush() that can't
+// write everything at once never completes and the command is silently
+// lost. Lambdas as slots need no moc, so this builds as one file with g++.
 
 #include <QBuffer>
 #include <QCoreApplication>
