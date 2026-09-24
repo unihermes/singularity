@@ -149,7 +149,7 @@ OverlayWindow {
 
     PanelFrame {
         id: box
-        width: Theme.fs(760)
+        width: Theme.fit(760)
         height: body.implicitHeight + Theme.sp(40)
         // Centred on the screen, at a fixed size: the list area is always
         // visibleRows tall, however many results there are, so the box

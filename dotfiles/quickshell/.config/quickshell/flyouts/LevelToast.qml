@@ -75,7 +75,7 @@ OverlayWindow {
             ? root.height - Theme.barExtent - height
             : Theme.barExtent
 
-        width: Theme.fs(220)
+        width: Theme.fit(220)
         height: row.implicitHeight + Theme.sp(18)
 
         opacity: root.active ? 1 : 0

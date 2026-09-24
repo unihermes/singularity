@@ -163,22 +163,16 @@ SettingsPage {
         label: "Profile"
         hint: PpdProfile.profile === "" ? "power-profiles-daemon isn't answering" : "Performance may not exist on every machine"
 
-        Row {
+        FlyoutSegmented {
             anchors.right: parent.right
-            spacing: Theme.spaceS
-            Repeater {
-                model: [{ id: "power-saver", text: "Power saver" }, { id: "balanced", text: "Balanced" },
-                    { id: "performance", text: "Performance" }]
-                FlyoutChip {
-                    required property var modelData
-                    text: modelData.text
-                    selected: PpdProfile.profile === modelData.id
-                    enabled: PpdProfile.profile !== "" && !PpdProfile.busy
-                    onClicked: if (!selected) {
-                        page.profilePending = true
-                        PpdProfile.set(modelData.id)
-                    }
-                }
+            fill: false
+            model: [{ value: "power-saver", text: "Power saver" }, { value: "balanced", text: "Balanced" },
+                { value: "performance", text: "Performance" }]
+            current: PpdProfile.profile
+            enabled: PpdProfile.profile !== "" && !PpdProfile.busy
+            onPicked: v => {
+                page.profilePending = true
+                PpdProfile.set(v)
             }
         }
     }
@@ -208,7 +202,7 @@ SettingsPage {
 
             FlyoutStepper {
                 anchors.right: parent.right
-                width: Theme.fs(170)
+                width: Theme.fit(170)
                 // in 30-second steps
                 value: Math.round(modelData.timeout / 30)
                 minimum: 1

@@ -152,21 +152,13 @@ SystemPage {
         font.pixelSize: Theme.fontSmall
     }
 
-    Row {
-        width: parent.width
-        spacing: Theme.spaceM
-
-        Repeater {
-            model: ["power-saver", "balanced", "performance"]
-
-            FlyoutChip {
-                required property var modelData
-                text: modelData.replace("-", " ")
-                selected: PpdProfile.profile === modelData
-                enabled: !PpdProfile.busy
-                onClicked: PpdProfile.set(modelData)
-            }
-        }
+    FlyoutSegmented {
+        fill: false
+        model: [{ value: "power-saver", text: "Power saver" }, { value: "balanced", text: "Balanced" },
+            { value: "performance", text: "Performance" }]
+        current: PpdProfile.profile
+        enabled: !PpdProfile.busy
+        onPicked: v => PpdProfile.set(v)
     }
 
     InfoRow { label: "Governor"; value: SystemStats.governor || "--" }

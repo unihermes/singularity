@@ -6,10 +6,17 @@
 // it (or over it, near the bottom of the window) with the current one
 // ticked. The list scrolls past `maxRows`.
 //
-// The list floats over the rows below rather than pushing them down, so
-// while it's open every ancestor up to the page is raised above its
-// siblings -- a dropdown inside a per-monitor or per-rule Column would
-// otherwise draw under the next block.
+// The list is drawn in an overlay filling the window rather than inside the
+// field, above a catcher that closes it on a click anywhere else. Raising
+// the field's own ancestors instead -- what this did before -- cannot work:
+// z orders siblings, so lifting an ancestor lifts that whole subtree, and
+// the rest of the window comes with it and swallows the click. The overlay
+// also escapes the page's Flickable, which clips, so a list opened at the
+// bottom of a long page is no longer cut off.
+//
+// The list is placed once, when it opens, in window coordinates; a wheel
+// anywhere closes it rather than letting the page scroll out from under it.
+// The dismissing click is swallowed, as a menu's is everywhere else.
 //
 //   SettingsDropdown {
 //       anchors.right: parent.right
@@ -45,46 +52,47 @@ Item {
         return -1
     }
 
-    width: Theme.fs(240)
+    width: Theme.fit(240)
     height: box.height
     opacity: enabled ? 1 : 0.5
 
     onEnabledChanged: if (!enabled) open = false
 
-    // Raise the chain while open, and put every z back as it was on close.
-    property var raised: []
-    onOpenChanged: {
-        if (open) {
-            var r = []
-            for (var p = root; p && p.isSettingsPage !== true; p = p.parent) {
-                r.push({ item: p, z: p.z })
-                p.z = 100
-            }
-            raised = r
-            upward = spaceBelow() < menu.height && spaceAbove() > spaceBelow()
-            list.positionViewAtIndex(Math.max(0, currentIndex), ListView.Center)
-        } else {
-            raised.forEach(e => e.item.z = e.z)
-            raised = []
-        }
-    }
-    Component.onDestruction: raised.forEach(e => { if (e.item) e.item.z = e.z })
+    // the window's root item, which the overlay fills; null only while the
+    // field is being built, before it belongs to a window
+    readonly property var overlayHost: root.Window ? root.Window.contentItem : null
+
+    // Known without the list existing, so the flip can be decided before it
+    // is placed.
+    readonly property int menuHeight: Math.min(model.length, maxRows) * Theme.rowHeight + Theme.spaceXs * 2
 
     property bool upward: false
-    // measured against the window, less its pads: the page's scroller clips
-    // a little inside the window's edge
-    function spaceBelow() {
-        var y = root.mapToItem(null, 0, root.height).y
-        return (root.Window.height || 0) - y - Theme.windowPad - Theme.panelPad
+    property real menuX: 0
+    property real menuY: 0
+
+    // Measured against the window, less its pads, so the list keeps the
+    // same margin from the edge the window's own panel does.
+    function place() {
+        if (!overlayHost) return
+        var p = root.mapToItem(overlayHost, 0, 0)
+        var pad = Theme.windowPad + Theme.panelPad
+        var below = (root.Window.height || 0) - (p.y + root.height) - pad
+        var above = p.y - pad
+        upward = below < menuHeight && above > below
+        menuX = p.x
+        menuY = upward ? p.y - menuHeight - Theme.spaceXs
+                       : p.y + root.height + Theme.spaceXs
     }
-    function spaceAbove() {
-        return root.mapToItem(null, 0, 0).y - Theme.windowPad - Theme.panelPad
+
+    onOpenChanged: if (open) {
+        place()
+        list.positionViewAtIndex(Math.max(0, currentIndex), ListView.Center)
     }
 
     Rectangle {
         id: box
         width: parent.width
-        height: Theme.fieldHeight
+        height: Theme.rowHeight
         radius: Theme.radiusInner
         color: Theme.fieldFill
         border.width: Theme.borderWidth
@@ -124,82 +132,110 @@ Item {
         }
     }
 
-    Rectangle {
-        id: menu
-        visible: root.open
-        y: root.upward ? -height - Theme.spaceXs : box.height + Theme.spaceXs
-        width: parent.width
-        height: list.height + Theme.spaceXs * 2
-        radius: Theme.radiusInner
-        color: Theme.panel
-        border.width: Theme.borderWidth
-        border.color: Theme.stroke
+    // The overlay: the catcher fills the window, the list sits over it. Both
+    // only exist while the list is open, so nothing here takes a click or a
+    // wheel the rest of the time.
+    Item {
+        id: overlay
+        parent: root.overlayHost || root
+        anchors.fill: parent
+        z: 9000
+        visible: root.open && root.overlayHost !== null
+        enabled: visible
 
-        ListView {
-            id: list
-            x: Theme.spaceXs
-            y: Theme.spaceXs
-            width: parent.width - Theme.spaceXs * 2
-            height: Math.min(root.model.length, root.maxRows) * Theme.rowHeight
-            clip: true
-            interactive: root.model.length > root.maxRows
-            boundsBehavior: Flickable.StopAtBounds
-            model: root.model
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+            onPressed: root.open = false
 
-            delegate: Rectangle {
-                id: item
-                required property var modelData
-                required property int index
-                readonly property bool isCurrent: index === root.currentIndex
-
-                width: list.width
-                height: Theme.rowHeight
-                radius: Theme.radiusSmall
-                color: itemMouse.containsMouse ? Theme.hoverFill : "transparent"
-
-                // the current choice's tick, as in a flyout list
-                Rectangle {
-                    visible: item.isCurrent
-                    x: Theme.spaceXs
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.indicatorWidth
-                    height: parent.height - 6
-                    radius: width / 2
-                    color: Theme.accent
-                }
-
-                Text {
-                    x: Theme.spaceL
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - Theme.spaceL * 2
-                    elide: Text.ElideRight
-                    text: root.labelFor(item.modelData)
-                    color: item.isCurrent || itemMouse.containsMouse ? Theme.textStrong : Theme.text
-                    font.family: root.fontFor(item.modelData)
-                    font.pixelSize: Theme.fontBody
-                }
-
-                MouseArea {
-                    id: itemMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        // picked() first: closing collapses list.model right
-                        // away, tearing down this delegate -- calling it
-                        // after left `root` and `item` already gone, so the
-                        // pick silently never fired.
-                        if (!item.isCurrent) root.picked(item.modelData)
-                        root.open = false
-                    }
-                }
+            // The list is placed in window coordinates and doesn't follow
+            // the page, so a wheel closes it rather than leaving it
+            // stranded mid-scroll. It hangs off the catcher, not the
+            // overlay, so the list keeps the wheel events over itself.
+            WheelHandler {
+                onWheel: root.open = false
             }
         }
 
-        ScrollBar {
-            anchors.right: parent.right
-            anchors.rightMargin: 2
-            flickable: list
+        Rectangle {
+            id: menu
+            x: root.menuX
+            y: root.menuY
+            width: root.width
+            height: root.menuHeight
+            radius: Theme.radiusInner
+            color: Theme.panel
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
+
+            ListView {
+                id: list
+                x: Theme.spaceXs
+                y: Theme.spaceXs
+                width: parent.width - Theme.spaceXs * 2
+                height: parent.height - Theme.spaceXs * 2
+                clip: true
+                interactive: root.model.length > root.maxRows
+                boundsBehavior: Flickable.StopAtBounds
+                // only while open: File Types puts sixty of these on one
+                // page, and a closed one has no reason to build delegates
+                model: root.open ? root.model : []
+
+                delegate: Rectangle {
+                    id: item
+                    required property var modelData
+                    required property int index
+                    readonly property bool isCurrent: index === root.currentIndex
+
+                    width: list.width
+                    height: Theme.rowHeight
+                    radius: Theme.radiusSmall
+                    color: itemMouse.containsMouse ? Theme.hoverFill : "transparent"
+
+                    // the current choice's tick, as in a flyout list
+                    Rectangle {
+                        visible: item.isCurrent
+                        x: Theme.spaceXs
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.indicatorWidth
+                        height: parent.height - 6
+                        radius: width / 2
+                        color: Theme.accent
+                    }
+
+                    Text {
+                        x: Theme.spaceL
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - Theme.spaceL * 2
+                        elide: Text.ElideRight
+                        text: root.labelFor(item.modelData)
+                        color: item.isCurrent || itemMouse.containsMouse ? Theme.textStrong : Theme.text
+                        font.family: root.fontFor(item.modelData)
+                        font.pixelSize: Theme.fontBody
+                    }
+
+                    MouseArea {
+                        id: itemMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            // picked() first: closing collapses list.model right
+                            // away, tearing down this delegate -- calling it
+                            // after left `root` and `item` already gone, so the
+                            // pick silently never fired.
+                            if (!item.isCurrent) root.picked(item.modelData)
+                            root.open = false
+                        }
+                    }
+                }
+            }
+
+            ScrollBar {
+                anchors.right: parent.right
+                anchors.rightMargin: 2
+                flickable: list
+            }
         }
     }
 }

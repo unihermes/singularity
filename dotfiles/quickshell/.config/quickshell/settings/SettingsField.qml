@@ -15,7 +15,7 @@ Item {
     property string label: ""
     property string hint: ""
     // width of the label column; controls get the rest
-    property int labelWidth: Theme.fs(240)
+    property int labelWidth: Theme.fit(240)
     readonly property bool isSettingsField: true
 
     // The page a search result landed on rings the field it named. Found by

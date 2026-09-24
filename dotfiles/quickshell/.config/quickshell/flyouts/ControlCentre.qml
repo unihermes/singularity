@@ -372,8 +372,8 @@ FlyoutPanel {
         FlyoutStepper {
             visible: shellRoot.nightLight
             label: "Warmth"
-            labelInset: 28
-            valueWidth: 44
+            labelInset: Theme.iconCell + Theme.spaceL
+            valueWidth: 52
             suffix: "K"
             value: Settings.nightLightKelvin
             minimum: Settings.limits.nightLightKelvin.min

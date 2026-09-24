@@ -99,30 +99,14 @@ Item {
 
     // The switch. Lightness carries on/off, as everywhere else in the shell:
     // a bright track with a dark knob is on, a dark track with a dim knob off.
-    Rectangle {
+    Switch {
         id: toggle
         visible: root.checkable
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.fs(26)
-        height: Theme.fs(14)
-        radius: Math.min(height / 2, Theme.radius)
-        color: root.checked ? Theme.meterFill : Theme.fieldFill
-        border.width: Theme.borderWidth
-        border.color: root.checked ? Theme.meterFill : Theme.stroke
-
-        Behavior on color { ColorAnimation { duration: Theme.durFast } }
-
-        Rectangle {
-            width: parent.height - 6
-            height: width
-            radius: Math.min(width / 2, Theme.radiusSmall)
-            anchors.verticalCenter: parent.verticalCenter
-            x: root.checked ? parent.width - width - 3 : 3
-            color: root.checked ? Theme.base : Theme.muted
-
-            Behavior on x { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
-        }
+        interactive: false
+        checked: root.checked
+        enabled: root.enabled
     }
 
     Text {

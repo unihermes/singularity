@@ -20,7 +20,7 @@ Item {
 
     signal clicked()
 
-    implicitWidth: label.implicitWidth + (glyph ? 14 : 12)
+    implicitWidth: label.implicitWidth + Theme.spaceM * 2 + (glyph ? 2 : 0)
     implicitHeight: Theme.chipHeight
 
     Rectangle {

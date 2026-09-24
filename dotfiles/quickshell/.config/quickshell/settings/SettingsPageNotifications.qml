@@ -76,7 +76,7 @@ SettingsPage {
 
         FlyoutStepper {
             anchors.right: parent.right
-            width: Theme.fs(170)
+            width: Theme.fit(170)
             readonly property int current: page.conf[sec.key] !== undefined ? Number(page.conf[sec.key]) : sec.fallback
             value: current
             minimum: 0
@@ -128,29 +128,19 @@ SettingsPage {
             anchors.right: parent.right
             spacing: Theme.sp(10)
 
-            Row {
-                spacing: Theme.spaceS
-                Repeater {
-                    model: ["top", "bottom"]
-                    FlyoutChip {
-                        required property var modelData
-                        text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
-                        selected: page.conf.positionY === modelData
-                        onClicked: if (!selected) page.setKey("positionY", modelData, "Popups: " + modelData)
-                    }
-                }
+            FlyoutSegmented {
+                fill: false
+                model: ["top", "bottom"]
+                labelFor: v => v.charAt(0).toUpperCase() + v.slice(1)
+                current: page.conf.positionY
+                onPicked: v => page.setKey("positionY", v, "Popups: " + v)
             }
-            Row {
-                spacing: Theme.spaceS
-                Repeater {
-                    model: ["left", "center", "right"]
-                    FlyoutChip {
-                        required property var modelData
-                        text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
-                        selected: page.conf.positionX === modelData
-                        onClicked: if (!selected) page.setKey("positionX", modelData, "Popups: " + modelData)
-                    }
-                }
+            FlyoutSegmented {
+                fill: false
+                model: ["left", "center", "right"]
+                labelFor: v => v.charAt(0).toUpperCase() + v.slice(1)
+                current: page.conf.positionX
+                onPicked: v => page.setKey("positionX", v, "Popups: " + v)
             }
         }
     }

@@ -76,7 +76,7 @@ Column {
     // total height of the list, editor and preset bar together, so opening
     // any of them shrinks the list instead of resizing (and re-centring) the
     // window
-    property int bodyHeight: Theme.fs(520)
+    property int bodyHeight: Theme.fit(520)
 
     property var model: null
     property string query: ""
@@ -592,7 +592,7 @@ Column {
     }
 
     component FieldLabel: Label {
-        width: Theme.fs(90)
+        width: Theme.fit(90)
         height: Theme.rowHeightTall
         verticalAlignment: Text.AlignVCenter
         color: Theme.subtext
@@ -659,23 +659,16 @@ Column {
         width: parent.width
         height: Theme.rowHeightTall
 
-        Row {
+        FlyoutSegmented {
             id: tabs
             anchors.left: parent.left
             anchors.leftMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceS
-
-            FlyoutChip {
-                text: "Binds"
-                selected: root.tab === "binds"
-                onClicked: root.showTab("binds")
-            }
-            FlyoutChip {
-                text: root.selectionCount > 0 ? "Presets · " + root.selectionCount : "Presets"
-                selected: root.tab === "presets"
-                onClicked: root.showTab("presets")
-            }
+            fill: false
+            model: [{ value: "binds", text: "Binds" },
+                { value: "presets", text: root.selectionCount > 0 ? "Presets · " + root.selectionCount : "Presets" }]
+            current: root.tab
+            onPicked: v => root.showTab(v)
         }
 
         FlyoutInput {
@@ -804,7 +797,7 @@ Column {
                 FieldLabel { text: "Keys" }
 
                 Item {
-                    width: parent.width - Theme.fs(90) - Theme.spaceL - recordChip.width - Theme.spaceL
+                    width: parent.width - Theme.fit(90) - Theme.spaceL - recordChip.width - Theme.spaceL
                     height: Theme.rowHeightTall
 
                     FlyoutInput {
@@ -888,17 +881,12 @@ Column {
                 Row {
                     spacing: Theme.spaceS
                     height: Theme.rowHeightTall
-                    FlyoutChip {
+                    FlyoutSegmented {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "Command"
-                        selected: root.editKind === "exec"
-                        onClicked: { root.editKind = "exec"; root.editError = "" }
-                    }
-                    FlyoutChip {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Lua action"
-                        selected: root.editKind === "lua"
-                        onClicked: { root.editKind = "lua"; root.editError = "" }
+                        fill: false
+                        model: [{ value: "exec", text: "Command" }, { value: "lua", text: "Lua action" }]
+                        current: root.editKind
+                        onPicked: v => { root.editKind = v; root.editError = "" }
                     }
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
@@ -916,7 +904,7 @@ Column {
                 spacing: Theme.spaceL
                 FieldLabel { text: root.editKind === "lua" ? "Action" : "Command" }
                 Item {
-                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    width: parent.width - Theme.fit(90) - Theme.spaceL
                     height: Theme.rowHeightTall
                     FlyoutInput {
                         id: cmdInput
@@ -938,7 +926,7 @@ Column {
                 spacing: Theme.spaceL
                 FieldLabel { text: "Description" }
                 Item {
-                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    width: parent.width - Theme.fit(90) - Theme.spaceL
                     height: Theme.rowHeightTall
                     FlyoutInput {
                         id: descInput
@@ -962,7 +950,7 @@ Column {
                 spacing: Theme.spaceL
                 FieldLabel { text: "Options" }
                 Flow {
-                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    width: parent.width - Theme.fit(90) - Theme.spaceL
                     spacing: Theme.spaceS
                     visible: root.editFlagsSimple
                     Repeater {
@@ -976,7 +964,7 @@ Column {
                     }
                 }
                 Label {
-                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    width: parent.width - Theme.fit(90) - Theme.spaceL
                     height: Theme.rowHeightTall
                     verticalAlignment: Text.AlignVCenter
                     visible: !root.editFlagsSimple
@@ -991,7 +979,7 @@ Column {
                 spacing: Theme.spaceL
                 FieldLabel { text: "Section" }
                 Flow {
-                    width: parent.width - Theme.fs(90) - Theme.spaceL
+                    width: parent.width - Theme.fit(90) - Theme.spaceL
                     spacing: Theme.spaceS
                     Repeater {
                         model: root.editCategories
@@ -1159,7 +1147,7 @@ Column {
                                     id: keysText
                                     anchors.left: parent.left
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Theme.fs(200)
+                                    width: Theme.fit(200)
                                     text: (row.modelData.conflict ? "󰀦 " : "") + row.modelData.keys
                                     color: row.modelData.conflict ? Theme.alert : Theme.textStrong
                                 }
@@ -1352,7 +1340,7 @@ Column {
                                     anchors.left: mark.right
                                     anchors.leftMargin: Theme.spaceM
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Theme.fs(180)
+                                    width: Theme.fit(180)
                                     text: pRow.modelData.keys
                                     color: pRow.done ? Theme.subtext
                                         : pRow.modelData.state === "taken" ? Theme.alert

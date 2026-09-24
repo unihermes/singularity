@@ -20,14 +20,23 @@ Item {
     id: root
 
     property string label: ""
-    // [{ value, text }]
+    // [{ value, text }], or plain values named by labelFor
     property var model: []
+    property var labelFor: v => String(v)
     property var current
     property bool enabled: true
+    // Equal segments across the whole row when there's no label beside it
+    // (a flyout's own strip). Off, each segment hugs its text and the strip
+    // sits at the right -- a Settings field's control slot.
+    property bool fill: label === ""
 
     signal picked(var value)
 
-    width: parent ? parent.width : 0
+    function valueOf(m) { return m !== null && typeof m === "object" && "value" in m ? m.value : m }
+    function textOf(m) { return m !== null && typeof m === "object" && "text" in m ? m.text : labelFor(m) }
+
+    width: (fill || label !== "") && parent ? parent.width : implicitWidth
+    implicitWidth: segs.implicitWidth + Theme.borderWidth * 2
     implicitHeight: Theme.rowHeight
     opacity: enabled ? 1 : 0.5
 
@@ -49,8 +58,7 @@ Item {
         id: strip
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        // full width when there's no label to share the row with
-        width: root.label === "" ? parent.width : segs.implicitWidth + Theme.borderWidth * 2
+        width: root.fill ? parent.width : segs.implicitWidth + Theme.borderWidth * 2
         height: Theme.chipHeight
         radius: Theme.radiusInner
         color: "transparent"
@@ -71,12 +79,12 @@ Item {
                     id: seg
                     required property var modelData
                     required property int index
-                    readonly property bool on: modelData.value === root.current
+                    readonly property bool on: root.valueOf(modelData) === root.current
 
                     height: segs.height
                     implicitWidth: segText.implicitWidth + Theme.spaceL * 2
                     // shared out evenly when the strip is stretched
-                    width: root.label === "" ? (strip.width - Theme.borderWidth * 2) / rep.count : implicitWidth
+                    width: root.fill ? (strip.width - Theme.borderWidth * 2) / rep.count : implicitWidth
 
                     Rectangle {
                         anchors.fill: parent
@@ -99,7 +107,7 @@ Item {
                     Text {
                         id: segText
                         anchors.centerIn: parent
-                        text: seg.modelData.text
+                        text: root.textOf(seg.modelData)
                         color: seg.on || segMouse.containsMouse ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontSmall
@@ -111,7 +119,7 @@ Item {
                         enabled: root.enabled
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: if (!seg.on) root.picked(seg.modelData.value)
+                        onClicked: if (!seg.on) root.picked(root.valueOf(seg.modelData))
                     }
                 }
             }

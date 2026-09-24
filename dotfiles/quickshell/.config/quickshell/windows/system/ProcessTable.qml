@@ -52,13 +52,14 @@ Column {
             text: "SORT BY"
         }
 
-        Row {
+        FlyoutSegmented {
             id: sortRow
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceS
-            SortButton { label: "CPU"; on: SystemStats.procSort === "cpu"; onClicked: SystemStats.procSort = "cpu" }
-            SortButton { label: "MEM"; on: SystemStats.procSort === "mem"; onClicked: SystemStats.procSort = "mem" }
+            fill: false
+            model: [{ value: "cpu", text: "CPU" }, { value: "mem", text: "MEM" }]
+            current: SystemStats.procSort
+            onPicked: v => SystemStats.procSort = v
         }
     }
 

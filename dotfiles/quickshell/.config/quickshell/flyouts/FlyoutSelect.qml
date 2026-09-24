@@ -11,6 +11,15 @@
 // Several on one page share `group`: opening one closes the others, so
 // the page never ends up with three lists open and a scroll to find them.
 //
+// The list is drawn in an overlay filling the flyout box, above a catcher
+// that closes it on a click anywhere else in the box -- the same shape as
+// SettingsDropdown, for the same reason: raising the row's own ancestors
+// lifts their whole subtree, so the rest of the page comes along and
+// swallows the click. The overlay stops at the box, not the whole layer, so
+// a click outside the flyout still dismisses the flyout itself.
+//
+// The list is placed once, when it opens, in the box's coordinates.
+//
 // A choice can carry a strip of colour swatches (`swatchesFor`) -- the
 // looks, shown by their palettes -- or be set in its own font (`fontFor`).
 
@@ -58,25 +67,30 @@ Item {
     opacity: enabled ? 1 : 0.5
     onEnabledChanged: if (!enabled) close()
 
-    // Raise the chain up to the flyout page while open, same as
-    // SettingsDropdown: without it, the dropdown would draw under whatever
-    // page content comes after this select in paint order.
-    property var raised: []
-    onOpenChanged: {
-        if (open) {
-            list.positionViewAtIndex(Math.max(0, root.currentIndex), ListView.Contain)
-            var r = []
-            for (var p = root; p && p.isFlyoutPage !== true; p = p.parent) {
-                r.push({ item: p, z: p.z })
-                p.z = 100
-            }
-            raised = r
-        } else {
-            raised.forEach(e => e.item.z = e.z)
-            raised = []
-        }
+    // The flyout page this select sits on -- the panel's content Column --
+    // and the box holding it, which is what the overlay fills. The page
+    // itself can't: a positioner manages its children's geometry, so an
+    // anchored child stops it laying out at all.
+    readonly property var pageItem: {
+        for (var p = root.parent; p; p = p.parent)
+            if (p.isFlyoutPage === true) return p
+        return null
     }
-    Component.onDestruction: raised.forEach(e => { if (e.item) e.item.z = e.z })
+    readonly property var overlayHost: pageItem ? pageItem.parent : null
+
+    // Known without the list existing, so it can be placed before it is.
+    readonly property int menuHeight: Math.min(model.length, maxRows) * Theme.rowHeight + Theme.spaceXs * 2
+    property real menuX: 0
+    property real menuY: 0
+
+    onOpenChanged: if (open) {
+        if (overlayHost) {
+            var p = root.mapToItem(overlayHost, 0, 0)
+            menuX = p.x
+            menuY = p.y + closedRow.height + Theme.spaceXs
+        }
+        list.positionViewAtIndex(Math.max(0, root.currentIndex), ListView.Contain)
+    }
 
     readonly property int currentIndex: {
         for (var i = 0; i < model.length; i++)
@@ -108,7 +122,7 @@ Item {
             anchors.fill: parent
             radius: Theme.radiusInner
             color: root.open ? Theme.selectedFill
-                : rowMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
+                : rowMouse.containsMouse ? Theme.hoverFillSoft : Theme.fieldFill
             border.width: Theme.borderWidth
             border.color: root.open ? Theme.selectedStroke
                 : rowMouse.containsMouse ? Theme.strokeHover : Theme.stroke
@@ -170,92 +184,110 @@ Item {
         }
     }
 
-    // the list, floating over whatever comes after the closed row
-    Rectangle {
-        visible: root.open
-        y: closedRow.height + Theme.spaceXs
-        width: parent.width
-        height: list.height + Theme.spaceXs * 2
-        radius: Theme.radiusInner
-        color: Theme.surface
-        border.width: Theme.borderWidth
-        border.color: Theme.stroke
+    // The overlay: the catcher fills the box, the list sits over it. Both
+    // only exist while the list is open, so nothing here takes a click the
+    // rest of the time.
+    Item {
+        id: overlay
+        parent: root.overlayHost || root
+        anchors.fill: parent
+        z: 9000
+        visible: root.open && root.overlayHost !== null
+        enabled: visible
 
-        ListView {
-            id: list
-            x: Theme.spaceXs
-            y: Theme.spaceXs
-            width: parent.width - Theme.spaceXs * 2
-            height: Math.min(root.model.length, root.maxRows) * Theme.rowHeight
-            clip: true
-            interactive: root.model.length > root.maxRows
-            boundsBehavior: Flickable.StopAtBounds
-            model: root.open ? root.model : []
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+            onPressed: root.close()
+        }
 
-            delegate: Rectangle {
-                id: item
-                required property var modelData
-                required property int index
-                readonly property bool isCurrent: index === root.currentIndex
+        // the list, floating over whatever comes after the closed row
+        Rectangle {
+            x: root.menuX
+            y: root.menuY
+            width: root.width
+            height: root.menuHeight
+            radius: Theme.radiusInner
+            color: Theme.surface
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
 
-                width: list.width
-                height: Theme.rowHeight
-                radius: Theme.radiusSmall
-                color: itemMouse.containsMouse ? Theme.hoverFill : "transparent"
+            ListView {
+                id: list
+                x: Theme.spaceXs
+                y: Theme.spaceXs
+                width: parent.width - Theme.spaceXs * 2
+                height: parent.height - Theme.spaceXs * 2
+                clip: true
+                interactive: root.model.length > root.maxRows
+                boundsBehavior: Flickable.StopAtBounds
+                model: root.open ? root.model : []
 
-                // the current choice's tick, as in every flyout list
-                Rectangle {
-                    visible: item.isCurrent
-                    x: Theme.spaceXs
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.indicatorWidth
-                    height: parent.height - 6
-                    radius: width / 2
-                    color: Theme.accent
-                }
+                delegate: Rectangle {
+                    id: item
+                    required property var modelData
+                    required property int index
+                    readonly property bool isCurrent: index === root.currentIndex
 
-                Text {
-                    x: Theme.spaceL
-                    anchors.right: itemSw.left
-                    anchors.rightMargin: Theme.spaceM
-                    anchors.verticalCenter: parent.verticalCenter
-                    elide: Text.ElideRight
-                    text: root.labelFor(item.modelData)
-                    color: item.isCurrent || itemMouse.containsMouse ? Theme.textStrong : Theme.text
-                    font.family: root.fontFor(item.modelData)
-                    font.pixelSize: Theme.fontBody
-                }
+                    width: list.width
+                    height: Theme.rowHeight
+                    radius: Theme.radiusSmall
+                    color: itemMouse.containsMouse ? Theme.hoverFill : "transparent"
 
-                Swatches {
-                    id: itemSw
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spaceM
-                    anchors.verticalCenter: parent.verticalCenter
-                    colours: root.swatchesFor(item.modelData)
-                }
+                    // the current choice's tick, as in every flyout list
+                    Rectangle {
+                        visible: item.isCurrent
+                        x: Theme.spaceXs
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.indicatorWidth
+                        height: parent.height - 6
+                        radius: width / 2
+                        color: Theme.accent
+                    }
 
-                MouseArea {
-                    id: itemMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        // picked() first: close() collapses list.model right
-                        // away (root.open flips false), tearing down this
-                        // delegate -- calling it after left `root` and
-                        // `item` already gone, so the pick silently never
-                        // fired.
-                        if (!item.isCurrent) root.picked(item.modelData)
-                        root.close()
+                    Text {
+                        x: Theme.spaceL
+                        anchors.right: itemSw.left
+                        anchors.rightMargin: Theme.spaceM
+                        anchors.verticalCenter: parent.verticalCenter
+                        elide: Text.ElideRight
+                        text: root.labelFor(item.modelData)
+                        color: item.isCurrent || itemMouse.containsMouse ? Theme.textStrong : Theme.text
+                        font.family: root.fontFor(item.modelData)
+                        font.pixelSize: Theme.fontBody
+                    }
+
+                    Swatches {
+                        id: itemSw
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.spaceM
+                        anchors.verticalCenter: parent.verticalCenter
+                        colours: root.swatchesFor(item.modelData)
+                    }
+
+                    MouseArea {
+                        id: itemMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            // picked() first: close() collapses list.model right
+                            // away (root.open flips false), tearing down this
+                            // delegate -- calling it after left `root` and
+                            // `item` already gone, so the pick silently never
+                            // fired.
+                            if (!item.isCurrent) root.picked(item.modelData)
+                            root.close()
+                        }
                     }
                 }
             }
-        }
 
-        ScrollBar {
-            anchors.right: parent.right
-            anchors.rightMargin: 2
-            flickable: list
+            ScrollBar {
+                anchors.right: parent.right
+                anchors.rightMargin: 2
+                flickable: list
+            }
         }
     }
 }

@@ -229,20 +229,12 @@ SettingsPage {
             ? "Every display is showing " + page.primary
             : "Each display has its own space; duplicate shows " + page.primary + " on all of them"
 
-        Row {
+        FlyoutSegmented {
             anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            FlyoutChip {
-                text: "Extend"
-                selected: !page.duplicating
-                onClicked: if (!selected) page.setArrangement(false)
-            }
-            FlyoutChip {
-                text: "Duplicate"
-                selected: page.duplicating
-                onClicked: if (!selected) page.setArrangement(true)
-            }
+            fill: false
+            model: [{ value: false, text: "Extend" }, { value: true, text: "Duplicate" }]
+            current: page.duplicating
+            onPicked: v => page.setArrangement(v)
         }
     }
 
@@ -251,19 +243,12 @@ SettingsPage {
         label: "Primary"
         hint: "Workspace 1 and the cursor start here, and duplicate copies it"
 
-        Row {
+        FlyoutSegmented {
             anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            Repeater {
-                model: page.monitors
-                FlyoutChip {
-                    required property var modelData
-                    text: modelData.name
-                    selected: page.primary === modelData.name
-                    onClicked: if (!selected) page.setPrimary(modelData.name)
-                }
-            }
+            fill: false
+            model: page.monitors.map(m => m.name)
+            current: page.primary
+            onPicked: v => page.setPrimary(v)
         }
     }
 
@@ -322,7 +307,7 @@ SettingsPage {
 
                 SettingsDropdown {
                     anchors.right: parent.right
-                    width: Theme.fs(160)
+                    width: Theme.fit(160)
                     // the rule's own value too, if it's none of the presets
                     model: page.scales.some(v => Math.abs(v - mon.ruleScale) < 0.001)
                         ? page.scales : page.scales.concat([mon.ruleScale])

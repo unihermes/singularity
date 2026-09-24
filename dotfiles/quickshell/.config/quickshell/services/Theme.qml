@@ -197,7 +197,13 @@ Singleton {
     function sp(n) { return Math.round(n * density) }
     // A text-bearing row: scaled with the font, and with density at half
     // strength so compact rows tighten without clipping their text.
-    function row(n) { return Math.round(fs(n) * (1 + (density - 1) / 2)) }
+    readonly property real densityHalf: 1 + (density - 1) / 2
+    function row(n) { return Math.round(fs(n) * densityHalf) }
+    // A box that holds text -- a flyout's or a window's size, a label
+    // column. Grows with roomy, whose padding would otherwise eat into it,
+    // but never shrinks with compact: the text inside doesn't get smaller,
+    // so a narrower box would only elide it.
+    function fit(n) { return Math.round(fs(n) * Math.max(1, densityHalf)) }
 
     // the steps every gap and padding is picked from
     readonly property int spaceXs:  sp(2)
@@ -209,11 +215,15 @@ Singleton {
     // inside a flyout's frame, and inside a window's
     readonly property int panelPad:  sp(10)
     readonly property int windowPad: sp(16)
-    // Every standalone window (Settings, System, Keybinds) is this tall
-    // below its title, whatever it holds. A window sized by its content
-    // was centred for its first frame's size and hung off-centre once a
-    // list loaded in; a fixed size opens centred and stays there.
-    readonly property int windowBodyHeight: fs(600)
+    // The size every standalone window opens at: the Normal-density layout
+    // with a 600px body, scaled by Font Size only. A window sized by its
+    // content was centred for its first frame and hung off-centre once a
+    // list loaded in, and one sized by density changed size under you.
+    // Density re-lays out the inside instead. Each is rebuilt on every open
+    // (LazyWindow.qml), so a size you drag one to lasts until it closes.
+    readonly property size settingsWindowSize: Qt.size(fs(1044), fs(755))
+    readonly property size systemWindowSize:   Qt.size(fs(944), fs(711))
+    readonly property size keybindsWindowSize: Qt.size(fs(772), fs(711))
     // between a flyout and the screen edge it's clamped against
     readonly property int edgeMargin: 6
 
@@ -222,8 +232,11 @@ Singleton {
     readonly property int rowHeight:     row(24)   // list rows, steppers
     readonly property int rowHeightTall: row(26)   // action rows, inputs
     readonly property int fieldHeight:   row(28)   // settings fields, nav rows
-    readonly property int chipHeight:    fs(20)
-    readonly property int controlSize:   fs(18)    // square +/- and close buttons
+    readonly property int chipHeight:    row(20)   // chips, segmented strips
+    readonly property int controlSize:   chipHeight // square +/- and close buttons
+    // on/off switches (Switch.qml)
+    readonly property int switchWidth:   row(28)
+    readonly property int switchHeight:  row(16)
     readonly property int headingHeight: fs(16)
     // the faint surface a window's framed panels sit on (WindowPanel.qml)
     readonly property color panelTint: Qt.rgba(surface.r, surface.g, surface.b, 0.35)

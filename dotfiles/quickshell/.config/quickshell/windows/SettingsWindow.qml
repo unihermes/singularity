@@ -45,18 +45,16 @@ FloatingWindow {
     // the setting a search result picked, for the page to scroll to and ring
     property string highlight: ""
 
-    // scaled with Font Size, since the pages' own columns are
-    readonly property int sidebarWidth: Theme.fs(240)
-    // Keybinds' list is laid out for 720; the page frame adds its margin
-    readonly property int paneWidth: Theme.fs(740)
-    readonly property int paneHeight: Theme.windowBodyHeight
+    // scaled with Font Size, since the pages' own columns are; the page
+    // gets whatever the window has left
+    readonly property int sidebarWidth: Theme.fit(240)
 
     visible: false
     title: "Settings"
     color: "transparent"
 
-    implicitWidth: Theme.windowPad * 2 + sidebarWidth + Theme.spaceXl + paneWidth + Theme.panelPad * 2
-    implicitHeight: panels.y + panels.height + Theme.windowPad
+    implicitWidth: Theme.settingsWindowSize.width
+    implicitHeight: Theme.settingsWindowSize.height
 
     // an unknown or empty page opens the default one
     function open(page) {
@@ -278,7 +276,10 @@ FloatingWindow {
         anchors.topMargin: Theme.spaceXl
         x: Theme.windowPad
         width: root.width - Theme.windowPad * 2
-        height: root.paneHeight + Theme.panelPad * 2
+        // the window's real size, not the one asked for: the two differ
+        // after a density or Font Size change while the window is open, which
+        // leaves the window as it was and re-lays out what's inside
+        height: root.height - y - Theme.windowPad
 
         // sections, or what the search matched
         WindowPanel {
@@ -371,8 +372,8 @@ FloatingWindow {
                 id: pane
                 x: Theme.panelPad
                 y: Theme.panelPad
-                width: root.paneWidth
-                height: root.paneHeight
+                width: parent.width - Theme.panelPad * 2
+                height: parent.height - Theme.panelPad * 2
                 active: root.visible
                 onLoaded: if (item && root.highlight !== "") item.highlight = root.highlight
                 source: {

@@ -17,10 +17,14 @@ Item {
     // handle instead of only catching up on release.
     signal moved(real value)
 
-    implicitHeight: Theme.meterHeight + 10
+    // The handle: the switch's knob, so the two controls you grab read as
+    // one family. The track runs between the handle's centres at either
+    // end, so 0 and 100 put it flush with the track's ends, not over them.
+    readonly property int knobSize: Theme.switchHeight
+    implicitHeight: knobSize
 
     function valueAt(px) {
-        return Math.round(Math.max(0, Math.min(1, px / width)) * 100)
+        return Math.round(Math.max(0, Math.min(1, (px - knobSize / 2) / Math.max(1, width - knobSize))) * 100)
     }
 
     // a touch taller than a read-only meter, since this one is grabbed
@@ -34,9 +38,22 @@ Item {
         border.color: Theme.strokeHover
     }
 
+    Rectangle {
+        x: Math.round((root.width - width) * Math.max(0, Math.min(1, root.value / 100)))
+        anchors.verticalCenter: parent.verticalCenter
+        width: root.knobSize
+        height: width
+        radius: Math.min(width / 2, Theme.radiusSmall + 2)
+        color: drag.pressed || drag.containsMouse ? Theme.textStrong : Theme.text
+        border.width: Theme.borderWidth
+        border.color: Theme.base
+        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+    }
 
     MouseArea {
+        id: drag
         anchors.fill: parent
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onPressed: mouse => root.moved(root.valueAt(mouse.x))
         onPositionChanged: mouse => {

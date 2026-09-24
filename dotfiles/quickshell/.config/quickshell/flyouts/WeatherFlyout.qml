@@ -113,8 +113,13 @@ FlyoutPanel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spaceS
-            FlyoutChip { text: "°F"; selected: !Weather.metric; onClicked: Settings.setWeatherUnits("F") }
-            FlyoutChip { text: "°C"; selected: Weather.metric;  onClicked: Settings.setWeatherUnits("C") }
+            FlyoutSegmented {
+                fill: false
+                anchors.verticalCenter: parent.verticalCenter
+                model: [{ value: false, text: "°F" }, { value: true, text: "°C" }]
+                current: Weather.metric
+                onPicked: v => Settings.setWeatherUnits(v ? "C" : "F")
+            }
             FlyoutChip { glyph: true; text: "󰑐"; onClicked: Weather.refresh() }
         }
     }

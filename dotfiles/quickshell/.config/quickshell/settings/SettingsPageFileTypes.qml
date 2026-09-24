@@ -3,10 +3,19 @@
 //
 // Which app opens what. The common kinds of file are grouped (a browser is
 // http, https and html at once; images are a handful of types), and every
-// other type an installed app declares is searchable below them.
+// other type the system knows is searchable below them.
+//
+// The full type list is the shared-mime-info database, not just what apps
+// declare, and it stays behind a button: a thousand rows is a scroll, not a
+// list, so the search is what the section leads with.
 //
 // Candidates come from the MimeType= lines of the installed .desktop files --
 // Quickshell's DesktopEntries doesn't expose them, so they're read directly.
+// An app also counts for a type it doesn't name but inherits: shared-mime-info
+// records that application/json is ultimately a kind of text/plain, so an
+// editor declaring text/plain can be picked for it. Without that nearly every
+// application/* text format has no candidate but a browser, which is how
+// JSON ends up opening in Zen.
 // The current default is the first entry mimeapps.list gives, falling back
 // to mimeinfo.cache's pick, the same order xdg-open resolves in.
 //
@@ -46,8 +55,19 @@ SettingsPage {
     property var defaults: ({})
     // mime -> desktop id, mimeinfo.cache's fallback
     property var cached: ({})
+    // mime -> [direct parent mime], from shared-mime-info
+    property var parents: ({})
+    // every type the mime database knows, whether or not an app wants it
+    property var known: []
     property bool loaded: false
     property string query: ""
+    // the unfiltered list is opt-in, and grows a page at a time
+    property bool showAll: false
+    property int limit: pageSize
+    readonly property int pageSize: 60
+
+    onQueryChanged: limit = pageSize
+    onShowAllChanged: limit = pageSize
 
     function appName(id) {
         return names[id] || id.replace(/\.desktop$/, "")
@@ -58,12 +78,40 @@ SettingsPage {
         return d !== undefined ? d : (cached[mime] || "")
     }
 
-    // apps declaring any of these types, by name
+    // A type and everything it inherits from. The two implicit rules the
+    // subclasses file leaves out are in the spec: every text/* is a text/plain,
+    // and every */*+xml is an application/xml.
+    property var ancestorCache: ({})
+    onParentsChanged: ancestorCache = ({})
+
+    function ancestors(mime) {
+        var hit = ancestorCache[mime]
+        if (hit !== undefined) return hit
+        var seen = {}, queue = [mime], out = []
+        while (queue.length) {
+            var t = queue.shift()
+            if (seen[t]) continue
+            seen[t] = true
+            out.push(t)
+            ;(parents[t] || []).forEach(p => queue.push(p))
+            if (t.indexOf("text/") === 0 && t !== "text/plain") queue.push("text/plain")
+            if (/\+xml$/.test(t)) queue.push("application/xml")
+        }
+        ancestorCache[mime] = out
+        return out
+    }
+
+    // Does this app declare the type, or anything the type is a kind of?
+    function handles(app, mime) {
+        return ancestors(mime).some(t => app.types.indexOf(t) >= 0)
+    }
+
+    // apps declaring any of these types (or a supertype), by name
     function candidates(types) {
         var out = []
         for (var id in apps) {
             var a = apps[id]
-            if (types.some(t => a.types.indexOf(t) >= 0)) out.push(a)
+            if (types.some(t => handles(a, t))) out.push(a)
         }
         return out.sort((x, y) => x.name.localeCompare(y.name))
     }
@@ -81,29 +129,40 @@ SettingsPage {
     }
 
     function setDefault(appId, types) {
-        var declared = apps[appId] ? types.filter(t => apps[appId].types.indexOf(t) >= 0) : types
+        var declared = apps[appId] ? types.filter(t => handles(apps[appId], t)) : types
         if (declared.length === 0) return
         setProc.pending = appName(appId) + " now opens " + (declared.length === 1 ? declared[0] : declared.length + " types")
         setProc.command = ["xdg-mime", "default", appId].concat(declared)
         setProc.running = true
     }
 
-    // every type some app declares, filtered by the search
-    readonly property var allTypes: {
+    // Every type the database lists, plus any an installed app invents that
+    // it doesn't. Sorted once, here, so the search only filters.
+    readonly property var everyType: {
         if (!loaded) return []
-        var q = query.trim().toLowerCase()
-        if (q === "") return []
         var set = {}
+        known.forEach(t => set[t] = true)
         for (var id in apps) apps[id].types.forEach(t => set[t] = true)
-        return Object.keys(set)
-            .filter(t => t.indexOf(q) >= 0 || candidates([t]).some(a => a.name.toLowerCase().indexOf(q) >= 0))
-            .sort()
-            .slice(0, 80)
+        for (var m in parents) set[m] = true
+        return Object.keys(set).sort()
     }
+
+    // What the search matches, before the page limit. A bare type search is
+    // a substring; anything else also matches the apps that handle the type,
+    // which is the slow half and so is only tried when the name can't match.
+    readonly property var matches: {
+        var q = query.trim().toLowerCase()
+        if (q === "") return showAll ? everyType : []
+        return everyType.filter(t => t.indexOf(q) >= 0
+            || candidates([t]).some(a => a.name.toLowerCase().indexOf(q) >= 0))
+    }
+
+    readonly property var allTypes: matches.slice(0, limit)
 
     Component.onCompleted: {
         scanProc.running = true
         defaultsProc.running = true
+        mimeProc.running = true
     }
 
     // One record per .desktop file, user copies shadowing system ones:
@@ -180,6 +239,36 @@ SettingsPage {
         }
     }
 
+    // The mime database, from every data dir in turn: S <TAB> child <TAB>
+    // parent for the subclass graph, T <TAB> type for the roster of types.
+    Process {
+        id: mimeProc
+        command: ["sh", "-c", `
+            IFS=:
+            for d in "\${XDG_DATA_HOME:-$HOME/.local/share}" \${XDG_DATA_DIRS:-/usr/local/share:/usr/share}; do
+                [ -f "$d/mime/subclasses" ] && sed 's/^/S\t/; s/ /\t/' "$d/mime/subclasses"
+                [ -f "$d/mime/types" ] && sed 's/^/T\t/' "$d/mime/types"
+            done
+            exit 0`]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var p = {}, seen = {}, types = []
+                text.split("\n").forEach(line => {
+                    var f = line.split("\t")
+                    if (f[0] === "S") {
+                        if (f.length < 3 || f[1] === "" || f[2] === "") return
+                        ;(p[f[1]] = p[f[1]] || []).push(f[2])
+                    } else if (f[0] === "T" && f[1] && !seen[f[1]]) {
+                        seen[f[1]] = true
+                        types.push(f[1])
+                    }
+                })
+                page.parents = p
+                page.known = types
+            }
+        }
+    }
+
     Process {
         id: setProc
         property string pending: ""
@@ -199,7 +288,7 @@ SettingsPage {
         readonly property var apps: page.candidates(types)
         readonly property string chosen: page.groupCurrent(types)
 
-        labelWidth: Theme.fs(200)
+        labelWidth: Theme.fit(200)
         hint: chosen === "mixed" ? "Mixed -- pick one to set them all"
             : chosen === "" ? "Nothing set"
             : page.names[chosen] ? page.appName(chosen)
@@ -221,7 +310,7 @@ SettingsPage {
             visible: hr.apps.length === 0
             height: Theme.chipHeight
             verticalAlignment: Text.AlignVCenter
-            text: page.loaded ? "No installed app declares this" : "Reading apps…"
+            text: page.loaded ? "No installed app handles this" : "Reading apps…"
             color: Theme.muted
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
@@ -250,6 +339,33 @@ SettingsPage {
         onEscapePressed: if (text !== "") text = ""
     }
 
+    // Browsing the lot is a deliberate act -- searching is the fast path, and
+    // a thousand rows takes a moment to build -- so it's a button, and it
+    // steps aside once there's a search to answer.
+    Row {
+        width: parent.width
+        spacing: Theme.spaceM
+
+        FlyoutChip {
+            text: page.showAll ? "Hide the full list" : "Show every type"
+            selected: page.showAll
+            enabled: page.loaded
+            onClicked: page.showAll = !page.showAll
+        }
+
+        Text {
+            height: Theme.chipHeight
+            verticalAlignment: Text.AlignVCenter
+            text: !page.loaded ? "Reading the mime database…"
+                : page.query.trim() !== "" ? page.matches.length + (page.matches.length === 1 ? " type matches" : " types match")
+                : page.showAll ? page.everyType.length + " types"
+                : "or search above"
+            color: Theme.muted
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontSmall
+        }
+    }
+
     Repeater {
         model: page.allTypes
         HandlerRow {
@@ -259,12 +375,21 @@ SettingsPage {
         }
     }
 
+    // Rows are cheap individually and dear in bulk, so the list arrives in
+    // pages rather than all at once.
+    FlyoutChip {
+        readonly property int rest: page.matches.length - page.allTypes.length
+        visible: rest > 0
+        text: "Show " + Math.min(rest, page.pageSize) + " more (" + rest + " left)"
+        onClicked: page.limit += page.pageSize
+    }
+
     Text {
-        visible: page.query.trim() !== "" && page.allTypes.length === 0
+        visible: page.query.trim() !== "" && page.matches.length === 0
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         topPadding: Theme.spaceL
-        text: "No installed app declares a type matching \"" + page.query.trim() + "\""
+        text: "No known type matches \"" + page.query.trim() + "\""
         color: Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody

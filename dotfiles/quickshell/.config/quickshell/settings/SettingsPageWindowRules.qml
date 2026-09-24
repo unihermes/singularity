@@ -380,19 +380,13 @@ SettingsPage {
                 label: "Layout"
                 hint: "Auto follows the current layout: full screen in monocle, tiled in dwindle"
 
-                Row {
+                FlyoutSegmented {
                     anchors.right: parent.right
-                    spacing: Theme.spaceS
-                    Repeater {
-                        model: [{ label: "Auto", value: false }, { label: "Float", value: true }]
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData.label
-                            enabled: !ruleCol.rule.pin
-                            selected: ruleCol.floats === modelData.value
-                            onClicked: if (!selected) page.setRule(ruleCol.index, "float", modelData.value)
-                        }
-                    }
+                    fill: false
+                    model: [{ text: "Auto", value: false }, { text: "Float", value: true }]
+                    enabled: !ruleCol.rule.pin
+                    current: ruleCol.floats
+                    onPicked: v => page.setRule(ruleCol.index, "float", v)
                 }
             }
 
@@ -401,19 +395,14 @@ SettingsPage {
                 label: "Size"
                 hint: "Natural is whatever size the app asks for"
 
-                Row {
+                FlyoutSegmented {
                     anchors.right: parent.right
-                    spacing: Theme.spaceS
-                    Repeater {
-                        // the presets, plus whatever the file holds if it's none of them
-                        model: page.sizes.concat(page.sizes.indexOf(ruleCol.rule.size || "") < 0 ? [ruleCol.rule.size] : [])
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData === "" ? "Natural" : modelData.replace(" ", "×")
-                            selected: (ruleCol.rule.size || "") === modelData
-                            onClicked: if (!selected) page.setRule(ruleCol.index, "size", modelData)
-                        }
-                    }
+                    fill: false
+                    // the presets, plus whatever the file holds if it's none of them
+                    model: page.sizes.concat(page.sizes.indexOf(ruleCol.rule.size || "") < 0 ? [ruleCol.rule.size] : [])
+                    labelFor: v => v === "" ? "Natural" : v.replace(" ", "×")
+                    current: ruleCol.rule.size || ""
+                    onPicked: v => page.setRule(ruleCol.index, "size", v)
                 }
             }
 
@@ -423,7 +412,7 @@ SettingsPage {
 
                 SettingsDropdown {
                     anchors.right: parent.right
-                    width: Theme.fs(160)
+                    width: Theme.fit(160)
                     // Any, then every workspace the bar shows
                     model: [0].concat(Array.from({ length: Settings.workspaceCount }, (_, i) => i + 1))
                     current: ruleCol.rule.workspace || 0
@@ -436,18 +425,10 @@ SettingsPage {
                 label: "Open fullscreen"
                 hint: "Covers the whole display, bar included"
 
-                Row {
+                Switch {
                     anchors.right: parent.right
-                    spacing: Theme.spaceS
-                    Repeater {
-                        model: [false, true]
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData ? "On" : "Off"
-                            selected: ruleCol.rule.fullscreen === modelData
-                            onClicked: if (!selected) page.setRule(ruleCol.index, "fullscreen", modelData)
-                        }
-                    }
+                    checked: ruleCol.rule.fullscreen === true
+                    onToggled: page.setRule(ruleCol.index, "fullscreen", !checked)
                 }
             }
 
@@ -455,18 +436,10 @@ SettingsPage {
                 label: "Always on top"
                 hint: "Pinned: floats above other windows and stays on every workspace"
 
-                Row {
+                Switch {
                     anchors.right: parent.right
-                    spacing: Theme.spaceS
-                    Repeater {
-                        model: [false, true]
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData ? "On" : "Off"
-                            selected: ruleCol.rule.pin === modelData
-                            onClicked: if (!selected) page.setRule(ruleCol.index, "pin", modelData)
-                        }
-                    }
+                    checked: ruleCol.rule.pin === true
+                    onToggled: page.setRule(ruleCol.index, "pin", !checked)
                 }
             }
 

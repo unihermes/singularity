@@ -197,7 +197,7 @@ SettingsPage {
         hint: "In points"
         FlyoutStepper {
             anchors.right: parent.right
-            width: Theme.fs(170)
+            width: Theme.fit(170)
             readonly property real current: Number(page.tomlValue("font.size", 11.25))
             value: Math.round(current * 2)
             minimum: 12
@@ -213,7 +213,7 @@ SettingsPage {
         hint: "Background only; text stays solid"
         FlyoutStepper {
             anchors.right: parent.right
-            width: Theme.fs(170)
+            width: Theme.fit(170)
             readonly property real current: Number(page.tomlValue("window.opacity", 1))
             value: Math.round(current * 20)
             minimum: 6
@@ -238,18 +238,12 @@ SettingsPage {
             readonly property string shape: (/shape\s*=\s*"(\w+)"/.exec(styleRaw) || [, "Block"])[1]
             readonly property string blinking: (/blinking\s*=\s*"(\w+)"/.exec(styleRaw) || [, "Off"])[1]
 
-            Row {
+            FlyoutSegmented {
                 id: shapes
-                spacing: Theme.spaceS
-                Repeater {
-                    model: ["Block", "Beam", "Underline"]
-                    FlyoutChip {
-                        required property var modelData
-                        text: modelData
-                        selected: shapes.parent.shape === modelData
-                        onClicked: if (!selected) page.setCursor(modelData, shapes.parent.blinking)
-                    }
-                }
+                fill: false
+                model: ["Block", "Beam", "Underline"]
+                current: shapes.parent.shape
+                onPicked: v => page.setCursor(v, shapes.parent.blinking)
             }
             FlyoutChip {
                 text: "Blink"
@@ -327,7 +321,7 @@ SettingsPage {
                 id: aliasNameText
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fs(120)
+                width: Theme.fit(120)
                 elide: Text.ElideRight
                 text: aliasRow.modelData.name
                 color: Theme.textStrong
@@ -366,7 +360,7 @@ SettingsPage {
             anchors.left: parent.left
             anchors.leftMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fs(112)
+            width: Theme.fit(112)
             echoPassword: false
             placeholder: "name"
             onAccepted: aliasValue.forceFocus()

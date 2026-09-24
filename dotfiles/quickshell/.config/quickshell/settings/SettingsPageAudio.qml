@@ -93,7 +93,7 @@ SettingsPage {
             spacing: Theme.sp(10)
 
             Slider {
-                width: Theme.fs(220)
+                width: Theme.fit(220)
                 anchors.verticalCenter: parent.verticalCenter
                 value: lvl.ready ? lvl.node.audio.volume * 100 : 0
                 onMoved: v => { if (lvl.ready) lvl.node.audio.volume = v / 100 }

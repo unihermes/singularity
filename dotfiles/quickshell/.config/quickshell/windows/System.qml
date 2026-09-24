@@ -15,8 +15,8 @@
 //
 // Laid out like Settings: the shared WindowHeader, then two framed panels
 // -- the numbered Sections on the left, the open page on the right. The
-// ground and Escape are a bare WindowChrome.qml, and the page's height is
-// Theme.windowBodyHeight like every other window's.
+// ground and Escape are a bare WindowChrome.qml, and the window opens at
+// Theme.systemWindowSize.
 //
 // Floating and centring come from the "quickshell-windows" rule in
 // hyprland.lua, as for Settings and Keybinds.
@@ -36,19 +36,16 @@ FloatingWindow {
     readonly property string defaultPage: "overview"
     property string currentPage: defaultPage
 
-    // scaled with Font Size, since the pages' own rows are
-    readonly property int sidebarWidth: Theme.fs(220)
-    // wide enough for the Processes table (name, user, CPU, MEM, kill) and
-    // for a config file's full path on one line
-    readonly property int paneWidth: Theme.fs(640)
-    readonly property int paneHeight: Theme.windowBodyHeight
+    // scaled with Font Size, since the pages' own rows are; the page gets
+    // whatever the window has left
+    readonly property int sidebarWidth: Theme.fit(240)
 
     visible: false
     title: "System"
     color: "transparent"
 
-    implicitWidth: Theme.windowPad * 2 + sidebarWidth + Theme.spaceXl + paneWidth + Theme.panelPad * 2
-    implicitHeight: panels.y + panels.height + Theme.windowPad
+    implicitWidth: Theme.systemWindowSize.width
+    implicitHeight: Theme.systemWindowSize.height
 
     // an unknown or empty page opens the default one
     function open(page) {
@@ -115,7 +112,10 @@ FloatingWindow {
         anchors.topMargin: Theme.spaceXl
         x: Theme.windowPad
         width: root.width - Theme.windowPad * 2
-        height: root.paneHeight + Theme.panelPad * 2
+        // the window's real size, not the one asked for: the two differ
+        // after a density or Font Size change while the window is open, which
+        // leaves the window as it was and re-lays out what's inside
+        height: root.height - y - Theme.windowPad
 
         // the pages
         WindowPanel {
@@ -166,8 +166,8 @@ FloatingWindow {
                 id: pane
                 x: Theme.panelPad
                 y: Theme.panelPad
-                width: root.paneWidth
-                height: root.paneHeight
+                width: parent.width - Theme.panelPad * 2
+                height: parent.height - Theme.panelPad * 2
                 active: root.visible
                 source: {
                     var p = root.pages.find(p => p.id === root.currentPage)

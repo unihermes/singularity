@@ -86,12 +86,11 @@ SettingsPage {
             : page.blocked ? "Blocked by rfkill -- unblock it to power the radio on"
             : page.poweredOn ? "On" : "Off"
 
-        FlyoutChip {
+        Switch {
             anchors.right: parent.right
-            text: page.blocked ? "Blocked" : page.poweredOn ? "On" : "Off"
-            selected: page.poweredOn
+            checked: page.poweredOn
             enabled: !!page.adapter && !page.blocked
-            onClicked: page.setPowered(!page.poweredOn)
+            onToggled: page.setPowered(!page.poweredOn)
         }
     }
 
@@ -120,11 +119,10 @@ SettingsPage {
         label: "Discoverable"
         hint: "Let other devices see this machine while this page is open"
 
-        FlyoutChip {
+        Switch {
             anchors.right: parent.right
-            text: page.adapter && page.adapter.discoverable ? "On" : "Off"
-            selected: !!page.adapter && page.adapter.discoverable
-            onClicked: page.adapter.discoverable = !page.adapter.discoverable
+            checked: !!page.adapter && page.adapter.discoverable
+            onToggled: page.adapter.discoverable = !page.adapter.discoverable
         }
     }
 
@@ -133,11 +131,10 @@ SettingsPage {
         label: "Pairable"
         hint: "Accept pairing requests that other devices start"
 
-        FlyoutChip {
+        Switch {
             anchors.right: parent.right
-            text: page.adapter && page.adapter.pairable ? "On" : "Off"
-            selected: !!page.adapter && page.adapter.pairable
-            onClicked: page.adapter.pairable = !page.adapter.pairable
+            checked: !!page.adapter && page.adapter.pairable
+            onToggled: page.adapter.pairable = !page.adapter.pairable
         }
     }
 

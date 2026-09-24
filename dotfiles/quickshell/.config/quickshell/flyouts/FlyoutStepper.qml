@@ -29,7 +29,7 @@ Item {
     // the value cell is fixed-width so the buttons don't shuffle; widen it
     // for values with more digits than the appearance metrics have
     property int valueWidth: 34
-    readonly property int scaledValueWidth: Theme.fs(valueWidth)
+    readonly property int scaledValueWidth: Math.max(Theme.fs(valueWidth), Theme.fit(valueWidth))
 
     signal stepped(int delta)
 

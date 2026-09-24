@@ -79,28 +79,19 @@ SettingsPage {
 
     // --- pieces --------------------------------------------------------------
 
-    component Choice: Row {
+    component Choice: FlyoutSegmented {
         id: choice
         property string sub: ""
         property string key: ""
-        property string label: ""
+        property string setLabel: ""
         // [{ text, value }]
-        property var options: []
-        readonly property var current: page.value(sub, key)
+        property alias options: choice.model
 
         anchors.right: parent.right
-        spacing: Theme.spaceS
-
-        Repeater {
-            model: choice.options
-            FlyoutChip {
-                required property var modelData
-                text: modelData.text
-                selected: choice.current === modelData.value
-                enabled: page.field(choice.sub, choice.key).editable
-                onClicked: if (!selected) page.set(choice.sub, choice.key, modelData.value, choice.label)
-            }
-        }
+        fill: false
+        current: page.value(sub, key)
+        enabled: page.field(sub, key).editable
+        onPicked: v => page.set(sub, key, v, setLabel)
     }
 
     component Toggle: SettingsField {
@@ -108,11 +99,11 @@ SettingsPage {
         property string sub: ""
         property string key: ""
 
-        Choice {
-            sub: tg.sub
-            key: tg.key
-            label: tg.label
-            options: [{ text: "Off", value: false }, { text: "On", value: true }]
+        Switch {
+            anchors.right: parent.right
+            checked: page.value(tg.sub, tg.key) === true
+            enabled: page.field(tg.sub, tg.key).editable
+            onToggled: page.set(tg.sub, tg.key, !checked, tg.label)
         }
     }
 
@@ -130,7 +121,7 @@ SettingsPage {
 
         Item {
             anchors.right: parent.right
-            width: Theme.fs(140)
+            width: Theme.fit(140)
             height: Theme.rowHeight
 
             FlyoutStepper {
@@ -159,7 +150,7 @@ SettingsPage {
 
         FlyoutStepper {
             anchors.right: parent.right
-            width: Theme.fs(160)
+            width: Theme.fit(160)
             value: Number(page.value(int_.sub, int_.key))
             minimum: int_.min
             maximum: int_.max
@@ -179,7 +170,7 @@ SettingsPage {
         FlyoutInput {
             id: input
             anchors.right: parent.right
-            width: Theme.fs(220)
+            width: Theme.fit(220)
             echoPassword: false
             placeholder: tx.placeholder
             text: String(page.value(tx.sub, tx.key))
@@ -251,7 +242,7 @@ SettingsPage {
         hint: "Flat moves the pointer exactly as far as the hand does"
         Choice {
             key: "accel_profile"
-            label: "Acceleration"
+            setLabel: "Acceleration"
             options: [{ text: "Default", value: "" }, { text: "Adaptive", value: "adaptive" }, { text: "Flat", value: "flat" }]
         }
     }
@@ -260,7 +251,7 @@ SettingsPage {
         hint: "0 click to focus · 1 always · 2 cursor only · 3 detached"
         Choice {
             key: "follow_mouse"
-            label: "Focus follows mouse"
+            setLabel: "Focus follows mouse"
             options: [0, 1, 2, 3].map(n => ({ text: String(n), value: n }))
         }
     }

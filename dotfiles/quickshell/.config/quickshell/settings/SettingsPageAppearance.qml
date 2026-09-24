@@ -48,24 +48,17 @@ SettingsPage {
         onPicked: v => Settings.set(key, v)
     }
 
-    component Choices: Row {
-        id: ch
+    component Choices: FlyoutSegmented {
         property string key: ""
         property bool live: true
 
         anchors.right: parent.right
-        spacing: Theme.spaceS
-
-        Repeater {
-            model: Settings.choices[ch.key] || []
-            FlyoutChip {
-                required property var modelData
-                text: page.label(modelData)
-                selected: Settings[ch.key] === modelData
-                enabled: ch.live
-                onClicked: if (!selected) Settings.set(ch.key, modelData)
-            }
-        }
+        fill: false
+        enabled: live
+        model: Settings.choices[key] || []
+        labelFor: v => page.label(v)
+        current: Settings[key]
+        onPicked: v => Settings.set(key, v)
     }
 
     // A Settings integer, stepped by `step` and clamped by Settings.limits.
@@ -77,7 +70,7 @@ SettingsPage {
 
         FlyoutStepper {
             anchors.right: parent.right
-            width: Theme.fs(160)
+            width: Theme.fit(160)
             // guarded: these can evaluate before `key` is assigned
             value: Settings[st.key] || 0
             minimum: (Settings.limits[st.key] || { min: 0 }).min
@@ -329,7 +322,7 @@ SettingsPage {
         width: parent.width
         height: lookStrip.height + Theme.spaceL + dots.height
 
-        readonly property int cardWidth: Theme.fs(210)
+        readonly property int cardWidth: Theme.fit(210)
 
         ListView {
             id: lookStrip
@@ -337,7 +330,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.leftMargin: prevChip.width + Theme.spaceS
             anchors.rightMargin: nextChip.width + Theme.spaceS
-            height: Theme.fs(200)
+            height: Theme.fit(200)
             orientation: ListView.Horizontal
             spacing: Theme.spaceL
             clip: true
@@ -646,20 +639,12 @@ SettingsPage {
         label: "At login"
         hint: Settings.wallpaperShuffle ? "A different wallpaper every login" : "The one showing now, until you pick another"
 
-        Row {
+        FlyoutSegmented {
             anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            FlyoutChip {
-                text: "Random"
-                selected: Settings.wallpaperShuffle
-                onClicked: Settings.setWallpaperShuffle(true)
-            }
-            FlyoutChip {
-                text: "Static"
-                selected: !Settings.wallpaperShuffle
-                onClicked: Settings.setWallpaperShuffle(false)
-            }
+            fill: false
+            model: [{ value: true, text: "Random" }, { value: false, text: "Static" }]
+            current: Settings.wallpaperShuffle
+            onPicked: v => Settings.setWallpaperShuffle(v)
         }
     }
 
@@ -783,20 +768,12 @@ SettingsPage {
         label: "Position"
         hint: "Flyouts open from whichever edge it's on"
 
-        Row {
+        FlyoutSegmented {
             anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            FlyoutChip {
-                text: "Top"
-                selected: Settings.barPosition === "top"
-                onClicked: Settings.set("barPosition", "top")
-            }
-            FlyoutChip {
-                text: "Bottom"
-                selected: Settings.barPosition === "bottom"
-                onClicked: Settings.set("barPosition", "bottom")
-            }
+            fill: false
+            model: [{ value: "top", text: "Top" }, { value: "bottom", text: "Bottom" }]
+            current: Settings.barPosition
+            onPicked: v => Settings.set("barPosition", v)
         }
     }
 
@@ -806,20 +783,10 @@ SettingsPage {
             : Settings.clockIsland ? "Volume, brightness, layout and notifications show in the clock for a moment"
             : "Those show as separate toasts under the bar"
 
-        Row {
+        Switch {
             anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            FlyoutChip {
-                text: "Off"
-                selected: !Settings.clockIsland
-                onClicked: Settings.setClockIsland(false)
-            }
-            FlyoutChip {
-                text: "On"
-                selected: Settings.clockIsland
-                onClicked: Settings.setClockIsland(true)
-            }
+            checked: Settings.clockIsland
+            onToggled: Settings.setClockIsland(!Settings.clockIsland)
         }
     }
 
@@ -998,7 +965,7 @@ SettingsPage {
 
         FlyoutStepper {
             anchors.right: parent.right
-            width: Theme.fs(160)
+            width: Theme.fit(160)
             value: hi.live ? hi.field.value : 0
             minimum: hi.live ? hi.min : 0
             maximum: hi.live ? hi.max : 0
@@ -1023,7 +990,7 @@ SettingsPage {
 
         FlyoutStepper {
             anchors.right: parent.right
-            width: Theme.fs(160)
+            width: Theme.fit(160)
             value: Math.round(hp.pct / 5)
             // min == max when not editable, which greys both buttons
             minimum: hp.live ? Math.round(hp.min / 5) : 20
@@ -1046,21 +1013,11 @@ SettingsPage {
         hint: field.editable ? note : "Not a plain value in hyprland.lua"
         property string note: ""
 
-        Row {
+        Switch {
             anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            Repeater {
-                model: [{ text: "Off", value: false }, { text: "On", value: true }]
-                FlyoutChip {
-                    required property var modelData
-                    text: modelData.text
-                    selected: ht.field.value === modelData.value
-                    enabled: ht.field.editable
-                    onClicked: if (!selected) page.setHypr(ht.path, ht.key, modelData.value,
-                        ht.label + " " + (modelData.value ? "on" : "off"))
-                }
-            }
+            checked: ht.field.value === true
+            enabled: ht.field.editable
+            onToggled: page.setHypr(ht.path, ht.key, !checked, ht.label + " " + (checked ? "off" : "on"))
         }
     }
 }

@@ -20,6 +20,20 @@ LazyLoader {
 
     function open(arg) {
         used = true
-        item.open(arg)
+        var w = item
+        // Torn down on close, so the next open builds a fresh window at its
+        // set size. Kept alive, Hyprland would remap it at whatever size it
+        // was dragged to. Hooked here rather than with Connections, since the
+        // loader's item isn't a property Connections sees change. Deferred:
+        // the window is still inside its own handler.
+        if (hooked !== w) {
+            hooked = w
+            w.visibleChanged.connect(() => {
+                if (!w.visible) Qt.callLater(() => { if (root.item === w && !w.visible) root.used = false })
+            })
+        }
+        w.open(arg)
     }
+
+    property var hooked: null
 }

@@ -83,12 +83,11 @@ SettingsPage {
             : page.online ? "Joined to " + Network.ssid
             : "On, not joined to anything"
 
-        FlyoutChip {
+        Switch {
             anchors.right: parent.right
-            text: Network.powered ? "On" : "Off"
-            selected: Network.powered
+            checked: Network.powered
             enabled: Network.device !== ""
-            onClicked: {
+            onToggled: {
                 Network.setPowered(!Network.powered)
                 page.say(Network.powered ? "Radio off" : "Radio on", false)
             }

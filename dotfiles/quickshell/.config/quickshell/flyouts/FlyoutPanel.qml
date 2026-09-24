@@ -83,7 +83,7 @@ OverlayWindow {
         y: Theme.barPosition === "bottom"
             ? root.height - root.topOffset - height
             : root.topOffset
-        width: Math.round(root.menuWidth * Theme.fontScale)
+        width: Theme.fit(root.menuWidth)
         height: contentColumn.implicitHeight + Theme.panelPad * 2
 
         Behavior on height {
@@ -103,9 +103,9 @@ OverlayWindow {
             width: parent.width - Theme.panelPad * 2
             spacing: Theme.spaceM
 
-            // Marks where FlyoutSelect's open-dropdown z-raise (see that
-            // file) should stop climbing -- the same marker SettingsPage
-            // gives SettingsDropdown.
+            // Marks the page FlyoutSelect looks for when an open dropdown
+            // needs a box to put its overlay in (see that file) -- the same
+            // marker SettingsPage gives SettingsDropdown.
             readonly property bool isFlyoutPage: true
         }
     }
