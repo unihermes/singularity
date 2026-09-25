@@ -9,7 +9,10 @@
 // root and without touching the real sync db -- a `pacman -Sy` here would
 // set up a partial upgrade. `yay -Qua` asks the AUR's RPC for the rest.
 //
-// First check one minute after startup, then every half hour.
+// First check one minute after startup, then every Settings.updateInterval
+// minutes (Settings -> Software Update). Packages in Settings.updateIgnore
+// are left out of the count and the upgrade, and the AUR only counts while
+// Settings.updateAur is on.
 
 pragma Singleton
 
@@ -20,13 +23,18 @@ import QtQuick
 Singleton {
     id: root
 
-    // [{ name, from, to, aur }]
-    property var packages: []
+    // [{ name, from, to, aur }], everything the last check found
+    property var found: []
+    // what counts: the AUR's only while it's included, and nothing ignored
+    readonly property var packages: found.filter(p =>
+        (Settings.updateAur || !p.aur) && Settings.updateIgnore.indexOf(p.name) < 0)
     readonly property int count: packages.length
     readonly property int aurCount: packages.filter(p => p.aur).length
     readonly property bool available: availProbe.found      // checkupdates is installed
     property bool checking: false
     property var lastChecked: null
+    // when pacman last ran a full upgrade, from its log; null if never
+    property var lastUpgrade: null
 
     function refresh() {
         if (!available || checkProc.running) return
@@ -44,8 +52,17 @@ Singleton {
     // On success the terminal closes itself with a notification; on failure
     // it stays open so the error can be read. Either way the list is
     // re-checked once it closes.
+    // --repo leaves the AUR alone when it's not included; --ignore takes
+    // Settings.updateIgnore, which Settings has already limited to names.
     function update() {
         if (updateProc.running) return
+        var flags = (Settings.updateAur ? "" : " --repo")
+            + (Settings.updateIgnore.length > 0 ? " --ignore " + Settings.updateIgnore.join(",") : "")
+        updateProc.command = ["alacritty", "--class", "neutrino-update", "-e", "sh", "-c",
+            "yay -Syu" + flags + " --sudoloop --noconfirm --answerclean None --answerdiff None "
+            + "--answeredit None --removemake; "
+            + "if [ $? -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "
+            + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi"]
         updateProc.running = true
     }
 
@@ -63,11 +80,12 @@ Singleton {
             "out=$(checkupdates 2>/dev/null); rc=$?; "
             + "printf '%s\\n' \"$out\" | sed '/^$/d;s/^/repo /'; "
             + "echo \"REPO_STATUS $rc\"; "
-            + "if command -v yay >/dev/null; then "
+            + "if [ \"$AUR\" = 1 ] && command -v yay >/dev/null; then "
             + "out=$(yay -Qua 2>/dev/null); rc=$?; "
             + "printf '%s\\n' \"$out\" | sed '/^$/d;s/^/aur /'; "
             + "echo \"AUR_STATUS $rc\"; "
             + "else echo 'AUR_STATUS skip'; fi"]
+        environment: ({ AUR: Settings.updateAur ? "1" : "0" })
         stdout: StdioCollector {
             onStreamFinished: {
                 var repoStatus = null, aurStatus = null
@@ -86,38 +104,55 @@ Singleton {
                 }
                 var out = []
                 out = out.concat(repoStatus === "0" || repoStatus === "2"
-                    ? repo : root.packages.filter(p => !p.aur))
+                    ? repo : root.found.filter(p => !p.aur))
                 out = out.concat(aurStatus === "0" || aurStatus === "skip"
-                    ? aur : root.packages.filter(p => p.aur))
+                    ? aur : root.found.filter(p => p.aur))
                 out.sort((a, b) => a.name.localeCompare(b.name))
-                root.packages = out
+                root.found = out
                 root.lastChecked = new Date()
             }
         }
-        onExited: root.checking = false
+        onExited: {
+            root.checking = false
+            logProc.running = true
+        }
+    }
+
+    Process {
+        id: logProc
+        command: ["sh", "-c", "grep 'starting full system upgrade' /var/log/pacman.log | tail -n1"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var m = /^\[([^\]]+)\]/.exec(text.trim())
+                root.lastUpgrade = m ? new Date(m[1].replace(/([+-]\d\d)(\d\d)$/, "$1:$2")) : null
+            }
+        }
     }
 
     Process {
         id: updateProc
-        command: ["alacritty", "--class", "neutrino-update", "-e", "sh", "-c",
-            "yay -Syu --sudoloop --noconfirm --answerclean None --answerdiff None "
-            + "--answeredit None --removemake; "
-            + "if [ $? -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "
-            + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi"]
         onExited: root.refresh()
     }
 
     Timer {
         id: firstCheck
         interval: 60000
-        running: root.available
+        running: root.available && Settings.updateInterval > 0
         onTriggered: root.refresh()
     }
 
     Timer {
-        interval: 1800000
+        interval: Math.max(1, Settings.updateInterval) * 60000
         repeat: true
-        running: root.available
+        running: root.available && Settings.updateInterval > 0
         onTriggered: root.refresh()
     }
+
+    // taking the AUR back in needs a check to know what it has
+    Connections {
+        target: Settings
+        function onUpdateAurChanged() { if (Settings.updateAur) root.refresh() }
+    }
+
+    Component.onCompleted: logProc.running = true
 }

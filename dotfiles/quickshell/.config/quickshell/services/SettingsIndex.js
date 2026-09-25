@@ -178,6 +178,16 @@ var entries = [
     { page: "datetime", section: "Clock and calendar", label: "Hour format", keywords: "12 24 hour am pm clock" },
     { page: "datetime", section: "Clock and calendar", label: "First day of the week", keywords: "calendar monday sunday saturday week start" },
 
+    // --- Software Update ---------------------------------------------------
+    { page: "updates", section: "Checking", label: "Check for updates", keywords: "update interval how often pacman checkupdates schedule" },
+    { page: "updates", section: "Checking", label: "Include the AUR",   keywords: "aur yay packages" },
+    { page: "updates", section: "Checking", label: "Last checked",      keywords: "update check now refresh" },
+    { page: "updates", section: "Checking", label: "Last upgrade",      keywords: "pacman log syu upgraded" },
+    { page: "updates", section: "Pending",  label: "Pending",           keywords: "updates available upgrade now yay" },
+    { page: "updates", section: "Ignored",  label: "Ignored",           keywords: "ignorepkg hold skip packages" },
+    { page: "updates", section: "Ignored",  label: "Ignore a package",  keywords: "ignorepkg hold skip add" },
+    { page: "updates", section: "Maintenance", label: "Maintenance",    keywords: "orphans cache clean pacman" },
+
     // --- Input -------------------------------------------------------------
     { page: "input", section: "Keyboard", label: "Layout",            keywords: "xkb us de language" },
     { page: "input", section: "Keyboard", label: "Variant",           keywords: "xkb colemak dvorak" },

@@ -183,6 +183,18 @@ Singleton {
     readonly property alias weekStart: adapter.weekStart
     function setClock24(on) { adapter.clock24 = !!on }
     function setWeekStart(d) { if (d === 0 || d === 1 || d === 6) adapter.weekStart = d }
+    // Software Update: minutes between checks (0 checks only when asked),
+    // whether the AUR is checked and upgraded too, and packages left out of
+    // both the count and the upgrade
+    readonly property alias updateInterval: adapter.updateInterval
+    readonly property alias updateAur: adapter.updateAur
+    readonly property alias updateIgnore: adapter.updateIgnore
+    function setUpdateInterval(m) { adapter.updateInterval = Math.max(0, Math.min(10080, Math.round(m))) }
+    function setUpdateAur(on) { adapter.updateAur = !!on }
+    function setUpdateIgnore(list) {
+        var seen = {}
+        adapter.updateIgnore = list.map(n => String(n).trim()).filter(n => /^[a-z0-9@._+-]+$/i.test(n) && !seen[n] && (seen[n] = true)).sort()
+    }
 
     // --- Bar Widgets ---------------------------------------------------
     // Order and visibility of the bar's modules, edited from the Control
@@ -646,6 +658,9 @@ Singleton {
             property string weatherUnits: "F"
             property bool clock24: true
             property int weekStart: 1
+            property int updateInterval: 30
+            property bool updateAur: true
+            property var updateIgnore: []
             property string centreAnchor: "clock"
             property var barLayout: ({})
             property var barHidden: []
