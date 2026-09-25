@@ -137,7 +137,7 @@ FloatingWindow {
                 anchors.topMargin: Theme.spaceL
                 x: Theme.panelPad
                 width: parent.width - Theme.panelPad * 2
-                spacing: Theme.spaceXs
+                spacing: 0
 
                 Repeater {
                     model: root.pages
@@ -149,7 +149,7 @@ FloatingWindow {
                         icon: modelData.icon
                         label: modelData.label
                         blurb: modelData.blurb
-                        gapAbove: modelData.gap ? Theme.spaceXl : 0
+                        ruleAbove: !!modelData.gap
                         selected: root.currentPage === modelData.id
                         onClicked: root.select(modelData.id)
                     }

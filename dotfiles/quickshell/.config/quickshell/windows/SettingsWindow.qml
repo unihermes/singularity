@@ -340,7 +340,7 @@ FloatingWindow {
                 Column {
                     id: listCol
                     width: list.width
-                    spacing: Theme.spaceXs
+                    spacing: 0
 
                     Repeater {
                         model: root.rows
@@ -352,7 +352,7 @@ FloatingWindow {
                             number: modelData.number
                             label: modelData.label
                             blurb: modelData.blurb
-                            gapAbove: modelData.gap ? Theme.spaceXl : 0
+                            ruleAbove: !!modelData.gap
                             selected: modelData.isPage && root.currentPage === modelData.page
                             current: root.searchFocused && root.cursor === index
                             onHovered: if (root.searchFocused) root.cursor = index

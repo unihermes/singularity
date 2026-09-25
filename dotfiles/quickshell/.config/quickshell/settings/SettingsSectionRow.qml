@@ -7,8 +7,8 @@
 // it lives on, with that page's icon -- so the list looks the same whether
 // it's the sections or what matched.
 //
-// Sections come in groups, set apart by `gapAbove` on each group's first
-// row.
+// Sections come in groups, set apart by a rule over each group's first row
+// (`ruleAbove`).
 //
 // Two ways to be lit: `selected` is the page on show (a stroke and a
 // chevron), `current` is where the arrow keys are while the search field
@@ -28,20 +28,31 @@ Item {
     property bool selected: false
     property bool current: false
 
-    // space over the row, to set it apart from the group above; not part
+    // a rule over the row, setting it apart from the group above; not part
     // of what lights up or takes the click
-    property int gapAbove: 0
+    property bool ruleAbove: false
+    readonly property int ruleSpace: ruleAbove ? Theme.spaceM + Theme.borderWidth : 0
 
     signal clicked()
     signal hovered()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.fieldHeight + Theme.spaceL + gapAbove
+    // just clear of the two lines of text, so a long list fits unscrolled
+    implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceS) + ruleSpace
+
+    Rectangle {
+        visible: root.ruleAbove
+        x: Theme.spaceL
+        y: Math.round((root.ruleSpace - height) / 2)
+        width: parent.width - Theme.spaceL * 2
+        height: Theme.borderWidth
+        color: Theme.stroke
+    }
 
     Item {
-        y: root.gapAbove
+        y: root.ruleSpace
         width: parent.width
-        height: parent.height - root.gapAbove
+        height: parent.height - root.ruleSpace
 
         Rectangle {
             anchors.fill: parent
@@ -82,6 +93,7 @@ Item {
         }
 
         Column {
+            id: texts
             anchors.left: iconCell.right
             anchors.leftMargin: Theme.spaceM
             anchors.right: chevron.left
