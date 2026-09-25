@@ -14,5 +14,5 @@ dotfiles/nvim/.local/
 # itself is a build artifact, not a dotfile.
 dotfiles/hypr/.config/hypr/alttab-relay
 
-# per-machine Claude Code settings
-.claude/settings.local.json
+# Claude Code settings
+.claude/
