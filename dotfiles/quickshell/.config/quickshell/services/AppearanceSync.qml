@@ -281,6 +281,12 @@ Scope {
     // links, primary buttons) and blue (the selected urlbar result) in place
     // of the system colours above. They're all variables on :root; unlayered
     // !important here outranks the browser's layered tokens.
+    // The line over the selected tab (.tab-context-line, Floorp's Photon UI)
+    // is --tab-line-color, which Lepton sets on #tabbrowser-tabs and on the
+    // line itself rather than inheriting it from :root, so it's set on all three.
+    // Lepton tells the selected tab by [selected="true"], but Gecko now sets
+    // `selected` bare, so its rules hide the line there (and grey it on hover);
+    // the last rule shows it on the tabs that are actually selected.
     function browserChrome() {
         var a = hex(Theme.accent), t = hex(onAccent())
         var vars = {
@@ -295,7 +301,15 @@ Scope {
         }
         var lines = [":root {"]
         for (var k in vars) lines.push("  " + k + ": " + vars[k] + " !important;")
-        lines.push("}")
+        lines.push("}", ":root, #tabbrowser-tabs, .tab-context-line {",
+            "  --tab-line-color: " + a + " !important;",
+            "  --lwt-tab-line-color: " + a + " !important;",
+            "}",
+            ".tabbrowser-tab:is([selected], [multiselected]) .tab-context-line {",
+            "  background-color: " + a + " !important;",
+            "  opacity: 1 !important;",
+            "  transform: none !important;",
+            "}")
         return lines
     }
 
