@@ -16,6 +16,8 @@ set -euo pipefail
 # relative to this script's real location, so the repo can live anywhere
 wallpaper_dir="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../../wallpapers")"
 state="$HOME/.local/state/neutrino/wallpaper.state"
+# the image on screen, for hyprlock.conf's background
+current_link="$HOME/.local/state/neutrino/current-wallpaper"
 
 list() {
   find "$wallpaper_dir" -maxdepth 1 -type f \
@@ -27,6 +29,8 @@ list() {
 # of bare background between them.
 show() {
   local old
+  mkdir -p "${current_link%/*}"
+  ln -sfn "$1" "$current_link"
   old=$(pgrep -x swaybg || true)
   swaybg -i "$1" -m fill &>/dev/null &
   disown
