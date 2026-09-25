@@ -103,7 +103,7 @@ FlyoutPanel {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             text: Weather.failed ? "Last update failed"
-                : Weather.updated ? "Updated " + Qt.formatTime(Weather.updated, "HH:mm") : ""
+                : Weather.updated ? "Updated " + Qt.formatTime(Weather.updated, Theme.timeFormat) : ""
             color: Weather.failed ? Theme.alert : Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall

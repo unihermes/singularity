@@ -170,6 +170,14 @@ var entries = [
     { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam blink" },
     { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc shortcut command" },
 
+    // --- Date & Time -------------------------------------------------------
+    { page: "datetime", section: "Time zone", label: "Now",          keywords: "clock current time date utc offset" },
+    { page: "datetime", section: "Time zone", label: "Region",       keywords: "timezone continent area" },
+    { page: "datetime", section: "Time zone", label: "Time zone",    keywords: "timezone tz city location timedatectl" },
+    { page: "datetime", section: "Time zone", label: "Set time automatically", keywords: "ntp network time sync timesyncd" },
+    { page: "datetime", section: "Clock and calendar", label: "Hour format", keywords: "12 24 hour am pm clock" },
+    { page: "datetime", section: "Clock and calendar", label: "First day of the week", keywords: "calendar monday sunday saturday week start" },
+
     // --- Input -------------------------------------------------------------
     { page: "input", section: "Keyboard", label: "Layout",            keywords: "xkb us de language" },
     { page: "input", section: "Keyboard", label: "Variant",           keywords: "xkb colemak dvorak" },

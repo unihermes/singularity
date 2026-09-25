@@ -2,9 +2,10 @@
 // ~/.config/quickshell/flyouts/CalendarFlyout.qml
 //
 // The clock module's calendar flyout, split out of shell.qml. Needs only
-// Theme -- no bar or root state.
+// Theme and Settings -- no bar or root state.
 //
-// A plain month view: page back and forth, and today is highlighted.
+// A plain month view: page back and forth, and today is highlighted. Weeks
+// start on the day Settings -> Date & Time picks (Settings.weekStart).
 
 import QtQuick
 import "../services"
@@ -17,15 +18,16 @@ FlyoutPanel {
     // offset in months from the current one, so the flyout can page
     // back and forth without tracking a whole date
     property int monthOffset: 0
-    readonly property date shown: {
-        var d = new Date()
-        return new Date(d.getFullYear(), d.getMonth() + monthOffset, 1)
-    }
+    // today, taken at each open so a new day or time zone shows
+    property date now: new Date()
+    readonly property date shown: new Date(now.getFullYear(), now.getMonth() + monthOffset, 1)
 
     // reset to this month every time it opens, so it never comes
     // back up three months deep from last time
-    onOpenChanged: if (open)
+    onOpenChanged: if (open) {
         monthOffset = 0
+        now = new Date()
+    }
 
     Item {
         width: parent.width
@@ -77,7 +79,11 @@ FlyoutPanel {
         spacing: 0
 
         Repeater {
-            model: ["M", "T", "W", "T", "F", "S", "S"]
+            // Sunday-first, rotated to the chosen first day
+            model: {
+                var d = ["S", "M", "T", "W", "T", "F", "S"]
+                return d.slice(Settings.weekStart).concat(d.slice(0, Settings.weekStart))
+            }
 
             Text {
                 required property var modelData
@@ -100,13 +106,9 @@ FlyoutPanel {
                 width: calendarFlyout.contentColumn.width / 7
                 height: Theme.row(22)
 
-                // Monday-first: JS getDay() is Sunday-first, so
-                // Sunday (0) becomes 6 and everything else shifts
-                // down one.
-                readonly property int firstDow: {
-                    var d = calendarFlyout.shown.getDay()
-                    return d === 0 ? 6 : d - 1
-                }
+                // the 1st's column: JS getDay() is Sunday-first
+                readonly property int firstDow:
+                    (calendarFlyout.shown.getDay() - Settings.weekStart + 7) % 7
                 readonly property int daysInMonth: {
                     var s = calendarFlyout.shown
                     return new Date(s.getFullYear(), s.getMonth() + 1, 0).getDate()
@@ -115,9 +117,8 @@ FlyoutPanel {
                 readonly property bool inMonth: dayNum >= 1 && dayNum <= daysInMonth
                 readonly property bool isToday: {
                     if (!inMonth) return false
-                    var n = new Date()
                     return calendarFlyout.monthOffset === 0
-                        && n.getDate() === dayNum
+                        && calendarFlyout.now.getDate() === dayNum
                 }
 
                 Rectangle {

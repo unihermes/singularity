@@ -301,6 +301,12 @@ Singleton {
     // "pills", "numbers" or "blocks" / "stamp", "time" or "day" -- Looks.js
     readonly property string workspaceStyle: Settings.workspaceStyle
     readonly property string clockStyle: Settings.clockStyle
+    // A Qt date format with its 24-hour fields turned 12-hour when Date &
+    // Time asks for that; every clock in the shell formats through this.
+    function hours(fmt) {
+        return Settings.clock24 ? fmt : fmt.replace(/HH:mm(:ss)?/g, "h:mm$1 AP")
+    }
+    readonly property string timeFormat: hours("HH:mm")
     // "outline", "filled", "flat" or "pill" -- see Looks.js
     readonly property string moduleStyle: Settings.moduleStyle
 

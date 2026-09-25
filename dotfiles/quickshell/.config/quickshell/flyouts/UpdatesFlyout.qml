@@ -69,7 +69,7 @@ FlyoutPanel {
 
     FlyoutRow {
         label: Updates.checking ? "Checking..." : "Check again"
-        trailing: Updates.lastChecked ? Qt.formatTime(Updates.lastChecked, "HH:mm") : ""
+        trailing: Updates.lastChecked ? Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
         enabled: !Updates.checking
         onActivated: Updates.refresh()
     }

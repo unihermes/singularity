@@ -176,6 +176,13 @@ Singleton {
     // "F" or "C", switched from the weather flyout
     readonly property alias weatherUnits: adapter.weatherUnits
     function setWeatherUnits(u) { adapter.weatherUnits = (u === "C") ? "C" : "F" }
+    // Date & Time: the hour format every clock in the shell uses, and the
+    // calendar's first weekday (0 Sunday .. 6 Saturday). System
+    // preferences like weatherUnits, so no look or reset touches them.
+    readonly property alias clock24: adapter.clock24
+    readonly property alias weekStart: adapter.weekStart
+    function setClock24(on) { adapter.clock24 = !!on }
+    function setWeekStart(d) { if (d === 0 || d === 1 || d === 6) adapter.weekStart = d }
 
     // --- Bar Widgets ---------------------------------------------------
     // Order and visibility of the bar's modules, edited from the Control
@@ -637,6 +644,8 @@ Singleton {
             property bool clockIsland: true
             property int nightLightKelvin: 4000
             property string weatherUnits: "F"
+            property bool clock24: true
+            property int weekStart: 1
             property string centreAnchor: "clock"
             property var barLayout: ({})
             property var barHidden: []

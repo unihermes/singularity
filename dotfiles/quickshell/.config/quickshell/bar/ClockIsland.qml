@@ -45,7 +45,7 @@ BarModule {
         long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
     })
     readonly property string timeText: Qt.formatDateTime(clockSource.date,
-        formats[Theme.clockStyle] || formats.stamp)
+        Theme.hours(formats[Theme.clockStyle] || formats.stamp))
 
     // the time's own width, so a level can take the chip over without the
     // modules either side of it moving
