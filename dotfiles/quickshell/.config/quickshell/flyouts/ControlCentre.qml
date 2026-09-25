@@ -562,6 +562,15 @@ FlyoutPanel {
             onMoved: v => Settings.set("barOpacity", v)
         }
 
+        FlyoutSliderRow {
+            label: "Text size"
+            suffix: "px"
+            value: Settings.barFontSize
+            minimum: Settings.limits.barFontSize.min
+            maximum: Settings.limits.barFontSize.max
+            onMoved: v => Settings.set("barFontSize", v)
+        }
+
         // --- Text & motion ---
 
         FlyoutHeading { text: "TEXT & MOTION" }
