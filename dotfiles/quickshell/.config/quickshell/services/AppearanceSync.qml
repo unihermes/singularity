@@ -163,8 +163,8 @@ Scope {
             "cursor = " + q(hex(Theme.bright)),
             "text = " + q(hex(Theme.base)),
             "", "[colors.selection]",
-            "background = " + q(hex(Theme.border)),
-            "text = " + q(hex(Theme.bright)),
+            "background = " + q(hex(Theme.accent)),
+            "text = " + q(hex(onAccent())),
             "", "[colors.normal]",
             "black = " + q(hex(Theme.surface))]
         for (var i = 1; i < 7; i++)
