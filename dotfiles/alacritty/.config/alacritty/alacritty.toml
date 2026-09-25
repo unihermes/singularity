@@ -6,7 +6,7 @@ import = ["~/.local/state/neutrino/alacritty.toml"]
 
 [window]
 padding = { x = 12, y = 10 }
-opacity = 0.94
+opacity = 0.85
 decorations = "none"
 dynamic_padding = true
 
