@@ -10,7 +10,7 @@
 // Slider.qml's 0..100, mapped onto minimum..maximum here.
 //
 // `live: false` holds the value back until the drag lets go, with the
-// handle and readout following the pointer meanwhile. For Font Size: every
+// fill and readout following the pointer meanwhile. For Font Size: every
 // step rescales the whole panel, which moved the slider out from under the
 // pointer mid-drag, so each step landed somewhere other than where you
 // were aiming.
