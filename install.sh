@@ -138,6 +138,27 @@ if [[ $(gsettings get org.gnome.desktop.wm.preferences button-layout 2>/dev/null
   warn "logged-in session or GTK4 apps will keep their headerbar buttons."
 fi
 
+# Claude Code: the shell writes ~/.claude/themes/singularity.json from the
+# look (AppearanceSync), and this selects it. settings.json is Claude Code's
+# own file, so it's edited in place rather than stowed, and a theme picked
+# with /theme since is left alone -- only unset or built-in dark is replaced.
+python3 - <<'PY' || warn "could not select the Claude Code theme -- pick Singularity under /theme"
+import json, os
+path = os.path.expanduser("~/.claude/settings.json")
+try:
+    with open(path) as f:
+        settings = json.load(f)
+except FileNotFoundError:
+    settings = {}
+if settings.get("theme", "dark") == "dark":
+    settings["theme"] = "custom:singularity"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + ".new", "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+    os.replace(path + ".new", path)
+PY
+
 # --- boot verbosity ------------------------------------------------------
 # Quiet by default: no kernel or unit output on startup or shutdown. Set
 # BOOT_VERBOSE=1 to get systemd's [ OK ] lines back, which is worth doing when

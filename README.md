@@ -259,6 +259,15 @@ live. Syntax stays in lightness and weight; the accent marks the current
 line number, tab, search hit and editing modes, and good/alert colour added
 and removed lines and errors. Without the file, nvim uses Neutrino's ramp.
 
+Claude Code gets a theme from the shell as well: `AppearanceSync.qml` writes
+`~/.claude/themes/singularity.json` over Claude's dark or light base, with the
+look's ramp for text and chrome, the accent for Claude's own marks, and good
+and alert for success and error. `install.sh` selects it in
+`~/.claude/settings.json` (`"theme": "custom:singularity"`) unless another
+theme has been picked; `/theme` switches between it and the built-ins.
+Claude Code reads new theme files at start, so restart a running session
+the first time.
+
 ## Editor
 
 nvim is [LazyVim](https://lazyvim.org), copied from its official starter,
