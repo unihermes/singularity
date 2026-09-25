@@ -23,6 +23,8 @@ Item {
     // something is in flight (connecting, pairing): the trailing text
     // pulses until it settles, and the row stops taking clicks
     property bool busy: false
+    // the label reports a failure (a refresh that didn't land)
+    property bool alert: false
 
     signal activated()
 
@@ -70,6 +72,7 @@ Item {
         text: root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
         elide: Text.ElideRight
         color: {
+            if (root.alert) return Theme.alert
             if (!root.enabled) return Theme.subtext
             if (root.highlighted || mouse.containsMouse) return Theme.textStrong
             return Theme.text

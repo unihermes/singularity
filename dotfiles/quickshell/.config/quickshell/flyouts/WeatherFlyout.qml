@@ -139,6 +139,7 @@ FlyoutPanel {
             : Weather.failed ? "Update failed, try again" : "Refresh"
         trailing: Weather.updated ? Qt.formatTime(Weather.updated, Theme.timeFormat) : ""
         busy: Weather.fetching
+        alert: Weather.failed && !Weather.fetching
         onActivated: Weather.refresh()
     }
 }
