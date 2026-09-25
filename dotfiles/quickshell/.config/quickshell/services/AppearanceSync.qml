@@ -278,8 +278,8 @@ Scope {
     }
 
     // Floorp's lightweight theme hard-codes cyan (the urlbar's focus ring,
-    // links, primary buttons), blue (the selected urlbar result) and the
-    // toolbar's grey (the selected tab) in place of the system colours above. They're all variables on :root; unlayered
+    // links, primary buttons) and blue (the selected urlbar result) in place
+    // of the system colours above. They're all variables on :root; unlayered
     // !important here outranks the browser's layered tokens.
     function browserChrome() {
         var a = hex(Theme.accent), t = hex(onAccent())
@@ -292,10 +292,6 @@ Scope {
             "--button-text-color-primary": t,
             "--urlbarview-background-color-selected": a,
             "--urlbarview-text-color-selected": t,
-            "--tab-background-color-selected": a,
-            "--tab-selected-bgcolor": a,
-            "--tab-selected-textcolor": t,
-            "--lwt-tab-line-color": a,
         }
         var lines = [":root {"]
         for (var k in vars) lines.push("  " + k + ": " + vars[k] + " !important;")
