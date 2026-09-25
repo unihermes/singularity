@@ -34,6 +34,7 @@ Singleton {
     property var forecast: []
     property var updated: null
     property bool failed: false
+    readonly property bool fetching: fetch.running
 
     readonly property bool metric: Settings.weatherUnits === "C"
 

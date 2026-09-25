@@ -54,6 +54,15 @@ FlyoutPanel {
 
     FlyoutHeading { text: "FORECAST" }
 
+    // hi and lo each get a column as wide as the widest reading, so the
+    // figures line up down the list whatever their digit count
+    TextMetrics {
+        id: tempMetrics
+        font.family: Theme.fontText
+        font.pixelSize: Theme.fontBody
+        text: "-00°"
+    }
+
     Repeater {
         model: Weather.forecast
 
@@ -64,29 +73,52 @@ FlyoutPanel {
             height: Theme.rowHeight
 
             Text {
+                id: day
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fs(56)
+                width: Theme.fit(48)
                 text: index === 0 ? "Today"
                     : Qt.formatDate(new Date(modelData.date + "T12:00:00"), "ddd")
                 color: Theme.text
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
-            Text {
-                x: Theme.fs(60)
 
+            // fixed-width cell, as in FlyoutAction: glyph advances vary
+            Item {
+                anchors.left: day.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: Weather.iconFor(modelData.code, false)
-                color: Theme.text
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontIconSize
+                width: Theme.iconCell
+                height: parent.height
+
+                Text {
+                    anchors.centerIn: parent
+                    text: Weather.iconFor(modelData.code, false)
+                    color: Theme.text
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontIconSize
+                }
+            }
+
+            Text {
+                anchors.right: lo.left
+                anchors.rightMargin: Theme.spaceL
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.ceil(tempMetrics.advanceWidth)
+                horizontalAlignment: Text.AlignRight
+                text: Weather.temp(modelData.hiF, modelData.hiC)
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
             }
             Text {
+                id: lo
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: Weather.temp(modelData.hiF, modelData.hiC) + "  /  " + Weather.temp(modelData.loF, modelData.loC)
-                color: Theme.textStrong
+                width: Math.ceil(tempMetrics.advanceWidth)
+                horizontalAlignment: Text.AlignRight
+                text: Weather.temp(modelData.loF, modelData.loC)
+                color: Theme.subtext
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
@@ -95,32 +127,18 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    Item {
-        width: parent.width
-        height: Theme.row(22)
+    FlyoutSegmented {
+        label: "Units"
+        model: [{ value: false, text: "°F" }, { value: true, text: "°C" }]
+        current: Weather.metric
+        onPicked: v => Settings.setWeatherUnits(v ? "C" : "F")
+    }
 
-        Text {
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            text: Weather.failed ? "Last update failed"
-                : Weather.updated ? "Updated " + Qt.formatTime(Weather.updated, Theme.timeFormat) : ""
-            color: Weather.failed ? Theme.alert : Theme.subtext
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontSmall
-        }
-
-        Row {
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceS
-            FlyoutSegmented {
-                fill: false
-                anchors.verticalCenter: parent.verticalCenter
-                model: [{ value: false, text: "°F" }, { value: true, text: "°C" }]
-                current: Weather.metric
-                onPicked: v => Settings.setWeatherUnits(v ? "C" : "F")
-            }
-            FlyoutChip { glyph: true; text: "󰑐"; onClicked: Weather.refresh() }
-        }
+    FlyoutRow {
+        label: Weather.fetching ? "Refreshing..."
+            : Weather.failed ? "Update failed, try again" : "Refresh"
+        trailing: Weather.updated ? Qt.formatTime(Weather.updated, Theme.timeFormat) : ""
+        busy: Weather.fetching
+        onActivated: Weather.refresh()
     }
 }
