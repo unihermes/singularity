@@ -183,10 +183,6 @@ Singleton {
     readonly property alias weekStart: adapter.weekStart
     function setClock24(on) { adapter.clock24 = !!on }
     function setWeekStart(d) { if (d === 0 || d === 1 || d === 6) adapter.weekStart = d }
-    // the Settings window's page when it was last closed, which the next
-    // plain open returns to
-    readonly property alias settingsPage: adapter.settingsPage
-    function setSettingsPage(id) { adapter.settingsPage = String(id) }
     // Software Update: minutes between checks (0 checks only when asked),
     // whether the AUR is checked and upgraded too, and packages left out of
     // both the count and the upgrade
@@ -665,7 +661,6 @@ Singleton {
             property int updateInterval: 30
             property bool updateAur: true
             property var updateIgnore: []
-            property string settingsPage: ""
             property string centreAnchor: "clock"
             property var barLayout: ({})
             property var barHidden: []

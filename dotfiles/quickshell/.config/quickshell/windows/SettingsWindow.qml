@@ -18,11 +18,10 @@
 // scroll to it and ring it. Escape clears the query, then leaves the bar,
 // then closes the window.
 //
-// A plain open returns to the page last shown (Settings.settingsPage, kept
-// across restarts), or Network the first time; open(page) goes to that page.
-// The page is a Loader that only exists while the window is visible, so
-// nothing a page read or ran survives a close -- and nothing runs at all
-// while Settings is shut.
+// No memory: every open starts on Appearance (or the page open() is asked
+// for), and the page is a Loader that only exists while the window is
+// visible, so nothing a page read or ran survives a close -- and nothing runs
+// at all while Settings is shut.
 //
 // Floating and centring come from the "quickshell-windows" rule in
 // hyprland.lua, as for System.
@@ -38,11 +37,8 @@ import "../services/SettingsIndex.js" as SettingsIndex
 FloatingWindow {
     id: root
 
-    // the sidebar's first page, for a first open or a remembered page
-    // that no longer exists
-    readonly property string defaultPage: "network"
+    readonly property string defaultPage: "appearance"
     property string currentPage: defaultPage
-    onCurrentPageChanged: Settings.setSettingsPage(currentPage)
     // the setting a search result picked, for the page to scroll to and ring
     property string highlight: ""
 
@@ -57,10 +53,9 @@ FloatingWindow {
     implicitWidth: Theme.windowSize.width
     implicitHeight: Theme.windowSize.height
 
-    // no page (or an unknown one) goes back to the last page open
+    // an unknown or empty page opens the default one
     function open(page) {
-        var known = id => pages.some(p => p.id === id)
-        currentPage = known(page) ? page : known(Settings.settingsPage) ? Settings.settingsPage : defaultPage
+        currentPage = pages.some(p => p.id === page) ? page : defaultPage
         highlight = ""
         field.text = ""
         visible = true
