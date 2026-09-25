@@ -33,7 +33,12 @@ Rectangle {
         anchors.fill: parent
         visible: Theme.frameDouble
         anchors.margins: Theme.frameInset
-        radius: Math.max(0, Theme.radius - Theme.frameInset)
+        // follows the outer corners, so a panel with some corners squared
+        // off keeps both strokes parallel
+        topLeftRadius: Math.max(0, root.topLeftRadius - Theme.frameInset)
+        topRightRadius: Math.max(0, root.topRightRadius - Theme.frameInset)
+        bottomLeftRadius: Math.max(0, root.bottomLeftRadius - Theme.frameInset)
+        bottomRightRadius: Math.max(0, root.bottomRightRadius - Theme.frameInset)
         color: "transparent"
         border.width: Theme.borderWidth
         border.color: Theme.frameStroke

@@ -2,10 +2,9 @@
 // ~/.config/quickshell/flyouts/ReloadToast.qml
 //
 // Stands in for Quickshell's own reload popup: a panel tucked into the corner
-// where the bar's left end meets the screen edge, flush with both. The
-// corners against the bar and the screen edge are square, like the notch's;
-// only the far one is rounded. A good reload fades on its own; a failed one
-// shows the error and stays until clicked or its longer timer runs out.
+// where the bar's left end meets the screen edge, flush with both. A good
+// reload fades on its own; a failed one shows the error and stays until
+// clicked or its longer timer runs out.
 //
 // inhibitReloadPopup() only takes effect when called from inside the
 // reloadCompleted/reloadFailed handlers. A failed reload leaves the old
@@ -58,9 +57,10 @@ OverlayWindow {
         onTriggered: root.active = false
     }
 
-    // Clips a PanelFrame that runs past it on the two flush sides, so every
-    // frame style keeps its strokes on the open sides only and the corners
-    // against the bar and the screen edge come out square.
+    // Clips a PanelFrame that runs past it on the bar's side, so every frame
+    // style keeps its strokes along the screen edge and the open sides but
+    // none against the bar. The corners on the bar and the screen edge are
+    // square; only the far one is rounded.
     Item {
         id: box
         readonly property int bleed: Theme.frameInset + Theme.borderWidth * 2
@@ -71,10 +71,11 @@ OverlayWindow {
         clip: true
 
         PanelFrame {
-            x: -box.bleed
             y: root.atBottom ? 0 : -box.bleed
-            width: box.width + box.bleed
+            width: box.width
             height: box.height + box.bleed
+            topLeftRadius: 0
+            bottomLeftRadius: 0
         }
 
         opacity: root.active ? 1 : 0
