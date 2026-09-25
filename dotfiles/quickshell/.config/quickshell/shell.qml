@@ -668,6 +668,7 @@ ShellRoot {
                         out.push({
                             ws: wss[i].id,
                             title: ipc && ipc.title ? ipc.title : (ipc && ipc.class ? ipc.class : "window"),
+                            cls: ipc && ipc.class ? ipc.class : "",
                             address: tls[j].address
                         })
                     }
