@@ -144,11 +144,12 @@ Scope {
         swayncReload.running = true
     }
 
-    // a + (b - a) * t per channel, as a hex
-    function mix(a, b, t) {
-        return hex(Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t,
-                           a.b + (b.b - a.b) * t, 1))
+    // a + (b - a) * t per channel, as a colour; mix() as a hex
+    function mixColor(a, b, t) {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t,
+                       a.b + (b.b - a.b) * t, 1)
     }
+    function mix(a, b, t) { return hex(mixColor(a, b, t)) }
 
     // The ANSI slots as a lightness ramp in the look's tones, the way the
     // repo's grayscale terminal always was: normal climbs muted -> text,
@@ -208,7 +209,7 @@ Scope {
         var rgb = c => "rgb(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + ","
             + Math.round(c.b * 255) + ")"
         var a = rgb(Theme.accent)
-        var shimmer = rgb(Qt.color(mix(Theme.accent, Theme.bright, 0.4)))
+        var shimmer = rgb(mixColor(Theme.accent, Theme.bright, 0.4))
         var o = {
             text: rgb(Theme.text), inverseText: rgb(Theme.base),
             inactive: rgb(Theme.subtext), inactiveShimmer: rgb(Theme.text),
