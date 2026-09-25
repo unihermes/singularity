@@ -897,6 +897,11 @@ ShellRoot {
             scope: screenScope
         }
 
+        // In place of Quickshell's own "reloaded" popup, on every screen
+        ReloadToast {
+            scope: screenScope
+        }
+
         // ALT+Tab. Shares openFlyout like everything else, so opening it
         // closes whatever was up.
         AltTabSwitcher {
