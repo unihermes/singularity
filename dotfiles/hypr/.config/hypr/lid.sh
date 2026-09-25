@@ -2,9 +2,10 @@
 # Singularity - lid
 # ~/.config/hypr/lid.sh
 #
-# Everything the lid does. Closing it turns the screen off, and five minutes
-# later suspends if it's still shut; an hour after it shut, the machine
-# hibernates. Opening it turns the screen back on and calls all of that off.
+# Everything the lid does. Closing it turns the screen off, and close_delay
+# later suspends if it's still shut (unless close_action is screen-off); an
+# hour after it shut, the machine hibernates. Opening it turns the screen
+# back on and calls all of that off.
 #
 #   lid.sh event    from hyprland.lua's lid-switch binds, on open and close
 #   lid.sh sleep    from hypridle's before_sleep_cmd, before every suspend
@@ -75,6 +76,9 @@
 set -u
 
 unit=singularity-lid-suspend
+# Settings -> Lock Screen edits these three in place
+close_action=suspend  # suspend | screen-off (never suspends on its own)
+lock_on_close=0    # 1: lock as soon as the lid shuts, not just before sleep
 close_delay=300    # lid shut this long -> suspend
 rewake_delay=60    # woke up with the lid still shut -> suspend again after this
 retry_delay=60     # suspend refused (a blocking inhibitor) -> try again
@@ -216,6 +220,7 @@ stay_dark() {
 
 arm() {
     disarm
+    [[ $close_action == suspend ]] || return 0
     systemd-run --user --quiet --collect --unit="$unit" \
         --on-active="$1" --timer-property=AccuracySec=1s \
         "$HOME/.config/hypr/lid.sh" fire \
@@ -242,6 +247,7 @@ event)
         else
             date +%s > "$closed_at"
             arm "$close_delay"
+            (( lock_on_close )) && { pidof hyprlock >/dev/null || loginctl lock-session; }
             blank
         fi
     else

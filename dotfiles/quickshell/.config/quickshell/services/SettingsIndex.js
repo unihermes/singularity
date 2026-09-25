@@ -46,6 +46,17 @@ var entries = [
     { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger" },
     { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
+    // --- Lock Screen -------------------------------------------------------
+    { page: "lockscreen", section: "Look",     label: "Background",   keywords: "hyprlock wallpaper screenshot plain image" },
+    { page: "lockscreen", section: "Look",     label: "Blur",         keywords: "hyprlock blur_passes background" },
+    { page: "lockscreen", section: "Look",     label: "Dim",          keywords: "hyprlock brightness darken background" },
+    { page: "lockscreen", section: "Look",     label: "Clock",        keywords: "hyprlock time 12 24 hour seconds date" },
+    { page: "lockscreen", section: "Look",     label: "Lock now",     keywords: "hyprlock preview test" },
+    { page: "lockscreen", section: "Password", label: "Grace period", keywords: "hyprlock grace delay password unlock idle" },
+    { page: "lockscreen", section: "Lid",      label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh" },
+    { page: "lockscreen", section: "Lid",      label: "Suspend after", keywords: "lid close delay minutes sleep" },
+    { page: "lockscreen", section: "Lid",      label: "Lock right away", keywords: "lid close lock immediately" },
+
     // --- Appearance --------------------------------------------------------
     { page: "appearance", section: "Look",          label: "Look",                 keywords: "theme preset style" },
     { page: "appearance", section: "Look",          label: "Reset look",           keywords: "revert default" },
