@@ -51,10 +51,13 @@ end
 local animMode   = singularityState("animations", "normal")
 local animFactor = animMode == "fast" and 0.5 or 1
 
--- How windows open and close, picked on the Appearance page. "fade" is
--- popin at full size, so the window only fades.
+-- How windows open, close, minimize and restore, picked on the Appearance
+-- page. "fade" is popin at full size, so the window only fades. SUPER+C
+-- follows the same choice by hand; see toggleMinimize() below.
 local windowStyles = { popin = "popin 92%", slide = "slide", fade = "popin 100%" }
-local windowStyle  = windowStyles[singularityState("window-anim", "popin")] or windowStyles.popin
+local windowAnim   = singularityState("window-anim", "popin")
+if not windowStyles[windowAnim] then windowAnim = "popin" end
+local windowStyle  = windowStyles[windowAnim]
 
 -- "<active> <inactive>" border colours, written by the Appearance page when
 -- borders follow the shell's accent; otherwise absent, and the colours
@@ -268,11 +271,14 @@ hl.config({
 hl.curve("neutrino", { type = "bezier", points = { {0.22, 1}, {0.36, 1} } })
 
 -- speed is in 100ms units (3 = 300ms), so lower is faster
+-- SUPER+C times its hand-made animations by these; see toggleMinimize() below
+local windowSpeed = 2
+local fadeSpeed = 1.5
 animation({ leaf = "global",     enabled = true, speed = 3, bezier = "neutrino" })
 animation({ leaf = "border",     enabled = true, speed = 3, bezier = "neutrino" })
-animation({ leaf = "windows",    enabled = true, speed = 2, bezier = "neutrino", style = windowStyle })
+animation({ leaf = "windows",    enabled = true, speed = windowSpeed, bezier = "neutrino", style = windowStyle })
 animation({ leaf = "windowsOut", enabled = true, speed = 1.5, bezier = "neutrino", style = windowStyle })
-animation({ leaf = "fade",       enabled = true, speed = 1.5, bezier = "neutrino" })
+animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, bezier = "neutrino" })
 animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "neutrino", style = "slidefade 12%" })
 
 -- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which
@@ -711,7 +717,11 @@ end
 -- Per-window state this config keeps on top of Hyprland's own, by address:
 --   small     -- unmaximized on purpose (SUPER+equal), so refocusing it does
 --                not immediately undo the choice; see toggleMaximize() below
---   minimized -- the {x, y} SUPER+C hid it from; see toggleMinimize() below
+--   minimized -- the {x, y, w, h} SUPER+C hid it from, and whether it was
+--                tiled (and fullscreen) before being floated to hide it;
+--                see toggleMinimize() below
+--   hideGen   -- bumped by every hide and restore, so a hide's delayed
+--                second step skips a window brought back in the meantime
 --   restore   -- the {x, y, w, h} a non-monocle floater had before it was
 --                filled; see fillFloating() below
 -- Cleared by a window.close hook further down: Hyprland reuses addresses,
@@ -726,12 +736,91 @@ local function stateOf(addr)
     return st
 end
 
--- Puts a SUPER+C-hidden window back where it was and forgets it was hidden.
+-- SUPER+C also writes what it saved to a tag on the window, since
+-- windowState doesn't survive a config reload and the Appearance page
+-- reloads for most of its settings. A window hidden across one would
+-- otherwise never come back. Tags set by dispatch outlive a reload.
+local function minimizedTag(m)
+    return string.format("minimized_%d_%d_%d_%d_%d_%d",
+        m.x, m.y, m.w, m.h, m.tiled and 1 or 0, m.fullscreen)
+end
+
+local function setProp(addr, prop, value)
+    hl.dispatch(hl.dsp.window.set_prop({ prop = prop, value = value, window = addr }))
+end
+
+-- Sizes and places a floater at r = {x, y, w, h}: animated with the
+-- windows curve, or in one jump. Hyprland reads no_anim when it next draws,
+-- not when the move is dispatched, so the jump holds it for a moment before
+-- clearing it and calling andThen, which may animate again.
+local function moveTo(addr, r)
+    hl.dispatch(hl.dsp.window.resize({ x = r.w, y = r.h, window = addr }))
+    hl.dispatch(hl.dsp.window.move({ x = r.x, y = r.y, window = addr }))
+end
+local function jumpTo(addr, r, andThen)
+    setProp(addr, "no_anim", "1")
+    moveTo(addr, r)
+    hl.timer(function()
+        setProp(addr, "no_anim", "0")
+        if andThen then andThen() end
+    end, { timeout = 30, type = "oneshot" })
+end
+
+-- Calls fn once an animation of the given speed has played out.
+local function afterAnimation(speed, fn)
+    if animMode == "off" then
+        fn()
+    else
+        hl.timer(fn, { timeout = math.floor(speed * 100 * animFactor), type = "oneshot" })
+    end
+end
+
+-- r at popin's starting size (windowStyles.popin), around the same centre.
+local function shrunk(r)
+    local w, h = math.floor(r.w * 0.92), math.floor(r.h * 0.92)
+    return { x = r.x + (r.w - w) // 2, y = r.y + (r.h - h) // 2, w = w, h = h }
+end
+
+-- Puts a SUPER+C-hidden window back where it was and forgets it was
+-- hidden: slid back up, or faded in where it was (growing from popin's
+-- size for pop), and tiled again if it was tiled.
 local function restoreMinimized(win)
     local st = stateOf(win.address)
     local saved = st.minimized
     st.minimized = nil
-    hl.dispatch(hl.dsp.window.move({ x = saved.x, y = saved.y, window = "address:" .. win.address }))
+    st.hideGen = (st.hideGen or 0) + 1
+    local gen = st.hideGen
+    local addr = "address:" .. win.address
+    hl.dispatch(hl.dsp.window.tag({ tag = "-" .. minimizedTag(saved), window = addr }))
+
+    -- skipped if it was hidden again, or closed, in the meantime
+    local function current()
+        return windowState[win.address] == st and st.hideGen == gen
+    end
+    -- Tiled again only once it has arrived: a maximized window hides the
+    -- rest of the workspace, which would otherwise vanish while it's still
+    -- fading in.
+    local function retile()
+        if not current() then return end
+        hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
+        if saved.fullscreen ~= 0 then
+            hl.dispatch(hl.dsp.window.fullscreen({
+                mode = saved.fullscreen == 1 and "maximized" or "fullscreen", action = "set", window = addr }))
+        end
+    end
+    local function show()
+        if not current() then return end
+        if windowAnim ~= "fade" then moveTo(addr, saved) end
+        -- slide too: the window may have been hidden under another style
+        setProp(addr, "opacity", "1")
+        if saved.tiled then afterAnimation(windowSpeed, retile) end
+    end
+
+    if windowAnim == "slide" then
+        show()
+    else
+        jumpTo(addr, windowAnim == "popin" and shrunk(saved) or saved, show)
+    end
 end
 
 -- The monitor's usable rect (its resolution minus what the bar and other
@@ -904,7 +993,13 @@ local function maximizeFocused()
     -- A hidden window focused by any route (ALT+Tab, the overlay, the bar)
     -- is being asked for, so bring it back. Ahead of the monocle check since
     -- SUPER+C works in dwindle mode too.
-    if win and stateOf(win.address).minimized then restoreMinimized(win) end
+    -- Restoring puts it back as it was, so there's nothing left to do here
+    -- but raise it -- a re-fit now would cut the restore animation short.
+    if win and stateOf(win.address).minimized then
+        restoreMinimized(win)
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+        return
+    end
 
     -- normally already done by the window.fullscreen hook
     win = unflagFloating(win)
@@ -1043,8 +1138,17 @@ function toggleMaximize()
     end
 end
 
--- Hides window below screen or restores it. Refocusing a hidden window any
--- other way restores it too -- see maximizeFocused() above.
+-- Hides a window below the screen, or restores it, the way windows open
+-- and close (windowAnim): slid down, or faded out where it is (shrinking to
+-- popin's size for pop) and only then moved away. It stays transparent
+-- while hidden, so the fade back in starts from nothing. A tiled window is
+-- floated where it is first, since only floaters can be moved off-screen.
+-- Refocusing a hidden window any other way restores it too -- see
+-- maximizeFocused() above.
+local function hiddenRect(r, mon)
+    return { x = r.x, y = mon.y + mon.height + 100, w = r.w, h = r.h }
+end
+
 function toggleMinimize()
     local win = hl.get_active_window()
     if not win then return end
@@ -1055,34 +1159,86 @@ function toggleMinimize()
         return
     end
 
-    -- window.move only places floating windows, so say so rather than
-    -- silently ignore the key.
-    if not win.floating then
-        hl.exec_cmd("notify-send -a Hyprland -t 3000 'Minimize' 'Only floating windows can be minimized'")
-        return
-    end
-
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
+    local addr = "address:" .. win.address
 
-    win = unflagFloating(win)
-    st.minimized = { x = win.at.x, y = win.at.y }
-    local belowScreen = mon.y + mon.height + 100
-    hl.dispatch(hl.dsp.window.move({ x = win.at.x, y = belowScreen, window = "address:" .. win.address }))
+    local tiled = not win.floating
+    if not tiled then win = unflagFloating(win) end
+    local r = { x = math.floor(win.at.x), y = math.floor(win.at.y),
+                w = math.floor(win.size.x), h = math.floor(win.size.y),
+                tiled = tiled, fullscreen = tiled and win.fullscreen or 0 }
+    st.minimized = r
+    st.hideGen = (st.hideGen or 0) + 1
+    local gen = st.hideGen
+    hl.dispatch(hl.dsp.window.tag({ tag = "+" .. minimizedTag(r), window = addr }))
+
+    -- skipped if it was restored, or closed, in the meantime
+    local function current()
+        return windowState[win.address] == st and st.hideGen == gen
+    end
 
     -- Moving it off-screen doesn't move focus, so hand focus to the most
     -- recently used window left on this workspace -- never another hidden
-    -- one, since focusing that would bring it back.
-    local next
-    for _, w in ipairs(hl.get_windows()) do
-        if w.address ~= win.address and w.mapped and not w.hidden
-                and w.workspace and win.workspace and w.workspace.id == win.workspace.id
-                and not stateOf(w.address).minimized
-                and (not next or w.focus_history_id < next.focus_history_id) then
-            next = w
+    -- one, since focusing that would bring it back. Only once it's gone:
+    -- a monocle window is raised as it takes focus, and would cover the
+    -- animation.
+    local function focusNext()
+        local next
+        for _, w in ipairs(hl.get_windows()) do
+            if w.address ~= win.address and w.mapped and not w.hidden
+                    and w.workspace and win.workspace and w.workspace.id == win.workspace.id
+                    and not stateOf(w.address).minimized
+                    and (not next or w.focus_history_id < next.focus_history_id) then
+                next = w
+            end
+        end
+        if next then hl.dispatch(hl.dsp.focus({ window = "address:" .. next.address })) end
+    end
+
+    local function gone()
+        if not current() then return end
+        if windowAnim ~= "slide" then jumpTo(addr, hiddenRect(r, mon)) end
+        focusNext()
+    end
+    local function hide()
+        if not current() then return end
+        if windowAnim == "slide" then
+            moveTo(addr, hiddenRect(r, mon))
+        else
+            setProp(addr, "opacity", "0")
+            if windowAnim == "popin" then moveTo(addr, shrunk(r)) end
+        end
+        afterAnimation(windowAnim == "slide" and windowSpeed or fadeSpeed, gone)
+    end
+
+    if tiled then
+        if r.fullscreen ~= 0 then
+            hl.dispatch(hl.dsp.window.fullscreen({
+                mode = r.fullscreen == 1 and "maximized" or "fullscreen", action = "unset", window = addr }))
+        end
+        hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
+        jumpTo(addr, r, hide)
+    else
+        hide()
+    end
+end
+
+-- After a reload, windows SUPER+C hid get their windowState back from the
+-- tag it left. One a reload caught mid-fade, before the timer above moved
+-- it away, is moved away now.
+for _, w in ipairs(hl.get_windows()) do
+    for _, t in ipairs(type(w.tags) == "table" and w.tags or { w.tags }) do
+        local x, y, width, height, tiled, fullscreen =
+            tostring(t):match("^minimized_(%-?%d+)_(%-?%d+)_(%d+)_(%d+)_([01])_(%d+)$")
+        if x then
+            local r = { x = tonumber(x), y = tonumber(y), w = tonumber(width), h = tonumber(height),
+                        tiled = tiled == "1", fullscreen = tonumber(fullscreen) }
+            stateOf(w.address).minimized = r
+            local mon = w.monitor
+            if mon and w.at.y < mon.y + mon.height then jumpTo("address:" .. w.address, hiddenRect(r, mon)) end
         end
     end
-    if next then hl.dispatch(hl.dsp.focus({ window = "address:" .. next.address })) end
 end
 
 -- monocleRule and the dwindle maximize rule act on windows as they map,

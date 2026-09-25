@@ -1062,7 +1062,7 @@ SettingsPage {
 
     SettingsField {
         label: "Window animation"
-        hint: "How windows open and close"
+        hint: "How windows open, close and minimize"
         Choices { key: "windowAnim" }
     }
 
