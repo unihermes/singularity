@@ -59,10 +59,12 @@ Item {
     }
 
     Text {
-        anchors.left: parent.left
+        anchors.left: field.left
+        anchors.right: field.right
         anchors.verticalCenter: parent.verticalCenter
         visible: field.text === ""
         text: root.placeholder
+        elide: Text.ElideRight
         color: Theme.textDisabled
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
@@ -74,6 +76,8 @@ Item {
         anchors.leftMargin: Theme.spaceXs
         anchors.rightMargin: Theme.spaceXs
         verticalAlignment: TextInput.AlignVCenter
+        // text scrolled out of view past either end stays inside the frame
+        clip: true
         color: Theme.textStrong
         selectionColor: Theme.muted
         selectedTextColor: Theme.textStrong
