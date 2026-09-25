@@ -206,9 +206,10 @@ Item {
                     id: glyphBox
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    // lifted by half the pip's share of the chip, so
-                    // icon and pip centre together as one mark
-                    anchors.verticalCenterOffset: -(pip.height + 1) / 2
+                    // lifted a single pixel: just enough to clear the
+                    // pip, so the icon still sits level with the
+                    // chips around it
+                    anchors.verticalCenterOffset: -1
                     width: Theme.barFs(16)
                     height: Theme.barFs(16)
                     opacity: winIcon.lit ? 1 : 0.55
@@ -231,12 +232,12 @@ Item {
                     }
                 }
 
-                // flush with the double border's first clear pixel,
-                // the same inset ModuleFrame's gauge track uses
+                // tucked a pixel under the icon rather than pinned to
+                // the chip's edge, so it needn't push the icon up
                 Rectangle {
                     id: pip
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 3
+                    anchors.top: glyphBox.bottom
+                    anchors.topMargin: 1
                     anchors.horizontalCenter: parent.horizontalCenter
                     height: Theme.indicatorWidth
                     radius: height / 2
