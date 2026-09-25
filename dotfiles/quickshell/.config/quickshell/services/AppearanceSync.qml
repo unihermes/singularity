@@ -23,6 +23,8 @@
 //                  alacritty watches imports, so open windows follow along.
 //   nvim.lua    -- the editor's palette, read by nvim's colors/neutrino.lua.
 //                  nvim watches it and recolours open sessions.
+//   ~/.claude/themes/singularity.json -- a Claude Code theme; Claude Code
+//                  only reads themes from there, and watches it.
 //   hyprlock.conf -- hyprlang variables (colours, font, radius, stroke) that
 //                  hypr/hyprlock.conf sources. hyprlock reads it at each lock.
 //   gtk3.css, gtk4.css -- the accent as GTK's selection and accent colours,
@@ -194,6 +196,47 @@ Scope {
             "}")
         var text = lines.join("\n") + "\n"
         AtomicFileWrite.write({ path: root.dir + "/nvim.lua", transform: () => text })
+    }
+
+    // A Claude Code theme over its own dark or light base: the look's ramp
+    // for text and chrome, the accent wherever Claude marks something (its
+    // name, prompts, spinners, meters), good and alert for success and
+    // error. Diff and subagent colours stay Claude's, since those hues carry
+    // meaning. Claude Code watches the directory, so open sessions recolour.
+    function renderClaude() {
+        var rgb = c => "rgb(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + ","
+            + Math.round(c.b * 255) + ")"
+        var a = rgb(Theme.accent)
+        var shimmer = rgb(Qt.color(mix(Theme.accent, Theme.bright, 0.4)))
+        var o = {
+            text: rgb(Theme.text), inverseText: rgb(Theme.base),
+            inactive: rgb(Theme.subtext), inactiveShimmer: rgb(Theme.text),
+            subtle: rgb(Theme.border),
+            promptBorder: rgb(Theme.muted), promptBorderShimmer: rgb(Theme.subtext),
+            bashBorder: rgb(Theme.bright),
+            planMode: rgb(Theme.subtext), ide: rgb(Theme.subtext),
+            success: rgb(Theme.good), error: rgb(Theme.alert),
+            userMessageBackground: rgb(Theme.surface),
+            userMessageBackgroundHover: rgb(Theme.overlay),
+            composerSidebarBackground: rgb(Theme.surface),
+            bashMessageBackgroundColor: rgb(Theme.overlay),
+            memoryBackgroundColor: rgb(Theme.overlay),
+            selectionBg: a, rate_limit_empty: rgb(Theme.border),
+            clawd_background: rgb(Theme.base),
+        }
+        var accented = ["claude", "clawd_body", "briefLabelClaude", "briefLabelYou",
+            "permission", "suggestion", "remember", "autoAccept", "skill", "merged",
+            "effortUltra", "rate_limit_fill", "claudeBlue_FOR_SYSTEM_SPINNER"]
+        for (var i = 0; i < accented.length; i++) o[accented[i]] = a
+        var shimmers = ["claudeShimmer", "permissionShimmer", "autoAcceptShimmer",
+            "claudeBlueShimmer_FOR_SYSTEM_SPINNER"]
+        for (i = 0; i < shimmers.length; i++) o[shimmers[i]] = shimmer
+        var text = JSON.stringify({ name: "Singularity", base: Theme.isLight ? "light" : "dark",
+            overrides: o }, null, 2) + "\n"
+        AtomicFileWrite.write({
+            path: Quickshell.env("HOME") + "/.claude/themes/singularity.json",
+            transform: () => text,
+        })
     }
 
     // hyprlock's colours as rgba(rrggbbaa), which is the only form hyprlang
@@ -449,7 +492,7 @@ Scope {
         id: debounce
         interval: 200
         onTriggered: {
-            root.renderWofi(); root.renderSwaync(); root.renderAlacritty(); root.renderNvim()
+            root.renderWofi(); root.renderSwaync(); root.renderAlacritty(); root.renderNvim(); root.renderClaude()
             root.renderHyprlock()
             root.renderGtk(); root.renderGtkCss(); root.renderQtScheme(); root.renderQt()
             root.renderBrowsers()
