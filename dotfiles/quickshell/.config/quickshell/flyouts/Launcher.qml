@@ -147,10 +147,24 @@ OverlayWindow {
         onClicked: root.requestClose()
     }
 
+    // Every row is the height of two lines, whether or not it has a second,
+    // so the fill and stroke of the current row always clear its text and
+    // the box stays one size from mode to mode.
+    FontMetrics { id: bodyMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontBody }
+    FontMetrics { id: captionMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontCaption }
+    readonly property int rowHeight: Math.max(Theme.fieldHeight,
+        Math.ceil(bodyMetrics.height + 1 + captionMetrics.height) + Theme.spaceM)
+
+    // the key hints over the field, for the mode on show
+    readonly property var hints: (clipMode ? ["Enter copy", "Shift+Del remove"]
+            : calcMode ? ["Enter copy"]
+            : fileMode ? ["Enter open", "Shift+Enter folder"]
+            : ["Enter open"]).concat(["Tab " + nextModeName])
+
     PanelFrame {
         id: box
         width: Theme.fit(760)
-        height: body.implicitHeight + Theme.sp(40)
+        height: body.implicitHeight + Theme.panelPad * 4
         // Centred on the screen, at a fixed size: the list area is always
         // visibleRows tall, however many results there are, so the box
         // doesn't shrink and re-centre on every keystroke.
@@ -163,17 +177,20 @@ OverlayWindow {
 
         Column {
             id: body
-            x: Theme.sp(22)
-            y: Theme.sp(20)
-            width: parent.width - Theme.sp(44)
-            spacing: Theme.spaceM
+            x: Theme.panelPad * 2
+            y: Theme.panelPad * 2
+            width: parent.width - Theme.panelPad * 4
+            spacing: Theme.spaceL
 
+            // the mode's name cut into a rule, as a flyout's headings are,
+            // with the key hints at its far end rather than in a footer
             Item {
                 width: parent.width
-                height: title.implicitHeight
+                height: Math.max(title.implicitHeight, hintRow.implicitHeight)
 
                 Text {
                     id: title
+                    anchors.verticalCenter: parent.verticalCenter
                     text: Theme.heading(root.clipMode ? "CLIPBOARD"
                         : root.calcMode ? "CALCULATOR"
                         : root.fileMode ? "FILES" : "APPLICATIONS")
@@ -184,52 +201,147 @@ OverlayWindow {
                     font.letterSpacing: Theme.headingSpacing
                 }
 
-                // the key hints sit inline with the title rather than in a
-                // footer, so the box is only as tall as its rows
-                Text {
+                Rectangle {
+                    visible: Theme.headingRule
+                    anchors.left: title.right
+                    anchors.leftMargin: Theme.spaceL
+                    anchors.right: hintRow.left
+                    anchors.rightMargin: Theme.spaceL
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: Theme.borderWidth
+                    color: Theme.stroke
+                }
+
+                Row {
+                    id: hintRow
                     anchors.right: parent.right
-                    text: (root.clipMode ? "Enter copy   Shift+Del remove   Esc close"
-                            : root.calcMode ? "Enter copy   Esc close"
-                            : root.fileMode ? "Enter open   Shift+Enter folder   Esc close"
-                            : "Enter open   Esc close")
-                        + "   Tab " + root.nextModeName
-                    color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.spaceXl
+
+                    Repeater {
+                        model: root.hints
+
+                        Text {
+                            required property string modelData
+                            text: modelData.toUpperCase()
+                            color: Theme.subtext
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontEyebrow
+                            font.letterSpacing: 1
+                        }
+                    }
                 }
             }
 
-            FlyoutInput {
-                id: search
+            // the search field, drawn as Settings' is: the mode's glyph, lit
+            // while the field has focus, then the query
+            Rectangle {
+                id: searchBar
                 width: parent.width
-                echoPassword: false
-                placeholder: root.clipMode ? "Search clipboard"
-                    : root.calcMode ? "2 + 2 * 3, sqrt(16), 200 * 15%"
-                    : root.fileMode ? "Search files in ~"
-                    : "Search applications"
-                onTextChanged: {
-                    root.query = text
-                    list.currentIndex = 0
-                    if (root.fileMode) Files.search(text)
+                height: Theme.rowHeightTall + Theme.spaceM
+                radius: Theme.radiusInner
+                color: Theme.fieldFill
+                border.width: Theme.borderWidth
+                border.color: search.activeFocus ? Theme.strokeFocus : Theme.stroke
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.IBeamCursor
+                    onClicked: search.forceActiveFocus()
                 }
-                onAccepted: if (list.count > 0) root.activate(root.items[list.currentIndex])
-                onShiftReturnPressed: if (list.count > 0) root.activateAlt(root.items[list.currentIndex])
-                onDownPressed: if (list.currentIndex < list.count - 1) list.currentIndex++
-                onUpPressed: if (list.currentIndex > 0) list.currentIndex--
-                onEscapePressed: root.requestClose()
-                onTabPressed: root.stepMode(1)
-                onBackTabPressed: root.stepMode(-1)
-                onShiftDeletePressed: root.removeCurrent()
+
+                Item {
+                    id: modeGlyph
+                    x: Theme.spaceL
+                    width: Theme.iconCell
+                    height: parent.height
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.clipMode ? "󰅍" : root.calcMode ? "󰃬"
+                            : root.fileMode ? "󰉋" : "󰀻"
+                        color: search.activeFocus ? Theme.accent : Theme.subtext
+                        font.family: Theme.fontIcon
+                        font.pixelSize: Theme.fontIconSize
+                    }
+                }
+
+                Text {
+                    anchors.left: search.left
+                    anchors.right: search.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: search.text === ""
+                    text: root.clipMode ? "Search clipboard"
+                        : root.calcMode ? "2 + 2 * 3, sqrt(16), 200 * 15%"
+                        : root.fileMode ? "Search files in ~"
+                        : "Search applications"
+                    elide: Text.ElideRight
+                    color: Theme.textDisabled
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontBody
+                }
+
+                TextInput {
+                    id: search
+                    anchors.left: modeGlyph.right
+                    anchors.leftMargin: Theme.spaceM
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spaceL
+                    anchors.verticalCenter: parent.verticalCenter
+                    clip: true
+                    color: Theme.textStrong
+                    selectionColor: Theme.muted
+                    selectedTextColor: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontBody
+
+                    function forceFocus() {
+                        forceActiveFocus()
+                        selectAll()
+                    }
+                    // after inserting text: keep typing where the insert
+                    // left off, not with the whole field selected
+                    function moveToEnd() {
+                        forceActiveFocus()
+                        cursorPosition = text.length
+                    }
+
+                    onTextChanged: {
+                        root.query = text
+                        list.currentIndex = 0
+                        if (root.fileMode) Files.search(text)
+                    }
+                    onAccepted: if (list.count > 0) root.activate(root.items[list.currentIndex])
+                    Keys.onDownPressed: if (list.currentIndex < list.count - 1) list.currentIndex++
+                    Keys.onUpPressed: if (list.currentIndex > 0) list.currentIndex--
+                    Keys.onEscapePressed: root.requestClose()
+                    Keys.onTabPressed: root.stepMode(1)
+                    Keys.onBacktabPressed: root.stepMode(-1)
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {
+                            root.removeCurrent()
+                            event.accepted = true
+                        }
+                        // caught here rather than in onAccepted, which can't
+                        // tell a plain Enter from a shifted one
+                        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                && (event.modifiers & Qt.ShiftModifier)) {
+                            if (list.count > 0) root.activateAlt(root.items[list.currentIndex])
+                            event.accepted = true
+                        }
+                    }
+                }
             }
 
             Item {
                 width: parent.width
-                height: root.visibleRows * (Theme.rowHeightTall + list.spacing)
+                height: root.visibleRows * (root.rowHeight + list.spacing) - list.spacing
 
                 Text {
                     visible: list.count === 0
-                    width: parent.width
-                    height: Theme.rowHeightTall
+                    x: Theme.spaceL + Theme.iconCell + Theme.spaceM
+                    width: parent.width - x
+                    height: root.rowHeight
                     verticalAlignment: Text.AlignVCenter
                     text: root.calcMode ? "No matching syntax"
                         : root.fileMode
@@ -257,49 +369,55 @@ OverlayWindow {
                         id: row
                         required property var modelData
                         required property int index
+                        readonly property bool current: ListView.isCurrentItem
+                        readonly property bool isResult: root.calcMode && modelData.kind === "result"
                         width: list.width
-                        height: Theme.rowHeightTall
+                        height: root.rowHeight
 
+                        // the row the keys are on, lit as Settings lights
+                        // its search hits: a fill and a quiet stroke
                         Rectangle {
                             anchors.fill: parent
                             radius: Theme.radiusInner
-                            color: row.ListView.isCurrentItem ? Theme.hoverFill : "transparent"
+                            color: row.current ? Theme.selectedFill : "transparent"
+                            border.width: Theme.borderWidth
+                            border.color: row.current ? Theme.strokeHover : "transparent"
                         }
 
-                        IconImage {
-                            id: appIcon
-                            visible: !root.clipMode && !root.calcMode && !root.fileMode
-                            anchors.left: parent.left
-                            anchors.leftMargin: Theme.spaceS
-                            anchors.verticalCenter: parent.verticalCenter
-                            implicitSize: Theme.fs(18)
-                            source: appIcon.visible ? Quickshell.iconPath(row.modelData.icon, true) : ""
-                        }
+                        Item {
+                            id: iconCell
+                            x: Theme.spaceL
+                            width: Theme.iconCell
+                            height: parent.height
 
-                        Text {
-                            id: glyph
-                            visible: !appIcon.visible
-                            anchors.left: parent.left
-                            anchors.leftMargin: Theme.spaceS
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Theme.fs(18)
-                            horizontalAlignment: Text.AlignHCenter
-                            text: root.calcMode
-                                    ? (row.modelData.kind === "ref" ? "󰘧" : "󰃬")
-                                : root.fileMode ? (row.modelData.isDir ? "󰉋" : "󰈔")
-                                : row.modelData.isImage ? "󰋩" : "󰅍"
-                            color: Theme.subtext
-                            font.family: Theme.fontIcon
-                            font.pixelSize: Theme.fontBody
+                            IconImage {
+                                id: appIcon
+                                visible: !root.clipMode && !root.calcMode && !root.fileMode
+                                anchors.centerIn: parent
+                                implicitSize: Theme.iconCell
+                                source: appIcon.visible ? Quickshell.iconPath(row.modelData.icon, true) : ""
+                            }
+
+                            Text {
+                                visible: !appIcon.visible
+                                anchors.centerIn: parent
+                                text: root.calcMode
+                                        ? (row.modelData.kind === "ref" ? "󰘧" : "󰃬")
+                                    : root.fileMode ? (row.modelData.isDir ? "󰉋" : "󰈔")
+                                    : row.modelData.isImage ? "󰋩" : "󰅍"
+                                color: row.current ? Theme.textStrong : Theme.subtext
+                                font.family: Theme.fontIcon
+                                font.pixelSize: Theme.fontIconSize
+                            }
                         }
 
                         Column {
-                            anchors.left: parent.left
-                            anchors.leftMargin: Theme.spaceS + Theme.fs(18) + Theme.sp(10)
-                            anchors.right: parent.right
+                            anchors.left: iconCell.right
+                            anchors.leftMargin: Theme.spaceM
+                            anchors.right: chevron.left
                             anchors.rightMargin: Theme.spaceS
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 0
+                            spacing: 1
 
                             Text {
                                 width: parent.width
@@ -311,29 +429,46 @@ OverlayWindow {
                                         ? (row.modelData.isImage ? "Image" : row.modelData.preview)
                                     : root.calcMode ? row.modelData.text
                                     : row.modelData.name) || ""
+                                // a copied page's HTML shows as its markup,
+                                // not as rich text with the images missing
+                                textFormat: Text.PlainText
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
-                                color: root.calcMode && row.modelData.kind === "result"
-                                        ? (row.modelData.ok ? Theme.textStrong : Theme.subtext)
-                                    : row.ListView.isCurrentItem ? Theme.textStrong : Theme.text
+                                color: row.isResult && !row.modelData.ok ? Theme.subtext
+                                    : row.current || row.isResult ? Theme.textStrong : Theme.text
                                 font.family: Theme.fontText
                                 font.pixelSize: Theme.fontBody
-                                font.bold: root.calcMode && row.modelData.kind === "result"
+                                font.bold: row.isResult
                             }
 
-                            // where the file is, so two files with the same
-                            // name are told apart without opening either
+                            // what the app is, where the file is (so two of
+                            // the same name are told apart without opening
+                            // either), or what the syntax does
                             Text {
-                                visible: (root.fileMode || root.calcMode) && text !== ""
+                                visible: text !== ""
                                 width: parent.width
-                                text: root.fileMode ? Files.pretty(row.modelData.dir)
-                                    : root.calcMode ? (row.modelData.hint || "") : ""
+                                text: (root.fileMode ? Files.pretty(row.modelData.dir)
+                                    : root.calcMode ? row.modelData.hint
+                                    : root.clipMode ? ""
+                                    : row.modelData.genericName || row.modelData.comment) || ""
                                 elide: root.fileMode ? Text.ElideLeft : Text.ElideRight
                                 maximumLineCount: 1
                                 color: Theme.subtext
                                 font.family: Theme.fontText
-                                font.pixelSize: Theme.fontSmall
+                                font.pixelSize: Theme.fontCaption
                             }
+                        }
+
+                        Text {
+                            id: chevron
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.spaceL
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: ">"
+                            opacity: row.current ? 1 : 0
+                            color: Theme.subtext
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontSmall
                         }
 
                         MouseArea {
@@ -347,6 +482,12 @@ OverlayWindow {
                             onClicked: root.activate(row.modelData)
                         }
                     }
+                }
+
+                ScrollBar {
+                    anchors.right: parent.right
+                    anchors.rightMargin: -Theme.spaceM
+                    flickable: list
                 }
             }
         }
