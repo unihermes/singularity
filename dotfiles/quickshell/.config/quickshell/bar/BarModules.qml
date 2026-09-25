@@ -148,13 +148,17 @@ Item {
     // trailing the overview button. One frame around the whole
     // row rather than one per icon: they're a single group, and
     // a chip each would read as six separate modules.
+    // Each icon sits over a pip in the workspace indicator's
+    // language: the focused window's is a long accent pill, the
+    // rest short muted stubs, and their icons dim to match.
     ModuleFrame {
         id: windowIcons
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.spaceM
+        spacing: Theme.spaceS
         // an empty chip on a bare workspace would be a floating
         // rectangle with nothing in it
         visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
+        active: screenScope.openFlyout === "windowmenu"
 
         Repeater {
             id: iconRepeater
@@ -163,28 +167,66 @@ Item {
             Item {
                 id: winIcon
                 required property var modelData
+                readonly property bool focused: Hyprland.activeToplevel !== null
+                    && Hyprland.activeToplevel.address === modelData.address
+                readonly property bool lit: focused || winMouse.containsMouse
                 anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: Theme.barFs(18)
-                implicitHeight: Theme.barFs(18)
+                // a little wider than the icon, so neighbours' pips
+                // don't run together and each is a comfortable target
+                implicitWidth: Theme.barFs(16) + Theme.spaceS
+                implicitHeight: Theme.moduleHeight
 
-                IconImage {
-                    anchors.fill: parent
-                    visible: winIcon.modelData.source !== ""
-                    source: winIcon.modelData.source
+                Item {
+                    id: glyphBox
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    // lifted by half the pip's share of the chip, so
+                    // icon and pip centre together as one mark
+                    anchors.verticalCenterOffset: -(pip.height + 1) / 2
+                    width: Theme.barFs(16)
+                    height: Theme.barFs(16)
+                    opacity: winIcon.lit ? 1 : 0.55
+                    Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+
+                    IconImage {
+                        anchors.fill: parent
+                        visible: winIcon.modelData.source !== ""
+                        source: winIcon.modelData.source
+                    }
+
+                    // apps with no themed icon, and the shell's own windows
+                    Text {
+                        anchors.centerIn: parent
+                        visible: winIcon.modelData.source === ""
+                        text: winIcon.modelData.glyph
+                        color: winIcon.focused ? Theme.textStrong : Theme.text
+                        font.family: Theme.fontIcon
+                        font.pixelSize: Theme.barFs(15)
+                    }
                 }
 
-                // apps with no themed icon, and the shell's own windows
-                Text {
-                    anchors.centerIn: parent
-                    visible: winIcon.modelData.source === ""
-                    text: winIcon.modelData.glyph
-                    color: Theme.text
-                    font.family: Theme.fontIcon
-                    font.pixelSize: Theme.barFs(17)
+                // flush with the double border's first clear pixel,
+                // the same inset ModuleFrame's gauge track uses
+                Rectangle {
+                    id: pip
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 3
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    height: Theme.indicatorWidth
+                    radius: height / 2
+                    width: winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6)
+                    color: winIcon.focused ? Theme.accent
+                        : winMouse.containsMouse ? Theme.subtext : Theme.muted
+                    Behavior on width {
+                        NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                    }
+                    Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
                 }
 
                 MouseArea {
+                    id: winMouse
                     anchors.fill: parent
+                    hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
