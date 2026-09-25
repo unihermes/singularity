@@ -226,6 +226,8 @@ function describeExec(cmd, ident) {
         return m[1] === "SOURCE" ? "Mute or unmute microphone" : "Mute or unmute sound"
     if ((m = c.match(/brightnessctl .*set [\d.]+%?([+-])/)))
         return "Brightness " + (m[1] === "+" ? "up" : "down")
+    if ((m = c.match(/brightness\.sh (up|down)\b/)))
+        return "Brightness " + m[1]
     if ((m = c.match(/^qs ipc call (\S+)(?: (\S+))?/)))
         return humanize(((m[2] || "") + " " + m[1]).trim())
     var w = c.split(/\s+/)
