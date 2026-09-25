@@ -337,7 +337,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.leftMargin: prevChip.width + Theme.spaceS
             anchors.rightMargin: nextChip.width + Theme.spaceS
-            height: Theme.fit(200)
+            height: Theme.fit(180)
             orientation: ListView.Horizontal
             spacing: Theme.spaceL
             clip: true
@@ -396,7 +396,7 @@ SettingsPage {
                     x: Theme.spaceS
                     y: Theme.spaceS
                     width: parent.width - Theme.spaceS * 2
-                    height: Math.round(width * 0.58)
+                    height: Math.round(width * 0.48)
                     radius: Theme.radiusInner
                 }
 
