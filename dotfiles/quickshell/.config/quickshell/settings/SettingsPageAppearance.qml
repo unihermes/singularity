@@ -330,6 +330,14 @@ SettingsPage {
         height: lookStrip.height + Theme.spaceL + dots.height
 
         readonly property int cardWidth: Theme.fit(210)
+        // tall enough for the preview, the name and two lines of description,
+        // so no card ends in an empty line
+        readonly property int previewHeight: Math.round((cardWidth - Theme.spaceS * 2) * 0.48)
+        readonly property int cardHeight: Theme.spaceS + previewHeight + Theme.spaceS
+            + Math.ceil(nameMetrics.height) + Theme.spaceXs + Math.ceil(blurbMetrics.height) * 2 + Theme.spaceL + Theme.spaceS
+
+        FontMetrics { id: nameMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontBody }
+        FontMetrics { id: blurbMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontSmall }
 
         ListView {
             id: lookStrip
@@ -337,7 +345,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.leftMargin: prevChip.width + Theme.spaceS
             anchors.rightMargin: nextChip.width + Theme.spaceS
-            height: Theme.fit(180)
+            height: carousel.cardHeight
             orientation: ListView.Horizontal
             spacing: Theme.spaceL
             clip: true
@@ -396,7 +404,7 @@ SettingsPage {
                     x: Theme.spaceS
                     y: Theme.spaceS
                     width: parent.width - Theme.spaceS * 2
-                    height: Math.round(width * 0.48)
+                    height: carousel.previewHeight
                     radius: Theme.radiusInner
                 }
 
