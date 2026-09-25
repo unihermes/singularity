@@ -27,11 +27,12 @@
 //                  only reads themes from there, and watches it.
 //   hyprlock.conf -- hyprlang variables (colours, font, radius, stroke) that
 //                  hypr/hyprlock.conf sources. hyprlock reads it at each lock.
-//   gtk3.css, gtk4.css -- the accent as GTK's selection and accent colours,
-//                  @imported by gtk-3.0/gtk.css and gtk-4.0/gtk.css. GTK reads
-//                  them at each app's launch.
-//   qt6ct-colors.conf -- qt6ct's stock scheme for dark or light with the
-//                  accent as Highlight; qt6ct.conf points at it.
+//   gtk3.css, gtk4.css -- the look's ramp, accent and status hues as
+//                  libadwaita's named colours (renderGtkCss), @imported by
+//                  gtk-3.0/gtk.css and gtk-4.0/gtk.css. GTK reads them at
+//                  each app's launch.
+//   qt6ct-colors.conf -- the same colours as a full QPalette (renderQtScheme);
+//                  qt6ct.conf points at it.
 //
 // Zen's and Floorp's active profiles get the accent as Gecko's selection and
 // accent colours, in a marked block of their user.js (browserPrefs), and
@@ -48,13 +49,13 @@
 //                  system font, written live to dconf (no file, so
 //                  nothing to watch -- GTK apps read dconf directly, and
 //                  xdg-desktop-portal-gtk forwards color-scheme to portal-aware
-//                  Qt/GTK4 apps).
+//                  Qt/GTK4 apps). GTK3's theme is adw-gtk3, libadwaita's look
+//                  ported to GTK3 with its colours left as named ones, so GTK3
+//                  and GTK4 apps draw the same widgets in the same colours.
 //   qt6ct.conf  -- Qt apps (QT_QPA_PLATFORMTHEME=qt6ct, hyprland.lua) have no
 //                  live dconf-style path, so this is a real file, read at each
-//                  Qt app's next launch. It switches between two of qt6ct's
-//                  own stock colour schemes rather than a palette built from
-//                  Theme's roles -- close enough for light vs dark, and far
-//                  less to get wrong than hand-mapping all 21 QPalette roles.
+//                  Qt app's next launch: Fusion, the palette above, the icon
+//                  theme and the system font.
 //   ~/.local/share/icons/default/index.theme -- the XCursor fallback,
 //                  inheriting the cursor theme (writeCursor).
 
@@ -272,35 +273,63 @@ Scope {
         var la = luminance(a), lb = luminance(b)
         return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
     }
-    function onAccent() {
-        return contrast(Theme.accent, Theme.base) >= contrast(Theme.accent, Theme.bright)
-            ? Theme.base : Theme.bright
+    function onAccent() { return onColor(Theme.accent) }
+
+    // Whichever of base or bright reads better on a fill of c.
+    function onColor(c) {
+        return contrast(c, Theme.base) >= contrast(c, Theme.bright) ? Theme.base : Theme.bright
     }
 
-    // GTK3's Adwaita has its colours compiled into its rules, so overriding
-    // its named colours changes nothing; these are rules of their own. GTK4
-    // (libadwaita's variables and GTK's own named colours) takes the colours
-    // themselves.
+    // The look in libadwaita's named colours, laid out the way the shell uses
+    // its ramp: windows and dialogs on panel, views (lists, text areas) a step
+    // down on bar, headerbars, sidebars, cards and tooltips a step up on
+    // surface, popovers lifted clear of the window. adw-gtk3 (GTK3) reads
+    // these as @define-color names and derives its older theme_* names from
+    // them; libadwaita (GTK4) reads them as CSS variables.
+    function gtkColours() {
+        var text = hex(Theme.text), a = hex(Theme.accent), t = hex(onAccent())
+        var alert = hex(Theme.alert), onAlert = hex(onColor(Theme.alert))
+        var good = hex(Theme.good), onGood = hex(onColor(Theme.good))
+        var shade = Theme.isLight ? "rgba(0, 0, 0, 0.07)" : "rgba(0, 0, 0, 0.36)"
+        return {
+            window_bg_color: hex(Theme.panel), window_fg_color: text,
+            view_bg_color: hex(Theme.bar), view_fg_color: text,
+            headerbar_bg_color: hex(Theme.surface), headerbar_fg_color: text,
+            headerbar_border_color: hex(Theme.border),
+            headerbar_backdrop_color: hex(Theme.panel),
+            headerbar_shade_color: shade,
+            headerbar_darker_shade_color: Theme.isLight ? "rgba(0, 0, 0, 0.12)" : "rgba(0, 0, 0, 0.9)",
+            sidebar_bg_color: hex(Theme.surface), sidebar_fg_color: text,
+            sidebar_backdrop_color: hex(Theme.panel), sidebar_border_color: hex(Theme.border),
+            sidebar_shade_color: shade,
+            secondary_sidebar_bg_color: hex(Theme.panel), secondary_sidebar_fg_color: text,
+            secondary_sidebar_backdrop_color: hex(Theme.bar),
+            secondary_sidebar_border_color: hex(Theme.border),
+            secondary_sidebar_shade_color: shade,
+            card_bg_color: hex(Theme.surface), card_fg_color: text, card_shade_color: shade,
+            dialog_bg_color: hex(Theme.panel), dialog_fg_color: text,
+            popover_bg_color: hex(Theme.isLight ? Theme.panel : Theme.overlay),
+            popover_fg_color: text, popover_shade_color: shade,
+            thumbnail_bg_color: hex(Theme.surface), thumbnail_fg_color: text,
+            shade_color: shade,
+            accent_bg_color: a, accent_fg_color: t, accent_color: a,
+            destructive_bg_color: alert, destructive_fg_color: onAlert, destructive_color: alert,
+            error_bg_color: alert, error_fg_color: onAlert, error_color: alert,
+            success_bg_color: good, success_fg_color: onGood, success_color: good,
+        }
+    }
+
     function renderGtkCss() {
-        var a = hex(Theme.accent), t = hex(onAccent())
+        var o = gtkColours()
         var header = "/* Generated by quickshell/services/AppearanceSync.qml -- edits are overwritten. */\n"
-        var gtk3 = header
-            + "@define-color theme_selected_bg_color " + a + ";\n"
-            + "@define-color theme_selected_fg_color " + t + ";\n"
-            + "selection, *:selected, *:selected:focus, row:selected, treeview.view:selected,\n"
-            + "entry selection, textview text selection, label selection {\n"
-            + "  background-color: " + a + ";\n  color: " + t + ";\n}\n"
-        var gtk4 = header
-            + ":root {\n"
-            + "  --accent-bg-color: " + a + ";\n"
-            + "  --accent-fg-color: " + t + ";\n"
-            + "  --accent-color: " + a + ";\n"
-            + "}\n"
-            + "@define-color accent_bg_color " + a + ";\n"
-            + "@define-color accent_fg_color " + t + ";\n"
-            + "@define-color accent_color " + a + ";\n"
-            + "@define-color theme_selected_bg_color " + a + ";\n"
-            + "@define-color theme_selected_fg_color " + t + ";\n"
+        var named = "", vars = ":root {\n"
+        for (var k in o) {
+            named += "@define-color " + k + " " + o[k] + ";\n"
+            vars += "  --" + k.replace(/_/g, "-") + ": " + o[k] + ";\n"
+        }
+        vars += "}\n"
+        // GTK4 without libadwaita still reads the named colours
+        var gtk3 = header + named, gtk4 = header + vars + named
         AtomicFileWrite.write({ path: root.dir + "/gtk3.css", transform: () => gtk3 })
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
     }
@@ -425,7 +454,7 @@ Scope {
         var font = Settings.systemFontFamily + " " + systemFontSize
         var monoFont = systemMonoFontFamily + " " + systemFontSize
         var scheme = Theme.isLight ? "prefer-light" : "prefer-dark"
-        var gtkTheme = Theme.isLight ? "Adwaita" : "Adwaita-dark"
+        var gtkTheme = Theme.isLight ? "adw-gtk3" : "adw-gtk3-dark"
         var iface = "org.gnome.desktop.interface"
         var q = s => "'" + String(s).replace(/'/g, "'\\''") + "'"
         gtkSync.command = ["sh", "-c",
@@ -444,27 +473,34 @@ Scope {
     // this is a real file -- picked up at each Qt app's next launch. `general`
     // follows Settings.systemFontFamily the same way GTK's font-name does;
     // `fixed` stays on systemMonoFontFamily. Neither follows the bar's own
-    // font picker -- only the colour scheme follows Theme.
-    // custom_palette has to be on, or qt6ct falls back to its style's own
-    // palette and color_scheme_path is ignored. The scheme is one of qt6ct's
-    // own stock files (see the file header) with the accent swapped in
-    // (renderQtScheme), not a palette built from Theme's roles.
-    readonly property string qtDarkScheme:  "/usr/share/qt6ct/colors/darker.conf"
-    readonly property string qtLightScheme: "/usr/share/qt6ct/colors/ia_ora.conf"
+    // font picker. custom_palette has to be on, or qt6ct falls back to its
+    // style's own palette and color_scheme_path is ignored.
 
-    // The stock scheme with the accent in Highlight and HighlightedText
-    // (slots 12 and 13 of QPalette's 21), in every colour group.
+    // The GTK colours above as QPalette's 21 roles, in its enum order: Window
+    // is GTK's window, Base its view, Button its headerbar and cards. Light
+    // through Shadow are Fusion's bevels, derived from Button the way
+    // QPalette's own constructor does. Accent (Qt 6.6's 22nd) is left out,
+    // so Qt takes it from Highlight.
+    function qtColours(disabled) {
+        var fg = disabled ? Theme.muted : Theme.text
+        var button = Theme.surface
+        return [fg, button, Qt.lighter(button, 1.5), Qt.lighter(button, 1.25),
+            Qt.darker(button, 2), Qt.darker(button, 1.5), fg, Theme.bright, fg,
+            Theme.bar, Theme.panel, "#000000",
+            disabled ? Theme.overlay : Theme.accent, disabled ? Theme.subtext : onAccent(),
+            Theme.accent, mix(Theme.accent, Theme.subtext, 0.5),
+            mix(Theme.bar, Theme.surface, 0.5), Theme.base,
+            Theme.surface, Theme.text, Theme.subtext]
+    }
+
     function renderQtScheme() {
-        var tpl = (Theme.isLight ? qtLightTemplate : qtDarkTemplate).text()
-        if (!tpl) return
         var argb = c => "#ff" + hex(c).slice(1)
-        var a = argb(Theme.accent), t = argb(onAccent())
-        var out = tpl.replace(/^(\w+_colors=)(.*)$/gm, (m, key, list) => {
-            var cols = list.split(/\s*,\s*/)
-            if (cols.length > 13) { cols[12] = a; cols[13] = t }
-            return key + cols.join(", ")
-        })
-        AtomicFileWrite.write({ path: root.dir + "/qt6ct-colors.conf", transform: () => out })
+        var row = d => qtColours(d).map(argb).join(", ")
+        var text = ["[ColorScheme]",
+            "active_colors=" + row(false),
+            "disabled_colors=" + row(true),
+            "inactive_colors=" + row(false)].join("\n") + "\n"
+        AtomicFileWrite.write({ path: root.dir + "/qt6ct-colors.conf", transform: () => text })
     }
 
     function renderQt() {
@@ -528,21 +564,6 @@ Scope {
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
-        onLoaded: debounce.restart()
-    }
-
-    FileView {
-        id: qtDarkTemplate
-        path: root.qtDarkScheme
-        preload: true
-        printErrors: false
-        onLoaded: debounce.restart()
-    }
-    FileView {
-        id: qtLightTemplate
-        path: root.qtLightScheme
-        preload: true
-        printErrors: false
         onLoaded: debounce.restart()
     }
 

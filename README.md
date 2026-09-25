@@ -328,6 +328,9 @@ fc-match monospace
   reads gsettings directly, and GTK4 through the settings portal, so
   `settings.ini` keeps only what the shell doesn't manage. Change them on the
   page rather than by hand: a hand edit is overwritten at the next start.
+  The colours go further than dark or light: GTK3 (adw-gtk3), GTK4 and Qt
+  (qt6ct, Fusion) apps all take the look's ramp and accent, generated into
+  `~/.local/state/neutrino/{gtk3,gtk4}.css` and `qt6ct-colors.conf`.
 - **Kora 2.0.0** dropped upstream symlinks and icons half-resolve in some
   panels. Check the AUR comments if theming looks wrong.
 - **State that survives a reboot.** rfkill (Wi-Fi/Bluetooth radio block),

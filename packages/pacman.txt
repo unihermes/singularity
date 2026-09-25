@@ -120,6 +120,9 @@ gtk-update-icon-cache
 # to nothing and GTK3 apps -- Thunar included -- silently fall back to light
 # Adwaita no matter what those files say.
 gnome-themes-extra
+# adw-gtk3: libadwaita's look for GTK3 apps, with its colours left as named
+# ones, so the shell's generated gtk3.css recolours them like GTK4 apps.
+adw-gtk-theme
 
 # fonts
 ttf-ubuntu-nerd
