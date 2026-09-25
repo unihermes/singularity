@@ -205,7 +205,7 @@ Singleton {
     // predates it.
 
     readonly property var widgetDefaults: ({
-        left:   ["controlcentre", "workspaces", "overview", "windows"],
+        left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "media", "clock", "weather"],
         right:  ["privacy", "failed", "updates", "claude", "notifications", "tray",
                  "bluetooth", "network", "volume", "brightness", "battery"],
@@ -218,7 +218,6 @@ Singleton {
     readonly property var widgetMeta: ({
         controlcentre: { label: "Control Centre", icon: "󰣇" },
         workspaces:    { label: "Workspaces",     icon: "󰇘" },
-        overview:      { label: "Window Overview", icon: "󰕰" },
         windows:       { label: "Open Windows",   icon: "󰀻" },
         clock:         { label: "Clock",          icon: "󰅐" },
         bluetooth:     { label: "Bluetooth",      icon: "󰂯" },

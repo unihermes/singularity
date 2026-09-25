@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/BarModules.qml
 //
-// The bar's 19 modules (and the widgetItems registry shell.qml's Bar
+// The bar's 18 modules (and the widgetItems registry shell.qml's Bar
 // Widgets reordering keys off of), split out of shell.qml so the bar's
 // layout plumbing isn't buried under every module's own logic.
 //
@@ -33,7 +33,7 @@ Item {
     required property var windowMenu
 
     readonly property var widgetItems: ({
-        controlcentre: ccBtn, workspaces: wsFrame, overview: wsOverviewBtn,
+        controlcentre: ccBtn, workspaces: wsFrame,
         windows: windowIcons, clock: clock, bluetooth: btBtn,
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame, media: mediaBtn,
@@ -131,21 +131,47 @@ Item {
                 }
             }
         }
-    }
 
-    // overview of every window on every workspace
-    BarModule {
-        id: wsOverviewBtn
-        visible: Settings.widgetVisible("overview")
-        anchors.verticalCenter: parent.verticalCenter
-        icon: "󰕰"
-        active: screenScope.openFlyout === "workspaces"
-        dimmed: screenScope.openFlyout !== "workspaces"
-        onActivated: screenScope.toggleFlyout("workspaces", wsOverviewBtn)
+        // the overview of every window on every workspace, as the
+        // chip's last mark after a divider: the selector and the
+        // pips it expands on read as one control
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth
+            height: Theme.moduleHeight - 12
+            color: Theme.stroke
+        }
+
+        Item {
+            id: wsOverviewBtn
+            readonly property bool open: screenScope.openFlyout === "workspaces"
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: overviewGlyph.implicitWidth + 4
+            implicitHeight: Theme.moduleHeight - 8
+
+            Text {
+                id: overviewGlyph
+                anchors.centerIn: parent
+                text: "󰕰"
+                color: wsOverviewBtn.open ? Theme.accent
+                    : overviewMouse.containsMouse ? Theme.text : Theme.subtext
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.barFs(15)
+                Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+            }
+
+            MouseArea {
+                id: overviewMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: screenScope.toggleFlyout("workspaces", wsOverviewBtn)
+            }
+        }
     }
 
     // icons for whatever is open on the focused workspace,
-    // trailing the overview button. One frame around the whole
+    // trailing the workspaces. One frame around the whole
     // row rather than one per icon: they're a single group, and
     // a chip each would read as six separate modules.
     // Each icon sits over a pip in the workspace indicator's

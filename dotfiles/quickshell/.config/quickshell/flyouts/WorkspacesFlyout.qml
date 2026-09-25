@@ -55,7 +55,7 @@ FlyoutPanel {
                 && Hyprland.focusedWorkspace.id === modelData.ws
             width: parent ? parent.width : 0
             // air between groups, not above the first
-            topPadding: index > 0 ? Theme.spaceS : 0
+            topPadding: index > 0 ? Theme.spaceXs : 0
 
             // ---- workspace header ----
             Item {
@@ -127,7 +127,7 @@ FlyoutPanel {
                     readonly property bool lit: focused || rowMouse.containsMouse
                     readonly property string iconPath: Apps.iconForClass(modelData.cls)
                     width: parent.width
-                    implicitHeight: Theme.rowHeightTall
+                    implicitHeight: Theme.rowHeight
 
                     Rectangle {
                         anchors.fill: parent

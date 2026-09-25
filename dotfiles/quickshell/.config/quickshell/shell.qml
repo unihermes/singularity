@@ -685,7 +685,7 @@ ShellRoot {
             // of the visible modules before it. A hidden module takes no
             // space, so the rest close up around it.
 
-            // The bar's 19 modules, in BarModules.qml -- split out since
+            // The bar's 18 modules, in BarModules.qml -- split out since
             // each module's own logic buried the layout plumbing below.
             BarModules {
                 id: barModules
