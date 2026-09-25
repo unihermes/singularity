@@ -1,10 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ReloadToast.qml
 //
-// Stands in for Quickshell's own reload popup: a panel tucked into the corner
-// where the bar's left end meets the screen edge, flush with both. A good
-// reload fades on its own; a failed one shows the error and stays until
-// clicked or its longer timer runs out.
+// Stands in for Quickshell's own reload popup: a notification card at the
+// bar's left end, mirroring where swaync puts its popups on the right. A
+// good reload fades on its own; a failed one shows the error and stays
+// until clicked or its longer timer runs out.
 //
 // inhibitReloadPopup() only takes effect when called from inside the
 // reloadCompleted/reloadFailed handlers. A failed reload leaves the old
@@ -57,26 +57,19 @@ OverlayWindow {
         onTriggered: root.active = false
     }
 
-    // Clips a PanelFrame that runs past it on the bar's side, so every frame
-    // style keeps its strokes along the screen edge and the open sides but
-    // none against the bar. The corners on the bar and the screen edge are
-    // square; only the far one is rounded.
-    Item {
+    // Sized and placed like a swaync popup (dotfiles/swaync): the same
+    // 380px window less its 6px padding, 6px off the bar and the screen
+    // edge, and the text inset and sizes its card gives a summary and body.
+    // A failure takes the alert stroke, as a critical notification does.
+    PanelFrame {
         id: box
-        readonly property int bleed: Theme.frameInset + Theme.borderWidth * 2
+        readonly property int gap: 6
 
-        y: root.atBottom ? root.height - Theme.barExtent - height : Theme.barExtent
-        width: col.width + Theme.spaceXl * 2
-        height: col.implicitHeight + Theme.sp(18)
-        clip: true
-
-        PanelFrame {
-            y: root.atBottom ? 0 : -box.bleed
-            width: box.width
-            height: box.height + box.bleed
-            topLeftRadius: 0
-            bottomLeftRadius: 0
-        }
+        x: gap
+        y: root.atBottom ? root.height - Theme.barExtent - gap - height : Theme.barExtent + gap
+        width: 368
+        height: col.implicitHeight + 26
+        border.color: root.failed ? Theme.alert : Theme.stroke
 
         opacity: root.active ? 1 : 0
         Behavior on opacity {
@@ -85,44 +78,27 @@ OverlayWindow {
 
         Column {
             id: col
-            x: Theme.spaceXl
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(Math.max(head.implicitWidth, detail.implicitWidth), Theme.fit(420))
-            spacing: Theme.spaceM
+            x: 14
+            y: 11
+            width: parent.width - 28
+            spacing: 2
 
-            Row {
-                id: head
-                spacing: Theme.sp(10)
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.failed ? "󰀦" : "󰑓"
-                    color: root.failed ? Theme.alert : Theme.text
-                    font.family: Theme.fontIcon
-                    font.pixelSize: Theme.fontIconSize
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Theme.heading(root.failed ? "RELOAD FAILED" : "RELOADED")
-                    color: Theme.text
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontSmall
-                    font.letterSpacing: Theme.headingSpacing * 2
-                    font.bold: Theme.headingBold
-                }
+            Text {
+                text: root.failed ? "Quickshell reload failed" : "Quickshell reloaded"
+                color: Theme.bright
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fs(13)
+                font.bold: true
             }
 
             Text {
-                id: detail
-                visible: root.failed && root.error !== ""
                 width: col.width
-                text: root.error
-                color: Theme.subtext
+                text: root.failed ? root.error : "Configuration loaded"
+                color: Theme.text
                 font.family: Theme.fontText
-                font.pixelSize: Theme.fontCaption
+                font.pixelSize: Theme.fs(13)
                 wrapMode: Text.Wrap
-                maximumLineCount: 6
+                maximumLineCount: 8
                 elide: Text.ElideRight
             }
         }
