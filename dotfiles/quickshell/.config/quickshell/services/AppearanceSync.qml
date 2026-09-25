@@ -328,8 +328,13 @@ Scope {
             vars += "  --" + k.replace(/_/g, "-") + ": " + o[k] + ";\n"
         }
         vars += "}\n"
+        // Stock Adwaita, the fallback when adw-gtk3 isn't installed, has its
+        // colours compiled into its rules; this at least carries the accent.
+        var selection = "selection, *:selected, *:selected:focus, row:selected, treeview.view:selected,\n"
+            + "entry selection, textview text selection, label selection {\n"
+            + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n}\n"
         // GTK4 without libadwaita still reads the named colours
-        var gtk3 = header + named, gtk4 = header + vars + named
+        var gtk3 = header + named + selection, gtk4 = header + vars + named
         AtomicFileWrite.write({ path: root.dir + "/gtk3.css", transform: () => gtk3 })
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
     }
@@ -454,14 +459,18 @@ Scope {
         var font = Settings.systemFontFamily + " " + systemFontSize
         var monoFont = systemMonoFontFamily + " " + systemFontSize
         var scheme = Theme.isLight ? "prefer-light" : "prefer-dark"
-        var gtkTheme = Theme.isLight ? "adw-gtk3" : "adw-gtk3-dark"
+        var suffix = Theme.isLight ? "" : "-dark"
         var iface = "org.gnome.desktop.interface"
         var q = s => "'" + String(s).replace(/'/g, "'\\''") + "'"
         gtkSync.command = ["sh", "-c",
             "gsettings set " + iface + " font-name " + q(font) + "; " +
             "gsettings set " + iface + " document-font-name " + q(font) + "; " +
             "gsettings set " + iface + " monospace-font-name " + q(monoFont) + "; " +
-            "gsettings set " + iface + " gtk-theme " + q(gtkTheme) + "; " +
+            // adw-gtk3 where it's installed, else Adwaita, which GTK3 at
+            // least draws dark rather than falling back to light
+            "t=adw-gtk3" + suffix + "; for d in /usr/share/themes \"$HOME/.local/share/themes\" \"$HOME/.themes\"; do " +
+            "[ -d \"$d/$t/gtk-3.0\" ] && f=1; done; [ \"$f\" ] || t=Adwaita" + suffix + "; " +
+            "gsettings set " + iface + " gtk-theme \"$t\"; " +
             "gsettings set " + iface + " color-scheme " + q(scheme) + "; " +
             "gsettings set " + iface + " icon-theme " + q(Settings.iconTheme) + "; " +
             "gsettings set " + iface + " cursor-theme " + q(Settings.cursorTheme) + "; " +
