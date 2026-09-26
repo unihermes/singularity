@@ -44,14 +44,14 @@ Singleton {
         "thunar-bulk-rename",
     ]
 
-    // Every launchable desktop entry, most launched first, ties A-Z.
-    // Case-insensitive, or lowercase names ("htop", "nvim") would all
+    // Every launchable desktop entry, most launched first, ties A-Z, or
+    // purely A-Z with `alphabetical`. Case-insensitive, or lowercase names ("htop", "nvim") would all
     // sort after Z.
     //
     // With a query, names that *start* with it come first, then any
     // other match, each group in the same order. genericName is searched
     // too, so "browser" finds Zen and Floorp.
-    function list(query) {
+    function list(query, alphabetical) {
         var all = DesktopEntries.applications.values
         var q = (query || "").trim().toLowerCase()
         var starts = [], rest = []
@@ -65,10 +65,11 @@ Singleton {
                 || (e.genericName || "").toLowerCase().indexOf(q) !== -1) rest.push(e)
         }
         var c = counts
-        var byUse = (a, b) => (c[b.id] || 0) - (c[a.id] || 0)
-            || a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-        starts.sort(byUse)
-        rest.sort(byUse)
+        var byName = (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        var order = alphabetical ? byName
+            : (a, b) => (c[b.id] || 0) - (c[a.id] || 0) || byName(a, b)
+        starts.sort(order)
+        rest.sort(order)
         return starts.concat(rest)
     }
 

@@ -233,7 +233,7 @@ FlyoutPanel {
         clip: true
         spacing: Theme.spaceXs
         boundsBehavior: Flickable.StopAtBounds
-        model: visible ? Apps.list(controlCentre.appQuery) : []
+        model: visible ? Apps.list(controlCentre.appQuery, true) : []
         // keeps the arrow-key selection scrolled into view
         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
         // back to the top each time the page opens
