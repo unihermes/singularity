@@ -11,6 +11,8 @@ FlyoutPanel {
     id: root
     flyout: "notifications"
     menuWidth: 380
+    // the bell sits near the bar's right end, so run into the corner
+    edgeMargin: 0
 
     FlyoutHeading {
         text: "NOTIFICATIONS" + (Notifications.count > 0 ? "  " + Notifications.count : "")
