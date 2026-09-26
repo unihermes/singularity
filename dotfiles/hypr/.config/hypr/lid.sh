@@ -245,6 +245,19 @@ stale_layers() {
         END { exit !bad }'
 }
 
+# Displays with no layer surface at all -- not even the wallpaper, which
+# covers every display it's told about. A mirror draws none of its own, so
+# it doesn't count.
+bare_displays() {
+    { hyprctl monitors; echo "--layers"; hyprctl layers; } 2>/dev/null | awk '
+        /^--layers/ { layers = 1; next }
+        !layers && /^Monitor / { name = $2 }
+        !layers && /mirrorOf:/ && $2 != "none" { mirror[name] = 1 }
+        layers && /^Monitor / { name = $2; sub(":", "", name); if (!(name in mirror)) seen[name] = 0 }
+        layers && /xywh:/ && (name in seen) { seen[name] = 1 }
+        END { for (n in seen) if (!seen[n]) print n }'
+}
+
 # Switch the panel off (or back on) through hyprland.lua; a no-op when it
 # already is, which is what keeps the displays hook the reload sets off from
 # going round again.
@@ -337,6 +350,19 @@ displays)
         stale_layers || break
     done
     stale_layers && log "bar or wallpaper still out of place after nudging the displays"
+    # Hyprland can bring a display up without ever announcing it to
+    # clients: it shows in hyprctl monitors, but no bar or wallpaper can
+    # open on it. Switching it off and back on announces it. The second
+    # look gives the wallpaper time to open at login.
+    if [[ -n $(bare_displays) ]]; then
+        sleep 2
+        for m in $(bare_displays); do
+            log "$m has no bar or wallpaper: switching it off and on"
+            hyprctl eval "hl.monitor({ output = \"$m\", disabled = true })" >/dev/null
+        done
+        sleep 1
+        hyprctl reload config-only >/dev/null
+    fi
     ;;
 sleep)
     rm -f "$slept_dark"
