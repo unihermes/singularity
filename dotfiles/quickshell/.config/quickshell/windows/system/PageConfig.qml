@@ -96,8 +96,6 @@ SystemPage {
             heading: "APPLICATIONS",
             items: [
                 { label: "nvim init.lua", path: home + "/.config/nvim/init.lua", note: "Editor entry point" },
-                { label: "swaync config.json", path: home + "/.config/swaync/config.json", note: "Notification daemon behaviour" },
-                { label: "swaync style.css", path: home + "/.config/swaync/style.css", note: "Notification daemon appearance" },
                 { label: "zathurarc", path: home + "/.config/zathura/zathurarc", note: "PDF viewer" },
             ],
         },

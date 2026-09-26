@@ -747,6 +747,14 @@ fi
 log "enabling Bluetooth power state restore"
 systemctl --user enable --now bt-power-restore.service
 
+# Quickshell is the notification daemon. A swaync left from an earlier
+# install is D-Bus-activated, and would take the name first when something
+# notifies before the shell is up; masking its unit stops the activation.
+if systemctl --user cat swaync.service &>/dev/null; then
+  log "masking swaync, which the shell replaces"
+  systemctl --user mask --now swaync.service
+fi
+
 
 # iwd is Type=dbus, so systemd waits for it to claim its bus name before
 # reaching network.target, and ly waits on network.target via

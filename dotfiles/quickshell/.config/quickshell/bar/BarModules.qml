@@ -490,14 +490,15 @@ Item {
 
     BarModule {
         id: notifBtn
-        // always shown, so the panel is one click away even when
-        // it's empty; dimmed when there's nothing unread
+        // always shown, so the history is one click away even when
+        // it's empty; dimmed when there's nothing in it
         visible: Settings.widgetVisible("notifications")
         icon: Notifications.dnd ? "󰂛" : "󰂚"
         label: Notifications.count > 0 ? String(Notifications.count) : ""
-        dimmed: Notifications.dnd || Notifications.count === 0 || !Notifications.available
-        // left: swaync's panel; right: Do Not Disturb
-        onActivated: Notifications.togglePanel()
+        dimmed: Notifications.dnd || Notifications.count === 0
+        active: screenScope.openFlyout === "notifications"
+        // left: the history; right: Do Not Disturb
+        onActivated: screenScope.toggleFlyout("notifications", notifBtn)
         onRightClicked: Notifications.toggleDnd()
     }
 

@@ -37,7 +37,7 @@ Singleton {
     readonly property alias radius:      adapter.radius
     readonly property alias barOpacity:  adapter.barOpacity
     // The base text size in px -- the size of body text, which every other
-    // size in the shell, wofi and swaync is scaled from (Theme.fontScale).
+    // size in the shell and wofi is scaled from (Theme.fontScale).
     readonly property alias fontSize:    adapter.fontSize
     readonly property int fontSizeBase: 16
     // the same for the bar's labels and icons alone (Theme.barFs)
@@ -198,6 +198,23 @@ Singleton {
     function setUpdateIgnore(list) {
         var seen = {}
         adapter.updateIgnore = list.map(n => String(n).trim()).filter(n => /^[a-z0-9@._+-]+$/i.test(n) && !seen[n] && (seen[n] = true)).sort()
+    }
+    // Notifications: Do Not Disturb, seconds a popup stays by urgency (0
+    // until dismissed), and the screen corner or edge popups stack from
+    readonly property alias notifDnd: adapter.notifDnd
+    readonly property alias notifTimeout: adapter.notifTimeout
+    readonly property alias notifTimeoutLow: adapter.notifTimeoutLow
+    readonly property alias notifTimeoutCritical: adapter.notifTimeoutCritical
+    readonly property alias notifPositionX: adapter.notifPositionX
+    readonly property alias notifPositionY: adapter.notifPositionY
+    function setNotifDnd(on) { adapter.notifDnd = !!on }
+    function setNotifTimeout(key, s) {
+        if (["notifTimeout", "notifTimeoutLow", "notifTimeoutCritical"].indexOf(key) >= 0)
+            adapter[key] = Math.max(0, Math.min(60, Math.round(s)))
+    }
+    function setNotifPosition(x, y) {
+        if (["left", "center", "right"].indexOf(x) >= 0) adapter.notifPositionX = x
+        if (["top", "bottom"].indexOf(y) >= 0) adapter.notifPositionY = y
     }
 
     // --- Bar Widgets ---------------------------------------------------
@@ -664,6 +681,12 @@ Singleton {
             property int updateInterval: 30
             property bool updateAur: true
             property var updateIgnore: []
+            property bool notifDnd: false
+            property int notifTimeout: 8
+            property int notifTimeoutLow: 4
+            property int notifTimeoutCritical: 16
+            property string notifPositionX: "right"
+            property string notifPositionY: "top"
             property string centreAnchor: "clock"
             property var barLayout: ({})
             property var barHidden: []

@@ -3,8 +3,8 @@
 //
 // Carries the Appearance page's settings out to the apps that draw the same
 // chrome as the bar -- corner radius, the palette (the look's or the
-// wallpaper's), font, font size and frame style -- so the launcher and the
-// notifications change with it.
+// wallpaper's), font, font size and frame style -- so the fallback launcher
+// and the other apps change with it.
 //
 // Everything lands in ~/.local/state/singularity/, never in ~/.config: those
 // directories are stow links into the repo, and generated files there would
@@ -17,8 +17,6 @@
 //                  template is written in) becomes the current colour for
 //                  that role, the font family becomes the current one, and
 //                  values tagged `@radius` / `@font` are recomputed.
-//   swaync.css  -- CSS variables only. swaync loads its stylesheet from a
-//                  path, so its style.css @imports this and uses var().
 //   alacritty.toml -- the terminal's colours, imported by alacritty.toml.
 //                  alacritty watches imports, so open windows follow along.
 //   nvim.lua    -- the editor's palette, read by nvim's colors/singularity.lua.
@@ -49,7 +47,7 @@
 // GTK and Qt apps get dark or light, the icon and cursor themes, and the
 // system font -- this is the only place any of those are set. Not the
 // shell's own font (Settings.fontFamily/Theme.fontText), which is for the
-// shell's chrome alone (wofi, swaync, the bar): GTK/Qt use systemFontFamily
+// shell's chrome alone (wofi and the bar): GTK/Qt use systemFontFamily
 // and systemFontSize below.
 //   gsettings   -- gtk-theme/color-scheme, the icon and cursor themes, and the
 //                  system font, written live to dconf (no file, so
@@ -126,40 +124,6 @@ Scope {
         out = tagged(out, "panel-bg", "#[0-9a-fA-F]{6}|rgba\\([^)]*\\)", rgba(Theme.panel, Theme.panelOpacity))
         out = tagged(out, "bw", "\\d+px", Theme.borderWidth + "px")
         wofiOut.setText(out)
-    }
-
-    function renderSwaync() {
-        var lines = [":root {",
-            "  --n-radius: " + px(0) + ";",
-            "  --n-radius-inner: " + px(2) + ";",
-            // the inner stroke's colour, or nothing when the frame is single
-            "  --n-frame: " + (Theme.frameDouble ? hex(Theme.frameStroke) : hex(Theme.panel)) + ";",
-            '  --n-font: "' + Theme.fontText + '";',
-            // the look's structure: its hue, stroke weight, glassiness,
-            // meter colour and heading style
-            "  --n-accent: " + hex(Theme.accent) + ";",
-            "  --n-focus: " + hex(Theme.strokeFocus) + ";",
-            "  --n-meter: " + hex(Theme.meterFill) + ";",
-            "  --n-bw: " + Theme.borderWidth + "px;",
-            "  --n-panel-bg: " + rgba(Theme.panel, Theme.panelOpacity) + ";",
-            "  --n-heading: " + hex(Theme.headingColor) + ";",
-            "  --n-heading-weight: " + (Theme.headingBold ? "bold" : "normal") + ";",
-            "  --n-heading-spacing: " + Theme.headingSpacing + "px;",
-            "  --n-heading-case: " + (Theme.headingUpper ? "uppercase" : "none") + ";"]
-        for (var i = 0; i < roleNames.length; i++)
-            lines.push("  --n-" + roleNames[i] + ": " + hex(Theme[roleNames[i]]) + ";")
-        // swaync's own sheet wants this one as a bare "r, g, b" triple
-        var p = Theme.panel
-        lines.push("  --noti-bg: " + Math.round(p.r * 255) + ", " + Math.round(p.g * 255) + ", " + Math.round(p.b * 255) + ";")
-        // the shell's type scale (Theme.fontSmall / fontBody), so a
-        // notification reads the same size as a flyout row
-        var sizes = { small: 11, label: 13, body: 13, summary: 13 }
-        for (var k in sizes)
-            lines.push("  --n-fs-" + k + ": " + Theme.fs(sizes[k]) + "px;")
-        lines.push("}")
-        swayncOut.setText(lines.join("\n") + "\n")
-        // only after the write has landed, or swaync re-reads the old file
-        swayncReload.running = true
     }
 
     // a + (b - a) * t per channel, as a colour; mix() as a hex
@@ -581,12 +545,12 @@ Scope {
     }
 
     // Coalesced like Settings' own save: the steppers fire several steps in
-    // a row, and each swaync reload re-parses its whole stylesheet.
+    // a row, and each step would rewrite every file.
     Timer {
         id: debounce
         interval: 200
         onTriggered: {
-            root.renderWofi(); root.renderSwaync(); root.renderAlacritty(); root.renderNvim(); root.renderClaude()
+            root.renderWofi(); root.renderAlacritty(); root.renderNvim(); root.renderClaude()
             root.renderHyprlock(); root.renderTermColors(); root.renderZathura()
             starshipTemplate.render(); fastfetchTemplate.render()
             root.renderGtk(); root.renderGtkCss(); root.renderQtScheme(); root.renderQt()
@@ -661,7 +625,6 @@ Scope {
     ProfileList { id: floorpProfiles; path: Quickshell.env("HOME") + "/.config/floorp/profiles.ini" }
 
     FileView { id: wofiOut;   path: root.dir + "/wofi.css"; printErrors: false }
-    FileView { id: swayncOut; path: root.dir + "/swaync.css"; printErrors: false }
 
     // Animation Speed reaches Hyprland through a state file its Lua config
     // reads on load, then a config-only reload (no monitor re-probe, so no
@@ -769,10 +732,5 @@ Scope {
         writeWindowAnim(false)
         writeBorders(false)
         debounce.restart()
-    }
-
-    Process {
-        id: swayncReload
-        command: ["swaync-client", "--reload-css", "--skip-wait"]
     }
 }

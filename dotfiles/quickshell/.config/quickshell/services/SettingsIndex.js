@@ -132,7 +132,7 @@ var entries = [
     // --- Notifications -----------------------------------------------------
     { page: "notifications", section: "Quick actions", label: "Do Not Disturb", keywords: "dnd silence mute" },
     { page: "notifications", section: "Quick actions", label: "Clear all",      keywords: "dismiss history" },
-    { page: "notifications", section: "Quick actions", label: "Open the panel", keywords: "swaync centre center" },
+    { page: "notifications", section: "Quick actions", label: "Open the history", keywords: "panel centre center list" },
     { page: "notifications", section: "Popups", label: "Position",              keywords: "corner where popups appear" },
     { page: "notifications", section: "How long popups stay", label: "Normal",  keywords: "timeout duration" },
     { page: "notifications", section: "How long popups stay", label: "Low priority", keywords: "timeout duration" },

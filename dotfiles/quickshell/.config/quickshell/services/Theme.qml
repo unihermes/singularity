@@ -123,8 +123,7 @@ Singleton {
     // Font Size, as a factor of the 16px base. Every font size and every
     // text-bearing row height in the shell goes through fs(), so text and the
     // rows holding it grow together instead of larger text clipping in
-    // fixed-height rows. AppearanceSync carries the same factor to wofi and
-    // swaync.
+    // fixed-height rows. AppearanceSync carries the same factor to wofi.
     readonly property real fontScale: Settings.fontSize / Settings.fontSizeBase
 
     function fs(n) { return Math.round(n * fontScale) }

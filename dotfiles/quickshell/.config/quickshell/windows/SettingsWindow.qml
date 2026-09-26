@@ -5,9 +5,9 @@
 // framed panels -- the numbered Sections on the left, the open page on the
 // right. Changes apply as they're made -- there is no Save -- and each page
 // writes straight to the thing it controls (mimeapps.list, hyprland.lua,
-// hypridle.conf, pipewire, swaync) rather than to a store of its own --
-// except Appearance, whose shell half is Settings.qml, shared with the
-// Control Centre's Appearance page.
+// hypridle.conf, pipewire) rather than to a store of its own -- except
+// Appearance and Notifications, whose settings are Settings.qml's, shared
+// with the Control Centre and the notification flyout.
 //
 // The ground and Escape come from WindowChrome.qml.
 //

@@ -89,8 +89,7 @@ xarchiver
 # gnome-keyring stores app secrets (browsers, VSCodium, Discord). ly's PAM
 # stack already calls pam_gnome_keyring, so it starts at login. libnotify
 # provides notify-send, used by screenshot.sh and anything else that wants
-# to hand swaync a notification from a script.
-swaync
+# to hand the shell a notification from a script.
 gnome-keyring
 libnotify
 

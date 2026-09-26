@@ -168,8 +168,8 @@ function complete(look) {
 }
 complete(looks[fallback])
 
-// The look the template stylesheets (wofi, swaync) are written in: their
-// hexes are this ramp, and AppearanceSync maps each one to the current role.
+// The look the template configs (wofi, starship, fastfetch) are written in:
+// their colours are this ramp, and AppearanceSync maps each one to the current role.
 var reference = "neutrino"
 
 // Fonts the Appearance page offers: monospace faces only, each as its plain

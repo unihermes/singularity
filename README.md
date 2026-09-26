@@ -27,6 +27,7 @@ dangling. Every step is idempotent; rerun `./install.sh` any time.
 - [Boot output](#boot-output)
 - [Boot speed](#boot-speed)
 - [Launcher](#launcher)
+- [Notifications](#notifications)
 - [Theme](#theme)
 - [Editor](#editor)
 - [Regenerating the package lists](#regenerating-the-package-lists)
@@ -90,7 +91,6 @@ singularity/
     ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
     ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh, autostart.sh
-    ├── swaync/.config/swaync/{config.json,style.css}
     ├── wofi/.config/wofi/{config,style.css}  # fallback launcher when the shell is down
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
@@ -214,6 +214,22 @@ With nothing typed it lists recent files instead, read from
 every other GTK app already maintains, so there is no second log to keep and
 it agrees with those apps' own Recent views.
 
+## Notifications
+
+The shell is the notification daemon (`services/Notifications.qml`, on
+Quickshell's `NotificationServer`), so popups and their history are drawn like
+every other flyout. Popups stack from the corner Settings → Notifications
+picks, on the focused screen, and stay for as long as that page says for their
+urgency unless the app asks for a time of its own. Pointing at one holds it.
+Clicking a card runs the app's default action; its other actions are chips
+underneath.
+
+Everything not dismissed stays in the history, which the bar's bell opens
+(right-click toggles Do Not Disturb). Do Not Disturb holds popups back, and
+notifications still land in the history. `qs ipc call notifications
+toggle|dnd|clear` does the same from a keybind. Notifications survive a shell
+reload, not a restart.
+
 ## Theme
 
 The default look, **Neutrino**, is one grayscale ramp with pale blue text. No
@@ -225,8 +241,8 @@ other hues: emphasis is carried by lightness and weight instead.
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
 | `#d4e4f4` text | `#ebebeb` bright | | |
 
-The shell (bar, flyouts, windows, settings, the launcher), swaync and Alacritty
-all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
+The shell (bar, flyouts, windows, settings, the launcher, notifications) and
+Alacritty all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
 `services/LookStore.qml`. A look sets the palette and accent colour, corner
 radius, stroke weight, frame style (double, single, bevel or none), module
 style (outline, filled, flat or pill), bar style (full width or floating),

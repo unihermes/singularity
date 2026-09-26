@@ -355,13 +355,10 @@ FlyoutPanel {
         }
 
         // Do Not Disturb lives here as well as on the notification
-        // module's right-click, because that module hides itself when
-        // nothing is unread -- this is the one place it's always reachable.
+        // module's right-click, since that module can be hidden
         FlyoutAction {
             icon: Notifications.dnd ? "󰂛" : "󰂚"
             label: "Do Not Disturb"
-            status: !Notifications.available ? "swaync not running" : ""
-            enabled: Notifications.available
             checked: Notifications.dnd
             onActivated: Notifications.toggleDnd()
         }

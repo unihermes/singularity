@@ -173,6 +173,14 @@ ShellRoot {
         function toggle(): void { root.claudeToggled() }
     }
 
+    // Notifications: the history flyout, Do Not Disturb, Clear all
+    IpcHandler {
+        target: "notifications"
+        function toggle(): void { Notifications.togglePanel() }
+        function dnd(): void { Notifications.toggleDnd() }
+        function clear(): void { Notifications.clearAll() }
+    }
+
     // The ALT+Tab switcher. The bind wins over the switcher's keyboard grab,
     // so every Tab of a held ALT+Tab re-runs alttab-ipc.sh: tab() opens the
     // switcher on the first and steps it on the rest. commit() when ALT comes
@@ -309,6 +317,22 @@ ShellRoot {
                     }
                     screenScope.launcherMode = mode
                     screenScope.openFlyout = "launcher"
+                }
+            }
+
+            // The notification history under its bar module, as a click
+            // would; with the module hidden, centred instead
+            Connections {
+                target: Notifications
+                function onPanelToggled() {
+                    if (!screenScope.isFocusedScreen()) return
+                    const it = screenScope.barWindow.widgetItem("notifications")
+                    if (it && it.visible) {
+                        screenScope.toggleFlyout("notifications", it)
+                        return
+                    }
+                    screenScope.flyoutAnchorX = screenScope.modelData.width / 2
+                    screenScope.openFlyout = screenScope.openFlyout === "notifications" ? "" : "notifications"
                 }
             }
 
@@ -902,6 +926,11 @@ ShellRoot {
             scope: screenScope
         }
 
+        // Notifications as they arrive
+        NotificationPopups {
+            scope: screenScope
+        }
+
         // ALT+Tab. Shares openFlyout like everything else, so opening it
         // closes whatever was up.
         AltTabSwitcher {
@@ -963,6 +992,9 @@ ShellRoot {
 
         // updates
         LazyFlyout { name: "updates"; scope: screenScope; UpdatesFlyout { scope: screenScope } }
+
+        // notification history
+        LazyFlyout { name: "notifications"; scope: screenScope; NotificationsFlyout { scope: screenScope } }
 
         // Claude: SUPER+I or the bar module
         LazyFlyout { name: "claude"; scope: screenScope; ClaudeFlyout { scope: screenScope } }

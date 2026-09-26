@@ -98,8 +98,9 @@ BarModule {
         onTriggered: root.morphing = false
     }
 
-    // Brightness loads from sysfs, the sink settles, and swaync reports
-    // in -- all of it looks like a change shortly after startup.
+    // Brightness loads from sysfs, the sink settles, and notifications kept
+    // over a reload come back -- all of it looks like a change shortly after
+    // startup.
     property bool ready: false
     Timer { interval: 2000; running: true; onTriggered: root.ready = true }
 

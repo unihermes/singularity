@@ -235,11 +235,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user reset-failed hyprpolkitagent.service; systemctl --user start hyprpolkitagent.service")
     -- Same for hypridle; the fallback runs it bare if the unit is missing.
     hl.exec_cmd("systemctl --user reset-failed hypridle.service; systemctl --user start hypridle.service || hypridle")
-    -- swaync is also D-Bus-activated, and the session's first notification
-    -- can start it before WAYLAND_DISPLAY reaches the systemd --user
-    -- environment, failing it into its start limit. Starting it here, where
-    -- WAYLAND_DISPLAY is already set, gets there first.
-    hl.exec_cmd("systemctl --user reset-failed swaync.service; systemctl --user start swaync.service")
     -- Stop logind suspending on lid close: the lid binds below just blank the
     -- screen, and hypridle suspends after 20 min idle. Released when
     -- Hyprland exits.

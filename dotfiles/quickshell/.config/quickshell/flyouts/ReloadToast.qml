@@ -2,7 +2,7 @@
 // ~/.config/quickshell/flyouts/ReloadToast.qml
 //
 // Stands in for Quickshell's own reload popup: a notification card at the
-// bar's left end, mirroring where swaync puts its popups on the right. A
+// bar's left end, clear of the notification popups on the right. A
 // good reload fades on its own; a failed one shows the error and stays
 // until clicked or its longer timer runs out.
 //
@@ -57,10 +57,9 @@ OverlayWindow {
         onTriggered: root.active = false
     }
 
-    // Sized and placed like a swaync popup (dotfiles/swaync): the same
-    // 380px window less its 6px padding, 6px off the bar and the screen
-    // edge, and the text inset and sizes its card gives a summary and body.
-    // A failure takes the alert stroke, as a critical notification does.
+    // 368px wide, 6px off the bar and the screen edge, with a summary and a
+    // body. A failure takes the alert stroke, as a critical notification
+    // does (NotificationCard).
     PanelFrame {
         id: box
         readonly property int gap: 6
