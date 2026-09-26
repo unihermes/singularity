@@ -73,7 +73,9 @@ Singleton {
         // checkupdates exits 1 on failure (db sync lock contention, network
         // hiccup, ...) and 2 when there's simply nothing to update -- both
         // print nothing, so the exit code is the only way to tell "checked,
-        // found none" from "check failed". Same idea for yay's AUR RPC call.
+        // found none" from "check failed". yay -Qua exits 1 for both, like
+        // pacman -Qu, so there a silent exit 1 means none and an exit 1 with
+        // an error on stderr means failed; it's mapped to 2 / left at 1.
         // Report it per source and, on failure, keep that source's previous
         // results instead of silently wiping them to zero.
         command: ["sh", "-c",
@@ -81,7 +83,8 @@ Singleton {
             + "printf '%s\\n' \"$out\" | sed '/^$/d;s/^/repo /'; "
             + "echo \"REPO_STATUS $rc\"; "
             + "if [ \"$AUR\" = 1 ] && command -v yay >/dev/null; then "
-            + "out=$(yay -Qua 2>/dev/null); rc=$?; "
+            + "err=$(mktemp); out=$(yay -Qua 2>\"$err\"); rc=$?; "
+            + "[ $rc -eq 1 ] && [ -z \"$out\" ] && [ ! -s \"$err\" ] && rc=2; rm -f \"$err\"; "
             + "printf '%s\\n' \"$out\" | sed '/^$/d;s/^/aur /'; "
             + "echo \"AUR_STATUS $rc\"; "
             + "else echo 'AUR_STATUS skip'; fi"]
@@ -105,7 +108,7 @@ Singleton {
                 var out = []
                 out = out.concat(repoStatus === "0" || repoStatus === "2"
                     ? repo : root.found.filter(p => !p.aur))
-                out = out.concat(aurStatus === "0" || aurStatus === "skip"
+                out = out.concat(aurStatus === "0" || aurStatus === "2" || aurStatus === "skip"
                     ? aur : root.found.filter(p => p.aur))
                 out.sort((a, b) => a.name.localeCompare(b.name))
                 root.found = out
