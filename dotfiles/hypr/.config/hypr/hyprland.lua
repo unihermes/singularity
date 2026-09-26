@@ -15,6 +15,7 @@
 local toggleMaximize
 local toggleMinimize
 local toggleScratchpad
+local toggleStashed
 
 -- Workspaces 1..MAX_WORKSPACES get SUPER+n binds, and are the only ones a
 -- window-rules.json entry may send a window to. Quickshell's copy is
@@ -440,9 +441,10 @@ hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))  -- Show a
 -- --- Scratchpad ---
 -- A terminal on its own special workspace, floating over whichever workspace
 -- you're on. The first press starts it; after that the key shows and hides it.
--- SHIFT stashes the focused window there as well, to be shown with it.
+-- SHIFT stashes the focused window there as well, to be shown with it, and
+-- on a window already in the scratchpad puts it back on the workspace below.
 hl.bind(mod .. " + grave", function() toggleScratchpad() end)  -- Show or hide the scratchpad
-hl.bind(mod .. " + SHIFT + grave", hl.dsp.window.move({ workspace = "special:scratchpad" }))  -- Move window to the scratchpad
+hl.bind(mod .. " + SHIFT + grave", function() toggleStashed() end)  -- Move window into or out of the scratchpad
 
 -- --- Focus ---
 hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }))  -- Focus window to the left
@@ -681,6 +683,27 @@ toggleScratchpad = function()
         hl.dispatch(hl.dsp.exec_cmd(terminal .. " --class " .. SCRATCH_CLASS))
     else
         hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad"))
+    end
+end
+
+-- Out of the scratchpad, it lands on the workspace the scratchpad was shown
+-- over, which is then uncovered so the window can be seen there. Into it,
+-- silently: the window just goes, rather than the scratchpad opening on it.
+toggleStashed = function()
+    local win = hl.get_active_window()
+    if not win or not win.workspace then return end
+    local target = "address:" .. win.address
+    if win.workspace.name == "special:scratchpad" then
+        local mon = win.monitor
+        local ws = mon and mon.active_workspace
+        if not ws then return end
+        hl.dispatch(hl.dsp.window.move({ workspace = ws.id, window = target }))
+        if mon.active_special_workspace then
+            hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad"))
+        end
+        hl.dispatch(hl.dsp.focus({ window = target }))
+    else
+        hl.dispatch(hl.dsp.window.move({ workspace = "special:scratchpad", window = target, follow = false }))
     end
 end
 
