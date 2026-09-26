@@ -124,6 +124,7 @@ var entries = [
     // --- Display -----------------------------------------------------------
     { page: "display", section: "",  label: "Arrangement",  keywords: "monitor position extend duplicate mirror" },
     { page: "display", section: "",  label: "Primary",      keywords: "monitor main workspace 1" },
+    { page: "display", section: "",  label: "Workspaces",   keywords: "monitor reset external workspace 1 2 dock" },
     { page: "display", section: "",  label: "Now",          keywords: "monitor current rule" },
     { page: "display", section: "",  label: "Scale",        keywords: "monitor hidpi fractional" },
     { page: "display", section: "",  label: "Mode",         keywords: "monitor resolution refresh rate hz" },

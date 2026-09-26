@@ -122,6 +122,42 @@ if primaryDisplay ~= "" then
     end)
 end
 
+-- One workspace per display, numbered from the primary: 1 on the primary,
+-- 2 on the next display to its right, and so on. Every other workspace is
+-- gathered onto the primary. A global so the Display page's "Reset
+-- workspaces" can run it through `hyprctl eval`.
+function singularityResetWorkspaces()
+    local mons = hl.get_monitors()
+    if #mons == 0 then return end
+    local primary = mons[1]
+    for _, m in ipairs(mons) do
+        if m.name == primaryDisplay then primary = m end
+    end
+    local order = {}
+    for _, m in ipairs(mons) do
+        if m ~= primary then order[#order + 1] = m end
+    end
+    table.sort(order, function(a, b) return a.x < b.x end)
+    table.insert(order, 1, primary)
+
+    for _, ws in ipairs(hl.get_workspaces()) do
+        if not ws.special and ws.id > #order and ws.monitor and ws.monitor.name ~= primary.name then
+            hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(ws.id), monitor = primary.name }))
+        end
+    end
+    -- Backwards, so the primary is focused last. A workspace that doesn't
+    -- exist yet is created on whichever display has focus.
+    for i = #order, 1, -1 do
+        local name = order[i].name
+        if hl.get_workspace(i) then
+            hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(i), monitor = name }))
+        else
+            hl.dispatch(hl.dsp.focus({ monitor = name }))
+        end
+        hl.dispatch(hl.dsp.focus({ workspace = i }))
+    end
+end
+
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----
 -------------------------------

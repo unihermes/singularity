@@ -252,6 +252,32 @@ SettingsPage {
         }
     }
 
+    // singularityResetWorkspaces() lives in hyprland.lua; anything it
+    // prints means the eval failed.
+    Process {
+        id: resetProc
+        command: ["hyprctl", "eval", "singularityResetWorkspaces()"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var out = text.trim()
+                if (out === "ok") page.say("Workspace 1 is on " + page.primary + ", 2 onward on the others", false)
+                else page.say("Couldn't reset workspaces: " + out.split("\n")[0], true)
+            }
+        }
+    }
+
+    SettingsField {
+        visible: page.monitors.length > 1 && !page.duplicating
+        label: "Workspaces"
+        hint: "Put 1 on " + page.primary + " and 2 onward on the others, left to right"
+
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Reset"
+            onClicked: resetProc.running = true
+        }
+    }
+
     Repeater {
         model: page.monitors
 
