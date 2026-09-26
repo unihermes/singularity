@@ -155,29 +155,50 @@ ShellRoot {
     }
 
     // Caps Lock / Num Lock, from hyprland.lua's pass-through binds on the two
-    // keys: `qs ipc call locks changed caps|num`. The bind only says which key
-    // went down; whether it's now on is read back from the main keyboard's
-    // state, so the toast can't drift out of step with the LED.
+    // keys' release: `qs ipc call locks changed caps|num`. Each call flips the
+    // shell's own copy of the state and toasts it straight away, so toggles
+    // quicker than a round trip to Hyprland each still show. The main
+    // keyboard's real state is read back at startup and shortly after the
+    // last toggle; if the copy has drifted (a missed call, another keyboard)
+    // it's corrected, and the toast with it.
     signal lockKeyChanged(string key, bool on)
+
+    property var lockState: ({ caps: false, num: false })
 
     IpcHandler {
         target: "locks"
         function changed(key: string): void {
-            lockProbe.key = key
-            lockProbe.running = true
+            if (key !== "caps" && key !== "num") return
+            root.lockState[key] = !root.lockState[key]
+            root.lockKeyChanged(key, root.lockState[key])
+            lockResync.restart()
         }
+    }
+
+    Timer {
+        id: lockResync
+        interval: 400
+        onTriggered: lockProbe.running = true
     }
 
     Process {
         id: lockProbe
-        property string key: ""
+        property bool primed: false
+        running: true
         command: ["hyprctl", "devices", "-j"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let kbs
                 try { kbs = JSON.parse(text).keyboards || [] } catch (e) { return }
                 const kb = kbs.find(k => k.main) || kbs[0]
-                if (kb) root.lockKeyChanged(lockProbe.key, lockProbe.key === "caps" ? kb.capsLock : kb.numLock)
+                if (!kb) return
+                const real = { caps: kb.capsLock, num: kb.numLock }
+                for (const key of ["caps", "num"]) {
+                    if (real[key] === root.lockState[key]) continue
+                    root.lockState[key] = real[key]
+                    if (lockProbe.primed) root.lockKeyChanged(key, real[key])
+                }
+                lockProbe.primed = true
             }
         }
     }

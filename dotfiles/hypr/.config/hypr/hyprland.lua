@@ -587,10 +587,12 @@ hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("~/.config/hypr/brightness.sh u
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("~/.config/hypr/brightness.sh down"),              { locked = true, repeating = true })  -- Brightness down
 
 -- --- Lock Keys ---
--- Pass-through: the key still toggles its lock as usual, and the shell reads
--- the new state back to show it in a toast (shell.qml's "locks" handler).
-hl.bind("Caps_Lock", hl.dsp.exec_cmd("qs ipc call locks changed caps"), { non_consuming = true })  -- Show Caps Lock state
-hl.bind("Num_Lock",  hl.dsp.exec_cmd("qs ipc call locks changed num"),  { non_consuming = true })  -- Show Num Lock state
+-- Pass-through: the key still toggles its lock as usual, and the shell shows
+-- the new state in a toast (shell.qml's "locks" handler). On release, since
+-- xkb only turns a lock *off* when the key comes up: on press it still reads
+-- as on.
+hl.bind("Caps_Lock", hl.dsp.exec_cmd("qs ipc call locks changed caps"), { non_consuming = true, release = true })  -- Show Caps Lock state
+hl.bind("Num_Lock",  hl.dsp.exec_cmd("qs ipc call locks changed num"),  { non_consuming = true, release = true })  -- Show Num Lock state
 
 ----------------------
 ---- WINDOW RULES ----
