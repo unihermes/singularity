@@ -136,9 +136,9 @@ if primaryDisplay ~= "" then
 end
 
 -- One workspace per display, numbered from the primary: 1 on the primary,
--- 2 on the next display to its right, and so on. Every other workspace is
--- gathered onto the primary. A global so the Display page's "Reset
--- workspaces" can run it through `hyprctl eval`.
+-- 2 on the next display along (left to right, then top to bottom), and so
+-- on. Every other workspace is gathered onto the primary. A global so the
+-- Display page's "Reset workspaces" can run it through `hyprctl eval`.
 function singularityResetWorkspaces()
     local mons = hl.get_monitors()
     if #mons == 0 then return end
@@ -150,7 +150,7 @@ function singularityResetWorkspaces()
     for _, m in ipairs(mons) do
         if m ~= primary then order[#order + 1] = m end
     end
-    table.sort(order, function(a, b) return a.x < b.x end)
+    table.sort(order, function(a, b) return a.x < b.x or (a.x == b.x and a.y < b.y) end)
     table.insert(order, 1, primary)
 
     for _, ws in ipairs(hl.get_workspaces()) do
