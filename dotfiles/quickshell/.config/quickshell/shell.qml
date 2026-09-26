@@ -155,9 +155,11 @@ ShellRoot {
     }
 
     // Caps Lock / Num Lock, from hyprland.lua's pass-through binds on the two
-    // keys' release: `qs ipc call locks changed caps|num`. Each call flips the
-    // shell's own copy of the state and toasts it straight away, so toggles
-    // quicker than a round trip to Hyprland each still show. The main
+    // keys: `qs ipc call locks changed caps|num`. Each call flips the shell's
+    // own copy of the state and toasts it straight away, rather than reading
+    // it: the bind fires on press, and xkb only turns a lock off when the key
+    // comes up, so the keyboard still reads on at that point. Flipping also
+    // lets toggles quicker than a round trip to Hyprland each show. The main
     // keyboard's real state is read back at startup and shortly after the
     // last toggle; if the copy has drifted (a missed call, another keyboard)
     // it's corrected, and the toast with it.
@@ -177,7 +179,9 @@ ShellRoot {
 
     Timer {
         id: lockResync
-        interval: 400
+        // long enough that the key is up again, or a lock being switched
+        // off would still read as on
+        interval: 1000
         onTriggered: lockProbe.running = true
     }
 
