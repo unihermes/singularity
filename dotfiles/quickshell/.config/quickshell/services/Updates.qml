@@ -42,25 +42,30 @@ Singleton {
         checkProc.running = true
     }
 
-    // yay does repo and AUR in one pass, unattended after the one sudo
-    // password prompt:
+    // yay does repo and AUR in one pass:
     //   --sudoloop       keeps sudo's timestamp fresh, so a long AUR build
     //                    doesn't ask again when pacman installs at the end
-    //   --noconfirm      takes pacman's default at every [Y/n]
-    //   --answer* None   skips yay's clean-build / diff / PKGBUILD-edit menus
+    //   --answerclean None, --answeredit None
+    //                    skip yay's clean-build and PKGBUILD-edit menus
     //   --removemake     drops build-only deps without asking
+    // Repo packages alone run unattended after the sudo prompt (--noconfirm,
+    // --answerdiff None), with --repo so an AUR update that turned up since
+    // the last check can't slip through unreviewed. With AUR updates pending
+    // it stops instead: every PKGBUILD diff is shown (--answerdiff All) and
+    // the install waits for a yes, since an AUR package is code nobody else
+    // has vetted -- the same review install.sh stops for.
     // On success the terminal closes itself with a notification; on failure
     // it stays open so the error can be read. Either way the list is
     // re-checked once it closes.
-    // --repo leaves the AUR alone when it's not included; --ignore takes
-    // Settings.updateIgnore, which Settings has already limited to names.
+    // --ignore takes Settings.updateIgnore, which Settings has already
+    // limited to names.
     function update() {
         if (updateProc.running) return
-        var flags = (Settings.updateAur ? "" : " --repo")
+        var review = Settings.updateAur && aurCount > 0
+        var flags = (review ? " --answerdiff All" : " --repo --noconfirm --answerdiff None")
             + (Settings.updateIgnore.length > 0 ? " --ignore " + Settings.updateIgnore.join(",") : "")
         updateProc.command = ["alacritty", "--class", "singularity-update", "-e", "sh", "-c",
-            "yay -Syu" + flags + " --sudoloop --noconfirm --answerclean None --answerdiff None "
-            + "--answeredit None --removemake; "
+            "yay -Syu" + flags + " --sudoloop --answerclean None --answeredit None --removemake; "
             + "if [ $? -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "
             + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi"]
         updateProc.running = true
