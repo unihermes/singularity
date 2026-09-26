@@ -14,6 +14,7 @@
 -- would be globals and the binds would call nil.
 local toggleMaximize
 local toggleMinimize
+local toggleScratchpad
 
 -- Workspaces 1..MAX_WORKSPACES get SUPER+n binds, and are the only ones a
 -- window-rules.json entry may send a window to. Quickshell's copy is
@@ -436,6 +437,13 @@ hl.bind(mod .. " + M",         function() toggleLayout() end)  -- Switch between
 -- Drawn by Quickshell (WorkspaceOverlay.qml), so this only pokes the shell.
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))  -- Show all workspaces
 
+-- --- Scratchpad ---
+-- A terminal on its own special workspace, floating over whichever workspace
+-- you're on. The first press starts it; after that the key shows and hides it.
+-- SHIFT stashes the focused window there as well, to be shown with it.
+hl.bind(mod .. " + grave", function() toggleScratchpad() end)  -- Show or hide the scratchpad
+hl.bind(mod .. " + SHIFT + grave", hl.dsp.window.move({ workspace = "special:scratchpad" }))  -- Move window to the scratchpad
+
 -- --- Focus ---
 hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }))  -- Focus window to the left
 hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))  -- Focus window to the right
@@ -643,6 +651,32 @@ hl.window_rule({
     maximize = false,
     -- Intentionally no size constraint — QML code defines window dimensions
 })
+
+-- The scratchpad terminal (SUPER+grave): opens straight onto the special
+-- workspace, floating and centred. Out of monocle for the same reason as the
+-- shell's windows above -- its open hook would stretch it to fill the screen.
+local SCRATCH_CLASS = "singularity-scratch"
+hl.window_rule({
+    name      = "scratchpad-terminal",
+    tag       = "-monocle",
+    match     = { class = "^(" .. SCRATCH_CLASS .. ")$" },
+    workspace = "special:scratchpad",
+    float     = true,
+    center    = true,
+    size      = "monitor_w*0.6 monitor_h*0.6",
+    maximize  = false,
+})
+hl.window_rule({ name = "scratchpad-terminal-exempt", match = { class = "^(" .. SCRATCH_CLASS .. ")$" }, tag = "+monocle-exempt" })
+
+-- Starts the terminal if it isn't running (the rule above shows it), and
+-- otherwise toggles the workspace it lives on.
+toggleScratchpad = function()
+    if #hl.get_windows({ class = SCRATCH_CLASS }) == 0 then
+        hl.dispatch(hl.dsp.exec_cmd(terminal .. " --class " .. SCRATCH_CLASS))
+    else
+        hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad"))
+    end
+end
 
 -- Apps always worth the whole screen: the editor, the browsers, zathura.
 -- In dwindle mode they maximize on open while everything else tiles. In
