@@ -446,6 +446,11 @@ hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))  -- Show a
 hl.bind(mod .. " + grave", function() toggleScratchpad() end)  -- Show or hide the scratchpad
 hl.bind(mod .. " + SHIFT + grave", function() toggleStashed() end)  -- Move window into or out of the scratchpad
 
+-- --- Notes ---
+-- Quickshell's sticky notes (windows/NotesWindow.qml), pinned in the
+-- top-right corner over every workspace; see the "notes" rule below
+hl.bind(mod .. " + N", hl.dsp.exec_cmd("qs ipc call notes toggle"))  -- Show or hide sticky notes
+
 -- --- Focus ---
 hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "left" }))  -- Focus window to the left
 hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))  -- Focus window to the right
@@ -654,11 +659,23 @@ local monocleRule = hl.window_rule({
 hl.window_rule({
     name     = "quickshell-windows",
     tag      = "-monocle",
-    match    = { class = "^(org\\.quickshell)$" },
+    match    = { class = "^(org\\.quickshell)$", title = "negative:^(Notes)$" },
     float    = true,
     center   = true,
     maximize = false,
     -- Intentionally no size constraint — QML code defines window dimensions
+})
+
+-- The sticky notes (SUPER+N): one of the shell's windows too, but pinned so
+-- it stays up across workspace switches, and put in the top-right corner by
+-- placeNotes() below instead of centred.
+hl.window_rule({
+    name     = "notes",
+    tag      = "-monocle",
+    match    = { class = "^(org\\.quickshell)$", title = "^(Notes)$" },
+    float    = true,
+    pin      = true,
+    maximize = false,
 })
 
 -- The scratchpad terminal (SUPER+grave): opens straight onto the special
@@ -962,6 +979,22 @@ local function usableArea(mon)
         h = mon.height / mon.scale - reserved.top - reserved.bottom,
     }
 end
+
+-- The sticky notes open in the top-right corner of the usable area, clear of
+-- the bar, on whichever monitor they open on.
+local NOTES_MARGIN = 8
+local function placeNotes(win)
+    if not win or win.class ~= "org.quickshell" or win.title ~= "Notes" then return end
+    local mon = win.monitor or hl.get_active_monitor()
+    if not mon then return end
+    local area = usableArea(mon)
+    hl.dispatch(hl.dsp.window.move({
+        x = math.floor(area.x + area.w - win.size.x - NOTES_MARGIN),
+        y = math.floor(area.y + NOTES_MARGIN),
+        window = "address:" .. win.address,
+    }))
+end
+hl.on("window.open", placeNotes)
 
 -- Whether a floater fills the monitor it is on: position as well as size,
 -- unlike isAlreadyFull(), since the right size on the wrong screen isn't.

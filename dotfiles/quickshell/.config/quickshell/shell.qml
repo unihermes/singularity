@@ -94,6 +94,7 @@ ShellRoot {
     // built on first open, see LazyWindow.qml
     LazyWindow { id: system; System {} }
     LazyWindow { id: settingsWindow; SettingsWindow {} }
+    LazyWindow { id: notesWindow; NotesWindow {} }
 
     // `qs ipc call settings open appearance`, for a keybind or a script;
     // an unknown or empty page opens the default one
@@ -108,6 +109,15 @@ ShellRoot {
     IpcHandler {
         target: "system"
         function open(page: string): void { system.open(page) }
+    }
+
+    // `qs ipc call notes toggle`, from SUPER+N
+    IpcHandler {
+        target: "notes"
+        function toggle(): void {
+            if (notesWindow.item && notesWindow.item.visible) notesWindow.item.close()
+            else notesWindow.open()
+        }
     }
 
     IpcHandler {
