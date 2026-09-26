@@ -155,31 +155,47 @@ SettingsPage {
         })
     }
 
-    // Which side of the primary a display sits, as hl.monitor() positions:
-    // the primary pinned at 0x0 and the other display placed against it.
-    // Hyprland lays out explicit positions before the auto ones, so the
-    // auto-center-* value is always relative to the primary, centred along
-    // the edge they share.
-    readonly property var sides: [
-        { value: "left", text: "Left" }, { value: "right", text: "Right" },
-        { value: "up", text: "Above" }, { value: "down", text: "Below" }]
+    // Displays that take part in the arrangement: not switched off (the
+    // panel with the lid shut) and not copying another.
+    readonly property var arranged: monitors.filter(m => !m.disabled && m.mirrorOf === "none")
 
-    // The side it is on now, from Hyprland's geometry rather than the rule,
-    // so a hand-written position reads correctly too.
-    function sideOf(mon) {
-        var p = monitors.find(m => m.name === primary)
-        if (!p || p === mon) return ""
-        if (mon.x + mon.lw <= p.x) return "left"
-        if (mon.x >= p.x + p.lw) return "right"
-        if (mon.y + mon.lh <= p.y) return "up"
-        if (mon.y >= p.y + p.lh) return "down"
-        return ""
+    // A display dragged to (x, y) on the arrangement picture, written as
+    // hl.monitor() positions with the primary pinned at 0x0. Two displays
+    // centred on a shared edge are the common case, and get the primary's
+    // 0x0 and an auto-center-* on the other: Hyprland lays out explicit
+    // positions before auto ones, so that is measured from the primary and
+    // still holds after a change of mode or scale. Anything else is an
+    // explicit position for every display, which is what the picture shows.
+    function arrange(name, x, y) {
+        var p = arranged.find(m => m.name === primary)
+        if (!p) return
+        var at = {}
+        arranged.forEach(m => at[m.name] = { x: m.x, y: m.y, w: m.lw, h: m.lh })
+        at[name].x = x
+        at[name].y = y
+        var px = at[primary].x, py = at[primary].y
+        Object.keys(at).forEach(n => { at[n].x = Math.round(at[n].x - px); at[n].y = Math.round(at[n].y - py) })
+
+        var want = {}
+        var others = Object.keys(at).filter(n => n !== primary)
+        if (others.length === 1) {
+            var o = at[others[0]], q = at[primary]
+            var midX = Math.abs(o.x + o.w / 2 - q.w / 2) <= 1
+            var midY = Math.abs(o.y + o.h / 2 - q.h / 2) <= 1
+            var side = midY && o.x + o.w === 0 ? "left" : midY && o.x === q.w ? "right"
+                : midX && o.y + o.h === 0 ? "up" : midX && o.y === q.h ? "down" : ""
+            if (side !== "") {
+                want[primary] = "0x0"
+                want[others[0]] = "auto-center-" + side
+            }
+        }
+        if (Object.keys(want).length === 0)
+            Object.keys(at).forEach(n => want[n] = at[n].x + "x" + at[n].y)
+        setPositions(want, name + " moved")
     }
 
-    function setSide(name, side) {
-        var want = {}
-        want[primary] = "0x0"
-        want[name] = "auto-center-" + side
+    // { output: position } in one write and one reload
+    function setPositions(want, message) {
         patchLua(function(src) {
             Object.keys(want).forEach(function(output) {
                 if (src === null) return
@@ -199,7 +215,7 @@ SettingsPage {
                 src = HyprTables.addMonitor(src, fields)
             })
             return src
-        }, name + " is " + (side === "up" ? "above" : side === "down" ? "below" : "to the " + side + " of") + " " + primary,
+        }, message,
            "position in an hl.monitor() rule isn't a plain value, edit it by hand")
     }
 
@@ -275,6 +291,14 @@ SettingsPage {
         })
     }
 
+    DisplayLayout {
+        visible: page.arranged.length > 1 && !page.duplicating
+        width: parent.width
+        monitors: page.arranged
+        primary: page.primary
+        onMoved: (name, x, y) => page.arrange(name, x, y)
+    }
+
     // Only worth showing with somewhere to send the picture.
     SettingsField {
         visible: page.monitors.length > 1
@@ -343,7 +367,6 @@ SettingsPage {
             readonly property var mode: page.fieldValue(rule, "mode", "preferred")
             readonly property real ruleScale: Number(page.fieldValue(rule, "scale", 1))
             readonly property bool mirrored: modelData.mirrorOf !== "none"
-            readonly property var primaryMon: page.monitors.find(m => m.name === page.primary)
 
             width: parent.width
             spacing: Theme.spaceM
@@ -378,21 +401,6 @@ SettingsPage {
                         text: "Own rule"
                         onClicked: page.ownRule(mon.modelData, mon.rule)
                     }
-                }
-            }
-
-            SettingsField {
-                visible: mon.modelData.name !== page.primary && !page.duplicating
-                    && !mon.modelData.disabled && mon.primaryMon !== undefined && !mon.primaryMon.disabled
-                label: "Side"
-                hint: "Where it sits next to " + page.primary + "; the cursor and windows cross over on that edge"
-
-                FlyoutSegmented {
-                    anchors.right: parent.right
-                    fill: false
-                    model: page.sides
-                    current: page.sideOf(mon.modelData)
-                    onPicked: v => page.setSide(mon.modelData.name, v)
                 }
             }
 
