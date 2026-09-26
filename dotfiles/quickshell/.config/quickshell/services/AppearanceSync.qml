@@ -691,6 +691,31 @@ Scope {
         })
     }
 
+    // How much of the screen's top edge the bar takes (0 when it sits at the
+    // bottom), for hyprland.lua's rule that opens the sticky notes clear of
+    // it. A rule can't read the reserved space itself.
+    function writeBarTop(reload) {
+        var top = Theme.barPosition === "top" ? Theme.barExtent : 0
+        AtomicFileWrite.write({
+            path: root.dir + "/bar-top",
+            transform: () => top + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+
+    // Stepping the height fires once per step; one reload at the end is enough.
+    Timer {
+        id: barTopDebounce
+        interval: 200
+        onTriggered: root.writeBarTop(true)
+    }
+
+    Connections {
+        target: Theme
+        function onBarPositionChanged() { barTopDebounce.restart() }
+        function onBarExtentChanged() { barTopDebounce.restart() }
+    }
+
     // A look switch changes both colours at once; one reload is enough.
     Timer {
         id: bordersDebounce
@@ -731,6 +756,7 @@ Scope {
         writeIcons()
         writeWindowAnim(false)
         writeBorders(false)
+        writeBarTop(false)
         debounce.restart()
     }
 }

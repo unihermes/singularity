@@ -654,8 +654,16 @@ hl.window_rule({
 })
 
 -- The sticky notes (SUPER+N): one of the shell's windows too, but pinned so
--- it stays up across workspace switches, and put in the top-right corner by
--- placeNotes() below instead of centred.
+-- it stays up across workspace switches, and opened in the top-right corner
+-- instead of centred. Placed by the rule rather than moved from a
+-- window.open hook: moving a pinned window as it maps crashes Hyprland.
+-- A rule's position ignores the bar's reserved space, so clearing a top bar
+-- takes its extent from the bar-top state file, which Quickshell rewrites
+-- (and reloads this config) whenever the bar moves or changes size.
+local NOTES_MARGIN = 8
+local function notesTop()
+    return (tonumber(singularityState("bar-top", "32")) or 32) + NOTES_MARGIN
+end
 hl.window_rule({
     name     = "notes",
     tag      = "-monocle",
@@ -663,6 +671,7 @@ hl.window_rule({
     float    = true,
     pin      = true,
     maximize = false,
+    move     = "monitor_w-window_w-" .. NOTES_MARGIN .. " " .. notesTop(),
 })
 
 -- The scratchpad terminal (SUPER+grave): opens straight onto the special
@@ -966,22 +975,6 @@ local function usableArea(mon)
         h = mon.height / mon.scale - reserved.top - reserved.bottom,
     }
 end
-
--- The sticky notes open in the top-right corner of the usable area, clear of
--- the bar, on whichever monitor they open on.
-local NOTES_MARGIN = 8
-local function placeNotes(win)
-    if not win or win.class ~= "org.quickshell" or win.title ~= "Notes" then return end
-    local mon = win.monitor or hl.get_active_monitor()
-    if not mon then return end
-    local area = usableArea(mon)
-    hl.dispatch(hl.dsp.window.move({
-        x = math.floor(area.x + area.w - win.size.x - NOTES_MARGIN),
-        y = math.floor(area.y + NOTES_MARGIN),
-        window = "address:" .. win.address,
-    }))
-end
-hl.on("window.open", placeNotes)
 
 -- Whether a floater fills the monitor it is on: position as well as size,
 -- unlike isAlreadyFull(), since the right size on the wrong screen isn't.
