@@ -1,8 +1,10 @@
 // Singularity - Fastfetch
 // ~/.config/fastfetch/config.jsonc
 //
-// Same grayscale ramp as the rest of the repo -- no hues, emphasis is
-// lightness and weight instead.
+// Emphasis is lightness and weight, not hue. Written in Neutrino's ramp:
+// Quickshell (AppearanceSync.qml) renders a copy with each 38;2;r;g;b in the
+// current look's colours to ~/.local/state/neutrino/fastfetch.jsonc, which
+// .bashrc runs fastfetch with.
 //   #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text  #ebebeb bright
 //
 // A fully closed box (not just a left border) drawn with box-drawing

@@ -15,6 +15,18 @@ export SUDO_EDITOR=nvim
 # non-interactive shells too (notably `ssh host command`), and anything that
 # writes to stdout there corrupts the stream -- scp and rsync fail with
 # "protocol error" when a greeting turns up in the middle of their transfer.
+#
+# fastfetch and starship use Quickshell's copies of their configs in the
+# current look's colours (AppearanceSync.qml) when those exist.
+look_state=~/.local/state/neutrino
+fastfetch() {
+  if [[ -r $look_state/fastfetch.jsonc ]]; then
+    command fastfetch -c "$look_state/fastfetch.jsonc" "$@"
+  else
+    command fastfetch "$@"
+  fi
+}
+[[ -r $look_state/starship.toml ]] && export STARSHIP_CONFIG=$look_state/starship.toml
 fastfetch
 
 alias ls='ls --color=auto'

@@ -12,6 +12,8 @@
 # The box is 50 columns so logo and box together fit a half-screen terminal.
 # Change it here and in config.jsonc (the title's dash count and the three
 # divider and bottom lines) together.
+N_MUTED='77;77;77' N_SUBTEXT='122;122;122'
+. "$HOME/.local/state/neutrino/term-colors.sh" 2>/dev/null
 label=$1
 if (( $# > 1 )); then
   v=$2
@@ -25,4 +27,4 @@ v=${v//(R)/}; v=${v//(TM)/}; v=${v/ \[Integrated\]/}
 max=$(( 50 - 5 - ${#label} ))
 (( ${#v} > max )) && v="${v:0:max-1}…"
 pad=$(( max - ${#v} )); (( pad < 0 )) && pad=0
-printf '\033[38;2;122;122;122m%s\033[0m %s%*s \033[38;2;77;77;77m│\033[0m' "$label" "$v" "$pad" ''
+printf '\033[38;2;%sm%s\033[0m %s%*s \033[38;2;%sm│\033[0m' "$N_SUBTEXT" "$label" "$v" "$pad" '' "$N_MUTED"

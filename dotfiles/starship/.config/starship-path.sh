@@ -12,14 +12,15 @@
 # in half. The single reset at the very end is deliberate.
 set -uo pipefail
 
-BG='48;2;36;36;36'          # overlay #242424, the capsule's ground
-SEP='38;2;77;77;77'         # muted   #4d4d4d, the slashes
-RAMP=(
-  '38;2;77;77;77'           # muted   #4d4d4d
-  '38;2;122;122;122'        # subtext #7a7a7a
-  '38;2;212;228;244'        # text    #d4e4f4
-)
-LAST='1;38;2;235;235;235'   # bright  #ebebeb, bold -- where you actually are
+# Neutrino's ramp, then the current look's from AppearanceSync if it's there
+N_OVERLAY='36;36;36' N_MUTED='77;77;77' N_SUBTEXT='122;122;122'
+N_TEXT='212;228;244' N_BRIGHT='235;235;235'
+. "$HOME/.local/state/neutrino/term-colors.sh" 2>/dev/null
+
+BG="48;2;$N_OVERLAY"        # the capsule's ground
+SEP="38;2;$N_MUTED"         # the slashes
+RAMP=("38;2;$N_MUTED" "38;2;$N_SUBTEXT" "38;2;$N_TEXT")
+LAST="1;38;2;$N_BRIGHT"     # bold -- where you actually are
 
 p=${PWD/#"$HOME"/\~}
 

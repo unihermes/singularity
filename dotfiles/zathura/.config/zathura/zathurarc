@@ -28,6 +28,11 @@ set highlight-color        "rgba(255,214,0,0.3)"
 set highlight-active-color "rgba(255,140,0,0.45)"
 set render-loading false
 
+# The current look's colours over the Neutrino ones above, from Quickshell
+# (AppearanceSync.qml). The path is relative to this file's directory, taken
+# as ~/.config/zathura even though that's a link into the repo.
+include ../../.local/state/neutrino/zathura
+
 # toggle the dark inversion, for documents that invert badly
 map <C-i> recolor
 

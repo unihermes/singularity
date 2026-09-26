@@ -1,9 +1,12 @@
 # Singularity - Starship
 # ~/.config/starship.toml
 #
-# Same grayscale ramp as the rest of the repo -- no hues, emphasis is
-# lightness and weight instead. Error draws the eye by being bold and
-# bright rather than red; a clean prompt stays plain.
+# Emphasis is lightness and weight, not hue. Error draws the eye by being
+# bold and bright rather than red; a clean prompt stays plain.
+#
+# Written in Neutrino's ramp. Quickshell (AppearanceSync.qml) renders a copy
+# in the current look's colours to ~/.local/state/neutrino/starship.toml,
+# which .bashrc points STARSHIP_CONFIG at, so edit this file, not that one.
 #   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
 #   #303030 border #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text
 #   #ebebeb bright

@@ -269,6 +269,16 @@ theme has been picked; `/theme` switches between it and the built-ins.
 Claude Code reads new theme files at start, so restart a running session
 the first time.
 
+The prompt, fastfetch and zathura follow the look too. `starship.toml` and
+fastfetch's `config.jsonc` are written in Neutrino's colours, and
+`AppearanceSync.qml` renders copies with each of those colours swapped for the
+current look's into `~/.local/state/neutrino/`. `.bashrc` points starship and
+fastfetch at the copies. Edit the repo files, not the copies.
+`starship-path.sh` and fastfetch's `row.sh` source
+`~/.local/state/neutrino/term-colors.sh` for the same colours, and `zathurarc`
+includes a generated colour file from the same place. Each falls back to
+Neutrino without its generated file.
+
 ## Editor
 
 nvim is [LazyVim](https://lazyvim.org), copied from its official starter,
