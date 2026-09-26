@@ -74,6 +74,20 @@ end
 ---- MONITORS ----
 ------------------
 
+-- The built-in panel switched off while the lid is shut on a docked laptop,
+-- so every workspace moves to the other displays as if the panel weren't
+-- there. lid.sh decides when: it writes the panel's name to this file and
+-- reloads, and removes it and reloads when the lid opens (the reload
+-- restores the panel's own rule above). Defined before the rules, called
+-- after them, so the Display page still adds new rules in the right place.
+local function panelOffWhileLidShut()
+    local f = io.open((os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-lid-docked")
+    if not f then return end
+    local panel = f:read("l")
+    f:close()
+    if panel and panel ~= "" then hl.monitor({ output = panel, disabled = true }) end
+end
+
 -- Empty output matches every display, which is what you want on a laptop that
 -- gets docked. `hyprctl monitors` for real names when you need a per-display
 -- rule.
@@ -103,6 +117,8 @@ hl.monitor({
     mirror = "",
 })
 
+panelOffWhileLidShut()
+
 -- Primary display, picked on the Settings window's Display page and handed
 -- over the same way as Animation Speed: a state file read here, then a
 -- config-only reload. Workspace 1 lives on it, the cursor starts on it, and
@@ -111,15 +127,12 @@ hl.monitor({
 --
 -- The workspace rule only decides where workspace 1 is *created*, so a
 -- workspace that already exists stays put. The Settings page moves it itself
--- when the choice changes; this hook covers docking, where the primary is
--- the display that just arrived and workspace 1 is still on the laptop.
+-- when the choice changes, and singularityResetWorkspaces() below does on
+-- docking.
 local primaryDisplay = singularityState("primary-display", "")
 if primaryDisplay ~= "" then
     hl.config({ cursor = { default_monitor = primaryDisplay } })
     hl.workspace_rule({ workspace = "1", monitor = primaryDisplay, default = true })
-    hl.on("monitor.added", function()
-        hl.dispatch(hl.dsp.workspace.move({ workspace = "1", monitor = primaryDisplay }))
-    end)
 end
 
 -- One workspace per display, numbered from the primary: 1 on the primary,
@@ -157,6 +170,17 @@ function singularityResetWorkspaces()
         hl.dispatch(hl.dsp.focus({ workspace = i }))
     end
 end
+
+-- A display plugged in (or the panel back on as the lid opens) lays the
+-- workspaces out afresh. Plugging or unplugging one with the lid shut is
+-- lid.sh's to handle: it switches the panel off or back on to match.
+hl.on("monitor.added", function()
+    singularityResetWorkspaces()
+    hl.exec_cmd("~/.config/hypr/lid.sh displays")
+end)
+hl.on("monitor.removed", function()
+    hl.exec_cmd("~/.config/hypr/lid.sh displays")
+end)
 
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----

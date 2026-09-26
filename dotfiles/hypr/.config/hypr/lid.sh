@@ -11,6 +11,7 @@
 #   lid.sh sleep    from hypridle's before_sleep_cmd, before every suspend
 #   lid.sh resume   from hypridle's after_sleep_cmd, after every wake-up
 #   lid.sh fire     from the suspend timer this script arms
+#   lid.sh displays from hyprland.lua, whenever a display comes or goes
 #
 # logind would suspend the moment the lid shuts, so hyprland.lua holds its
 # lid-switch inhibitor and this handles the lid instead.
@@ -68,8 +69,14 @@
 #   a hand actually reaching for the touchpad is tens. cursor_moved wants
 #   move_slop px away from where the pointer sat at wake-up.
 # - With an external monitor connected the laptop is docked: closing the lid
-#   only turns off the built-in panel, and nothing suspends. Input still
-#   wakes it there -- an external keyboard is the only way back in.
+#   switches the built-in panel off altogether, so its workspaces move to
+#   the other displays and the cursor can't wander onto it, and nothing
+#   suspends. The panel's name goes in $docked_file and hyprland.lua, on the
+#   reload that follows, disables it; opening the lid removes the file and
+#   reloads again, and the panel comes back with its own rule. A display
+#   plugged in or pulled out with the lid shut is handled the same way
+#   (lid.sh displays): pulling the last one brings the panel back and the
+#   lid-shut suspend takes over, as if it had been closed undocked.
 #
 # Both the lid and the monitors are read from sysfs rather than hyprctl, so
 # the timer's check works without Hyprland's environment.
@@ -86,6 +93,7 @@ move_slop=40       # px the pointer must travel on a stray wake to count as a pe
 hibernate_after=3600  # lid shut this long -> hibernate (see sleep.conf.d above)
 closed_at="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-closed-at"
 slept_dark="${XDG_RUNTIME_DIR:-/tmp}/singularity-slept-dark"
+docked_file="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-docked"
 
 log() { logger -t singularity-lid -- "$*"; }
 
@@ -218,6 +226,31 @@ stay_dark() {
     log "woke with the screen off and nobody there: leaving it off"
 }
 
+# Switch the panel off (or back on) through hyprland.lua; a no-op when it
+# already is, which is what keeps the displays hook the reload sets off from
+# going round again.
+panel_off() {
+    [[ -e $docked_file ]] && return
+    internal_panel > "$docked_file"
+    hyprctl reload config-only >/dev/null
+    log "lid closed while docked: panel off"
+}
+
+panel_back() {
+    [[ -e $docked_file ]] || return 0
+    rm -f "$docked_file"
+    hyprctl reload config-only >/dev/null
+    log "panel back on"
+}
+
+# The lid shut with nothing docked: blank, and suspend after close_delay.
+closed_undocked() {
+    date +%s > "$closed_at"
+    arm "$close_delay"
+    (( lock_on_close )) && { pidof hyprlock >/dev/null || loginctl lock-session; }
+    blank
+}
+
 arm() {
     disarm
     [[ $close_action == suspend ]] || return 0
@@ -241,19 +274,29 @@ event)
 
     if lid_closed; then
         if docked; then
-            dpms off "$(internal_panel)"
             disarm
-            log "lid closed while docked: panel off, no suspend"
+            panel_off
         else
-            date +%s > "$closed_at"
-            arm "$close_delay"
-            (( lock_on_close )) && { pidof hyprlock >/dev/null || loginctl lock-session; }
-            blank
+            panel_back
+            closed_undocked
         fi
     else
         disarm
         rm -f "$closed_at"
+        panel_back
         unblank
+    fi
+    ;;
+displays)
+    if ! lid_closed; then
+        panel_back
+    elif docked; then
+        disarm
+        panel_off
+    elif [[ -e $docked_file ]]; then
+        # the last external display went with the lid shut
+        panel_back
+        closed_undocked
     fi
     ;;
 sleep)
@@ -305,7 +348,7 @@ rearm-retry)
     lid_closed && ! docked && arm "$retry_delay"
     ;;
 *)
-    echo "usage: lid.sh event|sleep|resume|fire" >&2
+    echo "usage: lid.sh event|sleep|resume|fire|displays" >&2
     exit 2
     ;;
 esac
