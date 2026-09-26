@@ -51,8 +51,49 @@ already built here, often further than dwm-titus takes it.
 
 ## Open items
 
-*(Empty — the queue drawn from the dwm-titus comparison is done. What was left
-of it turned out to be deliberate design, and moved to Decisions below.)*
+The dwm-titus queue is done; what was left of it turned out to be deliberate
+design, and moved to Decisions below. These came from a gap sweep on
+2026-09-25, roughly in value order.
+
+**Holes:**
+
+1. **No keybind to lock the screen.** hyprlock is only reached by the idle
+   ladder or the lid. `SUPER+L` → `loginctl lock-session` (goes through
+   hypridle's `lock_cmd`, so the pidof guard and refocus still apply).
+2. **Media keys unbound.** `XF86AudioPlay/Pause/Next/Prev` have keycap labels
+   (`settings/Keycaps.qml`) but no binds in `hyprland.lua`. `services/Media.qml`
+   already speaks MPRIS; a `qs ipc call media …` target would drive it.
+3. **Screenshots are region-only.** `screenshot.sh` is `slurp` → `grim`. Add
+   full screen / active window / focused monitor modes (e.g. `SHIFT+Print`,
+   `CTRL+Print`) and an annotate action on the notification (satty or swappy).
+4. **No screen recording.** `wf-recorder` or `gpu-screen-recorder` behind a
+   toggle; the bar's Privacy module could show it's recording.
+5. **Power menu only in the Control Centre.** No bind for a lock / log out /
+   suspend / reboot / shut down overlay, and `SUPER+SHIFT+E` logs out with no
+   confirmation.
+6. **New machines start from nothing.** `~/.local/state/singularity` is per
+   machine by design. A `singularity export/import` (or a Settings button)
+   bundling the portable parts — looks, window rules, appearance, app usage,
+   not monitor rules — would carry a setup across.
+
+**Nice to have:**
+
+- **Emoji / glyph picker** as a fifth launcher mode, beside apps, files,
+  clipboard, calc.
+- **Keyboard window control:** move/swap by arrow (`SUPER+SHIFT+arrows`), a
+  resize submap, send window to the other monitor.
+- **Removable drives:** a flyout over UDisks2 (or `udiskie`) with mount/eject;
+  today `gvfs` only mounts inside Thunar.
+- **VPN / WireGuard:** the stack is iwd + networkd with no VPN path. A toggle
+  on the Network page or Control Centre for `wg-quick` / networkd `.netdev`.
+- **Clipboard pinning:** entries in the cliphist history that survive
+  clearing and restarts.
+- **Snapshots before updates:** the Updates page offering a snapper/btrfs (or
+  timeshift) snapshot before `pacman -Syu`; `diagnose` reporting the last one.
+- **Maintenance** in `clean.sh` and the Health page: orphaned packages,
+  unmerged `.pacnew` files, `fwupd` firmware updates.
+- **Scratchpad in the bar:** the scratchpad (SUPER+grave) has no indicator
+  when windows are stashed there.
 
 A standing chore, not a feature: **`services/SettingsIndex.js` is maintained by
 hand** and silently drifts. Two entries were already wrong by the time it was
