@@ -771,10 +771,13 @@ fi
 # systemd's TPM SRK setup costs ~2s every boot and nothing here uses it: no
 # TPM-unlocked LUKS, secure boot off. Masking only stops the setup running; it
 # does not touch what is stored in the TPM, so Windows and BitLocker are
-# unaffected. Left alone if crypttab asks for a TPM unlock.
+# unaffected. Left alone if crypttab asks for a TPM unlock. The setup also
+# allocates the NvPCRs, so systemd-pcrproduct, which measures into one, fails
+# every boot without it and is masked too.
 if ! grep -qs 'tpm2-device' /etc/crypttab; then
   log "masking systemd TPM setup"
-  sudo systemctl mask systemd-tpm2-setup-early.service systemd-tpm2-setup.service
+  sudo systemctl mask systemd-tpm2-setup-early.service systemd-tpm2-setup.service \
+    systemd-pcrproduct.service
 fi
 
 systemctl --user enable --now pipewire pipewire-pulse wireplumber ||

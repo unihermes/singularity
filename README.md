@@ -164,6 +164,8 @@ things the greeter was waiting on around the stall:
 It also masks `systemd-tpm2-setup-early` and `systemd-tpm2-setup`, about 2s,
 unless `/etc/crypttab` asks for a TPM unlock. That stops the setup running and
 leaves the TPM's contents alone, so Windows and BitLocker are unaffected.
+`systemd-pcrproduct` is masked with them, since it measures into an NvPCR that
+only the setup allocates and would otherwise fail every boot.
 
 The stall itself comes from the webcam's controller (`mei_vsc`), so that is
 blacklisted from autoloading and `singularity-vsc.timer` loads it 30s after
