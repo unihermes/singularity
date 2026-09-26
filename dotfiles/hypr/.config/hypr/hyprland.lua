@@ -255,10 +255,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("~/.config/hypr/wallpaper.sh")
     -- clipboard history daemon (cliphist needs this to capture every copy)
     hl.exec_cmd("wl-paste --watch cliphist store")
-    -- A terminal waiting on workspace 2. The rule below matches this title,
-    -- not the class: a class match would catch every terminal, and a custom
-    -- class would cost it its icon everywhere Quickshell looks one up.
-    hl.exec_cmd(terminal .. " --title singularity-startup")
     -- XDG autostart, which Hyprland does not run itself: the .desktop files
     -- in ~/.config/autostart, managed from Settings > Startup. Last, so a
     -- user entry starts against a session that already has its bar, its
@@ -618,15 +614,6 @@ hl.window_rule({
         pin        = false,
     },
     no_focus = true,
-})
-
--- The startup terminal, parked on workspace 2. "silent" is the whole point:
--- without it the window pulls the session onto workspace 2 as it opens, and
--- you land in a terminal instead of an empty desktop.
-hl.window_rule({
-    name  = "startup-terminal",
-    match = { title = "^(singularity-startup)$" },
-    workspace = "2 silent",
 })
 
 -- Monocle. Hyprland ships dwindle and master only, with no monocle layout,
