@@ -217,6 +217,18 @@ ShellRoot {
         }
     }
 
+    // The lid, from lid.sh once a close or open has survived its debounce:
+    // `qs ipc call lid changed closed|open`. Toasted like the lock keys.
+    signal lidChanged(bool closed)
+
+    IpcHandler {
+        target: "lid"
+        function changed(state: string): void {
+            if (state !== "closed" && state !== "open") return
+            root.lidChanged(state === "closed")
+        }
+    }
+
     // The launcher (flyouts/Launcher.qml): `qs ipc call launcher toggle apps`
     // from CTRL+SPACE, `... toggle clipboard` from SUPER+H. Same per-screen
     // signal relay as the overlay above.
@@ -347,7 +359,7 @@ ShellRoot {
                 }
             }
 
-            // SUPER+M and the lock keys: the mode toast. Not routed through
+            // SUPER+M, the lock keys and the lid: the mode toast. Not routed through
             // openFlyout like the rest -- it isn't a flyout (no backdrop,
             // self-dismissing, and it shouldn't close whatever flyout is
             // already open) -- so it gets its own bit of state: what to show,
@@ -370,6 +382,10 @@ ShellRoot {
                 function onLayoutModeChanged(mode) {
                     var monocle = mode === "monocle"
                     screenScope.showModeToast(monocle ? "󰊓" : "󰕴", monocle ? "MONOCLE" : "DWINDLE")
+                }
+                function onLidChanged(closed) {
+                    screenScope.showModeToast(closed ? "󰛧" : "󰌢",
+                        closed ? "LID CLOSED" : "LID OPEN")
                 }
                 function onLockKeyChanged(key, on) {
                     screenScope.showModeToast(key === "caps" ? "󰘲" : "󰎠",

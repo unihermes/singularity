@@ -283,6 +283,12 @@ closed_undocked() {
     blank
 }
 
+# the shell's lid toast, on whichever display has focus -- the external one
+# once a docked close has switched the panel off
+toast() {  # toast closed|open
+    qs ipc call lid changed "$1" >/dev/null 2>&1 &
+}
+
 arm() {
     disarm
     [[ $close_action == suspend ]] || return 0
@@ -312,10 +318,12 @@ event)
             panel_back
             closed_undocked
         fi
+        toast closed
     else
         disarm
         rm -f "$closed_at"
         panel_back
+        toast open
         unblank
     fi
     ;;
