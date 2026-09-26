@@ -1415,7 +1415,8 @@ function toggleLayout()
     if pin then
         hl.exec_cmd("notify-send -a Hyprland -t 3000 'Layout' 'Workspace " .. ws.id
             .. " is pinned to " .. (pin == "monocle" and "monocle" or "tiled")
-            .. "; the others switched'")
+            .. "; windows opened or moved elsewhere now go "
+            .. (monocleEnabled and "monocle" or "tiled") .. "'")
         return
     end
 
