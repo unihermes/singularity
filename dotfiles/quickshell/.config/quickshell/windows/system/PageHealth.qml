@@ -34,7 +34,7 @@ SystemPage {
     Component.onDestruction: Health.active = false
 
     // bad, then warn, then ok; within a status, the order the scan emitted,
-    // which runs services -> tools -> disk -> packages -> links -> log
+    // which runs services -> tools -> disk -> packages -> space -> links -> log
     readonly property var ordered: {
         var rank = { bad: 0, warn: 1, ok: 2 }
         return Health.checks.slice().sort((a, b) => (rank[a.status] || 3) - (rank[b.status] || 3))

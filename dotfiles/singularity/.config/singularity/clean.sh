@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Free disk space: package caches, orphaned packages, old journals, stale user
+# Free disk space: package and build caches, orphaned packages, old journals,
+# core dumps, leftover kernel modules, unused containers and stale user
 # caches. Everything removed here is regenerated on demand -- nothing is a
-# config or a document. Orphaned packages and the trash go too. After the sudo
+# config or a document. Orphaned packages and the trash go too. The System
+# window's Health page runs it from its "Reclaimable space" row. After the sudo
 # prompt at the start it runs to the end without asking anything.
 set -uo pipefail
 
@@ -31,13 +33,20 @@ if have paccache; then
 else
   warn "paccache missing (pacman-contrib), skipping pacman cache"
 fi
+# Half-finished downloads from an interrupted -Syu.
+if compgen -G '/var/cache/pacman/pkg/download-*' >/dev/null; then
+  log "Removing partial pacman downloads"
+  sudo rm -rf /var/cache/pacman/pkg/download-*
+fi
 
 # yay leaves full git clones and build trees for every AUR package it has
 # built. They are only a head start for the next rebuild.
-if [[ -d $HOME/.cache/yay ]]; then
-  log "Clearing yay build cache"
-  rm -rf "$HOME/.cache/yay"
-fi
+for helper in yay paru; do
+  if [[ -d $HOME/.cache/$helper ]]; then
+    log "Clearing $helper build cache"
+    rm -rf "${HOME:?}/.cache/$helper"
+  fi
+done
 
 # Dependencies nothing depends on any more. Named in the output because an
 # optional dependency you use directly can show up here too; reinstall it with
@@ -48,7 +57,9 @@ if (( ${#orphans[@]} )); then
   sudo pacman -Rns --noconfirm "${orphans[@]}"
 fi
 
+# Rotating first lets the vacuum reach the journals currently being written.
 log "Vacuuming journal to 2 weeks / 200M"
+sudo journalctl --rotate -q
 sudo journalctl --vacuum-time=2weeks --vacuum-size=200M -q
 
 if [[ -d /var/lib/systemd/coredump ]]; then
@@ -56,19 +67,40 @@ if [[ -d /var/lib/systemd/coredump ]]; then
   sudo find /var/lib/systemd/coredump -type f -delete
 fi
 
+# Module trees left behind by kernels that have since been upgraded or
+# removed. A tree with a kernel/ directory still holds real modules (a
+# hand-built kernel, say), so only the depmod/DKMS leftovers go.
+running=$(uname -r)
+for dir in /usr/lib/modules/*/; do
+  dir=${dir%/}
+  [[ -d $dir ]] || continue
+  [[ ${dir##*/} == "$running" || -d $dir/kernel ]] && continue
+  pacman -Qqo "$dir" &>/dev/null && continue
+  log "Removing leftover modules for kernel ${dir##*/}"
+  sudo rm -rf -- "$dir"
+done
+
 # Language package manager caches: downloads kept only to speed up the next
 # install.
 have pip   && { log "Purging pip cache";  pip cache purge &>/dev/null; }
 have npm   && { log "Cleaning npm cache"; npm cache clean --force &>/dev/null; }
 have pnpm  && { log "Pruning pnpm store"; pnpm store prune &>/dev/null; }
-have cargo && [[ -d $HOME/.cargo/registry/cache ]] && {
-  log "Clearing cargo download cache"; rm -rf "$HOME/.cargo/registry/cache"; }
-have go    && { log "Cleaning go module cache"; go clean -modcache &>/dev/null; }
+have uv    && { log "Pruning uv cache";   uv cache prune &>/dev/null; }
+have yarn  && { log "Cleaning yarn cache"; yarn cache clean &>/dev/null; }
+have bun   && { log "Clearing bun cache";  bun pm cache rm &>/dev/null; }
+# Downloaded crates, their unpacked sources and git checkouts; the registry
+# index stays so the next build doesn't refetch it.
+if have cargo && [[ -d $HOME/.cargo ]]; then
+  log "Clearing cargo caches"
+  rm -rf "$HOME/.cargo/registry/cache" "$HOME/.cargo/registry/src" "$HOME/.cargo/git/checkouts"
+fi
+have go    && { log "Cleaning go caches"; go clean -modcache -cache &>/dev/null; }
 
 have flatpak && { log "Removing unused flatpak runtimes"; flatpak uninstall --unused -y --noninteractive; }
 # prune only ever touches stopped containers, dangling images and unused
 # networks.
 have docker  && { log "Pruning docker"; docker system prune -f; }
+have podman  && { log "Pruning podman"; podman system prune -f; }
 
 log "Clearing thumbnails"
 rm -rf "$HOME/.cache/thumbnails"
@@ -94,8 +126,14 @@ for b in "${browsers[@]}"; do
 done
 find "$HOME/.cache" -mindepth 1 -type d "${skip[@]}" -empty -delete 2>/dev/null
 
+# gio also empties the per-drive .Trash-$UID folders on other mounts.
 trash=$HOME/.local/share/Trash
-if [[ -n $(ls -A "$trash/files" 2>/dev/null) ]]; then
+if have gio; then
+  if [[ -n $(gio trash --list 2>/dev/null | head -1) ]]; then
+    log "Emptying trash"
+    gio trash --empty
+  fi
+elif [[ -n $(ls -A "$trash/files" 2>/dev/null) ]]; then
   log "Emptying trash ($(du -sh "$trash" | cut -f1))"
   rm -rf "$trash/files" "$trash/info" && mkdir -p "$trash/files" "$trash/info"
 fi

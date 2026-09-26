@@ -111,16 +111,80 @@ if command -v pacman &>/dev/null; then
 	else
 		emit ok orphans "Orphaned packages" "None"
 	fi
+fi
 
-	# pacman keeps every version it ever downloaded; clean.sh trims to the
-	# last two. 4 GB is where that is worth a click rather than a mention.
-	cache=$(du -sm /var/cache/pacman/pkg 2>/dev/null | awk '{print $1}')
-	if [[ $cache =~ ^[0-9]+$ ]]; then
-		if (( cache >= 4096 )); then
-			emit warn cache "Package cache" "$cache MB of downloaded packages" clean Trim
-		else
-			emit ok cache "Package cache" "$cache MB"
-		fi
+# --- reclaimable space -------------------------------------------------------
+# What clean.sh would free, by the same rules, so the row can say how much a
+# click is worth. Always carries the button: cleaning up is worth offering on
+# a healthy machine too. Tool caches clean.sh purges through the tool itself
+# (docker, flatpak, npm, ...) aren't counted, so this is a lower bound.
+reclaim=()   # "KiB<TAB>what"
+add() { [[ $1 =~ ^[0-9]+$ ]] && (( $1 > 0 )) && reclaim+=("$1"$'\t'"$2"); }
+sizeof() { du -skc "$@" 2>/dev/null | awk 'END {print $1}'; }
+
+# paccache's dry run ends in "(disk space saved: 812.3 MiB)"
+if command -v paccache &>/dev/null; then
+	add "$({ paccache -dk2; paccache -duk0; } 2>/dev/null | awk '
+		match($0, /saved: [0-9.]+ [KMGT]?i?B/) {
+			split(substr($0, RSTART + 7, RLENGTH - 7), f, " ")
+			m = index("KMGT", substr(f[2], 1, 1))
+			t += f[1] * (m ? 1024 ^ (m - 1) : 1 / 1024)
+		}
+		END {printf "%d", t}')" "old packages"
+fi
+add "$(sizeof /var/cache/pacman/pkg/download-*)" "partial downloads"
+
+if command -v pacman &>/dev/null; then
+	mapfile -t orphaned < <(pacman -Qqtd 2>/dev/null)
+	(( ${#orphaned[@]} )) && add "$(pacman -Qi "${orphaned[@]}" 2>/dev/null | awk '
+		/^Installed Size/ {
+			m = index("KMGT", substr($5, 1, 1))
+			t += $4 * (m ? 1024 ^ (m - 1) : 1 / 1024)
+		}
+		END {printf "%d", t}')" "orphans"
+fi
+
+add "$(sizeof /var/lib/systemd/coredump)" "core dumps"
+running=$(uname -r)
+for dir in /usr/lib/modules/*/; do
+	dir=${dir%/}
+	[[ -d $dir && ${dir##*/} != "$running" && ! -d $dir/kernel ]] || continue
+	pacman -Qqo "$dir" &>/dev/null || add "$(sizeof "$dir")" "old kernel modules"
+done
+
+add "$(sizeof "$HOME/.cache/yay" "$HOME/.cache/paru")" "AUR builds"
+add "$(sizeof "$HOME/.cache/pip" "$HOME/.cargo/registry/cache" "$HOME/.cargo/registry/src" \
+	"$HOME/.cargo/git/checkouts" "$HOME/go/pkg/mod" "$HOME/.cache/go-build")" "language caches"
+add "$(sizeof "$HOME/.cache/thumbnails")" "thumbnails"
+add "$(sizeof "$HOME/.local/share/Trash")" "trash"
+
+# ~/.cache files untouched for 30 days, minus what is already counted above
+# and the browsers, which clean.sh only sweeps the HTTP cache of.
+skip=()
+for d in yay paru pip go-build thumbnails zen floorp mozilla firefox librewolf \
+	chromium google-chrome BraveSoftware vivaldi; do
+	skip+=(-not -path "$HOME/.cache/$d/*")
+done
+add "$(find "$HOME/.cache" -type f "${skip[@]}" -atime +30 -printf '%s\n' 2>/dev/null \
+	| awk '{t += $1} END {printf "%d", t / 1024}')" "stale cache"
+
+total=0
+for r in "${reclaim[@]}"; do (( total += ${r%%$'\t'*} )); done
+if (( total < 1024 )); then
+	emit ok reclaim "Reclaimable space" "Nothing worth clearing" clean "Clean up"
+else
+	# the two biggest sources, so the row says where the space is
+	detail=$(printf '%s\n' "${reclaim[@]}" \
+		| awk -F '\t' '{s[$2] += $1} END {for (k in s) print s[k] "\t" k}' \
+		| sort -rn | awk -F '\t' -v total="$total" '
+			function size(k) { return k >= 1048576 ? sprintf("%.1f GB", k / 1048576) : sprintf("%d MB", k / 1024) }
+			NR <= 2 && $1 >= 1024 { top = top (top ? ", " : "") $2 " " size($1) }
+			END { print "About " size(total) ": " top }')
+	# 2 GB is where it is worth a click rather than a mention
+	if (( total >= 2 * 1024 * 1024 )); then
+		emit warn reclaim "Reclaimable space" "$detail" clean "Clean up"
+	else
+		emit ok reclaim "Reclaimable space" "$detail" clean "Clean up"
 	fi
 fi
 
