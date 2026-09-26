@@ -62,7 +62,9 @@ SystemPage {
             heading: "HYPRLAND",
             items: [
                 { label: "hyprland.lua", path: home + "/.config/hypr/hyprland.lua",
-                  note: "Keybinds, window rules, monitors, input" },
+                  note: "Keybinds, window rules, input, the default monitor rule" },
+                { label: "monitors.lua", path: Settings.stateDir + "/monitors.lua",
+                  note: "This machine's display rules — written by the Display page" },
                 { label: "hypridle.conf", path: home + "/.config/hypr/hypridle.conf",
                   note: "When the screen dims, locks and suspends" },
                 { label: "hyprlock.conf", path: home + "/.config/hypr/hyprlock.conf",

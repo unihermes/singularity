@@ -4,8 +4,9 @@
 // Connected displays, and the hl.monitor() rule each one falls under.
 //
 // What's listed comes from Hyprland (`hyprctl monitors -j`, as System does);
-// what's changed is the rule in hyprland.lua, followed by a reload, which is
-// what applies it. A display with a rule of its own has that rule edited. A
+// what's changed is the rule in monitors.lua in the state directory, followed
+// by a reload, which is what applies it. Until the first change there is no
+// monitors.lua, and hyprland.lua's own catch-all rule is the one in force. A display with a rule of its own has that rule edited. A
 // display that only matches the catch-all `output = ""` rule edits the
 // catch-all -- which on a laptop is the rule that matters -- and says so,
 // with "Own rule" to split it off into one for that output alone.
@@ -26,7 +27,7 @@ SettingsPage {
     id: page
 
     title: "Display"
-    description: "Arrangement, primary display, resolution and scale, saved as hl.monitor() rules in hyprland.lua. Hyprland reloads on each change."
+    description: "Arrangement, primary display, resolution and scale, saved as hl.monitor() rules for this machine. Hyprland reloads on each change."
 
     // [{ name, description, width, height, hz, scale, modes: ["WxH@R"] }]
     property var monitors: []
@@ -50,8 +51,16 @@ SettingsPage {
     function reread() {
         luaFile.reload()
         luaFile.waitForJob()
-        rules = HyprTables.readMonitors(luaFile.text())
+        rules = HyprTables.readMonitors(luaFile.text() || seed())
         monitorsProc.running = true
+    }
+
+    // What monitors.lua starts from: hyprland.lua's default rule, which is
+    // what applies while the file doesn't exist.
+    function seed() {
+        confFile.reload()
+        confFile.waitForJob()
+        return HyprTables.copyMonitors(confFile.text())
     }
 
     Component.onCompleted: reread()
@@ -275,17 +284,24 @@ SettingsPage {
 
     FileView {
         id: luaFile
-        path: HyprLuaWrite.confPath
+        path: HyprLuaWrite.monitorsPath
         blockLoading: true
         watchChanges: true
         printErrors: false
         onFileChanged: if (!HyprLuaWrite.busy) page.reread()
     }
 
+    FileView {
+        id: confFile
+        path: HyprLuaWrite.confPath
+        blockLoading: true
+        printErrors: false
+    }
+
     // HyprLuaWrite is shared with the Keybinds editor and the other pages;
     // each result comes back to the page that asked for it
     function patchLua(transform, message, refusal) {
-        HyprLuaWrite.patch(transform, message, refusal, (ok, msg) => {
+        HyprLuaWrite.patchMonitors(transform, seed, message, refusal, (ok, msg) => {
             page.say(msg, !ok)
             page.reread()
         })

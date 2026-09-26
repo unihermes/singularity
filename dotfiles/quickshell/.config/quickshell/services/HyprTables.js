@@ -4,7 +4,7 @@
 // Reads and rewrites plain `key = value` fields in hyprland.lua's table
 // constructors, for the Settings window: the tables inside hl.config
 // (`input` and its `touchpad`, `general`, `decoration`), and the table each
-// hl.monitor() call takes. Plain functions over source text, like HyprBinds.js, whose
+// hl.monitor() call takes (in monitors.lua, see HyprLuaWrite). Plain functions over source text, like HyprBinds.js, whose
 // tokenizer this uses so strings and comments can't fool it.
 //
 // Only a field whose value is one literal token (a number, a string, true or
@@ -258,4 +258,20 @@ function addMonitor(src, fields) {
         return "    " + k + " = " + toLua(fields[k]) + ","
     }).join("\n")
     return src.slice(0, at) + "\n\nhl.monitor({\n" + body + "\n})" + src.slice(at)
+}
+
+// The hl.monitor() calls in src that name a literal output, on their own as
+// a monitors.lua would hold them: the start of one copied from hyprland.lua's
+// default rule.
+function copyMonitors(src) {
+    var out = ""
+    readMonitors(src).forEach(function(rule) {
+        if (rule.output === null) return
+        var fields = {}
+        Object.keys(rule.fields).forEach(function(k) {
+            if (rule.fields[k].editable) fields[k] = rule.fields[k].value
+        })
+        out = addMonitor(out, fields)
+    })
+    return out.replace(/^\n+/, "") + "\n"
 }

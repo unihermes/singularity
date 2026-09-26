@@ -2,7 +2,9 @@
 // ~/.config/quickshell/services/HyprLuaWrite.qml
 //
 // The one write path into hyprland.lua, shared by the Keybinds editor and the
-// Settings window's Input and Display pages.
+// Settings window's Input and Appearance pages, and into monitors.lua, the
+// Display page's hl.monitor() rules. Those are per machine, so they live in
+// the state directory, and hyprland.lua runs the file with dofile.
 //
 // A singleton, so there is exactly one of it however many of those are open:
 // as a per-page instance, each kept its own queue, and the standalone Keybinds
@@ -37,6 +39,7 @@ Singleton {
     readonly property string home: Quickshell.env("HOME")
     readonly property string confPath: home + "/.config/hypr/hyprland.lua"
     readonly property string backupPath: Settings.stateDir + "/hyprland.lua.bak"
+    readonly property string monitorsPath: Settings.stateDir + "/monitors.lua"
 
     // hyprland.lua writes queued or running; pages hold off re-reading the
     // file on change notifications while their own write lands
@@ -46,13 +49,13 @@ Singleton {
     readonly property string afterWrite:
         "hyprctl reload config-only >/dev/null; sleep 0.3; hyprctl configerrors"
 
-    function enqueue(transform, backup, done) {
+    function enqueue(transform, backup, done, path) {
         pending++
         AtomicFileWrite.write({
-            path: confPath,
+            path: path || confPath,
             transform: transform,
             check: "lua",
-            backup: backup ? backupPath : "",
+            backup: backup ? (path ? path + ".bak" : backupPath) : "",
             after: afterWrite,
             done: (status, detail) => {
                 pending--
@@ -65,14 +68,25 @@ Singleton {
     // change (the field isn't a plain value); refusal is the message given.
     // done(ok, message) gets one line for a status bar.
     function patch(transform, message, refusal, done) {
-        enqueue(src => src === "" ? null : transform(src), true, (status, detail) => {
-            if (status === "refused") done(false, refusal || "Not a plain value in hyprland.lua, edit it by hand")
+        enqueue(src => src === "" ? null : transform(src), true, reporter("hyprland.lua", message, refusal, done))
+    }
+
+    // The same for monitors.lua, which starts out missing: transform gets
+    // seed() in its place.
+    function patchMonitors(transform, seed, message, refusal, done) {
+        enqueue(src => transform(src === "" ? seed() : src), true,
+            reporter("monitors.lua", message, refusal, done), monitorsPath)
+    }
+
+    function reporter(file, message, refusal, done) {
+        return (status, detail) => {
+            if (status === "refused") done(false, refusal || "Not a plain value in " + file + ", edit it by hand")
             else if (status === "unchanged") done(true, message)
             else if (status === "syntax") done(false, syntaxMessage(detail))
-            else if (status !== "ok") done(false, "Couldn't write hyprland.lua" + (detail ? ": " + detail.split("\n")[0] : ""))
+            else if (status !== "ok") done(false, "Couldn't write " + file + (detail ? ": " + detail.split("\n")[0] : ""))
             else if (reloadComplaint(detail) !== "") done(false, "Written, but Hyprland reports: " + reloadComplaint(detail))
             else done(true, message)
-        })
+        }
     }
 
     // done(status, detail): status "ok" | "syntax" | "write". detail: luac's

@@ -78,8 +78,7 @@ end
 -- so every workspace moves to the other displays as if the panel weren't
 -- there. lid.sh decides when: it writes the panel's name to this file and
 -- reloads, and removes it and reloads when the lid opens (the reload
--- restores the panel's own rule above). Defined before the rules, called
--- after them, so the Display page still adds new rules in the right place.
+-- restores the panel's own rule). Called after the rules, so it wins.
 local function panelOffWhileLidShut()
     local f = io.open((os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-lid-docked")
     if not f then return end
@@ -88,34 +87,22 @@ local function panelOffWhileLidShut()
     if panel and panel ~= "" then hl.monitor({ output = panel, disabled = true }) end
 end
 
--- Empty output matches every display, which is what you want on a laptop that
--- gets docked. `hyprctl monitors` for real names when you need a per-display
--- rule.
+-- The Display page's rules for this machine's displays, in the state
+-- directory since they differ per machine. Until it has saved any, one rule
+-- for every display: empty output matches them all, which suits a laptop
+-- that gets docked. The page copies this rule to start the file.
 -- scale 1 is native resolution: everything as small as the panel can draw it.
 -- "auto" picks a HiDPI factor on a dense laptop panel, which makes the whole
 -- desktop look oversized. Nudge to 1.25 or 1.5 if 1 is too small; fractional
 -- values below 1 are not supported.
-hl.monitor({
-    output   = "",
-    mode     = "preferred",
-    position = "auto",
-    scale    = 1,
-})
-
-hl.monitor({
-    output = "eDP-1",
-    mode = "preferred",
-    position = "auto",
-    scale = 1,
-})
-
-hl.monitor({
-    output = "DP-3",
-    mode = "preferred",
-    position = "auto",
-    scale = 1,
-    mirror = "",
-})
+if not pcall(dofile, os.getenv("HOME") .. "/.local/state/singularity/monitors.lua") then
+    hl.monitor({
+        output   = "",
+        mode     = "preferred",
+        position = "auto",
+        scale    = 1,
+    })
+end
 
 panelOffWhileLidShut()
 
