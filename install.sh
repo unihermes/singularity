@@ -171,6 +171,31 @@ PY
 # tell you why.
 BOOT_VERBOSE=${BOOT_VERBOSE:-0}
 
+# Puts the rewritten cmdline in $1 over $2, and only when it holds different
+# options: a rerun that changes nothing then doesn't rebuild the initramfs.
+# Compared as a sorted set of words, since the verbosity knobs are always
+# re-appended at the end and would otherwise trade places with every token
+# added after them. Never an empty or truncated one either -- that is an
+# unbootable machine. Returns 0 only when it wrote, which is what the
+# unified-kernel-image callers rebuild on; the loader-entry callers add
+# `|| true`, so set -e doesn't end the run over a file left as it was.
+words() { tr -s ' \t' '\n\n' < "$1" | sort; }
+install_cmdline() {
+  local tmp=$1 f=$2
+  if [[ $(words "$tmp") == "$(words "$f")" ]]; then
+    rm -f "$tmp"
+    return 1
+  fi
+  if [[ -s $tmp ]] && grep -q 'root=' "$tmp"; then
+    sudo cp "$tmp" "$f"
+    rm -f "$tmp"
+    return 0
+  fi
+  warn "refusing to write $f, the result had no root= in it"
+  rm -f "$tmp"
+  return 1
+}
+
 set_boot_verbosity() {
   local f=$1 mode=$2 want=$3 tmp
   [[ -f $f ]] || return 1
@@ -203,15 +228,7 @@ set_boot_verbosity() {
     mode == "plain" && NF { print clean($0); next }
     { print }
   ' "$f" > "$tmp"
-  # Never install an empty or truncated cmdline: that is an unbootable machine.
-  if [[ -s $tmp ]] && grep -q 'root=' "$tmp"; then
-    sudo cp "$tmp" "$f"
-    rm -f "$tmp"
-    return 0
-  fi
-  warn "refusing to write $f, the result had no root= in it"
-  rm -f "$tmp"
-  return 1
+  install_cmdline "$tmp" "$f"
 }
 
 if (( BOOT_VERBOSE )); then
@@ -228,7 +245,7 @@ if [[ -f /etc/kernel/cmdline ]]; then
   set_boot_verbosity /etc/kernel/cmdline plain "$boot_want" && sudo mkinitcpio -P
 elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
   for entry in /boot/loader/entries/*.conf; do
-    grep -q '^options' "$entry" && set_boot_verbosity "$entry" options "$boot_want"
+    grep -q '^options' "$entry" && set_boot_verbosity "$entry" options "$boot_want" || true
   done
 else
   warn "no systemd-boot entry or /etc/kernel/cmdline found, leaving boot alone"
@@ -241,7 +258,7 @@ fi
 set_cmdline_token() {
   local f=$1 mode=$2 key=$3 value=$4 tmp
   [[ -f $f ]] || return 1
-  grep -Eq "(^|[[:space:]])${key}=${value}([[:space:]]|\$)" "$f" && return 0
+  grep -Eq "(^|[[:space:]])${key}=${value}([[:space:]]|\$)" "$f" && return 1
   [[ -f $f.singularity.bak ]] || sudo cp "$f" "$f.singularity.bak"
   tmp=$(mktemp)
   awk -v mode="$mode" -v key="$key" -v value="$value" '
@@ -262,14 +279,7 @@ set_cmdline_token() {
     mode == "plain" && NF { print fix($0); next }
     { print }
   ' "$f" > "$tmp"
-  if [[ -s $tmp ]] && grep -q 'root=' "$tmp"; then
-    sudo cp "$tmp" "$f"
-    rm -f "$tmp"
-    return 0
-  fi
-  warn "refusing to write $f, the result had no root= in it"
-  rm -f "$tmp"
-  return 1
+  install_cmdline "$tmp" "$f"
 }
 
 # The IPU6 webcam's sensor never satisfies its firmware dependency (missing
@@ -302,7 +312,7 @@ for kv in "deferred_probe_timeout=1" "driver_async_probe=intel_ish_ipc"; do
   elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
     log "setting kernel cmdline: $kv"
     for entry in /boot/loader/entries/*.conf; do
-      grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value"
+      grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value" || true
     done
   fi
 done
@@ -447,7 +457,7 @@ if [[ -n $resume_uuid && -n $resume_offset ]]; then
     elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
       log "setting kernel cmdline: $kv"
       for entry in /boot/loader/entries/*.conf; do
-        grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value"
+        grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value" || true
       done
     fi
   done
@@ -668,7 +678,8 @@ if [[ ! -L /etc/resolv.conf ]]; then
   [[ -f /etc/resolv.conf ]] && sudo cp /etc/resolv.conf /etc/resolv.conf.singularity.bak
   sudo ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 fi
-systemctl --user enable --now pipewire pipewire-pulse wireplumber
+systemctl --user enable --now pipewire pipewire-pulse wireplumber ||
+  warn "could not enable the pipewire user units"
 
 # Nothing enables BlueZ on a Minimal install, and the bar's Bluetooth module
 # and the pairing agent below both need its daemon.
@@ -779,9 +790,6 @@ if ! grep -qs 'tpm2-device' /etc/crypttab; then
   sudo systemctl mask systemd-tpm2-setup-early.service systemd-tpm2-setup.service \
     systemd-pcrproduct.service
 fi
-
-systemctl --user enable --now pipewire pipewire-pulse wireplumber ||
-  warn "could not enable the pipewire user units"
 
 # Display manager. Deliberately NOT --now: ly takes over a VT, and starting it
 # here would pull the terminal out from under this script mid-run. It comes up
