@@ -150,15 +150,16 @@ FlyoutPanel {
         onActivated: controlCentre.page = ""
     }
 
-    // root: everyday things, then customising the shell, then the
-    // standalone windows, and Power on its own at the bottom where it
-    // can't be hit on the way to something else. `sub` opens a submenu,
-    // `act` runs straight away.
+    // root: Power on its own at the top, then everyday things, then
+    // customising the shell, then the standalone windows. `sub` opens a
+    // submenu, `act` runs straight away.
     Repeater {
         model: controlCentre.page === "" ? [
             [
-                { label: "Quick Actions", sub: "quick" },
+                { label: "Power",         sub: "power" },
+            ], [
                 { label: "Applications",  sub: "apps" },
+                { label: "Quick Actions", sub: "quick" },
             ], [
                 { label: "Appearance",    sub: "appearance" },
                 { label: "Bar Widgets",   sub: "widgets" },
@@ -166,8 +167,6 @@ FlyoutPanel {
                 { label: "Settings",      act: "settings" },
                 { label: "System",        act: "system" },
                 { label: "Keybinds",      act: "keybinds" },
-            ], [
-                { label: "Power",         sub: "power" },
             ],
         ] : []
 
