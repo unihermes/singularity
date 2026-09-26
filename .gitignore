@@ -19,3 +19,8 @@ dotfiles/hypr/.config/hypr/alttab-relay
 
 # python bytecode from tools/
 __pycache__/
+
+# AtomicFileWrite's temp file, written beside its target -- which, through
+# the stowed folders, is inside the repo -- and left behind if the shell dies
+# mid-write
+*.new
