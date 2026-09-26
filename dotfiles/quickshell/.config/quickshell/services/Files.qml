@@ -160,7 +160,8 @@ Singleton {
                 "--max-results", String(root.fetchLimit),
             ].concat(root.excludes.reduce(function (acc, e) {
                 return acc.concat(["--exclude", e])
-            }, [])).concat([root.query.trim(), root.home])
+            // "--" so a query starting with a dash isn't read as an option
+            }, [])).concat(["--", root.query.trim(), root.home])
             finder.running = true
         }
     }

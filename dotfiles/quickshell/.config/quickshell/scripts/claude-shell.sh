@@ -91,7 +91,9 @@ case "${1:-}" in
         cd "$work" || exit 1
         extra=()
         [ -n "$session" ] && extra=(--resume "$session")
-        exec claude -p "$prompt" "${extra[@]}" \
+        # on stdin rather than argv: a prompt starting with a dash would
+        # otherwise be read as one of claude's own options
+        exec claude -p "${extra[@]}" <<< "$prompt" \
             --output-format stream-json --verbose \
             --permission-mode acceptEdits \
             --tools "Read,Edit,Write,Glob,Grep" \
