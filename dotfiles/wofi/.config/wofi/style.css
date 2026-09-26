@@ -1,0 +1,113 @@
+/* Singularity - wofi
+ * ~/.config/wofi/style.css
+ *
+ * Same grayscale ramp as every other config here:
+ *   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
+ *   #303030 border #4d4d4d muted  #7a7a7a subtext  #c2c2c2 text
+ *   #ebebeb bright
+ *
+ * Styled to match the bar's flyouts: the same #141414 ground, the same 6px
+ * radius, and the same double border -- an outer stroke with a second one
+ * inset inside it. GTK has no second border per widget, so the inner stroke
+ * is #outer-box's own border, inset by its margin.
+ *
+ * wofi is GTK, so these are GTK widget names, not arbitrary classes. Renaming
+ * a selector silently does nothing rather than erroring.
+ *
+ * This file is a template for the bar's Appearance page. wofi reads its CSS
+ * as a string, so it can't @import a generated file; instead Quickshell
+ * (AppearanceSync.qml) renders a copy with every ramp hex above swapped for
+ * the current colour in that role (the wallpaper's, in wallpaper mode), and
+ * values tagged with an `@radius` or `@font` comment recomputed -- `@radius-3`
+ * means Corner Radius minus 3, floored at 0. `@frame` marks the inner stroke,
+ * which becomes the ground colour (invisible) when the look's frames are
+ * single; font-family follows the look's font. The look's structure rides on
+ * more tags: `@accent`, `@focus` and `@hover` swap a hex for that role,
+ * `@panel-bg` for the translucent panel ground, `@bw` for the stroke width. The launcher is pointed at that
+ * copy, so colours used here must stay on the ramp to be themed. This file
+ * stays valid on its own and is what wofi falls back to if the copy doesn't
+ * exist yet. */
+
+* {
+  font-family: "UbuntuMono Nerd Font", monospace;
+  font-size: 17px /* @font */;
+  /* wofi draws its own focus rings otherwise */
+  outline: none;
+}
+
+window {
+  background-color: #141414 /* @panel-bg */;
+  border: 1px /* @bw */ solid #303030;
+  border-radius: 6px /* @radius */;
+}
+
+/* the inner half of the double border */
+#outer-box {
+  background-color: transparent;
+  border: 1px /* @bw */ solid #4d4d4d /* @frame */;
+  border-radius: 3px /* @radius-3 */;
+  margin: 3px;
+}
+
+#input {
+  background-color: #1a1a1a;
+  color: #ebebeb;
+  border: 1px /* @bw */ solid #303030;
+  border-radius: 4px /* @radius-2 */;
+  margin: 8px 8px 6px 8px;
+  padding: 3px 8px;
+  /* GTK's entry otherwise holds itself to its theme's tall minimum */
+  min-height: 0px;
+  /* the caret, which GTK calls this instead of caret-color */
+  caret-color: #ebebeb /* @accent */;
+}
+
+#input:focus {
+  border-color: #7a7a7a /* @focus */;
+}
+
+#input image {
+  color: #4d4d4d;
+}
+
+#inner-box {
+  background-color: transparent;
+  margin: 0px 4px 6px 4px;
+}
+
+#scroll {
+  margin: 0px;
+  padding: 0px;
+}
+
+#entry {
+  background-color: transparent;
+  border-radius: 4px /* @radius-2 */;
+  padding: 4px 8px;
+  margin: 0px 4px;
+}
+
+/* plus the left-edge tick the flyout rows use for the active entry */
+#entry:selected {
+  background-color: #242424 /* @hover */;
+  border-left: 2px solid #ebebeb /* @accent */;
+  padding-left: 6px;
+}
+
+#text {
+  color: #c2c2c2;
+  margin: 0px 2px;
+}
+
+#entry:selected #text {
+  color: #ebebeb;
+}
+
+/* the fuzzy-match substring wofi highlights inside a result */
+#text:selected {
+  color: #ebebeb /* @accent */;
+}
+
+#img {
+  margin-right: 8px;
+}

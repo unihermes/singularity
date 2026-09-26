@@ -16,3 +16,6 @@ dotfiles/hypr/.config/hypr/alttab-relay
 
 # Claude Code settings
 .claude/
+
+# python bytecode from tools/
+__pycache__/

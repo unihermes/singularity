@@ -91,6 +91,7 @@ singularity/
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
     ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh, autostart.sh
     ├── swaync/.config/swaync/{config.json,style.css}
+    ├── wofi/.config/wofi/{config,style.css}  # fallback launcher when the shell is down
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
     ├── nvim/.config/nvim/       # LazyVim: lua/config/, lua/plugins/, colors/neutrino.lua
