@@ -72,7 +72,15 @@ Singleton {
             reader.reload()
             reader.waitForJob()
             var src = reader.text()
-            var out = job.transform(src)
+            // A transform that throws is a refusal too: the exception would
+            // otherwise skip report(), and a caller counting its writes
+            // (HyprLuaWrite.pending) would stay busy for good.
+            var out
+            try { out = job.transform(src) }
+            catch (e) {
+                console.warn("AtomicFileWrite: transform for " + job.path + " failed: " + e)
+                out = null
+            }
             if (out === null || out === undefined) { report(job, "refused", job.refusal || ""); continue }
             if (out === src) { report(job, "unchanged", ""); continue }
             current = job
