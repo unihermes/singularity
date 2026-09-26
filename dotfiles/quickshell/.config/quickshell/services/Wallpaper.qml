@@ -28,7 +28,7 @@ Singleton {
     id: root
 
     readonly property string script: Quickshell.env("HOME") + "/.config/hypr/wallpaper.sh"
-    readonly property string stateDir: Quickshell.env("HOME") + "/.local/state/neutrino"
+    readonly property string stateDir: Settings.stateDir
 
     property var images: []
     property string current: ""

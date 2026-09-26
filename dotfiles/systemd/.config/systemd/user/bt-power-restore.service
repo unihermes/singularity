@@ -20,8 +20,8 @@ After=bluetooth.target
 Type=oneshot
 RemainAfterExit=yes
 TimeoutStopSec=5s
-ExecStart=/bin/sh -c 'f="$HOME/.local/state/neutrino/bluetooth.state"; [ -r "$f" ] && bluetoothctl power "$(cat "$f")" || true'
-ExecStop=/bin/sh -c 'mkdir -p "$HOME/.local/state/neutrino"; case "$(timeout 3 bluetoothctl show)" in *"Powered: yes"*) echo on ;; *) echo off ;; esac > "$HOME/.local/state/neutrino/bluetooth.state"'
+ExecStart=/bin/sh -c 'f="$HOME/.local/state/singularity/bluetooth.state"; [ -r "$f" ] && bluetoothctl power "$(cat "$f")" || true'
+ExecStop=/bin/sh -c 'mkdir -p "$HOME/.local/state/singularity"; case "$(timeout 3 bluetoothctl show)" in *"Powered: yes"*) echo on ;; *) echo off ;; esac > "$HOME/.local/state/singularity/bluetooth.state"'
 
 [Install]
 WantedBy=default.target

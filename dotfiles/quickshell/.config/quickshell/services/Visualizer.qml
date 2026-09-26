@@ -45,7 +45,7 @@ Singleton {
         id: cava
         running: root.hasCava && root.streamOpen
         command: ["sh", "-c",
-            "cfg=$(mktemp /tmp/neutrino-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
+            "cfg=$(mktemp /tmp/singularity-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
             + "printf '[general]\\nbars = " + root.barCount + "\\nframerate = " + root.fps + "\\n"
             + "[input]\\nmethod = pipewire\\nsource = auto\\n"
             + "[output]\\nmethod = raw\\nraw_target = /dev/stdout\\ndata_format = ascii\\n"

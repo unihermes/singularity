@@ -13,7 +13,7 @@
 # Change it here and in config.jsonc (the title's dash count and the three
 # divider and bottom lines) together.
 N_MUTED='77;77;77' N_SUBTEXT='122;122;122'
-. "$HOME/.local/state/neutrino/term-colors.sh" 2>/dev/null
+. "$HOME/.local/state/singularity/term-colors.sh" 2>/dev/null
 label=$1
 if (( $# > 1 )); then
   v=$2

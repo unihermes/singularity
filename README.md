@@ -94,7 +94,7 @@ singularity/
     ├── wofi/.config/wofi/{config,style.css}  # fallback launcher when the shell is down
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
-    ├── nvim/.config/nvim/       # LazyVim: lua/config/, lua/plugins/, colors/neutrino.lua
+    ├── nvim/.config/nvim/       # LazyVim: lua/config/, lua/plugins/, colors/singularity.lua
     ├── alacritty/.config/alacritty/alacritty.toml
     ├── zathura/.config/zathura/zathurarc
     ├── gtk/.config/gtk-3.0/settings.ini
@@ -107,6 +107,12 @@ singularity/
 Each directory under `dotfiles/` mirrors its own path relative to `$HOME`, and
 `link.sh` stows every one of them into place. Because they are symlinks,
 editing a config on the live system edits the repo.
+
+Anything the shell saves or generates goes in `~/.local/state/singularity/`,
+never the repo: the settings (`appearance.json`), per-machine choices such as
+display rules and the primary display, the wallpaper, and every colour file the
+current look renders for other apps. Deleting it resets the shell to its
+defaults.
 
 ## Starting a session
 
@@ -237,7 +243,7 @@ the Appearance page deletes it from that file; `git checkout --
 services/looks.json` brings it back.
 
 Alacritty follows the shell too: `AppearanceSync.qml` writes its colours to
-`~/.local/state/neutrino/alacritty.toml`, which `alacritty.toml` imports, and
+`~/.local/state/singularity/alacritty.toml`, which `alacritty.toml` imports, and
 open terminals recolour live when the look changes. The 16 ANSI slots are a
 lightness ramp in the look's own tones rather than hues, so coloured output
 stays legible but monochrome — you lose red-for-error in `git diff`, compiler
@@ -253,7 +259,7 @@ Neutrino, whichever look the shell has, because it runs before anyone logs in.
 
 nvim follows the shell the same way. `AppearanceSync.qml` writes the look's
 ten roles plus its accent, good and alert hues to
-`~/.local/state/neutrino/nvim.lua`, and `colors/neutrino.lua` builds every
+`~/.local/state/singularity/nvim.lua`, and `colors/singularity.lua` builds every
 highlight from them, plugins included: file tree, tabs, statusline,
 completion menu and git signs. Open editors watch the file and recolour
 live. Syntax stays in lightness and weight; the accent marks the current
@@ -272,10 +278,10 @@ the first time.
 The prompt, fastfetch and zathura follow the look too. `starship.toml` and
 fastfetch's `config.jsonc` are written in Neutrino's colours, and
 `AppearanceSync.qml` renders copies with each of those colours swapped for the
-current look's into `~/.local/state/neutrino/`. `.bashrc` points starship and
+current look's into `~/.local/state/singularity/`. `.bashrc` points starship and
 fastfetch at the copies. Edit the repo files, not the copies.
 `starship-path.sh` and fastfetch's `row.sh` source
-`~/.local/state/neutrino/term-colors.sh` for the same colours, and `zathurarc`
+`~/.local/state/singularity/term-colors.sh` for the same colours, and `zathurarc`
 includes a generated colour file from the same place. Each falls back to
 Neutrino without its generated file.
 
@@ -295,7 +301,7 @@ them and `:Lazy` updates them. Language support comes from LazyVim's extras,
 listed in `lua/config/lazy.lua` (Python, C/C++, TypeScript, JSON, YAML, TOML,
 Markdown); `:LazyExtras` adds more, and Mason installs their servers on
 first use. QML uses the `qmlls` that ships with Qt (`lua/plugins/lsp.lua`).
-LazyVim's bundled themes are disabled in favour of `colors/neutrino.lua`
+LazyVim's bundled themes are disabled in favour of `colors/singularity.lua`
 (see Theme above).
 
 ## Regenerating the package lists
@@ -341,7 +347,7 @@ fc-match monospace
   page rather than by hand: a hand edit is overwritten at the next start.
   The colours go further than dark or light: GTK3 (adw-gtk3), GTK4 and Qt
   (qt6ct, Fusion) apps all take the look's ramp and accent, generated into
-  `~/.local/state/neutrino/{gtk3,gtk4}.css` and `qt6ct-colors.conf`.
+  `~/.local/state/singularity/{gtk3,gtk4}.css` and `qt6ct-colors.conf`.
 - **Kora 2.0.0** dropped upstream symlinks and icons half-resolve in some
   panels. Check the AUR comments if theming looks wrong.
 - **State that survives a reboot.** rfkill (Wi-Fi/Bluetooth radio block),

@@ -25,7 +25,7 @@
  * --n-panel-bg (translucent ground), --n-heading* (heading style). The var() fallbacks are the grayscale defaults, for before
  * the shell has written it. Only the alert hue stays fixed. */
 
-@import url("../../.local/state/neutrino/swaync.css");
+@import url("../../.local/state/singularity/swaync.css");
 
 :root {
   --cc-bg: var(--n-panel, #141414);
@@ -40,7 +40,7 @@
   --text-color-disabled: var(--n-muted, #4d4d4d);
   --bg-selected: var(--n-subtext, #7a7a7a);
   --border: 1px solid var(--n-border, #303030);
-  --border-radius: var(--neutrino-radius, 6px);
+  --border-radius: var(--n-radius, 6px);
   --notification-shadow: none;
   --notification-icon-size: 40px;
   --notification-group-icon-size: 20px;
@@ -48,7 +48,7 @@
   --font-size-summary: var(--n-fs-summary, 13px);
 
   --double-border: inset 0 0 0 2px var(--n-panel, #141414), inset 0 0 0 3px var(--n-frame, #4d4d4d);
-  --r-inner: var(--neutrino-radius-inner, 4px);
+  --r-inner: var(--n-radius-inner, 4px);
 }
 
 * {

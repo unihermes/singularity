@@ -108,7 +108,7 @@ Singleton {
     // nothing. The scan follows it closing, by which time the repair has run.
     function terminal(id, script) {
         busyRepair = id
-        term.command = ["alacritty", "--class", "neutrino-repair", "-e", "sh", "-c",
+        term.command = ["alacritty", "--class", "singularity-repair", "-e", "sh", "-c",
             script + "; echo; read -rsn1 -p 'press any key to close'"]
         term.running = true
     }

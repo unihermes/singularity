@@ -73,6 +73,24 @@ backup_conflicts() {
 
 backup_conflicts
 
+# Saved state from where it lived before ~/.local/state/singularity: the
+# neutrino directory, and Quickshell's per-shell state directory, which is
+# keyed by a hash of the shell's path (the newest copy wins).
+state="$HOME/.local/state/singularity"
+if [[ -d $HOME/.local/state/neutrino && ! -e $state ]]; then
+  mv "$HOME/.local/state/neutrino" "$state"
+  log "moved ~/.local/state/neutrino to ${state#"$HOME/"}"
+fi
+for f in appearance.json app-usage.json; do
+  [[ -e $state/$f ]] && continue
+  old=$(ls -t "$HOME"/.local/state/quickshell/by-shell/*/"$f" 2>/dev/null | head -1)
+  if [[ -n $old ]]; then
+    mkdir -p "$state"
+    cp -- "$old" "$state/$f"
+    log "copied Quickshell's $f to ${state#"$HOME/"}"
+  fi
+done
+
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
 

@@ -27,7 +27,7 @@ Singleton {
     // status and recent log in a terminal, held open until a key is pressed
     function showLog(u) {
         var scope = u.user ? "--user " : ""
-        Quickshell.execDetached(["alacritty", "--class", "neutrino-unit-log", "-e", "sh", "-c",
+        Quickshell.execDetached(["alacritty", "--class", "singularity-unit-log", "-e", "sh", "-c",
             "systemctl " + scope + "status --no-pager " + u.name + "; echo; "
             + "journalctl " + scope + "-u " + u.name + " -n 40 --no-pager; echo; "
             + "read -rsn1 -p 'press any key to close'"])

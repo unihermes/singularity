@@ -19,7 +19,7 @@ Singleton {
 
     FileView {
         id: usageFile
-        path: Quickshell.statePath("app-usage.json")
+        path: Settings.stateDir + "/app-usage.json"
         preload: true
         // no file until the first launch
         printErrors: false

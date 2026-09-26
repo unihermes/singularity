@@ -13,7 +13,7 @@ if watcher and reload then
   watcher:start(dir, {}, function(err, name)
     if err or name ~= vim.fs.basename(palette.path) then return end
     reload:start(100, 0, vim.schedule_wrap(function()
-      if vim.g.colors_name == "neutrino" then vim.cmd.colorscheme("neutrino") end
+      if vim.g.colors_name == "singularity" then vim.cmd.colorscheme("singularity") end
     end))
   end)
 end

@@ -15,7 +15,7 @@ set -uo pipefail
 # Neutrino's ramp, then the current look's from AppearanceSync if it's there
 N_OVERLAY='36;36;36' N_MUTED='77;77;77' N_SUBTEXT='122;122;122'
 N_TEXT='212;228;244' N_BRIGHT='235;235;235'
-. "$HOME/.local/state/neutrino/term-colors.sh" 2>/dev/null
+. "$HOME/.local/state/singularity/term-colors.sh" 2>/dev/null
 
 BG="48;2;$N_OVERLAY"        # the capsule's ground
 SEP="38;2;$N_MUTED"         # the slashes

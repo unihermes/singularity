@@ -18,7 +18,7 @@ export SUDO_EDITOR=nvim
 #
 # fastfetch and starship use Quickshell's copies of their configs in the
 # current look's colours (AppearanceSync.qml) when those exist.
-look_state=~/.local/state/neutrino
+look_state=~/.local/state/singularity
 fastfetch() {
   if [[ -r $look_state/fastfetch.jsonc ]]; then
     command fastfetch -c "$look_state/fastfetch.jsonc" "$@"

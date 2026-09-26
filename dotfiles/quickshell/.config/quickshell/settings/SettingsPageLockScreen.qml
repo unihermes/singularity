@@ -30,7 +30,7 @@ SettingsPage {
     readonly property string lockPath: hyprDir + "/hyprlock.conf"
     readonly property string idlePath: hyprDir + "/hypridle.conf"
     readonly property string lidPath: hyprDir + "/lid.sh"
-    readonly property string wallpaperLink: "~/.local/state/neutrino/current-wallpaper"
+    readonly property string wallpaperLink: "~/.local/state/singularity/current-wallpaper"
 
     // --- hyprlock.conf -------------------------------------------------------
 

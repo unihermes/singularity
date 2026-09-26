@@ -63,7 +63,7 @@ OverlayWindow {
     focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
         : root.wantsKeyboard ? WlrKeyboardFocus.OnDemand
         : WlrKeyboardFocus.None
-    layerNamespace: "neutrino-flyout"
+    layerNamespace: "singularity-flyout"
 
     // backdrop: anywhere that isn't the box
     MouseArea {

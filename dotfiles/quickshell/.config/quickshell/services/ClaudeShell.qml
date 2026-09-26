@@ -22,7 +22,7 @@ Singleton {
 
     readonly property string script: Quickshell.shellPath("scripts/claude-shell.sh")
     // the shell's own settings file, which rides along in the staging copy
-    readonly property var env: ({ SINGULARITY_SETTINGS: Quickshell.statePath("appearance.json") })
+    readonly property var env: ({ SINGULARITY_SETTINGS: Settings.stateDir + "/appearance.json" })
 
     readonly property bool available: availProbe.found      // the claude CLI is installed
     property bool running: false

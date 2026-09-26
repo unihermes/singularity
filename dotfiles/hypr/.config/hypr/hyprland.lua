@@ -34,7 +34,7 @@ local floorp      = "floorp"
 -- isn't running. pkill first so a second press dismisses wofi rather than
 -- stacking another. Its stylesheet is Quickshell's copy with the bar's corner
 -- radius applied (AppearanceSync.qml), else the repo's own.
-local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/neutrino/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
+local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
 
 -- Animation Speed from the bar's Appearance page. Quickshell writes the choice
 -- to a state file and runs `hyprctl reload config-only`, which re-runs this
@@ -42,7 +42,7 @@ local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.lo
 -- rewritten. "fast" halves every speed below (speed is a duration, so lower is
 -- quicker) and "off" turns animations off entirely.
 local function singularityState(name, default)
-    local f = io.open(os.getenv("HOME") .. "/.local/state/neutrino/" .. name)
+    local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/" .. name)
     if not f then return default end
     local v = f:read("l")
     f:close()
@@ -274,7 +274,7 @@ hl.on("hyprland.start", function()
     -- A terminal waiting on workspace 2. The rule below matches this title,
     -- not the class: a class match would catch every terminal, and a custom
     -- class would cost it its icon everywhere Quickshell looks one up.
-    hl.exec_cmd(terminal .. " --title neutrino-startup")
+    hl.exec_cmd(terminal .. " --title singularity-startup")
     -- XDG autostart, which Hyprland does not run itself: the .desktop files
     -- in ~/.config/autostart, managed from Settings > Startup. Last, so a
     -- user entry starts against a session that already has its bar, its
@@ -348,24 +348,24 @@ hl.config({
     },
 })
 
-hl.curve("neutrino", { type = "bezier", points = { {0.22, 1}, {0.36, 1} } })
+hl.curve("singularity", { type = "bezier", points = { {0.22, 1}, {0.36, 1} } })
 
 -- speed is in 100ms units (3 = 300ms), so lower is faster
 -- SUPER+C times its hand-made animations by these; see toggleMinimize() below
 local windowSpeed = 2
 local fadeSpeed = 1.5
-animation({ leaf = "global",     enabled = true, speed = 3, bezier = "neutrino" })
-animation({ leaf = "border",     enabled = true, speed = 3, bezier = "neutrino" })
-animation({ leaf = "windows",    enabled = true, speed = windowSpeed, bezier = "neutrino", style = windowStyle })
-animation({ leaf = "windowsOut", enabled = true, speed = 1.5, bezier = "neutrino", style = windowStyle })
-animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, bezier = "neutrino" })
-animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "neutrino", style = "slidefade 12%" })
+animation({ leaf = "global",     enabled = true, speed = 3, bezier = "singularity" })
+animation({ leaf = "border",     enabled = true, speed = 3, bezier = "singularity" })
+animation({ leaf = "windows",    enabled = true, speed = windowSpeed, bezier = "singularity", style = windowStyle })
+animation({ leaf = "windowsOut", enabled = true, speed = 1.5, bezier = "singularity", style = windowStyle })
+animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, bezier = "singularity" })
+animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "singularity", style = "slidefade 12%" })
 
 -- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which
 -- they'd otherwise inherit, since a launcher should appear at once. fade
 -- rather than popin, since the bar is a layer too.
-animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "neutrino", style = "fade" })
-animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "neutrino", style = "fade" })
+animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
+animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 
 ---------------
 ---- INPUT ----
@@ -621,7 +621,7 @@ hl.window_rule({
 -- you land in a terminal instead of an empty desktop.
 hl.window_rule({
     name  = "startup-terminal",
-    match = { title = "^(neutrino-startup)$" },
+    match = { title = "^(singularity-startup)$" },
     workspace = "2 silent",
 })
 

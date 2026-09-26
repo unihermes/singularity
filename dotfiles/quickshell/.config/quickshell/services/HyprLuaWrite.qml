@@ -36,8 +36,7 @@ Singleton {
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string confPath: home + "/.config/hypr/hyprland.lua"
-    readonly property string backupPath:
-        (Quickshell.env("XDG_STATE_HOME") || home + "/.local/state") + "/neutrino/hyprland.lua.bak"
+    readonly property string backupPath: Settings.stateDir + "/hyprland.lua.bak"
 
     // hyprland.lua writes queued or running; pages hold off re-reading the
     // file on change notifications while their own write lands

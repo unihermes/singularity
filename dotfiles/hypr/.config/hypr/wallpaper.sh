@@ -9,15 +9,15 @@
 #   wallpaper.sh current    the image swaybg is showing
 #
 # The choice is saved by Quickshell's Appearance page (Wallpaper.qml) to
-# ~/.local/state/neutrino/wallpaper.state as key=value lines rather than JSON,
+# ~/.local/state/singularity/wallpaper.state as key=value lines rather than JSON,
 # so this can read it without jq.
 set -euo pipefail
 
 # relative to this script's real location, so the repo can live anywhere
 wallpaper_dir="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../../wallpapers")"
-state="$HOME/.local/state/neutrino/wallpaper.state"
+state="$HOME/.local/state/singularity/wallpaper.state"
 # the image on screen, for hyprlock.conf's background
-current_link="$HOME/.local/state/neutrino/current-wallpaper"
+current_link="$HOME/.local/state/singularity/current-wallpaper"
 
 list() {
   find "$wallpaper_dir" -maxdepth 1 -type f \

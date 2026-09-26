@@ -54,7 +54,7 @@ SystemPage {
                   note: "What each bar module is and what clicking it does" },
                 { label: "ControlCentre.qml", path: home + "/.config/quickshell/flyouts/ControlCentre.qml",
                   note: "The flyout this window opens from" },
-                { label: "appearance.json", path: Quickshell.statePath("appearance.json"),
+                { label: "appearance.json", path: Settings.stateDir + "/appearance.json",
                   note: "Saved appearance state — written by the shell, not by hand" },
             ],
         },

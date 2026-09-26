@@ -58,7 +58,7 @@ Singleton {
         if (updateProc.running) return
         var flags = (Settings.updateAur ? "" : " --repo")
             + (Settings.updateIgnore.length > 0 ? " --ignore " + Settings.updateIgnore.join(",") : "")
-        updateProc.command = ["alacritty", "--class", "neutrino-update", "-e", "sh", "-c",
+        updateProc.command = ["alacritty", "--class", "singularity-update", "-e", "sh", "-c",
             "yay -Syu" + flags + " --sudoloop --noconfirm --answerclean None --answerdiff None "
             + "--answeredit None --removemake; "
             + "if [ $? -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "

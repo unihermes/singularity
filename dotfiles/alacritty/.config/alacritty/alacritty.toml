@@ -2,7 +2,7 @@
 # ~/.config/alacritty/alacritty.toml
 
 [general]
-import = ["~/.local/state/neutrino/alacritty.toml"]
+import = ["~/.local/state/singularity/alacritty.toml"]
 
 [window]
 padding = { x = 12, y = 10 }

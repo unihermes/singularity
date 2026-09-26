@@ -26,6 +26,10 @@ import "Looks.js" as Looks
 Singleton {
     id: root
 
+    // Everything the shell and its scripts save or generate, in one place
+    // outside ~/.config: those directories are stow links into the repo.
+    readonly property string stateDir: Quickshell.env("HOME") + "/.local/state/singularity"
+
     // "top" or "bottom" -- which screen edge the bar is anchored to
     readonly property alias barPosition: adapter.barPosition
     readonly property alias barHeight:   adapter.barHeight
@@ -571,7 +575,7 @@ Singleton {
 
     FileView {
         id: view
-        path: Quickshell.statePath("appearance.json")
+        path: root.stateDir + "/appearance.json"
         // preload, or nothing ever reads the file: a FileView is lazy and
         // only loads when someone asks for text()/data(), which nothing
         // here does -- the adapter is the only consumer. Without it the

@@ -39,7 +39,7 @@ SettingsPage {
     // duplicate mode copies it. The saved choice while that display is
     // connected, otherwise the first Hyprland lists -- the built-in panel on
     // a laptop, which is also what Hyprland falls back to with no choice.
-    readonly property string stateDir: Quickshell.env("HOME") + "/.local/state/neutrino"
+    readonly property string stateDir: Settings.stateDir
     property string savedPrimary: ""
     readonly property string primary: monitors.some(m => m.name === savedPrimary) ? savedPrimary
         : monitors.length > 0 ? monitors[0].name : ""

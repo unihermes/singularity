@@ -7,7 +7,7 @@
 --   lua/config/keymaps.lua   familiar editor shortcuts on top of LazyVim's
 --   lua/config/autocmds.lua  recolours when the shell's look changes
 --   lua/plugins/             language extras, theme hookup, overrides
---   colors/neutrino.lua      the colour scheme, built from the active look
+--   colors/singularity.lua      the colour scheme, built from the active look
 --
 -- Press <space> and wait to see every binding; :LazyExtras adds languages
 -- and features, :Mason adds language servers.

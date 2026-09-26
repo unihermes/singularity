@@ -1,5 +1,5 @@
 -- Singularity - nvim colour scheme
--- ~/.config/nvim/colors/neutrino.lua
+-- ~/.config/nvim/colors/singularity.lua
 --
 -- The shell's active look (see lua/config/palette.lua), so the editor
 -- changes with the bar, the terminal and the notifications. Syntax is carried
@@ -15,7 +15,7 @@ local mix = palette.mix
 
 vim.cmd.highlight("clear")
 vim.o.background = c.light and "light" or "dark"
-vim.g.colors_name = "neutrino"
+vim.g.colors_name = "singularity"
 
 local groups = {
   -- editor --------------------------------------------------------------

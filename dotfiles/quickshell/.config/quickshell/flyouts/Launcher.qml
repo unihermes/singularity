@@ -140,7 +140,7 @@ OverlayWindow {
 
     visible: open
     focusMode: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    layerNamespace: "neutrino-flyout"
+    layerNamespace: "singularity-flyout"
 
     MouseArea {
         anchors.fill: parent

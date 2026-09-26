@@ -1,5 +1,5 @@
--- The shell's look instead of LazyVim's bundled themes. colors/neutrino.lua
--- builds everything from ~/.local/state/neutrino/nvim.lua (written by
+-- The shell's look instead of LazyVim's bundled themes. colors/singularity.lua
+-- builds everything from ~/.local/state/singularity/nvim.lua (written by
 -- AppearanceSync.qml), and lua/config/autocmds.lua reloads it on change.
 
 -- Modes are told apart by lightness, with the look's accent on the ones
@@ -24,7 +24,7 @@ local function lualine_theme()
 end
 
 return {
-  { "LazyVim/LazyVim", opts = { colorscheme = "neutrino" } },
+  { "LazyVim/LazyVim", opts = { colorscheme = "singularity" } },
   { "folke/tokyonight.nvim", enabled = false },
   { "catppuccin/nvim", enabled = false },
 
@@ -39,7 +39,7 @@ return {
       require("lualine").setup(opts)
       -- a table theme doesn't follow the scheme by itself; rebuild it
       vim.api.nvim_create_autocmd("ColorScheme", {
-        pattern = "neutrino",
+        pattern = "singularity",
         callback = function()
           opts.options.theme = lualine_theme()
           require("lualine").setup(opts)

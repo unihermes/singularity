@@ -6,7 +6,7 @@
 // wallpaper's), font, font size and frame style -- so the launcher and the
 // notifications change with it.
 //
-// Everything lands in ~/.local/state/neutrino/, never in ~/.config: those
+// Everything lands in ~/.local/state/singularity/, never in ~/.config: those
 // directories are stow links into the repo, and generated files there would
 // show up as changes to commit.
 //
@@ -21,7 +21,7 @@
 //                  path, so its style.css @imports this and uses var().
 //   alacritty.toml -- the terminal's colours, imported by alacritty.toml.
 //                  alacritty watches imports, so open windows follow along.
-//   nvim.lua    -- the editor's palette, read by nvim's colors/neutrino.lua.
+//   nvim.lua    -- the editor's palette, read by nvim's colors/singularity.lua.
 //                  nvim watches it and recolours open sessions.
 //   ~/.claude/themes/singularity.json -- a Claude Code theme; Claude Code
 //                  only reads themes from there, and watches it.
@@ -73,7 +73,7 @@ import "Looks.js" as Looks
 Scope {
     id: root
 
-    readonly property string dir: Quickshell.env("HOME") + "/.local/state/neutrino"
+    readonly property string dir: Settings.stateDir
 
     readonly property var roleNames: ["base", "bar", "panel", "surface", "overlay",
                                       "border", "muted", "subtext", "text", "bright"]
@@ -130,8 +130,8 @@ Scope {
 
     function renderSwaync() {
         var lines = [":root {",
-            "  --neutrino-radius: " + px(0) + ";",
-            "  --neutrino-radius-inner: " + px(2) + ";",
+            "  --n-radius: " + px(0) + ";",
+            "  --n-radius-inner: " + px(2) + ";",
             // the inner stroke's colour, or nothing when the frame is single
             "  --n-frame: " + (Theme.frameDouble ? hex(Theme.frameStroke) : hex(Theme.panel)) + ";",
             '  --n-font: "' + Theme.fontText + '";',
@@ -202,7 +202,7 @@ Scope {
     }
 
     // nvim's palette as a Lua table: the ten roles plus the look's accent and
-    // status hues. colors/neutrino.lua builds every highlight from it, and
+    // status hues. colors/singularity.lua builds every highlight from it, and
     // nvim watches the file, so open editors recolour like the terminal.
     function renderNvim() {
         var q = c => '"' + hex(c) + '"'
