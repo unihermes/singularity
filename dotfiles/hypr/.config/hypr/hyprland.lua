@@ -571,6 +571,12 @@ hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh"))  -- Screenshot
 -- open turns it back on and cancels that. logind's own lid handling is
 -- inhibited in autostart so this is the only thing acting on the lid. All of
 -- it -- the debounce for this laptop's bouncing lid switch, the suspend
+-- --- Shell windows ---
+-- The bar's standalone windows; an empty page opens each on its default page
+hl.bind(mod .. " + comma",  hl.dsp.exec_cmd("qs ipc call settings open ''"))  -- Open Settings
+hl.bind(mod .. " + Escape", hl.dsp.exec_cmd("qs ipc call system open ''"))    -- Open System
+hl.bind(mod .. " + K",      hl.dsp.exec_cmd("qs ipc call keybinds open"))     -- Open Keybinds
+
 -- timer, re-suspending after a wake with the lid shut, docked mode -- lives
 -- in lid.sh. misc:key_press_enables_dpms and mouse_move_enables_dpms are the
 -- backstop: any key or mouse movement wakes a wrongly-blanked screen. lid.sh
