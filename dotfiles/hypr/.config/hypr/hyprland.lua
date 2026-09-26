@@ -171,6 +171,26 @@ function singularityResetWorkspaces()
     end
 end
 
+-- Layer surfaces -- the bar, the wallpaper -- are only placed again when a
+-- monitor rule moves a display, not when Hyprland slides one over because
+-- another came or went, so the bar is left mid-screen or off it. A rule
+-- moving each display one pixel, at its current mode and scale so nothing
+-- modesets, followed by a reload back to the real rules, puts them right.
+-- lid.sh runs both after every change of displays.
+function singularityNudgeDisplays()
+    for _, m in ipairs(hl.get_monitors()) do
+        if not m.is_mirror then
+            hl.monitor({
+                output    = m.name,
+                mode      = string.format("%dx%d@%.3f", m.width, m.height, m.refresh_rate),
+                position  = (m.x + 1) .. "x" .. m.y,
+                scale     = m.scale,
+                transform = m.transform,
+            })
+        end
+    end
+end
+
 -- A display plugged in (or the panel back on as the lid opens) lays the
 -- workspaces out afresh. Plugging or unplugging one with the lid shut is
 -- lid.sh's to handle: it switches the panel off or back on to match.
@@ -290,7 +310,7 @@ hl.config({
         active_opacity   = 1.0,
         inactive_opacity = 0.96,
         dim_inactive = true,
-        dim_strength = 0.4,
+        dim_strength = 0.2,
 
         shadow = {
             enabled      = true,

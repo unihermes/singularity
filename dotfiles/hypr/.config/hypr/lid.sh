@@ -226,6 +226,25 @@ stay_dark() {
     log "woke with the screen off and nobody there: leaving it off"
 }
 
+# Whether any layer surface (the bar, the wallpaper) sticks out of the
+# display it belongs to -- left behind where the display used to be.
+stale_layers() {
+    { hyprctl monitors; echo "--layers"; hyprctl layers; } 2>/dev/null | awk '
+        /^--layers/ { layers = 1; next }
+        !layers && /^Monitor / { name = $2 }
+        !layers && / at [-0-9]+x[-0-9]+/ {
+            split($1, res, "[x@]"); split($3, pos, "x")
+            mx[name] = pos[1]; my[name] = pos[2]; mw[name] = res[1]; mh[name] = res[2]
+        }
+        !layers && /scale:/ { mw[name] /= $2; mh[name] /= $2 }
+        layers && /^Monitor / { name = $2; sub(":", "", name) }
+        layers && /xywh:/ && (name in mx) {
+            split($0, a, "xywh: "); split(a[2], v, "[ ,]")
+            if (v[1] < mx[name] || v[2] < my[name] || v[1] + v[3] > mx[name] + mw[name] || v[2] + v[4] > my[name] + mh[name]) bad = 1
+        }
+        END { exit !bad }'
+}
+
 # Switch the panel off (or back on) through hyprland.lua; a no-op when it
 # already is, which is what keeps the displays hook the reload sets off from
 # going round again.
@@ -288,6 +307,14 @@ event)
     fi
     ;;
 displays)
+    # one pass for a burst of display events: switching the panel off or on
+    # sends its own, and so does the reload below
+    marker="${XDG_RUNTIME_DIR:-/tmp}/singularity-displays-marker"
+    token="$$-$RANDOM"
+    echo "$token" > "$marker"
+    sleep 1
+    [[ $(cat "$marker" 2>/dev/null) == "$token" ]] || exit 0
+
     if ! lid_closed; then
         panel_back
     elif docked; then
@@ -298,6 +325,18 @@ displays)
         panel_back
         closed_undocked
     fi
+    # When a display comes or goes Hyprland slides the others into new
+    # places, but leaves layer surfaces -- the bar, the wallpaper -- where
+    # the displays used to be: the bar floats mid-screen or off it. See
+    # singularityNudgeDisplays() in hyprland.lua. The displays can still be
+    # settling (the panel coming back takes a moment), so check and go again.
+    for _ in 1 2 3; do
+        hyprctl eval 'singularityNudgeDisplays()' >/dev/null
+        hyprctl reload config-only >/dev/null
+        sleep 1
+        stale_layers || break
+    done
+    stale_layers && log "bar or wallpaper still out of place after nudging the displays"
     ;;
 sleep)
     rm -f "$slept_dark"
