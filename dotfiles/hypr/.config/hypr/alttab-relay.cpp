@@ -46,7 +46,10 @@
 // them. If no reachable instance answers for three rounds running -- long
 // enough that a shell still loading its config isn't mistaken for it -- that
 // is logged to ~/.cache/alttab-relay.log and raised as a desktop
-// notification, instead of alt-tab just quietly doing nothing.
+// notification, and the relay stops listening: with its socket gone,
+// alttab-ipc.sh falls back to `qs ipc call`, so alt-tab keeps working
+// (slower) instead of every command being accepted here and dropped. It
+// listens again once an instance answers.
 //
 // Deliberately fire-and-forget: every "alttab" IPC function this relays
 // (tab/prev/commit/cancel) returns void, and Quickshell executes a command
@@ -188,7 +191,6 @@ int main(int argc, char** argv) {
 	QCoreApplication app(argc, argv);
 
 	auto relaySockPath = xdgRuntimeDir() + "/singularity-alttab-relay.sock";
-	QLocalServer::removeServer(relaySockPath);
 
 	// Parented to `app` rather than stack/local objects: everything here
 	// lives for the process's whole lifetime, and the lambdas below close
@@ -196,21 +198,26 @@ int main(int argc, char** argv) {
 	// anything that could be a dangling stack reference by the time a
 	// signal fires later.
 	auto* server = new QLocalServer(&app);
-	if (!server->listen(relaySockPath)) {
+	auto listen = [=]() -> bool {
+		if (server->isListening()) return true;
+		QLocalServer::removeServer(relaySockPath);
+		if (server->listen(relaySockPath)) return true;
 		qCritical() << "alttab-relay: failed to listen on" << relaySockPath;
-		return 1;
-	}
+		return false;
+	};
+	if (!listen()) return 1;
 
 	auto* qsConn = new QLocalSocket(&app);
 	auto* qsStream = new QDataStream(qsConn);
 
-	// Connects fresh on (almost) every call, since Quickshell hangs up
-	// after each one anyway -- see the file comment. The state() check
-	// still matters despite that: it's what makes this relay launch-order
-	// independent of quickshell (see hyprland.lua) and self-healing across
-	// a quickshell restart mid-session, by re-running the instance lookup
-	// whenever the last-known connection turns out to be down instead of
-	// only ever trying once at startup.
+	// Connects fresh for every call, since Quickshell hangs up after each
+	// one anyway -- see the file comment. Not reused while state() still
+	// says connected: this process only learns of the hang-up when its event
+	// loop gets to it, and a commit that follows a Tab by a few ms can be
+	// handled first, and written into a connection Quickshell has already
+	// closed. Looking the instance up per call is also what makes the relay
+	// launch-order independent of quickshell (see hyprland.lua) and
+	// self-healing across a quickshell restart mid-session.
 	//
 	// Still a blocking wait here (not another connect()+signal), but that's
 	// fine: it runs inside a request that's already being handled from
@@ -221,7 +228,10 @@ int main(int argc, char** argv) {
 	auto* shellSock = new QString();
 
 	auto ensureConnected = [=]() -> bool {
-		if (qsConn->state() == QLocalSocket::ConnectedState) return true;
+		// the last call's bytes are usually long gone, but abort() would
+		// throw away any flush() couldn't finish
+		if (qsConn->bytesToWrite() > 0) qsConn->waitForBytesWritten(100);
+		qsConn->abort();
 
 		auto sockPath = *shellSock;
 		if (sockPath.isEmpty()) {
@@ -314,22 +324,24 @@ int main(int argc, char** argv) {
 			if (result == "ok") {
 				*shellSock = sockPath;
 				*failRounds = 0;
-				qsConn->abort();   // the next command connects to this one
 				qInfo() << "alttab-relay: self-test passed against" << sockPath;
+				listen();
 				return;
 			}
 		}
-		if (!reachable || ++*failRounds != 3) return;
+		if (!reachable || ++*failRounds < 3 || !server->isListening()) return;
 
 		qCritical().noquote() << "alttab-relay: SELF-TEST FAILED -- none of the"
 			<< live.size() << "running Quickshell instance(s) answered the relay's ping."
 			<< "If the bar is running, its private IPC wire format has probably changed"
-			<< "in an update; alt-tab won't respond until alttab-relay.cpp is brought in"
-			<< "line with it (or the relay is stopped, so alttab-ipc.sh falls back to"
-			<< "`qs ipc call`).";
+			<< "in an update. The relay has stopped listening, so alttab-ipc.sh falls back"
+			<< "to `qs ipc call` (slower) until alttab-relay.cpp is brought in line with it.";
+		server->close();
+		QLocalServer::removeServer(relaySockPath);
 		QProcess::startDetached("notify-send", {
 			"-a", "alttab-relay", "-u", "critical", "ALT+Tab relay out of date",
-			"Quickshell isn't answering alttab-relay's IPC. See ~/.cache/alttab-relay.log",
+			"Quickshell isn't answering alttab-relay's IPC, so ALT+Tab has fallen back to "
+			"the slower qs path. See ~/.cache/alttab-relay.log",
 		});
 	};
 	auto* selfTestTimer = new QTimer(&app);
