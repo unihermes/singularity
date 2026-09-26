@@ -1,13 +1,13 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/flyouts/LayoutToast.qml
+// ~/.config/quickshell/flyouts/ModeToast.qml
 //
-// SUPER+M: a small "MONOCLE" / "DWINDLE" toast at the top centre of the
-// screen, naming the layout just switched to. Self-dismissing rather than a
-// flyout -- there's nothing to interact with, so it fades out on its own
-// instead of waiting for a click or Escape. scope.layoutToastSeq (bumped in
-// shell.qml on every SUPER+M on this monitor) is what restarts the timer,
-// since scope.layoutToastMode alone wouldn't change on two quick toggles
-// that land back on the same mode.
+// A small toast at the top centre of the screen naming the mode a key just
+// switched: "MONOCLE" / "DWINDLE" for SUPER+M, "CAPS LOCK ON" and the like
+// for the lock keys. Self-dismissing rather than a flyout -- there's nothing
+// to interact with, so it fades out on its own instead of waiting for a click
+// or Escape. scope.modeToastSeq (bumped in shell.qml on every such key on
+// this monitor) is what restarts the timer, since scope.modeToastText alone
+// wouldn't change on two quick toggles that land on the same mode.
 
 import Quickshell
 import Quickshell.Wayland
@@ -31,7 +31,7 @@ OverlayWindow {
 
     Connections {
         target: root.scope
-        function onLayoutToastSeqChanged() {
+        function onModeToastSeqChanged() {
             // the clock island shows this itself
             if (Settings.islandActive) return
             root.active = true
@@ -64,7 +64,7 @@ OverlayWindow {
         Text {
             id: label
             anchors.centerIn: parent
-            text: Theme.heading(root.scope.layoutToastMode === "monocle" ? "MONOCLE" : "DWINDLE")
+            text: Theme.heading(root.scope.modeToastText)
 
             color: Theme.text
             font.family: Theme.fontText

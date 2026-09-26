@@ -5,10 +5,10 @@
 // something changes it shows that instead of the time, then eases back.
 //
 //   volume / brightness  the chip keeps its width and becomes a level meter
-//   layout (SUPER+M)     the mode just switched to
+//   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock)
 //   notifications        how many new ones arrived (not during DND)
 //
-// Settings.clockIsland turns it off, and LevelToast/LayoutToast step aside
+// Settings.clockIsland turns it off, and LevelToast/ModeToast step aside
 // only while it's on and the clock is actually on the bar
 // (Settings.islandActive), so there's always exactly one place these show.
 
@@ -124,14 +124,14 @@ BarModule {
         }
     }
 
-    // --- layout ---------------------------------------------------------------
-    // layoutToastSeq is already filtered to the focused monitor (shell.qml)
+    // --- modes --------------------------------------------------------------
+    // modeToastSeq is already filtered to the focused monitor (shell.qml)
 
     Connections {
         target: root.screenScope
-        function onLayoutToastSeqChanged() {
-            var monocle = root.screenScope.layoutToastMode === "monocle"
-            root.show("layout", monocle ? "󰊓" : "󰕴", Theme.heading(monocle ? "MONOCLE" : "DWINDLE"), -1, 1100)
+        function onModeToastSeqChanged() {
+            root.show("mode", root.screenScope.modeToastIcon,
+                      Theme.heading(root.screenScope.modeToastText), -1, 1100)
         }
     }
 

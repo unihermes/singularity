@@ -19,7 +19,7 @@ OverlayWindow {
     id: root
 
     // Kept true and re-armed by the timer rather than toggling window
-    // `visible` -- see LayoutToast for why an opacity fade needs the surface
+    // `visible` -- see ModeToast for why an opacity fade needs the surface
     // mapped for its whole duration.
     property bool active: false
     property bool failed: false

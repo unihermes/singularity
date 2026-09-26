@@ -24,7 +24,7 @@ Row {
         SUPER: "Super", CTRL: "Ctrl", ALT: "Alt", SHIFT: "Shift", MOD5: "AltGr",
         SPACE: "Space", space: "Space", Return: "Enter", Escape: "Esc", Tab: "Tab",
         BackSpace: "Backspace", Delete: "Del", Insert: "Ins", Print: "PrtSc",
-        Page_Up: "PgUp", Page_Down: "PgDn",
+        Page_Up: "PgUp", Page_Down: "PgDn", Caps_Lock: "Caps Lock", Num_Lock: "Num Lock",
         left: "←", right: "→", up: "↑", down: "↓",
         equal: "=", minus: "-", comma: ",", period: ".", slash: "/", backslash: "\\",
         semicolon: ";", apostrophe: "'", grave: "`", bracketleft: "[", bracketright: "]",

@@ -154,6 +154,34 @@ ShellRoot {
         function set(mode: string): void { root.layoutModeChanged(mode) }
     }
 
+    // Caps Lock / Num Lock, from hyprland.lua's pass-through binds on the two
+    // keys: `qs ipc call locks changed caps|num`. The bind only says which key
+    // went down; whether it's now on is read back from the main keyboard's
+    // state, so the toast can't drift out of step with the LED.
+    signal lockKeyChanged(string key, bool on)
+
+    IpcHandler {
+        target: "locks"
+        function changed(key: string): void {
+            lockProbe.key = key
+            lockProbe.running = true
+        }
+    }
+
+    Process {
+        id: lockProbe
+        property string key: ""
+        command: ["hyprctl", "devices", "-j"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let kbs
+                try { kbs = JSON.parse(text).keyboards || [] } catch (e) { return }
+                const kb = kbs.find(k => k.main) || kbs[0]
+                if (kb) root.lockKeyChanged(lockProbe.key, lockProbe.key === "caps" ? kb.capsLock : kb.numLock)
+            }
+        }
+    }
+
     // The launcher (flyouts/Launcher.qml): `qs ipc call launcher toggle apps`
     // from CTRL+SPACE, `... toggle clipboard` from SUPER+H. Same per-screen
     // signal relay as the overlay above.
@@ -284,22 +312,33 @@ ShellRoot {
                 }
             }
 
-            // SUPER+M: the layout toast. Not routed through openFlyout like
-            // the rest -- it isn't a flyout (no backdrop, self-dismissing,
-            // and it shouldn't close whatever flyout is already open) -- so
-            // it gets its own bit of state: the mode to show, and a counter
-            // LayoutToast watches to know a *new* toggle happened even when
-            // the mode repeats (e.g. two quick SUPER+M's landing back on
-            // "monocle" should restart the timer, not no-op).
-            property string layoutToastMode: ""
-            property int layoutToastSeq: 0
+            // SUPER+M and the lock keys: the mode toast. Not routed through
+            // openFlyout like the rest -- it isn't a flyout (no backdrop,
+            // self-dismissing, and it shouldn't close whatever flyout is
+            // already open) -- so it gets its own bit of state: what to show,
+            // and a counter ModeToast watches to know a *new* toggle happened
+            // even when the text repeats (e.g. two quick SUPER+M's landing
+            // back on "monocle" should restart the timer, not no-op).
+            property string modeToastIcon: ""
+            property string modeToastText: ""
+            property int modeToastSeq: 0
+
+            function showModeToast(icon, text) {
+                if (!screenScope.isFocusedScreen()) return
+                screenScope.modeToastIcon = icon
+                screenScope.modeToastText = text
+                screenScope.modeToastSeq++
+            }
 
             Connections {
                 target: root
                 function onLayoutModeChanged(mode) {
-                    if (!screenScope.isFocusedScreen()) return
-                    screenScope.layoutToastMode = mode
-                    screenScope.layoutToastSeq++
+                    var monocle = mode === "monocle"
+                    screenScope.showModeToast(monocle ? "󰊓" : "󰕴", monocle ? "MONOCLE" : "DWINDLE")
+                }
+                function onLockKeyChanged(key, on) {
+                    screenScope.showModeToast(key === "caps" ? "󰘲" : "󰎠",
+                        (key === "caps" ? "CAPS LOCK " : "NUM LOCK ") + (on ? "ON" : "OFF"))
                 }
             }
 
@@ -908,7 +947,7 @@ ShellRoot {
         // to. Listens for root.layoutModeChanged itself rather than going
         // through openFlyout -- it isn't a flyout (no backdrop, not closable,
         // self-dismissing) and shouldn't close whatever flyout is already open.
-        LayoutToast {
+        ModeToast {
             scope: screenScope
         }
 
