@@ -144,8 +144,8 @@ FlyoutPanel {
                         x: Theme.spaceM + 22 - width
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: -(pip.height + 1) / 2
-                        width: Theme.fs(16)
-                        height: Theme.fs(16)
+                        width: Theme.fontIconSize
+                        height: Theme.fontIconSize
                         opacity: row.lit ? 1 : 0.55
                         Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
 
@@ -163,7 +163,7 @@ FlyoutPanel {
                             text: Apps.glyphForWindow(row.modelData.cls, row.modelData.title)
                             color: row.focused ? Theme.textStrong : Theme.text
                             font.family: Theme.fontIcon
-                            font.pixelSize: Theme.fs(15)
+                            font.pixelSize: Theme.fontIconSize
                         }
                     }
 

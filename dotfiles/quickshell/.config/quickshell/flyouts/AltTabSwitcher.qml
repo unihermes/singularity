@@ -186,12 +186,14 @@ OverlayWindow {
     // a short list is still one centred row.
     readonly property int cardW: Theme.fs(128)
     readonly property int cardH: Theme.fs(116)
-    readonly property int maxColumns: Math.max(1, Math.floor((width - 80 - 40 + list.spacing) / (cardW + list.spacing)))
+    // the launcher's padding inside the frame, and as much again outside it
+    readonly property int pad: Theme.panelPad * 2
+    readonly property int maxColumns: Math.max(1, Math.floor((width - pad * 6 + list.spacing) / (cardW + list.spacing)))
 
     PanelFrame {
         anchors.centerIn: parent
-        width: list.width + 40
-        height: Math.min(root.height - 80, list.height + 40)
+        width: list.width + root.pad * 2
+        height: Math.min(root.height - root.pad * 4, list.height + root.pad * 2)
         // only matters past what even a wrapped grid can show (several
         // dozen windows): the rows that don't fit are cut off inside the
         // frame instead of spilling out of it
@@ -218,7 +220,7 @@ OverlayWindow {
                     radius: Theme.radiusInner
                     color: active ? Theme.selectedFill : Theme.surface
                     border.width: Theme.borderWidth
-                    border.color: active ? Theme.accent : Theme.stroke
+                    border.color: active ? Theme.selectedStroke : Theme.stroke
 
                     // No Behavior on colour here: the highlight has to keep up
                     // with held-Tab autorepeat, and a fade would smear it.
@@ -255,8 +257,8 @@ OverlayWindow {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.top: ico.bottom
-                        anchors.topMargin: Theme.sp(10)
-                        width: parent.width - 16
+                        anchors.topMargin: Theme.spaceL
+                        width: parent.width - Theme.spaceL * 2
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
                         maximumLineCount: 2
