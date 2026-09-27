@@ -722,6 +722,16 @@ hl.window_rule({
     no_focus = true,
 })
 
+-- A link opened from another app lands in a new Floorp tab, which Floorp
+-- selects and then asks to be activated. Hyprland ignores activation
+-- requests by default (misc:focus_on_activate); this honours Floorp's, so
+-- its window comes to the front showing that tab.
+hl.window_rule({
+    name  = "floorp-focus-on-activate",
+    match = { class = "^(floorp)$" },
+    focus_on_activate = true,
+})
+
 -- Monocle. Hyprland ships dwindle and master only, with no monocle layout,
 -- so this emulates one: dwindle stays the underlying layout, but every
 -- window that would tile is floated and sized to fill the usable area
