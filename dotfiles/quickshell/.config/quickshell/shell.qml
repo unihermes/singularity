@@ -256,6 +256,15 @@ ShellRoot {
         function clear(): void { Notifications.clearAll() }
     }
 
+    // The power menu (flyouts/PowerMenu.qml), from SUPER+SHIFT+E. Same
+    // per-screen signal relay as the overlay above.
+    signal powerMenuToggled()
+
+    IpcHandler {
+        target: "power"
+        function menu(): void { root.powerMenuToggled() }
+    }
+
     // The media keys: whichever player the bar's media module follows
     IpcHandler {
         target: "media"
@@ -367,6 +376,16 @@ ShellRoot {
                     if (!screenScope.isFocusedScreen()) return
                     screenScope.openFlyout =
                         screenScope.openFlyout === "workspaceoverlay" ? "" : "workspaceoverlay"
+                }
+            }
+
+            // SUPER+SHIFT+E: the power menu on the focused monitor
+            Connections {
+                target: root
+                function onPowerMenuToggled() {
+                    if (!screenScope.isFocusedScreen()) return
+                    screenScope.openFlyout =
+                        screenScope.openFlyout === "powermenu" ? "" : "powermenu"
                 }
             }
 
@@ -1003,6 +1022,11 @@ ShellRoot {
         LazyFlyout {
             name: "workspaceoverlay"; scope: screenScope
             WorkspaceOverlay { scope: screenScope }
+        }
+
+        LazyFlyout {
+            name: "powermenu"; scope: screenScope
+            PowerMenu { scope: screenScope }
         }
 
         // SUPER+M: brief top-of-screen toast naming the layout just switched

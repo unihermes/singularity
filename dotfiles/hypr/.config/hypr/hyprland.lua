@@ -424,7 +424,6 @@ hl.bind(mod .. " + CTRL + F",  hl.dsp.window.fullscreen())  -- Fullscreen window
 hl.bind(mod .. " + equal",     function() toggleMaximize() end)  -- Maximize or restore window
 hl.bind(mod .. " + C",         function() toggleMinimize() end)  -- Minimize or restore window
 hl.bind(mod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))  -- Float or tile window
-hl.bind(mod .. " + SHIFT + E", hl.dsp.exit())  -- Log out
 hl.bind(mod .. " + P",         hl.dsp.window.pseudo())  -- Keep window's own size in its tile
 hl.bind(mod .. " + J",         hl.dsp.layout("togglesplit"))  -- Split side by side or stacked
 hl.bind(mod .. " + M",         function() toggleLayout() end)  -- Switch between tiled and one-window layout
@@ -566,6 +565,8 @@ hl.bind(mod .. " + I", hl.dsp.exec_cmd("qs ipc call claude toggle"))  -- Ask Cla
 -- Through logind so hypridle's lock_cmd runs it: one hyprlock at a time, and
 -- the refocus on unlock
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))  -- Lock the screen
+-- lock, suspend, log out, reboot, shut down; flyouts/PowerMenu.qml
+hl.bind(mod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call power menu"))  -- Open the power menu
 
 -- --- Screenshot ---
 -- saves to ~/Pictures/Screenshots and copies to the clipboard

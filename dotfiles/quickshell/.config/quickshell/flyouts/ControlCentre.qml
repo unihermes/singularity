@@ -43,7 +43,7 @@ FlyoutPanel {
     onPageChanged: if (page === "quick") {
         rfkillRead.running = true
     } else if (page === "power") {
-        hibernateCheck.running = true
+        Session.refresh()
     } else if (page === "widgets") {
         widgetsList.refill()
     } else if (page === "apps") {
@@ -89,20 +89,6 @@ FlyoutPanel {
         onExited: rfkillRead.running = true
     }
 
-    // Hibernate is only offered once logind says it can: that needs a
-    // swapfile, the resume hook and resume= on the cmdline (install.sh's
-    // hibernation step), none of which link.sh alone sets up.
-    property bool canHibernate: false
-
-    Process {
-        id: hibernateCheck
-        command: ["busctl", "call", "org.freedesktop.login1", "/org/freedesktop/login1",
-                  "org.freedesktop.login1.Manager", "CanHibernate"]
-        stdout: StdioCollector {
-            onStreamFinished: controlCentre.canHibernate = text.trim() === 's "yes"'
-        }
-    }
-
     function launch(entry) {
         scope.openFlyout = ""
         Apps.launch(entry)
@@ -113,19 +99,6 @@ FlyoutPanel {
         if (act === "settings") settingsWin.open()
         else if (act === "system") systemWin.open()
         else if (act === "keybinds") settingsWin.open("keybinds")
-        // through hypridle's lock_cmd, like SUPER+L
-        else if (act === "lock") Quickshell.execDetached(["loginctl", "lock-session"])
-        else if (act === "suspend") Quickshell.execDetached(["systemctl", "suspend"])
-        else if (act === "hibernate") Quickshell.execDetached(["systemctl", "hibernate"])
-        // hl.dsp.exit() only kills the compositor -- start-hyprland (the
-        // hyprland package's own session wrapper, PID 1 of the logind
-        // session scope) treats that as a crash and immediately relaunches
-        // it, so nothing ever visibly closes. Killing the whole logind
-        // session scope instead ends everything in it and drops back to
-        // the ly login screen.
-        else if (act === "logout") Quickshell.execDetached(["sh", "-c", "loginctl terminate-session \"$XDG_SESSION_ID\""])
-        else if (act === "reboot") Quickshell.execDetached(["systemctl", "reboot"])
-        else if (act === "poweroff") Quickshell.execDetached(["systemctl", "poweroff"])
         // The pause lets the flyout's surface unmap first. slurp and
         // hyprpicker both draw on the overlay layer too, and without
         // it the menu is still on screen for their first frame --
@@ -612,21 +585,15 @@ FlyoutPanel {
 
     // --- Power ----------------------------------------------
     Repeater {
-        model: controlCentre.page === "power" ? [
-            { label: "Lock",      act: "lock" },
-            { label: "Suspend",   act: "suspend" },
-        ].concat(controlCentre.canHibernate ? [
-            { label: "Hibernate", act: "hibernate" },
-        ] : []).concat([
-            { label: "Log Out",   act: "logout" },
-            { label: "Reboot",    act: "reboot" },
-            { label: "Shut Down", act: "poweroff" },
-        ]) : []
+        model: controlCentre.page === "power" ? Session.actions : []
 
         FlyoutRow {
             required property var modelData
             label: modelData.label
-            onActivated: controlCentre.run(modelData.act)
+            onActivated: {
+                scope.openFlyout = ""
+                Session.run(modelData.act)
+            }
         }
     }
 }
