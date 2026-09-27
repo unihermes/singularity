@@ -1056,7 +1056,7 @@ SettingsPage {
     SettingsField {
         label: "Window animation"
         hint: "How windows open, close and minimize, and how the scratchpad appears"
-        Choices { key: "windowAnim" }
+        Choice { key: "windowAnim" }
     }
 
     // --- default --------------------------------------------------------------

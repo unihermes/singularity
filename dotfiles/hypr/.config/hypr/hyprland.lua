@@ -57,15 +57,23 @@ local animFactor = animMode == "fast" and 0.5 or 1
 -- page. "fade" is popin at full size, so the window only fades, and "none"
 -- shows and hides them at once. SUPER+C follows the same choice by hand; see
 -- toggleMinimize() below.
-local windowStyles = { popin = "popin 92%", slide = "slide", fade = "popin 100%", none = "popin 100%" }
+local windowStyles = {
+    popin = "popin 92%", zoom = "popin 70%", fade = "popin 100%", fold = "gnomed",
+    slide = "slide", rise = "slide bottom", drop = "slide top", none = "popin 100%",
+}
 local windowAnim   = singularityState("window-anim", "popin")
 if not windowStyles[windowAnim] then windowAnim = "popin" end
 local windowStyle    = windowStyles[windowAnim]
 local windowsAnimate = windowAnim ~= "none"
+-- SUPER+C's version: the styles that move the window off-screen (up for
+-- drop, down for the others), and the size the rest shrink to as they fade,
+-- as fractions of width and height (fold collapses to a line, as gnomed does)
+local windowSlides = windowAnim == "slide" or windowAnim == "rise" or windowAnim == "drop"
+local windowShrink = ({ popin = { 0.92, 0.92 }, zoom = { 0.7, 0.7 }, fold = { 1, 0.05 } })[windowAnim]
 
 -- The scratchpad (SUPER+grave) is a special workspace, and a workspace can
--- only slide or fade, so pop shows it as a fade.
-local scratchStyles = { popin = "fade", slide = "slidevert", fade = "fade", none = "fade" }
+-- only slide or fade, so the styles that don't slide show it as a fade.
+local scratchStyle = windowSlides and "slidevert" or "fade"
 
 -- "<active> <inactive>" border colours, written by the Appearance page when
 -- borders follow the shell's accent; otherwise absent, and the colours
@@ -350,7 +358,7 @@ animation({ leaf = "fadeIn",     enabled = windowsAnimate, speed = fadeSpeed, be
 animation({ leaf = "fadeOut",    enabled = windowsAnimate, speed = fadeSpeed, bezier = "singularity" })
 animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "singularity", style = "slidefade 12%" })
 animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, bezier = "singularity",
-            style = scratchStyles[windowAnim] })
+            style = scratchStyle })
 
 -- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which
 -- they'd otherwise inherit, since a launcher should appear at once. fade
@@ -938,15 +946,16 @@ local function afterAnimation(speed, fn)
     end
 end
 
--- r at popin's starting size (windowStyles.popin), around the same centre.
+-- r at the window style's starting size (windowShrink), around the same
+-- centre.
 local function shrunk(r)
-    local w, h = math.floor(r.w * 0.92), math.floor(r.h * 0.92)
+    local w, h = math.floor(r.w * windowShrink[1]), math.floor(r.h * windowShrink[2])
     return { x = r.x + (r.w - w) // 2, y = r.y + (r.h - h) // 2, w = w, h = h }
 end
 
 -- Puts a SUPER+C-hidden window back where it was and forgets it was
--- hidden: slid back up, or faded in where it was (growing from popin's
--- size for pop), and tiled again if it was tiled.
+-- hidden: slid back, or faded in where it was (growing from windowShrink
+-- for the styles that have one), and tiled again if it was tiled.
 local function restoreMinimized(win)
     local st = stateOf(win.address)
     local saved = st.minimized
@@ -979,10 +988,10 @@ local function restoreMinimized(win)
         if saved.tiled then afterAnimation(windowSpeed, retile) end
     end
 
-    if windowAnim == "slide" then
+    if windowSlides then
         show()
     else
-        jumpTo(addr, windowAnim == "popin" and shrunk(saved) or saved, show)
+        jumpTo(addr, windowShrink and shrunk(saved) or saved, show)
     end
 end
 
@@ -1324,14 +1333,16 @@ function toggleMaximize()
 end
 
 -- Hides a window below the screen, or restores it, the way windows open
--- and close (windowAnim): slid down, faded out where it is (shrinking to
--- popin's size for pop) and only then moved away, or moved away at once. It stays transparent
+-- and close (windowAnim): slid off the screen (up for drop, down otherwise),
+-- faded out where it is (shrinking to windowShrink for the styles that have
+-- one) and only then moved away, or moved away at once. It stays transparent
 -- while hidden, so the fade back in starts from nothing. A tiled window is
 -- floated where it is first, since only floaters can be moved off-screen.
 -- Refocusing a hidden window any other way restores it too -- see
 -- maximizeFocused() above.
 local function hiddenRect(r, mon)
-    return { x = r.x, y = mon.y + mon.height + 100, w = r.w, h = r.h }
+    local y = windowAnim == "drop" and mon.y - r.h - 100 or mon.y + mon.height + 100
+    return { x = r.x, y = y, w = r.w, h = r.h }
 end
 
 function toggleMinimize()
@@ -1383,19 +1394,19 @@ function toggleMinimize()
 
     local function gone()
         if not current() then return end
-        if windowAnim ~= "slide" then jumpTo(addr, hiddenRect(r, mon)) end
+        if not windowSlides then jumpTo(addr, hiddenRect(r, mon)) end
         focusNext()
     end
     local function hide()
         if not current() then return end
         if windowAnim == "none" then return gone() end
-        if windowAnim == "slide" then
+        if windowSlides then
             moveTo(addr, hiddenRect(r, mon))
         else
             setProp(addr, "opacity", "0")
-            if windowAnim == "popin" then moveTo(addr, shrunk(r)) end
+            if windowShrink then moveTo(addr, shrunk(r)) end
         end
-        afterAnimation(windowAnim == "slide" and windowSpeed or fadeSpeed, gone)
+        afterAnimation(windowSlides and windowSpeed or fadeSpeed, gone)
     end
 
     if tiled then
@@ -1422,7 +1433,7 @@ for _, w in ipairs(hl.get_windows()) do
                         tiled = tiled == "1", fullscreen = tonumber(fullscreen) }
             stateOf(w.address).minimized = r
             local mon = w.monitor
-            if mon and w.at.y < mon.y + mon.height then jumpTo("address:" .. w.address, hiddenRect(r, mon)) end
+            if mon and w.at.y + w.size.y > mon.y and w.at.y < mon.y + mon.height then jumpTo("address:" .. w.address, hiddenRect(r, mon)) end
         end
     end
 end
