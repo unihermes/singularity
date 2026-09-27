@@ -203,15 +203,6 @@ Singleton {
         var seen = {}
         adapter.updateIgnore = list.map(n => String(n).trim()).filter(n => /^[a-z0-9@._+-]+$/i.test(n) && !seen[n] && (seen[n] = true)).sort()
     }
-    // Sections folded shut by clicking their heading (FlyoutHeading), as
-    // "<page title>/<heading>" keys. Kept while the shell runs, so a page
-    // reopens as it was left, but not saved: every session starts unfolded.
-    property var collapsedSections: []
-    function setSectionCollapsed(key, on) {
-        var list = collapsedSections.filter(k => k !== key)
-        if (on) list.push(key)
-        collapsedSections = list
-    }
     // Notifications: Do Not Disturb, seconds a popup stays by urgency (0
     // until dismissed), and the screen corner or edge popups stack from
     readonly property alias notifDnd: adapter.notifDnd

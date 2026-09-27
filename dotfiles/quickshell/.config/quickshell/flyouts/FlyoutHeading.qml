@@ -14,9 +14,13 @@
 // it is. Folded rows are moved into a hidden holder rather than hidden one
 // by one, so their own `visible` bindings survive, and moved back in their
 // old order. The empty spacer Item a page puts before the next heading
-// stays, so folded sections keep their gaps. Which sections are folded is
-// kept in Settings.collapsedSections, by page title and heading, for as
-// long as the shell runs.
+// stays, so folded sections keep their gaps.
+//
+// Folding lasts while the window is open. The Settings and System windows
+// keep a `foldedSections` list (by page title and heading) on an item
+// above their pages, so a page left and come back to is as it was; the
+// windows are torn down on close, and the list with them. A flyout is only
+// hidden when it closes, so its sections unfold as it goes.
 
 import QtQuick
 import "../services"
@@ -110,14 +114,29 @@ Item {
         }
     }
 
+    // the nearest foldedSections list above, or null
+    function memory() {
+        for (var p = parent; p; p = p.parent)
+            if (Array.isArray(p.foldedSections)) return p
+        return null
+    }
+
     function toggle() {
         if (collapsed) expand()
         else collapse()
-        Settings.setSectionCollapsed(key(), collapsed)
+        var m = memory()
+        if (!m) return
+        var k = key()
+        var list = m.foldedSections.filter(x => x !== k)
+        if (collapsed) list.push(k)
+        m.foldedSections = list
     }
 
+    onVisibleChanged: if (!visible && !mirrorOf && !memory()) expand()
+
     Component.onCompleted: {
-        if (Settings.collapsedSections.indexOf(key()) >= 0) {
+        var m = memory()
+        if (m && m.foldedSections.indexOf(key()) >= 0) {
             folding = true
             // after the rest of the page has been built
             Qt.callLater(collapse)
