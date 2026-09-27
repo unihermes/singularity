@@ -95,6 +95,7 @@ ShellRoot {
     LazyWindow { id: system; System {} }
     LazyWindow { id: settingsWindow; SettingsWindow {} }
     LazyWindow { id: notesWindow; NotesWindow {} }
+    LazyWindow { id: keybindsWindow; KeybindsWindow {} }
 
     // `qs ipc call settings open appearance`, for a keybind or a script;
     // an unknown or empty page opens the default one
@@ -122,7 +123,7 @@ ShellRoot {
 
     IpcHandler {
         target: "keybinds"
-        function open(): void { settingsWindow.open("keybinds") }
+        function open(): void { keybindsWindow.open() }
     }
 
     // `qs ipc call look cycle` / `qs ipc call look set soft` -- for a keybind
@@ -1152,6 +1153,7 @@ ShellRoot {
                 shellRoot: root
                 settingsWin: settingsWindow
                 systemWin: system
+                keybindsWin: keybindsWindow
             }
         }
 

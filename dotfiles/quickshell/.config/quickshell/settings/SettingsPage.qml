@@ -28,6 +28,8 @@ Item {
     property bool noticeIsError: false
     // off for a page that manages its own scrolling (Keybinds)
     property bool scrolls: true
+    // off where a window header already names the page (the Keybinds window)
+    property bool headed: true
     // the label of the field a search result picked, "" for none; fields
     // find it by walking up to here, so they need this marker to stop on
     property string highlight: ""
@@ -35,7 +37,7 @@ Item {
 
     default property alias content: col.data
     // height available to content below the header, for non-scrolling pages
-    readonly property real bodyHeight: height - header.height - Theme.spaceXl
+    readonly property real bodyHeight: height - header.height - (headed ? Theme.spaceXl : 0)
 
     function say(msg, isError) {
         notice = msg
@@ -126,7 +128,9 @@ Item {
 
     Column {
         id: header
+        visible: root.headed
         width: parent.width
+        height: visible ? implicitHeight : 0
         spacing: Theme.spaceS
 
         FlyoutHeading { text: root.title.toUpperCase() }
@@ -144,7 +148,7 @@ Item {
 
     Item {
         anchors.top: header.bottom
-        anchors.topMargin: Theme.spaceXl
+        anchors.topMargin: root.headed ? Theme.spaceXl : 0
         anchors.bottom: parent.bottom
         width: parent.width
 

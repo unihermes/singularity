@@ -26,6 +26,7 @@ FlyoutPanel {
     required property var shellRoot
     required property var settingsWin
     required property var systemWin
+    required property var keybindsWin
 
     // Drill-down rather than nested pop-out panels: "" is the root
     // list and anything else is a submenu drawn in the same box. A
@@ -98,7 +99,7 @@ FlyoutPanel {
         scope.openFlyout = ""
         if (act === "settings") settingsWin.open()
         else if (act === "system") systemWin.open()
-        else if (act === "keybinds") settingsWin.open("keybinds")
+        else if (act === "keybinds") keybindsWin.open()
         // The pause lets the flyout's surface unmap first. slurp and
         // hyprpicker both draw on the overlay layer too, and without
         // it the menu is still on screen for their first frame --
