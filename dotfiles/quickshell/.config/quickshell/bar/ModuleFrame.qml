@@ -85,7 +85,7 @@ Item {
             : solid ? Theme.surface : "transparent"
 
         border.width: style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
-        border.color: root.active ? Theme.strokeFocus : Theme.stroke
+        border.color: root.active ? Theme.strokeFocus : Theme.frameAccent ? Theme.accent : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 

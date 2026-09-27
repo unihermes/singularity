@@ -178,7 +178,7 @@ Singleton {
     // the Neutrino signature. "single" is the outer stroke alone. "bevel" is
     // Win95's chiselled 3D edge (see Bevel.qml) instead of either, and
     // "groove" the same pair turned inside out, an etched line. "accent" is
-    // the single stroke in the accent colour, on panels only. "corners"
+    // the single stroke in the accent colour. "corners"
     // marks just the four corners (FrameCorners.qml). "none" draws no
     // stroke at all -- the ground colour alone marks the edge.
     readonly property bool frameDouble: Settings.frameStyle === "double"
