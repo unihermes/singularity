@@ -46,9 +46,8 @@ dangling. Every step is idempotent; rerun `./install.sh` any time.
    strips the GTK headerbar buttons through gsettings, and quiets the kernel
    command line
 6. Applies the boot speed fixes: vfat in the initramfs, iwd no longer blocking
-   the greeter, the webcam controller deferred until after login, and
-   systemd's unused TPM setup masked; then sets up a virtual webcam for apps
-   that bypass PipeWire (Discord)
+   the greeter, the webcam switched off, and systemd's unused TPM setup
+   masked
 7. Enables iwd, systemd-networkd, systemd-resolved, pipewire, bluetooth,
    power-profiles-daemon, the Bluetooth pairing agent, Bluetooth power
    restore, the AC-power profile switch, and the ly greeter
@@ -149,8 +148,8 @@ has lost its `root=` is refused rather than written.
 
 ## Boot speed
 
-On the XPS 13 the IPU6 camera stack stalls kernel module loading for about 10s
-at boot, until the kernel gives up waiting on the `ov01a10` sensor. Anything
+With the webcam enabled, the XPS 13's IPU6 camera stack stalls kernel module
+loading for about 10s at boot, until the kernel gives up waiting on the `ov01a10` sensor. Anything
 that needs a module in that window waits with it. `install.sh` routes the two
 things the greeter was waiting on around the stall:
 
@@ -167,10 +166,12 @@ leaves the TPM's contents alone, so Windows and BitLocker are unaffected.
 `systemd-pcrproduct` is masked with them, since it measures into an NvPCR that
 only the setup allocates and would otherwise fail every boot.
 
-The stall itself comes from the webcam's controller (`mei_vsc`), so that is
-blacklisted from autoloading and `singularity-vsc.timer` loads it 30s after
-boot, followed by `intel_ipu6` and `ivsc_csi` — the camera only appears if
-they load in that order.
+The webcam is currently switched off: `/etc/modprobe.d/singularity-vsc.conf`
+blacklists its whole stack (`mei_vsc`, `ivsc_csi`, `ivsc_ace`, `intel_ipu6`,
+`ov01a10`), which removes the stall entirely. Besides the stall, resuming from
+hibernation re-enumerates its controller under the v4l2 subdevs WirePlumber
+holds open, and closing those later oopses the kernel in `subdev_close` and
+hangs shutdown. Delete that file and rerun `mkinitcpio -P` to bring it back.
 
 Wi-Fi, Bluetooth and audio still finish loading about 10s in, after the greeter
 is up. To see where time goes:
@@ -402,25 +403,6 @@ fc-match monospace
   kernel drop that cache up front instead, so those pages fault back in from
   the NVMe once you're already logged in. Raise the cap if hibernating starts
   taking longer than resuming saves.
-- **Camera across hibernation.** The MEI stack re-enumerates on resume, so
-  `ivsc_csi` probes again *after* `ipu_bridge` has run and comes back without
-  its fwnode — the v4l2 subdevs behind the fds userspace still holds are gone.
-  WirePlumber's libcamera monitor keeps `/dev/v4l-subdev*` open all session,
-  and closing one of those stale fds is a general protection fault in
-  `subdev_close`, which leaves the task unkillable and hangs the next
-  shutdown. `/usr/lib/systemd/system-sleep/singularity-camera` stops
-  WirePlumber (and any running `v4l2-relayd`) before the image is written and
-  starts WirePlumber again after, so there is nothing stale left to close.
-  Suspend is unaffected and isn't touched. The camera itself stays dead until
-  you reboot: reloading `intel_ipu6` on a running machine oopses the kernel,
-  so the hook doesn't try.
-- **Webcam colour.** The sensor is raw Bayer with no colour controls, so the
-  virtual webcam (`v4l2-relayd`, what Discord sees) corrects it with a
-  `videobalance` stage in its GStreamer pipeline. Tune brightness, contrast,
-  saturation and hue in `install.sh`'s `webcam_conf` and rerun it; it
-  rewrites `/etc/v4l2-relayd.d/webcam.conf` and restarts the relay only when
-  the result differs. Browsers read the camera through PipeWire and are not
-  affected.
 - **System > Health** runs the checks in
   `~/.config/quickshell/scripts/health-scan.sh` and puts the fix next to the
   finding: a restart for an enabled unit that isn't running, a disable for one

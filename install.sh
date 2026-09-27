@@ -303,7 +303,7 @@ set_cmdline_token() {
 # (Async probing only hides a slow probe while no other module is loading:
 # every module's init ends in async_synchronize_full(), which waits on all
 # outstanding async probes system-wide. It doesn't help the webcam controller
-# below, which is why that one is deferred instead.)
+# below, which is why that one is blacklisted instead.)
 for kv in "deferred_probe_timeout=1" "driver_async_probe=intel_ish_ipc"; do
   key=${kv%%=*}; value=${kv#*=}
   if [[ -f /etc/kernel/cmdline ]]; then
@@ -318,11 +318,12 @@ for kv in "deferred_probe_timeout=1" "driver_async_probe=intel_ish_ipc"; do
 done
 
 # --- boot speed ----------------------------------------------------------
-# /boot (the ESP) is vfat, and vfat is a module. On this laptop the IPU6 camera
-# stack stalls kernel module loading for ~10s at boot, until the kernel gives
-# up waiting on the ov01a10 sensor. Mounting /boot has to load vfat, so it sits
-# in that stall, and sysinit.target, ly and everything after it wait on the
-# mount. Loading vfat from the initramfs means the mount needs no module load.
+# /boot (the ESP) is vfat, and vfat is a module. With the webcam enabled, the
+# IPU6 camera stack stalls kernel module loading for ~10s at boot, until the
+# kernel gives up waiting on the ov01a10 sensor. Mounting /boot has to load
+# vfat, so it sits in that stall, and sysinit.target, ly and everything after
+# it wait on the mount. Loading vfat from the initramfs means the mount needs
+# no module load.
 #
 # mac_hid, mousedev and joydev are autoloaded for every pointer device and hit
 # the same module-loading queue, so preloading them from the initramfs saves
@@ -360,52 +361,44 @@ if ! grep -qs 'enable_psr=0' "$psrconf"; then
   sudo mkinitcpio -P
 fi
 
-# --- webcam controller ---------------------------------------------------
-# The webcam's Visual Sensing Controller (mei_vsc, platform:intel_vsc) spends
-# ~11s in a firmware handshake at boot (5s -> 16s). While it runs, every other
-# module load waits on it, udev's workers pile up behind those loads, and udev
-# finishes nothing else -- including the touchpad, whose evdev nodes exist at
-# 5s but whose udev entries weren't written until 16s. libinput skips a
-# device udev hasn't finished ("skip unconfigured input device"), so Hyprland
-# came up with the keyboard (configured at 3.7s) but no touchpad, and the
-# cursor was dead until the handshake ended. Async probing it doesn't help,
-# see above. Instead the alias autoload is blacklisted and a timer loads it
-# 30s into boot, after login: the stall still happens, but only delays module
-# loads for anything hotplugged in that window.
+# --- webcam (off) --------------------------------------------------------
+# The IPU6 webcam is switched off until it gets another look. Its stack costs
+# ~10s of stalled module loading at boot, and after a hibernation resume the
+# Visual Sensing Controller re-enumerates under the v4l2 subdevs WirePlumber
+# holds open, so closing them later oopses the kernel in subdev_close and
+# hangs shutdown. Blacklisting the whole chain means none of it loads.
 #
-# The camera itself also needs that order. ipu_bridge (in intel_ipu6) wires the
-# sensor through the VSC's CSI device only if that device already exists when
-# ipu6 probes; otherwise ivsc_csi logs "mei-csi probed without device fwnode!"
-# and the sensor never shows up in the media graph. So intel_ipu6 and ivsc_csi
-# are held back too and loaded after mei_vsc, in order. (Unloading ipu6 to
-# re-probe it later oopses the kernel, so it has to be right the first time.)
+# This also clears out what earlier runs installed to make the camera work:
+# the deferred-load timer, the hibernation unit and hook, and the
+# v4l2-relayd virtual webcam.
 vscconf=/etc/modprobe.d/singularity-vsc.conf
-if ! grep -qs 'blacklist intel_ipu6' "$vscconf"; then
-  log "deferring the webcam controller until after login"
-  printf 'blacklist %s\n' mei_vsc intel_ipu6 ivsc_csi | sudo tee "$vscconf" >/dev/null
-  sudo tee /etc/systemd/system/singularity-vsc.service >/dev/null <<'UNIT'
-[Unit]
-Description=Load the webcam's Visual Sensing Controller after login
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/modprobe mei_vsc
-ExecStart=/usr/bin/modprobe intel_ipu6
-ExecStart=/usr/bin/modprobe ivsc_csi
-UNIT
-  sudo tee /etc/systemd/system/singularity-vsc.timer >/dev/null <<'UNIT'
-[Unit]
-Description=Load the webcam's Visual Sensing Controller 30s into boot
-
-[Timer]
-OnBootSec=30s
-
-[Install]
-WantedBy=timers.target
-UNIT
-  sudo systemctl daemon-reload
-  sudo systemctl enable singularity-vsc.timer
+vscmods=(mei_vsc ivsc_csi ivsc_ace intel_ipu6 ov01a10)
+if [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
+  log "switching the webcam off"
+  printf 'blacklist %s\n' "${vscmods[@]}" | sudo tee "$vscconf" >/dev/null
   sudo mkinitcpio -P
+fi
+webcam_leftovers=(
+  /etc/systemd/system/singularity-vsc.service
+  /etc/systemd/system/singularity-vsc.timer
+  /etc/systemd/system/singularity-camera-sleep.service
+  /usr/local/libexec/singularity-camera-sleep
+  /usr/lib/systemd/system-sleep/singularity-camera
+  /etc/modules-load.d/v4l2loopback.conf
+  /etc/modprobe.d/v4l2loopback.conf
+  /etc/v4l2-relayd.d/webcam.conf
+  /etc/systemd/system/v4l2-relayd@.service.d/libcamera.conf
+)
+found=()
+for f in "${webcam_leftovers[@]}"; do [[ -e $f ]] && found+=("$f"); done
+if (( ${#found[@]} )); then
+  log "removing the old webcam setup"
+  for unit in singularity-vsc.timer singularity-camera-sleep.service v4l2-relayd@webcam.service; do
+    sudo systemctl disable --now "$unit" 2>/dev/null || true
+  done
+  sudo rm -f "${found[@]}"
+  sudo rmdir /etc/v4l2-relayd.d /etc/systemd/system/v4l2-relayd@.service.d 2>/dev/null || true
+  sudo systemctl daemon-reload
 fi
 
 # --- hibernation ---------------------------------------------------------
@@ -519,133 +512,6 @@ if ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
     | sudo tee "$touchpadrule" >/dev/null
   sudo udevadm control --reload
   sudo udevadm trigger --subsystem-match=i2c --action=change
-fi
-
-# --- camera across hibernation -------------------------------------------
-# Resuming from hibernation kills a shutdown. What happens, in order:
-#
-#   PM: hibernation: hibernation exit
-#   ivsc_csi intel_vsc-...: mei-csi probed without device fwnode!
-#   Oops: general protection fault ... RIP: subdev_close+0x2a [videodev]
-#   Comm: CameraManager
-#
-# The MEI stack re-enumerates on resume, so ivsc_csi probes again -- and by
-# then ipu_bridge has long since run, so the CSI device comes back without its
-# fwnode and the v4l2 subdevs behind the fds userspace already holds are gone.
-# WirePlumber's libcamera monitor keeps half a dozen /dev/v4l-subdev* fds open
-# for the whole session; the oops is its CameraManager thread closing one of
-# them, which is why it lands at shutdown, when everything gets terminated.
-# (The faulting pointer reads "REASON=0" in ASCII -- freed memory reused for a
-# systemd environment string.) The oops leaves the task unkillable and systemd
-# waits on it forever, so the machine never powers off.
-#
-# So the fds are dropped before the image is written and WirePlumber is
-# started again afterwards: nothing stale is left to close. Only hibernation
-# needs this -- plain s2idle keeps the MEI clients alive and resumes fine.
-#
-# This can't be a system-sleep hook: systemd-sleep freezes user.slice before
-# it runs the hooks, so the user manager can't be reached to stop anything.
-# Instead it's a unit the hibernate targets pull in, ordered before the sleep
-# services: it starts (and stops WirePlumber) before systemd-sleep runs, and
-# since those targets are StopWhenUnneeded, it stops again after the resume,
-# once user.slice is thawed.
-#
-# The camera itself does NOT come back after a resume: ivsc_csi is stuck
-# fwnode-less until the modules are reloaded, and reloading intel_ipu6 while
-# the machine is up oopses the kernel a different way (see the webcam
-# controller step), so this doesn't try. Reboot to get the webcam back.
-camscript=/usr/local/libexec/singularity-camera-sleep
-camscript_body='#!/bin/sh
-# $1 pre|post. Nothing here is allowed to fail: a unit that fails before a
-# sleep service blocks the sleep itself.
-#
-# v4l2-relayd only runs while something is watching the loopback device, but
-# when it is running it holds camera fds of its own. It is started on demand
-# by its device unit, so it only has to be stopped.
-if [ "$1" = pre ]; then
-  for unit in $(systemctl list-units --state=active --plain --no-legend \
-                  "v4l2-relayd*" | awk "{ print \$1 }"); do
-    systemctl stop "$unit" || true
-  done
-fi
-
-# This runs as root outside any session, so each logged-in user'"'"'s own
-# manager is addressed through the --user -M user@ form.
-for uid in $(loginctl list-sessions --no-legend | awk "{ print \$2 }" | sort -u); do
-  user=$(id -nu "$uid" 2>/dev/null) || continue
-  case "$1" in
-    pre)  systemctl --user -M "$user@" stop wireplumber.service || true ;;
-    post) systemctl --user -M "$user@" start wireplumber.service || true ;;
-  esac
-done
-exit 0'
-camunit=/etc/systemd/system/singularity-camera-sleep.service
-camunit_body="[Unit]
-Description=Release the webcam around hibernation
-Before=systemd-hibernate.service systemd-suspend-then-hibernate.service systemd-hybrid-sleep.service
-StopWhenUnneeded=yes
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=$camscript pre
-ExecStop=$camscript post
-
-[Install]
-WantedBy=hibernate.target suspend-then-hibernate.target hybrid-sleep.target"
-if [[ "$(cat "$camscript" 2>/dev/null)" != "$camscript_body" ||
-      "$(cat "$camunit" 2>/dev/null)" != "$camunit_body" ]]; then
-  log "installing the hibernation camera unit"
-  sudo mkdir -p "${camscript%/*}"
-  printf '%s\n' "$camscript_body" | sudo tee "$camscript" >/dev/null
-  sudo chmod +x "$camscript"
-  printf '%s\n' "$camunit_body" | sudo tee "$camunit" >/dev/null
-  sudo systemctl daemon-reload
-  sudo systemctl reenable singularity-camera-sleep.service
-fi
-# The old system-sleep hook ran too late to reach the user manager.
-[[ -f /usr/lib/systemd/system-sleep/singularity-camera ]] &&
-  sudo rm /usr/lib/systemd/system-sleep/singularity-camera
-
-# --- virtual webcam ------------------------------------------------------
-# The IPU6 camera only works through libcamera. PipeWire apps (browsers)
-# reach it that way, but Discord's voice engine opens /dev/video* directly and
-# finds only the IPU6's raw capture nodes, which never deliver a frame (it
-# reports the camera as "in use"). v4l2-relayd bridges the gap: it owns a
-# v4l2loopback device called "Laptop Webcam" and starts libcamerasrc only
-# while some app has that device open, so the camera light is off otherwise.
-# The sensor's native 1284x812 is cropped to 1280x720, which every app takes.
-#
-# The sensor is raw Bayer with no colour controls of its own, so colour is
-# corrected by videobalance in the pipeline. Tune the values here, not in
-# /etc: a rerun rewrites webcam.conf and restarts the relay when it differs.
-webcam_conf='VIDEOSRC="libcamerasrc ! videoconvert ! videobalance brightness=0.0 contrast=1.0 saturation=1.0 hue=0.0 ! videocrop left=2 right=2 top=46 bottom=46 ! videoscale ! videorate"
-FORMAT=YUY2
-WIDTH=1280
-HEIGHT=720
-FRAMERATE=30/1
-CARD_LABEL="Laptop Webcam"'
-if [[ ! -f /etc/modprobe.d/v4l2loopback.conf ]]; then
-  log "setting up the virtual webcam"
-  echo 'v4l2loopback' | sudo tee /etc/modules-load.d/v4l2loopback.conf >/dev/null
-  echo 'options v4l2loopback exclusive_caps=1 card_label="Laptop Webcam"' \
-    | sudo tee /etc/modprobe.d/v4l2loopback.conf >/dev/null
-  sudo mkdir -p /etc/v4l2-relayd.d /etc/systemd/system/v4l2-relayd@.service.d
-  # The unit's device sandbox predates libcamera's software ISP, which
-  # allocates its frame buffers from these two.
-  sudo tee /etc/systemd/system/v4l2-relayd@.service.d/libcamera.conf >/dev/null <<'UNIT'
-[Service]
-DeviceAllow=/dev/dma_heap/system rw
-DeviceAllow=/dev/udmabuf rw
-UNIT
-  sudo systemctl daemon-reload
-  sudo modprobe v4l2loopback
-fi
-if [[ "$(cat /etc/v4l2-relayd.d/webcam.conf 2>/dev/null)" != "$webcam_conf" ]]; then
-  log "writing the virtual webcam pipeline"
-  printf '%s\n' "$webcam_conf" | sudo tee /etc/v4l2-relayd.d/webcam.conf >/dev/null
-  sudo systemctl enable v4l2-relayd@webcam.service
-  sudo systemctl restart v4l2-relayd@webcam.service
 fi
 
 log "enabling services"

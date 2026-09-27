@@ -61,18 +61,10 @@ iwd
 # Only that one row needs it, and the row hides itself when it isn't there.
 iw
 
-# audio + camera (libcamera drives the IPU6 webcam through pipewire)
+# audio
 pipewire
 pipewire-pulse
 wireplumber
-pipewire-libcamera
-libcamera-ipa
-libcamera-tools
-# virtual webcam for apps that skip pipewire (Discord); see install.sh
-gst-plugin-libcamera
-gst-plugins-good
-linux-headers
-v4l2loopback-dkms
 pavucontrol
 
 # file manager + its extras
