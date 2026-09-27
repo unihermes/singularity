@@ -95,16 +95,13 @@ Singleton {
     // The icon for an open window's class, for everything that lists
     // windows: the bar's window strip, ALT+Tab, the workspace overlay.
     //
-    // heuristicLookup() alone isn't enough. It goes through the desktop
-    // entries, and an entry marked NoDisplay=true isn't among them -- which
-    // is exactly the case for org.quickshell.desktop, so the shell's own
-    // windows (Settings, System, Keybinds) came out iconless. The class is
-    // tried as an icon name of its own after that, which is where
-    // org.quickshell.svg in hicolor gets found, and then the bare last
-    // segment of it, lowercased, for apps whose class is reverse-DNS but
-    // whose icon isn't.
+    // heuristicLookup() goes through the desktop entries, which leave out
+    // NoDisplay=true ones, so the class is also tried as an icon name of its
+    // own, then its bare last segment lowercased, for apps whose class is
+    // reverse-DNS but whose icon isn't. The shell's own windows get no icon
+    // here: they all share org.quickshell's, and draw their glyph instead.
     function iconForClass(cls) {
-        if (!cls) return ""
+        if (!cls || String(cls) === "org.quickshell") return ""
         var entry = DesktopEntries.heuristicLookup(cls)
         var path = entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : ""
         if (path === "") path = Quickshell.iconPath(cls, true)
@@ -114,13 +111,11 @@ Singleton {
 
     // When no icon file can be found, something still has to be drawn: an
     // IconImage with an empty source is a hole in the row. The shell's own
-    // windows are that case -- org.quickshell.desktop is NoDisplay, so it
-    // isn't among the desktop entries, and its themed icon doesn't resolve
-    // either -- and they get a glyph for what the window actually is, so
-    // Settings, System and Keybinds are told apart at a glance. Anything
-    // else falls back to a plain window outline.
+    // windows always take this path, with a glyph for what the window
+    // actually is, so Settings, System, Keybinds and Notes are told apart at a
+    // glance. Anything else falls back to a plain window outline.
     readonly property var shellGlyphs: ({
-        keybinds: "󰌌", settings: "󰒓", system: "󰨇",
+        keybinds: "󰌌", notes: "󰎚", settings: "󰒓", system: "󰨇",
     })
 
     function glyphForWindow(cls, title) {
