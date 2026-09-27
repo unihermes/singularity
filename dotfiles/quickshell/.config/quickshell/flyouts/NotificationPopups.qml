@@ -4,7 +4,7 @@
 // Notifications as they arrive, stacked from the corner or edge Settings >
 // Notifications picks, newest nearest the edge, on the focused screen only.
 // Each leaves after its timeout (Notifications.timeoutFor), held while the
-// pointer is on it; it stays in the history until dismissed.
+// pointer is on it; it stays in the history until cleared there.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -43,7 +43,7 @@ OverlayWindow {
             NotificationCard {
                 id: card
                 required property var modelData
-                notification: modelData
+                entry: modelData
                 width: stack.width
 
                 readonly property real timeout: Notifications.timeoutFor(modelData)

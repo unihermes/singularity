@@ -137,15 +137,15 @@ BarModule {
 
     // --- notifications ----------------------------------------------------------
 
-    property int lastCount: 0
+    property int lastUnread: 0
 
     Connections {
         target: Notifications
-        function onCountChanged() {
-            var n = Notifications.count
-            if (n > root.lastCount && !Notifications.dnd)
-                root.show("notify", "󰂚", n === 1 ? "1 notification" : n + " notifications", -1, 3000)
-            root.lastCount = n
+        function onUnreadChanged() {
+            var n = Notifications.unread
+            if (n > root.lastUnread && !Notifications.dnd)
+                root.show("notify", "󰂚", n === 1 ? "1 new notification" : n + " new notifications", -1, 3000)
+            root.lastUnread = n
         }
     }
 }

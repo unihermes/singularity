@@ -5,33 +5,52 @@
 // popups (flyouts/NotificationPopups.qml), the history flyout
 // (flyouts/NotificationsFlyout.qml), the bar module and Settings.
 //
-// Every notification is kept until dismissed, except transient ones, which
-// go when their popup does. Do Not Disturb holds the popups back; the
-// notifications still land in the history.
+// The history is the shell's own record of what arrived, kept in
+// ~/.local/state/singularity/notifications.json. An entry stays until it's
+// cleared from the history by hand -- not when its popup goes, the sender
+// withdraws it, or the shell restarts. Transient notifications are the
+// exception: by the spec they aren't kept, so they go with their popup.
+// While the sender still holds a notification its entry carries it as
+// `live`, which is what its actions and attached image need.
+//
+// Anything that arrived since the history was last opened is unread, which
+// is the number the bar module shows. Do Not Disturb holds the popups back;
+// notifications still land in the history, unread.
 
 pragma Singleton
 
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import QtQuick
 
 Singleton {
     id: root
 
-    // newest first
-    readonly property var list: server.trackedNotifications.values.slice().reverse()
-    readonly property int count: list.length
+    // Newest first:
+    // [{ key, id, appName, summary, body, icon, picture, urgency,
+    //    expireTimeout, transient, time, live }]
+    // Entries are replaced, never changed in place, so bindings see the change.
+    property var history: []
+    readonly property int count: history.length
     readonly property bool dnd: Settings.notifDnd
 
-    // Notifications showing as popups, newest first
+    // Date.now() when the history was last looked at; newer entries are unread
+    property double lastSeen: 0
+    readonly property int unread: history.filter(e => e.time > lastSeen).length
+    // lastSeen as it was when the open history was opened, so what was new
+    // then stays marked while it's on screen
+    property double seenBefore: 0
+    property bool viewing: false
+
+    // Entries showing as popups, newest first
     property var popups: []
 
-    // Date.now() when each notification arrived, by id; the spec carries no
-    // timestamp of its own
-    property var arrived: ({})
     // Advanced once a minute while there's anything to date, so relative
     // times ("5m") move on
     property double now: Date.now()
+
+    readonly property int maxEntries: 200
 
     // A bar module's click, IPC or Settings: shell.qml opens the flyout on
     // the focused screen
@@ -39,36 +58,81 @@ Singleton {
 
     function togglePanel() { panelToggled() }
     function toggleDnd() { Settings.setNotifDnd(!dnd) }
-    // a notification whose action was just invoked may be gone already
-    function dismiss(n) { hidePopup(n); if (n.tracked) n.dismiss() }
-    function clearAll() {
-        popups = []
-        list.forEach(n => n.dismiss())
+
+    // The history flyout opening or closing
+    function setViewing(on) {
+        if (on === viewing) return
+        viewing = on
+        if (!on) return
+        seenBefore = lastSeen
+        markSeen()
     }
 
-    function hidePopup(n) {
-        if (popups.indexOf(n) < 0) return
-        popups = popups.filter(p => p !== n)
-        if (n.transient) n.expire()
+    function markSeen() {
+        lastSeen = Date.now()
+        saveTimer.restart()
+    }
+
+    function isNew(entry) { return entry.time > (viewing ? seenBefore : lastSeen) }
+
+    // Out of the history for good, withdrawing it from the sender too
+    function remove(entry) {
+        hidePopup(entry)
+        history = history.filter(e => e.key !== entry.key)
+        closeLive(entry)
+        saveTimer.restart()
+    }
+
+    function clearAll() {
+        const all = history
+        popups = []
+        history = []
+        all.forEach(closeLive)
+        saveTimer.restart()
+    }
+
+    // A notification whose action was just invoked may be gone already
+    function closeLive(entry) {
+        if (entry.live && entry.live.tracked) entry.live.dismiss()
+    }
+
+    // The popup only; the entry stays in the history
+    function hidePopup(entry) {
+        if (!popups.some(p => p.key === entry.key)) return
+        popups = popups.filter(p => p.key !== entry.key)
+        if (entry.transient) {
+            history = history.filter(e => e.key !== entry.key)
+            if (entry.live && entry.live.tracked) entry.live.expire()
+        }
+    }
+
+    // Runs one of the sender's actions; the popup goes, the entry stays
+    function invoke(entry, action) {
+        hidePopup(entry)
+        action.invoke()
     }
 
     // Seconds a popup stays: what the sender asked for, else Settings'
     // time for its urgency; 0 is until dismissed
-    function timeoutFor(n) {
-        if (n.expireTimeout > 0) return n.expireTimeout
-        return n.urgency === NotificationUrgency.Critical ? Settings.notifTimeoutCritical
-            : n.urgency === NotificationUrgency.Low ? Settings.notifTimeoutLow
+    function timeoutFor(entry) {
+        if (entry.expireTimeout > 0) return entry.expireTimeout
+        return entry.urgency === NotificationUrgency.Critical ? Settings.notifTimeoutCritical
+            : entry.urgency === NotificationUrgency.Low ? Settings.notifTimeoutLow
             : Settings.notifTimeout
     }
 
-    function ago(n) {
-        var t = arrived[n.id]
-        if (!t) return ""
-        var m = Math.floor((now - t) / 60000)
+    function ago(entry) {
+        var m = Math.floor((now - entry.time) / 60000)
         if (m < 1) return "now"
         if (m < 60) return m + "m"
         if (m < 1440) return Math.floor(m / 60) + "h"
-        return Qt.formatDate(new Date(t), "MMM d")
+        return Qt.formatDate(new Date(entry.time), "MMM d")
+    }
+
+    // The attached picture: the live notification's while there is one (image
+    // data is only served while it lasts), else a file it named
+    function pictureOf(entry) {
+        return entry.live && entry.live.tracked ? pictureFor(entry.live) : entry.picture
     }
 
     // The app's icon as a source for an Image: a path or URL as given, a
@@ -94,6 +158,54 @@ Singleton {
         return i
     }
 
+    function entryFor(n, time) {
+        return {
+            key: time + "-" + n.id,
+            id: n.id,
+            appName: n.appName,
+            summary: n.summary,
+            body: n.body,
+            icon: iconFor(n),
+            picture: pictureFor(n),
+            urgency: n.urgency,
+            expireTimeout: n.expireTimeout,
+            transient: n.transient,
+            time: time,
+            live: n
+        }
+    }
+
+    // The entry with `live` swapped, in the history and the popups
+    function replaceLive(entry, live) {
+        const next = Object.assign({}, entry, { live: live })
+        history = history.map(e => e.key === entry.key ? next : e)
+        popups = popups.map(p => p.key === entry.key ? next : p)
+    }
+
+    function attach(n) {
+        n.closed.connect(() => {
+            const e = root.history.find(x => x.live === n)
+            // the sender withdrew it: gone from the screen, kept in the history
+            if (e) {
+                root.popups = root.popups.filter(p => p.key !== e.key)
+                if (e.transient) root.history = root.history.filter(x => x.key !== e.key)
+                else root.replaceLive(e, null)
+            }
+        })
+    }
+
+    // Notifications the server still holds with no entry (a reload before
+    // they were saved), added as they are; their arrival time is lost
+    function adoptLive() {
+        const time = Date.now()
+        const added = server.trackedNotifications.values
+            .filter(n => !history.some(e => e.live === n))
+            .map(n => { attach(n); return entryFor(n, time) })
+        if (added.length === 0) return
+        history = added.concat(history).slice(0, maxEntries)
+        saveTimer.restart()
+    }
+
     NotificationServer {
         id: server
         keepOnReload: true
@@ -106,21 +218,89 @@ Singleton {
 
         onNotification: n => {
             n.tracked = true
-            var a = Object.assign({}, root.arrived)
-            a[n.id] = Date.now()
-            root.arrived = a
-            root.now = Date.now()
-            // a replacement (same id) takes over its popup rather than
-            // stacking a second one
-            var rest = root.popups.filter(p => p.id !== n.id)
-            root.popups = root.dnd ? rest : [n].concat(rest)
-            n.closed.connect(() => {
-                root.popups = root.popups.filter(p => p !== n)
-                var left = Object.assign({}, root.arrived)
-                delete left[n.id]
-                root.arrived = left
-            })
+            // Held over a reload (keepOnReload) and announced again: link it
+            // back to its entry rather than showing it as new
+            if (n.lastGeneration) {
+                const had = root.history.find(e => e.live === n)
+                    || root.history.find(e => !e.live && e.id === n.id && e.summary === n.summary)
+                if (had) {
+                    if (had.live !== n) {
+                        root.replaceLive(had, n)
+                        root.attach(n)
+                    }
+                    return
+                }
+            }
+            const time = Date.now()
+            const entry = root.entryFor(n, time)
+            // a replacement (same id, still held by its sender) takes over
+            // the old entry and its popup rather than stacking a second one
+            const old = root.history.find(e => e.id === n.id && e.live)
+            const rest = root.history.filter(e => e !== old)
+            root.history = [entry].concat(rest).slice(0, root.maxEntries)
+            const others = root.popups.filter(p => !old || p.key !== old.key)
+            root.popups = root.dnd || n.lastGeneration ? others : [entry].concat(others)
+            root.now = time
+            if (root.viewing) root.lastSeen = time
+            root.attach(n)
+            saveTimer.restart()
         }
+    }
+
+    // --- persistence --------------------------------------------------------
+
+    function save() {
+        const entries = history.filter(e => !e.transient).map(e => ({
+            id: e.id, appName: e.appName, summary: e.summary, body: e.body,
+            icon: e.icon,
+            // image data doesn't outlive the notification; a file does
+            picture: e.picture.startsWith("file://") ? e.picture : "",
+            urgency: e.urgency, time: e.time
+        }))
+        view.setText(JSON.stringify({ lastSeen: lastSeen, entries: entries }, null, 1) + "\n")
+    }
+
+    Timer {
+        id: saveTimer
+        interval: 500
+        onTriggered: root.save()
+    }
+
+    FileView {
+        id: view
+        path: Quickshell.env("HOME") + "/.local/state/singularity/notifications.json"
+        preload: true
+        blockLoading: true
+        atomicWrites: true
+        // no file until the first notification
+        printErrors: false
+
+        onLoaded: {
+            let d
+            try { d = JSON.parse(text()) } catch (e) { return }
+            const live = server.trackedNotifications.values
+            const entries = (d.entries || []).filter(x => x && typeof x.time === "number").map(x => {
+                const e = {
+                    key: x.time + "-" + x.id, id: x.id | 0,
+                    appName: String(x.appName || ""), summary: String(x.summary || ""),
+                    body: String(x.body || ""), icon: String(x.icon || ""),
+                    picture: String(x.picture || ""), urgency: x.urgency | 0,
+                    expireTimeout: 0, transient: false, time: x.time, live: null
+                }
+                // After a reload the server still holds what hasn't closed
+                // (keepOnReload), so its entry gets its actions back
+                const n = live.find(l => l.id === e.id && l.summary === e.summary)
+                if (n) {
+                    e.live = n
+                    root.attach(n)
+                }
+                return e
+            })
+            root.history = entries.slice(0, root.maxEntries)
+            root.lastSeen = typeof d.lastSeen === "number" ? d.lastSeen : 0
+            root.adoptLive()
+        }
+        onLoadFailed: root.adoptLive()
     }
 
     Timer {

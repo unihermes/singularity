@@ -548,12 +548,12 @@ Item {
 
     BarModule {
         id: notifBtn
-        // always shown, so the history is one click away even when
-        // it's empty; dimmed when there's nothing in it
+        // always shown, so the history is one click away; the count is
+        // only what's arrived since it was last opened
         visible: Settings.widgetVisible("notifications")
-        icon: Notifications.dnd ? "󰂛" : "󰂚"
-        label: Notifications.count > 0 ? String(Notifications.count) : ""
-        dimmed: Notifications.dnd || Notifications.count === 0
+        icon: Notifications.dnd ? "󰂛" : Notifications.unread > 0 ? "󰂞" : "󰂚"
+        label: Notifications.unread > 0 ? String(Notifications.unread) : ""
+        dimmed: Notifications.dnd || Notifications.unread === 0
         active: screenScope.openFlyout === "notifications"
         // left: the history; right: Do Not Disturb
         onActivated: screenScope.toggleFlyout("notifications", notifBtn)

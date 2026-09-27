@@ -226,11 +226,19 @@ urgency unless the app asks for a time of its own. Pointing at one holds it.
 Clicking a card runs the app's default action; its other actions are chips
 underneath.
 
-Everything not dismissed stays in the history, which the bar's bell opens
-(right-click toggles Do Not Disturb). Do Not Disturb holds popups back, and
-notifications still land in the history. `qs ipc call notifications
-toggle|dnd|clear` does the same from a keybind. Notifications survive a shell
-reload, not a restart.
+Every notification goes into the history, which the bar's bell opens
+(right-click toggles Do Not Disturb). A popup closing, or the app withdrawing
+its notification, leaves the history alone. An entry goes only when you clear
+it with its × in the history or with Clear all. Transient notifications are
+the exception: they leave with their popup. The history is kept in
+`~/.local/state/singularity/notifications.json`, so it survives a restart.
+The bell's count is what arrived since you last opened it, and those entries
+are marked "new" while it's open. An app's action chips work for as long as
+the app still holds the notification.
+
+Do Not Disturb holds popups back, and notifications still land in the
+history. `qs ipc call notifications toggle|dnd|clear` does the same from a
+keybind.
 
 ## Theme
 

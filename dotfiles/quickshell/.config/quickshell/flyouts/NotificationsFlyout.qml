@@ -1,8 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NotificationsFlyout.qml
 //
-// Every notification not yet dismissed, newest first, with Do Not Disturb
-// and Clear all.
+// The notification history, newest first, with Do Not Disturb and Clear
+// all. Opening it marks everything read; what was new stays marked while
+// it's open.
 
 import QtQuick
 import "../services"
@@ -13,6 +14,8 @@ FlyoutPanel {
     menuWidth: 380
     // the bell sits near the bar's right end, so run into the corner
     edgeMargin: 0
+
+    onOpenChanged: Notifications.setViewing(open)
 
     FlyoutHeading {
         text: "NOTIFICATIONS" + (Notifications.count > 0 ? "  " + Notifications.count : "")
@@ -43,7 +46,7 @@ FlyoutPanel {
             interactive: contentHeight > height
             boundsBehavior: Flickable.StopAtBounds
             spacing: Theme.spaceM
-            model: Notifications.list
+            model: Notifications.history
 
             delegate: Column {
                 id: entry
@@ -55,8 +58,9 @@ FlyoutPanel {
                 FlyoutDivider { visible: entry.index > 0 }
 
                 NotificationCard {
-                    notification: entry.modelData
+                    entry: entry.modelData
                     framed: false
+                    inHistory: true
                     width: parent.width
                 }
             }

@@ -45,7 +45,7 @@ SettingsPage {
     FlyoutAction {
         icon: "󰎟"
         label: "Clear all"
-        status: Notifications.count === 0 ? "Nothing waiting" : Notifications.count + " waiting"
+        status: Notifications.count === 0 ? "The history is empty" : Notifications.count + " in the history"
         checkable: false
         enabled: Notifications.count > 0
         onActivated: Notifications.clearAll()

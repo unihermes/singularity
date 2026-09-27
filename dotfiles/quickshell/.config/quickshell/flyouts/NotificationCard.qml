@@ -1,11 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NotificationCard.qml
 //
-// One notification: app icon and name, how long ago, summary, body, an
-// attached image, and the sender's actions as chips. Clicking the card runs
-// the "default" action, if the sender gave one, and dismisses it; the close
-// glyph only dismisses. Shared by the popups and the history flyout, which
-// sets `framed: false` since it draws its own box.
+// One history entry (services/Notifications.qml): app icon and name, how long
+// ago, summary, body, an attached image, and the sender's actions as chips
+// while it still holds the notification. Clicking the card runs the
+// "default" action, if there is one. Shared by the popups, where the close
+// glyph and any action only take the popup down, and the history flyout
+// (`inHistory`), where the close glyph clears the entry for good and new
+// entries are marked.
 
 import Quickshell
 import Quickshell.Services.Notifications
@@ -15,16 +17,23 @@ import "../services"
 Item {
     id: root
 
-    required property var notification
+    required property var entry
     property bool framed: true
+    property bool inHistory: false
 
     // the popup's timer holds off while the pointer is on the card
     readonly property bool hovered: hover.hovered
 
-    readonly property bool critical: notification.urgency === NotificationUrgency.Critical
-    readonly property var defaultAction: notification.actions.find(a => a.identifier === "default") || null
-    readonly property var buttons: notification.actions.filter(a => a.identifier !== "default" && a.text !== "")
-    readonly property string icon: Notifications.iconFor(notification)
+    readonly property bool critical: entry.urgency === NotificationUrgency.Critical
+    readonly property var actions: entry.live && entry.live.tracked ? entry.live.actions : []
+    readonly property var defaultAction: actions.find(a => a.identifier === "default") || null
+    readonly property var buttons: actions.filter(a => a.identifier !== "default" && a.text !== "")
+    readonly property bool unread: inHistory && Notifications.isNew(entry)
+
+    function close() {
+        if (inHistory) Notifications.remove(entry)
+        else Notifications.hidePopup(entry)
+    }
 
     implicitHeight: col.implicitHeight + (framed ? Theme.panelPad * 2 : 0)
 
@@ -40,8 +49,8 @@ Item {
         anchors.fill: parent
         cursorShape: root.defaultAction ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: {
-            if (root.defaultAction) root.defaultAction.invoke()
-            Notifications.dismiss(root.notification)
+            if (root.defaultAction) Notifications.invoke(root.entry, root.defaultAction)
+            else if (!root.inHistory) Notifications.hidePopup(root.entry)
         }
     }
 
@@ -63,7 +72,7 @@ Item {
                 width: visible ? Theme.iconCell : 0
                 height: Theme.iconCell
                 anchors.verticalCenter: parent.verticalCenter
-                source: root.icon
+                source: root.entry.icon
                 sourceSize: Qt.size(Theme.iconCell * 2, Theme.iconCell * 2)
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
@@ -75,7 +84,7 @@ Item {
                 anchors.right: when.left
                 anchors.rightMargin: Theme.spaceM
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.notification.appName || "Notification"
+                text: root.entry.appName || "Notification"
                 elide: Text.ElideRight
                 color: root.critical ? Theme.alert : Theme.subtext
                 font.family: Theme.fontText
@@ -87,8 +96,8 @@ Item {
                 anchors.right: close.left
                 anchors.rightMargin: Theme.spaceM
                 anchors.verticalCenter: parent.verticalCenter
-                text: Notifications.ago(root.notification)
-                color: Theme.muted
+                text: (root.unread ? "new · " : "") + Notifications.ago(root.entry)
+                color: root.unread ? Theme.accent : Theme.muted
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontSmall
             }
@@ -108,7 +117,7 @@ Item {
                     anchors.margins: -Theme.spaceS
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Notifications.dismiss(root.notification)
+                    onClicked: root.close()
                 }
             }
         }
@@ -116,7 +125,7 @@ Item {
         Text {
             width: parent.width
             visible: text !== ""
-            text: root.notification.summary
+            text: root.entry.summary
             wrapMode: Text.Wrap
             maximumLineCount: 2
             elide: Text.ElideRight
@@ -129,7 +138,7 @@ Item {
         Text {
             width: parent.width
             visible: text !== ""
-            text: root.notification.body
+            text: root.entry.body
             textFormat: Text.StyledText
             wrapMode: Text.Wrap
             maximumLineCount: root.framed ? 4 : 6
@@ -145,7 +154,7 @@ Item {
             visible: status === Image.Ready
             width: Math.min(parent.width, implicitWidth)
             height: visible ? Math.min(Theme.fs(120), implicitHeight * width / Math.max(1, implicitWidth)) : 0
-            source: Notifications.pictureFor(root.notification)
+            source: Notifications.pictureOf(root.entry)
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignLeft
             sourceSize.width: parent.width * 2
@@ -163,12 +172,7 @@ Item {
                 FlyoutChip {
                     required property var modelData
                     text: modelData.text
-                    // invoke() can destroy this card and the notification with it
-                    onClicked: {
-                        const n = root.notification
-                        modelData.invoke()
-                        Notifications.dismiss(n)
-                    }
+                    onClicked: Notifications.invoke(root.entry, modelData)
                 }
             }
         }
