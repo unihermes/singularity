@@ -691,6 +691,18 @@ Scope {
         })
     }
 
+    // The tab bar over hyprland.lua's grouped windows, always in the look's
+    // colours: the lit tab like a selected row, the rest like the bar.
+    function writeGroupbar(reload) {
+        var rgba = c => "rgba(" + hex(c).slice(1) + "ff)"
+        var line = [Theme.selectedFill, Theme.bar, Theme.text, Theme.subtext].map(rgba).join(" ")
+        AtomicFileWrite.write({
+            path: root.dir + "/groupbar",
+            transform: () => line + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+
     // How much of the screen's top edge the bar takes (0 when it sits at the
     // bottom), for hyprland.lua's rule that opens the sticky notes clear of
     // it. A rule can't read the reserved space itself.
@@ -730,6 +742,20 @@ Scope {
         function onBorderChanged() { bordersDebounce.restart() }
     }
 
+    Timer {
+        id: groupbarDebounce
+        interval: 200
+        onTriggered: root.writeGroupbar(true)
+    }
+
+    Connections {
+        target: Theme
+        function onSelectedFillChanged() { groupbarDebounce.restart() }
+        function onBarChanged() { groupbarDebounce.restart() }
+        function onTextChanged() { groupbarDebounce.restart() }
+        function onSubtextChanged() { groupbarDebounce.restart() }
+    }
+
     // Stepping the size fires once per step; one setcursor at the end is enough.
     Timer {
         id: cursorDebounce
@@ -756,6 +782,7 @@ Scope {
         writeIcons()
         writeWindowAnim(false)
         writeBorders(false)
+        writeGroupbar(false)
         writeBarTop(false)
         debounce.restart()
     }

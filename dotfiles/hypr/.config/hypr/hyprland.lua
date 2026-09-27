@@ -80,6 +80,12 @@ local scratchStyle = windowSlides and "slidevert" or "fade"
 -- under general below apply.
 local borderActive, borderInactive = singularityState("borders", ""):match("^(%S+)%s+(%S+)$")
 
+-- "<active tab> <inactive tab> <active text> <inactive text>" for the tab bar
+-- over grouped windows (see TABS below), written by the Appearance page from
+-- the current look; absent, the colours under group below apply.
+local tabActive, tabInactive, tabText, tabTextInactive =
+    singularityState("groupbar", ""):match("^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$")
+
 local function animation(t)
     t.speed   = t.speed * animFactor
     t.enabled = t.enabled and animMode ~= "off"
@@ -282,6 +288,11 @@ end)
 ---- LOOK AND FEEL ----
 -----------------------
 
+-- The tab bar over grouped windows. A floating group draws it above the
+-- windows, so fillArea() below leaves this much room for it.
+local GROUPBAR_HEIGHT = 22
+local GROUPBAR_GAP    = 2
+
 hl.config({
     general = {
         gaps_in     = 1,
@@ -330,6 +341,35 @@ hl.config({
 
     dwindle = {
         preserve_split = true,
+    },
+
+    -- Groups are only made by the TABS hooks below, so a new window never
+    -- joins whichever group has focus, and dragging one never merges it in.
+    group = {
+        auto_group      = false,
+        drag_into_group = 0,
+        col = {
+            border_active   = borderActive or "rgba(d4e4f466)",
+            border_inactive = borderInactive or "rgba(303030aa)",
+        },
+        groupbar = {
+            height              = GROUPBAR_HEIGHT,
+            gaps_in             = GROUPBAR_GAP,
+            gaps_out            = GROUPBAR_GAP,
+            font_family         = "UbuntuMono Nerd Font",
+            font_size           = 12,
+            gradients           = true,
+            rounding            = 3,
+            gradient_rounding   = 3,
+            indicator_height    = 0,
+            middle_click_close  = true,
+            text_color          = tabText or "rgba(d4e4f4ff)",
+            text_color_inactive = tabTextInactive or "rgba(7a7a7aff)",
+            col = {
+                active   = tabActive or "rgba(2a2a2aff)",
+                inactive = tabInactive or "rgba(161616ff)",
+            },
+        },
     },
 
     misc = {
@@ -1009,6 +1049,18 @@ local function usableArea(mon)
     }
 end
 
+-- The rect a monocle window fills: the usable area, less a strip along the
+-- top for the tab bar when the window is one of a group's tabs.
+local function fillArea(win, mon)
+    local area = usableArea(mon)
+    if win.group then
+        local bar = GROUPBAR_HEIGHT + GROUPBAR_GAP * 2
+        area.y = area.y + bar
+        area.h = area.h - bar
+    end
+    return area
+end
+
 -- Whether a floater fills the monitor it is on: position as well as size,
 -- unlike isAlreadyFull(), since the right size on the wrong screen isn't.
 local function isFitted(win, area)
@@ -1050,7 +1102,7 @@ end
 local function sizeToFullFloat(win, mon)
     mon = mon or win.monitor or hl.get_active_monitor()
     if not mon then return end
-    local area = usableArea(mon)
+    local area = fillArea(win, mon)
     local addr = "address:" .. win.address
     hl.dispatch(hl.dsp.window.resize({ x = math.floor(area.w), y = math.floor(area.h), window = addr }))
     hl.dispatch(hl.dsp.window.move({ x = math.floor(area.x), y = math.floor(area.y), window = addr }))
@@ -1210,7 +1262,7 @@ local function maximizeFocused()
             -- (moved across, docked, undocked); backs up the monitor hooks
             -- below for when the layout hadn't settled as they fired.
             local mon = win.monitor
-            if mon and not stateOf(win.address).small and not isFitted(win, usableArea(mon)) then
+            if mon and not stateOf(win.address).small and not isFitted(win, fillArea(win, mon)) then
                 sizeToFullFloat(win, mon)
             end
             hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
@@ -1251,7 +1303,7 @@ local function refitMonocle()
     for _, w in ipairs(hl.get_windows()) do
         if w.floating and hasTag(w, "monocle") and not stateOf(w.address).small and monocleOn(w.workspace) then
             local mon = w.monitor
-            if mon and not isFitted(w, usableArea(mon)) then sizeToFullFloat(w, mon) end
+            if mon and not isFitted(w, fillArea(w, mon)) then sizeToFullFloat(w, mon) end
         end
     end
 end
@@ -1261,6 +1313,54 @@ end
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
+
+-- TABS. Apps with no tabs of their own open each file in a window of its
+-- own; these open theirs as tabs of one Hyprland group instead, joining the
+-- first window of the same class on the same workspace. The group draws its
+-- tab bar; clicking a tab switches, middle-clicking closes it.
+local TABBED_CLASSES = {
+    ["org.pwmt.zathura"] = true,
+}
+
+-- A monocle group is refitted as its tab bar comes and goes: the group
+-- moves as one, so fitting any member fits them all.
+local function refitGroup(win)
+    if isMonocleWin(win) and not stateOf(win.address).small and monocleOn(win.workspace) then
+        sizeToFullFloat(win)
+    end
+end
+
+hl.on("window.open", function(win)
+    if not win or not TABBED_CLASSES[win.class] or not win.workspace then return end
+    local host
+    for _, w in ipairs(hl.get_windows()) do
+        if w.address ~= win.address and w.class == win.class and w.workspace
+            and w.workspace.id == win.workspace.id and (not host or (w.group and not host.group)) then
+            host = w
+        end
+    end
+    if not host then return end
+    if not host.group then
+        hl.dispatch(hl.dsp.group.toggle({ window = "address:" .. host.address }))
+    end
+    if not host.group then return end
+    host.group:add(win)
+    refitGroup(win)
+end)
+
+-- A group down to its last tab is dissolved, so a lone window has no tab
+-- bar. After the close has settled, since the group still counts the
+-- closing window while window.close runs.
+hl.on("window.close", function()
+    hl.timer(function()
+        for _, w in ipairs(hl.get_windows()) do
+            if w.group and w.group.size == 1 then
+                hl.dispatch(hl.dsp.group.toggle({ window = "address:" .. w.address }))
+                refitGroup(w)
+            end
+        end
+    end, { timeout = 50, type = "oneshot" })
+end)
 
 -- SUPER+X. Deliberately no hook forcing a window back to maximized when it
 -- leaves that state (the window.fullscreen hook only takes the flag *off*
@@ -1300,7 +1400,7 @@ function toggleMaximize()
         local addr = "address:" .. win.address
         local mon = win.monitor or hl.get_active_monitor()
         if not mon then return end
-        local area = usableArea(mon)
+        local area = fillArea(win, mon)
         if not isFitted(win, area) then
             -- whatever size it is now is the one to come back to
             st.restore = nil
