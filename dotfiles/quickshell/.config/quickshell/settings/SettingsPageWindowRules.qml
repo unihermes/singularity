@@ -525,7 +525,7 @@ SettingsPage {
             SettingsField {
                 visible: ruleCol.expanded
                 label: "Open fullscreen"
-                hint: "Covers the whole display, bar included"
+                hint: "Monocle only: covers the whole display, bar included"
 
                 Switch {
                     anchors.right: parent.right

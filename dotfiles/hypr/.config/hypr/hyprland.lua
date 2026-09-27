@@ -743,22 +743,6 @@ toggleStashed = function()
     end
 end
 
--- Apps always worth the whole screen: the editor, the browsers, zathura.
--- In dwindle mode they maximize on open while everything else tiles. In
--- monocle this rule is disabled (see toggleLayout) and monocleRule floats
--- them like anything else -- only one window per workspace can hold
--- maximize, so two of these would resize on every switch between them.
--- zathura is here because it repaints slowly enough that a resize on focus
--- flashed the blurred wallpaper through it.
---
--- Matched on class: their titles change with what's open in them.
-local maximizePrimaryDwindleRule = hl.window_rule({
-    name     = "maximize-primary-dwindle",
-    match    = { class = "^(codium|VSCodium|floorp|zen|zen-browser|org\\.pwmt\\.zathura)$" },
-    maximize = true,
-})
-maximizePrimaryDwindleRule:set_enabled(false)
-
 -- Per-app and popout exceptions live in
 -- ~/.config/singularity/window-rules.json, edited from Settings > Window
 -- Rules. This file keeps only the machinery the shell depends on.
@@ -786,6 +770,9 @@ end
 local function literalRegex(text)
     return (text:gsub("[%.%^%$%*%+%?%(%)%[%]%{%}%|\\]", "\\%0"))
 end
+
+-- The "fullscreen" entries' rules, which follow the layout like monocleRule.
+local fullscreenRules = {}
 
 do
     local f = io.open(os.getenv("HOME") .. "/.config/singularity/window-rules.json")
@@ -828,10 +815,15 @@ do
                 if type(r.size) == "string" and r.size:match("^%d+ %d+$") then rule.size = r.size end
             end
             if r.pin then rule.pin = true end
-            if r.fullscreen then rule.fullscreen = true end
             local ws = tonumber(r.workspace)
             if ws and ws >= 1 and ws <= MAX_WORKSPACES then rule.workspace = tostring(math.floor(ws)) end
             hl.window_rule(rule)
+            -- Its own rule so applyLayoutRules can switch it off in dwindle,
+            -- where every window opens tiled (see keepNewWindowTiled).
+            if r.fullscreen then
+                table.insert(fullscreenRules,
+                    hl.window_rule({ name = name .. "-fullscreen", match = match, fullscreen = true }))
+            end
             -- A second rule, because one rule carries one tag: this marks the
             -- window as exempt for SUPER+M's sweep (toggleLayout), which has
             -- to decide about windows that were already open without being
@@ -1138,6 +1130,28 @@ local function onMonocleOpen(win)
 end
 hl.on("window.open", onMonocleOpen)
 
+-- In dwindle every window opens tiled, including one that asks to open
+-- maximized or fullscreen (an app restoring how it was last closed). Apps
+-- ask as they map or a moment after, so for its first second and a half a
+-- tiled window's maximize or fullscreen is undone. Taking it out of the
+-- tiling afterwards is left to SUPER+X, SUPER+CTRL+F and SUPER+SHIFT+V.
+local justOpened = {}
+local function keepNewWindowTiled(win)
+    if not (win and justOpened[win.address]) then return end
+    if win.floating or win.fullscreen == 0 or monocleOn(win.workspace) then return end
+    hl.dispatch(hl.dsp.window.fullscreen({
+        mode = win.fullscreen == 1 and "maximized" or "fullscreen", action = "unset",
+        window = "address:" .. win.address }))
+end
+hl.on("window.open", function(win)
+    if not win then return end
+    local addr = win.address
+    justOpened[addr] = true
+    hl.timer(function() justOpened[addr] = nil end, { timeout = 1500, type = "oneshot" })
+    keepNewWindowTiled(win)
+end)
+hl.on("window.fullscreen", keepNewWindowTiled)
+
 -- SUPER+SHIFT+n and dragging between workspaces: the window takes on the
 -- destination's layout. This fires before workspace.active does, so the
 -- rules may still be set for the workspace it left -- which is fine, since
@@ -1402,7 +1416,7 @@ for _, w in ipairs(hl.get_windows()) do
     end
 end
 
--- monocleRule and the dwindle maximize rule act on windows as they map,
+-- monocleRule and the fullscreen entries' rules act on windows as they map,
 -- nearly always on the active workspace, so they're switched to match it on
 -- every workspace change and on SUPER+M. That's what gives a pinned
 -- workspace its layout at map time, with no float-then-tile flicker. The
@@ -1414,7 +1428,7 @@ local function applyLayoutRules(announce)
     if ws and ws.special then return end
     local on = monocleOn(ws)
     monocleRule:set_enabled(on)
-    maximizePrimaryDwindleRule:set_enabled(not on)
+    for _, rule in ipairs(fullscreenRules) do rule:set_enabled(on) end
     if announce or (rulesMonocle ~= nil and rulesMonocle ~= on) then
         hl.exec_cmd("qs ipc call layout set " .. (on and "monocle" or "dwindle"))
     end
