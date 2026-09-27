@@ -325,8 +325,21 @@ ShellRoot {
                 // the wrong window.
                 Hyprland.refreshToplevels()
             }
+            // "special:name,MONITOR", or ",MONITOR" once it's hidden. Read
+            // from the event: refreshing the monitors here still gets the
+            // state from before the toggle.
+            if (event.name === "activespecial") {
+                const cut = event.data.lastIndexOf(",")
+                const shown = Object.assign({}, root.specialShown)
+                shown[event.data.slice(cut + 1)] = event.data.slice(0, cut)
+                root.specialShown = shown
+            }
         }
     }
+
+    // monitor name -> the special workspace shown on it ("" for none), from
+    // activespecial events; a monitor with no event yet isn't listed
+    property var specialShown: ({})
 
     Variants {
         model: Quickshell.screens
@@ -835,6 +848,7 @@ ShellRoot {
                 id: barModules
                 bar: bar
                 screenScope: screenScope
+                shellRoot: root
                 trayMenu: trayMenu
                 windowMenu: windowMenu
             }

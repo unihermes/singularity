@@ -25,6 +25,8 @@ Item {
 
     required property var bar
     required property var screenScope
+    // for specialShown, which follows Hyprland's events once for all bars
+    required property var shellRoot
     // the tray icon's right-click opens this flyout, which lives outside
     // the bar entirely (it's a sibling flyout in the screen's Scope). It's
     // the flyout's LazyFlyout loader: ensure() builds it if needed.
@@ -129,6 +131,62 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Hyprland.dispatch("hl.dsp.focus({workspace=" + parent.wsId + "})")
                 }
+            }
+        }
+
+        // The scratchpad (SUPER+grave), only while something is in it: lit
+        // when it's shown on this monitor, with a count past one window
+        Item {
+            id: scratchMark
+            readonly property var ws: Hyprland.workspaces.values.find(w => w.name === "special:scratchpad") || null
+            readonly property int count: ws
+                ? ws.toplevels.values.filter(t => !barModules.bar.isShellWindow(t)).length : 0
+            readonly property var monitor: Hyprland.monitorFor(barModules.screenScope.modelData)
+            // the monitor's own report until the first activespecial event
+            readonly property bool shown: {
+                const name = monitor ? monitor.name : ""
+                if (name in barModules.shellRoot.specialShown)
+                    return barModules.shellRoot.specialShown[name] === "special:scratchpad"
+                const sp = monitor && monitor.lastIpcObject && monitor.lastIpcObject.specialWorkspace
+                return !!sp && sp.name === "special:scratchpad"
+            }
+
+            visible: count > 0
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: scratchRow.implicitWidth + 4
+            implicitHeight: Theme.moduleHeight - 8
+
+            Row {
+                id: scratchRow
+                anchors.centerIn: parent
+                spacing: Theme.spaceXs
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "󰆍"
+                    color: scratchMark.shown ? Theme.accent
+                        : scratchMouse.containsMouse ? Theme.text : Theme.subtext
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.barFs(15)
+                    Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                }
+
+                Text {
+                    visible: scratchMark.count > 1
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: scratchMark.count
+                    color: scratchMark.shown ? Theme.accent : Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.barFs(11)
+                }
+            }
+
+            MouseArea {
+                id: scratchMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Hyprland.dispatch("hl.dsp.workspace.toggle_special('scratchpad')")
             }
         }
 
