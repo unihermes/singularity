@@ -131,6 +131,11 @@ sect "Packages"
 have pacman && {
   row "Installed" "$(pacman -Qq 2>/dev/null | wc -l) ($(pacman -Qqm 2>/dev/null | wc -l) foreign)"
   row "Orphans"   "$(pacman -Qqtd 2>/dev/null | wc -l)"
+  have pacdiff && {
+    n=$(pacdiff -o -f 2>/dev/null | wc -l)
+    if (( n > 0 )); then warn "Config to merge" "$n .pacnew/.pacsave (pacdiff -f --sudo)"
+    else                 ok   "Config to merge" "none"; fi
+  }
   row "Last upgrade" "$(awk -F'[][]' '/starting full system upgrade/{t=$2} END{print t}' \
     /var/log/pacman.log 2>/dev/null)"
 }

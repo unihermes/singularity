@@ -97,6 +97,16 @@ Singleton {
             terminal(check.id, "cd '" + repoPath + "' && ./link.sh")
             return
         }
+        if (kind === "pacdiff") {
+            // DIFFPROG follows $EDITOR; -f matches the scan, which finds
+            // .pacsave files the pacman database doesn't list
+            terminal(check.id, "pacdiff -f --sudo")
+            return
+        }
+        if (kind === "firmware") {
+            terminal(check.id, "fwupdmgr refresh; fwupdmgr update")
+            return
+        }
         if (kind === "log") {
             // the id carries a path, which can hold a colon in principle
             terminal(check.id, "less +G '" + parts.slice(1).join(":") + "'")

@@ -107,6 +107,8 @@ hypridle
 hyprsunset
 cava
 pacman-contrib
+# firmware updates, checked on the System window's Health page
+fwupd
 
 # gtk + theming
 gtk3

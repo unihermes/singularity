@@ -141,3 +141,12 @@ fi
 freed=$(( before - $(used) ))
 (( freed < 0 )) && freed=0
 log "Done, freed $(numfmt --to=iec --from-unit=1024 "$freed")"
+
+# Merging needs a person, so these are only pointed out
+if have pacdiff; then
+  mapfile -t pending < <(pacdiff -o -f 2>/dev/null)
+  if (( ${#pending[@]} )); then
+    warn "${#pending[@]} config file(s) left by pacman to merge; run: pacdiff -f --sudo"
+    printf '     %s\n' "${pending[@]}" >&2
+  fi
+fi

@@ -22,6 +22,8 @@
 #   install:<tools>          yay -S, in a terminal
 #   clean                    clean.sh, in a terminal
 #   relink                   the repo's link.sh, in a terminal
+#   pacdiff                  pacdiff, in a terminal
+#   firmware                 fwupdmgr refresh + update, in a terminal
 #   log:<path>               tail the file, in a terminal
 set -uo pipefail
 
@@ -111,6 +113,39 @@ if command -v pacman &>/dev/null; then
 	else
 		emit ok orphans "Orphaned packages" "None"
 	fi
+fi
+
+# A package upgrade that finds a config edited by hand writes the new one
+# beside it as .pacnew; removing a package keeps an edited config as
+# .pacsave. Found with find, not pacman's database, which misses .pacsave.
+if command -v pacdiff &>/dev/null; then
+	mapfile -t pending < <(pacdiff -o -f 2>/dev/null)
+	if (( ${#pending[@]} )); then
+		names=$(printf '%s\n' "${pending[@]##*/}" | head -n 3 | paste -sd, | sed 's/,/, /g')
+		(( ${#pending[@]} > 3 )) && names+=", …"
+		emit warn pacnew "Config files to merge" "${#pending[@]}: $names" pacdiff Merge
+	else
+		emit ok pacnew "Config files to merge" "None"
+	fi
+fi
+
+# --- firmware ----------------------------------------------------------------
+# From fwupd's cached metadata, so this doesn't go to the network; the
+# repair refreshes it first. Exit 2 is fwupd's "nothing to do".
+if command -v fwupdmgr &>/dev/null; then
+	out=$(timeout 20 fwupdmgr get-updates --json --no-unreported-check \
+		--no-metadata-check 2>/dev/null)
+	rc=$?
+	n=$(grep -o '"Releases"' <<<"$out" | wc -l)
+	if (( rc == 0 && n > 0 )); then
+		emit warn firmware "Firmware" "$n device(s) with an update" firmware Update
+	elif (( rc == 0 || rc == 2 )); then
+		emit ok firmware "Firmware" "Up to date" firmware Refresh
+	else
+		emit ok firmware "Firmware" "fwupd didn't answer" firmware Check
+	fi
+else
+	emit ok firmware "Firmware" "Not checked, fwupd isn't installed" install:fwupd Install
 fi
 
 # --- reclaimable space -------------------------------------------------------

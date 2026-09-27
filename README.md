@@ -417,8 +417,9 @@ fc-match monospace
   `~/.config/quickshell/scripts/health-scan.sh` and puts the fix next to the
   finding: a restart for an enabled unit that isn't running, a disable for one
   whose unit file is gone, `clean.sh` for a full disk or a pile of orphans,
-  `link.sh` for a dotfile symlink that no longer resolves, an install for a
-  missing tool. systemctl repairs run directly, prompting through the polkit
+  `link.sh` for a dotfile symlink that no longer resolves, `pacdiff` for
+  `.pacnew`/`.pacsave` files waiting to be merged, `fwupdmgr update` for
+  firmware with an update, an install for a missing tool. systemctl repairs run directly, prompting through the polkit
   agent for system units; the ones that ask questions or print a lot open a
   terminal so you can see what runs. The script only reads, so it is safe to
   run by hand, and it is the machine-readable half of what `diagnose` prints.
