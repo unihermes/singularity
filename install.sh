@@ -543,48 +543,69 @@ fi
 # started again afterwards: nothing stale is left to close. Only hibernation
 # needs this -- plain s2idle keeps the MEI clients alive and resumes fine.
 #
+# This can't be a system-sleep hook: systemd-sleep freezes user.slice before
+# it runs the hooks, so the user manager can't be reached to stop anything.
+# Instead it's a unit the hibernate targets pull in, ordered before the sleep
+# services: it starts (and stops WirePlumber) before systemd-sleep runs, and
+# since those targets are StopWhenUnneeded, it stops again after the resume,
+# once user.slice is thawed.
+#
 # The camera itself does NOT come back after a resume: ivsc_csi is stuck
 # fwnode-less until the modules are reloaded, and reloading intel_ipu6 while
 # the machine is up oopses the kernel a different way (see the webcam
 # controller step), so this doesn't try. Reboot to get the webcam back.
-camhook=/usr/lib/systemd/system-sleep/singularity-camera
-if [[ ! -f $camhook ]]; then
-  log "installing the hibernation camera hook"
-  sudo tee "$camhook" >/dev/null <<'HOOK'
-#!/bin/sh
-# $1 pre|post, $2 suspend|hibernate|hybrid-sleep|suspend-then-hibernate
-set -eu
-case "$2" in
-  hibernate|hybrid-sleep|suspend-then-hibernate) ;;
-  *) exit 0 ;;
-esac
-
-# Nothing here is allowed to fail: a sleep hook that exits non-zero delays or
-# blocks the sleep itself.
+camscript=/usr/local/libexec/singularity-camera-sleep
+camscript_body='#!/bin/sh
+# $1 pre|post. Nothing here is allowed to fail: a unit that fails before a
+# sleep service blocks the sleep itself.
 #
 # v4l2-relayd only runs while something is watching the loopback device, but
 # when it is running it holds camera fds of its own. It is started on demand
 # by its device unit, so it only has to be stopped.
 if [ "$1" = pre ]; then
   for unit in $(systemctl list-units --state=active --plain --no-legend \
-                  'v4l2-relayd*' | awk '{ print $1 }'); do
+                  "v4l2-relayd*" | awk "{ print \$1 }"); do
     systemctl stop "$unit" || true
   done
 fi
 
-# Sleep hooks run as root outside any session, so each logged-in user's own
+# This runs as root outside any session, so each logged-in user'"'"'s own
 # manager is addressed through the --user -M user@ form.
-for uid in $(loginctl list-sessions --no-legend | awk '{ print $2 }' | sort -u); do
+for uid in $(loginctl list-sessions --no-legend | awk "{ print \$2 }" | sort -u); do
   user=$(id -nu "$uid" 2>/dev/null) || continue
   case "$1" in
     pre)  systemctl --user -M "$user@" stop wireplumber.service || true ;;
     post) systemctl --user -M "$user@" start wireplumber.service || true ;;
   esac
 done
-exit 0
-HOOK
-  sudo chmod +x "$camhook"
+exit 0'
+camunit=/etc/systemd/system/singularity-camera-sleep.service
+camunit_body="[Unit]
+Description=Release the webcam around hibernation
+Before=systemd-hibernate.service systemd-suspend-then-hibernate.service systemd-hybrid-sleep.service
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=$camscript pre
+ExecStop=$camscript post
+
+[Install]
+WantedBy=hibernate.target suspend-then-hibernate.target hybrid-sleep.target"
+if [[ "$(cat "$camscript" 2>/dev/null)" != "$camscript_body" ||
+      "$(cat "$camunit" 2>/dev/null)" != "$camunit_body" ]]; then
+  log "installing the hibernation camera unit"
+  sudo mkdir -p "${camscript%/*}"
+  printf '%s\n' "$camscript_body" | sudo tee "$camscript" >/dev/null
+  sudo chmod +x "$camscript"
+  printf '%s\n' "$camunit_body" | sudo tee "$camunit" >/dev/null
+  sudo systemctl daemon-reload
+  sudo systemctl reenable singularity-camera-sleep.service
 fi
+# The old system-sleep hook ran too late to reach the user manager.
+[[ -f /usr/lib/systemd/system-sleep/singularity-camera ]] &&
+  sudo rm /usr/lib/systemd/system-sleep/singularity-camera
 
 # --- virtual webcam ------------------------------------------------------
 # The IPU6 camera only works through libcamera. PipeWire apps (browsers)
