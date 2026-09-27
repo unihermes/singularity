@@ -569,7 +569,9 @@ hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))  -- Lock the sc
 
 -- --- Screenshot ---
 -- saves to ~/Pictures/Screenshots and copies to the clipboard
-hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh"))  -- Screenshot an area
+hl.bind("Print",         hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh area"))    -- Screenshot an area
+hl.bind("SHIFT + Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh window"))  -- Screenshot the active window
+hl.bind("CTRL + Print",  hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh screen"))  -- Screenshot the focused monitor
 
 -- --- Lid ---
 -- Close turns the screen off and suspends after 5 min if it's still shut;

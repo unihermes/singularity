@@ -100,6 +100,8 @@ wl-clipboard
 cliphist
 grim
 slurp
+# annotates a screenshot from its notification (screenshot.sh)
+satty
 hyprpicker
 hypridle
 hyprsunset
