@@ -428,11 +428,6 @@ hl.bind(mod .. " + P",         hl.dsp.window.pseudo())  -- Keep window's own siz
 hl.bind(mod .. " + J",         hl.dsp.layout("togglesplit"))  -- Split side by side or stacked
 hl.bind(mod .. " + M",         function() toggleLayout() end)  -- Switch between tiled and one-window layout
 
--- Workspace grid: every workspace and its windows at once. Click a cell to
--- jump, click a window to focus it, drag a window between cells to move it.
--- Drawn by Quickshell (WorkspaceOverlay.qml), so this only pokes the shell.
-hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))  -- Show all workspaces
-
 -- --- Scratchpad ---
 -- A terminal on its own special workspace, floating over whichever workspace
 -- you're on. The first press starts it; after that the key shows and hides it.
@@ -539,6 +534,10 @@ hl.bind("ALT + grave",       altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { r
 -- Hyprland treats ALT everywhere, including the drag/resize mod.
 
 -- --- Workspaces ---
+-- Workspace grid: every workspace and its windows at once. Click a cell to
+-- jump, click a window to focus it, drag a window between cells to move it.
+-- Drawn by Quickshell (WorkspaceOverlay.qml), so this only pokes the shell.
+hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))  -- Show all workspaces
 for i = 1, MAX_WORKSPACES do
     hl.bind(mod .. " + " .. i,         hl.dsp.focus({ workspace = i }))
     hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))

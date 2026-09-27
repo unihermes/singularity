@@ -163,23 +163,63 @@ Column {
 
     // --- grouping: the config's own binds --------------------------------
 
+    // The file's `-- --- Name ---` sections, gathered into the groups the
+    // list shows, in the order you'd look for them: opening things, the
+    // shell's own tools, handling windows, getting around, the session, and
+    // the hardware keys last. A section not named here (one added by hand)
+    // keeps its own heading, after these, in file order. The editor's
+    // Category still means the file's section; this only changes the list.
+    readonly property var displayGroups: [
+        { name: "Apps",       sections: ["Launchers"] },
+        { name: "Shell",      sections: ["Shell windows", "Clipboard", "Calculator and file search",
+                                         "Notes", "Claude"] },
+        { name: "Windows",    sections: ["Window Management", "Mouse", "Scratchpad"] },
+        { name: "Focus",      sections: ["Focus"] },
+        { name: "Workspaces", sections: ["Workspaces"] },
+        { name: "Session",    sections: ["Session", "Screenshot"] },
+        { name: "Hardware keys", sections: ["Function Keys", "Media Keys", "Lock Keys", "Lid"] },
+    ]
+
+    // Within a section, a bind that does the same as an earlier one (two
+    // keys for maximize) is listed right under it rather than lines later.
+    function clusterSame(rows) {
+        var out = []
+        rows.forEach(r => {
+            var at = -1
+            for (var i = out.length - 1; i >= 0; i--)
+                if (r.desc !== "" && out[i].desc === r.desc) { at = i; break }
+            if (at < 0) out.push(r)
+            else out.splice(at + 1, 0, r)
+        })
+        return out
+    }
+
     readonly property var groups: {
         if (!model || tab !== "binds") return []
         var q = query.trim().toLowerCase()
-        var names = model.categories.map(c => c.name)
-        var byName = {}
-        var out = []
+        var groupOf = {}
+        displayGroups.forEach(g => g.sections.forEach(sec => groupOf[sec] = g.name))
+        var bySection = {}
         for (var i = 0; i < model.rows.length; i++) {
             var r = model.rows[i]
-            var cat = r.category !== "" ? r.category : "Other"
-            if (q !== "" && (r.keys + "\n" + r.desc + "\n" + r.command + "\n" + cat).toLowerCase().indexOf(q) < 0)
+            var sec = r.category !== "" ? r.category : "Other"
+            var shown = groupOf[sec] || sec
+            if (q !== "" && (r.keys + "\n" + r.desc + "\n" + r.command + "\n" + sec + "\n" + shown)
+                    .toLowerCase().indexOf(q) < 0)
                 continue
-            if (!byName[cat]) byName[cat] = []
-            byName[cat].push(r)
+            if (!bySection[sec]) bySection[sec] = []
+            bySection[sec].push(r)
         }
-        names.concat(["Other"]).forEach(n => {
-            if (byName[n]) out.push({ name: n, rows: byName[n] })
-        })
+        var out = []
+        var take = (name, sections) => {
+            var rows = []
+            sections.forEach(sec => { if (bySection[sec]) rows = rows.concat(clusterSame(bySection[sec])) })
+            if (rows.length > 0) out.push({ name: name, rows: rows })
+        }
+        displayGroups.forEach(g => take(g.name, g.sections))
+        model.categories.map(c => c.name).concat(["Other"])
+            .filter(sec => !groupOf[sec])
+            .forEach(sec => take(sec, [sec]))
         return out
     }
 
