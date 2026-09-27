@@ -80,11 +80,23 @@ local scratchStyle = windowSlides and "slidevert" or "fade"
 -- under general below apply.
 local borderActive, borderInactive = singularityState("borders", ""):match("^(%S+)%s+(%S+)$")
 
--- "<active tab> <inactive tab> <active text> <inactive text>" for the tab bar
--- over grouped windows (see TABS below), written by the Appearance page from
--- the current look; absent, the colours under group below apply.
-local tabActive, tabInactive, tabText, tabTextInactive =
-    singularityState("groupbar", ""):match("^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$")
+-- "<active tab> <inactive tab> <active text> <inactive text> <accent>" for
+-- the tab bar over grouped windows (see TABS below), written by the
+-- Appearance page from the current look; absent, the colours under group
+-- below apply.
+local tabActive, tabInactive, tabText, tabTextInactive, tabAccent =
+    singularityState("groupbar", ""):match("^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$")
+
+-- The open tab's fill, with a line of the accent along its top edge. The
+-- groupbar has no colour of its own for that line (its indicator shares the
+-- fill's colour), so it's the last stops of a vertical gradient: the last
+-- two of twenty are the accent, a line about 2px thick on a 26px bar.
+local function tabFill(fill, accent)
+    local colors = {}
+    for i = 1, 18 do colors[i] = fill end
+    colors[19], colors[20] = accent, accent
+    return { colors = colors, angle = 270 }
+end
 
 local function animation(t)
     t.speed   = t.speed * animFactor
@@ -289,8 +301,9 @@ end)
 -----------------------
 
 -- The tab bar over grouped windows. A floating group draws it above the
--- windows, so fillArea() below leaves this much room for it.
-local GROUPBAR_HEIGHT = 22
+-- windows, flush against them, so fillArea() below leaves this much room for
+-- it. The gap is only between tabs.
+local GROUPBAR_HEIGHT = 26
 local GROUPBAR_GAP    = 2
 
 hl.config({
@@ -348,16 +361,18 @@ hl.config({
     group = {
         auto_group      = false,
         drag_into_group = 0,
+        -- the tab fills, so the border runs on from the tab bar instead of
+        -- drawing an accent line between it and the window
         col = {
-            border_active   = borderActive or "rgba(d4e4f466)",
-            border_inactive = borderInactive or "rgba(303030aa)",
+            border_active   = tabActive or "rgba(2a2a2aff)",
+            border_inactive = tabInactive or "rgba(161616ff)",
         },
         groupbar = {
             height              = GROUPBAR_HEIGHT,
             gaps_in             = GROUPBAR_GAP,
-            gaps_out            = GROUPBAR_GAP,
+            gaps_out            = 0,
             font_family         = "UbuntuMono Nerd Font",
-            font_size           = 11,
+            font_size           = 13,
             -- room either side, so a long title's "…" isn't against the edge
             text_padding        = 10,
             gradients           = true,
@@ -368,7 +383,7 @@ hl.config({
             text_color          = tabText or "rgba(d4e4f4ff)",
             text_color_inactive = tabTextInactive or "rgba(7a7a7aff)",
             col = {
-                active   = tabActive or "rgba(2a2a2aff)",
+                active   = tabFill(tabActive or "rgba(2a2a2aff)", tabAccent or "rgba(d4e4f4ff)"),
                 inactive = tabInactive or "rgba(161616ff)",
             },
         },
@@ -1056,7 +1071,7 @@ end
 local function fillArea(win, mon)
     local area = usableArea(mon)
     if win.group then
-        local bar = GROUPBAR_HEIGHT + GROUPBAR_GAP * 2
+        local bar = GROUPBAR_HEIGHT
         area.y = area.y + bar
         area.h = area.h - bar
     end

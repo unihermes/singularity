@@ -692,10 +692,11 @@ Scope {
     }
 
     // The tab bar over hyprland.lua's grouped windows, always in the look's
-    // colours: the lit tab like a selected row, the rest like the bar.
+    // colours: the lit tab like a selected row with an accent line over it,
+    // the rest like the bar.
     function writeGroupbar(reload) {
         var rgba = c => "rgba(" + hex(c).slice(1) + "ff)"
-        var line = [Theme.selectedFill, Theme.bar, Theme.text, Theme.subtext].map(rgba).join(" ")
+        var line = [Theme.selectedFill, Theme.bar, Theme.text, Theme.subtext, Theme.accent].map(rgba).join(" ")
         AtomicFileWrite.write({
             path: root.dir + "/groupbar",
             transform: () => line + "\n",
@@ -754,6 +755,7 @@ Scope {
         function onBarChanged() { groupbarDebounce.restart() }
         function onTextChanged() { groupbarDebounce.restart() }
         function onSubtextChanged() { groupbarDebounce.restart() }
+        function onAccentChanged() { groupbarDebounce.restart() }
     }
 
     // Stepping the size fires once per step; one setcursor at the end is enough.
