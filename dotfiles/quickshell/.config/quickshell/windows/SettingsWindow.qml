@@ -57,7 +57,7 @@ FloatingWindow {
     function open(page) {
         currentPage = pages.some(p => p.id === page) ? page : defaultPage
         highlight = ""
-        field.text = ""
+        searchBar.text = ""
         visible = true
     }
     function close() { visible = false }
@@ -98,7 +98,7 @@ FloatingWindow {
 
     // --- search ------------------------------------------------------------
 
-    readonly property string query: field.text.trim()
+    readonly property string query: searchBar.text.trim()
     readonly property var index: SettingsIndex.build(pages)
     // the Sections panel's rows: the sections themselves, or what matched
     readonly property var rows: query === ""
@@ -110,13 +110,9 @@ FloatingWindow {
             entry: e }))
     // the row the arrow keys are on; only drawn while the bar has focus
     property int cursor: 0
-    readonly property bool searchFocused: field.activeFocus
+    readonly property bool searchFocused: searchBar.focused
 
-    function focusSearch() {
-        field.forceActiveFocus()
-        field.selectAll()
-        cursor = query === "" ? Math.max(0, pages.findIndex(p => p.id === currentPage)) : 0
-    }
+    function focusSearch() { searchBar.forceFocus() }
 
     function moveCursor(delta) {
         if (rows.length === 0) return
@@ -127,7 +123,7 @@ FloatingWindow {
     function activate(row) {
         if (row.isPage) select(row.page)
         else reveal(row.entry)
-        field.text = ""
+        searchBar.text = ""
         chrome.keySink.forceActiveFocus()
     }
 
@@ -189,91 +185,33 @@ FloatingWindow {
 
     // --- search bar --------------------------------------------------------
 
-    Rectangle {
+    FlyoutInput {
         id: searchBar
         anchors.top: header.bottom
         anchors.topMargin: Theme.spaceXl
         x: Theme.windowPad
         width: root.width - Theme.windowPad * 2
         height: Theme.rowHeightTall + Theme.spaceM
-        radius: Theme.radiusInner
-        color: Theme.fieldFill
-        border.width: Theme.borderWidth
-        border.color: field.activeFocus ? Theme.strokeFocus : Theme.stroke
+        echoPassword: false
+        glyph: "/"
+        placeholder: "Search settings and sections"
+        hints: ["Up/Down navigate", "Enter select"]
 
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.IBeamCursor
-            onClicked: root.focusSearch()
-        }
-
-        Text {
-            id: slash
-            x: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            text: "/"
-            color: field.activeFocus ? Theme.accent : Theme.subtext
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-        }
-
-        Text {
-            anchors.left: field.left
-            anchors.verticalCenter: parent.verticalCenter
-            visible: field.text === ""
-            text: "Search settings and sections"
-            color: Theme.textDisabled
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-        }
-
-        TextInput {
-            id: field
-            anchors.left: slash.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: hints.left
-            anchors.rightMargin: Theme.spaceXl
-            anchors.verticalCenter: parent.verticalCenter
-            clip: true
-            color: Theme.textStrong
-            selectionColor: Theme.muted
-            selectedTextColor: Theme.textStrong
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-
-            onTextChanged: root.cursor = 0
-            Keys.onDownPressed: root.moveCursor(1)
-            Keys.onUpPressed: root.moveCursor(-1)
-            Keys.onTabPressed: root.moveCursor(1)
-            Keys.onBacktabPressed: root.moveCursor(-1)
-            onAccepted: if (root.rows.length > 0) root.activate(root.rows[root.cursor])
-            // first clear the query, then leave the bar; the window's own
-            // Escape closes it after that
-            Keys.onEscapePressed: {
-                if (text !== "") text = ""
-                else chrome.keySink.forceActiveFocus()
-            }
-        }
-
-        Row {
-            id: hints
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceXl
-
-            Repeater {
-                model: ["Up/Down navigate", "Enter select"]
-
-                Text {
-                    required property string modelData
-                    text: modelData.toUpperCase()
-                    color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontEyebrow
-                    font.letterSpacing: 1
-                }
-            }
+        onTextChanged: root.cursor = 0
+        // however it got focus (`/` or a click), the arrows start from the
+        // open section
+        onFocusedChanged: if (focused)
+            root.cursor = root.query === "" ? Math.max(0, root.pages.findIndex(p => p.id === root.currentPage)) : 0
+        onDownPressed: root.moveCursor(1)
+        onUpPressed: root.moveCursor(-1)
+        onTabPressed: root.moveCursor(1)
+        onBackTabPressed: root.moveCursor(-1)
+        onAccepted: if (root.rows.length > 0) root.activate(root.rows[root.cursor])
+        // first clear the query, then leave the bar; the window's own
+        // Escape closes it after that
+        onEscapePressed: {
+            if (text !== "") text = ""
+            else chrome.keySink.forceActiveFocus()
         }
     }
 

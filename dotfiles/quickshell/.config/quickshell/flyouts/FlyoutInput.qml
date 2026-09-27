@@ -9,6 +9,9 @@
 // in a flyout. On a Settings page it stays within its bounds, so its edges
 // line up with the chips and switches beside it.
 //
+// A search box is the same field with a `glyph` in front, lit while it has
+// focus, and key `hints` at its far end: the launcher's and Settings'.
+//
 // The panel it sits in must ask for keyboard focus (FlyoutPanel.wantsKeyboard)
 // -- a layer-shell surface gets no key events at all otherwise, and the field
 // would look focused while silently dropping every keystroke.
@@ -23,6 +26,9 @@ Item {
     property alias text: field.text
     property bool echoPassword: true
     property bool bleed: false
+    property string glyph: ""
+    property var hints: []
+    readonly property bool focused: field.activeFocus
 
     signal accepted()
     // Arrow keys and Escape, for fields that drive a list below them. Emitted
@@ -64,6 +70,50 @@ Item {
         border.color: field.activeFocus ? Theme.strokeFocus : Theme.stroke
     }
 
+    // the glyph and the hints are outside the text, but still the field
+    MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.IBeamCursor
+        onClicked: field.forceActiveFocus()
+    }
+
+    Item {
+        id: glyphCell
+        visible: root.glyph !== ""
+        x: Theme.spaceL
+        width: visible ? Theme.iconCell : 0
+        height: parent.height
+
+        Text {
+            anchors.centerIn: parent
+            text: root.glyph
+            color: field.activeFocus ? Theme.accent : Theme.subtext
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontIconSize
+        }
+    }
+
+    Row {
+        id: hintRow
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spaceL
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Theme.spaceXl
+
+        Repeater {
+            model: root.hints
+
+            Text {
+                required property string modelData
+                text: modelData.toUpperCase()
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontEyebrow
+                font.letterSpacing: 1
+            }
+        }
+    }
+
     Text {
         anchors.left: field.left
         anchors.right: field.right
@@ -79,8 +129,10 @@ Item {
     TextInput {
         id: field
         anchors.fill: parent
-        anchors.leftMargin: Theme.spaceXs + (root.bleed ? 0 : Theme.spaceS)
-        anchors.rightMargin: anchors.leftMargin
+        anchors.leftMargin: root.glyph !== "" ? glyphCell.x + glyphCell.width + Theme.spaceM
+            : Theme.spaceXs + (root.bleed ? 0 : Theme.spaceS)
+        anchors.rightMargin: root.hints.length > 0 ? hintRow.width + Theme.spaceL + Theme.spaceXl
+            : Theme.spaceXs + (root.bleed ? 0 : Theme.spaceS)
         verticalAlignment: TextInput.AlignVCenter
         // text scrolled out of view past either end stays inside the frame
         clip: true

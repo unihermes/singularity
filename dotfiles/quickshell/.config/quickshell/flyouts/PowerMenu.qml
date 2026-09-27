@@ -71,10 +71,11 @@ OverlayWindow {
         }
     }
 
+    // laid out as the launcher is: a heading with the key hints, then the body
     PanelFrame {
         anchors.centerIn: parent
-        width: row.width + Theme.sp(40)
-        height: heading.height + row.height + Theme.sp(52)
+        width: body.implicitWidth + Theme.panelPad * 4
+        height: body.implicitHeight + Theme.panelPad * 4
 
         // absorbs clicks so they don't reach the backdrop
         MouseArea {
@@ -82,76 +83,74 @@ OverlayWindow {
             onClicked: {}
         }
 
-        Text {
-            id: heading
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.sp(18)
-            text: Theme.heading("POWER")
+        Column {
+            id: body
+            x: Theme.panelPad * 2
+            y: Theme.panelPad * 2
+            spacing: Theme.spaceL
 
-            color: Theme.subtext
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontSmall
-            font.bold: Theme.headingBold
-            font.letterSpacing: Theme.headingSpacing
-        }
+            FlyoutHeading {
+                width: row.width
+                text: "POWER"
+                hints: ["Arrows choose", "Enter run", "Esc close"]
+            }
 
-        Row {
-            id: row
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: heading.y + heading.height + Theme.sp(14)
-            spacing: Theme.sp(10)
+            Row {
+                id: row
+                spacing: Theme.spaceL
 
-            Repeater {
-                model: root.actions
+                Repeater {
+                    model: root.actions
 
-                Rectangle {
-                    id: tile
-                    required property var modelData
-                    required property int index
-                    readonly property bool selected: root.current === index
+                    Rectangle {
+                        id: tile
+                        required property var modelData
+                        required property int index
+                        readonly property bool selected: root.current === index
 
-                    width: Theme.fs(104)
-                    height: Theme.fs(104)
-                    radius: Theme.radiusInner
-                    color: selected ? Theme.hoverFill : Theme.surface
-                    border.width: Theme.borderWidth
-                    border.color: selected ? Theme.selectedStroke : Theme.border
+                        width: Theme.fs(104)
+                        height: Theme.fs(104)
+                        radius: Theme.radiusInner
+                        color: selected ? Theme.selectedFill : Theme.surface
+                        border.width: Theme.borderWidth
+                        border.color: selected ? Theme.selectedStroke : Theme.border
 
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: Theme.spaceM
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: Theme.spaceM
 
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: tile.modelData.icon
-                            color: tile.selected ? Theme.textStrong : Theme.text
-                            font.family: Theme.fontIcon
-                            font.pixelSize: Theme.fontHero
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: tile.modelData.icon
+                                color: tile.selected ? Theme.textStrong : Theme.text
+                                font.family: Theme.fontIcon
+                                font.pixelSize: Theme.fontHero
+                            }
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: tile.modelData.label
+                                color: tile.selected ? Theme.textStrong : Theme.text
+                                font.family: Theme.fontText
+                                font.pixelSize: Theme.fontBody
+                            }
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: tile.modelData.key
+                                color: Theme.subtext
+                                font.family: Theme.fontText
+                                font.pixelSize: Theme.fontCaption
+                            }
                         }
 
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: tile.modelData.label
-                            color: tile.selected ? Theme.textStrong : Theme.text
-                            font.family: Theme.fontText
-                            font.pixelSize: Theme.fontBody
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: root.current = tile.index
+                            onClicked: root.run(tile.index)
                         }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: tile.modelData.key
-                            color: Theme.subtext
-                            font.family: Theme.fontText
-                            font.pixelSize: Theme.fontCaption
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onEntered: root.current = tile.index
-                        onClicked: root.run(tile.index)
                     }
                 }
             }

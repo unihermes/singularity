@@ -182,155 +182,40 @@ OverlayWindow {
             width: parent.width - Theme.panelPad * 4
             spacing: Theme.spaceL
 
-            // the mode's name cut into a rule, as a flyout's headings are,
-            // with the key hints at its far end rather than in a footer
-            Item {
-                width: parent.width
-                height: Math.max(title.implicitHeight, hintRow.implicitHeight)
-
-                Text {
-                    id: title
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Theme.heading(root.clipMode ? "CLIPBOARD"
-                        : root.calcMode ? "CALCULATOR"
-                        : root.fileMode ? "FILES" : "APPLICATIONS")
-                    color: Theme.headingColor
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontSmall
-                    font.bold: Theme.headingBold
-                    font.letterSpacing: Theme.headingSpacing
-                }
-
-                Rectangle {
-                    visible: Theme.headingRule
-                    anchors.left: title.right
-                    anchors.leftMargin: Theme.spaceL
-                    anchors.right: hintRow.left
-                    anchors.rightMargin: Theme.spaceL
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: Theme.borderWidth
-                    color: Theme.stroke
-                }
-
-                Row {
-                    id: hintRow
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Theme.spaceXl
-
-                    Repeater {
-                        model: root.hints
-
-                        Text {
-                            required property string modelData
-                            text: modelData.toUpperCase()
-                            color: Theme.subtext
-                            font.family: Theme.fontText
-                            font.pixelSize: Theme.fontEyebrow
-                            font.letterSpacing: 1
-                        }
-                    }
-                }
+            // the mode's name, with the key hints at the rule's far end
+            // rather than in a footer
+            FlyoutHeading {
+                text: root.clipMode ? "CLIPBOARD"
+                    : root.calcMode ? "CALCULATOR"
+                    : root.fileMode ? "FILES" : "APPLICATIONS"
+                hints: root.hints
             }
 
-            // the search field, drawn as Settings' is: the mode's glyph, lit
-            // while the field has focus, then the query
-            Rectangle {
-                id: searchBar
-                width: parent.width
+            // the search field, as Settings' is: the mode's glyph, then the query
+            FlyoutInput {
+                id: search
                 height: Theme.rowHeightTall + Theme.spaceM
-                radius: Theme.radiusInner
-                color: Theme.fieldFill
-                border.width: Theme.borderWidth
-                border.color: search.activeFocus ? Theme.strokeFocus : Theme.stroke
+                echoPassword: false
+                glyph: root.clipMode ? "󰅍" : root.calcMode ? "󰃬"
+                    : root.fileMode ? "󰉋" : "󰀻"
+                placeholder: root.clipMode ? "Search clipboard"
+                    : root.calcMode ? "2 + 2 * 3, sqrt(16), 200 * 15%"
+                    : root.fileMode ? "Search files in ~"
+                    : "Search applications"
 
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.IBeamCursor
-                    onClicked: search.forceActiveFocus()
+                onTextChanged: {
+                    root.query = text
+                    list.currentIndex = 0
+                    if (root.fileMode) Files.search(text)
                 }
-
-                Item {
-                    id: modeGlyph
-                    x: Theme.spaceL
-                    width: Theme.iconCell
-                    height: parent.height
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.clipMode ? "󰅍" : root.calcMode ? "󰃬"
-                            : root.fileMode ? "󰉋" : "󰀻"
-                        color: search.activeFocus ? Theme.accent : Theme.subtext
-                        font.family: Theme.fontIcon
-                        font.pixelSize: Theme.fontIconSize
-                    }
-                }
-
-                Text {
-                    anchors.left: search.left
-                    anchors.right: search.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: search.text === ""
-                    text: root.clipMode ? "Search clipboard"
-                        : root.calcMode ? "2 + 2 * 3, sqrt(16), 200 * 15%"
-                        : root.fileMode ? "Search files in ~"
-                        : "Search applications"
-                    elide: Text.ElideRight
-                    color: Theme.textDisabled
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontBody
-                }
-
-                TextInput {
-                    id: search
-                    anchors.left: modeGlyph.right
-                    anchors.leftMargin: Theme.spaceM
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spaceL
-                    anchors.verticalCenter: parent.verticalCenter
-                    clip: true
-                    color: Theme.textStrong
-                    selectionColor: Theme.muted
-                    selectedTextColor: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontBody
-
-                    function forceFocus() {
-                        forceActiveFocus()
-                        selectAll()
-                    }
-                    // after inserting text: keep typing where the insert
-                    // left off, not with the whole field selected
-                    function moveToEnd() {
-                        forceActiveFocus()
-                        cursorPosition = text.length
-                    }
-
-                    onTextChanged: {
-                        root.query = text
-                        list.currentIndex = 0
-                        if (root.fileMode) Files.search(text)
-                    }
-                    onAccepted: if (list.count > 0) root.activate(root.items[list.currentIndex])
-                    Keys.onDownPressed: if (list.currentIndex < list.count - 1) list.currentIndex++
-                    Keys.onUpPressed: if (list.currentIndex > 0) list.currentIndex--
-                    Keys.onEscapePressed: root.requestClose()
-                    Keys.onTabPressed: root.stepMode(1)
-                    Keys.onBacktabPressed: root.stepMode(-1)
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {
-                            root.removeCurrent()
-                            event.accepted = true
-                        }
-                        // caught here rather than in onAccepted, which can't
-                        // tell a plain Enter from a shifted one
-                        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                                && (event.modifiers & Qt.ShiftModifier)) {
-                            if (list.count > 0) root.activateAlt(root.items[list.currentIndex])
-                            event.accepted = true
-                        }
-                    }
-                }
+                onAccepted: if (list.count > 0) root.activate(root.items[list.currentIndex])
+                onDownPressed: if (list.currentIndex < list.count - 1) list.currentIndex++
+                onUpPressed: if (list.currentIndex > 0) list.currentIndex--
+                onEscapePressed: root.requestClose()
+                onTabPressed: root.stepMode(1)
+                onBackTabPressed: root.stepMode(-1)
+                onShiftDeletePressed: root.removeCurrent()
+                onShiftReturnPressed: if (list.count > 0) root.activateAlt(root.items[list.currentIndex])
             }
 
             Item {

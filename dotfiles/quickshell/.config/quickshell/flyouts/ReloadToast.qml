@@ -57,17 +57,17 @@ OverlayWindow {
         onTriggered: root.active = false
     }
 
-    // 368px wide, 6px off the bar and the screen edge, with a summary and a
-    // body. A failure takes the alert stroke, as a critical notification
-    // does (NotificationCard).
+    // Sized and spaced as a notification popup is, a summary over a body.
+    // A failure takes the alert stroke, as a critical notification does
+    // (NotificationCard).
     PanelFrame {
         id: box
-        readonly property int gap: 6
+        readonly property int gap: Theme.edgeMargin
 
         x: gap
         y: root.atBottom ? root.height - Theme.barExtent - gap - height : Theme.barExtent + gap
-        width: 368
-        height: col.implicitHeight + 26
+        width: Theme.fit(380)
+        height: col.implicitHeight + Theme.panelPad * 2
         border.color: root.failed ? Theme.alert : Theme.stroke
 
         opacity: root.active ? 1 : 0
@@ -77,16 +77,16 @@ OverlayWindow {
 
         Column {
             id: col
-            x: 14
-            y: 11
-            width: parent.width - 28
-            spacing: 2
+            x: Theme.panelPad
+            y: Theme.panelPad
+            width: parent.width - Theme.panelPad * 2
+            spacing: Theme.spaceS
 
             Text {
                 text: root.failed ? "Quickshell reload failed" : "Quickshell reloaded"
-                color: Theme.bright
+                color: Theme.textStrong
                 font.family: Theme.fontText
-                font.pixelSize: Theme.fs(13)
+                font.pixelSize: Theme.fontBody
                 font.bold: true
             }
 
@@ -95,7 +95,7 @@ OverlayWindow {
                 text: root.failed ? root.error : "Configuration loaded"
                 color: Theme.text
                 font.family: Theme.fontText
-                font.pixelSize: Theme.fs(13)
+                font.pixelSize: Theme.fontBody
                 wrapMode: Text.Wrap
                 maximumLineCount: 8
                 elide: Text.ElideRight

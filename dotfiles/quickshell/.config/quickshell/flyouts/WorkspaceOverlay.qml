@@ -77,11 +77,12 @@ OverlayWindow {
         }
     }
 
+    // laid out as the launcher is: a heading with the key hints, then the body
     PanelFrame {
         id: box
         anchors.centerIn: parent
-        width: grid.width + Theme.sp(40)
-        height: heading.height + grid.height + Theme.sp(52)
+        width: body.implicitWidth + Theme.panelPad * 4
+        height: body.implicitHeight + Theme.panelPad * 4
 
         // absorbs clicks so they don't reach the backdrop and close the overlay
         MouseArea {
@@ -89,257 +90,247 @@ OverlayWindow {
             onClicked: {}
         }
 
-        Text {
-            id: heading
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.sp(18)
-            text: Theme.heading("WORKSPACES")
+        Column {
+            id: body
+            x: Theme.panelPad * 2
+            y: Theme.panelPad * 2
+            spacing: Theme.spaceL
 
-            color: Theme.subtext
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontSmall
-            font.bold: Theme.headingBold
-            font.letterSpacing: Theme.headingSpacing
-        }
+            FlyoutHeading {
+                width: grid.width
+                text: "WORKSPACES"
+                hints: ["1-" + Math.min(9, root.workspaceCount) + " jump", "Drag a window to move it", "Esc close"]
+            }
 
-        Grid {
-            id: grid
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: heading.y + heading.height + Theme.sp(14)
-            columns: Math.min(3, root.workspaceCount)
-            spacing: Theme.sp(10)
+            Grid {
+                id: grid
+                columns: Math.min(3, root.workspaceCount)
+                spacing: Theme.spaceL
 
-            Repeater {
-                model: root.workspaceCount
+                Repeater {
+                    model: root.workspaceCount
 
-                // One workspace. `index` is 0-based, Hyprland ids are 1-based.
-                Rectangle {
-                    id: cell
-                    required property int index
-                    readonly property int wsId: index + 1
-                    readonly property bool isFocused:
-                        Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
-                    readonly property bool isDropTarget: root.dropTarget === wsId
-                    // Hyprland only creates a workspace object once something is
-                    // on it, so an empty workspace legitimately has none.
-                    readonly property var windows: {
-                        const ws = Hyprland.workspaces.values.find(w => w.id === cell.wsId)
-                        if (!ws || !ws.toplevels) return []
-                        return ws.toplevels.values.filter(tl => !root.isShellWindow(tl))
-                    }
-
-                    width: Theme.fs(200)
-                    height: Theme.fs(132)
-                    radius: Theme.radiusInner
-                    color: isDropTarget ? Theme.selectedFill : Theme.surface
-                    border.width: Theme.borderWidth
-                    border.color: isDropTarget ? Theme.accent
-                        : cell.isFocused ? Theme.text
-                        : wsMouse.containsMouse ? Theme.strokeHover
-                        : Theme.border
-
-                    Behavior on border.color {
-                        ColorAnimation { duration: Theme.durFast }
-                    }
-
-                    // Jump to this workspace. Sits behind the window rows, so a
-                    // click that lands on a row focuses that window instead.
-                    MouseArea {
-                        id: wsMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            Hyprland.dispatch("hl.dsp.focus({workspace=" + cell.wsId + "})")
-                            root.requestClose()
+                    // One workspace. `index` is 0-based, Hyprland ids are 1-based.
+                    Rectangle {
+                        id: cell
+                        required property int index
+                        readonly property int wsId: index + 1
+                        readonly property bool isFocused:
+                            Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
+                        readonly property bool isDropTarget: root.dropTarget === wsId
+                        // Hyprland only creates a workspace object once something is
+                        // on it, so an empty workspace legitimately has none.
+                        readonly property var windows: {
+                            const ws = Hyprland.workspaces.values.find(w => w.id === cell.wsId)
+                            if (!ws || !ws.toplevels) return []
+                            return ws.toplevels.values.filter(tl => !root.isShellWindow(tl))
                         }
-                    }
 
-                    Text {
-                        x: Theme.spaceL
-                        y: Theme.spaceM
-                        text: cell.wsId
-                        color: cell.isFocused ? Theme.textStrong : Theme.text
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontBody
-                        font.bold: cell.isFocused
-                    }
+                        width: Theme.fs(200)
+                        height: Theme.fs(132)
+                        radius: Theme.radiusInner
+                        // the current workspace is lit as the power menu's
+                        // current tile is; a drop target takes the accent
+                        color: isDropTarget || cell.isFocused ? Theme.selectedFill : Theme.surface
+                        border.width: Theme.borderWidth
+                        border.color: isDropTarget ? Theme.accent
+                            : cell.isFocused ? Theme.selectedStroke
+                            : wsMouse.containsMouse ? Theme.strokeHover
+                            : Theme.border
 
-                    Text {
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.spaceL
-                        y: Theme.spaceM
-                        text: cell.windows.length === 0 ? "empty"
-                            : cell.windows.length + (cell.windows.length === 1 ? " window" : " windows")
-                        color: Theme.muted
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontSmall
-                    }
+                        Behavior on border.color {
+                            ColorAnimation { duration: Theme.durFast }
+                        }
 
-                    Column {
-                        x: Theme.spaceL
-                        y: Theme.spaceM + Theme.rowHeight
-                        width: parent.width - Theme.spaceL * 2
-                        spacing: Theme.spaceXs
+                        // Jump to this workspace. Sits behind the window rows, so a
+                        // click that lands on a row focuses that window instead.
+                        MouseArea {
+                            id: wsMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                Hyprland.dispatch("hl.dsp.focus({workspace=" + cell.wsId + "})")
+                                root.requestClose()
+                            }
+                        }
 
-                        Repeater {
-                            model: cell.windows
+                        Text {
+                            x: Theme.spaceL
+                            y: Theme.spaceM
+                            text: cell.wsId
+                            color: cell.isFocused ? Theme.textStrong : Theme.text
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontBody
+                            font.bold: cell.isFocused
+                        }
 
-                            Rectangle {
-                                id: winRow
-                                required property var modelData
-                                readonly property string cls:
-                                    (modelData.lastIpcObject && modelData.lastIpcObject.class) || ""
+                        Text {
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.spaceL
+                            y: Theme.spaceM
+                            text: cell.windows.length === 0 ? "empty"
+                                : cell.windows.length + (cell.windows.length === 1 ? " window" : " windows")
+                            color: Theme.muted
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontSmall
+                        }
 
-                                width: parent.width
-                                height: Theme.row(22)
-                                radius: Theme.radiusSmall
-                                color: winDrag.dragging ? Theme.selectedFill
-                                    : winDrag.containsMouse ? Theme.hoverFill
-                                    : "transparent"
+                        Column {
+                            x: Theme.spaceL
+                            y: Theme.spaceM + Theme.rowHeight
+                            width: parent.width - Theme.spaceL * 2
+                            spacing: Theme.spaceXs
 
-                                Row {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: Theme.spaceS
-                                    anchors.rightMargin: Theme.spaceS
-                                    spacing: Theme.spaceM
+                            Repeater {
+                                model: cell.windows
 
-                                    Item {
-                                        id: winIco
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        implicitWidth: Theme.fs(14)
-                                        implicitHeight: Theme.fs(14)
+                                Rectangle {
+                                    id: winRow
+                                    required property var modelData
+                                    readonly property string cls:
+                                        (modelData.lastIpcObject && modelData.lastIpcObject.class) || ""
 
-                                        readonly property string iconPath: Apps.iconForClass(winRow.cls)
+                                    width: parent.width
+                                    height: Theme.row(22)
+                                    radius: Theme.radiusSmall
+                                    color: winDrag.dragging ? Theme.selectedFill
+                                        : winDrag.containsMouse ? Theme.hoverFill
+                                        : "transparent"
 
-                                        IconImage {
-                                            anchors.fill: parent
-                                            visible: winIco.iconPath !== ""
-                                            source: winIco.iconPath
+                                    Row {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: Theme.spaceS
+                                        anchors.rightMargin: Theme.spaceS
+                                        spacing: Theme.spaceM
+
+                                        Item {
+                                            id: winIco
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            implicitWidth: Theme.fontSmall
+                                            implicitHeight: Theme.fontSmall
+
+                                            readonly property string iconPath: Apps.iconForClass(winRow.cls)
+
+                                            IconImage {
+                                                anchors.fill: parent
+                                                visible: winIco.iconPath !== ""
+                                                source: winIco.iconPath
+                                            }
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                visible: winIco.iconPath === ""
+                                                text: Apps.glyphForWindow(winRow.cls,
+                                                    winRow.modelData.lastIpcObject
+                                                        ? winRow.modelData.lastIpcObject.title : "")
+                                                color: Theme.subtext
+                                                font.family: Theme.fontIcon
+                                                font.pixelSize: Theme.fontSmall
+                                            }
                                         }
 
                                         Text {
-                                            anchors.centerIn: parent
-                                            visible: winIco.iconPath === ""
-                                            text: Apps.glyphForWindow(winRow.cls,
-                                                winRow.modelData.lastIpcObject
-                                                    ? winRow.modelData.lastIpcObject.title : "")
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: parent.width - winIco.width - parent.spacing
+
+                                            elide: Text.ElideRight
+                                            text: (winRow.modelData.lastIpcObject
+                                                   && winRow.modelData.lastIpcObject.title) || winRow.cls
                                             color: Theme.subtext
-                                            font.family: Theme.fontIcon
-                                            font.pixelSize: Theme.fs(13)
+                                            font.family: Theme.fontText
+                                            font.pixelSize: Theme.fontSmall
                                         }
                                     }
 
-                                    Text {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: parent.width - Theme.fs(14) - parent.spacing
+                                    // Click focuses this window; dragging it onto
+                                    // another cell moves it there instead.
+                                    //
+                                    // Hand-rolled rather than Qt's Drag/DropArea to
+                                    // match BarWidgetList's reorder grip, the only
+                                    // other drag in the shell: press, track the
+                                    // pointer against each cell's bounds, act on
+                                    // release. Nothing here needs a drag proxy item
+                                    // or mime data, so the native API would only add
+                                    // moving parts.
+                                    MouseArea {
+                                        id: winDrag
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        preventStealing: true
+                                        cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
 
-                                        elide: Text.ElideRight
-                                        text: (winRow.modelData.lastIpcObject
-                                               && winRow.modelData.lastIpcObject.title) || winRow.cls
-                                        color: Theme.subtext
-                                        font.family: Theme.fontText
-                                        font.pixelSize: Theme.fontSmall
-                                    }
-                                }
+                                        property bool dragging: false
+                                        property real pressX: 0
+                                        property real pressY: 0
 
-                                // Click focuses this window; dragging it onto
-                                // another cell moves it there instead.
-                                //
-                                // Hand-rolled rather than Qt's Drag/DropArea to
-                                // match BarWidgetList's reorder grip, the only
-                                // other drag in the shell: press, track the
-                                // pointer against each cell's bounds, act on
-                                // release. Nothing here needs a drag proxy item
-                                // or mime data, so the native API would only add
-                                // moving parts.
-                                MouseArea {
-                                    id: winDrag
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    preventStealing: true
-                                    cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
-
-                                    property bool dragging: false
-                                    property real pressX: 0
-                                    property real pressY: 0
-
-                                    function workspaceAt(mouse) {
-                                        const p = mapToItem(grid, mouse.x, mouse.y)
-                                        for (let i = 0; i < grid.children.length; i++) {
-                                            const c = grid.children[i]
-                                            if (c.wsId === undefined) continue
-                                            if (p.x >= c.x && p.x <= c.x + c.width
-                                                && p.y >= c.y && p.y <= c.y + c.height) return c.wsId
+                                        function workspaceAt(mouse) {
+                                            const p = mapToItem(grid, mouse.x, mouse.y)
+                                            for (let i = 0; i < grid.children.length; i++) {
+                                                const c = grid.children[i]
+                                                if (c.wsId === undefined) continue
+                                                if (p.x >= c.x && p.x <= c.x + c.width
+                                                    && p.y >= c.y && p.y <= c.y + c.height) return c.wsId
+                                            }
+                                            return -1
                                         }
-                                        return -1
-                                    }
 
-                                    onPressed: mouse => {
-                                        pressX = mouse.x
-                                        pressY = mouse.y
-                                        dragging = false
-                                    }
-
-                                    onPositionChanged: mouse => {
-                                        if (!pressed) return
-                                        // A few pixels of slop so a click with a
-                                        // shaky hand stays a click.
-                                        if (!dragging
-                                            && Math.abs(mouse.x - pressX) < 6
-                                            && Math.abs(mouse.y - pressY) < 6) return
-                                        dragging = true
-                                        const target = workspaceAt(mouse)
-                                        root.dropTarget = target === cell.wsId ? -1 : target
-                                    }
-
-                                    onReleased: mouse => {
-                                        const target = dragging ? workspaceAt(mouse) : -1
-                                        const addr = "address:0x" + winRow.modelData.address
-                                        root.dropTarget = -1
-
-                                        if (!dragging) {
-                                            Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-                                            root.requestClose()
-                                        } else if (target !== -1 && target !== cell.wsId) {
-                                            // Move the dragged window, not
-                                            // whatever happens to be focused.
-                                            Hyprland.dispatch("hl.dsp.window.move({window=\"" + addr
-                                                + "\", workspace=" + target + "})")
-                                            Hyprland.refreshToplevels()
+                                        onPressed: mouse => {
+                                            pressX = mouse.x
+                                            pressY = mouse.y
+                                            dragging = false
                                         }
-                                        dragging = false
-                                    }
 
-                                    onCanceled: {
-                                        dragging = false
-                                        root.dropTarget = -1
+                                        onPositionChanged: mouse => {
+                                            if (!pressed) return
+                                            // A few pixels of slop so a click with a
+                                            // shaky hand stays a click.
+                                            if (!dragging
+                                                && Math.abs(mouse.x - pressX) < 6
+                                                && Math.abs(mouse.y - pressY) < 6) return
+                                            dragging = true
+                                            const target = workspaceAt(mouse)
+                                            root.dropTarget = target === cell.wsId ? -1 : target
+                                        }
+
+                                        onReleased: mouse => {
+                                            const target = dragging ? workspaceAt(mouse) : -1
+                                            const addr = "address:0x" + winRow.modelData.address
+                                            root.dropTarget = -1
+
+                                            if (!dragging) {
+                                                Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
+                                                root.requestClose()
+                                            } else if (target !== -1 && target !== cell.wsId) {
+                                                // Move the dragged window, not
+                                                // whatever happens to be focused.
+                                                Hyprland.dispatch("hl.dsp.window.move({window=\"" + addr
+                                                    + "\", workspace=" + target + "})")
+                                                Hyprland.refreshToplevels()
+                                            }
+                                            dragging = false
+                                        }
+
+                                        onCanceled: {
+                                            dragging = false
+                                            root.dropTarget = -1
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    Text {
-                        anchors.centerIn: parent
-                        visible: cell.windows.length === 0
-                        text: "󰇘"
-                        color: Theme.muted
-                        font.family: Theme.fontIcon
-                        font.pixelSize: Theme.fontIconSize
+                        Text {
+                            anchors.centerIn: parent
+                            visible: cell.windows.length === 0
+                            text: "󰇘"
+                            color: Theme.muted
+                            font.family: Theme.fontIcon
+                            font.pixelSize: Theme.fontIconSize
+                        }
                     }
                 }
             }
-        }
-
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: Theme.spaceL
-            text: "click to jump · drag a window to move it · esc to close"
-            color: Theme.muted
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontSmall
         }
     }
 }
