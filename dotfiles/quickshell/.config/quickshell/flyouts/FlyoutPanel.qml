@@ -41,10 +41,10 @@ OverlayWindow {
     // making the user click the field first defeats the point. Safe because
     // the panel is transient -- focus goes back when it closes.
     property bool keyboardExclusive: false
-    // Distance from the bar's screen edge to the near edge of the box.
-    // Matches the bar's height exactly so the flyout sits flush against it
-    // rather than floating away from it.
-    property real topOffset: Theme.barExtent
+    // Distance from the bar's screen edge to the near edge of the box: the
+    // bar's height and one pixel more, so the box's stroke sits just clear
+    // of the bar's edge line rather than on top of it.
+    property real topOffset: Theme.barExtent + 1
 
     // How close the box may come to the left/right screen edge once the
     // clamp below catches it. The panels whose trigger sits at the very end
