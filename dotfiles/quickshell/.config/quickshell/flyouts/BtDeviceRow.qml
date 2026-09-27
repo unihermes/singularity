@@ -41,7 +41,6 @@ FlyoutRow {
     }
 
     highlighted: device.connected
-    enabled: !busy
 
     // Unpair and drop it from BlueZ entirely, so it moves back to nearby
     // (or vanishes, if it's off) and has to be paired again to reconnect.

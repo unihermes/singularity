@@ -38,33 +38,13 @@ SystemPage {
             text: "MACHINE"
         }
 
-        Rectangle {
+        FlyoutChip {
             id: copyBtn
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: copyLabel.implicitWidth + Theme.spaceXxl
-            height: Theme.controlSize
-            radius: Theme.radiusInner
-            color: copyMouse.containsMouse ? Theme.hoverFill : "transparent"
-            border.width: Theme.borderWidth
-            border.color: Theme.stroke
-
-            Text {
-                id: copyLabel
-                anchors.centerIn: parent
-                text: SystemSpecs.copied ? "Copied" : "Copy specs"
-                color: SystemSpecs.copied ? Theme.textStrong : Theme.subtext
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontSmall
-            }
-
-            MouseArea {
-                id: copyMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: SystemSpecs.copySummary()
-            }
+            text: SystemSpecs.copied ? "Copied" : "Copy specs"
+            selected: SystemSpecs.copied
+            onClicked: SystemSpecs.copySummary()
         }
     }
 

@@ -48,9 +48,9 @@ FlyoutPanel {
         }
     }
 
-    FlyoutRow { label: "Feels like"; trailing: Weather.temp(Weather.feelsF, Weather.feelsC); enabled: false }
-    FlyoutRow { label: "Humidity";   trailing: Weather.humidity + "%"; enabled: false }
-    FlyoutRow { label: "Wind";       trailing: Weather.wind; enabled: false }
+    FlyoutRow { label: "Feels like"; trailing: Weather.temp(Weather.feelsF, Weather.feelsC); trailingIsValue: true; enabled: false }
+    FlyoutRow { label: "Humidity";   trailing: Weather.humidity + "%"; trailingIsValue: true; enabled: false }
+    FlyoutRow { label: "Wind";       trailing: Weather.wind; trailingIsValue: true; enabled: false }
 
     FlyoutHeading { text: "FORECAST" }
 

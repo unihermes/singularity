@@ -220,37 +220,15 @@ Column {
 
                 // Only on your own processes: kill as a user can't touch
                 // root's, and a button that silently fails is worse than none.
-                Rectangle {
+                IconButton {
                     id: killBtn
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.killW
-                    height: Theme.chipHeight
-                    radius: Theme.radiusInner
                     visible: pr.mine
-                    color: pr.armed ? Theme.alert
-                        : killMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-                    border.width: Theme.borderWidth
-                    border.color: pr.armed ? Theme.alert
-                        : killMouse.containsMouse ? Theme.strokeHover : "transparent"
-
-                    Text {
-                        anchors.centerIn: parent
-                        // a check to confirm once armed, an x before
-                        text: pr.armed ? "󰄬" : "󰅖"
-                        color: pr.armed ? Theme.base
-                            : killMouse.containsMouse ? Theme.textStrong : Theme.muted
-                        font.family: Theme.fontIcon
-                        font.pixelSize: Theme.fontIconSize
-                    }
-
-                    MouseArea {
-                        id: killMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: SystemStats.requestKill(pr.modelData.pid)
-                    }
+                    icon: "󰅖"
+                    armed: pr.armed
+                    onClicked: SystemStats.requestKill(pr.modelData.pid)
                 }
             }
         }

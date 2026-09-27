@@ -51,57 +51,33 @@ FlyoutPanel {
         }
     }
 
-    component PageButton: Rectangle {
-        id: btn
-        property string glyph
-        signal clicked()
-        width: Theme.controlSize
-        height: Theme.controlSize
-        radius: Theme.radiusSmall
-        color: area.containsMouse ? Theme.hoverFill : "transparent"
-
-        Text {
-            anchors.centerIn: parent
-            text: btn.glyph
-            color: area.containsMouse ? Theme.textStrong : Theme.subtext
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontLarge
-        }
-        MouseArea {
-            id: area
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: btn.clicked()
-        }
-    }
-
     Item {
         width: parent.width
         height: Theme.chipHeight
 
-        PageButton {
+        IconButton {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            glyph: "‹"
+            icon: "󰅁"
             onClicked: calendarFlyout.monthOffset--
         }
 
         Text {
             anchors.centerIn: parent
-            text: Qt.formatDateTime(calendarFlyout.shown,
+            text: Theme.heading(Qt.formatDateTime(calendarFlyout.shown,
                 calendarFlyout.shown.getFullYear() === calendarFlyout.now.getFullYear()
-                    ? "MMMM" : "MMMM yyyy").toUpperCase()
-            color: Theme.textStrong
+                    ? "MMMM" : "MMMM yyyy"))
+            color: Theme.headingColor
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
-            font.bold: true
+            font.bold: Theme.headingBold
+            font.letterSpacing: Theme.headingSpacing
         }
 
-        PageButton {
+        IconButton {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            glyph: "›"
+            icon: "󰅂"
             onClicked: calendarFlyout.monthOffset++
         }
     }

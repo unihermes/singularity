@@ -92,7 +92,6 @@ Column {
     property string captureMods: ""
     // the combo a conflict warning was shown for; saving it again goes ahead
     property string conflictAck: ""
-    property bool deleteArmed: false
     property string editError: ""
 
     // presets
@@ -367,7 +366,6 @@ Column {
         capturing = false
         captureMods = ""
         conflictAck = ""
-        deleteArmed = false
         editError = ""
         editFlags = ({})
         editFlagsSimple = true
@@ -433,7 +431,6 @@ Column {
     }
 
     function remove() {
-        if (!deleteArmed) { deleteArmed = true; return }
         commit(HyprBinds.removeBind(model, editRow), "Deleted " + editRow.keys)
     }
 
@@ -966,8 +963,8 @@ Column {
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
                     visible: root.editMode === "edit"
-                    text: root.deleteArmed ? "Click again to delete" : "Delete"
-                    selected: root.deleteArmed
+                    text: "Delete"
+                    confirmText: "Click again to delete"
                     enabled: !root.busy
                     onClicked: root.remove()
                 }

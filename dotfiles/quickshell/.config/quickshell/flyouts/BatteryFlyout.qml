@@ -30,12 +30,14 @@ FlyoutPanel {
         trailing: UPower.onBattery
             ? batteryFlyout.fmtSeconds(Battery.device ? Battery.device.timeToEmpty : 0) + " left"
             : batteryFlyout.fmtSeconds(Battery.device ? Battery.device.timeToFull : 0) + " to full"
+        trailingIsValue: true
         enabled: false
     }
 
     FlyoutRow {
         label: "Draw"
         trailing: Battery.device ? Math.abs(Battery.device.changeRate).toFixed(1) + " W" : "--"
+        trailingIsValue: true
         enabled: false
     }
 
@@ -44,6 +46,7 @@ FlyoutPanel {
         trailing: (Battery.device && Battery.device.healthSupported)
             ? Math.round(Battery.device.healthPercentage) + "%"
             : "n/a"
+        trailingIsValue: true
         enabled: false
     }
 

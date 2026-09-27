@@ -9,7 +9,7 @@
 //
 //   click a tab           switch to it
 //   double-click a tab    rename it (Enter keeps, Escape drops)
-//   ×  on the open tab    delete it; a second click confirms when it has text
+//   󰅖  on the open tab    delete it; a second click confirms when it has text
 //   Ctrl+T / Ctrl+W       new tab / delete the open one
 //   Ctrl+Tab, Ctrl+PgDn   next tab (Shift / PgUp for the previous)
 //   Escape                hide the window
@@ -177,12 +177,13 @@ FloatingWindow {
                     // delete, on the open tab only
                     Text {
                         visible: tab.open && !tab.editing
-                        text: root.armed === tab.index ? "Delete?" : "×"
+                        anchors.verticalCenter: parent.verticalCenter
+                        // armed, the alert check every confirm-twice button shows
+                        text: root.armed === tab.index ? "󰄬" : "󰅖"
                         color: root.armed === tab.index ? Theme.alert
                             : closeMouse.containsMouse ? Theme.textStrong : Theme.subtext
-                        font.family: Theme.fontText
+                        font.family: Theme.fontIcon
                         font.pixelSize: Theme.fontSmall
-                        font.bold: root.armed === tab.index
 
                         MouseArea {
                             id: closeMouse
@@ -254,7 +255,7 @@ FloatingWindow {
 
                 Text {
                     visible: editor.text === ""
-                    text: "Write something..."
+                    text: "Write something…"
                     color: Theme.textDisabled
                     font: editor.font
                 }

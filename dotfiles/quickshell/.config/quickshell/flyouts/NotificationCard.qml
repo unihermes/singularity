@@ -102,23 +102,12 @@ Item {
                 font.pixelSize: Theme.fontSmall
             }
 
-            Text {
+            IconButton {
                 id: close
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: "󰅖"
-                color: closeArea.containsMouse ? Theme.bright : Theme.subtext
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontIconSize
-
-                MouseArea {
-                    id: closeArea
-                    anchors.fill: parent
-                    anchors.margins: -Theme.spaceS
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.close()
-                }
+                icon: "󰅖"
+                onClicked: root.close()
             }
         }
 

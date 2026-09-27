@@ -70,6 +70,7 @@ SettingsPage {
             FlyoutChip {
                 visible: row.entry.scope === "user"
                 text: "Remove"
+                confirmText: "Confirm"
                 enabled: !AtomicFileWrite.busy
                 onClicked: Autostart.remove(row.entry)
             }

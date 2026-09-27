@@ -114,32 +114,12 @@ Item {
     }
 
     // after the row's MouseArea, so it sits on top and takes its own clicks
-    Rectangle {
+    IconButton {
         id: revealBtn
         visible: rowHover.hovered && root.exists
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.fs(24)
-        height: Theme.chipHeight
-        radius: Theme.radiusInner
-        color: revealMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-        border.width: Theme.borderWidth
-        border.color: revealMouse.containsMouse ? Theme.strokeHover : "transparent"
-
-        Text {
-            anchors.centerIn: parent
-            text: "󰝰"
-            color: revealMouse.containsMouse ? Theme.textStrong : Theme.muted
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontIconSize
-        }
-
-        MouseArea {
-            id: revealMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.reveal()
-        }
+        icon: "󰝰"
+        onClicked: root.reveal()
     }
 }

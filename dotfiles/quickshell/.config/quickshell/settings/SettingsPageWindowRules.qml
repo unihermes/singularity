@@ -416,8 +416,9 @@ SettingsPage {
                     id: removeChip
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: ruleCol.expanded || headMouse.containsMouse || removeMouse.containsMouse
+                    visible: ruleCol.expanded || headMouse.containsMouse || removeMouse.containsMouse || armed
                     text: "Remove"
+                    confirmText: "Confirm"
                     enabled: !AtomicFileWrite.busy
                     onClicked: page.removeRule(ruleCol.index)
 

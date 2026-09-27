@@ -447,14 +447,13 @@ SettingsPage {
                     }
                 }
 
-                // Remove, in the preview's corner. First click arms, second
-                // deletes the look from looks.json -- there's no undo short
+                // Remove, in the preview's corner: two clicks, since it
+                // deletes the look from looks.json and there's no undo short
                 // of git. Its own ground, so it reads over any preview.
                 Rectangle {
                     id: removeBox
-                    property bool armed: false
                     visible: LookStore.removable(card.modelData)
-                             && (cardMouse.containsMouse || removeHover.hovered || armed)
+                             && (cardMouse.containsMouse || removeHover.hovered || removeChip.armed)
                     anchors.right: preview.right
                     anchors.top: preview.top
                     anchors.margins: Theme.spaceXs
@@ -464,19 +463,13 @@ SettingsPage {
                     color: Theme.surface
 
                     HoverHandler { id: removeHover }
-                    Timer { id: removeDisarm; interval: 3000; onTriggered: removeBox.armed = false }
 
                     FlyoutChip {
                         id: removeChip
-                        glyph: !removeBox.armed
-                        text: removeBox.armed ? "Remove" : "󰅖"
-                        selected: removeBox.armed
-                        onClicked: {
-                            if (!removeBox.armed) { removeBox.armed = true; removeDisarm.restart(); return }
-                            removeBox.armed = false
-                            removeDisarm.stop()
-                            Settings.removeLook(card.modelData, (ok, msg) => page.say(msg, !ok))
-                        }
+                        glyph: true
+                        text: "󰅖"
+                        confirmText: "Remove"
+                        onClicked: Settings.removeLook(card.modelData, (ok, msg) => page.say(msg, !ok))
                     }
                 }
             }
@@ -1077,25 +1070,19 @@ SettingsPage {
 
     SettingsField {
         id: saveField
-        // first click arms, second saves -- overwriting the old default
-        // can't be undone
-        property bool armed: false
         label: "Set as default"
-        hint: armed ? "Click again to replace the saved default"
+        // two clicks: overwriting the old default can't be undone
+        hint: saveChip.armed ? "Click again to replace the saved default"
             : Settings.isDefault ? "This is the default"
             : "Make everything as it is now what Reset returns to"
 
-        Timer { id: saveDisarm; interval: 3000; onTriggered: saveField.armed = false }
-
         FlyoutChip {
+            id: saveChip
             anchors.right: parent.right
-            text: saveField.armed ? "Confirm" : "Save"
-            selected: saveField.armed
+            text: "Save"
+            confirmText: "Confirm"
             enabled: !Settings.isDefault
             onClicked: {
-                if (!saveField.armed) { saveField.armed = true; saveDisarm.restart(); return }
-                saveField.armed = false
-                saveDisarm.stop()
                 Settings.saveAsDefault()
                 page.say("Current appearance saved as the default", false)
             }
