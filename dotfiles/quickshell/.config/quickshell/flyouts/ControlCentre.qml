@@ -113,7 +113,8 @@ FlyoutPanel {
         if (act === "settings") settingsWin.open()
         else if (act === "system") systemWin.open()
         else if (act === "keybinds") settingsWin.open("keybinds")
-        else if (act === "lock") Quickshell.execDetached(["hyprlock"])
+        // through hypridle's lock_cmd, like SUPER+L
+        else if (act === "lock") Quickshell.execDetached(["loginctl", "lock-session"])
         else if (act === "suspend") Quickshell.execDetached(["systemctl", "suspend"])
         else if (act === "hibernate") Quickshell.execDetached(["systemctl", "hibernate"])
         // hl.dsp.exit() only kills the compositor -- start-hyprland (the

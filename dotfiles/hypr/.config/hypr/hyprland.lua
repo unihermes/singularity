@@ -562,6 +562,11 @@ hl.bind(mod .. " + S",     hl.dsp.exec_cmd("qs ipc call launcher toggle files"))
 -- Quickshell's Claude flyout (flyouts/ClaudeFlyout.qml)
 hl.bind(mod .. " + I", hl.dsp.exec_cmd("qs ipc call claude toggle"))  -- Ask Claude to change the desktop
 
+-- --- Session ---
+-- Through logind so hypridle's lock_cmd runs it: one hyprlock at a time, and
+-- the refocus on unlock
+hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))  -- Lock the screen
+
 -- --- Screenshot ---
 -- saves to ~/Pictures/Screenshots and copies to the clipboard
 hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh"))  -- Screenshot an area
