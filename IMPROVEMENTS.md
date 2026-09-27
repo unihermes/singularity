@@ -76,10 +76,6 @@ The other five holes from that sweep are done; see the 2026-09-26 session.
   clearing and restarts.
 - **Snapshots before updates:** the Updates page offering a snapper/btrfs (or
   timeshift) snapshot before `pacman -Syu`; `diagnose` reporting the last one.
-- **Maintenance** in `clean.sh` and the Health page: orphaned packages,
-  unmerged `.pacnew` files, `fwupd` firmware updates.
-- **Scratchpad in the bar:** the scratchpad (SUPER+grave) has no indicator
-  when windows are stashed there.
 
 A standing chore, not a feature: **`services/SettingsIndex.js` is maintained by
 hand** and silently drifts. Two entries were already wrong by the time it was
@@ -432,6 +428,28 @@ to send keys to a layer surface), a real lock, and a real satty session.
   `dismiss()` after that logs "Cannot close destroyed notification".
 - An `EXIT` trap that expands a `local` fails under `set -u`: the local is
   gone by the time the trap runs.
+
+### 2026-09-26 — Maintenance checks and the scratchpad mark
+
+**Done:**
+
+- **Pacman configs and firmware:** Health has new "Config files to merge"
+  (Merge button, runs `pacdiff -f --sudo`) and "Firmware" (fwupd, from
+  cached metadata) rows. `diagnose` counts pending configs, and `clean.sh`
+  lists them at the end. It doesn't merge them, because it runs unattended.
+  Orphans were already covered. `fwupd` was added to `pacman.txt` but
+  **isn't installed here**, so the firmware row was only tested against a
+  stub `fwupdmgr`.
+- **Scratchpad mark:** a glyph at the end of the workspaces chip while
+  `special:scratchpad` has windows. It's lit while shown, and a click
+  toggles it.
+
+**Gotchas:**
+
+- `pacdiff -o` (the pacman-database scan) misses `.pacsave` files. Use
+  `-f` for both the scan and the merge, or the Merge button finds nothing.
+- On `activespecial`, `Hyprland.refreshMonitors()` still returns the
+  state from before the toggle. Parse the event's data instead.
 
 ---
 
