@@ -60,7 +60,7 @@ Singleton {
     // override. Choosing a look writes all four of these, plus the bar and
     // radius values it carries, so a look always arrives whole.
     readonly property alias look:        adapter.look
-    // "double" or "single" -- the inner stroke on panels and bar modules
+    // how panels and bar modules are framed -- see Looks.js
     readonly property alias frameStyle:  adapter.frameStyle
     // "compact", "normal" or "roomy"
     readonly property alias density:     adapter.density
@@ -120,7 +120,7 @@ Singleton {
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
         colourVariant: ["dark", "light"],
         look:         LookStore.order,
-        frameStyle:   ["double", "single", "bevel", "none"],
+        frameStyle:   ["double", "single", "accent", "bevel", "groove", "corners", "none"],
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
         systemFontFamily: Looks.systemFonts,
@@ -137,7 +137,8 @@ Singleton {
         "grayscale": "Grayscale", "wallpaper": "Wallpaper", "dark": "Dark", "light": "Light",
         "scheme-neutral": "Subtle", "scheme-tonal-spot": "Balanced",
         "scheme-vibrant": "Vivid", "scheme-expressive": "Expressive",
-        "double": "Double", "single": "Single", "bevel": "Bevel", "none": "None",
+        "double": "Double", "single": "Single", "accent": "Accent", "bevel": "Bevel",
+        "groove": "Groove", "corners": "Corners", "none": "None",
         "compact": "Compact", "roomy": "Roomy",
         "outline": "Outline", "filled": "Filled", "flat": "Flat", "pill": "Pill",
         "ghost": "Ghost", "bracket": "Brackets", "underline": "Underline",

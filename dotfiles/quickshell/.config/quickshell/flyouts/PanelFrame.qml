@@ -7,6 +7,9 @@
 //           inside it -- Neutrino's own look
 //   single  the outer stroke alone
 //   bevel   a raised chisel outside, a sunken one inside -- Windows 95
+//   groove  the bevel inside out: sunken outside, raised inside, an etched line
+//   accent  the outer stroke alone, in the accent colour
+//   corners an L at each corner and nothing between them
 //   none    no stroke -- the ground alone marks the edge
 // ModuleFrame is the bar chip's tighter version of the same look.
 
@@ -18,12 +21,13 @@ Rectangle {
 
     radius: Theme.radius
     color: Theme.panelFill
-    border.width: Theme.frameBevel || Theme.frameNone ? 0 : Theme.borderWidth
-    border.color: Theme.stroke
+    border.width: Theme.frameStroked ? Theme.borderWidth : 0
+    border.color: Theme.frameAccent ? Theme.accent : Theme.stroke
 
     Bevel {
-        visible: Theme.frameBevel
+        visible: Theme.frameChiselled
         anchors.fill: parent
+        raised: !Theme.frameGroove
         light: Theme.bevelLight
         dark: Theme.bevelDark
         thickness: Theme.borderWidth
@@ -48,12 +52,18 @@ Rectangle {
     // outer edge, using the ground and its surface as the light/dark pair
     // rather than adding a second colour to every look
     Bevel {
-        visible: Theme.frameBevel
+        visible: Theme.frameChiselled
         anchors.fill: parent
         anchors.margins: Theme.frameInset
-        raised: false
+        raised: Theme.frameGroove
         light: Theme.surface
         dark: Theme.base
         thickness: Theme.borderWidth
+    }
+
+    FrameCorners {
+        visible: Theme.frameCorners
+        anchors.fill: parent
+        color: Theme.strokeFocus
     }
 }

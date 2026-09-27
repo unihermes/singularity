@@ -115,7 +115,9 @@ SettingsPage {
         readonly property bool inset: ls.barStyle !== "full" && !notch
         readonly property bool atBottom: ls.barPosition === "bottom"
         readonly property string mod: ls.moduleStyle
-        readonly property bool bevelled: ls.frameStyle === "bevel"
+        readonly property bool bevelled: ls.frameStyle === "bevel" || grooved
+        readonly property bool grooved: ls.frameStyle === "groove"
+        readonly property bool stroked: !bevelled && ls.frameStyle !== "corners" && ls.frameStyle !== "none"
         readonly property var bv: look.bevel || { light: Qt.lighter(pal.border, 1.8), dark: Qt.darker(pal.border, 1.8) }
 
         // the desktop behind it: the look's deepest ground
@@ -236,12 +238,13 @@ SettingsPage {
             radius: pv.r
             color: pv.pal.panel
             opacity: 1
-            border.width: pv.bevelled ? 0 : pv.bw
-            border.color: pv.pal.border
+            border.width: pv.stroked ? pv.bw : 0
+            border.color: pv.ls.frameStyle === "accent" ? pv.accent : pv.pal.border
 
             Bevel {
                 visible: pv.bevelled
                 anchors.fill: parent
+                raised: !pv.grooved
                 light: pv.bv.light
                 dark: pv.bv.dark
                 thickness: pv.bw
@@ -261,10 +264,18 @@ SettingsPage {
                 visible: pv.bevelled
                 anchors.fill: parent
                 anchors.margins: 2
-                raised: false
+                raised: pv.grooved
                 light: pv.pal.surface
                 dark: pv.pal.base
                 thickness: pv.bw
+            }
+
+            FrameCorners {
+                visible: pv.ls.frameStyle === "corners"
+                anchors.fill: parent
+                length: 6
+                thickness: pv.bw
+                color: pv.accent
             }
 
             Column {
@@ -814,8 +825,8 @@ SettingsPage {
 
     SettingsField {
         label: "Frames"
-        hint: "Double draws a second stroke inside every panel and bar module"
-        Choices { key: "frameStyle" }
+        hint: "How every panel and bar module is outlined"
+        Choice { key: "frameStyle" }
     }
 
     Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }

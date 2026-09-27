@@ -84,6 +84,10 @@
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
 //                             Windows 95's chrome
+//                  "groove"   the bevel inside out, an etched line
+//                  "accent"   the outer stroke alone, in the accent colour
+//                  "corners"  an L at each corner, nothing between
+//                  "none"     no stroke, the ground alone
 //
 // Adding a look: copy an entry in looks.json and rename its key. Every key in
 // `palette` must be present, and in `settings` all but the layout ones in

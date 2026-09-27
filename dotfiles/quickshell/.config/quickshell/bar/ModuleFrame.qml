@@ -3,8 +3,9 @@
 //
 // The bar's chip, wrapped around whatever you put in it. Children are laid
 // out in a centred Row. How it's drawn is Theme.moduleStyle:
-//   outline  an outer stroke, plus an inset inner one when frames are double
-//            or a chiselled Bevel pair when frames are bevel
+//   outline  an outer stroke, plus an inset inner one when frames are double,
+//            a chiselled Bevel pair when they're bevel or groove, or only
+//            the corners when they're corners
 //   filled   a solid ground, no stroke
 //   flat     nothing until active, then an accent underline
 //   pill     filled, fully rounded
@@ -75,7 +76,7 @@ Item {
         // content swaps before the width has caught up with it
         clip: root.animateWidth
 
-        readonly property bool bevel: Theme.frameBevel && style === "outline"
+        readonly property bool bevel: Theme.frameChiselled && style === "outline"
 
         height: Theme.moduleHeight
         radius: style === "pill" ? height / 2 : Theme.radius
@@ -83,7 +84,7 @@ Item {
             : root.active ? Theme.selectedFill
             : solid ? Theme.surface : "transparent"
 
-        border.width: style === "outline" && !bevel && !Theme.frameNone ? Theme.borderWidth : 0
+        border.width: style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
         border.color: root.active ? Theme.strokeFocus : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
@@ -91,6 +92,7 @@ Item {
         Bevel {
             visible: frame.bevel
             anchors.fill: parent
+            raised: !Theme.frameGroove
             light: Theme.bevelLight
             dark: Theme.bevelDark
             thickness: Theme.borderWidth
@@ -113,10 +115,17 @@ Item {
             visible: frame.bevel
             anchors.fill: parent
             anchors.margins: 2
-            raised: false
+            raised: Theme.frameGroove
             light: Theme.surface
             dark: Theme.base
             thickness: Theme.borderWidth
+        }
+
+        FrameCorners {
+            visible: Theme.frameCorners && frame.style === "outline"
+            anchors.fill: parent
+            length: Theme.sp(5)
+            color: root.active ? Theme.strokeFocus : Theme.stroke
         }
 
         // the flat style's only mark: an underline under the active chip

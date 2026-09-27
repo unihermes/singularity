@@ -176,11 +176,21 @@ Singleton {
     readonly property int radiusSmall: Math.max(0, radius - 3)
     // "double" draws a second stroke inset inside panels and bar modules --
     // the Neutrino signature. "single" is the outer stroke alone. "bevel" is
-    // Win95's chiselled 3D edge (see Bevel.qml) instead of either. "none"
-    // draws no stroke at all -- the ground colour alone marks the edge.
+    // Win95's chiselled 3D edge (see Bevel.qml) instead of either, and
+    // "groove" the same pair turned inside out, an etched line. "accent" is
+    // the single stroke in the accent colour, on panels only. "corners"
+    // marks just the four corners (FrameCorners.qml). "none" draws no
+    // stroke at all -- the ground colour alone marks the edge.
     readonly property bool frameDouble: Settings.frameStyle === "double"
     readonly property bool frameBevel:  Settings.frameStyle === "bevel"
+    readonly property bool frameGroove: Settings.frameStyle === "groove"
+    readonly property bool frameAccent: Settings.frameStyle === "accent"
+    readonly property bool frameCorners: Settings.frameStyle === "corners"
     readonly property bool frameNone:   Settings.frameStyle === "none"
+    // bevel and groove: drawn with Bevel pairs rather than a border
+    readonly property bool frameChiselled: frameBevel || frameGroove
+    // every style but these draws the plain outer stroke
+    readonly property bool frameStroked: !frameChiselled && !frameCorners && !frameNone
     readonly property int borderWidth: Settings.borderWidth
     // how far the inner stroke sits inside a panel's outer one
     readonly property int frameInset:  3
