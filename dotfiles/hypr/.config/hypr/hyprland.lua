@@ -54,12 +54,18 @@ local animMode   = singularityState("animations", "normal")
 local animFactor = animMode == "fast" and 0.5 or 1
 
 -- How windows open, close, minimize and restore, picked on the Appearance
--- page. "fade" is popin at full size, so the window only fades. SUPER+C
--- follows the same choice by hand; see toggleMinimize() below.
-local windowStyles = { popin = "popin 92%", slide = "slide", fade = "popin 100%" }
+-- page. "fade" is popin at full size, so the window only fades, and "none"
+-- shows and hides them at once. SUPER+C follows the same choice by hand; see
+-- toggleMinimize() below.
+local windowStyles = { popin = "popin 92%", slide = "slide", fade = "popin 100%", none = "popin 100%" }
 local windowAnim   = singularityState("window-anim", "popin")
 if not windowStyles[windowAnim] then windowAnim = "popin" end
-local windowStyle  = windowStyles[windowAnim]
+local windowStyle    = windowStyles[windowAnim]
+local windowsAnimate = windowAnim ~= "none"
+
+-- The scratchpad (SUPER+grave) is a special workspace, and a workspace can
+-- only slide or fade, so pop shows it as a fade.
+local scratchStyles = { popin = "fade", slide = "slidevert", fade = "fade", none = "fade" }
 
 -- "<active> <inactive>" border colours, written by the Appearance page when
 -- borders follow the shell's accent; otherwise absent, and the colours
@@ -337,9 +343,14 @@ local fadeSpeed = 1.5
 animation({ leaf = "global",     enabled = true, speed = 3, bezier = "singularity" })
 animation({ leaf = "border",     enabled = true, speed = 3, bezier = "singularity" })
 animation({ leaf = "windows",    enabled = true, speed = windowSpeed, bezier = "singularity", style = windowStyle })
-animation({ leaf = "windowsOut", enabled = true, speed = 1.5, bezier = "singularity", style = windowStyle })
+animation({ leaf = "windowsIn",  enabled = windowsAnimate, speed = windowSpeed, bezier = "singularity", style = windowStyle })
+animation({ leaf = "windowsOut", enabled = windowsAnimate, speed = 1.5, bezier = "singularity", style = windowStyle })
 animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, bezier = "singularity" })
+animation({ leaf = "fadeIn",     enabled = windowsAnimate, speed = fadeSpeed, bezier = "singularity" })
+animation({ leaf = "fadeOut",    enabled = windowsAnimate, speed = fadeSpeed, bezier = "singularity" })
 animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "singularity", style = "slidefade 12%" })
+animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, bezier = "singularity",
+            style = scratchStyles[windowAnim] })
 
 -- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which
 -- they'd otherwise inherit, since a launcher should appear at once. fade
@@ -1313,8 +1324,8 @@ function toggleMaximize()
 end
 
 -- Hides a window below the screen, or restores it, the way windows open
--- and close (windowAnim): slid down, or faded out where it is (shrinking to
--- popin's size for pop) and only then moved away. It stays transparent
+-- and close (windowAnim): slid down, faded out where it is (shrinking to
+-- popin's size for pop) and only then moved away, or moved away at once. It stays transparent
 -- while hidden, so the fade back in starts from nothing. A tiled window is
 -- floated where it is first, since only floaters can be moved off-screen.
 -- Refocusing a hidden window any other way restores it too -- see
@@ -1377,6 +1388,7 @@ function toggleMinimize()
     end
     local function hide()
         if not current() then return end
+        if windowAnim == "none" then return gone() end
         if windowAnim == "slide" then
             moveTo(addr, hiddenRect(r, mon))
         else

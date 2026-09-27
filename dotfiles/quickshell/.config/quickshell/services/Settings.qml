@@ -77,7 +77,7 @@ Singleton {
     readonly property alias iconTheme:   adapter.iconTheme
     // Hyprland's window look beyond the plain fields in hyprland.lua, which
     // AppearanceSync hands it through state files: how windows open, close
-    // and minimize ("popin", "slide" or "fade"), and whether their borders take the
+    // and minimize ("popin", "slide", "fade" or "none"), and whether their borders take the
     // shell's focus and stroke colours rather than hyprland.lua's own.
     // Like the rest of the Windows section, kept by Reset.
     readonly property alias windowAnim:  adapter.windowAnim
@@ -126,7 +126,7 @@ Singleton {
         systemFontFamily: Looks.systemFonts,
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
-        windowAnim:   ["popin", "slide", "fade"],
+        windowAnim:   ["popin", "slide", "fade", "none"],
         moduleStyle:  ["outline", "filled", "flat", "pill", "bracket", "underline"],
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
         workspaceStyle: ["pills", "numbers", "blocks", "roman"],
