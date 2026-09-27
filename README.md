@@ -90,7 +90,7 @@ singularity/
 └── dotfiles/
     ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
-    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh, autostart.sh
+    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh, settings-bundle.sh, autostart.sh
     ├── wofi/.config/wofi/{config,style.css}  # fallback launcher when the shell is down
     ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
     ├── fastfetch/.config/fastfetch/
@@ -423,6 +423,13 @@ fc-match monospace
   terminal so you can see what runs. The script only reads, so it is safe to
   run by hand, and it is the machine-readable half of what `diagnose` prints.
   Nothing scans in the background: opening the page is what runs a scan.
+- **Moving to another machine.** `~/.local/state/singularity` is per machine,
+  so `settings-bundle export` packs its portable part — appearance, app usage,
+  sticky notes, the wallpaper (with the image when it isn't one of the repo's)
+  — into a tarball, and `settings-bundle import FILE` restores it, backing up
+  what it replaces and restarting the shell. Monitor layout stays behind;
+  looks, window rules and keybinds are in the repo already. The calendar feeds
+  are secret addresses and only go in with `--calendars`.
 - **What runs at login.** Hyprland runs no XDG autostart of its own, so
   `~/.config/singularity/autostart.sh run` — the last `exec` in
   `hyprland.lua` — is what launches the desktop entries in
