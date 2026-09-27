@@ -32,7 +32,7 @@ BarModule {
         id: clockSource
         // ticks on the second boundary, so the seconds never skip or stall;
         // on the minute when the clock style doesn't show seconds
-        precision: Theme.clockStyle === "stamp" ? SystemClock.Seconds : SystemClock.Minutes
+        precision: (root.formats[Theme.clockStyle] || root.formats.stamp).indexOf("ss") >= 0 ? SystemClock.Seconds : SystemClock.Minutes
         enabled: root.visible
     }
     // Thin spaces around the divider: in a monospace font an ordinary space
@@ -43,6 +43,8 @@ BarModule {
         time:  "HH:mm",
         day:   "ddd d MMM\u2002HH:mm",
         long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
+        seconds: "HH:mm:ss",
+        iso:   "yyyy-MM-dd\u2002HH:mm",
     })
     readonly property string timeText: Qt.formatDateTime(clockSource.date,
         Theme.hours(formats[Theme.clockStyle] || formats.stamp))

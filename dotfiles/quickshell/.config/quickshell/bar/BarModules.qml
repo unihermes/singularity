@@ -84,15 +84,18 @@ Item {
                 implicitWidth: (textual ? num.width : pip.width) + 4
                 implicitHeight: Theme.moduleHeight - 8
 
-                // pills and blocks: the same three states, drawn
-                // as a pill that stretches or a square that fills
+                // pills, dots, lines and blocks: the same three states,
+                // drawn as a pill that stretches, a dot or a short rule
+                // that lights, or a square that fills
                 Rectangle {
                     id: pip
                     readonly property bool blocks: Theme.workspaceStyle === "blocks"
+                    readonly property bool lines: Theme.workspaceStyle === "lines"
                     visible: !parent.textual
                     anchors.centerIn: parent
-                    height: blocks ? 10 : 7
-                    width: blocks ? 10 : parent.current ? 22 : (parent.occupied ? 11 : 7)
+                    height: blocks ? 10 : lines ? 3 : 7
+                    width: blocks ? 10 : lines ? 14 : Theme.workspaceStyle === "dots" ? 7
+                        : parent.current ? 22 : (parent.occupied ? 11 : 7)
                     // fully rounded: half the height makes a pill
                     // at any width, and a circle at the stub size
                     radius: blocks ? Math.min(2, Theme.radiusSmall) : height / 2

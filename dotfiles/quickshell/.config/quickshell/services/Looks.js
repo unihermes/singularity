@@ -55,6 +55,7 @@
 //                  "filled"   solid chips, no stroke
 //                  "flat"     bare glyphs; the active one is underlined
 //                  "pill"     solid, fully rounded
+//                  "ghost"    bare until active, then a filled ground
 //                  "bracket"  bare, between [ and ], like a tmux status line
 //                  "underline" bare over a rule, lit when active; a gauge
 //                             fills the rule instead of the chip
@@ -68,13 +69,17 @@
 //                             flush from the screen edge; the sides are bare
 //     barPosition  "top" or "bottom"
 //     workspaceStyle "pills"  the current workspace a long pill, others stubs
+//                  "dots"     one dot each, the current one lit
+//                  "lines"    one short rule each, the current one lit
 //                  "numbers"  1 2 3, the current one lit
 //                  "blocks"   squares: filled when occupied, lit when current
 //                  "roman"    I II III, the current one lit
 //     clockStyle   "stamp"    23:50:02 | 09/18/26
 //                  "time"     23:50
+//                  "seconds"  23:50:02
 //                  "day"      Fri 19 Sep  23:50
 //                  "long"     Friday, September 19 · 23:50
+//                  "iso"      2026-09-19  23:50
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --

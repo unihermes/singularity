@@ -201,7 +201,7 @@ SettingsPage {
                         readonly property bool bare: pv.mod === "flat" || pv.mod === "bracket" || pv.mod === "underline"
                         color: bare ? "transparent"
                             : modelData ? pv.pal.overlay
-                            : pv.mod === "outline" ? "transparent" : pv.pal.surface
+                            : pv.mod === "outline" || pv.mod === "ghost" ? "transparent" : pv.pal.surface
                         border.width: pv.mod === "outline" ? pv.bw : 0
                         border.color: modelData ? pv.accent : pv.pal.border
                         Rectangle {
@@ -942,13 +942,13 @@ SettingsPage {
     SettingsField {
         label: "Workspaces"
         hint: "How the workspace indicator marks each one"
-        Choices { key: "workspaceStyle" }
+        Choice { key: "workspaceStyle" }
     }
 
     SettingsField {
         label: "Clock"
         hint: "What the clock chip shows"
-        Choices { key: "clockStyle" }
+        Choice { key: "clockStyle" }
     }
 
     SettingsField {

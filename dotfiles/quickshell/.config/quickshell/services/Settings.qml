@@ -82,13 +82,13 @@ Singleton {
     // Like the rest of the Windows section, kept by Reset.
     readonly property alias windowAnim:  adapter.windowAnim
     readonly property alias borderFollowsTheme: adapter.borderFollowsTheme
-    // "outline", "filled", "flat" or "pill"
+    // "outline", "filled", "flat", "pill", "ghost", "bracket" or "underline"
     readonly property alias moduleStyle: adapter.moduleStyle
     // "full", "floating", "islands" or "bare"
     readonly property alias barStyle:    adapter.barStyle
-    // "pills", "numbers" or "blocks" -- the workspace indicator
+    // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
     readonly property alias workspaceStyle: adapter.workspaceStyle
-    // "stamp", "time" or "day" -- what the clock chip shows
+    // "stamp", "time", "seconds", "day", "long" or "iso" -- what the clock chip shows
     readonly property alias clockStyle:  adapter.clockStyle
     // The look's adjustable fixed half (Looks.adjustable): its accent as a
     // hex, "" for none; flyouts' and windows' ground opacity and the
@@ -127,10 +127,10 @@ Singleton {
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
         windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
-        moduleStyle:  ["outline", "filled", "flat", "pill", "bracket", "underline"],
+        moduleStyle:  ["outline", "filled", "flat", "pill", "ghost", "bracket", "underline"],
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
-        workspaceStyle: ["pills", "numbers", "blocks", "roman"],
-        clockStyle:   ["stamp", "time", "day", "long"],
+        workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman"],
+        clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso"],
     })
     readonly property var choiceLabels: ({
         "normal": "Normal", "fast": "Fast", "off": "Off",
@@ -140,13 +140,15 @@ Singleton {
         "double": "Double", "single": "Single", "bevel": "Bevel", "none": "None",
         "compact": "Compact", "roomy": "Roomy",
         "outline": "Outline", "filled": "Filled", "flat": "Flat", "pill": "Pill",
-        "bracket": "Brackets", "underline": "Underline",
+        "ghost": "Ghost", "bracket": "Brackets", "underline": "Underline",
         "full": "Full width", "floating": "Floating", "islands": "Islands", "bare": "Bare",
         "notch": "Notch",
-        "pills": "Pills", "numbers": "Numbers", "blocks": "Blocks", "roman": "Roman",
+        "pills": "Pills", "dots": "Dots", "lines": "Lines", "numbers": "Numbers", "blocks": "Blocks",
+        "roman": "Roman",
         "popin": "Pop", "zoom": "Zoom", "fade": "Fade", "fold": "Fold",
         "slide": "Slide", "rise": "Rise", "drop": "Drop",
-        "stamp": "Time + date", "time": "Time", "day": "Day + time", "long": "Full date",
+        "stamp": "Time + date", "time": "Time", "seconds": "Seconds", "day": "Day + time",
+        "long": "Full date", "iso": "ISO date",
     })
 
     // A choice's display name: the table above, then the look's or font's

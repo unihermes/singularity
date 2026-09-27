@@ -299,7 +299,7 @@ Singleton {
     readonly property int barExtent:  barHeight + barMargin * 2
     // between the bar's (or an island's) edge and its outermost module
     readonly property int barInset: barFloating ? spaceXs : barIslands || barNotch ? spaceM : 0
-    // "pills", "numbers" or "blocks" / "stamp", "time" or "day" -- Looks.js
+    // the workspace indicator and clock chip styles -- see Looks.js
     readonly property string workspaceStyle: Settings.workspaceStyle
     readonly property string clockStyle: Settings.clockStyle
     // A Qt date format with its 24-hour fields turned 12-hour when Date &
@@ -308,7 +308,7 @@ Singleton {
         return Settings.clock24 ? fmt : fmt.replace(/HH:mm(:ss)?/g, "h:mm$1 AP")
     }
     readonly property string timeFormat: hours("HH:mm")
-    // "outline", "filled", "flat" or "pill" -- see Looks.js
+    // how the bar's chips are drawn -- see Looks.js
     readonly property string moduleStyle: Settings.moduleStyle
 
     readonly property real barOpacity: Settings.barOpacity / 100
