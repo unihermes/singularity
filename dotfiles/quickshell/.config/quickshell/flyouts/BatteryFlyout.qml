@@ -59,19 +59,13 @@ FlyoutPanel {
     }
 
     Repeater {
-        model: [
-            { name: "power-saver", label: "Power Saver" },
-            { name: "balanced",    label: "Balanced" },
-            { name: "performance", label: "Performance" },
-        ]
+        model: PpdProfile.profile !== "" ? PpdProfile.choices : []
 
         FlyoutRow {
             required property var modelData
-            visible: PpdProfile.profile !== ""
-            label: modelData.label
-            highlighted: PpdProfile.profile === modelData.name
-            trailing: highlighted ? "" : ""
-            onActivated: PpdProfile.set(modelData.name)
+            label: modelData.text
+            highlighted: PpdProfile.profile === modelData.value
+            onActivated: PpdProfile.set(modelData.value)
         }
     }
 }

@@ -63,14 +63,14 @@ FlyoutPanel {
 
         Column {
             anchors.left: artFrame.right
-            anchors.leftMargin: Theme.sp(10)
+            anchors.leftMargin: Theme.spaceL
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spaceXs
 
             Text {
                 width: parent.width
-                text: mediaFlyout.player ? (mediaFlyout.player.trackTitle || "Nothing playing") : ""
+                text: mediaFlyout.player ? (mediaFlyout.player.trackTitle || "Nothing playing") : "No player open"
                 elide: Text.ElideRight
                 color: Theme.textStrong
                 font.family: Theme.fontText
@@ -79,6 +79,7 @@ FlyoutPanel {
             }
             Text {
                 width: parent.width
+                visible: text !== ""
                 text: mediaFlyout.player ? mediaFlyout.player.trackArtist : ""
                 elide: Text.ElideRight
                 color: Theme.text
@@ -147,6 +148,7 @@ FlyoutPanel {
     }
 
     Row {
+        visible: !!mediaFlyout.player
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.spaceL
 

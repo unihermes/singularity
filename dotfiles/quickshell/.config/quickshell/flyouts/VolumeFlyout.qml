@@ -2,7 +2,6 @@
 // ~/.config/quickshell/flyouts/VolumeFlyout.qml
 
 import "../services"
-import Quickshell
 import QtQuick
 
 FlyoutPanel {
@@ -13,22 +12,26 @@ FlyoutPanel {
         text: "VOLUME  " + (Audio.muted ? "MUTED" : Audio.percent + "%")
     }
 
+    // muted keeps the level on show, dimmed, as the volume toast does
     Slider {
         width: parent.width
         value: Audio.percent
+        opacity: Audio.muted ? 0.5 : 1
         onMoved: v => Audio.setVolume(v)
     }
 
-    FlyoutRow {
-        label: Audio.muted ? "Unmute" : "Mute"
+    FlyoutDivider {}
+
+    FlyoutAction {
+        icon: Audio.muted ? "󰖁" : "󰕾"
+        label: "Mute"
+        checked: Audio.muted
         onActivated: Audio.toggleMute()
     }
 
     FlyoutRow {
-        label: "Sound settings"
-        onActivated: {
-            scope.openFlyout = ""
-            Quickshell.execDetached(["pavucontrol"])
-        }
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("audio")
     }
 }

@@ -24,6 +24,12 @@ Singleton {
     // answering, which the UI says out loud rather than showing dead buttons
     property string profile: ""
     readonly property bool busy: setProc.running
+    // every picker's model, so the three that offer these name them alike
+    readonly property var choices: [
+        { value: "power-saver", text: "Power saver" },
+        { value: "balanced",    text: "Balanced" },
+        { value: "performance", text: "Performance" },
+    ]
 
     // a set() has settled; error is busctl's first line of complaint
     signal setFinished(bool ok, string error)

@@ -371,6 +371,12 @@ ShellRoot {
                     && Hyprland.focusedMonitor.name === screenScope.modelData.name
             }
 
+            // a flyout's "More in Settings" row: close it, open that page
+            function openSettings(page) {
+                screenScope.openFlyout = ""
+                settingsWindow.open(page)
+            }
+
             function toggleFlyout(name, item) {
                 if (screenScope.openFlyout === name) {
                     screenScope.openFlyout = ""

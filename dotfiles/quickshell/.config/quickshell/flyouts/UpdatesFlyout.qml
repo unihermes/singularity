@@ -15,8 +15,15 @@ FlyoutPanel {
             + (Updates.aurCount > 0 ? "  (" + Updates.aurCount + " AUR)" : "")
     }
 
+    FlyoutRow {
+        visible: Updates.count === 0
+        label: "Everything is up to date"
+        enabled: false
+    }
+
     ListView {
         id: updList
+        visible: count > 0
         width: parent.width
         height: Math.min(contentHeight, 12 * Theme.row(22))
         clip: true
@@ -61,6 +68,7 @@ FlyoutPanel {
     FlyoutRow {
         label: "Update now"
         trailing: "󰚰"
+        enabled: Updates.count > 0
         onActivated: {
             Updates.update()
             scope.openFlyout = ""
@@ -68,9 +76,15 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        label: Updates.checking ? "Checking..." : "Check again"
+        label: Updates.checking ? "Checking…" : "Check again"
         trailing: Updates.lastChecked ? Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
-        enabled: !Updates.checking
+        busy: Updates.checking
         onActivated: Updates.refresh()
+    }
+
+    FlyoutRow {
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("updates")
     }
 }

@@ -21,16 +21,10 @@ FlyoutPanel {
         text: "NOTIFICATIONS" + (Notifications.count > 0 ? "  " + Notifications.count : "")
     }
 
-    Text {
+    FlyoutRow {
         visible: Notifications.count === 0
-        width: parent.width
-        height: Theme.row(40)
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
-        text: "No notifications"
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.pixelSize: Theme.fontBody
+        label: "No notifications"
+        enabled: false
     }
 
     Item {
@@ -88,5 +82,11 @@ FlyoutPanel {
         trailing: "󰎟"
         enabled: Notifications.count > 0
         onActivated: Notifications.clearAll()
+    }
+
+    FlyoutRow {
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("notifications")
     }
 }

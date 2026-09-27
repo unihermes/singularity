@@ -26,15 +26,16 @@ FlyoutPanel {
 
     FlyoutHeading { text: "BLUETOOTH" }
 
-    FlyoutRow {
+    // the radio, as a switch like the Settings page's
+    FlyoutAction {
         readonly property var adapter: Bluetooth.defaultAdapter
-        label: bar.btAdapterBlocked(adapter) ? "Blocked (rfkill)"
-            : bar.btAdapterOn(adapter) ? "Powered on" : "Powered off"
-        trailing: bar.btAdapterOn(adapter) ? "" : ""
-        onActivated: {
-            var a = Bluetooth.defaultAdapter
-            bar.setBtPowered(a, !bar.btAdapterOn(a))
-        }
+        icon: bar.btAdapterOn(adapter) ? "󰂯" : "󰂲"
+        label: "Bluetooth"
+        status: !adapter ? "No adapter"
+            : bar.btAdapterBlocked(adapter) ? "Blocked by rfkill" : ""
+        enabled: !!adapter && !bar.btAdapterBlocked(adapter)
+        checked: bar.btAdapterOn(adapter)
+        onActivated: bar.setBtPowered(adapter, !bar.btAdapterOn(adapter))
     }
 
     FlyoutRow {
@@ -126,5 +127,13 @@ FlyoutPanel {
         label: "+ " + btFlyout.btHiddenCount() + " unnamed"
         enabled: false
         visible: btFlyout.btHiddenCount() > 0
+    }
+
+    FlyoutDivider {}
+
+    FlyoutRow {
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("bluetooth")
     }
 }

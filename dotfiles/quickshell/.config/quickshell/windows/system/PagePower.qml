@@ -154,8 +154,7 @@ SystemPage {
 
     FlyoutSegmented {
         fill: false
-        model: [{ value: "power-saver", text: "Power saver" }, { value: "balanced", text: "Balanced" },
-            { value: "performance", text: "Performance" }]
+        model: PpdProfile.choices
         current: PpdProfile.profile
         enabled: !PpdProfile.busy
         onPicked: v => PpdProfile.set(v)

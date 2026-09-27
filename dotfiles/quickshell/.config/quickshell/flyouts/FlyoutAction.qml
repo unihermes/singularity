@@ -32,6 +32,9 @@ Item {
     // a glyph in the switch's place on a non-checkable row, e.g. a lock on
     // a setting that can't be turned off
     property string trailingIcon: ""
+    // room kept clear left of the switch, for a control laid over the row
+    // (Bar Widgets' pin), so the label elides short of it
+    property int trailingInset: 0
 
     signal activated()
 
@@ -71,7 +74,7 @@ Item {
         anchors.leftMargin: Theme.spaceL
         anchors.right: root.checkable ? toggle.left
             : (root.trailingIcon !== "" ? trailing.left : parent.right)
-        anchors.rightMargin: Theme.spaceL
+        anchors.rightMargin: Theme.spaceL + root.trailingInset
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 

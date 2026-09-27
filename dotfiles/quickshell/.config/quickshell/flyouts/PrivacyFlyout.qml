@@ -7,17 +7,27 @@ import "../services"
 import QtQuick
 
 FlyoutPanel {
+    id: privacyFlyout
     flyout: "privacy"
     menuWidth: 240
 
+    readonly property var inUse: [
+        { icon: "󰍬", kind: "Microphone", apps: Privacy.state.mic },
+        { icon: "󰄀", kind: "Camera",     apps: Privacy.state.camera },
+        { icon: "󰍹", kind: "Screen",     apps: Privacy.state.screen },
+    ].filter(k => k.apps.length > 0)
+
     FlyoutHeading { text: "IN USE" }
 
+    // the module lingers a moment after the last stream stops
+    FlyoutRow {
+        visible: privacyFlyout.inUse.length === 0
+        label: "Nothing is recording"
+        enabled: false
+    }
+
     Repeater {
-        model: [
-            { icon: "󰍬", kind: "Microphone", apps: Privacy.state.mic },
-            { icon: "󰄀", kind: "Camera",     apps: Privacy.state.camera },
-            { icon: "󰍹", kind: "Screen",     apps: Privacy.state.screen },
-        ].filter(k => k.apps.length > 0)
+        model: privacyFlyout.inUse
 
         FlyoutAction {
             required property var modelData

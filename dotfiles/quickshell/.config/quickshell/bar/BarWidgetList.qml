@@ -201,7 +201,7 @@ Column {
                     z: 2
                     anchors.right: parent.right
                     // clears the FlyoutAction's switch, which sits flush right
-                    anchors.rightMargin: Theme.fs(26) + Theme.spaceL
+                    anchors.rightMargin: Theme.switchWidth + Theme.spaceS
 
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.fs(18)
@@ -234,6 +234,7 @@ Column {
                     label: row.info.label
                     checkable: !row.locked
                     checked: Settings.widgetVisible(row.key)
+                    trailingInset: pin.visible ? pin.width + Theme.spaceS : 0
                     // the locked row says why it has no switch, rather than
                     // looking like a broken one
                     trailingIcon: row.locked ? "󰌾" : ""

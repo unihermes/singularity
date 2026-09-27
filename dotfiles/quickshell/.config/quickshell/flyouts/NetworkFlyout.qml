@@ -62,17 +62,29 @@ FlyoutPanel {
     }
 
     // --- network list ---
-    FlyoutRow {
+    // the radio, as a switch like the Settings page's
+    FlyoutAction {
         visible: netFlyout.pendingSsid === ""
-        label: "Rescan"
+        icon: Network.powered ? "󰖩" : "󰖪"
+        label: "Wi-Fi"
+        status: Network.device === "" ? "No wireless device" : ""
+        enabled: Network.device !== ""
+        checked: Network.powered
+        onActivated: Network.setPowered(!Network.powered)
+    }
+
+    FlyoutRow {
+        visible: netFlyout.pendingSsid === "" && Network.powered
+        label: Network.scanning ? "Scanning…" : "Rescan"
         trailing: Network.device
+        busy: Network.scanning
         onActivated: Network.scan()
     }
 
     Repeater {
         // iwctl already orders by signal, so the cap keeps the ten
         // strongest rather than an arbitrary ten
-        model: netFlyout.pendingSsid === "" ? Network.networks.slice(0, 10) : []
+        model: netFlyout.pendingSsid === "" && Network.powered ? Network.networks.slice(0, 10) : []
 
         FlyoutRow {
             required property var modelData
@@ -108,15 +120,25 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        label: Network.device === "" ? "No wifi device"
-            : Network.listError !== "" ? Network.listError : "No networks found"
+        label: Network.listError !== "" ? Network.listError
+            : Network.scanning ? "Looking for networks…" : "No networks found"
         enabled: false
-        visible: netFlyout.pendingSsid === "" && Network.networks.length === 0
+        visible: netFlyout.pendingSsid === "" && Network.powered && Network.device !== ""
+            && Network.networks.length === 0
     }
 
     FlyoutRow {
         label: "+ " + (Network.networks.length - 10) + " weaker"
         enabled: false
-        visible: netFlyout.pendingSsid === "" && Network.networks.length > 10
+        visible: netFlyout.pendingSsid === "" && Network.powered && Network.networks.length > 10
+    }
+
+    FlyoutDivider { visible: netFlyout.pendingSsid === "" }
+
+    FlyoutRow {
+        visible: netFlyout.pendingSsid === ""
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("network")
     }
 }

@@ -35,6 +35,7 @@ Singleton {
     property string listError: ""
     // the SSID an iwctl connect is running for, or ""
     property string connecting: ""
+    readonly property bool scanning: scanProc.running
 
     function setPowered(on) {
         if (device === "") return
