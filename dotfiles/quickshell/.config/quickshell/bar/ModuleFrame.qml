@@ -226,12 +226,13 @@ Item {
 
         // Drawn after the track, so the icon reads on top of the fill
         // wherever the fill has reached.
+        // Placed by x rather than by swapping anchors.left for
+        // anchors.horizontalCenter: for a moment in between both are set,
+        // which pins the row to a width it keeps afterwards.
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter
-            anchors.left: frame.track ? parent.left : undefined
-            anchors.leftMargin: frame.track ? root.padH + frame.bracketW : 0
-            anchors.horizontalCenter: frame.track ? undefined : parent.horizontalCenter
+            x: frame.track ? root.padH + frame.bracketW : Math.round((parent.width - width) / 2)
             spacing: root.spacing
         }
     }
