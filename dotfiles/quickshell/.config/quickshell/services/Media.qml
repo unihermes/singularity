@@ -33,6 +33,14 @@ Singleton {
         function onIsPlayingChanged() { if (root.player.isPlaying) root.lastPlaying = root.player }
     }
 
+    // for the media keys; each is a no-op when the player can't do it
+    function toggle() { if (player && player.canTogglePlaying) player.togglePlaying() }
+    function play() { if (player && player.canPlay) player.play() }
+    function pause() { if (player && player.canPause) player.pause() }
+    function stop() { if (player && player.canControl) player.stop() }
+    function next() { if (player && player.canGoNext) player.next() }
+    function previous() { if (player && player.canGoPrevious) player.previous() }
+
     function fmtTime(sec) {
         if (!(sec >= 0)) return "--:--"
         var m = Math.floor(sec / 60), s = Math.floor(sec % 60)

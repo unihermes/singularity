@@ -598,6 +598,14 @@ hl.bind("XF86AudioMicMute",      hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_
 hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("~/.config/hypr/brightness.sh up"),                { locked = true, repeating = true })  -- Brightness up
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("~/.config/hypr/brightness.sh down"),              { locked = true, repeating = true })  -- Brightness down
 
+-- --- Media Keys ---
+-- Drive the player the bar's media module follows (services/Media.qml)
+hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("qs ipc call media toggle"),   { locked = true })  -- Play or pause media
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("qs ipc call media pause"),    { locked = true })  -- Pause media
+hl.bind("XF86AudioStop",  hl.dsp.exec_cmd("qs ipc call media stop"),     { locked = true })  -- Stop media
+hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("qs ipc call media next"),     { locked = true })  -- Next track
+hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("qs ipc call media previous"), { locked = true })  -- Previous track
+
 -- --- Lock Keys ---
 -- Pass-through: the key still toggles its lock as usual, and the shell shows
 -- the new state in a toast (shell.qml's "locks" handler). On press: a release

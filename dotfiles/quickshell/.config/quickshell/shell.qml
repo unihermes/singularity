@@ -256,6 +256,17 @@ ShellRoot {
         function clear(): void { Notifications.clearAll() }
     }
 
+    // The media keys: whichever player the bar's media module follows
+    IpcHandler {
+        target: "media"
+        function toggle(): void { Media.toggle() }
+        function play(): void { Media.play() }
+        function pause(): void { Media.pause() }
+        function stop(): void { Media.stop() }
+        function next(): void { Media.next() }
+        function previous(): void { Media.previous() }
+    }
+
     // The ALT+Tab switcher. The bind wins over the switcher's keyboard grab,
     // so every Tab of a held ALT+Tab re-runs alttab-ipc.sh: tab() opens the
     // switcher on the first and steps it on the rest. commit() when ALT comes
