@@ -57,24 +57,10 @@ design, and moved to Decisions below. These came from a gap sweep on
 
 **Holes:**
 
-1. **No keybind to lock the screen.** hyprlock is only reached by the idle
-   ladder or the lid. `SUPER+L` → `loginctl lock-session` (goes through
-   hypridle's `lock_cmd`, so the pidof guard and refocus still apply).
-2. **Media keys unbound.** `XF86AudioPlay/Pause/Next/Prev` have keycap labels
-   (`settings/Keycaps.qml`) but no binds in `hyprland.lua`. `services/Media.qml`
-   already speaks MPRIS; a `qs ipc call media …` target would drive it.
-3. **Screenshots are region-only.** `screenshot.sh` is `slurp` → `grim`. Add
-   full screen / active window / focused monitor modes (e.g. `SHIFT+Print`,
-   `CTRL+Print`) and an annotate action on the notification (satty or swappy).
-4. **No screen recording.** `wf-recorder` or `gpu-screen-recorder` behind a
-   toggle; the bar's Privacy module could show it's recording.
-5. **Power menu only in the Control Centre.** No bind for a lock / log out /
-   suspend / reboot / shut down overlay, and `SUPER+SHIFT+E` logs out with no
-   confirmation.
-6. **New machines start from nothing.** `~/.local/state/singularity` is per
-   machine by design. A `singularity export/import` (or a Settings button)
-   bundling the portable parts — looks, window rules, appearance, app usage,
-   not monitor rules — would carry a setup across.
+- **No screen recording.** `wf-recorder` or `gpu-screen-recorder` behind a
+  toggle; the bar's Privacy module could show it's recording.
+
+The other five holes from that sweep are done; see the 2026-09-26 session.
 
 **Nice to have:**
 
@@ -404,6 +390,48 @@ mixer's app names) can't be seen statically, and entries that name a *section*
 rather than a field are legitimate — the index header documents that they open
 the page and highlight nothing. Only a genuinely static field with no entry, or
 an entry whose label no longer exists, is a real defect.
+
+---
+
+### 2026-09-26 — Five of the six holes
+
+**Done**, one commit each:
+
+- **SUPER+L locks** through `loginctl lock-session`, so hypridle's
+  `lock_cmd` (pidof guard, refocus on unlock) runs it. The Control Centre's
+  Lock goes the same way now.
+- **Media keys** (`XF86AudioPlay/Pause/Stop/Next/Prev`) call a new `media`
+  IPC target, which drives `Media.player`, the same player the bar follows.
+- **Screenshots:** `screenshot.sh area|window|screen` on Print,
+  SHIFT+Print and CTRL+Print. When satty is installed the notification has
+  an Annotate action. `satty` was added to `pacman.txt` but **isn't installed
+  on this machine yet**.
+- **Power menu:** SUPER+SHIFT+E opens `flyouts/PowerMenu.qml` instead of
+  `hl.dsp.exit()`. Its actions are shared with the Control Centre through
+  `services/Session.qml`.
+- **`settings-bundle export|import`** (`.config/singularity/`, aliased in
+  `.bashrc`). It carries appearance, app usage, notes and the wallpaper.
+- **Fixed on the way:** clicking any notification action logged
+  `root is not defined`, because `invoke()` destroys the card. Found by
+  clicking Annotate.
+
+**Not verified:** the power menu's keyboard handling (there's no `wtype`
+to send keys to a layer surface), a real lock, and a real satty session.
+
+**Gotchas:**
+
+- `pgrep -f name; kill` inside a Bash tool call matches the tool's own
+  shell, whose command line contains the name, and kills it (exit 144).
+  Use `pgrep -x`, or kill by the pid a background job printed.
+- A test MPRIS player needs nothing but python-gobject: own
+  `org.mpris.MediaPlayer2.<name>` with `Gio.bus_own_name`, then
+  `register_object` both MPRIS interfaces at `/org/mpris/MediaPlayer2` from
+  introspection XML, with every `Can*` property true, and log each method
+  call.
+- A notification's `tracked` goes false once `invoke()` closes it. Calling
+  `dismiss()` after that logs "Cannot close destroyed notification".
+- An `EXIT` trap that expands a `local` fails under `set -u`: the local is
+  gone by the time the trap runs.
 
 ---
 
