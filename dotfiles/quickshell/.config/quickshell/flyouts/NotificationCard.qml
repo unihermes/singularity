@@ -163,9 +163,11 @@ Item {
                 FlyoutChip {
                     required property var modelData
                     text: modelData.text
+                    // invoke() can destroy this card and the notification with it
                     onClicked: {
+                        const n = root.notification
                         modelData.invoke()
-                        Notifications.dismiss(root.notification)
+                        Notifications.dismiss(n)
                     }
                 }
             }

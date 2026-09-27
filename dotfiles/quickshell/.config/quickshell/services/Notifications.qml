@@ -39,7 +39,8 @@ Singleton {
 
     function togglePanel() { panelToggled() }
     function toggleDnd() { Settings.setNotifDnd(!dnd) }
-    function dismiss(n) { hidePopup(n); n.dismiss() }
+    // a notification whose action was just invoked may be gone already
+    function dismiss(n) { hidePopup(n); if (n.tracked) n.dismiss() }
     function clearAll() {
         popups = []
         list.forEach(n => n.dismiss())
