@@ -14,11 +14,15 @@ SettingsPage {
     description: "Every shortcut in hyprland.lua, and presets worth adding. Saving checks the Lua, backs the file up and reloads Hyprland."
     scrolls: false
 
+    function focusSearch() { body.focusSearch() }
+
     KeybindsBody {
+        id: body
         page: page
         // the scrolling pages' width: their scroll bar's gutter is left free
         width: parent.width - Theme.scrollGutter
-        // toolbar, spacing, status line, spacing -- the rest is the list
-        bodyHeight: page.bodyHeight - Theme.rowHeightTall - Theme.headingHeight - Theme.spaceM * 2
+        // search, toolbar and status line, a spacing after each -- the rest
+        // is the list
+        bodyHeight: page.bodyHeight - searchHeight - Theme.rowHeightTall - Theme.headingHeight - Theme.spaceM * 3
     }
 }

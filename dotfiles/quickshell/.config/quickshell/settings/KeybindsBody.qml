@@ -652,8 +652,31 @@ Column {
 
     // --- layout ----------------------------------------------------------
 
-    // toolbar: tabs, search, then actions -- one row, on both tabs, so the
-    // list below is the same height either way
+    // search, the full width and height of Settings' own bar, over the
+    // toolbar: tabs, then actions -- both on both tabs, so the list below
+    // is the same height either way
+    readonly property int searchHeight: Theme.rowHeightTall + Theme.spaceM
+
+    function focusSearch() { search.forceFocus() }
+
+    FlyoutInput {
+        id: search
+        width: parent.width
+        height: root.searchHeight
+        glyph: "/"
+        placeholder: root.tab === "presets" ? "Search presets" : "Search keys, descriptions, commands"
+        hints: ["Tab Binds / Presets"]
+        echoPassword: false
+        onTextChanged: root.query = text
+        // Tab walks between the two lists, since the field keeps focus
+        onTabPressed: root.showTab(root.tab === "binds" ? "presets" : "binds")
+        onBackTabPressed: root.showTab(root.tab === "binds" ? "presets" : "binds")
+        onEscapePressed: {
+            if (text !== "") text = ""
+            else if (root.selectionCount > 0) root.clearSelection()
+        }
+    }
+
     Item {
         width: parent.width
         height: Theme.rowHeightTall
@@ -667,25 +690,6 @@ Column {
                 { value: "presets", text: root.selectionCount > 0 ? "Presets · " + root.selectionCount : "Presets" }]
             current: root.tab
             onPicked: v => root.showTab(v)
-        }
-
-        FlyoutInput {
-            id: search
-            anchors.left: tabs.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: toolbar.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            placeholder: root.tab === "presets" ? "Search presets" : "Search keys, descriptions, commands"
-            echoPassword: false
-            onTextChanged: root.query = text
-            // Tab walks between the two lists, since the field keeps focus
-            onTabPressed: root.showTab(root.tab === "binds" ? "presets" : "binds")
-            onBackTabPressed: root.showTab(root.tab === "binds" ? "presets" : "binds")
-            onEscapePressed: {
-                if (text !== "") text = ""
-                else if (root.selectionCount > 0) root.clearSelection()
-            }
         }
 
         Row {

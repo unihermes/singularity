@@ -36,6 +36,14 @@ FloatingWindow {
     WindowChrome {
         id: chrome
         window: root
+
+        // `/` puts the cursor in the search, as in Settings
+        Keys.onPressed: event => {
+            if (event.text === "/" && page.item) {
+                page.item.focusSearch()
+                event.accepted = true
+            }
+        }
     }
 
     WindowHeader {
@@ -56,6 +64,7 @@ FloatingWindow {
         // only while open, as Settings' pages are: nothing is parsed or
         // watched while the window is shut
         Loader {
+            id: page
             x: Theme.panelPad
             y: Theme.panelPad
             width: parent.width - Theme.panelPad * 2
