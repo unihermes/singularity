@@ -8,8 +8,8 @@
 //
 // The list is a DropdownMenu, as FlyoutSelect's is, in an overlay filling
 // the window, so it escapes the page's Flickable and a list opened at the
-// bottom of a long page isn't cut off. A wheel anywhere closes it rather
-// than letting the page scroll out from under it.
+// bottom of a long page isn't cut off. The page can't scroll while it's
+// open.
 //
 //   SettingsDropdown {
 //       anchors.right: parent.right
@@ -126,7 +126,6 @@ Item {
         labelFor: root.labelFor
         fontFor: root.fontFor
         maxRows: root.maxRows
-        closeOnWheel: true
         onPicked: v => root.picked(v)
         onDismissed: root.open = false
     }

@@ -13,8 +13,8 @@
 // escapes a page's Flickable, which clips.
 //
 // The dropdown places it (menuX, menuY, in overlayHost's coordinates) once,
-// when it opens. `closeOnWheel` is for a host that scrolls: the list doesn't
-// follow the page, so a wheel closes it rather than stranding it.
+// when it opens. While it's open the catcher swallows the wheel, so the page
+// behind can't scroll out from under a list that doesn't follow it.
 
 import QtQuick
 import "../services"
@@ -34,7 +34,6 @@ Item {
     // a choice's colour swatches, [] for none
     property var swatchesFor: v => []
     property int maxRows: 8
-    property bool closeOnWheel: false
     property real menuX: 0
     property real menuY: 0
     property real menuWidth: owner.width
@@ -58,13 +57,7 @@ Item {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onPressed: root.dismissed()
-
-        // on the catcher, not the overlay, so the list keeps the wheel
-        // events over itself
-        WheelHandler {
-            enabled: root.closeOnWheel
-            onWheel: root.dismissed()
-        }
+        onWheel: wheel => wheel.accepted = true
     }
 
     Rectangle {
@@ -76,6 +69,13 @@ Item {
         color: Theme.surface
         border.width: Theme.borderWidth
         border.color: Theme.stroke
+
+        // a list too short to scroll mustn't pass the wheel through either
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            onWheel: wheel => wheel.accepted = true
+        }
 
         ListView {
             id: list
