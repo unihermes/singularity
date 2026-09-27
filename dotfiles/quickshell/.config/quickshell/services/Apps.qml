@@ -8,6 +8,7 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import QtQuick
 
 Singleton {
@@ -122,6 +123,23 @@ Singleton {
         if (String(cls) === "org.quickshell")
             return shellGlyphs[String(title || "").toLowerCase()] || "󰖯"
         return "󰖯"
+    }
+
+    // hyprland.lua's TABS keep each tab of a group a window of its own.
+    // Everything that lists windows shows a group once, as the tab focused
+    // most recently (the one on top), so this is true for the tabs behind it.
+    // `ipc` and each of `ipcs` are shaped like hyprctl clients -j entries.
+    function isBackTab(ipc, ipcs) {
+        if (!ipc || !ipc.grouped || ipc.grouped.length < 2) return false
+        for (const o of ipcs) {
+            if (o && o.address !== ipc.address && ipc.grouped.indexOf(o.address) !== -1
+                    && o.focusHistoryID < ipc.focusHistoryID)
+                return true
+        }
+        return false
+    }
+    function isBackTabToplevel(tl) {
+        return isBackTab(tl.lastIpcObject, Hyprland.toplevels.values.map(t => t.lastIpcObject))
     }
 
     // A short name for an open window's app: its desktop entry's name, else

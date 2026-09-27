@@ -748,7 +748,7 @@ ShellRoot {
                     var tls = wss[i].toplevels.values
                     for (var j = 0; j < tls.length; j++) {
                         var cls = tls[j].lastIpcObject ? tls[j].lastIpcObject.class : ""
-                        if (!cls) continue
+                        if (!cls || Apps.isBackTabToplevel(tls[j])) continue
                         var ipc = tls[j].lastIpcObject
                         icons.push({
                             source: Apps.iconForClass(cls),
@@ -827,7 +827,7 @@ ShellRoot {
                 for (var i = 0; i < wss.length; i++) {
                     var tls = wss[i].toplevels.values
                     for (var j = 0; j < tls.length; j++) {
-                        if (isShellWindow(tls[j])) continue
+                        if (isShellWindow(tls[j]) || Apps.isBackTabToplevel(tls[j])) continue
                         var ipc = tls[j].lastIpcObject
                         out.push({
                             ws: wss[i].id,

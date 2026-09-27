@@ -123,7 +123,7 @@ OverlayWindow {
                         readonly property var windows: {
                             const ws = Hyprland.workspaces.values.find(w => w.id === cell.wsId)
                             if (!ws || !ws.toplevels) return []
-                            return ws.toplevels.values.filter(tl => !root.isShellWindow(tl))
+                            return ws.toplevels.values.filter(tl => !root.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
                         }
 
                         width: Theme.fs(200)

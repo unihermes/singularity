@@ -73,6 +73,7 @@ OverlayWindow {
             ? cs.filter(c => c.workspace && c.workspace.id === current.workspace.id)
             : cs
         onWs.sort((a, b) => a.focusHistoryID - b.focusHistoryID)
+        const listed = onWs.filter(c => !Apps.isBackTab(c, onWs))
 
         const byAddr = {}
         for (const tl of Hyprland.toplevels.values) {
@@ -81,7 +82,7 @@ OverlayWindow {
         }
 
         const out = []
-        for (const c of onWs) if (byAddr[c.address]) out.push(byAddr[c.address])
+        for (const c of listed) if (byAddr[c.address]) out.push(byAddr[c.address])
 
         windows = out
         selected = out.length > 1 ? 1 : 0
