@@ -219,6 +219,8 @@ Singleton {
     // inside a flyout's frame, and inside a window's
     readonly property int panelPad:  sp(10)
     readonly property int windowPad: sp(16)
+    // kept free beside a scrolling page for its ScrollBar
+    readonly property int scrollGutter: sp(10)
     // The size Settings and System open at: the Normal-density layout with
     // a 600px body, scaled by Font Size only. A window sized by its
     // content was centred for its first frame and hung off-centre once a
@@ -231,11 +233,12 @@ Singleton {
 
     // Control heights. Every text-bearing control is one of these, so a chip
     // beside a stepper beside a row all line up.
-    readonly property int rowHeight:     row(24)   // list rows, steppers
-    readonly property int rowHeightTall: row(26)   // action rows, inputs
-    readonly property int fieldHeight:   row(28)   // settings fields, nav rows
-    readonly property int chipHeight:    row(20)   // chips, segmented strips
-    readonly property int controlSize:   chipHeight // square +/- and close buttons
+    readonly property int rowHeight:      row(24)   // list rows, steppers
+    readonly property int rowHeightDense: row(22)   // packed lists: packages, gauges, calendar days
+    readonly property int rowHeightTall:  row(26)   // action rows, inputs
+    readonly property int fieldHeight:    row(28)   // settings fields, section rows
+    readonly property int chipHeight:     row(20)   // chips, segmented strips
+    readonly property int controlSize:    chipHeight // square +/-, icon buttons
     // on/off switches (Switch.qml)
     readonly property int switchWidth:   row(28)
     readonly property int switchHeight:  row(16)

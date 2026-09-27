@@ -75,7 +75,7 @@ FlyoutPanel {
         ListView {
             id: convo
             width: parent.width - Theme.spaceL
-            height: Math.min(contentHeight, Theme.row(22) * 14)
+            height: Math.min(contentHeight, Theme.rowHeightDense * 14)
             clip: true
             spacing: Theme.spaceM
             interactive: contentHeight > height
@@ -152,7 +152,7 @@ FlyoutPanel {
             id: fileRow
             required property var modelData
             width: parent.width
-            height: Theme.row(22)
+            height: Theme.rowHeightDense
 
             Text {
                 anchors.left: parent.left

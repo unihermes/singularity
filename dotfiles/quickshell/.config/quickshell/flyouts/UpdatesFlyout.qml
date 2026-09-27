@@ -25,7 +25,7 @@ FlyoutPanel {
         id: updList
         visible: count > 0
         width: parent.width
-        height: Math.min(contentHeight, 12 * Theme.row(22))
+        height: Math.min(contentHeight, 12 * Theme.rowHeightDense)
         clip: true
         interactive: contentHeight > height
         boundsBehavior: Flickable.StopAtBounds
@@ -34,7 +34,7 @@ FlyoutPanel {
         delegate: Item {
             required property var modelData
             width: updList.width
-            height: Theme.row(22)
+            height: Theme.rowHeightDense
 
             Text {
                 anchors.left: parent.left

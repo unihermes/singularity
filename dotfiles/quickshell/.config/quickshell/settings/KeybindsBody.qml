@@ -1400,7 +1400,7 @@ Column {
         // page keeps its own
         ScrollBar {
             anchors.right: parent.right
-            anchors.rightMargin: -(Theme.sp(10) + Theme.spaceS)
+            anchors.rightMargin: -(Theme.scrollGutter + Theme.spaceS)
             flickable: root.tab === "presets" ? presetList : list
         }
     }

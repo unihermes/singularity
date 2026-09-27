@@ -192,7 +192,7 @@ OverlayWindow {
                                         (modelData.lastIpcObject && modelData.lastIpcObject.class) || ""
 
                                     width: parent.width
-                                    height: Theme.row(22)
+                                    height: Theme.rowHeightDense
                                     radius: Theme.radiusSmall
                                     color: winDrag.dragging ? Theme.selectedFill
                                         : winDrag.containsMouse ? Theme.hoverFill

@@ -119,7 +119,7 @@ FlyoutPanel {
                 id: cell
                 required property int index
                 width: calendarFlyout.contentColumn.width / 7
-                height: Theme.row(22)
+                height: Theme.rowHeightDense
 
                 // the Date constructor rolls day 0 and day 32 over into the
                 // neighbouring months, which is what fills the edges

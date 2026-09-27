@@ -51,7 +51,7 @@ Item {
         Flickable {
             id: flick
             anchors.fill: parent
-            anchors.rightMargin: Theme.sp(10)
+            anchors.rightMargin: Theme.scrollGutter
             contentHeight: col.implicitHeight
             interactive: contentHeight > height
             clip: true

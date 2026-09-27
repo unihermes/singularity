@@ -16,7 +16,7 @@ Item {
     property bool available: true
 
     width: parent ? parent.width : 0
-    height: Theme.row(22)
+    height: Theme.rowHeightDense
 
     Text {
         id: gLabel

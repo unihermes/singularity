@@ -151,7 +151,7 @@ Item {
         Flickable {
             id: flick
             anchors.fill: parent
-            anchors.rightMargin: root.scrolls ? Theme.sp(10) : 0
+            anchors.rightMargin: root.scrolls ? Theme.scrollGutter : 0
             contentHeight: col.implicitHeight
             interactive: root.scrolls && contentHeight > height
             clip: true
