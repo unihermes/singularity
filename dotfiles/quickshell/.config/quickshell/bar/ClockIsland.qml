@@ -4,9 +4,12 @@
 // The clock chip, which doubles as a Dynamic Island: for a moment after
 // something changes it shows that instead of the time, then eases back.
 //
-//   volume / brightness  the chip keeps its width and becomes a level meter
+//   volume / brightness  a level meter
 //   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock)
-//   notifications        how many new ones arrived (not during DND)
+//   notifications        how many are unread (not during DND)
+//
+// The chip keeps the time's width throughout, eliding what doesn't fit, so
+// nothing on the bar moves when an event comes and goes.
 //
 // Settings.clockIsland turns it off, and LevelToast/ModeToast step aside
 // only while it's on and the clock is actually on the bar
@@ -49,34 +52,26 @@ BarModule {
     readonly property string timeText: Qt.formatDateTime(clockSource.date,
         Theme.hours(formats[Theme.clockStyle] || formats.stamp))
 
-    // the time's own width, so a level can take the chip over without the
-    // modules either side of it moving
+    // the chip's width while it shows the time, which it keeps for events
     TextMetrics {
         id: timeMetrics
         font.family: Theme.fontText
         font.pixelSize: Theme.barLabelSize
         text: root.timeText
     }
-    readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.padH * 2
+    readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.chrome
 
     icon: showing ? evIcon : ""
     label: showing ? evText : timeText
     fillValue: showing ? evFill : -1
     fillColor: Theme.muted
-    fixedWidth: showing && evFill >= 0 ? idleWidth : 0
-    labelMaxWidth: showing ? Theme.barFs(320) : 0
-    // Only while switching between the time and an event: in a proportional
-    // font the time itself changes width every second, and easing (and
-    // clipping) that would keep its first digit permanently cut off.
-    animateWidth: morphing
-    property bool morphing: false
+    fixedWidth: idleWidth
+    labelMaxWidth: showing ? Math.max(1, idleWidth - labelChrome) : 0
     active: screenScope.openFlyout === "calendar"
     onActivated: screenScope.toggleFlyout("calendar", root)
 
     function show(kind, icon, text, fill, ms) {
         if (!ready || !Settings.clockIsland || !root.visible) return
-        settle.stop()
-        root.morphing = true
         root.kind = kind
         root.evIcon = icon
         root.evText = text
@@ -87,17 +82,7 @@ BarModule {
 
     Timer {
         id: hideTimer
-        onTriggered: {
-            root.kind = ""
-            settle.restart()
-        }
-    }
-
-    // outlasts the width animation back to the time
-    Timer {
-        id: settle
-        interval: Theme.durSlow + 50
-        onTriggered: root.morphing = false
+        onTriggered: root.kind = ""
     }
 
     // Brightness loads from sysfs, the sink settles, and notifications kept

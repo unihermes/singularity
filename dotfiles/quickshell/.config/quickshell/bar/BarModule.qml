@@ -27,7 +27,11 @@ Item {
     property real fillValue: -1
     property color fillColor: Theme.muted
     property int fixedWidth: 0
-    property bool animateWidth: false
+    // the width the chip adds around its content: padding and brackets
+    readonly property int chrome: frame.chrome
+    // ...and around the label, which also has the icon and its gap beside it
+    readonly property real labelChrome: chrome
+        + (icon !== "" ? iconText.implicitWidth + frame.spacing : 0)
     // caps the label and elides it, for text of unbounded length (a track
     // title); 0 lets the label take whatever width it needs
     property int labelMaxWidth: 0
@@ -66,7 +70,6 @@ Item {
         fillValue: root.fillValue
         fillColor: root.fillColor
         fixedWidth: root.fixedWidth
-        animateWidth: root.animateWidth
 
         Text {
             id: iconText

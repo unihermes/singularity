@@ -38,9 +38,8 @@ Item {
     property color fillColor: Theme.muted
     // when > 0 the chip is pinned to this width instead of hugging content
     property int fixedWidth: 0
-    // eases between widths instead of jumping, for a chip whose content
-    // swaps wholesale (the clock island)
-    property bool animateWidth: false
+    // the width the chip adds around its content
+    readonly property int chrome: padH * 2 + frame.bracketW * 2
 
     default property alias content: contentRow.children
 
@@ -60,7 +59,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: root.fixedWidth > 0
             ? root.fixedWidth
-            : contentRow.implicitWidth + root.padH * 2 + bracketW * 2
+            : contentRow.implicitWidth + root.chrome
         readonly property string style: Theme.moduleStyle
         readonly property bool solid: style === "filled" || style === "pill"
         readonly property bool brackets: style === "bracket"
@@ -68,13 +67,6 @@ Item {
         readonly property int bracketW: brackets ? Math.ceil(bracketMetrics.advanceWidth) : 0
         // the gauge draws in the chip's interior, except under a rule
         readonly property bool track: root.gauge && !underline
-
-        Behavior on width {
-            enabled: root.animateWidth
-            NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease }
-        }
-        // content swaps before the width has caught up with it
-        clip: root.animateWidth
 
         readonly property bool bevel: Theme.frameChiselled && style === "outline"
 
