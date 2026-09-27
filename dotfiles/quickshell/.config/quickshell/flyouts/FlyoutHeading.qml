@@ -7,6 +7,15 @@
 //
 // `hints` puts key hints at the rule's far end ("Enter open", "Esc close"),
 // for the centred overlays that are driven from the keyboard.
+//
+// A heading that shares its column with another one heads a section: the
+// siblings after it, up to the next heading or FlyoutDivider. Clicking it
+// folds that section shut, and a chevron at the rule's end shows which way
+// it is. Folded rows are moved into a hidden holder rather than hidden one
+// by one, so their own `visible` bindings survive, and moved back in their
+// old order. The empty spacer Item a page puts before the next heading
+// stays, so folded sections keep their gaps. Which sections are folded is
+// kept in Settings.collapsedSections, by page title and heading.
 
 import QtQuick
 import "../services"
@@ -17,8 +26,101 @@ Item {
     property string text: ""
     property var hints: []
 
+    readonly property bool isFlyoutHeading: true
+    readonly property bool collapsible: hints.length === 0 && headingsBeside() > 0
+    readonly property bool collapsed: holder.children.length > 0 || folding
+
+    // set while a section starts folded, before its rows have moved
+    property bool folding: false
+
     width: parent ? parent.width : 0
     implicitHeight: Theme.headingHeight
+
+    // other headings showing in the same column; while this one is hidden
+    // (a flyout that's shut) there's no telling, so all of them count
+    function headingsBeside() {
+        if (!parent) return 0
+        var n = 0
+        var kids = parent.children
+        for (var i = 0; i < kids.length; i++)
+            if (kids[i] !== root && kids[i].isFlyoutHeading === true && (kids[i].visible || !root.visible)) n++
+        return n
+    }
+
+    // the page (or window) this sits on, so the same heading on two pages
+    // is two sections. Counts and prices are left out, so "BATTERY  80%"
+    // stays the same section as the charge changes.
+    function key() {
+        var name = text.replace(/[\d$%.,·:-]+/g, "").replace(/\s+/g, " ").trim()
+        for (var p = parent; p; p = p.parent)
+            if (typeof p.title === "string" && p.title !== "") return p.title + "/" + name
+        return name
+    }
+
+    function sectionItems() {
+        var kids = parent.children
+        var out = []
+        var i = 0
+        while (i < kids.length && kids[i] !== root) i++
+        var endsAtHeading = false
+        for (i++; i < kids.length; i++) {
+            var c = kids[i]
+            if (c.isFlyoutHeading === true) { endsAtHeading = true; break }
+            if (c.isSectionBreak === true) break
+            out.push(c)
+        }
+        if (endsAtHeading && out.length > 0 && /^QQuickItem\(/.test(String(out[out.length - 1])))
+            out.pop()
+        return out
+    }
+
+    function collapse() {
+        folding = false
+        if (!collapsible || holder.children.length > 0) return
+        var items = sectionItems()
+        for (var i = 0; i < items.length; i++) items[i].parent = holder
+    }
+
+    function expand() {
+        folding = false
+        var col = parent
+        var moving = []
+        for (var i = 0; i < holder.children.length; i++) moving.push(holder.children[i])
+        if (moving.length === 0) return
+        // A Column lays out in child order and a new child goes last, so
+        // everything after the heading is taken out and put back behind the
+        // unfolded rows.
+        var kids = col.children
+        var at = 0
+        while (at < kids.length && kids[at] !== root) at++
+        var tail = []
+        for (var k = at + 1; k < kids.length; k++) tail.push(kids[k])
+        for (var j = 0; j < moving.length; j++) moving[j].parent = col
+        for (var t = 0; t < tail.length; t++) {
+            tail[t].parent = holder
+            tail[t].parent = col
+        }
+    }
+
+    function toggle() {
+        if (collapsed) expand()
+        else collapse()
+        Settings.setSectionCollapsed(key(), collapsed)
+    }
+
+    Component.onCompleted: {
+        if (Settings.collapsedSections.indexOf(key()) >= 0) {
+            folding = true
+            // after the rest of the page has been built
+            Qt.callLater(collapse)
+        }
+    }
+
+    Item {
+        id: holder
+        visible: false
+        width: root.width
+    }
 
     Text {
         id: label
@@ -36,11 +138,22 @@ Item {
         visible: Theme.headingRule
         anchors.left: label.right
         anchors.leftMargin: Theme.spaceL
-        anchors.right: hintRow.left
-        anchors.rightMargin: root.hints.length > 0 ? Theme.spaceL : 0
+        anchors.right: chevron.visible ? chevron.left : hintRow.left
+        anchors.rightMargin: root.hints.length > 0 || chevron.visible ? Theme.spaceL : 0
         anchors.verticalCenter: parent.verticalCenter
         height: Theme.borderWidth
         color: Theme.stroke
+    }
+
+    Text {
+        id: chevron
+        visible: root.collapsible
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.collapsed ? "󰅂" : "󰅀"
+        color: foldMouse.containsMouse ? Theme.text : Theme.subtext
+        font.family: Theme.fontIcon
+        font.pixelSize: Theme.fontSmall
     }
 
     Row {
@@ -61,5 +174,14 @@ Item {
                 font.letterSpacing: 1
             }
         }
+    }
+
+    MouseArea {
+        id: foldMouse
+        anchors.fill: parent
+        enabled: root.collapsible
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.toggle()
     }
 }

@@ -15,6 +15,9 @@ import "../services"
 Item {
     id: root
 
+    // ends a collapsible section above it (FlyoutHeading)
+    readonly property bool isSectionBreak: true
+
     width: parent ? parent.width : 0
     implicitHeight: Theme.spaceL + 1
 

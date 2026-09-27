@@ -110,10 +110,17 @@ Item {
 
     // Depth-first, because a field can sit inside a page's own Column (the
     // per-monitor blocks on Display) rather than directly in the scroller.
+    // A field in a folded section unfolds it, and is scrolled to on the
+    // next try, once it has been laid out again.
     function scrollTo(item, label) {
         for (var i = 0; i < item.children.length; i++) {
             var c = item.children[i]
             if (c.isSettingsField === true && c.label === label) {
+                for (var p = c.parent; p && p !== col; p = p.parent)
+                    if (p.isFlyoutHeading === true) {
+                        p.toggle()
+                        return false
+                    }
                 if (root.scrolls) {
                     var y = col.mapFromItem(c, 0, 0).y
                     var max = Math.max(0, flick.contentHeight - flick.height)
