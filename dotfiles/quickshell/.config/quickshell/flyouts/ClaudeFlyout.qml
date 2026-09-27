@@ -253,7 +253,7 @@ FlyoutPanel {
 
     FlyoutRow {
         visible: ClaudeShell.hasChanges
-        label: ClaudeShell.applying ? "Applying..." : "Apply changes"
+        label: ClaudeShell.applying ? "Applying…" : "Apply changes"
         trailing: "󰄬"
         enabled: !ClaudeShell.running && !ClaudeShell.applying
         onActivated: ClaudeShell.apply()
@@ -275,8 +275,8 @@ FlyoutPanel {
         bleed: true
         visible: ClaudeShell.available
         echoPassword: false
-        placeholder: ClaudeShell.running ? "Working..."
-            : ClaudeShell.transcript.length > 0 ? "Follow up..." : "Ask Claude to change something..."
+        placeholder: ClaudeShell.running ? "Working…"
+            : ClaudeShell.transcript.length > 0 ? "Follow up…" : "Ask Claude to change something…"
         onAccepted: {
             if (ClaudeShell.running) return
             ClaudeShell.ask(text)

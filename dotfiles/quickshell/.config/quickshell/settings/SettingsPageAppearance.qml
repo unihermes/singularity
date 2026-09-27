@@ -657,7 +657,7 @@ SettingsPage {
 
     SettingsField {
         label: "Shade"
-        hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only -- a look sets its own"
+        hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only — a look sets its own"
             : "Dark or light grounds from the wallpaper. GTK and Qt apps follow"
         Choices { key: "colourVariant"; live: Settings.colourMode === "wallpaper" }
     }
@@ -892,7 +892,7 @@ SettingsPage {
     SettingsField {
         visible: Fonts.pending.length > 0
         label: Fonts.pending.length === 1 ? "1 new font" : Fonts.pending.length + " new fonts"
-        hint: Fonts.pending.map(f => page.label(f)).join(", ") + " -- installed since the shell started, and usable after a restart"
+        hint: Fonts.pending.map(f => page.label(f)).join(", ") + " — installed since the shell started, and usable after a restart"
 
         FlyoutChip {
             anchors.right: parent.right
@@ -953,7 +953,7 @@ SettingsPage {
 
     SettingsField {
         label: "Clock island"
-        hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar -- toasts show until then"
+        hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar — toasts show until then"
             : Settings.clockIsland ? "Volume, brightness, layout and notifications show in the clock for a moment"
             : "Those show as separate toasts under the bar"
 
@@ -981,7 +981,7 @@ SettingsPage {
     // pending/restart state to show like the shell font has.
     SettingsField {
         label: "System font"
-        hint: "GTK and Qt apps outside the shell -- terminal, file manager, and the rest. Doesn't change the bar, launcher or notifications"
+        hint: "GTK and Qt apps outside the shell — terminal, file manager, and the rest. Doesn't change the bar, launcher or notifications"
 
         SettingsDropdown {
             anchors.right: parent.right
@@ -1109,7 +1109,7 @@ SettingsPage {
     SettingsField {
         label: "Factory reset"
         hint: Settings.hasUserDefault ? "Forget the saved default and go back to stock"
-            : "No saved default -- stock is the default"
+            : "No saved default — stock is the default"
 
         FlyoutChip {
             anchors.right: parent.right

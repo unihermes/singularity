@@ -401,7 +401,7 @@ Column {
         var cmd = cmdInput.text.trim()
         var isMouse = editFlags["mouse"] === true
         if (keys.keyCount === 0) { editError = "The combo needs a key, not just modifiers"; return }
-        if (keys.keyCount > 1 && !isMouse) { editError = "One key per combo -- join them with + only after modifiers"; return }
+        if (keys.keyCount > 1 && !isMouse) { editError = "One key per combo — join them with + only after modifiers"; return }
         if (cmd === "") {
             editError = editKind === "lua" ? "The action can't be empty" : "The command can't be empty"
             return

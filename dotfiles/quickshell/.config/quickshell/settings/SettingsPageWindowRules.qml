@@ -284,7 +284,7 @@ SettingsPage {
         width: parent.width - Theme.spaceS * 2
         visible: page.typed !== ""
         text: n > 0 ? n + " open window" + (n === 1 ? "" : "s") + " match"
-            : "No open windows match -- the class has to be exact"
+            : "No open windows match — the class has to be exact"
         color: n > 0 ? Theme.good : Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontSmall

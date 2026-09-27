@@ -231,7 +231,7 @@ OverlayWindow {
                     text: root.calcMode ? "No matching syntax"
                         : root.fileMode
                             ? (root.query === "" ? "No recent files"
-                               : Files.searching ? "Searching..." : "No matches")
+                               : Files.searching ? "Searching…" : "No matches")
                         : root.query !== "" ? "No matches"
                         : root.clipMode ? "Clipboard history is empty" : "No applications"
                     color: Theme.textDisabled

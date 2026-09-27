@@ -83,7 +83,7 @@ SettingsPage {
     SettingsField {
         label: "Bluetooth"
         hint: !page.adapter ? "No adapter found"
-            : page.blocked ? "Blocked by rfkill -- unblock it to power the radio on"
+            : page.blocked ? "Blocked by rfkill — unblock it to power the radio on"
             : page.poweredOn ? "On" : "Off"
 
         Switch {

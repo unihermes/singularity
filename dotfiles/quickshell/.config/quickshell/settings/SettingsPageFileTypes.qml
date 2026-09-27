@@ -289,7 +289,7 @@ SettingsPage {
         readonly property string chosen: page.groupCurrent(types)
 
         labelWidth: Theme.fit(200)
-        hint: chosen === "mixed" ? "Mixed -- pick one to set them all"
+        hint: chosen === "mixed" ? "Mixed — pick one to set them all"
             : chosen === "" ? "Nothing set"
             : page.names[chosen] ? page.appName(chosen)
             : chosen + " (not installed)"
