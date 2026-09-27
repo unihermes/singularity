@@ -205,6 +205,11 @@ OverlayWindow {
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
     }
+    FontMetrics {
+        id: eyebrowMetrics
+        font.family: Theme.fontText
+        font.pixelSize: Theme.fontCaption
+    }
     readonly property int captionW: {
         let w = 0
         for (const win of windows) w = Math.max(w, captionMetrics.advanceWidth(titleOf(win)))
@@ -292,13 +297,18 @@ OverlayWindow {
                 }
             }
 
+            // Each line is held to its font's own line height: a title with
+            // an emoji or symbol from a fallback font would otherwise make
+            // its line, and the frame, taller for that one window.
             Column {
                 width: parent.width
                 spacing: Theme.spaceXs
 
                 Text {
                     width: parent.width
+                    height: Math.ceil(eyebrowMetrics.height)
                     horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
                     maximumLineCount: 1
                     readonly property var ipc: root.windows[root.selected] ? root.windows[root.selected].lastIpcObject : null
@@ -310,7 +320,9 @@ OverlayWindow {
 
                 Text {
                     width: parent.width
+                    height: Math.ceil(captionMetrics.height)
                     horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideMiddle
                     maximumLineCount: 1
                     text: root.titleOf(root.windows[root.selected])
