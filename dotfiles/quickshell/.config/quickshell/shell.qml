@@ -625,19 +625,16 @@ ShellRoot {
             }
 
             // Bar Opacity. Only the ground fades -- by its colour's alpha,
-            // so a floating bar's edge stays solid -- and the chips and
+            // so a floating bar's stroke stays solid -- and the chips and
             // their text stay solid so the bar is still readable over a busy
             // wallpaper.
             Rectangle {
-                visible: Theme.barFull
+                visible: Theme.barFull || Theme.barFloating
                 anchors.fill: barBody
                 color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
-            }
-
-            // floating: framed like a panel (BarGround.qml)
-            BarGround {
-                visible: Theme.barFloating
-                anchors.fill: barBody
+                radius: Theme.barFloating ? Theme.radius : 0
+                border.width: Theme.barFloating ? Theme.borderWidth : 0
+                border.color: Theme.stroke
             }
 
             // Islands: the same ground, but one per group of modules, each
@@ -647,7 +644,7 @@ ShellRoot {
             Repeater {
                 model: Theme.barIslands ? Settings.widgetSections : []
 
-                BarGround {
+                Rectangle {
                     required property string modelData
                     readonly property var span: bar.islandSpan(modelData)
                     readonly property int pad: Theme.moduleGap + Theme.barInset
@@ -656,6 +653,10 @@ ShellRoot {
                     y: barBody.y
                     width: span.w + pad * 2
                     height: barBody.height
+                    radius: Theme.radius
+                    color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                    border.width: Theme.borderWidth
+                    border.color: Theme.stroke
                 }
             }
 
@@ -957,12 +958,14 @@ ShellRoot {
                 onTriggered: bar.slotsAnimate = true
             }
 
-            // the full-width bar's inner edge, drawn to the frame style
-            BarEdge {
-                visible: Theme.barFull && !Theme.frameCorners && !Theme.frameNone
-                atTop: Theme.barPosition === "bottom"
-                y: atTop ? 0 : parent.height - height
+            // hairline on the bar's inner edge, so it reads as a surface
+            // rather than a strip of background
+            Rectangle {
+                visible: Theme.barFull
+                y: Theme.barPosition === "bottom" ? 0 : parent.height - height
                 width: parent.width
+                height: Theme.borderWidth
+                color: Theme.stroke
             }
 
 
