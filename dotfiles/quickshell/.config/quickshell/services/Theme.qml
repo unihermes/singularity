@@ -191,6 +191,24 @@ Singleton {
     readonly property bool frameChiselled: frameBevel || frameGroove
     // every style but these draws the plain outer stroke
     readonly property bool frameStroked: !frameChiselled && !frameCorners && !frameNone
+    // A control's own stroke inside a panel (chips, fields, steppers,
+    // cards), given the colour its state asks for: kept for the stroked
+    // styles, in the accent where it would be the plain stroke under Accent,
+    // and dropped for the rest -- ControlEdge.qml draws their edge -- except
+    // under Corners and None, where a lit or focused state still shows.
+    function controlBorder(c) {
+        if (frameStroked) return borderWidth
+        if (frameChiselled) return 0
+        return Qt.colorEqual(c, stroke) || Qt.colorEqual(c, "transparent") ? 0 : borderWidth
+    }
+    function controlStroke(c) {
+        return frameAccent && Qt.colorEqual(c, stroke) ? accent : c
+    }
+    // Under None a control with no ground of its own would vanish, so it
+    // gets the field's.
+    function controlFill(c) {
+        return frameNone && Qt.colorEqual(c, "transparent") ? fieldFill : c
+    }
     readonly property int borderWidth: Settings.borderWidth
     // how far the inner stroke sits inside a panel's outer one
     readonly property int frameInset:  3

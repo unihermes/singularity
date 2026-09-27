@@ -32,15 +32,20 @@ Item {
     implicitHeight: Theme.chipHeight
 
     Rectangle {
-        anchors.fill: parent
-        radius: Theme.radiusInner
-        color: root.armed ? Theme.alert
-            : root.selected ? Theme.selectedFill
-            : (root.enabled && mouse.containsMouse) ? Theme.hoverFillSoft : "transparent"
-        border.width: Theme.borderWidth
-        border.color: root.armed ? Theme.alert
+        id: box
+        readonly property color edge: root.armed ? Theme.alert
             : root.selected ? Theme.selectedStroke
             : (root.enabled && mouse.containsMouse) ? Theme.strokeHover : Theme.stroke
+        anchors.fill: parent
+        radius: Theme.radiusInner
+        color: Theme.controlFill(root.armed ? Theme.alert
+            : root.selected ? Theme.selectedFill
+            : (root.enabled && mouse.containsMouse) ? Theme.hoverFillSoft : "transparent")
+        border.width: Theme.controlBorder(edge)
+        border.color: Theme.controlStroke(edge)
+
+        // a lit chip is a pressed button
+        ControlEdge { stroke: box.edge; sunken: root.selected; radius: box.radius }
     }
 
     Text {

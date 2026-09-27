@@ -61,9 +61,11 @@ Item {
         width: root.fill ? parent.width : segs.implicitWidth + Theme.borderWidth * 2
         height: Theme.chipHeight
         radius: Theme.radiusInner
-        color: "transparent"
-        border.width: Theme.borderWidth
-        border.color: Theme.stroke
+        color: Theme.controlFill("transparent")
+        border.width: Theme.controlBorder(Theme.stroke)
+        border.color: Theme.controlStroke(Theme.stroke)
+
+        ControlEdge { sunken: true; radius: strip.radius }
 
         Row {
             id: segs

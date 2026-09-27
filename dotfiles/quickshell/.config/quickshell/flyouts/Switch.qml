@@ -24,12 +24,22 @@ Rectangle {
     radius: Math.min(height / 2, Theme.radius)
     opacity: enabled ? 1 : 0.5
     color: checked ? Theme.meterFill : Theme.fieldFill
-    border.width: Theme.borderWidth
-    border.color: checked ? Theme.meterFill
+    readonly property color edge: checked ? Theme.meterFill
         : (mouse.containsMouse ? Theme.strokeHover : Theme.stroke)
+    border.width: Theme.controlBorder(edge)
+    border.color: Theme.controlStroke(edge)
     Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
     readonly property int knobInset: Math.max(2, Math.round(height / 5))
+
+    // the track is a well; not under double, where an inner stroke would
+    // crowd the knob
+    ControlEdge {
+        visible: !Theme.frameDouble
+        stroke: root.edge
+        sunken: true
+        radius: root.radius
+    }
 
     Rectangle {
         width: parent.height - root.knobInset * 2

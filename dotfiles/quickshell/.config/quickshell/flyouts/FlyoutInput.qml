@@ -61,13 +61,17 @@ Item {
     }
 
     Rectangle {
+        id: well
+        readonly property color edge: field.activeFocus ? Theme.strokeFocus : Theme.stroke
         anchors.fill: parent
         anchors.leftMargin: root.bleed ? -Theme.spaceS : 0
         anchors.rightMargin: root.bleed ? -Theme.spaceS : 0
         radius: Theme.radiusInner
         color: Theme.fieldFill
-        border.width: Theme.borderWidth
-        border.color: field.activeFocus ? Theme.strokeFocus : Theme.stroke
+        border.width: Theme.controlBorder(edge)
+        border.color: Theme.controlStroke(edge)
+
+        ControlEdge { stroke: well.edge; sunken: true; radius: well.radius }
     }
 
     // the glyph and the hints are outside the text, but still the field

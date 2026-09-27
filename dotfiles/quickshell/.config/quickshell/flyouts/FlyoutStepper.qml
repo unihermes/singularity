@@ -62,10 +62,13 @@ Item {
 
             width: Theme.controlSize
             height: Theme.controlSize
+            readonly property color edge: btn.live ? Theme.stroke : Theme.surface
             radius: Theme.radiusSmall
-            color: (btn.live && ma.containsMouse) ? Theme.hoverFill : "transparent"
-            border.width: Theme.borderWidth
-            border.color: btn.live ? Theme.stroke : Theme.surface
+            color: Theme.controlFill((btn.live && ma.containsMouse) ? Theme.hoverFill : "transparent")
+            border.width: Theme.controlBorder(edge)
+            border.color: Theme.controlStroke(edge)
+
+            ControlEdge { stroke: btn.edge; sunken: ma.pressed; radius: btn.radius }
 
             Text {
                 anchors.centerIn: parent

@@ -77,11 +77,14 @@ Item {
         id: box
         width: parent.width
         height: Theme.rowHeight
+        readonly property color edge: root.open ? Theme.strokeFocus
+            : boxMouse.containsMouse ? Theme.strokeHover : Theme.stroke
         radius: Theme.radiusInner
         color: Theme.fieldFill
-        border.width: Theme.borderWidth
-        border.color: root.open ? Theme.strokeFocus
-            : boxMouse.containsMouse ? Theme.strokeHover : Theme.stroke
+        border.width: Theme.controlBorder(edge)
+        border.color: Theme.controlStroke(edge)
+
+        ControlEdge { stroke: box.edge; sunken: true; radius: box.radius }
 
         Text {
             anchors.left: parent.left

@@ -31,8 +31,16 @@ Rectangle {
     radius: Theme.radiusInner
     opacity: enabled ? 1 : 0.5
     color: armed ? Theme.alert : mouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-    border.width: Theme.borderWidth
-    border.color: armed ? Theme.alert : mouse.containsMouse ? Theme.strokeHover : "transparent"
+    readonly property color edge: armed ? Theme.alert : mouse.containsMouse ? Theme.strokeHover : "transparent"
+    border.width: Theme.controlBorder(edge)
+    border.color: Theme.controlStroke(edge)
+
+    // only once it's under the pointer, like its stroke
+    ControlEdge {
+        visible: mouse.containsMouse || root.armed
+        stroke: root.edge
+        radius: root.radius
+    }
 
     Text {
         anchors.centerIn: parent

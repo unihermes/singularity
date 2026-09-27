@@ -65,10 +65,13 @@ Item {
         y: root.menuY
         width: root.menuWidth
         height: root.menuHeight
+        id: menuBox
         radius: Theme.radiusInner
         color: Theme.surface
-        border.width: Theme.borderWidth
-        border.color: Theme.stroke
+        border.width: Theme.controlBorder(Theme.stroke)
+        border.color: Theme.controlStroke(Theme.stroke)
+
+        ControlEdge { radius: menuBox.radius }
 
         // a list too short to scroll mustn't pass the wheel through either
         MouseArea {

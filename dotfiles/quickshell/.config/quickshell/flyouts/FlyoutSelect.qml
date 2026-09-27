@@ -92,12 +92,16 @@ Item {
         height: Theme.rowHeight
 
         Rectangle {
+            id: selectBox
+            readonly property color edge: root.open ? Theme.strokeFocus
+                : rowMouse.containsMouse ? Theme.strokeHover : Theme.stroke
             anchors.fill: parent
             radius: Theme.radiusInner
             color: Theme.fieldFill
-            border.width: Theme.borderWidth
-            border.color: root.open ? Theme.strokeFocus
-                : rowMouse.containsMouse ? Theme.strokeHover : Theme.stroke
+            border.width: Theme.controlBorder(edge)
+            border.color: Theme.controlStroke(edge)
+
+            ControlEdge { stroke: selectBox.edge; sunken: true; radius: selectBox.radius }
         }
 
         Text {

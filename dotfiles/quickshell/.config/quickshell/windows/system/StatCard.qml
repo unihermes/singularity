@@ -29,11 +29,15 @@ Item {
     implicitHeight: body.implicitHeight + Theme.spaceXl * 2
 
     Rectangle {
+        id: card
+        readonly property color edge: mouse.containsMouse ? Theme.strokeHover : Theme.stroke
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: mouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-        border.width: Theme.borderWidth
-        border.color: mouse.containsMouse ? Theme.strokeHover : Theme.stroke
+        color: Theme.controlFill(mouse.containsMouse ? Theme.hoverFillSoft : "transparent")
+        border.width: Theme.controlBorder(edge)
+        border.color: Theme.controlStroke(edge)
+
+        ControlEdge { stroke: card.edge; radius: card.radius }
     }
 
     Column {
