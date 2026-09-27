@@ -31,7 +31,7 @@ SettingsPage {
     id: page
 
     title: "Appearance"
-    description: "The shell's look, wallpaper, colours, the bar, text and motion, and how Hyprland draws windows. Shell changes apply as you make them; window changes are saved to hyprland.lua and Hyprland reloads."
+    description: "The shell's look, wallpaper, colours, style, text and bar, how Hyprland draws windows, motion, and the apps' fonts, icons and cursor. Shell changes apply as you make them; window changes are saved to hyprland.lua and Hyprland reloads."
 
     function label(v) { return Settings.choiceLabel(v) }
 
@@ -819,6 +819,8 @@ SettingsPage {
     }
 
     // --- style ---------------------------------------------------------------
+    // How every panel and chip is drawn: its edge, its corners, its ground
+    // and the room inside it.
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "STYLE" }
@@ -831,6 +833,8 @@ SettingsPage {
 
     Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }
     Stepper { label: "Corner radius"; hint: "Modules, flyouts, windows of the shell, wofi and notifications"; key: "radius"; suffix: "px" }
+    Stepper { label: "Panel opacity"; hint: "Flyouts, the shell's windows, wofi and notifications. Below 100% the blur behind shows through"; key: "panelOpacity"; step: 5; suffix: "%" }
+    Stepper { label: "Overlay dimming"; hint: "How dark the desktop goes behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
 
     SettingsField {
         label: "Density"
@@ -838,47 +842,10 @@ SettingsPage {
         Choices { key: "density" }
     }
 
-    // Case as a pair, the rest as chips that toggle -- they're independent
-    SettingsField {
-        label: "Headings"
-        hint: "Section titles in flyouts, windows and here"
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceS
-
-            FlyoutSegmented {
-                fill: false
-                model: [{ value: true, text: "CAPS" }, { value: false, text: "Title" }]
-                current: Settings.headingUpper
-                onPicked: v => Settings.set("headingUpper", v)
-            }
-            FlyoutChip {
-                text: "Bold"
-                selected: Settings.headingBold
-                onClicked: Settings.set("headingBold", !Settings.headingBold)
-            }
-            FlyoutChip {
-                text: "Rule"
-                selected: Settings.headingRule
-                onClicked: Settings.set("headingRule", !Settings.headingRule)
-            }
-            FlyoutChip {
-                text: "Accent"
-                enabled: Theme.hasAccent
-                selected: Settings.headingAccent && Theme.hasAccent
-                onClicked: Settings.set("headingAccent", !Settings.headingAccent)
-            }
-        }
-    }
-
-    Stepper { label: "Panel opacity"; hint: "Flyouts, the shell's windows, wofi and notifications. Below 100% the blur behind shows through"; key: "panelOpacity"; step: 5; suffix: "%" }
-    Stepper { label: "Overlay dimming"; hint: "How dark the desktop goes behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
-
-    // --- text & motion -------------------------------------------------------
+    // --- text ----------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "TEXT & MOTION" }
+    FlyoutHeading { text: "TEXT" }
 
     // The box shows the font in use, set in itself, and the list sets every
     // installed choice in its own font.
@@ -914,13 +881,43 @@ SettingsPage {
 
     Stepper { label: "Font size"; hint: "Body text size for the shell, launcher and notifications. Headings, captions and rows scale with it."; key: "fontSize"; suffix: "px" }
 
+    // Case as a pair, the rest as chips that toggle -- they're independent
     SettingsField {
-        label: "Animations"
-        hint: "The shell's and Hyprland's alike"
-        Choices { key: "animSpeed" }
+        label: "Headings"
+        hint: "Section titles in flyouts, windows and here"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+
+            FlyoutSegmented {
+                fill: false
+                model: [{ value: true, text: "CAPS" }, { value: false, text: "Title" }]
+                current: Settings.headingUpper
+                onPicked: v => Settings.set("headingUpper", v)
+            }
+            FlyoutChip {
+                text: "Bold"
+                selected: Settings.headingBold
+                onClicked: Settings.set("headingBold", !Settings.headingBold)
+            }
+            FlyoutChip {
+                text: "Rule"
+                selected: Settings.headingRule
+                onClicked: Settings.set("headingRule", !Settings.headingRule)
+            }
+            FlyoutChip {
+                text: "Accent"
+                enabled: Theme.hasAccent
+                selected: Settings.headingAccent && Theme.hasAccent
+                onClicked: Settings.set("headingAccent", !Settings.headingAccent)
+            }
+        }
     }
 
     // --- bar -----------------------------------------------------------------
+    // Where the bar sits and its ground, then its chips, then what the
+    // workspace and clock chips show.
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "BAR" }
@@ -944,11 +941,17 @@ SettingsPage {
         Choice { key: "barStyle" }
     }
 
+    Stepper { label: "Height"; key: "barHeight"; suffix: "px" }
+    Stepper { label: "Opacity"; hint: "The bar's background only"; key: "barOpacity"; step: 5; suffix: "%" }
+
     SettingsField {
         label: "Modules"
         hint: "How the bar's chips are drawn"
         Choice { key: "moduleStyle" }
     }
+
+    Stepper { label: "Module gap"; hint: "Space between modules"; key: "moduleGap"; suffix: "px" }
+    Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
 
     SettingsField {
         label: "Workspaces"
@@ -975,10 +978,59 @@ SettingsPage {
         }
     }
 
-    Stepper { label: "Height"; key: "barHeight"; suffix: "px" }
-    Stepper { label: "Module gap"; hint: "Space between modules"; key: "moduleGap"; suffix: "px" }
-    Stepper { label: "Opacity"; hint: "The bar's background only"; key: "barOpacity"; step: 5; suffix: "%" }
-    Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
+    // --- windows -------------------------------------------------------------
+    // Hyprland's windows: the space around them, their edges, then what's
+    // drawn over and behind them.
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "WINDOWS" }
+
+    HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
+    HyprInt { label: "Gaps at screen edges"; path: ["general"]; key: "gaps_out"; max: 40 }
+    HyprInt { label: "Corner radius"; path: ["decoration"]; key: "rounding"; max: 20 }
+    HyprInt { label: "Border width"; note: "0 hides the border"; path: ["general"]; key: "border_size"; max: 6 }
+
+    SettingsField {
+        label: "Border colours"
+        hint: Settings.borderFollowsTheme ? "The focused window in the accent, the rest in the shell's stroke colour"
+            : "As set in hyprland.lua"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.borderFollowsTheme
+            onToggled: Settings.set("borderFollowsTheme", !Settings.borderFollowsTheme)
+        }
+    }
+
+    HyprPercent { label: "Focused opacity"; path: ["decoration"]; key: "active_opacity" }
+    HyprPercent { label: "Unfocused opacity"; path: ["decoration"]; key: "inactive_opacity" }
+    HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
+    HyprPercent { label: "Dim strength"; path: ["decoration"]; key: "dim_strength"; min: 0 }
+    HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
+    HyprInt { label: "Blur size"; note: "How far each pass spreads"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
+    HyprInt { label: "Blur passes"; note: "More is smoother and costs more"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
+    HyprToggle { label: "Shadows"; path: ["decoration", "shadow"]; key: "enabled" }
+    HyprInt { label: "Shadow size"; path: ["decoration", "shadow"]; key: "range"; max: 40 }
+    ShadowDarkness { label: "Shadow darkness" }
+
+    // --- motion --------------------------------------------------------------
+    // Animation Speed is part of the look; Window animation, like the
+    // Windows section, is kept by Reset.
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "MOTION" }
+
+    SettingsField {
+        label: "Animations"
+        hint: "The shell's and Hyprland's alike"
+        Choices { key: "animSpeed" }
+    }
+
+    SettingsField {
+        label: "Window animation"
+        hint: "How windows open, close and minimize, and how the scratchpad appears"
+        Choice { key: "windowAnim" }
+    }
 
     // --- system --------------------------------------------------------------
     // Preferences for the apps outside the shell. Not part of a look, and
@@ -987,7 +1039,7 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SYSTEM" }
 
-    // GTK/Qt apps' own font -- independent of the shell's Font under Text & Motion. Every
+    // GTK/Qt apps' own font -- independent of the shell's Font under Text. Every
     // choice here is always installed (see Looks.systemFonts), so there's no
     // pending/restart state to show like the shell font has.
     SettingsField {
@@ -1032,49 +1084,11 @@ SettingsPage {
 
     Stepper { label: "Cursor size"; key: "cursorSize"; step: 4; suffix: "px" }
 
-    // --- windows -------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "WINDOWS" }
-
-    HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
-    HyprInt { label: "Gaps at screen edges"; path: ["general"]; key: "gaps_out"; max: 40 }
-    HyprInt { label: "Border width"; note: "0 hides the border"; path: ["general"]; key: "border_size"; max: 6 }
-    HyprInt { label: "Corner radius"; path: ["decoration"]; key: "rounding"; max: 20 }
-    HyprPercent { label: "Focused opacity"; path: ["decoration"]; key: "active_opacity" }
-    HyprPercent { label: "Unfocused opacity"; path: ["decoration"]; key: "inactive_opacity" }
-    HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
-    HyprPercent { label: "Dim strength"; path: ["decoration"]; key: "dim_strength"; min: 0 }
-    HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
-    HyprInt { label: "Blur size"; note: "How far each pass spreads"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
-    HyprInt { label: "Blur passes"; note: "More is smoother and costs more"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
-    HyprToggle { label: "Shadows"; path: ["decoration", "shadow"]; key: "enabled" }
-    HyprInt { label: "Shadow size"; path: ["decoration", "shadow"]; key: "range"; max: 40 }
-    ShadowDarkness { label: "Shadow darkness" }
-
-    SettingsField {
-        label: "Border colours"
-        hint: Settings.borderFollowsTheme ? "The focused window in the accent, the rest in the shell's stroke colour"
-            : "As set in hyprland.lua"
-
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.borderFollowsTheme
-            onToggled: Settings.set("borderFollowsTheme", !Settings.borderFollowsTheme)
-        }
-    }
-
-    SettingsField {
-        label: "Window animation"
-        hint: "How windows open, close and minimize, and how the scratchpad appears"
-        Choice { key: "windowAnim" }
-    }
-
     // --- default --------------------------------------------------------------
     // "Default" is what Reset returns to: stock until something is saved over
-    // it. Covers the look and everything under Look, Colours, Bar and Text &
-    // Motion; the wallpaper and the System and Windows sections are kept
-    // either way.
+    // it. Covers the look and everything under Colours, Style, Text, Bar and
+    // Animations; the wallpaper, Window animation, and the Windows and System
+    // sections are kept either way.
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "DEFAULT" }
