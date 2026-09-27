@@ -302,9 +302,8 @@ end)
 
 -- The tab bar over grouped windows. A floating group draws it above the
 -- windows, flush against them, so fillArea() below leaves this much room for
--- it. The gap is only between tabs.
+-- it.
 local GROUPBAR_HEIGHT = 26
-local GROUPBAR_GAP    = 2
 
 hl.config({
     general = {
@@ -369,7 +368,9 @@ hl.config({
         },
         groupbar = {
             height              = GROUPBAR_HEIGHT,
-            gaps_in             = GROUPBAR_GAP,
+            -- tabs edge to edge: -1 rather than 0, since tab widths are
+            -- fractional and 0 leaves a hairline between them
+            gaps_in             = -1,
             gaps_out            = 0,
             font_family         = "UbuntuMono Nerd Font",
             font_size           = 13,
