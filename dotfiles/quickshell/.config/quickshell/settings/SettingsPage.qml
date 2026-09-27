@@ -124,7 +124,8 @@ Item {
                 if (root.scrolls) {
                     var y = col.mapFromItem(c, 0, 0).y
                     var max = Math.max(0, flick.contentHeight - flick.height)
-                    flick.contentY = Math.max(0, Math.min(max, y - Theme.spaceXl))
+                    // clear of the section's heading, pinned at the top
+                    flick.contentY = Math.max(0, Math.min(max, y - Theme.spaceXl - Theme.headingHeight))
                 }
                 return true
             }
@@ -179,6 +180,12 @@ Item {
         }
 
         // scroll indicator, as in the Keybinds list
+        StickyHeading {
+            width: flick.width
+            flickable: flick
+            column: col
+        }
+
         ScrollBar {
             anchors.right: parent.right
             flickable: flick

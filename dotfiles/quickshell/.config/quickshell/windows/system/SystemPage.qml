@@ -68,6 +68,12 @@ Item {
             }
         }
 
+        StickyHeading {
+            width: flick.width
+            flickable: flick
+            column: col
+        }
+
         ScrollBar {
             anchors.right: parent.right
             flickable: flick

@@ -28,8 +28,15 @@ Item {
     property var hints: []
 
     readonly property bool isFlyoutHeading: true
-    readonly property bool collapsible: hints.length === 0 && headingsBeside() > 0
-    readonly property bool collapsed: holder.children.length > 0 || folding
+    readonly property bool collapsible: mirrorOf ? mirrorOf.collapsible
+        : hints.length === 0 && headingsBeside() > 0
+    readonly property bool collapsed: mirrorOf ? mirrorOf.collapsed
+        : holder.children.length > 0 || folding
+
+    // A stand-in for another heading (StickyHeading's pinned copy): shows
+    // that one's fold state, and clicking folds that one's section.
+    property Item mirrorOf: null
+    signal mirrorToggled()
 
     // set while a section starts folded, before its rows have moved
     property bool folding: false
@@ -183,6 +190,13 @@ Item {
         enabled: root.collapsible
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.toggle()
+        onClicked: {
+            if (root.mirrorOf) {
+                root.mirrorOf.toggle()
+                root.mirrorToggled()
+            } else {
+                root.toggle()
+            }
+        }
     }
 }
