@@ -15,7 +15,8 @@
 // by one, so their own `visible` bindings survive, and moved back in their
 // old order. The empty spacer Item a page puts before the next heading
 // stays, so folded sections keep their gaps. Which sections are folded is
-// kept in Settings.collapsedSections, by page title and heading.
+// kept in Settings.collapsedSections, by page title and heading, for as
+// long as the shell runs.
 
 import QtQuick
 import "../services"
