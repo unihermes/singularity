@@ -340,11 +340,16 @@ SettingsPage {
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
-            FlyoutChip {
+            // on hover, as a flyout row's forget is: a Remove chip on every
+            // line made the list read as a column of buttons
+            HoverHandler { id: aliasHover }
+            IconButton {
                 id: removeChip
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Remove"
+                visible: aliasHover.hovered || armed
+                icon: "󰆴"
+                confirm: true
                 enabled: !AtomicFileWrite.busy
                 onClicked: page.removeAlias(aliasRow.modelData)
             }
@@ -358,7 +363,6 @@ SettingsPage {
         FlyoutInput {
             id: aliasName
             anchors.left: parent.left
-            anchors.leftMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.fit(112)
             echoPassword: false

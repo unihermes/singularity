@@ -16,6 +16,8 @@ SettingsPage {
 
     KeybindsBody {
         page: page
+        // the scrolling pages' width: their scroll bar's gutter is left free
+        width: parent.width - Theme.sp(10)
         // toolbar, spacing, status line, spacing -- the rest is the list
         bodyHeight: page.bodyHeight - Theme.rowHeightTall - Theme.headingHeight - Theme.spaceM * 2
     }

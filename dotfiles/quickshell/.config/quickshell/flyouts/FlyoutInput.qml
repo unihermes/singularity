@@ -1,8 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutInput.qml
 //
-// A single-line text field sized like a FlyoutRow, for the one thing in the
-// bar that needs typing: a Wi-Fi passphrase.
+// A single-line text field sized like a FlyoutRow: a Wi-Fi passphrase, a
+// prompt, and every text setting on the Settings pages.
+//
+// `bleed` runs the frame out past the field's own edges, as a FlyoutRow's
+// hover fill does, so the typed text lines up with the row labels above it
+// in a flyout. On a Settings page it stays within its bounds, so its edges
+// line up with the chips and switches beside it.
 //
 // The panel it sits in must ask for keyboard focus (FlyoutPanel.wantsKeyboard)
 // -- a layer-shell surface gets no key events at all otherwise, and the field
@@ -17,6 +22,7 @@ Item {
     property string placeholder: ""
     property alias text: field.text
     property bool echoPassword: true
+    property bool bleed: false
 
     signal accepted()
     // Arrow keys and Escape, for fields that drive a list below them. Emitted
@@ -50,8 +56,8 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        anchors.leftMargin: -Theme.spaceS
-        anchors.rightMargin: -Theme.spaceS
+        anchors.leftMargin: root.bleed ? -Theme.spaceS : 0
+        anchors.rightMargin: root.bleed ? -Theme.spaceS : 0
         radius: Theme.radiusInner
         color: Theme.fieldFill
         border.width: Theme.borderWidth
@@ -73,8 +79,8 @@ Item {
     TextInput {
         id: field
         anchors.fill: parent
-        anchors.leftMargin: Theme.spaceXs
-        anchors.rightMargin: Theme.spaceXs
+        anchors.leftMargin: Theme.spaceXs + (root.bleed ? 0 : Theme.spaceS)
+        anchors.rightMargin: anchors.leftMargin
         verticalAlignment: TextInput.AlignVCenter
         // text scrolled out of view past either end stays inside the frame
         clip: true

@@ -621,7 +621,6 @@ Column {
         FlyoutSegmented {
             id: tabs
             anchors.left: parent.left
-            anchors.leftMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
             fill: false
             model: [{ value: "binds", text: "Binds" },
@@ -1039,7 +1038,9 @@ Column {
         Flickable {
             id: list
             anchors.fill: parent
-            anchors.rightMargin: Theme.sp(10)
+            // room for the rows' hover fill, which bleeds past the column
+            anchors.leftMargin: -Theme.spaceS
+            anchors.rightMargin: -Theme.spaceS
             visible: root.tab === "binds"
             contentHeight: listCol.implicitHeight
             clip: true
@@ -1184,7 +1185,8 @@ Column {
         Flickable {
             id: presetList
             anchors.fill: parent
-            anchors.rightMargin: Theme.sp(10)
+            anchors.leftMargin: -Theme.spaceS
+            anchors.rightMargin: -Theme.spaceS
             visible: root.tab === "presets"
             contentHeight: presetCol.implicitHeight
             clip: true
@@ -1394,9 +1396,11 @@ Column {
             }
         }
 
-        // scroll indicator
+        // scroll indicator, out in the page's gutter where every other
+        // page keeps its own
         ScrollBar {
             anchors.right: parent.right
+            anchors.rightMargin: -(Theme.sp(10) + Theme.spaceS)
             flickable: root.tab === "presets" ? presetList : list
         }
     }

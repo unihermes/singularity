@@ -261,7 +261,6 @@ SettingsPage {
         FlyoutInput {
             id: classInput
             anchors.left: parent.left
-            anchors.leftMargin: Theme.spaceS
             anchors.right: addChip.left
             anchors.rightMargin: Theme.spaceXl
             anchors.verticalCenter: parent.verticalCenter

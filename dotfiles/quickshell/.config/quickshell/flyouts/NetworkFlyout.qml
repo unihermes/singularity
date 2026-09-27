@@ -42,6 +42,7 @@ FlyoutPanel {
 
     FlyoutInput {
         id: pass
+        bleed: true
         visible: netFlyout.pendingSsid !== ""
         placeholder: "passphrase"
         onAccepted: netFlyout.connectTo(netFlyout.pendingSsid, text)

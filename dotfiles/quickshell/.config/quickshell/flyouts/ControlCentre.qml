@@ -175,6 +175,7 @@ FlyoutPanel {
 
     FlyoutInput {
         id: appSearch
+        bleed: true
         visible: controlCentre.page === "apps"
         placeholder: "Search"
         echoPassword: false

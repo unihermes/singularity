@@ -272,6 +272,7 @@ FlyoutPanel {
 
     FlyoutInput {
         id: prompt
+        bleed: true
         visible: ClaudeShell.available
         echoPassword: false
         placeholder: ClaudeShell.running ? "Working..."
