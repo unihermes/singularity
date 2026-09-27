@@ -45,8 +45,8 @@ Singleton {
         powerSet.running = true
     }
 
-    // Called when the flyout opens rather than on a timer: the radio should
-    // not sweep while nobody is looking at it.
+    // Only when asked (the Rescan rows in the flyout and on the Settings
+    // page), never on a timer or when the flyout opens.
     function scan() { if (device !== "" && !scanProc.running) scanProc.running = true }
 
     // --passphrase rather than iwd's interactive prompt, which needs a tty.

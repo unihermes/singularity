@@ -375,9 +375,9 @@ Item {
         active: screenScope.openFlyout === "network"
         dimmed: Network.ssid === ""
         onActivated: {
-            // scan on open rather than on a timer: the radio
-            // should not sweep while nobody is looking at it
-            Network.scan()
+            // the networks iwd already knows of; a fresh scan
+            // only from the flyout's Rescan row
+            Network.refreshList()
             screenScope.toggleFlyout("network", netBtn)
         }
     }
