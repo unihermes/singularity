@@ -46,7 +46,18 @@ Singleton {
         // through hypridle's lock_cmd, like SUPER+L
         if (act === "lock") Quickshell.execDetached(["loginctl", "lock-session"])
         else if (act === "suspend") Quickshell.execDetached(["systemctl", "suspend"])
-        else if (act === "hibernate") Quickshell.execDetached(["systemctl", "hibernate"])
+        // Writing the image takes a minute or so, and the compositor is
+        // frozen for all of it: left lit, the panel holds whatever frame
+        // was up -- usually hyprlock half faded in over the desktop -- and
+        // looks hung. Blank it first, the way a closed lid does. The marker
+        // tells lid.sh sleep that the panel is off on purpose, so the resume
+        // lights it instead of treating it as a stray wake to keep dark.
+        else if (act === "hibernate") Quickshell.execDetached(["sh", "-c", `
+            m="$XDG_RUNTIME_DIR/singularity-hibernating"
+            dpms() { hyprctl eval "hl.dispatch(hl.dsp.dpms(\\"$1\\"))" >/dev/null; }
+            touch "$m"
+            dpms off
+            systemctl hibernate || { rm -f "$m"; dpms on; }`])
         // hl.dsp.exit() only kills the compositor -- start-hyprland (the
         // hyprland package's own session wrapper, PID 1 of the logind
         // session scope) treats that as a crash and immediately relaunches

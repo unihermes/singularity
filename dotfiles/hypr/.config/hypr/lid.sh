@@ -94,6 +94,7 @@ hibernate_after=3600  # lid shut this long -> hibernate (see sleep.conf.d above)
 closed_at="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-closed-at"
 slept_dark="${XDG_RUNTIME_DIR:-/tmp}/singularity-slept-dark"
 docked_file="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-docked"
+hibernating="${XDG_RUNTIME_DIR:-/tmp}/singularity-hibernating"
 
 log() { logger -t singularity-lid -- "$*"; }
 
@@ -374,7 +375,12 @@ displays)
     ;;
 sleep)
     rm -f "$slept_dark"
-    lid_closed || panel_on || touch "$slept_dark"
+    # the power menu's Hibernate blanks the panel itself (see Session.qml)
+    if [[ -e $hibernating ]]; then
+        rm -f "$hibernating"
+    else
+        lid_closed || panel_on || touch "$slept_dark"
+    fi
     ;;
 resume)
     if lid_closed && ! docked; then
