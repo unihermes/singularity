@@ -94,20 +94,7 @@ SettingsPage {
         }
     }
 
-    component Detail: SettingsField {
-        id: detail
-        property string value: ""
-        visible: value !== ""
-        // no verticalCenter anchor: the control slot's height is its
-        // childrenRect, so anchoring to it binds the row's height to itself
-        Text {
-            anchors.right: parent.right
-            text: detail.value
-            color: Theme.textStrong
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-        }
-    }
+    component Detail: SettingsValue { hideEmpty: true }
 
     // The adapter carries a friendly name and its hciN id; the MAC lives on
     // BluetoothDevice, not here, so there is no address to show.

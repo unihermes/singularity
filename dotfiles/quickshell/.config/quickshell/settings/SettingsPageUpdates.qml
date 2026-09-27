@@ -105,7 +105,7 @@ SettingsPage {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: page.when(Updates.lastChecked)
-                color: Theme.text
+                color: Theme.textStrong
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
             }
@@ -118,17 +118,10 @@ SettingsPage {
         }
     }
 
-    SettingsField {
+    SettingsValue {
         label: "Last upgrade"
         hint: "pacman's last full upgrade"
-
-        Text {
-            anchors.right: parent.right
-            text: page.when(Updates.lastUpgrade)
-            color: Theme.text
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-        }
+        value: page.when(Updates.lastUpgrade)
     }
 
     Item { width: 1; height: Theme.spaceM }

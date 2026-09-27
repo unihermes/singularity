@@ -94,20 +94,7 @@ SettingsPage {
         }
     }
 
-    component Detail: SettingsField {
-        id: detail
-        property string value: ""
-        visible: value !== ""
-        // no verticalCenter anchor: the slot's height is its childrenRect,
-        // so anchoring to it would bind the row's height to itself
-        Text {
-            anchors.right: parent.right
-            text: detail.value
-            color: Theme.textStrong
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-        }
-    }
+    component Detail: SettingsValue { hideEmpty: true }
 
     Detail { label: "Interface"; value: Network.device }
     Detail { label: "IP address"; value: page.ipAddr }

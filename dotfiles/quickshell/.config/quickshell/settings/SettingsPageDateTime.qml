@@ -116,17 +116,10 @@ SettingsPage {
 
     FlyoutHeading { text: "TIME ZONE" }
 
-    SettingsField {
+    SettingsValue {
         label: "Now"
         hint: page.zone === "" ? "" : page.pretty(page.zone) + " (" + page.zoneAbbrev + ")"
-
-        Text {
-            anchors.right: parent.right
-            text: Qt.formatDateTime(clock.date, Theme.hours("ddd d MMM yyyy, HH:mm:ss"))
-            color: Theme.textStrong
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-        }
+        value: Qt.formatDateTime(clock.date, Theme.hours("ddd d MMM yyyy, HH:mm:ss"))
     }
 
     SettingsField {
