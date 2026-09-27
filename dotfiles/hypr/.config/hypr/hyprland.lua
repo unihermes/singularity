@@ -357,7 +357,9 @@ hl.config({
             gaps_in             = GROUPBAR_GAP,
             gaps_out            = GROUPBAR_GAP,
             font_family         = "UbuntuMono Nerd Font",
-            font_size           = 12,
+            font_size           = 11,
+            -- room either side, so a long title's "…" isn't against the edge
+            text_padding        = 10,
             gradients           = true,
             rounding            = 3,
             gradient_rounding   = 3,
