@@ -123,4 +123,15 @@ Singleton {
             return shellGlyphs[String(title || "").toLowerCase()] || "󰖯"
         return "󰖯"
     }
+
+    // A short name for an open window's app: its desktop entry's name, else
+    // the class's bare last segment. The shell's own windows go by their
+    // title (Settings, System…), since they all share one class.
+    function nameForWindow(cls, title) {
+        if (String(cls) === "org.quickshell") return String(title || "Singularity")
+        var entry = cls ? DesktopEntries.heuristicLookup(cls) : null
+        if (entry && entry.name) return entry.name
+        var bare = String(cls || "").replace(/^.*\./, "")
+        return bare.charAt(0).toUpperCase() + bare.slice(1)
+    }
 }

@@ -183,101 +183,140 @@ OverlayWindow {
     }
 
     // Cards wrap onto more rows once a row would be wider than the screen;
-    // a short list is still one centred row.
-    readonly property int cardW: Theme.fs(128)
-    readonly property int cardH: Theme.fs(116)
+    // a short list is still one centred row. The cards are icons only; the
+    // highlighted window's app and title are the caption under the grid,
+    // where they have the frame's whole width instead of a card's.
+    readonly property int cardW: Theme.fs(80)
     // the launcher's padding inside the frame, and as much again outside it
     readonly property int pad: Theme.panelPad * 2
     readonly property int maxColumns: Math.max(1, Math.floor((width - pad * 6 + list.spacing) / (cardW + list.spacing)))
+    // the caption may widen the frame past a short row, up to this
+    readonly property int captionMax: Math.min(Theme.fs(560), width - pad * 6)
+
+    function titleOf(win) {
+        const o = win ? win.lastIpcObject : null
+        return o ? (o.title || o.class || "") : ""
+    }
+
+    // Sized for the longest title, not the highlighted one, so the frame
+    // holds still while Tab walks the row.
+    FontMetrics {
+        id: captionMetrics
+        font.family: Theme.fontText
+        font.pixelSize: Theme.fontBody
+    }
+    readonly property int captionW: {
+        let w = 0
+        for (const win of windows) w = Math.max(w, captionMetrics.advanceWidth(titleOf(win)))
+        return Math.ceil(w)
+    }
 
     PanelFrame {
         anchors.centerIn: parent
-        width: list.width + root.pad * 2
-        height: Math.min(root.height - root.pad * 4, list.height + root.pad * 2)
+        width: body.width + root.pad * 2
+        height: Math.min(root.height - root.pad * 4, body.height + root.pad * 2)
         // only matters past what even a wrapped grid can show (several
         // dozen windows): the rows that don't fit are cut off inside the
         // frame instead of spilling out of it
         clip: true
 
-        Grid {
-            id: list
+        Column {
+            id: body
             anchors.centerIn: parent
-            spacing: Theme.spaceL
-            columns: Math.min(root.windows.length, root.maxColumns)
+            spacing: Theme.spaceXl
+            width: Math.max(list.width, Math.min(root.captionW, root.captionMax))
 
-            Repeater {
-                model: root.windows
+            Grid {
+                id: list
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.spaceL
+                columns: Math.min(root.windows.length, root.maxColumns)
 
-                Rectangle {
-                    id: card
-                    required property var modelData
-                    required property int index
-                    readonly property bool active: index === root.selected
-                    readonly property string cls: modelData.lastIpcObject.class || ""
+                Repeater {
+                    model: root.windows
 
-                    width: root.cardW
-                    height: root.cardH
-                    radius: Theme.radiusInner
-                    color: active ? Theme.selectedFill : Theme.surface
-                    border.width: Theme.borderWidth
-                    border.color: active ? Theme.selectedStroke : Theme.stroke
+                    Rectangle {
+                        id: card
+                        required property var modelData
+                        required property int index
+                        readonly property bool active: index === root.selected
+                        readonly property var ipc: modelData.lastIpcObject || ({})
+                        readonly property string cls: ipc.class || ""
 
-                    // No Behavior on colour here: the highlight has to keep up
-                    // with held-Tab autorepeat, and a fade would smear it.
+                        width: root.cardW
+                        height: root.cardW
+                        radius: Theme.radiusInner
+                        color: active ? Theme.selectedFill : Theme.surface
+                        border.width: Theme.borderWidth
+                        border.color: active ? Theme.selectedStroke : Theme.stroke
 
-                    Item {
-                        id: ico
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: Theme.spaceXxl
-                        implicitWidth: Theme.fs(48)
-                        implicitHeight: Theme.fs(48)
-                        opacity: card.active ? 1 : 0.55
+                        // No Behavior on colour here: the highlight has to keep up
+                        // with held-Tab autorepeat, and a fade would smear it.
 
-                        readonly property string iconPath: Apps.iconForClass(card.cls)
-
-                        IconImage {
-                            anchors.fill: parent
-                            visible: ico.iconPath !== ""
-                            source: ico.iconPath
-                        }
-
-                        // the shell's own windows, and anything else with no
-                        // themed icon: a glyph rather than an empty card
-                        Text {
+                        Item {
+                            id: ico
                             anchors.centerIn: parent
-                            visible: ico.iconPath === ""
-                            text: Apps.glyphForWindow(card.cls,
-                                card.modelData.lastIpcObject ? card.modelData.lastIpcObject.title : "")
-                            color: Theme.text
-                            font.family: Theme.fontIcon
-                            font.pixelSize: Theme.fs(40)
+                            implicitWidth: Theme.fs(48)
+                            implicitHeight: Theme.fs(48)
+                            opacity: card.active ? 1 : 0.55
+
+                            readonly property string iconPath: Apps.iconForClass(card.cls)
+
+                            IconImage {
+                                anchors.fill: parent
+                                visible: ico.iconPath !== ""
+                                source: ico.iconPath
+                            }
+
+                            // the shell's own windows, and anything else with no
+                            // themed icon: a glyph rather than an empty card
+                            Text {
+                                anchors.centerIn: parent
+                                visible: ico.iconPath === ""
+                                text: Apps.glyphForWindow(card.cls, card.ipc.title)
+                                color: Theme.text
+                                font.family: Theme.fontIcon
+                                font.pixelSize: Theme.fs(40)
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.selected = card.index
+                                root.commit()
+                            }
                         }
                     }
+                }
+            }
 
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.top: ico.bottom
-                        anchors.topMargin: Theme.spaceL
-                        width: parent.width - Theme.spaceL * 2
-                        horizontalAlignment: Text.AlignHCenter
-                        elide: Text.ElideRight
-                        maximumLineCount: 2
-                        wrapMode: Text.WordWrap
-                        text: card.modelData.lastIpcObject.title || card.cls
-                        color: card.active ? Theme.text : Theme.textDisabled
+            Column {
+                width: parent.width
+                spacing: Theme.spaceXs
 
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontSmall
-                    }
+                Text {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    readonly property var ipc: root.windows[root.selected] ? root.windows[root.selected].lastIpcObject : null
+                    text: ipc ? Apps.nameForWindow(ipc.class, ipc.title) : ""
+                    color: Theme.textDisabled
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontCaption
+                }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.selected = card.index
-                            root.commit()
-                        }
-                    }
+                Text {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideMiddle
+                    maximumLineCount: 1
+                    text: root.titleOf(root.windows[root.selected])
+                    color: Theme.text
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontBody
                 }
             }
         }
