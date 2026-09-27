@@ -17,8 +17,7 @@ Item {
     property bool atTop: false
 
     readonly property int bw: Theme.borderWidth
-    visible: !Theme.frameCorners && !Theme.frameNone
-    height: Theme.frameDouble ? Theme.frameInset + bw : Theme.frameChiselled ? bw * 2 : bw
+    height: Theme.barEdge
 
     // the outermost line, on the edge itself
     Rectangle {

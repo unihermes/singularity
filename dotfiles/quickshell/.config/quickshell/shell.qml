@@ -605,7 +605,7 @@ ShellRoot {
             }
             // a floating bar's window also holds the gap between it and the
             // screen edge, so windows tile clear of the whole thing
-            implicitHeight: Theme.barHeight + Theme.barMargin
+            implicitHeight: Theme.barHeight + Theme.barMargin + Theme.barEdgeExtra
             // Transparent, with the ground drawn by the Rectangle below. A
             // Wayland surface decides whether it has an alpha channel when
             // it's created, so a window that starts opaque stays opaque --
@@ -619,7 +619,7 @@ ShellRoot {
             Item {
                 id: barBody
                 x: Theme.barMargin
-                y: Theme.barPosition === "bottom" ? 0 : Theme.barMargin
+                y: Theme.barPosition === "bottom" ? Theme.barEdgeExtra : Theme.barMargin
                 width: parent.width - Theme.barMargin * 2
                 height: Theme.barHeight
             }
@@ -630,7 +630,7 @@ ShellRoot {
             // wallpaper.
             Rectangle {
                 visible: Theme.barFull
-                anchors.fill: barBody
+                anchors.fill: parent
                 color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
             }
 
@@ -959,7 +959,7 @@ ShellRoot {
 
             // the full-width bar's inner edge, drawn to the frame style
             BarEdge {
-                visible: Theme.barFull && !Theme.frameCorners && !Theme.frameNone
+                visible: Theme.barEdge > 0
                 atTop: Theme.barPosition === "bottom"
                 y: atTop ? 0 : parent.height - height
                 width: parent.width

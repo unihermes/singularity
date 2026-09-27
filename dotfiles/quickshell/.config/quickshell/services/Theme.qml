@@ -306,7 +306,14 @@ Singleton {
     readonly property bool barNotch:    Settings.barStyle === "notch"
     readonly property bool barFull:     !barFloating && !barIslands && !barBare && !barNotch
     readonly property int barMargin:  barFull || barNotch ? 0 : 6
-    readonly property int barExtent:  barHeight + barMargin * 2
+    // A full-width bar's inner edge (BarEdge.qml), as thick as the frame
+    // style draws it. Past the one hairline it's added to the bar rather
+    // than cut into it, so a double or bevelled edge doesn't run into the
+    // modules.
+    readonly property int barEdge: !barFull || frameCorners || frameNone ? 0
+        : frameDouble ? frameInset + borderWidth : frameChiselled ? borderWidth * 2 : borderWidth
+    readonly property int barEdgeExtra: Math.max(0, barEdge - borderWidth)
+    readonly property int barExtent:  barHeight + barMargin * 2 + barEdgeExtra
     // between the bar's (or an island's) edge and its outermost module
     readonly property int barInset: barFloating ? spaceXs : barIslands || barNotch ? spaceM : 0
     // the workspace indicator and clock chip styles -- see Looks.js
