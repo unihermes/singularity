@@ -610,6 +610,14 @@ hl.bind("ALT + grave",       altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { r
 -- Not a bare Alt_L/Alt_R `global` bind for the release: that changes how
 -- Hyprland treats ALT everywhere, including the drag/resize mod.
 
+-- --- Tabs ---
+-- For the apps opened as tabs (TABBED_CLASSES under WINDOW RULES), and only
+-- while one has focus: the TABS hooks turn these off for anything else, so
+-- other apps keep the keys (a browser's own CTRL+Tab).
+local tabNextBind  = hl.bind("CTRL + Tab",         hl.dsp.group.next())  -- Next tab
+local tabPrevBind  = hl.bind("CTRL + SHIFT + Tab", hl.dsp.group.prev())  -- Previous tab
+local tabCloseBind = hl.bind(mod .. " + SHIFT + Q", function() closeAllTabs() end)  -- Close all tabs
+
 -- --- Workspaces ---
 -- Workspace grid: every workspace and its windows at once. Click a cell to
 -- jump, click a window to focus it, drag a window between cells to move it.
@@ -1365,6 +1373,26 @@ hl.on("window.open", function(win)
     host.group:add(win)
     refitGroup(win)
 end)
+
+-- SUPER+SHIFT+Q: every tab of the focused window's group.
+function closeAllTabs()
+    local win = hl.get_active_window()
+    if not win then return end
+    local members = win.group and win.group.members or { win }
+    for _, w in ipairs(members) do
+        hl.dispatch(hl.dsp.window.close({ window = "address:" .. w.address }))
+    end
+end
+
+-- The Tabs binds are live only while a tabbed app has focus.
+local function syncTabBinds()
+    local win = hl.get_active_window()
+    local on = win ~= nil and TABBED_CLASSES[win.class] == true
+    for _, b in ipairs({ tabNextBind, tabPrevBind, tabCloseBind }) do b:set_enabled(on) end
+end
+syncTabBinds()
+hl.on("window.active", syncTabBinds)
+hl.on("window.close", syncTabBinds)
 
 -- A group down to its last tab is dissolved, so a lone window has no tab
 -- bar. After the close has settled, since the group still counts the
