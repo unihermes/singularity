@@ -34,7 +34,10 @@ FlyoutPanel {
     property string page: ""
     // always reopen at the top level
     onOpenChanged: if (!open) page = ""
+    keyboardExclusive: open && page === "apps"
 
+    property string appQuery: ""
+    property point lastPointer: Qt.point(-1, -1)
     // Re-read the saved layout each time the page opens, so the
     // lists never show an order from before a reset or a hand edit.
     onPageChanged: if (page === "quick") {
@@ -43,12 +46,19 @@ FlyoutPanel {
         Session.refresh()
     } else if (page === "widgets") {
         widgetsList.refill()
+    } else if (page === "apps") {
+        appQuery = ""
+        appSearch.text = ""
+        appView.currentIndex = 0
+        // after the field has become visible, or focus is refused
+        Qt.callLater(appSearch.forceFocus)
     }
 
     readonly property var pageTitles: ({
         "power": "POWER",
         "appearance": "APPEARANCE",
         "quick": "QUICK ACTIONS",
+        "apps": "APPLICATIONS",
         "widgets": "BAR WIDGETS"
     })
 
@@ -79,16 +89,16 @@ FlyoutPanel {
         onExited: rfkillRead.running = true
     }
 
+    function launch(entry) {
+        scope.openFlyout = ""
+        Apps.launch(entry)
+    }
+
     function run(act) {
         scope.openFlyout = ""
         if (act === "settings") settingsWin.open()
         else if (act === "system") systemWin.open()
         else if (act === "keybinds") settingsWin.open("keybinds")
-        // the launcher, rather than a second, smaller app list in here
-        else if (act === "apps") {
-            scope.launcherMode = "apps"
-            scope.openFlyout = "launcher"
-        }
         // The pause lets the flyout's surface unmap first. slurp and
         // hyprpicker both draw on the overlay layer too, and without
         // it the menu is still on screen for their first frame --
@@ -122,7 +132,7 @@ FlyoutPanel {
             [
                 { label: "Power",         sub: "power" },
             ], [
-                { label: "Applications",  act: "apps" },
+                { label: "Applications",  sub: "apps" },
                 { label: "Quick Actions", sub: "quick" },
             ], [
                 { label: "Appearance",    sub: "appearance" },
@@ -154,6 +164,107 @@ FlyoutPanel {
                         ? controlCentre.page = modelData.sub
                         : controlCentre.run(modelData.act)
                 }
+            }
+        }
+    }
+
+    // --- Applications -----------------------------------------
+    // A list rather than rows in the column: at ~30 apps the panel
+    // would run most of the way down the screen, so it scrolls
+    // inside a fixed-height window instead.
+
+    FlyoutInput {
+        id: appSearch
+        bleed: true
+        visible: controlCentre.page === "apps"
+        placeholder: "Search"
+        echoPassword: false
+        onTextChanged: {
+            controlCentre.appQuery = text
+            appView.currentIndex = 0
+        }
+        // Enter launches whatever is highlighted -- the top match
+        // until the arrows move it
+        onAccepted: if (appView.count > 0)
+            controlCentre.launch(appView.model[appView.currentIndex])
+        onDownPressed: if (appView.currentIndex < appView.count - 1) appView.currentIndex++
+        onUpPressed: if (appView.currentIndex > 0) appView.currentIndex--
+        onEscapePressed: scope.openFlyout = ""
+    }
+
+    FlyoutRow {
+        visible: controlCentre.page === "apps" && appView.count === 0
+        label: "No matches"
+        enabled: false
+    }
+
+    ListView {
+        id: appView
+        visible: controlCentre.page === "apps"
+        width: parent.width
+        // 14 rows, or fewer if there are fewer apps
+        height: visible ? Math.min(contentHeight, 14 * (Theme.rowHeightTall + spacing)) : 0
+
+        clip: true
+        spacing: Theme.spaceXs
+        boundsBehavior: Flickable.StopAtBounds
+        model: visible ? Apps.list(controlCentre.appQuery, true) : []
+        // keeps the arrow-key selection scrolled into view
+        onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+        // back to the top each time the page opens
+        onVisibleChanged: if (visible) positionViewAtBeginning()
+
+        delegate: Item {
+            id: appRow
+            required property var modelData
+            required property int index
+            width: appView.width
+            height: Theme.rowHeightTall
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.radiusInner
+                color: appRow.ListView.isCurrentItem ? Theme.hoverFill : "transparent"
+            }
+
+            IconImage {
+                id: appIcon
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spaceXs
+                anchors.verticalCenter: parent.verticalCenter
+                implicitSize: Theme.fs(18)
+                source: Quickshell.iconPath(appRow.modelData.icon, true)
+            }
+
+            Text {
+                anchors.left: appIcon.right
+                anchors.leftMargin: Theme.spaceL
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spaceS
+                anchors.verticalCenter: parent.verticalCenter
+                text: appRow.modelData.name
+                elide: Text.ElideRight
+                color: appRow.ListView.isCurrentItem ? Theme.textStrong : Theme.text
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
+            }
+
+            MouseArea {
+                id: appMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                // one highlight shared by mouse and keys: hovering
+                // moves the selection rather than drawing a second one
+                // position, not containsMouse: arrow keys scroll rows under a
+                // still pointer, which would otherwise pull the selection back
+                onPositionChanged: mouse => {
+                    var p = appMouse.mapToGlobal(mouse.x, mouse.y)
+                    if (p.x === controlCentre.lastPointer.x && p.y === controlCentre.lastPointer.y) return
+                    controlCentre.lastPointer = p
+                    appView.currentIndex = appRow.index
+                }
+                onClicked: controlCentre.launch(appRow.modelData)
             }
         }
     }
