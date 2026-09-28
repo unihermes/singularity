@@ -732,6 +732,18 @@ hl.window_rule({
     focus_on_activate = true,
 })
 
+-- The other way round: a download opened from the browser goes to its app,
+-- which asks to be activated, and Hyprland only marks it urgent. While a
+-- browser has focus, honour that request too, so an app that was already
+-- open comes to the front with the file.
+local BROWSER_CLASSES = { ["zen"] = true, ["zen-browser"] = true, ["floorp"] = true, ["firefox"] = true }
+hl.on("window.urgent", function(win)
+    local active = hl.get_active_window()
+    if not win or not active or win.address == active.address then return end
+    if not BROWSER_CLASSES[active.class] or BROWSER_CLASSES[win.class] then return end
+    hl.dispatch(hl.dsp.focus({ window = "address:" .. win.address }))
+end)
+
 -- Monocle. Hyprland ships dwindle and master only, with no monocle layout,
 -- so this emulates one: dwindle stays the underlying layout, but every
 -- window that would tile is floated and sized to fill the usable area
