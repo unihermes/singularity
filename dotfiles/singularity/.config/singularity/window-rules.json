@@ -4,9 +4,9 @@
     "workspace": 0,
     "fullscreen": false,
     "pin": false,
+    "label": "Claude Desktop",
     "class": "com.anthropic.Claude",
-    "size": "1240 690",
-    "label": "Claude Desktop"
+    "size": "1240 690"
   },
   {
     "float": true,

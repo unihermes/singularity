@@ -6,7 +6,7 @@ import = ["~/.local/state/singularity/alacritty.toml"]
 
 [window]
 padding = { x = 12, y = 10 }
-opacity = 0.85
+opacity = 0.9
 decorations = "none"
 dynamic_padding = true
 

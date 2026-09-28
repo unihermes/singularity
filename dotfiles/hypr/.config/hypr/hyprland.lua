@@ -318,7 +318,7 @@ hl.config({
     general = {
         gaps_in     = 1,
         gaps_out    = 0,
-        border_size = 0,
+        border_size = 1,
 
         col = {
             active_border   = borderActive or "rgba(d4e4f466)",
@@ -331,12 +331,12 @@ hl.config({
     },
 
     decoration = {
-        rounding         = 3,
+        rounding         = 6,
         rounding_power   = 2,
-        active_opacity   = 1.0,
+        active_opacity   = 1,
         inactive_opacity = 0.96,
         dim_inactive = true,
-        dim_strength = 0.2,
+        dim_strength = 0.1,
 
         shadow = {
             enabled      = true,
