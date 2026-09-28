@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/BtBattery.qml
 //
-// Battery levels of connected Bluetooth devices, for the bar module and the
-// flyout. BlueZ's Battery1 covers most devices; AirPods only report over
+// Battery levels of connected Bluetooth devices, for the flyout and the
+// Settings page. BlueZ's Battery1 covers most devices; AirPods only report over
 // Apple's own protocol, read by scripts/airpods-battery.py, which is started
 // for every connected device BlueZ has no battery for.
 
@@ -50,16 +50,6 @@ Singleton {
         for (var i = 0; i < 3; i++)
             if (p[i] >= 0) out.push(names[i] + " " + p[i] + "%")
         return out.join("  ")
-    }
-
-    // the lowest level among connected devices, -1 when none report
-    readonly property int lowest: {
-        var min = -1
-        for (var i = 0; i < connected.length; i++) {
-            var l = level(connected[i])
-            if (l >= 0 && (min < 0 || l < min)) min = l
-        }
-        return min
     }
 
     function setParts(address, value) {
