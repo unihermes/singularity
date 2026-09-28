@@ -215,8 +215,16 @@ end
 -- A display plugged in (or the panel back on as the lid opens) lays the
 -- workspaces out afresh. Plugging or unplugging one with the lid shut is
 -- lid.sh's to handle: it switches the panel off or back on to match.
+--
+-- Run from a timer rather than inside the event: a display is added before
+-- its workspace exists, and focusing it then crashes Hyprland. At launch
+-- that is every display, so hyprland.start (see AUTOSTART below) queues it
+-- the same way.
+local function resetWorkspacesSoon()
+    hl.timer(function() singularityResetWorkspaces() end, { timeout = 500, type = "oneshot" })
+end
 hl.on("monitor.added", function()
-    singularityResetWorkspaces()
+    resetWorkspacesSoon()
     hl.exec_cmd("~/.config/hypr/lid.sh displays")
 end)
 hl.on("monitor.removed", function()
@@ -258,6 +266,7 @@ hl.env("QS_ICON_THEME", iconTheme)
 -------------------
 
 hl.on("hyprland.start", function()
+    resetWorkspacesSoon()
     -- Not UWSM, so graphical-session.target is never reached, and units
     -- that hang off it (rather than D-Bus activation) have to be started by
     -- hand. Starting the unit rather than the binary keeps its
