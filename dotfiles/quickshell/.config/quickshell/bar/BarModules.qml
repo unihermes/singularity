@@ -362,6 +362,8 @@ Item {
         icon: barModules.bar.btAdapterOn(adapter) ? "󰂯" : "󰂲"
         active: screenScope.openFlyout === "bluetooth"
         dimmed: !barModules.bar.btAdapterOn(adapter)
+        // the lowest connected device's battery, while one reports
+        label: BtBattery.lowest >= 0 ? BtBattery.lowest + "%" : ""
         onActivated: screenScope.toggleFlyout("bluetooth", btBtn)
     }
 

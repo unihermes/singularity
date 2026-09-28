@@ -31,11 +31,7 @@ FlyoutRow {
         if (device.pairing) return "pairing"
         if (connecting) return "connecting"
         if (disconnecting) return "disconnecting"
-        // BlueZ reports battery as a 0..1 fraction despite the name, the
-        // same as UPower -- rounding it directly shows a full headset as 1%
-        if (device.connected && device.batteryAvailable)
-            return Math.round(device.battery * 100) + "%"
-        if (device.connected) return ""
+        if (device.connected) return BtBattery.describe(device) || ""
         if (device.paired) return ""
         return "new"
     }
