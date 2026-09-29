@@ -96,6 +96,7 @@ singularity/
     ├── nvim/.config/nvim/       # LazyVim: lua/config/, lua/plugins/, colors/singularity.lua
     ├── alacritty/.config/alacritty/alacritty.toml
     ├── zathura/.config/zathura/zathurarc
+    ├── floorp/.config/floorp/singularity/  # user.js, userChrome.css: built into the active profile
     ├── gtk/.config/gtk-3.0/settings.ini
     ├── gtk/.config/gtk-4.0/settings.ini
     ├── fontconfig/.config/fontconfig/fonts.conf

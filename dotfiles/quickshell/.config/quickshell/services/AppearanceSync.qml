@@ -41,7 +41,8 @@
 // Zen's and Floorp's active profiles get dark or light and the accent as
 // Gecko's selection and accent colours, in a marked block of their user.js
 // (browserPrefs), and Floorp its chrome in the look's colours in one of
-// chrome/userChrome.css (browserChrome). The rest of each file is left
+// chrome/userChrome.css (browserChrome). Floorp's two files are rebuilt from
+// the repo's floorp/singularity/ copies each time; the rest of Zen's is left
 // alone. Read at each browser start.
 //
 // GTK and Qt apps get dark or light, the icon and cursor themes, and the
@@ -376,7 +377,8 @@ Scope {
     // Floorp's chrome in the look: the variables a theme (browser.theme, or
     // the Firefox Color extension) would set, laid out like gtkColours -- the
     // tab strip on bar, the toolbar and selected tab a step up on surface,
-    // the address bar on overlay, popups as GTK's popovers. userChrome.css is
+    // the address bar on overlay, popups as GTK's popovers. All text is the
+    // look's text, not bright. userChrome.css is
     // a user sheet, so its !important outranks a theme's inline values.
     // Floorp's lightweight theme also hard-codes cyan (the urlbar's focus
     // ring, links, primary buttons) and blue (the selected urlbar result) in
@@ -394,6 +396,7 @@ Scope {
         var vars = {
             "--lwt-accent-color": hex(Theme.bar),
             "--lwt-text-color": hex(Theme.text),
+            "--text-color": hex(Theme.text),
             "--toolbox-background-color": hex(Theme.bar),
             "--toolbox-background-color-inactive": hex(Theme.bar),
             "--toolbox-text-color": hex(Theme.text),
@@ -404,15 +407,15 @@ Scope {
             "--toolbarbutton-background-color-hover": hex(Theme.hoverFill),
             "--toolbarbutton-background-color-active": mix(Theme.selectedFill, Theme.border, 0.5),
             "--toolbar-field-background-color": hex(Theme.overlay),
-            "--toolbar-field-text-color": hex(Theme.bright),
+            "--toolbar-field-text-color": hex(Theme.text),
             "--toolbar-field-border-color": "transparent",
             "--toolbar-field-background-color-focus": hex(Theme.overlay),
-            "--toolbar-field-text-color-focus": hex(Theme.bright),
+            "--toolbar-field-text-color-focus": hex(Theme.text),
             "--toolbar-field-border-color-focus": a,
             "--lwt-toolbar-field-highlight": a,
             "--lwt-toolbar-field-highlight-text": t,
             "--tab-background-color-selected": hex(Theme.surface),
-            "--tab-selected-textcolor": hex(Theme.bright),
+            "--tab-selected-textcolor": hex(Theme.text),
             "--tab-loading-fill": a,
             "--tabs-navbar-separator-color": "transparent",
             "--toolbarseparator-color": hex(Theme.border),
@@ -439,6 +442,13 @@ Scope {
         lines.push("}", ":root, #tabbrowser-tabs, .tab-context-line {",
             "  --tab-line-color: " + a + " !important;",
             "  --lwt-tab-line-color: " + a + " !important;",
+            "}",
+            // context menus: toolkit sets these on each popup from GTK's
+            // Menu/MenuText, so :root alone doesn't reach them
+            "menupopup, panel:not([type=\"arrow\"]) {",
+            "  --panel-background-color: " + popup + " !important;",
+            "  --panel-text-color: " + hex(Theme.text) + " !important;",
+            "  --panel-border-color: " + hex(Theme.border) + " !important;",
             "}",
             ".tabbrowser-tab:is([selected], [multiselected]) .tab-context-line {",
             "  background-color: " + a + " !important;",
@@ -477,21 +487,25 @@ Scope {
         return path.charAt(0) === "/" ? path : base + "/" + path
     }
 
+    // The profile file with the marked block swapped in: built on the
+    // repo's copy (source) when the browser has one, else on the file itself.
+    function writeProfileFile(path, source, open, close, lines) {
+        var base = source && source.ready ? source.text() : null
+        AtomicFileWrite.write({
+            path: path,
+            transform: text => withBlock(base !== null ? base : text, open, close, lines),
+        })
+    }
+
     function renderBrowsers() {
         var prefs = browserPrefs(), chrome = browserChrome()
         for (var i = 0; i < browsers.length; i++) {
             var b = browsers[i]
             var profile = activeProfile(b.base, b.installs.text(), b.profiles.text())
             if (!profile) continue
-            AtomicFileWrite.write({
-                path: profile + "/user.js",
-                transform: text => withBlock(text, "// ", "", prefs),
-            })
+            writeProfileFile(profile + "/user.js", b.userJs, "// ", "", prefs)
             if (b.chrome)
-                AtomicFileWrite.write({
-                    path: profile + "/chrome/userChrome.css",
-                    transform: text => withBlock(text, "/* ", " */", chrome),
-                })
+                writeProfileFile(profile + "/chrome/userChrome.css", b.chrome, "/* ", " */", chrome)
         }
     }
 
@@ -655,7 +669,7 @@ Scope {
     readonly property var browsers: [
         { base: Quickshell.env("HOME") + "/.config/zen", installs: zenInstalls, profiles: zenProfiles },
         { base: Quickshell.env("HOME") + "/.config/floorp", installs: floorpInstalls, profiles: floorpProfiles,
-          chrome: true },
+          userJs: floorpUserJs, chrome: floorpChrome },
     ]
     component ProfileList: FileView {
         preload: true
@@ -668,6 +682,22 @@ Scope {
     ProfileList { id: zenProfiles;    path: Quickshell.env("HOME") + "/.config/zen/profiles.ini" }
     ProfileList { id: floorpInstalls; path: Quickshell.env("HOME") + "/.config/floorp/installs.ini" }
     ProfileList { id: floorpProfiles; path: Quickshell.env("HOME") + "/.config/floorp/profiles.ini" }
+
+    // Floorp's own prefs and chrome, kept in the repo beside its profiles:
+    // the profile's user.js and userChrome.css are these plus the look's
+    // block, so they're linked into whichever profile is active, whatever
+    // its random name. Watched, so editing one rewrites the profile's copy.
+    component ProfileSource: FileView {
+        property bool ready: false
+        preload: true
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: { ready = true; debounce.restart() }
+        onLoadFailed: ready = false
+    }
+    ProfileSource { id: floorpUserJs; path: Quickshell.env("HOME") + "/.config/floorp/singularity/user.js" }
+    ProfileSource { id: floorpChrome; path: Quickshell.env("HOME") + "/.config/floorp/singularity/userChrome.css" }
 
     FileView { id: wofiOut;   path: root.dir + "/wofi.css"; printErrors: false }
 
