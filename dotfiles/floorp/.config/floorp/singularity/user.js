@@ -6,5 +6,7 @@
 // so edit this one: edits to the profile's copy are overwritten.
 
 user_pref("media.webrtc.camera.allow-pipewire", true);
-// Page fullscreen fills the browser window instead of fullscreening it in Hyprland
-user_pref("full-screen-api.ignore-widgets", true);
+// Per-Site Fullscreen (extensions/per-site-fullscreen) is unsigned and
+// sideloaded into the profile: allow it, and enable it without a prompt
+user_pref("xpinstall.signatures.required", false);
+user_pref("extensions.autoDisableScopes", 14);

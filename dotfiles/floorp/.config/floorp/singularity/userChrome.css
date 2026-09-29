@@ -5,21 +5,3 @@
    this file by quickshell/services/AppearanceSync.qml, with the look's
    colours appended, so edit this one: edits to the profile's copy are
    overwritten. */
-
-@-moz-document url(chrome://browser/content/browser.xhtml) {
-
-/* Keep the tabs, address bar and bookmarks bar visible while a page is fullscreen */
-:root[inDOMFullscreen] #navigator-toolbox {
-  visibility: visible !important;
-  margin-top: 0 !important;
-}
-/* Firefox sizes a fullscreen page to the whole screen and only corrects it when
-   the page area changes size, so shrink it by 1px to make it fit the window */
-:root[inDOMFullscreen] #tabbrowser-tabbox {
-  margin-bottom: 1px !important;
-}
-:root[inDOMFullscreen] #PersonalToolbar:not([collapsed="true"]) {
-  visibility: visible !important;
-}
-
-}
