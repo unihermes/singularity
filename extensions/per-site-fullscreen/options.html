@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Per-Site Fullscreen</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { padding: 32px 16px; }
+  main { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 14px; margin: 0 0 8px; }
+  section > p { margin: 0 0 10px; }
+  .choices { flex-direction: row; flex-wrap: wrap; }
+  .choices label { border: 1px solid var(--line); }
+  #add { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  #add input { flex: 1 1 200px; min-width: 0; }
+  #add-error { color: #d7264c; margin: -4px 0 12px; }
+  #add-error[hidden] { display: none; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; }
+  td.site { overflow-wrap: anywhere; width: 100%; }
+  td.act { text-align: right; white-space: nowrap; }
+  #empty { padding: 12px 4px; }
+  dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+  dt { font-weight: 600; }
+  dd { margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Per-Site Fullscreen</h1>
+
+  <div id="warn" class="warn" hidden>
+    This browser keeps every page fullscreen inside its window, so Full screen can't fill the screen.
+    Open <code>about:config</code> and set <code>full-screen-api.ignore-widgets</code> to <code>false</code>.
+  </div>
+
+  <section>
+    <h2>Modes</h2>
+    <dl>
+      <dt>In window</dt><dd>The video or page fills the browser window; tabs and toolbars stay visible.</dd>
+      <dt>Full screen</dt><dd>The page fills the whole screen, as browsers normally do.</dd>
+      <dt>Ask</dt><dd>Choose each time a page goes fullscreen, with an option to remember it.</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Default for other sites</h2>
+    <div id="default" class="choices" role="radiogroup" aria-label="Default mode"></div>
+  </section>
+
+  <section>
+    <h2>Sites</h2>
+    <p class="muted">A rule for a domain also covers its subdomains, so <code>youtube.com</code> covers <code>m.youtube.com</code>.</p>
+    <form id="add">
+      <input id="add-host" type="text" placeholder="example.com" aria-label="Domain" autocomplete="off" spellcheck="false">
+      <select id="add-mode" aria-label="Mode"></select>
+      <button class="primary" type="submit">Add</button>
+    </form>
+    <div id="add-error" hidden>Enter a domain such as example.com.</div>
+    <table>
+      <thead><tr><th>Site</th><th>Mode</th><th></th></tr></thead>
+      <tbody id="rules"></tbody>
+    </table>
+    <div id="empty" class="muted" hidden>No sites yet. Add one above, or pick a mode from the toolbar button while on a site.</div>
+  </section>
+</main>
+<script src="shared.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

@@ -86,6 +86,8 @@ singularity/
 ├── packages/
 │   ├── pacman.txt        # native, one per line, # comments allowed
 │   └── aur.txt
+├── extensions/
+│   └── per-site-fullscreen/  # Floorp/Zen extension: fullscreen in window, full screen, or ask, per site
 └── dotfiles/
     ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
     ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows

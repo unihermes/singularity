@@ -24,3 +24,6 @@ __pycache__/
 # the stowed folders, is inside the repo -- and left behind if the shell dies
 # mid-write
 *.new
+
+# Packed browser extensions, built by extensions/*/build.sh
+extensions/*.xpi

@@ -1,0 +1,74 @@
+{
+  "manifest_version": 2,
+  "name": "Per-Site Fullscreen",
+  "version": "1.0.0",
+  "description": "Choose per website whether a page's fullscreen fills the screen, stays inside the browser window, or asks each time.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "per-site-fullscreen@singularity",
+      "strict_min_version": "128.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "shared.js",
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "all_frames": true,
+      "match_about_blank": true,
+      "run_at": "document_start",
+      "world": "MAIN",
+      "js": [
+        "page.js"
+      ]
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "all_frames": true,
+      "match_about_blank": true,
+      "run_at": "document_start",
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+  "browser_action": {
+    "default_title": "Fullscreen for this site",
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon-dark.svg",
+    "theme_icons": [
+      {
+        "light": "icons/icon-light.svg",
+        "dark": "icons/icon-dark.svg",
+        "size": 16
+      },
+      {
+        "light": "icons/icon-light.svg",
+        "dark": "icons/icon-dark.svg",
+        "size": 32
+      }
+    ],
+    "browser_style": false
+  }
+}
