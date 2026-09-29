@@ -29,7 +29,7 @@ fastfetch() {
 [[ -r $look_state/starship.toml ]] && export STARSHIP_CONFIG=$look_state/starship.toml
 fastfetch
 
-alias ls='ls --color=auto'
+alias ls='ls -A --color=auto'
 alias grep='grep --color=auto'
 alias vim='nvim'
 alias vi='nvim'
