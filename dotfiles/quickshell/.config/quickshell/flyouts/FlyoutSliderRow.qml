@@ -29,6 +29,8 @@ Column {
     property string suffix: ""
     property bool enabled: true
     property bool live: true
+    // named points under the slider (Slider.qml's `marks`), in this row's units
+    property var marks: []
 
     // fired while dragging (on release when !live), already snapped and clamped
     signal moved(real value)
@@ -57,7 +59,11 @@ Column {
         Text {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: root.shown + root.suffix
+            // a named point reads as its name
+            text: {
+                var m = root.marks.find(m => m.at === root.shown)
+                return m ? m.label : root.shown + root.suffix
+            }
             color: Theme.textStrong
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
@@ -67,6 +73,10 @@ Column {
     Slider {
         width: parent.width
         enabled: root.enabled
+        marks: root.marks.map(m => ({
+            at: (m.at - root.minimum) / Math.max(1, root.maximum - root.minimum) * 100,
+            label: m.label,
+        }))
         value: (root.shown - root.minimum) / Math.max(1, root.maximum - root.minimum) * 100
         onMoved: pct => {
             var v = root.minimum + (root.maximum - root.minimum) * pct / 100

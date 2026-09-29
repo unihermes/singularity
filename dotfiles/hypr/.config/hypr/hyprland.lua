@@ -38,11 +38,12 @@ local floorp      = "floorp"
 -- radius applied (AppearanceSync.qml), else the repo's own.
 local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
 
--- Animation Speed from the bar's Appearance page. Quickshell writes the choice
--- to a state file and runs `hyprctl reload config-only`, which re-runs this
--- file -- so the setting survives a restart without the repo's config being
--- rewritten. "fast" halves every speed below (speed is a duration, so lower is
--- quicker) and "off" turns animations off entirely.
+-- Animation time from the bar's Appearance page. Quickshell writes it to a
+-- state file and runs `hyprctl reload config-only`, which re-runs this file --
+-- so the setting survives a restart without the repo's config being
+-- rewritten. It's a percentage of each speed below (speed is a duration, so
+-- 50 is twice as quick), and 0 turns animations off entirely. The words
+-- "normal", "fast" and "off" are the older form of the same file.
 local function singularityState(name, default)
     local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/" .. name)
     if not f then return default end
@@ -50,8 +51,10 @@ local function singularityState(name, default)
     f:close()
     return v or default
 end
-local animMode   = singularityState("animations", "normal")
-local animFactor = animMode == "fast" and 0.5 or 1
+local animTime   = singularityState("animations", "100")
+local animFactor = math.max(0, math.min(100,
+    tonumber(animTime) or ({ normal = 100, fast = 50, off = 0 })[animTime] or 100)) / 100
+local animOff    = animFactor == 0
 
 -- How windows open, close, minimize and restore, picked on the Appearance
 -- page. "fade" is popin at full size, so the window only fades, and "none"
@@ -100,7 +103,7 @@ end
 
 local function animation(t)
     t.speed   = t.speed * animFactor
-    t.enabled = t.enabled and animMode ~= "off"
+    t.enabled = t.enabled and not animOff
     hl.animation(t)
 end
 
@@ -357,7 +360,7 @@ hl.config({
     },
 
     animations = {
-        enabled = animMode ~= "off",
+        enabled = not animOff,
     },
 
     dwindle = {
@@ -1036,7 +1039,7 @@ end
 
 -- Calls fn once an animation of the given speed has played out.
 local function afterAnimation(speed, fn)
-    if animMode == "off" then
+    if animOff then
         fn()
     else
         hl.timer(fn, { timeout = math.floor(speed * 100 * animFactor), type = "oneshot" })

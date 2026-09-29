@@ -701,16 +701,16 @@ Scope {
 
     FileView { id: wofiOut;   path: root.dir + "/wofi.css"; printErrors: false }
 
-    // Animation Speed reaches Hyprland through a state file its Lua config
+    // Animation time reaches Hyprland through a state file its Lua config
     // reads on load, then a config-only reload (no monitor re-probe, so no
     // flicker). Written in one shell command so the reload can't run before
     // the write lands. At startup the file is only written, not reloaded:
     // Hyprland read the same value when it started.
     function writeHyprAnimations(reload) {
-        var speed = String(Settings.animSpeed)
+        var time = String(Settings.animTime)
         AtomicFileWrite.write({
             path: root.dir + "/animations",
-            transform: () => speed + "\n",
+            transform: () => time + "\n",
             after: reload ? "hyprctl reload config-only >/dev/null" : "",
         })
     }
@@ -840,9 +840,16 @@ Scope {
         onTriggered: root.writeCursor(true)
     }
 
+    // the Animations slider moves in steps; one Hyprland reload per drag
+    Timer {
+        id: animDebounce
+        interval: 200
+        onTriggered: root.writeHyprAnimations(true)
+    }
+
     Connections {
         target: Settings
-        function onAnimSpeedChanged() { root.writeHyprAnimations(true) }
+        function onAnimTimeChanged() { animDebounce.restart() }
         function onSystemFontFamilyChanged() { debounce.restart() }
         function onCursorThemeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onCursorSizeChanged() { cursorDebounce.restart(); debounce.restart() }

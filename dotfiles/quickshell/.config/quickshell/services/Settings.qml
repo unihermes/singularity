@@ -42,8 +42,9 @@ Singleton {
     readonly property int fontSizeBase: 16
     // the same for the bar's labels and icons alone (Theme.barFs)
     readonly property alias barFontSize: adapter.barFontSize
-    // "normal", "fast" or "off"
-    readonly property alias animSpeed:   adapter.animSpeed
+    // how long animations take, as a percentage of their normal length:
+    // 100 normal, 50 fast, 0 off
+    readonly property alias animTime:    adapter.animTime
     // "grayscale" or "wallpaper"
     readonly property alias colourMode:  adapter.colourMode
     // a matugen scheme type; only read in wallpaper mode
@@ -115,7 +116,6 @@ Singleton {
 
     // Cycled through by the Appearance page's choice rows, in this order.
     readonly property var choices: ({
-        animSpeed:    ["normal", "fast", "off"],
         colourMode:   ["grayscale", "wallpaper"],
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
         colourVariant: ["dark", "light"],
@@ -133,7 +133,7 @@ Singleton {
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso"],
     })
     readonly property var choiceLabels: ({
-        "normal": "Normal", "fast": "Fast", "off": "Off",
+        "normal": "Normal",
         "grayscale": "Grayscale", "wallpaper": "Wallpaper", "dark": "Dark", "light": "Light",
         "scheme-neutral": "Subtle", "scheme-tonal-spot": "Balanced",
         "scheme-vibrant": "Vivid", "scheme-expressive": "Expressive",
@@ -392,7 +392,13 @@ Singleton {
         nightLightKelvin: { min: 2500, max: 6000 },
         cursorSize:   { min: 16, max: 48 },
         wallpaperInterval: { min: 0, max: 1440 },
+        animTime:     { min: 0,  max: 100 },
     })
+
+    // The named points on the Animations slider, as animTime values.
+    readonly property var animTimeMarks: [
+        { at: 0, label: "Off" }, { at: 50, label: "Fast" }, { at: 100, label: "Normal" },
+    ]
 
     // Stock: the fallback look, with its own settings layered over the values
     // no look sets.
@@ -401,7 +407,7 @@ Singleton {
             look: Looks.fallback,
             fontSize: 16,
             barFontSize: 16,
-            animSpeed: "normal",
+            animTime: 100,
             colourMode: "grayscale",
             colourScheme: "scheme-tonal-spot",
             colourVariant: "dark",
@@ -625,6 +631,20 @@ Singleton {
                 adapter.fontSize = root.clamp("fontSize", root.fontSizeBase * adapter.fontScale / 100)
                 adapter.fontScale = 100
             }
+            // Animation Speed used to be one of three words. Carried over
+            // once, in the saved default too, then the old key is emptied.
+            if (adapter.animSpeed !== "") {
+                var times = { normal: 100, fast: 50, off: 0 }
+                adapter.animTime = times[adapter.animSpeed] !== undefined ? times[adapter.animSpeed] : 100
+                var u = adapter.userDefaults || {}
+                if (u.animSpeed !== undefined) {
+                    var c = {}
+                    for (var k in u) if (k !== "animSpeed") c[k] = u[k]
+                    c.animTime = times[u.animSpeed] !== undefined ? times[u.animSpeed] : 100
+                    adapter.userDefaults = c
+                }
+                adapter.animSpeed = ""
+            }
             root.seedAdjustable()
         }
         onLoadFailed: {
@@ -647,7 +667,9 @@ Singleton {
             // superseded by fontSize; read once to migrate (see onLoaded)
             property int fontScale: 100
 
-            property string animSpeed: "normal"
+            property int animTime: 100
+            // superseded by animTime; read once to migrate (see onLoaded)
+            property string animSpeed: ""
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
             property string colourVariant: "dark"

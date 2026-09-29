@@ -558,10 +558,14 @@ FlyoutPanel {
             onMoved: v => Settings.set("fontSize", v)
         }
 
-        FlyoutSegmented {
-            model: appearancePage.seg("animSpeed")
-            current: Settings.animSpeed
-            onPicked: v => Settings.set("animSpeed", v)
+        FlyoutSliderRow {
+            label: "Animations"
+            suffix: "%"
+            value: Settings.animTime
+            minimum: Settings.limits.animTime.min
+            maximum: Settings.limits.animTime.max
+            marks: Settings.animTimeMarks
+            onMoved: v => Settings.set("animTime", v)
         }
 
         // --- the way out ---

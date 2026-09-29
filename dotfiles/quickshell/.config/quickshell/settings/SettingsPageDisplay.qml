@@ -126,7 +126,7 @@ SettingsPage {
     }
 
     // Saved as a state file Hyprland's config reads, then a config-only
-    // reload, as Animation Speed is -- one shell command, so the reload can't
+    // reload, as the animation time is -- one shell command, so the reload can't
     // run before the write lands. The reload applies the workspace rule and
     // the cursor's default display, but a rule only places a workspace when
     // it is created, so workspace 1 is also moved over explicitly.

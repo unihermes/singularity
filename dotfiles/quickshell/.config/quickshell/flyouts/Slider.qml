@@ -12,6 +12,10 @@ Item {
     id: root
 
     property real value: 0          // 0..100
+    // Named points along the slider, as [{ at: 0..100, label }]: each label
+    // sits under its point, and clicking it jumps there. A drag that ends
+    // near one lands on it.
+    property var marks: []
 
     // Fired continuously while dragging, so the backend follows the
     // pointer instead of only catching up on release.
@@ -23,34 +27,80 @@ Item {
     // No handle: the fill's end is the grip, so the bar alone shows the
     // level. The hit area stays the switch's height so a thin bar is still
     // easy to grab.
-    implicitHeight: Theme.switchHeight
+    implicitHeight: track.height + (marks.length > 0 ? markRow.height : 0)
 
     function valueAt(px) {
-        return Math.round(Math.max(0, Math.min(1, px / Math.max(1, width))) * 100)
+        var v = Math.max(0, Math.min(1, px / Math.max(1, width))) * 100
+        for (var i = 0; i < marks.length; i++)
+            if (Math.abs(v - marks[i].at) < 3) return marks[i].at
+        return Math.round(v)
     }
 
-    // a touch taller than a read-only meter, since this one is grabbed
-    Meter {
-        anchors.verticalCenter: parent.verticalCenter
+    Item {
+        id: track
         width: parent.width
-        height: Theme.meterHeight + 2
-        fraction: root.value / 100
-        // the fill follows the pointer; easing it would make it lag
-        animated: false
-        border.color: drag.pressed || drag.containsMouse ? Theme.strokeHover : Theme.meterStroke
-        Behavior on border.color { ColorAnimation { duration: Theme.durFast } }
+        height: Theme.switchHeight
+
+        // a touch taller than a read-only meter, since this one is grabbed
+        Meter {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            height: Theme.meterHeight + 2
+            fraction: root.value / 100
+            // the fill follows the pointer; easing it would make it lag
+            animated: false
+            border.color: drag.pressed || drag.containsMouse ? Theme.strokeHover : Theme.meterStroke
+            Behavior on border.color { ColorAnimation { duration: Theme.durFast } }
+        }
+
+        MouseArea {
+            id: drag
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onPressed: mouse => root.moved(root.valueAt(mouse.x))
+            onPositionChanged: mouse => {
+                if (pressed) root.moved(root.valueAt(mouse.x))
+            }
+            onReleased: root.released()
+            onCanceled: root.released()
+        }
     }
 
-    MouseArea {
-        id: drag
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onPressed: mouse => root.moved(root.valueAt(mouse.x))
-        onPositionChanged: mouse => {
-            if (pressed) root.moved(root.valueAt(mouse.x))
+    // the end labels line up with the ends rather than hanging past them
+    Item {
+        id: markRow
+        visible: root.marks.length > 0
+        anchors.top: track.bottom
+        width: parent.width
+        height: Theme.fontCaption + Theme.spaceS
+
+        Repeater {
+            model: root.marks
+
+            Text {
+                id: mark
+                required property var modelData
+                readonly property bool current: Math.round(root.value) === modelData.at
+                x: Math.max(0, Math.min(markRow.width - width,
+                    markRow.width * modelData.at / 100 - width / 2))
+                text: modelData.label
+                color: current || markHover.containsMouse ? Theme.text : Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontCaption
+
+                MouseArea {
+                    id: markHover
+                    anchors.fill: parent
+                    anchors.margins: -Theme.spaceS / 2
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        root.moved(mark.modelData.at)
+                        root.released()
+                    }
+                }
+            }
         }
-        onReleased: root.released()
-        onCanceled: root.released()
     }
 }

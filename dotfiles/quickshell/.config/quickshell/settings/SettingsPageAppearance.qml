@@ -1014,7 +1014,7 @@ SettingsPage {
     ShadowDarkness { label: "Shadow darkness" }
 
     // --- motion --------------------------------------------------------------
-    // Animation Speed is part of the look; Window animation, like the
+    // Animations is part of the look; Window animation, like the
     // Windows section, is kept by Reset.
 
     Item { width: 1; height: Theme.spaceM }
@@ -1022,8 +1022,18 @@ SettingsPage {
 
     SettingsField {
         label: "Animations"
-        hint: "The shell's and Hyprland's alike"
-        Choices { key: "animSpeed" }
+        hint: "How long the shell's and Hyprland's animations take"
+        FlyoutSliderRow {
+            anchors.right: parent.right
+            width: Theme.fit(260)
+            label: ""
+            suffix: "%"
+            value: Settings.animTime
+            minimum: Settings.limits.animTime.min
+            maximum: Settings.limits.animTime.max
+            marks: Settings.animTimeMarks
+            onMoved: v => Settings.set("animTime", v)
+        }
     }
 
     SettingsField {
