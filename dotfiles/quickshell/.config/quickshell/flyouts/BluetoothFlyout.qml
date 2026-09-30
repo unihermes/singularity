@@ -43,8 +43,9 @@ FlyoutPanel {
         // discovery is meaningless with the radio off, and bluez
         // errors rather than ignoring the request
         visible: bar.btAdapterOn(adapter)
-        label: (adapter && adapter.discovering) ? "Scanning" : "Scan"
+        label: (adapter && adapter.discovering) ? "Scanning…" : "Scan"
         trailing: (adapter && adapter.discovering) ? "stop" : adapter ? adapter.adapterId : ""
+        pulsing: !!adapter && adapter.discovering
         onActivated: {
             var a = Bluetooth.defaultAdapter
             if (bar.btAdapterOn(a)) a.discovering = !a.discovering

@@ -255,7 +255,8 @@ FlyoutPanel {
         visible: ClaudeShell.hasChanges
         label: ClaudeShell.applying ? "Applying…" : "Apply changes"
         trailing: "󰄬"
-        enabled: !ClaudeShell.running && !ClaudeShell.applying
+        enabled: !ClaudeShell.running
+        busy: ClaudeShell.applying
         onActivated: ClaudeShell.apply()
     }
 

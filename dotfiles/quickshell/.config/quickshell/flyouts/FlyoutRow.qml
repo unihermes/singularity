@@ -20,9 +20,12 @@ Item {
     // the trailing text is the row's current setting (Top, Grayscale), not
     // a chevron or tick, so it reads like a stepper's value
     property bool trailingIsValue: false
-    // something is in flight (connecting, pairing): the trailing text
-    // pulses until it settles, and the row stops taking clicks
+    // something is in flight (connecting, pairing, a rescan): the row's
+    // text pulses until it settles, and the row stops taking clicks
     property bool busy: false
+    // pulses like busy but still takes clicks, for work the same row
+    // stops (a Bluetooth scan)
+    property bool pulsing: busy
     // the label reports a failure (a refresh that didn't land)
     property bool alert: false
 
@@ -78,6 +81,7 @@ Item {
         }
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
+        opacity: root.pulse
     }
 
     HoverHandler { id: rowHover }
@@ -100,15 +104,17 @@ Item {
         // and this is the one font that has them
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontBody
+        opacity: root.pulse
+    }
 
-        SequentialAnimation on opacity {
-            running: root.busy
-            loops: Animation.Infinite
-            // back to solid when it stops, not frozen mid-fade
-            onRunningChanged: if (!running) trailingText.opacity = 1
-            NumberAnimation { to: 0.3; duration: Theme.durPulse; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 1; duration: Theme.durPulse; easing.type: Easing.InOutSine }
-        }
+    property real pulse: 1
+    SequentialAnimation on pulse {
+        running: root.pulsing
+        loops: Animation.Infinite
+        // back to solid when it stops, not frozen mid-fade
+        onRunningChanged: if (!running) root.pulse = 1
+        NumberAnimation { to: 0.3; duration: Theme.durPulse; easing.type: Easing.InOutSine }
+        NumberAnimation { to: 1; duration: Theme.durPulse; easing.type: Easing.InOutSine }
     }
 
     MouseArea {
