@@ -5,3 +5,36 @@
    this file by quickshell/services/AppearanceSync.qml, with the look's
    colours appended, so edit this one: edits to the profile's copy are
    overwritten. */
+
+/* The mute badge over a tab's favicon: a dark grey disc with a lighter grey
+   speaker, the same on pinned and normal tabs. Normal tabs draw it with
+   .tab-audio-button, pinned ones with .tab-icon-overlay; Lepton also shows
+   the audio button on pinned tabs, where it has no icon and sits on top of
+   the overlay, so it's hidden there. The overlay is nudged and padded to
+   match the button's position and 12px icon. */
+.tab-audio-button[muted]:not([pinned], [crashed]) {
+  --button-background-color-ghost: #3a3a3a !important;
+  --button-background-color-ghost-hover: #4a4a4a !important;
+  --button-background-color-ghost-active: #4a4a4a !important;
+  --button-text-color-ghost: #b4b4b4 !important;
+  --button-text-color-ghost-hover: #b4b4b4 !important;
+  --button-text-color-ghost-active: #b4b4b4 !important;
+  --button-icon-fill: #b4b4b4 !important;
+  fill-opacity: 1 !important;
+}
+.tab-icon-overlay[muted]:not([crashed]) {
+  inset-inline-end: -10px !important;
+  padding: 2.5px !important;
+  background-color: #3a3a3a !important;
+  background-image: none !important;
+  fill: #b4b4b4 !important;
+  color: #b4b4b4 !important;
+  stroke: transparent !important;
+  fill-opacity: 1 !important;
+  &:hover {
+    background-color: #4a4a4a !important;
+  }
+}
+.tab-audio-button[pinned] {
+  display: none !important;
+}
