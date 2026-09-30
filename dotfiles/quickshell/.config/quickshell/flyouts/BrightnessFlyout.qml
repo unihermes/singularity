@@ -12,7 +12,7 @@ import QtQuick
 FlyoutPanel {
     id: brightnessFlyout
     flyout: "brightness"
-    menuWidth: 290
+    menuWidth: 220
 
     required property var shellRoot
 
@@ -31,8 +31,8 @@ FlyoutPanel {
         label: "Night Light"
         status: !shellRoot.hasHyprsunset ? "hyprsunset not installed"
             : Settings.nightLightSchedule === "off" ? ""
-            : (shellRoot.nightLight ? "Until " + brightnessFlyout.time(shellRoot.nightWindow[1])
-                                    : "From " + brightnessFlyout.time(shellRoot.nightWindow[0]))
+            : shellRoot.nightLight ? "Until " + brightnessFlyout.time(shellRoot.nightWindow[1])
+            : "From " + brightnessFlyout.time(shellRoot.nightWindow[0])
         enabled: shellRoot.hasHyprsunset
         checked: shellRoot.nightLight
         onActivated: shellRoot.nightLight = !shellRoot.nightLight
@@ -54,22 +54,13 @@ FlyoutPanel {
 
     function time(m) { return TimeWindow.format(m, Theme.hours("HH:mm")) }
 
+    // the schedule: off, sunset to sunrise (from the weather; 19:00 to
+    // 07:00 until it loads), or two set times
     FlyoutSegmented {
-        label: "Schedule"
-        labelInset: Theme.iconCell + Theme.spaceL
         enabled: shellRoot.hasHyprsunset
-        model: [{ value: "off", text: "Off" }, { value: "sun", text: "Sunset" }, { value: "custom", text: "Custom" }]
+        model: [{ value: "off", text: "Manual" }, { value: "sun", text: "Sunset" }, { value: "custom", text: "Custom" }]
         current: Settings.nightLightSchedule
         onPicked: v => Settings.setNightLightSchedule(v)
-    }
-
-    // sunset to sunrise comes from the weather; until it has loaded, 19:00 to 07:00
-    FlyoutRow {
-        visible: Settings.nightLightSchedule === "sun"
-        enabled: false
-        label: Weather.sunsetMin >= 0 ? "Sunset to sunrise" : "Until the weather loads"
-        trailing: brightnessFlyout.time(shellRoot.nightWindow[0]) + "–" + brightnessFlyout.time(shellRoot.nightWindow[1])
-        trailingIsValue: true
     }
 
     Repeater {

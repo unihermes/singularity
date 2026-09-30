@@ -205,6 +205,32 @@ FlyoutPanel {
         }
     }
 
+    // today's date; a way back to it while paged away or on another day
+    Rectangle {
+        width: parent.width
+        height: Theme.chipHeight
+        radius: Theme.radiusSmall
+        readonly property bool away: calendarFlyout.monthOffset !== 0 || calendarFlyout.picked !== null
+        color: away && todayArea.containsMouse ? Theme.hoverFill : "transparent"
+
+        Text {
+            anchors.centerIn: parent
+            text: parent.away ? "Back to today"
+                : Qt.formatDateTime(calendarFlyout.now, "dddd, MMMM d")
+            color: parent.away && todayArea.containsMouse ? Theme.textStrong : Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontSmall
+        }
+        MouseArea {
+            id: todayArea
+            anchors.fill: parent
+            enabled: parent.away
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: { calendarFlyout.monthOffset = 0; calendarFlyout.picked = null }
+        }
+    }
+
     // --- events ---------------------------------------------------------------
 
     readonly property var dayEvents: Calendar.configured && open ? Calendar.eventsOn(selected) : []
@@ -293,16 +319,6 @@ FlyoutPanel {
         label: "+" + (calendarFlyout.dayEvents.length - calendarFlyout.maxEvents) + " more"
     }
 
-    // the last download failed; what's listed is the cached copy
-    FlyoutRow {
-        visible: Calendar.configured && Calendar.offline && !Calendar.refreshing
-        enabled: false
-        label: "Offline"
-        trailing: Calendar.fetched ? "as of " + Qt.formatDateTime(Calendar.fetched,
-            calendarFlyout.sameDay(Calendar.fetched, calendarFlyout.now) ? Theme.hours("HH:mm") : "MMM d") : ""
-        trailingIsValue: true
-    }
-
     // --- timer ----------------------------------------------------------------
 
     property int timerMinutes: 10
@@ -327,7 +343,8 @@ FlyoutPanel {
 
     Row {
         visible: !Timers.active
-        spacing: Theme.spaceS
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: Theme.spaceL
         FlyoutChip { text: "Start"; onClicked: Timers.countdown(calendarFlyout.timerMinutes) }
         FlyoutChip { text: "Pomodoro"; onClicked: Timers.pomodoro() }
         FlyoutChip { text: "Stopwatch"; onClicked: Timers.stopwatch() }
@@ -344,36 +361,26 @@ FlyoutPanel {
 
     Row {
         visible: Timers.active
-        spacing: Theme.spaceS
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: Theme.spaceL
         FlyoutChip { text: Timers.paused ? "Resume" : "Pause"; onClicked: Timers.togglePause() }
         FlyoutChip { visible: Timers.mode === "countdown"; text: "+1 min"; onClicked: Timers.addMinutes(1) }
         FlyoutChip { visible: Timers.mode === "pomodoro"; text: "Skip"; onClicked: Timers.skip() }
         FlyoutChip { text: "Stop"; confirmText: "Stop?"; onClicked: Timers.stop() }
     }
 
-    // today's date; a way back to it while paged away or on another day
-    Rectangle {
-        width: parent.width
-        height: Theme.chipHeight
-        radius: Theme.radiusSmall
-        readonly property bool away: calendarFlyout.monthOffset !== 0 || calendarFlyout.picked !== null
-        color: away && todayArea.containsMouse ? Theme.hoverFill : "transparent"
+    FlyoutDivider { visible: Calendar.configured }
 
-        Text {
-            anchors.centerIn: parent
-            text: parent.away ? "Back to today"
-                : Qt.formatDateTime(calendarFlyout.now, "dddd, MMMM d")
-            color: parent.away && todayArea.containsMouse ? Theme.textStrong : Theme.subtext
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontSmall
-        }
-        MouseArea {
-            id: todayArea
-            anchors.fill: parent
-            enabled: parent.away
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: { calendarFlyout.monthOffset = 0; calendarFlyout.picked = null }
-        }
+    // as the weather flyout's: when the feeds last came in, and a way to
+    // ask again; failed, the list is the last good copy
+    FlyoutRow {
+        visible: Calendar.configured
+        label: Calendar.refreshing ? "Refreshing…"
+            : Calendar.offline ? "Update failed, try again" : "Refresh events"
+        trailing: Calendar.fetched ? Qt.formatDateTime(Calendar.fetched,
+            calendarFlyout.sameDay(Calendar.fetched, calendarFlyout.now) ? Theme.timeFormat : "MMM d") : ""
+        busy: Calendar.refreshing
+        alert: Calendar.offline && !Calendar.refreshing
+        onActivated: Calendar.refresh(false)
     }
 }
