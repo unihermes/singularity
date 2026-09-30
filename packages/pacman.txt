@@ -100,6 +100,9 @@ grim
 slurp
 # annotates a screenshot from its notification (screenshot.sh)
 satty
+# reads the text in a screenshot region (screenshot.sh text)
+tesseract
+tesseract-data-eng
 hyprpicker
 hypridle
 hyprsunset

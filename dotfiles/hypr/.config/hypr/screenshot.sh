@@ -5,10 +5,31 @@
 #   screenshot.sh [area]   drag out a region with slurp
 #   screenshot.sh window   the active window
 #   screenshot.sh screen   the focused monitor
+#   screenshot.sh text     drag out a region and copy the text in it (OCR);
+#                          nothing is saved
 #
 # The notification offers Annotate when satty is installed; it edits the
 # saved file in place.
 set -euo pipefail
+
+if [[ ${1:-} == text ]]; then
+  if ! command -v tesseract &>/dev/null || ! tesseract --list-langs 2>/dev/null | grep -qx eng; then
+    notify-send -a Screenshot -u critical "Copy text needs tesseract" \
+      "Install tesseract and tesseract-data-eng" 2>/dev/null || true
+    exit 1
+  fi
+  geometry=$(slurp) || exit 0
+  [[ -n $geometry ]] || exit 0
+  # upscaled first: tesseract reads screen-sized text far better at 2x
+  text=$(grim -g "$geometry" -s 2 - | tesseract - - -l eng 2>/dev/null | sed -e 's/[[:space:]]*$//' | sed -e '/./,$!d')
+  if [[ -z ${text//[[:space:]]/} ]]; then
+    notify-send -a Screenshot "No text found" "Nothing readable in that area" 2>/dev/null || true
+    exit 0
+  fi
+  printf '%s' "$text" | wl-copy
+  notify-send -a Screenshot "Text copied" "$(printf '%s' "$text" | head -c 300)" 2>/dev/null || true
+  exit 0
+fi
 
 dir="$HOME/Pictures/Screenshots"
 mkdir -p "$dir"
@@ -39,7 +60,7 @@ case "${1:-area}" in
   screen)
     grim -o "$(focused_monitor)" "$file" ;;
   *)
-    echo "usage: ${0##*/} [area|window|screen]" >&2
+    echo "usage: ${0##*/} [area|window|screen|text]" >&2
     exit 2 ;;
 esac
 wl-copy --type image/png < "$file"

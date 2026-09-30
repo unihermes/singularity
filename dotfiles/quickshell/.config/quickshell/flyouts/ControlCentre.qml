@@ -106,6 +106,8 @@ FlyoutPanel {
         // in the picker's case, close enough to pick its own pixels.
         else if (act === "screenshot")
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/screenshot.sh"])
+        else if (act === "copytext")
+            Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/screenshot.sh text"])
         else if (act === "colourpick")
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/colour-pick.sh"])
         // relaunched the way hyprland.lua starts it, so the log stays in one place
@@ -361,6 +363,13 @@ FlyoutPanel {
             icon: "󰹑"
             label: "Screenshot region"
             onActivated: controlCentre.run("screenshot")
+        }
+
+        FlyoutAction {
+            checkable: false
+            icon: "󰊄"
+            label: "Copy text from region"
+            onActivated: controlCentre.run("copytext")
         }
 
         FlyoutAction {

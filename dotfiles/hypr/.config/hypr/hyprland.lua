@@ -682,6 +682,8 @@ hl.bind(mod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call power menu"))  -- Op
 hl.bind("Print",         hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh area"))    -- Screenshot an area
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh window"))  -- Screenshot the active window
 hl.bind("CTRL + Print",  hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh screen"))  -- Screenshot the focused monitor
+hl.bind("ALT + Print",   hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh text"))    -- Copy the text in an area
+hl.bind(mod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh text"))  -- Copy the text in an area
 
 -- --- Lid ---
 -- Close turns the screen off and suspends after 5 min if it's still shut;
