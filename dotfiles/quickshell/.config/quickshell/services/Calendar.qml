@@ -6,7 +6,7 @@
 // downloads and expands them into a cache file this watches, so events show
 // straight away at login and stay up while offline.
 //
-// Refreshed every 15 minutes, every 2 while a download is failing, and a few
+// Refreshed every hour, every 2 minutes while a download is failing, and a few
 // seconds after waking from sleep, once the network is back. Every run is
 // capped by `timeout`, whose clock keeps counting through a suspend, so a
 // download cut off by sleep can't leave the service stuck on a dead process.
@@ -137,7 +137,7 @@ Singleton {
     }
 
     Timer {
-        interval: root.failed ? 120000 : 900000
+        interval: root.failed ? 120000 : 3600000
         repeat: true
         running: root.configured
         onTriggered: root.refresh(false)
