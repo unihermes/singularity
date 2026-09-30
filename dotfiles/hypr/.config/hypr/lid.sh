@@ -85,8 +85,13 @@
 #   each turned it off or on in turn. For the hold's length only the hold
 #   decides; any input ends it early and the idle ladder takes over as
 #   usual. Input is seen through hypridle.conf's first listener, which
-#   touches $input_seen whenever input follows a couple of idle seconds --
-#   the panel is on throughout, so key_press_enables_dpms can't tell.
+#   touches $input_seen whenever input follows a couple of idle seconds and
+#   $idle_seen after a couple without -- the panel is on throughout, so
+#   key_press_enables_dpms can't tell. Both are needed: the key or touch
+#   that wakes the machine lands just before the hold starts, so someone
+#   who carries straight on typing their password never goes quiet long
+#   enough for a newer $input_seen; they show up as input that hasn't
+#   stopped since ($input_seen newer than $idle_seen).
 # Both the lid and the monitors are read from sysfs rather than hyprctl, so
 # the timer's check works without Hyprland's environment.
 set -u
@@ -107,6 +112,7 @@ docked_file="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-docked"
 hibernating="${XDG_RUNTIME_DIR:-/tmp}/singularity-hibernating"
 hold_marker="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-hold"
 input_seen="${XDG_RUNTIME_DIR:-/tmp}/singularity-input"
+idle_seen="${XDG_RUNTIME_DIR:-/tmp}/singularity-idle"
 
 log() { logger -t singularity-lid -- "$*"; }
 
@@ -204,7 +210,8 @@ unblank() {
 
 # The lid just opened: the panel on for open_hold, whatever else turns it
 # off meanwhile, then off unless there was input. The hold's marker is also
-# its start time -- input counts once $input_seen is newer -- and its token:
+# its start time -- input counts once $input_seen is newer, or while input
+# that began before it hasn't paused (see present) -- and its token:
 # a later hold replaces this one, and closing the lid (blank) or a stray
 # wake (stay_dark) removes it, so this one returns without touching the
 # panel. The first three seconds hold regardless of input, for the same
@@ -217,7 +224,7 @@ hold() {
     for (( i = 1; i <= open_hold * 2; i++ )); do
         sleep 0.5
         [[ $(cat "$hold_marker" 2>/dev/null) == "$token" ]] || return 0
-        if (( i > 6 )) && [[ $input_seen -nt $hold_marker ]]; then
+        if (( i > 6 )) && present; then
             rm -f "$hold_marker"
             return 0
         fi
@@ -229,6 +236,11 @@ hold() {
 }
 
 unhold() { rm -f "$hold_marker"; }
+
+# someone has used the machine since the hold began, or is using it now
+present() {
+    [[ $input_seen -nt $hold_marker || $input_seen -nt $idle_seen ]]
+}
 
 # the lid is open again: docked, the panel just comes back beside the other
 # displays, which were on all along -- no hold, and nothing to turn off after
