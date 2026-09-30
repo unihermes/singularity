@@ -181,6 +181,19 @@ Singleton {
     // for persistence only -- it isn't part of Appearance, so reset() and
     // isDefault below leave it alone.
     readonly property alias nightLightKelvin: adapter.nightLightKelvin
+    // Night Light's schedule: "off", "sun" (sunset to sunrise, from the
+    // weather) or "custom" (the two times below, minutes after midnight)
+    readonly property alias nightLightSchedule: adapter.nightLightSchedule
+    readonly property alias nightLightFrom: adapter.nightLightFrom
+    readonly property alias nightLightTo: adapter.nightLightTo
+    function setNightLightSchedule(v) {
+        if (["off", "sun", "custom"].indexOf(v) >= 0) adapter.nightLightSchedule = v
+    }
+    // a schedule time, stepped with wrap-around past midnight
+    function setScheduleTime(key, minutes) {
+        if (["nightLightFrom", "nightLightTo", "notifQuietFrom", "notifQuietTo"].indexOf(key) >= 0)
+            adapter[key] = ((Math.round(minutes) % 1440) + 1440) % 1440
+    }
     // "F" or "C", switched from the weather flyout
     readonly property alias weatherUnits: adapter.weatherUnits
     function setWeatherUnits(u) { adapter.weatherUnits = (u === "C") ? "C" : "F" }
@@ -212,6 +225,15 @@ Singleton {
     readonly property alias notifPositionX: adapter.notifPositionX
     readonly property alias notifPositionY: adapter.notifPositionY
     function setNotifDnd(on) { adapter.notifDnd = !!on }
+    // Quiet hours: Do Not Disturb on a daily window. notifDndBySchedule marks
+    // DND as the schedule's doing, so the window's end only turns off what
+    // it turned on.
+    readonly property alias notifQuiet: adapter.notifQuiet
+    readonly property alias notifQuietFrom: adapter.notifQuietFrom
+    readonly property alias notifQuietTo: adapter.notifQuietTo
+    readonly property alias notifDndBySchedule: adapter.notifDndBySchedule
+    function setNotifQuiet(on) { adapter.notifQuiet = !!on }
+    function setNotifDndBySchedule(on) { adapter.notifDndBySchedule = !!on }
     function setNotifTimeout(key, s) {
         if (["notifTimeout", "notifTimeoutLow", "notifTimeoutCritical"].indexOf(key) >= 0)
             adapter[key] = Math.max(0, Math.min(60, Math.round(s)))
@@ -701,6 +723,9 @@ Singleton {
             property int wallpaperInterval: 0
             property bool clockIsland: true
             property int nightLightKelvin: 4000
+            property string nightLightSchedule: "off"
+            property int nightLightFrom: 1200
+            property int nightLightTo: 420
             property string weatherUnits: "F"
             property bool clock24: true
             property int weekStart: 1
@@ -708,6 +733,10 @@ Singleton {
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false
+            property bool notifQuiet: false
+            property int notifQuietFrom: 1320
+            property int notifQuietTo: 420
+            property bool notifDndBySchedule: false
             property int notifTimeout: 8
             property int notifTimeoutLow: 4
             property int notifTimeoutCritical: 16

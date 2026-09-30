@@ -32,6 +32,7 @@ import "services"
 import "flyouts"
 import "bar"
 import "windows"
+import "services/TimeWindow.js" as TimeWindow
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -67,6 +68,44 @@ ShellRoot {
     // false until the probe below finds the binary; the toggle says so
     // instead of flipping on and silently doing nothing
     property bool hasHyprsunset: false
+
+    // Night Light's schedule (Settings.nightLightSchedule). It acts only when
+    // the window opens or closes, so a hand toggle in between holds until
+    // the next edge. Checked by the wall clock, and again on waking, since
+    // a timer alone would run late by however long the machine slept.
+    readonly property var nightWindow: Settings.nightLightSchedule === "sun"
+        ? [Weather.sunsetMin >= 0 ? Weather.sunsetMin : 1140, Weather.sunriseMin >= 0 ? Weather.sunriseMin : 420]
+        : [Settings.nightLightFrom, Settings.nightLightTo]
+    // the window's state at the last check; undefined makes the next one act
+    property var nightScheduled: undefined
+
+    function checkNightSchedule() {
+        if (Settings.nightLightSchedule === "off") { nightScheduled = undefined; return }
+        const want = TimeWindow.contains(nightWindow[0], nightWindow[1], new Date())
+        if (want === nightScheduled) return
+        nightScheduled = want
+        nightLight = want
+    }
+    onNightWindowChanged: checkNightSchedule()
+
+    // a schedule just picked or retimed applies straight away
+    Connections {
+        target: Settings
+        function onNightLightScheduleChanged() { root.nightScheduled = undefined; root.checkNightSchedule() }
+        function onNightLightFromChanged() { root.nightScheduled = undefined; root.checkNightSchedule() }
+        function onNightLightToChanged() { root.nightScheduled = undefined; root.checkNightSchedule() }
+    }
+    Connections {
+        target: Session
+        function onResumed() { root.checkNightSchedule() }
+    }
+    Timer {
+        interval: 20000
+        repeat: true
+        running: Settings.nightLightSchedule !== "off"
+        triggeredOnStart: true
+        onTriggered: root.checkNightSchedule()
+    }
 
     // Also clears out any hyprsunset left behind by a previous shell. It is
     // a child process but outlives Quickshell being killed or crashing, and

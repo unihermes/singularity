@@ -30,6 +30,9 @@ Singleton {
     property int humidity: 0
     property string wind: ""
     property bool isNight: false
+    // today's sunrise and sunset, minutes after midnight; -1 until known
+    property int sunriseMin: -1
+    property int sunsetMin: -1
     // [{ date, hiF, loF, hiC, loC, code, condition }]
     property var forecast: []
     property var updated: null
@@ -85,6 +88,8 @@ Singleton {
                     var now = new Date(), mins = now.getHours() * 60 + now.getMinutes()
                     var rise = root.minutesOf(astro.sunrise), set = root.minutesOf(astro.sunset)
                     root.isNight = rise >= 0 && set >= 0 && (mins < rise || mins >= set)
+                    root.sunriseMin = rise
+                    root.sunsetMin = set
 
                     var f = []
                     for (var i = 0; i < d.weather.length; i++) {

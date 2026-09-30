@@ -23,6 +23,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import QtQuick
+import "TimeWindow.js" as TimeWindow
 
 Singleton {
     id: root
@@ -312,9 +313,52 @@ Singleton {
         onTriggered: root.now = Date.now()
     }
 
-    // Turning DND on also clears what's already up
+    // Turning DND on also clears what's already up; turning it off by hand
+    // takes it back from the schedule until the next quiet hours
     Connections {
         target: Settings
-        function onNotifDndChanged() { if (Settings.notifDnd) root.popups = [] }
+        function onNotifDndChanged() {
+            if (Settings.notifDnd) root.popups = []
+            else if (Settings.notifDndBySchedule) Settings.setNotifDndBySchedule(false)
+        }
+        function onNotifQuietChanged() { root.quietState = undefined; root.checkQuiet() }
+        function onNotifQuietFromChanged() { root.quietState = undefined; root.checkQuiet() }
+        function onNotifQuietToChanged() { root.quietState = undefined; root.checkQuiet() }
+    }
+
+    // --- quiet hours ----------------------------------------------------------
+    // DND on a daily window. Acts only as the window opens or closes, and the
+    // close only undoes DND the window itself turned on. Checked by the wall
+    // clock and on waking, so a window that passed during sleep still ends.
+
+    property var quietState: undefined
+
+    function checkQuiet() {
+        const want = Settings.notifQuiet
+            && TimeWindow.contains(Settings.notifQuietFrom, Settings.notifQuietTo, new Date())
+        if (want === quietState) return
+        quietState = want
+        if (want) {
+            if (!Settings.notifDnd) {
+                Settings.setNotifDnd(true)
+                Settings.setNotifDndBySchedule(true)
+            }
+        } else if (Settings.notifDndBySchedule) {
+            Settings.setNotifDndBySchedule(false)
+            Settings.setNotifDnd(false)
+        }
+    }
+
+    Connections {
+        target: Session
+        function onResumed() { root.checkQuiet() }
+    }
+
+    Timer {
+        interval: 20000
+        repeat: true
+        running: Settings.notifQuiet || Settings.notifDndBySchedule
+        triggeredOnStart: true
+        onTriggered: root.checkQuiet()
     }
 }

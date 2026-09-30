@@ -29,6 +29,8 @@ Item {
     // (a flyout's own strip). Off, each segment hugs its text and the strip
     // sits at the right -- a Settings field's control slot.
     property bool fill: label === ""
+    // left offset for the label, as FlyoutStepper's
+    property int labelInset: 0
 
     signal picked(var value)
 
@@ -42,6 +44,7 @@ Item {
 
     Text {
         anchors.left: parent.left
+        anchors.leftMargin: root.labelInset
         anchors.right: strip.left
         anchors.rightMargin: Theme.spaceL
         anchors.verticalCenter: parent.verticalCenter

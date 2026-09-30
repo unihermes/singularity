@@ -8,12 +8,13 @@ import Quickshell
 import QtQuick
 import "../services"
 import "../flyouts"
+import "../services/TimeWindow.js" as TimeWindow
 
 SettingsPage {
     id: page
 
     title: "Notifications"
-    description: "Do Not Disturb, the history, and how long popups stay and where they appear."
+    description: "Do Not Disturb and its quiet hours, the history, and how long popups stay and where they appear."
 
     component Seconds: SettingsField {
         id: sec
@@ -56,6 +57,48 @@ SettingsPage {
         label: "Open the history"
         checkable: false
         onActivated: Notifications.togglePanel()
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "QUIET HOURS" }
+
+    component QuietTime: SettingsField {
+        id: qt
+        property string key: ""
+        enabled: Settings.notifQuiet
+        opacity: enabled ? 1 : 0.5
+
+        FlyoutStepper {
+            anchors.right: parent.right
+            width: Theme.fit(190)
+            // never inert at an end: the time wraps past midnight
+            minimum: -1
+            maximum: 1440
+            value: Settings[qt.key]
+            valueWidth: 80
+            displayValue: TimeWindow.format(value, Theme.hours("HH:mm"))
+            onStepped: delta => Settings.setScheduleTime(qt.key, value + delta * 30)
+        }
+    }
+
+    FlyoutAction {
+        icon: "󰔟"
+        label: "Quiet hours"
+        status: Settings.notifQuiet
+            ? "Do Not Disturb turns itself on and off each day"
+            : "Do Not Disturb only when you turn it on"
+        checked: Settings.notifQuiet
+        onActivated: Settings.setNotifQuiet(!Settings.notifQuiet)
+    }
+
+    QuietTime {
+        key: "notifQuietFrom"
+        label: "Starts"
+    }
+    QuietTime {
+        key: "notifQuietTo"
+        label: "Ends"
+        hint: "Turning Do Not Disturb off during quiet hours holds until the next day's"
     }
 
     Item { width: 1; height: Theme.spaceM }
