@@ -37,7 +37,7 @@ SettingsPage {
     FlyoutAction {
         icon: Notifications.dnd ? "󰂛" : "󰂚"
         label: "Do Not Disturb"
-        status: Notifications.dnd ? "Popups are held; they still land in the history" : "Popups show as they arrive"
+        status: Notifications.dnd ? "Popups are held, except critical ones; all still land in the history" : "Popups show as they arrive"
         checked: Notifications.dnd
         onActivated: Notifications.toggleDnd()
     }

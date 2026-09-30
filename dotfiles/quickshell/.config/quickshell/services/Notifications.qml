@@ -239,7 +239,9 @@ Singleton {
             const rest = root.history.filter(e => e !== old)
             root.history = [entry].concat(rest).slice(0, root.maxEntries)
             const others = root.popups.filter(p => !old || p.key !== old.key)
-            root.popups = root.dnd || n.lastGeneration ? others : [entry].concat(others)
+            // critical ones (a battery about to die) still come through DND
+            const hold = root.dnd && n.urgency !== NotificationUrgency.Critical
+            root.popups = hold || n.lastGeneration ? others : [entry].concat(others)
             root.now = time
             if (root.viewing) root.lastSeen = time
             root.attach(n)
