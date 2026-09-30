@@ -318,13 +318,19 @@ ShellRoot {
     Connections {
         target: Hyprland
         function onRawEvent(event) {
-            if (event.name === "openwindow" || event.name === "closewindow" || event.name === "movewindow"
-                || event.name === "activewindow") {
-                // activewindow keeps focusHistoryID current, which is the order
-                // the ALT+Tab switcher walks. Without it the switcher sorts on
-                // whatever the history was at the last open/close and lands on
-                // the wrong window.
+            const n = event.name
+            if (n === "openwindow" || n === "closewindow" || n === "movewindow"
+                || n === "togglegroup" || n === "moveintogroup" || n === "moveoutofgroup") {
                 Hyprland.refreshToplevels()
+            } else if (n === "activewindowv2") {
+                // Focus moves far more often than windows come and go, and a
+                // refresh re-evaluates everything bound to lastIpcObject on
+                // every screen. Only a group needs it: which tab was focused
+                // last (focusHistoryID) decides the one the window lists show.
+                // ALT+Tab reads its own fresh client list from the relay.
+                const tl = Hyprland.toplevels.values.find(t => t.address === event.data)
+                const ipc = tl ? tl.lastIpcObject : null
+                if (ipc && ipc.grouped && ipc.grouped.length > 1) Hyprland.refreshToplevels()
             }
             // "special:name,MONITOR", or ",MONITOR" once it's hidden. Read
             // from the event: refreshing the monitors here still gets the
@@ -831,7 +837,7 @@ ShellRoot {
                         var ipc = tls[j].lastIpcObject
                         out.push({
                             ws: wss[i].id,
-                            title: ipc && ipc.title ? ipc.title : (ipc && ipc.class ? ipc.class : "window"),
+                            title: tls[j].title || (ipc && ipc.class ? ipc.class : "window"),
                             cls: ipc && ipc.class ? ipc.class : "",
                             address: tls[j].address
                         })

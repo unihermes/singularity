@@ -221,9 +221,7 @@ OverlayWindow {
                                             Text {
                                                 anchors.centerIn: parent
                                                 visible: winIco.iconPath === ""
-                                                text: Apps.glyphForWindow(winRow.cls,
-                                                    winRow.modelData.lastIpcObject
-                                                        ? winRow.modelData.lastIpcObject.title : "")
+                                                text: Apps.glyphForWindow(winRow.cls, winRow.modelData.title)
                                                 color: Theme.subtext
                                                 font.family: Theme.fontIcon
                                                 font.pixelSize: Theme.fontSmall
@@ -235,8 +233,7 @@ OverlayWindow {
                                             width: parent.width - winIco.width - parent.spacing
 
                                             elide: Text.ElideRight
-                                            text: (winRow.modelData.lastIpcObject
-                                                   && winRow.modelData.lastIpcObject.title) || winRow.cls
+                                            text: winRow.modelData.title || winRow.cls
                                             color: Theme.subtext
                                             font.family: Theme.fontText
                                             font.pixelSize: Theme.fontSmall
