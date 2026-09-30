@@ -86,8 +86,8 @@ SettingsPage {
             if ((m = /^timeout\s*=\s*(\d+)$/.exec(l))) { cur.timeout = Number(m[1]); cur.line = i }
             else if ((m = /^on-timeout\s*=\s*(.*)$/.exec(l))) cur.action = m[1]
             else if (l === "}") {
-                // no on-timeout: lid.sh's input detector, not a step
-                if (cur.line >= 0 && cur.action !== "") { cur.label = describe(cur.action); out.push(cur) }
+                // on-timeout = true: lid.sh's input detector, not a step
+                if (cur.line >= 0 && cur.action !== "" && cur.action !== "true") { cur.label = describe(cur.action); out.push(cur) }
                 cur = null
             }
         }
