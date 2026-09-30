@@ -390,6 +390,9 @@ Scope {
     // Lepton tells the selected tab by [selected="true"], but Gecko now sets
     // `selected` bare, so its rules hide the line there (and grey it on hover);
     // the last rule shows it on the tabs that are actually selected.
+    // The sound badge on tabs (its rules are in the repo's userChrome.css)
+    // is a disc between border and muted with a speaker halfway from subtext
+    // to bright -- #3a3a3a and #b4b4b4 on neutrino.
     function browserChrome() {
         var a = hex(Theme.accent), t = hex(onAccent())
         var popup = hex(Theme.isLight ? Theme.panel : Theme.overlay)
@@ -436,6 +439,9 @@ Scope {
             "--button-text-color-primary": t,
             "--urlbarview-background-color-selected": a,
             "--urlbarview-text-color-selected": t,
+            "--sound-badge-background-color": mix(Theme.border, Theme.muted, 0.35),
+            "--sound-badge-background-color-hover": mix(Theme.border, Theme.muted, 0.9),
+            "--sound-badge-icon-color": mix(Theme.subtext, Theme.bright, 0.515),
         }
         var lines = [":root {"]
         for (var k in vars) lines.push("  " + k + ": " + vars[k] + " !important;")

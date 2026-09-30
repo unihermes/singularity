@@ -12,28 +12,29 @@
    .tab-audio-button, pinned ones with .tab-icon-overlay; Lepton also shows
    the audio button on pinned tabs, where it has no icon and sits on top of
    the overlay, so it's hidden there. The overlay is nudged and padded to
-   match the button's position and 12px icon. */
+   match the button's position and 12px icon. The colours come from the
+   look, in AppearanceSync's block below. */
 .tab-audio-button:is([soundplaying], [muted], [activemedia-blocked]):not([pinned], [crashed]) {
-  --button-background-color-ghost: #3a3a3a !important;
-  --button-background-color-ghost-hover: #4a4a4a !important;
-  --button-background-color-ghost-active: #4a4a4a !important;
-  --button-text-color-ghost: #b4b4b4 !important;
-  --button-text-color-ghost-hover: #b4b4b4 !important;
-  --button-text-color-ghost-active: #b4b4b4 !important;
-  --button-icon-fill: #b4b4b4 !important;
+  --button-background-color-ghost: var(--sound-badge-background-color) !important;
+  --button-background-color-ghost-hover: var(--sound-badge-background-color-hover) !important;
+  --button-background-color-ghost-active: var(--sound-badge-background-color-hover) !important;
+  --button-text-color-ghost: var(--sound-badge-icon-color) !important;
+  --button-text-color-ghost-hover: var(--sound-badge-icon-color) !important;
+  --button-text-color-ghost-active: var(--sound-badge-icon-color) !important;
+  --button-icon-fill: var(--sound-badge-icon-color) !important;
   fill-opacity: 1 !important;
 }
 .tab-icon-overlay:is([soundplaying], [muted], [activemedia-blocked]):not([crashed]) {
   inset-inline-end: -10px !important;
   padding: 2.5px !important;
-  background-color: #3a3a3a !important;
+  background-color: var(--sound-badge-background-color) !important;
   background-image: none !important;
-  fill: #b4b4b4 !important;
-  color: #b4b4b4 !important;
+  fill: var(--sound-badge-icon-color) !important;
+  color: var(--sound-badge-icon-color) !important;
   stroke: transparent !important;
   fill-opacity: 1 !important;
   &:hover {
-    background-color: #4a4a4a !important;
+    background-color: var(--sound-badge-background-color-hover) !important;
   }
 }
 .tab-audio-button[pinned] {
