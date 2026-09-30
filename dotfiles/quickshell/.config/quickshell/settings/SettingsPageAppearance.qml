@@ -968,7 +968,7 @@ SettingsPage {
     SettingsField {
         label: "Clock island"
         hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar — toasts show until then"
-            : Settings.clockIsland ? "Volume, brightness, layout and notifications show in the clock for a moment"
+            : Settings.clockIsland ? "Volume, brightness and layout show in the clock for a moment"
             : "Those show as separate toasts under the bar"
 
         Switch {

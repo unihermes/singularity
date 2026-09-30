@@ -6,7 +6,6 @@
 //
 //   volume / brightness  a level meter
 //   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock)
-//   notifications        how many are unread (not during DND)
 //
 // The chip keeps the time's width throughout, eliding what doesn't fit, so
 // nothing on the bar moves when an event comes and goes.
@@ -85,9 +84,8 @@ BarModule {
         onTriggered: root.kind = ""
     }
 
-    // Brightness loads from sysfs, the sink settles, and notifications kept
-    // over a reload come back -- all of it looks like a change shortly after
-    // startup.
+    // Brightness loads from sysfs and the sink settles -- both look like a
+    // change shortly after startup.
     property bool ready: false
     Timer { interval: 2000; running: true; onTriggered: root.ready = true }
 
@@ -119,20 +117,6 @@ BarModule {
         function onModeToastSeqChanged() {
             root.show("mode", root.screenScope.modeToastIcon,
                       Theme.heading(root.screenScope.modeToastText), -1, 1100)
-        }
-    }
-
-    // --- notifications ----------------------------------------------------------
-
-    property int lastUnread: 0
-
-    Connections {
-        target: Notifications
-        function onUnreadChanged() {
-            var n = Notifications.unread
-            if (n > root.lastUnread && !Notifications.dnd)
-                root.show("notify", "󰂚", n === 1 ? "1 new notification" : n + " new notifications", -1, 3000)
-            root.lastUnread = n
         }
     }
 }

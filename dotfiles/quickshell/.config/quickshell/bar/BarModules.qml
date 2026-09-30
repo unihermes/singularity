@@ -347,8 +347,8 @@ Item {
         }
     }
 
-    // Time and date in one chip, which briefly shows volume, layout, track
-    // and notification changes instead (see ClockIsland.qml).
+    // Time and date in one chip, which briefly shows volume, brightness and
+    // layout changes instead (see ClockIsland.qml).
     ClockIsland {
         id: clock
         visible: Settings.widgetVisible("clock")
