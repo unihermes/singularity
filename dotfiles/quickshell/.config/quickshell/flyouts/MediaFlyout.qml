@@ -190,7 +190,7 @@ FlyoutPanel {
             label: modelData.identity + (modelData.trackTitle ? "  ·  " + modelData.trackTitle : "")
             highlighted: modelData === Media.player
             trailing: modelData.isPlaying ? "󰐊" : ""
-            onActivated: Media.lastPlaying = modelData
+            onActivated: Media.pick(modelData)
         }
     }
 }
