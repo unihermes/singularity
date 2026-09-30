@@ -18,16 +18,15 @@ import "../services"
 OverlayWindow {
     id: root
 
-    // Kept true and re-armed by the timer rather than toggling window
-    // `visible` -- see ModeToast for why an opacity fade needs the surface
-    // mapped for its whole duration.
+    // Re-armed by the timer; the surface stays mapped through the fade --
+    // see ModeToast.
     property bool active: false
     property bool failed: false
     property string error: ""
 
     readonly property bool atBottom: Theme.barPosition === "bottom"
 
-    visible: true
+    visible: active || box.opacity > 0
     layerNamespace: "singularity-toast"
     // click-through, except a failure's panel, which a click dismisses
     mask: Region { item: root.active && root.failed ? box : null }

@@ -17,13 +17,13 @@ import "../services"
 OverlayWindow {
     id: root
 
-    // Kept true and re-armed by the timer below rather than toggling window
-    // `visible` on and off: an opacity fade needs the surface mapped for its
-    // whole duration, and a click-through, always-transparent strip costs
-    // nothing to leave mapped between toasts (same call the bar itself makes).
+    // Re-armed by the timer below. The surface is mapped only while the
+    // toast shows or fades: an opacity fade needs it for its whole duration,
+    // but left up between toasts it's a full-screen transparent layer the
+    // compositor blends into every frame.
     property bool active: false
 
-    visible: true
+    visible: active || box.opacity > 0
     layerNamespace: "singularity-toast"
     // Nothing here is interactive: no keyboard (the base's default), and
     // clicks fall straight through to whatever's beneath the toast.

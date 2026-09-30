@@ -17,9 +17,8 @@ import "../services"
 OverlayWindow {
     id: root
 
-    // Kept true and re-armed by the timer rather than toggling window
-    // `visible` -- see ModeToast for why an opacity fade needs the surface
-    // mapped for its whole duration.
+    // Re-armed by the timer; the surface stays mapped through the fade --
+    // see ModeToast.
     property bool active: false
     // "volume" or "brightness"; decides the icon and which level the
     // fill bar tracks.
@@ -30,7 +29,7 @@ OverlayWindow {
         ? (Audio.muted ? "󰖁" : "󰕾")
         : "󰃠"
 
-    visible: true
+    visible: active || box.opacity > 0
     layerNamespace: "singularity-toast"
     // Nothing here is interactive: no keyboard (the base's default), and
     // clicks fall straight through to whatever's beneath the toast.
