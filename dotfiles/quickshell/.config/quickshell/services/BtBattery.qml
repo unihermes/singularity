@@ -59,8 +59,12 @@ Singleton {
         parts = next
     }
 
+    // A ScriptModel rather than the bare array: a fresh array from any
+    // change to the adapter's device list (a scan finding something nearby)
+    // would rebuild every delegate, dropping each helper's channel and its
+    // reading. This keeps a helper for as long as its device is in the list.
     Instantiator {
-        model: root.connected.filter(d => !d.batteryAvailable)
+        model: ScriptModel { values: root.connected.filter(d => !d.batteryAvailable) }
 
         Process {
             id: proc
