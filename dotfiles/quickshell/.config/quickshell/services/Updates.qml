@@ -48,12 +48,9 @@ Singleton {
     //   --answerclean None, --answeredit None
     //                    skip yay's clean-build and PKGBUILD-edit menus
     //   --removemake     drops build-only deps without asking
-    // Repo packages alone run unattended after the sudo prompt (--noconfirm,
-    // --answerdiff None), with --repo so an AUR update that turned up since
-    // the last check can't slip through unreviewed. With AUR updates pending
-    // it stops instead: every PKGBUILD diff is shown (--answerdiff All) and
-    // the install waits for a yes, since an AUR package is code nobody else
-    // has vetted -- the same review install.sh stops for.
+    //   --noconfirm, --answerdiff None
+    //                    no install prompt or PKGBUILD diffs, so after the
+    //                    sudo prompt it runs unattended, AUR included
     // On success the terminal closes itself with a notification; on failure
     // it stays open so the error can be read. Either way the list is
     // re-checked once it closes.
@@ -61,8 +58,7 @@ Singleton {
     // limited to names.
     function update() {
         if (updateProc.running) return
-        var review = Settings.updateAur && aurCount > 0
-        var flags = (review ? " --answerdiff All" : " --repo --noconfirm --answerdiff None")
+        var flags = " --noconfirm --answerdiff None" + (Settings.updateAur ? "" : " --repo")
             + (Settings.updateIgnore.length > 0 ? " --ignore " + Settings.updateIgnore.join(",") : "")
         updateProc.command = ["alacritty", "--class", "singularity-update", "-e", "sh", "-c",
             "yay -Syu" + flags + " --sudoloop --answerclean None --answeredit None --removemake; "
