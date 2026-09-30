@@ -5,7 +5,8 @@
 # Everything the lid does. Closing it turns the screen off, and close_delay
 # later suspends if it's still shut (unless close_action is screen-off); an
 # hour after it shut, the machine hibernates. Opening it turns the screen
-# back on and calls all of that off.
+# back on and calls all of that off; left untouched, the screen goes off
+# again open_hold later.
 #
 #   lid.sh event    from hyprland.lua's lid-switch binds, on open and close
 #   lid.sh sleep    from hypridle's before_sleep_cmd, before every suspend
@@ -77,7 +78,15 @@
 #   plugged in or pulled out with the lid shut is handled the same way
 #   (lid.sh displays): pulling the last one brings the panel back and the
 #   lid-shut suspend takes over, as if it had been closed undocked.
-#
+# - Opening the lid holds the panel on for open_hold, then turns it off if
+#   nobody has touched anything. Left alone, an opened lid used to blink on
+#   and off: Hyprland's DPMS restore after a resume, a step of the idle
+#   ladder that fell due while the lid was shut, and stray touchpad wakes
+#   each turned it off or on in turn. For the hold's length only the hold
+#   decides; any input ends it early and the idle ladder takes over as
+#   usual. Input is seen through hypridle.conf's first listener, which
+#   touches $input_seen whenever input follows a couple of idle seconds --
+#   the panel is on throughout, so key_press_enables_dpms can't tell.
 # Both the lid and the monitors are read from sysfs rather than hyprctl, so
 # the timer's check works without Hyprland's environment.
 set -u
@@ -90,11 +99,14 @@ close_delay=300    # lid shut this long -> suspend
 rewake_delay=60    # woke up with the lid still shut -> suspend again after this
 retry_delay=60     # suspend refused (a blocking inhibitor) -> try again
 move_slop=40       # px the pointer must travel on a stray wake to count as a person
+open_hold=60       # lid opened and left untouched -> screen off after this
 hibernate_after=3600  # lid shut this long -> hibernate (see sleep.conf.d above)
 closed_at="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-closed-at"
 slept_dark="${XDG_RUNTIME_DIR:-/tmp}/singularity-slept-dark"
 docked_file="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-docked"
 hibernating="${XDG_RUNTIME_DIR:-/tmp}/singularity-hibernating"
+hold_marker="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-hold"
+input_seen="${XDG_RUNTIME_DIR:-/tmp}/singularity-input"
 
 log() { logger -t singularity-lid -- "$*"; }
 
@@ -160,6 +172,7 @@ panel_on() {  # anything eDP-1 reports off
 # nothing and is what makes a first close reliable.
 blank() {
     local i
+    unhold
     input_wakes false
     for i in 1 2 3 4; do
         dpms off
@@ -189,6 +202,40 @@ unblank() {
     panel_on || log "panel would not come back on"
 }
 
+# The lid just opened: the panel on for open_hold, whatever else turns it
+# off meanwhile, then off unless there was input. The hold's marker is also
+# its start time -- input counts once $input_seen is newer -- and its token:
+# a later hold replaces this one, and closing the lid (blank) or a stray
+# wake (stay_dark) removes it, so this one returns without touching the
+# panel. The first three seconds hold regardless of input, for the same
+# restore unblank() waits out.
+hold() {
+    local token="$$-$RANDOM" i
+    echo "$token" > "$hold_marker"
+    input_wakes true
+    dpms on
+    for (( i = 1; i <= open_hold * 2; i++ )); do
+        sleep 0.5
+        [[ $(cat "$hold_marker" 2>/dev/null) == "$token" ]] || return 0
+        if (( i > 6 )) && [[ $input_seen -nt $hold_marker ]]; then
+            rm -f "$hold_marker"
+            return 0
+        fi
+        panel_on || dpms on
+    done
+    rm -f "$hold_marker"
+    log "lid open and untouched for ${open_hold}s: screen off"
+    dpms off
+}
+
+unhold() { rm -f "$hold_marker"; }
+
+# the lid is open again: docked, the panel just comes back beside the other
+# displays, which were on all along -- no hold, and nothing to turn off after
+opened() {
+    if docked; then unblank; else hold; fi
+}
+
 # has the pointer moved more than move_slop px from "$1" ("x, y")? An
 # unreadable position (hyprctl not answering yet, right after a resume)
 # counts as no movement rather than as a person.
@@ -214,6 +261,7 @@ cursor_moved() {
 # exists to undo, so before then "the panel is on" says nothing.
 stay_dark() {
     local i start
+    unhold
     input_wakes true
     start=$(hyprctl cursorpos 2>/dev/null)
     for i in 1 2 3 4 5 6; do
@@ -263,6 +311,7 @@ bare_displays() {
 # already is, which is what keeps the displays hook the reload sets off from
 # going round again.
 panel_off() {
+    unhold
     [[ -e $docked_file ]] && return
     internal_panel > "$docked_file"
     hyprctl reload config-only >/dev/null
@@ -325,7 +374,7 @@ event)
         rm -f "$closed_at"
         panel_back
         toast open
-        unblank
+        opened
     fi
     ;;
 displays)
@@ -394,7 +443,7 @@ resume)
     else
         disarm
         rm -f "$closed_at"
-        unblank
+        opened
     fi
     ;;
 fire)

@@ -390,7 +390,9 @@ fc-match monospace
   shut, the machine wakes itself and hibernates (once hibernation is set up;
   see below). A wake-up with the
   lid still shut goes back to sleep after a minute. With an external monitor
-  connected only the laptop's panel turns off and nothing suspends. All of it
+  connected only the laptop's panel turns off and nothing suspends. Opening
+  it keeps the screen on for a minute; untouched, it then goes off, and any
+  input in that minute hands over to the usual idle timers. All of it
   is `~/.config/hypr/lid.sh`; `journalctl -t singularity-lid` shows what it did.
 - **Hibernate** is in the Control Centre's Power menu. zram can't hold a
   hibernation image, so `install.sh` creates a RAM-sized `/swapfile` (below
