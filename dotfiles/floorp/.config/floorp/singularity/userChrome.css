@@ -6,13 +6,14 @@
    colours appended, so edit this one: edits to the profile's copy are
    overwritten. */
 
-/* The mute badge over a tab's favicon: a dark grey disc with a lighter grey
-   speaker, the same on pinned and normal tabs. Normal tabs draw it with
+/* The sound badge over a tab's favicon -- playing, muted or blocked, and a
+   click mutes or unmutes: a dark grey disc with a lighter grey speaker, the
+   same on pinned and normal tabs. Normal tabs draw it with
    .tab-audio-button, pinned ones with .tab-icon-overlay; Lepton also shows
    the audio button on pinned tabs, where it has no icon and sits on top of
    the overlay, so it's hidden there. The overlay is nudged and padded to
    match the button's position and 12px icon. */
-.tab-audio-button[muted]:not([pinned], [crashed]) {
+.tab-audio-button:is([soundplaying], [muted], [activemedia-blocked]):not([pinned], [crashed]) {
   --button-background-color-ghost: #3a3a3a !important;
   --button-background-color-ghost-hover: #4a4a4a !important;
   --button-background-color-ghost-active: #4a4a4a !important;
@@ -22,7 +23,7 @@
   --button-icon-fill: #b4b4b4 !important;
   fill-opacity: 1 !important;
 }
-.tab-icon-overlay[muted]:not([crashed]) {
+.tab-icon-overlay:is([soundplaying], [muted], [activemedia-blocked]):not([crashed]) {
   inset-inline-end: -10px !important;
   padding: 2.5px !important;
   background-color: #3a3a3a !important;
