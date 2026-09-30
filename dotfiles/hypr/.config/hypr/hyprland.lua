@@ -410,6 +410,13 @@ hl.config({
         key_press_enables_dpms  = true,
         mouse_move_enables_dpms = true,
     },
+
+    -- A fullscreen game's frames go straight to the display, skipping
+    -- compositing; 2 limits it to windows tagged as games, where 1 (every
+    -- fullscreen window) can flicker on some apps.
+    render = {
+        direct_scanout = 2,
+    },
 })
 
 hl.curve("singularity", { type = "bezier", points = { {0.22, 1}, {0.36, 1} } })
