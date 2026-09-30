@@ -7,6 +7,9 @@
 //   volume / brightness  a level meter
 //   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock)
 //
+// While a timer runs (services/Timers.qml) it shows that in place of the
+// time, the clock after it when there's room, and its progress as the fill.
+//
 // The chip keeps the time's width throughout, eliding what doesn't fit, so
 // nothing on the bar moves when an event comes and goes.
 //
@@ -60,14 +63,26 @@ BarModule {
     }
     readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.chrome
 
-    icon: showing ? evIcon : ""
-    label: showing ? evText : timeText
-    fillValue: showing ? evFill : -1
+    // the running timer, with the clock after it when both fit
+    TextMetrics {
+        id: timerMetrics
+        font.family: Theme.fontText
+        font.pixelSize: Theme.barLabelSize
+        text: Timers.text + "\u2002·\u2002" + Qt.formatDateTime(clockSource.date, Theme.timeFormat)
+    }
+    readonly property string timerText: timerMetrics.advanceWidth <= idleWidth - labelChrome
+        ? timerMetrics.text : Timers.text
+
+    icon: showing ? evIcon : Timers.active ? Timers.icon : ""
+    label: showing ? evText : Timers.active ? timerText : timeText
+    fillValue: showing ? evFill : Timers.active ? Timers.progress : -1
     fillColor: Theme.muted
     fixedWidth: idleWidth
-    labelMaxWidth: showing ? Math.max(1, idleWidth - labelChrome) : 0
+    labelMaxWidth: showing || Timers.active ? Math.max(1, idleWidth - labelChrome) : 0
     active: screenScope.openFlyout === "calendar"
     onActivated: screenScope.toggleFlyout("calendar", root)
+    // middle click pauses or resumes a running timer
+    onMiddleClicked: Timers.togglePause()
 
     function show(kind, icon, text, fill, ms) {
         if (!ready || !Settings.clockIsland || !root.visible) return

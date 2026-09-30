@@ -12,7 +12,8 @@
 //
 // With feeds in calendars.conf (services/Calendar.qml), days with events
 // carry a dot, and the events of the picked day (today to start) are listed
-// under the month.
+// under the month. Under that, the timer the clock island shows
+// (services/Timers.qml): started, paused and stopped here.
 
 import Quickshell
 import QtQuick
@@ -300,6 +301,54 @@ FlyoutPanel {
         trailing: Calendar.fetched ? "as of " + Qt.formatDateTime(Calendar.fetched,
             calendarFlyout.sameDay(Calendar.fetched, calendarFlyout.now) ? Theme.hours("HH:mm") : "MMM d") : ""
         trailingIsValue: true
+    }
+
+    // --- timer ----------------------------------------------------------------
+
+    property int timerMinutes: 10
+
+    FlyoutHeading { text: "TIMER" }
+
+    // idle: a countdown of the stepped length, or one of the other two
+    FlyoutStepper {
+        visible: !Timers.active
+        label: "Countdown"
+        minimum: 1
+        maximum: 180
+        valueWidth: 64
+        value: calendarFlyout.timerMinutes
+        displayValue: value + " min"
+        onStepped: d => {
+            var v = calendarFlyout.timerMinutes
+            var step = v + d * (v >= 30 && !(d < 0 && v === 30) ? 5 : 1)
+            calendarFlyout.timerMinutes = Math.max(minimum, Math.min(maximum, step))
+        }
+    }
+
+    Row {
+        visible: !Timers.active
+        spacing: Theme.spaceS
+        FlyoutChip { text: "Start"; onClicked: Timers.countdown(calendarFlyout.timerMinutes) }
+        FlyoutChip { text: "Pomodoro"; onClicked: Timers.pomodoro() }
+        FlyoutChip { text: "Stopwatch"; onClicked: Timers.stopwatch() }
+    }
+
+    // running: what it is and how far along, and what can be done to it
+    FlyoutRow {
+        visible: Timers.active
+        enabled: false
+        label: Timers.title + (Timers.paused ? " · paused" : "")
+        trailing: Timers.text
+        trailingIsValue: true
+    }
+
+    Row {
+        visible: Timers.active
+        spacing: Theme.spaceS
+        FlyoutChip { text: Timers.paused ? "Resume" : "Pause"; onClicked: Timers.togglePause() }
+        FlyoutChip { visible: Timers.mode === "countdown"; text: "+1 min"; onClicked: Timers.addMinutes(1) }
+        FlyoutChip { visible: Timers.mode === "pomodoro"; text: "Skip"; onClicked: Timers.skip() }
+        FlyoutChip { text: "Stop"; confirmText: "Stop?"; onClicked: Timers.stop() }
     }
 
     // today's date; a way back to it while paged away or on another day

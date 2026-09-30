@@ -70,6 +70,8 @@ pipewire
 pipewire-pulse
 wireplumber
 pavucontrol
+# the chime when a timer runs out (quickshell/services/Timers.qml)
+sound-theme-freedesktop
 
 # video
 # VA-API driver for the Iris Xe: without it browsers decode video (AV1, VP9)
