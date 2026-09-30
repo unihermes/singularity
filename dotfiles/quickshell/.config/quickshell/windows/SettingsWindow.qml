@@ -325,6 +325,9 @@ FloatingWindow {
                 width: parent.width - Theme.panelPad * 2
                 height: parent.height - Theme.panelPad * 2
                 active: root.visible
+                // built off the render loop, so the window maps at once and
+                // the page lands a moment later instead of holding up both
+                asynchronous: true
                 onLoaded: if (item && root.highlight !== "") item.highlight = root.highlight
                 source: {
                     var p = root.pages.find(p => p.id === root.currentPage)
