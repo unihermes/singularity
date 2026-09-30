@@ -32,8 +32,12 @@ FlyoutPanel {
 
         Rectangle {
             id: artFrame
-            width: Theme.fs(64)
-            height: width
+            // takes the art's own shape, so album covers stay square and
+            // video thumbnails 16:9; anything outside that range is cropped
+            readonly property real aspect: art.status === Image.Ready && art.implicitHeight > 0
+                ? Math.max(1, Math.min(16 / 9, art.implicitWidth / art.implicitHeight)) : 1
+            height: Theme.fs(60)
+            width: Math.round(height * aspect)
             radius: Theme.radiusInner
             color: Theme.meterTrack
             border.width: Theme.borderWidth
