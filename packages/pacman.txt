@@ -67,6 +67,12 @@ pipewire-pulse
 wireplumber
 pavucontrol
 
+# video
+# VA-API driver for the Iris Xe: without it browsers decode video (AV1, VP9)
+# in software, which keeps this 2-P-core chip busy enough to slow everything,
+# browser launches included
+intel-media-driver
+
 # file manager + its extras
 thunar
 thunar-volman
