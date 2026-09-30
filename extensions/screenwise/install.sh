@@ -37,6 +37,8 @@ for base in "$HOME/.config/floorp" "$HOME/.config/zen"; do
     [[ -d $profile ]] || continue
     ensure_prefs "$profile"
     mkdir -p "$profile/extensions"
-    cp "$xpi" "$profile/extensions/$id.xpi"
+    # Renamed into place: a running browser keeps reading the old file
+    cp "$xpi" "$profile/extensions/.$id.xpi.new"
+    mv -f "$profile/extensions/.$id.xpi.new" "$profile/extensions/$id.xpi"
     echo "installed into $profile"
 done

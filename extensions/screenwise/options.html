@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Per-Site Fullscreen</title>
+<title>Screenwise</title>
 <link rel="stylesheet" href="common.css">
 <style>
   body { padding: 32px 16px; }
@@ -25,11 +25,12 @@
   dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
   dt { font-weight: 600; }
   dd { margin: 0; }
+  dl + p { margin: 10px 0 0; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Per-Site Fullscreen</h1>
+  <h1>Screenwise</h1>
 
   <div id="warn" class="warn" hidden>
     This browser keeps every page fullscreen inside its window, so Full screen can't fill the screen.
@@ -43,6 +44,7 @@
       <dt>Full screen</dt><dd>The page fills the whole screen, as browsers normally do.</dd>
       <dt>Ask</dt><dd>Choose each time a page goes fullscreen, with an option to remember it.</dd>
     </dl>
+    <p class="muted">Hold Shift while going fullscreen to be asked just that once, whatever the site is set to.</p>
   </section>
 
   <section>

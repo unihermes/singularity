@@ -28,10 +28,32 @@
     toPage(data, target);
   };
 
+  // Shift held on the click or key that asked for fullscreen shows the Ask
+  // prompt, whatever the site's mode. Clicks on a <video>'s own controls
+  // never reach the page, so pressing or releasing Shift itself counts too,
+  // and the window is generous because those controls go fullscreen late.
+  let lastInput = { shift: false, time: 0 };
+  for (const type of ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "keydown", "keyup", "touchend"]) {
+    window.addEventListener(type, (e) => {
+      if (e.isTrusted) lastInput = { shift: e.shiftKey || e.key === "Shift", time: Date.now() };
+    }, true);
+  }
+  // Where the pointer last was, so the Ask prompt opens under it.
+  let pointer = null;
+  for (const type of ["pointermove", "pointerdown", "mousemove"]) {
+    window.addEventListener(type, (e) => {
+      if (e.isTrusted) pointer = { x: e.clientX, y: e.clientY };
+    }, { capture: true, passive: true });
+  }
+
+  const shiftAsked = () => lastInput.shift && Date.now() - lastInput.time < 3000;
+
   window.addEventListener(REQ, (e) => {
     const msg = parse(e);
     if (!msg || typeof msg.id !== "number") return;
     toPage({ type: "ack", id: msg.id });
+    // A new request replaces a prompt still waiting for an answer.
+    if (open) open.cancel();
     // Checked here, where the page can't fake them: a request needs a user
     // gesture and a document allowed to go fullscreen, as it natively would.
     const active = !navigator.userActivation || navigator.userActivation.isActive;
@@ -39,14 +61,17 @@
       toPage({ type: "reject", id: msg.id });
       return;
     }
-    handleRequest(msg.id).catch(() => toPage({ type: "native", id: msg.id }));
+    const forceAsk = shiftAsked();
+    handleRequest(msg.id, forceAsk).catch(() => toPage({ type: "native", id: msg.id }));
   }, true);
 
-  async function handleRequest(id) {
-    const { mode, site } = await send({ type: "decide" });
+  async function handleRequest(id, forceAsk) {
+    const decided = await send({ type: "decide" });
+    const site = decided.site;
+    const mode = forceAsk ? "ask" : decided.mode;
     let choice = mode;
     if (mode === "ask") {
-      const answer = await ask(site);
+      const answer = await ask(forceAsk ? null : site, site);
       if (!answer) {
         toPage({ type: "reject", id });
         return;
@@ -103,17 +128,19 @@
       return;
     }
     if (!el || el.localName === "iframe" || el.localName === "frame") return;
-    adoptReal().catch(() => {});
+    adoptReal(shiftAsked()).catch(() => {});
   }, true);
 
-  async function adoptReal() {
-    const { mode, site } = await send({ type: "decide" });
+  async function adoptReal(forceAsk) {
+    const decided = await send({ type: "decide" });
+    const site = decided.site;
+    const mode = forceAsk ? "ask" : decided.mode;
     if (mode === "screen" || !document.fullscreenElement) return;
     emulate({ type: "to-window" });
     if (mode !== "ask") return;
     // Asked after moving it into the window: the rest of a page is inert
     // while something is really fullscreen, so the prompt couldn't be used.
-    const answer = await ask(site);
+    const answer = await ask(forceAsk ? null : site, site);
     if (!answer) {
       toPage({ type: "exit", cause: "page" });
       return;
@@ -158,7 +185,9 @@
 
   let open = null;
 
-  function ask(site) {
+  // rememberFor is null for a Shift-asked fullscreen: that choice is for
+  // this once and can't be saved.
+  function ask(rememberFor, site) {
     if (open) open.cancel();
     return new Promise((resolve) => {
       const host = document.createElement("div");
@@ -192,7 +221,7 @@
       const check = document.createElement("input");
       check.type = "checkbox";
       remember.append(check, document.createTextNode(" Remember for this site"));
-      if (!site) remember.hidden = true;
+      if (!rememberFor) remember.hidden = true;
 
       const close = document.createElement("button");
       close.className = "cancel";
@@ -214,7 +243,7 @@
         b.className = mode;
         b.addEventListener("click", (e) => {
           e.stopPropagation();
-          finish({ mode, remember: check.checked });
+          finish({ mode, remember: !!rememberFor && check.checked });
         });
         return b;
       }
@@ -256,6 +285,14 @@
         host.showPopover();
       } catch {
         host.removeAttribute("popover");
+      }
+      if (pointer) {
+        const w = box.offsetWidth, h = box.offsetHeight;
+        const vw = host.clientWidth || innerWidth, vh = host.clientHeight || innerHeight;
+        const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+        box.style.position = "absolute";
+        box.style.left = `${clamp(pointer.x - w / 2, 8, vw - w - 8)}px`;
+        box.style.top = `${clamp(pointer.y - h / 2, 8, vh - h - 8)}px`;
       }
       screenBtn.focus({ preventScroll: true });
     });

@@ -6,7 +6,7 @@
 // so edit this one: edits to the profile's copy are overwritten.
 
 user_pref("media.webrtc.camera.allow-pipewire", true);
-// Per-Site Fullscreen (extensions/per-site-fullscreen) is unsigned and
+// Screenwise (extensions/screenwise) is unsigned and
 // sideloaded into the profile: allow it, and enable it without a prompt
 user_pref("xpinstall.signatures.required", false);
 user_pref("extensions.autoDisableScopes", 14);

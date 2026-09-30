@@ -1,4 +1,4 @@
-# Per-Site Fullscreen
+# Screenwise
 
 A browser extension for Floorp, Zen and other Firefox-based browsers that
 chooses, per website, what happens when a page goes fullscreen:
@@ -8,6 +8,10 @@ chooses, per website, what happens when a page goes fullscreen:
 - **Full screen** — the page fills the whole screen, as browsers normally do.
 - **Ask** — a small prompt offers both each time, with "Remember for this
   site".
+
+Hold Shift while going fullscreen (Shift-click the player's button, or
+Shift-double-click a video) to get the Ask prompt whatever the site is set to.
+That choice is for that one fullscreen and doesn't change the site's mode.
 
 The toolbar button sets the mode for the current site. **All sites…** opens
 the options page, which sets the default for sites without a rule and lists
@@ -23,7 +27,7 @@ works on Windows and macOS.
 Build the package (needs Python 3):
 
 ```bash
-./build.sh        # writes ../per-site-fullscreen-<version>.xpi
+./build.sh        # writes ../screenwise-<version>.xpi
 ```
 
 The extension isn't signed by Mozilla. Floorp and Zen accept unsigned

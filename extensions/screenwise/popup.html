@@ -10,6 +10,7 @@
   .choices { margin: 8px 0 10px; }
   #rule { margin: 0 0 8px; }
   footer { border-top: 1px solid var(--line); padding-top: 8px; display: flex; justify-content: flex-end; }
+  .hint { font-size: 12px; margin: 0 0 8px; }
   #warn { margin-bottom: 8px; }
 </style>
 </head>
@@ -19,6 +20,7 @@
   <div id="rule" class="muted" hidden></div>
   <div id="pick" class="choices" role="radiogroup" aria-label="Fullscreen"></div>
   <div id="warn" class="warn" hidden>Full screen is kept inside the window by <code>full-screen-api.ignore-widgets</code> in about:config. Set it to false.</div>
+  <p class="hint muted">Hold Shift when going fullscreen to be asked just that once.</p>
   <footer><button id="options">All sites…</button></footer>
   <script src="shared.js"></script>
   <script src="popup.js"></script>
