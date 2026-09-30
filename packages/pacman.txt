@@ -28,6 +28,10 @@ socat
 # the bar's Claude module merges its settings edits key by key
 # (quickshell/scripts/claude-shell.sh)
 python
+# the calendar flyout's events from iCalendar feeds, recurrences included
+# (quickshell/scripts/calendar-events.py)
+python-icalendar
+python-recurring-ical-events
 
 # compositor + session
 # ly is a TUI greeter that reads the wayland-sessions entry hyprland ships,

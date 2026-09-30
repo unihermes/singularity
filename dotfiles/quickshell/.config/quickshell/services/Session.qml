@@ -2,7 +2,10 @@
 // ~/.config/quickshell/services/Session.qml
 //
 // Lock, suspend, log out and the rest, for the Control Centre's Power page
-// and the SUPER+SHIFT+E power menu.
+// and the SUPER+SHIFT+E power menu. Also `resumed()`, for services that keep
+// time: Qt's timers run on the monotonic clock, which stops while the machine
+// sleeps, so anything due during a suspend or hibernate would otherwise fire
+// late by however long the machine was out.
 
 pragma Singleton
 
@@ -67,5 +70,52 @@ Singleton {
         else if (act === "logout") Quickshell.execDetached(["sh", "-c", "loginctl terminate-session \"$XDG_SESSION_ID\""])
         else if (act === "reboot") Quickshell.execDetached(["systemctl", "reboot"])
         else if (act === "poweroff") Quickshell.execDetached(["systemctl", "poweroff"])
+    }
+
+    // --- waking ------------------------------------------------------------
+
+    // After a suspend or hibernate, at most once a minute
+    signal resumed()
+    property real lastResume: 0
+
+    function noteResume() {
+        var now = Date.now()
+        if (now - lastResume < 60000) return
+        lastResume = now
+        resumed()
+    }
+
+    // logind's PrepareForSleep(false), sent as the machine comes back
+    Process {
+        id: sleepWatch
+        running: true
+        command: ["gdbus", "monitor", "--system", "--dest", "org.freedesktop.login1",
+                  "--object-path", "/org/freedesktop/login1"]
+        stdout: SplitParser {
+            onRead: line => {
+                if (line.indexOf("PrepareForSleep (false") !== -1) root.noteResume()
+            }
+        }
+        onExited: sleepRewatch.restart()
+    }
+
+    Timer {
+        id: sleepRewatch
+        interval: 5000
+        onTriggered: sleepWatch.running = true
+    }
+
+    // Backstop for a missed signal: the wall clock jumping ahead of this
+    // timer means the machine was asleep in between.
+    property real lastTick: Date.now()
+    Timer {
+        interval: 15000
+        repeat: true
+        running: true
+        onTriggered: {
+            var now = Date.now()
+            if (now - root.lastTick > 45000) root.noteResume()
+            root.lastTick = now
+        }
     }
 }

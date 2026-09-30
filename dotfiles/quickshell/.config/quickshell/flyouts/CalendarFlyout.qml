@@ -9,6 +9,10 @@
 // (clicking one pages to its month). The footer names today's date and,
 // while paged away, takes you back to it. Weeks start on the day
 // Settings -> Date & Time picks (Settings.weekStart).
+//
+// With feeds in calendars.conf (services/Calendar.qml), days with events
+// carry a dot, and the events of the picked day (today to start) are listed
+// under the month.
 
 import Quickshell
 import QtQuick
@@ -17,7 +21,7 @@ import "../services"
 FlyoutPanel {
     id: calendarFlyout
     flyout: "calendar"
-    menuWidth: 240
+    menuWidth: Calendar.configured ? 280 : 240
 
     // offset in months from the current one, so the flyout can page
     // back and forth without tracking a whole date
@@ -32,9 +36,17 @@ FlyoutPanel {
     readonly property date now: clock.date
     readonly property date shown: new Date(now.getFullYear(), now.getMonth() + monthOffset, 1)
 
-    // reset to this month every time it opens, so it never comes
+    // the day whose events are listed; null is today
+    property var picked: null
+    readonly property date selected: picked || now
+    function sameDay(a, b) {
+        return a.getDate() === b.getDate() && a.getMonth() === b.getMonth()
+            && a.getFullYear() === b.getFullYear()
+    }
+
+    // reset to this month and today every time it opens, so it never comes
     // back up three months deep from last time
-    onOpenChanged: if (open) monthOffset = 0
+    onOpenChanged: if (open) { monthOffset = 0; picked = null }
 
     // wheel anywhere over the box pages; one step per notch, and touchpads
     // accumulate so a flick doesn't fly through a year
@@ -134,14 +146,21 @@ FlyoutPanel {
                         && day.getFullYear() === n.getFullYear()
                 }
 
+                readonly property bool isPicked: calendarFlyout.picked !== null
+                    && calendarFlyout.sameDay(day, calendarFlyout.picked)
+                readonly property bool busy: Calendar.busyDays[Calendar.dayKey(day)] === true
+
                 Rectangle {
+                    id: dayBox
                     anchors.centerIn: parent
                     width: Theme.fs(20)
                     height: Theme.controlSize
                     radius: Theme.radiusSmall
                     color: cell.isToday ? Theme.meterFill
-                        : !cell.inMonth && dayArea.containsMouse ? Theme.hoverFill
+                        : dayArea.containsMouse ? Theme.hoverFill
                         : "transparent"
+                    border.width: cell.isPicked && !cell.isToday ? Theme.borderWidth : 0
+                    border.color: Theme.strokeHover
                     opacity: cell.isToday && !cell.inMonth ? 0.5 : 1
 
                     Text {
@@ -154,25 +173,141 @@ FlyoutPanel {
                     }
                 }
 
-                // an edge day pages to its own month
+                // a day with events under it
+                Rectangle {
+                    visible: cell.busy
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: dayBox.bottom
+                    anchors.topMargin: 1
+                    width: 4
+                    height: 4
+                    radius: 2
+                    color: cell.isToday || cell.isPicked ? Theme.accent : Theme.subtext
+                    opacity: cell.inMonth ? 1 : 0.5
+                }
+
+                // picks the day for the list below (with calendars set up);
+                // an edge day also pages to its own month
                 MouseArea {
                     id: dayArea
                     anchors.fill: parent
-                    enabled: !cell.inMonth
+                    enabled: !cell.inMonth || Calendar.configured
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: calendarFlyout.monthOffset += cell.index < 7 ? -1 : 1
+                    onClicked: {
+                        if (Calendar.configured)
+                            calendarFlyout.picked = calendarFlyout.sameDay(cell.day, calendarFlyout.now) ? null : cell.day
+                        if (!cell.inMonth) calendarFlyout.monthOffset += cell.index < 7 ? -1 : 1
+                    }
                 }
             }
         }
     }
 
-    // today's date; a way back to it while paged away
+    // --- events ---------------------------------------------------------------
+
+    readonly property var dayEvents: Calendar.configured && open ? Calendar.eventsOn(selected) : []
+    readonly property int maxEvents: 8
+
+    FlyoutHeading {
+        visible: Calendar.configured
+        text: calendarFlyout.sameDay(calendarFlyout.selected, calendarFlyout.now) ? "TODAY"
+            : Theme.heading(Qt.formatDateTime(calendarFlyout.selected, "ddd d MMMM"))
+    }
+
+    FlyoutRow {
+        visible: Calendar.configured && calendarFlyout.dayEvents.length === 0
+        enabled: false
+        label: Calendar.events.length === 0 && Calendar.refreshing ? "Loading events…" : "No events"
+    }
+
+    Repeater {
+        model: calendarFlyout.dayEvents.slice(0, calendarFlyout.maxEvents)
+
+        Item {
+            id: ev
+            required property var modelData
+            readonly property bool past: !modelData.allDay && modelData.end < calendarFlyout.now
+            width: parent.width
+            height: Math.max(Theme.rowHeight, evText.implicitHeight + Theme.spaceS)
+            opacity: past ? 0.5 : 1
+
+            // "All day", or the start (and the end on the day it began)
+            Text {
+                id: evTime
+                width: Theme.fs(90)
+                anchors.top: parent.top
+                anchors.topMargin: (Theme.rowHeight - height) / 2
+                text: {
+                    var e = ev.modelData
+                    if (e.allDay) return "All day"
+                    var f = Theme.hours("HH:mm")
+                    var t = Qt.formatDateTime(e.start, f)
+                    if (e.end > e.start && calendarFlyout.sameDay(e.start, e.end))
+                        t += "–" + Qt.formatDateTime(e.end, f)
+                    return t
+                }
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontSmall
+            }
+
+            Column {
+                id: evText
+                anchors.left: evTime.right
+                anchors.leftMargin: Theme.spaceS
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.topMargin: (Theme.rowHeight - titleText.implicitHeight) / 2
+
+                Text {
+                    id: titleText
+                    width: parent.width
+                    text: ev.modelData.title
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    textFormat: Text.PlainText
+                    color: Theme.text
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    visible: text !== ""
+                    width: parent.width
+                    text: ev.modelData.location
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    textFormat: Text.PlainText
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontCaption
+                }
+            }
+        }
+    }
+
+    FlyoutRow {
+        visible: calendarFlyout.dayEvents.length > calendarFlyout.maxEvents
+        enabled: false
+        label: "+" + (calendarFlyout.dayEvents.length - calendarFlyout.maxEvents) + " more"
+    }
+
+    // the last download failed; what's listed is the cached copy
+    FlyoutRow {
+        visible: Calendar.configured && Calendar.offline && !Calendar.refreshing
+        enabled: false
+        label: "Offline"
+        trailing: Calendar.fetched ? "as of " + Qt.formatDateTime(Calendar.fetched,
+            calendarFlyout.sameDay(Calendar.fetched, calendarFlyout.now) ? Theme.hours("HH:mm") : "MMM d") : ""
+        trailingIsValue: true
+    }
+
+    // today's date; a way back to it while paged away or on another day
     Rectangle {
         width: parent.width
         height: Theme.chipHeight
         radius: Theme.radiusSmall
-        readonly property bool away: calendarFlyout.monthOffset !== 0
+        readonly property bool away: calendarFlyout.monthOffset !== 0 || calendarFlyout.picked !== null
         color: away && todayArea.containsMouse ? Theme.hoverFill : "transparent"
 
         Text {
@@ -189,7 +324,7 @@ FlyoutPanel {
             enabled: parent.away
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: calendarFlyout.monthOffset = 0
+            onClicked: { calendarFlyout.monthOffset = 0; calendarFlyout.picked = null }
         }
     }
 }
