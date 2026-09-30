@@ -7,10 +7,10 @@
 //   volume / brightness  a level meter
 //   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock)
 //
-// While a timer runs (services/Timers.qml) it shows that in place of the
-// time, the clock after it when there's room, and its progress as the fill.
+// While a timer runs (services/Timers.qml) it shows that and the clock in
+// place of the time, sized to them, with the timer's progress as the fill.
 //
-// The chip keeps the time's width throughout, eliding what doesn't fit, so
+// The chip keeps its width through an event, eliding what doesn't fit, so
 // nothing on the bar moves when an event comes and goes.
 //
 // Settings.clockIsland turns it off, and LevelToast/ModeToast step aside
@@ -63,22 +63,35 @@ BarModule {
     }
     readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.chrome
 
-    // the running timer, with the clock after it when both fit
-    TextMetrics {
+    // the running timer and the clock after it; the chip hugs these for as
+    // long as the timer runs, rather than keeping the time's width
+    // a Text, not TextMetrics: the label is a Text, and its implicit width
+    // runs a pixel or two past TextMetrics' advance, which would elide it
+    Text {
         id: timerMetrics
+        visible: false
         font.family: Theme.fontText
         font.pixelSize: Theme.barLabelSize
         text: Timers.text + "\u2002·\u2002" + Qt.formatDateTime(clockSource.date, Theme.timeFormat)
     }
-    readonly property string timerText: timerMetrics.advanceWidth <= idleWidth - labelChrome
-        ? timerMetrics.text : Timers.text
+    readonly property int chipWidth: Timers.active ? Math.ceil(timerMetrics.implicitWidth + timerChrome) : idleWidth
+    // the chip's room round the timer's text, icon included; held through
+    // an event, whose own icon would otherwise resize the chip
+    property real timerChrome: 0
+    Binding {
+        target: root
+        property: "timerChrome"
+        value: root.labelChrome
+        when: Timers.active && !root.showing
+        restoreMode: Binding.RestoreNone
+    }
 
     icon: showing ? evIcon : Timers.active ? Timers.icon : ""
-    label: showing ? evText : Timers.active ? timerText : timeText
+    label: showing ? evText : Timers.active ? timerMetrics.text : timeText
     fillValue: showing ? evFill : Timers.active ? Timers.progress : -1
     fillColor: Theme.muted
-    fixedWidth: idleWidth
-    labelMaxWidth: showing || Timers.active ? Math.max(1, idleWidth - labelChrome) : 0
+    fixedWidth: chipWidth
+    labelMaxWidth: showing || Timers.active ? Math.max(1, Math.ceil(chipWidth - labelChrome)) : 0
     active: screenScope.openFlyout === "calendar"
     onActivated: screenScope.toggleFlyout("calendar", root)
     // middle click pauses or resumes a running timer
