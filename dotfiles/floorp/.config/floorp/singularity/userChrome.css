@@ -40,3 +40,52 @@
 .tab-audio-button[pinned] {
   display: none !important;
 }
+
+/* WORKAROUND (Floorp 12.19.0) -- delete this whole block, down to the END
+   marker, once Floorp fixes it.
+
+   Floorp's "menu icons" option injects a copy of Lepton's menu CSS
+   (<style id="floorp-chrome-extras">) with Lepton's platform @media gates
+   stripped, so its Windows and macOS menu spacing apply on Linux too: menu
+   icons sit under the first letters of their labels. This puts back the
+   Linux values; user-sheet !important beats the injected sheet's. To check
+   whether it's still needed: comment it out, restart Floorp and right-click
+   a page -- if the icons clear their labels, delete it. */
+:root {
+  --context-menu-background-padding: var(--context-menu-background-padding-default) !important;
+  --context-menu-background-padding-default: 6px !important;
+  --context-menu-mac-padding: 0px !important;
+  --menu-background-padding-default: var(--context-menu-background-padding-default) !important;
+}
+:not(menu, #ContentSelectDropdown)
+  > menupopup:not(.in-menulist)
+  > :is(menuitem:not(.menuitem-iconic, .bookmark-item, .in-menulist, [checked="true"]),
+        menu:not(.menu-iconic, .in-menulist, [checked="true"])) {
+  list-style-image: none !important;
+}
+:not(menu, #ContentSelectDropdown, #context-navigation)
+  > menupopup:not(.in-menulist)
+  > :is(menuitem:not(.menuitem-iconic, .bookmark-item, .in-menulist, [checked="true"]),
+        menu:not(.menu-iconic, .in-menulist, [checked="true"])) {
+  padding-inline: var(--context-menu-background-padding) var(--menuitem-padding-inline) !important;
+}
+.menu-icon {
+  display: unset !important;
+}
+#main-menubar > menu > .menu-icon {
+  display: none !important;
+}
+#main-menubar > menu > :is(.menubar-text, .menu-text) {
+  transform: none !important;
+  padding-inline-start: 3px !important;
+}
+#PersonalToolbar menupopup menuitem.bookmark-item {
+  padding-inline: var(--menuitem-padding-inline) !important;
+}
+#PersonalToolbar menupopup menu.bookmark-item {
+  padding-inline: 0.5em var(--menuitem-padding-inline) !important;
+}
+:is(#BMB_bookmarksPopup, #PersonalToolbar menupopup) menuitem:not(.menuitem-iconic, .bookmark-item) {
+  margin: var(--menuitem-margin) !important;
+}
+/* END WORKAROUND (Floorp 12.19.0) */
