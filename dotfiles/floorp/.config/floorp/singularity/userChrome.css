@@ -41,6 +41,19 @@
   display: none !important;
 }
 
+/* The open address bar is drawn as two backgrounds, the field's and the
+   results', each clipped to meet the other on the same line. That line
+   falls on a half pixel, so the two antialiased edges leave a seam the
+   toolbars behind show through. The results' background is clipped 1px
+   higher, under the field's, to close it. */
+.urlbar > .urlbarView > .urlbarView-background {
+  clip-path: inset(
+    calc(var(--urlbar-joint-background-overlap) - 1px)
+    calc(-1 * var(--urlbar-joint-background-shadow-margin))
+    calc(-1 * var(--urlbar-joint-background-shadow-margin))
+  ) !important;
+}
+
 /* WORKAROUND (Floorp 12.19.0) -- delete this whole block, down to the END
    marker, once Floorp fixes it.
 
