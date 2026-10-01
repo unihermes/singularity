@@ -265,9 +265,18 @@ font, and how the bar draws its parts: workspaces, clock, the open windows
 (icons, the focused title, tabs or dots, with a choice of focused-window
 mark, for one workspace or all), app icons (colour, greyed or accent),
 the volume/brightness/battery levels (fill, segments or a rule) and the
-visualizer (mirrored, rising, dots or a line). With "One per look" on, each
-look also keeps its own wallpaper. Every one of these is listed in
-`services/Looks.js`.
+visualizer (mirrored, rising, dots or a line), separators between modules
+(lines, dots or powerline chevrons) and hover feedback. Beyond the bar, a
+look sets how flyouts open (drop, fade, scale) and sit (flush, as a tab,
+floating) and whether their first heading is a title bar, the launcher's
+layout (list, grid, one line), position and detail, notification popups
+(full, compact, banner; an urgency stripe), the ALT+Tab cards (icons,
+titles, window previews), the workspace overview (grid or one row; its
+backdrop), the power menu (row, list, full screen) and the level popup
+(bar, screen edge, number); separate corners for the bar and panels; a
+heading font, text and bold weights; a second accent for levels; and
+gradient grounds. With "One per look" on, each look also keeps its own
+wallpaper. Every one of these is listed in `services/Looks.js`.
 
 Neutrino is built into `services/Looks.js` and is what everything falls back
 to. The other shipped looks are data in `services/looks.json`: the dark

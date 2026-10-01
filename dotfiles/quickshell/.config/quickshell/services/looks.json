@@ -15,6 +15,7 @@
             "bright": "#eef6ff"
         },
         "accent": "#4fd6c8",
+        "accent2": "#7aa2f7",
         "meterAccent": true,
         "good": "#5fd39a",
         "alert": "#f07a8a",
@@ -41,7 +42,9 @@
             "workspaceStyle": "dots",
             "clockStyle": "time",
             "shadow": "soft",
-            "windowMark": "ground"
+            "windowMark": "ground",
+            "flyoutAnim": "scale",
+            "gradient": true
         }
     },
     "ember": {
@@ -85,7 +88,8 @@
             "workspaceStyle": "pills",
             "clockStyle": "day",
             "shadow": "soft",
-            "windowMark": "dot"
+            "windowMark": "dot",
+            "gradient": true
         }
     },
     "neon": {
@@ -132,7 +136,10 @@
             "windowMark": "above",
             "iconTint": "accent",
             "vizStyle": "line",
-            "shadow": "hard"
+            "shadow": "hard",
+            "barSeparator": "chevron",
+            "flyoutAttach": "floating",
+            "gradient": true
         }
     },
     "cathedral": {
@@ -178,7 +185,9 @@
             "workspaceStyle": "roman",
             "clockStyle": "long",
             "windowMark": "box",
-            "vizStyle": "rise"
+            "vizStyle": "rise",
+            "headingFont": "Noto Serif",
+            "flyoutTitle": "strip"
         },
         "layout": {
             "left": [
@@ -255,7 +264,10 @@
             "windowStyle": "dots",
             "iconTint": "accent",
             "vizStyle": "line",
-            "gaugeStyle": "rule"
+            "gaugeStyle": "rule",
+            "flyoutAnim": "scale",
+            "levelStyle": "number",
+            "barSeparator": "line"
         }
     },
     "phosphor": {
@@ -301,7 +313,10 @@
             "clockStyle": "stamp",
             "iconTint": "accent",
             "vizStyle": "dots",
-            "gaugeStyle": "segments"
+            "gaugeStyle": "segments",
+            "barSeparator": "chevron",
+            "launcherLayout": "line",
+            "flyoutAnim": "none"
         },
         "layout": {
             "left": [
@@ -374,7 +389,10 @@
             "clockStyle": "time",
             "windowStyle": "dots",
             "iconTint": "mono",
-            "gaugeStyle": "rule"
+            "gaugeStyle": "rule",
+            "flyoutAnim": "fade",
+            "launcherLayout": "line",
+            "levelStyle": "edge"
         },
         "layout": {
             "left": [
@@ -454,7 +472,9 @@
             "clockStyle": "time",
             "windowStyle": "tabs",
             "shadow": "hard",
-            "gaugeStyle": "segments"
+            "gaugeStyle": "segments",
+            "flyoutTitle": "titlebar",
+            "powerStyle": "list"
         },
         "layout": {
             "left": [
@@ -527,7 +547,10 @@
             "workspaceStyle": "lines",
             "clockStyle": "day",
             "windowMark": "pill",
-            "shadow": "soft"
+            "shadow": "soft",
+            "flyoutAnim": "fade",
+            "launcherLayout": "grid",
+            "altTabStyle": "previews"
         },
         "layout": {
             "left": [
@@ -606,7 +629,9 @@
             "clockStyle": "stamp",
             "windowStyle": "tabs",
             "shadow": "hard",
-            "gaugeStyle": "segments"
+            "gaugeStyle": "segments",
+            "flyoutTitle": "titlebar",
+            "gradient": true
         }
     },
     "brutalist": {
@@ -654,7 +679,10 @@
             "windowMark": "box",
             "shadow": "hard",
             "gaugeStyle": "segments",
-            "vizStyle": "rise"
+            "vizStyle": "rise",
+            "boldWeight": "black",
+            "flyoutAttach": "floating",
+            "notifStripe": true
         }
     },
     "moss": {
@@ -699,7 +727,8 @@
             "workspaceStyle": "dots",
             "clockStyle": "time",
             "windowMark": "ground",
-            "vizStyle": "rise"
+            "vizStyle": "rise",
+            "barSeparator": "dot"
         }
     },
     "amber": {
@@ -745,7 +774,10 @@
             "clockStyle": "seconds",
             "iconTint": "accent",
             "vizStyle": "dots",
-            "gaugeStyle": "segments"
+            "gaugeStyle": "segments",
+            "barSeparator": "chevron",
+            "launcherLayout": "line",
+            "flyoutAnim": "none"
         }
     },
     "dracula": {
@@ -764,6 +796,7 @@
             "bright": "#ffffff"
         },
         "accent": "#ff79c6",
+        "accent2": "#50fa7b",
         "meterAccent": true,
         "good": "#50fa7b",
         "alert": "#ff5555",
@@ -833,7 +866,9 @@
             "workspaceStyle": "pills",
             "clockStyle": "day",
             "windowMark": "dot",
-            "shadow": "soft"
+            "shadow": "soft",
+            "flyoutAttach": "tab",
+            "notifStyle": "compact"
         }
     },
     "cyberpunk": {
@@ -880,7 +915,10 @@
             "iconTint": "accent",
             "windowMark": "above",
             "vizStyle": "line",
-            "shadow": "hard"
+            "shadow": "hard",
+            "barSeparator": "chevron",
+            "flyoutAttach": "floating",
+            "gradient": true
         }
     },
     "riso": {
@@ -924,7 +962,9 @@
             "workspaceStyle": "dots",
             "clockStyle": "day",
             "shadow": "hard",
-            "vizStyle": "rise"
+            "vizStyle": "rise",
+            "barSeparator": "dot",
+            "boldWeight": "black"
         }
     },
     "swiss": {
@@ -971,7 +1011,10 @@
             "windowStyle": "titled",
             "windowMark": "above",
             "iconTint": "mono",
-            "gaugeStyle": "rule"
+            "gaugeStyle": "rule",
+            "headingFont": "Noto Sans",
+            "boldWeight": "black",
+            "barSeparator": "line"
         }
     },
     "redmond": {
@@ -1022,7 +1065,9 @@
             "clockStyle": "time",
             "windowStyle": "tabs",
             "shadow": "hard",
-            "gaugeStyle": "segments"
+            "gaugeStyle": "segments",
+            "flyoutTitle": "titlebar",
+            "powerStyle": "list"
         },
         "layout": {
             "left": [
@@ -1097,7 +1142,9 @@
             "windowStyle": "titled",
             "windowMark": "box",
             "iconTint": "mono",
-            "shadow": "hard"
+            "shadow": "hard",
+            "flyoutTitle": "strip",
+            "flyoutAnim": "none"
         },
         "layout": {
             "left": [
@@ -1170,7 +1217,9 @@
             "workspaceStyle": "dots",
             "clockStyle": "day",
             "shadow": "soft",
-            "windowMark": "dot"
+            "windowMark": "dot",
+            "flyoutAnim": "fade",
+            "notifStripe": true
         }
     },
     "eink": {
@@ -1214,7 +1263,9 @@
             "clockStyle": "long",
             "windowStyle": "titled",
             "iconTint": "mono",
-            "vizStyle": "line"
+            "vizStyle": "line",
+            "flyoutAnim": "none",
+            "powerStyle": "list"
         }
     },
     "solarized": {
@@ -1233,6 +1284,7 @@
             "bright": "#073642"
         },
         "accent": "#268bd2",
+        "accent2": "#859900",
         "meterAccent": true,
         "good": "#859900",
         "alert": "#dc322f",
