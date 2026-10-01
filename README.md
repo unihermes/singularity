@@ -279,8 +279,11 @@ gradient grounds. With "One per look" on, each look also keeps its own
 wallpaper. Every one of these is listed in `services/Looks.js`.
 
 The Singularity look is built into `services/Looks.js` and is what everything falls back
-to. More looks can be added as data in `services/looks.json`, which ships
-empty: copy the shape described in `services/Looks.js` under a new key. Pick
+to. The other shipped looks are data in `services/looks.json`: the classic
+desktops GNOME 2, Breeze Dark, Greybird, CDE, NeXTSTEP, Elementary and
+Ambiance, and the app palettes Gruvbox (and Light), Catppuccin Mocha and
+Latte, Tokyo Night, Nord, Rosé Pine Moon and Dawn, Everforest, Kanagawa and
+One Dark. To add a look, copy an entry there under a new key. Pick
 one from the carousel on Settings → Appearance's Look tab or in the Control
 Centre, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
 set <name>`. The other tabs (Wallpaper, Colours, Style, Text, Bar, Panels,
