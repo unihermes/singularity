@@ -1000,6 +1000,12 @@ SettingsPage {
         Choices { key: "flyoutAttach" }
     }
 
+    SettingsField {
+        label: "Flyout titles"
+        hint: "A flyout's first heading: plain, on a strip across the top, or a title bar with a close box"
+        Choices { key: "flyoutTitle" }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.

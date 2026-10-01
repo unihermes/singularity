@@ -16,6 +16,10 @@
 // old order. The empty spacer Item a page puts before the next heading
 // stays, so folded sections keep their gaps.
 //
+// The first heading of a bar flyout can be drawn as its title instead
+// (Theme.flyoutTitle): on a strip of ground across the panel's top, or as a
+// title bar in the accent with a close box.
+//
 // Folding lasts while the window is open. The Settings and System windows
 // keep a `foldedSections` list (by page title and heading) on an item
 // above their pages, so a page left and come back to is as it was; the
@@ -46,7 +50,24 @@ Item {
     property bool folding: false
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.headingHeight
+    implicitHeight: Theme.headingHeight + (asTitle ? Theme.spaceS : 0)
+
+    // the first row of a bar flyout's column, drawn as its title
+    readonly property bool asTitle: Theme.flyoutTitle !== "none" && !mirrorOf
+        && !!parent && parent.isFlyoutPage === true && parent.children[0] === root
+    readonly property bool titleBar: asTitle && Theme.flyoutTitle === "titlebar"
+    // the panel around the column, for its corners
+    readonly property Item panel: parent ? parent.parent : null
+    // from the panel's edge in to the first clear pixel inside its frame
+    readonly property int frameIn: Theme.frameDouble || Theme.frameChiselled ? Theme.frameInset + Theme.borderWidth
+        : Theme.frameStroked ? Theme.borderWidth : 0
+    readonly property color titleInk: !titleBar ? Theme.headingColor
+        : Theme.hasAccent ? (Theme.accent.hslLightness > 0.55 ? "#111111" : "#ffffff") : Theme.textStrong
+
+    function closePanel() {
+        for (var p = parent; p; p = p.parent)
+            if (typeof p.requestClose === "function") { p.requestClose(); return }
+    }
 
     // other headings showing in the same column; while this one is hidden
     // (a flyout that's shut) there's no telling, so all of them count
@@ -149,12 +170,33 @@ Item {
         width: root.width
     }
 
+    // the title's ground, out to the panel's frame on three sides
+    Rectangle {
+        id: band
+        visible: root.asTitle
+        x: -Theme.panelPad + root.frameIn
+        y: -Theme.panelPad + root.frameIn
+        width: root.width + (Theme.panelPad - root.frameIn) * 2
+        height: root.height - y
+        topLeftRadius: root.panel ? Math.max(0, root.panel.topLeftRadius - root.frameIn) : 0
+        topRightRadius: root.panel ? Math.max(0, root.panel.topRightRadius - root.frameIn) : 0
+        color: root.titleBar ? (Theme.hasAccent ? Theme.accent : Theme.overlay) : Theme.surface
+
+        Rectangle {
+            visible: !root.titleBar
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Theme.borderWidth
+            color: Theme.stroke
+        }
+    }
+
     Text {
         id: label
         anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
         text: Theme.heading(root.text)
-        color: Theme.headingColor
+        color: root.titleInk
         font.family: Theme.fontText
         font.pixelSize: Theme.fontSmall
         font.bold: Theme.headingBold
@@ -162,7 +204,7 @@ Item {
     }
 
     Rectangle {
-        visible: Theme.headingRule
+        visible: Theme.headingRule && !root.asTitle
         anchors.left: label.right
         anchors.leftMargin: Theme.spaceL
         anchors.right: chevron.visible ? chevron.left : hintRow.left
@@ -175,8 +217,9 @@ Item {
     Text {
         id: chevron
         visible: root.collapsible
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: closeBox.visible ? closeBox.left : parent.right
+        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
+        anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
         text: root.collapsed ? "󰅂" : "󰅀"
         color: foldMouse.containsMouse ? Theme.text : Theme.subtext
         font.family: Theme.fontIcon
@@ -185,8 +228,9 @@ Item {
 
     Row {
         id: hintRow
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: closeBox.visible ? closeBox.left : parent.right
+        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
+        anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
         spacing: Theme.spaceXl
 
         Repeater {
@@ -216,6 +260,36 @@ Item {
             } else {
                 root.toggle()
             }
+        }
+    }
+
+    // the title bar's close box
+    Rectangle {
+        id: closeBox
+        visible: root.titleBar
+        anchors.right: parent.right
+        anchors.verticalCenter: band.verticalCenter
+        width: Theme.fontBody + Theme.spaceXs
+        height: width
+        radius: Math.min(Theme.radiusSmall, 3)
+        color: closeMouse.containsMouse ? Qt.rgba(root.titleInk.r, root.titleInk.g, root.titleInk.b, 0.18) : "transparent"
+        border.width: Theme.borderWidth
+        border.color: root.titleInk
+
+        Text {
+            anchors.centerIn: parent
+            text: "󰅖"
+            color: root.titleInk
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontSmall
+        }
+
+        MouseArea {
+            id: closeMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.closePanel()
         }
     }
 }

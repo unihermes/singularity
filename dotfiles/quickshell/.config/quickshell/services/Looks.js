@@ -122,6 +122,9 @@
 //     flyoutAttach where a flyout sits: "flush" against the bar, "tab" the
 //                  same with the corners at the bar squared off, so it
 //                  hangs from it, "floating" a gap below it
+//     flyoutTitle  a flyout's first heading: "none" a plain heading,
+//                  "strip" on a ground of its own across the top,
+//                  "titlebar" a title bar in the accent with a close box
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -197,6 +200,7 @@ var settingsBase = {
     vizStyle: "mirror",
     flyoutAnim: "drop",
     flyoutAttach: "flush",
+    flyoutTitle: "none",
     gaugeStyle: "fill",
 }
 

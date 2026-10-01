@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias flyoutTitle: adapter.flyoutTitle
     readonly property alias barRadius:   adapter.barRadius
     readonly property alias panelRadius: adapter.panelRadius
     readonly property alias flyoutAttach: adapter.flyoutAttach
@@ -153,6 +154,7 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        flyoutTitle:  ["none", "strip", "titlebar"],
         flyoutAttach: ["flush", "tab", "floating"],
         flyoutAnim:   ["drop", "fade", "scale", "none"],
     })
@@ -180,6 +182,7 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "strip": "Strip", "titlebar": "Title bar",
         "flush": "Flush", "tab": "Tab", "floating": "Floating",
         "drop": "Drop", "scale": "Scale",
     })
@@ -771,6 +774,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string flyoutTitle: "none"
             property int barRadius: -1
             property int panelRadius: -1
             property string flyoutAttach: "flush"
