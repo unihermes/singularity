@@ -869,6 +869,25 @@ ShellRoot {
                 return !!(tl.lastIpcObject && tl.lastIpcObject.class === "org.quickshell")
             }
 
+            // an app open on workspace `id` for the workspace indicator's
+            // apps style -- the first that isn't one of the shell's windows
+            // -- as { source, glyph }, or null when there's none
+            function workspaceApp(id) {
+                var entryCount = DesktopEntries.applications.values.length
+                var wss = Hyprland.workspaces.values
+                for (var i = 0; i < wss.length; i++) {
+                    if (wss[i].id !== id) continue
+                    var tls = wss[i].toplevels.values
+                    for (var j = 0; j < tls.length; j++) {
+                        var ipc = tls[j].lastIpcObject
+                        if (!ipc || !ipc.class || isShellWindow(tls[j])) continue
+                        return { source: entryCount > 0 ? Apps.iconForClass(ipc.class) : "",
+                                 glyph: Apps.glyphForWindow(ipc.class, ipc.title) }
+                    }
+                }
+                return null
+            }
+
             function workspaceHasWindows(id) {
                 var wss = Hyprland.workspaces.values
                 for (var i = 0; i < wss.length; i++) {

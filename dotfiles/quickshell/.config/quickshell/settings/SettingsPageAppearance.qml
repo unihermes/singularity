@@ -1097,6 +1097,28 @@ SettingsPage {
         Choice { key: "workspaceStyle" }
     }
 
+    // the names the Names workspace style shows, comma-separated in
+    // workspace order; a blank one falls back to the number
+    SettingsField {
+        label: "Workspace names"
+        hint: Theme.workspaceStyle === "names" ? "Comma-separated, in order — Enter to apply. A blank one shows its number"
+            : "For the Names workspace style"
+
+        FlyoutInput {
+            id: wsNames
+            anchors.right: parent.right
+            width: Theme.fit(240)
+            echoPassword: false
+            placeholder: "web, code, chat"
+            text: Settings.workspaceNames
+            onAccepted: {
+                Settings.set("workspaceNames", text.trim())
+                page.say("Workspace names saved", false)
+            }
+            onEscapePressed: text = Settings.workspaceNames
+        }
+    }
+
     SettingsField {
         label: "Clock"
         hint: "What the clock chip shows"

@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias workspaceNames: adapter.workspaceNames
     readonly property alias barSeparator: adapter.barSeparator
     readonly property alias notifGroup:  adapter.notifGroup
     readonly property alias notifStripe: adapter.notifStripe
@@ -152,7 +153,7 @@ Singleton {
         windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
         moduleStyle:  ["outline", "filled", "flat", "pill", "ghost", "bracket", "underline"],
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
-        workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman"],
+        workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman", "names", "apps"],
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso"],
         windowStyle:  ["icons", "titled", "tabs", "dots"],
         windowScope:  ["workspace", "all"],
@@ -182,7 +183,7 @@ Singleton {
         "full": "Full width", "floating": "Floating", "islands": "Islands", "bare": "Bare",
         "notch": "Notch",
         "pills": "Pills", "dots": "Dots", "lines": "Lines", "numbers": "Numbers", "blocks": "Blocks",
-        "roman": "Roman",
+        "roman": "Roman", "names": "Names", "apps": "App icons",
         "popin": "Pop", "zoom": "Zoom", "fade": "Fade", "fold": "Fold",
         "slide": "Slide", "rise": "Rise", "drop": "Drop",
         "stamp": "Time + date", "time": "Time", "seconds": "Seconds", "day": "Day + time",
@@ -594,6 +595,8 @@ Singleton {
         else if (key === "accent") adapter.accent = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
+        // free text, such as the workspace names
+        else if (typeof adapter[key] === "string") adapter[key] = String(v)
         else adapter[key] = clamp(key, v)
     }
 
@@ -789,6 +792,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string workspaceNames: ""
             property string barSeparator: "none"
             property bool notifGroup: false
             property bool notifStripe: false

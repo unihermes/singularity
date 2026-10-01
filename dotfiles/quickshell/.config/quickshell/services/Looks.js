@@ -78,6 +78,9 @@
 //                  "numbers"  1 2 3, the current one lit
 //                  "blocks"   squares: filled when occupied, lit when current
 //                  "roman"    I II III, the current one lit
+//                  "names"    the names in Settings.workspaceNames, numbers
+//                             for the rest
+//                  "apps"     the icon of an app open on each, a dot when empty
 //     clockStyle   "stamp"    23:50:02 | 09/18/26
 //                  "time"     23:50
 //                  "seconds"  23:50:02

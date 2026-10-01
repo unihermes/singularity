@@ -331,6 +331,8 @@ Singleton {
     readonly property int barInset: barFloating ? spaceXs : barIslands || barNotch ? spaceM : 0
     // the workspace indicator and clock chip styles -- see Looks.js
     readonly property string workspaceStyle: Settings.workspaceStyle
+    // what the Names style calls each workspace, "" where it has none
+    readonly property var workspaceNames: Settings.workspaceNames.split(",").map(s => s.trim())
     readonly property string clockStyle: Settings.clockStyle
     // the open-windows strip and app icons in the bar -- see Looks.js
     readonly property string windowStyle: Settings.windowStyle

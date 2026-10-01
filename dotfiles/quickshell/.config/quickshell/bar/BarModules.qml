@@ -82,7 +82,11 @@ Item {
                 // a little wider than the mark so an empty
                 // workspace is still a comfortable click target
                 readonly property bool textual: Theme.workspaceStyle === "numbers" || Theme.workspaceStyle === "roman"
-                implicitWidth: (textual ? num.width : pip.width) + 4
+                    || Theme.workspaceStyle === "names"
+                // the apps style: an app open there, or null when it's empty
+                readonly property var app: Theme.workspaceStyle === "apps" ? barModules.bar.workspaceApp(wsId) : null
+                readonly property bool appMark: Theme.workspaceStyle === "apps" && app !== null
+                implicitWidth: (appMark ? appBox.width : textual ? num.width : pip.width) + 4
                 implicitHeight: Theme.moduleHeight - 8
 
                 // pills, dots, lines and blocks: the same three states,
@@ -92,10 +96,10 @@ Item {
                     id: pip
                     readonly property bool blocks: Theme.workspaceStyle === "blocks"
                     readonly property bool lines: Theme.workspaceStyle === "lines"
-                    visible: !parent.textual
+                    visible: !parent.textual && !parent.appMark
                     anchors.centerIn: parent
                     height: blocks ? 10 : lines ? 3 : 7
-                    width: blocks ? 10 : lines ? 14 : Theme.workspaceStyle === "dots" ? 7
+                    width: blocks ? 10 : lines ? 14 : Theme.workspaceStyle === "dots" || Theme.workspaceStyle === "apps" ? 7
                         : parent.current ? 22 : (parent.occupied ? 11 : 7)
                     // fully rounded: half the height makes a pill
                     // at any width, and a circle at the stub size
@@ -122,12 +126,48 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     text: Theme.workspaceStyle === "roman"
                         ? ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][parent.wsId - 1] || parent.wsId
+                        : Theme.workspaceStyle === "names" ? Theme.workspaceNames[parent.wsId - 1] || parent.wsId
                         : parent.wsId
                     color: parent.current ? Theme.accent
                         : parent.occupied ? Theme.text : Theme.muted
                     font.family: Theme.fontText
                     font.pixelSize: Theme.barLabelSize
                     font.bold: parent.current
+                }
+
+                // the apps style: the app's icon, an accent rule under the
+                // current workspace's
+                Item {
+                    id: appBox
+                    visible: parent.appMark
+                    anchors.centerIn: parent
+                    width: Theme.barFs(15)
+                    height: Theme.barFs(15)
+                    opacity: parent.current ? 1 : 0.6
+
+                    TintedIcon {
+                        anchors.fill: parent
+                        visible: !!parent.parent.app && parent.parent.app.source !== ""
+                        source: parent.parent.app ? parent.parent.app.source : ""
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        visible: !!parent.parent.app && parent.parent.app.source === ""
+                        text: parent.parent.app ? parent.parent.app.glyph : ""
+                        color: Theme.text
+                        font.family: Theme.fontIcon
+                        font.pixelSize: Theme.barFs(14)
+                    }
+                    Rectangle {
+                        visible: appBox.parent.current
+                        anchors.top: parent.bottom
+                        anchors.topMargin: 1
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: parent.width
+                        height: Theme.indicatorWidth
+                        radius: height / 2
+                        color: Theme.accent
+                    }
                 }
 
                 MouseArea {
