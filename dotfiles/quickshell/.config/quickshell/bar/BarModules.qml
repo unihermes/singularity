@@ -18,6 +18,7 @@ import Quickshell.Bluetooth
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
 import QtQuick
+import QtQuick.Shapes
 import "../services"
 
 Item {
@@ -638,8 +639,9 @@ Item {
         onMiddleClicked: if (player && player.canTogglePlaying) player.togglePlaying()
     }
 
-    // audio spectrum: thin pills growing from the middle, in the
-    // same shape language as the workspace indicator
+    // audio spectrum, in the meter colour, drawn as Theme.vizStyle: thin
+    // pills growing from the middle (the workspace indicator's shape
+    // language), bars rising from the bottom, stacked dots, or one line
     ModuleFrame {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
@@ -647,23 +649,81 @@ Item {
         padH: Theme.barFs(8)
         visible: Visualizer.playing && Settings.widgetVisible("visualizer")
 
+        readonly property string style: Theme.vizStyle
+        readonly property int bandW: Theme.barFs(3)
+        readonly property int bandH: Theme.moduleHeight - 10
+
         Repeater {
-            model: Visualizer.barCount
+            model: vizFrame.style === "line" ? 0 : Visualizer.barCount
 
             Item {
+                id: band
                 required property int index
+                readonly property real v: Math.max(0, Math.min(1, (Visualizer.bars[index] || 0) / 100))
                 anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: Theme.barFs(3)
-                implicitHeight: Theme.moduleHeight - 10
+                implicitWidth: vizFrame.bandW
+                implicitHeight: vizFrame.bandH
 
                 Rectangle {
-                    anchors.centerIn: parent
-                    width: Theme.barFs(3)
-                    radius: Theme.barFs(1.5)
-                    readonly property real v: (Visualizer.bars[parent.index] || 0) / 100
-                    height: Math.max(3, parent.height * v)
-                    color: Theme.text
+                    visible: vizFrame.style !== "dots"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: vizFrame.style === "mirror" ? parent.verticalCenter : undefined
+                    anchors.bottom: vizFrame.style === "rise" ? parent.bottom : undefined
+                    width: vizFrame.bandW
+                    radius: vizFrame.style === "rise" ? Math.min(1, Theme.radiusSmall) : vizFrame.bandW / 2
+                    height: Math.max(3, parent.height * band.v)
+                    color: Theme.meterFill
                     Behavior on height { NumberAnimation { duration: Theme.dur(60) } }
+                }
+
+                // four dots from the bottom, lit up to the band's level
+                Column {
+                    visible: vizFrame.style === "dots"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Math.max(1, (vizFrame.bandH - vizFrame.bandW * 4) / 3)
+                    Repeater {
+                        model: 4
+                        Rectangle {
+                            required property int index
+                            width: vizFrame.bandW
+                            height: vizFrame.bandW
+                            radius: width / 2
+                            color: Theme.meterFill
+                            // index 0 is the top dot; the bottom one is always lit
+                            opacity: band.v * 4 >= 3 - index || index === 3 ? 1 : 0.18
+                            Behavior on opacity { NumberAnimation { duration: Theme.dur(60) } }
+                        }
+                    }
+                }
+            }
+        }
+
+        // the line style: one stroke through every band's level
+        Shape {
+            visible: vizFrame.style === "line"
+            anchors.verticalCenter: parent.verticalCenter
+            implicitWidth: Visualizer.barCount * (vizFrame.bandW + vizFrame.spacing) - vizFrame.spacing
+            implicitHeight: vizFrame.bandH
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeColor: Theme.meterFill
+                strokeWidth: Math.max(1.5, Theme.borderWidth * 1.5)
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathPolyline {
+                    path: {
+                        var pts = [], n = Visualizer.barCount
+                        var w = vizFrame.style === "line" ? n * (vizFrame.bandW + vizFrame.spacing) - vizFrame.spacing : 0
+                        var h = vizFrame.bandH
+                        for (var i = 0; i < n; i++) {
+                            var v = Math.max(0, Math.min(1, (Visualizer.bars[i] || 0) / 100))
+                            pts.push(Qt.point(n > 1 ? i * w / (n - 1) : 0, h - 1 - v * (h - 2)))
+                        }
+                        return pts
+                    }
                 }
             }
         }

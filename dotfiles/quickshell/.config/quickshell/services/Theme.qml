@@ -337,6 +337,8 @@ Singleton {
     // under panels and solid chips -- see Looks.js and flyouts/Shadow.qml
     readonly property string shadow: Settings.shadow
     readonly property int shadowOffset: Math.max(3, borderWidth * 2)
+    // the bar's audio visualizer -- see Looks.js
+    readonly property string vizStyle: Settings.vizStyle
     // A Qt date format with its 24-hour fields turned 12-hour when Date &
     // Time asks for that; every clock in the shell formats through this.
     function hours(fmt) {

@@ -102,6 +102,11 @@
 //                             shell's panels and solid chips
 //                  "hard"     a solid offset copy of the shape instead --
 //                             Windows 95, or a brutalist poster
+//     vizStyle     the bar's audio visualizer, in the meter colour:
+//                  "mirror"   pills growing out from the middle
+//                  "rise"     bars rising from the bottom
+//                  "dots"     a stack of up to four dots per band
+//                  "line"     one line through every band's level
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -174,6 +179,7 @@ var settingsBase = {
     windowMark: "pill",
     iconTint: "colour",
     shadow: "none",
+    vizStyle: "mirror",
 }
 
 // The parts of the fixed half the Appearance page can also adjust. The look

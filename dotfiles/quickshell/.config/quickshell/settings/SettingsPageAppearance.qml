@@ -1019,6 +1019,12 @@ SettingsPage {
     }
 
     SettingsField {
+        label: "Visualizer"
+        hint: "The audio spectrum while sound plays"
+        Choices { key: "vizStyle" }
+    }
+
+    SettingsField {
         label: "Open windows"
         hint: "Icons, the focused window's title, a tab per window, or a dot each"
         Choice { key: "windowStyle" }

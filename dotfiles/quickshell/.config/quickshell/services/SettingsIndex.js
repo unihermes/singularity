@@ -83,6 +83,7 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Workspaces",           keywords: "indicator dots" },
     { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
     { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft offset brutalist" },
+    { page: "appearance", section: "Bar",           label: "Visualizer",           keywords: "audio spectrum music bars cava" },
     { page: "appearance", section: "Bar",           label: "Open windows",         keywords: "taskbar tasks apps icons titles tabs" },
     { page: "appearance", section: "Bar",           label: "Focused window",       keywords: "active window indicator mark pip underline highlight" },
     { page: "appearance", section: "Bar",           label: "Windows shown",        keywords: "taskbar workspace all scope" },
