@@ -1030,6 +1030,23 @@ SettingsPage {
         }
     }
 
+    SettingsField {
+        label: "Notification popups"
+        hint: "Everything, the body only while hovered, or a single line"
+        Choices { key: "notifStyle" }
+    }
+
+    SettingsField {
+        label: "Urgency stripe"
+        hint: "A stripe down each notification's edge: the accent, the alert colour when critical"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.notifStripe
+            onToggled: Settings.set("notifStripe", !Settings.notifStripe)
+        }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.

@@ -132,6 +132,11 @@
 //                  "full" centred over a dimmed screen, with more rows
 //     launcherDetails true: each result's second line (what the app is,
 //                  where the file is) and the key hints; false: names only
+//     notifStyle   notification popups: "full" every part of them,
+//                  "compact" the body, picture and actions only while
+//                  hovered, "banner" one line of summary and body
+//     notifStripe  true: a stripe down a notification's edge, in the
+//                  accent, the alert colour when critical, muted when low
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -211,6 +216,8 @@ var settingsBase = {
     launcherLayout: "list",
     launcherPosition: "centre",
     launcherDetails: true,
+    notifStyle: "full",
+    notifStripe: false,
     gaugeStyle: "fill",
 }
 

@@ -98,6 +98,9 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias notifGroup:  adapter.notifGroup
+    readonly property alias notifStripe: adapter.notifStripe
+    readonly property alias notifStyle:  adapter.notifStyle
     readonly property alias launcherDetails: adapter.launcherDetails
     readonly property alias launcherPosition: adapter.launcherPosition
     readonly property alias launcherLayout: adapter.launcherLayout
@@ -157,6 +160,7 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        notifStyle:   ["full", "compact", "banner"],
         launcherPosition: ["centre", "top", "full"],
         launcherLayout: ["list", "grid", "line"],
         flyoutTitle:  ["none", "strip", "titlebar"],
@@ -187,6 +191,7 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "full": "Full", "compact": "Compact", "banner": "Banner",
         "centre": "Centre", "top": "Under the bar", "full": "Full screen",
         "list": "List", "grid": "Grid", "line": "One line",
         "strip": "Strip", "titlebar": "Title bar",
@@ -781,6 +786,9 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property bool notifGroup: false
+            property bool notifStripe: false
+            property string notifStyle: "full"
             property bool launcherDetails: true
             property string launcherPosition: "centre"
             property string launcherLayout: "list"

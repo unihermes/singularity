@@ -344,6 +344,9 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    readonly property bool notifStripe: Settings.notifStripe
+    // notification popups -- see Looks.js and NotificationCard
+    readonly property string notifStyle: Settings.notifStyle
     readonly property bool launcherDetails: Settings.launcherDetails
     readonly property string launcherPosition: Settings.launcherPosition
     // the launcher -- see Looks.js and flyouts/Launcher.qml

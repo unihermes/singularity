@@ -4,7 +4,9 @@
 // Notifications as they arrive, stacked from the corner or edge Settings >
 // Notifications picks, newest nearest the edge, on the focused screen only.
 // Each leaves after its timeout (Notifications.timeoutFor), held while the
-// pointer is on it; it stays in the history until cleared there.
+// pointer is on it; it stays in the history until cleared there. With
+// Settings.notifGroup, one app's popups share a card: the newest, with a
+// count, which takes the rest down with it.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -16,7 +18,18 @@ OverlayWindow {
 
     readonly property bool focused: !!Hyprland.focusedMonitor
         && Hyprland.focusedMonitor.name === scope.modelData.name
-    readonly property var shown: focused ? Notifications.popups.slice(0, 5) : []
+    // [{ entry, others }], newest first
+    readonly property var groups: {
+        var out = []
+        var ps = Notifications.popups
+        for (var i = 0; i < ps.length; i++) {
+            var g = Settings.notifGroup ? out.find(o => o.entry.appName === ps[i].appName) : null
+            if (g) g.others.push(ps[i])
+            else out.push({ entry: ps[i], others: [] })
+        }
+        return out
+    }
+    readonly property var shown: focused ? groups.slice(0, 5) : []
     readonly property bool atBottom: Settings.notifPositionY === "bottom"
     // the bar's thickness when the popups start from its edge
     readonly property real barGap: (Theme.barPosition === "bottom") === atBottom ? Theme.barExtent : 0
@@ -43,15 +56,17 @@ OverlayWindow {
             NotificationCard {
                 id: card
                 required property var modelData
-                entry: modelData
+                entry: modelData.entry
+                others: modelData.others
+                count: modelData.others.length + 1
                 width: stack.width
 
-                readonly property real timeout: Notifications.timeoutFor(modelData)
+                readonly property real timeout: Notifications.timeoutFor(modelData.entry)
 
                 Timer {
                     interval: card.timeout * 1000
                     running: card.timeout > 0 && !card.hovered
-                    onTriggered: Notifications.hidePopup(card.modelData)
+                    onTriggered: card.close()
                 }
             }
         }

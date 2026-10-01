@@ -129,6 +129,18 @@ SettingsPage {
         }
     }
 
+    SettingsField {
+        label: "Group by app"
+        hint: Settings.notifGroup ? "Popups from one app stack into one, with a count"
+            : "Every notification gets its own popup"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.notifGroup
+            onToggled: Settings.set("notifGroup", !Settings.notifGroup)
+        }
+    }
+
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "HOW LONG POPUPS STAY" }
 
