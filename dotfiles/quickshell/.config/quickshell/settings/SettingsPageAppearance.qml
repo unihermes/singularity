@@ -599,6 +599,18 @@ SettingsPage {
         }
     }
 
+    SettingsField {
+        label: "One per look"
+        hint: Settings.wallpaperPerLook ? "Picking a look brings back the wallpaper you last had with it"
+            : "Every look shares the wallpaper showing now"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.wallpaperPerLook
+            onToggled: Settings.setWallpaperPerLook(!Settings.wallpaperPerLook)
+        }
+    }
+
     // One choice over two settings: whether login picks a random wallpaper
     // (Settings.wallpaperShuffle, which wallpaper.sh reads) and whether one
     // is picked on a timer while logged in (wallpaperInterval). A timer

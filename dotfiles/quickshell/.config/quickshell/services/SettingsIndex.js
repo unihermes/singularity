@@ -61,6 +61,7 @@ var entries = [
     { page: "appearance", section: "Look",          label: "Look",                 keywords: "theme preset style" },
     { page: "appearance", section: "Look",          label: "Reset look",           keywords: "revert default" },
     { page: "appearance", section: "Wallpaper",     label: "Current",              keywords: "wallpaper background image" },
+    { page: "appearance", section: "Wallpaper",     label: "One per look",         keywords: "wallpaper look theme remember pair background" },
     { page: "appearance", section: "Wallpaper",     label: "New wallpaper",        keywords: "wallpaper shuffle random login rotate slideshow interval timer" },
     { page: "appearance", section: "Colours",       label: "Palette",              keywords: "colour color grayscale wallpaper" },
     { page: "appearance", section: "Colours",       label: "Intensity",            keywords: "colour color saturation" },
