@@ -19,9 +19,12 @@ import "../services"
 Rectangle {
     id: root
 
+    // no ground, stroke or shadow: the content straight on what's behind
+    property bool bare: false
+
     radius: Theme.panelRadius
-    color: Theme.panelFill
-    border.width: Theme.frameStroked ? Theme.borderWidth : 0
+    color: bare ? "transparent" : Theme.panelFill
+    border.width: Theme.frameStroked && !bare ? Theme.borderWidth : 0
     border.color: Theme.frameAccent ? Theme.accent : Theme.stroke
 
     // false for panels inside a window Hyprland already shadows
@@ -29,11 +32,11 @@ Rectangle {
 
     Shadow {
         radius: root.radius
-        opaque: root.shadowed && Theme.panelOpacity >= 1
+        opaque: root.shadowed && !root.bare && Theme.panelOpacity >= 1
     }
 
     Bevel {
-        visible: Theme.frameChiselled
+        visible: Theme.frameChiselled && !root.bare
         anchors.fill: parent
         raised: !Theme.frameGroove
         light: Theme.bevelLight
@@ -43,7 +46,7 @@ Rectangle {
 
     Rectangle {
         anchors.fill: parent
-        visible: Theme.frameDouble
+        visible: Theme.frameDouble && !root.bare
         anchors.margins: Theme.frameInset
         // follows the outer corners, so a panel with some corners squared
         // off keeps both strokes parallel
@@ -60,7 +63,7 @@ Rectangle {
     // outer edge, using the ground and its surface as the light/dark pair
     // rather than adding a second colour to every look
     Bevel {
-        visible: Theme.frameChiselled
+        visible: Theme.frameChiselled && !root.bare
         anchors.fill: parent
         anchors.margins: Theme.frameInset
         raised: Theme.frameGroove
@@ -70,7 +73,7 @@ Rectangle {
     }
 
     FrameCorners {
-        visible: Theme.frameCorners
+        visible: Theme.frameCorners && !root.bare
         anchors.fill: parent
         color: Theme.strokeFocus
     }

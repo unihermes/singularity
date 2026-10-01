@@ -1065,6 +1065,12 @@ SettingsPage {
         Choices { key: "overviewBackdrop" }
     }
 
+    SettingsField {
+        label: "Power menu"
+        hint: "A row of tiles, a list, or large tiles over a darkened screen"
+        Choices { key: "powerStyle" }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.

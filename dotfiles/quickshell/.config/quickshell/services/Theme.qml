@@ -346,6 +346,8 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    // the power menu -- see Looks.js and PowerMenu
+    readonly property string powerStyle: Settings.powerStyle
     readonly property string overviewBackdrop: Settings.overviewBackdrop
     // the workspace overview -- see Looks.js and WorkspaceOverlay
     readonly property string overviewLayout: Settings.overviewLayout

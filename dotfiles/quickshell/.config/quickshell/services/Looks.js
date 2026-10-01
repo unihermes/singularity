@@ -152,6 +152,8 @@
 //                  "strip" of every workspace in one row
 //     overviewBackdrop behind the overview: the desktop "dim"med by the
 //                  overlay dimming, "clear", or hidden behind a "solid" ground
+//     powerStyle   the power menu: a "row" of tiles, a "list" of rows, or
+//                  "full" screen -- large tiles over a darkened desktop
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -238,6 +240,7 @@ var settingsBase = {
     altTabStyle: "icons",
     overviewLayout: "grid",
     overviewBackdrop: "dim",
+    powerStyle: "row",
     gaugeStyle: "fill",
 }
 

@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias powerStyle:  adapter.powerStyle
     readonly property alias overviewBackdrop: adapter.overviewBackdrop
     readonly property alias overviewLayout: adapter.overviewLayout
     readonly property alias altTabStyle: adapter.altTabStyle
@@ -173,6 +174,7 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        powerStyle:   ["row", "list", "full"],
         overviewBackdrop: ["dim", "clear", "solid"],
         overviewLayout: ["grid", "strip"],
         altTabStyle:  ["icons", "titled", "previews"],
@@ -211,6 +213,7 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "row": "Row", "list": "List", "full": "Full screen",
         "dim": "Dimmed", "clear": "Clear", "solid": "Solid",
         "grid": "Grid", "strip": "One row",
         "previews": "Previews",
@@ -822,6 +825,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string powerStyle: "row"
             property string overviewBackdrop: "dim"
             property string overviewLayout: "grid"
             property string altTabStyle: "icons"
