@@ -147,6 +147,9 @@ OverlayWindow {
         Qt.callLater(() => list.currentIndex = Math.min(i, list.count - 1))
     }
 
+    // LazyFlyout builds the launcher already open, so the first open sends
+    // no onOpenChanged
+    Component.onCompleted: if (open) reset()
     onOpenChanged: if (open) reset()
     onModeChanged: if (open) reset()
 
