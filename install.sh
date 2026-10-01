@@ -514,32 +514,76 @@ if ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
   sudo udevadm trigger --subsystem-match=i2c --action=change
 fi
 
-# Battery charge cap: charging stops at 80% and starts again below 75%, so a
-# laptop that lives on the charger isn't held at 100%. On this Dell the
-# thresholds are the BIOS's own "Primary Battery Charge Configuration: Custom"
-# setting -- dell_laptop writes them to the firmware through SMBIOS -- so they
-# hold across reboots and in every OS with nothing running at boot. Dell
-# takes a stop of 55-100 and a start of 50-95, at least 5 apart. Written
-# only when different, since every write is a firmware write. The stop goes
-# first unless it would land at or below the current start, which the
-# firmware refuses.
-charge_start=75
-charge_stop=80
-for bat in /sys/class/power_supply/BAT*; do
-  [[ -e $bat/charge_control_end_threshold ]] || continue
-  cur_start=$(cat "$bat/charge_control_start_threshold" 2>/dev/null || echo)
-  cur_stop=$(cat "$bat/charge_control_end_threshold")
-  [[ $cur_start == "$charge_start" && $cur_stop == "$charge_stop" ]] && continue
-  log "capping ${bat##*/} charging at $charge_stop% (resumes below $charge_start%)"
-  order=(end start)
-  [[ -n $cur_start ]] && (( charge_stop <= cur_start )) && order=(start end)
-  for which in "${order[@]}"; do
-    [[ $which == start && -z $cur_start ]] && continue
-    [[ $which == start ]] && v=$charge_start || v=$charge_stop
-    echo "$v" | sudo tee "$bat/charge_control_${which}_threshold" >/dev/null ||
-      warn "${bat##*/} refused a charge ${which} threshold of $v"
-  done
+# Battery charging: the helper Settings → Power & Idle uses to pick the
+# battery's charge mode and, in Custom, where charging stops and resumes. On
+# this Dell those are the BIOS's own "Primary Battery Charge Configuration"
+# -- dell_laptop writes them to the firmware through SMBIOS -- so a change
+# holds across reboots and in every OS with nothing running at boot.
+#
+# Writing them needs root, so the page runs the helper through pkexec, and
+# the polkit action lets the active local session do that without a
+# password. The helper takes nothing but a mode name and two numbers, and
+# the driver refuses any value the firmware doesn't take. Root-owned in
+# /usr/local/bin rather than linked from the dotfiles, so the user can't
+# change what runs as root.
+if compgen -G '/sys/class/power_supply/BAT*/charge_types' >/dev/null; then
+  log "installing the battery charge helper"
+  sudo tee /usr/local/bin/singularity-charge >/dev/null <<'CHARGE'
+#!/bin/sh
+# singularity-charge Standard|Adaptive|Fast
+# singularity-charge Custom START STOP
+set -eu
+mode=${1:-}
+case $mode in
+  Standard|Adaptive|Fast) ;;
+  Custom)
+    case "${2:-}:${3:-}" in
+      [0-9]*:[0-9]*) ;;
+      *) echo "Custom takes a start and a stop percentage" >&2; exit 2 ;;
+    esac
+    case "$2$3" in *[!0-9]*) echo "not a number: $2 $3" >&2; exit 2 ;; esac
+    start=$2 stop=$3 ;;
+  *) echo "usage: singularity-charge Standard|Adaptive|Fast|Custom [START STOP]" >&2; exit 2 ;;
+esac
+bat=
+for b in /sys/class/power_supply/BAT*; do
+  [ -e "$b/charge_types" ] && { bat=$b; break; }
 done
+[ -n "$bat" ] || { echo "no battery with a charge mode" >&2; exit 1; }
+if [ "$mode" = Custom ]; then
+  # the firmware refuses a stop at or below the current start, so the
+  # start goes first when the stop is coming down past it
+  cur=$(cat "$bat/charge_control_start_threshold")
+  if [ "$stop" -le "$cur" ]; then
+    echo "$start" > "$bat/charge_control_start_threshold"
+    echo "$stop" > "$bat/charge_control_end_threshold"
+  else
+    echo "$stop" > "$bat/charge_control_end_threshold"
+    echo "$start" > "$bat/charge_control_start_threshold"
+  fi
+fi
+echo "$mode" > "$bat/charge_types"
+CHARGE
+  sudo chmod 755 /usr/local/bin/singularity-charge
+
+  sudo tee /usr/share/polkit-1/actions/org.singularity.charge.policy >/dev/null <<'POLICY'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <action id="org.singularity.charge">
+    <description>Change how the battery charges</description>
+    <message>Authentication is required to change how the battery charges</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/singularity-charge</annotate>
+  </action>
+</policyconfig>
+POLICY
+fi
 
 log "enabling services"
 

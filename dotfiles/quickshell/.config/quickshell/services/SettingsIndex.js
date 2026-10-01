@@ -39,6 +39,10 @@ var entries = [
 
     // --- Power & Idle ------------------------------------------------------
     { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
+    { page: "power", section: "Battery", label: "Charging",            keywords: "battery charge mode limit cap bios standard adaptive express custom" },
+    { page: "power", section: "Battery", label: "Stop at",             keywords: "battery charge limit cap threshold 80 percent" },
+    { page: "power", section: "Battery", label: "Resume below",        keywords: "battery charge start threshold" },
+    { page: "power", section: "Battery", label: "Battery",             keywords: "battery level percent charging" },
     { page: "power", section: "When idle", label: "Dim the screen",    keywords: "idle brightness timeout hypridle" },
     { page: "power", section: "When idle", label: "Lock",              keywords: "idle hyprlock timeout screen lock" },
     { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },

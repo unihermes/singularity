@@ -1,10 +1,18 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPagePower.qml
 //
-// Power profile, and the idle ladder in hypridle.conf.
+// Power profile, how the battery charges, and the idle ladder in
+// hypridle.conf.
 //
 // The profile goes through PpdProfile.qml, as the battery flyout's does,
 // and needs no saving -- PPD remembers it.
+//
+// Charging is the BIOS's charge mode and, in Custom, where charging stops
+// and resumes. They're read from the battery's sysfs files and written by
+// install.sh's singularity-charge helper through pkexec (no password for
+// the active session). The firmware keeps them, so nothing else saves
+// them. The stop and resume steppers write once they've been still for a
+// moment, since every write is a firmware write.
 //
 // The ladder is hypridle.conf's listener blocks, each shown by what it does
 // (dim, lock, screens off, suspend) and edited in place: only the number on
@@ -14,6 +22,7 @@
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.UPower
 import QtQuick
 import "../services"
 import "../flyouts"
@@ -22,7 +31,7 @@ SettingsPage {
     id: page
 
     title: "Power & Idle"
-    description: "Power profile, and how long the machine sits idle before each step of hypridle.conf. hypridle restarts to pick up a change."
+    description: "Power profile, how the battery charges, and how long the machine sits idle before each step of hypridle.conf. hypridle restarts to pick up a change."
 
     readonly property string idlePath: Quickshell.env("HOME") + "/.config/hypr/hypridle.conf"
 
@@ -40,6 +49,113 @@ SettingsPage {
             if (!ok) page.say("power-profiles-daemon refused: " + error, true)
             else page.say("Power profile: " + PpdProfile.profile, false)
         }
+    }
+
+    // --- charging ------------------------------------------------------------
+
+    readonly property string chargeHelper: "/usr/local/bin/singularity-charge"
+    // the kernel's charge_types name, "" until read or on a battery without one
+    property string chargeMode: ""
+    property int chargeStart: 0
+    property int chargeStop: 0
+    property bool chargeHelperFound: false
+    property bool chargeBusy: false
+
+    // Express is the kernel's Fast. Trickle is the BIOS's "Primarily AC
+    // use": it can be set there, but has no segment here, so it lights none.
+    readonly property var chargeModes: [
+        { value: "Standard", text: "Standard" },
+        { value: "Adaptive", text: "Adaptive" },
+        { value: "Fast", text: "Express" },
+        { value: "Custom", text: "Custom" },
+    ]
+    readonly property var chargeHints: ({
+        "Standard": "Charges to full at a normal rate",
+        "Adaptive": "The BIOS picks limits from how you use the laptop",
+        "Fast": "Charges faster, wears the battery more",
+        "Custom": "Your own stop and resume points",
+        "Trickle": "Primarily AC use, set in the BIOS",
+    })
+
+    function chargeHint() {
+        if (chargeMode === "") return "This battery has no charge modes"
+        if (!chargeHelperFound) return "Run install.sh to change this from here"
+        return chargeHints[chargeMode] || chargeMode
+    }
+
+    function chargeRead() { chargeReader.running = true }
+
+    function chargeWrite(mode) {
+        chargeBusy = true
+        chargeWriter.command = mode === "Custom"
+            ? ["pkexec", chargeHelper, mode, String(chargeStart), String(chargeStop)]
+            : ["pkexec", chargeHelper, mode]
+        chargeWriter.running = true
+    }
+
+    // Steps of 5, kept 5 apart. Dell takes a stop of 55-100 and a start of
+    // 50-95; pushing one into the other moves both.
+    function chargeStep(which, delta) {
+        if (which === "stop") {
+            chargeStop = Math.max(55, Math.min(100, chargeStop + delta * 5))
+            chargeStart = Math.min(chargeStart, chargeStop - 5)
+        } else {
+            chargeStart = Math.max(50, Math.min(95, chargeStart + delta * 5))
+            chargeStop = Math.max(chargeStop, chargeStart + 5)
+        }
+        chargeDebounce.restart()
+    }
+
+    function batteryState() {
+        if (!Battery.present) return ""
+        var s = Battery.device.state
+        var what = s === UPowerDeviceState.Charging ? "Charging"
+            : s === UPowerDeviceState.Discharging ? "On battery"
+            : s === UPowerDeviceState.FullyCharged ? "Full"
+            : "Not charging"
+        return Battery.percent + "% · " + what
+    }
+
+    Process {
+        id: chargeReader
+        command: ["sh", "-c",
+            "[ -x " + page.chargeHelper + " ] && echo helper; "
+            + "for b in /sys/class/power_supply/BAT*; do [ -e \"$b/charge_types\" ] || continue; "
+            + "cat \"$b/charge_types\" \"$b/charge_control_start_threshold\" \"$b/charge_control_end_threshold\"; break; done"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var lines = text.split("\n").filter(l => l !== "")
+                page.chargeHelperFound = lines[0] === "helper"
+                if (page.chargeHelperFound) lines.shift()
+                var m = lines.length >= 3 ? /\[(\w+)\]/.exec(lines[0]) : null
+                page.chargeMode = m ? m[1] : ""
+                if (m) {
+                    page.chargeStart = Number(lines[1])
+                    page.chargeStop = Number(lines[2])
+                }
+            }
+        }
+    }
+
+    Process {
+        id: chargeWriter
+        stderr: StdioCollector { id: chargeErr }
+        onExited: code => {
+            page.chargeBusy = false
+            var e = chargeErr.text.trim()
+            if (code === 0) page.say(page.chargeMode === "Custom"
+                ? "Charging stops at " + page.chargeStop + "%, resumes below " + page.chargeStart + "%"
+                : "Charge mode saved", false)
+            // 126/127: pkexec was dismissed or refused
+            else page.say("The BIOS refused the change" + (e ? ": " + e : ""), true)
+            page.chargeRead()
+        }
+    }
+
+    Timer {
+        id: chargeDebounce
+        interval: 700
+        onTriggered: page.chargeWrite("Custom")
     }
 
     // --- idle ladder ---------------------------------------------------------
@@ -149,6 +265,7 @@ SettingsPage {
         ladder = listeners.map((l, i) => i).sort((a, b) => listeners[a].timeout - listeners[b].timeout)
         idleCheck.running = true
         PpdProfile.refresh()
+        chargeRead()
     }
 
     FileView {
@@ -189,6 +306,68 @@ SettingsPage {
                 PpdProfile.set(v)
             }
         }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "BATTERY" }
+
+    SettingsField {
+        label: "Charging"
+        hint: page.chargeHint()
+
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: page.chargeModes
+            current: page.chargeMode
+            enabled: page.chargeMode !== "" && page.chargeHelperFound && !page.chargeBusy
+            onPicked: v => {
+                page.chargeMode = v
+                page.chargeWrite(v)
+            }
+        }
+    }
+
+    SettingsField {
+        visible: page.chargeMode === "Custom"
+        label: "Stop at"
+        hint: "55–100%"
+
+        FlyoutStepper {
+            anchors.right: parent.right
+            width: Theme.fit(170)
+            value: page.chargeStop / 5
+            minimum: 11
+            maximum: 20
+            valueWidth: 64
+            displayValue: page.chargeStop + "%"
+            enabled: page.chargeHelperFound
+            onStepped: delta => page.chargeStep("stop", delta)
+        }
+    }
+
+    SettingsField {
+        visible: page.chargeMode === "Custom"
+        label: "Resume below"
+        hint: "50–95%, at least 5 under Stop at"
+
+        FlyoutStepper {
+            anchors.right: parent.right
+            width: Theme.fit(170)
+            value: page.chargeStart / 5
+            minimum: 10
+            maximum: 19
+            valueWidth: 64
+            displayValue: page.chargeStart + "%"
+            enabled: page.chargeHelperFound
+            onStepped: delta => page.chargeStep("start", delta)
+        }
+    }
+
+    SettingsValue {
+        label: "Battery"
+        value: page.batteryState()
+        hideEmpty: true
     }
 
     Item { width: 1; height: Theme.spaceM }
