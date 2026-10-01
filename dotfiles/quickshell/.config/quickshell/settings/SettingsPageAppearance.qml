@@ -1018,6 +1018,14 @@ SettingsPage {
     }
 
     SettingsField {
+        label: "Focused window"
+        hint: Theme.windowStyle === "icons" || Theme.windowStyle === "titled"
+            ? "How the open windows mark the one in focus"
+            : "For the Icons and Focused title styles; tabs and dots mark it their own way"
+        Choice { key: "windowMark" }
+    }
+
+    SettingsField {
         label: "Windows shown"
         hint: "Every workspace's are grouped, with a rule between"
         Choices { key: "windowScope" }

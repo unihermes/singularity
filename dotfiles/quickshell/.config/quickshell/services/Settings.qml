@@ -93,6 +93,7 @@ Singleton {
     readonly property alias clockStyle:  adapter.clockStyle
     readonly property alias windowStyle: adapter.windowStyle
     readonly property alias windowScope: adapter.windowScope
+    readonly property alias windowMark:  adapter.windowMark
     readonly property alias iconTint:    adapter.iconTint
     // The look's adjustable fixed half (Looks.adjustable): its accent as a
     // hex, "" for none; flyouts' and windows' ground opacity and the
@@ -140,6 +141,7 @@ Singleton {
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso"],
         windowStyle:  ["icons", "titled", "tabs", "dots"],
         windowScope:  ["workspace", "all"],
+        windowMark:   ["pill", "dot", "above", "ground", "box"],
         iconTint:     ["colour", "mono", "accent"],
     })
     readonly property var choiceLabels: ({
@@ -162,6 +164,7 @@ Singleton {
         "long": "Full date", "iso": "ISO date",
         "icons": "Icons", "titled": "Focused title", "tabs": "Tabs",
         "workspace": "This workspace", "all": "All workspaces",
+        "pill": "Pill", "dot": "Dot", "above": "Line above", "ground": "Lit ground", "box": "Box",
         "colour": "Colour", "mono": "Mono",
     })
 
@@ -724,6 +727,7 @@ Singleton {
             property string clockStyle: "stamp"
             property string windowStyle: "icons"
             property string windowScope: "workspace"
+            property string windowMark: "pill"
             property string iconTint: "colour"
             property string accent: ""
             property int panelOpacity: 100

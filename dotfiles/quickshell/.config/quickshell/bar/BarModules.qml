@@ -265,6 +265,9 @@ Item {
                 readonly property bool dots: style === "dots"
                 readonly property bool tabs: style === "tabs"
                 readonly property bool showTitle: tabs || (style === "titled" && focused)
+                // Theme.windowMark, for the two icon styles
+                readonly property string mark: dots || tabs ? "" : Theme.windowMark
+                readonly property bool underMark: mark === "pill" || (mark === "dot" && focused)
                 readonly property string title: modelData.toplevel ? modelData.toplevel.title || "" : ""
                 // room for the rule between workspaces, in "all" scope
                 readonly property int lead: modelData.groupStart ? Theme.spaceS + 1 : 0
@@ -324,6 +327,35 @@ Item {
                     }
                 }
 
+                // "ground" and "box": a square behind or around the icon,
+                // lit for the focused window, a hover fill for the rest
+                Rectangle {
+                    visible: winIcon.mark === "ground" || winIcon.mark === "box"
+                    anchors.centerIn: glyphBox
+                    width: glyphBox.width + Theme.spaceS
+                    height: glyphBox.height + Theme.spaceS
+                    radius: Theme.radiusSmall
+                    color: winIcon.mark === "ground" && winIcon.focused ? Theme.selectedFill
+                        : winMouse.containsMouse && !winIcon.focused ? Theme.overlay : "transparent"
+                    border.width: winIcon.focused ? Theme.borderWidth : 0
+                    border.color: winIcon.mark === "box" ? Theme.accent : Theme.strokeFocus
+                    Behavior on color { ColorAnimation { duration: Theme.durFast } }
+                }
+
+                // "above": a rule along the chip's top edge, just inside
+                // the double frame's inner stroke
+                Rectangle {
+                    visible: winIcon.mark === "above"
+                    anchors.horizontalCenter: glyphBox.horizontalCenter
+                    y: 4
+                    width: glyphBox.width + Theme.spaceXs
+                    height: Theme.indicatorWidth
+                    radius: height / 2
+                    color: Theme.accent
+                    opacity: winIcon.focused ? 1 : winMouse.containsMouse ? 0.4 : 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+                }
+
                 Item {
                     id: glyphBox
                     visible: !winIcon.dots
@@ -332,7 +364,7 @@ Item {
                     // lifted a single pixel: just enough to clear the
                     // pip, so the icon still sits level with the
                     // chips around it
-                    anchors.verticalCenterOffset: winIcon.tabs ? 0 : -1
+                    anchors.verticalCenterOffset: winIcon.underMark || winIcon.mark === "pill" ? -1 : 0
                     width: Theme.barFs(16)
                     height: Theme.barFs(16)
                     opacity: winIcon.lit ? 1 : 0.55
@@ -373,13 +405,14 @@ Item {
                 // the chip's edge, so it needn't push the icon up
                 Rectangle {
                     id: pip
-                    visible: !winIcon.dots && !winIcon.tabs
+                    visible: winIcon.underMark
                     anchors.top: glyphBox.bottom
                     anchors.topMargin: 1
                     anchors.horizontalCenter: glyphBox.horizontalCenter
-                    height: Theme.indicatorWidth
+                    height: winIcon.mark === "dot" ? Theme.barFs(4) : Theme.indicatorWidth
                     radius: height / 2
-                    width: winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6)
+                    width: winIcon.mark === "dot" ? height
+                        : winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6)
                     color: winIcon.focused ? Theme.accent
                         : winMouse.containsMouse ? Theme.subtext : Theme.muted
                     Behavior on width {

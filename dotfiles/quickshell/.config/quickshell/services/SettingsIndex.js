@@ -83,6 +83,7 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Workspaces",           keywords: "indicator dots" },
     { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
     { page: "appearance", section: "Bar",           label: "Open windows",         keywords: "taskbar tasks apps icons titles tabs" },
+    { page: "appearance", section: "Bar",           label: "Focused window",       keywords: "active window indicator mark pip underline highlight" },
     { page: "appearance", section: "Bar",           label: "Windows shown",        keywords: "taskbar workspace all scope" },
     { page: "appearance", section: "Bar",           label: "App icons",            keywords: "tint monochrome grey gray colour color accent tray" },
     { page: "appearance", section: "Bar",           label: "Clock island",         keywords: "notch toast" },

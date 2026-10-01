@@ -88,6 +88,12 @@
 //                  "dots"     a dot per window, no icons
 //     windowScope  "workspace" the focused workspace's windows
 //                  "all"      every workspace's, grouped, a rule between
+//     windowMark   how the icon styles mark the focused window:
+//                  "pill"     a long accent pill under it, stubs under the rest
+//                  "dot"      an accent dot under it alone
+//                  "above"    an accent rule along the chip's top edge
+//                  "ground"   a lit ground behind its icon
+//                  "box"      an accent outline around its icon
 //     iconTint     "colour"   app icons as they are
 //                  "mono"     greyed, so they sit in a colourless look
 //                  "accent"   tinted the accent's hue
@@ -160,6 +166,7 @@ var settingsBase = {
     clockStyle: "stamp",
     windowStyle: "icons",
     windowScope: "workspace",
+    windowMark: "pill",
     iconTint: "colour",
 }
 
