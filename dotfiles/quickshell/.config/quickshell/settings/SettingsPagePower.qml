@@ -12,7 +12,8 @@
 // install.sh's singularity-charge helper through pkexec (no password for
 // the active session). The firmware keeps them, so nothing else saves
 // them. The stop and resume steppers write once they've been still for a
-// moment, since every write is a firmware write.
+// moment, since every write is a firmware write. The Battery row draws the
+// charge now on a pill, with Custom's stop-to-resume band over it.
 //
 // The ladder is hypridle.conf's listener blocks, each shown by what it does
 // (dim, lock, screens off, suspend) and edited in place: only the number on
@@ -364,10 +365,40 @@ SettingsPage {
         }
     }
 
-    SettingsValue {
+    // the charge now on a pill, and in Custom the band charging keeps it in
+    SettingsField {
+        visible: Battery.present
         label: "Battery"
-        value: page.batteryState()
-        hideEmpty: true
+        hint: page.batteryState() + (page.chargeMode === "Custom"
+            ? " · kept " + page.chargeStart + "–" + page.chargeStop + "%" : "")
+
+        Meter {
+            id: chargeBar
+            anchors.right: parent.right
+            width: Theme.fit(220)
+            height: Theme.fit(14)
+            fraction: Battery.percent / 100
+            fillColor: Theme.muted
+
+            Rectangle {
+                visible: page.chargeMode === "Custom"
+                x: chargeBar.width * page.chargeStart / 100
+                width: chargeBar.width * (page.chargeStop - page.chargeStart) / 100
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                color: Qt.alpha(Theme.accent, 0.3)
+                Rectangle { width: Theme.borderWidth; height: parent.height; color: Theme.accent }
+                Rectangle { width: Theme.borderWidth; height: parent.height; anchors.right: parent.right; color: Theme.accent }
+            }
+
+            Rectangle {
+                x: Math.round(chargeBar.width * Battery.percent / 100 - width / 2)
+                y: -Theme.fit(2)
+                width: 2
+                height: parent.height + Theme.fit(4)
+                color: Theme.bright
+            }
+        }
     }
 
     Item { width: 1; height: Theme.spaceM }
