@@ -117,7 +117,7 @@ var entries = [
     { page: "appearance", section: "Panels",        label: "Flyouts sit",          keywords: "attach tab floating gap flush menu popup" },
     { page: "appearance", section: "Panels",        label: "Flyouts open",         keywords: "animation drop fade scale menu popup" },
     { page: "appearance", section: "Bar",           label: "Visualizer",           keywords: "audio spectrum music bars cava" },
-    { page: "appearance", section: "Bar",           label: "Open windows",         keywords: "taskbar tasks apps icons titles tabs" },
+    { page: "appearance", section: "Bar",           label: "Open windows",         keywords: "taskbar tasks apps icons titles tabs glide lift inset segmented spotlight index dots" },
     { page: "appearance", section: "Bar",           label: "Focused window",       keywords: "active window indicator mark pip underline highlight" },
     { page: "appearance", section: "Bar",           label: "Windows shown",        keywords: "taskbar workspace all scope" },
     { page: "appearance", section: "Bar",           label: "App icons",            keywords: "tint monochrome grey gray colour color accent tray" },

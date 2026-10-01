@@ -824,6 +824,8 @@ ShellRoot {
                             // drawn instead when nothing resolved, so a
                             // window is never silently missing from the strip
                             glyph: Apps.glyphForWindow(cls, ipc ? ipc.title : ""),
+                            // for the index style, which names the app
+                            name: Apps.nameForWindow(cls, ipc ? ipc.title : ""),
                             address: tls[j].address,
                             // live, for the title styles; read in the
                             // delegate so a title change doesn't rebuild the strip

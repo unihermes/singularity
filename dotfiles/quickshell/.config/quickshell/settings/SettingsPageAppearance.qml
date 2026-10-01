@@ -1502,7 +1502,7 @@ SettingsPage {
 
         SettingsField {
             label: "Open windows"
-            hint: "Icons, the focused window's title, a tab per window, or a dot each"
+            hint: "How each open window is drawn, and how the focused one stands out"
             Choice { key: "windowStyle" }
         }
 
@@ -1511,7 +1511,7 @@ SettingsPage {
             visible: Theme.windowStyle === "icons" || Theme.windowStyle === "titled"
             hint: Theme.windowStyle === "icons" || Theme.windowStyle === "titled"
                 ? "How the open windows mark the one in focus"
-                : "For the Icons and Focused title styles; tabs and dots mark it their own way"
+                : "For the Icons and Focused title styles; the others mark it their own way"
             Choice { key: "windowMark" }
         }
 

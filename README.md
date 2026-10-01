@@ -262,8 +262,9 @@ Alacritty all draw from one stylesheet, `quickshell/services/Theme.qml`, which r
 radius, stroke weight, frame style, module style, bar style and geometry,
 panel translucency, shadows (none, soft or hard), heading style, density and
 font, and how the bar draws its parts: workspaces, clock, the open windows
-(icons, the focused title, tabs or dots, with a choice of focused-window
-mark, for one workspace or all), app icons (colour, greyed or accent),
+(icons, the focused title, a gliding slider, size alone, an inset well,
+segments, a spotlight capsule, tabs, numbered names or dots, with a choice
+of focused-window mark, for one workspace or all), app icons (colour, greyed or accent),
 the volume/brightness/battery levels (fill, segments or a rule) and the
 visualizer (mirrored, rising, dots or a line), separators between modules
 (lines, dots or powerline chevrons) and hover feedback. Beyond the bar, a

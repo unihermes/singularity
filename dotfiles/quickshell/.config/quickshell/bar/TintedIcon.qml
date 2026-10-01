@@ -14,11 +14,13 @@ IconImage {
     id: root
 
     readonly property string tint: Theme.iconTint
+    // greyed whatever the tint, for an icon that's set back from the rest
+    property bool grey: false
 
-    layer.enabled: tint !== "colour"
+    layer.enabled: tint !== "colour" || grey
     layer.effect: MultiEffect {
-        saturation: root.tint === "mono" ? -1 : 0
-        colorization: root.tint === "accent" ? 1 : 0
+        saturation: root.tint === "mono" || root.grey ? -1 : 0
+        colorization: root.tint === "accent" && !root.grey ? 1 : 0
         colorizationColor: Theme.accent
         // colourised icons keep their own lightness, and most app icons
         // are dark enough to turn muddy without a lift

@@ -93,8 +93,19 @@
 //     windowStyle  "icons"    the open windows' icons, a short rule under each,
 //                             a long accent one under the focused window
 //                  "titled"   the same, with the focused window's title
+//                  "glide"    the icons over one rail, an accent slider
+//                             travelling to the focused one
+//                  "lift"     no marks: the focused icon large and in
+//                             colour, the rest small and grey
+//                  "inset"    the focused icon in a recessed well
+//                  "segmented" segments of one control, the focused one
+//                             on a soft accent ground
+//                  "spotlight" the focused window a capsule with its
+//                             title, the rest small icons
 //                  "tabs"     icon and title for every window, the focused
 //                             one on a lit ground -- a classic taskbar
+//                  "index"    a number and the app's name for each, the
+//                             focused one on an accent ground
 //                  "dots"     a dot per window, no icons
 //     windowScope  "workspace" the focused workspace's windows
 //                  "all"      every workspace's, grouped, a rule between
