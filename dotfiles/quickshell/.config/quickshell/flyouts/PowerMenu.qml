@@ -27,10 +27,15 @@ OverlayWindow {
         Session.run(a.act)
     }
 
-    onOpenChanged: if (open) {
+    function reset() {
         current = 0
         Session.refresh()
     }
+
+    // LazyFlyout builds the menu already open, so the first open sends no
+    // onOpenChanged
+    Component.onCompleted: if (open) reset()
+    onOpenChanged: if (open) reset()
 
     readonly property bool list: Theme.powerStyle === "list"
     readonly property bool full: Theme.powerStyle === "full"
