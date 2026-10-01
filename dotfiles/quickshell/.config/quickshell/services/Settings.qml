@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias altTabStyle: adapter.altTabStyle
     readonly property alias lockNotifs:  adapter.lockNotifs
     readonly property alias lockMedia:   adapter.lockMedia
     readonly property alias lockDate:    adapter.lockDate
@@ -170,6 +171,7 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        altTabStyle:  ["icons", "titled", "previews"],
         lockClockPlace: ["centre", "top", "corner"],
         lockClockSize: ["small", "large", "huge"],
         hoverStyle:   ["none", "fill", "outline", "lift"],
@@ -205,6 +207,7 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "previews": "Previews",
         "corner": "Corner",
         "small": "Small", "large": "Large", "huge": "Huge",
         "outline": "Outline", "lift": "Lift",
@@ -813,6 +816,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string altTabStyle: "icons"
             property bool lockNotifs: false
             property bool lockMedia: false
             property bool lockDate: false

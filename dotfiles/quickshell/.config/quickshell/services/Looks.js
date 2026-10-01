@@ -145,6 +145,9 @@
 //                  "dot", or a powerline-style "chevron"
 //     hoverStyle   a bar module under the pointer: "none", a "fill"
 //                  behind it, an accent "outline", or a one-pixel "lift"
+//     altTabStyle  the ALT+Tab switcher's cards: "icons", "titled" an icon
+//                  over each window's title, "previews" a still of each
+//                  window with its app's icon in the corner
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -228,6 +231,7 @@ var settingsBase = {
     notifStripe: false,
     barSeparator: "none",
     hoverStyle: "none",
+    altTabStyle: "icons",
     gaugeStyle: "fill",
 }
 

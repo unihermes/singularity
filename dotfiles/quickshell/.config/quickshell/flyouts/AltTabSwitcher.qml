@@ -14,6 +14,10 @@
 // alttab-ipc.sh, which steps it over IPC. But Hyprland won't deliver a
 // modifier release to a bind, so this window takes the keyboard to catch
 // the ALT release in Keys.onReleased. Escape is handled here too.
+//
+// The cards are drawn as Theme.altTabStyle says: the app's icon, the icon
+// over the window's title, or a still of the window (one screencopy frame
+// as the switcher opens) with the icon in its corner.
 
 import Quickshell
 import Quickshell.Wayland
@@ -187,7 +191,10 @@ OverlayWindow {
     // a short list is still one centred row. The cards are icons only; the
     // highlighted window's app and title are the caption under the grid,
     // where they have the frame's whole width instead of a card's.
-    readonly property int cardW: Theme.fs(80)
+    readonly property bool previews: Theme.altTabStyle === "previews"
+    readonly property bool titled: Theme.altTabStyle === "titled"
+    readonly property int cardW: previews ? Theme.fs(220) : titled ? Theme.fs(120) : Theme.fs(80)
+    readonly property int cardH: previews ? Theme.fs(140) : Theme.fs(80) + (titled ? Theme.fs(22) : 0)
     // the launcher's padding inside the frame, and as much again outside it
     readonly property int pad: Theme.panelPad * 2
     readonly property int maxColumns: Math.max(1, Math.floor((width - pad * 6 + list.spacing) / (cardW + list.spacing)))
@@ -250,7 +257,7 @@ OverlayWindow {
                         readonly property string cls: ipc.class || ""
 
                         width: root.cardW
-                        height: root.cardW
+                        height: root.cardH
                         radius: Theme.radiusInner
                         color: active ? Theme.selectedFill : Theme.surface
                         border.width: Theme.borderWidth
@@ -259,12 +266,28 @@ OverlayWindow {
                         // No Behavior on colour here: the highlight has to keep up
                         // with held-Tab autorepeat, and a fade would smear it.
 
+                        // previews: one frame of the window, fitted inside the card
+                        ScreencopyView {
+                            id: shot
+                            visible: root.previews
+                            anchors.fill: parent
+                            anchors.margins: Theme.spaceS
+                            captureSource: root.previews && root.open && card.modelData.wayland ? card.modelData.wayland : null
+                            live: false
+                            constraintSize: Qt.size(width, height)
+                            opacity: card.active ? 1 : 0.7
+                        }
+
                         Item {
                             id: ico
-                            anchors.centerIn: parent
-                            implicitWidth: Theme.fs(48)
-                            implicitHeight: Theme.fs(48)
-                            opacity: card.active ? 1 : 0.55
+                            // centred, higher up over a title, or small in a
+                            // preview's corner
+                            x: root.previews ? Theme.spaceM : (parent.width - width) / 2
+                            y: root.previews ? parent.height - height - Theme.spaceM
+                                : root.titled ? Theme.spaceL : (parent.height - height) / 2
+                            implicitWidth: root.previews ? Theme.fs(28) : Theme.fs(48)
+                            implicitHeight: implicitWidth
+                            opacity: card.active || root.previews ? 1 : 0.55
 
                             readonly property string iconPath: Apps.iconForClass(card.cls)
 
@@ -284,6 +307,21 @@ OverlayWindow {
                                 font.family: Theme.fontIcon
                                 font.pixelSize: Theme.fs(40)
                             }
+                        }
+
+                        Text {
+                            visible: root.titled
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: Theme.spaceS
+                            x: Theme.spaceS
+                            width: parent.width - Theme.spaceS * 2
+                            horizontalAlignment: Text.AlignHCenter
+                            text: card.ipc.title || ""
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            color: card.active ? Theme.textStrong : Theme.subtext
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontCaption
                         }
 
                         MouseArea {

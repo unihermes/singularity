@@ -1047,6 +1047,12 @@ SettingsPage {
         }
     }
 
+    SettingsField {
+        label: "Window switcher"
+        hint: "ALT+Tab's cards: app icons, icons with titles, or a still of each window"
+        Choices { key: "altTabStyle" }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.
