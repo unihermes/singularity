@@ -614,12 +614,17 @@ Item {
     // open-windows strip. Left raises the app's window (or activates
     // the app if it has none open), right opens the app's menu in a
     // flyout, middle is the app's secondary action.
+    //
+    // With the tray drawer on, only the pinned icons show until the chevron
+    // opens the drawer.
     ModuleFrame {
         id: trayFrame
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceM
         visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
         active: screenScope.openFlyout === "traymenu"
+
+        property bool drawerOpen: false
 
         Repeater {
             id: trayRepeater
@@ -628,6 +633,8 @@ Item {
             TintedIcon {
                 id: trayIcon
                 required property var modelData
+                visible: !Settings.trayDrawer || trayFrame.drawerOpen
+                    || Settings.trayPinned.indexOf(modelData.id) !== -1
                 anchors.verticalCenter: parent.verticalCenter
                 source: modelData.icon
                 implicitSize: Theme.barFs(16)
@@ -662,6 +669,25 @@ Item {
                         }
                     }
                 }
+            }
+        }
+
+        // the drawer's handle
+        Text {
+            visible: Settings.trayDrawer
+            anchors.verticalCenter: parent.verticalCenter
+            text: trayFrame.drawerOpen ? "󰅂" : "󰅁"
+            color: drawerMouse.containsMouse ? Theme.textStrong : Theme.subtext
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.barFs(14)
+
+            MouseArea {
+                id: drawerMouse
+                anchors.fill: parent
+                anchors.margins: -4
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: trayFrame.drawerOpen = !trayFrame.drawerOpen
             }
         }
     }

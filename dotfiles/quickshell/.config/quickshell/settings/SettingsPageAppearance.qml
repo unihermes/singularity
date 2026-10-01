@@ -1094,6 +1094,18 @@ SettingsPage {
         Choices { key: "hoverStyle" }
     }
 
+    SettingsField {
+        label: "Tray drawer"
+        hint: Settings.trayDrawer ? "Tray icons fold behind a chevron; pin one from its right-click menu to keep it out"
+            : "Every tray icon shows"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.trayDrawer
+            onToggled: Settings.set("trayDrawer", !Settings.trayDrawer)
+        }
+    }
+
     Stepper { label: "Module gap"; hint: "Space between modules"; key: "moduleGap"; suffix: "px" }
     Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
 

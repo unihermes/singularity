@@ -37,6 +37,17 @@ FlyoutPanel {
         onActivated: trayMenu.stack = trayMenu.stack.slice(0, -1)
     }
 
+    // with the tray drawer on: keep this app's icon out of the drawer
+    FlyoutRow {
+        visible: Settings.trayDrawer && trayMenu.stack.length === 0 && !!trayMenu.item
+        readonly property bool pinned: !!trayMenu.item && Settings.trayPinned.indexOf(trayMenu.item.id) !== -1
+        label: pinned ? "󰐄  Unpin from the bar" : "󰐃  Pin to the bar"
+        onActivated: {
+            Settings.setTrayPinned(trayMenu.item.id, !pinned)
+            scope.openFlyout = ""
+        }
+    }
+
     Repeater {
         model: trayMenu.open ? trayOpener.children.values : []
 

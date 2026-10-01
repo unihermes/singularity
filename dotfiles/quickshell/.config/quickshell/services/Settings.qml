@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias trayDrawer:  adapter.trayDrawer
     readonly property alias hoverStyle:  adapter.hoverStyle
     readonly property alias workspaceNames: adapter.workspaceNames
     readonly property alias barSeparator: adapter.barSeparator
@@ -224,6 +225,13 @@ Singleton {
     }
 
     function setWallpaperShuffle(on) { adapter.wallpaperShuffle = on }
+    // tray items kept out of the tray drawer, by id
+    readonly property alias trayPinned: adapter.trayPinned
+    function setTrayPinned(id, on) {
+        var l = adapter.trayPinned.filter(x => x !== id)
+        if (on) l.push(id)
+        adapter.trayPinned = l
+    }
     // Each look keeps the wallpaper last shown with it, and picking the look
     // brings it back (Wallpaper.qml). lookWallpapers: look -> image path.
     readonly property alias wallpaperPerLook: adapter.wallpaperPerLook
@@ -795,6 +803,8 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property bool trayDrawer: false
+            property var trayPinned: []
             property string hoverStyle: "none"
             property string workspaceNames: ""
             property string barSeparator: "none"
