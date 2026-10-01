@@ -62,14 +62,29 @@ Singleton {
         })
     }
 
+    // A file caught mid-write (git checkout, an editor's save) reads as
+    // invalid JSON for a moment, and the change that completes it may not
+    // come through the watch. So a bad parse keeps the looks already loaded
+    // and reads the file again shortly; only a file that's still bad then
+    // is reported.
     function parse(text) {
         try {
             var j = JSON.parse(text)
             root.fileLooks = (j && typeof j === "object") ? j : {}
+            retry.tries = 0
         } catch (e) {
+            if (retry.tries < 3) { retry.tries++; retry.restart(); return }
+            retry.tries = 0
             console.warn("looks.json isn't valid JSON, only " + Looks.fallback + " is available: " + e)
             root.fileLooks = {}
         }
+    }
+
+    Timer {
+        id: retry
+        property int tries: 0
+        interval: 300
+        onTriggered: file.reload()
     }
 
     FileView {

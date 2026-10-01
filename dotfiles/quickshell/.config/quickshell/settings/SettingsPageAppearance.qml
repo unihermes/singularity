@@ -35,6 +35,10 @@ SettingsPage {
 
     function label(v) { return Settings.choiceLabel(v) }
 
+    // on the page rather than the card: the reload after the write destroys
+    // the removed look's card before the result comes back
+    function removeLook(name) { Settings.removeLook(name, (ok, msg) => say(msg, !ok)) }
+
     // --- shell pieces --------------------------------------------------------
 
     // One chip per value of a Settings choice, lit on the current one.
@@ -361,16 +365,41 @@ SettingsPage {
             spacing: Theme.spaceL
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            snapMode: ListView.SnapToItem
-            highlightMoveDuration: Theme.durSlow
+            highlightFollowsCurrentItem: false
+            // every card built up front, so none is created mid-scroll
+            cacheBuffer: count * step
             model: LookStore.order
             // open on the current look
             Component.onCompleted: positionViewAtIndex(Math.max(0, LookStore.order.indexOf(Settings.look)), ListView.Center)
 
+            readonly property real step: carousel.cardWidth + spacing
+            readonly property real maxX: originX + Math.max(0, contentWidth - width)
+
+            NumberAnimation on contentX {
+                id: glide
+                running: false
+                duration: Theme.durSlow
+                easing.type: Theme.ease
+            }
+
+            function glideTo(x) {
+                glide.stop()
+                glide.to = Math.max(originX, Math.min(maxX, x))
+                glide.start()
+            }
+
+            // a page is one card: from the first card wholly in view, which
+            // at the end of the strip isn't the one at its left edge
             function page(d) {
-                var i = Math.max(0, Math.min(count - 1, indexAt(contentX + 1, 1) + d))
-                currentIndex = i
-                positionViewAtIndex(i, ListView.Beginning)
+                var first = Math.ceil((contentX - originX) / step - 0.01)
+                glideTo(originX + (first + d) * step)
+            }
+
+            // scroll just far enough to show card i whole
+            function reveal(i) {
+                var x = originX + i * step
+                if (x < contentX) glideTo(x)
+                else if (x + carousel.cardWidth > contentX + width) glideTo(x + carousel.cardWidth - width)
             }
 
             // A plain mouse wheel, or a touchpad's vertical two-finger
@@ -389,7 +418,8 @@ SettingsPage {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: event => {
                     if (event.angleDelta.x !== 0) { event.accepted = false; return }
-                    lookStrip.contentX = Math.max(0, Math.min(lookStrip.contentWidth - lookStrip.width,
+                    glide.stop()
+                    lookStrip.contentX = Math.max(lookStrip.originX, Math.min(lookStrip.maxX,
                         lookStrip.contentX - event.angleDelta.y))
                 }
             }
@@ -480,7 +510,7 @@ SettingsPage {
                         glyph: true
                         text: "󰅖"
                         confirmText: "Remove"
-                        onClicked: Settings.removeLook(card.modelData, (ok, msg) => page.say(msg, !ok))
+                        onClicked: page.removeLook(card.modelData)
                     }
                 }
             }
@@ -526,7 +556,7 @@ SettingsPage {
                         anchors.fill: parent
                         anchors.margins: -4
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: lookStrip.positionViewAtIndex(parent.index, ListView.Contain)
+                        onClicked: lookStrip.reveal(parent.index)
                     }
                 }
             }
