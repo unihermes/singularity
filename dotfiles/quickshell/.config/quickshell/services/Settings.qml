@@ -684,7 +684,7 @@ Singleton {
     function step(key, delta) { set(key, adapter[key] + delta) }
 
     // A file written before the look's fixed half was adjustable has none of
-    // those keys, so the adapter's declared defaults -- Neutrino's -- would
+    // those keys, so the adapter's declared defaults -- Singularity's -- would
     // strip another look of its accent and headings. Filled in once from the
     // look in use; `adjustableSeeded` stops it redoing that over later edits.
     function seedAdjustable() {
@@ -697,6 +697,25 @@ Singleton {
 
     // A file from before the panels and the bar had corners of their own
     // has -1 for them: they start out following `radius`, as they did.
+    // The fallback look was called Neutrino: a file saved then still names it
+    // as the look in use, in the saved default and in the per-look wallpapers.
+    function migrateNeutrino() {
+        if (adapter.look === "neutrino") adapter.look = Looks.fallback
+        var u = adapter.userDefaults || {}
+        if (u.look === "neutrino") {
+            var c = {}
+            for (var k in u) c[k] = u[k]
+            c.look = Looks.fallback
+            adapter.userDefaults = c
+        }
+        var w = adapter.lookWallpapers || {}
+        if (w.neutrino !== undefined) {
+            var m = {}
+            for (var j in w) m[j === "neutrino" ? Looks.fallback : j] = w[j]
+            adapter.lookWallpapers = m
+        }
+    }
+
     function seedCorners() {
         if (adapter.panelRadius < 0) adapter.panelRadius = adapter.radius
         if (adapter.barRadius < 0) adapter.barRadius = adapter.radius
@@ -804,11 +823,13 @@ Singleton {
                 adapter.animSpeed = ""
             }
             root.seedAdjustable()
+            root.migrateNeutrino()
             root.seedCorners()
         }
         onLoadFailed: {
             root.ready = true
             root.seedAdjustable()
+            root.migrateNeutrino()
             root.seedCorners()
         }
 
@@ -833,7 +854,7 @@ Singleton {
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
             property string colourVariant: "dark"
-            property string look: "neutrino"
+            property string look: "singularity"
             property string frameStyle: "double"
             property string density: "normal"
             property string fontFamily: "UbuntuMono Nerd Font"
@@ -885,7 +906,7 @@ Singleton {
             property int panelRadius: -1
             property string flyoutAttach: "flush"
             property string flyoutAnim: "drop"
-            property string accent: ""
+            property string accent: "#5555c8"
             property string accent2: ""
             property int panelOpacity: 100
             property int borderWidth: 1

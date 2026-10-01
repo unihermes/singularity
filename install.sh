@@ -705,7 +705,7 @@ if [[ -n $dm_unit ]]; then
     sudo systemctl set-default graphical.target
   fi
 
-  # Theme the greeter as Neutrino. ly draws on a Linux VT, and the VT has no
+  # Theme the greeter as Singularity. ly draws on a Linux VT, and the VT has no
   # true colour: a 24-bit escape is squashed onto the nearest of its 16 palette
   # slots, so full_color with the ramp's hexes would come out as plain black
   # and white. Instead the palette itself becomes the ramp -- the same slots
@@ -717,10 +717,10 @@ if [[ -n $dm_unit ]]; then
     sudo tee /etc/ly/singularity.sh >/dev/null <<'LY'
 #!/bin/sh
 # Written by singularity's install.sh. Run by ly (start_cmd) before it takes
-# the TTY: loads the Neutrino ramp into the VT palette, slots 0-15.
+# the TTY: loads the Singularity ramp into the VT palette, slots 0-15.
 [ "$TERM" = linux ] || exit 0
 i=0
-for c in 0b0b0b a87676 7d9b7d 969696 a0a0a0 aeaeae b8b8b8 d4e4f4 \
+for c in 0b0b0b a87676 7d9b7d 969696 a0a0a0 aeaeae b8b8b8 a8c8ff \
          303030 a87676 7d9b7d adadad b8b8b8 c8c8c8 d8d8d8 ebebeb; do
   printf '\033]P%x%s' "$i" "$c"
   i=$((i + 1))
@@ -749,7 +749,7 @@ LY
     set_ly start_cmd /etc/ly/singularity.sh
     set_ly full_color false
     set_ly bg 0x00000001            # slot 0, base   #0b0b0b
-    set_ly fg 0x00000008            # slot 7, text   #d4e4f4 (pale blue)
+    set_ly fg 0x00000008            # slot 7, text   #a8c8ff (blue)
     set_ly border_fg 0x01000001     # slot 8, border #303030
     set_ly error_bg 0x00000001
     set_ly error_fg 0x00000002      # slot 1, alert  #a87676

@@ -14,21 +14,21 @@ set statusbar-v-padding 6
 # content too, which isn't wanted here, so it stays off by default.
 set recolor false
 set recolor-keephue false
-set recolor-darkcolor  "#d4e4f4"
+set recolor-darkcolor  "#a8c8ff"
 set recolor-lightcolor "#0b0b0b"
 set default-bg     "#0b0b0b"
-set default-fg     "#d4e4f4"
+set default-fg     "#a8c8ff"
 set statusbar-bg   "#121212"
 set statusbar-fg   "#7a7a7a"
 set inputbar-bg    "#121212"
 set inputbar-fg    "#ebebeb"
 set notification-bg "#121212"
-set notification-fg "#d4e4f4"
+set notification-fg "#a8c8ff"
 set highlight-color        "rgba(255,214,0,0.3)"
 set highlight-active-color "rgba(255,140,0,0.45)"
 set render-loading false
 
-# The current look's colours over the Neutrino ones above, from Quickshell
+# The current look's colours over the Singularity ones above, from Quickshell
 # (AppearanceSync.qml). The path is relative to this file's directory, taken
 # as ~/.config/zathura even though that's a link into the repo.
 include ../../.local/state/singularity/zathura

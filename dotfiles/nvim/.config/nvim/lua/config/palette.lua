@@ -1,7 +1,7 @@
 -- The active look's palette, as the shell hands it out. AppearanceSync.qml
 -- writes ~/.local/state/singularity/nvim.lua whenever the look, the colour mode
 -- or the wallpaper palette changes; until the shell has run once (or outside
--- the desktop) this falls back to Neutrino's ramp from Looks.js.
+-- the desktop) this falls back to Singularity's ramp from Looks.js.
 
 local M = {}
 
@@ -10,7 +10,7 @@ M.path = vim.fn.expand("~/.local/state/singularity/nvim.lua")
 local fallback = {
   base = "#0b0b0b", bar = "#121212", panel = "#141414", surface = "#1a1a1a",
   overlay = "#242424", border = "#303030", muted = "#4d4d4d", subtext = "#7a7a7a",
-  text = "#d4e4f4", bright = "#ebebeb",
+  text = "#a8c8ff", bright = "#ebebeb",
   accent = "#ebebeb", good = "#7d9b7d", alert = "#a87676",
 }
 

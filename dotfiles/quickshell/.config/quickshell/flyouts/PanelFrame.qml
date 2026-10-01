@@ -4,7 +4,7 @@
 // The panel ground every flyout and standalone window shares. How the frame
 // itself is drawn is Theme.frameStyle:
 //   double  the #141414 fill, an outer stroke, and a second stroke inset 3px
-//           inside it -- Neutrino's own look
+//           inside it -- Singularity's own look
 //   single  the outer stroke alone
 //   bevel   a raised chisel outside, a sunken one inside -- Windows 95
 //   groove  the bevel inside out: sunken outside, raised inside, an etched line

@@ -193,7 +193,7 @@
 .pragma library
 
 // the look that can't be removed, and the one used when the chosen look is gone
-var fallback = "neutrino"
+var fallback = "singularity"
 
 // shared defaults for the fixed half, so each look only states what differs
 var base = {
@@ -209,12 +209,12 @@ var base = {
 }
 
 var looks = {
-    neutrino: {
-        name: "Neutrino",
+    singularity: {
+        name: "Singularity",
         description: "Grayscale, double-stroked frames, tight spacing",
         palette: {
             base: "#0b0b0b", bar: "#121212", panel: "#141414", surface: "#1a1a1a", overlay: "#242424",
-            border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#d4e4f4", bright: "#ebebeb",
+            border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#a8c8ff", bright: "#ebebeb",
         },
         accent: "#5555c8",
         // desaturated hard, so they read as a tinted grey rather than alerts
@@ -305,7 +305,7 @@ var accents = [
 
 // The look the template configs (wofi, starship, fastfetch) are written in:
 // their colours are this ramp, and AppearanceSync maps each one to the current role.
-var reference = "neutrino"
+var reference = "singularity"
 
 // Fonts the Appearance page offers: monospace faces only, each as its plain
 // "Nerd Font" family. Not the "Nerd Font Mono" variant, which squashes every

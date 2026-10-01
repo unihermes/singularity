@@ -246,7 +246,7 @@ keybind.
 
 ## Theme
 
-The default look, **Neutrino**, is one grayscale ramp with pale blue text and
+The default look, **Singularity**, is one grayscale ramp with bright blue text and
 a single indigo accent (`#5555c8`) for focus and selection. Otherwise emphasis
 is carried by lightness and weight.
 
@@ -254,7 +254,7 @@ is carried by lightness and weight.
 |---|---|---|---|
 | `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
-| `#d4e4f4` text | `#ebebeb` bright | | |
+| `#a8c8ff` text | `#ebebeb` bright | | |
 
 The shell (bar, flyouts, windows, settings, the launcher, notifications) and
 Alacritty all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
@@ -278,7 +278,7 @@ heading font, text and bold weights; a second accent for levels; and
 gradient grounds. With "One per look" on, each look also keeps its own
 wallpaper. Every one of these is listed in `services/Looks.js`.
 
-Neutrino is built into `services/Looks.js` and is what everything falls back
+The Singularity look is built into `services/Looks.js` and is what everything falls back
 to. The other shipped looks are data in `services/looks.json`: the dark
 Abyss, Ember, Neon, Cathedral, HUD, Phosphor, Void, Redmond Night (Windows 95),
 Ten (Windows 10), Amiga, Brutalist, Moss, Amber CRT, Dracula, Aubergine and
@@ -301,11 +301,11 @@ output and `ls`. `renderAlacritty()` is the only place to change if that trade
 is not worth it.
 
 ly, the greeter, runs on a Linux VT, which can't show true colour, so it gets
-Neutrino by other means. `install.sh` writes `/etc/ly/singularity.sh`, which
+the Singularity look by other means. `install.sh` writes `/etc/ly/singularity.sh`, which
 loads the ramp into the VT's 16-colour palette before ly draws, and points
 ly's colours at those palette slots. Red and green become the shell's muted
 alert and good tints, so a failed login still stands out. It always uses
-Neutrino, whichever look the shell has, because it runs before anyone logs in.
+the Singularity look, whichever look the shell has, because it runs before anyone logs in.
 
 nvim follows the shell the same way. `AppearanceSync.qml` writes the look's
 ten roles plus its accent, good and alert hues to
@@ -314,7 +314,7 @@ highlight from them, plugins included: file tree, tabs, statusline,
 completion menu and git signs. Open editors watch the file and recolour
 live. Syntax stays in lightness and weight; the accent marks the current
 line number, tab, search hit and editing modes, and good/alert colour added
-and removed lines and errors. Without the file, nvim uses Neutrino's ramp.
+and removed lines and errors. Without the file, nvim uses the Singularity look's ramp.
 
 Claude Code gets a theme from the shell as well: `AppearanceSync.qml` writes
 `~/.claude/themes/singularity.json` over Claude's dark or light base, with the
@@ -326,14 +326,14 @@ Claude Code reads new theme files at start, so restart a running session
 the first time.
 
 The prompt, fastfetch and zathura follow the look too. `starship.toml` and
-fastfetch's `config.jsonc` are written in Neutrino's colours, and
+fastfetch's `config.jsonc` are written in the Singularity look's colours, and
 `AppearanceSync.qml` renders copies with each of those colours swapped for the
 current look's into `~/.local/state/singularity/`. `.bashrc` points starship and
 fastfetch at the copies. Edit the repo files, not the copies.
 `starship-path.sh` and fastfetch's `row.sh` source
 `~/.local/state/singularity/term-colors.sh` for the same colours, and `zathurarc`
 includes a generated colour file from the same place. Each falls back to
-Neutrino without its generated file.
+the Singularity look without its generated file.
 
 ## Editor
 

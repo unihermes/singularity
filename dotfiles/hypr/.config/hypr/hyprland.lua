@@ -6,7 +6,7 @@
 --
 -- grayscale ramp, shared with every other config in this repo:
 --   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
---   #303030 border #4d4d4d muted  #7a7a7a subtext  #d4e4f4 text
+--   #303030 border #4d4d4d muted  #7a7a7a subtext  #a8c8ff text
 --   #ebebeb bright
 
 -- Forward-declared so the binds below can close over them ahead of their
@@ -324,7 +324,7 @@ hl.config({
         border_size = 1,
 
         col = {
-            active_border   = borderActive or "rgba(d4e4f466)",
+            active_border   = borderActive or "rgba(a8c8ff66)",
             inactive_border = borderInactive or "rgba(303030aa)",
         },
 
@@ -393,10 +393,10 @@ hl.config({
             gradient_rounding   = 3,
             indicator_height    = 0,
             middle_click_close  = true,
-            text_color          = tabText or "rgba(d4e4f4ff)",
+            text_color          = tabText or "rgba(a8c8ffff)",
             text_color_inactive = tabTextInactive or "rgba(7a7a7aff)",
             col = {
-                active   = tabFill(tabActive or "rgba(2a2a2aff)", tabAccent or "rgba(d4e4f4ff)"),
+                active   = tabFill(tabActive or "rgba(2a2a2aff)", tabAccent or "rgba(a8c8ffff)"),
                 inactive = tabInactive or "rgba(161616ff)",
             },
         },

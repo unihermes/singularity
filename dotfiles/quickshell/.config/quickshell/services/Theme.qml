@@ -182,7 +182,7 @@ Singleton {
     // small controls inside a row: stepper buttons, drag handles
     readonly property int radiusSmall: Math.max(0, radius - 3)
     // "double" draws a second stroke inset inside panels and bar modules --
-    // the Neutrino signature. "single" is the outer stroke alone. "bevel" is
+    // the Singularity signature. "single" is the outer stroke alone. "bevel" is
     // Win95's chiselled 3D edge (see Bevel.qml) instead of either, and
     // "groove" the same pair turned inside out, an etched line. "accent" is
     // the single stroke in the accent colour, on panels only. "corners"
