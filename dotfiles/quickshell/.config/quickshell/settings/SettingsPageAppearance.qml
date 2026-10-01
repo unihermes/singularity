@@ -1088,6 +1088,12 @@ SettingsPage {
         Choices { key: "barSeparator" }
     }
 
+    SettingsField {
+        label: "Hover"
+        hint: "A module under the pointer: unchanged, filled, outlined, or lifted"
+        Choices { key: "hoverStyle" }
+    }
+
     Stepper { label: "Module gap"; hint: "Space between modules"; key: "moduleGap"; suffix: "px" }
     Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
 

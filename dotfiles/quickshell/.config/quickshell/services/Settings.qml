@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias hoverStyle:  adapter.hoverStyle
     readonly property alias workspaceNames: adapter.workspaceNames
     readonly property alias barSeparator: adapter.barSeparator
     readonly property alias notifGroup:  adapter.notifGroup
@@ -162,6 +163,7 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        hoverStyle:   ["none", "fill", "outline", "lift"],
         barSeparator: ["none", "line", "dot", "chevron"],
         notifStyle:   ["full", "compact", "banner"],
         launcherPosition: ["centre", "top", "full"],
@@ -194,6 +196,7 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "outline": "Outline", "lift": "Lift",
         "line": "Lines", "dot": "Dots", "chevron": "Chevrons",
         "full": "Full", "compact": "Compact", "banner": "Banner",
         "centre": "Centre", "top": "Under the bar", "full": "Full screen",
@@ -792,6 +795,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string hoverStyle: "none"
             property string workspaceNames: ""
             property string barSeparator: "none"
             property bool notifGroup: false

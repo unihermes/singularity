@@ -54,9 +54,15 @@ Item {
     implicitWidth: frame.width
     implicitHeight: Theme.barHeight
 
+    // Theme.hoverStyle, while the pointer is on the chip and it isn't lit
+    HoverHandler { id: hover }
+    readonly property bool hovered: hover.hovered && !active
+    readonly property string hoverStyle: hovered ? Theme.hoverStyle : "none"
+
     Rectangle {
         id: frame
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: root.hoverStyle === "lift" ? -1 : 0
         width: root.fixedWidth > 0
             ? root.fixedWidth
             : contentRow.implicitWidth + root.chrome
@@ -75,12 +81,14 @@ Item {
 
         height: Theme.moduleHeight
         radius: style === "pill" ? height / 2 : Theme.radius
-        color: style === "flat" || brackets || underline ? "transparent"
+        color: root.hoverStyle === "fill" ? Theme.overlay
+            : style === "flat" || brackets || underline ? "transparent"
             : root.active ? Theme.selectedFill
             : solid ? Theme.surface : "transparent"
 
-        border.width: style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
-        border.color: root.active ? Theme.strokeFocus : Theme.stroke
+        border.width: root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked) ? Theme.borderWidth : 0
+        border.color: root.active || root.hoverStyle === "outline" ? Theme.strokeFocus
+            : root.hoverStyle === "lift" ? Theme.strokeHover : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 

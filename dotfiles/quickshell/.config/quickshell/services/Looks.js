@@ -142,6 +142,8 @@
 //                  accent, the alert colour when critical, muted when low
 //     barSeparator between the bar's modules: "none", a thin "line", a
 //                  "dot", or a powerline-style "chevron"
+//     hoverStyle   a bar module under the pointer: "none", a "fill"
+//                  behind it, an accent "outline", or a one-pixel "lift"
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -224,6 +226,7 @@ var settingsBase = {
     notifStyle: "full",
     notifStripe: false,
     barSeparator: "none",
+    hoverStyle: "none",
     gaugeStyle: "fill",
 }
 
