@@ -10,7 +10,7 @@ M.path = vim.fn.expand("~/.local/state/singularity/nvim.lua")
 local fallback = {
   base = "#0b0b0b", bar = "#121212", panel = "#141414", surface = "#1a1a1a",
   overlay = "#242424", border = "#303030", muted = "#4d4d4d", subtext = "#7a7a7a",
-  text = "#c4daf8", bright = "#ebebeb",
+  text = "#d0e2fa", bright = "#ebebeb",
   accent = "#ebebeb", good = "#7d9b7d", alert = "#a87676",
 }
 

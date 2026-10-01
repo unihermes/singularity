@@ -720,7 +720,7 @@ if [[ -n $dm_unit ]]; then
 # the TTY: loads the Singularity ramp into the VT palette, slots 0-15.
 [ "$TERM" = linux ] || exit 0
 i=0
-for c in 0b0b0b a87676 7d9b7d 969696 a0a0a0 aeaeae b8b8b8 c4daf8 \
+for c in 0b0b0b a87676 7d9b7d 969696 a0a0a0 aeaeae b8b8b8 d0e2fa \
          303030 a87676 7d9b7d adadad b8b8b8 c8c8c8 d8d8d8 ebebeb; do
   printf '\033]P%x%s' "$i" "$c"
   i=$((i + 1))
@@ -749,7 +749,7 @@ LY
     set_ly start_cmd /etc/ly/singularity.sh
     set_ly full_color false
     set_ly bg 0x00000001            # slot 0, base   #0b0b0b
-    set_ly fg 0x00000008            # slot 7, text   #c4daf8 (pale blue)
+    set_ly fg 0x00000008            # slot 7, text   #d0e2fa (pale blue)
     set_ly border_fg 0x01000001     # slot 8, border #303030
     set_ly error_bg 0x00000001
     set_ly error_fg 0x00000002      # slot 1, alert  #a87676

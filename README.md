@@ -254,7 +254,7 @@ is carried by lightness and weight.
 |---|---|---|---|
 | `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
-| `#c4daf8` text | `#ebebeb` bright | | |
+| `#d0e2fa` text | `#ebebeb` bright | | |
 
 The shell (bar, flyouts, windows, settings, the launcher, notifications) and
 Alacritty all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
