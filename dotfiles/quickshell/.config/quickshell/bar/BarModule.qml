@@ -25,7 +25,7 @@ Item {
     // -1 for a normal chip; 0..1 replaces the readout with a fill bar and
     // the exact number moves into the flyout
     property real fillValue: -1
-    property color fillColor: Theme.muted
+    property color fillColor: Theme.gaugeFill
     property int fixedWidth: 0
     // the width the chip adds around its content: padding and brackets
     readonly property int chrome: frame.chrome

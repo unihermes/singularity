@@ -132,6 +132,7 @@ Singleton {
     // overlay dimming, both in percent; every stroke's width in px; and how
     // section headings are set.
     readonly property alias accent:       adapter.accent
+    readonly property alias accent2:      adapter.accent2
     readonly property alias panelOpacity: adapter.panelOpacity
     readonly property alias borderWidth:  adapter.borderWidth
     readonly property alias scrim:        adapter.scrim
@@ -637,6 +638,7 @@ Singleton {
         else if (key === "colourMode") setColourMode(v)
         else if (key === "look") applyLook(v)
         else if (key === "accent") adapter.accent = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
+        else if (key === "accent2") adapter.accent2 = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
         // free text, such as the workspace names
@@ -867,6 +869,7 @@ Singleton {
             property string flyoutAttach: "flush"
             property string flyoutAnim: "drop"
             property string accent: ""
+            property string accent2: ""
             property int panelOpacity: 100
             property int borderWidth: 1
             property int scrim: 40

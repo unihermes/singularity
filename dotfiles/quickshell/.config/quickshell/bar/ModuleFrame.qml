@@ -35,7 +35,7 @@ Item {
     // content is left-aligned beside it instead of centred.
     property real fillValue: -1
     readonly property bool gauge: fillValue >= 0
-    property color fillColor: Theme.muted
+    property color fillColor: Theme.gaugeFill
     // when > 0 the chip is pinned to this width instead of hugging content
     property int fixedWidth: 0
     // the width the chip adds around its content

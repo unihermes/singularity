@@ -818,6 +818,60 @@ SettingsPage {
         }
     }
 
+    // A second hue for meters, levels and the visualizer: the presets, the
+    // look's own when it has one, or None to leave them to the accent.
+    SettingsField {
+        label: "Second accent"
+        hint: Settings.colourMode === "wallpaper" ? "Grayscale palette only"
+            : "Meters, levels and the visualizer, in a hue of their own"
+
+        Flow {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+            enabled: Settings.colourMode !== "wallpaper"
+            opacity: enabled ? 1 : 0.4
+            width: Math.min(parent.width, accent2Repeater.count * (Theme.chipHeight + spacing) + accent2None.width)
+
+            Repeater {
+                id: accent2Repeater
+                model: {
+                    var l = LookStore.looks[Settings.look]
+                    var out = l && l.accent2 ? [l.accent2] : []
+                    for (var i = 0; i < Looks.accents.length; i++)
+                        if (out.indexOf(Looks.accents[i]) === -1) out.push(Looks.accents[i])
+                    if (Settings.accent2 !== "" && out.indexOf(Settings.accent2) === -1) out.push(Settings.accent2)
+                    return out
+                }
+
+                Rectangle {
+                    id: sw2
+                    required property string modelData
+                    width: Theme.chipHeight
+                    height: Theme.chipHeight
+                    radius: Theme.radiusSmall
+                    color: modelData
+                    border.width: Settings.accent2 === modelData ? 2 : sw2Mouse.containsMouse ? Theme.borderWidth : 0
+                    border.color: Theme.textStrong
+
+                    MouseArea {
+                        id: sw2Mouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Settings.set("accent2", sw2.modelData)
+                    }
+                }
+            }
+
+            FlyoutChip {
+                id: accent2None
+                text: "None"
+                selected: Settings.accent2 === ""
+                onClicked: Settings.set("accent2", "")
+            }
+        }
+    }
+
     // Any colour as #rrggbb (or #rgb, with or without the #), applied on
     // Enter. The swatch beside it previews what's typed while it parses.
     SettingsField {

@@ -102,7 +102,11 @@ Singleton {
     // Meters: gauges, sliders, progress and level bars
     readonly property color meterTrack:    base
     readonly property color meterStroke:   surface
-    readonly property color meterFill:     look.meterAccent && hasAccent ? accent : text
+    readonly property bool hasAccent2: Settings.accent2 !== "" && Settings.colourMode !== "wallpaper"
+    readonly property color meterFill:     hasAccent2 ? Settings.accent2 : look.meterAccent && hasAccent ? accent : text
+    // the bar's level chips: quiet under their icons, unless there's a
+    // second accent for levels
+    readonly property color gaugeFill:     hasAccent2 ? Settings.accent2 : muted
     // the dimming behind full-screen overlays
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // Flyouts', windows' and cards' ground, translucent in glassy looks. The

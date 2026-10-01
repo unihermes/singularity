@@ -593,7 +593,7 @@ Item {
         fillColor: {
             if (!UPower.onBattery) return Theme.good
             if (Battery.percent <= 20) return Theme.alert
-            return Theme.muted
+            return Theme.gaugeFill
         }
         active: screenScope.openFlyout === "battery"
         onActivated: {

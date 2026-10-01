@@ -28,6 +28,8 @@
 //     accent         the one hue for marks: selection ticks, focus, current
 //                    items, and meters when meterAccent. null = the ramp's
 //                    bright, i.e. a colourless look
+//     accent2        a second hue, for meters, levels and the visualizer;
+//                    null leaves those to the accent or the text colour
 //     good, alert    status hues
 //     borderWidth    every stroke, in px
 //     panelOpacity   flyouts, windows, wofi and notification cards; below 1
@@ -193,6 +195,7 @@ var fallback = "neutrino"
 // shared defaults for the fixed half, so each look only states what differs
 var base = {
     accent: null,
+    accent2: null,
     borderWidth: 1,
     panelOpacity: 1,
     meterAccent: false,
@@ -264,6 +267,7 @@ function adjustable(look) {
     var h = look.heading
     return {
         accent: look.accent || "",
+        accent2: look.accent2 || "",
         panelOpacity: Math.round(look.panelOpacity * 100),
         borderWidth: look.borderWidth,
         scrim: Math.round(look.scrim * 100),

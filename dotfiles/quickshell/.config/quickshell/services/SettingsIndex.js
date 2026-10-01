@@ -88,6 +88,7 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Modules",              keywords: "bar chips" },
     { page: "appearance", section: "Bar",           label: "Workspaces",           keywords: "indicator dots" },
     { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
+    { page: "appearance", section: "Colours",       label: "Second accent",        keywords: "secondary accent colour color meters levels visualizer two tone" },
     { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft offset brutalist" },
     { page: "appearance", section: "Bar",           label: "Levels",               keywords: "gauge meter volume brightness battery fill segments bar" },
     { page: "appearance", section: "Text",          label: "Bold weight",          keywords: "font weight bold black heavy emphasis" },
