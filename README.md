@@ -283,10 +283,12 @@ to. The other shipped looks are data in `services/looks.json`: the dark
 Abyss, Ember, Neon, Cathedral, HUD, Phosphor, Void, Redmond Night (Windows 95),
 Ten (Windows 10), Amiga, Brutalist, Moss, Amber CRT, Dracula, Aubergine and
 Cyberpunk, then the light Riso, Swiss, Redmond (Windows 95), System 1, Sakura,
-E-ink and Solarized Light. Pick one from the carousel under
-Settings → Appearance or in the Control Centre, where each value can then be
-adjusted, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
-set <name>`. To add a look, copy an entry in `looks.json`. Removing one from
+E-ink and Solarized Light. Pick one from the carousel on Settings →
+Appearance's Look tab or in the Control Centre, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
+set <name>`. The other tabs (Wallpaper, Colours, Style, Text, Bar, Panels,
+Windows, System) adjust it; a dot marks each setting that differs from the
+look, and the Look tab lists those changes with a way back for each. To add a
+look, copy an entry in `looks.json`. Removing one from
 the Appearance page deletes it from that file; `git checkout --
 services/looks.json` brings it back.
 
@@ -387,7 +389,7 @@ fc-match monospace
   has another name). `install.sh` writes DHCP configs to
   `/etc/systemd/network` only when that directory has none.
 - **The theme, icons, cursor and fonts live in gsettings, set by the shell.**
-  The Appearance page's System section (and Shade, for dark or light) writes
+  The Appearance page's System tab (and Shade, for dark or light) writes
   them through AppearanceSync every time it starts, along with qt6ct's config
   and the XCursor fallback in `~/.local/share/icons/default`. GTK3 on Wayland
   reads gsettings directly, and GTK4 through the settings portal, so

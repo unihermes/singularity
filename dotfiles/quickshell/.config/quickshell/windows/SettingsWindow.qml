@@ -320,6 +320,8 @@ FloatingWindow {
                 // sections folded on this window's pages (FlyoutHeading),
                 // kept across page switches and dropped with the window
                 property var foldedSections: []
+                // the tab each tabbed page was left on (SettingsPage.tabs)
+                property var pageTabs: ({})
                 x: Theme.panelPad
                 y: Theme.panelPad
                 width: parent.width - Theme.panelPad * 2

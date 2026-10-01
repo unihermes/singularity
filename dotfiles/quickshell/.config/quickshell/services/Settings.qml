@@ -209,42 +209,48 @@ Singleton {
         "compact": "Compact", "roomy": "Roomy",
         "outline": "Outline", "filled": "Filled", "flat": "Flat", "pill": "Pill",
         "ghost": "Ghost", "bracket": "Brackets", "underline": "Underline",
-        "full": "Full width", "floating": "Floating", "islands": "Islands", "bare": "Bare",
+        "full": "Full", "floating": "Floating", "islands": "Islands", "bare": "Bare",
         "notch": "Notch",
         "pills": "Pills", "dots": "Dots", "lines": "Lines", "numbers": "Numbers", "blocks": "Blocks",
         "roman": "Roman", "names": "Names", "apps": "App icons",
         "popin": "Pop", "zoom": "Zoom", "fade": "Fade", "fold": "Fold",
-        "slide": "Slide", "rise": "Rise", "drop": "Drop",
+        "slide": "Slide", "rise": "Rise", "drop": "Drop", "scale": "Scale",
         "stamp": "Time + date", "time": "Time", "seconds": "Seconds", "day": "Day + time",
         "long": "Full date", "iso": "ISO date", "custom": "Custom",
-        "icons": "Icons", "titled": "Focused title", "tabs": "Tabs",
+        "icons": "Icons", "titled": "With titles", "tabs": "Tabs", "previews": "Previews",
         "workspace": "This workspace", "all": "All workspaces",
-        "pill": "Pill", "dot": "Dot", "above": "Line above", "ground": "Lit ground", "box": "Box",
+        "dot": "Dot", "above": "Line above", "ground": "Lit ground", "box": "Box",
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
-        "mirror": "Mirrored", "rise": "Rising", "line": "Line",
-        "fill": "Fill", "segments": "Segments", "rule": "Rule",
-        "bold": "Bold", "black": "Black",
-        "light": "Light", "regular": "Regular", "medium": "Medium",
-        "pill": "Bar", "edge": "Screen edge", "number": "Number",
-        "row": "Row", "list": "List", "full": "Full screen",
+        "mirror": "Mirrored", "line": "Line", "chevron": "Chevrons",
+        "fill": "Fill", "segments": "Segments", "rule": "Rule", "lift": "Lift",
+        "regular": "Regular", "medium": "Medium", "bold": "Bold", "black": "Black",
+        "edge": "Screen edge", "number": "Number",
+        "row": "Row", "list": "List", "grid": "Grid", "strip": "Strip",
         "dim": "Dimmed", "clear": "Clear", "solid": "Solid",
-        "grid": "Grid", "strip": "One row",
-        "previews": "Previews",
-        "corner": "Corner",
+        "banner": "Banner", "titlebar": "Title bar",
+        "flush": "Flush", "tab": "Tab",
+        "centre": "Centre", "top": "Top", "corner": "Corner",
         "small": "Small", "large": "Large", "huge": "Huge",
-        "outline": "Outline", "lift": "Lift",
-        "line": "Lines", "dot": "Dots", "chevron": "Chevrons",
-        "full": "Full", "compact": "Compact", "banner": "Banner",
-        "centre": "Centre", "top": "Under the bar", "full": "Full screen",
-        "list": "List", "grid": "Grid", "line": "One line",
-        "strip": "Strip", "titlebar": "Title bar",
-        "flush": "Flush", "tab": "Tab", "floating": "Floating",
-        "drop": "Drop", "scale": "Scale",
+    })
+    // where one value means different things under different settings
+    readonly property var keyedLabels: ({
+        barStyle: { "full": "Full width" },
+        windowStyle: { "titled": "Focused title" },
+        vizStyle: { "rise": "Rising", "line": "One line" },
+        barSeparator: { "line": "Lines", "dot": "Dots" },
+        windowMark: { "pill": "Pill" },
+        levelStyle: { "pill": "Bar" },
+        launcherLayout: { "line": "One line" },
+        launcherPosition: { "top": "Under the bar", "full": "Full screen" },
+        powerStyle: { "full": "Full screen" },
+        overviewLayout: { "strip": "One row" },
     })
 
     // A choice's display name: the table above, then the look's or font's
     // own name, then the raw value.
-    function choiceLabel(v) {
+    // `key`, when given, is the setting the value belongs to (keyedLabels)
+    function choiceLabel(v, key) {
+        if (key && keyedLabels[key] && keyedLabels[key][v]) return keyedLabels[key][v]
         if (choiceLabels[v]) return choiceLabels[v]
         if (LookStore.looks[v]) return LookStore.looks[v].name
         return Looks.fontLabels[v] || Looks.systemFontLabels[v] || v
@@ -619,12 +625,21 @@ Singleton {
 
     // true while every value the look carries is still the look's own --
     // what the Appearance page shows as "as designed" vs "customised"
-    readonly property bool lookPristine: {
+    readonly property bool lookPristine: !!LookStore.looks[adapter.look] && lookDiffs.length === 0
+
+    // the keys of the look's settings that no longer have the look's value,
+    // for the Appearance page's list of changes and its fields' markers
+    readonly property var lookDiffs: {
         var l = LookStore.looks[adapter.look]
-        if (!l) return false
-        var diffs = Object.keys(l.settings).filter(k =>
+        if (!l) return []
+        return Object.keys(l.settings).filter(k =>
             !(k === "barOpacity" && adapter.colourMode === "wallpaper") && adapter[k] !== l.settings[k])
-        return diffs.length === 0
+    }
+
+    // one setting back to the look's own value
+    function resetLookKey(k) {
+        var l = LookStore.looks[adapter.look]
+        if (l && l.settings[k] !== undefined) set(k, l.settings[k])
     }
 
     function clamp(key, v) {

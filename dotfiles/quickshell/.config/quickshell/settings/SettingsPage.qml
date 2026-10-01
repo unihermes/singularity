@@ -13,6 +13,11 @@
 //
 // `highlight` is set by the window when a search result lands here: the page
 // scrolls the field with that label into view and rings it for a moment.
+//
+// A long page can be split into `tabs`: a row of them under the
+// description, and the page's content in Columns marked isSettingsTab, each
+// showing while `tab` is its own. The window remembers each page's tab
+// while it's open, and a search result in a hidden tab switches to it.
 
 import QtQuick
 import "../services"
@@ -34,6 +39,36 @@ Item {
     // find it by walking up to here, so they need this marker to stop on
     property string highlight: ""
     readonly property bool isSettingsPage: true
+
+    // [{ id, label, icon }] and the one showing; [] for an untabbed page
+    property var tabs: []
+    property string tab: tabs.length > 0 ? tabs[0].id : ""
+    // the column whose headings pin to the top as it scrolls: a tabbed
+    // page points it at the tab showing
+    property Item stickyColumn: col
+
+    function tabMemory() {
+        for (var p = parent; p; p = p.parent)
+            if (p.pageTabs !== undefined) return p
+        return null
+    }
+    onTabChanged: {
+        if (!tabsReady) return
+        flick.contentY = 0
+        var m = tabMemory()
+        if (!m) return
+        var t = {}
+        for (var k in m.pageTabs) t[k] = m.pageTabs[k]
+        t[title] = tab
+        m.pageTabs = t
+    }
+    property bool tabsReady: false
+    Component.onCompleted: {
+        var m = tabMemory()
+        if (m && m.pageTabs[title] !== undefined && tabs.some(t => t.id === m.pageTabs[title]))
+            tab = m.pageTabs[title]
+        tabsReady = true
+    }
 
     default property alias content: col.data
     // height available to content below the header, for non-scrolling pages
@@ -115,12 +150,18 @@ Item {
     function scrollTo(item, label) {
         for (var i = 0; i < item.children.length; i++) {
             var c = item.children[i]
-            if (c.isSettingsField === true && c.label === label) {
-                for (var p = c.parent; p && p !== col; p = p.parent)
+            if (c.isSettingsField === true && c.searchable !== false && c.label === label) {
+                for (var p = c.parent; p && p !== col; p = p.parent) {
+                    // in a tab that isn't showing: show it, then try again
+                    if (p.isSettingsTab === true && root.tab !== p.tabId) {
+                        root.tab = p.tabId
+                        return false
+                    }
                     if (p.isFlyoutHeading === true) {
                         p.toggle()
                         return false
                     }
+                }
                 if (root.scrolls) {
                     var y = col.mapFromItem(c, 0, 0).y
                     var max = Math.max(0, flick.contentHeight - flick.height)
@@ -151,6 +192,60 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
+        }
+
+        // the tabs: icon and name, the one showing lit and underlined
+        Flow {
+            width: parent.width
+            visible: root.tabs.length > 0
+            topPadding: Theme.spaceS
+            spacing: Theme.spaceXs
+
+            Repeater {
+                model: root.tabs
+
+                Rectangle {
+                    id: tabChip
+                    required property var modelData
+                    readonly property bool current: root.tab === modelData.id
+                    width: tabRow.implicitWidth + Theme.spaceL * 2
+                    height: Theme.rowHeightTall
+                    radius: Theme.radiusInner
+                    color: current ? Theme.selectedFill : tabMouse.containsMouse ? Theme.overlay : "transparent"
+                    border.width: current ? Theme.borderWidth : 0
+                    border.color: Theme.selectedStroke
+
+                    Row {
+                        id: tabRow
+                        anchors.centerIn: parent
+                        spacing: Theme.spaceS
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: tabChip.modelData.icon || ""
+                            visible: text !== ""
+                            color: tabChip.current ? Theme.accent : Theme.subtext
+                            font.family: Theme.fontIcon
+                            font.pixelSize: Theme.fontIconSize
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: tabChip.modelData.label
+                            color: tabChip.current ? Theme.textStrong : Theme.text
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontBody
+                            font.weight: tabChip.current ? Theme.weightStrong : Theme.weightBody
+                        }
+                    }
+
+                    MouseArea {
+                        id: tabMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.tab = tabChip.modelData.id
+                    }
+                }
+            }
         }
     }
 
@@ -183,7 +278,7 @@ Item {
         StickyHeading {
             width: flick.width
             flickable: flick
-            column: col
+            column: root.stickyColumn
         }
 
         ScrollBar {

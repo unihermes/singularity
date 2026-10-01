@@ -307,7 +307,7 @@ SettingsPage {
             anchors.right: parent.right
             fill: false
             model: Settings.choices.lockClockSize
-            labelFor: v => Settings.choiceLabel(v)
+            labelFor: v => Settings.choiceLabel(v, "lockClockSize")
             current: Settings.lockClockSize
             onPicked: v => Settings.set("lockClockSize", v)
         }
@@ -320,7 +320,7 @@ SettingsPage {
             anchors.right: parent.right
             fill: false
             model: Settings.choices.lockClockPlace
-            labelFor: v => Settings.choiceLabel(v)
+            labelFor: v => Settings.choiceLabel(v, "lockClockPlace")
             current: Settings.lockClockPlace
             onPicked: v => Settings.set("lockClockPlace", v)
         }

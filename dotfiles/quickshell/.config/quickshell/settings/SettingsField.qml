@@ -14,9 +14,17 @@ Item {
 
     property string label: ""
     property string hint: ""
+    // A setting the look carries (Looks.js `settings`): while it differs
+    // from the look's own value the label is marked, and the mark puts it
+    // back. "" for a field that isn't one.
+    property string lookKey: ""
+    readonly property bool modified: lookKey !== "" && Settings.lookDiffs.indexOf(lookKey) !== -1
     // width of the label column; controls get the rest
     property int labelWidth: Theme.fit(240)
     readonly property bool isSettingsField: true
+    // false for a row that only repeats another field's label (the
+    // Appearance page's list of changes), so a search lands on the field
+    property bool searchable: true
 
     // The page a search result landed on rings the field it named. Found by
     // walking up rather than passed in, so no page has to thread it through.
@@ -62,14 +70,42 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 
-        Text {
+        // the label, and the mark of a change from the look
+        Item {
             width: parent.width
-            text: root.label
-            elide: Text.ElideRight
-            color: Theme.text
-            font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
-            font.weight: Theme.weightBody
+            height: labelText.implicitHeight
+
+            Text {
+                id: labelText
+                width: Math.min(implicitWidth, parent.width - (resetMark.visible ? resetMark.width + Theme.spaceS : 0))
+                text: root.label
+                elide: Text.ElideRight
+                color: Theme.text
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
+                font.weight: Theme.weightBody
+            }
+
+            Text {
+                id: resetMark
+                visible: root.modified
+                anchors.left: labelText.right
+                anchors.leftMargin: Theme.spaceS
+                anchors.verticalCenter: labelText.verticalCenter
+                text: resetMouse.containsMouse ? "󰑓 " + Settings.choiceLabel(Settings.look) + "'s" : "●"
+                color: Theme.accent
+                font.family: Theme.fontIcon
+                font.pixelSize: resetMouse.containsMouse ? Theme.fontSmall : Theme.fontCaption
+
+                MouseArea {
+                    id: resetMouse
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Settings.resetLookKey(root.lookKey)
+                }
+            }
         }
 
         Text {
