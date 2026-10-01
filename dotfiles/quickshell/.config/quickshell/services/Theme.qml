@@ -339,6 +339,8 @@ Singleton {
     readonly property int shadowOffset: Math.max(3, borderWidth * 2)
     // the bar's audio visualizer -- see Looks.js
     readonly property string vizStyle: Settings.vizStyle
+    // how a gauge chip shows its level -- see Looks.js and ModuleFrame
+    readonly property string gaugeStyle: Settings.gaugeStyle
     // A Qt date format with its 24-hour fields turned 12-hour when Date &
     // Time asks for that; every clock in the shell formats through this.
     function hours(fmt) {

@@ -66,7 +66,10 @@ Item {
         readonly property bool underline: style === "underline"
         readonly property int bracketW: brackets ? Math.ceil(bracketMetrics.advanceWidth) : 0
         // the gauge draws in the chip's interior, except under a rule
+        // (the underline style's, or Theme.gaugeStyle "rule")
         readonly property bool track: root.gauge && !underline
+        readonly property string gaugeStyle: underline ? "rule" : Theme.gaugeStyle
+        readonly property real level: Math.max(0, Math.min(1, root.fillValue))
 
         readonly property bool bevel: Theme.frameChiselled && style === "outline"
 
@@ -189,7 +192,7 @@ Item {
         // it rather than beside it.
         Rectangle {
             id: track
-            visible: frame.track
+            visible: frame.track && frame.gaugeStyle === "fill"
             anchors.fill: parent
             anchors.margins: frame.barInset
             anchors.leftMargin: frame.barInset + frame.bracketW
@@ -218,6 +221,53 @@ Item {
                 }
                 Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
+            }
+        }
+
+        // "segments": the same interior as five blocks, lit up to the level
+        Row {
+            visible: frame.track && frame.gaugeStyle === "segments"
+            anchors.fill: parent
+            anchors.margins: frame.barInset
+            anchors.leftMargin: frame.barInset + frame.bracketW
+            anchors.rightMargin: frame.barInset + frame.bracketW
+            spacing: Math.max(1, Theme.borderWidth)
+
+            Repeater {
+                model: 5
+                Rectangle {
+                    required property int index
+                    width: (parent.width - parent.spacing * 4) / 5
+                    height: parent.height
+                    radius: Math.min(Theme.radiusSmall, 2)
+                    // a block is lit once the level passes its midpoint, and
+                    // the first stays lit above zero so a low level still shows
+                    color: frame.level > 0 && (index === 0 || frame.level >= (index + 0.5) / 5)
+                        ? root.fillColor : Theme.meterTrack
+                    Behavior on color { ColorAnimation { duration: Theme.dur(120) } }
+                }
+            }
+        }
+
+        // "rule" for every module style but underline, which has its own:
+        // a thin level along the chip's bottom, inside the frame
+        Rectangle {
+            visible: frame.track && frame.gaugeStyle === "rule"
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: frame.barInset
+            anchors.left: parent.left
+            anchors.leftMargin: frame.barInset + frame.bracketW
+            width: parent.width - (frame.barInset + frame.bracketW) * 2
+            height: Math.max(2, Theme.borderWidth * 2)
+            radius: height / 2
+            color: Theme.meterTrack
+
+            Rectangle {
+                height: parent.height
+                radius: parent.radius
+                width: parent.width * frame.level
+                color: root.fillColor
+                Behavior on width { NumberAnimation { duration: Theme.dur(120); easing.type: Theme.ease } }
             }
         }
 

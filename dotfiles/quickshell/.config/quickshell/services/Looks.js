@@ -107,6 +107,11 @@
 //                  "rise"     bars rising from the bottom
 //                  "dots"     a stack of up to four dots per band
 //                  "line"     one line through every band's level
+//     gaugeStyle   the volume, brightness and battery chips' level:
+//                  "fill"     the chip's interior fills from the left
+//                  "segments" five blocks, lit up to the level
+//                  "rule"     a thin rule along the chip's bottom edge
+//                  (the underline module style always uses its own rule)
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -180,6 +185,7 @@ var settingsBase = {
     iconTint: "colour",
     shadow: "none",
     vizStyle: "mirror",
+    gaugeStyle: "fill",
 }
 
 // The parts of the fixed half the Appearance page can also adjust. The look

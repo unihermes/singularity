@@ -1019,6 +1019,13 @@ SettingsPage {
     }
 
     SettingsField {
+        label: "Levels"
+        hint: Theme.moduleStyle === "underline" ? "Underlined modules show the level in their own rule"
+            : "How volume, brightness and battery show their level"
+        Choices { key: "gaugeStyle"; live: Theme.moduleStyle !== "underline" }
+    }
+
+    SettingsField {
         label: "Visualizer"
         hint: "The audio spectrum while sound plays"
         Choices { key: "vizStyle" }

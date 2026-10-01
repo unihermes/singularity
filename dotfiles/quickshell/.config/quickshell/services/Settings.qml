@@ -97,6 +97,7 @@ Singleton {
     readonly property alias iconTint:    adapter.iconTint
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
+    readonly property alias gaugeStyle:  adapter.gaugeStyle
     // The look's adjustable fixed half (Looks.adjustable): its accent as a
     // hex, "" for none; flyouts' and windows' ground opacity and the
     // overlay dimming, both in percent; every stroke's width in px; and how
@@ -147,6 +148,7 @@ Singleton {
         iconTint:     ["colour", "mono", "accent"],
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
+        gaugeStyle:   ["fill", "segments", "rule"],
     })
     readonly property var choiceLabels: ({
         "normal": "Normal",
@@ -171,6 +173,7 @@ Singleton {
         "pill": "Pill", "dot": "Dot", "above": "Line above", "ground": "Lit ground", "box": "Box",
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
+        "fill": "Fill", "segments": "Segments", "rule": "Rule",
     })
 
     // A choice's display name: the table above, then the look's or font's
@@ -736,6 +739,7 @@ Singleton {
             property string iconTint: "colour"
             property string shadow: "none"
             property string vizStyle: "mirror"
+            property string gaugeStyle: "fill"
             property string accent: ""
             property int panelOpacity: 100
             property int borderWidth: 1
