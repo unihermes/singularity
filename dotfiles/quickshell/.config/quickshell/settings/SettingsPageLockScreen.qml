@@ -301,6 +301,45 @@ SettingsPage {
         }
     }
 
+    SettingsField {
+        label: "Clock size"
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: Settings.choices.lockClockSize
+            labelFor: v => Settings.choiceLabel(v)
+            current: Settings.lockClockSize
+            onPicked: v => Settings.set("lockClockSize", v)
+        }
+    }
+
+    SettingsField {
+        label: "Clock place"
+        hint: "Above the password field, at the top, or in the bottom-left corner"
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: Settings.choices.lockClockPlace
+            labelFor: v => Settings.choiceLabel(v)
+            current: Settings.lockClockPlace
+            onPicked: v => Settings.set("lockClockPlace", v)
+        }
+    }
+
+    // the info line under the clock (hypr/lock-info.sh): any of the three
+    SettingsField {
+        label: "Under the clock"
+        hint: "A line of the date, the track playing and unread notifications"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+            FlyoutChip { text: "Date"; selected: Settings.lockDate; onClicked: Settings.set("lockDate", !Settings.lockDate) }
+            FlyoutChip { text: "Media"; selected: Settings.lockMedia; onClicked: Settings.set("lockMedia", !Settings.lockMedia) }
+            FlyoutChip { text: "Notifications"; selected: Settings.lockNotifs; onClicked: Settings.set("lockNotifs", !Settings.lockNotifs) }
+        }
+    }
+
     FlyoutAction {
         icon: "󰌾"
         label: "Lock now"

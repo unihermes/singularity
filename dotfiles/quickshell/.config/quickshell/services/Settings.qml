@@ -98,6 +98,11 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias lockNotifs:  adapter.lockNotifs
+    readonly property alias lockMedia:   adapter.lockMedia
+    readonly property alias lockDate:    adapter.lockDate
+    readonly property alias lockClockPlace: adapter.lockClockPlace
+    readonly property alias lockClockSize: adapter.lockClockSize
     readonly property alias clockFormat: adapter.clockFormat
     readonly property alias trayDrawer:  adapter.trayDrawer
     readonly property alias hoverStyle:  adapter.hoverStyle
@@ -165,6 +170,8 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        lockClockPlace: ["centre", "top", "corner"],
+        lockClockSize: ["small", "large", "huge"],
         hoverStyle:   ["none", "fill", "outline", "lift"],
         barSeparator: ["none", "line", "dot", "chevron"],
         notifStyle:   ["full", "compact", "banner"],
@@ -198,6 +205,8 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "corner": "Corner",
+        "small": "Small", "large": "Large", "huge": "Huge",
         "outline": "Outline", "lift": "Lift",
         "line": "Lines", "dot": "Dots", "chevron": "Chevrons",
         "full": "Full", "compact": "Compact", "banner": "Banner",
@@ -804,6 +813,11 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property bool lockNotifs: false
+            property bool lockMedia: false
+            property bool lockDate: false
+            property string lockClockPlace: "centre"
+            property string lockClockSize: "large"
             property string clockFormat: "ddd HH:mm"
             property bool trayDrawer: false
             property var trayPinned: []

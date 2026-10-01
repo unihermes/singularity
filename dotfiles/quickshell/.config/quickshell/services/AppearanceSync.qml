@@ -272,9 +272,51 @@ Scope {
             "$n_radius = " + Theme.radius,
             "$n_bw = " + Theme.borderWidth,
             "$n_fs = " + Theme.fs(16),
-            "$n_fs_clock = " + Theme.fs(64)]
+            "$n_fs_clock = " + clockSize]
+        // the clock and the info line under it, placed as Lock Screen says
+        var place = Settings.lockClockPlace
+        if (place === "top")
+            lines.push("$n_clock_pos = 0, -60", "$n_clock_halign = center", "$n_clock_valign = top",
+                "$n_info_pos = 0, " + -Math.round(60 + clockSize * 1.5), "$n_info_halign = center", "$n_info_valign = top")
+        else if (place === "corner")
+            lines.push("$n_clock_pos = 60, " + Math.round(60 + Theme.fs(16) * 2), "$n_clock_halign = left", "$n_clock_valign = bottom",
+                "$n_info_pos = 62, 60", "$n_info_halign = left", "$n_info_valign = bottom")
+        else
+            lines.push("$n_clock_pos = 0, " + Math.round(50 + clockSize * 0.6), "$n_clock_halign = center", "$n_clock_valign = center",
+                "$n_info_pos = 0, 34",
+                "$n_info_halign = center", "$n_info_valign = center")
+        lines.push("$n_info_args = " + (Settings.lockDate ? "date" : "none"))
         var text = lines.join("\n") + "\n"
         AtomicFileWrite.write({ path: root.dir + "/hyprlock.conf", transform: () => text })
+    }
+
+    readonly property int clockSize: Theme.fs(Settings.lockClockSize === "small" ? 40
+        : Settings.lockClockSize === "huge" ? 110 : 64)
+
+    // What the lock screen's info line shows besides the date: the track
+    // playing and the unread count, kept in a file lock-info.sh reads, since
+    // hyprlock can't ask the shell. Empty when both are off.
+    readonly property string lockInfo: {
+        var out = []
+        var p = Media.player
+        if (Settings.lockMedia && p && p.isPlaying)
+            out.push("󰝚  " + (p.trackArtist ? p.trackArtist + " – " : "") + (p.trackTitle || p.identity))
+        if (Settings.lockNotifs && Notifications.unread > 0)
+            out.push("󰂚  " + Notifications.unread + " unread")
+        return out.join("\n")
+    }
+    onLockInfoChanged: lockInfoWrite.restart()
+    Timer {
+        id: lockInfoWrite
+        interval: 500
+        onTriggered: AtomicFileWrite.write({ path: root.dir + "/lock-info", transform: () => root.lockInfo + "\n" })
+    }
+
+    Connections {
+        target: Settings
+        function onLockClockSizeChanged() { debounce.restart() }
+        function onLockClockPlaceChanged() { debounce.restart() }
+        function onLockDateChanged() { debounce.restart() }
     }
 
     // The accent, and whichever of base or bright reads better on it -- the
