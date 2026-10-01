@@ -514,6 +514,33 @@ if ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
   sudo udevadm trigger --subsystem-match=i2c --action=change
 fi
 
+# Battery charge cap: charging stops at 80% and starts again below 75%, so a
+# laptop that lives on the charger isn't held at 100%. On this Dell the
+# thresholds are the BIOS's own "Primary Battery Charge Configuration: Custom"
+# setting -- dell_laptop writes them to the firmware through SMBIOS -- so they
+# hold across reboots and in every OS with nothing running at boot. Dell
+# takes a stop of 55-100 and a start of 50-95, at least 5 apart. Written
+# only when different, since every write is a firmware write. The stop goes
+# first unless it would land at or below the current start, which the
+# firmware refuses.
+charge_start=75
+charge_stop=80
+for bat in /sys/class/power_supply/BAT*; do
+  [[ -e $bat/charge_control_end_threshold ]] || continue
+  cur_start=$(cat "$bat/charge_control_start_threshold" 2>/dev/null || echo)
+  cur_stop=$(cat "$bat/charge_control_end_threshold")
+  [[ $cur_start == "$charge_start" && $cur_stop == "$charge_stop" ]] && continue
+  log "capping ${bat##*/} charging at $charge_stop% (resumes below $charge_start%)"
+  order=(end start)
+  [[ -n $cur_start ]] && (( charge_stop <= cur_start )) && order=(start end)
+  for which in "${order[@]}"; do
+    [[ $which == start && -z $cur_start ]] && continue
+    [[ $which == start ]] && v=$charge_start || v=$charge_stop
+    echo "$v" | sudo tee "$bat/charge_control_${which}_threshold" >/dev/null ||
+      warn "${bat##*/} refused a charge ${which} threshold of $v"
+  done
+done
+
 log "enabling services"
 
 # Without seatd running, libseat falls back to talking to logind directly,
