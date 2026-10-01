@@ -103,6 +103,66 @@ SettingsPage {
         }
     }
 
+    // Settings[key] as any colour, #rrggbb (or #rgb, with or without the
+    // #), applied on Enter. The swatch beside it previews what's typed while
+    // it parses; a swatch picked above replaces what's typed.
+    component HexAccent: SettingsField {
+        id: hex
+        property string key: ""
+        hint: Settings.colourMode === "wallpaper" ? "Grayscale palette only"
+            : "Type a hex colour and press Enter"
+
+        function parse(t) {
+            var h = String(t).trim().replace(/^#/, "")
+            if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.split("").map(c => c + c).join("")
+            return /^[0-9a-fA-F]{6}$/.test(h) ? "#" + h.toLowerCase() : ""
+        }
+
+        Row {
+            id: hexRow
+            anchors.right: parent.right
+            spacing: Theme.spaceL
+            enabled: Settings.colourMode !== "wallpaper"
+            opacity: enabled ? 1 : 0.4
+            readonly property string typed: hex.parse(hexInput.text)
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.chipHeight
+                height: Theme.chipHeight
+                radius: Theme.radiusSmall
+                color: hexRow.typed !== "" ? hexRow.typed : "transparent"
+                border.width: Theme.borderWidth
+                border.color: Theme.stroke
+            }
+
+            FlyoutInput {
+                id: hexInput
+                width: Theme.fit(110)
+                echoPassword: false
+                placeholder: "#rrggbb"
+                text: Settings[hex.key] || ""
+                onAccepted: {
+                    if (hexRow.typed === "") {
+                        page.say("\"" + text.trim() + "\" isn't a hex colour", true)
+                        return
+                    }
+                    Settings.set(hex.key, hexRow.typed)
+                    text = hexRow.typed
+                    page.say(hex.label + " set to " + hexRow.typed, false)
+                }
+                onEscapePressed: text = Settings[hex.key] || ""
+
+                // typing breaks the binding; follow a swatch picked above
+                Connections {
+                    target: Settings
+                    function onAccentChanged() { if (hex.key === "accent") hexInput.text = Settings.accent }
+                    function onAccent2Changed() { if (hex.key === "accent2") hexInput.text = Settings.accent2 }
+                }
+            }
+        }
+    }
+
     // A Settings integer, stepped by `step` and clamped by Settings.limits.
     component Stepper: SettingsField {
         id: st
@@ -1093,63 +1153,7 @@ SettingsPage {
             }
         }
 
-        // Any colour as #rrggbb (or #rgb, with or without the #), applied on
-        // Enter. The swatch beside it previews what's typed while it parses.
-        SettingsField {
-            id: customField
-            label: "Custom accent"
-            hint: Settings.colourMode === "wallpaper" ? "Grayscale palette only"
-                : "Type a hex colour and press Enter"
-
-            function parse(t) {
-                var h = String(t).trim().replace(/^#/, "")
-                if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.split("").map(c => c + c).join("")
-                return /^[0-9a-fA-F]{6}$/.test(h) ? "#" + h.toLowerCase() : ""
-            }
-
-            Row {
-                id: customRow
-                anchors.right: parent.right
-                spacing: Theme.spaceL
-                enabled: Settings.colourMode !== "wallpaper"
-                opacity: enabled ? 1 : 0.4
-                readonly property string typed: customField.parse(hexInput.text)
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.chipHeight
-                    height: Theme.chipHeight
-                    radius: Theme.radiusSmall
-                    color: customRow.typed !== "" ? customRow.typed : "transparent"
-                    border.width: Theme.borderWidth
-                    border.color: Theme.stroke
-                }
-
-                FlyoutInput {
-                    id: hexInput
-                    width: Theme.fit(110)
-                    echoPassword: false
-                    placeholder: "#rrggbb"
-                    text: Settings.accent
-                    onAccepted: {
-                        if (customRow.typed === "") {
-                            page.say("\"" + text.trim() + "\" isn't a hex colour", true)
-                            return
-                        }
-                        Settings.set("accent", customRow.typed)
-                        text = customRow.typed
-                        page.say("Accent set to " + customRow.typed, false)
-                    }
-                    onEscapePressed: text = Settings.accent
-
-                    // typing breaks the binding; follow a swatch picked above
-                    Connections {
-                        target: Settings
-                        function onAccentChanged() { hexInput.text = Settings.accent }
-                    }
-                }
-            }
-        }
+        HexAccent { label: "Custom accent"; key: "accent" }
 
         // A second hue for meters, levels and the visualizer: the presets, the
         // look's own when it has one, or None to leave them to the accent.
@@ -1205,6 +1209,8 @@ SettingsPage {
                 }
             }
         }
+
+        HexAccent { label: "Custom second accent"; key: "accent2" }
 
     }
 
