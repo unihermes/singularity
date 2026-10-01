@@ -678,10 +678,18 @@ ShellRoot {
             // so a floating bar's stroke stays solid -- and the chips and
             // their text stay solid so the bar is still readable over a busy
             // wallpaper.
+            // Theme.gradient: every ground below shaded top to bottom
+            readonly property color barGround: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+            property Gradient barShading: Gradient {
+                GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }
+                GradientStop { position: 1; color: Theme.shadeBottom(bar.barGround) }
+            }
+
             Rectangle {
                 visible: Theme.barFull || Theme.barFloating
                 anchors.fill: barBody
-                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                color: bar.barGround
+                gradient: Theme.gradient ? bar.barShading : null
                 radius: Theme.barFloating ? Theme.barRadius : 0
                 border.width: Theme.barFloating ? Theme.borderWidth : 0
                 border.color: Theme.stroke
@@ -704,7 +712,8 @@ ShellRoot {
                     width: span.w + pad * 2
                     height: barBody.height
                     radius: Theme.barRadius
-                    color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                    color: bar.barGround
+                    gradient: Theme.gradient ? bar.barShading : null
                     border.width: Theme.borderWidth
                     border.color: Theme.stroke
                 }
@@ -723,7 +732,8 @@ ShellRoot {
                 width: span.w + pad * 2
                 height: barBody.height
                 radius: Theme.barRadius
-                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                color: bar.barGround
+                gradient: Theme.gradient ? bar.barShading : null
                 Behavior on x { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
                 Behavior on width { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
 
@@ -732,7 +742,9 @@ ShellRoot {
                     y: parent.atBottom ? parent.height - height : 0
                     width: parent.width
                     height: Math.min(parent.radius, parent.height / 2)
-                    color: parent.color
+                    // the shaded ground's own colour at that edge
+                    color: !Theme.gradient ? parent.color
+                        : parent.atBottom ? Theme.shadeBottom(parent.color) : Theme.shadeTop(parent.color)
                 }
             }
 

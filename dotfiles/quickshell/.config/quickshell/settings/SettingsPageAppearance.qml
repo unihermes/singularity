@@ -944,6 +944,18 @@ SettingsPage {
     }
 
     SettingsField {
+        label: "Gradient grounds"
+        hint: Settings.gradient ? "The bar and panels shade from lighter at the top to darker at the bottom"
+            : "Flat grounds"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.gradient
+            onToggled: Settings.set("gradient", !Settings.gradient)
+        }
+    }
+
+    SettingsField {
         label: "Shadows"
         hint: Theme.panelOpacity < 1 ? "Needs panels at full opacity — a shadow shows through a see-through one"
             : "Under flyouts, toasts and solid chips: blurred, or a hard offset block"

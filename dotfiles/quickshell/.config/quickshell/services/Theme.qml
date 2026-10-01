@@ -350,6 +350,10 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    // a top-to-bottom shading on grounds -- see Looks.js
+    readonly property bool gradient: Settings.gradient
+    function shadeTop(c) { return Qt.tint(c, Qt.rgba(1, 1, 1, isLight ? 0.35 : 0.06)) }
+    function shadeBottom(c) { return Qt.tint(c, Qt.rgba(0, 0, 0, isLight ? 0.06 : 0.12)) }
     // the weights text and its emphasis are set in -- see Looks.js
     readonly property int weightBody: Settings.textWeight === "light" ? Font.Light
         : Settings.textWeight === "medium" ? Font.Medium : Font.Normal

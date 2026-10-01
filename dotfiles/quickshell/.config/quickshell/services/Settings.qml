@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias gradient:    adapter.gradient
     readonly property alias boldWeight:  adapter.boldWeight
     readonly property alias textWeight:  adapter.textWeight
     readonly property alias headingFont: adapter.headingFont
@@ -838,6 +839,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property bool gradient: false
             property string boldWeight: "bold"
             property string textWeight: "regular"
             property string headingFont: ""

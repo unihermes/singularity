@@ -91,6 +91,7 @@ var entries = [
     { page: "appearance", section: "Colours",       label: "Second accent",        keywords: "secondary accent colour color meters levels visualizer two tone" },
     { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft offset brutalist" },
     { page: "appearance", section: "Bar",           label: "Levels",               keywords: "gauge meter volume brightness battery fill segments bar" },
+    { page: "appearance", section: "Style",         label: "Gradient grounds",     keywords: "gradient shading bar panels y2k aqua" },
     { page: "appearance", section: "Text",          label: "Bold weight",          keywords: "font weight bold black heavy emphasis" },
     { page: "appearance", section: "Text",          label: "Text weight",          keywords: "font weight light medium thin regular" },
     { page: "appearance", section: "Text",          label: "Heading font",         keywords: "headings typeface serif sans display" },

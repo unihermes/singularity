@@ -164,6 +164,9 @@
 //     textWeight   labels and body text: "light", "regular" or "medium"
 //     boldWeight   what's bold -- headings, titles: "medium", "bold" or
 //                  "black". A font without the weight draws its nearest
+//     gradient     true: the bar's ground and the panels shade from a
+//                  little lighter at the top to a little darker at the
+//                  bottom; false: flat grounds
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -256,6 +259,7 @@ var settingsBase = {
     headingFont: "",
     textWeight: "regular",
     boldWeight: "bold",
+    gradient: false,
     gaugeStyle: "fill",
 }
 

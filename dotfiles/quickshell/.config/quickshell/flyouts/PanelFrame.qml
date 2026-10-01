@@ -24,6 +24,12 @@ Rectangle {
 
     radius: Theme.panelRadius
     color: bare ? "transparent" : Theme.panelFill
+    // Theme.gradient: the same ground, shaded top to bottom
+    gradient: Theme.gradient && !bare ? shading : null
+    property Gradient shading: Gradient {
+        GradientStop { position: 0; color: Theme.shadeTop(root.color) }
+        GradientStop { position: 1; color: Theme.shadeBottom(root.color) }
+    }
     border.width: Theme.frameStroked && !bare ? Theme.borderWidth : 0
     border.color: Theme.frameAccent ? Theme.accent : Theme.stroke
 
