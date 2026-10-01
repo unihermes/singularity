@@ -259,9 +259,15 @@ is carried by lightness and weight.
 The shell (bar, flyouts, windows, settings, the launcher, notifications) and
 Alacritty all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
 `services/LookStore.qml`. A look sets the palette and accent colour, corner
-radius, stroke weight, frame style (double, single, bevel or none), module
-style (outline, filled, flat or pill), bar style (full width or floating),
-panel translucency, heading style, density, font and bar geometry.
+radius, stroke weight, frame style, module style, bar style and geometry,
+panel translucency, shadows (none, soft or hard), heading style, density and
+font, and how the bar draws its parts: workspaces, clock, the open windows
+(icons, the focused title, tabs or dots, with a choice of focused-window
+mark, for one workspace or all), app icons (colour, greyed or accent),
+the volume/brightness/battery levels (fill, segments or a rule) and the
+visualizer (mirrored, rising, dots or a line). With "One per look" on, each
+look also keeps its own wallpaper. Every one of these is listed in
+`services/Looks.js`.
 
 Neutrino is built into `services/Looks.js` and is what everything falls back
 to. The other shipped looks are data in `services/looks.json`: the dark

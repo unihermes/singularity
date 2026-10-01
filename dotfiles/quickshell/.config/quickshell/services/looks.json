@@ -39,7 +39,9 @@
             "barStyle": "floating",
             "barPosition": "top",
             "workspaceStyle": "dots",
-            "clockStyle": "time"
+            "clockStyle": "time",
+            "shadow": "soft",
+            "windowMark": "ground"
         }
     },
     "ember": {
@@ -81,7 +83,9 @@
             "barStyle": "islands",
             "barPosition": "top",
             "workspaceStyle": "pills",
-            "clockStyle": "day"
+            "clockStyle": "day",
+            "shadow": "soft",
+            "windowMark": "dot"
         }
     },
     "neon": {
@@ -124,7 +128,11 @@
             "barStyle": "floating",
             "barPosition": "top",
             "workspaceStyle": "blocks",
-            "clockStyle": "seconds"
+            "clockStyle": "seconds",
+            "windowMark": "above",
+            "iconTint": "accent",
+            "vizStyle": "line",
+            "shadow": "hard"
         }
     },
     "cathedral": {
@@ -168,7 +176,9 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "roman",
-            "clockStyle": "long"
+            "clockStyle": "long",
+            "windowMark": "box",
+            "vizStyle": "rise"
         },
         "layout": {
             "left": [
@@ -241,7 +251,11 @@
             "barStyle": "floating",
             "barPosition": "top",
             "workspaceStyle": "numbers",
-            "clockStyle": "iso"
+            "clockStyle": "iso",
+            "windowStyle": "dots",
+            "iconTint": "accent",
+            "vizStyle": "line",
+            "gaugeStyle": "rule"
         }
     },
     "phosphor": {
@@ -284,7 +298,10 @@
             "barStyle": "full",
             "barPosition": "bottom",
             "workspaceStyle": "numbers",
-            "clockStyle": "stamp"
+            "clockStyle": "stamp",
+            "iconTint": "accent",
+            "vizStyle": "dots",
+            "gaugeStyle": "segments"
         },
         "layout": {
             "left": [
@@ -354,7 +371,10 @@
             "barStyle": "notch",
             "barPosition": "top",
             "workspaceStyle": "lines",
-            "clockStyle": "time"
+            "clockStyle": "time",
+            "windowStyle": "dots",
+            "iconTint": "mono",
+            "gaugeStyle": "rule"
         },
         "layout": {
             "left": [
@@ -431,7 +451,10 @@
             "barStyle": "full",
             "barPosition": "bottom",
             "workspaceStyle": "numbers",
-            "clockStyle": "time"
+            "clockStyle": "time",
+            "windowStyle": "tabs",
+            "shadow": "hard",
+            "gaugeStyle": "segments"
         },
         "layout": {
             "left": [
@@ -502,7 +525,9 @@
             "barStyle": "full",
             "barPosition": "bottom",
             "workspaceStyle": "lines",
-            "clockStyle": "day"
+            "clockStyle": "day",
+            "windowMark": "pill",
+            "shadow": "soft"
         },
         "layout": {
             "left": [
@@ -578,7 +603,10 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "numbers",
-            "clockStyle": "stamp"
+            "clockStyle": "stamp",
+            "windowStyle": "tabs",
+            "shadow": "hard",
+            "gaugeStyle": "segments"
         }
     },
     "brutalist": {
@@ -622,7 +650,11 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "blocks",
-            "clockStyle": "iso"
+            "clockStyle": "iso",
+            "windowMark": "box",
+            "shadow": "hard",
+            "gaugeStyle": "segments",
+            "vizStyle": "rise"
         }
     },
     "moss": {
@@ -665,7 +697,9 @@
             "barStyle": "islands",
             "barPosition": "top",
             "workspaceStyle": "dots",
-            "clockStyle": "time"
+            "clockStyle": "time",
+            "windowMark": "ground",
+            "vizStyle": "rise"
         }
     },
     "amber": {
@@ -708,7 +742,10 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "numbers",
-            "clockStyle": "seconds"
+            "clockStyle": "seconds",
+            "iconTint": "accent",
+            "vizStyle": "dots",
+            "gaugeStyle": "segments"
         }
     },
     "dracula": {
@@ -750,7 +787,9 @@
             "barStyle": "floating",
             "barPosition": "top",
             "workspaceStyle": "pills",
-            "clockStyle": "day"
+            "clockStyle": "day",
+            "shadow": "soft",
+            "windowMark": "ground"
         }
     },
     "aubergine": {
@@ -792,7 +831,9 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "pills",
-            "clockStyle": "day"
+            "clockStyle": "day",
+            "windowMark": "dot",
+            "shadow": "soft"
         }
     },
     "cyberpunk": {
@@ -835,7 +876,11 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "blocks",
-            "clockStyle": "iso"
+            "clockStyle": "iso",
+            "iconTint": "accent",
+            "windowMark": "above",
+            "vizStyle": "line",
+            "shadow": "hard"
         }
     },
     "riso": {
@@ -877,7 +922,9 @@
             "barStyle": "islands",
             "barPosition": "bottom",
             "workspaceStyle": "dots",
-            "clockStyle": "day"
+            "clockStyle": "day",
+            "shadow": "hard",
+            "vizStyle": "rise"
         }
     },
     "swiss": {
@@ -920,7 +967,11 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "lines",
-            "clockStyle": "iso"
+            "clockStyle": "iso",
+            "windowStyle": "titled",
+            "windowMark": "above",
+            "iconTint": "mono",
+            "gaugeStyle": "rule"
         }
     },
     "redmond": {
@@ -968,7 +1019,10 @@
             "barStyle": "full",
             "barPosition": "bottom",
             "workspaceStyle": "numbers",
-            "clockStyle": "time"
+            "clockStyle": "time",
+            "windowStyle": "tabs",
+            "shadow": "hard",
+            "gaugeStyle": "segments"
         },
         "layout": {
             "left": [
@@ -1039,7 +1093,11 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "numbers",
-            "clockStyle": "time"
+            "clockStyle": "time",
+            "windowStyle": "titled",
+            "windowMark": "box",
+            "iconTint": "mono",
+            "shadow": "hard"
         },
         "layout": {
             "left": [
@@ -1110,7 +1168,9 @@
             "barStyle": "islands",
             "barPosition": "top",
             "workspaceStyle": "dots",
-            "clockStyle": "day"
+            "clockStyle": "day",
+            "shadow": "soft",
+            "windowMark": "dot"
         }
     },
     "eink": {
@@ -1151,7 +1211,10 @@
             "barStyle": "full",
             "barPosition": "top",
             "workspaceStyle": "lines",
-            "clockStyle": "long"
+            "clockStyle": "long",
+            "windowStyle": "titled",
+            "iconTint": "mono",
+            "vizStyle": "line"
         }
     },
     "solarized": {
@@ -1193,7 +1256,8 @@
             "barStyle": "floating",
             "barPosition": "top",
             "workspaceStyle": "numbers",
-            "clockStyle": "day"
+            "clockStyle": "day",
+            "windowMark": "ground"
         }
     }
 }
