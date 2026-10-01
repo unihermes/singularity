@@ -128,6 +128,7 @@ var looks = {
             base: "#0b0b0b", bar: "#121212", panel: "#141414", surface: "#1a1a1a", overlay: "#242424",
             border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#d4e4f4", bright: "#ebebeb",
         },
+        accent: "#5555c8",
         // desaturated hard, so they read as a tinted grey rather than alerts
         good: "#7d9b7d", alert: "#a87676",
         settings: {

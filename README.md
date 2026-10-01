@@ -246,8 +246,9 @@ keybind.
 
 ## Theme
 
-The default look, **Neutrino**, is one grayscale ramp with pale blue text. No
-other hues: emphasis is carried by lightness and weight instead.
+The default look, **Neutrino**, is one grayscale ramp with pale blue text and
+a single indigo accent (`#5555c8`) for focus and selection. Otherwise emphasis
+is carried by lightness and weight.
 
 | | | | |
 |---|---|---|---|
