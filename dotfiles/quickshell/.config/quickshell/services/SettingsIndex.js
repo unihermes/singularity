@@ -87,6 +87,7 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
     { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft offset brutalist" },
     { page: "appearance", section: "Bar",           label: "Levels",               keywords: "gauge meter volume brightness battery fill segments bar" },
+    { page: "appearance", section: "Bar",           label: "Clock format",         keywords: "custom time date format pattern qt" },
     { page: "appearance", section: "Bar",           label: "Tray drawer",          keywords: "system tray hide collapse chevron pin icons" },
     { page: "appearance", section: "Bar",           label: "Hover",                keywords: "pointer mouse highlight lift outline fill modules" },
     { page: "appearance", section: "Bar",           label: "Workspace names",      keywords: "label rename workspaces web code chat" },

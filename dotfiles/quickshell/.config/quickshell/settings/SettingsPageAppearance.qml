@@ -1182,6 +1182,28 @@ SettingsPage {
         Choices { key: "iconTint" }
     }
 
+    // the Custom clock style's pattern, in Qt's date format
+    SettingsField {
+        label: "Clock format"
+        hint: Theme.clockStyle !== "custom" ? "For the Custom clock style"
+            : "Now: " + Qt.formatDateTime(new Date(), Theme.hours(clockFmt.text || "HH:mm"))
+              + " — yyyy MM dd ddd HH mm ss, Enter to apply"
+
+        FlyoutInput {
+            id: clockFmt
+            anchors.right: parent.right
+            width: Theme.fit(240)
+            echoPassword: false
+            placeholder: "ddd HH:mm"
+            text: Settings.clockFormat
+            onAccepted: {
+                Settings.set("clockFormat", text.trim() || "HH:mm")
+                page.say("Clock format saved", false)
+            }
+            onEscapePressed: text = Settings.clockFormat
+        }
+    }
+
     SettingsField {
         label: "Clock island"
         hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar — toasts show until then"

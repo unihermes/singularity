@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias clockFormat: adapter.clockFormat
     readonly property alias trayDrawer:  adapter.trayDrawer
     readonly property alias hoverStyle:  adapter.hoverStyle
     readonly property alias workspaceNames: adapter.workspaceNames
@@ -156,7 +157,7 @@ Singleton {
         moduleStyle:  ["outline", "filled", "flat", "pill", "ghost", "bracket", "underline"],
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
         workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman", "names", "apps"],
-        clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso"],
+        clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
         windowStyle:  ["icons", "titled", "tabs", "dots"],
         windowScope:  ["workspace", "all"],
         windowMark:   ["pill", "dot", "above", "ground", "box"],
@@ -190,7 +191,7 @@ Singleton {
         "popin": "Pop", "zoom": "Zoom", "fade": "Fade", "fold": "Fold",
         "slide": "Slide", "rise": "Rise", "drop": "Drop",
         "stamp": "Time + date", "time": "Time", "seconds": "Seconds", "day": "Day + time",
-        "long": "Full date", "iso": "ISO date",
+        "long": "Full date", "iso": "ISO date", "custom": "Custom",
         "icons": "Icons", "titled": "Focused title", "tabs": "Tabs",
         "workspace": "This workspace", "all": "All workspaces",
         "pill": "Pill", "dot": "Dot", "above": "Line above", "ground": "Lit ground", "box": "Box",
@@ -803,6 +804,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string clockFormat: "ddd HH:mm"
             property bool trayDrawer: false
             property var trayPinned: []
             property string hoverStyle: "none"

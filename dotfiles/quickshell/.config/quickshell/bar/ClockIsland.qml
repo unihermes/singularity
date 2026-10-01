@@ -50,6 +50,7 @@ BarModule {
         long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
         seconds: "HH:mm:ss",
         iso:   "yyyy-MM-dd\u2002HH:mm",
+        custom: Settings.clockFormat || "HH:mm",
     })
     readonly property string timeText: Qt.formatDateTime(clockSource.date,
         Theme.hours(formats[Theme.clockStyle] || formats.stamp))

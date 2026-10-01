@@ -87,6 +87,7 @@
 //                  "day"      Fri 19 Sep  23:50
 //                  "long"     Friday, September 19 · 23:50
 //                  "iso"      2026-09-19  23:50
+//                  "custom"   Settings.clockFormat, a Qt date format
 //     windowStyle  "icons"    the open windows' icons, a short rule under each,
 //                             a long accent one under the focused window
 //                  "titled"   the same, with the focused window's title
