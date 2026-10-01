@@ -263,9 +263,9 @@ style (outline, filled, flat or pill), bar style (full width or floating),
 panel translucency, heading style, density, font and bar geometry.
 
 Neutrino is built into `services/Looks.js` and is what everything falls back
-to. The other shipped looks are data in `services/looks.json`: Soft, Paper,
-Frost, Win95 Dark, Platinum, NeXTSTEP, Phosphor, E-ink, Braun, Blueprint,
-Gruvbox, Kanagawa, Tokyo Night and Nord Light. Pick one from the carousel under
+to. The other shipped looks are data in `services/looks.json`: the dark
+Abyss, Ember, Neon, Cathedral, HUD, Phosphor and Void, then the light Riso,
+Swiss and Redmond (Windows 95). Pick one from the carousel under
 Settings → Appearance or in the Control Centre, where each value can then be
 adjusted, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
 set <name>`. To add a look, copy an entry in `looks.json`. Removing one from

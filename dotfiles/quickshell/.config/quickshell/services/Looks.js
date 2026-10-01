@@ -12,7 +12,7 @@
 // the shape described below.
 //
 // Switch looks from the Appearance page, the Control Centre, or a keybind:
-//   qs ipc call look cycle        qs ipc call look set terminal
+//   qs ipc call look cycle        qs ipc call look set phosphor
 //
 // A look has two halves:
 //

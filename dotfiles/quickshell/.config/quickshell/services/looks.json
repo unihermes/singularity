@@ -1,480 +1,82 @@
 {
-    "soft": {
-        "name": "Soft",
-        "description": "Cool slate, solid chips, round corners, room to breathe",
+    "abyss": {
+        "name": "Abyss",
+        "description": "Deep-sea navy, a floating bar of soft ghost chips, cyan glow, panels you can see through",
         "palette": {
-            "base": "#0f1013",
-            "bar": "#15161a",
-            "panel": "#181a1e",
-            "surface": "#1f2126",
-            "overlay": "#292b32",
-            "border": "#33363e",
-            "muted": "#4f535d",
-            "subtext": "#80858f",
-            "text": "#c6c9d0",
-            "bright": "#eceef3"
+            "base": "#050a12",
+            "bar": "#0a1220",
+            "panel": "#0c1626",
+            "surface": "#111d30",
+            "overlay": "#18273d",
+            "border": "#1f3149",
+            "muted": "#3b5370",
+            "subtext": "#7790ad",
+            "text": "#c4d6ea",
+            "bright": "#eef6ff"
         },
-        "good": "#84a38a",
-        "alert": "#b47f80",
-        "heading": {
-            "upper": false,
-            "bold": false,
-            "spacing": 0.5,
-            "rule": true,
-            "accent": false
-        },
-        "scrim": 0.35,
-        "settings": {
-            "radius": 10,
-            "barHeight": 36,
-            "moduleGap": 4,
-            "barOpacity": 92,
-            "frameStyle": "single",
-            "density": "roomy",
-            "fontFamily": "JetBrainsMono Nerd Font",
-            "moduleStyle": "filled",
-            "barStyle": "full"
-        }
-    },
-    "paper": {
-        "name": "Paper",
-        "description": "Light and warm, terracotta accents, a floating bar",
-        "palette": {
-            "base": "#dcd5c8",
-            "bar": "#f3efe7",
-            "panel": "#f8f5ef",
-            "surface": "#eee9df",
-            "overlay": "#e4ddd0",
-            "border": "#cfc6b6",
-            "muted": "#a59b8a",
-            "subtext": "#6f675a",
-            "text": "#39352e",
-            "bright": "#171512"
-        },
-        "accent": "#b8532b",
+        "accent": "#4fd6c8",
         "meterAccent": true,
-        "good": "#4c7a4f",
-        "alert": "#b3402f",
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": false,
-            "accent": true
-        },
-        "scrim": 0.25,
-        "settings": {
-            "radius": 8,
-            "barHeight": 34,
-            "moduleGap": 4,
-            "barOpacity": 96,
-            "frameStyle": "single",
-            "density": "normal",
-            "fontFamily": "BlexMono Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "floating"
-        }
-    },
-    "frost": {
-        "name": "Frost",
-        "description": "Arctic blue-grey, pill chips, translucent glassy panels",
-        "palette": {
-            "base": "#1c2028",
-            "bar": "#232833",
-            "panel": "#282e3a",
-            "surface": "#2f3644",
-            "overlay": "#39414f",
-            "border": "#434c5e",
-            "muted": "#5b667a",
-            "subtext": "#8f9aae",
-            "text": "#d8dee9",
-            "bright": "#eceff4"
-        },
-        "accent": "#88c0d0",
-        "meterAccent": true,
-        "good": "#a3be8c",
-        "alert": "#bf616a",
-        "panelOpacity": 0.9,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0.3,
-            "rule": false,
-            "accent": true
-        },
-        "scrim": 0.3,
-        "settings": {
-            "radius": 14,
-            "barHeight": 36,
-            "moduleGap": 4,
-            "barOpacity": 88,
-            "frameStyle": "single",
-            "density": "roomy",
-            "fontFamily": "GeistMono Nerd Font",
-            "moduleStyle": "pill",
-            "barStyle": "floating"
-        }
-    },
-    "win95dark": {
-        "name": "Win95 Dark",
-        "description": "Chiselled 3D chrome, navy accent, square and chunky",
-        "palette": {
-            "base": "#141417",
-            "bar": "#26262b",
-            "panel": "#2c2c32",
-            "surface": "#232328",
-            "overlay": "#3a3a42",
-            "border": "#0c0c0e",
-            "muted": "#57575f",
-            "subtext": "#9a9aa4",
-            "text": "#d6d6da",
-            "bright": "#ffffff"
-        },
-        "accent": "#2a52a0",
-        "meterAccent": true,
-        "good": "#3f8f4a",
-        "alert": "#b33a3a",
-        "borderWidth": 2,
-        "bevel": {
-            "light": "#6e6e78",
-            "dark": "#050506"
-        },
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": false
-        },
-        "scrim": 0.5,
-        "settings": {
-            "radius": 0,
-            "barHeight": 30,
-            "moduleGap": 0,
-            "barOpacity": 100,
-            "frameStyle": "bevel",
-            "density": "compact",
-            "fontFamily": "Mononoki Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "full"
-        }
-    },
-    "platinum": {
-        "name": "Platinum",
-        "description": "Mac OS 9: light grey bevels, lavender highlight, compact",
-        "palette": {
-            "base": "#a8a8a8",
-            "bar": "#dddddd",
-            "panel": "#e3e3e3",
-            "surface": "#d2d2d2",
-            "overlay": "#ccccf0",
-            "border": "#7a7a7a",
-            "muted": "#8e8e8e",
-            "subtext": "#555555",
-            "text": "#1f1f1f",
-            "bright": "#000000"
-        },
-        "accent": "#5555c8",
-        "meterAccent": true,
-        "good": "#2f7d32",
-        "alert": "#c62828",
-        "bevel": {
-            "light": "#ffffff",
-            "dark": "#6f6f6f"
-        },
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": false
-        },
-        "scrim": 0.3,
-        "settings": {
-            "radius": 2,
-            "barHeight": 30,
-            "moduleGap": 3,
-            "barOpacity": 100,
-            "frameStyle": "bevel",
-            "density": "compact",
-            "fontFamily": "CommitMono Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "full"
-        }
-    },
-    "nextstep": {
-        "name": "NeXTSTEP",
-        "description": "Mid-grey panels, hard black-and-white bevels, no colour at all",
-        "palette": {
-            "base": "#858585",
-            "bar": "#9a9a9a",
-            "panel": "#aaaaaa",
-            "surface": "#bcbcbc",
-            "overlay": "#ffffff",
-            "border": "#000000",
-            "muted": "#6a6a6a",
-            "subtext": "#333333",
-            "text": "#161616",
-            "bright": "#000000"
-        },
-        "good": "#1f5f1f",
-        "alert": "#8a0000",
-        "borderWidth": 2,
-        "bevel": {
-            "light": "#ffffff",
-            "dark": "#000000"
-        },
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": false,
-            "accent": false
-        },
+        "good": "#5fd39a",
+        "alert": "#f07a8a",
+        "panelOpacity": 0.88,
         "scrim": 0.45,
-        "settings": {
-            "radius": 0,
-            "barHeight": 30,
-            "moduleGap": 2,
-            "barOpacity": 100,
-            "frameStyle": "bevel",
-            "density": "normal",
-            "fontFamily": "SauceCodePro Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "full"
-        }
-    },
-    "braun": {
-        "name": "Braun",
-        "description": "Warm off-white, soft pills, one orange mark for what's active",
-        "palette": {
-            "base": "#d8d4cc",
-            "bar": "#efece6",
-            "panel": "#f4f2ee",
-            "surface": "#e8e5df",
-            "overlay": "#dedad2",
-            "border": "#c2bdb3",
-            "muted": "#9d978c",
-            "subtext": "#6b665e",
-            "text": "#2e2c29",
-            "bright": "#111111"
-        },
-        "accent": "#e8590c",
-        "meterAccent": false,
-        "good": "#5f7f4f",
-        "alert": "#c43d2b",
         "heading": {
-            "upper": true,
-            "bold": false,
-            "spacing": 1.5,
+            "upper": false,
+            "bold": true,
+            "spacing": 0,
             "rule": false,
-            "accent": false
+            "accent": true
         },
-        "scrim": 0.2,
         "settings": {
             "radius": 12,
-            "barHeight": 34,
-            "moduleGap": 6,
-            "barOpacity": 100,
-            "frameStyle": "none",
+            "barHeight": 36,
+            "moduleGap": 4,
+            "barOpacity": 85,
+            "frameStyle": "single",
             "density": "roomy",
-            "fontFamily": "GeistMono Nerd Font",
-            "moduleStyle": "pill",
-            "barStyle": "floating"
+            "fontFamily": "FiraCode Nerd Font",
+            "moduleStyle": "ghost",
+            "barStyle": "floating",
+            "barPosition": "top",
+            "workspaceStyle": "dots",
+            "clockStyle": "time"
         }
     },
-    "blueprint": {
-        "name": "Blueprint",
-        "description": "Navy ground, cyan hairlines, wide-spaced drafting headings",
+    "ember": {
+        "name": "Ember",
+        "description": "Warm charcoal and amber: three rounded islands of pill chips, like a fire left to glow",
         "palette": {
-            "base": "#0a1f3d",
-            "bar": "#0d2547",
-            "panel": "#0f2a52",
-            "surface": "#14335f",
-            "overlay": "#1b3f72",
-            "border": "#3d6fa8",
-            "muted": "#4f7fb5",
-            "subtext": "#8fb4dc",
-            "text": "#d4e6fa",
-            "bright": "#ffffff"
+            "base": "#120d0a",
+            "bar": "#1a1310",
+            "panel": "#1d1612",
+            "surface": "#251c17",
+            "overlay": "#30251e",
+            "border": "#3b2e25",
+            "muted": "#6b5545",
+            "subtext": "#a48a74",
+            "text": "#e8d5c2",
+            "bright": "#fff3e6"
         },
-        "accent": "#6fd3ff",
+        "accent": "#ff9e3d",
         "meterAccent": true,
-        "good": "#7fe0a8",
-        "alert": "#ff7a6b",
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 3,
-            "rule": true,
-            "accent": true
-        },
-        "scrim": 0.45,
-        "settings": {
-            "radius": 0,
-            "barHeight": 32,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "double",
-            "density": "normal",
-            "fontFamily": "SpaceMono Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "floating"
-        }
-    },
-    "gruvbox": {
-        "name": "Gruvbox",
-        "description": "Retro warm dark, cream text, yellow accent",
-        "palette": {
-            "base": "#1d2021",
-            "bar": "#282828",
-            "panel": "#32302f",
-            "surface": "#3c3836",
-            "overlay": "#504945",
-            "border": "#665c54",
-            "muted": "#7c6f64",
-            "subtext": "#a89984",
-            "text": "#ebdbb2",
-            "bright": "#fbf1c7"
-        },
-        "accent": "#fabd2f",
-        "meterAccent": true,
-        "good": "#b8bb26",
-        "alert": "#fb4934",
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 1,
-            "rule": true,
-            "accent": true
-        },
-        "scrim": 0.45,
-        "settings": {
-            "radius": 4,
-            "barHeight": 34,
-            "moduleGap": 3,
-            "barOpacity": 100,
-            "frameStyle": "single",
-            "density": "normal",
-            "fontFamily": "UbuntuMono Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "full"
-        }
-    },
-    "kanagawa": {
-        "name": "Kanagawa",
-        "description": "Ink-wash indigo, parchment text, double frames",
-        "palette": {
-            "base": "#16161d",
-            "bar": "#1f1f28",
-            "panel": "#24242f",
-            "surface": "#2a2a37",
-            "overlay": "#363646",
-            "border": "#54546d",
-            "muted": "#727169",
-            "subtext": "#938aa9",
-            "text": "#dcd7ba",
-            "bright": "#f2ecbc"
-        },
-        "accent": "#7e9cd8",
-        "meterAccent": true,
-        "good": "#98bb6c",
-        "alert": "#ff5d62",
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0.5,
-            "rule": true,
-            "accent": false
-        },
-        "scrim": 0.45,
-        "settings": {
-            "radius": 6,
-            "barHeight": 34,
-            "moduleGap": 2,
-            "barOpacity": 100,
-            "frameStyle": "double",
-            "density": "normal",
-            "fontFamily": "CommitMono Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "full"
-        }
-    },
-    "tokyonight": {
-        "name": "Tokyo Night",
-        "description": "Deep blue night, periwinkle accent, solid floating chips",
-        "palette": {
-            "base": "#16161e",
-            "bar": "#1a1b26",
-            "panel": "#1f2335",
-            "surface": "#24283b",
-            "overlay": "#292e42",
-            "border": "#3b4261",
-            "muted": "#565f89",
-            "subtext": "#737aa2",
-            "text": "#c0caf5",
-            "bright": "#e6ebff"
-        },
-        "accent": "#7aa2f7",
-        "meterAccent": true,
-        "good": "#9ece6a",
-        "alert": "#f7768e",
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 1.5,
-            "rule": false,
-            "accent": true
-        },
+        "good": "#a9c46c",
+        "alert": "#ef6a4c",
         "scrim": 0.4,
-        "settings": {
-            "radius": 10,
-            "barHeight": 34,
-            "moduleGap": 4,
-            "barOpacity": 92,
-            "frameStyle": "single",
-            "density": "normal",
-            "fontFamily": "JetBrainsMono Nerd Font",
-            "moduleStyle": "filled",
-            "barStyle": "floating"
-        }
-    },
-    "archipelago": {
-        "name": "Archipelago",
-        "description": "No bar: three floating islands, soft lavender on deep indigo, pill chips, big curves",
-        "palette": {
-            "base": "#11111b",
-            "bar": "#1e1e2e",
-            "panel": "#1e1e2e",
-            "surface": "#262637",
-            "overlay": "#313244",
-            "border": "#3b3c52",
-            "muted": "#585b70",
-            "subtext": "#9399b2",
-            "text": "#cdd6f4",
-            "bright": "#f5f7ff"
-        },
-        "accent": "#cba6f7",
-        "meterAccent": true,
-        "good": "#a6e3a1",
-        "alert": "#f38ba8",
-        "panelOpacity": 0.94,
         "heading": {
             "upper": false,
             "bold": true,
-            "spacing": 0.2,
-            "rule": false,
+            "spacing": 0,
+            "rule": true,
             "accent": true
         },
-        "scrim": 0.35,
         "settings": {
             "radius": 14,
-            "barHeight": 38,
+            "barHeight": 34,
             "moduleGap": 6,
-            "barOpacity": 94,
+            "barOpacity": 100,
             "frameStyle": "none",
             "density": "roomy",
-            "fontFamily": "GeistMono Nerd Font",
+            "fontFamily": "CommitMono Nerd Font",
             "moduleStyle": "pill",
             "barStyle": "islands",
             "barPosition": "top",
@@ -482,26 +84,187 @@
             "clockStyle": "day"
         }
     },
-    "terminal": {
-        "name": "Terminal",
-        "description": "A tmux status line along the bottom: bracketed readouts, phosphor green, clock at the far right, no motion",
+    "neon": {
+        "name": "Neon",
+        "description": "Synthwave night: magenta strokes around everything, thick edges, square workspaces, seconds ticking",
         "palette": {
-            "base": "#080a08",
-            "bar": "#0d100d",
-            "panel": "#101410",
-            "surface": "#151a15",
-            "overlay": "#1d241d",
-            "border": "#2a352a",
-            "muted": "#4a5c4a",
-            "subtext": "#7a947a",
-            "text": "#b8d4b0",
-            "bright": "#e4f5dc"
+            "base": "#0a0612",
+            "bar": "#110a1e",
+            "panel": "#140c24",
+            "surface": "#1b1130",
+            "overlay": "#26173f",
+            "border": "#3a2260",
+            "muted": "#5d4785",
+            "subtext": "#9884c2",
+            "text": "#e2d6ff",
+            "bright": "#ffffff"
         },
-        "accent": "#9fe870",
+        "accent": "#ff3ea5",
         "meterAccent": true,
-        "good": "#9fe870",
-        "alert": "#e8705f",
+        "good": "#3effc1",
+        "alert": "#ff5f5f",
+        "borderWidth": 2,
+        "scrim": 0.5,
+        "heading": {
+            "upper": true,
+            "bold": true,
+            "spacing": 2,
+            "rule": true,
+            "accent": true
+        },
+        "settings": {
+            "radius": 4,
+            "barHeight": 32,
+            "moduleGap": 4,
+            "barOpacity": 100,
+            "frameStyle": "accent",
+            "density": "normal",
+            "fontFamily": "Hack Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "floating",
+            "barPosition": "top",
+            "workspaceStyle": "blocks",
+            "clockStyle": "seconds"
+        }
+    },
+    "cathedral": {
+        "name": "Cathedral",
+        "description": "Candlelit stone and oxblood: etched grooves, Roman numerals, the date spelled out in full",
+        "palette": {
+            "base": "#0c0a0a",
+            "bar": "#141111",
+            "panel": "#171313",
+            "surface": "#1e1919",
+            "overlay": "#2a2222",
+            "border": "#3a2f2d",
+            "muted": "#5e4f4b",
+            "subtext": "#9a8780",
+            "text": "#d9cbc2",
+            "bright": "#f4e9df"
+        },
+        "accent": "#b8323f",
+        "meterAccent": false,
+        "good": "#7f9a6a",
+        "alert": "#d0473f",
+        "borderWidth": 2,
+        "scrim": 0.6,
+        "motion": 0.8,
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 2,
+            "rule": true,
+            "accent": true
+        },
+        "settings": {
+            "radius": 0,
+            "barHeight": 34,
+            "moduleGap": 2,
+            "barOpacity": 100,
+            "frameStyle": "groove",
+            "density": "roomy",
+            "fontFamily": "BlexMono Nerd Font",
+            "moduleStyle": "flat",
+            "barStyle": "full",
+            "barPosition": "top",
+            "workspaceStyle": "roman",
+            "clockStyle": "long"
+        },
+        "layout": {
+            "left": [
+                "controlcentre",
+                "windows",
+                "tray"
+            ],
+            "centre": [
+                "workspaces"
+            ],
+            "right": [
+                "media",
+                "privacy",
+                "failed",
+                "updates",
+                "claude",
+                "notifications",
+                "network",
+                "bluetooth",
+                "volume",
+                "brightness",
+                "battery",
+                "weather",
+                "clock"
+            ],
+            "hidden": [
+                "visualizer"
+            ],
+            "anchor": "workspaces"
+        }
+    },
+    "hud": {
+        "name": "HUD",
+        "description": "A heads-up display: a smoked-glass strip, corner brackets on every readout, amber figures in ISO time",
+        "palette": {
+            "base": "#07090a",
+            "bar": "#0c1012",
+            "panel": "#0e1315",
+            "surface": "#141a1d",
+            "overlay": "#1c2428",
+            "border": "#2a363b",
+            "muted": "#4a5a60",
+            "subtext": "#7f949b",
+            "text": "#c9d6da",
+            "bright": "#f0f7f9"
+        },
+        "accent": "#ffb000",
+        "meterAccent": true,
+        "good": "#9be36c",
+        "alert": "#ff5a3c",
+        "panelOpacity": 0.9,
+        "scrim": 0.5,
+        "motion": 0.6,
+        "heading": {
+            "upper": true,
+            "bold": true,
+            "spacing": 3,
+            "rule": false,
+            "accent": true
+        },
+        "settings": {
+            "radius": 0,
+            "barHeight": 30,
+            "moduleGap": 6,
+            "barOpacity": 75,
+            "frameStyle": "corners",
+            "density": "compact",
+            "fontFamily": "SpaceMono Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "floating",
+            "barPosition": "top",
+            "workspaceStyle": "numbers",
+            "clockStyle": "iso"
+        }
+    },
+    "phosphor": {
+        "name": "Phosphor",
+        "description": "A tmux status line along the bottom: bracketed readouts, green CRT glow, nothing ever moves",
+        "palette": {
+            "base": "#060906",
+            "bar": "#0b0f0b",
+            "panel": "#0e130e",
+            "surface": "#131a13",
+            "overlay": "#1b241b",
+            "border": "#273427",
+            "muted": "#466046",
+            "subtext": "#76967a",
+            "text": "#b2d6aa",
+            "bright": "#e2f7d8"
+        },
+        "accent": "#8fef5f",
+        "meterAccent": true,
+        "good": "#8fef5f",
+        "alert": "#ef705f",
         "motion": 0,
+        "scrim": 0.55,
         "heading": {
             "upper": true,
             "bold": true,
@@ -509,7 +272,6 @@
             "rule": true,
             "accent": true
         },
-        "scrim": 0.55,
         "settings": {
             "radius": 0,
             "barHeight": 26,
@@ -549,64 +311,59 @@
                 "clock"
             ],
             "hidden": [
-                "overview",
                 "visualizer"
             ],
             "anchor": ""
         }
     },
-    "notch": {
-        "name": "Notch",
-        "description": "No bar, just a black notch hanging from the top that holds workspaces, clock and track; everything else bare at the edges",
+    "void": {
+        "name": "Void",
+        "description": "True black and nothing else: no colour, a notch holding the time, bare glyphs at the edges",
         "palette": {
-            "base": "#0c0c0e",
+            "base": "#000000",
             "bar": "#000000",
-            "panel": "#121214",
-            "surface": "#1c1c1f",
-            "overlay": "#26262a",
-            "border": "#2e2e33",
-            "muted": "#55555c",
-            "subtext": "#8b8b93",
-            "text": "#d8d8de",
+            "panel": "#0a0a0a",
+            "surface": "#121212",
+            "overlay": "#1c1c1c",
+            "border": "#262626",
+            "muted": "#4a4a4a",
+            "subtext": "#858585",
+            "text": "#cfcfcf",
             "bright": "#ffffff"
         },
-        "accent": "#ff9f0a",
-        "meterAccent": true,
-        "good": "#30d158",
-        "alert": "#ff453a",
-        "panelOpacity": 0.96,
+        "good": "#9a9a9a",
+        "alert": "#e05a5a",
+        "panelOpacity": 0.94,
+        "scrim": 0.7,
         "heading": {
             "upper": false,
-            "bold": true,
+            "bold": false,
             "spacing": 0,
             "rule": false,
             "accent": false
         },
-        "scrim": 0.3,
         "settings": {
             "radius": 14,
-            "barHeight": 34,
-            "moduleGap": 6,
+            "barHeight": 32,
+            "moduleGap": 8,
             "barOpacity": 100,
             "frameStyle": "none",
             "density": "roomy",
-            "fontFamily": "MartianMono Nerd Font",
-            "moduleStyle": "flat",
+            "fontFamily": "UbuntuMono Nerd Font",
+            "moduleStyle": "pill",
             "barStyle": "notch",
             "barPosition": "top",
-            "workspaceStyle": "pills",
+            "workspaceStyle": "lines",
             "clockStyle": "time"
         },
         "layout": {
             "left": [
                 "controlcentre",
-                "windows",
-                "tray"
+                "windows"
             ],
             "centre": [
                 "workspaces",
                 "clock",
-                "media",
                 "visualizer"
             ],
             "right": [
@@ -615,150 +372,167 @@
                 "updates",
                 "claude",
                 "notifications",
+                "tray",
                 "network",
                 "bluetooth",
                 "volume",
                 "battery"
             ],
             "hidden": [
-                "overview",
+                "media",
                 "weather",
                 "brightness"
             ],
             "anchor": "clock"
         }
     },
-    "strata": {
-        "name": "Strata",
-        "description": "Polybar-style underlined readouts on solarized teal: clock and weather lead, roman workspaces in the middle, system to the right",
+    "riso": {
+        "name": "Riso",
+        "description": "Risograph print: warm newsprint, fluorescent pink and blue ink, rounded islands",
         "palette": {
-            "base": "#002029",
-            "bar": "#002b36",
-            "panel": "#073642",
-            "surface": "#0a3d4a",
-            "overlay": "#0f4a58",
-            "border": "#1d5968",
-            "muted": "#586e75",
-            "subtext": "#839496",
-            "text": "#c5cfc9",
-            "bright": "#fdf6e3"
+            "base": "#e4dccb",
+            "bar": "#f4efe4",
+            "panel": "#f7f3ea",
+            "surface": "#ece5d6",
+            "overlay": "#e6dccb",
+            "border": "#cfc2aa",
+            "muted": "#a3967f",
+            "subtext": "#6f6556",
+            "text": "#2c2924",
+            "bright": "#0f0e0c"
         },
-        "accent": "#2aa198",
+        "accent": "#ff4f8b",
         "meterAccent": true,
-        "good": "#859900",
-        "alert": "#dc322f",
+        "good": "#2e7fd1",
+        "alert": "#e6492d",
+        "scrim": 0.25,
         "heading": {
             "upper": true,
-            "bold": false,
+            "bold": true,
             "spacing": 2,
-            "rule": true,
+            "rule": false,
             "accent": true
         },
-        "scrim": 0.45,
         "settings": {
-            "radius": 0,
-            "barHeight": 30,
-            "moduleGap": 10,
+            "radius": 14,
+            "barHeight": 34,
+            "moduleGap": 6,
             "barOpacity": 100,
             "frameStyle": "single",
-            "density": "normal",
-            "fontFamily": "Iosevka Nerd Font",
-            "moduleStyle": "underline",
-            "barStyle": "full",
-            "barPosition": "top",
-            "workspaceStyle": "roman",
+            "density": "roomy",
+            "fontFamily": "SpaceMono Nerd Font",
+            "moduleStyle": "pill",
+            "barStyle": "islands",
+            "barPosition": "bottom",
+            "workspaceStyle": "dots",
             "clockStyle": "day"
-        },
-        "layout": {
-            "left": [
-                "clock",
-                "weather",
-                "media",
-                "visualizer"
-            ],
-            "centre": [
-                "workspaces"
-            ],
-            "right": [
-                "windows",
-                "tray",
-                "privacy",
-                "failed",
-                "updates",
-                "claude",
-                "notifications",
-                "network",
-                "bluetooth",
-                "volume",
-                "brightness",
-                "battery",
-                "controlcentre"
-            ],
-            "hidden": [
-                "overview"
-            ],
-            "anchor": "workspaces"
         }
     },
-    "dock": {
-        "name": "Dock",
-        "description": "A light, tall dock along the bottom: workspaces and open apps gathered in the middle island, status to the right",
+    "swiss": {
+        "name": "Swiss",
+        "description": "International style: white page, black type, one red, underlined readouts on a strict grid",
         "palette": {
-            "base": "#c9ced6",
-            "bar": "#f4f6f9",
-            "panel": "#fbfcfd",
-            "surface": "#e9edf2",
-            "overlay": "#dde3ea",
-            "border": "#c3cad4",
-            "muted": "#98a1ae",
-            "subtext": "#5f6875",
-            "text": "#2a3038",
-            "bright": "#0d1116"
+            "base": "#e6e6e6",
+            "bar": "#ffffff",
+            "panel": "#fbfbfb",
+            "surface": "#f2f2f2",
+            "overlay": "#e9e9e9",
+            "border": "#1a1a1a",
+            "muted": "#9a9a9a",
+            "subtext": "#5c5c5c",
+            "text": "#1a1a1a",
+            "bright": "#000000"
         },
-        "accent": "#3b7bf6",
+        "accent": "#e3000f",
         "meterAccent": true,
-        "good": "#2f9e5a",
-        "alert": "#d9443a",
-        "panelOpacity": 0.95,
+        "good": "#00875a",
+        "alert": "#e3000f",
+        "scrim": 0.2,
+        "motion": 0.7,
         "heading": {
             "upper": false,
             "bold": true,
             "spacing": 0,
-            "rule": false,
+            "rule": true,
             "accent": false
         },
-        "scrim": 0.2,
         "settings": {
-            "radius": 14,
-            "barHeight": 44,
-            "moduleGap": 8,
-            "barOpacity": 90,
-            "frameStyle": "none",
-            "density": "roomy",
-            "fontFamily": "CaskaydiaCove Nerd Font",
-            "moduleStyle": "pill",
-            "barStyle": "islands",
+            "radius": 0,
+            "barHeight": 32,
+            "moduleGap": 4,
+            "barOpacity": 100,
+            "frameStyle": "single",
+            "density": "normal",
+            "fontFamily": "BlexMono Nerd Font",
+            "moduleStyle": "underline",
+            "barStyle": "full",
+            "barPosition": "top",
+            "workspaceStyle": "lines",
+            "clockStyle": "iso"
+        }
+    },
+    "redmond": {
+        "name": "Redmond",
+        "description": "Windows 95: grey chiselled chrome, a taskbar along the bottom, navy highlights, no rounding anywhere",
+        "palette": {
+            "base": "#ffffff",
+            "bar": "#c0c0c0",
+            "panel": "#c0c0c0",
+            "surface": "#b4b4b4",
+            "overlay": "#a9b3cf",
+            "border": "#808080",
+            "muted": "#808080",
+            "subtext": "#404040",
+            "text": "#000000",
+            "bright": "#000000"
+        },
+        "accent": "#000080",
+        "meterAccent": true,
+        "good": "#008000",
+        "alert": "#c00000",
+        "borderWidth": 2,
+        "bevel": {
+            "light": "#ffffff",
+            "dark": "#404040"
+        },
+        "motion": 0.5,
+        "scrim": 0.35,
+        "heading": {
+            "upper": false,
+            "bold": true,
+            "spacing": 0,
+            "rule": true,
+            "accent": false
+        },
+        "settings": {
+            "radius": 0,
+            "barHeight": 30,
+            "moduleGap": 2,
+            "barOpacity": 100,
+            "frameStyle": "bevel",
+            "density": "compact",
+            "fontFamily": "Mononoki Nerd Font",
+            "moduleStyle": "outline",
+            "barStyle": "full",
             "barPosition": "bottom",
-            "workspaceStyle": "blocks",
-            "clockStyle": "long"
+            "workspaceStyle": "numbers",
+            "clockStyle": "time"
         },
         "layout": {
             "left": [
                 "controlcentre",
-                "overview"
-            ],
-            "centre": [
                 "workspaces",
-                "windows",
-                "media"
+                "windows"
             ],
+            "centre": [],
             "right": [
-                "tray",
+                "media",
                 "privacy",
                 "failed",
                 "updates",
                 "claude",
                 "notifications",
+                "tray",
                 "network",
                 "bluetooth",
                 "volume",
@@ -771,78 +545,6 @@
                 "visualizer"
             ],
             "anchor": ""
-        }
-    },
-    "zen": {
-        "name": "Zen",
-        "description": "Almost nothing: workspaces, the time and the battery on three small pebbles; the rest only appears when it needs you",
-        "palette": {
-            "base": "#151412",
-            "bar": "#1b1a18",
-            "panel": "#1f1e1b",
-            "surface": "#262521",
-            "overlay": "#302e2a",
-            "border": "#3a3833",
-            "muted": "#5e5a52",
-            "subtext": "#8d877c",
-            "text": "#cfc8bb",
-            "bright": "#efe9dd"
-        },
-        "accent": "#b5a27a",
-        "meterAccent": false,
-        "good": "#8fa27a",
-        "alert": "#b87a6a",
-        "heading": {
-            "upper": false,
-            "bold": false,
-            "spacing": 0.5,
-            "rule": false,
-            "accent": false
-        },
-        "scrim": 0.3,
-        "settings": {
-            "radius": 14,
-            "barHeight": 30,
-            "moduleGap": 14,
-            "barOpacity": 88,
-            "frameStyle": "none",
-            "density": "roomy",
-            "fontFamily": "VictorMono Nerd Font",
-            "moduleStyle": "flat",
-            "barStyle": "islands",
-            "barPosition": "top",
-            "workspaceStyle": "pills",
-            "clockStyle": "time"
-        },
-        "layout": {
-            "left": [
-                "workspaces"
-            ],
-            "centre": [
-                "clock"
-            ],
-            "right": [
-                "privacy",
-                "failed",
-                "notifications",
-                "battery",
-                "controlcentre"
-            ],
-            "hidden": [
-                "overview",
-                "windows",
-                "media",
-                "visualizer",
-                "weather",
-                "updates",
-                "claude",
-                "tray",
-                "bluetooth",
-                "network",
-                "volume",
-                "brightness"
-            ],
-            "anchor": "clock"
         }
     }
 }
