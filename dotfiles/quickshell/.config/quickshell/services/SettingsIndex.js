@@ -87,6 +87,7 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
     { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft offset brutalist" },
     { page: "appearance", section: "Bar",           label: "Levels",               keywords: "gauge meter volume brightness battery fill segments bar" },
+    { page: "appearance", section: "Bar",           label: "Separators",           keywords: "divider between modules powerline chevron dots lines" },
     { page: "notifications", section: "Popups", label: "Group by app",          keywords: "stack collapse same app count" },
     { page: "appearance", section: "Panels",        label: "Urgency stripe",       keywords: "notifications stripe edge colour critical urgency" },
     { page: "appearance", section: "Panels",        label: "Notification popups",  keywords: "notifications cards compact banner style" },

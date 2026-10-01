@@ -954,7 +954,7 @@ ShellRoot {
                 for (var i = 0; i < o.length; i++) {
                     if (o[i] === key) return x
                     var it = slots.itemFor(o[i])
-                    if (it && it.visible) x += it.width + Theme.moduleGap
+                    if (it && it.visible) x += it.width + Theme.moduleSpacing
                 }
                 return x
             }
@@ -965,7 +965,7 @@ ShellRoot {
             // Rounded, since a half-pixel x blurs the chip borders.
             function centreX(key) {
                 var o = centreSlots.order
-                var gap = Theme.moduleGap
+                var gap = Theme.moduleSpacing
                 var ai = o.indexOf(Settings.centreAnchor)
                 var anchorItem = ai >= 0 ? widgetItem(o[ai]) : null
                 var ki = o.indexOf(key)
@@ -1007,7 +1007,7 @@ ShellRoot {
                     var it = slots.itemFor(o[i])
                     if (it && it.visible) { w += it.width; n++ }
                 }
-                return w + Math.max(0, n - 1) * Theme.moduleGap
+                return w + Math.max(0, n - 1) * Theme.moduleSpacing
             }
 
             // Slides modules when the order changes, but not at startup,
@@ -1041,6 +1041,8 @@ ShellRoot {
 
                 readonly property var order: Settings.widgetOrder("left")
                 function itemFor(k) { return bar.widgetItem(k) }
+
+                ModuleSeparators { slots: leftSlots }
             }
 
             // --- centre -----------------------------------------------
@@ -1055,6 +1057,8 @@ ShellRoot {
 
                 readonly property var order: Settings.widgetOrder("centre")
                 function itemFor(k) { return bar.widgetItem(k) }
+
+                ModuleSeparators { slots: centreSlots }
             }
 
             // --- right: system modules --------------------------------
@@ -1075,6 +1079,8 @@ ShellRoot {
 
                 readonly property var order: Settings.widgetOrder("right")
                 function itemFor(k) { return bar.widgetItem(k) }
+
+                ModuleSeparators { slots: rightSlots }
             }
 
             // Keep Awake. The Wayland idle-inhibit protocol, rather than

@@ -344,6 +344,10 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    // between the bar's modules, and the room each gap takes with one
+    readonly property string barSeparator: Settings.barSeparator
+    readonly property int moduleSpacing: moduleGap + (barSeparator === "none" ? 0
+        : barSeparator === "chevron" ? barFs(14) : spaceL)
     readonly property bool notifStripe: Settings.notifStripe
     // notification popups -- see Looks.js and NotificationCard
     readonly property string notifStyle: Settings.notifStyle

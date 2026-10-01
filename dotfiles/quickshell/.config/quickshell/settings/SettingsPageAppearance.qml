@@ -1082,6 +1082,12 @@ SettingsPage {
         Choice { key: "moduleStyle" }
     }
 
+    SettingsField {
+        label: "Separators"
+        hint: "Between the bar's modules: nothing, a line, a dot, or a powerline chevron"
+        Choices { key: "barSeparator" }
+    }
+
     Stepper { label: "Module gap"; hint: "Space between modules"; key: "moduleGap"; suffix: "px" }
     Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
 

@@ -137,6 +137,8 @@
 //                  hovered, "banner" one line of summary and body
 //     notifStripe  true: a stripe down a notification's edge, in the
 //                  accent, the alert colour when critical, muted when low
+//     barSeparator between the bar's modules: "none", a thin "line", a
+//                  "dot", or a powerline-style "chevron"
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -218,6 +220,7 @@ var settingsBase = {
     launcherDetails: true,
     notifStyle: "full",
     notifStripe: false,
+    barSeparator: "none",
     gaugeStyle: "fill",
 }
 
