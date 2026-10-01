@@ -334,6 +334,9 @@ Singleton {
     readonly property string windowScope: Settings.windowScope
     readonly property string windowMark: Settings.windowMark
     readonly property string iconTint: Settings.iconTint
+    // under panels and solid chips -- see Looks.js and flyouts/Shadow.qml
+    readonly property string shadow: Settings.shadow
+    readonly property int shadowOffset: Math.max(3, borderWidth * 2)
     // A Qt date format with its 24-hour fields turned 12-hour when Date &
     // Time asks for that; every clock in the shell formats through this.
     function hours(fmt) {

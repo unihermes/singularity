@@ -11,4 +11,6 @@ import "../flyouts"
 
 PanelFrame {
     color: Theme.panelTint
+    // see-through, and inside a window that has its own
+    shadowed: false
 }

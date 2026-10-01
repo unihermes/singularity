@@ -97,6 +97,11 @@
 //     iconTint     "colour"   app icons as they are
 //                  "mono"     greyed, so they sit in a colourless look
 //                  "accent"   tinted the accent's hue
+//     shadow       "none"     panels and chips sit flat
+//                  "soft"     a blurred drop shadow under flyouts, the
+//                             shell's panels and solid chips
+//                  "hard"     a solid offset copy of the shape instead --
+//                             Windows 95, or a brutalist poster
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -168,6 +173,7 @@ var settingsBase = {
     windowScope: "workspace",
     windowMark: "pill",
     iconTint: "colour",
+    shadow: "none",
 }
 
 // The parts of the fixed half the Appearance page can also adjust. The look

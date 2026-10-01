@@ -18,7 +18,8 @@ Item {
 
     anchors.fill: parent
 
-    PanelFrame { anchors.fill: parent }
+    // Hyprland shadows the window itself
+    PanelFrame { anchors.fill: parent; shadowed: false }
 
     // Escape anywhere in the window. A text field with focus takes Escape
     // itself (to clear, or to close an editor), so this only fires when

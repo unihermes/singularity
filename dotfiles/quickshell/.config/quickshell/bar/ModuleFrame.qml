@@ -81,6 +81,11 @@ Item {
 
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
+        Shadow {
+            radius: frame.radius
+            opaque: frame.solid
+        }
+
         Bevel {
             visible: frame.bevel
             anchors.fill: parent

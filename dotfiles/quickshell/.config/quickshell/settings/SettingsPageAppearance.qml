@@ -877,6 +877,13 @@ SettingsPage {
         Choice { key: "frameStyle" }
     }
 
+    SettingsField {
+        label: "Shadows"
+        hint: Theme.panelOpacity < 1 ? "Needs panels at full opacity — a shadow shows through a see-through one"
+            : "Under flyouts, toasts and solid chips: blurred, or a hard offset block"
+        Choices { key: "shadow" }
+    }
+
     Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }
     Stepper { label: "Corner radius"; hint: "Modules, flyouts, windows of the shell, wofi and notifications"; key: "radius"; suffix: "px" }
     Stepper { label: "Panel opacity"; hint: "Flyouts, the shell's windows, wofi and notifications. Below 100% the blur behind shows through"; key: "panelOpacity"; step: 5; suffix: "%" }

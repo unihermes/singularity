@@ -24,6 +24,14 @@ Rectangle {
     border.width: Theme.frameStroked ? Theme.borderWidth : 0
     border.color: Theme.frameAccent ? Theme.accent : Theme.stroke
 
+    // false for panels inside a window Hyprland already shadows
+    property bool shadowed: true
+
+    Shadow {
+        radius: root.radius
+        opaque: root.shadowed && Theme.panelOpacity >= 1
+    }
+
     Bevel {
         visible: Theme.frameChiselled
         anchors.fill: parent
