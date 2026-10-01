@@ -46,6 +46,11 @@ import QtQuick
 ShellRoot {
     id: root
 
+    // Wallpaper runs the rotation timer and each look's own wallpaper, so it
+    // has to exist from startup -- a singleton is only built when something
+    // first reads it, which in grayscale mode is the Appearance page
+    readonly property string wallpaper: Wallpaper.current
+
     // Keep Awake, from Quick Actions. Held here rather than on a bar because
     // every screen gets its own bar, and a per-screen flag would let one
     // monitor's menu say "on" while another's says "off". Session-only on
