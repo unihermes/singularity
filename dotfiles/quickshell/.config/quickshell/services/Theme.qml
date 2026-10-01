@@ -346,6 +346,9 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    readonly property string overviewBackdrop: Settings.overviewBackdrop
+    // the workspace overview -- see Looks.js and WorkspaceOverlay
+    readonly property string overviewLayout: Settings.overviewLayout
     // the ALT+Tab switcher -- see Looks.js and AltTabSwitcher
     readonly property string altTabStyle: Settings.altTabStyle
     // a bar module under the pointer -- see Looks.js and ModuleFrame

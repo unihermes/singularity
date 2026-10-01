@@ -148,6 +148,10 @@
 //     altTabStyle  the ALT+Tab switcher's cards: "icons", "titled" an icon
 //                  over each window's title, "previews" a still of each
 //                  window with its app's icon in the corner
+//     overviewLayout SUPER+W's workspaces: a "grid" three across, or a
+//                  "strip" of every workspace in one row
+//     overviewBackdrop behind the overview: the desktop "dim"med by the
+//                  overlay dimming, "clear", or hidden behind a "solid" ground
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -232,6 +236,8 @@ var settingsBase = {
     barSeparator: "none",
     hoverStyle: "none",
     altTabStyle: "icons",
+    overviewLayout: "grid",
+    overviewBackdrop: "dim",
     gaugeStyle: "fill",
 }
 

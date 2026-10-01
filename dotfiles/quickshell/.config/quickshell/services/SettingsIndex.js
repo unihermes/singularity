@@ -90,6 +90,8 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
     { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft offset brutalist" },
     { page: "appearance", section: "Bar",           label: "Levels",               keywords: "gauge meter volume brightness battery fill segments bar" },
+    { page: "appearance", section: "Panels",        label: "Overview backdrop",    keywords: "super w overview background dim solid clear" },
+    { page: "appearance", section: "Panels",        label: "Workspace overview",   keywords: "super w overview grid row strip expose" },
     { page: "appearance", section: "Panels",        label: "Window switcher",      keywords: "alt tab switcher previews thumbnails icons titles" },
     { page: "appearance", section: "Bar",           label: "Clock format",         keywords: "custom time date format pattern qt" },
     { page: "appearance", section: "Bar",           label: "Tray drawer",          keywords: "system tray hide collapse chevron pin icons" },

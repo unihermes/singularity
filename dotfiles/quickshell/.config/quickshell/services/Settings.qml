@@ -98,6 +98,8 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias overviewBackdrop: adapter.overviewBackdrop
+    readonly property alias overviewLayout: adapter.overviewLayout
     readonly property alias altTabStyle: adapter.altTabStyle
     readonly property alias lockNotifs:  adapter.lockNotifs
     readonly property alias lockMedia:   adapter.lockMedia
@@ -171,6 +173,8 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        overviewBackdrop: ["dim", "clear", "solid"],
+        overviewLayout: ["grid", "strip"],
         altTabStyle:  ["icons", "titled", "previews"],
         lockClockPlace: ["centre", "top", "corner"],
         lockClockSize: ["small", "large", "huge"],
@@ -207,6 +211,8 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "dim": "Dimmed", "clear": "Clear", "solid": "Solid",
+        "grid": "Grid", "strip": "One row",
         "previews": "Previews",
         "corner": "Corner",
         "small": "Small", "large": "Large", "huge": "Huge",
@@ -816,6 +822,8 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string overviewBackdrop: "dim"
+            property string overviewLayout: "grid"
             property string altTabStyle: "icons"
             property bool lockNotifs: false
             property bool lockMedia: false

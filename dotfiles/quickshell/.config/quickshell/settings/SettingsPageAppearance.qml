@@ -1053,6 +1053,18 @@ SettingsPage {
         Choices { key: "altTabStyle" }
     }
 
+    SettingsField {
+        label: "Workspace overview"
+        hint: "SUPER+W's workspaces: three across, or all in one row"
+        Choices { key: "overviewLayout" }
+    }
+
+    SettingsField {
+        label: "Overview backdrop"
+        hint: "Behind the overview: the desktop dimmed, as it is, or hidden"
+        Choices { key: "overviewBackdrop" }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.

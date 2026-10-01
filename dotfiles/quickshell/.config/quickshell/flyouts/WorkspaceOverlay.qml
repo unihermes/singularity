@@ -9,6 +9,9 @@
 // and lay their content out in a Column. This is centred on the screen and
 // grid-shaped, so it only borrows the pattern (full-screen transparent layer
 // with a backdrop that closes on click), not the component.
+//
+// Three across or one row (Theme.overviewLayout), over the desktop dimmed,
+// clear, or hidden behind the look's ground (Theme.overviewBackdrop).
 
 import Quickshell
 import Quickshell.Wayland
@@ -48,7 +51,8 @@ OverlayWindow {
     // Dim, and close on a click that misses every cell.
     Rectangle {
         anchors.fill: parent
-        color: Theme.scrim
+        color: Theme.overviewBackdrop === "solid" ? Theme.base
+            : Theme.overviewBackdrop === "clear" ? "transparent" : Theme.scrim
 
         MouseArea {
             anchors.fill: parent
@@ -104,7 +108,7 @@ OverlayWindow {
 
             Grid {
                 id: grid
-                columns: Math.min(3, root.workspaceCount)
+                columns: Theme.overviewLayout === "strip" ? root.workspaceCount : Math.min(3, root.workspaceCount)
                 spacing: Theme.spaceL
 
                 Repeater {
@@ -126,8 +130,11 @@ OverlayWindow {
                             return ws.toplevels.values.filter(tl => !root.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
                         }
 
-                        width: Theme.fs(200)
-                        height: Theme.fs(132)
+                        // a row of every workspace has to fit the screen
+                        readonly property real shrink: Theme.overviewLayout === "strip"
+                            ? Math.min(1, (root.width * 0.9 / root.workspaceCount - grid.spacing) / Theme.fs(200)) : 1
+                        width: Math.round(Theme.fs(200) * shrink)
+                        height: Math.round(Theme.fs(132) * shrink)
                         radius: Theme.radiusInner
                         // the current workspace is lit as the power menu's
                         // current tile is; a drop target takes the accent
