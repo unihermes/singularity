@@ -91,6 +91,9 @@ Singleton {
     readonly property alias workspaceStyle: adapter.workspaceStyle
     // "stamp", "time", "seconds", "day", "long" or "iso" -- what the clock chip shows
     readonly property alias clockStyle:  adapter.clockStyle
+    readonly property alias windowStyle: adapter.windowStyle
+    readonly property alias windowScope: adapter.windowScope
+    readonly property alias iconTint:    adapter.iconTint
     // The look's adjustable fixed half (Looks.adjustable): its accent as a
     // hex, "" for none; flyouts' and windows' ground opacity and the
     // overlay dimming, both in percent; every stroke's width in px; and how
@@ -135,6 +138,9 @@ Singleton {
         barStyle:     ["full", "floating", "islands", "bare", "notch"],
         workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman"],
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso"],
+        windowStyle:  ["icons", "titled", "tabs", "dots"],
+        windowScope:  ["workspace", "all"],
+        iconTint:     ["colour", "mono", "accent"],
     })
     readonly property var choiceLabels: ({
         "normal": "Normal",
@@ -154,6 +160,9 @@ Singleton {
         "slide": "Slide", "rise": "Rise", "drop": "Drop",
         "stamp": "Time + date", "time": "Time", "seconds": "Seconds", "day": "Day + time",
         "long": "Full date", "iso": "ISO date",
+        "icons": "Icons", "titled": "Focused title", "tabs": "Tabs",
+        "workspace": "This workspace", "all": "All workspaces",
+        "colour": "Colour", "mono": "Mono",
     })
 
     // A choice's display name: the table above, then the look's or font's
@@ -713,6 +722,9 @@ Singleton {
             property string barStyle: "full"
             property string workspaceStyle: "pills"
             property string clockStyle: "stamp"
+            property string windowStyle: "icons"
+            property string windowScope: "workspace"
+            property string iconTint: "colour"
             property string accent: ""
             property int panelOpacity: 100
             property int borderWidth: 1

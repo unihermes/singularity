@@ -329,6 +329,10 @@ Singleton {
     // the workspace indicator and clock chip styles -- see Looks.js
     readonly property string workspaceStyle: Settings.workspaceStyle
     readonly property string clockStyle: Settings.clockStyle
+    // the open-windows strip and app icons in the bar -- see Looks.js
+    readonly property string windowStyle: Settings.windowStyle
+    readonly property string windowScope: Settings.windowScope
+    readonly property string iconTint: Settings.iconTint
     // A Qt date format with its 24-hour fields turned 12-hour when Date &
     // Time asks for that; every clock in the shell formats through this.
     function hours(fmt) {

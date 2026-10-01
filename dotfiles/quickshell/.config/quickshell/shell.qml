@@ -777,6 +777,10 @@ ShellRoot {
             // {source, address} for every window open on the focused
             // workspace, via each window's wmClass -> .desktop entry -> icon.
             // address lets the icon's click handler focus that exact window.
+            // The windows the open-windows strip shows: the focused
+            // workspace's, or with Theme.windowScope "all" every workspace's
+            // in workspace order, each group's first marked so the strip can
+            // rule it off from the one before.
             function focusedWorkspaceIcons() {
                 // read this so the binding re-evaluates once the desktop
                 // entry scan (async at startup) finishes populating it
@@ -785,12 +789,15 @@ ShellRoot {
 
                 if (!Hyprland.focusedWorkspace) return []
                 var wsId = Hyprland.focusedWorkspace.id
+                var all = Theme.windowScope === "all"
 
+                var wss = Hyprland.workspaces.values.slice()
+                    .filter(w => all ? w.id > 0 : w.id === wsId)
+                    .sort((x, y) => x.id - y.id)
                 var icons = []
-                var wss = Hyprland.workspaces.values
                 for (var i = 0; i < wss.length; i++) {
-                    if (wss[i].id !== wsId) continue
                     var tls = wss[i].toplevels.values
+                    var first = true
                     for (var j = 0; j < tls.length; j++) {
                         var cls = tls[j].lastIpcObject ? tls[j].lastIpcObject.class : ""
                         if (!cls || Apps.isBackTabToplevel(tls[j])) continue
@@ -801,9 +808,13 @@ ShellRoot {
                             // window is never silently missing from the strip
                             glyph: Apps.glyphForWindow(cls, ipc ? ipc.title : ""),
                             address: tls[j].address,
+                            // live, for the title styles; read in the
+                            // delegate so a title change doesn't rebuild the strip
+                            toplevel: tls[j],
+                            groupStart: first && icons.length > 0,
                         })
+                        first = false
                     }
-                    break
                 }
                 return icons
             }

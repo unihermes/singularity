@@ -1012,6 +1012,24 @@ SettingsPage {
     }
 
     SettingsField {
+        label: "Open windows"
+        hint: "Icons, the focused window's title, a tab per window, or a dot each"
+        Choice { key: "windowStyle" }
+    }
+
+    SettingsField {
+        label: "Windows shown"
+        hint: "Every workspace's are grouped, with a rule between"
+        Choices { key: "windowScope" }
+    }
+
+    SettingsField {
+        label: "App icons"
+        hint: "The open windows' and the tray's"
+        Choices { key: "iconTint" }
+    }
+
+    SettingsField {
         label: "Clock island"
         hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar — toasts show until then"
             : Settings.clockIsland ? "Volume, brightness and layout show in the clock for a moment"

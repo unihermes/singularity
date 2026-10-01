@@ -80,6 +80,17 @@
 //                  "day"      Fri 19 Sep  23:50
 //                  "long"     Friday, September 19 · 23:50
 //                  "iso"      2026-09-19  23:50
+//     windowStyle  "icons"    the open windows' icons, a short rule under each,
+//                             a long accent one under the focused window
+//                  "titled"   the same, with the focused window's title
+//                  "tabs"     icon and title for every window, the focused
+//                             one on a lit ground -- a classic taskbar
+//                  "dots"     a dot per window, no icons
+//     windowScope  "workspace" the focused workspace's windows
+//                  "all"      every workspace's, grouped, a rule between
+//     iconTint     "colour"   app icons as they are
+//                  "mono"     greyed, so they sit in a colourless look
+//                  "accent"   tinted the accent's hue
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -147,6 +158,9 @@ var settingsBase = {
     barPosition: "top",
     workspaceStyle: "pills",
     clockStyle: "stamp",
+    windowStyle: "icons",
+    windowScope: "workspace",
+    iconTint: "colour",
 }
 
 // The parts of the fixed half the Appearance page can also adjust. The look

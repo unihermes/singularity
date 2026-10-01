@@ -231,17 +231,21 @@ Item {
         }
     }
 
-    // icons for whatever is open on the focused workspace,
-    // trailing the workspaces. One frame around the whole
-    // row rather than one per icon: they're a single group, and
-    // a chip each would read as six separate modules.
-    // Each icon sits over a pip in the workspace indicator's
-    // language: the focused window's is a long accent pill, the
-    // rest short muted stubs, and their icons dim to match.
+    // The open windows, trailing the workspaces: the focused workspace's,
+    // or every workspace's (Theme.windowScope), in one frame -- they're a
+    // single group, and a chip each would read as six separate modules.
+    // Theme.windowStyle draws each one:
+    //   icons   the icon over a pip in the workspace indicator's language:
+    //           a long accent pill under the focused window, muted stubs
+    //           under the rest, whose icons dim to match
+    //   titled  the same, with the focused window's title beside its icon
+    //   tabs    icon and title for every window, the focused one's tab lit
+    //   dots    a dot per window, the focused one a short accent pill
     ModuleFrame {
         id: windowIcons
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.spaceS
+        spacing: Theme.windowStyle === "tabs" ? Theme.spaceXs
+            : Theme.windowStyle === "dots" ? Theme.spaceXs : Theme.spaceS
         // an empty chip on a bare workspace would be a floating
         // rectangle with nothing in it
         visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
@@ -257,26 +261,84 @@ Item {
                 readonly property bool focused: Hyprland.activeToplevel !== null
                     && Hyprland.activeToplevel.address === modelData.address
                 readonly property bool lit: focused || winMouse.containsMouse
+                readonly property string style: Theme.windowStyle
+                readonly property bool dots: style === "dots"
+                readonly property bool tabs: style === "tabs"
+                readonly property bool showTitle: tabs || (style === "titled" && focused)
+                readonly property string title: modelData.toplevel ? modelData.toplevel.title || "" : ""
+                // room for the rule between workspaces, in "all" scope
+                readonly property int lead: modelData.groupStart ? Theme.spaceS + 1 : 0
+                // the icon, or the dot, and the title after it
+                readonly property int bodyWidth: dots ? dot.width
+                    : glyphBox.width + (showTitle ? Theme.spaceXs + titleText.width : 0)
+                readonly property int padX: tabs ? Theme.spaceS : dots ? 1 : Theme.spaceS / 2
+                // tabs share a fixed budget, so a crowded workspace shortens
+                // every title rather than pushing into the bar's centre
+                readonly property int tabTitleMax: Math.max(Theme.fit(40), Math.min(Theme.fit(140),
+                    Theme.fit(520) / Math.max(1, iconRepeater.count) - glyphBox.width - padX * 2 - Theme.spaceXs))
+
                 anchors.verticalCenter: parent.verticalCenter
                 // a little wider than the icon, so neighbours' pips
                 // don't run together and each is a comfortable target
-                implicitWidth: Theme.barFs(16) + Theme.spaceS
+                implicitWidth: lead + bodyWidth + padX * 2
                 implicitHeight: Theme.moduleHeight
+
+                Behavior on implicitWidth {
+                    enabled: winIcon.style === "titled"
+                    NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                }
+
+                // the rule between one workspace's windows and the next's
+                Rectangle {
+                    visible: winIcon.modelData.groupStart
+                    x: 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 1
+                    height: Math.round(Theme.moduleHeight * 0.5)
+                    color: Theme.stroke
+                }
+
+                // a tab's ground: lit under the focused window, a hover
+                // fill under the others
+                Rectangle {
+                    visible: winIcon.tabs
+                    x: winIcon.lead
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - winIcon.lead
+                    height: Theme.moduleHeight - 6
+                    radius: Theme.radiusSmall
+                    color: winIcon.focused ? Theme.selectedFill
+                        : winMouse.containsMouse ? Theme.overlay : "transparent"
+                    border.width: winIcon.focused ? Theme.borderWidth : 0
+                    border.color: Theme.strokeFocus
+                    Behavior on color { ColorAnimation { duration: Theme.durFast } }
+
+                    Rectangle {
+                        visible: winIcon.focused
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: parent.width - Theme.spaceS * 2
+                        height: Theme.indicatorWidth
+                        radius: height / 2
+                        color: Theme.accent
+                    }
+                }
 
                 Item {
                     id: glyphBox
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: !winIcon.dots
+                    x: winIcon.lead + winIcon.padX
                     anchors.verticalCenter: parent.verticalCenter
                     // lifted a single pixel: just enough to clear the
                     // pip, so the icon still sits level with the
                     // chips around it
-                    anchors.verticalCenterOffset: -1
+                    anchors.verticalCenterOffset: winIcon.tabs ? 0 : -1
                     width: Theme.barFs(16)
                     height: Theme.barFs(16)
                     opacity: winIcon.lit ? 1 : 0.55
                     Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
 
-                    IconImage {
+                    TintedIcon {
                         anchors.fill: parent
                         visible: winIcon.modelData.source !== ""
                         source: winIcon.modelData.source
@@ -293,13 +355,28 @@ Item {
                     }
                 }
 
+                Text {
+                    id: titleText
+                    visible: winIcon.showTitle
+                    anchors.left: glyphBox.right
+                    anchors.leftMargin: Theme.spaceXs
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: winIcon.title
+                    width: Math.min(implicitWidth, winIcon.tabs ? winIcon.tabTitleMax : Theme.fit(220))
+                    elide: Text.ElideRight
+                    color: winIcon.focused ? Theme.textStrong : winIcon.lit ? Theme.text : Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.barLabelSize
+                }
+
                 // tucked a pixel under the icon rather than pinned to
                 // the chip's edge, so it needn't push the icon up
                 Rectangle {
                     id: pip
+                    visible: !winIcon.dots && !winIcon.tabs
                     anchors.top: glyphBox.bottom
                     anchors.topMargin: 1
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.horizontalCenter: glyphBox.horizontalCenter
                     height: Theme.indicatorWidth
                     radius: height / 2
                     width: winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6)
@@ -311,9 +388,28 @@ Item {
                     Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
                 }
 
+                // the dots style's whole mark
+                Rectangle {
+                    id: dot
+                    visible: winIcon.dots
+                    x: winIcon.lead + winIcon.padX
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: Theme.barFs(6)
+                    width: winIcon.focused ? Theme.barFs(14) : height
+                    radius: height / 2
+                    color: winIcon.focused ? Theme.accent
+                        : winMouse.containsMouse ? Theme.subtext : Theme.muted
+                    Behavior on width {
+                        NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                    }
+                    Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                }
+
                 MouseArea {
                     id: winMouse
-                    anchors.fill: parent
+                    x: winIcon.lead
+                    width: parent.width - winIcon.lead
+                    height: parent.height
                     hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                     cursorShape: Qt.PointingHandCursor
@@ -455,7 +551,7 @@ Item {
             id: trayRepeater
             model: SystemTray.items.values
 
-            IconImage {
+            TintedIcon {
                 id: trayIcon
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
