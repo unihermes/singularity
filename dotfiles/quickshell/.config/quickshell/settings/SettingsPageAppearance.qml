@@ -1652,7 +1652,7 @@ SettingsPage {
 
         SettingsField {
             label: "Window switcher"
-            hint: "ALT+Tab's cards: app icons, icons with titles, or a still of each window"
+            hint: "ALT+Tab: app icons alone, icons with titles, or a still of each window"
             Choices { key: "altTabStyle" }
         }
 

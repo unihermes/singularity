@@ -15,9 +15,10 @@
 // modifier release to a bind, so this window takes the keyboard to catch
 // the ALT release in Keys.onReleased. Escape is handled here too.
 //
-// The cards are drawn as Theme.altTabStyle says: the app's icon, the icon
-// over the window's title, or a still of the window (one screencopy frame
-// as the switcher opens) with the icon in its corner.
+// The cards are drawn as Theme.altTabStyle says: the app's icon alone, the
+// icon over the window's title, or a still of the window (one screencopy
+// frame as the switcher opens) with the icon in its corner. The last two
+// also name the highlighted window under the cards.
 
 import Quickshell
 import Quickshell.Wayland
@@ -193,6 +194,7 @@ OverlayWindow {
     // where they have the frame's whole width instead of a card's.
     readonly property bool previews: Theme.altTabStyle === "previews"
     readonly property bool titled: Theme.altTabStyle === "titled"
+    readonly property bool iconsOnly: Theme.altTabStyle === "icons"
     readonly property int cardW: previews ? Theme.fs(220) : titled ? Theme.fs(120) : Theme.fs(80)
     readonly property int cardH: previews ? Theme.fs(140) : Theme.fs(80) + (titled ? Theme.fs(22) : 0)
     // the launcher's padding inside the frame, and as much again outside it
@@ -237,7 +239,8 @@ OverlayWindow {
             id: body
             anchors.centerIn: parent
             spacing: Theme.spaceXl
-            width: Math.max(list.width, Math.min(root.captionW, root.captionMax))
+            // the icons style is the icons alone, without the caption
+            width: root.iconsOnly ? list.width : Math.max(list.width, Math.min(root.captionW, root.captionMax))
 
             Grid {
                 id: list
@@ -340,6 +343,7 @@ OverlayWindow {
             // an emoji or symbol from a fallback font would otherwise make
             // its line, and the frame, taller for that one window.
             Column {
+                visible: !root.iconsOnly
                 width: parent.width
                 spacing: Theme.spaceXs
 
