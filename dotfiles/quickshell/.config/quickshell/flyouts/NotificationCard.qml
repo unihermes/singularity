@@ -163,7 +163,7 @@ Item {
             color: Theme.bright
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
-            font.bold: true
+            font.weight: Theme.weightStrong
         }
 
         Text {
@@ -178,6 +178,7 @@ Item {
             linkColor: Theme.strokeFocus
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
+            font.weight: Theme.weightBody
             onLinkActivated: link => Qt.openUrlExternally(link)
         }
 

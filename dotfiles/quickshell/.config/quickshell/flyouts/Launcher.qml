@@ -361,7 +361,7 @@ OverlayWindow {
                                     : row.current || row.isResult ? Theme.textStrong : Theme.text
                                 font.family: Theme.fontText
                                 font.pixelSize: Theme.fontBody
-                                font.bold: row.isResult
+                                font.weight: row.isResult ? Theme.weightStrong : Theme.weightBody
                             }
 
                             // what the app is, where the file is (so two of

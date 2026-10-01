@@ -946,6 +946,32 @@ SettingsPage {
         }
     }
 
+    SettingsField {
+        label: "Heading font"
+        hint: "Section headings, in the text font or one of their own"
+
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: Settings.choices.headingFont
+            current: Settings.headingFont
+            labelFor: v => page.label(v)
+            fontFor: v => v === "" ? Theme.fontText : v
+            onPicked: v => Settings.set("headingFont", v)
+        }
+    }
+
+    SettingsField {
+        label: "Text weight"
+        hint: "Labels and body text. A font without the weight draws its nearest"
+        Choices { key: "textWeight" }
+    }
+
+    SettingsField {
+        label: "Bold weight"
+        hint: "Headings and titles"
+        Choices { key: "boldWeight" }
+    }
+
     Stepper { label: "Font size"; hint: "Body text size for the shell, launcher and notifications. Headings, captions and rows scale with it."; key: "fontSize"; suffix: "px" }
 
     // Case as a pair, the rest as chips that toggle -- they're independent

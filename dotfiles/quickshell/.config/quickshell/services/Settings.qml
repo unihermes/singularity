@@ -98,6 +98,9 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias boldWeight:  adapter.boldWeight
+    readonly property alias textWeight:  adapter.textWeight
+    readonly property alias headingFont: adapter.headingFont
     readonly property alias levelStyle:  adapter.levelStyle
     readonly property alias powerStyle:  adapter.powerStyle
     readonly property alias overviewBackdrop: adapter.overviewBackdrop
@@ -160,6 +163,7 @@ Singleton {
         frameStyle:   ["double", "single", "accent", "bevel", "groove", "corners", "none"],
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
+        headingFont:  [""].concat(Fonts.headingExtras, Fonts.available),
         systemFontFamily: Looks.systemFonts,
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
@@ -175,6 +179,8 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        boldWeight:   ["medium", "bold", "black"],
+        textWeight:   ["light", "regular", "medium"],
         levelStyle:   ["pill", "edge", "number"],
         powerStyle:   ["row", "list", "full"],
         overviewBackdrop: ["dim", "clear", "solid"],
@@ -192,7 +198,7 @@ Singleton {
         flyoutAnim:   ["drop", "fade", "scale", "none"],
     })
     readonly property var choiceLabels: ({
-        "normal": "Normal",
+        "normal": "Normal", "": "Same as text",
         "grayscale": "Grayscale", "wallpaper": "Wallpaper", "dark": "Dark", "light": "Light",
         "scheme-neutral": "Subtle", "scheme-tonal-spot": "Balanced",
         "scheme-vibrant": "Vivid", "scheme-expressive": "Expressive",
@@ -215,6 +221,8 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "bold": "Bold", "black": "Black",
+        "light": "Light", "regular": "Regular", "medium": "Medium",
         "pill": "Bar", "edge": "Screen edge", "number": "Number",
         "row": "Row", "list": "List", "full": "Full screen",
         "dim": "Dimmed", "clear": "Clear", "solid": "Solid",
@@ -828,6 +836,9 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string boldWeight: "bold"
+            property string textWeight: "regular"
+            property string headingFont: ""
             property string levelStyle: "pill"
             property string powerStyle: "row"
             property string overviewBackdrop: "dim"

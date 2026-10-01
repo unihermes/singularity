@@ -60,6 +60,7 @@ BarModule {
         id: timeMetrics
         font.family: Theme.fontText
         font.pixelSize: Theme.barLabelSize
+        font.weight: Theme.weightBody
         text: root.timeText
     }
     readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.chrome
@@ -73,6 +74,7 @@ BarModule {
         visible: false
         font.family: Theme.fontText
         font.pixelSize: Theme.barLabelSize
+        font.weight: Theme.weightBody
         text: Timers.text + "\u2002·\u2002" + Qt.formatDateTime(clockSource.date, Theme.timeFormat)
     }
     readonly property int chipWidth: Timers.active ? Math.ceil(timerMetrics.implicitWidth + timerChrome) : idleWidth

@@ -97,6 +97,7 @@ Item {
             color: root.fg
             font.family: Theme.fontText
             font.pixelSize: Theme.barLabelSize
+            font.weight: Theme.weightBody
         }
     }
 

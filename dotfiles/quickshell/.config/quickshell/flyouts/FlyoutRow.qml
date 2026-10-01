@@ -81,6 +81,7 @@ Item {
         }
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
+        font.weight: Theme.weightBody
         opacity: root.pulse
     }
 
@@ -104,6 +105,7 @@ Item {
         // and this is the one font that has them
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontBody
+        font.weight: Theme.weightBody
         opacity: root.pulse
     }
 

@@ -346,6 +346,14 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    // the weights text and its emphasis are set in -- see Looks.js
+    readonly property int weightBody: Settings.textWeight === "light" ? Font.Light
+        : Settings.textWeight === "medium" ? Font.Medium : Font.Normal
+    readonly property int weightStrong: Settings.boldWeight === "medium" ? Font.Medium
+        : Settings.boldWeight === "black" ? Font.Black : Font.Bold
+    // section headings' face -- see Looks.js
+    readonly property string fontHeading: Settings.headingFont !== "" && Fonts.loaded.indexOf(Settings.headingFont) !== -1
+        ? Settings.headingFont : fontText
     // the volume/brightness popup -- see Looks.js and LevelToast
     readonly property string levelStyle: Settings.levelStyle
     // the power menu -- see Looks.js and PowerMenu

@@ -26,6 +26,8 @@ Singleton {
     // ship comes back as "Name [Foundry]"; Qt still resolves the bare name.
     readonly property var loaded: Qt.fontFamilies().map(f => f.replace(/ \[[^\]]*\]$/, ""))
     readonly property var available: Looks.fonts.filter(f => loaded.indexOf(f) !== -1)
+    // the proportional faces headings may also use, where installed
+    readonly property var headingExtras: Looks.headingFonts.filter(f => loaded.indexOf(f) !== -1)
 
     // on disk per fontconfig; refreshed when the Appearance page opens
     property var installed: []

@@ -197,9 +197,9 @@ Item {
         anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
         text: Theme.heading(root.text)
         color: root.titleInk
-        font.family: Theme.fontText
+        font.family: Theme.fontHeading
         font.pixelSize: Theme.fontSmall
-        font.bold: Theme.headingBold
+        font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
         font.letterSpacing: Theme.headingSpacing
     }
 

@@ -157,6 +157,11 @@
 //     levelStyle   the volume/brightness popup when the clock island is
 //                  off: a level "pill" under the bar, a vertical bar at the
 //                  screen's right "edge", or the "number" itself
+//     headingFont  the face section headings are set in; "" for the text
+//                  font. Any of the text fonts, or one of Looks.headingFonts
+//     textWeight   labels and body text: "light", "regular" or "medium"
+//     boldWeight   what's bold -- headings, titles: "medium", "bold" or
+//                  "black". A font without the weight draws its nearest
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -245,6 +250,9 @@ var settingsBase = {
     overviewBackdrop: "dim",
     powerStyle: "row",
     levelStyle: "pill",
+    headingFont: "",
+    textWeight: "regular",
+    boldWeight: "bold",
     gaugeStyle: "fill",
 }
 
@@ -313,6 +321,10 @@ var fontLabels = {
     "Mononoki Nerd Font": "Mononoki", "Terminess Nerd Font": "Terminus",
     "Iosevka Nerd Font": "Iosevka",
 }
+
+// Faces headings can be set in besides the monospace ones above: a serif and
+// two sans, each in a package pacman.txt installs.
+var headingFonts = ["Noto Serif", "Noto Sans", "Ubuntu Nerd Font"]
 
 // The system font: what GTK and Qt apps draw everywhere outside the shell
 // itself (AppearanceSync.renderGtk/renderQt) -- independent of `fonts` above,

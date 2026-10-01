@@ -69,6 +69,7 @@ Item {
             color: Theme.text
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
+            font.weight: Theme.weightBody
         }
 
         Text {
@@ -79,6 +80,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
+            font.weight: Theme.weightBody
         }
     }
 
