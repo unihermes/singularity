@@ -742,47 +742,63 @@ SettingsPage {
         }
     }
 
-    // Every look's accent as a swatch, and None -- plus the accent in use,
-    // when it's a custom one none of the looks has. The wallpaper palette
-    // brings its own, so the picker rests while that's on.
+    // The look's own accent, the presets and None, with a gap after the
+    // look's own; a custom accent in use joins the end. Wraps rather than
+    // running under the label when the window is narrow. The wallpaper
+    // palette brings its own, so the picker rests while that's on.
     SettingsField {
+        id: accentField
         label: "Accent"
         hint: Settings.colourMode === "wallpaper" ? "The wallpaper palette's own tone is used instead"
+            : Settings.lookAccent !== "" ? "Selection, focus and the current item. First is " + page.label(Settings.look) + "'s own"
             : "Selection, focus and the current item"
 
-        Row {
+        readonly property int swatch: Theme.chipHeight
+        readonly property int gap: Theme.spaceS
+        // the look's own swatch is followed by a wider gap
+        readonly property int lead: Settings.lookAccent !== "" ? Theme.spaceM : 0
+
+        Flow {
+            id: accentFlow
             anchors.right: parent.right
-            spacing: Theme.spaceS
+            spacing: accentField.gap
             enabled: Settings.colourMode !== "wallpaper"
             opacity: enabled ? 1 : 0.4
+            width: Math.min(parent.width, Settings.accents.length * (accentField.swatch + accentField.gap)
+                + accentField.lead + noneChip.width)
 
             Repeater {
-                model: Settings.accent === "" || Settings.accents.indexOf(Settings.accent) !== -1
-                    ? Settings.accents : Settings.accents.concat([Settings.accent])
+                model: Settings.accents
 
-                Rectangle {
+                Item {
                     id: swatch
                     required property string modelData
+                    required property int index
                     readonly property bool current: Settings.accent === modelData
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.chipHeight
-                    height: Theme.chipHeight
-                    radius: Theme.radiusSmall
-                    color: modelData
-                    border.width: current ? 2 : swatchMouse.containsMouse ? Theme.borderWidth : 0
-                    border.color: Theme.textStrong
+                    width: accentField.swatch + (index === 0 ? accentField.lead : 0)
+                    height: accentField.swatch
 
-                    MouseArea {
-                        id: swatchMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Settings.set("accent", swatch.modelData)
+                    Rectangle {
+                        width: accentField.swatch
+                        height: accentField.swatch
+                        radius: Theme.radiusSmall
+                        color: swatch.modelData
+                        border.width: swatch.current ? 2 : swatchMouse.containsMouse ? Theme.borderWidth : 0
+                        border.color: Theme.textStrong
+
+                        MouseArea {
+                            id: swatchMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Settings.set("accent", swatch.modelData)
+                        }
                     }
                 }
             }
 
             FlyoutChip {
+                id: noneChip
                 text: "None"
                 selected: Settings.accent === ""
                 onClicked: Settings.set("accent", "")

@@ -104,13 +104,17 @@ Singleton {
     readonly property alias headingRule:  adapter.headingRule
     readonly property alias headingAccent: adapter.headingAccent
 
-    // What the accent picker offers: every look's own accent, in look order.
+    // What the accent picker offers: the look's own accent first, then the
+    // presets in Looks.js, then the accent in use if it's a custom one.
+    readonly property string lookAccent: {
+        var l = LookStore.looks[adapter.look]
+        return l && l.accent ? l.accent : ""
+    }
     readonly property var accents: {
-        var out = []
-        for (var i = 0; i < LookStore.order.length; i++) {
-            var a = LookStore.looks[LookStore.order[i]].accent
-            if (a && out.indexOf(a) === -1) out.push(a)
-        }
+        var out = lookAccent !== "" ? [lookAccent] : []
+        for (var i = 0; i < Looks.accents.length; i++)
+            if (out.indexOf(Looks.accents[i]) === -1) out.push(Looks.accents[i])
+        if (adapter.accent !== "" && out.indexOf(adapter.accent) === -1) out.push(adapter.accent)
         return out
     }
 

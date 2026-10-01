@@ -178,6 +178,13 @@ function complete(look) {
 }
 complete(looks[fallback])
 
+// The accents the Appearance page offers besides the look's own: one per
+// hue around the wheel, at a lightness that reads on dark and light grounds.
+var accents = [
+    "#e5484d", "#f76b15", "#f5b70a", "#8fc93a", "#30a46c",
+    "#12a594", "#0091ff", "#5555c8", "#8e4ec6", "#d6409f",
+]
+
 // The look the template configs (wofi, starship, fastfetch) are written in:
 // their colours are this ramp, and AppearanceSync maps each one to the current role.
 var reference = "neutrino"
