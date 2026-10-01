@@ -1,8 +1,11 @@
 # One line of config.jsonc's info block:
 #   . row.sh LABEL [VALUE]    an icon, the label and its value
 #   . row.sh --title          user@host in an accent capsule
-#   . row.sh --head NAME      a section name in a capsule, ruled to the width
+#   . row.sh --head NAME      a section name in a capsule
 #   . row.sh --swatches       the look's ramp and accent
+#
+# An outline runs down the left and along each capsule line, open on the
+# right: rounded corners when the look has a radius, square at 0.
 #
 # Sourced, not run: fastfetch finds the terminal by walking up the process
 # tree, and a shell of its own between the two fastfetch processes makes the
@@ -21,6 +24,12 @@ N_HEADING=$N_BRIGHT T_ROUND=1 T_UPPER=1
 . "$HOME/.local/state/singularity/term-colors.sh" 2>/dev/null
 W=46
 
+# the outline's colour and corners; `rule N` draws it from column N out to
+# the block's width
+O=$'\033[38;2;'"$N_MUTED"'m'
+if (( T_ROUND )); then TOP=╭ BOT=╰; else TOP=┌ BOT=└; fi
+rule() { printf ' %s%s\033[0m' "$O" "$(printf -- '─%.0s' $(seq 1 $(( W - $1 - 1 ))))"; }
+
 # a capsule: ground, foreground, text; round caps only when the look has a radius
 cap() {
   if (( T_ROUND )); then
@@ -32,20 +41,24 @@ cap() {
 
 case $1 in
   --title)
-    cap "$N_ACCENT" "$N_ON_ACCENT" $'\uf007 '"$(whoami)@$(uname -n)"
+    t=$'\uf007 '"$(whoami)@$(uname -n)"
+    printf '%s%s─\033[0m' "$O" "$TOP"
+    cap "$N_ACCENT" "$N_ON_ACCENT" "$t"
+    rule $(( ${#t} + 4 ))
     ;;
   --head)
     h=$2
     (( T_UPPER )) || { h=${h,,}; h=${h^}; }
-    rule=$(printf -- '─%.0s' $(seq 1 $(( W - ${#h} - 3 ))))
+    printf '%s├─\033[0m' "$O"
     cap "$N_OVERLAY" "$N_HEADING" "$h"
-    printf ' \033[38;2;%sm%s\033[0m' "$N_BORDER" "$rule"
+    rule $(( ${#h} + 4 ))
     ;;
   --swatches)
+    printf '%s%s─ ' "$O" "$BOT"
     for c in "$N_SURFACE" "$N_OVERLAY" "$N_BORDER" "$N_MUTED" "$N_SUBTEXT" "$N_TEXT" "$N_BRIGHT" "$N_ACCENT"; do
       printf '\033[38;2;%sm██' "$c"
     done
-    printf '\033[0m'
+    rule 19
     ;;
   *)
     label=$1
@@ -67,8 +80,8 @@ case $1 in
       Terminal) i=$'\ue795';; Icons) i=$'\U000f003b';; Uptime) i=$'\U000f0150';; Packages) i=$'\U000f03d6';;
       Processes) i=$'\uf085';; Age) i=$'\U000f00ed';; *) i=' ';;
     esac
-    max=$(( W - 14 ))
+    max=$(( W - 15 ))
     (( ${#v} > max )) && v="${v:0:max-1}…"
-    printf '  \033[38;2;%sm%s %-10s\033[38;2;%sm%s\033[0m' "$N_SUBTEXT" "$i" "$label" "$N_TEXT" "$v"
+    printf '%s│  \033[38;2;%sm%s %-10s\033[38;2;%sm%s\033[0m' "$O" "$N_SUBTEXT" "$i" "$label" "$N_TEXT" "$v"
     ;;
 esac
