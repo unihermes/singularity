@@ -98,6 +98,9 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias launcherDetails: adapter.launcherDetails
+    readonly property alias launcherPosition: adapter.launcherPosition
+    readonly property alias launcherLayout: adapter.launcherLayout
     readonly property alias flyoutTitle: adapter.flyoutTitle
     readonly property alias barRadius:   adapter.barRadius
     readonly property alias panelRadius: adapter.panelRadius
@@ -154,6 +157,8 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        launcherPosition: ["centre", "top", "full"],
+        launcherLayout: ["list", "grid", "line"],
         flyoutTitle:  ["none", "strip", "titlebar"],
         flyoutAttach: ["flush", "tab", "floating"],
         flyoutAnim:   ["drop", "fade", "scale", "none"],
@@ -182,6 +187,8 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "centre": "Centre", "top": "Under the bar", "full": "Full screen",
+        "list": "List", "grid": "Grid", "line": "One line",
         "strip": "Strip", "titlebar": "Title bar",
         "flush": "Flush", "tab": "Tab", "floating": "Floating",
         "drop": "Drop", "scale": "Scale",
@@ -774,6 +781,9 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property bool launcherDetails: true
+            property string launcherPosition: "centre"
+            property string launcherLayout: "list"
             property string flyoutTitle: "none"
             property int barRadius: -1
             property int panelRadius: -1

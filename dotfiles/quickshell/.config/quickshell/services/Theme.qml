@@ -344,6 +344,10 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    readonly property bool launcherDetails: Settings.launcherDetails
+    readonly property string launcherPosition: Settings.launcherPosition
+    // the launcher -- see Looks.js and flyouts/Launcher.qml
+    readonly property string launcherLayout: Settings.launcherLayout
     readonly property string flyoutTitle: Settings.flyoutTitle
     readonly property string flyoutAttach: Settings.flyoutAttach
     // how flyouts open and where they sit -- see Looks.js and FlyoutPanel

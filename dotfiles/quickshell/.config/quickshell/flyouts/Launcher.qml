@@ -15,6 +15,11 @@
 // copies it; Enter on a syntax row inserts it into the expression. So the
 // box is the same shape in every mode and Enter always acts on the current
 // row.
+//
+// Laid out as Theme.launcherLayout says: rows, a grid of app icons (apps
+// mode only), or one compact line under the field; placed as
+// Theme.launcherPosition says; and with or without each row's second line
+// and the key hints (Theme.launcherDetails).
 
 import Quickshell
 import Quickshell.Wayland
@@ -76,7 +81,13 @@ OverlayWindow {
         return Apps.list(query)
     }
 
-    readonly property int visibleRows: 8
+    readonly property bool full: Theme.launcherPosition === "full"
+    readonly property bool line: Theme.launcherLayout === "line"
+    readonly property bool gridOn: Theme.launcherLayout === "grid" && mode === "apps"
+    readonly property bool details: Theme.launcherDetails && !line
+    readonly property int visibleRows: full ? 12 : 8
+    // whichever view is showing: the keys and the clicks drive this one
+    readonly property var view: gridOn ? grid : list
 
     // Rows scroll under a still pointer when the arrow keys move the list,
     // and that counts as hovering a new row. Only real pointer movement
@@ -95,6 +106,7 @@ OverlayWindow {
         query = ""
         search.text = ""
         list.currentIndex = 0
+        grid.currentIndex = 0
         if (clipMode) Clipboard.refresh()
         Files.clear()
         Qt.callLater(search.forceFocus)
@@ -142,6 +154,13 @@ OverlayWindow {
     focusMode: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     layerNamespace: "singularity-flyout"
 
+    // full screen: the desktop dimmed behind the box
+    Rectangle {
+        anchors.fill: parent
+        visible: root.full
+        color: Theme.scrim
+    }
+
     MouseArea {
         anchors.fill: parent
         onClicked: root.requestClose()
@@ -153,7 +172,9 @@ OverlayWindow {
     FontMetrics { id: bodyMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontBody }
     FontMetrics { id: captionMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontCaption }
     readonly property int rowHeight: Math.max(Theme.fieldHeight,
-        Math.ceil(bodyMetrics.height + 1 + captionMetrics.height) + Theme.spaceM)
+        Math.ceil(bodyMetrics.height + (details ? 1 + captionMetrics.height : 0)) + Theme.spaceM)
+    readonly property int gridColumns: full ? 8 : 6
+    readonly property int gridCell: Math.floor(list.width / gridColumns)
 
     // the key hints over the field, for the mode on show
     readonly property var hints: (clipMode ? ["Enter copy", "Shift+Del remove"]
@@ -163,12 +184,16 @@ OverlayWindow {
 
     PanelFrame {
         id: box
-        width: Theme.fit(760)
+        width: Theme.fit(root.full ? 960 : 760)
         height: body.implicitHeight + Theme.panelPad * 4
-        // Centred on the screen, at a fixed size: the list area is always
-        // visibleRows tall, however many results there are, so the box
-        // doesn't shrink and re-centre on every keystroke.
-        anchors.centerIn: parent
+        // Centred on the screen (or just under the bar), at a fixed size:
+        // the list area is always visibleRows tall, however many results
+        // there are, so the box doesn't shrink and re-centre on every
+        // keystroke.
+        x: Math.round((parent.width - width) / 2)
+        y: Theme.launcherPosition !== "top" ? Math.round((parent.height - height) / 2)
+            : Theme.barPosition === "bottom" ? parent.height - Theme.barExtent - Theme.spaceL - height
+            : Theme.barExtent + Theme.spaceL
 
         MouseArea {
             anchors.fill: parent
@@ -185,10 +210,11 @@ OverlayWindow {
             // the mode's name, with the key hints at the rule's far end
             // rather than in a footer
             FlyoutHeading {
+                visible: !root.line
                 text: root.clipMode ? "CLIPBOARD"
                     : root.calcMode ? "CALCULATOR"
                     : root.fileMode ? "FILES" : "APPLICATIONS"
-                hints: root.hints
+                hints: Theme.launcherDetails ? root.hints : []
             }
 
             // the search field, as Settings' is: the mode's glyph, then the query
@@ -205,25 +231,33 @@ OverlayWindow {
 
                 onTextChanged: {
                     root.query = text
-                    list.currentIndex = 0
+                    root.view.currentIndex = 0
                     if (root.fileMode) Files.search(text)
                 }
-                onAccepted: if (list.count > 0) root.activate(root.items[list.currentIndex])
-                onDownPressed: if (list.currentIndex < list.count - 1) list.currentIndex++
-                onUpPressed: if (list.currentIndex > 0) list.currentIndex--
+                onAccepted: if (root.view.count > 0) root.activate(root.items[root.view.currentIndex])
+                // in a grid, down and up go a row at a time
+                onDownPressed: {
+                    var v = root.view
+                    v.currentIndex = Math.min(v.count - 1, v.currentIndex + (root.gridOn ? root.gridColumns : 1))
+                }
+                onUpPressed: {
+                    var v = root.view
+                    v.currentIndex = Math.max(0, v.currentIndex - (root.gridOn ? root.gridColumns : 1))
+                }
                 onEscapePressed: root.requestClose()
                 onTabPressed: root.stepMode(1)
                 onBackTabPressed: root.stepMode(-1)
                 onShiftDeletePressed: root.removeCurrent()
-                onShiftReturnPressed: if (list.count > 0) root.activateAlt(root.items[list.currentIndex])
+                onShiftReturnPressed: if (root.view.count > 0) root.activateAlt(root.items[root.view.currentIndex])
             }
 
             Item {
                 width: parent.width
-                height: root.visibleRows * (root.rowHeight + list.spacing) - list.spacing
+                height: root.line ? root.rowHeight
+                    : root.visibleRows * (root.rowHeight + list.spacing) - list.spacing
 
                 Text {
-                    visible: list.count === 0
+                    visible: root.view.count === 0
                     x: Theme.spaceL + Theme.iconCell + Theme.spaceM
                     width: parent.width - x
                     height: root.rowHeight
@@ -241,10 +275,11 @@ OverlayWindow {
 
                 ListView {
                     id: list
-                    visible: count > 0
+                    visible: count > 0 && !root.gridOn
                     width: parent.width
                     height: parent.height
                     clip: true
+                    orientation: root.line ? ListView.Horizontal : ListView.Vertical
                     spacing: Theme.spaceXs
                     boundsBehavior: Flickable.StopAtBounds
                     model: root.items
@@ -256,7 +291,9 @@ OverlayWindow {
                         required property int index
                         readonly property bool current: ListView.isCurrentItem
                         readonly property bool isResult: root.calcMode && modelData.kind === "result"
-                        width: list.width
+                        // one line: each result as wide as its name, capped
+                        width: root.line ? Math.min(Theme.fit(240), iconCell.width + nameText.implicitWidth + Theme.spaceL * 2 + Theme.spaceM)
+                            : list.width
                         height: root.rowHeight
 
                         // the row the keys are on, lit as Settings lights
@@ -299,12 +336,13 @@ OverlayWindow {
                         Column {
                             anchors.left: iconCell.right
                             anchors.leftMargin: Theme.spaceM
-                            anchors.right: chevron.left
-                            anchors.rightMargin: Theme.spaceS
+                            anchors.right: root.line ? parent.right : chevron.left
+                            anchors.rightMargin: root.line ? Theme.spaceL : Theme.spaceS
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 1
 
                             Text {
+                                id: nameText
                                 width: parent.width
                                 // `|| ""` throughout: switching mode swaps
                                 // the model out from under the delegates,
@@ -330,7 +368,7 @@ OverlayWindow {
                             // the same name are told apart without opening
                             // either), or what the syntax does
                             Text {
-                                visible: text !== ""
+                                visible: text !== "" && root.details
                                 width: parent.width
                                 text: (root.fileMode ? Files.pretty(row.modelData.dir)
                                     : root.calcMode ? row.modelData.hint
@@ -350,6 +388,7 @@ OverlayWindow {
                             anchors.rightMargin: Theme.spaceL
                             anchors.verticalCenter: parent.verticalCenter
                             text: ">"
+                            visible: !root.line
                             opacity: row.current ? 1 : 0
                             color: Theme.subtext
                             font.family: Theme.fontText
@@ -369,10 +408,74 @@ OverlayWindow {
                     }
                 }
 
+                // apps as a grid: a large icon over its name
+                GridView {
+                    id: grid
+                    visible: count > 0 && root.gridOn
+                    width: parent.width
+                    height: parent.height
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    cellWidth: root.gridCell
+                    cellHeight: root.gridCell
+                    model: root.gridOn ? root.items : []
+                    onCurrentIndexChanged: positionViewAtIndex(currentIndex, GridView.Contain)
+
+                    delegate: Item {
+                        id: cell
+                        required property var modelData
+                        required property int index
+                        readonly property bool current: GridView.isCurrentItem
+                        width: grid.cellWidth
+                        height: grid.cellHeight
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: Theme.spaceXs
+                            radius: Theme.radiusInner
+                            color: cell.current ? Theme.selectedFill : "transparent"
+                            border.width: Theme.borderWidth
+                            border.color: cell.current ? Theme.strokeHover : "transparent"
+                        }
+
+                        IconImage {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: Math.round(parent.height * 0.16)
+                            implicitSize: Math.round(parent.height * 0.42)
+                            source: Quickshell.iconPath(cell.modelData.icon || "", true)
+                        }
+
+                        Text {
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: Math.round(parent.height * 0.12)
+                            x: Theme.spaceS
+                            width: parent.width - Theme.spaceS * 2
+                            horizontalAlignment: Text.AlignHCenter
+                            text: cell.modelData.name || ""
+                            elide: Text.ElideRight
+                            color: cell.current ? Theme.textStrong : Theme.text
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fontSmall
+                        }
+
+                        MouseArea {
+                            id: cellMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onPositionChanged: mouse => {
+                                if (root.pointerMoved(cellMouse, mouse.x, mouse.y)) grid.currentIndex = cell.index
+                            }
+                            onClicked: root.activate(cell.modelData)
+                        }
+                    }
+                }
+
                 ScrollBar {
+                    visible: !root.line && overflow > 0
                     anchors.right: parent.right
                     anchors.rightMargin: -Theme.spaceM
-                    flickable: list
+                    flickable: root.view
                 }
             }
         }

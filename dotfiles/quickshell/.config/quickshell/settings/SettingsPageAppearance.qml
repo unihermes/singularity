@@ -1006,6 +1006,30 @@ SettingsPage {
         Choices { key: "flyoutTitle" }
     }
 
+    SettingsField {
+        label: "Launcher layout"
+        hint: "Rows, a grid of app icons, or one compact line like dmenu"
+        Choices { key: "launcherLayout" }
+    }
+
+    SettingsField {
+        label: "Launcher position"
+        hint: "Centred, just under the bar, or over a dimmed screen with more rows"
+        Choices { key: "launcherPosition" }
+    }
+
+    SettingsField {
+        label: "Launcher details"
+        hint: Settings.launcherDetails ? "What each app is or where each file is, and the key hints"
+            : "Names only"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.launcherDetails
+            onToggled: Settings.set("launcherDetails", !Settings.launcherDetails)
+        }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.

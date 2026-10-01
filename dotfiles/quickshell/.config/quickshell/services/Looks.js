@@ -125,6 +125,13 @@
 //     flyoutTitle  a flyout's first heading: "none" a plain heading,
 //                  "strip" on a ground of its own across the top,
 //                  "titlebar" a title bar in the accent with a close box
+//     launcherLayout "list" rows of results, "grid" a grid of large app
+//                  icons (apps only; the other modes stay a list), "line"
+//                  one compact row under the field, dmenu-like
+//     launcherPosition "centre" of the screen, "top" just under the bar,
+//                  "full" centred over a dimmed screen, with more rows
+//     launcherDetails true: each result's second line (what the app is,
+//                  where the file is) and the key hints; false: names only
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -201,6 +208,9 @@ var settingsBase = {
     flyoutAnim: "drop",
     flyoutAttach: "flush",
     flyoutTitle: "none",
+    launcherLayout: "list",
+    launcherPosition: "centre",
+    launcherDetails: true,
     gaugeStyle: "fill",
 }
 
