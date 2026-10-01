@@ -112,6 +112,12 @@
 //                  "segments" five blocks, lit up to the level
 //                  "rule"     a thin rule along the chip's bottom edge
 //                  (the underline module style always uses its own rule)
+//     flyoutAnim   how a flyout opens: "drop" slides it out of the bar,
+//                  "fade" fades it in, "scale" grows it from its chip,
+//                  "none" shows it at once
+//     flyoutAttach where a flyout sits: "flush" against the bar, "tab" the
+//                  same with the corners at the bar squared off, so it
+//                  hangs from it, "floating" a gap below it
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -185,6 +191,8 @@ var settingsBase = {
     iconTint: "colour",
     shadow: "none",
     vizStyle: "mirror",
+    flyoutAnim: "drop",
+    flyoutAttach: "flush",
     gaugeStyle: "fill",
 }
 

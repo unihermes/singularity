@@ -341,6 +341,9 @@ Singleton {
     readonly property string vizStyle: Settings.vizStyle
     // how a gauge chip shows its level -- see Looks.js and ModuleFrame
     readonly property string gaugeStyle: Settings.gaugeStyle
+    readonly property string flyoutAttach: Settings.flyoutAttach
+    // how flyouts open and where they sit -- see Looks.js and FlyoutPanel
+    readonly property string flyoutAnim: Settings.flyoutAnim
     // A Qt date format with its 24-hour fields turned 12-hour when Date &
     // Time asks for that; every clock in the shell formats through this.
     function hours(fmt) {

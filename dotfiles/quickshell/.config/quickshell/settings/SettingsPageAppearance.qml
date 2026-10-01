@@ -980,6 +980,24 @@ SettingsPage {
         }
     }
 
+    // --- panels --------------------------------------------------------------
+    // How the shell's flyouts and overlays open, sit and are laid out.
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "PANELS" }
+
+    SettingsField {
+        label: "Flyouts open"
+        hint: "Sliding out of the bar, fading in, growing from their chip, or at once"
+        Choices { key: "flyoutAnim" }
+    }
+
+    SettingsField {
+        label: "Flyouts sit"
+        hint: "Against the bar, hanging from it like a tab, or floating below it"
+        Choices { key: "flyoutAttach" }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.

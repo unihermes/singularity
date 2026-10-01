@@ -85,6 +85,8 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
     { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft offset brutalist" },
     { page: "appearance", section: "Bar",           label: "Levels",               keywords: "gauge meter volume brightness battery fill segments bar" },
+    { page: "appearance", section: "Panels",        label: "Flyouts sit",          keywords: "attach tab floating gap flush menu popup" },
+    { page: "appearance", section: "Panels",        label: "Flyouts open",         keywords: "animation drop fade scale menu popup" },
     { page: "appearance", section: "Bar",           label: "Visualizer",           keywords: "audio spectrum music bars cava" },
     { page: "appearance", section: "Bar",           label: "Open windows",         keywords: "taskbar tasks apps icons titles tabs" },
     { page: "appearance", section: "Bar",           label: "Focused window",       keywords: "active window indicator mark pip underline highlight" },

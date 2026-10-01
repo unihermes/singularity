@@ -47,6 +47,7 @@ OverlayWindow {
     // to the bar itself rather than barExtent, which adds a floating bar's
     // gap below it again.
     property real topOffset: Theme.barHeight + Theme.barMargin - Theme.borderWidth
+        + (Theme.flyoutAttach === "floating" ? Theme.spaceM + Theme.borderWidth : 0)
 
     // How close the box may come to the left/right screen edge once the
     // clamp below catches it. The panels whose trigger sits at the very end
@@ -61,7 +62,27 @@ OverlayWindow {
     default property alias content: contentColumn.data
     property alias contentColumn: contentColumn
 
-    visible: open
+    // 0 shut, 1 open: Theme.flyoutAnim plays over it both ways, and the
+    // surface stays up until it has played out shut
+    property real reveal: 0
+    readonly property bool animated: Theme.flyoutAnim !== "none" && Theme.animFactor > 0
+    NumberAnimation {
+        id: revealAnim
+        target: root
+        property: "reveal"
+        duration: Theme.dur(150)
+        easing.type: Theme.ease
+    }
+    function play(to) {
+        revealAnim.stop()
+        if (!root.animated) { root.reveal = to; return }
+        revealAnim.to = to
+        revealAnim.start()
+    }
+    onOpenChanged: play(open ? 1 : 0)
+    Component.onCompleted: if (open) play(1)
+
+    visible: open || reveal > 0
     focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
         : root.wantsKeyboard ? WlrKeyboardFocus.OnDemand
         : WlrKeyboardFocus.None
@@ -87,6 +108,23 @@ OverlayWindow {
             : root.topOffset
         width: Theme.fit(root.menuWidth)
         height: contentColumn.implicitHeight + Theme.panelPad * 2
+
+        readonly property bool atBottom: Theme.barPosition === "bottom"
+        // a tab's corners at the bar are square, so it hangs from it
+        readonly property int barCorner: Theme.flyoutAttach === "tab" ? 0 : radius
+        topLeftRadius: atBottom ? radius : barCorner
+        topRightRadius: atBottom ? radius : barCorner
+        bottomLeftRadius: atBottom ? barCorner : radius
+        bottomRightRadius: atBottom ? barCorner : radius
+
+        opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
+        // drop: slides out from under the bar; scale: grows from the edge
+        // at the bar, centred on the chip
+        transform: Translate {
+            y: Theme.flyoutAnim === "drop" ? (1 - root.reveal) * Theme.sp(10) * (box.atBottom ? 1 : -1) : 0
+        }
+        scale: Theme.flyoutAnim === "scale" ? 0.9 + 0.1 * root.reveal : 1
+        transformOrigin: atBottom ? Item.Bottom : Item.Top
 
         Behavior on height {
             NumberAnimation { duration: Theme.dur(90); easing.type: Theme.ease }
