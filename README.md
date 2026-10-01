@@ -279,18 +279,14 @@ gradient grounds. With "One per look" on, each look also keeps its own
 wallpaper. Every one of these is listed in `services/Looks.js`.
 
 The Singularity look is built into `services/Looks.js` and is what everything falls back
-to. The other shipped looks are data in `services/looks.json`: the dark
-Abyss, Ember, Neon, Cathedral, HUD, Phosphor, Void, Redmond Night (Windows 95),
-Ten (Windows 10), Amiga, Brutalist, Moss, Amber CRT, Dracula, Aubergine and
-Cyberpunk, then the light Riso, Swiss, Redmond (Windows 95), System 1, Sakura,
-E-ink and Solarized Light. Pick one from the carousel on Settings →
-Appearance's Look tab or in the Control Centre, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
+to. More looks can be added as data in `services/looks.json`, which ships
+empty: copy the shape described in `services/Looks.js` under a new key. Pick
+one from the carousel on Settings → Appearance's Look tab or in the Control
+Centre, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
 set <name>`. The other tabs (Wallpaper, Colours, Style, Text, Bar, Panels,
 Windows, System) adjust it; a dot marks each setting that differs from the
-look, and the Look tab lists those changes with a way back for each. To add a
-look, copy an entry in `looks.json`. Removing one from
-the Appearance page deletes it from that file; `git checkout --
-services/looks.json` brings it back.
+look, and the Look tab lists those changes with a way back for each. Removing
+a look from the Appearance page deletes it from that file.
 
 Alacritty follows the shell too: `AppearanceSync.qml` writes its colours to
 `~/.local/state/singularity/alacritty.toml`, which `alacritty.toml` imports, and

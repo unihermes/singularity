@@ -12,7 +12,7 @@
 // the shape described below.
 //
 // Switch looks from the Appearance page, the Control Centre, or a keybind:
-//   qs ipc call look cycle        qs ipc call look set phosphor
+//   qs ipc call look cycle        qs ipc call look set singularity
 //
 // A look has two halves:
 //
