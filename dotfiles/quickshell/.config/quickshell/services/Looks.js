@@ -154,6 +154,9 @@
 //                  overlay dimming, "clear", or hidden behind a "solid" ground
 //     powerStyle   the power menu: a "row" of tiles, a "list" of rows, or
 //                  "full" screen -- large tiles over a darkened desktop
+//     levelStyle   the volume/brightness popup when the clock island is
+//                  off: a level "pill" under the bar, a vertical bar at the
+//                  screen's right "edge", or the "number" itself
 //     frameStyle   "double"   a second stroke inset inside the outer one
 //                  "single"   the outer stroke alone
 //                  "bevel"    a raised 3D edge outside, a sunken one inside --
@@ -241,6 +244,7 @@ var settingsBase = {
     overviewLayout: "grid",
     overviewBackdrop: "dim",
     powerStyle: "row",
+    levelStyle: "pill",
     gaugeStyle: "fill",
 }
 

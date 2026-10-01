@@ -98,6 +98,7 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias levelStyle:  adapter.levelStyle
     readonly property alias powerStyle:  adapter.powerStyle
     readonly property alias overviewBackdrop: adapter.overviewBackdrop
     readonly property alias overviewLayout: adapter.overviewLayout
@@ -174,6 +175,7 @@ Singleton {
         shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
+        levelStyle:   ["pill", "edge", "number"],
         powerStyle:   ["row", "list", "full"],
         overviewBackdrop: ["dim", "clear", "solid"],
         overviewLayout: ["grid", "strip"],
@@ -213,6 +215,7 @@ Singleton {
         "colour": "Colour", "mono": "Mono", "soft": "Soft", "hard": "Hard",
         "mirror": "Mirrored", "rise": "Rising", "line": "Line",
         "fill": "Fill", "segments": "Segments", "rule": "Rule",
+        "pill": "Bar", "edge": "Screen edge", "number": "Number",
         "row": "Row", "list": "List", "full": "Full screen",
         "dim": "Dimmed", "clear": "Clear", "solid": "Solid",
         "grid": "Grid", "strip": "One row",
@@ -825,6 +828,7 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property string levelStyle: "pill"
             property string powerStyle: "row"
             property string overviewBackdrop: "dim"
             property string overviewLayout: "grid"

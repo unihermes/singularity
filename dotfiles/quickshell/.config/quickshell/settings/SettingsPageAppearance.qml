@@ -1071,6 +1071,13 @@ SettingsPage {
         Choices { key: "powerStyle" }
     }
 
+    SettingsField {
+        label: "Level popup"
+        hint: Settings.islandActive ? "Volume and brightness show in the clock island instead"
+            : "Volume and brightness: a bar under the bar, a bar at the screen's edge, or the number"
+        Choices { key: "levelStyle"; live: !Settings.islandActive }
+    }
+
     // --- bar -----------------------------------------------------------------
     // Where the bar sits and its ground, then its chips, then what the
     // workspace and clock chips show.
