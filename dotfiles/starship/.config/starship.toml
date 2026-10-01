@@ -1,12 +1,13 @@
 # Singularity - Starship
 # ~/.config/starship.toml
 #
-# Emphasis is lightness and weight, not hue. Error draws the eye by being
-# bold and bright rather than red; a clean prompt stays plain.
+# The current folder is an accent pill; a failed command turns the prompt
+# character the look's alert colour, and a clean prompt stays plain.
 #
-# Written in Singularity's ramp. Quickshell (AppearanceSync.qml) renders a copy
-# in the current look's colours to ~/.local/state/singularity/starship.toml,
-# which .bashrc points STARSHIP_CONFIG at, so edit this file, not that one.
+# Written in Singularity's ramp, accent and alert. Quickshell
+# (AppearanceSync.qml) renders a copy in the current look's colours to
+# ~/.local/state/singularity/starship.toml, which .bashrc points
+# STARSHIP_CONFIG at, so edit this file, not that one.
 #   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
 #   #303030 border #4d4d4d muted  #7a7a7a subtext  #d0e2fa text
 #   #ebebeb bright
@@ -19,37 +20,32 @@
 add_newline = true
 
 format = """
-[](fg:overlay)${custom.path}[](fg:overlay)
+${custom.path}
 $character"""
 
 palette = "singularity"
 
 [palettes.singularity]
-overlay = "#242424"
-muted   = "#4d4d4d"
-subtext = "#7a7a7a"
-text    = "#d0e2fa"
-bright  = "#ebebeb"
+text  = "#d0e2fa"
+alert = "#a87676"
 
-# The path is drawn by custom.path, not this module: starship's directory
-# has one style for the whole string, and the point here is a different
-# shade per segment. Left disabled rather than deleted so it's obvious the
-# omission is deliberate.
+# The path is drawn by custom.path (starship-path.sh), not this module:
+# starship's directory has one style for the whole string. Left disabled
+# rather than deleted so it's obvious the omission is deliberate.
 [directory]
 disabled = true
 
-# Rounded caps (U+E0B6/U+E0B4) sit either side, coloured fg:overlay against
-# the terminal's own background so they read as the ends of the block. They
-# need a Nerd Font with the rounded powerline glyphs, which UbuntuMono has.
+# The capsule glyphs (U+E0B6/U+E0B4) need a Nerd Font with the rounded
+# powerline glyphs, which UbuntuMono has.
 [custom.path]
 command = "~/.config/starship-path.sh"
 when = true
 shell = ["bash", "--noprofile", "--norc"]
-# no style bracket: the script emits its own per-segment SGR, and wrapping it
-# would let starship's reset cut the background out from under it
+# no style bracket: the script emits its own SGR, and wrapping it would let
+# starship's reset cut the background out from under it
 format = "$output"
 style = ""
 
 [character]
 success_symbol = "[❯](text)"
-error_symbol = "[❯](bold bright)"
+error_symbol = "[❯](bold alert)"

@@ -31,8 +31,10 @@
 //                  each app's launch.
 //   qt6ct-colors.conf -- the same colours as a full QPalette (renderQtScheme);
 //                  qt6ct.conf points at it.
-//   term-colors.sh -- the ramp and accent as "r;g;b" triples in shell
-//                  variables, sourced by starship-path.sh and fastfetch's row.sh.
+//   term-colors.sh -- the ramp, accent, text on the accent and heading colour
+//                  as "r;g;b" triples in shell variables, and the capsule
+//                  shape (T_ROUND) and heading case (T_UPPER), sourced by
+//                  starship-path.sh and fastfetch's row.sh.
 //   starship.toml, fastfetch.jsonc -- the repo's own configs, recoloured
 //                  (recolour). .bashrc points starship (STARSHIP_CONFIG) and
 //                  fastfetch (-c) at them when they exist.
@@ -94,13 +96,15 @@ Scope {
     }
 
     // A config written in the reference look's colours (Looks.reference),
-    // in the current one: each ramp hex, and each ANSI truecolour triple
-    // (38;2;r;g;b or 48;2;r;g;b), becomes the current colour for its role.
+    // in the current one: each ramp, accent or alert hex, and each ANSI
+    // truecolour triple (38;2;r;g;b or 48;2;r;g;b), becomes the current
+    // colour for its role.
     function recolour(text) {
-        var ref = Looks.looks[Looks.reference].palette
+        var look = Looks.looks[Looks.reference], ref = look.palette
+        var roles = roleNames.map(r => [ref[r], Theme[r]]).concat([[look.accent, Theme.accent], [look.alert, Theme.alert]])
         var byHex = {}, byTriple = {}
-        for (var i = roleNames.length - 1; i >= 0; i--) {
-            var h = ref[roleNames[i]], c = Theme[roleNames[i]]
+        for (var i = roles.length - 1; i >= 0; i--) {
+            var h = roles[i][0], c = roles[i][1]
             byHex[h] = c
             byTriple[[1, 3, 5].map(k => parseInt(h.substr(k, 2), 16)).join(";")] = c
         }
@@ -231,6 +235,10 @@ Scope {
         for (var i = 0; i < roleNames.length; i++)
             lines.push("N_" + roleNames[i].toUpperCase() + "='" + triple(Theme[roleNames[i]]) + "'")
         lines.push("N_ACCENT='" + triple(Theme.accent) + "'")
+        lines.push("N_ON_ACCENT='" + triple(onAccent()) + "'")
+        lines.push("N_HEADING='" + triple(Theme.headingColor) + "'")
+        lines.push("T_ROUND=" + (Theme.radius > 0 ? 1 : 0))
+        lines.push("T_UPPER=" + (Theme.headingUpper ? 1 : 0))
         var text = lines.join("\n") + "\n"
         AtomicFileWrite.write({ path: root.dir + "/term-colors.sh", transform: () => text })
     }
