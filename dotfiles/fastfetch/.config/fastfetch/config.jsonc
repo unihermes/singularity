@@ -5,7 +5,7 @@
 // Quickshell (AppearanceSync.qml) renders a copy with each 38;2;r;g;b in the
 // current look's colours to ~/.local/state/singularity/fastfetch.jsonc, which
 // .bashrc runs fastfetch with.
-//   #4d4d4d muted  #7a7a7a subtext  #a8c8ff text  #ebebeb bright
+//   #4d4d4d muted  #7a7a7a subtext  #c4daf8 text  #ebebeb bright
 //
 // A fully closed box (not just a left border) drawn with box-drawing
 // characters around the info block. Every data line is a "command" module

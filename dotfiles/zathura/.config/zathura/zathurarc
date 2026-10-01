@@ -14,16 +14,16 @@ set statusbar-v-padding 6
 # content too, which isn't wanted here, so it stays off by default.
 set recolor false
 set recolor-keephue false
-set recolor-darkcolor  "#a8c8ff"
+set recolor-darkcolor  "#c4daf8"
 set recolor-lightcolor "#0b0b0b"
 set default-bg     "#0b0b0b"
-set default-fg     "#a8c8ff"
+set default-fg     "#c4daf8"
 set statusbar-bg   "#121212"
 set statusbar-fg   "#7a7a7a"
 set inputbar-bg    "#121212"
 set inputbar-fg    "#ebebeb"
 set notification-bg "#121212"
-set notification-fg "#a8c8ff"
+set notification-fg "#c4daf8"
 set highlight-color        "rgba(255,214,0,0.3)"
 set highlight-active-color "rgba(255,140,0,0.45)"
 set render-loading false

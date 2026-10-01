@@ -214,7 +214,7 @@ var looks = {
         description: "Grayscale, double-stroked frames, tight spacing",
         palette: {
             base: "#0b0b0b", bar: "#121212", panel: "#141414", surface: "#1a1a1a", overlay: "#242424",
-            border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#a8c8ff", bright: "#ebebeb",
+            border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#c4daf8", bright: "#ebebeb",
         },
         accent: "#5555c8",
         // desaturated hard, so they read as a tinted grey rather than alerts
