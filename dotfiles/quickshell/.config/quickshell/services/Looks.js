@@ -50,6 +50,10 @@
 //                    leaving it for a look without one restores the user's.
 //                    Keys a section omits go back to their default section.
 //
+// Corners in `settings`: `radius` for chips and controls, `panelRadius` for
+// flyouts, the shell's windows, notifications and wofi, `barRadius` for a
+// floating bar, islands and the notch. The last two default to `radius`.
+//
 // The style switches in `settings`:
 //     moduleStyle  "outline"  stroked chips (the double frame applies here)
 //                  "filled"   solid chips, no stroke
@@ -221,6 +225,9 @@ function complete(look) {
     var a = adjustable(look)
     for (var k in a)
         if (look.settings[k] === undefined) look.settings[k] = a[k]
+    // the panels' and the bar's corners follow `radius` unless stated
+    for (var r of ["panelRadius", "barRadius"])
+        if (look.settings[r] === undefined) look.settings[r] = look.settings.radius
     return look
 }
 complete(looks[fallback])

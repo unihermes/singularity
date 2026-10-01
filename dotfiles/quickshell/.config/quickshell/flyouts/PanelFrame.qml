@@ -19,7 +19,7 @@ import "../services"
 Rectangle {
     id: root
 
-    radius: Theme.radius
+    radius: Theme.panelRadius
     color: Theme.panelFill
     border.width: Theme.frameStroked ? Theme.borderWidth : 0
     border.color: Theme.frameAccent ? Theme.accent : Theme.stroke

@@ -88,7 +88,7 @@ Scope {
         var re = new RegExp("(" + valuePattern + ")(\\s*)\\/\\*\\s*@" + tag + "\\s*\\*\\/", "g")
         return src.replace(re, (m, v, sp) => value + sp + "/* @" + tag + " */")
     }
-    function px(offset) { return Math.max(0, Theme.radius - offset) + "px" }
+    function px(offset) { return Math.max(0, Theme.panelRadius - offset) + "px" }
     function triple(c) {
         return Math.round(c.r * 255) + ";" + Math.round(c.g * 255) + ";" + Math.round(c.b * 255)
     }

@@ -897,7 +897,9 @@ SettingsPage {
     }
 
     Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }
-    Stepper { label: "Corner radius"; hint: "Modules, flyouts, windows of the shell, wofi and notifications"; key: "radius"; suffix: "px" }
+    Stepper { label: "Corner radius"; hint: "Bar modules, buttons and controls"; key: "radius"; suffix: "px" }
+    Stepper { label: "Panel corners"; hint: "Flyouts, the shell's windows, wofi and notifications"; key: "panelRadius"; suffix: "px" }
+    Stepper { label: "Bar corners"; hint: "A floating bar, its islands or the notch"; key: "barRadius"; suffix: "px" }
     Stepper { label: "Panel opacity"; hint: "Flyouts, the shell's windows, wofi and notifications. Below 100% the blur behind shows through"; key: "panelOpacity"; step: 5; suffix: "%" }
     Stepper { label: "Overlay dimming"; hint: "How dark the desktop goes behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
 

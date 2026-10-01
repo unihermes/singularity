@@ -169,6 +169,9 @@ Singleton {
     // --- shape -----------------------------------------------------------------
 
     readonly property int radius:      Settings.radius
+    // flyouts, windows, cards and wofi; and a floating bar, islands, notch
+    readonly property int panelRadius: Settings.panelRadius
+    readonly property int barRadius:   Settings.barRadius
     // One step in from the outer stroke. Floored at 0 because the radius is
     // user-settable down to square, and a negative radius draws nothing.
     readonly property int radiusInner: Math.max(0, radius - 2)

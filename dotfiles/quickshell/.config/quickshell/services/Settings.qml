@@ -98,6 +98,8 @@ Singleton {
     readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gaugeStyle:  adapter.gaugeStyle
+    readonly property alias barRadius:   adapter.barRadius
+    readonly property alias panelRadius: adapter.panelRadius
     readonly property alias flyoutAttach: adapter.flyoutAttach
     readonly property alias flyoutAnim:  adapter.flyoutAnim
     // The look's adjustable fixed half (Looks.adjustable): its accent as a
@@ -447,6 +449,8 @@ Singleton {
         barHeight: { min: 24, max: 48 },
         moduleGap: { min: 0,  max: 12 },
         radius:    { min: 0,  max: 14 },
+        barRadius: { min: 0, max: 14 },
+        panelRadius: { min: 0, max: 14 },
         barOpacity: { min: 40, max: 100 },
         fontSize:  { min: 12, max: 22 },
         barFontSize: { min: 12, max: 22 },
@@ -608,6 +612,13 @@ Singleton {
         adapter.adjustableSeeded = true
     }
 
+    // A file from before the panels and the bar had corners of their own
+    // has -1 for them: they start out following `radius`, as they did.
+    function seedCorners() {
+        if (adapter.panelRadius < 0) adapter.panelRadius = adapter.radius
+        if (adapter.barRadius < 0) adapter.barRadius = adapter.radius
+    }
+
     function reset() {
         root.applyLayout(adapter.look, defaults.look)
         for (var key in defaults) adapter[key] = defaults[key]
@@ -710,10 +721,12 @@ Singleton {
                 adapter.animSpeed = ""
             }
             root.seedAdjustable()
+            root.seedCorners()
         }
         onLoadFailed: {
             root.ready = true
             root.seedAdjustable()
+            root.seedCorners()
         }
 
         onFileChanged: reload()
@@ -758,6 +771,8 @@ Singleton {
             property string shadow: "none"
             property string vizStyle: "mirror"
             property string gaugeStyle: "fill"
+            property int barRadius: -1
+            property int panelRadius: -1
             property string flyoutAttach: "flush"
             property string flyoutAnim: "drop"
             property string accent: ""

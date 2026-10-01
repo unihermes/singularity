@@ -682,7 +682,7 @@ ShellRoot {
                 visible: Theme.barFull || Theme.barFloating
                 anchors.fill: barBody
                 color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
-                radius: Theme.barFloating ? Theme.radius : 0
+                radius: Theme.barFloating ? Theme.barRadius : 0
                 border.width: Theme.barFloating ? Theme.borderWidth : 0
                 border.color: Theme.stroke
             }
@@ -703,7 +703,7 @@ ShellRoot {
                     y: barBody.y
                     width: span.w + pad * 2
                     height: barBody.height
-                    radius: Theme.radius
+                    radius: Theme.barRadius
                     color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
                     border.width: Theme.borderWidth
                     border.color: Theme.stroke
@@ -722,7 +722,7 @@ ShellRoot {
                 y: barBody.y
                 width: span.w + pad * 2
                 height: barBody.height
-                radius: Theme.radius
+                radius: Theme.barRadius
                 color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
                 Behavior on x { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
                 Behavior on width { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
