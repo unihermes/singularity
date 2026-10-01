@@ -543,6 +543,23 @@ hl.bind(mod .. " + right", hl.dsp.focus({ direction = "right" }))  -- Focus wind
 hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }))  -- Focus window above
 hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus window below
 
+-- --- Move & resize ---
+-- moveWindowDir() and friends, below: tiled windows move, swap and resize
+-- in the layout, floating ones are nudged 40px at a time.
+hl.bind(mod .. " + SHIFT + left",  function() moveWindowDir("left") end,  { repeating = true })  -- Move window left
+hl.bind(mod .. " + SHIFT + right", function() moveWindowDir("right") end, { repeating = true })  -- Move window right
+hl.bind(mod .. " + SHIFT + up",    function() moveWindowDir("up") end,    { repeating = true })  -- Move window up
+hl.bind(mod .. " + SHIFT + down",  function() moveWindowDir("down") end,  { repeating = true })  -- Move window down
+hl.bind(mod .. " + ALT + left",  function() swapWindowDir("left") end)  -- Swap with the window to the left
+hl.bind(mod .. " + ALT + right", function() swapWindowDir("right") end)  -- Swap with the window to the right
+hl.bind(mod .. " + ALT + up",    function() swapWindowDir("up") end)  -- Swap with the window above
+hl.bind(mod .. " + ALT + down",  function() swapWindowDir("down") end)  -- Swap with the window below
+hl.bind(mod .. " + CTRL + left",  function() resizeWindowDir("left") end,  { repeating = true })  -- Resize window: move its edge left
+hl.bind(mod .. " + CTRL + right", function() resizeWindowDir("right") end, { repeating = true })  -- Resize window: move its edge right
+hl.bind(mod .. " + CTRL + up",    function() resizeWindowDir("up") end,    { repeating = true })  -- Resize window: move its edge up
+hl.bind(mod .. " + CTRL + down",  function() resizeWindowDir("down") end,  { repeating = true })  -- Resize window: move its edge down
+hl.bind(mod .. " + O", function() sendToNextMonitor() end)  -- Send window to the next monitor
+
 -- Windows-style alt-tab, with the switcher drawn by Quickshell
 -- (AltTabSwitcher.qml). Hold ALT and tap Tab to move the highlight, release
 -- ALT to focus what you landed on.
@@ -1637,6 +1654,69 @@ for _, w in ipairs(hl.get_windows()) do
             if mon and w.at.y + w.size.y > mon.y and w.at.y < mon.y + mon.height then jumpTo("address:" .. w.address, hiddenRect(r, mon)) end
         end
     end
+end
+
+-- WINDOW KEYS: SUPER+SHIFT/ALT/CTRL + arrows and SUPER+O. Global so the
+-- binds can reach them.
+--
+-- A monocle window filling its monitor has nowhere to move or grow on it,
+-- so the arrows leave it alone, except that SHIFT+left/right sends it to
+-- the monitor that way. SUPER+X shrinks it first to move or size it by hand.
+local NUDGE = 40
+local ARROWS = { left = { -1, 0 }, right = { 1, 0 }, up = { 0, -1 }, down = { 0, 1 } }
+
+local function isFullMonocle(win)
+    return isMonocleWin(win) and not stateOf(win.address).small
+end
+
+-- Re-fits a monocle window to the monitor it landed on. The focus hook
+-- would catch it too, but only on the next focus change.
+local function refitAfterMove(win)
+    if not isMonocleWin(win) or stateOf(win.address).small then return end
+    local moved = hl.get_window("address:" .. win.address)
+    if moved and moved.monitor then sizeToFullFloat(moved, moved.monitor) end
+end
+
+-- Tiled: along the layout, and on to the next monitor past its edge.
+-- Floating: nudged, since a floater moved by direction jumps to the edge.
+function moveWindowDir(dir)
+    local win = hl.get_active_window()
+    if not win then return end
+    if not win.floating then
+        hl.dispatch(hl.dsp.window.move({ direction = dir }))
+    elseif isFullMonocle(win) then
+        if dir ~= "left" and dir ~= "right" then return end
+        hl.dispatch(hl.dsp.window.move({ monitor = dir == "left" and "l" or "r" }))
+        refitAfterMove(win)
+    else
+        local d = ARROWS[dir]
+        hl.dispatch(hl.dsp.window.move({ x = d[1] * NUDGE, y = d[2] * NUDGE, relative = true }))
+    end
+end
+
+-- Tiled only: a floater has no place in the layout to trade. Hyprland
+-- reports a missing neighbour as an error, which is nothing here.
+function swapWindowDir(dir)
+    local win = hl.get_active_window()
+    if not win or win.floating then return end
+    pcall(hl.dispatch, hl.dsp.window.swap({ direction = dir }))
+end
+
+-- On a tiled window the arrow moves the split it shares with its
+-- neighbour that way. A floater grows to the right and down and shrinks to
+-- the left and up, about its centre.
+function resizeWindowDir(dir)
+    local win = hl.get_active_window()
+    if not win or isFullMonocle(win) then return end
+    local d = ARROWS[dir]
+    hl.dispatch(hl.dsp.window.resize({ x = d[1] * NUDGE, y = d[2] * NUDGE, relative = true }))
+end
+
+function sendToNextMonitor()
+    local win = hl.get_active_window()
+    if not win or #hl.get_monitors() < 2 then return end
+    hl.dispatch(hl.dsp.window.move({ monitor = "+1" }))
+    refitAfterMove(win)
 end
 
 -- monocleRule and the fullscreen entries' rules act on windows as they map,
