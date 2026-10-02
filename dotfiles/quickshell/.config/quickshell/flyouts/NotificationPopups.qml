@@ -49,19 +49,25 @@ OverlayWindow {
             : root.width - width - root.gap
         y: root.atBottom ? root.height - root.barGap - root.gap - height : root.barGap + root.gap
 
-        // nearest the edge first, so at the bottom the list runs upward
+        // Nearest the edge first, so at the bottom the list runs upward. A
+        // ScriptModel of the entries themselves, rather than the fresh array
+        // of groups, so a card stays put while others come and go and its
+        // countdown isn't started over by every arrival.
         Repeater {
-            model: root.atBottom ? root.shown.slice().reverse() : root.shown
+            model: ScriptModel {
+                values: (root.atBottom ? root.shown.slice().reverse() : root.shown).map(g => g.entry)
+            }
 
             NotificationCard {
                 id: card
                 required property var modelData
-                entry: modelData.entry
-                others: modelData.others
-                count: modelData.others.length + 1
+                readonly property var group: root.shown.find(g => g.entry === modelData) || null
+                entry: modelData
+                others: group ? group.others : []
+                count: others.length + 1
                 width: stack.width
 
-                readonly property real timeout: Notifications.timeoutFor(modelData.entry)
+                readonly property real timeout: Notifications.timeoutFor(modelData)
 
                 NumberAnimation on life {
                     from: 1
