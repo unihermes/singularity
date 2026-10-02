@@ -8,6 +8,21 @@ from `services/Theme.qml`; the look that sets them is `singularity` in
 The current design is **Channel** (settled 2026-10-01): grayscale, rounded,
 double-lined, with one indigo accent (`#5555c8`) for marks.
 
+## Styles
+
+How the chrome is drawn is one setting, `style` (`services/Styles.js`):
+Channel, Lined, Flat, Retro, Minimal, Basic, Capsule, Glass, Tabbed and
+Terminal. A style sets the frame, bar modules, hover, level chips, focused
+window mark, flyout titles, heading prefix and where flyouts sit, all at
+once. Beside it are only dials that move everything together (Roundness, Bar
+shape, Density, See-through) and Finish switches that are safe with any style
+(separators, shadows, shaded grounds, heavy lines, heading caps and rule).
+
+Don't add a setting that changes one piece's frame on its own: that's what
+made combinations clash. A new look of a piece belongs in a style. Theme reads
+the derived values through `Styles.resolve()`; the sections below describe
+Channel.
+
 ## The channel
 
 The signature shape. Every frame is three bands, outside in, then the ground:
@@ -29,12 +44,12 @@ The signature shape. Every frame is three bands, outside in, then the ground:
   a fillet of `channelFillet` (7px). Edges closer than a corner's worth snap
   flush instead of leaving a sliver.
 
-Setting: `frameStyle: "channel"`.
+Style: `channel` (frame `channel` in `Styles.js`).
 
 ## Bar
 
 - **Groups:** left, centre and right are each one channel around their visible
-  modules (`moduleStyle: "grouped"`). The channel is `groupHeight`
+  modules (the style's `modules: "grouped"`). The channel is `groupHeight`
   (bar height − 4) tall with radius `groupRadius` (radius + 4) and a surface
   ground. Drawn in `shell.qml` (`groupRect()`).
 - **Modules** sit flush inside the inner line, with no frame of their own:
@@ -48,7 +63,7 @@ Setting: `frameStyle: "channel"`.
 
 ## Flyouts
 
-- **Grown from the group** (`flyoutAttach: "grown"`): the flyout hangs straight
+- **Grown from the group** (the style's `attach: "grown"`): the flyout hangs straight
   off the bottom of the whole group its module sits in, with one channel
   outline around both. Rounded inside corners join them where the widths
   differ, and the sides are straight where they line up (at the screen edge,
