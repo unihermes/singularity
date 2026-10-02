@@ -134,13 +134,12 @@ var entries = [
     { page: "appearance", section: "Look",       label: "Factory reset",        keywords: "stock wipe" },
 
     // --- Window Rules ------------------------------------------------------
-    { page: "windowrules", section: "Add a rule", label: "Open now",     keywords: "app class pick running" },
+    { page: "windowrules", section: "Rules", label: "Rules",             keywords: "app class float add new order drag reorder priority" },
+    { page: "windowrules", section: "Rules", label: "Add a rule…",       keywords: "app class pick running open now new" },
     { page: "windowrules", section: "Rules", label: "Name",              keywords: "alias rename label title" },
-    { page: "windowrules", section: "Rules", label: "Layout",            keywords: "float tiled auto" },
-    { page: "windowrules", section: "Rules", label: "Size",              keywords: "natural window dimensions" },
+    { page: "windowrules", section: "Rules", label: "Opens as",          keywords: "float tiled fullscreen maximise maximize on top pin always above" },
+    { page: "windowrules", section: "Rules", label: "Size",              keywords: "natural window dimensions custom percent pixels" },
     { page: "windowrules", section: "Rules", label: "Workspace",         keywords: "where it opens" },
-    { page: "windowrules", section: "Rules", label: "Open fullscreen",   keywords: "maximise maximize" },
-    { page: "windowrules", section: "Rules", label: "Always on top",     keywords: "pin float above" },
     { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
 
     // --- Display -----------------------------------------------------------

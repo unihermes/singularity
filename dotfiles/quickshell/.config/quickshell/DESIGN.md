@@ -152,9 +152,14 @@ Settings') are laid out the same way.
 - **Spot pickers:** a place on the screen (where notification popups
   appear) is one small screen beside the label with a spot per choice,
   drawing the thing where it is (`PopupSpot`).
-- **Which pages are tabbed:** Appearance and Window Rules (Apps ·
-  Workspaces). Power & Idle and Lock Screen are one page each; prefer one
-  page with sections over tabs.
+- **Which pages are tabbed:** only Appearance. Every other page is one
+  page with sections; prefer that over tabs.
+- **Window Rules:** rules are one-line rows (drag handle, name, a pattern
+  mark, how it opens) that open in place: Matches, Name with the pencil,
+  one Opens as choice (Tiled · Float · Fullscreen · On top), Size from a
+  dropdown of presets, shares of the screen and Custom…, Workspace, and
+  Remove. Rows reorder by dragging the handle. Add a rule… is the last row,
+  as Other network… is. Workspace layouts are segments per workspace.
   The tab showing has white text on its accent fill, never dark. Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.
 - **Rows that open in place:** a row whose action needs more input (a

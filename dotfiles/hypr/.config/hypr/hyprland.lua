@@ -936,6 +936,19 @@ toggleStashed = function()
     end
 end
 
+-- A rule's size: "W H" in pixels, or either as a share of the screen
+-- ("60%"), which Hyprland takes as monitor_w*0.6 / monitor_h*0.6.
+local function ruleSize(size)
+    if type(size) ~= "string" then return nil end
+    local w, h = size:match("^(%d+%%?) (%d+%%?)$")
+    if not w then return nil end
+    local function part(v, dim)
+        local pct = v:match("^(%d+)%%$")
+        return pct and (dim .. "*" .. tonumber(pct) / 100) or v
+    end
+    return part(w, "monitor_w") .. " " .. part(h, "monitor_h")
+end
+
 -- Per-app and popout exceptions live in
 -- ~/.config/singularity/window-rules.json, edited from Settings > Window
 -- Rules. This file keeps only the machinery the shell depends on.
@@ -1005,7 +1018,7 @@ do
             if r.float or r.pin then
                 rule.float  = true
                 rule.center = not r.pin
-                if type(r.size) == "string" and r.size:match("^%d+ %d+$") then rule.size = r.size end
+                rule.size = ruleSize(r.size)
             end
             if r.pin then rule.pin = true end
             local ws = tonumber(r.workspace)
