@@ -124,16 +124,3 @@ function resolve(s) {
         glass: !!st.glass,
     }
 }
-
-// The style a file saved before Styles existed was closest to, from its
-// frame and module style.
-function infer(frameStyle, moduleStyle) {
-    if (frameStyle === "channel" || moduleStyle === "grouped") return "channel"
-    if (frameStyle === "bevel" || frameStyle === "groove") return "retro"
-    if (frameStyle === "double") return "lined"
-    if (moduleStyle === "bracket") return "terminal"
-    if (moduleStyle === "pill") return "capsule"
-    if (moduleStyle === "underline") return "minimal"
-    if (frameStyle === "none") return moduleStyle === "filled" ? "flat" : "basic"
-    return moduleStyle === "outline" || moduleStyle === "filled" ? "lined" : "minimal"
-}

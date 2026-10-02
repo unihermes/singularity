@@ -668,57 +668,6 @@ Singleton {
 
     function step(key, delta) { set(key, adapter[key] + delta) }
 
-    // A file written before the look's fixed half was adjustable has none of
-    // those keys, so the adapter's declared defaults -- Singularity's -- would
-    // strip another look of its accent and headings. Filled in once from the
-    // look in use; `adjustableSeeded` stops it redoing that over later edits.
-    function seedAdjustable() {
-        if (adapter.adjustableSeeded) return
-        var l = LookStore.looks[adapter.look] || Looks.looks[Looks.fallback]
-        var a = Looks.adjustable(l)
-        for (var k in a) adapter[k] = a[k]
-        adapter.adjustableSeeded = true
-    }
-
-    // The fallback look was called Neutrino: a file saved then still names it
-    // as the look in use, in the saved default and in the per-look wallpapers.
-    function migrateNeutrino() {
-        if (adapter.look === "neutrino") adapter.look = Looks.fallback
-        var u = adapter.userDefaults || {}
-        if (u.look === "neutrino") {
-            var c = {}
-            for (var k in u) c[k] = u[k]
-            c.look = Looks.fallback
-            adapter.userDefaults = c
-        }
-        var w = adapter.lookWallpapers || {}
-        if (w.neutrino !== undefined) {
-            var m = {}
-            for (var j in w) m[j === "neutrino" ? Looks.fallback : j] = w[j]
-            adapter.lookWallpapers = m
-        }
-    }
-
-    // A file from before Styles has a frame and module style instead: the
-    // style closest to them, and the bar's opacity as See-through, once.
-    // The saved default is carried over the same way.
-    function seedStyle(fromFile) {
-        if (adapter.styleSeeded) return
-        if (fromFile) {
-            adapter.style = Styles.infer(adapter.frameStyle, adapter.moduleStyle)
-            adapter.seeThrough = clamp("seeThrough", Math.min(adapter.barOpacity, adapter.panelOpacity))
-            var u = adapter.userDefaults || {}
-            if (u.frameStyle !== undefined && u.style === undefined) {
-                var c = {}
-                for (var k in u) c[k] = u[k]
-                c.style = Styles.infer(u.frameStyle, u.moduleStyle)
-                c.seeThrough = clamp("seeThrough", u.barOpacity !== undefined ? u.barOpacity : 100)
-                adapter.userDefaults = c
-            }
-        }
-        adapter.styleSeeded = true
-    }
-
     function reset() {
         root.applyLayout(adapter.look, defaults.look)
         for (var key in defaults) adapter[key] = defaults[key]
@@ -800,36 +749,8 @@ Singleton {
         // attached object to hook instead.)
         onLoaded: {
             root.ready = true
-            // Font size used to be a percentage. Carried over once, then the
-            // old key is parked at 100 so this never runs again.
-            if (adapter.fontScale !== 100) {
-                adapter.fontSize = root.clamp("fontSize", root.fontSizeBase * adapter.fontScale / 100)
-                adapter.fontScale = 100
-            }
-            // Animation Speed used to be one of three words. Carried over
-            // once, in the saved default too, then the old key is emptied.
-            if (adapter.animSpeed !== "") {
-                var times = { normal: 100, fast: 50, off: 0 }
-                adapter.animTime = times[adapter.animSpeed] !== undefined ? times[adapter.animSpeed] : 100
-                var u = adapter.userDefaults || {}
-                if (u.animSpeed !== undefined) {
-                    var c = {}
-                    for (var k in u) if (k !== "animSpeed") c[k] = u[k]
-                    c.animTime = times[u.animSpeed] !== undefined ? times[u.animSpeed] : 100
-                    adapter.userDefaults = c
-                }
-                adapter.animSpeed = ""
-            }
-            root.seedAdjustable()
-            root.migrateNeutrino()
-            root.seedStyle(true)
         }
-        onLoadFailed: {
-            root.ready = true
-            root.seedAdjustable()
-            root.migrateNeutrino()
-            root.seedStyle(false)
-        }
+        onLoadFailed: root.ready = true
 
         onFileChanged: reload()
         onAdapterUpdated: if (root.ready) saveTimer.restart()
@@ -839,12 +760,8 @@ Singleton {
             property string barPosition: "top"
             property int radius: 6
             property int fontSize: 16
-            // superseded by fontSize; read once to migrate (see onLoaded)
-            property int fontScale: 100
 
             property int animTime: 100
-            // superseded by animTime; read once to migrate (see onLoaded)
-            property string animSpeed: ""
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
             property string colourVariant: "dark"
@@ -854,12 +771,6 @@ Singleton {
             property bool shadows: true
             property bool heavyLines: false
             property string levelColour: "accent"
-            property bool styleSeeded: false
-            // superseded by style and seeThrough; read once to migrate (seedStyle)
-            property string frameStyle: "double"
-            property string moduleStyle: "outline"
-            property int barOpacity: 100
-            property int panelOpacity: 100
             property string density: "normal"
             property string fontFamily: "UbuntuMono Nerd Font"
             property string systemFontFamily: "Ubuntu Nerd Font"
@@ -900,7 +811,6 @@ Singleton {
             property int scrim: 40
             property bool headingUpper: true
             property bool headingRule: true
-            property bool adjustableSeeded: false
 
             property bool wallpaperShuffle: true
             property bool wallpaperPerLook: false
