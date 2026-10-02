@@ -150,9 +150,14 @@ OverlayWindow {
                                 Math.min(root.anchorX - width / 2,
                                          root.width - width - root.edgeMargin))
             if (!root.grown) return free
+            // within reach of a group edge, flush with it: the nearer one when
+            // both are in reach, so a box about the group's width lines up
+            // on the side its module is on
             var near = Theme.channelFillet + Math.max(Theme.groupRadius, root.grownRadius)
-            if (Math.abs(free - root.group.x0) < near) return root.group.x0
-            if (Math.abs(free + width - root.group.x1) < near) return root.group.x1 - width
+            var d0 = Math.abs(free - root.group.x0)
+            var d1 = Math.abs(free + width - root.group.x1)
+            if (d0 < near && d0 <= d1) return root.group.x0
+            if (d1 < near) return root.group.x1 - width
             return Math.round(free)
         }
         // Hangs off whichever edge the bar is on: below it at the top,
