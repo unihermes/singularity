@@ -18,6 +18,11 @@
 // description, and the page's content in Columns marked isSettingsTab, each
 // showing while `tab` is its own. The window remembers each page's tab
 // while it's open, and a search result in a hidden tab switches to it.
+//
+// `sectioned` is the redesigned layout, page by page (DESIGN.md): with
+// channel frames each group of rows sits in a channel of its own, the tabs
+// are one segmented strip in place of the heading, and hints keep to one
+// line. `pinned` shows above the scrolling rows while `pinnedVisible`.
 
 import QtQuick
 import "../services"
@@ -39,6 +44,10 @@ Item {
     // find it by walking up to here, so they need this marker to stop on
     property string highlight: ""
     readonly property bool isSettingsPage: true
+    property bool sectioned: false
+    readonly property bool channelled: sectioned && Theme.frameChannel
+    property Component pinned: null
+    property bool pinnedVisible: true
 
     // [{ id, label, icon }] and the one showing; [] for an untabbed page
     property var tabs: []
@@ -182,11 +191,14 @@ Item {
         height: visible ? implicitHeight : 0
         spacing: Theme.spaceS
 
-        FlyoutHeading { text: root.title.toUpperCase() }
+        FlyoutHeading {
+            visible: !(root.sectioned && root.tabs.length > 0)
+            text: root.title.toUpperCase()
+        }
 
         Text {
             width: parent.width
-            visible: text !== ""
+            visible: text !== "" && !(root.sectioned && root.tabs.length > 0)
             text: root.description
             wrapMode: Text.WordWrap
             color: Theme.subtext
@@ -196,9 +208,102 @@ Item {
         }
 
         // the tabs: icon and name, the one showing lit and underlined
+        // sectioned: the tabs as one segmented strip, the one showing filled
+        Rectangle {
+            id: tabStrip
+            visible: root.tabs.length > 0 && root.sectioned
+            width: parent.width
+            height: Theme.rowHeightTall + Theme.spaceS
+            radius: Theme.radiusInner
+            color: Theme.controlFill("transparent")
+            border.width: Theme.controlBorder(Theme.stroke)
+            border.color: Theme.controlStroke(Theme.stroke)
+
+            ControlEdge { sunken: true; radius: tabStrip.radius }
+
+            Row {
+                x: Theme.borderWidth
+                y: Theme.borderWidth
+                height: parent.height - Theme.borderWidth * 2
+
+                Repeater {
+                    id: tabRep
+                    model: root.tabs
+
+                    Item {
+                        id: seg
+                        required property var modelData
+                        required property int index
+                        readonly property bool current: root.tab === modelData.id
+                        width: (tabStrip.width - Theme.borderWidth * 2) / tabRep.count
+                        height: parent.height
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 1
+                            radius: Theme.radiusSmall
+                            color: seg.current ? (Theme.frameChannel ? Theme.accent : Theme.selectedFill)
+                                : segMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
+                            border.width: !seg.current ? 0 : Theme.frameChannel ? Theme.channelGrooveWidth : Theme.borderWidth
+                            border.color: Theme.frameChannel ? Theme.channelGroove : Theme.selectedStroke
+                        }
+
+                        Rectangle {
+                            visible: seg.index > 0
+                            width: Theme.borderWidth
+                            height: parent.height - Theme.spaceS * 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Theme.stroke
+                        }
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: Theme.spaceS
+                            Text {
+                                id: segIcon
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: seg.modelData.icon || ""
+                                visible: text !== ""
+                                color: seg.current && Theme.frameChannel ? "#ffffff"
+                                    : seg.current ? Theme.accent : Theme.subtext
+                                font.family: Theme.fontIcon
+                                font.pixelSize: Theme.fontIconSize
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, seg.width - segIcon.width - Theme.spaceS * 3)
+                                elide: Text.ElideRight
+                                text: seg.modelData.label
+                                color: seg.current && Theme.frameChannel ? "#ffffff"
+                                    : seg.current || segMouse.containsMouse ? Theme.textStrong : Theme.text
+                                font.family: Theme.fontText
+                                font.pixelSize: Theme.fontSmall
+                                font.weight: seg.current ? Theme.weightStrong : Theme.weightBody
+                            }
+                        }
+
+                        MouseArea {
+                            id: segMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.tab = seg.modelData.id
+                        }
+                    }
+                }
+            }
+        }
+
+        Loader {
+            width: parent.width
+            active: root.pinned !== null && root.pinnedVisible
+            visible: active
+            sourceComponent: root.pinned
+        }
+
         Flow {
             width: parent.width
-            visible: root.tabs.length > 0
+            visible: root.tabs.length > 0 && !root.sectioned
             topPadding: Theme.spaceS
             spacing: Theme.spaceXs
 
@@ -265,11 +370,23 @@ Item {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
-            Column {
-                id: col
+            SectionRuns {
+                visible: root.channelled
                 x: Theme.spaceS
                 width: flick.width - Theme.spaceS * 2
+                column: root.stickyColumn
+                columnY: col.y + (root.stickyColumn === col ? 0 : root.stickyColumn.y)
+            }
+
+            Column {
+                id: col
+                // sectioned: inset to clear the sections' frames
+                readonly property int inset: root.channelled ? Theme.channelWidth + Theme.spaceL : 0
+                readonly property bool sectioned: root.channelled
+                x: Theme.spaceS + inset
+                width: flick.width - x * 2
                 spacing: Theme.spaceM
+                topPadding: root.channelled ? Theme.channelWidth + Theme.spaceS : 0
                 // clear of the panel's rounded bottom border, as on System
                 bottomPadding: Theme.spaceXl
             }

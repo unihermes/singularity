@@ -19,6 +19,9 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 # (page, label) pairs that are fine as they are, with the reason
 ALLOW = {
+    # rows in the Appearance page's live preview, a picture of a flyout
+    ("appearance", "Speakers"): "a row in the live preview",
+    ("appearance", "More in Settings"): "a row in the live preview",
 }
 
 def main():

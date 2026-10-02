@@ -34,9 +34,16 @@ import "../services/HyprTables.js" as HyprTables
 import "../services/Looks.js" as Looks
 import "../services"
 import "../flyouts"
+import "../bar"
 
 SettingsPage {
     id: page
+
+    sectioned: true
+    // a small bar and flyout, drawn by the shell's own pieces, above the
+    // tabs whose settings change how they look
+    pinned: LivePreview {}
+    pinnedVisible: ["colours", "style", "text", "bar", "panels"].indexOf(tab) !== -1
 
     title: "Appearance"
     description: "Pick a look, then change anything about it. Changes apply as you make them; a dot marks a setting that differs from the look."
@@ -430,12 +437,390 @@ SettingsPage {
         }
     }
 
+    // --- visual pickers ------------------------------------------------------
+    // A choice judged by eye: one tile per value, each drawing what it does,
+    // the current one lit. `art` is a Component reading `parent.value`.
+    component Tiles: Column {
+        id: tl
+        property string key: ""
+        property string label: ""
+        property string hint: ""
+        property Component art: null
+        width: parent ? parent.width : 0
+        spacing: Theme.spaceXs
+
+        SettingsField {
+            label: tl.label
+            hint: tl.hint
+            lookKey: Looks.looks[Looks.fallback].settings[tl.key] !== undefined ? tl.key : ""
+        }
+
+        Grid {
+            id: tileGrid
+            width: parent.width
+            columns: 4
+            spacing: Theme.spaceS
+            bottomPadding: Theme.spaceXs
+
+            Repeater {
+                model: Settings.choices[tl.key] || []
+
+                Rectangle {
+                    id: tile
+                    required property var modelData
+                    readonly property bool on: Settings[tl.key] === modelData
+                    width: (tileGrid.width - tileGrid.spacing * 3) / 4
+                    height: Theme.fs(70)
+                    radius: Theme.radius + 3
+                    color: on ? Theme.overlay : tileMouse.containsMouse ? Theme.surface : Theme.panel
+                    border.width: Theme.borderWidth
+                    border.color: on ? Theme.channelOuter : tileMouse.containsMouse ? Theme.subtext : Theme.border
+
+                    // lit: the groove inside the line, in the accent
+                    Rectangle {
+                        visible: tile.on
+                        anchors.fill: parent
+                        anchors.margins: Theme.borderWidth
+                        radius: parent.radius - Theme.borderWidth
+                        color: "transparent"
+                        border.width: Theme.channelGrooveWidth
+                        border.color: Theme.accent
+                    }
+
+                    Loader {
+                        property string value: tile.modelData
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: Theme.spaceL
+                        sourceComponent: tl.art
+                    }
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: Theme.spaceS
+                        text: page.label(tile.modelData, tl.key)
+                        color: tile.on || tileMouse.containsMouse ? Theme.textStrong : Theme.text
+                        font.family: Theme.fontText
+                        font.pixelSize: Theme.fontSmall
+                        font.weight: Theme.weightBody
+                    }
+
+                    MouseArea {
+                        id: tileMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            page.holdInPlace(tl)
+                            Settings.set(tl.key, tile.modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // a small panel in each frame style
+    Component {
+        id: frameArt
+        Item {
+            id: fa
+            readonly property string v: parent ? parent.value : ""
+            readonly property int r: Theme.radius + 2
+            width: Theme.fs(64)
+            height: Theme.fs(30)
+
+            Rectangle {
+                anchors.fill: parent
+                radius: fa.r
+                visible: fa.v !== "channel"
+                color: Theme.surface
+                border.width: fa.v === "double" || fa.v === "single" || fa.v === "accent" ? Theme.borderWidth : 0
+                border.color: fa.v === "accent" ? Theme.accent : Theme.border
+            }
+            Rectangle {
+                visible: fa.v === "double"
+                anchors.fill: parent
+                anchors.margins: 3
+                radius: fa.r - 3
+                color: "transparent"
+                border.width: Theme.borderWidth
+                border.color: Theme.muted
+            }
+            Channel { visible: fa.v === "channel"; radius: fa.r }
+            Bevel {
+                visible: fa.v === "bevel" || fa.v === "groove"
+                anchors.fill: parent
+                raised: fa.v === "bevel"
+                light: Theme.bevelLight
+                dark: Theme.bevelDark
+            }
+            FrameCorners {
+                visible: fa.v === "corners"
+                anchors.fill: parent
+                length: Theme.sp(7)
+                color: Theme.subtext
+            }
+            Column {
+                anchors.centerIn: parent
+                spacing: 3
+                Rectangle { width: fa.width * 0.45; height: 3; radius: 1.5; color: Theme.subtext }
+                Rectangle { width: fa.width * 0.6; height: 3; radius: 1.5; color: Theme.muted }
+            }
+        }
+    }
+
+    // a small panel lifted off by each kind of shadow
+    Component {
+        id: shadowArt
+        Item {
+            id: sa
+            readonly property string v: parent ? parent.value : ""
+            width: Theme.fs(64)
+            height: Theme.fs(30)
+
+            Repeater {
+                model: sa.v === "soft" ? 4 : 0
+                Rectangle {
+                    required property int index
+                    x: -index
+                    y: 3 + index
+                    width: sa.width + index * 2
+                    height: sa.height
+                    radius: Theme.radius + 2 + index
+                    color: Qt.rgba(0, 0, 0, 0.22)
+                }
+            }
+            Rectangle {
+                visible: sa.v === "hard"
+                x: 4; y: 4
+                width: sa.width; height: sa.height
+                radius: Theme.radius + 2
+                color: "#000000"
+            }
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.radius + 2
+                color: Theme.surface
+                border.width: Theme.borderWidth
+                border.color: Theme.muted
+            }
+            Column {
+                anchors.centerIn: parent
+                spacing: 3
+                Rectangle { width: sa.width * 0.45; height: 3; radius: 1.5; color: Theme.subtext }
+                Rectangle { width: sa.width * 0.6; height: 3; radius: 1.5; color: Theme.muted }
+            }
+        }
+    }
+
+    // rows packed as each density packs them
+    Component {
+        id: densityArt
+        Rectangle {
+            id: da
+            readonly property string v: parent ? parent.value : ""
+            readonly property int gap: v === "compact" ? 2 : v === "roomy" ? 6 : 4
+            width: Theme.fs(64)
+            height: Theme.fs(34)
+            radius: Theme.radius + 2
+            color: Theme.surface
+            border.width: Theme.borderWidth
+            border.color: Theme.muted
+            clip: true
+
+            Column {
+                x: da.gap + 4
+                y: da.gap + 3
+                width: da.width - x * 2
+                spacing: da.gap
+                Repeater {
+                    model: 4
+                    Rectangle {
+                        required property int index
+                        width: parent.width * (index === 0 ? 0.6 : 1)
+                        height: 3
+                        radius: 1.5
+                        color: index === 0 ? Theme.subtext : Theme.muted
+                    }
+                }
+            }
+        }
+    }
+
+    // --- live preview --------------------------------------------------------
+    // The shell's own bar chips and a flyout, scaled down over the wallpaper,
+    // so every change on the visual tabs shows as it's made. Built from the
+    // real components, which read Theme, so it can't drift from the shell.
+    component PreviewGroup: Item {
+        default property alias chips: chipRow.data
+        width: chipRow.width + (Theme.moduleGrouped ? Theme.channelWidth * 2 : 0)
+        height: Theme.barHeight
+
+        Item {
+            visible: Theme.moduleGrouped
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            height: Theme.groupHeight
+            Channel { radius: Theme.groupRadius }
+        }
+        Row {
+            id: chipRow
+            x: Theme.moduleGrouped ? Theme.channelWidth : 0
+            spacing: Theme.moduleSpacing
+        }
+    }
+
+    component PreviewGlyph: Text {
+        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+        color: Theme.textStrong
+        font.family: Theme.fontIcon
+        font.pixelSize: Theme.iconSize
+    }
+
+    component LivePreview: Rectangle {
+        id: lp
+        readonly property real sc: 0.62
+        width: parent ? parent.width : 0
+        height: Math.round(stage.height * sc) + Theme.spaceL * 2
+        radius: Theme.radiusInner
+        color: Theme.base
+        clip: true
+
+        Image {
+            anchors.fill: parent
+            source: Wallpaper.current !== "" ? "file://" + Wallpaper.current : ""
+            sourceSize.width: 640
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            opacity: 0.85
+        }
+
+        Item {
+            id: stage
+            x: Theme.spaceL
+            y: Theme.spaceL
+            width: (lp.width - Theme.spaceL * 2) / lp.sc
+            height: Theme.barHeight + Theme.spaceS + flyout.height
+            scale: lp.sc
+            transformOrigin: Item.TopLeft
+
+            Rectangle {
+                width: parent.width
+                height: Theme.barHeight
+                radius: Theme.barFloating ? Theme.barRadius : Theme.radiusSmall
+                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                border.width: Theme.barFloating ? Theme.borderWidth : 0
+                border.color: Theme.stroke
+            }
+
+            PreviewGroup {
+                x: Theme.barInset + Theme.moduleGap
+                ModuleFrame { PreviewGlyph { text: "󰣇" } }
+                ModuleFrame {
+                    Row {
+                        spacing: Theme.spaceS
+                        anchors.verticalCenter: parent.verticalCenter
+                        Repeater {
+                            model: 4
+                            Rectangle {
+                                required property int index
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: index === 1 ? 18 : 6
+                                height: 6
+                                radius: 3
+                                color: index === 1 ? Theme.accent : Theme.muted
+                            }
+                        }
+                    }
+                }
+            }
+
+            PreviewGroup {
+                anchors.horizontalCenter: parent.horizontalCenter
+                ModuleFrame {
+                    active: true
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Qt.formatDateTime(new Date(), Theme.timeFormat)
+                        color: Theme.textStrong
+                        font.family: Theme.fontText
+                        font.pixelSize: Theme.barLabelSize
+                        font.weight: Theme.weightBody
+                    }
+                }
+            }
+
+            PreviewGroup {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.barInset + Theme.moduleGap
+                ModuleFrame { PreviewGlyph { text: "󰖩" } }
+                ModuleFrame {
+                    fixedWidth: Theme.moduleWidth
+                    fillValue: 0.45
+                    PreviewGlyph { text: "󰕾" }
+                }
+                ModuleFrame {
+                    fixedWidth: Theme.moduleWidth
+                    fillValue: 0.8
+                    fillColor: Theme.good
+                    PreviewGlyph { text: "󰂄" }
+                }
+            }
+
+            PanelFrame {
+                id: flyout
+                readonly property int padX: Theme.frameChannel ? Theme.channelWidth * 2 + 3 + Theme.spaceL : Theme.panelPad
+                readonly property int padY: Theme.frameChannel ? Theme.channelWidth * 2 + 3 + Theme.spaceS : Theme.panelPad
+                anchors.right: parent.right
+                y: Theme.barHeight + Theme.spaceS
+                width: Theme.fit(260) + padX * 2
+                height: flyCol.implicitHeight + padY * 2
+                ground: Theme.frameChannel ? Theme.surface : Theme.panelFill
+
+                SectionRuns {
+                    visible: Theme.frameChannel
+                    x: Theme.channelWidth + 3
+                    width: flyout.width - x * 2
+                    height: flyout.height
+                    column: flyCol
+                    columnY: flyCol.y
+                }
+
+                Column {
+                    id: flyCol
+                    readonly property bool sectioned: Theme.frameChannel
+                    x: flyout.padX
+                    y: flyout.padY
+                    width: flyout.width - flyout.padX * 2
+                    spacing: Theme.spaceM
+
+                    FlyoutHeading { text: "VOLUME  45%" }
+                    Slider { width: parent.width; value: 45 }
+                    FlyoutDivider {}
+                    FlyoutAction { icon: "󰕾"; label: "Mute"; checked: false }
+                    FlyoutRow { label: "Speakers"; highlighted: true }
+                    FlyoutRow { label: "More in Settings"; trailing: "󰁔" }
+                }
+            }
+        }
+
+        // a picture: nothing in it takes the pointer
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+        }
+    }
+
     // --- tabs and their furniture -------------------------------------------
 
     // One tab's content, showing while it's the page's tab
     component Tab: Column {
         required property string tabId
         readonly property bool isSettingsTab: true
+        // FlyoutHeading and FlyoutDivider make room for the sections
+        readonly property bool sectioned: page.channelled
         visible: page.tab === tabId
         width: parent.width
         spacing: Theme.spaceM
@@ -611,6 +996,9 @@ SettingsPage {
         id: tab_look
         tabId: "look"
 
+        CurrentPreview {}
+
+        Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "LOOK" }
 
         Item {
@@ -927,8 +1315,8 @@ SettingsPage {
 
         SettingsField {
             label: "One per look"
-            hint: Settings.wallpaperPerLook ? "Picking a look brings back the wallpaper you last had with it"
-                : "Every look shares the wallpaper showing now"
+            hint: Settings.wallpaperPerLook ? "Each look keeps its own wallpaper"
+                : "Every look shares this wallpaper"
 
             Switch {
                 anchors.right: parent.right
@@ -943,9 +1331,9 @@ SettingsPage {
         // implies a random one at login too.
         SettingsField {
             label: "New wallpaper"
-            hint: Settings.wallpaperInterval > 0 ? "A random one at login, then on this interval, counted from the last change"
+            hint: Settings.wallpaperInterval > 0 ? "Random at login, then on this interval"
                 : Settings.wallpaperShuffle ? "A random one every login"
-                : "The one showing now stays until you pick another"
+                : "Stays until you pick another"
 
             FlyoutSegmented {
                 anchors.right: parent.right
@@ -1022,14 +1410,12 @@ SettingsPage {
         id: tab_colours
         tabId: "colours"
 
-        CurrentPreview {}
-
         Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "PALETTE" }
 
         SettingsField {
             label: "Palette"
-            hint: "Grayscale, or tones taken from the wallpaper. Wofi and notifications follow."
+            hint: "Grayscale, or tones from the wallpaper"
             Choices { key: "colourMode" }
         }
 
@@ -1038,15 +1424,15 @@ SettingsPage {
             visible: Settings.colourMode === "wallpaper"
             hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only"
                 : Wallpaper.generating ? "Generating palette…"
-                : "How much of the wallpaper's colour comes through"
+                : "How much wallpaper colour comes through"
             Choices { key: "colourScheme"; live: Settings.colourMode === "wallpaper" }
         }
 
         SettingsField {
             label: "Shade"
             visible: Settings.colourMode === "wallpaper"
-            hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only — a look sets its own"
-                : "Dark or light grounds from the wallpaper. GTK and Qt apps follow"
+            hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only"
+                : "Dark or light grounds; apps follow"
             Choices { key: "colourVariant"; live: Settings.colourMode === "wallpaper" }
         }
 
@@ -1101,9 +1487,9 @@ SettingsPage {
             id: accentField
             label: "Accent"
             lookKey: "accent"
-            hint: Settings.colourMode === "wallpaper" ? "The wallpaper palette's own tone is used instead"
-                : Settings.lookAccent !== "" ? "Selection, focus and the current item. First is " + page.label(Settings.look) + "'s own"
-                : "Selection, focus and the current item"
+            hint: Settings.colourMode === "wallpaper" ? "The wallpaper's own tone is used"
+                : Settings.lookAccent !== "" ? "Selection and focus. First is " + page.label(Settings.look) + "'s own"
+                : "Selection, focus, the current item"
 
             readonly property int swatch: Theme.chipHeight
             readonly property int gap: Theme.spaceS
@@ -1166,7 +1552,7 @@ SettingsPage {
             label: "Second accent"
             lookKey: "accent2"
             hint: Settings.colourMode === "wallpaper" ? "Grayscale palette only"
-                : "Meters, levels and the visualizer, in a hue of their own"
+                : "Meters, levels and the visualizer"
 
             Flow {
                 anchors.right: parent.right
@@ -1223,30 +1609,22 @@ SettingsPage {
         id: tab_style
         tabId: "style"
 
-        CurrentPreview {}
-
         Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "FRAMES" }
 
-        SettingsField {
-            label: "Frames"
-            hint: "How every panel and bar module is outlined"
-            Choice { key: "frameStyle" }
-        }
+        Tiles { key: "frameStyle"; label: "Frames"; hint: "Panels and bar modules"; art: frameArt }
 
-        Stepper { label: "Stroke width"; hint: "Every frame, chip and divider the shell draws"; key: "borderWidth"; suffix: "px" }
+        Stepper { label: "Stroke width"; hint: "Frames, chips and dividers"; key: "borderWidth"; suffix: "px" }
 
-        SettingsField {
-            label: "Shadows"
-            hint: Theme.panelOpacity < 1 ? "Needs panels at full opacity — a shadow shows through a see-through one"
-                : "Under flyouts, toasts and solid chips: blurred, or a hard offset block"
-            Choices { key: "shadow" }
+        Tiles {
+            key: "shadow"; label: "Shadows"; art: shadowArt
+            hint: Theme.panelOpacity < 1 ? "Needs panels at full opacity" : "Under flyouts, toasts and solid chips"
         }
 
         SettingsField {
             label: "Gradient grounds"
             lookKey: "gradient"
-            hint: Settings.gradient ? "The bar and panels shade from lighter at the top to darker at the bottom"
+            hint: Settings.gradient ? "Bar and panels shade top to bottom"
                 : "Flat grounds"
 
             Switch {
@@ -1261,30 +1639,24 @@ SettingsPage {
 
         Stepper { label: "Corner radius"; hint: "Bar modules, buttons and controls"; key: "radius"; suffix: "px" }
 
-        Stepper { label: "Panel corners"; hint: "Flyouts, the shell's windows, wofi and notifications"; key: "panelRadius"; suffix: "px" }
+        Stepper { label: "Panel corners"; hint: "Flyouts, windows, wofi, notifications"; key: "panelRadius"; suffix: "px" }
 
         Stepper { label: "Bar corners"; hint: "A floating bar, its islands or the notch"; key: "barRadius"; suffix: "px" }
 
         Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "SPACE AND SEE-THROUGH" }
 
-        SettingsField {
-            label: "Density"
-            hint: "Space between and inside rows, panels and windows"
-            Choices { key: "density" }
-        }
+        Tiles { key: "density"; label: "Density"; hint: "Space in rows, panels and windows"; art: densityArt }
 
-        Stepper { label: "Panel opacity"; hint: "Flyouts, the shell's windows, wofi and notifications. Below 100% the blur behind shows through"; key: "panelOpacity"; step: 5; suffix: "%" }
+        Stepper { label: "Panel opacity"; hint: "Below 100% the blur behind shows"; key: "panelOpacity"; step: 5; suffix: "%" }
 
-        Stepper { label: "Overlay dimming"; hint: "How dark the desktop goes behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
+        Stepper { label: "Overlay dimming"; hint: "Behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
 
     }
 
     Tab {
         id: tab_text
         tabId: "text"
-
-        CurrentPreview {}
 
         Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "SHELL FONT" }
@@ -1296,7 +1668,7 @@ SettingsPage {
             lookKey: "fontFamily"
             hint: Theme.fontText !== Settings.fontFamily
                 ? page.label(Settings.fontFamily) + " isn't available, so " + page.label(Theme.fontText) + " stands in"
-                : "Monospace only. Text and icons alike, across the shell, launcher and notifications"
+                : "Monospace; text and icons alike"
 
             SettingsDropdown {
                 anchors.right: parent.right
@@ -1313,7 +1685,7 @@ SettingsPage {
         SettingsField {
             visible: Fonts.pending.length > 0
             label: Fonts.pending.length === 1 ? "1 new font" : Fonts.pending.length + " new fonts"
-            hint: Fonts.pending.map(f => page.label(f)).join(", ") + " — installed since the shell started, and usable after a restart"
+            hint: Fonts.pending.map(f => page.label(f)).join(", ") + " — usable after a restart"
 
             FlyoutChip {
                 anchors.right: parent.right
@@ -1322,11 +1694,11 @@ SettingsPage {
             }
         }
 
-        Stepper { label: "Font size"; hint: "Body text size for the shell, launcher and notifications. Headings, captions and rows scale with it."; key: "fontSize"; suffix: "px" }
+        Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
 
         SettingsField {
             label: "Text weight"
-            hint: "Labels and body text. A font without the weight draws its nearest"
+            hint: "Labels and body text"
             Choices { key: "textWeight" }
         }
 
@@ -1342,7 +1714,7 @@ SettingsPage {
         SettingsField {
             label: "Heading font"
             lookKey: "headingFont"
-            hint: "Section headings, in the text font or one of their own"
+            hint: "Section headings"
 
             SettingsDropdown {
                 anchors.right: parent.right
@@ -1412,7 +1784,7 @@ SettingsPage {
 
         SettingsField {
             label: "Shape"
-            hint: "Edge to edge, floating, an island per group, or no bar at all"
+            hint: "Edge to edge, floating, islands or none"
             Choice { key: "barStyle" }
         }
 
@@ -1420,7 +1792,7 @@ SettingsPage {
 
         Stepper { label: "Opacity"; hint: "The bar's background only"; key: "barOpacity"; step: 5; suffix: "%" }
 
-        Stepper { label: "Bar text size"; hint: "The bar's labels and icons, on their own. The bar's height caps how large they get."; key: "barFontSize"; suffix: "px" }
+        Stepper { label: "Bar text size"; hint: "Labels and icons; capped by the height"; key: "barFontSize"; suffix: "px" }
 
         Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "MODULES" }
@@ -1435,20 +1807,20 @@ SettingsPage {
 
         SettingsField {
             label: "Separators"
-            hint: "Between the bar's modules: nothing, a line, a dot, or a powerline chevron"
+            hint: "Between the bar's modules"
             Choices { key: "barSeparator" }
         }
 
         SettingsField {
             label: "Hover"
-            hint: "A module under the pointer: unchanged, filled, outlined, or lifted"
+            hint: "A module under the pointer"
             Choices { key: "hoverStyle" }
         }
 
         SettingsField {
             label: "Levels"
-            hint: Theme.moduleStyle === "underline" ? "Underlined modules show the level in their own rule"
-                : "How volume, brightness and battery show their level"
+            hint: Theme.moduleStyle === "underline" ? "Underlined modules use their own rule"
+                : "Volume, brightness and battery"
             Choices { key: "gaugeStyle"; live: Theme.moduleStyle !== "underline" }
         }
 
@@ -1460,7 +1832,7 @@ SettingsPage {
 
         SettingsField {
             label: "Tray drawer"
-            hint: Settings.trayDrawer ? "Tray icons fold behind a chevron; pin one from its right-click menu to keep it out"
+            hint: Settings.trayDrawer ? "Icons fold behind a chevron"
                 : "Every tray icon shows"
 
             Switch {
@@ -1484,7 +1856,7 @@ SettingsPage {
         SettingsField {
             label: "Workspace names"
             visible: Theme.workspaceStyle === "names"
-            hint: Theme.workspaceStyle === "names" ? "Comma-separated, in order — Enter to apply. A blank one shows its number"
+            hint: Theme.workspaceStyle === "names" ? "Comma-separated, Enter to apply"
                 : "For the Names workspace style"
 
             FlyoutInput {
@@ -1507,7 +1879,7 @@ SettingsPage {
 
         SettingsField {
             label: "Open windows"
-            hint: "How each open window is drawn, and how the focused one stands out"
+            hint: "How open windows are drawn"
             Choice { key: "windowStyle" }
         }
 
@@ -1516,13 +1888,13 @@ SettingsPage {
             visible: Theme.windowStyle === "icons" || Theme.windowStyle === "titled"
             hint: Theme.windowStyle === "icons" || Theme.windowStyle === "titled"
                 ? "How the open windows mark the one in focus"
-                : "For the Icons and Focused title styles; the others mark it their own way"
+                : "For the Icons and Focused title styles"
             Choice { key: "windowMark" }
         }
 
         SettingsField {
             label: "Windows shown"
-            hint: "Every workspace's are grouped, with a rule between"
+            hint: "All workspaces, grouped with a rule"
             Choices { key: "windowScope" }
         }
 
@@ -1547,7 +1919,7 @@ SettingsPage {
             visible: Theme.clockStyle === "custom"
             hint: Theme.clockStyle !== "custom" ? "For the Custom clock style"
                 : "Now: " + Qt.formatDateTime(new Date(), Theme.hours(clockFmt.text || "HH:mm"))
-                  + " — yyyy MM dd ddd HH mm ss, Enter to apply"
+                  + ", Enter to apply"
 
             FlyoutInput {
                 id: clockFmt
@@ -1566,9 +1938,9 @@ SettingsPage {
 
         SettingsField {
             label: "Clock island"
-            hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar — toasts show until then"
-                : Settings.clockIsland ? "Volume, brightness and layout show in the clock for a moment"
-                : "Those show as separate toasts under the bar"
+            hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar"
+                : Settings.clockIsland ? "Volume and layout show in the clock"
+                : "Separate toasts under the bar"
 
             Switch {
                 anchors.right: parent.right
@@ -1587,19 +1959,19 @@ SettingsPage {
 
         SettingsField {
             label: "Flyouts open"
-            hint: "Sliding out of the bar, fading in, growing from their chip, or at once"
+            hint: "How flyouts appear"
             Choices { key: "flyoutAnim" }
         }
 
         SettingsField {
             label: "Flyouts sit"
-            hint: "Against the bar, hanging from it like a tab, or floating below it"
+            hint: "Where flyouts sit against the bar"
             Choices { key: "flyoutAttach" }
         }
 
         SettingsField {
             label: "Flyout titles"
-            hint: "A flyout's first heading: plain, on a strip across the top, or a title bar with a close box"
+            hint: "A flyout's first heading"
             Choices { key: "flyoutTitle" }
         }
 
@@ -1608,20 +1980,20 @@ SettingsPage {
 
         SettingsField {
             label: "Launcher layout"
-            hint: "Rows, a grid of app icons, or one compact line like dmenu"
+            hint: "Rows, an icon grid, or one line"
             Choices { key: "launcherLayout" }
         }
 
         SettingsField {
             label: "Launcher position"
-            hint: "Centred, just under the bar, or over a dimmed screen with more rows"
+            hint: "Centred, under the bar, or full screen"
             Choices { key: "launcherPosition" }
         }
 
         SettingsField {
             label: "Launcher details"
             lookKey: "launcherDetails"
-            hint: Settings.launcherDetails ? "What each app is or where each file is, and the key hints"
+            hint: Settings.launcherDetails ? "Second lines and key hints"
                 : "Names only"
 
             Switch {
@@ -1636,14 +2008,14 @@ SettingsPage {
 
         SettingsField {
             label: "Notification popups"
-            hint: "Everything, the body only while hovered, or a single line"
+            hint: "How much each popup shows"
             Choices { key: "notifStyle" }
         }
 
         SettingsField {
             label: "Urgency stripe"
             lookKey: "notifStripe"
-            hint: "A stripe down each notification's edge: the accent, the alert colour when critical"
+            hint: "In the accent, the alert colour if critical"
 
             Switch {
                 anchors.right: parent.right
@@ -1657,32 +2029,32 @@ SettingsPage {
 
         SettingsField {
             label: "Window switcher"
-            hint: "ALT+Tab: app icons alone, icons with titles, or a still of each window"
+            hint: "ALT+Tab's cards"
             Choices { key: "altTabStyle" }
         }
 
         SettingsField {
             label: "Workspace overview"
-            hint: "SUPER+W's workspaces: three across, or all in one row"
+            hint: "SUPER+W's layout"
             Choices { key: "overviewLayout" }
         }
 
         SettingsField {
             label: "Overview backdrop"
-            hint: "Behind the overview: the desktop dimmed, as it is, or hidden"
+            hint: "Behind the overview"
             Choices { key: "overviewBackdrop" }
         }
 
         SettingsField {
             label: "Power menu"
-            hint: "A row of tiles, a list, or large tiles over a darkened screen"
+            hint: "How the power menu lays out"
             Choices { key: "powerStyle" }
         }
 
         SettingsField {
             label: "Level popup"
-            hint: Settings.islandActive ? "Volume and brightness show in the clock island instead"
-                : "Volume and brightness: a bar under the bar, a bar at the screen's edge, or the number"
+            hint: Settings.islandActive ? "Shown in the clock island instead"
+                : "The volume and brightness popup"
             Choices { key: "levelStyle"; live: !Settings.islandActive }
         }
 
@@ -1701,7 +2073,7 @@ SettingsPage {
 
         SettingsField {
             label: "Border colours"
-            hint: Settings.borderFollowsTheme ? "The focused window in the accent, the rest in the shell's stroke colour"
+            hint: Settings.borderFollowsTheme ? "Focused in the accent, the rest grey"
                 : "As set in hyprland.lua"
 
             Switch {
@@ -1732,7 +2104,7 @@ SettingsPage {
 
         SettingsField {
             label: "Animations"
-            hint: "How long the shell's and Hyprland's animations take"
+            hint: "The shell's and Hyprland's"
             FlyoutSliderRow {
                 anchors.right: parent.right
                 width: Theme.fit(260)
@@ -1748,7 +2120,7 @@ SettingsPage {
 
         SettingsField {
             label: "Window animation"
-            hint: "How windows open, close and minimize, and how the scratchpad appears"
+            hint: "Open, close, minimize, scratchpad"
             Choice { key: "windowAnim" }
         }
 
@@ -1760,7 +2132,7 @@ SettingsPage {
         // pending/restart state to show like the shell font has.
         SettingsField {
             label: "System font"
-            hint: "GTK and Qt apps outside the shell — terminal, file manager, and the rest. Doesn't change the bar, launcher or notifications"
+            hint: "GTK and Qt apps outside the shell"
 
             SettingsDropdown {
                 anchors.right: parent.right
@@ -1774,7 +2146,7 @@ SettingsPage {
 
         SettingsField {
             label: "Icons"
-            hint: "GTK apps change now, Qt apps when next opened, and the shell's own app icons at the next login"
+            hint: "GTK now, Qt when next opened"
 
             SettingsDropdown {
                 anchors.right: parent.right
@@ -1787,7 +2159,7 @@ SettingsPage {
 
         SettingsField {
             label: "Cursor"
-            hint: "Changes on the desktop now, and in apps when they're next opened"
+            hint: "Apps pick it up when next opened"
 
             SettingsDropdown {
                 anchors.right: parent.right

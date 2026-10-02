@@ -19,8 +19,10 @@ Item {
     // back. "" for a field that isn't one.
     property string lookKey: ""
     readonly property bool modified: lookKey !== "" && Settings.lookDiffs.indexOf(lookKey) !== -1
-    // width of the label column; controls get the rest
-    property int labelWidth: Theme.fit(240)
+    // width of the label column; controls get the rest. A redesigned page
+    // (SettingsPage.sectioned) widens it and keeps hints to one line.
+    property int labelWidth: hostPage && hostPage.sectioned ? Theme.fit(320) : Theme.fit(240)
+    readonly property bool oneLineHint: !!hostPage && hostPage.sectioned
     readonly property bool isSettingsField: true
     // false for a row that only repeats another field's label (the
     // Appearance page's list of changes), so a search lands on the field
@@ -112,7 +114,8 @@ Item {
             width: parent.width
             visible: root.hint !== ""
             text: root.hint
-            wrapMode: Text.WordWrap
+            wrapMode: root.oneLineHint ? Text.NoWrap : Text.WordWrap
+            elide: root.oneLineHint ? Text.ElideRight : Text.ElideNone
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall

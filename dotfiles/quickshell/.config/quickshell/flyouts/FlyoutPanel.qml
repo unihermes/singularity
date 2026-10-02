@@ -120,25 +120,6 @@ OverlayWindow {
     readonly property int sectionPadY: Theme.spaceS
     readonly property int padX: sectioned ? Theme.channelWidth * 2 + sectionGap + Theme.spaceL : Theme.panelPad
     readonly property int padY: sectioned ? Theme.channelWidth * 2 + sectionGap + sectionPadY : Theme.panelPad
-    // [{ y0, y1 }] in the column's coordinates
-    readonly property var sectionRuns: {
-        if (!sectioned) return []
-        var kids = contentColumn.children
-        var runs = [], cur = null
-        for (var i = 0; i < kids.length; i++) {
-            var c = kids[i]
-            if (!c.visible || c.height <= 0) continue
-            // headings, dividers and a page's bare spacer Items end a run
-            if (c.isFlyoutHeading === true || c.isSectionBreak === true
-                    || (/^QQuickItem\(/.test(String(c)) && c.children.length === 0)) {
-                cur = null
-                continue
-            }
-            if (!cur) { cur = { y0: c.y, y1: c.y + c.height }; runs.push(cur) }
-            else cur.y1 = c.y + c.height
-        }
-        return runs
-    }
 
     visible: open || reveal > 0
     focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
@@ -216,19 +197,14 @@ OverlayWindow {
             onClicked: {}
         }
 
-        Repeater {
-            model: root.sectionRuns
-
-            Item {
-                required property var modelData
-                readonly property int out: Theme.channelWidth + root.sectionPadY
-                x: Theme.channelWidth + root.sectionGap
-                width: box.width - x * 2
-                y: contentColumn.y + modelData.y0 - out
-                height: modelData.y1 - modelData.y0 + out * 2
-
-                Channel { radius: Theme.radius + 3; fill: Theme.panelFill }
-            }
+        SectionRuns {
+            visible: root.sectioned
+            x: Theme.channelWidth + root.sectionGap
+            width: box.width - x * 2
+            height: box.height
+            column: contentColumn
+            columnY: contentColumn.y
+            padY: root.sectionPadY
         }
 
         Column {

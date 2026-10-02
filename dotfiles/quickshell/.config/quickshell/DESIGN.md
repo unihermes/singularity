@@ -75,6 +75,30 @@ Setting: `frameStyle: "channel"`.
 - Timer tab: the time large (`fontHero`) with what it is underneath, then the
   minute stepper and the chips.
 
+## Settings pages
+
+Pages are redesigned one at a time; a redesigned page sets
+`sectioned: true` on its `SettingsPage`. Appearance is done so far.
+
+- **Tabs:** one segmented strip at the top, an icon and a name per tab
+  (names elide when tight), replacing the page heading and description.
+- **Sections:** each group of rows between headings sits in its own channel
+  (`SectionRuns`, as in the flyouts). Rows are inset to clear it.
+- **Hints:** one line, eliding if needed. Write them short, at most about 44
+  characters ("Frames, chips and dividers"), with no lists of every choice.
+  The label column is wider (`fit(320)`).
+- **Live preview (Appearance):** pinned above the rows on the Colours, Style,
+  Text, Bar and Panels tabs. It shows a scaled-down bar and flyout built
+  from the real components (`ModuleFrame`, `PanelFrame`, `FlyoutHeading`,
+  `Slider`, …) over the wallpaper, so it follows every setting and can't
+  drift from the shell. It's only built while one of those tabs shows.
+- **Visual pickers:** a choice judged by eye (Frames, Shadows, Density)
+  is a grid of tiles, four across. Each tile draws what its value does; the
+  current one has the lit groove. Numbers stay steppers, and on/off stays a
+  switch.
+- **Look summary:** the look card with "See changes" appears on the Look
+  tab only.
+
 ## Headings
 
 - Bold spaced caps, value in white (`VOLUME  45%`).
