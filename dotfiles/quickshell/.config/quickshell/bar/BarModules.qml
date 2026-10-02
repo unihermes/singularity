@@ -50,8 +50,6 @@ Item {
     BarModule {
         id: ccBtn
         icon: "󰣇"
-        // the left group packs tighter than the right's gauges
-        padH: Theme.modulePadH - 2
         active: screenScope.openFlyout === "controlcentre"
         onActivated: screenScope.toggleFlyout("controlcentre", ccBtn)
     }
@@ -67,9 +65,8 @@ Item {
         visible: Settings.widgetVisible("workspaces")
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceS
-        // each mark already sits in a slot 2px wider on either side,
-        // and the left group packs tighter than the right's gauges
-        padH: Theme.modulePadH - 4
+        // each mark already sits in a slot 2px wider on either side
+        padH: Theme.modulePadH - 2
 
         Repeater {
             model: Settings.workspaceCount
@@ -308,9 +305,8 @@ Item {
         active: screenScope.openFlyout === "windowmenu"
         hoverWhole: false
         // the plain icon styles pad each icon by a hair, which would
-        // otherwise stack on the chip's own padding; the left group packs
-        // tighter than the right's gauges
-        padH: Theme.modulePadH - 2 - (["icons", "titled", "glide", "lift"].indexOf(Theme.windowStyle) >= 0
+        // otherwise stack on the chip's own padding
+        padH: Theme.modulePadH - (["icons", "titled", "glide", "lift"].indexOf(Theme.windowStyle) >= 0
             ? Theme.spaceS / 2 : 0)
 
         Item {
@@ -931,7 +927,6 @@ Item {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceXs
-        padH: Theme.barFs(8)
         visible: Visualizer.playing && Settings.widgetVisible("visualizer")
 
         readonly property string style: Theme.vizStyle

@@ -441,7 +441,7 @@ Singleton {
     // original 28 at the default 34, and the floor keeps the double border
     // from eating the whole chip at the smallest bar height.
     readonly property int moduleHeight: Math.max(18, barHeight - 6)
-    readonly property int modulePadH:   sp(8)
+    readonly property int modulePadH:   sp(6)
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // Shared width for the gauge modules only, so their fill bars are
