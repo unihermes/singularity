@@ -82,6 +82,8 @@ OverlayWindow {
     }
 
     readonly property bool full: Theme.launcherPosition === "full"
+    readonly property bool underBar: Theme.launcherPosition === "top"
+    readonly property bool atBottom: Theme.barPosition === "bottom"
     readonly property bool line: Theme.launcherLayout === "line"
     readonly property bool gridOn: Theme.launcherLayout === "grid" && mode === "apps"
     readonly property bool details: Theme.launcherDetails && !line
@@ -189,14 +191,21 @@ OverlayWindow {
         id: box
         width: Theme.fit(root.full ? 960 : 760)
         height: body.implicitHeight + Theme.panelPad * 4
-        // Centred on the screen (or just under the bar), at a fixed size:
-        // the list area is always visibleRows tall, however many results
-        // there are, so the box doesn't shrink and re-centre on every
-        // keystroke.
+        // Centred on the screen, or hung off the bar where the flyouts sit,
+        // at a fixed size: the list area is always visibleRows tall, however
+        // many results there are, so the box doesn't shrink and re-centre on
+        // every keystroke. Grown has no group to grow from, so it sits flush.
         x: Math.round((parent.width - width) / 2)
-        y: Theme.launcherPosition !== "top" ? Math.round((parent.height - height) / 2)
-            : Theme.barPosition === "bottom" ? parent.height - Theme.barExtent - Theme.spaceL - height
-            : Theme.barExtent + Theme.spaceL
+        y: !root.underBar ? Math.round((parent.height - height) / 2)
+            : root.atBottom ? parent.height - Theme.flyoutOffset - height
+            : Theme.flyoutOffset
+
+        // a tab's corners at the bar are square, as the flyouts' are
+        readonly property int barCorner: root.underBar && Theme.flyoutAttach === "tab" ? 0 : radius
+        topLeftRadius: root.atBottom ? radius : barCorner
+        topRightRadius: root.atBottom ? radius : barCorner
+        bottomLeftRadius: root.atBottom ? barCorner : radius
+        bottomRightRadius: root.atBottom ? barCorner : radius
 
         MouseArea {
             anchors.fill: parent

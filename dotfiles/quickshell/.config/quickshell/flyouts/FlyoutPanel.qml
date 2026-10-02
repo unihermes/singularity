@@ -42,13 +42,8 @@ OverlayWindow {
     // making the user click the field first defeats the point. Safe because
     // the panel is transient -- focus goes back when it closes.
     property bool keyboardExclusive: false
-    // Distance from the bar's screen edge to the near edge of the box:
-    // flush with the bar, the box's top stroke laid over the bar's own edge
-    // line so the two read as one line rather than a doubled one. Measured
-    // to the bar itself rather than barExtent, which adds a floating bar's
-    // gap below it again.
-    property real topOffset: Theme.barHeight + Theme.barMargin - Theme.borderWidth
-        + (Theme.flyoutAttach === "floating" ? Theme.spaceM + Theme.borderWidth : 0)
+    // distance from the bar's screen edge to the near edge of the box
+    property real topOffset: Theme.flyoutOffset
 
     // How close the box may come to the left/right screen edge once the
     // clamp below catches it. The panels whose trigger sits at the very end

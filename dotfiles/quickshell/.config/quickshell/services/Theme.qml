@@ -425,6 +425,12 @@ Singleton {
     readonly property int groupRadius: radius + channelWidth
     // "grown": a flyout hangs off its module's group, one outline round both
     readonly property bool flyoutGrown: flyoutAttach === "grown" && moduleGrouped && frameChannel
+    // Distance from the bar's screen edge to a flyout's near edge: flush lays
+    // the box's stroke over the bar's own edge line, floating leaves a gap.
+    // Measured to the bar itself, not barExtent, which adds a floating bar's
+    // gap below it again.
+    readonly property real flyoutOffset: barHeight + barMargin - borderWidth
+        + (flyoutAttach === "floating" ? spaceM + borderWidth : 0)
 
     readonly property real barOpacity: Settings.barOpacity / 100
     // Derived from the bar rather than fixed, so a taller bar gets taller
