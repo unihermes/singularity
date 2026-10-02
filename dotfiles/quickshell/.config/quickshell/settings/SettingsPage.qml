@@ -186,10 +186,13 @@ Item {
         return false
     }
 
+    // sectioned: lined up with the section frames below, clear of the
+    // scroll bar's gutter
     Column {
         id: header
         visible: root.headed
-        width: parent.width
+        x: root.channelled && root.scrolls ? Theme.spaceS : 0
+        width: parent.width - (root.channelled && root.scrolls ? Theme.spaceS * 2 + Theme.scrollGutter : 0)
         height: visible ? implicitHeight : 0
         spacing: Theme.spaceS
 

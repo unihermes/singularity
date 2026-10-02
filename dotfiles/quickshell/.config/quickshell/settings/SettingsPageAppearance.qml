@@ -1293,7 +1293,6 @@ SettingsPage {
         page: page
         tabId: "colours"
 
-        Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "PALETTE" }
 
         SettingsField {
@@ -1442,7 +1441,6 @@ SettingsPage {
         page: page
         tabId: "style"
 
-        Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "STYLE" }
 
         Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 5 }
