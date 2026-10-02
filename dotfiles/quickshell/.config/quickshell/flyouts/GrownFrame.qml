@@ -25,7 +25,7 @@ Shape {
     // the outline inset by d, with the hole cut out of it
     function band(d) {
         if (!rects || rects.length === 0 || rects.some(r => !r)) return ""
-        var p = ChannelPath.outline(ChannelPath.inset(rects, d), Theme.channelFillet + d)
+        var p = ChannelPath.outline(rects, Theme.channelFillet, d)
         if (hole) p += " " + ChannelPath.roundRect(hole.x0, hole.y0, hole.x1, hole.y1, hole.r)
         return p
     }

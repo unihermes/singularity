@@ -22,49 +22,56 @@ function snapTo(rect, fixed, fillet) {
     return out
 }
 
-// The same stack shrunk by d on its outside: convex corners tighten by d,
-// fillets widen by d, so the result runs parallel to the original.
-function inset(rects, d) {
-    var last = rects.length - 1
-    return rects.map(function(r, i) {
-        return { x0: r.x0 + d, x1: r.x1 - d,
-                 y0: i === 0 ? r.y0 + d : r.y0, y1: i === last ? r.y1 - d : r.y1,
-                 r: Math.max(0, r.r - d) }
-    })
-}
-
 function arc(r, x, y, sweep) {
     return " A" + r + " " + r + " 0 0 " + sweep + " " + x + " " + y
 }
 
-// closed outline, clockwise from the top-left corner
-function outline(R, fillet) {
-    var F = fillet
-    var t = R[0], b = R[R.length - 1]
-    var p = "M" + (t.x0 + t.r) + " " + t.y0 + " L" + (t.x1 - t.r) + " " + t.y0 + arc(t.r, t.x1, t.y0 + t.r, 1)
-    for (var i = 0; i < R.length - 1; i++) {
-        var u = R[i], v = R[i + 1], y = u.y1
-        if (v.x1 > u.x1)
-            p += " L" + u.x1 + " " + (y - F) + arc(F, u.x1 + F, y, 0)
-                + " L" + (v.x1 - v.r) + " " + y + arc(v.r, v.x1, y + v.r, 1)
-        else if (v.x1 < u.x1)
-            p += " L" + u.x1 + " " + (y - u.r) + arc(u.r, u.x1 - u.r, y, 1)
-                + " L" + (v.x1 + F) + " " + y + arc(F, v.x1, y + F, 0)
+// The closed outline, clockwise from the top-left corner, shrunk by d so a
+// band drawn inside it runs parallel: sides and ends move in by d, convex
+// corners tighten by d, fillets widen by d, and each step's horizontal edge
+// moves into whichever rect it belongs to (down into a wider rect below,
+// up into a wider rect above).
+function outline(R, fillet, d) {
+    d = d || 0
+    var F = fillet + d
+    var n = R.length
+    var X0 = R.map(function(r) { return r.x0 + d })
+    var X1 = R.map(function(r) { return r.x1 - d })
+    var rad = R.map(function(r) { return Math.max(0, r.r - d) })
+    var top = R[0].y0 + d, bottom = R[n - 1].y1 - d
+
+    var p = "M" + (X0[0] + rad[0]) + " " + top + " L" + (X1[0] - rad[0]) + " " + top
+        + arc(rad[0], X1[0], top + rad[0], 1)
+    for (var i = 0; i < n - 1; i++) {
+        var y = R[i].y1
+        if (X1[i + 1] > X1[i]) {
+            var ys = y + d
+            p += " L" + X1[i] + " " + (ys - F) + arc(F, X1[i] + F, ys, 0)
+                + " L" + (X1[i + 1] - rad[i + 1]) + " " + ys + arc(rad[i + 1], X1[i + 1], ys + rad[i + 1], 1)
+        } else if (X1[i + 1] < X1[i]) {
+            var yi = y - d
+            p += " L" + X1[i] + " " + (yi - rad[i]) + arc(rad[i], X1[i] - rad[i], yi, 1)
+                + " L" + (X1[i + 1] + F) + " " + yi + arc(F, X1[i + 1], yi + F, 0)
+        }
     }
-    p += " L" + b.x1 + " " + (b.y1 - b.r) + arc(b.r, b.x1 - b.r, b.y1, 1)
-        + " L" + (b.x0 + b.r) + " " + b.y1 + arc(b.r, b.x0, b.y1 - b.r, 1)
-    for (var j = R.length - 1; j > 0; j--) {
-        var w = R[j], z = R[j - 1], yy = w.y0
-        if (z.x0 < w.x0)
-            p += " L" + w.x0 + " " + (yy + F) + arc(F, w.x0 - F, yy, 0)
-                + " L" + (z.x0 + z.r) + " " + yy + arc(z.r, z.x0, yy - z.r, 1)
-        else if (z.x0 > w.x0)
-            p += " L" + w.x0 + " " + (yy + w.r) + arc(w.r, w.x0 + w.r, yy, 1)
-                + " L" + (z.x0 - F) + " " + yy + arc(F, z.x0, yy - F, 0)
+    var l = n - 1
+    p += " L" + X1[l] + " " + (bottom - rad[l]) + arc(rad[l], X1[l] - rad[l], bottom, 1)
+        + " L" + (X0[l] + rad[l]) + " " + bottom + arc(rad[l], X0[l], bottom - rad[l], 1)
+    for (var j = n - 1; j > 0; j--) {
+        var yy = R[j].y0
+        if (X0[j - 1] < X0[j]) {
+            var yu = yy - d
+            p += " L" + X0[j] + " " + (yu + F) + arc(F, X0[j] - F, yu, 0)
+                + " L" + (X0[j - 1] + rad[j - 1]) + " " + yu + arc(rad[j - 1], X0[j - 1], yu - rad[j - 1], 1)
+        } else if (X0[j - 1] > X0[j]) {
+            var yd = yy + d
+            p += " L" + X0[j] + " " + (yd + rad[j]) + arc(rad[j], X0[j] + rad[j], yd, 1)
+                + " L" + (X0[j - 1] - F) + " " + yd + arc(F, X0[j - 1], yd - F, 0)
+        }
     }
-    return p + " L" + t.x0 + " " + (t.y0 + t.r) + arc(t.r, t.x0 + t.r, t.y0, 1) + " Z"
+    return p + " L" + X0[0] + " " + (top + rad[0]) + arc(rad[0], X0[0] + rad[0], top, 1) + " Z"
 }
 
 function roundRect(x0, y0, x1, y1, r) {
-    return outline([{ x0: x0, x1: x1, y0: y0, y1: y1, r: r }], 0)
+    return outline([{ x0: x0, x1: x1, y0: y0, y1: y1, r: r }], 0, 0)
 }
