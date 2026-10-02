@@ -15,3 +15,14 @@ if git diff --cached --name-only | grep -qE 'quickshell/settings/SettingsPage|se
         exit 1
     fi
 fi
+
+# Declarations nothing reads, in the shell's QML and JS (check-unused.py).
+if git diff --cached --name-only | grep -qE 'quickshell/.*\.(qml|js)$'; then
+    if ! python3 tools/check-unused.py; then
+        echo
+        echo "Something in the shell is declared and never read (above)."
+        echo "Remove it, or add a reasoned ALLOW entry in tools/check-unused.py."
+        echo "git commit --no-verify skips this."
+        exit 1
+    fi
+fi

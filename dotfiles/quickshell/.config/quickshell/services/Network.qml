@@ -94,6 +94,9 @@ Singleton {
             onStreamFinished: {
                 root.device = text.trim()
                 root.refreshStatus()
+                // what iwd already knows, so the list isn't empty until the
+                // first click (a reload resets this singleton too)
+                root.refreshList()
             }
         }
     }

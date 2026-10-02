@@ -17,7 +17,8 @@ FlyoutPanel {
 
     FlyoutRow {
         visible: Updates.count === 0
-        label: "Everything is up to date"
+        label: Updates.checking ? "Checking…"
+            : Updates.lastChecked === null ? "Not checked yet" : "Everything is up to date"
         enabled: false
     }
 

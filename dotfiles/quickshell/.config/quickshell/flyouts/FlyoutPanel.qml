@@ -98,6 +98,8 @@ OverlayWindow {
         return { x0: g.x, x1: g.x + g.w, y0: g.y + dy, y1: g.y + g.h + dy, r: Theme.groupRadius }
     }
     readonly property bool grown: group !== null
+    // how close a box edge or width must be to its group's to line up with it
+    readonly property real snapReach: Theme.channelFillet + Math.max(Theme.groupRadius, grownRadius)
     readonly property int grownRadius: Theme.channelPanelRadius
     // the box's own rect: its width never follows the group's, so a side
     // that nearly lines up with the group's makes a short jog rather than
@@ -153,7 +155,7 @@ OverlayWindow {
             // within reach of a group edge, flush with it: the nearer one when
             // both are in reach, so a box about the group's width lines up
             // on the side its module is on
-            var near = Theme.channelFillet + Math.max(Theme.groupRadius, root.grownRadius)
+            var near = root.snapReach
             var d0 = Math.abs(free - root.group.x0)
             var d1 = Math.abs(free + width - root.group.x1)
             if (d0 < near && d0 <= d1) return root.group.x0
@@ -167,7 +169,12 @@ OverlayWindow {
         y: root.grown ? (atBottom ? root.group.y0 - height : root.group.y1)
             : atBottom ? root.height - root.topOffset - height
             : root.topOffset
-        width: Theme.fit(root.menuWidth) + (root.padX - Theme.panelPad) * 2
+        // its own width, except within a fillet and corner of its group's:
+        // that close, a jog would be too short to read as a step, so it
+        // takes the group's width and both sides run straight
+        readonly property real ownWidth: Theme.fit(root.menuWidth) + (root.padX - Theme.panelPad) * 2
+        width: root.grown && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
+            ? root.group.x1 - root.group.x0 : ownWidth
         height: contentColumn.implicitHeight + root.padY * 2
 
         readonly property bool atBottom: Theme.barPosition === "bottom"

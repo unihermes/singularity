@@ -128,7 +128,11 @@ SettingsPage {
 
     SettingsField {
         label: "Pending"
-        hint: Updates.count === 0 ? "Everything is up to date"
+        // before the first check (a minute after the shell starts) there's
+        // nothing to say yet, rather than a reassurance it hasn't earned
+        hint: Updates.checking ? "Checking…"
+            : Updates.lastChecked === null ? "Not checked yet"
+            : Updates.count === 0 ? "Everything is up to date"
             : Updates.count + (Updates.count === 1 ? " package" : " packages")
                 + (Updates.aurCount > 0 ? ", " + Updates.aurCount + " from the AUR" : "")
 

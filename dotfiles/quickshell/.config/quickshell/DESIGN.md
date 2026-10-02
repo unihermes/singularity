@@ -51,9 +51,10 @@ The signature shape. Every frame is three bands, outside in, then the ground:
 - Draw it with `flyouts/Channel.qml`. A frame joined across shapes (a flyout
   grown from its bar group) uses `flyouts/GrownFrame.qml`, which builds the
   path with `services/ChannelPath.js`. Where widths change, inside corners get
-  a fillet of `channelFillet` (7px). A flyout keeps its own width whatever
-  its group's: a step narrower than a fillet and corner shrinks both into
-  a short jog, and only a step of a pixel or two snaps flush.
+  a fillet of `channelFillet` (7px). A flyout keeps its own width unless it's
+  within a fillet and corner of its group's; that close it takes the
+  group's width, so both sides run straight instead of making a jog too
+  short to read as a step.
 
 Style: `channel` (frame `channel` in `Styles.js`).
 
