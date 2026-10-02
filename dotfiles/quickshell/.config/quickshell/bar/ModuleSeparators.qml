@@ -2,7 +2,7 @@
 // ~/.config/quickshell/bar/ModuleSeparators.qml
 //
 // The marks between one bar module and the next in a section, as
-// Theme.barSeparator says: a thin line, a dot, or a powerline-style chevron.
+// Theme.barSeparator says: a thin line or a dot.
 // Each sits in the middle of the gap after a visible module that has a
 // visible one after it, and follows the module as it slides.
 
@@ -41,7 +41,7 @@ Repeater {
         Item {
             id: mark
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.barSeparator === "chevron" ? glyph.implicitWidth : Math.max(1, Theme.borderWidth) + (Theme.barSeparator === "dot" ? 2 : 0)
+            width: Math.max(1, Theme.borderWidth) + (Theme.barSeparator === "dot" ? 2 : 0)
             height: parent.height
 
             Rectangle {
@@ -59,16 +59,6 @@ Repeater {
                 height: width
                 radius: width / 2
                 color: Theme.muted
-            }
-
-            Text {
-                id: glyph
-                visible: Theme.barSeparator === "chevron"
-                anchors.centerIn: parent
-                text: ""
-                color: Theme.muted
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.barFs(16)
             }
         }
     }

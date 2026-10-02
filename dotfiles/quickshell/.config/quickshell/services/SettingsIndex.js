@@ -110,7 +110,7 @@ var entries = [
     { page: "appearance", section: "Bar",           label: "Tray drawer",          keywords: "system tray hide collapse chevron pin icons" },
     { page: "appearance", section: "Bar",           label: "Hover",                keywords: "pointer mouse highlight lift outline fill modules" },
     { page: "appearance", section: "Bar",           label: "Workspace names",      keywords: "label rename workspaces web code chat" },
-    { page: "appearance", section: "Bar",           label: "Separators",           keywords: "divider between modules powerline chevron dots lines" },
+    { page: "appearance", section: "Bar",           label: "Separators",           keywords: "divider between modules dots lines" },
     { page: "notifications", section: "Popups", label: "Group by app",          keywords: "stack collapse same app count" },
     { page: "appearance", section: "Panels",        label: "Urgency stripe",       keywords: "notifications stripe edge colour critical urgency" },
     { page: "appearance", section: "Panels",        label: "Notification popups",  keywords: "notifications cards compact banner style" },

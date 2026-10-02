@@ -160,8 +160,8 @@
 //                  hovered, "banner" one line of summary and body
 //     notifStripe  true: a stripe down a notification's edge, in the
 //                  accent, the alert colour when critical, muted when low
-//     barSeparator between the bar's modules: "none", a thin "line", a
-//                  "dot", or a powerline-style "chevron"
+//     barSeparator between the bar's modules: "none", a thin "line" or a
+//                  "dot"
 //     hoverStyle   a bar module under the pointer: "none", a "fill"
 //                  behind it, an accent "outline", or a one-pixel "lift"
 //     altTabStyle  the ALT+Tab switcher's cards: "icons", "titled" an icon
