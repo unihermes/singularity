@@ -11,7 +11,8 @@
 //
 // A popup is drawn as Theme.notifStyle says (the history always shows
 // everything), with an urgency stripe down its edge (accent for normal,
-// grey for low, the alert hue for critical), and stands for `count` popups when the popups are grouped by app.
+// grey for low, the alert hue for critical) that shortens with `life`, and
+// stands for `count` popups when the popups are grouped by app.
 //
 // `standalone` is for an entry that isn't in the history (the reload
 // toast): closing it only emits dismissed(), and a critical one always
@@ -48,6 +49,8 @@ Item {
     readonly property bool critical: entry.urgency === NotificationUrgency.Critical
     readonly property bool low: entry.urgency === NotificationUrgency.Low
     readonly property int stripeW: framed ? Math.max(3, Theme.borderWidth * 3) : 0
+    // how much of a popup's time is left, 1 to 0; the stripe shows it
+    property real life: 1
     readonly property var actions: entry.live && entry.live.tracked ? entry.live.actions : []
     readonly property var defaultAction: actions.find(a => a.identifier === "default") || null
     readonly property var buttons: actions.filter(a => a.identifier !== "default" && a.text !== "")
@@ -81,9 +84,9 @@ Item {
             x: inset
             y: inset
             width: root.stripeW
-            height: parent.height - inset * 2
+            height: (parent.height - inset * 2) * root.life
             topLeftRadius: Math.max(0, frame.topLeftRadius - inset)
-            bottomLeftRadius: Math.max(0, frame.bottomLeftRadius - inset)
+            bottomLeftRadius: root.life < 1 ? 0 : Math.max(0, frame.bottomLeftRadius - inset)
             color: root.critical ? Theme.alert : root.low ? Theme.muted : Theme.accent
         }
     }

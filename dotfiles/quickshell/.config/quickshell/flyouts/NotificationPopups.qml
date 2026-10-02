@@ -3,8 +3,8 @@
 //
 // Notifications as they arrive, stacked from the corner or edge Settings >
 // Notifications picks, newest nearest the edge, on the focused screen only.
-// Each leaves after its timeout (Notifications.timeoutFor), held while the
-// pointer is on it; it stays in the history until cleared there. With
+// Each leaves after its timeout (Notifications.timeoutFor), its urgency
+// stripe running down as the time goes, held while the pointer is on it; it stays in the history until cleared there. With
 // Settings.notifGroup, one app's popups share a card: the newest, with a
 // count, which takes the rest down with it.
 
@@ -63,10 +63,13 @@ OverlayWindow {
 
                 readonly property real timeout: Notifications.timeoutFor(modelData.entry)
 
-                Timer {
-                    interval: card.timeout * 1000
-                    running: card.timeout > 0 && !card.hovered
-                    onTriggered: card.close()
+                NumberAnimation on life {
+                    from: 1
+                    to: 0
+                    duration: card.timeout * 1000
+                    running: card.timeout > 0
+                    paused: running && card.hovered
+                    onFinished: card.close()
                 }
             }
         }
