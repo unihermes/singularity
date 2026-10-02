@@ -23,10 +23,14 @@ Item {
 
     required property Flickable flickable
     required property Item column
+    // where the column sits in the flickable's content, for one nested in
+    // another (a tab's column in the page's)
+    property real columnY: 0
+    property real columnX: column.x
 
     // [the heading whose section is on screen, the one after it]
     readonly property var pair: {
-        var top = flickable.contentY
+        var top = flickable.contentY - columnY
         var cur = null
         var next = null
         var kids = column.children
@@ -42,7 +46,7 @@ Item {
 
     // the copy's own top edge, dragged up by the next heading coming in
     readonly property real slide: pair[1]
-        ? Math.min(0, pair[1].y - flickable.contentY - height) : 0
+        ? Math.min(0, pair[1].y + columnY - flickable.contentY - height) : 0
 
     visible: current !== null && flickable.contentY > 0
     height: copy.height + column.spacing
@@ -56,7 +60,7 @@ Item {
 
         FlyoutHeading {
             id: copy
-            x: root.column.x
+            x: root.columnX
             width: root.column.width
             text: root.current ? root.current.text : ""
             mirrorOf: root.current
@@ -64,7 +68,7 @@ Item {
                 var h = root.current
                 if (!h) return
                 var max = Math.max(0, root.flickable.contentHeight - root.flickable.height)
-                root.flickable.contentY = Math.max(0, Math.min(max, h.y))
+                root.flickable.contentY = Math.max(0, Math.min(max, h.y + root.columnY))
             }
         }
     }

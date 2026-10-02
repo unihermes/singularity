@@ -400,6 +400,8 @@ Item {
             width: flick.width
             flickable: flick
             column: root.stickyColumn
+            columnX: col.x + (root.stickyColumn === col ? 0 : root.stickyColumn.x)
+            columnY: root.stickyColumn === col ? 0 : root.stickyColumn.y
         }
 
         ScrollBar {
