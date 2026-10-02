@@ -10,7 +10,8 @@
 // entries are marked.
 //
 // A popup is drawn as Theme.notifStyle says (the history always shows
-// everything), and stands for `count` popups when the popups are grouped by app.
+// everything), with an urgency stripe down its edge (accent for normal,
+// grey for low, the alert hue for critical), and stands for `count` popups when the popups are grouped by app.
 //
 // `standalone` is for an entry that isn't in the history (the reload
 // toast): closing it only emits dismissed(), and a critical one always
@@ -45,6 +46,8 @@ Item {
     readonly property bool hovered: hover.hovered
 
     readonly property bool critical: entry.urgency === NotificationUrgency.Critical
+    readonly property bool low: entry.urgency === NotificationUrgency.Low
+    readonly property int stripeW: framed ? Math.max(3, Theme.borderWidth * 3) : 0
     readonly property var actions: entry.live && entry.live.tracked ? entry.live.actions : []
     readonly property var defaultAction: actions.find(a => a.identifier === "default") || null
     readonly property var buttons: actions.filter(a => a.identifier !== "default" && a.text !== "")
@@ -68,6 +71,21 @@ Item {
         anchors.fill: parent
         visible: root.framed
         border.color: root.critical ? Theme.alert : Theme.stroke
+
+        // the urgency stripe, inside the frame's strokes
+        Rectangle {
+            visible: root.framed
+            readonly property int inset: Theme.frameChannel ? Theme.channelWidth
+                : Theme.frameDouble || Theme.frameChiselled ? Theme.frameInset + Theme.borderWidth
+                : Theme.frameStroked ? Theme.borderWidth : 0
+            x: inset
+            y: inset
+            width: root.stripeW
+            height: parent.height - inset * 2
+            topLeftRadius: Math.max(0, frame.topLeftRadius - inset)
+            bottomLeftRadius: Math.max(0, frame.bottomLeftRadius - inset)
+            color: root.critical ? Theme.alert : root.low ? Theme.muted : Theme.accent
+        }
     }
 
     MouseArea {
@@ -81,7 +99,7 @@ Item {
 
     Column {
         id: col
-        x: root.framed ? Theme.panelPad : 0
+        x: root.framed ? Theme.panelPad + root.stripeW : 0
         y: root.framed ? Theme.panelPad : 0
         width: parent.width - x - (root.framed ? Theme.panelPad : 0)
         spacing: Theme.spaceS
