@@ -103,8 +103,7 @@ Item {
                     id: badgeText
                     anchors.centerIn: parent
                     text: root.badge > 99 ? "99+" : root.badge
-                    // dark or light, whichever reads on the accent
-                    color: Theme.accent.hslLightness > 0.6 ? "#000000" : "#ffffff"
+                    color: Theme.onAccent
                     font.family: Theme.fontText
                     font.pixelSize: Theme.barFs(9)
                     font.weight: Font.Bold

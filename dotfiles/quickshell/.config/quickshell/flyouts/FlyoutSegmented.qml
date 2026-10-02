@@ -93,10 +93,10 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 1
                         radius: Theme.radiusSmall
-                        // channel: the chosen one filled with the accent in its groove
-                        color: seg.on ? (Theme.frameChannel ? Theme.accent : Theme.selectedFill)
+                        // the chosen one filled with the accent, in its groove on channel
+                        color: seg.on ? Theme.accent
                             : segMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-                        border.width: !seg.on ? 0 : Theme.frameChannel ? Theme.channelGrooveWidth : Theme.borderWidth
+                        border.width: seg.on && Theme.frameChannel ? Theme.channelGrooveWidth : 0
                         border.color: Theme.frameChannel ? Theme.channelGroove : Theme.selectedStroke
                     }
 
@@ -112,8 +112,8 @@ Item {
                         id: segText
                         anchors.centerIn: parent
                         text: root.textOf(seg.modelData)
-                        color: seg.on && Theme.frameChannel ? "#ffffff"
-                            : seg.on || segMouse.containsMouse ? Theme.textStrong : Theme.text
+                        color: seg.on ? Theme.onAccent
+                            : segMouse.containsMouse ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
                         font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontSmall

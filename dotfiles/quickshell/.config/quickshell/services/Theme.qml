@@ -99,6 +99,8 @@ Singleton {
     readonly property color hoverFillSoft: surface
     readonly property color selectedFill:  overlay
     readonly property color selectedStroke: hasAccent ? accent : muted
+    // text on an accent fill: dark on a light accent, white otherwise
+    readonly property color onAccent: accent.hslLightness > 0.55 ? "#111111" : "#ffffff"
     // the inner half of a double frame
     readonly property color frameStroke:   muted
     // a field's ground: inputs, key-capture boxes
@@ -441,13 +443,17 @@ Singleton {
     // original 28 at the default 34, and the floor keeps the double border
     // from eating the whole chip at the smallest bar height.
     readonly property int moduleHeight: Math.max(18, barHeight - 6)
-    readonly property int modulePadH:   sp(6)
+    // brackets hug their content, and leave the gap between chips instead,
+    // so neighbours read "[a] [b]" rather than "[ a ][ b ]"
+    readonly property int modulePadH:   moduleStyle === "bracket" ? sp(2) : sp(6)
     // gap between adjacent modules, the same on both sides of the bar
-    readonly property int moduleGap:    resolved.moduleGap
+    readonly property int moduleGap:    resolved.moduleGap + (moduleStyle === "bracket" ? spaceS : 0)
     // Shared width for the gauge modules only, so their fill bars are
     // directly comparable. The icon-only chips hug their content instead --
     // padding them out to match would just add dead space.
-    readonly property int moduleWidth:  54
+    // Segments sit beside the icon rather than under it, so they get the
+    // room of a whole icon more.
+    readonly property int moduleWidth:  gaugeStyle === "segments" ? 76 : 54
     // The double frame eats 8px of the chip (outer stroke + a 2px-inset inner
     // one), so the icon is sized to the space left inside it. Capped to the
     // chip, so a large Font Size can't push icons out of it.

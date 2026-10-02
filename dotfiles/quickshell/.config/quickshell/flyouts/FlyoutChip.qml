@@ -39,7 +39,7 @@ Item {
         anchors.fill: parent
         radius: Theme.radiusInner
         color: Theme.controlFill(root.armed ? Theme.alert
-            : root.selected ? (Theme.frameChannel ? Theme.accent : Theme.selectedFill)
+            : root.selected ? Theme.accent
             : (root.enabled && mouse.containsMouse) ? Theme.hoverFillSoft : "transparent")
         border.width: Theme.controlBorder(edge)
         border.color: Theme.controlStroke(edge)
@@ -57,7 +57,7 @@ Item {
         text: root.armed ? root.confirmText : root.text
         color: !root.enabled ? Theme.textDisabled
             : root.armed ? Theme.base
-            : root.selected && Theme.frameChannel ? "#ffffff"
+            : root.selected ? Theme.onAccent
             : (root.selected || mouse.containsMouse) ? Theme.textStrong : Theme.text
 
         font.family: root.glyph && !root.armed ? Theme.fontIcon : Theme.fontText

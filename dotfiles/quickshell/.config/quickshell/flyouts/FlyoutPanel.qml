@@ -219,4 +219,46 @@ OverlayWindow {
             readonly property bool isFlyoutPage: true
         }
     }
+
+    // Tab (Theme.flyoutAttach "tab"): the module it opened from is the tab
+    // the box hangs from. Its sides and far edge are stroked down to the
+    // box, and the box's own edge under it is covered, so chip and box read
+    // as one shape. Strokes and the strip between them only: the module's
+    // icon shows through from the bar underneath.
+    Item {
+        id: tab
+        visible: Theme.flyoutAttach === "tab" && scope.flyoutAnchorW > 0 && !root.grown
+        anchors.fill: parent
+        opacity: box.opacity
+
+        readonly property int bw: Theme.borderWidth
+        readonly property real x0: Math.round(root.anchorX - scope.flyoutAnchorW / 2)
+        readonly property real x1: Math.round(root.anchorX + scope.flyoutAnchorW / 2)
+        // the chip's far and near edges, measured from the bar's screen edge
+        readonly property real inset: Theme.barMargin + (Theme.barHeight - Theme.moduleHeight) / 2
+        readonly property real far: box.atBottom ? root.height - inset : inset
+        readonly property real near: box.atBottom ? root.height - inset - Theme.moduleHeight : inset + Theme.moduleHeight
+        // the box's edge facing the bar
+        readonly property real edge: box.atBottom ? box.y + box.height : box.y
+        readonly property real y0: Math.min(far, edge)
+        readonly property real y1: Math.max(far, edge)
+
+        // between the chip and the box, and over the box's edge
+        Rectangle {
+            x: tab.x0 + tab.bw
+            width: tab.x1 - tab.x0 - tab.bw * 2
+            y: box.atBottom ? tab.edge - tab.bw : tab.near
+            height: box.atBottom ? tab.near - tab.edge + tab.bw : tab.edge + tab.bw - tab.near
+            color: box.ground
+        }
+        Rectangle { x: tab.x0; y: tab.y0; width: tab.bw; height: tab.y1 - tab.y0 + tab.bw; color: Theme.stroke }
+        Rectangle { x: tab.x1 - tab.bw; y: tab.y0; width: tab.bw; height: tab.y1 - tab.y0 + tab.bw; color: Theme.stroke }
+        Rectangle {
+            x: tab.x0
+            y: box.atBottom ? tab.far - tab.bw : tab.far
+            width: tab.x1 - tab.x0
+            height: tab.bw
+            color: Theme.stroke
+        }
+    }
 }

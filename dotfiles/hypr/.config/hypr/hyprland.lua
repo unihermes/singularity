@@ -756,6 +756,18 @@ hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("qs ipc call media previous"), { locke
 hl.bind("Caps_Lock", hl.dsp.exec_cmd("qs ipc call locks changed caps"), { non_consuming = true })  -- Show Caps Lock state
 hl.bind("Num_Lock",  hl.dsp.exec_cmd("qs ipc call locks changed num"),  { non_consuming = true })  -- Show Num Lock state
 
+-- The shell's surfaces (the bar is "quickshell", the rest "singularity-*")
+-- blur what's behind their see-through grounds, which the Glass style and a
+-- See-through below 100% rely on. ignore_alpha leaves the transparent rest
+-- of a full-screen flyout surface, and the faint edge of a soft shadow,
+-- unblurred.
+hl.layer_rule({
+    name  = "shell-blur",
+    match = { namespace = "^(quickshell|singularity-.*)$" },
+    blur  = true,
+    ignore_alpha = 0.2,
+})
+
 ----------------------
 ---- WINDOW RULES ----
 ----------------------

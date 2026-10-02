@@ -245,9 +245,9 @@ Item {
                             anchors.fill: parent
                             anchors.margins: 1
                             radius: Theme.radiusSmall
-                            color: seg.current ? (Theme.frameChannel ? Theme.accent : Theme.selectedFill)
+                            color: seg.current ? Theme.accent
                                 : segMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-                            border.width: !seg.current ? 0 : Theme.frameChannel ? Theme.channelGrooveWidth : Theme.borderWidth
+                            border.width: seg.current && Theme.frameChannel ? Theme.channelGrooveWidth : 0
                             border.color: Theme.frameChannel ? Theme.channelGroove : Theme.selectedStroke
                         }
 
@@ -267,8 +267,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: seg.modelData.icon || ""
                                 visible: text !== ""
-                                color: seg.current && Theme.frameChannel ? "#ffffff"
-                                    : seg.current ? Theme.accent : Theme.subtext
+                                color: seg.current ? Theme.onAccent : Theme.subtext
                                 font.family: Theme.fontIcon
                                 font.pixelSize: Theme.fontIconSize
                             }
@@ -277,8 +276,8 @@ Item {
                                 width: Math.min(implicitWidth, seg.width - segIcon.width - Theme.spaceS * 3)
                                 elide: Text.ElideRight
                                 text: seg.modelData.label
-                                color: seg.current && Theme.frameChannel ? "#ffffff"
-                                    : seg.current || segMouse.containsMouse ? Theme.textStrong : Theme.text
+                                color: seg.current ? Theme.onAccent
+                                    : segMouse.containsMouse ? Theme.textStrong : Theme.text
                                 font.family: Theme.fontText
                                 font.pixelSize: Theme.fontSmall
                                 font.weight: seg.current ? Theme.weightStrong : Theme.weightBody

@@ -386,7 +386,7 @@ Item {
                             Theme.fit(520) / Math.max(1, iconRepeater.count) - glyphBox.width - padX * 2 - Theme.spaceXs))
                         // the label colour on an accent ground
                         readonly property color onAccent: Theme.hasAccent
-                            ? (Theme.accent.hslLightness > 0.55 ? "#111111" : "#ffffff") : Theme.textStrong
+                            ? Theme.onAccent : Theme.textStrong
 
                         anchors.verticalCenter: parent.verticalCenter
                         // a little wider than the icon, so neighbours' pips
@@ -684,6 +684,7 @@ Item {
                                         menu.address = winIcon.modelData.address
                                         menu.movePage = false
                                         screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
+                                        screenScope.flyoutAnchorW = winIcon.width
                                         return
                                     }
                                     menu.address = winIcon.modelData.address
@@ -1093,9 +1094,11 @@ Item {
 
     // Show desktop, as on Windows: a slim button at the end of its group,
     // set off by a hairline, whose rounded end is the group's own corner.
-    // A click hides every window on the workspace (singularityShowDesktop()
-    // in hyprland.lua, also SUPER+D); it fills with the accent while they're
-    // hidden, and a second click brings them back.
+    // Without groups it's a slim chip of the style's own, with a short bar
+    // in it. A click hides every window on the workspace
+    // (singularityShowDesktop() in hyprland.lua, also SUPER+D); it lights
+    // with the accent while they're hidden, and a second click brings them
+    // back.
     Item {
         id: desktopBtn
         visible: Settings.widgetVisible("desktop")
@@ -1116,11 +1119,28 @@ Item {
             NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
         }
 
-        implicitWidth: Theme.sp(8)
+        implicitWidth: grouped ? Theme.sp(8) : chip.implicitWidth
         implicitHeight: Theme.barHeight
+
+        ModuleFrame {
+            id: chip
+            visible: !desktopBtn.grouped
+            anchors.centerIn: parent
+            padH: Theme.modulePadH / 2
+
+            Rectangle {
+                width: Theme.sp(3)
+                height: Theme.iconSize - 2
+                radius: width / 2
+                color: desktopBtn.shown ? Theme.accent
+                    : desktopMouse.containsMouse ? Theme.text : Theme.muted
+                Behavior on color { ColorAnimation { duration: Theme.durFast } }
+            }
+        }
 
         Rectangle {
             id: cap
+            visible: desktopBtn.grouped
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: desktopBtn.grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight

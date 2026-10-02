@@ -50,7 +50,8 @@ Item {
             fraction: root.value / 100
             // the fill follows the pointer; easing it would make it lag
             animated: false
-            border.color: drag.pressed || drag.containsMouse ? Theme.strokeHover : Theme.meterStroke
+            // the plain stroke at rest, so an empty slider still shows its track
+            border.color: drag.pressed || drag.containsMouse ? Theme.strokeHover : Theme.stroke
             Behavior on border.color { ColorAnimation { duration: Theme.durFast } }
         }
 

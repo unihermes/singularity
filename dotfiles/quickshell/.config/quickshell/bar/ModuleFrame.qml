@@ -92,7 +92,9 @@ Item {
         color: grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
             : root.hoverStyle === "fill" ? Theme.overlay
             : style === "flat" || brackets || underline ? "transparent"
-            : root.active ? Theme.selectedFill
+            // open under a tab-style flyout: the flyout's own ground, so
+            // the chip reads as the tab it hangs from
+            : root.active ? (Theme.flyoutAttach === "tab" ? Theme.panelFill : Theme.selectedFill)
             : solid ? Theme.surface : "transparent"
 
         border.width: !grouped && (root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked)) ? Theme.borderWidth : 0
@@ -243,12 +245,13 @@ Item {
             }
         }
 
-        // "segments": the same interior as five blocks, lit up to the level
+        // "segments": five blocks beside the icon, lit up to the level, as
+        // a terminal meter would draw them
         Row {
             visible: frame.track && frame.gaugeStyle === "segments"
             anchors.fill: parent
-            anchors.margins: frame.barInset
-            anchors.leftMargin: frame.barInset + frame.bracketW
+            anchors.margins: frame.barInset + 1
+            anchors.leftMargin: root.padH + frame.bracketW + contentRow.width + root.spacing
             anchors.rightMargin: frame.barInset + frame.bracketW
             spacing: Math.max(1, Theme.borderWidth)
 
@@ -260,9 +263,10 @@ Item {
                     height: parent.height
                     radius: Math.min(Theme.radiusSmall, 2)
                     // a block is lit once the level passes its midpoint, and
-                    // the first stays lit above zero so a low level still shows
+                    // the first stays lit above zero so a low level still shows;
+                    // unlit ones in the stroke colour, so all five read
                     color: frame.level > 0 && (index === 0 || frame.level >= (index + 0.5) / 5)
-                        ? root.fillColor : Theme.meterTrack
+                        ? root.fillColor : Theme.border
                     Behavior on color { ColorAnimation { duration: Theme.dur(120) } }
                 }
             }

@@ -18,6 +18,15 @@ once. Beside it are only dials that move everything together (Roundness, Bar
 shape, Density, See-through) and Finish switches that are safe with any style
 (separators, shadows, shaded grounds, heavy lines, heading caps and rule).
 
+Across every style, a chosen segment, tab or chip fills with the accent
+(text in `Theme.onAccent`); only Channel adds its groove round it. Tabbed
+draws the open module as a real tab: its sides and top are stroked down
+into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
+Terminal's brackets hug their content with the gap between chips, and its
+level chips show five blocks beside the icon. The shell's layers blur what's
+behind them (a Hyprland layer rule), so Glass and see-through grounds stay
+readable.
+
 Don't add a setting that changes one piece's frame on its own: that's what
 made combinations clash. A new look of a piece belongs in a style. Theme reads
 the derived values through `Styles.resolve()`; the sections below describe
