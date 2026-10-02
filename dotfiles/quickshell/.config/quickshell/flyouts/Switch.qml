@@ -23,25 +23,40 @@ Rectangle {
     implicitHeight: Theme.switchHeight
     radius: Math.min(height / 2, Theme.radius)
     opacity: enabled ? 1 : 0.5
-    color: checked ? Theme.meterFill : Theme.fieldFill
+    // channel: no knob, the whole switch fills with the accent when on
+    readonly property bool channel: Theme.frameChannel
+    color: channel ? (checked ? Theme.accent : Theme.channelGroove)
+        : checked ? Theme.meterFill : Theme.fieldFill
     readonly property color edge: checked ? Theme.meterFill
         : (mouse.containsMouse ? Theme.strokeHover : Theme.stroke)
     border.width: Theme.controlBorder(edge)
-    border.color: Theme.controlStroke(edge)
+    border.color: channel ? (mouse.containsMouse ? Theme.subtext : Theme.channelOuter) : Theme.controlStroke(edge)
     Behavior on color { ColorAnimation { duration: Theme.durFast } }
+
+    // channel: the inner line when off, a dark groove round the fill when on
+    Rectangle {
+        visible: root.channel
+        anchors.fill: parent
+        anchors.margins: Theme.borderWidth
+        radius: Math.max(0, root.radius - Theme.borderWidth)
+        color: "transparent"
+        border.width: root.checked ? Theme.channelGrooveWidth : Theme.borderWidth
+        border.color: root.checked ? Theme.channelGroove : Theme.channelInner
+    }
 
     readonly property int knobInset: Math.max(2, Math.round(height / 5))
 
     // the track is a well; not under double, where an inner stroke would
     // crowd the knob
     ControlEdge {
-        visible: !Theme.frameDouble
+        visible: !Theme.frameDouble && !root.channel
         stroke: root.edge
         sunken: true
         radius: root.radius
     }
 
     Rectangle {
+        visible: !root.channel
         width: parent.height - root.knobInset * 2
         height: width
         radius: Math.min(width / 2, Theme.radiusSmall)

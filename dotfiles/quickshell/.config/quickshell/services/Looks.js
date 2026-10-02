@@ -34,9 +34,10 @@
 //     borderWidth    every stroke, in px
 //     panelOpacity   flyouts, windows, wofi and notification cards; below 1
 //                    lets the desktop show through
-//     heading        { upper, bold, spacing, rule, accent }: section headings
-//                    in caps or title case, with or without the trailing
-//                    rule, in the accent or in bright
+//     heading        { upper, bold, spacing, rule, accent, prefix }: section
+//                    headings in caps or title case, with or without the
+//                    trailing rule, in the accent or in bright; prefix is a
+//                    mark drawn in the accent before each one ("//")
 //     bevel          { light, dark }, or null. When frameStyle is "bevel",
 //                    panels and outline chips are drawn as a chiselled 3D
 //                    edge in these two colours instead of a flat stroke
@@ -65,6 +66,9 @@
 //                  "bracket"  bare, between [ and ], like a tmux status line
 //                  "underline" bare over a rule, lit when active; a gauge
 //                             fills the rule instead of the chip
+//                  "grouped"  each bar section one channel, its modules
+//                             bare inside: a fill on hover, an accent ring
+//                             when open, gauges filling the whole chip
 //     barStyle     "full"     edge to edge, a hairline on its inner edge
 //                  "floating" inset from the screen edges, rounded, stroked
 //                  "islands"  no bar at all between the groups: left, centre
@@ -138,7 +142,9 @@
 //                  "none" shows it at once
 //     flyoutAttach where a flyout sits: "flush" against the bar, "tab" the
 //                  same with the corners at the bar squared off, so it
-//                  hangs from it, "floating" a gap below it
+//                  hangs from it, "floating" a gap below it, "grown" out of
+//                  its module's group, one outline round both (needs
+//                  grouped modules and channel frames; flush otherwise)
 //     flyoutTitle  a flyout's first heading: "none" a plain heading,
 //                  "strip" on a ground of its own across the top,
 //                  "titlebar" a title bar in the accent with a close box
@@ -186,6 +192,9 @@
 //                  "accent"   the outer stroke alone, in the accent colour
 //                  "corners"  an L at each corner, nothing between
 //                  "none"     no stroke, the ground alone
+//                  "channel"  an outer line, a dark groove, an inner line;
+//                             flyouts split into channels per section, and
+//                             lit controls light the groove
 //
 // Adding a look: copy an entry in looks.json and rename its key. Every key in
 // `palette` must be present, and in `settings` all but the layout ones in
@@ -213,7 +222,7 @@ var base = {
     borderWidth: 1,
     panelOpacity: 1,
     meterAccent: false,
-    heading: { upper: true, bold: true, spacing: 1, rule: true, accent: false },
+    heading: { upper: true, bold: true, spacing: 1, rule: true, accent: false, prefix: "" },
     bevel: null,
     scrim: 0.4,
     motion: 1,
@@ -222,7 +231,7 @@ var base = {
 var looks = {
     singularity: {
         name: "Singularity",
-        description: "Grayscale, double-stroked frames, tight spacing",
+        description: "Grayscale channels: grouped bar, flyouts grown from it, // headings",
         palette: {
             base: "#0b0b0b", bar: "#121212", panel: "#141414", surface: "#1a1a1a", overlay: "#242424",
             border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#d0e2fa", bright: "#ebebeb",
@@ -230,10 +239,11 @@ var looks = {
         accent: "#5555c8",
         // desaturated hard, so they read as a tinted grey rather than alerts
         good: "#7d9b7d", alert: "#a87676",
+        heading: { upper: true, bold: true, spacing: 1, rule: true, accent: false, prefix: "//" },
         settings: {
             radius: 6, barHeight: 32, moduleGap: 2, barOpacity: 100,
-            frameStyle: "double", density: "normal", fontFamily: "UbuntuMono Nerd Font",
-            moduleStyle: "outline", barStyle: "full",
+            frameStyle: "channel", density: "normal", fontFamily: "UbuntuMono Nerd Font",
+            moduleStyle: "grouped", barStyle: "full", flyoutAttach: "grown",
         },
     },
 }

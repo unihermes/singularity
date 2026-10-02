@@ -9,6 +9,8 @@
 //   bevel    a raised chisel on buttons, a sunken well on fields
 //   groove   the same pair the other way round
 //   corners  marks at the four corners, in the control's stroke colour
+//   channel  a groove inside the stroke: dark at rest, the accent and
+//            twice as wide when the control is lit (focused, selected)
 // Single, accent and none are the stroke alone (or none), so this draws
 // nothing for them.
 //
@@ -25,8 +27,20 @@ Item {
     property bool sunken: false
     // the host's corner radius, which the inner stroke follows
     property real radius: 0
+    // channel: light the groove
+    property bool lit: Qt.colorEqual(stroke, Theme.strokeFocus) && !Qt.colorEqual(stroke, Theme.stroke)
 
     anchors.fill: parent
+
+    Rectangle {
+        visible: Theme.frameChannel
+        anchors.fill: parent
+        anchors.margins: Theme.borderWidth
+        radius: Math.max(0, root.radius - Theme.borderWidth)
+        color: "transparent"
+        border.width: root.lit ? Theme.channelGrooveWidth : Theme.borderWidth
+        border.color: root.lit ? Theme.accent : Theme.channelGroove
+    }
 
     Rectangle {
         visible: Theme.frameDouble

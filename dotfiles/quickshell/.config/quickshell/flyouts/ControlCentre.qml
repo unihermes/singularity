@@ -130,42 +130,40 @@ FlyoutPanel {
     // root: Power on its own at the top, then everyday things, then
     // customising the shell, then the standalone windows. `sub` opens a
     // submenu, `act` runs straight away.
+    // One flat list, dividers included, so each row and divider is a child
+    // of the panel's own column (a sectioned flyout frames the runs between
+    // dividers).
     Repeater {
         model: controlCentre.page === "" ? [
-            [
-                { label: "Power",         sub: "power" },
-            ], [
-                { label: "Applications",  sub: "apps" },
-                { label: "Quick Actions", sub: "quick" },
-            ], [
-                { label: "Appearance",    sub: "appearance" },
-                { label: "Bar Widgets",   sub: "widgets" },
-            ], [
-                { label: "Settings",      act: "settings" },
-                { label: "System",        act: "system" },
-                { label: "Keybinds",      act: "keybinds" },
-            ],
+            { label: "Power",         sub: "power" },
+            { divider: true },
+            { label: "Applications",  sub: "apps" },
+            { label: "Quick Actions", sub: "quick" },
+            { divider: true },
+            { label: "Appearance",    sub: "appearance" },
+            { label: "Bar Widgets",   sub: "widgets" },
+            { divider: true },
+            { label: "Settings",      act: "settings" },
+            { label: "System",        act: "system" },
+            { label: "Keybinds",      act: "keybinds" },
         ] : []
 
-        Column {
-            id: group
+        Loader {
+            id: entry
             required property var modelData
-            required property int index
-            width: parent.width
-            spacing: controlCentre.contentColumn.spacing
+            readonly property bool isSectionBreak: modelData.divider === true
+            width: parent ? parent.width : 0
+            sourceComponent: isSectionBreak ? divider : row
 
-            FlyoutDivider { visible: group.index > 0 }
-
-            Repeater {
-                model: group.modelData
-
+            Component { id: divider; FlyoutDivider {} }
+            Component {
+                id: row
                 FlyoutRow {
-                    required property var modelData
-                    label: modelData.label
-                    trailing: modelData.sub ? "󰅂" : ""
-                    onActivated: modelData.sub
-                        ? controlCentre.page = modelData.sub
-                        : controlCentre.run(modelData.act)
+                    label: entry.modelData.label
+                    trailing: entry.modelData.sub ? "󰅂" : ""
+                    onActivated: entry.modelData.sub
+                        ? controlCentre.page = entry.modelData.sub
+                        : controlCentre.run(entry.modelData.act)
                 }
             }
         }

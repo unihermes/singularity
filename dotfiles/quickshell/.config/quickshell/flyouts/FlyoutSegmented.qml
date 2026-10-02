@@ -92,10 +92,11 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 1
                         radius: Theme.radiusSmall
-                        color: seg.on ? Theme.selectedFill
+                        // channel: the chosen one filled with the accent in its groove
+                        color: seg.on ? (Theme.frameChannel ? Theme.accent : Theme.selectedFill)
                             : segMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-                        border.width: seg.on ? Theme.borderWidth : 0
-                        border.color: Theme.selectedStroke
+                        border.width: !seg.on ? 0 : Theme.frameChannel ? Theme.channelGrooveWidth : Theme.borderWidth
+                        border.color: Theme.frameChannel ? Theme.channelGroove : Theme.selectedStroke
                     }
 
                     Rectangle {
@@ -110,7 +111,8 @@ Item {
                         id: segText
                         anchors.centerIn: parent
                         text: root.textOf(seg.modelData)
-                        color: seg.on || segMouse.containsMouse ? Theme.textStrong : Theme.text
+                        color: seg.on && Theme.frameChannel ? "#ffffff"
+                            : seg.on || segMouse.containsMouse ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontSmall
                     }

@@ -11,6 +11,8 @@
 //   accent  the outer stroke alone, in the accent colour
 //   corners an L at each corner and nothing between them
 //   none    no stroke -- the ground alone marks the edge
+//   channel an outer line, a dark groove and an inner line (Channel.qml),
+//           with rounder corners to clear them
 // ModuleFrame is the bar chip's tighter version of the same look.
 
 import QtQuick
@@ -21,16 +23,19 @@ Rectangle {
 
     // no ground, stroke or shadow: the content straight on what's behind
     property bool bare: false
+    // what the panel is filled with
+    property color ground: Theme.panelFill
+    readonly property bool channel: Theme.frameChannel && !bare
 
-    radius: Theme.panelRadius
-    color: bare ? "transparent" : Theme.panelFill
+    radius: Theme.frameChannel ? Theme.channelPanelRadius : Theme.panelRadius
+    color: bare || channel ? "transparent" : ground
     // Theme.gradient: the same ground, shaded top to bottom
-    gradient: Theme.gradient && !bare ? shading : null
+    gradient: Theme.gradient && !bare && !channel ? shading : null
     property Gradient shading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(root.color) }
         GradientStop { position: 1; color: Theme.shadeBottom(root.color) }
     }
-    border.width: Theme.frameStroked && !bare ? Theme.borderWidth : 0
+    border.width: Theme.frameStroked && !bare && !channel ? Theme.borderWidth : 0
     border.color: Theme.frameAccent ? Theme.accent : Theme.stroke
 
     // false for panels inside a window Hyprland already shadows
@@ -39,6 +44,15 @@ Rectangle {
     Shadow {
         radius: root.radius
         opaque: root.shadowed && !root.bare && Theme.panelOpacity >= 1
+    }
+
+    Channel {
+        visible: root.channel
+        topLeftRadius: root.topLeftRadius
+        topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius
+        bottomRightRadius: root.bottomRightRadius
+        fill: root.ground
     }
 
     Bevel {

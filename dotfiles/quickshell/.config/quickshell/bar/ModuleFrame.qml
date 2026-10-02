@@ -11,6 +11,8 @@
 //   pill     filled, fully rounded
 //   bracket  bare, between [ and ] in the text face -- a terminal status line
 //   underline bare over a rule; a gauge fills the rule itself
+//   grouped  bare inside its section's channel (shell.qml): a fill on hover,
+//            an accent ring while open, a gauge filling the whole chip
 //
 // This exists so the chrome has one definition. BarModule draws an
 // icon/label pair in it, and the open-window icons draw a whole row of
@@ -70,6 +72,7 @@ Item {
         readonly property bool solid: style === "filled" || style === "pill"
         readonly property bool brackets: style === "bracket"
         readonly property bool underline: style === "underline"
+        readonly property bool grouped: style === "grouped"
         readonly property int bracketW: brackets ? Math.ceil(bracketMetrics.advanceWidth) : 0
         // the gauge draws in the chip's interior, except under a rule
         // (the underline style's, or Theme.gaugeStyle "rule")
@@ -79,14 +82,15 @@ Item {
 
         readonly property bool bevel: Theme.frameChiselled && style === "outline"
 
-        height: Theme.moduleHeight
+        height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
         radius: style === "pill" ? height / 2 : Theme.radius
-        color: root.hoverStyle === "fill" ? Theme.overlay
+        color: grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+            : root.hoverStyle === "fill" ? Theme.overlay
             : style === "flat" || brackets || underline ? "transparent"
             : root.active ? Theme.selectedFill
             : solid ? Theme.surface : "transparent"
 
-        border.width: root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked) ? Theme.borderWidth : 0
+        border.width: !grouped && (root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked)) ? Theme.borderWidth : 0
         border.color: root.active || root.hoverStyle === "outline" ? Theme.strokeFocus
             : root.hoverStyle === "lift" ? Theme.strokeHover : Theme.stroke
 
@@ -194,7 +198,7 @@ Item {
         // Flush inside the double border: the outer stroke sits at 0..1, the
         // inner one at 2..3, so 3 is the first clear pixel. Matching that
         // exactly is what makes the bar touch the border with no gap.
-        readonly property int barInset: 3
+        readonly property int barInset: grouped ? 0 : 3
 
         // The bar is the whole interior now, with the icon sitting on top of
         // it rather than beside it.
@@ -208,8 +212,9 @@ Item {
             // one less than the inner stroke's radius, being one pixel
             // further in, so the curves stay concentric -- floored because
             // the radius is user-settable down to square
-            radius: frame.style === "pill" ? height / 2 : Theme.radiusSmall
-            color: Theme.meterTrack
+            radius: frame.style === "pill" ? height / 2 : frame.grouped ? frame.radius : Theme.radiusSmall
+            color: !frame.grouped ? Theme.meterTrack
+                : root.active || hover.hovered ? Theme.overlay : "transparent"
 
 
             Rectangle {
@@ -279,6 +284,16 @@ Item {
             }
         }
 
+        // grouped: the open module's accent ring, over any gauge fill
+        Rectangle {
+            visible: frame.grouped && root.active
+            anchors.fill: parent
+            radius: frame.radius
+            color: "transparent"
+            border.width: Theme.borderWidth * 2
+            border.color: Theme.accent
+        }
+
         // Drawn after the track, so the icon reads on top of the fill
         // wherever the fill has reached.
         // Placed by x rather than by swapping anchors.left for
@@ -287,7 +302,7 @@ Item {
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter
-            x: frame.track ? root.padH + frame.bracketW : Math.round((parent.width - width) / 2)
+            x: frame.track && !frame.grouped ? root.padH + frame.bracketW : Math.round((parent.width - width) / 2)
             spacing: root.spacing
         }
     }

@@ -50,7 +50,13 @@ Item {
     property bool folding: false
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.headingHeight + (asTitle ? Theme.spaceS : 0)
+    implicitHeight: Theme.headingHeight + (asTitle ? Theme.spaceS : 0) + sectionRoom * (firstInColumn ? 1 : 2)
+
+    // in a sectioned flyout, room round the heading for the sections' frames:
+    // below it, and above it too unless it opens the column
+    readonly property int sectionRoom: parent && parent.sectioned === true && !asTitle ? Theme.spaceM : 0
+    readonly property bool firstInColumn: !!parent && parent.children[0] === root
+    readonly property real lift: firstInColumn ? -sectionRoom / 2 : 0
 
     // the first row of a bar flyout's column, drawn as its title
     readonly property bool asTitle: Theme.flyoutTitle !== "none" && !mirrorOf
@@ -191,10 +197,23 @@ Item {
         }
     }
 
+    // the look's mark before every heading (Theme.headingPrefix)
+    Text {
+        id: prefix
+        visible: text !== ""
+        anchors.left: parent.left
+        anchors.verticalCenter: label.verticalCenter
+        text: root.titleBar ? "" : Theme.headingPrefix
+        color: Theme.hasAccent ? Qt.lighter(Theme.accent, 1.4) : Theme.subtext
+        font: label.font
+    }
+
     Text {
         id: label
-        anchors.left: parent.left
+        anchors.left: prefix.visible ? prefix.right : parent.left
+        anchors.leftMargin: prefix.visible ? Theme.spaceM : 0
         anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
+        anchors.verticalCenterOffset: root.asTitle ? 0 : root.lift
         text: Theme.heading(root.text)
         color: root.titleInk
         font.family: Theme.fontHeading
@@ -209,7 +228,7 @@ Item {
         anchors.leftMargin: Theme.spaceL
         anchors.right: chevron.visible ? chevron.left : hintRow.left
         anchors.rightMargin: root.hints.length > 0 || chevron.visible ? Theme.spaceL : 0
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: label.verticalCenter
         height: Theme.borderWidth
         color: Theme.stroke
     }
@@ -219,7 +238,7 @@ Item {
         visible: root.collapsible
         anchors.right: closeBox.visible ? closeBox.left : parent.right
         anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
-        anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
+        anchors.verticalCenter: label.verticalCenter
         text: root.collapsed ? "󰅂" : "󰅀"
         color: foldMouse.containsMouse ? Theme.text : Theme.subtext
         font.family: Theme.fontIcon
@@ -230,7 +249,7 @@ Item {
         id: hintRow
         anchors.right: closeBox.visible ? closeBox.left : parent.right
         anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
-        anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
+        anchors.verticalCenter: label.verticalCenter
         spacing: Theme.spaceXl
 
         Repeater {

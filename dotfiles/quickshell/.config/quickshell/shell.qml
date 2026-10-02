@@ -410,6 +410,9 @@ ShellRoot {
 
             // screen-local x the open flyout centres itself under
             property real flyoutAnchorX: 0
+            // the bar section ("left", "centre", "right") of the module it
+            // opened from, "" when none; a grown flyout hangs off its group
+            property string flyoutSection: ""
 
             // `item` is the module that was clicked; mapToItem(null, ...)
             // gives its position in its own window's coordinates, and the
@@ -434,6 +437,7 @@ ShellRoot {
                     return
                 }
                 screenScope.flyoutAnchorX = item.mapToItem(null, item.width / 2, 0).x
+                screenScope.flyoutSection = screenScope.barWindow.sectionOf(item)
                 screenScope.openFlyout = name
             }
 
@@ -522,6 +526,7 @@ ShellRoot {
                         return
                     }
                     screenScope.flyoutAnchorX = screenScope.modelData.width / 2
+                    screenScope.flyoutSection = ""
                     screenScope.openFlyout = screenScope.openFlyout === "notifications" ? "" : "notifications"
                 }
             }
@@ -538,6 +543,7 @@ ShellRoot {
                         return
                     }
                     screenScope.flyoutAnchorX = screenScope.modelData.width / 2
+                    screenScope.flyoutSection = ""
                     screenScope.openFlyout = screenScope.openFlyout === "claude" ? "" : "claude"
                 }
             }
@@ -746,6 +752,44 @@ ShellRoot {
                     color: !Theme.gradient ? parent.color
                         : parent.atBottom ? Theme.shadeBottom(parent.color) : Theme.shadeTop(parent.color)
                 }
+            }
+
+            // Grouped modules: one channel round each section's visible
+            // modules, which sit flush inside its inner line.
+            Repeater {
+                model: Theme.moduleGrouped ? Settings.widgetSections : []
+
+                Item {
+                    required property string modelData
+                    readonly property var rect: bar.groupRect(modelData)
+                    visible: rect !== null
+                    x: rect ? rect.x : 0
+                    y: rect ? rect.y : 0
+                    width: rect ? rect.w : 0
+                    height: rect ? rect.h : 0
+
+                    Channel { radius: Theme.groupRadius }
+                }
+            }
+
+            // A section's channel, in the bar's coordinates; null when the
+            // section shows nothing
+            function groupRect(section) {
+                var s = islandSpan(section)
+                if (s.w <= 0) return null
+                var pad = Theme.channelWidth
+                return { x: s.x - pad, y: barBody.y + Math.round((Theme.barHeight - Theme.groupHeight) / 2),
+                         w: s.w + pad * 2, h: Theme.groupHeight }
+            }
+
+            // the section a bar item (or anything inside one) sits in
+            function sectionOf(item) {
+                for (var p = item; p; p = p.parent) {
+                    if (p === leftSlots) return "left"
+                    if (p === centreSlots) return "centre"
+                    if (p === rightSlots) return "right"
+                }
+                return ""
             }
 
             // {x, w} of a section's visible modules, in the bar's coordinates

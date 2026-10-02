@@ -157,6 +157,8 @@ Singleton {
     readonly property bool headingUpper:   Settings.headingUpper
     readonly property bool headingRule:    Settings.headingRule
     readonly property color headingColor:  Settings.headingAccent && hasAccent ? accent : bright
+    // drawn in the accent before every heading, "" for none
+    readonly property string headingPrefix: look.heading.prefix || ""
     // acronyms title case leaves alone
     readonly property var headingKeep: ["AUR", "CPU", "GPU", "RAM", "MEM", "IP", "DND", "USB",
                                         "HDMI", "VPN", "UI", "SSD", "OS", "WIFI"]
@@ -194,10 +196,26 @@ Singleton {
     readonly property bool frameAccent: Settings.frameStyle === "accent"
     readonly property bool frameCorners: Settings.frameStyle === "corners"
     readonly property bool frameNone:   Settings.frameStyle === "none"
+    // "channel": an outer line, a dark groove, an inner line; lit states
+    // light the groove in the accent (Channel.qml)
+    readonly property bool frameChannel: Settings.frameStyle === "channel"
     // bevel and groove: drawn with Bevel pairs rather than a border
     readonly property bool frameChiselled: frameBevel || frameGroove
     // every style but these draws the plain outer stroke
     readonly property bool frameStroked: !frameChiselled && !frameCorners && !frameNone
+
+    // The channel's three bands, outside in: the outer line, the groove,
+    // the inner line. channelWidth is all of them, the first clear pixel.
+    readonly property color channelOuter: muted
+    readonly property color channelGroove: base
+    readonly property color channelInner: border
+    readonly property int channelGrooveWidth: 2
+    readonly property int channelWidth: borderWidth * 2 + channelGrooveWidth
+    // where a channel's width changes (a flyout grown out of its bar
+    // group), the inside corner is rounded by this
+    readonly property int channelFillet: 7
+    // a channel-framed panel's corners: the panel radius out past the bands
+    readonly property int channelPanelRadius: panelRadius + frameInset + channelWidth
     // A control's own stroke inside a panel (chips, fields, steppers,
     // cards), given the colour its state asks for: kept for the stroked
     // styles, in the accent where it would be the plain stroke under Accent,
@@ -209,6 +227,8 @@ Singleton {
         return Qt.colorEqual(c, stroke) || Qt.colorEqual(c, "transparent") ? 0 : borderWidth
     }
     function controlStroke(c) {
+        if (frameChannel && Qt.colorEqual(c, stroke)) return channelOuter
+        if (frameChannel && Qt.colorEqual(c, strokeHover)) return subtext
         return frameAccent && Qt.colorEqual(c, stroke) ? accent : c
     }
     // Under None a control with no ground of its own would vanish, so it
@@ -332,7 +352,8 @@ Singleton {
     readonly property int barMargin:  barFull || barNotch ? 0 : 6
     readonly property int barExtent:  barHeight + barMargin * 2
     // between the bar's (or an island's) edge and its outermost module
-    readonly property int barInset: barFloating ? spaceXs : barIslands || barNotch ? spaceM : 0
+    readonly property int barInset: barFloating ? spaceXs : barIslands || barNotch ? spaceM
+        : moduleGrouped ? channelWidth + 1 : 0
     // the workspace indicator and clock chip styles -- see Looks.js
     readonly property string workspaceStyle: Settings.workspaceStyle
     // what the Names style calls each workspace, "" where it has none
@@ -396,6 +417,13 @@ Singleton {
     readonly property string timeFormat: hours("HH:mm")
     // how the bar's chips are drawn -- see Looks.js
     readonly property string moduleStyle: Settings.moduleStyle
+    // "grouped": each section of the bar is one channel (shell.qml), and
+    // its modules are bare chips inside it, sized to the channel's interior
+    readonly property bool moduleGrouped: moduleStyle === "grouped"
+    readonly property int groupHeight: moduleHeight + 2
+    readonly property int groupRadius: radius + channelWidth
+    // "grown": a flyout hangs off its module's group, one outline round both
+    readonly property bool flyoutGrown: flyoutAttach === "grown" && moduleGrouped && frameChannel
 
     readonly property real barOpacity: Settings.barOpacity / 100
     // Derived from the bar rather than fixed, so a taller bar gets taller

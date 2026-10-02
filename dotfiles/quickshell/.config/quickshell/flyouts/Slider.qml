@@ -43,6 +43,7 @@ Item {
 
         // a touch taller than a read-only meter, since this one is grabbed
         Meter {
+            visible: !Theme.frameChannel
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: Theme.meterHeight + 2
@@ -51,6 +52,42 @@ Item {
             animated: false
             border.color: drag.pressed || drag.containsMouse ? Theme.strokeHover : Theme.meterStroke
             Behavior on border.color { ColorAnimation { duration: Theme.durFast } }
+        }
+
+        // channel: a level chip, filled inside a dark groove, with a bright
+        // marker at the level
+        Rectangle {
+            id: level
+            visible: Theme.frameChannel
+            readonly property int pad: Theme.borderWidth + Theme.channelGrooveWidth
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            height: Theme.switchHeight
+            radius: Math.min(height / 2, Theme.radius)
+            color: Theme.channelGroove
+            border.width: Theme.borderWidth
+            border.color: drag.pressed || drag.containsMouse ? Theme.subtext : Theme.channelOuter
+            Behavior on border.color { ColorAnimation { duration: Theme.durFast } }
+
+            Rectangle {
+                id: levelFill
+                x: level.pad
+                y: level.pad
+                height: level.height - level.pad * 2
+                width: (level.width - level.pad * 2) * Math.max(0, Math.min(1, root.value / 100))
+                radius: Math.max(0, level.radius - level.pad)
+                color: Theme.meterFill
+            }
+
+            Rectangle {
+                width: Math.max(2, Theme.borderWidth * 3)
+                height: level.height - level.pad * 2 - 2
+                anchors.verticalCenter: parent.verticalCenter
+                x: Math.max(level.pad, Math.min(level.width - level.pad - width,
+                    levelFill.x + levelFill.width - width / 2))
+                radius: 1
+                color: Theme.bright
+            }
         }
 
         MouseArea {

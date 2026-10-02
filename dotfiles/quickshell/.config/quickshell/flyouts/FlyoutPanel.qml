@@ -13,6 +13,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import "../services"
+import "../services/ChannelPath.js" as ChannelPath
 
 OverlayWindow {
     id: root
@@ -79,8 +80,65 @@ OverlayWindow {
         revealAnim.to = to
         revealAnim.start()
     }
-    onOpenChanged: play(open ? 1 : 0)
-    Component.onCompleted: if (open) play(1)
+    onOpenChanged: {
+        if (open) section = scope.flyoutSection
+        play(open ? 1 : 0)
+    }
+    Component.onCompleted: if (open) {
+        section = scope.flyoutSection
+        play(1)
+    }
+
+    // Grown (Theme.flyoutGrown): the bar group this flyout opened from, in
+    // this window's coordinates, which the box hangs off; null to sit as
+    // usual. The section is kept from opening, so a closing flyout doesn't
+    // jump to the next one's group.
+    property string section: ""
+    readonly property bool atBottom: Theme.barPosition === "bottom"
+    readonly property var group: {
+        if (!Theme.flyoutGrown || section === "" || !scope.barWindow) return null
+        var g = scope.barWindow.groupRect(section)
+        if (!g) return null
+        var dy = atBottom ? root.height - scope.barWindow.implicitHeight : 0
+        return { x0: g.x, x1: g.x + g.w, y0: g.y + dy, y1: g.y + g.h + dy, r: Theme.groupRadius }
+    }
+    readonly property bool grown: group !== null
+    readonly property int grownRadius: Theme.channelPanelRadius
+    // the box's own rect, snapped flush to the group where it nearly is
+    readonly property var grownRect: {
+        if (!grown) return null
+        var b = { x0: box.x, x1: box.x + box.width, r: grownRadius,
+                  y0: atBottom ? box.y : group.y1, y1: atBottom ? group.y0 : box.y + box.height }
+        return ChannelPath.snapTo(b, group, Theme.channelFillet)
+    }
+
+    // Sectioned (channel frames): each run of rows between headings and
+    // dividers sits in a channel of its own, and the content is padded to
+    // clear both frames.
+    readonly property bool sectioned: Theme.frameChannel
+    readonly property int sectionGap: 3
+    readonly property int sectionPadY: Theme.spaceS
+    readonly property int padX: sectioned ? Theme.channelWidth * 2 + sectionGap + Theme.spaceL : Theme.panelPad
+    readonly property int padY: sectioned ? Theme.channelWidth * 2 + sectionGap + sectionPadY : Theme.panelPad
+    // [{ y0, y1 }] in the column's coordinates
+    readonly property var sectionRuns: {
+        if (!sectioned) return []
+        var kids = contentColumn.children
+        var runs = [], cur = null
+        for (var i = 0; i < kids.length; i++) {
+            var c = kids[i]
+            if (!c.visible || c.height <= 0) continue
+            // headings, dividers and a page's bare spacer Items end a run
+            if (c.isFlyoutHeading === true || c.isSectionBreak === true
+                    || (/^QQuickItem\(/.test(String(c)) && c.children.length === 0)) {
+                cur = null
+                continue
+            }
+            if (!cur) { cur = { y0: c.y, y1: c.y + c.height }; runs.push(cur) }
+            else cur.y1 = c.y + c.height
+        }
+        return runs
+    }
 
     visible: open || reveal > 0
     focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
@@ -94,20 +152,41 @@ OverlayWindow {
         onClicked: root.requestClose()
     }
 
+    GrownFrame {
+        visible: root.grown
+        anchors.fill: parent
+        opacity: box.opacity
+        rects: !root.grown ? [] : root.atBottom ? [root.grownRect, root.group] : [root.group, root.grownRect]
+        hole: !root.grown ? null : ({
+            x0: root.group.x0 + Theme.channelWidth, x1: root.group.x1 - Theme.channelWidth,
+            y0: root.group.y0 + Theme.channelWidth, y1: root.group.y1 - Theme.channelWidth,
+            r: Theme.groupRadius - Theme.channelWidth
+        })
+    }
+
     PanelFrame {
         id: box
-        x: Math.max(root.edgeMargin,
-                    Math.min(root.anchorX - width / 2,
-                             root.width - width - root.edgeMargin))
+        bare: root.grown
+        ground: root.sectioned ? Theme.surface : Theme.panelFill
+        x: {
+            var free = Math.max(root.edgeMargin,
+                                Math.min(root.anchorX - width / 2,
+                                         root.width - width - root.edgeMargin))
+            if (!root.grown) return free
+            var near = Theme.channelFillet + Math.max(Theme.groupRadius, root.grownRadius)
+            if (Math.abs(free - root.group.x0) < near) return root.group.x0
+            if (Math.abs(free + width - root.group.x1) < near) return root.group.x1 - width
+            return Math.round(free)
+        }
         // Hangs off whichever edge the bar is on: below it at the top,
         // above it at the bottom. Measured from the far edge in the bottom
         // case so the box grows upward as rows are added, which keeps it
         // pinned to the bar instead of sliding down over the screen edge.
-        y: Theme.barPosition === "bottom"
-            ? root.height - root.topOffset - height
+        y: root.grown ? (atBottom ? root.group.y0 - height : root.group.y1)
+            : atBottom ? root.height - root.topOffset - height
             : root.topOffset
-        width: Theme.fit(root.menuWidth)
-        height: contentColumn.implicitHeight + Theme.panelPad * 2
+        width: Theme.fit(root.menuWidth) + (root.padX - Theme.panelPad) * 2
+        height: contentColumn.implicitHeight + root.padY * 2
 
         readonly property bool atBottom: Theme.barPosition === "bottom"
         // a tab's corners at the bar are square, so it hangs from it
@@ -120,10 +199,11 @@ OverlayWindow {
         opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
         // drop: slides out from under the bar; scale: grows from the edge
         // at the bar, centred on the chip
+        // a grown flyout only fades: its frame is joined to the bar
         transform: Translate {
-            y: Theme.flyoutAnim === "drop" ? (1 - root.reveal) * Theme.sp(10) * (box.atBottom ? 1 : -1) : 0
+            y: Theme.flyoutAnim === "drop" && !root.grown ? (1 - root.reveal) * Theme.sp(10) * (box.atBottom ? 1 : -1) : 0
         }
-        scale: Theme.flyoutAnim === "scale" ? 0.9 + 0.1 * root.reveal : 1
+        scale: Theme.flyoutAnim === "scale" && !root.grown ? 0.9 + 0.1 * root.reveal : 1
         transformOrigin: atBottom ? Item.Bottom : Item.Top
 
         Behavior on height {
@@ -136,12 +216,29 @@ OverlayWindow {
             onClicked: {}
         }
 
+        Repeater {
+            model: root.sectionRuns
+
+            Item {
+                required property var modelData
+                readonly property int out: Theme.channelWidth + root.sectionPadY
+                x: Theme.channelWidth + root.sectionGap
+                width: box.width - x * 2
+                y: contentColumn.y + modelData.y0 - out
+                height: modelData.y1 - modelData.y0 + out * 2
+
+                Channel { radius: Theme.radius + 3; fill: Theme.panelFill }
+            }
+        }
+
         Column {
             id: contentColumn
-            x: Theme.panelPad
-            y: Theme.panelPad
-            width: parent.width - Theme.panelPad * 2
+            x: root.padX
+            y: root.padY
+            width: parent.width - root.padX * 2
             spacing: Theme.spaceM
+            // FlyoutHeading and FlyoutDivider make room for the sections
+            readonly property bool sectioned: root.sectioned
 
             // Marks the page FlyoutSelect looks for when an open dropdown
             // needs a box to put its overlay in (see that file) -- the same
