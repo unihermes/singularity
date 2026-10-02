@@ -22,6 +22,8 @@ change together when you pick a new look.
 git clone https://github.com/unihermes/singularity.git && cd singularity && ./install.sh
 ```
 
+![The Singularity desktop: the bar, a terminal and Thunar over the wallpaper](.github/assets/desktop.jpg)
+
 ## Contents
 
 - [Highlights](#highlights)
@@ -150,6 +152,8 @@ meters, section frames, the heading mark and where flyouts sit. There are
 ten: Channel, Lined, Flat, Retro, Minimal, Basic, Capsule, Glass, Tabbed and
 Terminal. Beside it are only dials that move everything together
 (Roundness, Bar shape, Density, See-through) and a few finishing switches.
+
+<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance's Style tab: a live preview and the ten Styles" width="720"></p>
 
 Pick a look from **Settings → Appearance → Look**, the Control Centre, or a
 keybind (`qs ipc call look cycle`, `qs ipc call look set <name>`). The other
