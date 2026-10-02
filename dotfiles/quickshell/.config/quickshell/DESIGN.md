@@ -93,7 +93,9 @@ Style: `channel` (frame `channel` in `Styles.js`).
 
 ## Settings pages
 
-Every page sets `sectioned: true` on its `SettingsPage`.
+Every page sets `sectioned: true` on its `SettingsPage`. The System
+window's pages (`SystemPage`) and the Keybinds window (the same page as
+Settings') are laid out the same way.
 
 - **Header (untabbed pages):** the page's heading and a one-line
   description, eliding if needed.
@@ -105,6 +107,9 @@ Every page sets `sectioned: true` on its `SettingsPage`.
 - A Repeater's Column that holds its own heading and rows (Display's
   per-monitor blocks) sets `isSectionGroup: true` and `sectioned`, so its
   rows get sections as if they sat in the page.
+- A heading sharing its line with a control (Copy specs, the CPU / MEM
+  sort) sits in an item marked `isSectionBreak` and `sectioned`; the
+  control takes the heading's `lift` so the two stay level.
 
 - **Tabs:** one segmented strip at the top, an icon and a name per tab
   (names elide when tight), replacing the page heading and description.

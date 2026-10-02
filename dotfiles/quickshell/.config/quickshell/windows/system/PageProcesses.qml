@@ -12,6 +12,7 @@ import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
 import "../../flyouts"
+import "../../settings"
 // the page's own building blocks next door; QML needs the directory named
 import "../system"
 
@@ -55,17 +56,7 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "TOOLS" }
 
-    Text {
-        width: parent.width
-        text: "The kill button sends SIGTERM and only appears on your own processes — "
-            + "killing root's would fail silently. For anything this table can't reach, "
-            + "open a full monitor."
-        wrapMode: Text.WordWrap
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
-    }
+    SettingsNote { text: "Kill sends SIGTERM, to your own processes only" }
 
     Flow {
         width: parent.width

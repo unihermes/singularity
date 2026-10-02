@@ -16,6 +16,7 @@
 import QtQuick
 import "../../services"
 import "../../flyouts"
+import "../../settings"
 import "../system"
 
 SystemPage {
@@ -40,6 +41,8 @@ SystemPage {
         return Health.checks.slice().sort((a, b) => (rank[a.status] || 3) - (rank[b.status] || 3))
     }
 
+    FlyoutHeading { text: "CHECKS" }
+
     Row {
         width: parent.width
         spacing: Theme.spaceL
@@ -60,8 +63,6 @@ SystemPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceS }
-
     Repeater {
         model: page.ordered
 
@@ -81,30 +82,11 @@ SystemPage {
         }
     }
 
-    Text {
-        width: parent.width
+    FlyoutRow {
         visible: Health.checks.length === 0 && !Health.scanning
-        text: "No checks ran. health-scan.sh may be missing or not executable."
-        wrapMode: Text.WordWrap
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+        enabled: false
+        label: "No checks ran; is health-scan.sh executable?"
     }
 
-    Item { width: 1; height: Theme.spaceM }
-
-    Text {
-        width: parent.width
-        text: "These checks are health-scan.sh, which reads and never changes "
-            + "anything; `diagnose` in a terminal covers the same ground in more "
-            + "detail and is what to reach for when the shell itself is down. "
-            + "Repairs that ask questions or print a lot — installing a package, "
-            + "freeing space, relinking — open a terminal so you can see what runs."
-        wrapMode: Text.WordWrap
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
-    }
+    SettingsNote { text: "Read-only. If the shell is down, run diagnose in a terminal" }
 }

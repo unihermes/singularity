@@ -15,6 +15,7 @@ import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
 import "../../flyouts"
+import "../../settings"
 // the page's own building blocks next door; QML needs the directory named
 import "../system"
 
@@ -27,10 +28,13 @@ SystemPage {
     // --- identity -----------------------------------------------------------
 
     Item {
+        readonly property bool isSectionBreak: true
+        readonly property bool sectioned: Theme.frameChannel
         width: parent.width
-        height: Theme.controlSize
+        height: Math.max(Theme.controlSize, machineHeading.implicitHeight)
 
         FlyoutHeading {
+            id: machineHeading
             anchors.left: parent.left
             anchors.right: copyBtn.left
             anchors.rightMargin: Theme.spaceL
@@ -42,6 +46,7 @@ SystemPage {
             id: copyBtn
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: machineHeading.lift
             text: SystemSpecs.copied ? "Copied" : "Copy specs"
             selected: SystemSpecs.copied
             onClicked: SystemSpecs.copySummary()
@@ -134,14 +139,9 @@ SystemPage {
         }
     }
 
-    Text {
-        width: parent.width
+    SettingsNote {
         visible: SystemStats.sensors.length === 0
-        text: "No hwmon temperature nodes are readable."
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+        text: "No hwmon temperature nodes are readable"
     }
 
     Repeater {

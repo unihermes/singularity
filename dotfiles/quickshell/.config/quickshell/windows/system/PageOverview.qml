@@ -140,12 +140,19 @@ SystemPage {
     // forks a couple of dozen processes and this page is on screen by
     // default every time the window opens.
     Row {
+        readonly property bool isSectionBreak: true
+        readonly property bool sectioned: Theme.frameChannel
         width: parent.width
         spacing: Theme.spaceL
 
-        FlyoutHeading { text: "HEALTH" }
+        FlyoutHeading {
+            width: parent.width - healthChip.width - parent.spacing
+            text: "HEALTH"
+            firstInColumn: false
+        }
 
         FlyoutChip {
+            id: healthChip
             anchors.verticalCenter: parent.verticalCenter
             text: Health.lastScan === "" ? "Run checks"
                 : Health.problems > 0 ? Health.problems + " to fix"

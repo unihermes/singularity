@@ -31,6 +31,9 @@ Column {
 
     width: parent ? parent.width : 0
     spacing: Theme.spaceM
+    // sectioned as if its rows sat in the page, under its own heading
+    readonly property bool isSectionGroup: true
+    readonly property bool sectioned: Theme.frameChannel
 
     readonly property int pidW:  Theme.fs(64)
     readonly property int userW: Theme.fs(74)
@@ -42,10 +45,14 @@ Column {
         + (detailed ? userW + Theme.spaceL : 0)
 
     Item {
+        readonly property bool isSectionBreak: true
+        readonly property bool sectioned: root.sectioned
         width: parent.width
-        height: Math.max(Theme.headingHeight, root.showSort ? sortRow.height : 0)
+        height: Math.max(tableHeading.implicitHeight, root.showSort ? sortRow.height : 0)
 
         FlyoutHeading {
+            id: tableHeading
+            firstInColumn: !!root.parent && root.parent.children[0] === root
             anchors.left: parent.left
             anchors.right: root.showSort ? sortRow.left : parent.right
             anchors.rightMargin: root.showSort ? Theme.spaceL : 0
@@ -58,6 +65,7 @@ Column {
             visible: root.showSort
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: tableHeading.lift
             fill: false
             model: [{ value: "cpu", text: "CPU" }, { value: "mem", text: "MEM" }]
             current: SystemStats.procSort

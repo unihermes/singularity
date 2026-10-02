@@ -26,8 +26,7 @@ SystemPage {
     id: page
 
     title: "Config"
-    subtitle: "Click to open in the editor; the folder button on the right reveals it. "
-        + "Files under /etc open read-only unless the editor is given a way to elevate."
+    subtitle: "Click to edit; the folder button shows it in the file manager"
 
     readonly property string home: Quickshell.env("HOME")
     // filled in by rootProc; empty until then, which simply leaves the
@@ -192,9 +191,14 @@ SystemPage {
 
         Column {
             required property var modelData
+            required property int index
             width: parent.width
             spacing: Theme.spaceXs
             bottomPadding: Theme.spaceL
+            // sectioned as if its rows sat in the page
+            readonly property bool isSectionGroup: true
+            readonly property bool sectioned: Theme.frameChannel
+            readonly property bool opensPage: index === 0
 
             FlyoutHeading { text: modelData.heading }
 

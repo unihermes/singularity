@@ -11,6 +11,7 @@ import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
 import "../../flyouts"
+import "../../settings"
 // the page's own building blocks next door; QML needs the directory named
 import "../system"
 
@@ -120,16 +121,7 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "WRITEBACK" }
 
-    Text {
-        width: parent.width
-        text: "Pages changed in memory but not yet on disk. A dirty figure that "
-            + "stays large under load is the disk failing to keep up, not a memory problem."
-        wrapMode: Text.WordWrap
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
-    }
+    SettingsNote { text: "Changed in memory, not yet written to disk" }
 
     InfoRow { label: "Dirty";      value: Format.kib(SystemStats.dirtyKb) }
     InfoRow { label: "In flight";  value: Format.kib(SystemStats.writebackKb) }
