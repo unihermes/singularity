@@ -302,6 +302,7 @@ Item {
         // rectangle with nothing in it
         visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
         active: screenScope.openFlyout === "windowmenu"
+        hoverWhole: false
 
         Item {
             id: strip
@@ -413,6 +414,22 @@ Item {
                             width: 1
                             height: Math.round(Theme.moduleHeight * 0.45)
                             color: Theme.stroke
+                        }
+
+                        // the hover fill under just this window, for the
+                        // styles without a ground of their own, sized as a
+                        // whole module's hover is
+                        Rectangle {
+                            readonly property bool grouped: Theme.moduleStyle === "grouped"
+                            visible: winIcon.hovered && !winIcon.tabs && !winIcon.seg && !winIcon.spot
+                                && !winIcon.indexed && !winIcon.inset
+                                && winIcon.mark !== "ground" && winIcon.mark !== "box"
+                            x: winIcon.lead
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - winIcon.lead
+                            height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight - 6
+                            radius: grouped ? Theme.radius : Theme.radiusSmall
+                            color: Theme.overlay
                         }
 
                         // a tab's ground: lit under the focused window, a hover

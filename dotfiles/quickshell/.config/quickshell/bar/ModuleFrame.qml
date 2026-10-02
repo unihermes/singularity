@@ -57,7 +57,10 @@ Item {
     implicitHeight: Theme.barHeight
 
     // Theme.hoverStyle, while the pointer is on the chip and it isn't lit
-    HoverHandler { id: hover }
+    // false for a chip whose items show their own hover (the open
+    // windows): the chip itself then stays as it is under the pointer
+    property bool hoverWhole: true
+    HoverHandler { id: hover; enabled: root.hoverWhole }
     readonly property bool hovered: hover.hovered && !active
     readonly property string hoverStyle: hovered ? Theme.hoverStyle : "none"
 
