@@ -1,8 +1,9 @@
 # One line of config.jsonc's info block:
 #   . row.sh LABEL [VALUE]    an icon, the label and its value
-#   . row.sh --title          user@host in an accent capsule
+#   . row.sh --title          user@host in an accent capsule, the look's
+#                             ramp and accent as swatches at the right
 #   . row.sh --head NAME      a section name in a capsule
-#   . row.sh --swatches       the look's ramp and accent
+#   . row.sh --foot           the outline's closing corner
 #
 # An outline runs down the left and along each capsule line, open on the
 # right: rounded corners when the look has a radius, square at 0.
@@ -44,7 +45,13 @@ case $1 in
     t=$'\uf007 '"$(whoami)@$(uname -n)"
     printf '%s%s─\033[0m' "$O" "$TOP"
     cap "$N_ACCENT" "$N_ON_ACCENT" "$t"
-    rule $(( ${#t} + 4 ))
+    # 16 columns of swatches, flush with the block's right edge
+    rule $(( ${#t} + 4 + 17 ))
+    printf ' '
+    for c in "$N_SURFACE" "$N_OVERLAY" "$N_BORDER" "$N_MUTED" "$N_SUBTEXT" "$N_TEXT" "$N_BRIGHT" "$N_ACCENT"; do
+      printf '\033[38;2;%sm██' "$c"
+    done
+    printf '\033[0m'
     ;;
   --head)
     h=$2
@@ -53,12 +60,8 @@ case $1 in
     cap "$N_OVERLAY" "$N_HEADING" "$h"
     rule $(( ${#h} + 4 ))
     ;;
-  --swatches)
-    printf '%s%s─ ' "$O" "$BOT"
-    for c in "$N_SURFACE" "$N_OVERLAY" "$N_BORDER" "$N_MUTED" "$N_SUBTEXT" "$N_TEXT" "$N_BRIGHT" "$N_ACCENT"; do
-      printf '\033[38;2;%sm██' "$c"
-    done
-    rule 19
+  --foot)
+    printf '%s%s%s\033[0m' "$O" "$BOT" "$(printf -- '─%.0s' $(seq 2 $W))"
     ;;
   *)
     label=$1

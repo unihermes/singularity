@@ -132,7 +132,7 @@
     {
       "type": "command",
       "key": " ",
-      "text": ". ~/.config/fastfetch/row.sh --swatches"
+      "text": ". ~/.config/fastfetch/row.sh --foot"
     }
   ]
 }
