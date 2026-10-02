@@ -68,7 +68,7 @@ Item {
     readonly property int frameIn: Theme.frameDouble || Theme.frameChiselled ? Theme.frameInset + Theme.borderWidth
         : Theme.frameStroked ? Theme.borderWidth : 0
     readonly property color titleInk: !titleBar ? Theme.headingColor
-        : Theme.hasAccent ? Theme.onAccent : Theme.textStrong
+        : Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
 
     function closePanel() {
         for (var p = parent; p; p = p.parent)

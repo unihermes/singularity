@@ -103,7 +103,7 @@ Item {
                     id: badgeText
                     anchors.centerIn: parent
                     text: root.badge > 99 ? "99+" : root.badge
-                    color: Theme.onAccent
+                    color: Theme.textOnAccent
                     font.family: Theme.fontText
                     font.pixelSize: Theme.barFs(9)
                     font.weight: Font.Bold

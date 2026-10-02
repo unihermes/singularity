@@ -384,8 +384,8 @@ Item {
                         readonly property int tabTitleMax: Math.max(Theme.fit(40), Math.min(Theme.fit(140),
                             Theme.fit(520) / Math.max(1, iconRepeater.count) - glyphBox.width - padX * 2 - Theme.spaceXs))
                         // the label colour on an accent ground
-                        readonly property color onAccent: Theme.hasAccent
-                            ? Theme.onAccent : Theme.textStrong
+                        readonly property color textOnAccent: Theme.hasAccent
+                            ? Theme.textOnAccent : Theme.textStrong
 
                         anchors.verticalCenter: parent.verticalCenter
                         // a little wider than the icon, so neighbours' pips
@@ -604,7 +604,7 @@ Item {
                             x: winIcon.lead + winIcon.padX
                             anchors.verticalCenter: parent.verticalCenter
                             text: winIcon.index + 1
-                            color: winIcon.focused ? winIcon.onAccent : Theme.muted
+                            color: winIcon.focused ? winIcon.textOnAccent : Theme.muted
                             opacity: winIcon.focused ? 0.65 : 1
                             font.family: Theme.fontText
                             font.weight: Theme.weightBody
@@ -620,7 +620,7 @@ Item {
                             TextMetrics { id: nameMetrics; font: indexName.font; text: indexName.text }
                             width: winIcon.indexed ? Math.min(Math.ceil(nameMetrics.advanceWidth), Theme.fit(120)) : 0
                             elide: Text.ElideRight
-                            color: winIcon.focused ? winIcon.onAccent : winIcon.hovered ? Theme.text : Theme.subtext
+                            color: winIcon.focused ? winIcon.textOnAccent : winIcon.hovered ? Theme.text : Theme.subtext
                             font.family: Theme.fontText
                             font.weight: Theme.weightBody
                             font.pixelSize: Theme.barLabelSize

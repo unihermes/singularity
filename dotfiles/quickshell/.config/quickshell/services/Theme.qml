@@ -99,8 +99,11 @@ Singleton {
     readonly property color hoverFillSoft: surface
     readonly property color selectedFill:  overlay
     readonly property color selectedStroke: hasAccent ? accent : muted
-    // text on an accent fill: dark on a light accent, white otherwise
-    readonly property color onAccent: accent.hslLightness > 0.55 ? "#111111" : "#ffffff"
+    // Text on an accent fill: white, unless the accent is so bright that
+    // white wouldn't read (by perceived brightness; HSL lightness calls a
+    // mid blue like #5555c8 light). Not named onAccent: QML reads an
+    // on<Name> property as a signal handler, and it always came back black.
+    readonly property color textOnAccent: 0.299 * accent.r + 0.587 * accent.g + 0.114 * accent.b > 0.65 ? "#111111" : "#ffffff"
     // the inner half of a double frame
     readonly property color frameStroke:   muted
     // a field's ground: inputs, key-capture boxes

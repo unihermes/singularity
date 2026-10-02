@@ -19,7 +19,7 @@ shape, Density, See-through) and Finish switches that are safe with any style
 (separators, shadows, shaded grounds, heavy lines, heading caps and rule).
 
 Across every style, a chosen segment, tab or chip fills with the accent
-(text in `Theme.onAccent`); only Channel adds its groove round it. Tabbed
+(text in `Theme.textOnAccent`); only Channel adds its groove round it. Tabbed
 draws the open module as a real tab: its sides and top are stroked down
 into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
 Terminal keeps every corner square whatever Roundness says (the style's
@@ -150,8 +150,8 @@ Settings') are laid out the same way.
   appear) is one small screen beside the label with a spot per choice,
   drawing the thing where it is (`PopupSpot`).
 - **Which pages are tabbed:** Appearance, Lock Screen (Look · Password &
-  Lid), Power & Idle (Power · When idle) and Window Rules (Apps ·
-  Workspaces). Two tabs at least, each with more than one row; a page
+  Lid) and Window Rules (Apps · Workspaces). Power & Idle is one page.
+  The tab showing has white text on its accent fill, never dark. Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.
 - **Rows that open in place:** a row whose action needs more input (a
   network's passphrase, a hidden network, a saved network's settings)

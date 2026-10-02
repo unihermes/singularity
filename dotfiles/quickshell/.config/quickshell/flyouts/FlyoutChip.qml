@@ -84,7 +84,7 @@ Item {
             text: root.armed ? root.confirmText : root.text
             color: !root.enabled ? Theme.textDisabled
                 : root.armed ? Theme.base
-                : root.selected ? Theme.onAccent
+                : root.selected ? Theme.textOnAccent
                 : (root.selected || mouse.containsMouse) ? Theme.textStrong : Theme.text
 
             font.family: root.glyph && !root.armed ? Theme.fontIcon : Theme.fontText

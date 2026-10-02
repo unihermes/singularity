@@ -269,7 +269,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: seg.modelData.icon || ""
                                 visible: text !== ""
-                                color: seg.current ? Theme.onAccent : Theme.subtext
+                                color: seg.current ? Theme.textOnAccent : Theme.subtext
                                 font.family: Theme.fontIcon
                                 font.pixelSize: Theme.fontIconSize
                             }
@@ -278,7 +278,7 @@ Item {
                                 width: Math.min(implicitWidth, seg.width - segIcon.width - Theme.spaceS * 3)
                                 elide: Text.ElideRight
                                 text: seg.modelData.label
-                                color: seg.current ? Theme.onAccent
+                                color: seg.current ? Theme.textOnAccent
                                     : segMouse.containsMouse ? Theme.textStrong : Theme.text
                                 font.family: Theme.fontText
                                 font.pixelSize: Theme.fontSmall

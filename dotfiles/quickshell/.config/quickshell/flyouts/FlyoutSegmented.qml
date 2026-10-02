@@ -112,7 +112,7 @@ Item {
                         id: segText
                         anchors.centerIn: parent
                         text: root.textOf(seg.modelData)
-                        color: seg.on ? Theme.onAccent
+                        color: seg.on ? Theme.textOnAccent
                             : segMouse.containsMouse ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
                         font.weight: Theme.weightBody
