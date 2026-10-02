@@ -545,34 +545,9 @@ hl.bind(mod .. " + grave", function() toggleScratchpad() end)  -- Show or hide t
 hl.bind(mod .. " + SHIFT + grave", function() toggleStashed() end)  -- Move window into or out of the scratchpad
 
 -- --- Show desktop ---
--- Every window on the active workspace moves to a hidden special workspace
--- named after it, and the next press brings them back. The name carries
--- the workspace, so a reload while the desktop shows loses nothing. A
--- global so the bar's show-desktop button can run it through `hyprctl eval`.
-function singularityShowDesktop()
-    local ws = hl.get_active_workspace()
-    if not ws or ws.special then return end
-    local hidden = "special:desktop-" .. ws.id
-    local parked, here = {}, {}
-    for _, w in ipairs(hl.get_windows()) do
-        local name = w.workspace and w.workspace.name or ""
-        if name == hidden then
-            parked[#parked + 1] = w
-        elseif w.workspace and not w.workspace.special and w.workspace.id == ws.id then
-            here[#here + 1] = w
-        end
-    end
-    if #parked > 0 then
-        for _, w in ipairs(parked) do
-            hl.dispatch(hl.dsp.window.move({ workspace = ws.id, window = "address:" .. w.address, follow = false }))
-        end
-        hl.dispatch(hl.dsp.focus({ window = "address:" .. parked[#parked].address }))
-    else
-        for _, w in ipairs(here) do
-            hl.dispatch(hl.dsp.window.move({ workspace = hidden, window = "address:" .. w.address, follow = false }))
-        end
-    end
-end
+-- Hides every window on the workspace as SUPER+C does, so they stay on it
+-- and in the bar's window strip; the next press brings them back. See
+-- singularityShowDesktop() below.
 hl.bind(mod .. " + D", function() singularityShowDesktop() end)  -- Show the desktop, or bring its windows back
 
 -- --- Notes ---
@@ -1152,6 +1127,14 @@ local function restoreMinimized(win)
     local gen = st.hideGen
     local addr = "address:" .. win.address
     hl.dispatch(hl.dsp.window.tag({ tag = "-" .. minimizedTag(saved), window = addr }))
+    -- hidden by show desktop: the bar's button reads the tag
+    for _, t in ipairs(type(win.tags) == "table" and win.tags or { win.tags }) do
+        if t == "showdesktop" then
+            hl.dispatch(hl.dsp.window.tag({ tag = "-showdesktop", window = addr }))
+            hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
+            break
+        end
+    end
 
     -- skipped if it was hidden again, or closed, in the meantime
     local function current()
@@ -1633,16 +1616,8 @@ local function hiddenRect(r, mon)
     return { x = r.x, y = y, w = r.w, h = r.h }
 end
 
-function toggleMinimize()
-    local win = hl.get_active_window()
-    if not win then return end
+local function minimizeWindow(win)
     local st = stateOf(win.address)
-
-    if st.minimized then
-        restoreMinimized(win)
-        return
-    end
-
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
     local addr = "address:" .. win.address
@@ -1707,6 +1682,49 @@ function toggleMinimize()
     else
         hide()
     end
+end
+
+function toggleMinimize()
+    local win = hl.get_active_window()
+    if not win then return end
+    if stateOf(win.address).minimized then restoreMinimized(win) else minimizeWindow(win) end
+end
+
+-- SUPER+D and the bar's show-desktop button. With any window showing on
+-- the active workspace, hides them all as SUPER+C does, tagged
+-- "showdesktop"; with none, brings back the ones it tagged and focuses the
+-- one used last. Bringing one back any other way (the window strip,
+-- ALT+Tab) drops its tag. The bar reads the tag to light its button, so
+-- it's told to look again. A global so the button can run it through
+-- `hyprctl eval`.
+function singularityShowDesktop()
+    local ws = hl.get_active_workspace()
+    if not ws or ws.special then return end
+    local showing, hidden = {}, {}
+    for _, w in ipairs(hl.get_windows()) do
+        if w.mapped and not w.hidden and w.workspace and w.workspace.id == ws.id
+                and w.class ~= "org.quickshell" then
+            if not stateOf(w.address).minimized then
+                showing[#showing + 1] = w
+            elseif hasTag(w, "showdesktop") then
+                hidden[#hidden + 1] = w
+            end
+        end
+    end
+    if #showing > 0 then
+        for _, w in ipairs(showing) do
+            hl.dispatch(hl.dsp.window.tag({ tag = "+showdesktop", window = "address:" .. w.address }))
+            minimizeWindow(w)
+        end
+    elseif #hidden > 0 then
+        local last
+        for _, w in ipairs(hidden) do
+            restoreMinimized(w)
+            if not last or w.focus_history_id < last.focus_history_id then last = w end
+        end
+        hl.dispatch(hl.dsp.focus({ window = "address:" .. last.address }))
+    end
+    hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
 end
 
 -- After a reload, windows SUPER+C hid get their windowState back from the

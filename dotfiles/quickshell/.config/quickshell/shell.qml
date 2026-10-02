@@ -148,6 +148,13 @@ ShellRoot {
         function open(page: string): void { settingsWindow.open(page) }
     }
 
+    // hyprland.lua's singularityShowDesktop(), after it tags or untags
+    // windows: tags aren't announced, and the bar's button reads them
+    IpcHandler {
+        target: "desktop"
+        function changed(): void { Hyprland.refreshToplevels() }
+    }
+
     // `qs ipc call system open`, likewise.
     // System takes a page the way Settings does -- `... open network` -- so a
     // keybind can go straight to the one page it is about.

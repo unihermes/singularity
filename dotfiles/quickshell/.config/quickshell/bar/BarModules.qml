@@ -1097,12 +1097,14 @@ Item {
         id: desktopBtn
         visible: Settings.widgetVisible("desktop")
         readonly property bool grouped: Theme.moduleGrouped
-        // the focused workspace's windows are parked on its special workspace
+        // a window on the focused workspace that it hid is still hidden
         readonly property bool shown: {
             var ws = Hyprland.focusedWorkspace
             if (!ws) return false
-            var name = "special:desktop-" + ws.id
-            return Hyprland.workspaces.values.some(w => w.name === name && w.toplevels.values.length > 0)
+            return ws.toplevels.values.some(t => {
+                var tags = t.lastIpcObject ? t.lastIpcObject.tags || [] : []
+                return tags.indexOf("showdesktop") !== -1
+            })
         }
 
         property bool slideX: false
