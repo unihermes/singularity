@@ -141,16 +141,20 @@ Settings') are laid out the same way.
   from the real components (`ModuleFrame`, `PanelFrame`, `FlyoutHeading`,
   `Slider`, …) over the wallpaper, so it follows every setting and can't
   drift from the shell. It's only built while one of those tabs shows.
-- **Visual pickers:** a choice judged by eye (Style, Density, the lock
-  screen's Background and Clock place) is a grid of tiles
+- **Lock Screen:** a live preview of the lock screen is pinned over the
+  rows (`pinned`), with a Lock now chip on its corner, so Background and
+  Clock place are plain segments. Under the clock's hint is the line as it
+  will read. The lid is one row: [Suspend | Screen off] after [N min].
+- **Visual pickers:** a choice judged by eye (Style, Density) is a grid of tiles
   (`SettingsTiles`), four across, or three when each tile is a small
   screen. Each tile draws what its value does; the current one has the lit
   groove. Numbers stay steppers, and on/off stays a switch.
 - **Spot pickers:** a place on the screen (where notification popups
   appear) is one small screen beside the label with a spot per choice,
   drawing the thing where it is (`PopupSpot`).
-- **Which pages are tabbed:** Appearance, Lock Screen (Look · Password &
-  Lid) and Window Rules (Apps · Workspaces). Power & Idle is one page.
+- **Which pages are tabbed:** Appearance and Window Rules (Apps ·
+  Workspaces). Power & Idle and Lock Screen are one page each; prefer one
+  page with sections over tabs.
   The tab showing has white text on its accent fill, never dark. Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.
 - **Rows that open in place:** a row whose action needs more input (a

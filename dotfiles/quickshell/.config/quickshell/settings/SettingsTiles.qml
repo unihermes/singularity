@@ -6,8 +6,7 @@
 // under a SettingsField that names the choice.
 //
 // `model` is [{ value, text }]. `art` is a Component drawn near the top of
-// each tile; it reads `parent.value` and can size itself from
-// `parent.tileWidth`.
+// each tile; it reads `parent.value`.
 
 import QtQuick
 import "../services"
@@ -53,7 +52,6 @@ Grid {
 
             Loader {
                 property var value: tile.modelData.value
-                property real tileWidth: tile.width
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: Theme.spaceL
                 sourceComponent: root.art

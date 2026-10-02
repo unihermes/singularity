@@ -53,17 +53,16 @@ var entries = [
     { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
     // --- Lock Screen -------------------------------------------------------
-    { page: "lockscreen", section: "Look",     label: "Background",   keywords: "hyprlock wallpaper screenshot plain image" },
-    { page: "lockscreen", section: "Look",     label: "Blur",         keywords: "hyprlock blur_passes background" },
-    { page: "lockscreen", section: "Look",     label: "Dim",          keywords: "hyprlock brightness darken background" },
-    { page: "lockscreen", section: "Look",     label: "Clock",        keywords: "hyprlock time 12 24 hour seconds date" },
-    { page: "lockscreen", section: "Look",     label: "Clock size",   keywords: "hyprlock clock big small huge font" },
-    { page: "lockscreen", section: "Look",     label: "Clock place",  keywords: "hyprlock clock position centre top corner" },
-    { page: "lockscreen", section: "Look",     label: "Under the clock", keywords: "hyprlock date media music notifications info line" },
-    { page: "lockscreen", section: "Look",     label: "Lock now",     keywords: "hyprlock preview test" },
+    { page: "lockscreen", section: "Background", label: "Background",   keywords: "hyprlock wallpaper screenshot plain image" },
+    { page: "lockscreen", section: "Background", label: "Blur",         keywords: "hyprlock blur_passes background" },
+    { page: "lockscreen", section: "Background", label: "Dim",          keywords: "hyprlock brightness darken background" },
+    { page: "lockscreen", section: "Clock",    label: "Clock",        keywords: "hyprlock time 12 24 hour seconds date" },
+    { page: "lockscreen", section: "Clock",    label: "Clock size",   keywords: "hyprlock clock big small huge font" },
+    { page: "lockscreen", section: "Clock",    label: "Clock place",  keywords: "hyprlock clock position centre top corner" },
+    { page: "lockscreen", section: "Clock",    label: "Under the clock", keywords: "hyprlock date media music notifications info line" },
+    { page: "lockscreen", section: "Clock",    label: "Lock now",     keywords: "hyprlock preview test" },
     { page: "lockscreen", section: "Password", label: "Grace period", keywords: "hyprlock grace delay password unlock idle" },
-    { page: "lockscreen", section: "Lid",      label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh" },
-    { page: "lockscreen", section: "Lid",      label: "Suspend after", keywords: "lid close delay minutes sleep" },
+    { page: "lockscreen", section: "Lid",      label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh delay after minutes" },
     { page: "lockscreen", section: "Lid",      label: "Lock right away", keywords: "lid close lock immediately" },
 
     // --- Appearance --------------------------------------------------------
