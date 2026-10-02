@@ -14,6 +14,9 @@ Item {
 
     property string label: ""
     property string hint: ""
+    // a glyph before the label (a battery or plug), and a row that's off
+    property string mark: ""
+    property bool dimmed: false
     // A setting the look carries (Looks.js `settings`): while it differs
     // from the look's own value the label is marked, and the mark puts it
     // back. "" for a field that isn't one.
@@ -80,9 +83,9 @@ Item {
             Text {
                 id: labelText
                 width: Math.min(implicitWidth, parent.width - (resetMark.visible ? resetMark.width + Theme.spaceS : 0))
-                text: root.label
+                text: (root.mark !== "" ? root.mark + "  " : "") + root.label
                 elide: Text.ElideRight
-                color: Theme.text
+                color: root.dimmed ? Theme.subtext : Theme.text
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontBody
                 font.weight: Theme.weightBody

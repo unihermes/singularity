@@ -175,6 +175,15 @@ Settings') are laid out the same way.
   the IN RANGE heading, its icon turning while it runs (`FlyoutChip.icon`
   and `spinning`), and the unnamed devices are a last "Show N unnamed" row.
   Discoverable's hint counts down to BlueZ's timeout.
+- **Power & Idle:** the profile segments carry their icons and the hint
+  says what the chosen one does. The battery is a card (charge large, then
+  state, time left, the Custom band and health) over a full-fill level chip
+  of the charge; in Custom the resume-to-stop band sits on the chip and its
+  ends are dragged, in steps of 5, in place of steppers. The idle steps
+  have a timeline above them (each step's icon at its time, muted when
+  off), and each step a switch: off comments its block out of
+  hypridle.conf with `#~ `. Steps that differ only by power source carry a
+  battery or plug mark (`SettingsField.mark`).
 - **No look summary card:** the Look tab's Changes list alone shows
   what's changed.
 - **Changes are counted from the saved default** when one was saved with

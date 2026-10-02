@@ -12,20 +12,24 @@
 // install.sh's singularity-charge helper through pkexec (no password for
 // the active session). The firmware keeps them, so nothing else saves
 // them. The stop and resume steppers write once they've been still for a
-// moment, since every write is a firmware write. The Battery row draws the
-// charge now on a pill, with Custom's stop-to-resume band over it.
+// moment, since every write is a firmware write. The battery card sits
+// over a level chip of the charge now; in Custom it carries the resume-to-
+// stop band, whose ends are dragged to set them.
 //
 // The ladder is hypridle.conf's listener blocks, each shown by what it does
-// (dim, lock, screens off, suspend) and edited in place: only the number on
-// its `timeout = N` line changes, the rest of the file is left byte for byte.
-// hypridle reads its config once at start, so every write restarts it --
-// debounced, so stepping through ten values restarts it once.
+// (dim, lock, screens off, suspend) and edited in place: the number on its
+// `timeout = N` line changes, and a step turned off has its block's lines
+// commented out with a `#~ ` mark (taken off again when it's turned back
+// on). The rest of the file is left byte for byte. hypridle reads its
+// config once at start, so every write restarts it -- debounced, so
+// stepping through ten values restarts it once.
 
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
 import QtQuick
 import "../services"
+import "../services/Format.js" as Format
 import "../flyouts"
 
 SettingsPage {
@@ -44,7 +48,32 @@ SettingsPage {
 
     readonly property string idlePath: Quickshell.env("HOME") + "/.config/hypr/hypridle.conf"
 
+    readonly property var glyphs: ({
+        "power-saver": String.fromCodePoint(0xF032A),
+        "balanced": String.fromCodePoint(0xF05D1),
+        "performance": String.fromCodePoint(0xF0463),
+        charging: String.fromCodePoint(0xF0084),
+        plug: String.fromCodePoint(0xF06A5),
+        battery: String.fromCodePoint(0xF0079),
+        "Dim the screen": String.fromCodePoint(0xF00DF),
+        "Lock": String.fromCodePoint(0xF033E),
+        "Turn screens off": String.fromCodePoint(0xF0D90),
+        "Suspend on battery": String.fromCodePoint(0xF0079),
+        "Suspend": String.fromCodePoint(0xF04B2),
+        "Hibernate": String.fromCodePoint(0xF0904),
+    })
+    function batteryGlyph(pct) {
+        return String.fromCodePoint(pct >= 90 ? 0xF0079 : pct >= 70 ? 0xF0080
+            : pct >= 50 ? 0xF007E : pct >= 30 ? 0xF007C : 0xF007A)
+    }
+
     // --- power profile -------------------------------------------------------
+
+    readonly property var profileHints: ({
+        "power-saver": "Slower and cooler, battery lasts longer",
+        "balanced": "Speeds up only when it's needed",
+        "performance": "Full speed, more heat and fan",
+    })
 
     // true between this page's own set() and its result, so a change made
     // from the battery flyout meanwhile doesn't report here
@@ -103,26 +132,32 @@ SettingsPage {
     }
 
     // Steps of 5, kept 5 apart. Dell takes a stop of 55-100 and a start of
-    // 50-95; pushing one into the other moves both.
-    function chargeStep(which, delta) {
+    // 50-95; pushing one into the other moves both. Written once the drag
+    // lets go.
+    function chargeSet(which, pct) {
+        pct = Math.round(pct / 5) * 5
         if (which === "stop") {
-            chargeStop = Math.max(55, Math.min(100, chargeStop + delta * 5))
+            chargeStop = Math.max(55, Math.min(100, pct))
             chargeStart = Math.min(chargeStart, chargeStop - 5)
         } else {
-            chargeStart = Math.max(50, Math.min(95, chargeStart + delta * 5))
+            chargeStart = Math.max(50, Math.min(95, pct))
             chargeStop = Math.max(chargeStop, chargeStart + 5)
         }
-        chargeDebounce.restart()
     }
 
-    function batteryState() {
+    // the card's second line: what it's doing, how long, the band, health
+    function batteryLine() {
         if (!Battery.present) return ""
-        var s = Battery.device.state
-        var what = s === UPowerDeviceState.Charging ? "Charging"
-            : s === UPowerDeviceState.Discharging ? "On battery"
-            : s === UPowerDeviceState.FullyCharged ? "Full"
-            : "Not charging"
-        return Battery.percent + "% · " + what
+        var d = Battery.device, st = d.state
+        var parts = [st === UPowerDeviceState.Charging ? "Charging"
+            : st === UPowerDeviceState.Discharging ? "On battery"
+            : st === UPowerDeviceState.FullyCharged ? "Full"
+            : "Not charging"]
+        if (st === UPowerDeviceState.Discharging && d.timeToEmpty > 0) parts.push(Format.duration(d.timeToEmpty) + " left")
+        if (st === UPowerDeviceState.Charging && d.timeToFull > 0) parts.push(Format.duration(d.timeToFull) + " to full")
+        if (chargeMode === "Custom") parts.push("kept " + chargeStart + "–" + chargeStop + "%")
+        if (d.healthSupported) parts.push("Health " + Math.round(d.healthPercentage) + "%")
+        return parts.join("  ·  ")
     }
 
     Process {
@@ -169,8 +204,9 @@ SettingsPage {
 
     // --- idle ladder ---------------------------------------------------------
 
-    // [{ timeout, action, label, line }] -- line is the index of the
-    // `timeout = N` line in the file
+    // [{ timeout, action, label, line, open, close, on }] -- line is the
+    // index of the `timeout = N` line, open and close the block's braces,
+    // and on false for a block commented out with `#~ `
     property var listeners: []
     property bool idleRunning: false
     // the listeners' indices, soonest first: taken once when the page opens,
@@ -204,13 +240,15 @@ SettingsPage {
         var lines = text.split("\n")
         var out = [], cur = null
         for (var i = 0; i < lines.length; i++) {
-            var l = lines[i].replace(/#.*/, "").trim()
-            if (/^listener\s*\{$/.test(l)) { cur = { timeout: -1, action: "", line: -1 }; continue }
+            var off = /^\s*#~/.test(lines[i])
+            var l = lines[i].replace(/^\s*#~ ?/, "").replace(/#.*/, "").trim()
+            if (/^listener\s*\{$/.test(l)) { cur = { timeout: -1, action: "", line: -1, open: i, on: !off }; continue }
             if (!cur) continue
             var m
             if ((m = /^timeout\s*=\s*(\d+)$/.exec(l))) { cur.timeout = Number(m[1]); cur.line = i }
             else if ((m = /^on-timeout\s*=\s*(.*)$/.exec(l))) cur.action = m[1]
             else if (l === "}") {
+                cur.close = i
                 // lid.sh's input detector, not a step
                 if (cur.line >= 0 && cur.action !== "" && !cur.action.includes("singularity-idle")) { cur.label = describe(cur.action); out.push(cur) }
                 cur = null
@@ -227,18 +265,19 @@ SettingsPage {
         listeners = parseIdle(text)
     }
 
-    function setTimeout_(index, seconds) {
+    function setStep(index, change) {
         var copy = listeners.slice()
-        copy[index] = Object.assign({}, copy[index], { timeout: seconds })
+        copy[index] = Object.assign({}, copy[index], change)
         listeners = copy
         idleDebounce.restart()
     }
 
     // Applied to the file as it is when the write runs. Only the timeout
-    // values change, by listener position, so a file whose listeners were
-    // added or removed since the page read it is left alone.
+    // values and the `#~ ` marks change, by listener position, so a file
+    // whose listeners were added or removed since the page read it is left
+    // alone.
     function writeIdle() {
-        var want = listeners.map(l => l.timeout)
+        var want = listeners.map(l => ({ timeout: l.timeout, on: l.on }))
         AtomicFileWrite.write({
             path: idlePath,
             transform: text => {
@@ -246,7 +285,11 @@ SettingsPage {
                 if (text === "" || fresh.length !== want.length) return null
                 var lines = text.split("\n")
                 fresh.forEach((l, i) => {
-                    lines[l.line] = lines[l.line].replace(/(timeout\s*=\s*)\d+/, "$1" + want[i])
+                    lines[l.line] = lines[l.line].replace(/(timeout\s*=\s*)\d+/, "$1" + want[i].timeout)
+                    if (l.on === want[i].on) return
+                    for (var j = l.open; j <= l.close; j++)
+                        lines[j] = want[i].on ? lines[j].replace(/^(\s*)#~ ?/, "$1")
+                            : lines[j].replace(/^(\s*)/, "$1#~ ")
                 })
                 return lines.join("\n")
             },
@@ -260,7 +303,7 @@ SettingsPage {
                 if (status === "ok" || status === "unchanged") page.say("Saved, hypridle restarted", false)
                 else page.say(status === "refused" ? detail : "Couldn't write hypridle.conf" + (detail ? ": " + detail : ""), true)
                 page.reread()
-                idleCheck.running = true
+                idleRecheck.restart()
             }
         })
     }
@@ -290,6 +333,13 @@ SettingsPage {
         onTriggered: page.writeIdle()
     }
 
+    // after a restart, once hypridle has had a moment to come back
+    Timer {
+        id: idleRecheck
+        interval: 1500
+        onTriggered: idleCheck.running = true
+    }
+
     Process {
         id: idleCheck
         command: ["pgrep", "-x", "hypridle"]
@@ -307,12 +357,13 @@ SettingsPage {
 
         SettingsField {
             label: "Profile"
-            hint: PpdProfile.profile === "" ? "power-profiles-daemon isn't answering" : "Performance may not exist on every machine"
+            hint: PpdProfile.profile === "" ? "power-profiles-daemon isn't answering"
+                : page.profileHints[PpdProfile.profile] || ""
 
             FlyoutSegmented {
                 anchors.right: parent.right
                 fill: false
-                model: PpdProfile.choices
+                model: PpdProfile.choices.map(c => ({ value: c.value, text: page.glyphs[c.value] + " " + c.text }))
                 current: PpdProfile.profile
                 enabled: PpdProfile.profile !== "" && !PpdProfile.busy
                 onPicked: v => {
@@ -325,9 +376,152 @@ SettingsPage {
         Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "BATTERY" }
 
+        // the charge now, what it's doing, and its health
+        Item {
+            visible: Battery.present
+            width: parent.width
+            implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
+
+            Text {
+                id: cardGlyph
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fontTitle * 1.4
+                horizontalAlignment: Text.AlignHCenter
+                text: Battery.present && Battery.device.state === UPowerDeviceState.Charging
+                    ? page.glyphs.charging : page.batteryGlyph(Battery.percent)
+                color: Theme.textStrong
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontTitle
+            }
+
+            Column {
+                id: cardText
+                anchors.left: cardGlyph.right
+                anchors.leftMargin: Theme.spaceL
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 1
+
+                Text {
+                    text: Battery.percent + "%"
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightStrong
+                    font.pixelSize: Theme.fontTitle
+                }
+                Text {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: page.batteryLine()
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+            }
+        }
+
+        // The charge as a level chip. In Custom the resume-to-stop band
+        // sits over it, and its two ends drag in steps of 5.
+        Item {
+            id: band
+            visible: Battery.present
+            readonly property bool custom: page.chargeMode === "Custom"
+            readonly property bool draggable: custom && page.chargeHelperFound && !page.chargeBusy
+            width: parent.width
+            implicitHeight: level.height + Theme.spaceM * 2 + (custom ? bandScale.height : 0)
+
+            function pctAt(px) { return Math.max(0, Math.min(100, px / level.width * 100)) }
+
+            Slider {
+                id: level
+                y: Theme.spaceM
+                width: parent.width
+                value: Battery.percent
+                interactive: false
+                fillColor: Theme.good
+            }
+
+            Rectangle {
+                visible: band.custom
+                x: level.width * page.chargeStart / 100
+                width: level.width * (page.chargeStop - page.chargeStart) / 100
+                y: level.y - Theme.spaceS
+                height: level.height + Theme.spaceS * 2
+                color: Qt.alpha(Theme.accent, 0.18)
+
+                Rectangle { width: Theme.indicatorWidth; height: parent.height; color: Theme.accent }
+                Rectangle { width: Theme.indicatorWidth; height: parent.height; anchors.right: parent.right; color: Theme.accent }
+            }
+
+            Repeater {
+                model: band.draggable ? ["start", "stop"] : []
+
+                MouseArea {
+                    required property string modelData
+                    readonly property int at: modelData === "stop" ? page.chargeStop : page.chargeStart
+                    x: level.width * at / 100 - width / 2
+                    y: level.y - Theme.spaceS
+                    width: Theme.spaceL * 2
+                    height: level.height + Theme.spaceS * 2
+                    hoverEnabled: true
+                    cursorShape: Qt.SizeHorCursor
+                    preventStealing: true
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Theme.indicatorWidth * 3
+                        height: parent.height
+                        radius: width / 2
+                        color: Theme.accent
+                        opacity: parent.pressed || parent.containsMouse ? 1 : 0
+                    }
+
+                    onPositionChanged: mouse => {
+                        if (pressed) page.chargeSet(modelData, band.pctAt(mapToItem(level, mouse.x, 0).x))
+                    }
+                    onReleased: chargeDebounce.restart()
+                }
+            }
+
+            // the band's two numbers, under its ends
+            Item {
+                id: bandScale
+                visible: band.custom
+                anchors.top: level.bottom
+                anchors.topMargin: Theme.spaceS
+                width: parent.width
+                height: Theme.fontCaption + Theme.spaceS
+
+                Repeater {
+                    model: [page.chargeStart, page.chargeStop]
+                    Text {
+                        required property int modelData
+                        required property int index
+                        x: Math.max(0, Math.min(bandScale.width - width, level.width * modelData / 100 - width / 2))
+                        text: modelData + "%"
+                        color: Theme.textStrong
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
+                    }
+                }
+            }
+
+            // keeps the card and chip apart from the mode under them
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: Theme.borderWidth
+                color: Theme.stroke
+            }
+        }
+
         SettingsField {
             label: "Charging"
-            hint: page.chargeHint()
+            hint: page.chargeMode === "Custom" && page.chargeHelperFound
+                ? "Drag the band's ends to set it" : page.chargeHint()
 
             FlyoutSegmented {
                 anchors.right: parent.right
@@ -341,78 +535,6 @@ SettingsPage {
                 }
             }
         }
-
-        SettingsField {
-            visible: page.chargeMode === "Custom"
-            label: "Stop at"
-            hint: "55–100%"
-
-            FlyoutStepper {
-                anchors.right: parent.right
-                width: Theme.fit(170)
-                value: page.chargeStop / 5
-                minimum: 11
-                maximum: 20
-                valueWidth: 64
-                displayValue: page.chargeStop + "%"
-                enabled: page.chargeHelperFound
-                onStepped: delta => page.chargeStep("stop", delta)
-            }
-        }
-
-        SettingsField {
-            visible: page.chargeMode === "Custom"
-            label: "Resume below"
-            hint: "50–95%, at least 5 under Stop at"
-
-            FlyoutStepper {
-                anchors.right: parent.right
-                width: Theme.fit(170)
-                value: page.chargeStart / 5
-                minimum: 10
-                maximum: 19
-                valueWidth: 64
-                displayValue: page.chargeStart + "%"
-                enabled: page.chargeHelperFound
-                onStepped: delta => page.chargeStep("start", delta)
-            }
-        }
-
-        // the charge now on a pill, and in Custom the band charging keeps it in
-        SettingsField {
-            visible: Battery.present
-            label: "Battery"
-            hint: page.batteryState() + (page.chargeMode === "Custom"
-                ? " · kept " + page.chargeStart + "–" + page.chargeStop + "%" : "")
-
-            Meter {
-                id: chargeBar
-                anchors.right: parent.right
-                width: Theme.fit(220)
-                height: Theme.fit(14)
-                fraction: Battery.percent / 100
-                fillColor: Theme.muted
-
-                Rectangle {
-                    visible: page.chargeMode === "Custom"
-                    x: chargeBar.width * page.chargeStart / 100
-                    width: chargeBar.width * (page.chargeStop - page.chargeStart) / 100
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    color: Qt.alpha(Theme.accent, 0.3)
-                    Rectangle { width: Theme.borderWidth; height: parent.height; color: Theme.accent }
-                    Rectangle { width: Theme.borderWidth; height: parent.height; anchors.right: parent.right; color: Theme.accent }
-                }
-
-                Rectangle {
-                    x: Math.round(chargeBar.width * Battery.percent / 100 - width / 2)
-                    y: -Theme.fit(2)
-                    width: 2
-                    height: parent.height + Theme.fit(4)
-                    color: Theme.bright
-                }
-            }
-        }
     }
 
     SettingsTab {
@@ -423,9 +545,84 @@ SettingsPage {
         FlyoutHeading { text: "WHEN IDLE" }
 
         SettingsNote {
-            text: page.idleRunning ? "Paused by Keep Awake or a playing video"
-                : "hypridle isn't running; a change starts it"
-            alert: !page.idleRunning
+            visible: !page.idleRunning
+            text: "hypridle isn't running; a change starts it"
+            alert: true
+        }
+
+        // each step at its time, from idle to the last one
+        Item {
+            id: timeline
+            visible: page.listeners.length > 0
+            readonly property real span: Math.max(60, ...page.listeners.map(l => l.timeout)) * 1.04
+            width: parent.width
+            implicitHeight: Theme.fontTitle + Theme.fontCaption + Theme.spaceL * 2 + Theme.spaceM
+
+            Rectangle {
+                id: track
+                x: Theme.spaceL
+                width: parent.width - Theme.spaceL * 2
+                y: Theme.spaceM + Theme.fontTitle + Theme.spaceS
+                height: Theme.borderWidth
+                color: Theme.stroke
+            }
+
+            Text {
+                x: track.x
+                anchors.top: track.bottom
+                anchors.topMargin: Theme.spaceS
+                text: "idle"
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontCaption
+            }
+
+            Repeater {
+                model: page.listeners
+
+                Item {
+                    required property var modelData
+                    x: track.x + track.width * modelData.timeout / timeline.span
+                    y: Theme.spaceM
+
+                    Text {
+                        anchors.horizontalCenter: parent.left
+                        anchors.bottom: dot.top
+                        anchors.bottomMargin: Theme.spaceS / 2
+                        text: page.glyphs[modelData.label] || "•"
+                        color: modelData.on ? Theme.textStrong : Theme.muted
+                        font.family: Theme.fontIcon
+                        font.pixelSize: Theme.fontBody
+                    }
+                    Rectangle {
+                        id: dot
+                        x: -width / 2
+                        y: track.y - Theme.spaceM - height / 2
+                        width: Theme.spaceS * 2
+                        height: width
+                        radius: width / 2
+                        color: modelData.on ? Theme.accent : Theme.muted
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.left
+                        anchors.top: dot.bottom
+                        anchors.topMargin: Theme.spaceS / 2
+                        text: page.minutes(modelData.timeout).replace(" min", "")
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: Theme.borderWidth
+                color: Theme.stroke
+            }
         }
 
         Repeater {
@@ -436,19 +633,47 @@ SettingsPage {
                 required property int modelData
                 readonly property int index: modelData
                 readonly property var step: page.listeners[index]
-                label: step.label
-                hint: page.stepHints[step.label] || ""
+                readonly property bool unplugged: step.label === "Suspend on battery"
+                // the plain suspend, beside one that only runs on battery
+                readonly property bool plugged: step.label === "Suspend"
+                    && page.listeners.some(l => l.label === "Suspend on battery")
+                label: plugged ? "Suspend plugged in" : step.label
+                mark: unplugged ? page.glyphs.battery : plugged ? page.glyphs.plug : ""
+                hint: !step.on ? "Skipped" : page.stepHints[step.label] || ""
+                dimmed: !step.on
 
-                FlyoutStepper {
+                Row {
                     anchors.right: parent.right
-                    width: Theme.fit(170)
-                    // in 30-second steps
-                    value: Math.round(step.timeout / 30)
-                    minimum: 1
-                    maximum: 240
-                    valueWidth: 64
-                    displayValue: page.minutes(step.timeout)
-                    onStepped: delta => page.setTimeout_(index, Math.max(30, (value + delta) * 30))
+                    spacing: Theme.spaceM
+
+                    FlyoutStepper {
+                        visible: step.on
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.fit(170)
+                        // in 30-second steps
+                        value: Math.round(step.timeout / 30)
+                        minimum: 1
+                        maximum: 240
+                        valueWidth: 64
+                        displayValue: page.minutes(step.timeout)
+                        onStepped: delta => page.setStep(index, { timeout: Math.max(30, (value + delta) * 30) })
+                    }
+                    Text {
+                        visible: !step.on
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.fit(170)
+                        horizontalAlignment: Text.AlignHCenter
+                        text: "Off"
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontBody
+                    }
+                    Switch {
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: step.on
+                        onToggled: page.setStep(index, { on: !step.on })
+                    }
                 }
             }
         }
