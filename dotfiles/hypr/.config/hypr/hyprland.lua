@@ -814,6 +814,14 @@ local monocleRule = hl.window_rule({
     tag = "+monocle",
 })
 
+-- A monocle window fills the screen to its edges, where rounded corners
+-- would only show slivers of wallpaper and border; it stays square.
+hl.window_rule({
+    name     = "monocle-square",
+    match    = { tag = "monocle" },
+    rounding = 0,
+})
+
 -- The bar's standalone windows (System, Keybinds, Settings): Quickshell
 -- FloatingWindows, class org.quickshell, which size themselves in QML. They
 -- float centred at that size -- no size here.
