@@ -38,6 +38,12 @@ Item {
     // overrides the lightness-based colour, for the few modules whose whole
     // point is to be noticed (privacy, failed units)
     property color iconColor: "transparent"
+    // a count in a bubble on the icon's top-right corner, drawn over the
+    // chip so its width doesn't change; 0 hides it
+    property int badge: 0
+
+    // how far the badge may rise above the icon before the bar's edge
+    readonly property real badgeLift: (Theme.barHeight - iconText.height) / 2
 
     signal activated()
 
@@ -79,6 +85,29 @@ Item {
             color: root.iconColor.a > 0 ? root.iconColor : root.fg
             font.family: Theme.fontIcon
             font.pixelSize: Theme.iconSize
+
+            Rectangle {
+                visible: root.badge > 0
+                x: parent.width - width / 2 - 1
+                y: Math.max(-root.badgeLift, parent.height / 2 - Theme.iconSize / 2 - height / 2 + 1)
+                height: Math.round(Theme.barFs(10) * 1.35)
+                width: Math.max(height, badgeText.implicitWidth + 4)
+                radius: height / 2
+                color: Theme.accent
+                border.width: 1
+                border.color: Theme.bar
+
+                Text {
+                    id: badgeText
+                    anchors.centerIn: parent
+                    text: root.badge > 99 ? "99+" : root.badge
+                    // dark or light, whichever reads on the accent
+                    color: Theme.accent.hslLightness > 0.6 ? "#000000" : "#ffffff"
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.barFs(10)
+                    font.weight: Font.Bold
+                }
+            }
         }
 
         Text {

@@ -1017,11 +1017,11 @@ Item {
 
     BarModule {
         id: notifBtn
-        // always shown, so the history is one click away; the count is
+        // always shown, so the history is one click away; the badge is
         // only what's arrived since it was last opened
         visible: Settings.widgetVisible("notifications")
-        icon: Notifications.dnd ? "󰂛" : Notifications.unread > 0 ? "󰂞" : "󰂚"
-        label: Notifications.unread > 0 ? String(Notifications.unread) : ""
+        icon: Notifications.dnd ? "󰂛" : "󰂚"
+        badge: Notifications.unread
         dimmed: Notifications.dnd || Notifications.unread === 0
         active: screenScope.openFlyout === "notifications"
         // left: the history; right: Do Not Disturb
