@@ -54,7 +54,8 @@ The signature shape. Every frame is three bands, outside in, then the ground:
   a fillet of `channelFillet` (7px). A flyout keeps its own width unless it's
   within a fillet and corner of its group's; that close it takes the
   group's width, so both sides run straight instead of making a jog too
-  short to read as a step.
+  short to read as a step. Flyouts from the centre group stay
+  centred on their module (the calendar on the clock) and never snap.
 
 Style: `channel` (frame `channel` in `Styles.js`).
 

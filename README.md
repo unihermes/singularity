@@ -1,466 +1,72 @@
+<div align="center">
+
 # Singularity
 
-Provisions a full Arch Linux desktop — Hyprland, theme, fonts, services, the
-lot — from a fresh Minimal install with one command.
+**A complete Arch Linux desktop in one command: Hyprland, a hand-built Quickshell shell, and every app themed to match.**
 
+[![checks](https://github.com/unihermes/singularity/actions/workflows/checks.yml/badge.svg)](https://github.com/unihermes/singularity/actions/workflows/checks.yml)
 ![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?logo=arch-linux&logoColor=white)
-![Hyprland](https://img.shields.io/badge/Hyprland-58E1FF?logo=wayland&logoColor=black)
-![Shell](https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnu-bash&logoColor=white)
-![Idempotent](https://img.shields.io/badge/Idempotent-yes-brightgreen)
+![Hyprland](https://img.shields.io/badge/Hyprland-Lua_config-58E1FF?logo=wayland&logoColor=black)
+![Quickshell](https://img.shields.io/badge/Quickshell-QML-41CD52?logo=qt&logoColor=white)
+![Idempotent](https://img.shields.io/badge/install-idempotent-brightgreen)
 
-## Install
+</div>
+
+Singularity turns a fresh Arch **Minimal** install into a finished desktop:
+packages, services, boot tweaks, dotfiles and a shell written from scratch in
+QML. Everything you see is one design system, so the bar, the lock screen,
+the terminal, the editor, GTK and Qt apps, the greeter and even Claude Code
+change together when you pick a new look.
 
 ```bash
 git clone https://github.com/unihermes/singularity.git && cd singularity && ./install.sh
 ```
 
-Clone it somewhere you intend to keep — dotfiles are symlinked from this
-location, so moving the folder afterward leaves everything in `~/.config`
-dangling. Every step is idempotent; rerun `./install.sh` any time.
-
-## Table of contents
-
-- [What it does](#what-it-does)
-- [Dotfiles only](#dotfiles-only)
-- [Layout](#layout)
-- [Starting a session](#starting-a-session)
-- [Boot output](#boot-output)
-- [Boot speed](#boot-speed)
-- [Launcher](#launcher)
-- [Notifications](#notifications)
-- [Theme](#theme)
-- [Editor](#editor)
-- [Regenerating the package lists](#regenerating-the-package-lists)
-- [Verifying names before trusting them](#verifying-names-before-trusting-them)
-- [Notes](#notes)
-- [Testing from zero](#testing-from-zero)
-
-## What it does
-
-1. Full system sync, installs `base-devel git stow`
-2. Bootstraps `yay` from `yay-bin` if it is not already present
-3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`
-4. Symlinks `dotfiles/` into `$HOME` with GNU stow, and builds the
-   `alttab-relay` helper from its C++ source
-5. Rebuilds font and icon caches, sets Thunar as the directory handler,
-   strips the GTK headerbar buttons through gsettings, and quiets the kernel
-   command line
-6. Applies the boot speed fixes: vfat in the initramfs, iwd no longer blocking
-   the greeter, the webcam switched off, and systemd's unused TPM setup
-   masked
-7. Enables iwd, systemd-networkd, systemd-resolved, pipewire, bluetooth,
-   power-profiles-daemon, the Bluetooth pairing agent, Bluetooth power
-   restore, the AC-power profile switch, and the ly greeter
-
-Every step is idempotent. `--needed` skips installed packages, `stow -R`
-restows cleanly, `enable --now` is a no-op on an already-running unit. Safe to
-rerun as many times as you like.
-
-## Dotfiles only
-
-`link.sh` does step 4 and nothing else — no packages, no services, no sudo.
-Use it on a machine where you only want the configs, or to relink after adding
-a new directory under `dotfiles/`.
-
-```bash
-./link.sh
-```
-
-`install.sh` calls it rather than duplicating the logic.
-
-Apps write their own config when none exists — Hyprland regenerates
-`~/.config/hypr/hyprland.lua` on every start without one — and that real file
-then blocks stow from linking yours, so the app goes on reading its own default
-and your repo config is never used. `link.sh` moves such files into a
-timestamped `~/.config-backup-*` first. Nothing is deleted. This is the safe
-inverse of `stow --adopt`, which would pull the app's file into the repo over
-what you wrote.
-
-## Layout
-
-```
-singularity/
-├── install.sh
-├── link.sh              # dotfiles only, no packages or services
-├── wallpapers/          # what wallpaper.sh picks from
-├── packages/
-│   ├── pacman.txt        # native, one per line, # comments allowed
-│   └── aur.txt
-└── dotfiles/
-    ├── hypr/.config/hypr/       # hyprland.lua, hypridle, hyprlock, helper scripts
-    ├── quickshell/.config/quickshell/  # the bar, flyouts, Settings/System windows
-    ├── singularity/.config/singularity/  # window-rules.json (edited from Settings), clean.sh, diagnose.sh, settings-bundle.sh, autostart.sh
-    ├── wofi/.config/wofi/{config,style.css}  # fallback launcher when the shell is down
-    ├── systemd/.config/systemd/user/   # bt-agent, bt-power-restore, wireplumber drop-in
-    ├── fastfetch/.config/fastfetch/
-    ├── nvim/.config/nvim/       # LazyVim: lua/config/, lua/plugins/, colors/singularity.lua
-    ├── alacritty/.config/alacritty/alacritty.toml
-    ├── zathura/.config/zathura/zathurarc
-    ├── floorp/.config/floorp/singularity/  # user.js, userChrome.css: built into the active profile
-    ├── gtk/.config/gtk-3.0/settings.ini
-    ├── gtk/.config/gtk-4.0/settings.ini
-    ├── fontconfig/.config/fontconfig/fonts.conf
-    ├── bash/.bashrc
-    └── starship/.config/{starship.toml,starship-path.sh}
-```
-
-Each directory under `dotfiles/` mirrors its own path relative to `$HOME`, and
-`link.sh` stows every one of them into place. Because they are symlinks,
-editing a config on the live system edits the repo.
-
-Anything the shell saves or generates goes in `~/.local/state/singularity/`,
-never the repo: the settings (`appearance.json`), per-machine choices such as
-display rules and the primary display, the wallpaper, and every colour file the
-current look renders for other apps. Deleting it resets the shell to its
-defaults.
-
-## Starting a session
-
-The Minimal archinstall profile ships no display manager, so this repo installs
-`ly`, a TUI greeter. `install.sh` enables it but does not start it, because ly
-seizes a VT and would kill the install mid-run. Reboot and it greets you; pick
-Hyprland from the session list with the arrow keys.
-
-If ly never appears at boot, check the usual causes: it isn't installed, the
-unit name is wrong (`ly@tty2.service` on ly 1.x), another display manager
-already owns `display-manager.service`, or the default boot target isn't
-`graphical.target`.
-
-If Hyprland dies you get dumped back at the greeter with no error shown. Switch
-to a TTY with `ctrl+alt+F3` and run it by hand to see what happened:
-
-```bash
-Hyprland
-hyprctl configerrors
-```
-
-## Boot output
-
-Boot and shutdown are quiet by default. To see systemd's `[ OK ]` lines —
-worth it when a boot hangs and you need to know which unit it hung on:
-
-```bash
-BOOT_VERBOSE=1 ./install.sh
-```
-
-Run it again without the variable to go back to quiet. Either way the
-bootloader entry is backed up to `*.singularity.bak` first, and a result that
-has lost its `root=` is refused rather than written.
-
-## Boot speed
-
-With the webcam enabled, the XPS 13's IPU6 camera stack stalls kernel module
-loading for about 10s at boot, until the kernel gives up waiting on the `ov01a10` sensor. Anything
-that needs a module in that window waits with it. `install.sh` routes the two
-things the greeter was waiting on around the stall:
-
-- **`/boot` mount.** The ESP is vfat, and vfat is a module, so the mount sat in
-  the stall and held up `sysinit.target`. `vfat` is now in `MODULES=()` in
-  `/etc/mkinitcpio.conf` (backed up to `*.singularity.bak`).
-- **iwd.** It is `Type=dbus` and needs crypto modules before it claims its bus
-  name, and ly waits on `network.target`. A drop-in at
-  `/etc/systemd/system/iwd.service.d/singularity.conf` sets `Type=exec`.
-
-It also masks `systemd-tpm2-setup-early` and `systemd-tpm2-setup`, about 2s,
-unless `/etc/crypttab` asks for a TPM unlock. That stops the setup running and
-leaves the TPM's contents alone, so Windows and BitLocker are unaffected.
-`systemd-pcrproduct` is masked with them, since it measures into an NvPCR that
-only the setup allocates and would otherwise fail every boot.
-
-The webcam is currently switched off: `/etc/modprobe.d/singularity-vsc.conf`
-blacklists its whole stack (`mei_vsc`, `ivsc_csi`, `ivsc_ace`, `intel_ipu6`,
-`ov01a10`), which removes the stall entirely. Besides the stall, resuming from
-hibernation re-enumerates its controller under the v4l2 subdevs WirePlumber
-holds open, and closing those later oopses the kernel in `subdev_close` and
-hangs shutdown. Delete that file and rerun `mkinitcpio -P` to bring it back.
-
-Wi-Fi, Bluetooth and audio still finish loading about 10s in, after the greeter
-is up. To see where time goes:
-
-```bash
-systemd-analyze
-systemd-analyze blame | head
-systemd-analyze critical-chain ly@tty2.service
-```
-
-## Launcher
-
-One box, four modes, cycled with Tab (Shift+Tab goes back). Each has its own
-way in:
-
-| Mode | Key | What it does |
-|---|---|---|
-| Applications | `CTRL+SPACE` | Desktop entries; Enter launches |
-| Files | `SUPER+S` | Recent files, or names under `~` via `fd`; Enter opens, `Shift+Enter` opens the folder |
-| Clipboard | `SUPER+H` | cliphist history; Enter copies, `Shift+Del` removes |
-| Calculator | `SUPER+/` | Arithmetic; Enter copies the result, the box stays open |
-
-The calculator is `services/Calc.js`: its own tokeniser and parser, not
-`eval()`, which would run whatever was typed into a box that is one hotkey
-away at all times. It handles `+ - * / ^`, parentheses, `mod`, a trailing `%`
-(just `/100`), `pi`/`e`/`tau`, hex and binary literals, `_` digit separators,
-and the usual functions — `sqrt`, `ln`, `log`, `sin`, `min`, `max` and so on.
-Anything else is an error rather than something executed. The list under the
-result is that syntax, filtered to whatever is being typed — `sq` narrows it
-to `sqrt` — so Enter on a row inserts it into the expression and the list
-doubles as completion.
-
-File search (`services/Files.qml`) searches hidden files too, since half of
-what is worth finding lives in `~/.config`, but skips the application data
-dumps (`.steam`, `.mozilla`, `.cargo`, caches, `node_modules`, …). It asks
-`fd` for many more matches than it shows and ranks them itself — prefix
-matches first, then paths not buried in a dot directory, then the shallowest
-— because `fd` walks in directory order, so a small cap would just return
-whatever sorts first alphabetically.
-
-With nothing typed it lists recent files instead, read from
-`~/.local/share/recently-used.xbel` — the XDG recent-files list Thunar and
-every other GTK app already maintains, so there is no second log to keep and
-it agrees with those apps' own Recent views.
-
-## Notifications
-
-The shell is the notification daemon (`services/Notifications.qml`, on
-Quickshell's `NotificationServer`), so popups and their history are drawn like
-every other flyout. Popups stack from the corner Settings → Notifications
-picks, on the focused screen, and stay for as long as that page says for their
-urgency unless the app asks for a time of its own. Pointing at one holds it.
-Clicking a card runs the app's default action; its other actions are chips
-underneath.
-
-Every notification goes into the history, which the bar's bell opens
-(right-click toggles Do Not Disturb). A popup closing, or the app withdrawing
-its notification, leaves the history alone. An entry goes only when you clear
-it with its × in the history or with Clear all. Transient notifications are
-the exception: they leave with their popup. The history is kept in
-`~/.local/state/singularity/notifications.json`, so it survives a restart.
-The bell's count is what arrived since you last opened it, and those entries
-are marked "new" while it's open. An app's action chips work for as long as
-the app still holds the notification.
-
-Do Not Disturb holds popups back, and notifications still land in the
-history. `qs ipc call notifications toggle|dnd|clear` does the same from a
-keybind.
-
-## Theme
-
-The default look, **Singularity**, is one grayscale ramp with pale blue text and
-a single indigo accent (`#5555c8`) for focus and selection. Otherwise emphasis
-is carried by lightness and weight.
-
-| | | | |
-|---|---|---|---|
-| `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
-| `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
-| `#d0e2fa` text | `#ebebeb` bright | | |
-
-The shell (bar, flyouts, windows, settings, the launcher, notifications) and
-Alacritty all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
-`services/LookStore.qml`. A look sets the palette, accent and status
-colours, and a starting point for everything the Appearance page changes:
-its Style, Roundness, bar shape, density, see-through, the Finish switches,
-font, and how the bar draws its workspaces, clock and open windows. The
-Style (`services/Styles.js`: Channel, Lined, Flat, Retro, Minimal, Basic,
-Capsule, Glass, Tabbed or Terminal) draws all of the chrome at once: frames,
-bar chips, hover, level chips, the focused-window mark, heading prefix and
-where flyouts sit, so no mix of settings can clash. With "One per look" on,
-each look also keeps its own wallpaper. Every key is listed in
-`services/Looks.js`.
-
-The Singularity look is built into `services/Looks.js` and is what everything falls back
-to. The other shipped looks are data in `services/looks.json`: the classic
-desktops GNOME 2, Breeze Dark, Greybird, CDE, NeXTSTEP, Elementary and
-Ambiance, and the app palettes Gruvbox (and Light), Catppuccin Mocha and
-Latte, Tokyo Night, Nord, Rosé Pine Moon and Dawn, Everforest, Kanagawa and
-One Dark. To add a look, copy an entry there under a new key. Pick
-one from the carousel on Settings → Appearance's Look tab or in the Control
-Centre, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
-set <name>`. The other tabs (Colours, Style, Bar, Panels, Windows,
-System) adjust it; a dot marks each setting that differs from the
-look, and the Look tab lists those changes with a way back for each. Removing
-a look from the Appearance page deletes it from that file.
-
-Alacritty follows the shell too: `AppearanceSync.qml` writes its colours to
-`~/.local/state/singularity/alacritty.toml`, which `alacritty.toml` imports, and
-open terminals recolour live when the look changes. The 16 ANSI slots are a
-lightness ramp in the look's own tones rather than hues, so coloured output
-stays legible but monochrome — you lose red-for-error in `git diff`, compiler
-output and `ls`. `renderAlacritty()` is the only place to change if that trade
-is not worth it.
-
-ly, the greeter, runs on a Linux VT, which can't show true colour, so it gets
-the Singularity look by other means. `install.sh` writes `/etc/ly/singularity.sh`, which
-loads the ramp into the VT's 16-colour palette before ly draws, and points
-ly's colours at those palette slots. Red and green become the shell's muted
-alert and good tints, so a failed login still stands out. It always uses
-the Singularity look, whichever look the shell has, because it runs before anyone logs in.
-The greeter's top-right shows the date and time, and its bottom-right a
-status stack from `/etc/ly/info.sh` (also written by `install.sh`): battery
-charge and time left, power draw and battery health, Wi-Fi network and
-signal, kernel, and the last login. Each is a `[lbl:*]` entry that
-`install.sh` keeps at the end of `/etc/ly/config.ini`.
-
-nvim follows the shell the same way. `AppearanceSync.qml` writes the look's
-ten roles plus its accent, good and alert hues to
-`~/.local/state/singularity/nvim.lua`, and `colors/singularity.lua` builds every
-highlight from them, plugins included: file tree, tabs, statusline,
-completion menu and git signs. Open editors watch the file and recolour
-live. Syntax stays in lightness and weight; the accent marks the current
-line number, tab, search hit and editing modes, and good/alert colour added
-and removed lines and errors. Without the file, nvim uses the Singularity look's ramp.
-
-Claude Code gets a theme from the shell as well: `AppearanceSync.qml` writes
-`~/.claude/themes/singularity.json` over Claude's dark or light base, with the
-look's ramp for text and chrome, the accent for Claude's own marks, and good
-and alert for success and error. `install.sh` selects it in
-`~/.claude/settings.json` (`"theme": "custom:singularity"`) unless another
-theme has been picked; `/theme` switches between it and the built-ins.
-Claude Code reads new theme files at start, so restart a running session
-the first time.
-
-The prompt, fastfetch and zathura follow the look too. `starship.toml` and
-fastfetch's `config.jsonc` are written in the Singularity look's colours, and
-`AppearanceSync.qml` renders copies with each of those colours swapped for the
-current look's into `~/.local/state/singularity/`. `.bashrc` points starship and
-fastfetch at the copies. Edit the repo files, not the copies.
-`starship-path.sh` and fastfetch's `row.sh` source
-`~/.local/state/singularity/term-colors.sh` for the same colours, and `zathurarc`
-includes a generated colour file from the same place. Each falls back to
-the Singularity look without its generated file.
-
-## Editor
-
-nvim is [LazyVim](https://lazyvim.org), copied from its official starter,
-with the shell's look on top: a file tree, tabs, fuzzy finder, completion,
-language servers, a problems panel, lazygit and a start screen. Press
-`Space` and wait to see every binding. Shortcuts from other editors are added
-on top of LazyVim's own (`lua/config/keymaps.lua`): `Ctrl+P` find a file,
-`Ctrl+Shift+F` search text, `Ctrl+B` file tree, `Ctrl+/` comment,
-`` Ctrl+` `` terminal, `F2` rename, `F12` go to definition, `Alt+Shift+F`
-format.
-
-The first start clones lazy.nvim and every plugin; `lazy-lock.json` pins
-them and `:Lazy` updates them. Language support comes from LazyVim's extras,
-listed in `lua/config/lazy.lua` (Python, C/C++, TypeScript, JSON, YAML, TOML,
-Markdown); `:LazyExtras` adds more, and Mason installs their servers on
-first use. QML uses the `qmlls` that ships with Qt (`lua/plugins/lsp.lua`).
-LazyVim's bundled themes are disabled in favour of `colors/singularity.lua`
-(see Theme above).
-
-## Regenerating the package lists
-
-Once the system is in a state worth keeping:
-
-```bash
-pacman -Qqen > packages/pacman.txt   # explicit native
-pacman -Qqem > packages/aur.txt      # foreign, meaning AUR
-```
-
-This flattens the comments in the current files. Keep a copy if you want them.
-
-## Verifying names before trusting them
-
-Nerd Font and icon theme names are inconsistent. Check the real strings:
-
-```bash
-fc-list : family | grep -i ubuntu | sort -u
-ls /usr/share/icons | grep -i kora
-fc-match sans-serif
-fc-match monospace
-```
-
-## Notes
-
-- **AUR safety.** Read the PKGBUILD diffs yay shows you. The legitimate Zen
-  package is `zen-browser-bin`; `zen-browser-PATCHED-bin` was malware. This is
-  why `install.sh` does not pass `--noconfirm` to the AUR step.
-- **Thunar needs its extras.** No `gvfs` means no trash or mounting, no
-  `tumbler` means no thumbnails. Both are in `pacman.txt`.
-- **Networking is iwd plus systemd-networkd**, not NetworkManager. iwd joins
-  the network, networkd runs DHCP, resolved does DNS. Connect with
-  `iwctl station wlan0 connect <SSID>` (`iwctl device list` if the interface
-  has another name). `install.sh` writes DHCP configs to
-  `/etc/systemd/network` only when that directory has none.
-- **The theme, icons, cursor and fonts live in gsettings, set by the shell.**
-  The Appearance page's System tab (and Shade, for dark or light) writes
-  them through AppearanceSync every time it starts, along with qt6ct's config
-  and the XCursor fallback in `~/.local/share/icons/default`. GTK3 on Wayland
-  reads gsettings directly, and GTK4 through the settings portal, so
-  `settings.ini` keeps only what the shell doesn't manage. Change them on the
-  page rather than by hand: a hand edit is overwritten at the next start.
-  The colours go further than dark or light: GTK3 (adw-gtk3), GTK4 and Qt
-  (qt6ct, Fusion) apps all take the look's ramp and accent, generated into
-  `~/.local/state/singularity/{gtk3,gtk4}.css` and `qt6ct-colors.conf`.
-- **Kora 2.0.0** dropped upstream symlinks and icons half-resolve in some
-  panels. Check the AUR comments if theming looks wrong.
-- **State that survives a reboot.** rfkill (Wi-Fi/Bluetooth radio block),
-  volume and brightness already persist on their own, via systemd-rfkill,
-  wireplumber and systemd-backlight respectively. The one gap was BlueZ's own
-  adapter power, which always comes back on powered off; `bt-power-restore.service`
-  saves it at logout and restores it at login.
-- **Closing the lid** turns the screen off, and suspends after 5 minutes if it
-  stays shut, even with a video playing or Keep Awake on. An hour after it
-  shut, the machine wakes itself and hibernates (once hibernation is set up;
-  see below). A wake-up with the
-  lid still shut goes back to sleep after a minute. With an external monitor
-  connected only the laptop's panel turns off and nothing suspends. Opening
-  it keeps the screen on for a minute; untouched, it then goes off, and any
-  input in that minute hands over to the usual idle timers. All of it
-  is `~/.config/hypr/lid.sh`; `journalctl -t singularity-lid` shows what it did.
-- **Hibernate** is in the Control Centre's Power menu. zram can't hold a
-  hibernation image, so `install.sh` creates a RAM-sized `/swapfile` (below
-  zram in priority, so it's only really written when hibernating), adds the
-  `resume` hook to the initramfs and points `resume=`/`resume_offset=` at the
-  file. The menu entry only appears once logind reports hibernation as
-  possible, so a `link.sh`-only machine won't offer it. Deleting and
-  recreating the swapfile moves it on disk; rerun `./install.sh` afterwards.
-- **Resume speed.** The image is capped at 4G via `/sys/power/image_size`
-  (a `tmpfiles.d` drop-in). The kernel's own default is 2/5 of RAM and it
-  fills it, mostly with page cache, and all of it is decompressed
-  single-threaded with LZO before the desktop appears. Capping it makes the
-  kernel drop that cache up front instead, so those pages fault back in from
-  the NVMe once you're already logged in. Raise the cap if hibernating starts
-  taking longer than resuming saves.
-- **System > Health** runs the checks in
-  `~/.config/quickshell/scripts/health-scan.sh` and puts the fix next to the
-  finding: a restart for an enabled unit that isn't running, a disable for one
-  whose unit file is gone, `clean.sh` for a full disk or a pile of orphans,
-  `link.sh` for a dotfile symlink that no longer resolves, `pacdiff` for
-  `.pacnew`/`.pacsave` files waiting to be merged, `fwupdmgr update` for
-  firmware with an update, an install for a missing tool. systemctl repairs run directly, prompting through the polkit
-  agent for system units; the ones that ask questions or print a lot open a
-  terminal so you can see what runs. The script only reads, so it is safe to
-  run by hand, and it is the machine-readable half of what `diagnose` prints.
-  Nothing scans in the background: opening the page is what runs a scan.
-- **Moving to another machine.** `~/.local/state/singularity` is per machine,
-  so `settings-bundle export` packs its portable part — appearance, app usage,
-  sticky notes, the wallpaper (with the image when it isn't one of the repo's)
-  — into a tarball, and `settings-bundle import FILE` restores it, backing up
-  what it replaces and restarting the shell. Monitor layout stays behind;
-  looks, window rules and keybinds are in the repo already. The calendar feeds
-  are secret addresses and only go in with `--calendars`.
-- **What runs at login.** Hyprland runs no XDG autostart of its own, so
-  `~/.config/singularity/autostart.sh run` — the last `exec` in
-  `hyprland.lua` — is what launches the desktop entries in
-  `~/.config/autostart`. Settings > Startup manages them: turn one off
-  (`Hidden=true`), remove it, or add any installed application. Entries in
-  `/etc/xdg/autostart` are listed too but are **off until you turn one on**,
-  which copies it into `~/.config/autostart`; the spec says those should run
-  by default, but none of them ever has on this machine and two of them
-  duplicate a systemd user unit that already starts the same program.
-  `TryExec` and `OnlyShowIn`/`NotShowIn` are honoured, so an entry meant for
-  another desktop is shown as unavailable rather than run. Anything that
-  should come back after a crash belongs in `dotfiles/systemd` as a user unit
-  instead. `~/.cache/autostart.log` records what ran.
-- **Power profile follows the charger.** A udev rule
-  (`/etc/udev/rules.d/99-singularity-power-profile.rules`) runs
-  `/usr/local/bin/singularity-power-profile` on every `power_supply` change,
-  which switches `power-profiles-daemon` to `performance` while any supply
-  reports `online`, `balanced` otherwise.
-
-## Testing from zero
-
-The point of the repo is that it works on a machine that has never seen it:
+## Contents
+
+- [Highlights](#highlights)
+- [Requirements](#requirements)
+- [Installing](#installing)
+- [First steps](#first-steps)
+- [Looks and Styles](#looks-and-styles)
+- [The shell](#the-shell)
+- [Everything else that follows the look](#everything-else-that-follows-the-look)
+- [Repository layout](#repository-layout)
+- [Development](#development)
+- [Machine notes](#machine-notes)
+- [Troubleshooting](#troubleshooting)
+
+## Highlights
+
+- **A shell of its own.** Bar, flyouts, Control Centre, launcher, notification
+  daemon, lock screen setup, Settings and System windows, all in
+  [Quickshell](https://quickshell.outfoxxed.me) and editable live.
+- **Looks and Styles.** 20+ looks (GNOME 2, CDE, NeXTSTEP, Gruvbox,
+  Catppuccin, Nord, …) on top of ten Styles that draw all of the chrome at
+  once, so no combination of settings can clash.
+- **Settings for everything.** Displays, input, power and idle, the lock
+  screen, window rules, keybinds, notifications, audio, Bluetooth, Wi-Fi,
+  startup apps, file types, updates. Every page writes the real config file
+  (hyprland.lua, hypridle.conf, lid.sh, mimeapps.list, …) in place.
+- **One-command install, safe to rerun.** Every step is idempotent, and
+  configs you already had are backed up rather than overwritten.
+- **Fast, quiet boot** on the XPS 13 it was built on, with the reasons for
+  each change written down (see [Machine notes](#machine-notes)).
+- **Checked on every commit:** a pre-commit hook and GitHub Actions run the
+  same tests and lints (see [Development](#development)).
+
+## Requirements
+
+- Arch Linux, installed with the archinstall **Minimal** profile (or any Arch
+  system with `sudo`)
+- An internet connection during the install
+- Your own user account; `install.sh` refuses to run as root
+
+The repo is built and tested on a Dell XPS 13 with Intel graphics. Nothing
+in the shell is specific to it, but the boot tweaks in `install.sh` are
+written for that hardware and skip themselves where they don't apply.
+
+## Installing
 
 ```bash
 sudo pacman -S --needed git
@@ -468,6 +74,293 @@ git clone https://github.com/unihermes/singularity.git ~/singularity
 cd ~/singularity && ./install.sh
 ```
 
-Clone to a path you intend to keep. Stow's symlinks point at the repo's
-location on disk, so moving it afterwards leaves every config in `~/.config`
-dangling.
+Clone it somewhere you'll keep it: the configs are symlinked from this folder,
+so moving it later leaves `~/.config` pointing nowhere. Reboot when it
+finishes and pick **Hyprland** in the greeter.
+
+<details>
+<summary>What <code>install.sh</code> does</summary>
+
+1. Syncs the system and installs `base-devel git stow`
+2. Bootstraps `yay` from `yay-bin` if it isn't there
+3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`
+4. Links `dotfiles/` into `$HOME` with GNU stow (`link.sh`) and builds the
+   `alttab-relay` helper
+5. Rebuilds font and icon caches, makes Thunar the folder handler, and quiets
+   the kernel command line
+6. Applies the boot fixes: vfat in the initramfs, iwd no longer blocking the
+   greeter, the webcam stack switched off, unused TPM setup masked
+7. Enables iwd, systemd-networkd and -resolved, PipeWire, Bluetooth (with its
+   pairing agent and power restore), power-profiles-daemon, the AC-power
+   profile switch, and the `ly` greeter
+
+`--needed`, `stow -R` and `enable --now` make every step a no-op the second
+time, so rerunning it is always safe.
+
+</details>
+
+### Dotfiles only
+
+```bash
+./link.sh
+```
+
+Links the configs and nothing else: no packages, services or sudo. Use it on
+a machine where you only want the configs, or after adding a folder under
+`dotfiles/`. Apps write a default config when none exists (Hyprland does on
+every start), and that file would block the link; `link.sh` moves any such
+file to a timestamped `~/.config-backup-*` first. Nothing is deleted.
+
+## First steps
+
+| Keys | Opens |
+|---|---|
+| `SUPER + ,` | Settings |
+| `CTRL + SPACE` | Launcher: apps, then `Tab` for files, clipboard and the calculator |
+| `SUPER + Return` | Terminal (Alacritty) |
+| `SUPER + K` | Every keybind, editable |
+| `SUPER + W` | All workspaces |
+| `SUPER + L` | Lock the screen |
+| `SUPER + SHIFT + E` | Power menu |
+| `ALT + Tab` | Window switcher |
+| `Print` | Screenshot an area (`SHIFT` window, `CTRL` screen, `ALT` copy text) |
+
+The bar is clickable throughout: the Arch logo opens the Control Centre, and
+each module opens a flyout with its controls and a "More in Settings" link.
+
+## Looks and Styles
+
+A **look** is a palette and accent plus a starting point for every
+appearance setting. The default, **Singularity**, is one grayscale ramp with
+pale blue text and a single indigo accent (`#5555c8`):
+
+| | | | |
+|---|---|---|---|
+| `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
+| `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
+| `#d0e2fa` text | `#ebebeb` bright | | |
+
+It ships with the classic desktops GNOME 2, Breeze Dark, Greybird, CDE,
+NeXTSTEP, Elementary and Ambiance, and the palettes Gruvbox (dark and light),
+Catppuccin Mocha and Latte, Tokyo Night, Nord, Rosé Pine Moon and Dawn,
+Everforest, Kanagawa and One Dark.
+
+A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
+meters, section frames, the heading mark and where flyouts sit. There are
+ten: Channel, Lined, Flat, Retro, Minimal, Basic, Capsule, Glass, Tabbed and
+Terminal. Beside it are only dials that move everything together
+(Roundness, Bar shape, Density, See-through) and a few finishing switches.
+
+Pick a look from **Settings → Appearance → Look**, the Control Centre, or a
+keybind (`qs ipc call look cycle`, `qs ipc call look set <name>`). The other
+tabs adjust it; a dot marks every setting that differs from the look, and the
+Look tab lists those changes with a way back for each. **Set as default**
+saves your setup as the point Reset returns to.
+
+Looks live in `quickshell/services/looks.json` (copy an entry to make your
+own); Styles are in `services/Styles.js`; `DESIGN.md` in the shell's folder
+is the design reference for every element.
+
+## The shell
+
+**Launcher.** One box, four modes, cycled with `Tab`:
+
+| Mode | Key | |
+|---|---|---|
+| Applications | `CTRL + SPACE` | Desktop entries; Enter launches |
+| Files | `SUPER + S` | Recent files, or names under `~` via `fd`; `Shift+Enter` opens the folder |
+| Clipboard | `SUPER + H` | cliphist history; `Shift+Del` removes |
+| Calculator | `SUPER + /` | Enter copies the result |
+
+The calculator is its own parser (`services/Calc.js`), never `eval()`, so a
+box one hotkey away can't run code. File search includes dotfiles but skips
+app data dumps, and ranks its own results rather than taking `fd`'s first.
+
+**Notifications.** The shell is the notification daemon. Popups stack from
+the corner you pick, each with an urgency stripe that counts its time down;
+pointing at one holds it. Everything lands in the history behind the bell
+(right-click for Do Not Disturb), which survives restarts.
+`qs ipc call notifications toggle|dnd|clear` works from keybinds.
+
+**Settings and System.** Settings covers the desktop; System shows the
+machine: CPU, memory, processes, storage, network, power, hardware, the
+config files, and a **Health** page that finds problems (failed units,
+broken links, `.pacnew` files, full disks, firmware updates) and puts the fix
+next to each one. Settings search finds any field.
+
+**Power and the lid.** Closing the lid turns the screen off and suspends after
+5 minutes, then hibernates an hour later once hibernation is set up
+(`install.sh` makes a swapfile for it). With an external monitor connected,
+only the laptop panel turns off. All of it is `hypr/lid.sh`, logged to
+`journalctl -t singularity-lid`. The power profile follows the charger.
+
+**Moving machines.** `settings-bundle export` packs your appearance, app
+usage, notes and wallpaper into a tarball; `settings-bundle import FILE`
+restores it.
+
+## Everything else that follows the look
+
+`services/AppearanceSync.qml` renders the current look for everything outside
+the shell, into `~/.local/state/singularity/`:
+
+- **GTK 3/4 and Qt** apps take the ramp and accent (adw-gtk3, qt6ct), and the
+  theme, icons, cursor and fonts are set through gsettings. Change them on
+  the Appearance page; hand edits are overwritten.
+- **Alacritty, starship, fastfetch and zathura** recolour live. The terminal's
+  16 ANSI colours are a lightness ramp in the look's tones, so output stays
+  legible but monochrome (`renderAlacritty()` is the one place to change
+  that).
+- **Neovim** ([LazyVim](https://lazyvim.org) with familiar shortcuts:
+  `Ctrl+P`, `Ctrl+Shift+F`, `Ctrl+B`, `F2`, `F12`) builds every highlight,
+  plugins included, from the look, and open editors recolour live.
+- **Claude Code** gets a `custom:singularity` theme.
+- **ly**, the greeter, runs on a VT without true colour, so `install.sh`
+  loads the Singularity ramp into the VT palette and adds a status stack
+  (battery, power, Wi-Fi, kernel, last login).
+- **Floorp** gets a `userChrome.css` and `user.js` built into its profile.
+
+Anything the shell saves (settings, display rules, the wallpaper, the
+generated colour files) lives in `~/.local/state/singularity/`, never in the
+repo. Deleting it resets the shell to its defaults.
+
+## Repository layout
+
+```
+singularity/
+├── install.sh              # provision a whole machine
+├── link.sh                 # link the dotfiles only
+├── packages/               # pacman.txt and aur.txt, one package per line
+├── wallpapers/
+├── tools/                  # checks run by the pre-commit hook and CI
+│   ├── git-hooks/pre-commit
+│   ├── check-settings-index.py
+│   ├── check-unused.py
+│   ├── test-js.mjs
+│   └── glyph-svg.py        # Nerd Font glyphs as SVG, for HTML mockups
+├── .github/workflows/      # the same checks on every push
+└── dotfiles/               # each folder mirrors its path under $HOME
+    ├── quickshell/.config/quickshell/
+    │   ├── shell.qml       # entry point: IPC, one scope per screen, flyouts
+    │   ├── DESIGN.md       # the design reference
+    │   ├── bar/            # the bar window and its modules
+    │   ├── flyouts/        # flyouts, popups, overlays and shared controls
+    │   ├── settings/       # Settings pages (appearance/ holds its tabs)
+    │   ├── windows/        # Settings, System, Keybinds and Notes windows
+    │   ├── services/       # singletons: Theme, Settings, Network, Audio, …
+    │   └── scripts/        # helpers the shell runs
+    ├── hypr/               # hyprland.lua, hypridle, hyprlock, lid.sh, helpers
+    ├── singularity/        # window rules, autostart, clean, diagnose, settings-bundle
+    ├── systemd/            # Bluetooth agent and power restore, WirePlumber drop-in
+    ├── nvim/  alacritty/  starship/  fastfetch/  zathura/  floorp/
+    ├── gtk/  fontconfig/  bash/
+    └── wofi/               # fallback launcher when the shell is down
+```
+
+## Development
+
+The configs are symlinks into the repo, so editing a file under
+`~/.config` edits the repo, and Quickshell reloads the shell the moment a QML
+file is saved. `quickshell` run from a terminal prints QML errors with file
+and line; `qs log` shows the running instance's.
+
+**Checks.** `link.sh` points git at `tools/git-hooks`, whose pre-commit hook
+runs, for whatever is staged:
+
+| Check | What it catches |
+|---|---|
+| `tools/check-settings-index.py` | A Settings field that search can't find, or a search entry for a field that's gone |
+| `tools/check-unused.py` | Files, functions, properties and signals nothing reads |
+| `node --test tools/test-js.mjs` | Regressions in the plain-JS modules: the calculator, time windows, formats, Style resolution, the channel outline, and the readers/writers of `hyprland.lua` |
+
+GitHub Actions runs all three on every push, plus `bash -n` on every script
+and `luac -p` on every Lua file.
+
+**Conventions.** UI work starts from `DESIGN.md`: take colours and sizes from
+`Theme`, reach for the shared components (`FlyoutRow`, `SettingsField`,
+`FlyoutSegmented`, …), and record new decisions there. Comments explain the
+code as it is; history and reasons for a change go in the commit message.
+
+**Driving the shell.** Everything the keybinds do is an IPC call;
+`qs ipc show` lists them, e.g. `qs ipc call settings open display`.
+
+**Package lists.** Once a system is worth keeping:
+
+```bash
+pacman -Qqen > packages/pacman.txt   # explicit native
+pacman -Qqem > packages/aur.txt      # foreign (AUR)
+```
+
+This drops the comments in the current lists; keep a copy if you want them.
+
+## Machine notes
+
+<details>
+<summary>Boot speed on the XPS 13</summary>
+
+With the webcam enabled, the IPU6 camera stack stalls module loading for about
+10 s at boot, waiting on the `ov01a10` sensor. `install.sh` routes the
+greeter's dependencies around it:
+
+- **`/boot`**: vfat is a module, so the ESP mount sat in the stall. `vfat`
+  goes in `MODULES=()` in `/etc/mkinitcpio.conf` (backed up first).
+- **iwd** is `Type=dbus` and needs crypto modules before claiming its bus
+  name, while ly waits on `network.target`; a drop-in sets `Type=exec`.
+- **TPM setup** (`systemd-tpm2-setup*`, `systemd-pcrproduct`) is masked unless
+  `/etc/crypttab` asks for a TPM unlock. The TPM's contents are untouched, so
+  Windows and BitLocker are unaffected.
+- **The webcam** is switched off: `/etc/modprobe.d/singularity-vsc.conf`
+  blacklists its stack, removing the stall, and avoids a kernel oops at
+  shutdown after resuming from hibernation. Delete the file and run
+  `mkinitcpio -P` to bring it back.
+
+`systemd-analyze blame` and `systemd-analyze critical-chain ly@tty2.service`
+show where boot time goes.
+
+</details>
+
+<details>
+<summary>Networking, hibernation and other notes</summary>
+
+- **Networking is iwd + systemd-networkd + resolved**, not NetworkManager.
+  Connect from the bar or `iwctl station wlan0 connect <SSID>`.
+- **Hibernation** needs a disk swapfile (zram can't hold the image), so
+  `install.sh` creates a RAM-sized `/swapfile`, adds the `resume` hook and
+  sets `resume=`/`resume_offset=`. The image is capped at 4 GB so resuming
+  doesn't decompress gigabytes of page cache single-threaded. Recreating the
+  swapfile moves it; rerun `install.sh` afterwards.
+- **State that survives a reboot**: rfkill, volume and brightness persist on
+  their own; `bt-power-restore.service` covers BlueZ adapter power, which
+  otherwise always comes back off.
+- **Startup apps**: Hyprland has no XDG autostart, so
+  `~/.config/singularity/autostart.sh` runs `~/.config/autostart` (managed in
+  Settings → Startup). System-wide entries are listed but off until you turn
+  one on.
+- **AUR safety**: read the PKGBUILD diffs yay shows. `install.sh` doesn't pass
+  `--noconfirm` to the AUR step for this reason.
+- **Kora 2.0.0** dropped upstream symlinks; if icons half-resolve, check the
+  AUR comments.
+
+</details>
+
+## Troubleshooting
+
+**No greeter at boot.** Check that `ly` is installed, its unit is
+`ly@tty2.service`, no other display manager owns `display-manager.service`,
+and the default target is `graphical.target`. `install.sh` enables ly but
+doesn't start it, since it would take over the VT mid-install.
+
+**Back at the greeter after logging in.** Hyprland exited. From a TTY
+(`CTRL + ALT + F3`) run `Hyprland` by hand, then `hyprctl configerrors`.
+
+**No bar.** Run `quickshell` from a terminal in the session to see the QML
+error; after a Quickshell update it's usually a renamed import.
+
+**Watching boot.** `BOOT_VERBOSE=1 ./install.sh` turns systemd's `[ OK ]`
+lines back on; rerun without it to go quiet again.
+
+**Wrong font or icon names.** Nerd Font and icon theme names vary; check the
+real strings with `fc-list : family | grep -i ubuntu`, `fc-match monospace`
+and `ls /usr/share/icons`.
+
+**Something's broken and you don't know what.** `diagnose` prints a report,
+and System → Health finds most problems and offers the fix.
