@@ -223,8 +223,9 @@ Singleton {
     // where a channel's width changes (a flyout grown out of its bar
     // group), the inside corner is rounded by this
     readonly property int channelFillet: 7
-    // a channel-framed panel's corners: the panel radius out past the bands
-    readonly property int channelPanelRadius: panelRadius + frameInset + channelWidth
+    // a channel-framed panel's corners: the panel radius out past the bands,
+    // or square when Roundness is 0 (Hyprland's windows follow this)
+    readonly property int channelPanelRadius: panelRadius > 0 ? panelRadius + frameInset + channelWidth : 0
     // a panel's outer corners in the current frame style, which Hyprland's
     // window rounding follows (AppearanceSync)
     readonly property int panelFrameRadius: frameChannel ? channelPanelRadius : panelRadius
@@ -424,7 +425,7 @@ Singleton {
     // its modules are bare chips inside it, sized to the channel's interior
     readonly property bool moduleGrouped: moduleStyle === "grouped"
     readonly property int groupHeight: moduleHeight + 2
-    readonly property int groupRadius: radius + channelWidth
+    readonly property int groupRadius: radius > 0 ? radius + channelWidth : 0
     // "grown": a flyout hangs off its module's group, one outline round both
     readonly property bool flyoutGrown: flyoutAttach === "grown" && moduleGrouped && frameChannel
     // Distance from the bar's screen edge to a flyout's near edge: flush lays
