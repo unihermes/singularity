@@ -60,6 +60,9 @@ Style: `channel` (frame `channel` in `Styles.js`).
 - **Level chips** (volume, brightness, battery) fill the **whole chip** from the
   left, in the level colour (accent2, green for battery). The icon is centred
   on top. Never show a level as an underline or thin rule.
+- **Show desktop** ends the right group: a slim slot past a hairline, whose
+  rounded end is the group's own corner. Hover is the overlay fill; while
+  the desktop shows it fills with the accent.
 - Icon-only, by design; no text readouts beside icons.
 
 ## Flyouts

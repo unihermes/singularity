@@ -544,6 +544,37 @@ hl.bind(mod .. " + M",         function() toggleLayout() end)  -- Switch between
 hl.bind(mod .. " + grave", function() toggleScratchpad() end)  -- Show or hide the scratchpad
 hl.bind(mod .. " + SHIFT + grave", function() toggleStashed() end)  -- Move window into or out of the scratchpad
 
+-- --- Show desktop ---
+-- Every window on the active workspace moves to a hidden special workspace
+-- named after it, and the next press brings them back. The name carries
+-- the workspace, so a reload while the desktop shows loses nothing. A
+-- global so the bar's show-desktop button can run it through `hyprctl eval`.
+function singularityShowDesktop()
+    local ws = hl.get_active_workspace()
+    if not ws or ws.special then return end
+    local hidden = "special:desktop-" .. ws.id
+    local parked, here = {}, {}
+    for _, w in ipairs(hl.get_windows()) do
+        local name = w.workspace and w.workspace.name or ""
+        if name == hidden then
+            parked[#parked + 1] = w
+        elseif w.workspace and not w.workspace.special and w.workspace.id == ws.id then
+            here[#here + 1] = w
+        end
+    end
+    if #parked > 0 then
+        for _, w in ipairs(parked) do
+            hl.dispatch(hl.dsp.window.move({ workspace = ws.id, window = "address:" .. w.address, follow = false }))
+        end
+        hl.dispatch(hl.dsp.focus({ window = "address:" .. parked[#parked].address }))
+    else
+        for _, w in ipairs(here) do
+            hl.dispatch(hl.dsp.window.move({ workspace = hidden, window = "address:" .. w.address, follow = false }))
+        end
+    end
+end
+hl.bind(mod .. " + D", function() singularityShowDesktop() end)  -- Show the desktop, or bring its windows back
+
 -- --- Notes ---
 -- Quickshell's sticky notes (windows/NotesWindow.qml), pinned in the
 -- top-right corner over every workspace; see the "notes" rule below

@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/BarModules.qml
 //
-// The bar's 18 modules (and the widgetItems registry shell.qml's Bar
+// The bar's 19 modules (and the widgetItems registry shell.qml's Bar
 // Widgets reordering keys off of), split out of shell.qml so the bar's
 // layout plumbing isn't buried under every module's own logic.
 //
@@ -42,7 +42,8 @@ Item {
         battery: battBtn, tray: trayFrame, media: mediaBtn,
         visualizer: vizFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn,
-        failed: failedBtn, updates: updatesBtn, claude: claudeBtn })
+        failed: failedBtn, updates: updatesBtn, claude: claudeBtn,
+        desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
     // distro/menu button conventionally lives.
@@ -1084,6 +1085,59 @@ Item {
             repeat: true
             running: ClaudeShell.running && claudeBtn.visible
             onTriggered: frame = (frame + 1) % frames.length
+        }
+    }
+
+    // Show desktop, as on Windows: a slim button at the end of its group,
+    // set off by a hairline, whose rounded end is the group's own corner.
+    // A click hides every window on the workspace (singularityShowDesktop()
+    // in hyprland.lua, also SUPER+D); it fills with the accent while they're
+    // hidden, and a second click brings them back.
+    Item {
+        id: desktopBtn
+        visible: Settings.widgetVisible("desktop")
+        readonly property bool grouped: Theme.moduleGrouped
+        // the focused workspace's windows are parked on its special workspace
+        readonly property bool shown: {
+            var ws = Hyprland.focusedWorkspace
+            if (!ws) return false
+            var name = "special:desktop-" + ws.id
+            return Hyprland.workspaces.values.some(w => w.name === name && w.toplevels.values.length > 0)
+        }
+
+        property bool slideX: false
+        Behavior on x {
+            enabled: desktopBtn.slideX
+            NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
+        }
+
+        implicitWidth: Theme.sp(8)
+        implicitHeight: Theme.barHeight
+
+        Rectangle {
+            id: cap
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            height: desktopBtn.grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
+            topRightRadius: desktopBtn.grouped ? Theme.radius : Theme.radiusSmall
+            bottomRightRadius: topRightRadius
+            color: desktopBtn.shown ? Theme.accent
+                : desktopMouse.containsMouse ? Theme.overlay : "transparent"
+            Behavior on color { ColorAnimation { duration: Theme.durFast } }
+
+            Rectangle {
+                width: Theme.borderWidth
+                height: parent.height
+                color: desktopBtn.shown ? Theme.accent : Theme.stroke
+            }
+        }
+
+        MouseArea {
+            id: desktopMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Quickshell.execDetached(["hyprctl", "eval", "singularityShowDesktop()"])
         }
     }
 }

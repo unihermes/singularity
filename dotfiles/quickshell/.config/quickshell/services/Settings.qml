@@ -348,7 +348,7 @@ Singleton {
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "media", "clock", "weather"],
         right:  ["privacy", "failed", "updates", "claude", "notifications", "tray",
-                 "bluetooth", "network", "volume", "brightness", "battery"],
+                 "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
     // Every module's name and icon on the Bar Widgets page. A new module
@@ -374,6 +374,7 @@ Singleton {
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },
         claude:        { label: "Claude",         icon: "󰚩" },
+        desktop:       { label: "Show Desktop",   icon: "󰇄" },
     })
 
     // Can't be hidden: the control centre button is the only way back to
@@ -394,7 +395,8 @@ Singleton {
     // written -- goes beside its default neighbours: before the next module
     // that follows it in the defaults, or after the one before it, or at the
     // end if neither is in that section. Appending instead would put every
-    // new module after the battery at the far edge.
+    // new module after the battery at the far edge. One that ends its
+    // section in the defaults (Show Desktop) ends it here too.
     function widgetLayout() {
         var saved = adapter.barLayout || {}
         var known = [], homeOf = {}
@@ -418,6 +420,7 @@ Singleton {
             if (placed[key2]) continue
             var home = homeOf[key2], defs = widgetDefaults[home], row = out[home]
             var at = -1, di = defs.indexOf(key2)
+            if (di === defs.length - 1) at = row.length
             for (var a = di + 1; a < defs.length && at < 0; a++)
                 if (placed[defs[a]] && row.indexOf(defs[a]) !== -1) at = row.indexOf(defs[a])
             for (var b = di - 1; b >= 0 && at < 0; b--)
