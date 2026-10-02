@@ -814,13 +814,24 @@ local monocleRule = hl.window_rule({
     tag = "+monocle",
 })
 
--- A monocle window fills the screen to its edges, where rounded corners
--- would only show slivers of wallpaper and border; it stays square.
-hl.window_rule({
-    name     = "monocle-square",
-    match    = { tag = "monocle" },
-    rounding = 0,
-})
+-- The gap general.gaps_out leaves at the screen's edges, which monocle
+-- windows keep clear of like tiled ones: { top, right, bottom, left }.
+local function edgeGaps()
+    local g = hl.get_config("general.gaps_out")
+    if type(g) ~= "table" then return { top = 0, right = 0, bottom = 0, left = 0 } end
+    return { top = g.top or 0, right = g.right or 0, bottom = g.bottom or 0, left = g.left or 0 }
+end
+
+-- With no gap, a monocle window runs to the screen's edges, where rounded
+-- corners would only show slivers of wallpaper and border; it stays square.
+local gaps = edgeGaps()
+if gaps.top == 0 and gaps.right == 0 and gaps.bottom == 0 and gaps.left == 0 then
+    hl.window_rule({
+        name     = "monocle-square",
+        match    = { tag = "monocle" },
+        rounding = 0,
+    })
+end
 
 -- The bar's standalone windows (System, Keybinds, Settings): Quickshell
 -- FloatingWindows, class org.quickshell, which size themselves in QML. They
@@ -1155,10 +1166,16 @@ local function usableArea(mon)
     }
 end
 
--- The rect a monocle window fills: the usable area, less a strip along the
--- top for the tab bar when the window is one of a group's tabs.
+-- The rect a monocle window fills: the usable area inside the edge gaps,
+-- less a strip along the top for the tab bar when the window is one of a
+-- group's tabs.
 local function fillArea(win, mon)
     local area = usableArea(mon)
+    local g = edgeGaps()
+    area.x = area.x + g.left
+    area.y = area.y + g.top
+    area.w = area.w - g.left - g.right
+    area.h = area.h - g.top - g.bottom
     if win.group then
         local bar = GROUPBAR_HEIGHT
         area.y = area.y + bar
@@ -1431,6 +1448,8 @@ end
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
+-- and after every load, for a changed edge gap
+hl.timer(refitMonocle, { timeout = 200, type = "oneshot" })
 
 -- TABS. Apps with no tabs of their own open each file in a window of its
 -- own; these open theirs as tabs of one Hyprland group instead, joining the
