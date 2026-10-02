@@ -800,6 +800,93 @@ done
 clear
 LY
     sudo chmod 755 /etc/ly/singularity.sh
+    # The status lines in the greeter's bottom-right corner, one [lbl:*] entry
+    # each. ly runs these as root before anyone logs in, so they only read
+    # sysfs and root-readable tools.
+    sudo tee /etc/ly/info.sh >/dev/null <<'LY'
+#!/bin/sh
+# Written by singularity's install.sh. ly runs `info.sh <line>` for each
+# status line at the greeter's bottom-right: battery, power, wifi, kernel, last.
+# ly right-aligns each line by its length in bytes, so every line is padded
+# to the same byte count to line the stack up on its left edge.
+export LC_ALL=C
+out() { printf '%-72s' "$(printf '%-12s%s' "$1" "$2")"; }
+read_num() { v=$(cat "$1" 2>/dev/null); echo "${v:-0}"; }
+dur() { [ "$1" -ge 60 ] && printf '%dh %02dm' $(($1 / 60)) $(($1 % 60)) || printf '%dm' "$1"; }
+
+# now/full/rate in µAh and µA, or µWh and µW, depending on what the battery reports
+battery_state() {
+  for b in /sys/class/power_supply/BAT*; do [ -r "$b/capacity" ] && break; done
+  [ -r "$b/capacity" ] || return 1
+  pct=$(read_num "$b/capacity")
+  status=$(cat "$b/status" 2>/dev/null)
+  if [ -r "$b/charge_now" ]; then
+    now=$(read_num "$b/charge_now"); full=$(read_num "$b/charge_full")
+    design=$(read_num "$b/charge_full_design"); rate=$(read_num "$b/current_now")
+    watts=$(awk -v i="$rate" -v v="$(read_num "$b/voltage_now")" 'BEGIN { printf "%.1f", (i < 0 ? -i : i) * v / 1e12 }')
+  else
+    now=$(read_num "$b/energy_now"); full=$(read_num "$b/energy_full")
+    design=$(read_num "$b/energy_full_design"); rate=$(read_num "$b/power_now")
+    watts=$(awk -v p="$rate" 'BEGIN { printf "%.1f", (p < 0 ? -p : p) / 1e6 }')
+  fi
+  rate=${rate#-}
+}
+
+case $1 in
+battery)
+  battery_state || { out battery 'none'; exit; }
+  filled=$(((pct + 5) / 10)) bar='' i=0
+  while [ $i -lt 10 ]; do
+    [ $i -lt $filled ] && bar="$bar■" || bar="$bar·"
+    i=$((i + 1))
+  done
+  case $status in
+    Discharging)
+      text=''
+      [ "$rate" -gt 0 ] && text="$(dur $((now * 60 / rate))) left"
+      [ "$pct" -le 15 ] && text="low${text:+, $text}" ;;
+    Charging)
+      text='charging'
+      [ "$rate" -gt 0 ] && [ "$full" -gt "$now" ] &&
+        text="charging, full in $(dur $(((full - now) * 60 / rate)))" ;;
+    Full) text='plugged in, full' ;;
+    *) text='plugged in' ;;
+  esac
+  out battery "$bar $pct%  $text" ;;
+power)
+  battery_state || { out power 'on AC'; exit; }
+  case $status in
+    Discharging) text="$watts W" ;;
+    Charging) text="charging at $watts W" ;;
+    *) text='idle' ;;
+  esac
+  [ "$design" -gt 0 ] && text="$text  ·  health $((full * 100 / design))%"
+  out power "$text" ;;
+wifi)
+  for w in /sys/class/net/*/wireless; do [ -d "$w" ] && break; done
+  [ -d "$w" ] || { out wifi 'none'; exit; }
+  dev=${w%/wireless}; dev=${dev##*/}
+  link=$(iw dev "$dev" link 2>/dev/null)
+  ssid=$(printf '%s\n' "$link" | sed -n 's/^[[:space:]]*SSID: //p')
+  signal=$(printf '%s\n' "$link" | sed -n 's/^[[:space:]]*signal: //p')
+  if [ -n "$ssid" ]; then out wifi "$ssid${signal:+  ·  signal $signal}"
+  else out wifi 'not connected'; fi ;;
+kernel)
+  out kernel "linux $(uname -r)" ;;
+last)
+  # newest entry across users; lastlog2's Latest column is the last six fields
+  best=0 text='never'
+  while read -r port when; do
+    t=$(date -d "$when" +%s 2>/dev/null) || continue
+    [ "$t" -gt "$best" ] && best=$t text="$(date -d "@$t" '+%a %-d %b %H:%M') on $port"
+  done <<EOF
+$(lastlog2 2>/dev/null | awk 'NR > 1 && $NF ~ /^[0-9][0-9][0-9][0-9]$/ {
+    print $2, $(NF-5), $(NF-4), $(NF-3), $(NF-2), $(NF-1), $NF }')
+EOF
+  out 'last login' "$text" ;;
+esac
+LY
+    sudo chmod 755 /etc/ly/info.sh
     # Edit keys in place rather than shipping a whole config.ini: pacman keeps
     # a modified config and drops upstream's as .pacnew, so a full copy would
     # quietly stop picking up new options. 8-colour ids are 1-based (0x0001
@@ -824,10 +911,25 @@ LY
     set_ly border_fg 0x01000001     # slot 8, border #303030
     set_ly error_bg 0x00000001
     set_ly error_fg 0x00000002      # slot 1, alert  #a87676
-    # the bar clock's format, minus the thin spaces the VT font lacks
-    set_ly clock '%H:%M:%S | %m/%d/%y'
+    # Sections run to the end of the file, so set_ly appending a key after one
+    # would file it under that section: drop ours before setting keys and add
+    # it back last.
+    sudo sed -i '/^# singularity status lines/,$d' /etc/ly/config.ini
+    set_ly clock '%a %-d %b  %H:%M'
     set_ly hide_version_string true
     set_ly animation none
+    set_ly edge_margin 1
+    set_ly asterisk 0x2022          # •
+    # ly trims plain spaces off values, so the title is padded with no-break
+    # spaces to keep it off the box's corner
+    set_ly box_title $' singularity '
+    {
+      echo '# singularity status lines, bottom-right; refresh is in clock ticks (seconds)'
+      for line in battery:30 power:10 wifi:10 kernel:0 last:0; do
+        printf '[lbl:%s]\ncmd = /etc/ly/info.sh %s\nrefresh = %s\n' \
+          "${line%:*}" "${line%:*}" "${line#*:}"
+      done
+    } | sudo tee -a /etc/ly/config.ini >/dev/null
   fi
 else
   warn "no ly unit found. Units the package ships:"

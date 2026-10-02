@@ -304,6 +304,11 @@ loads the ramp into the VT's 16-colour palette before ly draws, and points
 ly's colours at those palette slots. Red and green become the shell's muted
 alert and good tints, so a failed login still stands out. It always uses
 the Singularity look, whichever look the shell has, because it runs before anyone logs in.
+The greeter's top-right shows the date and time, and its bottom-right a
+status stack from `/etc/ly/info.sh` (also written by `install.sh`): battery
+charge and time left, power draw and battery health, Wi-Fi network and
+signal, kernel, and the last login. Each is a `[lbl:*]` entry that
+`install.sh` keeps at the end of `/etc/ly/config.ini`.
 
 nvim follows the shell the same way. `AppearanceSync.qml` writes the look's
 ten roles plus its accent, good and alert hues to
