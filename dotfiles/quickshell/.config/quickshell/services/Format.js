@@ -14,8 +14,8 @@ function kib(kb) {
     return Math.round(kb / 1024) + "M"
 }
 
-// Any size, picking the unit from the number rather than fixing it at GiB:
-// gib() reads "0.0G" for a 250MB boot partition, which looks like a bug.
+// Any size, picking the unit from the number rather than fixing it at GiB,
+// which reads "0.0G" for a 250MB boot partition and looks like a bug.
 function bytes(b) {
     if (b < 0) return "--"
     if (b >= 1099511627776) return (b / 1099511627776).toFixed(1) + "T"

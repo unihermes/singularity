@@ -1,0 +1,35 @@
+# The same checks the pre-commit hook runs, on every push and pull request,
+# so a commit made with --no-verify or on another machine is still checked.
+name: checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Lua toolchain
+        run: sudo apt-get update && sudo apt-get install -y lua5.4
+
+      - name: Settings search index matches the pages
+        run: python3 tools/check-settings-index.py
+
+      - name: Nothing declared and never read
+        run: python3 tools/check-unused.py
+
+      - name: JS module tests
+        run: node --test tools/test-js.mjs
+
+      - name: Shell scripts parse
+        run: git ls-files '*.sh' | xargs -n1 bash -n
+
+      - name: Lua parses
+        run: git ls-files '*.lua' | xargs -n1 luac5.4 -p

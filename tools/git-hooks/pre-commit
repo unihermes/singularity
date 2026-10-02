@@ -26,3 +26,15 @@ if git diff --cached --name-only | grep -qE 'quickshell/.*\.(qml|js)$'; then
         exit 1
     fi
 fi
+
+# The plain-JS modules' tests, when one of them or the tests are staged
+# (test-js.mjs also reads hyprland.lua, so that counts too).
+if git diff --cached --name-only | grep -qE 'quickshell/services/.*\.js$|tools/test-js\.mjs|hypr/hyprland\.lua'; then
+    if ! node --test tools/test-js.mjs >/tmp/singularity-test-js.log 2>&1; then
+        grep -E '^not ok|✖|Error|expected|actual' /tmp/singularity-test-js.log | head -30
+        echo
+        echo "JS module tests failed (full output in /tmp/singularity-test-js.log)."
+        echo "git commit --no-verify skips this."
+        exit 1
+    fi
+fi
