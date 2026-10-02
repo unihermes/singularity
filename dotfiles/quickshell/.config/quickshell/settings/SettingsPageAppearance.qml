@@ -6,13 +6,13 @@
 //              comes; what's been changed from the look in use, each with
 //              its way back; the saved default
 //   Colours    the palette and the accents
-//   Style      the style, its shape dials and the Finish switches
-//   Text       the shell's font and size
+//   Style      the style, its shape dials, the shell's font and size, and
+//              the Finish switches
 //   Bar        its layout, then its modules, workspaces, windows and clock
 //   Panels     flyouts, the launcher, notifications and the overlays
 //   Windows    how Hyprland draws windows
 //   System     motion, and the fonts, icons and cursor of other apps
-// Colours, Style and Text open on a preview of the setup as it is.
+// Colours, Style, Bar and Panels open on a preview of the setup as it is.
 //
 // A look (LookStore) is a starting point: picking one sets everything it
 // carries, which can then be adjusted one by one. A field holding such a
@@ -44,7 +44,7 @@ SettingsPage {
     // a small bar and flyout, drawn by the shell's own pieces, above the
     // tabs whose settings change how they look
     pinned: LivePreview {}
-    pinnedVisible: ["colours", "style", "text", "bar", "panels"].indexOf(tab) !== -1
+    pinnedVisible: ["colours", "style", "bar", "panels"].indexOf(tab) !== -1
 
     title: "Appearance"
     description: "Pick a look, then change anything about it. Changes apply as you make them; a dot marks a setting that differs from the look."
@@ -53,14 +53,13 @@ SettingsPage {
         { id: "look",      label: "Look",      icon: "󰏘" },
         { id: "colours",   label: "Colours",   icon: "󰌁" },
         { id: "style",     label: "Style",     icon: "󰆧" },
-        { id: "text",      label: "Text",      icon: "󰛖" },
         { id: "bar",       label: "Bar",       icon: "󰕰" },
         { id: "panels",    label: "Panels",    icon: "󰕮" },
         { id: "windows",   label: "Windows",   icon: "󰖲" },
         { id: "system",    label: "System",    icon: "󰒓" },
     ]
     stickyColumn: ({ look: tab_look, colours: tab_colours, style: tab_style,
-                     text: tab_text, bar: tab_bar, panels: tab_panels, windows: tab_windows,
+                     bar: tab_bar, panels: tab_panels, windows: tab_windows,
                      system: tab_system })[tab] || tab_look
 
     function label(v, key) { return Settings.choiceLabel(v, key) }
@@ -1530,40 +1529,7 @@ SettingsPage {
         Stepper { label: "Overlay dimming"; hint: "Behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
 
         Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading { text: "FINISH" }
-
-        SettingsField {
-            label: "Separators"
-            hint: "Between the bar's modules"
-            Choice { key: "barSeparator" }
-        }
-
-        FinishSwitch {
-            label: "Shadows"; key: "shadows"
-            live: Styles.get(Settings.style).shadow !== "none"
-            hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
-        }
-
-        FinishSwitch { label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
-
-        FinishSwitch {
-            label: "Heavy lines"; key: "heavyLines"
-            live: Styles.get(Settings.style).lines
-            hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
-        }
-
-        FinishSwitch { label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
-
-        FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
-
-    }
-
-    Tab {
-        id: tab_text
-        tabId: "text"
-
-        Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading { text: "SHELL FONT" }
+        FlyoutHeading { text: "TEXT" }
 
         // The box shows the font in use, set in itself, and the list sets every
         // installed choice in its own font.
@@ -1599,6 +1565,33 @@ SettingsPage {
         }
 
         Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
+
+        Item { width: 1; height: Theme.spaceM }
+        FlyoutHeading { text: "FINISH" }
+
+        SettingsField {
+            label: "Separators"
+            hint: "Between the bar's modules"
+            Choice { key: "barSeparator" }
+        }
+
+        FinishSwitch {
+            label: "Shadows"; key: "shadows"
+            live: Styles.get(Settings.style).shadow !== "none"
+            hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
+        }
+
+        FinishSwitch { label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
+
+        FinishSwitch {
+            label: "Heavy lines"; key: "heavyLines"
+            live: Styles.get(Settings.style).lines
+            hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
+        }
+
+        FinishSwitch { label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
+
+        FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
 
     }
 
