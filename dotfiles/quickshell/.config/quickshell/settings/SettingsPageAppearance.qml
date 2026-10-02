@@ -826,72 +826,6 @@ SettingsPage {
         spacing: Theme.spaceM
     }
 
-    // The setup as it is, drawn by the same miniature as the look cards,
-    // beside the look's name and how far it's been changed
-    readonly property var currentLook: ({
-        palette: {
-            base: Theme.base, bar: Theme.bar, panel: Theme.panel, surface: Theme.surface,
-            overlay: Theme.overlay, border: Theme.border, muted: Theme.muted,
-            subtext: Theme.subtext, text: Theme.text, bright: Theme.bright,
-        },
-        accent: Theme.hasAccent ? Theme.accent : null,
-        borderWidth: Settings.borderWidth,
-        bevel: { light: Theme.bevelLight, dark: Theme.bevelDark },
-        meterAccent: Theme.look.meterAccent,
-        heading: { upper: Settings.headingUpper, bold: Settings.headingBold,
-                   spacing: Theme.headingSpacing, rule: Settings.headingRule, accent: Settings.headingAccent },
-        settings: {
-            radius: Settings.radius, barStyle: Settings.barStyle, barPosition: Settings.barPosition,
-            moduleStyle: Settings.moduleStyle, frameStyle: Settings.frameStyle, fontFamily: Theme.fontText,
-        },
-    })
-
-    component CurrentPreview: Row {
-        width: parent.width
-        spacing: Theme.spaceXl
-
-        LookPreview {
-            look: page.currentLook
-            width: Theme.fit(300)
-            height: Math.round(width * 0.48)
-            radius: Theme.radiusInner
-            border.width: Theme.borderWidth
-            border.color: Theme.stroke
-        }
-
-        Column {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - Theme.fit(300) - parent.spacing
-            spacing: Theme.spaceS
-
-            Text {
-                width: parent.width
-                text: page.label(Settings.look)
-                elide: Text.ElideRight
-                color: Theme.textStrong
-                font.family: Theme.fontHeading
-                font.pixelSize: Theme.fontBody
-                font.weight: Theme.weightStrong
-            }
-            Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                text: Settings.lookPristine ? "As the look was designed"
-                    : Settings.lookDiffs.length === 1 ? "1 setting changed from the look"
-                    : Settings.lookDiffs.length + " settings changed from the look"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-            FlyoutChip {
-                visible: !Settings.lookPristine
-                text: "See changes"
-                onClicked: page.tab = "look"
-            }
-        }
-    }
-
     // What each setting a look carries is called on this page, for the list
     // of changes; the same as its field's label, so "Show" can find it
     readonly property var keyLabels: ({
@@ -996,9 +930,6 @@ SettingsPage {
         id: tab_look
         tabId: "look"
 
-        CurrentPreview {}
-
-        Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "LOOK" }
 
         Item {

@@ -96,8 +96,8 @@ Pages are redesigned one at a time; a redesigned page sets
   is a grid of tiles, four across. Each tile draws what its value does; the
   current one has the lit groove. Numbers stay steppers, and on/off stays a
   switch.
-- **Look summary:** the look card with "See changes" appears on the Look
-  tab only.
+- **No look summary card:** what differs from the look is the Look tab's
+  Changes list alone.
 
 ## Headings
 
