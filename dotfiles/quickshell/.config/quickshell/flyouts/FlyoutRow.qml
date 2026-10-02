@@ -24,6 +24,8 @@ Item {
     // that's empty: marks that have to line up down a list (a network's lock
     // and strength). "" leaves its cell blank.
     property var trailingIcons: []
+    // a glyph in a fixed cell before the label (a device's type)
+    property string leadingIcon: ""
     // something is in flight (connecting, pairing, a rescan): the row's
     // text pulses until it settles, and the row stops taking clicks
     property bool busy: false
@@ -69,9 +71,25 @@ Item {
     }
 
     Text {
-        id: labelText
+        id: leadText
+        visible: root.leadingIcon !== ""
         anchors.left: parent.left
         anchors.leftMargin: root.highlighted ? Theme.spaceM : 0
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.iconCell
+        horizontalAlignment: Text.AlignHCenter
+        text: root.leadingIcon
+        color: labelText.color
+        font.family: Theme.fontIcon
+        font.pixelSize: Theme.fontBody
+        font.weight: Theme.weightBody
+        opacity: root.pulse
+    }
+
+    Text {
+        id: labelText
+        anchors.left: leadText.visible ? leadText.right : parent.left
+        anchors.leftMargin: leadText.visible ? Theme.spaceM : root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: root.showAction ? actionBtn.left : iconCells.visible ? iconCells.left : trailingText.left
         anchors.rightMargin: Theme.spaceL

@@ -16,6 +16,9 @@ Item {
     // sits under its point, and clicking it jumps there. A drag that ends
     // near one lands on it.
     property var marks: []
+    // false for a read-only level (a battery): no hover, no drag
+    property bool interactive: true
+    property color fillColor: Theme.meterFill
 
     // Fired continuously while dragging, so the backend follows the
     // pointer instead of only catching up on release.
@@ -48,6 +51,7 @@ Item {
             width: parent.width
             height: Theme.meterHeight + 2
             fraction: root.value / 100
+            fillColor: root.fillColor
             // the fill follows the pointer; easing it would make it lag
             animated: false
             // the plain stroke at rest, so an empty slider still shows its track
@@ -77,7 +81,7 @@ Item {
                 height: level.height - level.pad * 2
                 width: (level.width - level.pad * 2) * Math.max(0, Math.min(1, root.value / 100))
                 radius: Math.max(0, level.radius - level.pad)
-                color: Theme.meterFill
+                color: root.fillColor
             }
 
             Rectangle {
@@ -94,6 +98,7 @@ Item {
         MouseArea {
             id: drag
             anchors.fill: parent
+            enabled: root.interactive
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onPressed: mouse => root.moved(root.valueAt(mouse.x))

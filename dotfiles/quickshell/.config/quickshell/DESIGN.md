@@ -166,6 +166,15 @@ Settings') are laid out the same way.
 - **Long lists:** the ten most useful rows, then a "Show all N" row. Network
   puts the joined network in a card at the top (name large, strength icon,
   security, band, the radio switch) and leaves it out of the lists below.
+- **Bluetooth:** the adapter is a card the same way (its name, hci id, how
+  many paired and connected, the power switch). Device rows carry the type
+  icon on the left, and on the right the battery and Connected / Not
+  connected (nearby ones say what they are). A paired device opens in place
+  (`SettingsIndent`): Connect, battery as level chips (one per bud and the
+  case), Reconnect by itself, rename, type, address, Remove. Scan sits on
+  the IN RANGE heading, its icon turning while it runs (`FlyoutChip.icon`
+  and `spinning`), and the unnamed devices are a last "Show N unnamed" row.
+  Discoverable's hint counts down to BlueZ's timeout.
 - **No look summary card:** the Look tab's Changes list alone shows
   what's changed.
 - **Changes are counted from the saved default** when one was saved with

@@ -25,6 +25,9 @@ ALLOW = {
     # readouts inside one saved network, opened from its row
     ("network", "Security"): "a readout under each saved network",
     ("network", "Last joined"): "a readout under each saved network",
+    ("bluetooth", "Reconnect by itself"): "a switch under each paired device",
+    ("bluetooth", "Type"): "a readout under each paired device",
+    ("bluetooth", "Address"): "a readout under each paired device",
 }
 
 def main():

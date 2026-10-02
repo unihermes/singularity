@@ -34,12 +34,11 @@ var entries = [
     { page: "network", section: "Saved", label: "Auto-join",   keywords: "autoconnect automatic connect known network" },
 
     // --- Bluetooth ---------------------------------------------------------
-    { page: "bluetooth", section: "Adapter", label: "Bluetooth",    keywords: "bt radio bluez power on off rfkill" },
-    { page: "bluetooth", section: "Adapter", label: "Name",         keywords: "adapter hostname identity" },
-    { page: "bluetooth", section: "Adapter", label: "Interface",    keywords: "hci adapter id mac address" },
-    { page: "bluetooth", section: "Adapter", label: "Discoverable", keywords: "visible advertise findable" },
-    { page: "bluetooth", section: "Adapter", label: "Pairable",     keywords: "accept pairing requests" },
-    { page: "bluetooth", section: "Nearby",  label: "Nearby",       keywords: "scan discover pair headphones mouse keyboard unnamed" },
+    { page: "bluetooth", section: "Adapter",  label: "Adapter",      keywords: "bt radio bluez power on off rfkill name hci interface" },
+    { page: "bluetooth", section: "Adapter",  label: "Discoverable", keywords: "visible advertise findable timeout" },
+    { page: "bluetooth", section: "Adapter",  label: "Pairable",     keywords: "accept pairing requests" },
+    { page: "bluetooth", section: "Paired",   label: "Paired",       keywords: "devices connect disconnect rename remove forget battery trusted reconnect" },
+    { page: "bluetooth", section: "In range", label: "In range",     keywords: "scan discover pair headphones mouse keyboard nearby unnamed" },
 
     // --- Power & Idle ------------------------------------------------------
     { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },

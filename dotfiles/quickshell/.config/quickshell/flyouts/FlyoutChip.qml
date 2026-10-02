@@ -22,13 +22,16 @@ Item {
     // lit, for the current choice in a pair (°F / °C)
     property bool selected: false
     property string confirmText: ""
+    // a glyph before the text, turning while `spinning` (a scan running)
+    property string icon: ""
+    property bool spinning: false
     readonly property bool armed: disarm.running
 
     signal clicked()
 
     function disarmNow() { disarm.stop() }
 
-    implicitWidth: label.implicitWidth + Theme.spaceM * 2 + (glyph && !armed ? 2 : 0)
+    implicitWidth: content.implicitWidth + Theme.spaceM * 2 + (glyph && !armed ? 2 : 0)
     implicitHeight: Theme.chipHeight
 
     Rectangle {
@@ -51,17 +54,42 @@ Item {
         }
     }
 
-    Text {
-        id: label
+    Row {
+        id: content
         anchors.centerIn: parent
-        text: root.armed ? root.confirmText : root.text
-        color: !root.enabled ? Theme.textDisabled
-            : root.armed ? Theme.base
-            : root.selected ? Theme.onAccent
-            : (root.selected || mouse.containsMouse) ? Theme.textStrong : Theme.text
+        spacing: Theme.spaceS
 
-        font.family: root.glyph && !root.armed ? Theme.fontIcon : Theme.fontText
-        font.pixelSize: root.glyph && !root.armed ? Theme.fontIconSize : Theme.fontBody
+        Text {
+            id: iconText
+            visible: root.icon !== "" && !root.armed
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.icon
+            color: label.color
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontBody
+            font.weight: Theme.weightBody
+
+            RotationAnimation on rotation {
+                running: root.spinning
+                loops: Animation.Infinite
+                from: 0; to: 360
+                duration: Theme.durPulse * 2
+                onRunningChanged: if (!running) iconText.rotation = 0
+            }
+        }
+
+        Text {
+            id: label
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.armed ? root.confirmText : root.text
+            color: !root.enabled ? Theme.textDisabled
+                : root.armed ? Theme.base
+                : root.selected ? Theme.onAccent
+                : (root.selected || mouse.containsMouse) ? Theme.textStrong : Theme.text
+
+            font.family: root.glyph && !root.armed ? Theme.fontIcon : Theme.fontText
+            font.pixelSize: root.glyph && !root.armed ? Theme.fontIconSize : Theme.fontBody
+        }
     }
 
     MouseArea {

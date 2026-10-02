@@ -286,7 +286,7 @@ SettingsPage {
             onActivated: page.joinOrPrompt(netRow.modelData)
         }
 
-        Indent {
+        SettingsIndent {
             visible: netRow.prompting
             onVisibleChanged: if (visible) Qt.callLater(pass.forceFocus)
 
@@ -324,29 +324,6 @@ SettingsPage {
             }
 
             SettingsNote { text: "iwd keeps the passphrase once it joins" }
-        }
-    }
-
-    // What a row opens under itself, set in by a rule down its left side.
-    component Indent: Item {
-        default property alias content: indentCol.data
-        width: parent ? parent.width : 0
-        implicitHeight: visible ? indentCol.implicitHeight + Theme.spaceM * 2 : 0
-
-        Rectangle {
-            x: Theme.spaceS
-            y: Theme.spaceS
-            width: Theme.indicatorWidth
-            height: parent.height - Theme.spaceS * 2
-            color: Theme.stroke
-        }
-
-        Column {
-            id: indentCol
-            x: Theme.spaceS + Theme.indicatorWidth + Theme.spaceL
-            y: Theme.spaceM
-            width: parent.width - x
-            spacing: Theme.spaceS
         }
     }
 
@@ -403,7 +380,7 @@ SettingsPage {
         }
     }
 
-    Indent {
+    SettingsIndent {
         visible: page.listening && page.hiddenOpen
 
         FlyoutInput {
@@ -491,7 +468,7 @@ SettingsPage {
                 onActivated: page.openSaved = saved.isOpen ? "" : saved.modelData.ssid
             }
 
-            Indent {
+            SettingsIndent {
                 visible: saved.isOpen
 
                 SettingsField {
