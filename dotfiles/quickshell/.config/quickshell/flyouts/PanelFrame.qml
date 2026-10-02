@@ -27,7 +27,7 @@ Rectangle {
     property color ground: Theme.panelFill
     readonly property bool channel: Theme.frameChannel && !bare
 
-    radius: Theme.frameChannel ? Theme.channelPanelRadius : Theme.panelRadius
+    radius: Theme.panelFrameRadius
     color: bare || channel ? "transparent" : ground
     // Theme.gradient: the same ground, shaded top to bottom
     gradient: Theme.gradient && !bare && !channel ? shading : null

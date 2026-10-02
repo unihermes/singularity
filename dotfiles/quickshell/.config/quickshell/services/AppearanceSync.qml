@@ -826,6 +826,17 @@ Scope {
         })
     }
 
+    // Window corners, rounded like the shell's panels, so its own windows'
+    // frames fill Hyprland's clip and every other window matches them.
+    function writeRounding(reload) {
+        var r = String(Theme.panelFrameRadius)
+        AtomicFileWrite.write({
+            path: root.dir + "/rounding",
+            transform: () => r + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+
     // The tab bar over hyprland.lua's grouped windows, always in the look's
     // colours: the lit tab like a selected row with an accent line over it,
     // the rest like the bar.
@@ -862,6 +873,18 @@ Scope {
         target: Theme
         function onBarPositionChanged() { barTopDebounce.restart() }
         function onBarExtentChanged() { barTopDebounce.restart() }
+    }
+
+    // Stepping the radius fires once per step; one reload at the end is enough.
+    Timer {
+        id: roundingDebounce
+        interval: 200
+        onTriggered: root.writeRounding(true)
+    }
+
+    Connections {
+        target: Theme
+        function onPanelFrameRadiusChanged() { roundingDebounce.restart() }
     }
 
     // A look switch changes both colours at once; one reload is enough.
@@ -928,6 +951,7 @@ Scope {
         writeBorders(false)
         writeGroupbar(false)
         writeBarTop(false)
+        writeRounding(false)
         debounce.restart()
     }
 }

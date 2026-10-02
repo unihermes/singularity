@@ -1575,7 +1575,7 @@ SettingsPage {
 
         Stepper { label: "Corner radius"; hint: "Bar modules, buttons and controls"; key: "radius"; suffix: "px" }
 
-        Stepper { label: "Panel corners"; hint: "Flyouts, windows, wofi, notifications"; key: "panelRadius"; suffix: "px" }
+        Stepper { label: "Panel corners"; hint: "Flyouts, all windows, wofi, notifications"; key: "panelRadius"; suffix: "px" }
 
         Stepper { label: "Bar corners"; hint: "A floating bar, its islands or the notch"; key: "barRadius"; suffix: "px" }
 
@@ -2004,7 +2004,6 @@ SettingsPage {
 
         HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
         HyprInt { label: "Gaps at screen edges"; path: ["general"]; key: "gaps_out"; max: 40 }
-        HyprInt { label: "Window corners"; path: ["decoration"]; key: "rounding"; max: 20 }
         HyprInt { label: "Border width"; note: "0 hides the border"; path: ["general"]; key: "border_size"; max: 6 }
 
         SettingsField {
@@ -2120,7 +2119,7 @@ SettingsPage {
     // Hyprland's own defaults, for keys the file leaves out
     readonly property var hyprDefaults: ({
         "general.gaps_in": 5, "general.gaps_out": 20, "general.border_size": 1,
-        "decoration.rounding": 0, "decoration.active_opacity": 1, "decoration.inactive_opacity": 1,
+        "decoration.active_opacity": 1, "decoration.inactive_opacity": 1,
         "decoration.dim_inactive": false,
         "decoration.blur.enabled": true, "decoration.shadow.enabled": true,
         "decoration.dim_strength": 0.5, "decoration.blur.size": 8, "decoration.blur.passes": 1,

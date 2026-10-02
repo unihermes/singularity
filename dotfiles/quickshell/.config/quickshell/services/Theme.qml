@@ -216,6 +216,9 @@ Singleton {
     readonly property int channelFillet: 7
     // a channel-framed panel's corners: the panel radius out past the bands
     readonly property int channelPanelRadius: panelRadius + frameInset + channelWidth
+    // a panel's outer corners in the current frame style, which Hyprland's
+    // window rounding follows (AppearanceSync)
+    readonly property int panelFrameRadius: frameChannel ? channelPanelRadius : panelRadius
     // A control's own stroke inside a panel (chips, fields, steppers,
     // cards), given the colour its state asks for: kept for the stroked
     // styles, in the accent where it would be the plain stroke under Accent,

@@ -90,6 +90,10 @@ local borderActive, borderInactive = singularityState("borders", ""):match("^(%S
 local tabActive, tabInactive, tabText, tabTextInactive, tabAccent =
     singularityState("groupbar", ""):match("^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$")
 
+-- Window corner radius, written by the Appearance page from the shell's panel
+-- corners so windows and panels round alike; absent, 6.
+local windowRounding = tonumber(singularityState("rounding", "")) or 6
+
 -- The open tab's fill, with a line of the accent along its top edge. The
 -- groupbar has no colour of its own for that line (its indicator shares the
 -- fill's colour), so it's the last stops of a vertical gradient: the last
@@ -334,7 +338,7 @@ hl.config({
     },
 
     decoration = {
-        rounding         = 6,
+        rounding         = windowRounding,
         rounding_power   = 2,
         active_opacity   = 1,
         inactive_opacity = 1,
