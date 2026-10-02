@@ -455,67 +455,14 @@ SettingsPage {
             lookKey: Looks.looks[Looks.fallback].settings[tl.key] !== undefined ? tl.key : ""
         }
 
-        Grid {
-            id: tileGrid
-            width: parent.width
+        SettingsTiles {
             columns: tl.columns
-            spacing: Theme.spaceS
-            bottomPadding: Theme.spaceXs
-
-            Repeater {
-                model: Settings.choices[tl.key] || []
-
-                Rectangle {
-                    id: tile
-                    required property var modelData
-                    readonly property bool on: Settings[tl.key] === modelData
-                    width: (tileGrid.width - tileGrid.spacing * (tl.columns - 1)) / tl.columns
-                    height: Theme.fs(70)
-                    radius: Theme.radius + 3
-                    color: on ? Theme.overlay : tileMouse.containsMouse ? Theme.surface : Theme.panel
-                    border.width: Theme.borderWidth
-                    border.color: on ? Theme.channelOuter : tileMouse.containsMouse ? Theme.subtext : Theme.border
-
-                    // lit: the groove inside the line, in the accent
-                    Rectangle {
-                        visible: tile.on
-                        anchors.fill: parent
-                        anchors.margins: Theme.borderWidth
-                        radius: parent.radius - Theme.borderWidth
-                        color: "transparent"
-                        border.width: Theme.channelGrooveWidth
-                        border.color: Theme.accent
-                    }
-
-                    Loader {
-                        property string value: tile.modelData
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        y: Theme.spaceL
-                        sourceComponent: tl.art
-                    }
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: Theme.spaceS
-                        text: page.label(tile.modelData, tl.key)
-                        color: tile.on || tileMouse.containsMouse ? Theme.textStrong : Theme.text
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontSmall
-                        font.weight: Theme.weightBody
-                    }
-
-                    MouseArea {
-                        id: tileMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            page.holdInPlace(tl)
-                            Settings.set(tl.key, tile.modelData)
-                        }
-                    }
-                }
+            model: (Settings.choices[tl.key] || []).map(v => ({ value: v, text: page.label(v, tl.key) }))
+            current: Settings[tl.key]
+            art: tl.art
+            onPicked: v => {
+                page.holdInPlace(tl)
+                Settings.set(tl.key, v)
             }
         }
     }
@@ -840,18 +787,7 @@ SettingsPage {
         }
     }
 
-    // --- tabs and their furniture -------------------------------------------
-
-    // One tab's content, showing while it's the page's tab
-    component Tab: Column {
-        required property string tabId
-        readonly property bool isSettingsTab: true
-        // FlyoutHeading and FlyoutDivider make room for the sections
-        readonly property bool sectioned: page.channelled
-        visible: page.tab === tabId
-        width: parent.width
-        spacing: Theme.spaceM
-    }
+    // --- the Look tab's changes ----------------------------------------------
 
     // What each setting a look carries is called on this page, for the list
     // of changes; the same as its field's label, so "Show" can find it
@@ -945,8 +881,9 @@ SettingsPage {
         }
     }
 
-    Tab {
+    SettingsTab {
         id: tab_look
+        page: page
         tabId: "look"
 
         FlyoutHeading { text: "LOOK" }
@@ -1351,8 +1288,9 @@ SettingsPage {
 
     }
 
-    Tab {
+    SettingsTab {
         id: tab_colours
+        page: page
         tabId: "colours"
 
         Item { width: 1; height: Theme.spaceM }
@@ -1499,8 +1437,9 @@ SettingsPage {
 
     }
 
-    Tab {
+    SettingsTab {
         id: tab_style
+        page: page
         tabId: "style"
 
         Item { width: 1; height: Theme.spaceM }
@@ -1595,8 +1534,9 @@ SettingsPage {
 
     }
 
-    Tab {
+    SettingsTab {
         id: tab_bar
+        page: page
         tabId: "bar"
 
         FlyoutHeading { text: "LAYOUT" }
@@ -1736,8 +1676,9 @@ SettingsPage {
 
     }
 
-    Tab {
+    SettingsTab {
         id: tab_panels
+        page: page
         tabId: "panels"
 
         FlyoutHeading { text: "LAUNCHER" }
@@ -1812,8 +1753,9 @@ SettingsPage {
 
     }
 
-    Tab {
+    SettingsTab {
         id: tab_windows
+        page: page
         tabId: "windows"
 
         FlyoutHeading { text: "WINDOWS" }
@@ -1830,8 +1772,9 @@ SettingsPage {
 
     }
 
-    Tab {
+    SettingsTab {
         id: tab_system
+        page: page
         tabId: "system"
 
         FlyoutHeading { text: "MOTION" }

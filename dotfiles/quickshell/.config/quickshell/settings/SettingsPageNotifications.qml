@@ -108,26 +108,11 @@ SettingsPage {
 
     SettingsField {
         label: "Position"
-        hint: "Where popups appear"
+        hint: ({ top: "Top", bottom: "Bottom" })[Settings.notifPositionY] + " " + Settings.notifPositionX + " · click a spot"
 
-        Row {
+        PopupSpot {
             anchors.right: parent.right
-            spacing: Theme.sp(10)
-
-            FlyoutSegmented {
-                fill: false
-                model: ["top", "bottom"]
-                labelFor: v => v.charAt(0).toUpperCase() + v.slice(1)
-                current: Settings.notifPositionY
-                onPicked: v => Settings.setNotifPosition(Settings.notifPositionX, v)
-            }
-            FlyoutSegmented {
-                fill: false
-                model: ["left", "center", "right"]
-                labelFor: v => v.charAt(0).toUpperCase() + v.slice(1)
-                current: Settings.notifPositionX
-                onPicked: v => Settings.setNotifPosition(v, Settings.notifPositionY)
-            }
+            onPicked: (x, y) => Settings.setNotifPosition(x, y)
         }
     }
 

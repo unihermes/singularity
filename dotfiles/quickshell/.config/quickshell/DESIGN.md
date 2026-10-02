@@ -126,10 +126,18 @@ Settings') are laid out the same way.
   from the real components (`ModuleFrame`, `PanelFrame`, `FlyoutHeading`,
   `Slider`, …) over the wallpaper, so it follows every setting and can't
   drift from the shell. It's only built while one of those tabs shows.
-- **Visual pickers:** a choice judged by eye (Frames, Shadows, Density)
-  is a grid of tiles, four across. Each tile draws what its value does; the
-  current one has the lit groove. Numbers stay steppers, and on/off stays a
-  switch.
+- **Visual pickers:** a choice judged by eye (Style, Density, the lock
+  screen's Background and Clock place) is a grid of tiles
+  (`SettingsTiles`), four across, or three when each tile is a small
+  screen. Each tile draws what its value does; the current one has the lit
+  groove. Numbers stay steppers, and on/off stays a switch.
+- **Spot pickers:** a place on the screen (where notification popups
+  appear) is one small screen beside the label with a spot per choice,
+  drawing the thing where it is (`PopupSpot`).
+- **Which pages are tabbed:** Appearance, Lock Screen (Look · Password &
+  Lid), Power & Idle (Power · When idle) and Window Rules (Apps ·
+  Workspaces). Two tabs at least, each with more than one row; a page
+  whose sections are short stays one page. Tab content is `SettingsTab`.
 - **No look summary card:** the Look tab's Changes list alone shows
   what's changed.
 - **Changes are counted from the saved default** when one was saved with

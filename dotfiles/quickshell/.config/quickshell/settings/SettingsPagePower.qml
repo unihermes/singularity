@@ -36,6 +36,12 @@ SettingsPage {
     title: "Power & Idle"
     description: "Power profile, charging, and the idle steps in hypridle.conf."
 
+    tabs: [
+        { id: "power", label: "Power",     icon: "󰂄" },
+        { id: "idle",  label: "When idle", icon: "󰒲" },
+    ]
+    stickyColumn: tab === "idle" ? tab_idle : tab_power
+
     readonly property string idlePath: Quickshell.env("HOME") + "/.config/hypr/hypridle.conf"
 
     // --- power profile -------------------------------------------------------
@@ -292,147 +298,158 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    FlyoutHeading { text: "POWER PROFILE" }
+    SettingsTab {
+        id: tab_power
+        page: page
+        tabId: "power"
 
-    SettingsField {
-        label: "Profile"
-        hint: PpdProfile.profile === "" ? "power-profiles-daemon isn't answering" : "Performance may not exist on every machine"
-
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: PpdProfile.choices
-            current: PpdProfile.profile
-            enabled: PpdProfile.profile !== "" && !PpdProfile.busy
-            onPicked: v => {
-                page.profilePending = true
-                PpdProfile.set(v)
-            }
-        }
-    }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "BATTERY" }
-
-    SettingsField {
-        label: "Charging"
-        hint: page.chargeHint()
-
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: page.chargeModes
-            current: page.chargeMode
-            enabled: page.chargeMode !== "" && page.chargeHelperFound && !page.chargeBusy
-            onPicked: v => {
-                page.chargeMode = v
-                page.chargeWrite(v)
-            }
-        }
-    }
-
-    SettingsField {
-        visible: page.chargeMode === "Custom"
-        label: "Stop at"
-        hint: "55–100%"
-
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            value: page.chargeStop / 5
-            minimum: 11
-            maximum: 20
-            valueWidth: 64
-            displayValue: page.chargeStop + "%"
-            enabled: page.chargeHelperFound
-            onStepped: delta => page.chargeStep("stop", delta)
-        }
-    }
-
-    SettingsField {
-        visible: page.chargeMode === "Custom"
-        label: "Resume below"
-        hint: "50–95%, at least 5 under Stop at"
-
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            value: page.chargeStart / 5
-            minimum: 10
-            maximum: 19
-            valueWidth: 64
-            displayValue: page.chargeStart + "%"
-            enabled: page.chargeHelperFound
-            onStepped: delta => page.chargeStep("start", delta)
-        }
-    }
-
-    // the charge now on a pill, and in Custom the band charging keeps it in
-    SettingsField {
-        visible: Battery.present
-        label: "Battery"
-        hint: page.batteryState() + (page.chargeMode === "Custom"
-            ? " · kept " + page.chargeStart + "–" + page.chargeStop + "%" : "")
-
-        Meter {
-            id: chargeBar
-            anchors.right: parent.right
-            width: Theme.fit(220)
-            height: Theme.fit(14)
-            fraction: Battery.percent / 100
-            fillColor: Theme.muted
-
-            Rectangle {
-                visible: page.chargeMode === "Custom"
-                x: chargeBar.width * page.chargeStart / 100
-                width: chargeBar.width * (page.chargeStop - page.chargeStart) / 100
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                color: Qt.alpha(Theme.accent, 0.3)
-                Rectangle { width: Theme.borderWidth; height: parent.height; color: Theme.accent }
-                Rectangle { width: Theme.borderWidth; height: parent.height; anchors.right: parent.right; color: Theme.accent }
-            }
-
-            Rectangle {
-                x: Math.round(chargeBar.width * Battery.percent / 100 - width / 2)
-                y: -Theme.fit(2)
-                width: 2
-                height: parent.height + Theme.fit(4)
-                color: Theme.bright
-            }
-        }
-    }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "WHEN IDLE" }
-
-    SettingsNote {
-        text: page.idleRunning ? "Paused by Keep Awake or a playing video"
-            : "hypridle isn't running; a change starts it"
-        alert: !page.idleRunning
-    }
-
-    Repeater {
-        // a file whose listeners changed under the page shows in file order
-        model: page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i)
+        FlyoutHeading { text: "POWER PROFILE" }
 
         SettingsField {
-            required property int modelData
-            readonly property int index: modelData
-            readonly property var step: page.listeners[index]
-            label: step.label
-            hint: page.stepHints[step.label] || ""
+            label: "Profile"
+            hint: PpdProfile.profile === "" ? "power-profiles-daemon isn't answering" : "Performance may not exist on every machine"
+
+            FlyoutSegmented {
+                anchors.right: parent.right
+                fill: false
+                model: PpdProfile.choices
+                current: PpdProfile.profile
+                enabled: PpdProfile.profile !== "" && !PpdProfile.busy
+                onPicked: v => {
+                    page.profilePending = true
+                    PpdProfile.set(v)
+                }
+            }
+        }
+
+        Item { width: 1; height: Theme.spaceM }
+        FlyoutHeading { text: "BATTERY" }
+
+        SettingsField {
+            label: "Charging"
+            hint: page.chargeHint()
+
+            FlyoutSegmented {
+                anchors.right: parent.right
+                fill: false
+                model: page.chargeModes
+                current: page.chargeMode
+                enabled: page.chargeMode !== "" && page.chargeHelperFound && !page.chargeBusy
+                onPicked: v => {
+                    page.chargeMode = v
+                    page.chargeWrite(v)
+                }
+            }
+        }
+
+        SettingsField {
+            visible: page.chargeMode === "Custom"
+            label: "Stop at"
+            hint: "55–100%"
 
             FlyoutStepper {
                 anchors.right: parent.right
                 width: Theme.fit(170)
-                // in 30-second steps
-                value: Math.round(step.timeout / 30)
-                minimum: 1
-                maximum: 240
+                value: page.chargeStop / 5
+                minimum: 11
+                maximum: 20
                 valueWidth: 64
-                displayValue: page.minutes(step.timeout)
-                onStepped: delta => page.setTimeout_(index, Math.max(30, (value + delta) * 30))
+                displayValue: page.chargeStop + "%"
+                enabled: page.chargeHelperFound
+                onStepped: delta => page.chargeStep("stop", delta)
+            }
+        }
+
+        SettingsField {
+            visible: page.chargeMode === "Custom"
+            label: "Resume below"
+            hint: "50–95%, at least 5 under Stop at"
+
+            FlyoutStepper {
+                anchors.right: parent.right
+                width: Theme.fit(170)
+                value: page.chargeStart / 5
+                minimum: 10
+                maximum: 19
+                valueWidth: 64
+                displayValue: page.chargeStart + "%"
+                enabled: page.chargeHelperFound
+                onStepped: delta => page.chargeStep("start", delta)
+            }
+        }
+
+        // the charge now on a pill, and in Custom the band charging keeps it in
+        SettingsField {
+            visible: Battery.present
+            label: "Battery"
+            hint: page.batteryState() + (page.chargeMode === "Custom"
+                ? " · kept " + page.chargeStart + "–" + page.chargeStop + "%" : "")
+
+            Meter {
+                id: chargeBar
+                anchors.right: parent.right
+                width: Theme.fit(220)
+                height: Theme.fit(14)
+                fraction: Battery.percent / 100
+                fillColor: Theme.muted
+
+                Rectangle {
+                    visible: page.chargeMode === "Custom"
+                    x: chargeBar.width * page.chargeStart / 100
+                    width: chargeBar.width * (page.chargeStop - page.chargeStart) / 100
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    color: Qt.alpha(Theme.accent, 0.3)
+                    Rectangle { width: Theme.borderWidth; height: parent.height; color: Theme.accent }
+                    Rectangle { width: Theme.borderWidth; height: parent.height; anchors.right: parent.right; color: Theme.accent }
+                }
+
+                Rectangle {
+                    x: Math.round(chargeBar.width * Battery.percent / 100 - width / 2)
+                    y: -Theme.fit(2)
+                    width: 2
+                    height: parent.height + Theme.fit(4)
+                    color: Theme.bright
+                }
+            }
+        }
+    }
+
+    SettingsTab {
+        id: tab_idle
+        page: page
+        tabId: "idle"
+
+        FlyoutHeading { text: "WHEN IDLE" }
+
+        SettingsNote {
+            text: page.idleRunning ? "Paused by Keep Awake or a playing video"
+                : "hypridle isn't running; a change starts it"
+            alert: !page.idleRunning
+        }
+
+        Repeater {
+            // a file whose listeners changed under the page shows in file order
+            model: page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i)
+
+            SettingsField {
+                required property int modelData
+                readonly property int index: modelData
+                readonly property var step: page.listeners[index]
+                label: step.label
+                hint: page.stepHints[step.label] || ""
+
+                FlyoutStepper {
+                    anchors.right: parent.right
+                    width: Theme.fit(170)
+                    // in 30-second steps
+                    value: Math.round(step.timeout / 30)
+                    minimum: 1
+                    maximum: 240
+                    valueWidth: 64
+                    displayValue: page.minutes(step.timeout)
+                    onStepped: delta => page.setTimeout_(index, Math.max(30, (value + delta) * 30))
+                }
             }
         }
     }
