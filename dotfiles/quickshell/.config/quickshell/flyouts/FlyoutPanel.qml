@@ -151,7 +151,9 @@ OverlayWindow {
             var free = Math.max(root.edgeMargin,
                                 Math.min(root.anchorX - width / 2,
                                          root.width - width - root.edgeMargin))
-            if (!root.grown) return free
+            // the centre group's flyouts stay centred on their module (the
+            // clock's on the clock), however close a group edge comes
+            if (!root.grown || root.section === "centre") return Math.round(free)
             // within reach of a group edge, flush with it: the nearer one when
             // both are in reach, so a box about the group's width lines up
             // on the side its module is on
@@ -173,7 +175,8 @@ OverlayWindow {
         // that close, a jog would be too short to read as a step, so it
         // takes the group's width and both sides run straight
         readonly property real ownWidth: Theme.fit(root.menuWidth) + (root.padX - Theme.panelPad) * 2
-        width: root.grown && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
+        width: root.grown && root.section !== "centre"
+                && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
             ? root.group.x1 - root.group.x0 : ownWidth
         height: contentColumn.implicitHeight + root.padY * 2
 
