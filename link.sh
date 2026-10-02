@@ -105,8 +105,22 @@ for old in "$HOME/.icons" "$HOME/.config/swaync"; do
   fi
 done
 
-# The repo's own hooks (tools/git-hooks): the pre-commit check that keeps
-# Settings search in step with the Settings pages.
+# File-manager bookmarks (GTK's, which Thunar shows in its side pane) for
+# the usual folders. Not stowed: the paths hold the home directory, and the
+# file manager rewrites the file as bookmarks are added, so it's written
+# once, only where there's none yet.
+bookmarks="$HOME/.config/gtk-3.0/bookmarks"
+if [[ ! -e $bookmarks ]]; then
+  mkdir -p "$(dirname "$bookmarks")"
+  for d in Downloads Git Documents; do
+    printf 'file://%s/%s\n' "$HOME" "$d"
+  done > "$bookmarks"
+  log "wrote ${bookmarks#"$HOME/"}"
+fi
+
+# The repo's own hooks (tools/git-hooks): the pre-commit checks (Settings
+# search in step with the pages, nothing declared and never read, the JS
+# module tests).
 [[ -d .git ]] && git config core.hooksPath tools/git-hooks
 
 log "done. verify a link with: ls -l ~/.config/hypr/hyprland.lua"

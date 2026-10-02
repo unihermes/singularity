@@ -24,3 +24,7 @@ __pycache__/
 # the stowed folders, is inside the repo -- and left behind if the shell dies
 # mid-write
 *.new
+
+# GTK's bookmarks, written by link.sh with this machine's home directory
+# and rewritten by the file manager; lands here when gtk-3.0 is a stowed link
+dotfiles/gtk/.config/gtk-3.0/bookmarks
