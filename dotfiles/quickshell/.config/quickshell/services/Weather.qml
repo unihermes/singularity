@@ -67,43 +67,50 @@ Singleton {
         return h * 60 + Number(m[2])
     }
 
+    // wttr.in's JSON into the properties above; `at` is when it was fetched
+    function parse(text, at) {
+        var d = JSON.parse(text)
+        var c = d.current_condition[0]
+        var a = d.nearest_area && d.nearest_area[0]
+        root.area = a ? a.areaName[0].value + ", " + a.region[0].value : ""
+        root.code = Number(c.weatherCode)
+        root.condition = c.weatherDesc[0].value.trim()
+        root.tempF = Number(c.temp_F); root.tempC = Number(c.temp_C)
+        root.feelsF = Number(c.FeelsLikeF); root.feelsC = Number(c.FeelsLikeC)
+        root.humidity = Number(c.humidity)
+        root.wind = c.windspeedMiles + " mph " + c.winddir16Point
+
+        var astro = d.weather[0].astronomy[0]
+        var now = new Date(), mins = now.getHours() * 60 + now.getMinutes()
+        var rise = root.minutesOf(astro.sunrise), set = root.minutesOf(astro.sunset)
+        root.isNight = rise >= 0 && set >= 0 && (mins < rise || mins >= set)
+        root.sunriseMin = rise
+        root.sunsetMin = set
+
+        var f = []
+        for (var i = 0; i < d.weather.length; i++) {
+            var w = d.weather[i]
+            // midday (the 12:00 slot) stands in for the day
+            var noon = w.hourly[Math.min(4, w.hourly.length - 1)]
+            f.push({ date: w.date, hiF: Number(w.maxtempF), loF: Number(w.mintempF),
+                     hiC: Number(w.maxtempC), loC: Number(w.mintempC),
+                     code: Number(noon.weatherCode), condition: noon.weatherDesc[0].value.trim() })
+        }
+        root.forecast = f
+        root.updated = at
+        root.ready = true
+        root.failed = false
+    }
+
     Process {
         id: fetch
         command: ["curl", "-sf", "--max-time", "15", "https://wttr.in/?format=j1"]
         stdout: StdioCollector {
             onStreamFinished: {
+                var at = new Date()
                 try {
-                    var d = JSON.parse(text)
-                    var c = d.current_condition[0]
-                    var a = d.nearest_area && d.nearest_area[0]
-                    root.area = a ? a.areaName[0].value + ", " + a.region[0].value : ""
-                    root.code = Number(c.weatherCode)
-                    root.condition = c.weatherDesc[0].value.trim()
-                    root.tempF = Number(c.temp_F); root.tempC = Number(c.temp_C)
-                    root.feelsF = Number(c.FeelsLikeF); root.feelsC = Number(c.FeelsLikeC)
-                    root.humidity = Number(c.humidity)
-                    root.wind = c.windspeedMiles + " mph " + c.winddir16Point
-
-                    var astro = d.weather[0].astronomy[0]
-                    var now = new Date(), mins = now.getHours() * 60 + now.getMinutes()
-                    var rise = root.minutesOf(astro.sunrise), set = root.minutesOf(astro.sunset)
-                    root.isNight = rise >= 0 && set >= 0 && (mins < rise || mins >= set)
-                    root.sunriseMin = rise
-                    root.sunsetMin = set
-
-                    var f = []
-                    for (var i = 0; i < d.weather.length; i++) {
-                        var w = d.weather[i]
-                        // midday (the 12:00 slot) stands in for the day
-                        var noon = w.hourly[Math.min(4, w.hourly.length - 1)]
-                        f.push({ date: w.date, hiF: Number(w.maxtempF), loF: Number(w.mintempF),
-                                 hiC: Number(w.maxtempC), loC: Number(w.mintempC),
-                                 code: Number(noon.weatherCode), condition: noon.weatherDesc[0].value.trim() })
-                    }
-                    root.forecast = f
-                    root.updated = new Date()
-                    root.ready = true
-                    root.failed = false
+                    root.parse(text, at)
+                    cache.save({ fetched: at.toISOString(), body: text })
                 } catch (e) {
                     root.failed = true
                 }
@@ -129,5 +136,17 @@ Singleton {
         repeat: true
         running: root.failed
         onTriggered: root.refresh()
+    }
+
+    // the last report, shown at once on start if it's under three hours
+    // old; the fetch on start replaces it moments later
+    DiskCache {
+        id: cache
+        name: "weather"
+        onRestored: data => {
+            var at = new Date(data.fetched)
+            if (root.ready || !data.body || !(Date.now() - at < 3 * 3600000)) return
+            try { root.parse(data.body, at) } catch (e) {}
+        }
     }
 }

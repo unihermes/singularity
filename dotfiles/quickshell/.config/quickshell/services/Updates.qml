@@ -114,6 +114,7 @@ Singleton {
                 out.sort((a, b) => a.name.localeCompare(b.name))
                 root.found = out
                 root.lastChecked = new Date()
+                cache.save({ found: root.found, lastChecked: root.lastChecked.toISOString() })
             }
         }
         onExited: {
@@ -156,6 +157,17 @@ Singleton {
     Connections {
         target: Settings
         function onUpdateAurChanged() { if (Settings.updateAur) root.refresh() }
+    }
+
+    // the last check's results until this run's first check is in
+    DiskCache {
+        id: cache
+        name: "updates"
+        onRestored: data => {
+            if (root.lastChecked !== null || !Array.isArray(data.found)) return
+            root.found = data.found
+            root.lastChecked = data.lastChecked ? new Date(data.lastChecked) : null
+        }
     }
 
     Component.onCompleted: logProc.running = true
