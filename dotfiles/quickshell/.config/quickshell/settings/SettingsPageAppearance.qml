@@ -2,9 +2,9 @@
 // ~/.config/quickshell/settings/SettingsPageAppearance.qml
 //
 // Appearance, in tabs, from the broadest choice to the finest:
-//   Look       every look as a card; what's been changed from the one in
-//              use, each with its way back; the saved default
-//   Wallpaper  the image, and how often a new one comes
+//   Look       every look as a card; the wallpaper and how often a new one
+//              comes; what's been changed from the look in use, each with
+//              its way back; the saved default
 //   Colours    the palette and the accents
 //   Style      the style, its shape dials and the Finish switches
 //   Text       the shell's font and size
@@ -51,7 +51,6 @@ SettingsPage {
 
     tabs: [
         { id: "look",      label: "Look",      icon: "󰏘" },
-        { id: "wallpaper", label: "Wallpaper", icon: "󰸉" },
         { id: "colours",   label: "Colours",   icon: "󰌁" },
         { id: "style",     label: "Style",     icon: "󰆧" },
         { id: "text",      label: "Text",      icon: "󰛖" },
@@ -60,7 +59,7 @@ SettingsPage {
         { id: "windows",   label: "Windows",   icon: "󰖲" },
         { id: "system",    label: "System",    icon: "󰒓" },
     ]
-    stickyColumn: ({ look: tab_look, wallpaper: tab_wallpaper, colours: tab_colours, style: tab_style,
+    stickyColumn: ({ look: tab_look, colours: tab_colours, style: tab_style,
                      text: tab_text, bar: tab_bar, panels: tab_panels, windows: tab_windows,
                      system: tab_system })[tab] || tab_look
 
@@ -1179,75 +1178,6 @@ SettingsPage {
         }
 
         Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading {
-            text: Settings.lookPristine ? "CHANGES" : "CHANGES  " + Settings.lookDiffs.length
-        }
-
-        LookChanges {}
-
-        Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading { text: "SAVED DEFAULT" }
-
-        SettingsField {
-            id: saveField
-            label: "Set as default"
-            // two clicks: overwriting the old default can't be undone
-            hint: saveChip.armed ? "Click again to replace the saved default"
-                : Settings.isDefault ? "This is the default"
-                : "Make everything as it is now what Reset returns to"
-
-            FlyoutChip {
-                id: saveChip
-                anchors.right: parent.right
-                text: "Save"
-                confirmText: "Confirm"
-                enabled: !Settings.isDefault
-                onClicked: {
-                    Settings.saveAsDefault()
-                    page.say("Current appearance saved as the default", false)
-                }
-            }
-        }
-
-        SettingsField {
-            label: "Reset to default"
-            hint: Settings.isDefault ? "Already at the default"
-                : Settings.hasUserDefault ? "Back to the appearance you saved as default"
-                : "Back to stock: the " + page.label(Looks.fallback) + " look as designed"
-
-            FlyoutChip {
-                anchors.right: parent.right
-                text: "Reset"
-                enabled: !Settings.isDefault
-                onClicked: {
-                    Settings.reset()
-                    page.say("Appearance reset to the default", false)
-                }
-            }
-        }
-
-        SettingsField {
-            label: "Factory reset"
-            hint: Settings.hasUserDefault ? "Forget the saved default and go back to stock"
-                : "No saved default — stock is the default"
-
-            FlyoutChip {
-                anchors.right: parent.right
-                text: "Forget"
-                enabled: Settings.hasUserDefault
-                onClicked: {
-                    Settings.factoryReset()
-                    page.say("Saved default cleared, back to stock", false)
-                }
-            }
-        }
-
-    }
-
-    Tab {
-        id: tab_wallpaper
-        tabId: "wallpaper"
-
         FlyoutHeading { text: "WALLPAPER" }
 
         SettingsField {
@@ -1354,6 +1284,70 @@ SettingsPage {
             font.family: Theme.fontText
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
+        }
+
+        Item { width: 1; height: Theme.spaceM }
+        FlyoutHeading {
+            text: Settings.lookPristine ? "CHANGES" : "CHANGES  " + Settings.lookDiffs.length
+        }
+
+        LookChanges {}
+
+        Item { width: 1; height: Theme.spaceM }
+        FlyoutHeading { text: "SAVED DEFAULT" }
+
+        SettingsField {
+            id: saveField
+            label: "Set as default"
+            // two clicks: overwriting the old default can't be undone
+            hint: saveChip.armed ? "Click again to replace the saved default"
+                : Settings.isDefault ? "This is the default"
+                : "Make everything as it is now what Reset returns to"
+
+            FlyoutChip {
+                id: saveChip
+                anchors.right: parent.right
+                text: "Save"
+                confirmText: "Confirm"
+                enabled: !Settings.isDefault
+                onClicked: {
+                    Settings.saveAsDefault()
+                    page.say("Current appearance saved as the default", false)
+                }
+            }
+        }
+
+        SettingsField {
+            label: "Reset to default"
+            hint: Settings.isDefault ? "Already at the default"
+                : Settings.hasUserDefault ? "Back to the appearance you saved as default"
+                : "Back to stock: the " + page.label(Looks.fallback) + " look as designed"
+
+            FlyoutChip {
+                anchors.right: parent.right
+                text: "Reset"
+                enabled: !Settings.isDefault
+                onClicked: {
+                    Settings.reset()
+                    page.say("Appearance reset to the default", false)
+                }
+            }
+        }
+
+        SettingsField {
+            label: "Factory reset"
+            hint: Settings.hasUserDefault ? "Forget the saved default and go back to stock"
+                : "No saved default — stock is the default"
+
+            FlyoutChip {
+                anchors.right: parent.right
+                text: "Forget"
+                enabled: Settings.hasUserDefault
+                onClicked: {
+                    Settings.factoryReset()
+                    page.say("Saved default cleared, back to stock", false)
+                }
+            }
         }
 
     }
