@@ -99,12 +99,14 @@ OverlayWindow {
     }
     readonly property bool grown: group !== null
     readonly property int grownRadius: Theme.channelPanelRadius
-    // the box's own rect, snapped flush to the group where it nearly is
+    // the box's own rect: its width never follows the group's, so a side
+    // that nearly lines up with the group's makes a short jog rather than
+    // snapping flush (only a step of a pixel or two is closed)
     readonly property var grownRect: {
         if (!grown) return null
         var b = { x0: box.x, x1: box.x + box.width, r: grownRadius,
                   y0: atBottom ? box.y : group.y1, y1: atBottom ? group.y0 : box.y + box.height }
-        return ChannelPath.snapTo(b, group, Theme.channelFillet)
+        return ChannelPath.snapTo(b, group, 2)
     }
 
     // Sectioned (channel frames): each run of rows between headings and
