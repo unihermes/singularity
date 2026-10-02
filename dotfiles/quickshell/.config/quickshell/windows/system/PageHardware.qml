@@ -28,7 +28,7 @@ SystemPage {
 
     Item {
         readonly property bool isSectionBreak: true
-        readonly property bool sectioned: Theme.frameChannel
+        readonly property bool sectioned: true
         width: parent.width
         height: Math.max(Theme.controlSize, machineHeading.implicitHeight)
 

@@ -22,7 +22,8 @@ Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.onAccent`); only Channel adds its groove round it. Tabbed
 draws the open module as a real tab: its sides and top are stroked down
 into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
-Terminal's brackets hug their content with the gap between chips, and its
+Terminal keeps every corner square whatever Roundness says (the style's
+`square`), and its brackets hug their content with the gap between chips, and its
 level chips show five blocks beside the icon. The shell's layers blur what's
 behind them (a Hyprland layer rule), so Glass and see-through grounds stay
 readable.
@@ -84,7 +85,10 @@ Style: `channel` (frame `channel` in `Styles.js`).
 - **Frame:** a channel with a surface ground and radius `channelPanelRadius`
   (13px).
 - **Sectioned:** each run of rows between headings and dividers sits in its
-  own channel (panel ground, radius + 3), in place of divider lines.
+  own frame (panel ground, radius + 3), in place of divider lines. The frame
+  is the style's: a channel, a double or single stroke, a sunken bevel, or
+  the ground alone (`SectionRuns`). Settings pages and the System window
+  are sectioned the same way under every style.
   `FlyoutPanel` works out the runs from the column's children. To start a new
   section, put a `FlyoutDivider` (or an item with `isSectionBreak: true`)
   **directly** in the flyout's column; a divider nested inside a sub-Column

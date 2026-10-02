@@ -25,6 +25,7 @@
 //   anim       how flyouts open when Flyouts open is left to the style
 //   prefix     drawn in the accent before every heading
 //   glass      grounds a further 30% see-through, with a light hairline
+//   square     every corner square, whatever Roundness says
 //   finish     what picking the style sets the Finish switches to
 
 .pragma library
@@ -89,7 +90,7 @@ var styles = {
     terminal: {
         name: "Terminal", hint: "Bracketed modules, block meters, square edges",
         frame: "single", modules: "bracket", hover: "none", gauge: "segments", mark: "box", title: "none",
-        shadow: "none", lines: true, attach: "auto", anim: "none", prefix: ">",
+        shadow: "none", lines: true, attach: "auto", anim: "none", prefix: ">", square: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
     },
 }
@@ -104,6 +105,7 @@ function resolve(s) {
     var st = get(s.style)
     var bar = densityBar[s.density] || densityBar.normal
     var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
+    var radius = st.square ? 0 : s.radius
     return {
         frameStyle: st.frame,
         moduleStyle: st.modules,
@@ -113,8 +115,9 @@ function resolve(s) {
         flyoutTitle: st.title,
         shadow: s.shadows ? st.shadow : "none",
         borderWidth: s.heavyLines && st.lines ? 2 : 1,
-        panelRadius: s.radius,
-        barRadius: s.radius,
+        radius: radius,
+        panelRadius: radius,
+        barRadius: radius,
         flyoutAttach: attach,
         flyoutAnim: !s.flyoutAnim || s.flyoutAnim === "auto" ? st.anim : s.flyoutAnim,
         barHeight: bar.height,

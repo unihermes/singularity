@@ -35,7 +35,7 @@ Grid {
             readonly property bool on: root.current === modelData.value
             width: (root.width - root.spacing * (root.columns - 1)) / root.columns
             height: root.tileHeight
-            radius: Theme.radius + 3
+            radius: Theme.radius > 0 ? Theme.radius + 3 : 0
             color: on ? Theme.overlay : tileMouse.containsMouse ? Theme.surface : Theme.panel
             border.width: Theme.borderWidth
             border.color: on ? Theme.channelOuter : tileMouse.containsMouse ? Theme.subtext : Theme.border
@@ -45,7 +45,7 @@ Grid {
                 visible: tile.on
                 anchors.fill: parent
                 anchors.margins: Theme.borderWidth
-                radius: parent.radius - Theme.borderWidth
+                radius: Math.max(0, parent.radius - Theme.borderWidth)
                 color: "transparent"
                 border.width: Theme.channelGrooveWidth
                 border.color: Theme.accent

@@ -395,7 +395,7 @@ SettingsPage {
             spacing: Theme.spaceM
             // its heading and rows sectioned as if they sat in the page
             readonly property bool isSectionGroup: true
-            readonly property bool sectioned: page.channelled
+            readonly property bool sectioned: page.sectioned
             // nothing above it: the arrangement only shows for two or more
             readonly property bool opensPage: page.monitors.length < 2
 

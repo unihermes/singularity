@@ -109,14 +109,13 @@ OverlayWindow {
         return ChannelPath.snapTo(b, group, 2)
     }
 
-    // Sectioned (channel frames): each run of rows between headings and
-    // dividers sits in a channel of its own, and the content is padded to
-    // clear both frames.
-    readonly property bool sectioned: Theme.frameChannel
+    // Sectioned: each run of rows between headings and dividers sits in a
+    // frame of its own, drawn in the style's frame (SectionRuns), and the
+    // content is padded to clear both frames.
     readonly property int sectionGap: 3
     readonly property int sectionPadY: Theme.spaceS
-    readonly property int padX: sectioned ? Theme.channelWidth * 2 + sectionGap + Theme.spaceL : Theme.panelPad
-    readonly property int padY: sectioned ? Theme.channelWidth * 2 + sectionGap + sectionPadY : Theme.panelPad
+    readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceL
+    readonly property int padY: Theme.channelWidth * 2 + sectionGap + sectionPadY
 
     visible: open || reveal > 0
     focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
@@ -145,7 +144,7 @@ OverlayWindow {
     PanelFrame {
         id: box
         bare: root.grown
-        ground: root.sectioned ? Theme.surface : Theme.panelFill
+        ground: Theme.surface
         x: {
             var free = Math.max(root.edgeMargin,
                                 Math.min(root.anchorX - width / 2,
@@ -195,7 +194,6 @@ OverlayWindow {
         }
 
         SectionRuns {
-            visible: root.sectioned
             x: Theme.channelWidth + root.sectionGap
             width: box.width - x * 2
             height: box.height
@@ -211,7 +209,7 @@ OverlayWindow {
             width: parent.width - root.padX * 2
             spacing: Theme.spaceM
             // FlyoutHeading and FlyoutDivider make room for the sections
-            readonly property bool sectioned: root.sectioned
+            readonly property bool sectioned: true
 
             // Marks the page FlyoutSelect looks for when an open dropdown
             // needs a box to put its overlay in (see that file) -- the same

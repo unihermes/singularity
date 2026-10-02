@@ -184,7 +184,7 @@ Singleton {
 
     // --- shape -----------------------------------------------------------------
 
-    readonly property int radius:      Settings.radius
+    readonly property int radius:      resolved.radius
     // flyouts, windows, cards and wofi; and a floating bar or islands
     readonly property int panelRadius: resolved.panelRadius
     readonly property int barRadius:   resolved.barRadius

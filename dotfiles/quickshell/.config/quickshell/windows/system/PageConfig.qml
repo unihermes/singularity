@@ -197,7 +197,7 @@ SystemPage {
             bottomPadding: Theme.spaceL
             // sectioned as if its rows sat in the page
             readonly property bool isSectionGroup: true
-            readonly property bool sectioned: Theme.frameChannel
+            readonly property bool sectioned: true
             readonly property bool opensPage: index === 0
 
             FlyoutHeading { text: modelData.heading }

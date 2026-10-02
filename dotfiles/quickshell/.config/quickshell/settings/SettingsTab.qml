@@ -12,7 +12,7 @@ Column {
     required property Item page
     readonly property bool isSettingsTab: true
     // FlyoutHeading and FlyoutDivider make room for the sections
-    readonly property bool sectioned: page.channelled
+    readonly property bool sectioned: page.sectioned
     visible: page.tab === tabId
     width: parent ? parent.width : 0
     spacing: Theme.spaceM

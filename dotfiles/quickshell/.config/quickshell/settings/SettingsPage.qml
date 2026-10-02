@@ -45,7 +45,6 @@ Item {
     property string highlight: ""
     readonly property bool isSettingsPage: true
     property bool sectioned: false
-    readonly property bool channelled: sectioned && Theme.frameChannel
     property Component pinned: null
     property bool pinnedVisible: true
 
@@ -83,7 +82,7 @@ Item {
     // height available to content below the header, for non-scrolling
     // pages: clear of the section's frame above and below when sectioned
     readonly property real bodyHeight: height - header.height - (headed ? Theme.spaceXl : 0)
-        - (channelled ? (Theme.channelWidth + Theme.spaceS) * 2 : 0)
+        - (sectioned ? (Theme.channelWidth + Theme.spaceS) * 2 : 0)
 
     function say(msg, isError) {
         notice = msg
@@ -191,8 +190,8 @@ Item {
     Column {
         id: header
         visible: root.headed
-        x: root.channelled && root.scrolls ? Theme.spaceS : 0
-        width: parent.width - (root.channelled && root.scrolls ? Theme.spaceS * 2 + Theme.scrollGutter : 0)
+        x: root.sectioned && root.scrolls ? Theme.spaceS : 0
+        width: parent.width - (root.sectioned && root.scrolls ? Theme.spaceS * 2 + Theme.scrollGutter : 0)
         height: visible ? implicitHeight : 0
         spacing: Theme.spaceS
 
@@ -376,7 +375,7 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
 
             SectionRuns {
-                visible: root.channelled
+                visible: root.sectioned
                 x: Theme.spaceS
                 width: flick.width - Theme.spaceS * 2
                 column: root.stickyColumn
@@ -386,12 +385,12 @@ Item {
             Column {
                 id: col
                 // sectioned: inset to clear the sections' frames
-                readonly property int inset: root.channelled ? Theme.channelWidth + Theme.spaceL : 0
-                readonly property bool sectioned: root.channelled
+                readonly property int inset: root.sectioned ? Theme.channelWidth + Theme.spaceL : 0
+                readonly property bool sectioned: root.sectioned
                 x: Theme.spaceS + inset
                 width: flick.width - x * 2
                 spacing: Theme.spaceM
-                topPadding: root.channelled ? Theme.channelWidth + Theme.spaceS : 0
+                topPadding: root.sectioned ? Theme.channelWidth + Theme.spaceS : 0
                 // clear of the panel's rounded bottom border, as on System
                 bottomPadding: Theme.spaceXl
             }

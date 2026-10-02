@@ -24,8 +24,6 @@ Item {
     property string title: ""
     property string subtitle: ""
 
-    readonly property bool channelled: Theme.frameChannel
-
     default property alias content: col.data
     // the column's own width, for content that has to size cells by hand
     readonly property real contentWidth: col.width
@@ -65,7 +63,6 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
 
             SectionRuns {
-                visible: root.channelled
                 x: Theme.spaceS
                 width: flick.width - Theme.spaceS * 2
                 column: col
@@ -75,12 +72,12 @@ Item {
             Column {
                 id: col
                 // sectioned: inset to clear the sections' frames
-                readonly property int inset: root.channelled ? Theme.channelWidth + Theme.spaceL : 0
-                readonly property bool sectioned: root.channelled
+                readonly property int inset: Theme.channelWidth + Theme.spaceL
+                readonly property bool sectioned: true
                 x: Theme.spaceS + inset
                 width: flick.width - x * 2
                 spacing: Theme.spaceM
-                topPadding: root.channelled ? Theme.channelWidth + Theme.spaceS : 0
+                topPadding: Theme.channelWidth + Theme.spaceS
                 // the last row of a full page would otherwise sit hard
                 // against the window's rounded bottom border
                 bottomPadding: Theme.spaceXl

@@ -588,7 +588,7 @@ SettingsPage {
             readonly property int gap: v === "compact" ? 2 : v === "roomy" ? 6 : 4
             width: Theme.fs(64)
             height: Theme.fs(34)
-            radius: Theme.radius + 2
+            radius: Theme.radius > 0 ? Theme.radius + 2 : 0
             color: Theme.surface
             border.width: Theme.borderWidth
             border.color: Theme.muted
@@ -735,16 +735,15 @@ SettingsPage {
 
             PanelFrame {
                 id: flyout
-                readonly property int padX: Theme.frameChannel ? Theme.channelWidth * 2 + 3 + Theme.spaceL : Theme.panelPad
-                readonly property int padY: Theme.frameChannel ? Theme.channelWidth * 2 + 3 + Theme.spaceS : Theme.panelPad
+                readonly property int padX: Theme.channelWidth * 2 + 3 + Theme.spaceL
+                readonly property int padY: Theme.channelWidth * 2 + 3 + Theme.spaceS
                 anchors.right: parent.right
                 y: Theme.barHeight + Theme.spaceS
                 width: Theme.fit(260) + padX * 2
                 height: flyCol.implicitHeight + padY * 2
-                ground: Theme.frameChannel ? Theme.surface : Theme.panelFill
+                ground: Theme.surface
 
                 SectionRuns {
-                    visible: Theme.frameChannel
                     x: Theme.channelWidth + 3
                     width: flyout.width - x * 2
                     height: flyout.height
@@ -754,7 +753,7 @@ SettingsPage {
 
                 Column {
                     id: flyCol
-                    readonly property bool sectioned: Theme.frameChannel
+                    readonly property bool sectioned: true
                     x: flyout.padX
                     y: flyout.padY
                     width: flyout.width - flyout.padX * 2
@@ -1441,7 +1440,9 @@ SettingsPage {
 
         Stepper {
             label: "Roundness"; key: "radius"; suffix: "px"
-            hint: Theme.moduleStyle === "pill" ? "Panels and windows; chips are pills" : "Chips, panels, the bar and every window"
+            enabled: !Styles.get(Settings.style).square
+            hint: !enabled ? Styles.get(Settings.style).name + " keeps every corner square"
+                : Theme.moduleStyle === "pill" ? "Panels and windows; chips are pills" : "Chips, panels, the bar and every window"
         }
 
         SettingsField {

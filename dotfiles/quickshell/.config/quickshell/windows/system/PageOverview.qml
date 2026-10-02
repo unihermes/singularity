@@ -141,7 +141,7 @@ SystemPage {
     // default every time the window opens.
     Row {
         readonly property bool isSectionBreak: true
-        readonly property bool sectioned: Theme.frameChannel
+        readonly property bool sectioned: true
         width: parent.width
         spacing: Theme.spaceL
 

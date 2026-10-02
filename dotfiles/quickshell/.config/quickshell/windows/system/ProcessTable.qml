@@ -33,7 +33,7 @@ Column {
     spacing: Theme.spaceM
     // sectioned as if its rows sat in the page, under its own heading
     readonly property bool isSectionGroup: true
-    readonly property bool sectioned: Theme.frameChannel
+    readonly property bool sectioned: true
 
     readonly property int pidW:  Theme.fs(64)
     readonly property int userW: Theme.fs(74)
