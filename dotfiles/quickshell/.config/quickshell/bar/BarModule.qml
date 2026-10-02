@@ -42,8 +42,7 @@ Item {
     // chip so its width doesn't change; 0 hides it
     property int badge: 0
 
-    // how far the badge may rise above the icon before the bar's edge
-    readonly property real badgeLift: (Theme.barHeight - iconText.height) / 2
+    readonly property int badgeInset: Theme.borderWidth + 1
 
     signal activated()
 
@@ -88,9 +87,12 @@ Item {
 
             Rectangle {
                 visible: root.badge > 0
-                x: parent.width - width / 2 - 1
-                y: Math.max(-root.badgeLift, parent.height / 2 - Theme.iconSize / 2 - height / 2 + 1)
-                height: Math.round(Theme.barFs(10) * 1.35)
+                // over the icon's corner, but kept inside the chip's
+                // outline, clear of its stroke
+                x: Math.min(parent.width - width * 0.3, parent.width + root.chrome / 2 - width - root.badgeInset)
+                y: Math.max(parent.height / 2 - frame.chipHeight / 2 + root.badgeInset,
+                    parent.height / 2 - Theme.iconSize / 2 - height / 2 + 1)
+                height: Math.round(Theme.barFs(9) * 1.3)
                 width: Math.max(height, badgeText.implicitWidth + 4)
                 radius: height / 2
                 color: Theme.accent
@@ -104,7 +106,7 @@ Item {
                     // dark or light, whichever reads on the accent
                     color: Theme.accent.hslLightness > 0.6 ? "#000000" : "#ffffff"
                     font.family: Theme.fontText
-                    font.pixelSize: Theme.barFs(10)
+                    font.pixelSize: Theme.barFs(9)
                     font.weight: Font.Bold
                 }
             }

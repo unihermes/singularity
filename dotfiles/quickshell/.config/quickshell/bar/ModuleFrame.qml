@@ -42,6 +42,8 @@ Item {
     property int fixedWidth: 0
     // the width the chip adds around its content
     readonly property int chrome: padH * 2 + frame.bracketW * 2
+    // the drawn chip's height, which can be less than the item's
+    readonly property real chipHeight: frame.height
 
     default property alias content: contentRow.children
 
