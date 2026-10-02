@@ -22,6 +22,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import "Looks.js" as Looks
+import "Styles.js" as Styles
 
 Singleton {
     id: root
@@ -32,16 +33,12 @@ Singleton {
 
     // "top" or "bottom" -- which screen edge the bar is anchored to
     readonly property alias barPosition: adapter.barPosition
-    readonly property alias barHeight:   adapter.barHeight
-    readonly property alias moduleGap:   adapter.moduleGap
+    // Roundness: chips, panels, the bar and Hyprland's windows
     readonly property alias radius:      adapter.radius
-    readonly property alias barOpacity:  adapter.barOpacity
     // The base text size in px -- the size of body text, which every other
     // size in the shell and wofi is scaled from (Theme.fontScale).
     readonly property alias fontSize:    adapter.fontSize
     readonly property int fontSizeBase: 16
-    // the same for the bar's labels and icons alone (Theme.barFs)
-    readonly property alias barFontSize: adapter.barFontSize
     // how long animations take, as a percentage of their normal length:
     // 100 normal, 50 fast, 0 off
     readonly property alias animTime:    adapter.animTime
@@ -57,12 +54,18 @@ Singleton {
     readonly property alias wallpaperShuffle: adapter.wallpaperShuffle
     // minutes between random wallpapers while logged in; 0 never changes it
     readonly property alias wallpaperInterval: adapter.wallpaperInterval
-    // The active look (Looks.js), and the parts of it the Appearance page can
-    // override. Choosing a look writes all four of these, plus the bar and
-    // radius values it carries, so a look always arrives whole.
+    // The active look (Looks.js). Choosing one writes everything it
+    // carries, so a look always arrives whole.
     readonly property alias look:        adapter.look
-    // how panels and bar modules are framed -- see Looks.js
-    readonly property alias frameStyle:  adapter.frameStyle
+    // how all the chrome is drawn: one of Styles.order (Styles.js)
+    readonly property alias style:       adapter.style
+    // the bar's and panels' opacity, in percent
+    readonly property alias seeThrough:  adapter.seeThrough
+    // The Finish switches, safe with any style: its shadow on or off, every
+    // stroke 2px, and the colour level fills take ("accent", "good", "text")
+    readonly property alias shadows:     adapter.shadows
+    readonly property alias heavyLines:  adapter.heavyLines
+    readonly property alias levelColour: adapter.levelColour
     // "compact", "normal" or "roomy"
     readonly property alias density:     adapter.density
     readonly property alias fontFamily:  adapter.fontFamily
@@ -76,16 +79,11 @@ Singleton {
     readonly property alias cursorTheme: adapter.cursorTheme
     readonly property alias cursorSize:  adapter.cursorSize
     readonly property alias iconTheme:   adapter.iconTheme
-    // Hyprland's window look beyond the plain fields in hyprland.lua, which
-    // AppearanceSync hands it through state files: how windows open, close
-    // and minimize (a style in choices.windowAnim below), and whether their borders take the
-    // shell's focus and stroke colours rather than hyprland.lua's own.
-    // Like the rest of the Windows section, kept by Reset.
+    // How Hyprland's windows open, close and minimize (choices.windowAnim
+    // below), handed over by AppearanceSync through a state file. Like the
+    // rest of the Windows section, kept by Reset.
     readonly property alias windowAnim:  adapter.windowAnim
-    readonly property alias borderFollowsTheme: adapter.borderFollowsTheme
-    // "outline", "filled", "flat", "pill", "ghost", "bracket" or "underline"
-    readonly property alias moduleStyle: adapter.moduleStyle
-    // "full", "floating", "islands" or "bare"
+    // "full", "floating" or "islands"
     readonly property alias barStyle:    adapter.barStyle
     // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
     readonly property alias workspaceStyle: adapter.workspaceStyle
@@ -93,15 +91,9 @@ Singleton {
     readonly property alias clockStyle:  adapter.clockStyle
     readonly property alias windowStyle: adapter.windowStyle
     readonly property alias windowScope: adapter.windowScope
-    readonly property alias windowMark:  adapter.windowMark
     readonly property alias iconTint:    adapter.iconTint
-    readonly property alias shadow:      adapter.shadow
     readonly property alias vizStyle:    adapter.vizStyle
-    readonly property alias gaugeStyle:  adapter.gaugeStyle
     readonly property alias gradient:    adapter.gradient
-    readonly property alias boldWeight:  adapter.boldWeight
-    readonly property alias textWeight:  adapter.textWeight
-    readonly property alias headingFont: adapter.headingFont
     readonly property alias levelStyle:  adapter.levelStyle
     readonly property alias powerStyle:  adapter.powerStyle
     readonly property alias overviewBackdrop: adapter.overviewBackdrop
@@ -114,33 +106,22 @@ Singleton {
     readonly property alias lockClockSize: adapter.lockClockSize
     readonly property alias clockFormat: adapter.clockFormat
     readonly property alias trayDrawer:  adapter.trayDrawer
-    readonly property alias hoverStyle:  adapter.hoverStyle
     readonly property alias workspaceNames: adapter.workspaceNames
     readonly property alias barSeparator: adapter.barSeparator
     readonly property alias notifGroup:  adapter.notifGroup
-    readonly property alias notifStripe: adapter.notifStripe
     readonly property alias notifStyle:  adapter.notifStyle
     readonly property alias launcherDetails: adapter.launcherDetails
     readonly property alias launcherPosition: adapter.launcherPosition
     readonly property alias launcherLayout: adapter.launcherLayout
-    readonly property alias flyoutTitle: adapter.flyoutTitle
-    readonly property alias barRadius:   adapter.barRadius
-    readonly property alias panelRadius: adapter.panelRadius
-    readonly property alias flyoutAttach: adapter.flyoutAttach
+    // how flyouts open: "auto" leaves it to the style
     readonly property alias flyoutAnim:  adapter.flyoutAnim
     // The look's adjustable fixed half (Looks.adjustable): its accent as a
-    // hex, "" for none; flyouts' and windows' ground opacity and the
-    // overlay dimming, both in percent; every stroke's width in px; and how
-    // section headings are set.
+    // hex, "" for none, and the overlay dimming in percent. Then the
+    // headings' Finish switches: caps, and the rule after them.
     readonly property alias accent:       adapter.accent
-    readonly property alias accent2:      adapter.accent2
-    readonly property alias panelOpacity: adapter.panelOpacity
-    readonly property alias borderWidth:  adapter.borderWidth
     readonly property alias scrim:        adapter.scrim
     readonly property alias headingUpper: adapter.headingUpper
-    readonly property alias headingBold:  adapter.headingBold
     readonly property alias headingRule:  adapter.headingRule
-    readonly property alias headingAccent: adapter.headingAccent
 
     // What the accent picker offers: the look's own accent first, then the
     // presets in Looks.js, then the accent in use if it's a custom one.
@@ -162,27 +143,21 @@ Singleton {
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
         colourVariant: ["dark", "light"],
         look:         LookStore.order,
-        frameStyle:   ["double", "channel", "single", "accent", "bevel", "groove", "corners", "none"],
+        style:        Styles.order,
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
-        headingFont:  [""].concat(Fonts.headingExtras, Fonts.available),
         systemFontFamily: Looks.systemFonts,
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
         windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
-        moduleStyle:  ["outline", "grouped", "filled", "flat", "pill", "ghost", "bracket", "underline"],
-        barStyle:     ["full", "floating", "islands", "bare", "notch"],
+        barStyle:     ["full", "floating", "islands"],
         workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman", "names", "apps"],
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
         windowStyle:  ["icons", "titled", "glide", "lift", "inset", "segmented", "spotlight", "tabs", "index", "dots"],
         windowScope:  ["workspace", "all"],
-        windowMark:   ["pill", "dot", "above", "ground", "box"],
         iconTint:     ["colour", "mono", "accent"],
-        shadow:       ["none", "soft", "hard"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
-        gaugeStyle:   ["fill", "segments", "rule"],
-        boldWeight:   ["medium", "bold", "black"],
-        textWeight:   ["light", "regular", "medium", "bold"],
+        levelColour:  ["accent", "good", "text"],
         levelStyle:   ["pill", "edge", "number"],
         powerStyle:   ["row", "list", "full"],
         overviewBackdrop: ["dim", "clear", "solid"],
@@ -190,17 +165,14 @@ Singleton {
         altTabStyle:  ["icons", "titled", "previews"],
         lockClockPlace: ["centre", "top", "corner"],
         lockClockSize: ["small", "large", "huge"],
-        hoverStyle:   ["none", "fill", "outline", "lift"],
         barSeparator: ["none", "line", "double", "dot", "dots", "capped"],
         notifStyle:   ["full", "compact", "banner"],
         launcherPosition: ["centre", "top", "full"],
         launcherLayout: ["list", "grid", "line"],
-        flyoutTitle:  ["none", "strip", "titlebar"],
-        flyoutAttach: ["flush", "tab", "floating", "grown"],
-        flyoutAnim:   ["drop", "fade", "scale", "none"],
+        flyoutAnim:   ["auto", "drop", "fade", "scale", "none"],
     })
     readonly property var choiceLabels: ({
-        "normal": "Normal", "": "Same as text",
+        "normal": "Normal", "auto": "Style's own",
         "grayscale": "Grayscale", "wallpaper": "Wallpaper", "dark": "Dark", "light": "Light",
         "scheme-neutral": "Subtle", "scheme-tonal-spot": "Balanced",
         "scheme-vibrant": "Vivid", "scheme-expressive": "Expressive",
@@ -244,6 +216,7 @@ Singleton {
                         "dots": "Stacked dots", "capped": "Capped lines" },
         windowMark: { "pill": "Pill" },
         levelStyle: { "pill": "Bar" },
+        levelColour: { "accent": "Accent", "good": "Green", "text": "Text" },
         launcherLayout: { "line": "One line" },
         launcherPosition: { "top": "Under the bar", "full": "Full screen" },
         powerStyle: { "full": "Full screen" },
@@ -255,6 +228,7 @@ Singleton {
     // `key`, when given, is the setting the value belongs to (keyedLabels)
     function choiceLabel(v, key) {
         if (key && keyedLabels[key] && keyedLabels[key][v]) return keyedLabels[key][v]
+        if (key === "style") return Styles.get(v).name
         if (choiceLabels[v]) return choiceLabels[v]
         if (LookStore.looks[v]) return LookStore.looks[v].name
         return Looks.fontLabels[v] || Looks.systemFontLabels[v] || v
@@ -521,16 +495,9 @@ Singleton {
     // values rather than in the menu, so a hand-edited JSON file that is
     // out of range is corrected by the same numbers the UI enforces.
     readonly property var limits: ({
-        barHeight: { min: 24, max: 48 },
-        moduleGap: { min: 0,  max: 12 },
         radius:    { min: 0,  max: 14 },
-        barRadius: { min: 0, max: 14 },
-        panelRadius: { min: 0, max: 14 },
-        barOpacity: { min: 40, max: 100 },
+        seeThrough: { min: 50, max: 100 },
         fontSize:  { min: 12, max: 22 },
-        barFontSize: { min: 12, max: 22 },
-        panelOpacity: { min: 50, max: 100 },
-        borderWidth:  { min: 1,  max: 3 },
         scrim:        { min: 0,  max: 80 },
         nightLightKelvin: { min: 2500, max: 6000 },
         cursorSize:   { min: 16, max: 48 },
@@ -549,7 +516,6 @@ Singleton {
         var d = {
             look: Looks.fallback,
             fontSize: 16,
-            barFontSize: 16,
             animTime: 100,
             colourMode: "grayscale",
             colourScheme: "scheme-tonal-spot",
@@ -588,16 +554,16 @@ Singleton {
         for (var k in stockDefaults) adapter[k] = stockDefaults[k]
     }
 
-    // Everything the look carries, written at once. The bar's opacity is only
+    // Everything the look carries, written at once. See-through is only
     // taken in grayscale mode: in wallpaper mode it keeps the lower wallpaper
-    // default (see barOpacityDefaults), which a look's value would undo.
+    // default (see seeThroughDefaults), which a look's value would undo.
     function applyLook(name) {
         var l = LookStore.looks[name]
         if (!l) return
         root.applyLayout(adapter.look, name)
         adapter.look = name
         for (var k in l.settings) {
-            if (k === "barOpacity" && adapter.colourMode === "wallpaper") continue
+            if (k === "seeThrough" && adapter.colourMode === "wallpaper") continue
             adapter[k] = l.settings[k]
         }
     }
@@ -650,7 +616,7 @@ Singleton {
     readonly property var lookDiffs: {
         var b = lookBaseline
         return Object.keys(b).filter(k =>
-            !(k === "barOpacity" && adapter.colourMode === "wallpaper") && adapter[k] !== b[k])
+            !(k === "seeThrough" && adapter.colourMode === "wallpaper") && adapter[k] !== b[k])
     }
 
     // one setting back to the baseline's value
@@ -678,7 +644,7 @@ Singleton {
         else if (key === "colourMode") setColourMode(v)
         else if (key === "look") applyLook(v)
         else if (key === "accent") adapter.accent = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
-        else if (key === "accent2") adapter.accent2 = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
+        else if (key === "style") setStyle(v)
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
         // free text, such as the workspace names
@@ -686,22 +652,30 @@ Singleton {
         else adapter[key] = clamp(key, v)
     }
 
-    // The bar's opacity defaults lower on the wallpaper palette, so the
-    // wallpaper shows through a bar tinted to match it. Switching palette
-    // always moves to the new palette's opacity: a see-through bar kept
-    // after switching to grayscale still shows the wallpaper's colours
-    // through it, which reads as the switch not having happened. Opacity
-    // sits right under the palette switch to adjust afterwards. Here rather
-    // than in an on-changed handler, which would also fire on a reload of
-    // the file. Grayscale's default is the look's own.
-    readonly property var barOpacityDefaults: ({
-        grayscale: (LookStore.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.barOpacity,
+    // A style arrives with its own Finish switches, so picking one always
+    // lands somewhere it was drawn for.
+    function setStyle(v) {
+        if (Styles.order.indexOf(v) === -1) return
+        adapter.style = v
+        var fin = Styles.get(v).finish
+        for (var k in fin) adapter[k] = fin[k]
+    }
+
+    // See-through defaults lower on the wallpaper palette, so the wallpaper
+    // shows through a bar tinted to match it. Switching palette always moves
+    // to the new palette's value: a see-through bar kept after switching to
+    // grayscale still shows the wallpaper's colours through it, which reads
+    // as the switch not having happened. Here rather than in an on-changed
+    // handler, which would also fire on a reload of the file. Grayscale's
+    // default is the look's own.
+    readonly property var seeThroughDefaults: ({
+        grayscale: (LookStore.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.seeThrough,
         wallpaper: 85,
     })
 
     function setColourMode(v) {
         if (choices.colourMode.indexOf(v) === -1 || v === adapter.colourMode) return
-        adapter.barOpacity = barOpacityDefaults[v]
+        adapter.seeThrough = seeThroughDefaults[v]
         adapter.colourMode = v
     }
 
@@ -719,8 +693,6 @@ Singleton {
         adapter.adjustableSeeded = true
     }
 
-    // A file from before the panels and the bar had corners of their own
-    // has -1 for them: they start out following `radius`, as they did.
     // The fallback look was called Neutrino: a file saved then still names it
     // as the look in use, in the saved default and in the per-look wallpapers.
     function migrateNeutrino() {
@@ -740,9 +712,24 @@ Singleton {
         }
     }
 
-    function seedCorners() {
-        if (adapter.panelRadius < 0) adapter.panelRadius = adapter.radius
-        if (adapter.barRadius < 0) adapter.barRadius = adapter.radius
+    // A file from before Styles has a frame and module style instead: the
+    // style closest to them, and the bar's opacity as See-through, once.
+    // The saved default is carried over the same way.
+    function seedStyle(fromFile) {
+        if (adapter.styleSeeded) return
+        if (fromFile) {
+            adapter.style = Styles.infer(adapter.frameStyle, adapter.moduleStyle)
+            adapter.seeThrough = clamp("seeThrough", Math.min(adapter.barOpacity, adapter.panelOpacity))
+            var u = adapter.userDefaults || {}
+            if (u.frameStyle !== undefined && u.style === undefined) {
+                var c = {}
+                for (var k in u) c[k] = u[k]
+                c.style = Styles.infer(u.frameStyle, u.moduleStyle)
+                c.seeThrough = clamp("seeThrough", u.barOpacity !== undefined ? u.barOpacity : 100)
+                adapter.userDefaults = c
+            }
+        }
+        adapter.styleSeeded = true
     }
 
     function reset() {
@@ -848,13 +835,13 @@ Singleton {
             }
             root.seedAdjustable()
             root.migrateNeutrino()
-            root.seedCorners()
+            root.seedStyle(true)
         }
         onLoadFailed: {
             root.ready = true
             root.seedAdjustable()
             root.migrateNeutrino()
-            root.seedCorners()
+            root.seedStyle(false)
         }
 
         onFileChanged: reload()
@@ -863,12 +850,8 @@ Singleton {
         JsonAdapter {
             id: adapter
             property string barPosition: "top"
-            property int barHeight: 32
-            property int moduleGap: 2
             property int radius: 6
-            property int barOpacity: 100
             property int fontSize: 16
-            property int barFontSize: 16
             // superseded by fontSize; read once to migrate (see onLoaded)
             property int fontScale: 100
 
@@ -879,7 +862,17 @@ Singleton {
             property string colourScheme: "scheme-tonal-spot"
             property string colourVariant: "dark"
             property string look: "singularity"
+            property string style: "channel"
+            property int seeThrough: 100
+            property bool shadows: true
+            property bool heavyLines: false
+            property string levelColour: "accent"
+            property bool styleSeeded: false
+            // superseded by style and seeThrough; read once to migrate (seedStyle)
             property string frameStyle: "double"
+            property string moduleStyle: "outline"
+            property int barOpacity: 100
+            property int panelOpacity: 100
             property string density: "normal"
             property string fontFamily: "UbuntuMono Nerd Font"
             property string systemFontFamily: "Ubuntu Nerd Font"
@@ -887,22 +880,14 @@ Singleton {
             property int cursorSize: 20
             property string iconTheme: "kora"
             property string windowAnim: "popin"
-            property bool borderFollowsTheme: false
-            property string moduleStyle: "outline"
             property string barStyle: "full"
             property string workspaceStyle: "pills"
             property string clockStyle: "stamp"
             property string windowStyle: "icons"
             property string windowScope: "workspace"
-            property string windowMark: "pill"
             property string iconTint: "colour"
-            property string shadow: "none"
             property string vizStyle: "mirror"
-            property string gaugeStyle: "fill"
             property bool gradient: false
-            property string boldWeight: "bold"
-            property string textWeight: "regular"
-            property string headingFont: ""
             property string levelStyle: "pill"
             property string powerStyle: "row"
             property string overviewBackdrop: "dim"
@@ -916,29 +901,18 @@ Singleton {
             property string clockFormat: "ddd HH:mm"
             property bool trayDrawer: false
             property var trayPinned: []
-            property string hoverStyle: "none"
             property string workspaceNames: ""
             property string barSeparator: "none"
             property bool notifGroup: false
-            property bool notifStripe: false
             property string notifStyle: "full"
             property bool launcherDetails: true
             property string launcherPosition: "centre"
             property string launcherLayout: "list"
-            property string flyoutTitle: "none"
-            property int barRadius: -1
-            property int panelRadius: -1
-            property string flyoutAttach: "flush"
-            property string flyoutAnim: "drop"
+            property string flyoutAnim: "auto"
             property string accent: "#5555c8"
-            property string accent2: ""
-            property int panelOpacity: 100
-            property int borderWidth: 1
             property int scrim: 40
             property bool headingUpper: true
-            property bool headingBold: true
             property bool headingRule: true
-            property bool headingAccent: false
             property bool adjustableSeeded: false
 
             property bool wallpaperShuffle: true

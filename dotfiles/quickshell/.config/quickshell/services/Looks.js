@@ -16,33 +16,19 @@
 //
 // A look has two halves:
 //
-//   settings  -- the values the Appearance page can also change: radius, the
-//                bar's height/gap/opacity/style/position, module style,
-//                frame style, density, font, workspace and clock style,
-//                plus the adjustable part of the fixed half (adjustable()
-//                below). Picking a look writes these into Settings;
-//                after that they're the user's to adjust, and the look only
-//                comes back on a re-pick.
+//   settings  -- the values the Appearance page can also change. Picking a
+//                look writes these into Settings; after that they're the
+//                user's to adjust, and the look only comes back on a
+//                re-pick. Every look states a `style` (Styles.js), which
+//                draws all of its chrome; the Finish switches a look leaves
+//                out come from its style.
 //   the rest  -- fixed per look:
 //     palette        the ten-role ramp (see below)
 //     accent         the one hue for marks: selection ticks, focus, current
-//                    items, and meters when meterAccent. null = the ramp's
-//                    bright, i.e. a colourless look
-//     accent2        a second hue, for meters, levels and the visualizer;
-//                    null leaves those to the accent or the text colour
+//                    items. null = the ramp's bright, a colourless look
 //     good, alert    status hues
-//     borderWidth    every stroke, in px
-//     panelOpacity   flyouts, windows, wofi and notification cards; below 1
-//                    lets the desktop show through
-//     heading        { upper, bold, spacing, rule, accent, prefix }: section
-//                    headings in caps or title case, with or without the
-//                    trailing rule, in the accent or in bright; prefix is a
-//                    mark drawn in the accent before each one ("//")
-//     bevel          { light, dark }, or null. When frameStyle is "bevel",
-//                    panels and outline chips are drawn as a chiselled 3D
-//                    edge in these two colours instead of a flat stroke
-//                    (see Bevel.qml). null falls back to a computed
-//                    light/dark pair off `border`.
+//     bevel          { light, dark }, or null: the Retro style's chiselled
+//                    edge (Bevel.qml); null computes a pair off `border`
 //     scrim          how dark full-screen overlays dim the desktop
 //     motion         a factor on every animation; 0 for a look that should
 //                    never move (e-ink)
@@ -53,30 +39,17 @@
 //                    leaving it for a look without one restores the user's.
 //                    Keys a section omits go back to their default section.
 //
-// Corners in `settings`: `radius` for chips and controls, `panelRadius` for
-// flyouts, the shell's windows, notifications and wofi, `barRadius` for a
-// floating bar, islands and the notch. The last two default to `radius`.
+// The shape keys in `settings`:
+//     style        one of Styles.order
+//     radius       Roundness: chips, panels, the bar and Hyprland's windows
+//     barStyle     "full" edge to edge, "floating" inset and rounded, or
+//                  "islands", each group of modules on its own ground
+//     density      "compact", "normal" or "roomy": spacing, bar height, gaps
+//     seeThrough   the bar's and panels' opacity, in percent
+//     shadows, gradient, heavyLines, headingUpper, headingRule,
+//     barSeparator, levelColour   the Finish switches (Settings.qml)
 //
-// The style switches in `settings`:
-//     moduleStyle  "outline"  stroked chips (the double frame applies here)
-//                  "filled"   solid chips, no stroke
-//                  "flat"     bare glyphs; the active one is underlined
-//                  "pill"     solid, fully rounded
-//                  "ghost"    bare until active, then a filled ground
-//                  "bracket"  bare, between [ and ], like a tmux status line
-//                  "underline" bare over a rule, lit when active; a gauge
-//                             fills the rule instead of the chip
-//                  "grouped"  each bar section one channel, its modules
-//                             bare inside: a fill on hover, an accent ring
-//                             when open, gauges filling the whole chip
-//     barStyle     "full"     edge to edge, a hairline on its inner edge
-//                  "floating" inset from the screen edges, rounded, stroked
-//                  "islands"  no bar at all between the groups: left, centre
-//                             and right each float on a ground of their own
-//                  "bare"     no ground anywhere -- the chips sit straight
-//                             on the wallpaper
-//                  "notch"    only the centre group has a ground, hanging
-//                             flush from the screen edge; the sides are bare
+// The content keys in `settings`:
 //     barPosition  "top" or "bottom"
 //     workspaceStyle "pills"  the current workspace a long pill, others stubs
 //                  "dots"     one dot each, the current one lit
@@ -113,41 +86,14 @@
 //                  "dots"     a dot per window, no icons
 //     windowScope  "workspace" the focused workspace's windows
 //                  "all"      every workspace's, grouped, a rule between
-//     windowMark   how the icon styles mark the focused window:
-//                  "pill"     a long accent pill under it, stubs under the rest
-//                  "dot"      an accent dot under it alone
-//                  "above"    an accent rule along the chip's top edge
-//                  "ground"   a lit ground behind its icon
-//                  "box"      an accent outline around its icon
 //     iconTint     "colour"   app icons as they are
 //                  "mono"     greyed, so they sit in a colourless look
 //                  "accent"   tinted the accent's hue
-//     shadow       "none"     panels and chips sit flat
-//                  "soft"     a blurred drop shadow under flyouts, the
-//                             shell's panels and solid chips
-//                  "hard"     a solid offset copy of the shape instead --
-//                             Windows 95, or a brutalist poster
 //     vizStyle     the bar's audio visualizer, in the meter colour:
 //                  "mirror"   pills growing out from the middle
 //                  "rise"     bars rising from the bottom
 //                  "dots"     a stack of up to four dots per band
 //                  "line"     one line through every band's level
-//     gaugeStyle   the volume, brightness and battery chips' level:
-//                  "fill"     the chip's interior fills from the left
-//                  "segments" five blocks, lit up to the level
-//                  "rule"     a thin rule along the chip's bottom edge
-//                  (the underline module style always uses its own rule)
-//     flyoutAnim   how a flyout opens: "drop" slides it out of the bar,
-//                  "fade" fades it in, "scale" grows it from its chip,
-//                  "none" shows it at once
-//     flyoutAttach where a flyout sits: "flush" against the bar, "tab" the
-//                  same with the corners at the bar squared off, so it
-//                  hangs from it, "floating" a gap below it, "grown" out of
-//                  its module's group, one outline round both (needs
-//                  grouped modules and channel frames; flush otherwise)
-//     flyoutTitle  a flyout's first heading: "none" a plain heading,
-//                  "strip" on a ground of its own across the top,
-//                  "titlebar" a title bar in the accent with a close box
 //     launcherLayout "list" rows of results, "grid" a grid of large app
 //                  icons (apps only; the other modes stay a list), "line"
 //                  one compact row under the field, dmenu-like
@@ -158,13 +104,9 @@
 //     notifStyle   notification popups: "full" every part of them,
 //                  "compact" the body, picture and actions only while
 //                  hovered, "banner" one line of summary and body
-//     notifStripe  true: a stripe down a notification's edge, in the
-//                  accent, the alert colour when critical, muted when low
 //     barSeparator between the bar's modules: "none", a thin "line", two
 //                  ("double"), a "dot", three stacked ("dots"), or a line
 //                  with a dot at each end ("capped")
-//     hoverStyle   a bar module under the pointer: "none", a "fill"
-//                  behind it, an accent "outline", or a one-pixel "lift"
 //     altTabStyle  the ALT+Tab switcher's cards: "icons", "titled" an icon
 //                  over each window's title, "previews" a still of each
 //                  window with its app's icon in the corner
@@ -177,33 +119,9 @@
 //     levelStyle   the volume/brightness popup when the clock island is
 //                  off: a level "pill" under the bar, a vertical bar at the
 //                  screen's right "edge", or the "number" itself
-//     headingFont  the face section headings are set in; "" for the text
-//                  font. Any of the text fonts, or one of Looks.headingFonts
-//     textWeight   labels and body text: "light", "regular", "medium" or
-//                  "bold" (for fonts with no medium, such as Ubuntu Mono)
-//     boldWeight   what's bold -- headings, titles: "medium", "bold" or
-//                  "black". A font without the weight draws its nearest
 //     gradient     true: the bar's ground and the panels shade from a
 //                  little lighter at the top to a little darker at the
 //                  bottom; false: flat grounds
-//     frameStyle   "double"   a second stroke inset inside the outer one
-//                  "single"   the outer stroke alone
-//                  "bevel"    a raised 3D edge outside, a sunken one inside --
-//                             Windows 95's chrome
-//                  "groove"   the bevel inside out, an etched line
-//                  "accent"   the outer stroke alone, in the accent colour
-//                  "corners"  an L at each corner, nothing between
-//                  "none"     no stroke, the ground alone
-//                  "channel"  an outer line, a dark groove, an inner line;
-//                             flyouts split into channels per section, and
-//                             lit controls light the groove
-//
-// Adding a look: copy an entry in looks.json and rename its key. Every key in
-// `palette` must be present, and in `settings` all but the layout ones in
-// `settingsBase` below; the rest of the fixed half falls back to `base`.
-// Fonts must be installed (fc-list : family); the families here are all in
-// packages/.
-
 //
 // The palette's roles are semantic, not literal lightness: base is the most
 // recessed ground (meter tracks), panel the flyouts' ground, overlay a hover
@@ -214,17 +132,14 @@
 
 .pragma library
 
+.import "Styles.js" as Styles
+
 // the look that can't be removed, and the one used when the chosen look is gone
 var fallback = "singularity"
 
 // shared defaults for the fixed half, so each look only states what differs
 var base = {
     accent: null,
-    accent2: null,
-    borderWidth: 1,
-    panelOpacity: 1,
-    meterAccent: false,
-    heading: { upper: true, bold: true, spacing: 1, rule: true, accent: false, prefix: "" },
     bevel: null,
     scrim: 0.4,
     motion: 1,
@@ -241,80 +156,62 @@ var looks = {
         accent: "#5555c8",
         // desaturated hard, so they read as a tinted grey rather than alerts
         good: "#7d9b7d", alert: "#a87676",
-        heading: { upper: true, bold: true, spacing: 1, rule: true, accent: false, prefix: "//" },
         settings: {
-            radius: 6, barHeight: 32, moduleGap: 2, barOpacity: 100,
-            frameStyle: "channel", density: "normal", fontFamily: "UbuntuMono Nerd Font",
-            moduleStyle: "grouped", barStyle: "full", flyoutAttach: "grown", textWeight: "bold",
+            style: "channel", radius: 6, density: "normal", fontFamily: "UbuntuMono Nerd Font",
         },
     },
 }
 
-// The layout half of `settings`, which the looks from before these existed
-// don't state. Filled in rather than left out so picking any look sets all
-// of them -- otherwise leaving a bottom-bar look for one of those would keep
-// the bar at the bottom.
+// The settings a look doesn't state. Filled in rather than left out so
+// picking any look sets all of them -- otherwise leaving a bottom-bar look
+// for one that doesn't say would keep the bar at the bottom.
 var settingsBase = {
+    barStyle: "full",
     barPosition: "top",
+    seeThrough: 100,
+    shadows: true,
+    heavyLines: false,
+    levelColour: "accent",
     workspaceStyle: "pills",
     clockStyle: "stamp",
     windowStyle: "icons",
     windowScope: "workspace",
-    windowMark: "pill",
     iconTint: "colour",
-    shadow: "none",
     vizStyle: "mirror",
-    flyoutAnim: "drop",
-    flyoutAttach: "flush",
-    flyoutTitle: "none",
     launcherLayout: "list",
     launcherPosition: "centre",
     launcherDetails: true,
     notifStyle: "full",
-    notifStripe: false,
-    barSeparator: "none",
-    hoverStyle: "none",
     altTabStyle: "icons",
     overviewLayout: "grid",
     overviewBackdrop: "dim",
     powerStyle: "row",
     levelStyle: "pill",
-    headingFont: "",
-    textWeight: "regular",
-    boldWeight: "bold",
-    gradient: false,
-    gaugeStyle: "fill",
 }
 
-// The parts of the fixed half the Appearance page can also adjust. The look
-// states them where they always were; they're copied into `settings` in the
-// units Settings stores (percentages, "" for no accent), so picking the look
-// sets them like the rest, and Reset look puts them back.
+// The parts of the fixed half the Appearance page can also adjust, copied
+// into `settings` in the units Settings stores ("" for no accent, scrim in
+// percent), so picking the look sets them like the rest.
 function adjustable(look) {
-    var h = look.heading
     return {
         accent: look.accent || "",
-        accent2: look.accent2 || "",
-        panelOpacity: Math.round(look.panelOpacity * 100),
-        borderWidth: look.borderWidth,
         scrim: Math.round(look.scrim * 100),
-        headingUpper: h.upper, headingBold: h.bold, headingRule: h.rule, headingAccent: h.accent,
     }
 }
 
-// a look with its fixed half filled in from `base`, and its settings from
-// `settingsBase` and adjustable()
+// a look with its fixed half filled in from `base`, its Finish switches
+// from its style, and the rest of its settings from `settingsBase`
 function complete(look) {
     for (var b in base)
         if (look[b] === undefined) look[b] = base[b]
+    var fin = Styles.get(look.settings.style).finish
+    for (var f in fin)
+        if (look.settings[f] === undefined) look.settings[f] = fin[f]
     for (var s in settingsBase)
         if (look.settings[s] === undefined) look.settings[s] = settingsBase[s]
     var a = adjustable(look)
     for (var k in a)
         if (look.settings[k] === undefined) look.settings[k] = a[k]
-    // the panels' and the bar's corners follow `radius` unless stated
-    for (var r of ["panelRadius", "barRadius"])
-        if (look.settings[r] === undefined) look.settings[r] = look.settings.radius
     return look
 }
 complete(looks[fallback])
@@ -353,9 +250,9 @@ var fontLabels = {
     "Iosevka Nerd Font": "Iosevka",
 }
 
-// Faces headings can be set in besides the monospace ones above: a serif and
-// two sans, each in a package pacman.txt installs.
-var headingFonts = ["Noto Serif", "Noto Sans", "Ubuntu Nerd Font"]
+// The weight body text is set in, for the fonts that need other than
+// regular: Ubuntu Mono has no medium, and its regular reads thin.
+var fontWeights = { "UbuntuMono Nerd Font": "bold" }
 
 // The system font: what GTK and Qt apps draw everywhere outside the shell
 // itself (AppearanceSync.renderGtk/renderQt) -- independent of `fonts` above,

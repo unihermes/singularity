@@ -435,6 +435,15 @@ FlyoutPanel {
             onPicked: v => Settings.set("look", v)
         }
 
+        FlyoutSelect {
+            label: "Style"
+            group: selects
+            model: Settings.choices.style
+            current: Settings.style
+            labelFor: v => Settings.choiceLabel(v, "style")
+            onPicked: v => Settings.set("style", v)
+        }
+
         // The preview is the control: click it for the next wallpaper, or
         // use the chips in its corner.
         ClippingRectangle {
@@ -533,23 +542,14 @@ FlyoutPanel {
         }
 
         FlyoutSliderRow {
-            label: "Opacity"
+            label: "See-through"
             suffix: "%"
             // fives: nothing between two of them is visible anyway
             step: 5
-            value: Settings.barOpacity
-            minimum: Settings.limits.barOpacity.min
-            maximum: Settings.limits.barOpacity.max
-            onMoved: v => Settings.set("barOpacity", v)
-        }
-
-        FlyoutSliderRow {
-            label: "Text size"
-            suffix: "px"
-            value: Settings.barFontSize
-            minimum: Settings.limits.barFontSize.min
-            maximum: Settings.limits.barFontSize.max
-            onMoved: v => Settings.set("barFontSize", v)
+            value: Settings.seeThrough
+            minimum: Settings.limits.seeThrough.min
+            maximum: Settings.limits.seeThrough.max
+            onMoved: v => Settings.set("seeThrough", v)
         }
 
         // --- Text & motion ---

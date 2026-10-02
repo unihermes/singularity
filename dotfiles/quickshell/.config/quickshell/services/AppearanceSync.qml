@@ -805,9 +805,9 @@ Scope {
         AtomicFileWrite.write({ path: root.dir + "/icons", transform: () => theme + "\n" })
     }
 
-    // The window animation style and, when they follow the shell, the border
-    // colours: state files hyprland.lua reads on load, then a config-only
-    // reload. An empty borders file leaves hyprland.lua's own colours.
+    // The window animation style and the border colours (the accent for the
+    // focused window, the ramp's border for the rest): state files
+    // hyprland.lua reads on load, then a config-only reload.
     function writeWindowAnim(reload) {
         var style = Settings.windowAnim
         AtomicFileWrite.write({
@@ -817,8 +817,7 @@ Scope {
         })
     }
     function writeBorders(reload) {
-        var line = Settings.borderFollowsTheme
-            ? "rgba(" + hex(Theme.strokeFocus).slice(1) + "ff) rgba(" + hex(Theme.border).slice(1) + "ff)" : ""
+        var line = "rgba(" + hex(Theme.strokeFocus).slice(1) + "ff) rgba(" + hex(Theme.border).slice(1) + "ff)"
         AtomicFileWrite.write({
             path: root.dir + "/borders",
             transform: () => line + "\n",
@@ -875,6 +874,24 @@ Scope {
         function onBarExtentChanged() { barTopDebounce.restart() }
     }
 
+    // The windows' border width and shadow, from the style: Heavy lines
+    // thickens the border with the shell's strokes, and Shadows picks the
+    // style's soft or hard shadow, or none.
+    function writeWindowFrame(reload) {
+        var line = Theme.borderWidth + " " + Theme.shadow
+        AtomicFileWrite.write({
+            path: root.dir + "/window-frame",
+            transform: () => line + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+
+    Timer {
+        id: windowFrameDebounce
+        interval: 200
+        onTriggered: root.writeWindowFrame(true)
+    }
+
     // Stepping the radius fires once per step; one reload at the end is enough.
     Timer {
         id: roundingDebounce
@@ -885,6 +902,8 @@ Scope {
     Connections {
         target: Theme
         function onPanelFrameRadiusChanged() { roundingDebounce.restart() }
+        function onBorderWidthChanged() { windowFrameDebounce.restart() }
+        function onShadowChanged() { windowFrameDebounce.restart() }
     }
 
     // A look switch changes both colours at once; one reload is enough.
@@ -896,7 +915,6 @@ Scope {
 
     Connections {
         target: Theme
-        enabled: Settings.borderFollowsTheme
         function onStrokeFocusChanged() { bordersDebounce.restart() }
         function onBorderChanged() { bordersDebounce.restart() }
     }
@@ -938,7 +956,6 @@ Scope {
         function onCursorSizeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onIconThemeChanged() { root.writeIcons(); debounce.restart() }
         function onWindowAnimChanged() { root.writeWindowAnim(true) }
-        function onBorderFollowsThemeChanged() { bordersDebounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
@@ -952,6 +969,7 @@ Scope {
         writeGroupbar(false)
         writeBarTop(false)
         writeRounding(false)
+        writeWindowFrame(false)
         debounce.restart()
     }
 }

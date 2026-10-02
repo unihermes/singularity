@@ -15,36 +15,22 @@
             "bright": "#000000"
         },
         "accent": "#3465a4",
-        "accent2": "#f57900",
-        "meterAccent": true,
         "good": "#4e9a06",
         "alert": "#cc0000",
         "scrim": 0.3,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "lined",
             "radius": 4,
-            "barHeight": 28,
-            "moduleGap": 2,
-            "barOpacity": 100,
-            "frameStyle": "single",
             "density": "compact",
             "fontFamily": "Hack Nerd Font",
-            "moduleStyle": "filled",
             "barStyle": "full",
             "workspaceStyle": "numbers",
             "clockStyle": "day",
             "windowStyle": "tabs",
-            "windowMark": "ground",
             "gradient": true,
-            "shadow": "soft",
-            "hoverStyle": "fill",
-            "headingFont": "Noto Sans"
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "breeze": {
@@ -63,40 +49,9 @@
             "bright": "#fcfcfc"
         },
         "accent": "#3daee9",
-        "meterAccent": true,
         "good": "#27ae60",
         "alert": "#da4453",
-        "panelOpacity": 0.96,
         "scrim": 0.4,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
-        "settings": {
-            "radius": 4,
-            "panelRadius": 6,
-            "barHeight": 40,
-            "moduleGap": 2,
-            "barOpacity": 100,
-            "frameStyle": "single",
-            "density": "normal",
-            "fontFamily": "Hack Nerd Font",
-            "moduleStyle": "ghost",
-            "barStyle": "full",
-            "barPosition": "bottom",
-            "workspaceStyle": "numbers",
-            "clockStyle": "time",
-            "windowStyle": "icons",
-            "windowMark": "above",
-            "shadow": "soft",
-            "hoverStyle": "fill",
-            "flyoutAnim": "scale",
-            "launcherLayout": "grid",
-            "headingFont": "Noto Sans"
-        },
         "layout": {
             "left": [
                 "controlcentre",
@@ -124,6 +79,22 @@
                 "visualizer"
             ],
             "anchor": ""
+        },
+        "settings": {
+            "style": "lined",
+            "radius": 4,
+            "density": "normal",
+            "fontFamily": "Hack Nerd Font",
+            "barStyle": "full",
+            "barPosition": "bottom",
+            "workspaceStyle": "numbers",
+            "clockStyle": "time",
+            "windowStyle": "icons",
+            "launcherLayout": "grid",
+            "seeThrough": 96,
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "greybird": {
@@ -142,35 +113,23 @@
             "bright": "#000000"
         },
         "accent": "#398ee7",
-        "meterAccent": true,
         "good": "#4e9a06",
         "alert": "#cc0000",
         "scrim": 0.3,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": false
-        },
         "settings": {
+            "style": "lined",
             "radius": 3,
-            "barHeight": 28,
-            "moduleGap": 2,
-            "barOpacity": 100,
-            "frameStyle": "single",
             "density": "compact",
             "fontFamily": "FiraCode Nerd Font",
-            "moduleStyle": "flat",
             "barStyle": "full",
             "workspaceStyle": "numbers",
             "clockStyle": "time",
             "windowStyle": "tabs",
-            "windowMark": "ground",
             "gradient": true,
-            "hoverStyle": "fill",
-            "flyoutAnim": "none",
-            "powerStyle": "list"
+            "powerStyle": "list",
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "cde": {
@@ -189,45 +148,14 @@
             "bright": "#000000"
         },
         "accent": "#8b2d3a",
-        "accent2": "#2f6f7e",
-        "meterAccent": true,
         "good": "#2e7d32",
         "alert": "#b00020",
-        "borderWidth": 2,
         "bevel": {
             "light": "#e3e5ec",
             "dark": "#4f5361"
         },
         "motion": 0.5,
         "scrim": 0.35,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": false
-        },
-        "settings": {
-            "radius": 0,
-            "barHeight": 34,
-            "moduleGap": 3,
-            "barOpacity": 100,
-            "frameStyle": "bevel",
-            "density": "compact",
-            "fontFamily": "Terminess Nerd Font",
-            "moduleStyle": "outline",
-            "barStyle": "full",
-            "barPosition": "bottom",
-            "workspaceStyle": "numbers",
-            "clockStyle": "time",
-            "windowStyle": "icons",
-            "windowMark": "box",
-            "gaugeStyle": "segments",
-            "flyoutTitle": "titlebar",
-            "flyoutAnim": "none",
-            "powerStyle": "list",
-            "levelStyle": "number"
-        },
         "layout": {
             "left": [
                 "controlcentre",
@@ -256,6 +184,22 @@
                 "visualizer"
             ],
             "anchor": "workspaces"
+        },
+        "settings": {
+            "style": "retro",
+            "radius": 0,
+            "density": "compact",
+            "fontFamily": "Terminess Nerd Font",
+            "barStyle": "full",
+            "barPosition": "bottom",
+            "workspaceStyle": "numbers",
+            "clockStyle": "time",
+            "windowStyle": "icons",
+            "powerStyle": "list",
+            "levelStyle": "number",
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "nextstep": {
@@ -276,39 +220,25 @@
         "accent": null,
         "good": "#2f5f2f",
         "alert": "#7a1f1f",
-        "borderWidth": 2,
         "bevel": {
             "light": "#ffffff",
             "dark": "#555555"
         },
         "motion": 0.5,
         "scrim": 0.35,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": false
-        },
         "settings": {
+            "style": "retro",
             "radius": 0,
-            "barHeight": 30,
-            "moduleGap": 3,
-            "barOpacity": 100,
-            "frameStyle": "bevel",
             "density": "compact",
             "fontFamily": "BlexMono Nerd Font",
-            "moduleStyle": "outline",
             "barStyle": "full",
             "workspaceStyle": "blocks",
             "clockStyle": "day",
-            "windowMark": "box",
             "iconTint": "mono",
-            "gaugeStyle": "segments",
-            "flyoutTitle": "titlebar",
-            "flyoutAnim": "none",
             "powerStyle": "list",
-            "headingFont": "Noto Sans"
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "elementary": {
@@ -327,41 +257,23 @@
             "bright": "#1a1a1a"
         },
         "accent": "#3689e6",
-        "accent2": "#68b723",
-        "meterAccent": true,
         "good": "#68b723",
         "alert": "#c6262e",
-        "panelOpacity": 0.97,
         "scrim": 0.3,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": false
-        },
         "settings": {
+            "style": "flat",
             "radius": 10,
-            "panelRadius": 12,
-            "barHeight": 30,
-            "moduleGap": 4,
-            "barOpacity": 90,
-            "frameStyle": "none",
             "density": "roomy",
             "fontFamily": "CommitMono Nerd Font",
-            "moduleStyle": "ghost",
             "barStyle": "full",
             "workspaceStyle": "dots",
             "clockStyle": "day",
             "windowStyle": "dots",
-            "shadow": "soft",
-            "flyoutAnim": "fade",
-            "flyoutAttach": "floating",
             "launcherLayout": "grid",
-            "hoverStyle": "fill",
-            "headingFont": "Noto Sans",
-            "textWeight": "regular",
-            "boldWeight": "medium"
+            "seeThrough": 90,
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "good"
         }
     },
     "ambiance": {
@@ -380,36 +292,24 @@
             "bright": "#ffffff"
         },
         "accent": "#f07746",
-        "meterAccent": true,
         "good": "#87a556",
         "alert": "#df382c",
         "scrim": 0.45,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "flat",
             "radius": 4,
-            "barHeight": 26,
-            "moduleGap": 2,
-            "barOpacity": 100,
-            "frameStyle": "none",
             "density": "compact",
             "fontFamily": "UbuntuMono Nerd Font",
-            "moduleStyle": "ghost",
             "barStyle": "full",
             "workspaceStyle": "blocks",
             "clockStyle": "day",
             "windowStyle": "titled",
-            "windowMark": "dot",
             "gradient": true,
-            "shadow": "soft",
             "launcherLayout": "grid",
             "launcherPosition": "full",
-            "headingFont": "Ubuntu Nerd Font"
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "gruvbox": {
@@ -428,34 +328,20 @@
             "bright": "#fbf1c7"
         },
         "accent": "#fe8019",
-        "accent2": "#8ec07c",
-        "meterAccent": true,
         "good": "#b8bb26",
         "alert": "#fb4934",
         "scrim": 0.45,
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 1,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "flat",
             "radius": 4,
-            "barRadius": 6,
-            "barHeight": 30,
-            "moduleGap": 3,
-            "barOpacity": 100,
-            "frameStyle": "none",
             "density": "normal",
             "fontFamily": "Mononoki Nerd Font",
-            "moduleStyle": "filled",
             "barStyle": "floating",
             "workspaceStyle": "numbers",
             "clockStyle": "day",
-            "windowMark": "ground",
-            "gaugeStyle": "segments",
-            "hoverStyle": "lift"
+            "headingUpper": true,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "gruvboxlight": {
@@ -474,34 +360,20 @@
             "bright": "#1d2021"
         },
         "accent": "#af3a03",
-        "accent2": "#427b58",
-        "meterAccent": true,
         "good": "#79740e",
         "alert": "#9d0006",
         "scrim": 0.3,
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 1,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "flat",
             "radius": 4,
-            "barRadius": 6,
-            "barHeight": 30,
-            "moduleGap": 3,
-            "barOpacity": 100,
-            "frameStyle": "none",
             "density": "normal",
             "fontFamily": "Mononoki Nerd Font",
-            "moduleStyle": "filled",
             "barStyle": "floating",
             "workspaceStyle": "numbers",
             "clockStyle": "day",
-            "windowMark": "ground",
-            "gaugeStyle": "segments",
-            "hoverStyle": "lift"
+            "headingUpper": true,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "mocha": {
@@ -520,37 +392,21 @@
             "bright": "#ffffff"
         },
         "accent": "#cba6f7",
-        "accent2": "#a6e3a1",
-        "meterAccent": true,
         "good": "#a6e3a1",
         "alert": "#f38ba8",
         "scrim": 0.45,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "capsule",
             "radius": 12,
-            "barRadius": 14,
-            "panelRadius": 14,
-            "barHeight": 34,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "none",
             "density": "roomy",
             "fontFamily": "FiraCode Nerd Font",
-            "moduleStyle": "pill",
             "barStyle": "islands",
             "workspaceStyle": "dots",
             "clockStyle": "day",
-            "windowMark": "pill",
-            "shadow": "soft",
-            "hoverStyle": "fill",
             "vizStyle": "rise",
-            "notifStripe": true
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "good"
         }
     },
     "latte": {
@@ -569,37 +425,21 @@
             "bright": "#262838"
         },
         "accent": "#8839ef",
-        "accent2": "#40a02b",
-        "meterAccent": true,
         "good": "#40a02b",
         "alert": "#d20f39",
         "scrim": 0.3,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "capsule",
             "radius": 12,
-            "barRadius": 14,
-            "panelRadius": 14,
-            "barHeight": 34,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "none",
             "density": "roomy",
             "fontFamily": "FiraCode Nerd Font",
-            "moduleStyle": "pill",
             "barStyle": "islands",
             "workspaceStyle": "dots",
             "clockStyle": "day",
-            "windowMark": "pill",
-            "shadow": "soft",
-            "hoverStyle": "fill",
             "vizStyle": "rise",
-            "notifStripe": true
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "good"
         }
     },
     "tokyonight": {
@@ -618,34 +458,21 @@
             "bright": "#ffffff"
         },
         "accent": "#7aa2f7",
-        "accent2": "#bb9af7",
-        "meterAccent": true,
         "good": "#9ece6a",
         "alert": "#f7768e",
         "scrim": 0.45,
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 1,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "minimal",
             "radius": 6,
-            "barHeight": 32,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "single",
             "density": "normal",
             "fontFamily": "CommitMono Nerd Font",
-            "moduleStyle": "underline",
             "barStyle": "floating",
             "workspaceStyle": "lines",
             "clockStyle": "day",
-            "windowMark": "dot",
             "barSeparator": "dot",
-            "gaugeStyle": "rule",
-            "shadow": "soft"
+            "headingUpper": true,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "nord": {
@@ -664,35 +491,21 @@
             "bright": "#eceff4"
         },
         "accent": "#88c0d0",
-        "accent2": "#81a1c1",
-        "meterAccent": true,
         "good": "#a3be8c",
         "alert": "#bf616a",
         "scrim": 0.4,
         "motion": 0.8,
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 2,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "flat",
             "radius": 8,
-            "barRadius": 10,
-            "barHeight": 32,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "none",
             "density": "roomy",
             "fontFamily": "SpaceMono Nerd Font",
-            "moduleStyle": "ghost",
             "barStyle": "islands",
             "workspaceStyle": "dots",
             "clockStyle": "time",
-            "windowMark": "dot",
-            "shadow": "soft",
-            "flyoutAnim": "fade"
+            "headingUpper": true,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "rosepine": {
@@ -711,37 +524,20 @@
             "bright": "#ffffff"
         },
         "accent": "#ea9a97",
-        "accent2": "#f6c177",
-        "meterAccent": true,
         "good": "#9ccfd8",
         "alert": "#eb6f92",
         "scrim": 0.45,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "minimal",
             "radius": 8,
-            "barRadius": 10,
-            "barHeight": 32,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "single",
             "density": "normal",
             "fontFamily": "BlexMono Nerd Font",
-            "moduleStyle": "ghost",
             "barStyle": "floating",
             "workspaceStyle": "dots",
             "clockStyle": "long",
-            "windowMark": "dot",
-            "shadow": "soft",
-            "flyoutAnim": "fade",
-            "headingFont": "Noto Serif",
-            "textWeight": "regular",
-            "boldWeight": "medium"
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "rosepinedawn": {
@@ -760,37 +556,20 @@
             "bright": "#2a2546"
         },
         "accent": "#d7827e",
-        "accent2": "#286983",
-        "meterAccent": true,
         "good": "#56949f",
         "alert": "#b4637a",
         "scrim": 0.3,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "minimal",
             "radius": 8,
-            "barRadius": 10,
-            "barHeight": 32,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "single",
             "density": "normal",
             "fontFamily": "BlexMono Nerd Font",
-            "moduleStyle": "ghost",
             "barStyle": "floating",
             "workspaceStyle": "dots",
             "clockStyle": "long",
-            "windowMark": "dot",
-            "shadow": "soft",
-            "flyoutAnim": "fade",
-            "headingFont": "Noto Serif",
-            "textWeight": "regular",
-            "boldWeight": "medium"
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "everforest": {
@@ -809,35 +588,21 @@
             "bright": "#f2efdf"
         },
         "accent": "#a7c080",
-        "accent2": "#dbbc7f",
-        "meterAccent": true,
         "good": "#83c092",
         "alert": "#e67e80",
         "scrim": 0.4,
         "motion": 0.8,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "flat",
             "radius": 10,
-            "barRadius": 12,
-            "barHeight": 34,
-            "moduleGap": 4,
-            "barOpacity": 100,
-            "frameStyle": "none",
             "density": "roomy",
             "fontFamily": "Mononoki Nerd Font",
-            "moduleStyle": "filled",
             "barStyle": "islands",
             "workspaceStyle": "pills",
             "clockStyle": "day",
-            "windowMark": "pill",
-            "shadow": "soft",
-            "hoverStyle": "fill"
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "kanagawa": {
@@ -856,34 +621,21 @@
             "bright": "#f4f0dc"
         },
         "accent": "#7e9cd8",
-        "accent2": "#e6c384",
-        "meterAccent": true,
         "good": "#98bb6c",
         "alert": "#e46876",
         "scrim": 0.45,
-        "heading": {
-            "upper": false,
-            "bold": true,
-            "spacing": 0,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "lined",
             "radius": 2,
-            "barHeight": 32,
-            "moduleGap": 3,
-            "barOpacity": 100,
-            "frameStyle": "single",
             "density": "normal",
             "fontFamily": "BlexMono Nerd Font",
-            "moduleStyle": "flat",
             "barStyle": "full",
             "workspaceStyle": "numbers",
             "clockStyle": "long",
-            "windowMark": "above",
             "barSeparator": "line",
-            "gaugeStyle": "rule",
-            "headingFont": "Noto Serif"
+            "headingUpper": false,
+            "headingRule": true,
+            "levelColour": "accent"
         }
     },
     "onedark": {
@@ -902,36 +654,127 @@
             "bright": "#e6e9ef"
         },
         "accent": "#61afef",
-        "accent2": "#98c379",
-        "meterAccent": true,
         "good": "#98c379",
         "alert": "#e06c75",
         "scrim": 0.45,
-        "heading": {
-            "upper": true,
-            "bold": true,
-            "spacing": 1,
-            "rule": true,
-            "accent": true
-        },
         "settings": {
+            "style": "lined",
             "radius": 4,
-            "barHeight": 26,
-            "moduleGap": 2,
-            "barOpacity": 100,
-            "frameStyle": "single",
             "density": "compact",
             "fontFamily": "Hack Nerd Font",
-            "moduleStyle": "flat",
             "barStyle": "full",
             "barPosition": "bottom",
             "workspaceStyle": "numbers",
             "clockStyle": "time",
             "windowStyle": "titled",
-            "windowMark": "ground",
-            "hoverStyle": "fill",
-            "flyoutAttach": "tab",
-            "launcherPosition": "top"
+            "launcherPosition": "top",
+            "headingUpper": true,
+            "headingRule": true,
+            "levelColour": "good"
+        }
+    },
+    "basic": {
+        "name": "Basic",
+        "description": "Grayscale with nothing but grounds and text: no outlines, no marks",
+        "palette": {
+            "base": "#0b0b0b",
+            "bar": "#121212",
+            "panel": "#141414",
+            "surface": "#1a1a1a",
+            "overlay": "#242424",
+            "border": "#303030",
+            "muted": "#4d4d4d",
+            "subtext": "#7a7a7a",
+            "text": "#d0e2fa",
+            "bright": "#ebebeb"
+        },
+        "accent": "#5b8def",
+        "good": "#7d9b7d",
+        "alert": "#a87676",
+        "settings": {
+            "style": "basic",
+            "radius": 4,
+            "density": "normal",
+            "fontFamily": "UbuntuMono Nerd Font"
+        }
+    },
+    "frost": {
+        "name": "Frost",
+        "description": "Frosted blue-grey glass over the blur, a floating bar",
+        "palette": {
+            "base": "#0e1116",
+            "bar": "#141922",
+            "panel": "#171d27",
+            "surface": "#1e2532",
+            "overlay": "#283142",
+            "border": "#364156",
+            "muted": "#56627a",
+            "subtext": "#8a96ab",
+            "text": "#dbe4f0",
+            "bright": "#f4f7fb"
+        },
+        "accent": "#5fb3c9",
+        "good": "#7fb59a",
+        "alert": "#d07f8a",
+        "settings": {
+            "style": "glass",
+            "radius": 10,
+            "barStyle": "floating",
+            "seeThrough": 85,
+            "density": "normal",
+            "fontFamily": "UbuntuMono Nerd Font"
+        }
+    },
+    "workbench": {
+        "name": "Workbench",
+        "description": "Warm greys with orange tabs that flyouts hang from",
+        "palette": {
+            "base": "#100f0e",
+            "bar": "#171615",
+            "panel": "#1b1a18",
+            "surface": "#22201e",
+            "overlay": "#2c2a27",
+            "border": "#3a3733",
+            "muted": "#57534d",
+            "subtext": "#8c867d",
+            "text": "#e6dfd3",
+            "bright": "#f7f2ea"
+        },
+        "accent": "#e08a3c",
+        "good": "#8fae7c",
+        "alert": "#c9776b",
+        "settings": {
+            "style": "tabbed",
+            "radius": 4,
+            "density": "normal",
+            "fontFamily": "UbuntuMono Nerd Font"
+        }
+    },
+    "phosphor": {
+        "name": "Phosphor",
+        "description": "Green phosphor on black: brackets, block meters, square edges",
+        "palette": {
+            "base": "#050805",
+            "bar": "#0a0f0a",
+            "panel": "#0c120c",
+            "surface": "#111a11",
+            "overlay": "#182418",
+            "border": "#223322",
+            "muted": "#345034",
+            "subtext": "#5f8f5f",
+            "text": "#9fe39f",
+            "bright": "#d4ffd4"
+        },
+        "accent": "#4ade80",
+        "good": "#4ade80",
+        "alert": "#e06c6c",
+        "settings": {
+            "style": "terminal",
+            "radius": 0,
+            "density": "compact",
+            "fontFamily": "UbuntuMono Nerd Font",
+            "workspaceStyle": "numbers",
+            "clockStyle": "iso"
         }
     }
 }

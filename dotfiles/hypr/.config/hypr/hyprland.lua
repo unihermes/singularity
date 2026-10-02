@@ -94,6 +94,13 @@ local tabActive, tabInactive, tabText, tabTextInactive, tabAccent =
 -- corners so windows and panels round alike; absent, 6.
 local windowRounding = tonumber(singularityState("rounding", "")) or 6
 
+-- "<border width> <shadow>" from the Appearance page's style: the border
+-- as thick as the shell's strokes, and its shadow ("none", "soft", "hard")
+local windowBorder, windowShadow = singularityState("window-frame", ""):match("^(%d+)%s+(%a+)$")
+windowBorder = tonumber(windowBorder) or 1
+windowShadow = windowShadow or "soft"
+local hardShadow = windowShadow == "hard"
+
 -- The open tab's fill, with a line of the accent along its top edge. The
 -- groupbar has no colour of its own for that line (its indicator shares the
 -- fill's colour), so it's the last stops of a vertical gradient: the last
@@ -325,7 +332,7 @@ hl.config({
     general = {
         gaps_in     = 1,
         gaps_out    = 0,
-        border_size = 1,
+        border_size = windowBorder,
 
         col = {
             active_border   = borderActive or "rgba(d0e2fa66)",
@@ -345,12 +352,13 @@ hl.config({
         dim_inactive = true,
         dim_strength = 0.1,
 
+        -- soft: black at 40 percent, blurred; hard: a solid offset copy
         shadow = {
-            enabled      = true,
-            range        = 18,
-            render_power = 3,
-            -- rgba(RRGGBBAA): black at 40 percent
-            color        = "rgba(00000066)",
+            enabled      = windowShadow ~= "none",
+            range        = hardShadow and 2 or 18,
+            render_power = hardShadow and 1 or 3,
+            offset       = hardShadow and "4 4" or "0 0",
+            color        = hardShadow and "rgba(000000ff)" or "rgba(00000066)",
         },
 
         blur = {

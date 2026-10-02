@@ -725,35 +725,6 @@ ShellRoot {
                 }
             }
 
-            // Notch: the centre group's ground, flush against the screen
-            // edge with only its far corners rounded, growing and shrinking
-            // as the centre's modules come and go.
-            Rectangle {
-                readonly property var span: Theme.barNotch ? bar.islandSpan("centre") : ({ x: 0, w: 0 })
-                readonly property int pad: Theme.moduleGap + Theme.spaceXl
-                readonly property bool atBottom: Theme.barPosition === "bottom"
-                visible: Theme.barNotch && span.w > 0
-                x: span.x - pad
-                y: barBody.y
-                width: span.w + pad * 2
-                height: barBody.height
-                radius: Theme.barRadius
-                color: bar.barGround
-                gradient: Theme.gradient ? bar.barShading : null
-                Behavior on x { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
-                Behavior on width { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
-
-                // squares off the corners on the screen edge
-                Rectangle {
-                    y: parent.atBottom ? parent.height - height : 0
-                    width: parent.width
-                    height: Math.min(parent.radius, parent.height / 2)
-                    // the shaded ground's own colour at that edge
-                    color: !Theme.gradient ? parent.color
-                        : parent.atBottom ? Theme.shadeBottom(parent.color) : Theme.shadeTop(parent.color)
-                }
-            }
-
             // Grouped modules: one channel round each section's visible
             // modules, which sit flush inside its inner line.
             Repeater {

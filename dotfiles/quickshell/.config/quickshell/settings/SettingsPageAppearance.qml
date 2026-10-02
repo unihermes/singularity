@@ -6,8 +6,8 @@
 //              use, each with its way back; the saved default
 //   Wallpaper  the image, and how often a new one comes
 //   Colours    the palette and the accents
-//   Style      frames, shadows, corners, density and see-through
-//   Text       the shell's font, size and weights, and the headings
+//   Style      the style, its shape dials and the Finish switches
+//   Text       the shell's font and size
 //   Bar        its layout, then its modules, workspaces, windows and clock
 //   Panels     flyouts, the launcher, notifications and the overlays
 //   Windows    how Hyprland draws windows
@@ -32,6 +32,7 @@ import Quickshell.Widgets
 import QtQuick
 import "../services/HyprTables.js" as HyprTables
 import "../services/Looks.js" as Looks
+import "../services/Styles.js" as Styles
 import "../services"
 import "../flyouts"
 import "../bar"
@@ -164,9 +165,25 @@ SettingsPage {
                 Connections {
                     target: Settings
                     function onAccentChanged() { if (hex.key === "accent") hexInput.text = Settings.accent }
-                    function onAccent2Changed() { if (hex.key === "accent2") hexInput.text = Settings.accent2 }
                 }
             }
+        }
+    }
+
+    // A Settings boolean as a switch, resting while the style gives it
+    // nothing to do
+    component FinishSwitch: SettingsField {
+        id: fsw
+        property string key: ""
+        property bool live: true
+        lookKey: key
+
+        Switch {
+            anchors.right: parent.right
+            enabled: fsw.live
+            opacity: fsw.live ? 1 : 0.4
+            checked: !!Settings[fsw.key]
+            onToggled: Settings.set(fsw.key, !Settings[fsw.key])
         }
     }
 
@@ -206,15 +223,15 @@ SettingsPage {
         id: pv
         required property var look
         readonly property var pal: look.palette
-        readonly property var ls: look.settings
+        // the look's settings with what its style draws (Styles.resolve)
+        readonly property var ls: Object.assign({}, look.settings, Styles.resolve(look.settings))
         readonly property color accent: look.accent || pal.bright
         readonly property int r: ls.radius
-        readonly property int bw: look.borderWidth
+        readonly property int bw: ls.borderWidth
         readonly property bool floating: ls.barStyle === "floating"
-        // islands and bare: no one bar ground, just what's behind the chips
-        readonly property bool notch: ls.barStyle === "notch"
-        readonly property bool groundless: ls.barStyle === "islands" || ls.barStyle === "bare" || notch
-        readonly property bool inset: ls.barStyle !== "full" && !notch
+        // islands: no one bar ground, just what's behind the chips
+        readonly property bool groundless: ls.barStyle === "islands"
+        readonly property bool inset: ls.barStyle !== "full"
         readonly property bool atBottom: ls.barPosition === "bottom"
         readonly property string mod: ls.moduleStyle
         readonly property bool bevelled: ls.frameStyle === "bevel" || grooved
@@ -274,26 +291,10 @@ SettingsPage {
                 border.color: pv.pal.border
             }
 
-            // the notch: a centre ground flush with the screen edge
-            Rectangle {
-                visible: pv.notch
-                x: miniChips.x - 8
-                width: miniChips.width + 16
-                height: parent.height
-                radius: Math.min(pv.r, height / 2)
-                color: pv.pal.bar
-                Rectangle {
-                    y: pv.atBottom ? parent.height - height : 0
-                    width: parent.width
-                    height: parent.radius
-                    color: parent.color
-                }
-            }
-
             Row {
                 id: miniChips
                 anchors.verticalCenter: parent.verticalCenter
-                x: pv.notch ? Math.round((parent.width - width) / 2) : pv.ls.barStyle === "islands" ? 6 : 4
+                x: pv.ls.barStyle === "islands" ? 6 : 4
                 spacing: 3
                 Repeater {
                     model: [false, true, false]
@@ -390,12 +391,12 @@ SettingsPage {
                 Row {
                     spacing: 4
                     Text {
-                        text: pv.look.heading.upper ? "SOUND" : "Sound"
-                        color: pv.look.heading.accent ? pv.accent : pv.pal.bright
+                        text: (pv.ls.headingPrefix ? pv.ls.headingPrefix + " " : "") + (pv.ls.headingUpper ? "SOUND" : "Sound")
+                        color: pv.pal.bright
                         font.family: Fonts.resolve(pv.ls.fontFamily)
                         font.pixelSize: Theme.fs(10)
-                        font.weight: pv.look.heading.bold ? Theme.weightStrong : Theme.weightBody
-                        font.letterSpacing: pv.look.heading.spacing / 2
+                        font.weight: Theme.weightStrong
+                        font.letterSpacing: pv.ls.headingUpper ? 0.5 : 0
                     }
                 }
                 // a lit row: hover fill and the accent tick
@@ -430,7 +431,7 @@ SettingsPage {
                         width: parent.width * 0.65
                         height: parent.height
                         radius: parent.radius
-                        color: pv.look.meterAccent ? pv.accent : pv.pal.text
+                        color: pv.ls.levelColour === "good" ? pv.look.good : pv.ls.levelColour === "text" ? pv.pal.text : pv.accent
                     }
                 }
             }
@@ -446,6 +447,7 @@ SettingsPage {
         property string label: ""
         property string hint: ""
         property Component art: null
+        property int columns: 4
         width: parent ? parent.width : 0
         spacing: Theme.spaceXs
 
@@ -458,7 +460,7 @@ SettingsPage {
         Grid {
             id: tileGrid
             width: parent.width
-            columns: 4
+            columns: tl.columns
             spacing: Theme.spaceS
             bottomPadding: Theme.spaceXs
 
@@ -469,7 +471,7 @@ SettingsPage {
                     id: tile
                     required property var modelData
                     readonly property bool on: Settings[tl.key] === modelData
-                    width: (tileGrid.width - tileGrid.spacing * 3) / 4
+                    width: (tileGrid.width - tileGrid.spacing * (tl.columns - 1)) / tl.columns
                     height: Theme.fs(70)
                     radius: Theme.radius + 3
                     color: on ? Theme.overlay : tileMouse.containsMouse ? Theme.surface : Theme.panel
@@ -520,96 +522,123 @@ SettingsPage {
         }
     }
 
-    // a small panel in each frame style
+    // Two bar chips, the right one open, as each style draws them
     Component {
-        id: frameArt
+        id: styleArt
         Item {
-            id: fa
+            id: ya
             readonly property string v: parent ? parent.value : ""
-            readonly property int r: Theme.radius + 2
+            readonly property int cw: Theme.fs(24)
+            readonly property int ch: Theme.fs(16)
+            readonly property int r: Math.min(Theme.radius, 5)
             width: Theme.fs(64)
-            height: Theme.fs(30)
+            height: Theme.fs(34)
 
+            // Glass: a tinted ground for the frost to sit on
             Rectangle {
+                visible: ya.v === "glass"
                 anchors.fill: parent
-                radius: fa.r
-                visible: fa.v !== "channel"
-                color: Theme.surface
-                border.width: fa.v === "double" || fa.v === "single" || fa.v === "accent" ? Theme.borderWidth : 0
-                border.color: fa.v === "accent" ? Theme.accent : Theme.border
-            }
-            Rectangle {
-                visible: fa.v === "double"
-                anchors.fill: parent
-                anchors.margins: 3
-                radius: fa.r - 3
-                color: "transparent"
-                border.width: Theme.borderWidth
-                border.color: Theme.muted
-            }
-            Channel { visible: fa.v === "channel"; radius: fa.r }
-            Bevel {
-                visible: fa.v === "bevel" || fa.v === "groove"
-                anchors.fill: parent
-                raised: fa.v === "bevel"
-                light: Theme.bevelLight
-                dark: Theme.bevelDark
-            }
-            FrameCorners {
-                visible: fa.v === "corners"
-                anchors.fill: parent
-                length: Theme.sp(7)
-                color: Theme.subtext
-            }
-            Column {
-                anchors.centerIn: parent
-                spacing: 3
-                Rectangle { width: fa.width * 0.45; height: 3; radius: 1.5; color: Theme.subtext }
-                Rectangle { width: fa.width * 0.6; height: 3; radius: 1.5; color: Theme.muted }
-            }
-        }
-    }
-
-    // a small panel lifted off by each kind of shadow
-    Component {
-        id: shadowArt
-        Item {
-            id: sa
-            readonly property string v: parent ? parent.value : ""
-            width: Theme.fs(64)
-            height: Theme.fs(30)
-
-            Repeater {
-                model: sa.v === "soft" ? 4 : 0
-                Rectangle {
-                    required property int index
-                    x: -index
-                    y: 3 + index
-                    width: sa.width + index * 2
-                    height: sa.height
-                    radius: Theme.radius + 2 + index
-                    color: Qt.rgba(0, 0, 0, 0.22)
+                radius: ya.r
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0; color: Qt.darker(Theme.accent, 2.6) }
+                    GradientStop { position: 1; color: Theme.surface }
                 }
             }
-            Rectangle {
-                visible: sa.v === "hard"
-                x: 4; y: 4
-                width: sa.width; height: sa.height
-                radius: Theme.radius + 2
-                color: "#000000"
+            // Channel: one grooved band round both chips
+            Item {
+                visible: ya.v === "channel"
+                x: 2; y: (ya.height - height) / 2
+                width: ya.width - 4; height: ya.ch + 10
+                Channel { radius: ya.r + 4 }
             }
+            // Tabbed: the panel the open chip hangs into
             Rectangle {
-                anchors.fill: parent
-                radius: Theme.radius + 2
-                color: Theme.surface
-                border.width: Theme.borderWidth
-                border.color: Theme.muted
+                visible: ya.v === "tabbed"
+                x: ya.width / 2; y: ya.height / 2 + ya.ch / 2
+                width: ya.width / 2; height: ya.height - y
+                color: Theme.panel
+                border.width: 1; border.color: Theme.border
             }
-            Column {
+
+            Row {
                 anchors.centerIn: parent
-                spacing: 3
-                Rectangle { width: sa.width * 0.45; height: 3; radius: 1.5; color: Theme.subtext }
-                Rectangle { width: sa.width * 0.6; height: 3; radius: 1.5; color: Theme.muted }
+                spacing: Theme.fs(6)
+                Repeater {
+                    model: [false, true]
+                    Item {
+                        id: chip
+                        required property bool modelData
+                        readonly property bool lit: modelData
+                        width: ya.cw; height: ya.ch
+
+                        Rectangle {
+                            anchors.fill: parent
+                            visible: ya.v !== "minimal" && ya.v !== "terminal" && ya.v !== "channel"
+                                && !(ya.v === "basic" && !chip.lit) && !(ya.v === "tabbed" && !chip.lit)
+                            radius: ya.v === "capsule" ? height / 2 : ya.v === "retro" ? 0
+                                : ya.v === "tabbed" ? 0 : ya.r
+                            color: ya.v === "glass" ? Qt.rgba(1, 1, 1, chip.lit ? 0.16 : 0.08)
+                                : ya.v === "lined" ? Theme.panel
+                                : ya.v === "tabbed" ? Theme.panel
+                                : ya.v === "retro" ? Theme.surface
+                                : (ya.v === "flat" || ya.v === "capsule") && chip.lit ? Theme.accent
+                                : Theme.overlay
+                            border.width: ya.v === "lined" || ya.v === "glass" ? 1 : 0
+                            border.color: ya.v === "glass" ? Qt.rgba(1, 1, 1, 0.2) : chip.lit ? Theme.accent : Theme.border
+
+                            Rectangle {
+                                visible: ya.v === "lined"
+                                anchors.fill: parent; anchors.margins: 2
+                                radius: Math.max(0, parent.radius - 2)
+                                color: "transparent"
+                                border.width: 1; border.color: Theme.overlay
+                            }
+                            Bevel {
+                                visible: ya.v === "retro"
+                                anchors.fill: parent
+                                raised: !chip.lit
+                                light: Theme.bevelLight; dark: Theme.bevelDark
+                            }
+                            Rectangle {
+                                visible: ya.v === "tabbed"
+                                width: parent.width; height: 2
+                                color: Theme.accent
+                            }
+                        }
+                        // Channel's open chip: a fill and an accent ring
+                        Rectangle {
+                            visible: ya.v === "channel" && chip.lit
+                            anchors.fill: parent
+                            radius: ya.r
+                            color: Theme.overlay
+                            border.width: 2; border.color: Theme.accent
+                        }
+                        // the icon
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: Theme.fs(8); height: Theme.fs(5)
+                            radius: 1
+                            color: (ya.v === "flat" || ya.v === "capsule") && chip.lit ? Theme.bright : Theme.text
+                        }
+                        // Minimal: a rule under each, lit under the open one
+                        Rectangle {
+                            visible: ya.v === "minimal"
+                            anchors.bottom: parent.bottom
+                            width: parent.width; height: 2
+                            color: chip.lit ? Theme.accent : Theme.border
+                        }
+                        Text {
+                            visible: ya.v === "terminal"
+                            anchors.centerIn: parent
+                            text: "[    ]"
+                            color: chip.lit ? Theme.accent : Theme.muted
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.fs(14)
+                            font.weight: Theme.weightStrong
+                        }
+                    }
+                }
             }
         }
     }
@@ -829,37 +858,24 @@ SettingsPage {
     // What each setting a look carries is called on this page, for the list
     // of changes; the same as its field's label, so "Show" can find it
     readonly property var keyLabels: ({
-        radius: "Corner radius", panelRadius: "Panel corners", barRadius: "Bar corners",
-        barHeight: "Height", moduleGap: "Module gap", barOpacity: "Opacity",
-        frameStyle: "Frames", density: "Density", fontFamily: "Font", moduleStyle: "Modules",
-        barStyle: "Shape", barPosition: "Position", workspaceStyle: "Workspaces",
+        style: "Style", radius: "Roundness", barStyle: "Bar shape", density: "Density",
+        seeThrough: "See-through", scrim: "Overlay dimming", barSeparator: "Separators",
+        shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
+        headingUpper: "Capital headings", headingRule: "Heading rule",
+        fontFamily: "Font", barPosition: "Position", workspaceStyle: "Workspaces",
         clockStyle: "Clock", windowStyle: "Open windows", windowScope: "Windows shown",
-        windowMark: "Focused window", iconTint: "App icons", shadow: "Shadows",
-        vizStyle: "Visualizer", gaugeStyle: "Levels", flyoutAnim: "Flyouts open",
-        flyoutAttach: "Flyouts sit", flyoutTitle: "Flyout titles", launcherLayout: "Launcher layout",
-        launcherPosition: "Launcher position", launcherDetails: "Launcher details",
-        notifStyle: "Notification popups", notifStripe: "Urgency stripe", barSeparator: "Separators",
-        hoverStyle: "Hover", altTabStyle: "Window switcher", overviewLayout: "Workspace overview",
+        iconTint: "App icons", vizStyle: "Visualizer", flyoutAnim: "Flyouts open",
+        launcherLayout: "Launcher layout", launcherPosition: "Launcher position",
+        launcherDetails: "Launcher details", notifStyle: "Notification popups",
+        altTabStyle: "Window switcher", overviewLayout: "Workspace overview",
         overviewBackdrop: "Overview backdrop", powerStyle: "Power menu", levelStyle: "Level popup",
-        headingFont: "Heading font", textWeight: "Text weight", boldWeight: "Bold weight",
-        gradient: "Gradient grounds", accent: "Accent", accent2: "Second accent",
-        panelOpacity: "Panel opacity", borderWidth: "Stroke width", scrim: "Overlay dimming",
-        headingUpper: "Headings", headingBold: "Headings", headingRule: "Headings",
-        headingAccent: "Headings",
+        accent: "Accent", levelColour: "Level colour",
     })
-    readonly property var keyUnits: ({
-        radius: "px", panelRadius: "px", barRadius: "px", barHeight: "px", moduleGap: "px",
-        borderWidth: "px", barOpacity: "%", panelOpacity: "%", scrim: "%",
-    })
+    readonly property var keyUnits: ({ radius: "px", seeThrough: "%", scrim: "%" })
     function valueText(k, v) {
-        if (k === "headingUpper") return v ? "caps" : "title case"
-        if (k === "headingBold") return v ? "bold" : "not bold"
-        if (k === "headingRule") return v ? "with a rule" : "no rule"
-        if (k === "headingAccent") return v ? "in the accent" : "not in the accent"
         if (typeof v === "boolean") return v ? "on" : "off"
         if (typeof v === "number") return v + (keyUnits[k] || "")
-        if ((k === "accent" || k === "accent2") && v === "") return "none"
-        if (v === "") return k === "headingFont" ? "the text font" : "none"
+        if (v === "") return "none"
         return page.label(v, k)
     }
 
@@ -1482,62 +1498,11 @@ SettingsPage {
 
         HexAccent { label: "Custom accent"; key: "accent" }
 
-        // A second hue for meters, levels and the visualizer: the presets, the
-        // look's own when it has one, or None to leave them to the accent.
         SettingsField {
-            label: "Second accent"
-            lookKey: "accent2"
-            hint: Settings.colourMode === "wallpaper" ? "Grayscale palette only"
-                : "Meters, levels and the visualizer"
-
-            Flow {
-                anchors.right: parent.right
-                spacing: Theme.spaceS
-                enabled: Settings.colourMode !== "wallpaper"
-                opacity: enabled ? 1 : 0.4
-                width: Math.min(parent.width, accent2Repeater.count * (Theme.chipHeight + spacing) + accent2None.width)
-
-                Repeater {
-                    id: accent2Repeater
-                    model: {
-                        var l = LookStore.looks[Settings.look]
-                        var out = l && l.accent2 ? [l.accent2] : []
-                        for (var i = 0; i < Looks.accents.length; i++)
-                            if (out.indexOf(Looks.accents[i]) === -1) out.push(Looks.accents[i])
-                        if (Settings.accent2 !== "" && out.indexOf(Settings.accent2) === -1) out.push(Settings.accent2)
-                        return out
-                    }
-
-                    Rectangle {
-                        id: sw2
-                        required property string modelData
-                        width: Theme.chipHeight
-                        height: Theme.chipHeight
-                        radius: Theme.radiusSmall
-                        color: modelData
-                        border.width: Settings.accent2 === modelData ? 2 : sw2Mouse.containsMouse ? Theme.borderWidth : 0
-                        border.color: Theme.textStrong
-
-                        MouseArea {
-                            id: sw2Mouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Settings.set("accent2", sw2.modelData)
-                        }
-                    }
-                }
-
-                FlyoutChip {
-                    id: accent2None
-                    text: "None"
-                    selected: Settings.accent2 === ""
-                    onClicked: Settings.set("accent2", "")
-                }
-            }
+            label: "Level colour"
+            hint: "Volume, brightness and battery fills"
+            Choices { key: "levelColour" }
         }
-
-        HexAccent { label: "Custom second accent"; key: "accent2" }
 
     }
 
@@ -1546,47 +1511,56 @@ SettingsPage {
         tabId: "style"
 
         Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading { text: "FRAMES" }
+        FlyoutHeading { text: "STYLE" }
 
-        Tiles { key: "frameStyle"; label: "Frames"; hint: "Panels and bar modules"; art: frameArt }
+        Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 5 }
 
-        Stepper { label: "Stroke width"; hint: "Frames, chips and dividers"; key: "borderWidth"; suffix: "px" }
+        Item { width: 1; height: Theme.spaceM }
+        FlyoutHeading { text: "SHAPE" }
 
-        Tiles {
-            key: "shadow"; label: "Shadows"; art: shadowArt
-            hint: Theme.panelOpacity < 1 ? "Needs panels at full opacity" : "Under flyouts, toasts and solid chips"
+        Stepper {
+            label: "Roundness"; key: "radius"; suffix: "px"
+            hint: Theme.moduleStyle === "pill" ? "Panels and windows; chips are pills" : "Chips, panels, the bar and every window"
         }
 
         SettingsField {
-            label: "Gradient grounds"
-            lookKey: "gradient"
-            hint: Settings.gradient ? "Bar and panels shade top to bottom"
-                : "Flat grounds"
-
-            Switch {
-                anchors.right: parent.right
-                checked: Settings.gradient
-                onToggled: Settings.set("gradient", !Settings.gradient)
-            }
+            label: "Bar shape"
+            hint: "Where flyouts sit follows it"
+            Choices { key: "barStyle" }
         }
 
-        Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading { text: "CORNERS" }
+        Tiles { key: "density"; label: "Density"; hint: "Spacing, bar height and gaps"; art: densityArt }
 
-        Stepper { label: "Corner radius"; hint: "Bar modules, buttons and controls"; key: "radius"; suffix: "px" }
-
-        Stepper { label: "Panel corners"; hint: "Flyouts, all windows, wofi, notifications"; key: "panelRadius"; suffix: "px" }
-
-        Stepper { label: "Bar corners"; hint: "A floating bar, its islands or the notch"; key: "barRadius"; suffix: "px" }
-
-        Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading { text: "SPACE AND SEE-THROUGH" }
-
-        Tiles { key: "density"; label: "Density"; hint: "Space in rows, panels and windows"; art: densityArt }
-
-        Stepper { label: "Panel opacity"; hint: "Below 100% the blur behind shows"; key: "panelOpacity"; step: 5; suffix: "%" }
+        Stepper { label: "See-through"; hint: Theme.glass ? "The bar and panels; Glass adds more" : "The bar and every panel"; key: "seeThrough"; step: 5; suffix: "%" }
 
         Stepper { label: "Overlay dimming"; hint: "Behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
+
+        Item { width: 1; height: Theme.spaceM }
+        FlyoutHeading { text: "FINISH" }
+
+        SettingsField {
+            label: "Separators"
+            hint: "Between the bar's modules"
+            Choice { key: "barSeparator" }
+        }
+
+        FinishSwitch {
+            label: "Shadows"; key: "shadows"
+            live: Styles.get(Settings.style).shadow !== "none"
+            hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
+        }
+
+        FinishSwitch { label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
+
+        FinishSwitch {
+            label: "Heavy lines"; key: "heavyLines"
+            live: Styles.get(Settings.style).lines
+            hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
+        }
+
+        FinishSwitch { label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
+
+        FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
 
     }
 
@@ -1632,70 +1606,6 @@ SettingsPage {
 
         Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
 
-        SettingsField {
-            label: "Text weight"
-            hint: "Labels and body text"
-            Choices { key: "textWeight" }
-        }
-
-        SettingsField {
-            label: "Bold weight"
-            hint: "Headings and titles"
-            Choices { key: "boldWeight" }
-        }
-
-        Item { width: 1; height: Theme.spaceM }
-        FlyoutHeading { text: "HEADINGS" }
-
-        SettingsField {
-            label: "Heading font"
-            lookKey: "headingFont"
-            hint: "Section headings"
-
-            SettingsDropdown {
-                anchors.right: parent.right
-                model: Settings.choices.headingFont
-                current: Settings.headingFont
-                labelFor: v => page.label(v)
-                fontFor: v => v === "" ? Theme.fontText : v
-                onPicked: v => Settings.set("headingFont", v)
-            }
-        }
-
-        // Case as a pair, the rest as chips that toggle -- they're independent
-        SettingsField {
-            label: "Headings"
-            hint: "Section titles in flyouts, windows and here"
-
-            Row {
-                anchors.right: parent.right
-                spacing: Theme.spaceS
-
-                FlyoutSegmented {
-                    fill: false
-                    model: [{ value: true, text: "CAPS" }, { value: false, text: "Title" }]
-                    current: Settings.headingUpper
-                    onPicked: v => Settings.set("headingUpper", v)
-                }
-                FlyoutChip {
-                    text: "Bold"
-                    selected: Settings.headingBold
-                    onClicked: Settings.set("headingBold", !Settings.headingBold)
-                }
-                FlyoutChip {
-                    text: "Rule"
-                    selected: Settings.headingRule
-                    onClicked: Settings.set("headingRule", !Settings.headingRule)
-                }
-                FlyoutChip {
-                    text: "Accent"
-                    enabled: Theme.hasAccent
-                    selected: Settings.headingAccent && Theme.hasAccent
-                    onClicked: Settings.set("headingAccent", !Settings.headingAccent)
-                }
-            }
-        }
-
     }
 
     Tab {
@@ -1718,47 +1628,8 @@ SettingsPage {
             }
         }
 
-        SettingsField {
-            label: "Shape"
-            hint: "Edge to edge, floating, islands or none"
-            Choice { key: "barStyle" }
-        }
-
-        Stepper { label: "Height"; key: "barHeight"; suffix: "px" }
-
-        Stepper { label: "Opacity"; hint: "The bar's background only"; key: "barOpacity"; step: 5; suffix: "%" }
-
-        Stepper { label: "Bar text size"; hint: "Labels and icons; capped by the height"; key: "barFontSize"; suffix: "px" }
-
         Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "MODULES" }
-
-        SettingsField {
-            label: "Modules"
-            hint: "How the bar's chips are drawn"
-            Choice { key: "moduleStyle" }
-        }
-
-        Stepper { label: "Module gap"; hint: "Space between modules"; key: "moduleGap"; suffix: "px" }
-
-        SettingsField {
-            label: "Separators"
-            hint: "Between the bar's modules"
-            Choice { key: "barSeparator" }
-        }
-
-        SettingsField {
-            label: "Hover"
-            hint: "A module under the pointer"
-            Choices { key: "hoverStyle" }
-        }
-
-        SettingsField {
-            label: "Levels"
-            hint: Theme.moduleStyle === "underline" ? "Underlined modules use their own rule"
-                : "Volume, brightness and battery"
-            Choices { key: "gaugeStyle"; live: Theme.moduleStyle !== "underline" }
-        }
 
         SettingsField {
             label: "Visualizer"
@@ -1817,15 +1688,6 @@ SettingsPage {
             label: "Open windows"
             hint: "How open windows are drawn"
             Choice { key: "windowStyle" }
-        }
-
-        SettingsField {
-            label: "Focused window"
-            visible: Theme.windowStyle === "icons" || Theme.windowStyle === "titled"
-            hint: Theme.windowStyle === "icons" || Theme.windowStyle === "titled"
-                ? "How the open windows mark the one in focus"
-                : "For the Icons and Focused title styles"
-            Choice { key: "windowMark" }
         }
 
         SettingsField {
@@ -1891,27 +1753,6 @@ SettingsPage {
         id: tab_panels
         tabId: "panels"
 
-        FlyoutHeading { text: "FLYOUTS" }
-
-        SettingsField {
-            label: "Flyouts open"
-            hint: "How flyouts appear"
-            Choices { key: "flyoutAnim" }
-        }
-
-        SettingsField {
-            label: "Flyouts sit"
-            hint: "Where flyouts sit against the bar"
-            Choices { key: "flyoutAttach" }
-        }
-
-        SettingsField {
-            label: "Flyout titles"
-            hint: "A flyout's first heading"
-            Choices { key: "flyoutTitle" }
-        }
-
-        Item { width: 1; height: Theme.spaceM }
         FlyoutHeading { text: "LAUNCHER" }
 
         SettingsField {
@@ -1946,18 +1787,6 @@ SettingsPage {
             label: "Notification popups"
             hint: "How much each popup shows"
             Choices { key: "notifStyle" }
-        }
-
-        SettingsField {
-            label: "Urgency stripe"
-            lookKey: "notifStripe"
-            hint: "In the accent, the alert colour if critical"
-
-            Switch {
-                anchors.right: parent.right
-                checked: Settings.notifStripe
-                onToggled: Settings.set("notifStripe", !Settings.notifStripe)
-            }
         }
 
         Item { width: 1; height: Theme.spaceM }
@@ -2004,20 +1833,6 @@ SettingsPage {
 
         HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
         HyprInt { label: "Gaps at screen edges"; path: ["general"]; key: "gaps_out"; max: 40 }
-        HyprInt { label: "Border width"; note: "0 hides the border"; path: ["general"]; key: "border_size"; max: 6 }
-
-        SettingsField {
-            label: "Border colours"
-            hint: Settings.borderFollowsTheme ? "Focused in the accent, the rest grey"
-                : "As set in hyprland.lua"
-
-            Switch {
-                anchors.right: parent.right
-                checked: Settings.borderFollowsTheme
-                onToggled: Settings.set("borderFollowsTheme", !Settings.borderFollowsTheme)
-            }
-        }
-
         HyprPercent { label: "Focused opacity"; path: ["decoration"]; key: "active_opacity" }
         HyprPercent { label: "Unfocused opacity"; path: ["decoration"]; key: "inactive_opacity" }
         HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
@@ -2025,9 +1840,6 @@ SettingsPage {
         HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
         HyprInt { label: "Blur size"; visible: page.blurOn; note: "How far each pass spreads"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
         HyprInt { label: "Blur passes"; visible: page.blurOn; note: "More is smoother and costs more"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
-        HyprToggle { label: "Window shadows"; path: ["decoration", "shadow"]; key: "enabled" }
-        HyprInt { label: "Shadow size"; visible: page.shadowOn; path: ["decoration", "shadow"]; key: "range"; max: 40 }
-        ShadowDarkness { label: "Shadow darkness"; visible: page.shadowOn }
 
     }
 
@@ -2057,6 +1869,12 @@ SettingsPage {
             label: "Window animation"
             hint: "Open, close, minimize, scratchpad"
             Choice { key: "windowAnim" }
+        }
+
+        SettingsField {
+            label: "Flyouts open"
+            hint: Theme.flyoutGrown ? "Grown flyouts always fade" : "How flyouts appear"
+            Choice { key: "flyoutAnim" }
         }
 
         Item { width: 1; height: Theme.spaceM }
@@ -2114,20 +1932,17 @@ SettingsPage {
     // { "general": {key: {editable, value}}, "decoration.blur": ... }, a
     // table being null when the file doesn't have it
     property var conf: ({})
-    readonly property var tablePaths: [["general"], ["decoration"], ["decoration", "blur"], ["decoration", "shadow"]]
+    readonly property var tablePaths: [["general"], ["decoration"], ["decoration", "blur"]]
 
     // Hyprland's own defaults, for keys the file leaves out
     readonly property var hyprDefaults: ({
-        "general.gaps_in": 5, "general.gaps_out": 20, "general.border_size": 1,
+        "general.gaps_in": 5, "general.gaps_out": 20,
         "decoration.active_opacity": 1, "decoration.inactive_opacity": 1,
-        "decoration.dim_inactive": false,
-        "decoration.blur.enabled": true, "decoration.shadow.enabled": true,
+        "decoration.dim_inactive": false, "decoration.blur.enabled": true,
         "decoration.dim_strength": 0.5, "decoration.blur.size": 8, "decoration.blur.passes": 1,
-        "decoration.shadow.range": 4, "decoration.shadow.color": 0xee1a1a1a,
     })
 
     readonly property bool blurOn: hyprField(["decoration", "blur"], "enabled").value === true
-    readonly property bool shadowOn: hyprField(["decoration", "shadow"], "enabled").value === true
 
     function hyprField(path, key) {
         var t = conf[path.join(".")]
@@ -2224,38 +2039,6 @@ SettingsPage {
             onStepped: d => {
                 var p = Math.max(hp.min, Math.min(100, (value + d) * 5))
                 page.setHypr(hp.path, hp.key, p / 100, hp.label + " " + p + "%")
-            }
-        }
-    }
-
-    // The shadow colour's alpha, its hue left as it is. Read from an
-    // rgba(RRGGBBAA) string or a 0xAARRGGBB number, written as the string.
-    component ShadowDarkness: SettingsField {
-        id: sd
-        readonly property var field: page.hyprField(["decoration", "shadow"], "color")
-        readonly property var rgba: {
-            var v = field.value
-            if (typeof v === "number") return { rgb: (v & 0xffffff).toString(16).padStart(6, "0"), a: (v >>> 24) / 255 }
-            var m = /^rgba\(([0-9a-fA-F]{6})([0-9a-fA-F]{2})\)$/.exec(String(v))
-            return m ? { rgb: m[1], a: parseInt(m[2], 16) / 255 } : null
-        }
-        readonly property bool live: field.editable && rgba !== null
-        readonly property int pct: live ? Math.round(rgba.a * 100) : 0
-
-        hint: live ? "" : "Not a plain colour in hyprland.lua"
-
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(160)
-            value: Math.round(sd.pct / 5)
-            minimum: 0
-            maximum: sd.live ? 20 : 0
-            displayValue: sd.pct + "%"
-            valueWidth: 56
-            onStepped: d => {
-                var p = Math.max(0, Math.min(100, (value + d) * 5))
-                var a = ("0" + Math.round(p / 100 * 255).toString(16)).slice(-2)
-                page.setHypr(["decoration", "shadow"], "color", "rgba(" + sd.rgba.rgb + a + ")", "Shadow darkness " + p + "%")
             }
         }
     }
