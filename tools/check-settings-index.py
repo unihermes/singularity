@@ -40,6 +40,13 @@ def main():
         page = m.group(1).lower()
         pages.add(page)
         src = open(os.path.join(ROOT, "settings", f)).read()
+        # a page split into files keeps them in a folder named after it
+        # (settings/appearance/ for SettingsPageAppearance.qml)
+        sub = os.path.join(ROOT, "settings", page)
+        if os.path.isdir(sub):
+            for g in sorted(os.listdir(sub)):
+                if g.endswith(".qml"):
+                    src += "\n" + open(os.path.join(sub, g)).read()
 
         # a field: a SettingsField block, or a one-line component use that
         # carries a label (Appearance's Stepper)

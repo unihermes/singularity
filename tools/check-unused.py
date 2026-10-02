@@ -25,7 +25,9 @@ ALLOW = {
 }
 
 def main():
-    files = subprocess.check_output(["git", "ls-files", "*.qml", "*.js"], cwd=ROOT, text=True).split()
+    # tracked and new files alike, so a file not yet added still counts
+    files = subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard",
+                                     "*.qml", "*.js"], cwd=ROOT, text=True).split()
     files = [f for f in files if os.path.exists(os.path.join(ROOT, f))]
     src = {f: open(os.path.join(ROOT, f)).read() for f in files}
     words = collections.Counter(re.findall(r"\w+", re.sub(r"//[^\n]*", "", "\n".join(src.values()))))
