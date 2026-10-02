@@ -1744,7 +1744,7 @@ SettingsPage {
         SettingsField {
             label: "Separators"
             hint: "Between the bar's modules"
-            Choices { key: "barSeparator" }
+            Choice { key: "barSeparator" }
         }
 
         SettingsField {
