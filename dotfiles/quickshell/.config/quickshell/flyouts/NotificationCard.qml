@@ -126,7 +126,7 @@ Item {
                     : root.entry.appName || "Notification"
                 textFormat: Text.PlainText
                 elide: Text.ElideRight
-                font.bold: root.banner && !!root.entry.summary
+                font.weight: (root.banner && !!root.entry.summary) ? Theme.weightStrong : Theme.weightBody
                 color: root.critical ? Theme.alert : root.banner ? Theme.text : Theme.subtext
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontSmall
@@ -141,6 +141,7 @@ Item {
                     + (root.unread ? "new · " : "") + Notifications.ago(root.entry)
                 color: root.unread ? Theme.accent : Theme.muted
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
 

@@ -49,6 +49,7 @@ SystemPage {
             text: Health.lastScan === "" ? "Not checked yet" : "Checked at " + Health.lastScan
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
 
@@ -87,6 +88,7 @@ SystemPage {
         wrapMode: Text.WordWrap
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -102,6 +104,7 @@ SystemPage {
         wrapMode: Text.WordWrap
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 }

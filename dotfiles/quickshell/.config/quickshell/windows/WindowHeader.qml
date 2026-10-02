@@ -49,6 +49,7 @@ Item {
             text: root.eyebrow
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontEyebrow
             font.letterSpacing: 1.5
         }
@@ -67,6 +68,7 @@ Item {
             text: root.subtitle
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontCaption
         }
     }

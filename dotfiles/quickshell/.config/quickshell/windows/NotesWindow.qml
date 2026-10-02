@@ -148,7 +148,7 @@ FloatingWindow {
                         color: tab.open ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontSmall
-                        font.bold: tab.open
+                        font.weight: tab.open ? Theme.weightStrong : Theme.weightBody
                     }
 
                     TextInput {
@@ -248,6 +248,7 @@ FloatingWindow {
                 selectionColor: Theme.selectedStroke
                 selectedTextColor: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
 
                 onTextChanged: Notes.setText(Notes.current, text)

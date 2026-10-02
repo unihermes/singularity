@@ -36,6 +36,7 @@ FlyoutPanel {
                 elide: Text.ElideMiddle
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
 
@@ -46,6 +47,7 @@ FlyoutPanel {
                 text: modelData.user ? "user" : "system"
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
 

@@ -43,6 +43,7 @@ FlyoutPanel {
                 text: Weather.condition
                 color: Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
         }
@@ -59,6 +60,7 @@ FlyoutPanel {
     TextMetrics {
         id: tempMetrics
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
         text: "-00°"
     }
@@ -81,6 +83,7 @@ FlyoutPanel {
                     : Qt.formatDate(new Date(modelData.date + "T12:00:00"), "ddd")
                 color: Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
 
@@ -109,6 +112,7 @@ FlyoutPanel {
                 text: Weather.temp(modelData.hiF, modelData.hiC)
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
             Text {
@@ -120,6 +124,7 @@ FlyoutPanel {
                 text: Weather.temp(modelData.loF, modelData.loC)
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
         }

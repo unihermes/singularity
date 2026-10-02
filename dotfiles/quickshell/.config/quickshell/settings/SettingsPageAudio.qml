@@ -121,6 +121,7 @@ SettingsPage {
                 text: lvl.ready ? Math.round(lvl.node.audio.volume * 100) + "%" : "--"
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
             FlyoutChip {
@@ -208,6 +209,7 @@ SettingsPage {
         text: "Nothing is playing"
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 

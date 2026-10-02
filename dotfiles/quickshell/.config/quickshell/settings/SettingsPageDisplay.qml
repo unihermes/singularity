@@ -410,6 +410,7 @@ SettingsPage {
                             + mon.modelData.hz.toFixed(2) + " Hz · scale " + mon.modelData.scale
                         color: Theme.textStrong
                         font.family: Theme.fontText
+                        font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontBody
                     }
                     FlyoutChip {

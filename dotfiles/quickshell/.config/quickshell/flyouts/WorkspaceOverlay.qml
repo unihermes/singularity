@@ -169,7 +169,7 @@ OverlayWindow {
                             color: cell.isFocused ? Theme.textStrong : Theme.text
                             font.family: Theme.fontText
                             font.pixelSize: Theme.fontBody
-                            font.bold: cell.isFocused
+                            font.weight: cell.isFocused ? Theme.weightStrong : Theme.weightBody
                         }
 
                         Text {
@@ -180,6 +180,7 @@ OverlayWindow {
                                 : cell.windows.length + (cell.windows.length === 1 ? " window" : " windows")
                             color: Theme.muted
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontSmall
                         }
 
@@ -243,6 +244,7 @@ OverlayWindow {
                                             text: winRow.modelData.title || winRow.cls
                                             color: Theme.subtext
                                             font.family: Theme.fontText
+                                            font.weight: Theme.weightBody
                                             font.pixelSize: Theme.fontSmall
                                         }
                                     }

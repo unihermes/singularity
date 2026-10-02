@@ -37,7 +37,7 @@ Item {
 
     width: (fill || label !== "") && parent ? parent.width : implicitWidth
     implicitWidth: segs.implicitWidth + Theme.borderWidth * 2
-    implicitHeight: Theme.rowHeight
+    implicitHeight: Theme.rowHeightTall
     opacity: enabled ? 1 : 0.5
 
     Text {
@@ -50,6 +50,7 @@ Item {
         elide: Text.ElideRight
         color: Theme.text
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 
@@ -59,7 +60,7 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         width: root.fill ? parent.width : segs.implicitWidth + Theme.borderWidth * 2
-        height: Theme.chipHeight
+        height: Theme.rowHeight
         radius: Theme.radiusInner
         color: Theme.controlFill("transparent")
         border.width: Theme.controlBorder(Theme.stroke)
@@ -114,6 +115,7 @@ Item {
                         color: seg.on && Theme.frameChannel ? "#ffffff"
                             : seg.on || segMouse.containsMouse ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
+                        font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontSmall
                     }
 

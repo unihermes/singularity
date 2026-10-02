@@ -213,11 +213,13 @@ OverlayWindow {
     FontMetrics {
         id: captionMetrics
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
     FontMetrics {
         id: eyebrowMetrics
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontCaption
     }
     readonly property int captionW: {
@@ -324,6 +326,7 @@ OverlayWindow {
                             maximumLineCount: 1
                             color: card.active ? Theme.textStrong : Theme.subtext
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontCaption
                         }
 
@@ -358,6 +361,7 @@ OverlayWindow {
                     text: ipc ? Apps.nameForWindow(ipc.class, ipc.title) : ""
                     color: Theme.textDisabled
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontCaption
                 }
 
@@ -371,6 +375,7 @@ OverlayWindow {
                     text: root.titleOf(root.windows[root.selected])
                     color: Theme.text
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
             }

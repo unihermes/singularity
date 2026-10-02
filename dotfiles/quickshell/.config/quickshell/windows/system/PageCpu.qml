@@ -67,6 +67,7 @@ SystemPage {
                     text: "#" + index
                     color: Theme.subtext
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
 
@@ -89,6 +90,7 @@ SystemPage {
                     text: Format.pct(modelData)
                     color: Theme.textStrong
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
 
@@ -102,6 +104,7 @@ SystemPage {
                         ? (SystemStats.coreMhz[index] / 1000).toFixed(2) + "G" : ""
                     color: Theme.muted
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
             }

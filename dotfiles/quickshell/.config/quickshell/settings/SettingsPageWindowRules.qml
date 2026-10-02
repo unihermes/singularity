@@ -287,6 +287,7 @@ SettingsPage {
             : "No open windows match — the class has to be exact"
         color: n > 0 ? Theme.good : Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -321,6 +322,7 @@ SettingsPage {
         text: "No rules yet."
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 
@@ -388,6 +390,7 @@ SettingsPage {
                         text: page.describe(ruleCol.rule)
                         color: Theme.textStrong
                         font.family: Theme.fontText
+                        font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontBody
                     }
                     Text {
@@ -396,6 +399,7 @@ SettingsPage {
                         text: page.summary(ruleCol.rule)
                         color: Theme.subtext
                         font.family: Theme.fontText
+                        font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontSmall
                     }
                 }
@@ -408,6 +412,7 @@ SettingsPage {
                     text: ruleCol.open > 0 ? ruleCol.open + " open" : ""
                     color: Theme.good
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
 
@@ -448,6 +453,7 @@ SettingsPage {
                 wrapMode: Text.WrapAnywhere
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
 

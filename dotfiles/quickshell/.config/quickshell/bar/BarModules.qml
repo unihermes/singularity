@@ -132,7 +132,7 @@ Item {
                         : parent.occupied ? Theme.text : Theme.muted
                     font.family: Theme.fontText
                     font.pixelSize: Theme.barLabelSize
-                    font.bold: parent.current
+                    font.weight: parent.current ? Theme.weightStrong : Theme.weightBody
                 }
 
                 // the apps style: the app's icon, an accent rule under the
@@ -221,6 +221,7 @@ Item {
                     text: scratchMark.count
                     color: scratchMark.shown ? Theme.accent : Theme.subtext
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.barFs(11)
                 }
             }
@@ -568,6 +569,7 @@ Item {
                             elide: Text.ElideRight
                             color: winIcon.focused ? Theme.textStrong : winIcon.lit ? Theme.text : Theme.subtext
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.barLabelSize
                             Behavior on width {
                                 enabled: winIcon.spot
@@ -585,6 +587,7 @@ Item {
                             color: winIcon.focused ? winIcon.onAccent : Theme.muted
                             opacity: winIcon.focused ? 0.65 : 1
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.barLabelSize
                         }
                         Text {
@@ -599,6 +602,7 @@ Item {
                             elide: Text.ElideRight
                             color: winIcon.focused ? winIcon.onAccent : winIcon.hovered ? Theme.text : Theme.subtext
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.barLabelSize
                         }
 

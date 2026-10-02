@@ -191,6 +191,7 @@ Item {
             wrapMode: Text.WordWrap
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
 
@@ -344,6 +345,7 @@ Item {
                 elide: Text.ElideRight
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
         }

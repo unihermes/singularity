@@ -112,6 +112,7 @@ Item {
                 text: modelData.toUpperCase()
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontEyebrow
                 font.letterSpacing: 1
             }
@@ -127,6 +128,7 @@ Item {
         elide: Text.ElideRight
         color: Theme.textDisabled
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 
@@ -145,6 +147,7 @@ Item {
         selectedTextColor: Theme.textStrong
 
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
         echoMode: root.echoPassword ? TextInput.Password : TextInput.Normal
         // the panel is dismissed by click-off or Escape, so Enter is the only

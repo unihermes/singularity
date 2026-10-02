@@ -45,6 +45,7 @@ FlyoutPanel {
                 elide: Text.ElideRight
                 color: Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
             Text {
@@ -58,6 +59,7 @@ FlyoutPanel {
                 elide: Text.ElideLeft
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
         }

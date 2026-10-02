@@ -128,7 +128,7 @@ Column {
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontSmall
-                    font.bold: Theme.headingBold
+                    font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
                     font.letterSpacing: Theme.headingSpacing
                 }
 
@@ -137,6 +137,7 @@ Column {
                     text: "empty, drag a module here"
                     color: Theme.muted
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
             }

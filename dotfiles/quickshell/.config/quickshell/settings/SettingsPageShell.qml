@@ -284,6 +284,7 @@ SettingsPage {
         text: "Terminals already open keep their aliases until you run source ~/.bashrc in them."
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -326,6 +327,7 @@ SettingsPage {
                 text: aliasRow.modelData.name
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
             Text {
@@ -338,6 +340,7 @@ SettingsPage {
                 text: aliasRow.modelData.value
                 color: Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
             // on hover, as a flyout row's forget is: a Remove chip on every

@@ -77,6 +77,7 @@ Column {
             text: "PID"
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
         Text {
@@ -85,6 +86,7 @@ Column {
             text: "Process"
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
         Text {
@@ -97,6 +99,7 @@ Column {
             text: "User"
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
         Text {
@@ -108,6 +111,7 @@ Column {
             text: "CPU"
             color: SystemStats.procSort === "cpu" ? Theme.text : Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
         Text {
@@ -119,6 +123,7 @@ Column {
             text: "MEM"
             color: SystemStats.procSort === "mem" ? Theme.text : Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }
@@ -162,6 +167,7 @@ Column {
                     text: pr.modelData.pid
                     color: Theme.muted
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
 
@@ -174,6 +180,7 @@ Column {
                     elide: Text.ElideRight
                     color: Theme.text
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
 
@@ -189,6 +196,7 @@ Column {
                     elide: Text.ElideRight
                     color: pr.mine ? Theme.subtext : Theme.muted
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
 
@@ -202,6 +210,7 @@ Column {
                     text: pr.modelData.cpu.toFixed(1) + "%"
                     color: SystemStats.procSort === "cpu" ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
 
@@ -215,6 +224,7 @@ Column {
                     text: Format.kib(pr.modelData.memKb)
                     color: SystemStats.procSort === "mem" ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
 
@@ -241,6 +251,7 @@ Column {
             : SystemStats.procs.length === 0 ? "Sampling…" : ""
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 }

@@ -91,7 +91,7 @@ FlyoutPanel {
                     color: group.current || headMouse.containsMouse ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
                     font.pixelSize: Theme.fontSmall
-                    font.bold: group.current
+                    font.weight: group.current ? Theme.weightStrong : Theme.weightBody
                 }
 
                 Text {
@@ -100,6 +100,7 @@ FlyoutPanel {
                     text: group.modelData.windows.length
                     color: Theme.muted
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
 
@@ -190,6 +191,7 @@ FlyoutPanel {
                         elide: Text.ElideRight
                         color: row.lit ? Theme.textStrong : Theme.text
                         font.family: Theme.fontText
+                        font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontBody
                     }
 

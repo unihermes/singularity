@@ -182,7 +182,7 @@ Singleton {
         vizStyle:     ["mirror", "rise", "dots", "line"],
         gaugeStyle:   ["fill", "segments", "rule"],
         boldWeight:   ["medium", "bold", "black"],
-        textWeight:   ["light", "regular", "medium"],
+        textWeight:   ["light", "regular", "medium", "bold"],
         levelStyle:   ["pill", "edge", "number"],
         powerStyle:   ["row", "list", "full"],
         overviewBackdrop: ["dim", "clear", "solid"],

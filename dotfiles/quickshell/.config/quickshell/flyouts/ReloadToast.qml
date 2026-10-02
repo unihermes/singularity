@@ -94,6 +94,7 @@ OverlayWindow {
                 text: root.failed ? root.error : "Configuration loaded"
                 color: Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
                 wrapMode: Text.Wrap
                 maximumLineCount: 8

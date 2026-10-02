@@ -143,6 +143,7 @@ OverlayWindow {
                             text: tile.modelData.label
                             color: tile.selected ? Theme.textStrong : Theme.text
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontBody
                         }
                         Text {
@@ -153,6 +154,7 @@ OverlayWindow {
                             text: tile.modelData.key
                             color: Theme.subtext
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontCaption
                         }
 
@@ -174,6 +176,7 @@ OverlayWindow {
                                 text: tile.modelData.label
                                 color: tile.selected ? Theme.textStrong : Theme.text
                                 font.family: Theme.fontText
+                                font.weight: Theme.weightBody
                                 font.pixelSize: Theme.fontBody
                             }
 
@@ -182,6 +185,7 @@ OverlayWindow {
                                 text: tile.modelData.key
                                 color: Theme.subtext
                                 font.family: Theme.fontText
+                                font.weight: Theme.weightBody
                                 font.pixelSize: Theme.fontCaption
                             }
                         }

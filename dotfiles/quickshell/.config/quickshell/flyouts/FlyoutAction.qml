@@ -86,6 +86,7 @@ Item {
                 : mouse.containsMouse ? Theme.textStrong
                 : Theme.text
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
 
@@ -96,6 +97,7 @@ Item {
             elide: Text.ElideRight
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }

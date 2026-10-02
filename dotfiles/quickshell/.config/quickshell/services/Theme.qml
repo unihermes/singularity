@@ -377,7 +377,8 @@ Singleton {
     function shadeBottom(c) { return Qt.tint(c, Qt.rgba(0, 0, 0, isLight ? 0.06 : 0.12)) }
     // the weights text and its emphasis are set in -- see Looks.js
     readonly property int weightBody: Settings.textWeight === "light" ? Font.Light
-        : Settings.textWeight === "medium" ? Font.Medium : Font.Normal
+        : Settings.textWeight === "medium" ? Font.Medium
+        : Settings.textWeight === "bold" ? Font.Bold : Font.Normal
     readonly property int weightStrong: Settings.boldWeight === "medium" ? Font.Medium
         : Settings.boldWeight === "black" ? Font.Black : Font.Bold
     // section headings' face -- see Looks.js

@@ -74,6 +74,7 @@ Item {
             color: !root.exists ? Theme.textDisabled
                 : mouse.containsMouse ? Theme.textStrong : Theme.text
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
 
@@ -84,6 +85,7 @@ Item {
             elide: Text.ElideRight
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }
@@ -101,6 +103,7 @@ Item {
         elide: Text.ElideLeft
         color: root.exists ? Theme.muted : Theme.alert
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 

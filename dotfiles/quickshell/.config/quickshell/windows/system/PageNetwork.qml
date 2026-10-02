@@ -120,6 +120,7 @@ SystemPage {
                     text: modelData.name
                     color: Theme.textStrong
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
 
@@ -129,6 +130,7 @@ SystemPage {
                     text: modelData.state.toLowerCase()
                     color: modelData.state === "UP" ? Theme.text : Theme.muted
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
             }
@@ -146,6 +148,7 @@ SystemPage {
         text: "No interfaces reported yet."
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 

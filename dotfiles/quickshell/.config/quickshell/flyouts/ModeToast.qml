@@ -70,7 +70,7 @@ OverlayWindow {
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
             font.letterSpacing: Theme.headingSpacing * 2
-            font.bold: Theme.headingBold
+            font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
         }
     }
 }

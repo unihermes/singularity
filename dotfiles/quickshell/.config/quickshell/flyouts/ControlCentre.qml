@@ -247,6 +247,7 @@ FlyoutPanel {
                 elide: Text.ElideRight
                 color: appRow.ListView.isCurrentItem ? Theme.textStrong : Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
 
@@ -481,6 +482,7 @@ FlyoutPanel {
                     text: Wallpaper.name !== "" ? Wallpaper.name : "No wallpaper"
                     color: Theme.textStrong
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontCaption
                 }
 

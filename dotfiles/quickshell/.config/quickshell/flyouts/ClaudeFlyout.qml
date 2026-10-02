@@ -64,6 +64,7 @@ FlyoutPanel {
             + "copy of the repo; nothing goes live until you apply it."
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -112,6 +113,7 @@ FlyoutPanel {
                         : entry.kind === "tool" ? Theme.subtext
                         : entry.kind === "error" ? Theme.alert : Theme.text
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: entry.kind === "tool" ? Theme.fontSmall : Theme.fontBody
                 }
             }
@@ -163,6 +165,7 @@ FlyoutPanel {
                 elide: Text.ElideLeft
                 color: Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
 
@@ -176,12 +179,14 @@ FlyoutPanel {
                     text: "+" + fileRow.modelData.added
                     color: Theme.good
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
                 Text {
                     text: "−" + fileRow.modelData.removed
                     color: Theme.alert
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
             }
@@ -232,7 +237,7 @@ FlyoutPanel {
                     : c === "@" ? Theme.subtext
                     : c === "+" ? Theme.good
                     : c === "-" ? Theme.alert : Theme.text
-                font.bold: modelData.indexOf("diff --git") === 0
+                font.weight: (modelData.indexOf("diff --git") === 0) ? Theme.weightStrong : Theme.weightBody
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontSmall
             }

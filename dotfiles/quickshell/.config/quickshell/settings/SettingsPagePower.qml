@@ -412,6 +412,7 @@ SettingsPage {
             : "hypridle isn't running, so none of these fire. Changing one starts it."
         color: page.idleRunning ? Theme.subtext : Theme.alert
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 

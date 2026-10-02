@@ -101,7 +101,7 @@ groove, or fill with the accent, when active.
   it fills with the accent inside a dark groove.
 - **Slider:** a 16px level chip. A dark groove holds an accent fill up to the
   value, with a thin white marker at the level.
-- **Segmented:** a channel strip. The chosen segment fills with the accent
+- **Segmented:** a channel strip, `rowHeight` tall (taller than chips). The chosen segment fills with the accent
   inside a 2px dark groove, with white text.
 - **Chip/button:** surface ground with an outer line and groove. Hover
   brightens the outer line, and selected fills with the accent. Armed
@@ -113,6 +113,12 @@ groove, or fill with the accent, when active.
 ## Type
 
 - UbuntuMono Nerd Font for everything: text and icons.
+- **All text is bold** (`textWeight: "bold"`): UbuntuMono has no medium
+  weight. Every Text takes `Theme.weightBody`; emphasis and headings use
+  `Theme.weightStrong`. A new Text sets `font.weight: Theme.weightBody`, and
+  a conditional emphasis is `font.weight: cond ? Theme.weightStrong :
+  Theme.weightBody`, never `font.bold: cond`, which would drop the off state
+  to regular.
 - Sizes: body 16, headings 14, captions 12, and the bar's own size
   (`barFontSize`).
 

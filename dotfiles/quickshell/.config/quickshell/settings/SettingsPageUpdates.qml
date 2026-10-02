@@ -60,6 +60,7 @@ SettingsPage {
         text: "checkupdates isn't installed (pacman-contrib), so nothing is checked."
         color: Theme.alert
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -107,6 +108,7 @@ SettingsPage {
                 text: page.when(Updates.lastChecked)
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
             FlyoutChip {
@@ -166,6 +168,7 @@ SettingsPage {
         text: "Left out of the count and passed to yay as --ignore. pacman.conf's own IgnorePkg still applies."
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -224,6 +227,7 @@ SettingsPage {
         text: Health.scanning ? "Looking…" : "pacman isn't available"
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 

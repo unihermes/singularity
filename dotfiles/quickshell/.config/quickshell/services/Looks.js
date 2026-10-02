@@ -178,7 +178,8 @@
 //                  screen's right "edge", or the "number" itself
 //     headingFont  the face section headings are set in; "" for the text
 //                  font. Any of the text fonts, or one of Looks.headingFonts
-//     textWeight   labels and body text: "light", "regular" or "medium"
+//     textWeight   labels and body text: "light", "regular", "medium" or
+//                  "bold" (for fonts with no medium, such as Ubuntu Mono)
 //     boldWeight   what's bold -- headings, titles: "medium", "bold" or
 //                  "black". A font without the weight draws its nearest
 //     gradient     true: the bar's ground and the panels shade from a
@@ -243,7 +244,7 @@ var looks = {
         settings: {
             radius: 6, barHeight: 32, moduleGap: 2, barOpacity: 100,
             frameStyle: "channel", density: "normal", fontFamily: "UbuntuMono Nerd Font",
-            moduleStyle: "grouped", barStyle: "full", flyoutAttach: "grown",
+            moduleStyle: "grouped", barStyle: "full", flyoutAttach: "grown", textWeight: "bold",
         },
     },
 }

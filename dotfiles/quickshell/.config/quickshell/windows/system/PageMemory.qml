@@ -93,6 +93,7 @@ SystemPage {
         text: "■ applications   ■ cache and buffers   □ free"
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -126,6 +127,7 @@ SystemPage {
         wrapMode: Text.WordWrap
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 

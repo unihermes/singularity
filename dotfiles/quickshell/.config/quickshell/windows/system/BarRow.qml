@@ -36,6 +36,7 @@ Item {
             text: root.label
             color: Theme.text
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
 
@@ -49,6 +50,7 @@ Item {
             elide: Text.ElideMiddle
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
 
@@ -59,6 +61,7 @@ Item {
             text: root.value
             color: root.critical ? Theme.alert : Theme.textStrong
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
     }

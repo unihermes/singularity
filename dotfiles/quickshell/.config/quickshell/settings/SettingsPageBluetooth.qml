@@ -140,6 +140,7 @@ SettingsPage {
         text: "Nothing paired yet"
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 
@@ -183,6 +184,7 @@ SettingsPage {
         text: page.adapter && page.adapter.discovering ? "Nothing found yet" : "Nothing in range"
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 }

@@ -153,6 +153,7 @@ Item {
                         text: box.isPrimary ? "Primary" : box.modelData.width + "×" + box.modelData.height
                         color: box.isPrimary ? Theme.accent : Theme.subtext
                         font.family: Theme.fontText
+                        font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontCaption
                     }
                 }
@@ -207,6 +208,7 @@ Item {
         text: "Drag a display to where it sits"
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontCaption
     }
 }

@@ -273,6 +273,7 @@ OverlayWindow {
                         : root.clipMode ? "Clipboard history is empty" : "No applications"
                     color: Theme.textDisabled
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
 
@@ -381,6 +382,7 @@ OverlayWindow {
                                 maximumLineCount: 1
                                 color: Theme.subtext
                                 font.family: Theme.fontText
+                                font.weight: Theme.weightBody
                                 font.pixelSize: Theme.fontCaption
                             }
                         }
@@ -395,6 +397,7 @@ OverlayWindow {
                             opacity: row.current ? 1 : 0
                             color: Theme.subtext
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontSmall
                         }
 
@@ -458,6 +461,7 @@ OverlayWindow {
                             elide: Text.ElideRight
                             color: cell.current ? Theme.textStrong : Theme.text
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontSmall
                         }
 

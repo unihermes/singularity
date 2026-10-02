@@ -387,7 +387,7 @@ SettingsPage {
                         color: pv.look.heading.accent ? pv.accent : pv.pal.bright
                         font.family: Fonts.resolve(pv.ls.fontFamily)
                         font.pixelSize: Theme.fs(10)
-                        font.bold: pv.look.heading.bold
+                        font.weight: pv.look.heading.bold ? Theme.weightStrong : Theme.weightBody
                         font.letterSpacing: pv.look.heading.spacing / 2
                     }
                 }
@@ -496,6 +496,7 @@ SettingsPage {
                     : Settings.lookDiffs.length + " settings changed from the look"
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
             FlyoutChip {
@@ -573,6 +574,7 @@ SettingsPage {
             text: "Nothing changed — " + page.label(Settings.look) + " is as it was designed. Anything you change on the other tabs shows up here."
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
 
@@ -745,6 +747,7 @@ SettingsPage {
                             text: card.look.description
                             color: Theme.subtext
                             font.family: Theme.fontText
+                            font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontSmall
                         }
                     }
@@ -1009,6 +1012,7 @@ SettingsPage {
             text: "No images in the repo's wallpapers/ folder"
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
 
@@ -1079,6 +1083,7 @@ SettingsPage {
                         text: sw.modelData
                         color: Theme.subtext
                         font.family: Theme.fontText
+                        font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontSmall
                     }
                 }

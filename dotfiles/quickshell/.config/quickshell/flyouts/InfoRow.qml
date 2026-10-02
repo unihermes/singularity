@@ -25,6 +25,7 @@ Item {
         text: info.label
         color: Theme.text
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 
@@ -39,6 +40,7 @@ Item {
         color: info.valueColor !== undefined ? info.valueColor : Theme.textStrong
 
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 }

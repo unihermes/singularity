@@ -124,6 +124,7 @@ Item {
                 text: modelData.label
                 color: current || markHover.containsMouse ? Theme.text : Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontCaption
 
                 MouseArea {

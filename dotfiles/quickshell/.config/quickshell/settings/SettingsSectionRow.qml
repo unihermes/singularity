@@ -72,6 +72,7 @@ Item {
             text: root.number
             color: root.selected ? Theme.accent : Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontCaption
         }
 
@@ -107,6 +108,7 @@ Item {
                 elide: Text.ElideRight
                 color: root.selected || root.current || mouse.containsMouse ? Theme.textStrong : Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
 
@@ -117,6 +119,7 @@ Item {
                 elide: Text.ElideRight
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontCaption
             }
         }
@@ -130,6 +133,7 @@ Item {
             visible: root.selected || root.current
             color: root.selected ? Theme.accent : Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
 

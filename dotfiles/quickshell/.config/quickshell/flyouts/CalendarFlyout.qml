@@ -105,7 +105,7 @@ FlyoutPanel {
             color: Theme.headingColor
             font.family: Theme.fontText
             font.pixelSize: Theme.fontBody
-            font.bold: Theme.headingBold
+            font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
             font.letterSpacing: Theme.headingSpacing
         }
 
@@ -142,6 +142,7 @@ FlyoutPanel {
                 text: modelData
                 color: Theme.muted
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
         }
@@ -193,7 +194,7 @@ FlyoutPanel {
                         color: cell.isToday ? Theme.base : cell.inMonth ? Theme.text : Theme.muted
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontBody
-                        font.bold: cell.isToday
+                        font.weight: cell.isToday ? Theme.weightStrong : Theme.weightBody
                     }
                 }
 
@@ -244,6 +245,7 @@ FlyoutPanel {
                 : Qt.formatDateTime(calendarFlyout.now, "dddd, MMMM d")
             color: parent.away && todayArea.containsMouse ? Theme.textStrong : Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
         MouseArea {
@@ -301,6 +303,7 @@ FlyoutPanel {
                 }
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
 
@@ -321,6 +324,7 @@ FlyoutPanel {
                     textFormat: Text.PlainText
                     color: Theme.text
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
                 }
                 Text {
@@ -332,6 +336,7 @@ FlyoutPanel {
                     textFormat: Text.PlainText
                     color: Theme.subtext
                     font.family: Theme.fontText
+                    font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontCaption
                 }
             }
@@ -375,6 +380,7 @@ FlyoutPanel {
             text: Timers.active ? Timers.text : calendarFlyout.timerMinutes + ":00"
             color: Theme.textStrong
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontHero
             font.letterSpacing: 1
         }
@@ -385,6 +391,7 @@ FlyoutPanel {
                 : "Countdown · " + calendarFlyout.timerMinutes + " min"
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }

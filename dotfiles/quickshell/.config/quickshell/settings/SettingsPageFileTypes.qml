@@ -313,6 +313,7 @@ SettingsPage {
             text: page.loaded ? "No installed app handles this" : "Reading apps…"
             color: Theme.muted
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }
@@ -362,6 +363,7 @@ SettingsPage {
                 : "or search above"
             color: Theme.muted
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }
@@ -392,6 +394,7 @@ SettingsPage {
         text: "No known type matches \"" + page.query.trim() + "\""
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 }

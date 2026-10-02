@@ -88,6 +88,7 @@ FlyoutPanel {
                 elide: Text.ElideRight
                 color: Theme.text
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
             Text {
@@ -97,6 +98,7 @@ FlyoutPanel {
                 elide: Text.ElideRight
                 color: Theme.subtext
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
         }
@@ -139,6 +141,7 @@ FlyoutPanel {
             text: mediaFlyout.player ? Media.fmtTime(mediaFlyout.player.position) : ""
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
         Text {
@@ -147,6 +150,7 @@ FlyoutPanel {
             text: mediaFlyout.player ? Media.fmtTime(mediaFlyout.player.length) : ""
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }

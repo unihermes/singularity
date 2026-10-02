@@ -53,6 +53,7 @@ Column {
             text: root.label
             color: Theme.text
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
 
@@ -66,6 +67,7 @@ Column {
             }
             color: Theme.textStrong
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
     }

@@ -86,6 +86,7 @@ SettingsPage {
         wrapMode: Text.WordWrap
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -150,6 +151,7 @@ SettingsPage {
         wrapMode: Text.WordWrap
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 
@@ -168,6 +170,7 @@ SettingsPage {
         wrapMode: Text.WordWrap
         color: Theme.subtext
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
     }
 }

@@ -43,6 +43,7 @@ Item {
         text: root.label
         color: Theme.text
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
     }
 
@@ -75,6 +76,7 @@ Item {
                 text: btn.glyph
                 color: btn.live ? (ma.containsMouse ? Theme.textStrong : Theme.text) : Theme.textDisabled
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
 
@@ -106,6 +108,7 @@ Item {
                 text: root.displayValue !== "" ? root.displayValue : root.value + root.suffix
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
 
                 font.pixelSize: Theme.fontBody
             }

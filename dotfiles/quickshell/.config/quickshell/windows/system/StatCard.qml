@@ -56,7 +56,7 @@ Item {
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
-            font.bold: Theme.headingBold
+            font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
             font.letterSpacing: Theme.headingSpacing
         }
 
@@ -67,6 +67,7 @@ Item {
             color: !root.available ? Theme.subtext
                 : root.critical ? Theme.alert : Theme.textStrong
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontTitle
         }
 
@@ -84,6 +85,7 @@ Item {
             elide: Text.ElideRight
             color: Theme.subtext
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
     }

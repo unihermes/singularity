@@ -165,6 +165,7 @@ Item {
             text: "["
             color: root.active ? Theme.accent : Theme.muted
             font.family: Theme.fontText
+            font.weight: Theme.weightBody
             font.pixelSize: Theme.barLabelSize
         }
 

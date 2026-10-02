@@ -587,6 +587,7 @@ Column {
     component Label: Text {
         color: Theme.text
         font.family: Theme.fontText
+        font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
         elide: Text.ElideRight
     }
@@ -616,7 +617,7 @@ Column {
             text: Theme.heading(head.text)
             color: Theme.headingColor
             font.pixelSize: Theme.fontSmall
-            font.bold: Theme.headingBold
+            font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
             font.letterSpacing: Theme.headingSpacing
         }
 

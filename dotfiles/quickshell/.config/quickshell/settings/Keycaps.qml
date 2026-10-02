@@ -63,6 +63,7 @@ Row {
                 text: root.label(parent.modelData)
                 color: root.alert ? Theme.alert : root.dim ? Theme.subtext : Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
         }
