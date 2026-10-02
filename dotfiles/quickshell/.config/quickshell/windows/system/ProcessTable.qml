@@ -40,9 +40,6 @@ Column {
     readonly property int cpuW:  Theme.fs(52)
     readonly property int memW:  Theme.fs(62)
     readonly property int killW: Theme.fs(22)
-    // where the name column has to stop, counting back from the right edge
-    readonly property int tailW: cpuW + memW + killW + Theme.spaceL * 3
-        + (detailed ? userW + Theme.spaceL : 0)
 
     Item {
         readonly property bool isSectionBreak: true

@@ -13,7 +13,6 @@
 
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Widgets
 import Quickshell.Bluetooth
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
@@ -360,7 +359,7 @@ Item {
                         // Theme.windowMark, for the two icon styles
                         readonly property string mark: style === "icons" || style === "titled"
                             ? Theme.windowMark : ""
-                        readonly property bool underMark: mark === "pill" || (mark === "dot" && focused)
+                        readonly property bool underMark: mark === "pill"
                         readonly property string title: modelData.toplevel ? modelData.toplevel.title || "" : ""
                         // room for the rule between workspaces, in "all" scope
                         readonly property int lead: modelData.groupStart ? Theme.spaceS + 1 : 0
@@ -542,8 +541,7 @@ Item {
                             // lifted a single pixel: just enough to clear the
                             // pip, so the icon still sits level with the
                             // chips around it
-                            anchors.verticalCenterOffset: winIcon.underMark || winIcon.mark === "pill"
-                                || winIcon.glide ? -1 : 0
+                            anchors.verticalCenterOffset: winIcon.underMark || winIcon.glide ? -1 : 0
                             width: winIcon.iconPx
                             height: winIcon.iconPx
                             opacity: winIcon.lift ? (winIcon.focused ? 1 : winIcon.hovered ? 0.9 : 0.5)
@@ -636,10 +634,9 @@ Item {
                             anchors.top: glyphBox.bottom
                             anchors.topMargin: 1
                             anchors.horizontalCenter: glyphBox.horizontalCenter
-                            height: winIcon.mark === "dot" ? Theme.barFs(4) : Theme.indicatorWidth
+                            height: Theme.indicatorWidth
                             radius: height / 2
-                            width: winIcon.mark === "dot" ? height
-                                : winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6)
+                            width: winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6)
                             color: winIcon.focused ? Theme.accent
                                 : winIcon.hovered ? Theme.subtext : Theme.muted
                             Behavior on width {

@@ -37,10 +37,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
-import Quickshell.Widgets
 import Quickshell.Bluetooth
-import Quickshell.Services.SystemTray
-import Quickshell.Services.Mpris
 import QtQuick
 
 ShellRoot {
@@ -808,17 +805,6 @@ ShellRoot {
                 a.enabled = on
             }
 
-            // Name of the first connected Bluetooth device, "" for none.
-            function btConnectedName() {
-                var a = Bluetooth.defaultAdapter
-                var ds = (a && a.devices) ? a.devices.values : []
-                for (var i = 0; i < ds.length; i++) {
-                    if (!ds[i].connected) continue
-                    return ds[i].deviceName !== "" ? ds[i].deviceName
-                        : (ds[i].name !== "" ? ds[i].name : ds[i].address)
-                }
-                return ""
-            }
             // {source, address} for every window open on the focused
             // workspace, via each window's wmClass -> .desktop entry -> icon.
             // address lets the icon's click handler focus that exact window.

@@ -7,7 +7,6 @@
 // active interface without any special case for it.
 
 import Quickshell
-import Quickshell.Io
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format

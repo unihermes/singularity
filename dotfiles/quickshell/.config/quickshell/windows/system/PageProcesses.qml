@@ -7,7 +7,6 @@
 // System.qml), so the summary tables elsewhere stay cheap.
 
 import Quickshell
-import Quickshell.Io
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format

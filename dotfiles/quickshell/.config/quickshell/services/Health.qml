@@ -45,7 +45,6 @@ Singleton {
 
     readonly property int problems: checks.filter(c => c.status === "bad").length
     readonly property int warnings: checks.filter(c => c.status === "warn").length
-    readonly property bool healthy: !scanning && lastScan !== "" && problems === 0 && warnings === 0
 
     // set by the Health page while it is on screen
     property bool active: false

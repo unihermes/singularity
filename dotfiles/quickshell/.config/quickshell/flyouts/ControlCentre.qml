@@ -9,7 +9,6 @@
 // in shell.qml.
 
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Widgets
 import Quickshell.Io
 import QtQuick

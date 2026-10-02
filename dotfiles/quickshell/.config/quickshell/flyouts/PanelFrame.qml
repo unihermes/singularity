@@ -7,9 +7,6 @@
 //           inside it -- Singularity's own look
 //   single  the outer stroke alone
 //   bevel   a raised chisel outside, a sunken one inside -- Windows 95
-//   groove  the bevel inside out: sunken outside, raised inside, an etched line
-//   accent  the outer stroke alone, in the accent colour
-//   corners an L at each corner and nothing between them
 //   none    no stroke -- the ground alone marks the edge
 //   channel an outer line, a dark groove and an inner line (Channel.qml),
 //           with rounder corners to clear them
@@ -36,7 +33,7 @@ Rectangle {
         GradientStop { position: 1; color: Theme.shadeBottom(root.color) }
     }
     border.width: Theme.frameStroked && !bare && !channel ? Theme.borderWidth : 0
-    border.color: Theme.frameAccent ? Theme.accent : Theme.stroke
+    border.color: Theme.stroke
 
     // false for panels inside a window Hyprland already shadows
     property bool shadowed: true
@@ -58,7 +55,7 @@ Rectangle {
     Bevel {
         visible: Theme.frameChiselled && !root.bare
         anchors.fill: parent
-        raised: !Theme.frameGroove
+        raised: true
         light: Theme.bevelLight
         dark: Theme.bevelDark
         thickness: Theme.borderWidth
@@ -86,15 +83,9 @@ Rectangle {
         visible: Theme.frameChiselled && !root.bare
         anchors.fill: parent
         anchors.margins: Theme.frameInset
-        raised: Theme.frameGroove
+        raised: false
         light: Theme.surface
         dark: Theme.base
         thickness: Theme.borderWidth
-    }
-
-    FrameCorners {
-        visible: Theme.frameCorners && !root.bare
-        anchors.fill: parent
-        color: Theme.strokeFocus
     }
 }

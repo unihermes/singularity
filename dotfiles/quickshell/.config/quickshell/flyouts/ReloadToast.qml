@@ -11,7 +11,6 @@
 // shell running, so its handlers are the ones that catch reloadFailed.
 
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import QtQuick
 import "../services"

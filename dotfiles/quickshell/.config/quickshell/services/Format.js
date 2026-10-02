@@ -9,12 +9,6 @@
 
 function pct(f) { return Math.round(f * 100) + "%" }
 
-// binary units, labelled the way df -h and free -h label them
-function gib(bytes) {
-    var g = bytes / 1073741824
-    return g >= 100 ? g.toFixed(0) + "G" : g.toFixed(1) + "G"
-}
-
 function kib(kb) {
     if (kb >= 1048576) return (kb / 1048576).toFixed(1) + "G"
     return Math.round(kb / 1024) + "M"

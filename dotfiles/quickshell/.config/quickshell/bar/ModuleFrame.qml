@@ -3,11 +3,10 @@
 //
 // The bar's chip, wrapped around whatever you put in it. Children are laid
 // out in a centred Row. How it's drawn is Theme.moduleStyle:
-//   outline  an outer stroke, plus an inset inner one when frames are double,
-//            a chiselled Bevel pair when they're bevel or groove, or only
-//            the corners when they're corners
+//   outline  an outer stroke, plus an inset inner one when frames are
+//            double, or a chiselled Bevel pair when they're bevel
 //   filled   a solid ground, no stroke
-//   flat     nothing until active, then an accent underline
+//   ghost    bare until hovered or open
 //   pill     filled, fully rounded
 //   bracket  bare, between [ and ] in the text face -- a terminal status line
 //   underline bare over a rule; a gauge fills the rule itself
@@ -69,7 +68,6 @@ Item {
     Rectangle {
         id: frame
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: root.hoverStyle === "lift" ? -1 : 0
         width: root.fixedWidth > 0
             ? root.fixedWidth
             : contentRow.implicitWidth + root.chrome
@@ -91,15 +89,14 @@ Item {
         radius: style === "pill" ? height / 2 : Theme.radius
         color: grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
             : root.hoverStyle === "fill" ? Theme.overlay
-            : style === "flat" || brackets || underline ? "transparent"
+            : brackets || underline ? "transparent"
             // open under a tab-style flyout: the flyout's own ground, so
             // the chip reads as the tab it hangs from
             : root.active ? (Theme.flyoutAttach === "tab" ? Theme.panelFill : Theme.selectedFill)
             : solid ? Theme.surface : "transparent"
 
         border.width: !grouped && (root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked)) ? Theme.borderWidth : 0
-        border.color: root.active || root.hoverStyle === "outline" ? Theme.strokeFocus
-            : root.hoverStyle === "lift" ? Theme.strokeHover : Theme.stroke
+        border.color: root.active || root.hoverStyle === "outline" ? Theme.strokeFocus : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
@@ -111,7 +108,7 @@ Item {
         Bevel {
             visible: frame.bevel
             anchors.fill: parent
-            raised: !Theme.frameGroove
+            raised: true
             light: Theme.bevelLight
             dark: Theme.bevelDark
             thickness: Theme.borderWidth
@@ -134,28 +131,10 @@ Item {
             visible: frame.bevel
             anchors.fill: parent
             anchors.margins: 2
-            raised: Theme.frameGroove
+            raised: false
             light: Theme.surface
             dark: Theme.base
             thickness: Theme.borderWidth
-        }
-
-        FrameCorners {
-            visible: Theme.frameCorners && frame.style === "outline"
-            anchors.fill: parent
-            length: Theme.sp(5)
-            color: root.active ? Theme.strokeFocus : Theme.stroke
-        }
-
-        // the flat style's only mark: an underline under the active chip
-        Rectangle {
-            visible: frame.style === "flat" && root.active
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - Theme.spaceL
-            height: Theme.indicatorWidth
-            radius: height / 2
-            color: Theme.accent
         }
 
         TextMetrics {

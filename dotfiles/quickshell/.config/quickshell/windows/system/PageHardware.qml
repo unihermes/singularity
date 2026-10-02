@@ -10,7 +10,6 @@
 // strings exactly, and guessing it is the usual way that goes wrong.
 
 import Quickshell
-import Quickshell.Io
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format

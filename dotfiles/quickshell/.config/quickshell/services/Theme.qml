@@ -185,7 +185,7 @@ Singleton {
     // --- shape -----------------------------------------------------------------
 
     readonly property int radius:      Settings.radius
-    // flyouts, windows, cards and wofi; and a floating bar, islands, notch
+    // flyouts, windows, cards and wofi; and a floating bar or islands
     readonly property int panelRadius: resolved.panelRadius
     readonly property int barRadius:   resolved.barRadius
     // One step in from the outer stroke. Floored at 0 because the radius is
@@ -193,27 +193,21 @@ Singleton {
     readonly property int radiusInner: Math.max(0, radius - 2)
     // small controls inside a row: stepper buttons, drag handles
     readonly property int radiusSmall: Math.max(0, radius - 3)
-    // "double" draws a second stroke inset inside panels and bar modules --
-    // the Singularity signature. "single" is the outer stroke alone. "bevel" is
-    // Win95's chiselled 3D edge (see Bevel.qml) instead of either, and
-    // "groove" the same pair turned inside out, an etched line. "accent" is
-    // the single stroke in the accent colour, on panels only. "corners"
-    // marks just the four corners (FrameCorners.qml). "none" draws no
-    // stroke at all -- the ground colour alone marks the edge.
+    // "double" draws a second stroke inset inside panels and bar modules.
+    // "single" is the outer stroke alone. "bevel" is Win95's chiselled 3D
+    // edge (see Bevel.qml) instead of either. "none" draws no stroke at all
+    // -- the ground colour alone marks the edge.
     readonly property string frameStyle: resolved.frameStyle
     readonly property bool frameDouble: frameStyle === "double"
     readonly property bool frameBevel:  frameStyle === "bevel"
-    readonly property bool frameGroove: frameStyle === "groove"
-    readonly property bool frameAccent: frameStyle === "accent"
-    readonly property bool frameCorners: frameStyle === "corners"
     readonly property bool frameNone:   frameStyle === "none"
     // "channel": an outer line, a dark groove, an inner line; lit states
     // light the groove in the accent (Channel.qml)
     readonly property bool frameChannel: frameStyle === "channel"
-    // bevel and groove: drawn with Bevel pairs rather than a border
-    readonly property bool frameChiselled: frameBevel || frameGroove
+    // bevel: drawn with Bevel pairs rather than a border
+    readonly property bool frameChiselled: frameBevel
     // every style but these draws the plain outer stroke
-    readonly property bool frameStroked: !frameChiselled && !frameCorners && !frameNone
+    readonly property bool frameStroked: !frameChiselled && !frameNone
 
     // The channel's three bands, outside in: the outer line, the groove,
     // the inner line. channelWidth is all of them, the first clear pixel.
@@ -233,9 +227,8 @@ Singleton {
     readonly property int panelFrameRadius: frameChannel ? channelPanelRadius : panelRadius
     // A control's own stroke inside a panel (chips, fields, steppers,
     // cards), given the colour its state asks for: kept for the stroked
-    // styles, in the accent where it would be the plain stroke under Accent,
-    // and dropped for the rest -- ControlEdge.qml draws their edge -- except
-    // under Corners and None, where a lit or focused state still shows.
+    // styles, dropped under Bevel -- ControlEdge.qml draws its edge -- and
+    // under None kept only where a lit or focused state shows.
     function controlBorder(c) {
         if (frameStroked) return borderWidth
         if (frameChiselled) return 0
@@ -244,7 +237,7 @@ Singleton {
     function controlStroke(c) {
         if (frameChannel && Qt.colorEqual(c, stroke)) return channelOuter
         if (frameChannel && Qt.colorEqual(c, strokeHover)) return subtext
-        return frameAccent && Qt.colorEqual(c, stroke) ? accent : c
+        return c
     }
     // Under None a control with no ground of its own would vanish, so it
     // gets the field's.
@@ -404,7 +397,6 @@ Singleton {
     // between the bar's modules, and the room each gap takes with one
     readonly property string barSeparator: Settings.barSeparator
     readonly property int moduleSpacing: moduleGap + (barSeparator === "none" ? 0 : spaceL)
-    readonly property bool notifStripe: false
     // notification popups -- see Looks.js and NotificationCard
     readonly property string notifStyle: Settings.notifStyle
     readonly property bool launcherDetails: Settings.launcherDetails

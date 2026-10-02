@@ -11,7 +11,6 @@
 // nothing here has to care which kind this one is.
 
 import Quickshell
-import Quickshell.Io
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format

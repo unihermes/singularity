@@ -38,7 +38,6 @@ Singleton {
 
     readonly property var userEntries: entries.filter(e => e.scope === "user")
     readonly property var systemEntries: entries.filter(e => e.scope === "system")
-    readonly property int enabledCount: entries.filter(e => e.enabled).length
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || home + "/.config"

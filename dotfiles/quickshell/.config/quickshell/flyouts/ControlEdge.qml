@@ -7,12 +7,10 @@
 // itself for the rest:
 //   double   an inner stroke, inset, as on bar modules
 //   bevel    a raised chisel on buttons, a sunken well on fields
-//   groove   the same pair the other way round
-//   corners  marks at the four corners, in the control's stroke colour
 //   channel  a groove inside the stroke: dark at rest, the accent and
 //            twice as wide when the control is lit (focused, selected)
-// Single, accent and none are the stroke alone (or none), so this draws
-// nothing for them.
+// Single and none are the stroke alone (or none), so this draws nothing
+// for them.
 //
 // `sunken` marks a field (an input, a dropdown's box, a switch's track) or
 // a pressed button (a lit chip).
@@ -57,16 +55,9 @@ Item {
     Bevel {
         visible: Theme.frameChiselled
         anchors.fill: parent
-        raised: Theme.frameGroove ? root.sunken : !root.sunken
+        raised: !root.sunken
         light: Theme.bevelLight
         dark: Theme.bevelDark
         thickness: Theme.borderWidth
-    }
-
-    FrameCorners {
-        visible: Theme.frameCorners
-        anchors.fill: parent
-        length: Math.min(Theme.sp(6), root.height / 3)
-        color: Qt.colorEqual(root.stroke, "transparent") ? Theme.stroke : root.stroke
     }
 }

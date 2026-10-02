@@ -277,8 +277,6 @@ Column {
 
     // --- selection -------------------------------------------------------
 
-    function isSelected(id) { return selection[id] === true }
-
     function toggleSelect(item) {
         if (item.state === "bound") {
             say("Already in your config" + (item.other ? " on line " + item.other.line : ""), false)

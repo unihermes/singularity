@@ -234,11 +234,3 @@ function reference(src) {
     })
 }
 
-// Whether a query looks like maths rather than an app name, for the hint
-// the apps mode shows ("= 42  Enter to copy").
-function looksNumeric(src) {
-    var s = String(src || "").trim()
-    if (s === "" || /^[a-zA-Z ]+$/.test(s)) return false
-    return /^[-+(]?\s*(0x[0-9a-f_]+|0b[01_]+|[0-9._]+|pi|e|tau|sqrt|abs|sin|cos|tan|ln|log)/i.test(s)
-        && /[-+*/^%()]|mod/i.test(s)
-}

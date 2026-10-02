@@ -10,8 +10,7 @@
 // entries are marked.
 //
 // A popup is drawn as Theme.notifStyle says (the history always shows
-// everything), with an urgency stripe down its edge when Theme.notifStripe,
-// and stands for `count` popups when the popups are grouped by app.
+// everything), and stands for `count` popups when the popups are grouped by app.
 //
 // `standalone` is for an entry that isn't in the history (the reload
 // toast): closing it only emits dismissed(), and a critical one always
@@ -41,9 +40,6 @@ Item {
     readonly property bool banner: style === "banner"
     // compact shows the rest while the pointer is on it
     readonly property bool expanded: style === "full" || (style === "compact" && hovered)
-    readonly property bool low: entry.urgency === NotificationUrgency.Low
-    readonly property bool stripe: framed && Theme.notifStripe
-    readonly property int stripeW: stripe ? Math.max(3, Theme.borderWidth * 3) : 0
 
     // the popup's timer holds off while the pointer is on the card
     readonly property bool hovered: hover.hovered
@@ -72,20 +68,6 @@ Item {
         anchors.fill: parent
         visible: root.framed
         border.color: root.critical ? Theme.alert : Theme.stroke
-
-        // the urgency stripe, inside the frame's strokes
-        Rectangle {
-            visible: root.stripe
-            readonly property int inset: Theme.frameDouble || Theme.frameChiselled ? Theme.frameInset + Theme.borderWidth
-                : Theme.frameStroked ? Theme.borderWidth : 0
-            x: inset
-            y: inset
-            width: root.stripeW
-            height: parent.height - inset * 2
-            topLeftRadius: Math.max(0, frame.topLeftRadius - inset)
-            bottomLeftRadius: Math.max(0, frame.bottomLeftRadius - inset)
-            color: root.critical ? Theme.alert : root.low ? Theme.muted : Theme.accent
-        }
     }
 
     MouseArea {
@@ -99,7 +81,7 @@ Item {
 
     Column {
         id: col
-        x: root.framed ? Theme.panelPad + root.stripeW : 0
+        x: root.framed ? Theme.panelPad : 0
         y: root.framed ? Theme.panelPad : 0
         width: parent.width - x - (root.framed ? Theme.panelPad : 0)
         spacing: Theme.spaceS

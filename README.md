@@ -256,26 +256,16 @@ is carried by lightness and weight.
 
 The shell (bar, flyouts, windows, settings, the launcher, notifications) and
 Alacritty all draw from one stylesheet, `quickshell/services/Theme.qml`, which reads the active look from
-`services/LookStore.qml`. A look sets the palette and accent colour, corner
-radius, stroke weight, frame style, module style, bar style and geometry,
-panel translucency, shadows (none, soft or hard), heading style, density and
-font, and how the bar draws its parts: workspaces, clock, the open windows
-(icons, the focused title, a gliding slider, size alone, an inset well,
-segments, a spotlight capsule, tabs, numbered names or dots, with a choice
-of focused-window mark, for one workspace or all), app icons (colour, greyed or accent),
-the volume/brightness/battery levels (fill, segments or a rule) and the
-visualizer (mirrored, rising, dots or a line), separators between modules
-(lines, dots or powerline chevrons) and hover feedback. Beyond the bar, a
-look sets how flyouts open (drop, fade, scale) and sit (flush, as a tab,
-floating) and whether their first heading is a title bar, the launcher's
-layout (list, grid, one line), position and detail, notification popups
-(full, compact, banner; an urgency stripe), the ALT+Tab cards (icons,
-titles, window previews), the workspace overview (grid or one row; its
-backdrop), the power menu (row, list, full screen) and the level popup
-(bar, screen edge, number); separate corners for the bar and panels; a
-heading font, text and bold weights; a second accent for levels; and
-gradient grounds. With "One per look" on, each look also keeps its own
-wallpaper. Every one of these is listed in `services/Looks.js`.
+`services/LookStore.qml`. A look sets the palette, accent and status
+colours, and a starting point for everything the Appearance page changes:
+its Style, Roundness, bar shape, density, see-through, the Finish switches,
+font, and how the bar draws its workspaces, clock and open windows. The
+Style (`services/Styles.js`: Channel, Lined, Flat, Retro, Minimal, Basic,
+Capsule, Glass, Tabbed or Terminal) draws all of the chrome at once: frames,
+bar chips, hover, level chips, the focused-window mark, heading prefix and
+where flyouts sit, so no mix of settings can clash. With "One per look" on,
+each look also keeps its own wallpaper. Every key is listed in
+`services/Looks.js`.
 
 The Singularity look is built into `services/Looks.js` and is what everything falls back
 to. The other shipped looks are data in `services/looks.json`: the classic
@@ -285,8 +275,8 @@ Latte, Tokyo Night, Nord, Rosé Pine Moon and Dawn, Everforest, Kanagawa and
 One Dark. To add a look, copy an entry there under a new key. Pick
 one from the carousel on Settings → Appearance's Look tab or in the Control
 Centre, or from a keybind with `qs ipc call look cycle` / `qs ipc call look
-set <name>`. The other tabs (Wallpaper, Colours, Style, Text, Bar, Panels,
-Windows, System) adjust it; a dot marks each setting that differs from the
+set <name>`. The other tabs (Colours, Style, Bar, Panels, Windows,
+System) adjust it; a dot marks each setting that differs from the
 look, and the Look tab lists those changes with a way back for each. Removing
 a look from the Appearance page deletes it from that file.
 

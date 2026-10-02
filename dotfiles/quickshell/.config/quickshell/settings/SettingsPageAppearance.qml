@@ -232,9 +232,8 @@ SettingsPage {
         readonly property bool inset: ls.barStyle !== "full"
         readonly property bool atBottom: ls.barPosition === "bottom"
         readonly property string mod: ls.moduleStyle
-        readonly property bool bevelled: ls.frameStyle === "bevel" || grooved
-        readonly property bool grooved: ls.frameStyle === "groove"
-        readonly property bool stroked: !bevelled && ls.frameStyle !== "corners" && ls.frameStyle !== "none"
+        readonly property bool bevelled: ls.frameStyle === "bevel"
+        readonly property bool stroked: !bevelled && ls.frameStyle !== "none"
         readonly property var bv: look.bevel || { light: Qt.lighter(pal.border, 1.8), dark: Qt.darker(pal.border, 1.8) }
 
         // the desktop behind it: the look's deepest ground
@@ -345,7 +344,7 @@ SettingsPage {
             Bevel {
                 visible: pv.bevelled
                 anchors.fill: parent
-                raised: !pv.grooved
+                raised: true
                 light: pv.bv.light
                 dark: pv.bv.dark
                 thickness: pv.bw
@@ -365,18 +364,10 @@ SettingsPage {
                 visible: pv.bevelled
                 anchors.fill: parent
                 anchors.margins: 2
-                raised: pv.grooved
+                raised: false
                 light: pv.pal.surface
                 dark: pv.pal.base
                 thickness: pv.bw
-            }
-
-            FrameCorners {
-                visible: pv.ls.frameStyle === "corners"
-                anchors.fill: parent
-                length: 6
-                thickness: pv.bw
-                color: pv.accent
             }
 
             Column {

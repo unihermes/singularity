@@ -13,7 +13,6 @@
 // bar at the screen's right edge, or the number itself under the bar.
 
 import Quickshell
-import Quickshell.Wayland
 import QtQuick
 import "../services"
 
