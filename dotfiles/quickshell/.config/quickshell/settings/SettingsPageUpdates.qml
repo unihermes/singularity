@@ -197,6 +197,8 @@ SettingsPage {
                 id: addChip
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                // as tall as the field beside it, so the two read as one control
+                height: ignoreName.height
                 text: "+ Add"
                 enabled: /^[a-z0-9@._+-]+$/i.test(ignoreName.text.trim())
                 onClicked: if (enabled) {

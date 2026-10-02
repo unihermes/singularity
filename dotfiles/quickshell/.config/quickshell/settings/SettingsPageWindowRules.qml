@@ -285,6 +285,8 @@ SettingsPage {
                 id: addChip
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                // as tall as the field beside it, so the two read as one control
+                height: classInput.height
                 text: "+ Add"
                 enabled: !AtomicFileWrite.busy && page.typed !== ""
                 onClicked: if (page.addRule(page.typed)) classInput.text = ""

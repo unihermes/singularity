@@ -192,7 +192,8 @@ var entries = [
     // --- Terminal ----------------------------------------------------------
     { page: "shell", section: "Alacritty", label: "Font size",  keywords: "terminal points" },
     { page: "shell", section: "Alacritty", label: "Opacity",    keywords: "terminal transparency background" },
-    { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam blink" },
+    { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam underline shape" },
+    { page: "shell", section: "Alacritty", label: "Blinking cursor", keywords: "terminal blink" },
     { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc shortcut command" },
 
     // --- Date & Time -------------------------------------------------------

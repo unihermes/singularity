@@ -10,6 +10,8 @@
 // it -- the glyph becomes an alert check -- and the second emits clicked().
 // It disarms itself after 3s. A caller that keeps its own armed state (the
 // process table's, shared with its hint line) sets `armed` instead.
+//
+// `lit` shows the glyph in the accent, for one that toggles a state (mute).
 
 import QtQuick
 import "../services"
@@ -21,6 +23,7 @@ Rectangle {
     property bool enabled: true
     property bool confirm: false
     property bool armed: confirm && disarm.running
+    property bool lit: false
 
     signal clicked()
 
@@ -45,7 +48,8 @@ Rectangle {
     Text {
         anchors.centerIn: parent
         text: root.armed ? "󰄬" : root.icon
-        color: root.armed ? Theme.base : mouse.containsMouse ? Theme.textStrong : Theme.subtext
+        color: root.armed ? Theme.base : root.lit ? Theme.accent
+            : mouse.containsMouse ? Theme.textStrong : Theme.subtext
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontIconSize
     }

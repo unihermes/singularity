@@ -226,32 +226,33 @@ SettingsPage {
         }
     }
 
+    // style = { shape = "Beam", blinking = "On" } is an inline table, so
+    // it's read by pattern rather than parsed
+    readonly property string cursorRaw: String(toml["cursor.style"] || "")
+    readonly property string cursorShape: (/shape\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Block"])[1]
+    readonly property string cursorBlinking: (/blinking\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Off"])[1]
+
     SettingsField {
         label: "Cursor"
-        hint: "Shape, and whether it blinks"
+        hint: "Its shape"
 
-        Row {
+        FlyoutSegmented {
             anchors.right: parent.right
-            spacing: Theme.sp(10)
+            fill: false
+            model: ["Block", "Beam", "Underline"]
+            current: page.cursorShape
+            onPicked: v => page.setCursor(v, page.cursorBlinking)
+        }
+    }
 
-            // style = { shape = "Beam", blinking = "On" } is an inline
-            // table, so it's read by pattern rather than parsed
-            readonly property string styleRaw: String(page.toml["cursor.style"] || "")
-            readonly property string shape: (/shape\s*=\s*"(\w+)"/.exec(styleRaw) || [, "Block"])[1]
-            readonly property string blinking: (/blinking\s*=\s*"(\w+)"/.exec(styleRaw) || [, "Off"])[1]
+    SettingsField {
+        label: "Blinking cursor"
+        hint: "Blinks while the terminal has focus"
 
-            FlyoutSegmented {
-                id: shapes
-                fill: false
-                model: ["Block", "Beam", "Underline"]
-                current: shapes.parent.shape
-                onPicked: v => page.setCursor(v, shapes.parent.blinking)
-            }
-            FlyoutChip {
-                text: "Blink"
-                selected: parent.blinking === "On" || parent.blinking === "Always"
-                onClicked: page.setCursor(parent.shape, selected ? "Off" : "On")
-            }
+        Switch {
+            anchors.right: parent.right
+            checked: page.cursorBlinking === "On" || page.cursorBlinking === "Always"
+            onToggled: page.setCursor(page.cursorShape, checked ? "Off" : "On")
         }
     }
 

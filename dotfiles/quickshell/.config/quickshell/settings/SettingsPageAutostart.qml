@@ -126,6 +126,8 @@ SettingsPage {
                 id: addChip
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
+                // as tall as the box beside it, so the two read as one control
+                height: picker.height
                 text: "+ Add"
                 enabled: page.chosen !== null && !AtomicFileWrite.busy
                 onClicked: {

@@ -91,8 +91,10 @@ SettingsPage {
         return tail !== "" ? tail : media
     }
 
-    // Shared by the two device levels and every app row: the same slider,
-    // readout and mute, differing only in what they call themselves.
+    // Shared by the two device levels and every app row: the same mute,
+    // slider and readout, differing only in what they call themselves. Mute
+    // is the speaker glyph before the slider, lit while muted, as tall as the
+    // slider's grab area rather than a chip that would stand taller.
     component Level: SettingsField {
         id: lvl
         property var node: null
@@ -110,6 +112,13 @@ SettingsPage {
             anchors.right: parent.right
             spacing: Theme.sp(10)
 
+            IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                icon: lvl.ready && lvl.node.audio.muted ? "󰖁" : "󰕾"
+                lit: lvl.ready && lvl.node.audio.muted
+                enabled: lvl.ready
+                onClicked: lvl.node.audio.muted = !lvl.node.audio.muted
+            }
             Slider {
                 width: Theme.fit(220)
                 anchors.verticalCenter: parent.verticalCenter
@@ -125,13 +134,6 @@ SettingsPage {
                 font.family: Theme.fontText
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
-            }
-            FlyoutChip {
-                anchors.verticalCenter: parent.verticalCenter
-                text: lvl.ready && lvl.node.audio.muted ? "Muted" : "Mute"
-                selected: lvl.ready && lvl.node.audio.muted
-                enabled: lvl.ready
-                onClicked: lvl.node.audio.muted = !lvl.node.audio.muted
             }
         }
     }
