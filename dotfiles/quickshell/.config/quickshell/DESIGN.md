@@ -153,6 +153,19 @@ Settings') are laid out the same way.
   Lid), Power & Idle (Power · When idle) and Window Rules (Apps ·
   Workspaces). Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.
+- **Rows that open in place:** a row whose action needs more input (a
+  network's passphrase, a hidden network, a saved network's settings)
+  opens a block under itself, set in by a rule down its left side, and
+  takes the accent tick while open. Not a prompt elsewhere on the page.
+- **Marks that line up:** icons at a row's end that repeat down a list (a
+  network's lock and strength) go in `FlyoutRow.trailingIcons`, one fixed
+  cell each, so every row's marks sit in the same columns.
+- **Copyable values:** an address worth pasting elsewhere is a
+  `SettingsValue` with `copyable`: hover fills it, a click copies it, and it
+  reads Copied in the good colour for a moment.
+- **Long lists:** the ten most useful rows, then a "Show all N" row. Network
+  puts the joined network in a card at the top (name large, strength icon,
+  security, band, the radio switch) and leaves it out of the lists below.
 - **No look summary card:** the Look tab's Changes list alone shows
   what's changed.
 - **Changes are counted from the saved default** when one was saved with

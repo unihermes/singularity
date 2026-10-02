@@ -20,6 +20,10 @@ Item {
     // the trailing text is the row's current setting (Top, Grayscale), not
     // a chevron or tick, so it reads like a stepper's value
     property bool trailingIsValue: false
+    // Glyphs in fixed-width cells at the right, in place of `trailing` while
+    // that's empty: marks that have to line up down a list (a network's lock
+    // and strength). "" leaves its cell blank.
+    property var trailingIcons: []
     // something is in flight (connecting, pairing, a rescan): the row's
     // text pulses until it settles, and the row stops taking clicks
     property bool busy: false
@@ -69,7 +73,7 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
-        anchors.right: root.showAction ? actionBtn.left : trailingText.left
+        anchors.right: root.showAction ? actionBtn.left : iconCells.visible ? iconCells.left : trailingText.left
         anchors.rightMargin: Theme.spaceL
         text: root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
         elide: Text.ElideRight
@@ -87,6 +91,29 @@ Item {
 
     HoverHandler { id: rowHover }
     readonly property bool showAction: actionIcon !== "" && enabled && !busy && (rowHover.hovered || actionArmed)
+
+    Row {
+        id: iconCells
+        visible: !root.showAction && root.trailing === "" && root.trailingIcons.length > 0
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        opacity: root.pulse
+
+        Repeater {
+            model: root.trailingIcons
+
+            Text {
+                required property string modelData
+                width: Theme.iconCell
+                horizontalAlignment: Text.AlignHCenter
+                text: modelData
+                color: trailingText.color
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontBody
+                font.weight: Theme.weightBody
+            }
+        }
+    }
 
     Text {
         id: trailingText

@@ -22,6 +22,9 @@ ALLOW = {
     # rows in the Appearance page's live preview, a picture of a flyout
     ("appearance", "Speakers"): "a row in the live preview",
     ("appearance", "More in Settings"): "a row in the live preview",
+    # readouts inside one saved network, opened from its row
+    ("network", "Security"): "a readout under each saved network",
+    ("network", "Last joined"): "a readout under each saved network",
 }
 
 def main():

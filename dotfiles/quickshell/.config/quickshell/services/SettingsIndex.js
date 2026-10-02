@@ -21,13 +21,17 @@
 
 var entries = [
     // --- Network -----------------------------------------------------------
-    { page: "network", section: "Status", label: "Wi-Fi",      keywords: "wifi wireless radio iwd on off" },
+    { page: "network", section: "Status", label: "Status",     keywords: "wifi wi-fi wireless radio iwd on off ssid connected joined" },
     { page: "network", section: "Status", label: "Interface",  keywords: "device wlan adapter" },
-    { page: "network", section: "Status", label: "IP address", keywords: "ipv4 dhcp address" },
-    { page: "network", section: "Status", label: "Gateway",    keywords: "router default route" },
-    { page: "network", section: "Status", label: "MAC",        keywords: "hardware address ethernet" },
-    { page: "network", section: "Status", label: "Link",       keywords: "bitrate signal strength speed" },
-    { page: "network", section: "Networks", label: "Networks", keywords: "wifi scan ssid connect join forget passphrase" },
+    { page: "network", section: "Status", label: "IP address", keywords: "ipv4 dhcp address copy" },
+    { page: "network", section: "Status", label: "Gateway",    keywords: "router default route copy" },
+    { page: "network", section: "Status", label: "MAC",        keywords: "hardware address ethernet copy" },
+    { page: "network", section: "Status", label: "Speed",      keywords: "bitrate link rate mbit" },
+    { page: "network", section: "Status", label: "Signal",     keywords: "strength dbm rssi band ghz" },
+    { page: "network", section: "Saved nearby", label: "Saved nearby", keywords: "wifi scan rescan ssid connect join passphrase" },
+    { page: "network", section: "Other networks", label: "Other network…", keywords: "hidden ssid connect join passphrase wifi" },
+    { page: "network", section: "Saved", label: "Saved",       keywords: "known networks forget remove passphrase" },
+    { page: "network", section: "Saved", label: "Auto-join",   keywords: "autoconnect automatic connect known network" },
 
     // --- Bluetooth ---------------------------------------------------------
     { page: "bluetooth", section: "Adapter", label: "Bluetooth",    keywords: "bt radio bluez power on off rfkill" },

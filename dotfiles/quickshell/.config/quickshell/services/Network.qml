@@ -29,8 +29,11 @@ Singleton {
     // `station show`: a powered-off device has no station at all
     // ("No station on device"), but still appears in the list.
     property bool powered: true
-    // [{ connected, ssid, security, bars, known }], strongest first
+    // [{ connected, ssid, security, dbm, bars, known }], strongest first
     property var networks: []
+    // every network iwd keeps a passphrase or profile for, in range or not:
+    // [{ ssid, security, hidden, auto, last, path }], last joined first
+    property var knownNetworks: []
     // why the list couldn't be read, or ""
     property string listError: ""
     // the SSID an iwctl connect is running for, or ""
@@ -58,11 +61,13 @@ Singleton {
     // The latest request waits and runs when the current one exits.
     property var pendingConnect: null
 
-    function connect(name, passphrase) {
+    // `hidden` for a network that doesn't broadcast its name, which iwd
+    // won't find in a scan and has to be told to probe for.
+    function connect(name, passphrase, hidden) {
         if (device === "") return
         var cmd = ["iwctl"]
         if (passphrase) cmd.push("--passphrase", passphrase)
-        cmd.push("station", device, "connect", name)
+        cmd.push("station", device, hidden ? "connect-hidden" : "connect", name)
         if (connectProc.running) { pendingConnect = { cmd: cmd, ssid: name }; return }
         connecting = name
         connectProc.command = cmd
@@ -74,6 +79,16 @@ Singleton {
     function forget(name) {
         forgetProc.command = ["iwctl", "known-networks", name, "forget"]
         forgetProc.running = true
+    }
+
+    // Whether iwd joins a saved network by itself when it's in range. A
+    // property on its KnownNetwork object, which iwctl has no command for.
+    function setAutoConnect(name, on) {
+        var k = knownNetworks.find(n => n.ssid === name)
+        if (!k) return
+        autoProc.command = ["busctl", "set-property", "net.connman.iwd", k.path,
+            "net.connman.iwd.KnownNetwork", "AutoConnect", "b", on ? "true" : "false"]
+        autoProc.running = true
     }
 
     function refreshStatus() {
@@ -151,10 +166,23 @@ Singleton {
                 try { objs = JSON.parse(text).data[0] }
                 catch (e) { root.listFailed("GetManagedObjects gave no JSON"); return }
                 var station = ""
+                var known = []
                 for (var path in objs) {
+                    var kn = objs[path]["net.connman.iwd.KnownNetwork"]
+                    if (kn && kn.Name) known.push({
+                        ssid: kn.Name.data,
+                        security: kn.Type ? kn.Type.data : "",
+                        hidden: !!(kn.Hidden && kn.Hidden.data),
+                        auto: !kn.AutoConnect || kn.AutoConnect.data,
+                        // ISO 8601, so it sorts as a string; absent if never joined
+                        last: kn.LastConnectedTime ? kn.LastConnectedTime.data : "",
+                        path: path
+                    })
                     var dev = objs[path]["net.connman.iwd.Device"]
                     if (dev && dev.Name.data === root.device && objs[path]["net.connman.iwd.Station"]) station = path
                 }
+                known.sort((a, b) => a.last < b.last ? 1 : a.last > b.last ? -1 : 0)
+                root.knownNetworks = known
                 if (station === "") { root.listFailed("no station object for " + root.device); return }
                 root.objects = objs
                 orderProc.command = ["busctl", "--json=short", "call", "net.connman.iwd", station,
@@ -183,6 +211,7 @@ Singleton {
                         connected: !!(net.Connected && net.Connected.data),
                         ssid: net.Name.data,
                         security: net.Type ? net.Type.data : "",
+                        dbm: dbm,
                         bars: dbm >= -60 ? 4 : dbm >= -67 ? 3 : dbm >= -75 ? 2 : 1,
                         known: !!net.KnownNetwork
                     })
@@ -230,6 +259,12 @@ Singleton {
             root.refreshStatus()
             root.refreshList()
         }
+    }
+
+    Process {
+        id: autoProc
+        command: ["true"]
+        onExited: root.refreshList()
     }
 
     Process {
