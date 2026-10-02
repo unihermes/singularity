@@ -626,23 +626,43 @@ Singleton {
         adapter.centreAnchor = lay.anchor !== undefined ? lay.anchor : "clock"
     }
 
-    // true while every value the look carries is still the look's own --
-    // what the Appearance page shows as "as designed" vs "customised"
-    readonly property bool lookPristine: !!LookStore.looks[adapter.look] && lookDiffs.length === 0
-
-    // the keys of the look's settings that no longer have the look's value,
-    // for the Appearance page's list of changes and its fields' markers
-    readonly property var lookDiffs: {
+    // What changes are counted from: the saved default when it was saved
+    // with the look in use, so saving clears the list; the look as designed
+    // otherwise.
+    readonly property bool baselineIsDefault: (adapter.userDefaults || {}).look === adapter.look
+    readonly property var lookBaseline: {
         var l = LookStore.looks[adapter.look]
-        if (!l) return []
-        return Object.keys(l.settings).filter(k =>
-            !(k === "barOpacity" && adapter.colourMode === "wallpaper") && adapter[k] !== l.settings[k])
+        if (!l) return {}
+        var u = adapter.userDefaults || {}
+        var b = {}
+        for (var k in l.settings)
+            b[k] = baselineIsDefault && u[k] !== undefined ? u[k] : l.settings[k]
+        return b
     }
 
-    // one setting back to the look's own value
+    // true while every value the look carries is still the baseline's --
+    // what the Appearance page shows as unchanged vs "customised"
+    readonly property bool lookPristine: !!LookStore.looks[adapter.look] && lookDiffs.length === 0
+
+    // the keys of the look's settings that no longer have the baseline's
+    // value, for the Appearance page's list of changes and its fields' markers
+    readonly property var lookDiffs: {
+        var b = lookBaseline
+        return Object.keys(b).filter(k =>
+            !(k === "barOpacity" && adapter.colourMode === "wallpaper") && adapter[k] !== b[k])
+    }
+
+    // one setting back to the baseline's value
     function resetLookKey(k) {
-        var l = LookStore.looks[adapter.look]
-        if (l && l.settings[k] !== undefined) set(k, l.settings[k])
+        if (lookBaseline[k] !== undefined) set(k, lookBaseline[k])
+    }
+
+    // every change back to the baseline: the saved default's values, or
+    // the whole look as designed
+    function undoLookChanges() {
+        if (!baselineIsDefault) { resetLook(); return }
+        var d = lookDiffs.slice()
+        for (var i = 0; i < d.length; i++) set(d[i], lookBaseline[d[i]])
     }
 
     function clamp(key, v) {

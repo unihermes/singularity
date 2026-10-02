@@ -96,8 +96,12 @@ Pages are redesigned one at a time; a redesigned page sets
   is a grid of tiles, four across. Each tile draws what its value does; the
   current one has the lit groove. Numbers stay steppers, and on/off stays a
   switch.
-- **No look summary card:** what differs from the look is the Look tab's
-  Changes list alone.
+- **No look summary card:** the Look tab's Changes list alone shows
+  what's changed.
+- **Changes are counted from the saved default** when one was saved with
+  the look in use (`Settings.lookBaseline`), so Set as default empties the
+  list. Otherwise they're counted from the look as designed. Undo, Undo
+  all and the fields' ● marks go back to the same baseline.
 
 ## Headings
 

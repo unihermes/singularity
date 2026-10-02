@@ -94,7 +94,8 @@ Item {
                 anchors.left: labelText.right
                 anchors.leftMargin: Theme.spaceS
                 anchors.verticalCenter: labelText.verticalCenter
-                text: resetMouse.containsMouse ? "󰑓 " + Settings.choiceLabel(Settings.look) + "'s" : "●"
+                text: !resetMouse.containsMouse ? "●"
+                    : Settings.baselineIsDefault ? "󰑓 default" : "󰑓 " + Settings.choiceLabel(Settings.look) + "'s"
                 color: Theme.accent
                 font.family: Theme.fontIcon
                 font.pixelSize: resetMouse.containsMouse ? Theme.fontSmall : Theme.fontCaption

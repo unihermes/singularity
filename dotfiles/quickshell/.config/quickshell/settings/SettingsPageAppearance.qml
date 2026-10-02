@@ -872,16 +872,18 @@ SettingsPage {
 
         // every change at once
         SettingsField {
-            label: "Reset look"
+            label: Settings.baselineIsDefault ? "Back to default" : "Reset look"
             visible: !Settings.lookPristine
-            hint: "Put all of these back to " + page.label(Settings.look) + "'s own"
+            hint: Settings.baselineIsDefault ? "Put all of these back to your saved default"
+                : "Put all of these back to " + page.label(Settings.look) + "'s own"
 
             FlyoutChip {
                 anchors.right: parent.right
                 text: "Undo all"
                 onClicked: {
-                    Settings.resetLook()
-                    page.say(page.label(Settings.look) + " look restored", false)
+                    Settings.undoLookChanges()
+                    page.say(Settings.baselineIsDefault ? "Saved default restored"
+                        : page.label(Settings.look) + " look restored", false)
                 }
             }
         }
@@ -890,7 +892,9 @@ SettingsPage {
             visible: Settings.lookPristine
             width: parent.width
             wrapMode: Text.WordWrap
-            text: "Nothing changed — " + page.label(Settings.look) + " is as it was designed. Anything you change on the other tabs shows up here."
+            text: Settings.baselineIsDefault
+                ? "Nothing changed since you saved your default. Anything you change on the other tabs shows up here."
+                : "Nothing changed — " + page.label(Settings.look) + " is as it was designed. Anything you change on the other tabs shows up here."
             color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody
@@ -905,10 +909,11 @@ SettingsPage {
                 required property string modelData
                 // shares its label with the field it stands for
                 searchable: false
-                readonly property var lookValue: (LookStore.looks[Settings.look] || { settings: {} }).settings[modelData]
+                readonly property var lookValue: Settings.lookBaseline[modelData]
                 label: page.keyLabels[modelData] || modelData
                 hint: "Now " + page.valueText(modelData, Settings[modelData])
-                    + " · " + page.label(Settings.look) + " has " + page.valueText(modelData, change.lookValue)
+                    + " · " + (Settings.baselineIsDefault ? "default" : page.label(Settings.look))
+                    + " has " + page.valueText(modelData, change.lookValue)
 
                 Row {
                     anchors.right: parent.right
