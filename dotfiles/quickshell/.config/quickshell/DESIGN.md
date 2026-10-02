@@ -63,6 +63,18 @@ Setting: `frameStyle: "channel"`.
   won't split the section.
 - Content clears both frames: `padX` and `padY` in `FlyoutPanel`.
 
+### Clock flyout
+
+- **Tabs**, one shown at a time, picked from a segmented strip in its own
+  section at the top: **Month**, **Today** (it reads **Day** once another day
+  is picked) and **Timer** (it reads **Timer ●** while one runs).
+- It opens on Today, or on Month when no calendar feeds are set up (then
+  there's no Today tab).
+- Picking a day in the month switches to that day's events.
+- The Refresh row sits under the events, in its own section.
+- Timer tab: the time large (`fontHero`) with what it is underneath, then the
+  minute stepper and the chips.
+
 ## Headings
 
 - Bold spaced caps, value in white (`VOLUME  45%`).
