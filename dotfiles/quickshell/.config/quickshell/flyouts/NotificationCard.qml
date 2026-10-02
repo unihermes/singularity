@@ -12,6 +12,10 @@
 // A popup is drawn as Theme.notifStyle says (the history always shows
 // everything), with an urgency stripe down its edge when Theme.notifStripe,
 // and stands for `count` popups when the popups are grouped by app.
+//
+// `standalone` is for an entry that isn't in the history (the reload
+// toast): closing it only emits dismissed(), and a critical one always
+// shows in full.
 
 import Quickshell
 import Quickshell.Services.Notifications
@@ -28,9 +32,12 @@ Item {
     // takes down with it
     property int count: 1
     property var others: []
+    property bool standalone: false
+    property int bodyLines: framed ? 4 : 6
+    signal dismissed()
 
     readonly property bool popup: framed && !inHistory
-    readonly property string style: popup ? Theme.notifStyle : "full"
+    readonly property string style: popup && !(standalone && critical) ? Theme.notifStyle : "full"
     readonly property bool banner: style === "banner"
     // compact shows the rest while the pointer is on it
     readonly property bool expanded: style === "full" || (style === "compact" && hovered)
@@ -48,7 +55,8 @@ Item {
     readonly property bool unread: inHistory && Notifications.isNew(entry)
 
     function close() {
-        if (inHistory) Notifications.remove(entry)
+        if (standalone) dismissed()
+        else if (inHistory) Notifications.remove(entry)
         else {
             Notifications.hidePopup(entry)
             for (var i = 0; i < others.length; i++) Notifications.hidePopup(others[i])
@@ -173,7 +181,7 @@ Item {
             text: root.entry.body
             textFormat: Text.StyledText
             wrapMode: Text.Wrap
-            maximumLineCount: root.framed ? 4 : 6
+            maximumLineCount: root.bodyLines
             elide: Text.ElideRight
             color: Theme.text
             linkColor: Theme.strokeFocus

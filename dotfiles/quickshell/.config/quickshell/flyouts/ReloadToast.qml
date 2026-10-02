@@ -4,7 +4,7 @@
 // Stands in for Quickshell's own reload popup: a notification card at the
 // bar's left end, clear of the notification popups on the right. A
 // good reload fades on its own; a failed one shows the error and stays
-// until clicked or its longer timer runs out.
+// until clicked or its longer timer runs out. Either can be closed.
 //
 // inhibitReloadPopup() only takes effect when called from inside the
 // reloadCompleted/reloadFailed handlers. A failed reload leaves the old
@@ -12,6 +12,7 @@
 
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Services.Notifications
 import QtQuick
 import "../services"
 
@@ -28,10 +29,13 @@ OverlayWindow {
 
     visible: active || box.opacity > 0
     layerNamespace: "singularity-toast"
-    // click-through, except a failure's panel, which a click dismisses
-    mask: Region { item: root.active && root.failed ? box : null }
+    // click-through, except the card, which a click dismisses
+    mask: Region { item: root.active ? box : null }
+
+    property real shownAt: 0
 
     function show(err) {
+        root.shownAt = Date.now()
         root.failed = err !== undefined
         root.error = root.failed ? String(err).trim() : ""
         root.active = true
@@ -56,57 +60,39 @@ OverlayWindow {
         onTriggered: root.active = false
     }
 
-    // Sized and spaced as a notification popup is, a summary over a body.
-    // A failure takes the alert stroke, as a critical notification does
-    // (NotificationCard).
-    PanelFrame {
+    // A notification card, so it looks as the popups do. A failure is
+    // critical: the alert colour, and the error in full.
+    NotificationCard {
         id: box
         readonly property int gap: Theme.edgeMargin
 
         x: gap
         y: root.atBottom ? root.height - Theme.barExtent - gap - height : Theme.barExtent + gap
         width: Theme.fit(380)
-        height: col.implicitHeight + Theme.panelPad * 2
-        border.color: root.failed ? Theme.alert : Theme.stroke
+        height: implicitHeight
+        standalone: true
+        bodyLines: 8
+        entry: ({
+            key: "quickshell-reload",
+            appName: "Quickshell",
+            icon: "",
+            summary: root.failed ? "Reload failed" : "Reloaded",
+            // the body is styled text; an error's < and & are literal
+            body: root.failed ? root.error.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                : "Configuration loaded",
+            urgency: root.failed ? NotificationUrgency.Critical : NotificationUrgency.Normal,
+            time: root.shownAt,
+            live: null,
+            picture: "",
+        })
+        onDismissed: root.active = false
+        // held while the pointer is on it, as a popup is
+        onHoveredChanged: if (hovered) hideTimer.stop()
+            else if (root.active) hideTimer.restart()
 
         opacity: root.active ? 1 : 0
         Behavior on opacity {
             NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
-        }
-
-        Column {
-            id: col
-            x: Theme.panelPad
-            y: Theme.panelPad
-            width: parent.width - Theme.panelPad * 2
-            spacing: Theme.spaceS
-
-            Text {
-                text: root.failed ? "Quickshell reload failed" : "Quickshell reloaded"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontBody
-                font.bold: true
-            }
-
-            Text {
-                width: col.width
-                text: root.failed ? root.error : "Configuration loaded"
-                color: Theme.text
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-                wrapMode: Text.Wrap
-                maximumLineCount: 8
-                elide: Text.ElideRight
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            enabled: root.failed
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.active = false
         }
     }
 }
