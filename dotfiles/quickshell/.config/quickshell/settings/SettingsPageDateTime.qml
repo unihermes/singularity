@@ -19,8 +19,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Date & Time"
-    description: "Time zone and network time for the whole system, set through timedatectl, and how the shell's clocks and calendar read."
+    description: "Time zone, network time, and how the shell's clocks read."
 
     property string zone: ""
     property string zoneAbbrev: ""
@@ -151,7 +153,7 @@ SettingsPage {
 
     SettingsField {
         label: "Set time automatically"
-        hint: !page.canNtp ? "No network time service is installed"
+        hint: !page.canNtp ? "No network time service installed"
             : page.ntp ? (page.synced ? "Synchronised over the network" : "Waiting for a time server")
             : "The clock runs on its own"
 
@@ -169,7 +171,7 @@ SettingsPage {
 
     SettingsField {
         label: "Hour format"
-        hint: "The bar clock and every time the shell shows"
+        hint: "The bar clock and every time shown"
 
         FlyoutSegmented {
             anchors.right: parent.right

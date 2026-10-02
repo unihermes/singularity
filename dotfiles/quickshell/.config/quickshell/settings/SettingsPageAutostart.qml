@@ -24,8 +24,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Startup"
-    description: "Applications launched at login. Saved as desktop entries in ~/.config/autostart."
+    description: "What starts at login, as entries in ~/.config/autostart."
 
     // the app picked in the Add row, held until + Add is clicked
     property var chosen: null
@@ -79,15 +81,10 @@ SettingsPage {
 
     FlyoutHeading { text: "AT LOGIN" }
 
-    Text {
-        width: parent.width
+    FlyoutRow {
         visible: Autostart.loaded && Autostart.userEntries.length === 0
-        text: "Nothing is set to start at login yet."
-        wrapMode: Text.WordWrap
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+        enabled: false
+        label: "Nothing starts at login yet"
     }
 
     Repeater {
@@ -103,7 +100,7 @@ SettingsPage {
 
     SettingsField {
         label: "Application"
-        hint: "Writes a desktop entry for it into ~/.config/autostart"
+        hint: "Adds a desktop entry to ~/.config/autostart"
 
         // An Item of its own height rather than a Row, so the dropdown and
         // the button can centre against something fixed -- see the note in
@@ -142,18 +139,7 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "FROM INSTALLED PACKAGES" }
 
-    Text {
-        width: parent.width
-        text: "Entries packages placed in /etc/xdg/autostart. These are off until "
-            + "you turn one on, which copies it into ~/.config/autostart; several "
-            + "of them duplicate a systemd user unit that already starts the same "
-            + "program."
-        wrapMode: Text.WordWrap
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
-    }
+    SettingsNote { text: "Off until turned on; some repeat a user unit" }
 
     Repeater {
         model: Autostart.systemEntries
@@ -163,14 +149,9 @@ SettingsPage {
         }
     }
 
-    Text {
-        width: parent.width
+    FlyoutRow {
         visible: Autostart.loaded && Autostart.systemEntries.length === 0
-        text: "No package entries left to add."
-        wrapMode: Text.WordWrap
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+        enabled: false
+        label: "No package entries left to add"
     }
 }

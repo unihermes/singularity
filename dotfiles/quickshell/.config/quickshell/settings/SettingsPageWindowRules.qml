@@ -27,8 +27,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Window Rules"
-    description: "How each app's windows and popouts open, and which layout each workspace uses. Saved to window-rules.json and workspace-layouts.json in ~/.config/singularity. Rules apply to windows opened after a change."
+    description: "How each app's windows open, and each workspace's layout."
 
     readonly property string rulesPath:
         (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/window-rules.json"
@@ -278,17 +280,12 @@ SettingsPage {
         }
     }
 
-    Text {
+    SettingsNote {
         readonly property int n: page.openCount({ class: page.typed })
-        x: Theme.spaceS
-        width: parent.width - Theme.spaceS * 2
         visible: page.typed !== ""
         text: n > 0 ? n + " open window" + (n === 1 ? "" : "s") + " match"
-            : "No open windows match — the class has to be exact"
+            : "No open window matches; the class must be exact"
         color: n > 0 ? Theme.good : Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
     }
 
     SettingsField {
@@ -316,14 +313,10 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "RULES" }
 
-    Text {
-        x: Theme.spaceS
+    FlyoutRow {
         visible: page.rules.length === 0
-        text: "No rules yet."
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontBody
+        enabled: false
+        label: "No rules yet"
     }
 
     Repeater {
@@ -352,10 +345,18 @@ SettingsPage {
                     anchors.leftMargin: -Theme.spaceS
                     anchors.rightMargin: -Theme.spaceS
                     radius: Theme.radiusInner
-                    color: ruleCol.expanded ? Theme.selectedFill
-                        : headMouse.containsMouse ? Theme.hoverFill : "transparent"
-                    border.width: ruleCol.expanded ? Theme.borderWidth : 0
-                    border.color: Theme.selectedStroke
+                    color: headMouse.containsMouse ? Theme.hoverFill : "transparent"
+                }
+
+                // the open rule: a tick on the left edge, as a selected row
+                Rectangle {
+                    visible: ruleCol.expanded
+                    x: -Theme.spaceS
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.indicatorWidth
+                    height: parent.height - 6
+                    radius: width / 2
+                    color: Theme.accent
                 }
 
                 MouseArea {
@@ -484,7 +485,7 @@ SettingsPage {
             SettingsField {
                 visible: ruleCol.expanded
                 label: "Layout"
-                hint: "Auto follows the current layout: full screen in monocle, tiled in dwindle"
+                hint: "Auto: monocle fills, dwindle tiles"
 
                 FlyoutSegmented {
                     anchors.right: parent.right
@@ -499,7 +500,7 @@ SettingsPage {
             SettingsField {
                 visible: ruleCol.expanded && ruleCol.floats
                 label: "Size"
-                hint: "Natural is whatever size the app asks for"
+                hint: "Natural is whatever the app asks for"
 
                 FlyoutSegmented {
                     anchors.right: parent.right
@@ -515,7 +516,7 @@ SettingsPage {
             SettingsField {
                 visible: ruleCol.expanded
                 label: "Workspace"
-                hint: "Where it opens; Any means wherever you are"
+                hint: "Where it opens; Any is wherever you are"
 
                 SettingsDropdown {
                     anchors.right: parent.right
@@ -531,7 +532,7 @@ SettingsPage {
             SettingsField {
                 visible: ruleCol.expanded
                 label: "Open fullscreen"
-                hint: "Monocle only: covers the whole display, bar included"
+                hint: "Monocle only; covers the bar too"
 
                 Switch {
                     anchors.right: parent.right
@@ -543,7 +544,7 @@ SettingsPage {
             SettingsField {
                 visible: ruleCol.expanded
                 label: "Always on top"
-                hint: "Pinned: floats above other windows and stays on every workspace"
+                hint: "Floats above, on every workspace"
 
                 Switch {
                     anchors.right: parent.right
@@ -568,7 +569,7 @@ SettingsPage {
             readonly property string key: String(index + 1)
             readonly property string mode: page.layouts[key] || ""
             label: "Workspace " + key
-            hint: index === 0 ? "Pinned workspaces keep their layout when SUPER+M switches the rest" : ""
+            hint: index === 0 ? "Kept when SUPER+M switches the rest" : ""
 
             SettingsDropdown {
                 anchors.right: parent.right

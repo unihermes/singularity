@@ -10,8 +10,10 @@ import "../services"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Keybinds"
-    description: "Every shortcut in hyprland.lua, and presets worth adding. Saving checks the Lua, backs the file up and reloads Hyprland."
+    description: "Every shortcut in hyprland.lua, and presets worth adding."
     scrolls: false
 
     function focusSearch() { body.focusSearch() }

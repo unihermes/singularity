@@ -22,8 +22,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Terminal"
-    description: "Alacritty applies changes to open windows as they're saved. Aliases in ~/.bashrc apply to new terminals."
+    description: "Alacritty, and the aliases in ~/.bashrc."
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string alacrittyPath:
@@ -278,15 +280,7 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "BASH ALIASES" }
 
-    Text {
-        width: parent.width
-        wrapMode: Text.WordWrap
-        text: "Terminals already open keep their aliases until you run source ~/.bashrc in them."
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
-    }
+    SettingsNote { text: "Open terminals need source ~/.bashrc" }
 
     Repeater {
         model: page.aliases

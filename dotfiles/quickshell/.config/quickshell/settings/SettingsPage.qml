@@ -80,8 +80,10 @@ Item {
     }
 
     default property alias content: col.data
-    // height available to content below the header, for non-scrolling pages
+    // height available to content below the header, for non-scrolling
+    // pages: clear of the section's frame above and below when sectioned
     readonly property real bodyHeight: height - header.height - (headed ? Theme.spaceXl : 0)
+        - (channelled ? (Theme.channelWidth + Theme.spaceS) * 2 : 0)
 
     function say(msg, isError) {
         notice = msg
@@ -200,7 +202,8 @@ Item {
             width: parent.width
             visible: text !== "" && !(root.sectioned && root.tabs.length > 0)
             text: root.description
-            wrapMode: Text.WordWrap
+            wrapMode: root.sectioned ? Text.NoWrap : Text.WordWrap
+            elide: root.sectioned ? Text.ElideRight : Text.ElideNone
             color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody

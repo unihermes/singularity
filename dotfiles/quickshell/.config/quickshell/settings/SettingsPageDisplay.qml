@@ -26,8 +26,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Display"
-    description: "Arrangement, primary display, resolution and scale, saved as hl.monitor() rules for this machine. Hyprland reloads on each change."
+    description: "Arrangement, resolution and scale, as hl.monitor() rules."
 
     // [{ name, description, width, height, hz, scale, modes: ["WxH@R"] }]
     property var monitors: []
@@ -307,6 +309,11 @@ SettingsPage {
         })
     }
 
+    FlyoutHeading {
+        visible: page.monitors.length > 1
+        text: "ARRANGEMENT"
+    }
+
     DisplayLayout {
         visible: page.arranged.length > 1 && !page.duplicating
         width: parent.width
@@ -321,7 +328,7 @@ SettingsPage {
         label: "Arrangement"
         hint: page.duplicating
             ? "Every display is showing " + page.primary
-            : "Each display has its own space; duplicate shows " + page.primary + " on all of them"
+            : "Duplicate shows " + page.primary + " on every display"
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -335,7 +342,7 @@ SettingsPage {
     SettingsField {
         visible: page.monitors.length > 1
         label: "Primary"
-        hint: "Workspace 1 and the cursor start here, and duplicate copies it"
+        hint: "Workspace 1 and the cursor start here"
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -363,7 +370,7 @@ SettingsPage {
     SettingsField {
         visible: page.monitors.length > 1 && !page.duplicating
         label: "Workspaces"
-        hint: "Put 1 on " + page.primary + " and 2 onward on the others, left to right"
+        hint: "1 on " + page.primary + ", 2 onward on the others"
 
         FlyoutChip {
             anchors.right: parent.right
@@ -386,13 +393,18 @@ SettingsPage {
 
             width: parent.width
             spacing: Theme.spaceM
+            // its heading and rows sectioned as if they sat in the page
+            readonly property bool isSectionGroup: true
+            readonly property bool sectioned: page.channelled
+            // nothing above it: the arrangement only shows for two or more
+            readonly property bool opensPage: page.monitors.length < 2
 
             FlyoutHeading { text: mon.modelData.name + " · " + mon.modelData.description.toUpperCase() }
 
             SettingsField {
                 label: "Now"
-                hint: mon.rule === null ? "No hl.monitor() rule matches this display"
-                    : mon.catchAll ? "Set by the rule for every display (output = \"\")"
+                hint: mon.rule === null ? "No hl.monitor() rule matches it"
+                    : mon.catchAll ? "Set by the rule for every display"
                     : "Set by its own rule"
 
                 Row {
@@ -423,8 +435,8 @@ SettingsPage {
 
             SettingsField {
                 label: "Scale"
-                hint: mon.mirrored ? "Saved to its rule, and applies once this display is extended again"
-                    : "1 is native; fractions that don't divide the resolution cleanly get rounded"
+                hint: mon.mirrored ? "Applies once this display is extended"
+                    : "1 is native; odd fractions get rounded"
 
                 SettingsDropdown {
                     anchors.right: parent.right
@@ -439,7 +451,7 @@ SettingsPage {
 
             SettingsField {
                 label: "Mode"
-                hint: mon.mirrored ? "Saved to its rule, and applies once this display is extended again"
+                hint: mon.mirrored ? "Applies once this display is extended"
                     : "preferred is what the display asks for"
 
                 SettingsDropdown {

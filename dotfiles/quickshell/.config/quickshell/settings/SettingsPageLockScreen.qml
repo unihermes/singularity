@@ -23,8 +23,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Lock Screen"
-    description: "How the lock screen looks, how soon it asks for the password, and what closing the lid does. Colours and font follow the look on Appearance."
+    description: "Look, password grace and the lid. Colours follow Appearance."
 
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
     readonly property string lockPath: hyprDir + "/hyprlock.conf"
@@ -315,7 +317,7 @@ SettingsPage {
 
     SettingsField {
         label: "Clock place"
-        hint: "Above the password field, at the top, or in the bottom-left corner"
+        hint: "Where the clock sits"
         FlyoutSegmented {
             anchors.right: parent.right
             fill: false
@@ -329,7 +331,7 @@ SettingsPage {
     // the info line under the clock (hypr/lock-info.sh): any of the three
     SettingsField {
         label: "Under the clock"
-        hint: "A line of the date, the track playing and unread notifications"
+        hint: "One line under the clock"
 
         Row {
             anchors.right: parent.right
@@ -343,7 +345,7 @@ SettingsPage {
     FlyoutAction {
         icon: "󰌾"
         label: "Lock now"
-        status: "Shows the lock screen as it is set up here"
+        status: "Shows the lock screen as set up here"
         checkable: false
         onActivated: Quickshell.execDetached(["sh", "-c", "pidof hyprlock || hyprlock"])
     }
@@ -354,7 +356,7 @@ SettingsPage {
     SettingsField {
         label: "Grace period"
         hint: !page.graceFound ? "hypridle.conf has no idle lock step"
-            : "After an idle lock, any input this soon unlocks without the password"
+            : "Input this soon after an idle lock unlocks"
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -372,7 +374,7 @@ SettingsPage {
 
     SettingsField {
         label: "When the lid closes"
-        hint: page.closeAction === "suspend" ? "Hibernates about an hour after closing, where set up"
+        hint: page.closeAction === "suspend" ? "Hibernates about an hour later, if set up"
             : "Idle steps on Power & Idle still apply"
 
         FlyoutSegmented {
@@ -387,7 +389,7 @@ SettingsPage {
 
     SettingsField {
         label: "Suspend after"
-        hint: "With an external monitor connected, the lid never suspends"
+        hint: "Never with an external monitor connected"
 
         FlyoutStepper {
             anchors.right: parent.right

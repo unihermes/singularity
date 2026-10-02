@@ -10,7 +10,7 @@
 // Sections come in groups, set apart by a rule over each group's first row
 // (`ruleAbove`).
 //
-// Two ways to be lit: `selected` is the page on show (a stroke and a
+// Two ways to be lit: `selected` is the page on show (a tick and a
 // chevron), `current` is where the arrow keys are while the search field
 // has focus (a fill). They differ because both can be true of different
 // rows at once.
@@ -57,11 +57,17 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: Theme.radiusInner
-            color: root.selected || root.current ? Theme.selectedFill
-                : mouse.containsMouse ? Theme.hoverFillSoft : "transparent"
-            border.width: Theme.borderWidth
-            border.color: root.selected ? Theme.selectedStroke
-                : root.current ? Theme.strokeHover : "transparent"
+            color: root.current || mouse.containsMouse ? Theme.hoverFill : "transparent"
+        }
+
+        // the page on show: a tick on the left edge, as a selected row
+        Rectangle {
+            visible: root.selected
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.indicatorWidth
+            height: parent.height - 6
+            radius: width / 2
+            color: Theme.accent
         }
 
         Text {

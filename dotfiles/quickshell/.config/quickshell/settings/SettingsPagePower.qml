@@ -31,8 +31,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Power & Idle"
-    description: "Power profile, how the battery charges, and how long the machine sits idle before each step of hypridle.conf. hypridle restarts to pick up a change."
+    description: "Power profile, charging, and the idle steps in hypridle.conf."
 
     readonly property string idlePath: Quickshell.env("HOME") + "/.config/hypr/hypridle.conf"
 
@@ -72,7 +74,7 @@ SettingsPage {
     ]
     readonly property var chargeHints: ({
         "Standard": "Charges to full at a normal rate",
-        "Adaptive": "The BIOS picks limits from how you use the laptop",
+        "Adaptive": "The BIOS sets limits from your use",
         "Fast": "Charges faster, wears the battery more",
         "Custom": "Your own stop and resume points",
         "Trickle": "Primarily AC use, set in the BIOS",
@@ -404,16 +406,10 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "WHEN IDLE" }
 
-    Text {
-        width: parent.width
-        wrapMode: Text.WordWrap
-        text: page.idleRunning
-            ? "Keep Awake in Quick Actions, or a playing video, pauses all of these."
-            : "hypridle isn't running, so none of these fire. Changing one starts it."
-        color: page.idleRunning ? Theme.subtext : Theme.alert
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+    SettingsNote {
+        text: page.idleRunning ? "Paused by Keep Awake or a playing video"
+            : "hypridle isn't running; a change starts it"
+        alert: !page.idleRunning
     }
 
     Repeater {

@@ -16,8 +16,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Software Update"
-    description: "How often the bar checks for new packages, whether the AUR is included, and packages to leave out. Upgrades run yay in a terminal."
+    description: "How often to check, the AUR, and packages to leave out."
 
     readonly property var intervals: [0, 30, 60, 360, 1440]
 
@@ -53,15 +55,10 @@ SettingsPage {
 
     FlyoutHeading { text: "CHECKING" }
 
-    Text {
-        width: parent.width
+    SettingsNote {
         visible: !Updates.available
-        wrapMode: Text.WordWrap
-        text: "checkupdates isn't installed (pacman-contrib), so nothing is checked."
-        color: Theme.alert
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+        text: "checkupdates (pacman-contrib) isn't installed"
+        alert: true
     }
 
     SettingsField {
@@ -83,7 +80,7 @@ SettingsPage {
 
     SettingsField {
         label: "Include the AUR"
-        hint: "Checked with yay -Qua and upgraded with the rest"
+        hint: "Checked with yay -Qua"
 
         Switch {
             anchors.right: parent.right
@@ -162,15 +159,7 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "IGNORED" }
 
-    Text {
-        width: parent.width
-        wrapMode: Text.WordWrap
-        text: "Left out of the count and passed to yay as --ignore. pacman.conf's own IgnorePkg still applies."
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
-    }
+    SettingsNote { text: "Left out of the count; passed to yay --ignore" }
 
     Repeater {
         model: Settings.updateIgnore
@@ -221,14 +210,10 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "MAINTENANCE" }
 
-    Text {
-        width: parent.width
+    FlyoutRow {
         visible: page.maintenance.length === 0
-        text: Health.scanning ? "Looking…" : "pacman isn't available"
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+        enabled: false
+        label: Health.scanning ? "Looking…" : "pacman isn't available"
     }
 
     Repeater {

@@ -20,22 +20,30 @@ Item {
     property real radius: Theme.radius + 3
     property color fill: Theme.panelFill
 
-    // [{ y0, y1 }] in the column's coordinates
+    // [{ y0, y1 }] in the column's coordinates. A child marked
+    // isSectionGroup (a Repeater's Column of heading and rows) is walked
+    // as if its children sat in the column itself.
     readonly property var runs: {
         if (!column) return []
-        var kids = column.children
         var out = [], cur = null
-        for (var i = 0; i < kids.length; i++) {
-            var c = kids[i]
-            if (!c.visible || c.height <= 0) continue
-            if (c.isFlyoutHeading === true || c.isSectionBreak === true
-                    || (/^QQuickItem\(/.test(String(c)) && c.children.length === 0)) {
-                cur = null
-                continue
+        function walk(kids, dy) {
+            for (var i = 0; i < kids.length; i++) {
+                var c = kids[i]
+                if (!c.visible || c.height <= 0) continue
+                if (c.isSectionGroup === true) {
+                    walk(c.children, dy + c.y)
+                    continue
+                }
+                if (c.isFlyoutHeading === true || c.isSectionBreak === true
+                        || (/^QQuickItem\(/.test(String(c)) && c.children.length === 0)) {
+                    cur = null
+                    continue
+                }
+                if (!cur) { cur = { y0: dy + c.y, y1: dy + c.y + c.height }; out.push(cur) }
+                else cur.y1 = dy + c.y + c.height
             }
-            if (!cur) { cur = { y0: c.y, y1: c.y + c.height }; out.push(cur) }
-            else cur.y1 = c.y + c.height
         }
+        walk(column.children, 0)
         return out
     }
 

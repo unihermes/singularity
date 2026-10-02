@@ -17,8 +17,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Audio"
-    description: "Default output and input, their levels, and the volume of each app using them. Wireplumber remembers these across restarts."
+    description: "Default devices, their levels, and each app's volume."
 
     readonly property var devices: Pipewire.nodes.values.filter(n => n.audio && !n.isStream)
     readonly property var sinks: devices.filter(n => n.isSink)
@@ -204,13 +206,10 @@ SettingsPage {
         }
     }
 
-    Text {
+    FlyoutRow {
         visible: page.playing.length === 0
-        text: "Nothing is playing"
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontBody
+        enabled: false
+        label: "Nothing is playing"
     }
 
     Item { width: 1; height: Theme.spaceM; visible: page.recording.length > 0 }

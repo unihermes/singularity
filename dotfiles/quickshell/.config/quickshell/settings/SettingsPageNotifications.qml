@@ -13,8 +13,10 @@ import "../services/TimeWindow.js" as TimeWindow
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Notifications"
-    description: "Do Not Disturb and its quiet hours, the history, and how long popups stay and where they appear."
+    description: "Do Not Disturb, quiet hours and popups."
 
     component Seconds: SettingsField {
         id: sec
@@ -38,7 +40,7 @@ SettingsPage {
     FlyoutAction {
         icon: Notifications.dnd ? "󰂛" : "󰂚"
         label: "Do Not Disturb"
-        status: Notifications.dnd ? "Popups are held, except critical ones; all still land in the history" : "Popups show as they arrive"
+        status: Notifications.dnd ? "Popups held, except critical ones" : "Popups show as they arrive"
         checked: Notifications.dnd
         onActivated: Notifications.toggleDnd()
     }
@@ -98,7 +100,7 @@ SettingsPage {
     QuietTime {
         key: "notifQuietTo"
         label: "Ends"
-        hint: "Turning Do Not Disturb off during quiet hours holds until the next day's"
+        hint: "Turning it off holds until the next day"
     }
 
     Item { width: 1; height: Theme.spaceM }
@@ -131,8 +133,8 @@ SettingsPage {
 
     SettingsField {
         label: "Group by app"
-        hint: Settings.notifGroup ? "Popups from one app stack into one, with a count"
-            : "Every notification gets its own popup"
+        hint: Settings.notifGroup ? "One app's popups stack, with a count"
+            : "Each notification gets its own popup"
 
         Switch {
             anchors.right: parent.right
@@ -147,7 +149,7 @@ SettingsPage {
     Seconds {
         key: "notifTimeout"
         label: "Normal"
-        hint: "Unless the app asks for a time of its own"
+        hint: "Unless the app asks for its own"
     }
     Seconds {
         key: "notifTimeoutLow"
@@ -156,6 +158,6 @@ SettingsPage {
     Seconds {
         key: "notifTimeoutCritical"
         label: "Critical"
-        hint: "Never means it stays until dismissed"
+        hint: "Never: it stays until dismissed"
     }
 }

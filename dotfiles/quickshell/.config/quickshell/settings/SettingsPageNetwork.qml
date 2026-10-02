@@ -25,8 +25,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Network"
-    description: "Wi-Fi through iwd. Passphrases are stored by iwd itself, not by the shell."
+    description: "Wi-Fi through iwd, which keeps the passphrases."
 
     // "" while browsing; an SSID while its passphrase is being typed
     property string pendingSsid: ""
@@ -141,6 +143,7 @@ SettingsPage {
     // --- networks in range ----------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "NETWORKS" }
 
     SettingsField {
         label: "Networks"
@@ -191,15 +194,12 @@ SettingsPage {
         }
     }
 
-    Text {
+    FlyoutRow {
         visible: Network.networks.length === 0
-        text: Network.device === "" ? "No wireless device"
+        enabled: false
+        label: Network.device === "" ? "No wireless device"
             : !Network.powered ? "The radio is off"
             : "None found"
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontBody
     }
 
     // Read together with the list, and again a moment after a connect

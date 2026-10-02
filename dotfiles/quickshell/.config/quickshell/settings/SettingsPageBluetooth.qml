@@ -23,8 +23,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Bluetooth"
-    description: "The adapter, paired devices, and whatever else is in range. BlueZ remembers pairings itself."
+    description: "The adapter, paired devices and what's in range."
 
     readonly property var adapter: Bluetooth.defaultAdapter
 
@@ -83,7 +85,7 @@ SettingsPage {
     SettingsField {
         label: "Bluetooth"
         hint: !page.adapter ? "No adapter found"
-            : page.blocked ? "Blocked by rfkill — unblock it to power the radio on"
+            : page.blocked ? "Blocked by rfkill; unblock to power on"
             : page.poweredOn ? "On" : "Off"
 
         Switch {
@@ -104,7 +106,7 @@ SettingsPage {
     SettingsField {
         visible: page.poweredOn
         label: "Discoverable"
-        hint: "Let other devices see this machine while this page is open"
+        hint: "Visible to others while this page is open"
 
         Switch {
             anchors.right: parent.right
@@ -116,7 +118,7 @@ SettingsPage {
     SettingsField {
         visible: page.poweredOn
         label: "Pairable"
-        hint: "Accept pairing requests that other devices start"
+        hint: "Accept pairing started by other devices"
 
         Switch {
             anchors.right: parent.right
@@ -135,24 +137,22 @@ SettingsPage {
         BtDeviceRow { required property var modelData; device: modelData }
     }
 
-    Text {
+    FlyoutRow {
         visible: page.paired.length === 0
-        text: "Nothing paired yet"
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontBody
+        enabled: false
+        label: "Nothing paired yet"
     }
 
     // --- in range ---------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "IN RANGE" }
 
     SettingsField {
         label: "Nearby"
         hint: !page.poweredOn ? "The radio is off"
             : page.adapter.discovering ? "Scanning…"
-            : "Scan to find devices that aren't paired yet"
+            : "Scan to find unpaired devices"
 
         Row {
             anchors.right: parent.right
@@ -179,12 +179,9 @@ SettingsPage {
         BtDeviceRow { required property var modelData; device: modelData }
     }
 
-    Text {
+    FlyoutRow {
         visible: page.poweredOn && page.nearby.length === 0
-        text: page.adapter && page.adapter.discovering ? "Nothing found yet" : "Nothing in range"
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontBody
+        enabled: false
+        label: page.adapter && page.adapter.discovering ? "Nothing found yet" : "Nothing in range"
     }
 }

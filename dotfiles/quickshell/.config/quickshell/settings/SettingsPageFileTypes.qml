@@ -31,8 +31,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "File Types"
-    description: "The app xdg-open and file managers launch for each kind of file. Saved to ~/.config/mimeapps.list."
+    description: "The app each kind of file opens with, in mimeapps.list."
 
     readonly property var groups: [
         { label: "Web browser",  types: ["x-scheme-handler/http", "x-scheme-handler/https", "text/html", "application/xhtml+xml"] },

@@ -92,14 +92,24 @@ Style: `channel` (frame `channel` in `Styles.js`).
 
 ## Settings pages
 
-Pages are redesigned one at a time; a redesigned page sets
-`sectioned: true` on its `SettingsPage`. Appearance is done so far.
+Every page sets `sectioned: true` on its `SettingsPage`.
+
+- **Header (untabbed pages):** the page's heading and a one-line
+  description, eliding if needed.
+- **Notes and empty states:** a note under a heading is one line of
+  `SettingsNote` (`alert` for a problem); an empty list is a disabled
+  `FlyoutRow`, as in the flyouts. No paragraphs.
+- **Sidebar:** the page on show has the accent tick, not a fill; the row
+  the arrow keys are on (while searching) has the hover fill.
+- A Repeater's Column that holds its own heading and rows (Display's
+  per-monitor blocks) sets `isSectionGroup: true` and `sectioned`, so its
+  rows get sections as if they sat in the page.
 
 - **Tabs:** one segmented strip at the top, an icon and a name per tab
   (names elide when tight), replacing the page heading and description.
 - **Sections:** each group of rows between headings sits in its own channel
   (`SectionRuns`, as in the flyouts). Rows are inset to clear it.
-- **Hints:** one line, eliding if needed. Write them short, at most about 44
+- **Hints:** one line, eliding if needed. Write them short, at most about 42
   characters ("Frames, chips and dividers"), with no lists of every choice.
   The label column is wider (`fit(320)`).
 - **Live preview (Appearance):** pinned above the rows on the Colours, Style,

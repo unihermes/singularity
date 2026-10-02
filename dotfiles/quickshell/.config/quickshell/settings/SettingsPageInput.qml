@@ -23,8 +23,10 @@ import "../flyouts"
 SettingsPage {
     id: page
 
+    sectioned: true
+
     title: "Input"
-    description: "Keyboard, mouse and touchpad, from the input table in hyprland.lua. Each change is saved and Hyprland reloads."
+    description: "Keyboard, mouse and touchpad, from hyprland.lua's input table."
 
     property var conf: ({ found: false, fields: {}, touchpad: {} })
 
@@ -194,19 +196,19 @@ SettingsPage {
     Text_ {
         key: "kb_layout"
         label: "Layout"
-        hint: "XKB layouts, comma-separated: us,de. Enter to apply"
+        hint: "XKB layouts, comma-separated: us,de"
         placeholder: "us"
     }
     Text_ {
         key: "kb_variant"
         label: "Variant"
-        hint: "Per layout, e.g. colemak. Enter to apply"
+        hint: "Per layout, e.g. colemak"
         placeholder: "none"
     }
     Text_ {
         key: "kb_options"
         label: "Options"
-        hint: "XKB options, e.g. caps:escape. Enter to apply"
+        hint: "XKB options, e.g. caps:escape"
         placeholder: "none"
     }
     Integer {
@@ -239,7 +241,7 @@ SettingsPage {
     }
     SettingsField {
         label: "Acceleration"
-        hint: "Flat moves the pointer exactly as far as the hand does"
+        hint: "Flat: the pointer moves as far as the hand"
         Choice {
             key: "accel_profile"
             setLabel: "Acceleration"
@@ -248,11 +250,11 @@ SettingsPage {
     }
     SettingsField {
         label: "Focus follows mouse"
-        hint: "0 click to focus · 1 always · 2 cursor only · 3 detached"
+        hint: "What pointing at a window focuses"
         Choice {
             key: "follow_mouse"
             setLabel: "Focus follows mouse"
-            options: [0, 1, 2, 3].map(n => ({ text: String(n), value: n }))
+            options: ["Click", "Always", "Cursor", "Detached"].map((t, n) => ({ text: t, value: n }))
         }
     }
     Toggle {
@@ -286,12 +288,12 @@ SettingsPage {
     Toggle {
         sub: "touchpad"; key: "clickfinger_behavior"
         label: "Click by finger count"
-        hint: "Two-finger press is right click, three is middle"
+        hint: "Two fingers right-click, three middle"
     }
     Toggle {
         sub: "touchpad"; key: "drag_lock"
         label: "Drag lock"
-        hint: "Lifting a finger mid-drag doesn't drop what's held"
+        hint: "Lifting mid-drag doesn't drop it"
     }
     Toggle {
         sub: "touchpad"; key: "middle_button_emulation"

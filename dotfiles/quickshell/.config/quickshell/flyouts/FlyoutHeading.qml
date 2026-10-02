@@ -55,7 +55,7 @@ Item {
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
     readonly property int sectionRoom: parent && parent.sectioned === true && !asTitle ? Theme.spaceM : 0
-    readonly property bool firstInColumn: !!parent && parent.children[0] === root
+    readonly property bool firstInColumn: !!parent && parent.children[0] === root && (parent.isSectionGroup !== true || parent.opensPage === true)
     readonly property real lift: firstInColumn ? -sectionRoom / 2 : 0
 
     // the first row of a bar flyout's column, drawn as its title
