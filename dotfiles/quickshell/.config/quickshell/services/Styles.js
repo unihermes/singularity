@@ -43,60 +43,80 @@ var styles = {
         frame: "channel", modules: "grouped", hover: "fill", gauge: "fill", mark: "pill", title: "none",
         shadow: "none", lines: true, attach: "grown", anim: "fade", prefix: "//",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
+        // solid windows; the terminal a touch see-through, as it always was
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
     },
     lined: {
         name: "Lined", hint: "Two fine strokes on every chip and panel",
         frame: "double", modules: "outline", hover: "outline", gauge: "fill", mark: "pill", title: "none",
         shadow: "none", lines: true, attach: "auto", anim: "drop", prefix: "",
         finish: { barSeparator: "line", gradient: false, headingUpper: true, headingRule: true },
+        // crisp strokes want solid windows; the terminal as usual
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
     },
     flat: {
         name: "Flat", hint: "Solid grounds, no strokes, soft shadows",
         frame: "none", modules: "filled", hover: "fill", gauge: "fill", mark: "ground", title: "none",
         shadow: "soft", lines: false, attach: "auto", anim: "scale", prefix: "",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
+        // solid grounds all the way down
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
     retro: {
         name: "Retro", hint: "Raised bevels, title bars, hard shadows",
         frame: "bevel", modules: "outline", hover: "none", gauge: "fill", mark: "box", title: "titlebar",
         shadow: "hard", lines: true, attach: "auto", anim: "none", prefix: "",
         finish: { barSeparator: "double", gradient: true, headingUpper: false, headingRule: true },
+        // opaque, as the era drew everything
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
     minimal: {
         name: "Minimal", hint: "Bare chips over a rule, hairline panels",
         frame: "single", modules: "underline", hover: "fill", gauge: "fill", mark: "above", title: "none",
         shadow: "soft", lines: true, attach: "auto", anim: "drop", prefix: "",
         finish: { barSeparator: "dot", gradient: false, headingUpper: true, headingRule: true },
+        // airy: windows in the back thin out, the terminal shows the desktop
+        windows: { focusedOpacity: 100, unfocusedOpacity: 95, terminalOpacity: 85 },
     },
     basic: {
         name: "Basic", hint: "No outlines or marks: grounds and text only",
         frame: "none", modules: "ghost", hover: "fill", gauge: "fill", mark: "ground", title: "none",
         shadow: "none", lines: false, attach: "auto", anim: "fade", prefix: "",
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false },
+        // grounds and text only, nothing showing through
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
     capsule: {
         name: "Capsule", hint: "Every chip, control and island a pill",
         frame: "none", modules: "pill", hover: "fill", gauge: "fill", mark: "pill", title: "none",
         shadow: "soft", lines: false, attach: "floating", anim: "scale", prefix: "",
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false },
+        // soft: a faint lift between the window in front and the rest
+        windows: { focusedOpacity: 100, unfocusedOpacity: 95, terminalOpacity: 90 },
     },
     glass: {
         name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
         frame: "single", modules: "filled", hover: "fill", gauge: "fill", mark: "ground", title: "none",
         shadow: "soft", lines: false, attach: "floating", anim: "fade", prefix: "", glass: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
+        // frosted: everything over the blur, the back windows most
+        windows: { focusedOpacity: 95, unfocusedOpacity: 85, terminalOpacity: 75 },
     },
     tabbed: {
         name: "Tabbed", hint: "Flyouts hang from the bar like tabs",
         frame: "single", modules: "ghost", hover: "fill", gauge: "fill", mark: "above", title: "none",
         shadow: "soft", lines: true, attach: "tab", anim: "drop", prefix: "",
         finish: { barSeparator: "line", gradient: false, headingUpper: true, headingRule: true },
+        // solid windows; the terminal as usual
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
     },
     terminal: {
         name: "Terminal", hint: "Bracketed modules, block meters, square edges",
         frame: "single", modules: "bracket", hover: "none", gauge: "segments", mark: "box", title: "none",
         shadow: "none", lines: true, attach: "auto", anim: "none", prefix: ">", square: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
+        // terminals over the wallpaper, the back windows receding
+        windows: { focusedOpacity: 100, unfocusedOpacity: 90, terminalOpacity: 85 },
     },
 }
 
