@@ -221,7 +221,7 @@ Settings') are laid out the same way.
   and opens a search with the matching apps under it, with their icons; a
   click adds one. From packages lists only the entries that can run here,
   saying when a user service already does the job; ones for other
-  desktops fold into a Show N row that says which desktops they're for.
+  desktops aren't shown at all.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

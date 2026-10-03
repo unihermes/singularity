@@ -199,10 +199,10 @@ SettingsPage {
 
     // --- from packages ---------------------------------------------------------
 
-    // Only what could run here; entries for other desktops fold away.
+    // Only what could run here: an entry for another desktop (GNOME's
+    // keyring and accessibility bus) never runs in this session, so it isn't
+    // offered at all.
     readonly property var packageEntries: Autostart.systemEntries.filter(e => e.runnable)
-    readonly property var otherDesktops: Autostart.systemEntries.filter(e => !e.runnable)
-    property bool showOthers: false
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "FROM PACKAGES" }
@@ -218,30 +218,7 @@ SettingsPage {
     }
 
     FlyoutRow {
-        visible: page.otherDesktops.length > 0
-        label: (page.showOthers ? "Hide " : "Show ") + page.otherDesktops.length + " for other desktops"
-        trailing: page.showOthers ? "󰅀" : "󰅂"
-        onActivated: page.showOthers = !page.showOthers
-    }
-
-    SettingsIndent {
-        visible: page.showOthers
-
-        Repeater {
-            model: page.otherDesktops
-            FlyoutRow {
-                required property var modelData
-                enabled: false
-                leadingImage: page.iconSource(modelData.icon)
-                leadingIcon: modelData.icon ? "" : "󰣆"
-                label: modelData.name
-                trailing: modelData.only !== "" ? "Only for " + modelData.only : "Can't run here"
-            }
-        }
-    }
-
-    FlyoutRow {
-        visible: Autostart.loaded && Autostart.systemEntries.length === 0
+        visible: Autostart.loaded && page.packageEntries.length === 0
         enabled: false
         label: "No package entries left to add"
     }
