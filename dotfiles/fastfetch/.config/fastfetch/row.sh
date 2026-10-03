@@ -16,14 +16,14 @@
 #
 # Colours, capsule shape and heading case come from term-colors.sh, which
 # Quickshell (AppearanceSync.qml) writes for the current look. The block is
-# The block is W columns: with the 64-column logo and its 1-column gap the
+# The block is W columns: with the 64-column logo and its 3-column gap the
 # whole thing is 115, which fits a half-screen terminal (about 116).
 N_SURFACE='26;26;26' N_OVERLAY='36;36;36' N_BORDER='48;48;48'
 N_MUTED='77;77;77' N_SUBTEXT='122;122;122' N_TEXT='208;226;250'
 N_BRIGHT='235;235;235' N_ACCENT='85;85;200' N_ON_ACCENT='235;235;235'
 T_ROUND=1 T_UPPER=1
 . "$HOME/.local/state/singularity/term-colors.sh" 2>/dev/null
-W=50
+W=48
 
 # a capsule: ground, foreground, text; round caps only when the look has a radius
 cap() {
