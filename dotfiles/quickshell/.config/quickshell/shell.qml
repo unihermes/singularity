@@ -47,6 +47,9 @@ ShellRoot {
     // has to exist from startup -- a singleton is only built when something
     // first reads it, which in grayscale mode is the Appearance page
     readonly property string wallpaper: Wallpaper.current
+    // SystemStats samples from startup, so the System window's graphs open
+    // with the last minute already in them
+    readonly property bool systemHistory: SystemStats.history
 
     // Keep Awake, from Quick Actions. Held here rather than on a bar because
     // every screen gets its own bar, and a per-screen flag would let one

@@ -28,6 +28,11 @@ Column {
     property int reserveRows: 5
     // the section heading, with the sort toggles on its line
     property string heading: "PROCESSES"
+    // CPU as a share of the whole machine (top's per-core figure over the
+    // thread count), with a small level beside it, rather than per core,
+    // where one busy browser reads 170%
+    property bool machineShare: false
+    readonly property int threads: Math.max(1, SystemStats.cores.length)
 
     width: parent ? parent.width : 0
     spacing: Theme.spaceM
@@ -176,14 +181,15 @@ Column {
                     font.pixelSize: Theme.fontBody
                 }
 
+                // armed, the name asks
                 Text {
                     anchors.left: root.detailed ? pidText.right : parent.left
                     anchors.right: userText.left
                     anchors.rightMargin: Theme.spaceL
                     anchors.verticalCenter: parent.verticalCenter
-                    text: pr.modelData.name
+                    text: pr.armed ? "End " + pr.modelData.name + "?" : pr.modelData.name
                     elide: Text.ElideRight
-                    color: Theme.text
+                    color: pr.armed ? Theme.alert : Theme.text
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontBody
@@ -194,7 +200,7 @@ Column {
                     visible: root.detailed
                     // zero-width when hidden, so the name column runs on
                     width: root.detailed ? root.userW : 0
-                    anchors.right: cpuText.left
+                    anchors.right: cpuLevel.left
                     anchors.rightMargin: root.detailed ? Theme.spaceL : 0
                     anchors.verticalCenter: parent.verticalCenter
                     text: pr.modelData.user
@@ -205,6 +211,23 @@ Column {
                     font.pixelSize: Theme.fontSmall
                 }
 
+                Item {
+                    id: cpuLevel
+                    anchors.right: cpuText.left
+                    anchors.rightMargin: root.machineShare ? Theme.spaceM : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root.machineShare ? Theme.fs(80) : 0
+                    height: lvl.height
+                    visible: root.machineShare
+
+                    Slider {
+                        id: lvl
+                        width: parent.width
+                        interactive: false
+                        value: Math.min(100, pr.modelData.cpu / root.threads)
+                    }
+                }
+
                 Text {
                     id: cpuText
                     anchors.right: memText.left
@@ -212,7 +235,7 @@ Column {
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.cpuW
                     horizontalAlignment: Text.AlignRight
-                    text: pr.modelData.cpu.toFixed(1) + "%"
+                    text: (root.machineShare ? pr.modelData.cpu / root.threads : pr.modelData.cpu).toFixed(1) + "%"
                     color: SystemStats.procSort === "cpu" ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
@@ -252,8 +275,7 @@ Column {
     Text {
         width: parent.width
         height: Theme.fs(12)
-        text: SystemStats.killPid > 0 ? "Click again to end that process"
-            : SystemStats.procs.length === 0 ? "Sampling…" : ""
+        text: SystemStats.procs.length === 0 ? "Sampling…" : ""
         color: Theme.subtext
         font.family: Theme.fontText
         font.weight: Theme.weightBody

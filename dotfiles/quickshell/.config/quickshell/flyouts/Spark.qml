@@ -14,6 +14,11 @@ Item {
     // should sit on top last
     property var series: []
     property real ceiling: 1
+    // the value at the bottom edge: a temperature's line reads better from
+    // 30 °C than from 0
+    property real floor: 0
+    // no box of its own, for a graph inside a card that already has one
+    property bool bare: false
     property string caption: ""
     // samples the full width stands for; one per second in the System window
     property int historyLength: 60
@@ -25,6 +30,7 @@ Item {
     onCeilingChanged: canvas.requestPaint()
 
     Rectangle {
+        visible: !sp.bare
         anchors.fill: parent
         radius: Theme.radiusInner
         color: Theme.meterTrack
@@ -35,7 +41,7 @@ Item {
     Canvas {
         id: canvas
         anchors.fill: parent
-        anchors.margins: Theme.sp(3)
+        anchors.margins: sp.bare ? 0 : Theme.sp(3)
         onWidthChanged: requestPaint()
 
         onPaint: {
@@ -49,7 +55,7 @@ Item {
                 var x0 = w - (vals.length - 1) * step
                 ctx.beginPath()
                 for (var i = 0; i < vals.length; i++) {
-                    var y = h - Math.min(1, vals[i] / sp.ceiling) * h
+                    var y = h - Math.max(0, Math.min(1, (vals[i] - sp.floor) / (sp.ceiling - sp.floor))) * h
                     if (i === 0) ctx.moveTo(x0, y)
                     else ctx.lineTo(x0 + i * step, y)
                 }

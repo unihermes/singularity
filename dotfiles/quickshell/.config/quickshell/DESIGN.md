@@ -303,6 +303,22 @@ Settings') are laid out the same way.
   list. Otherwise they're counted from the look as designed. Undo, Undo
   all and the fields' ● marks go back to the same baseline.
 
+## System window
+
+Laid out like the sectioned Settings pages (`SystemPage`).
+
+- **Overview:** four cards (CPU, Memory, Temp, Battery), each with its
+  last minute as a line over its level (`StatCard.history`; temperature
+  drawn from 30 °C), then the network's minute as one slim strip with its
+  live rates. SystemStats samples its cheap per-second files from shell
+  start, so every graph opens full. Health is a card (the count or All
+  clear, when the checks ran, Run checks and Open Health) with rows only
+  for what needs a look, each opening where it's fixed, and one quiet line
+  for what's fine. Process CPU is a share of the whole machine with a
+  small level (`ProcessTable.machineShare`); ending one asks End <name>?
+  in the row. At a glance is two columns. Quick actions are rows with an
+  icon and a note saying what each does; Restart audio asks first.
+
 ## Headings
 
 - Bold spaced caps, value in white (`VOLUME  45%`).

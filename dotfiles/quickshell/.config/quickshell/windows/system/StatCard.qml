@@ -7,7 +7,8 @@
 //
 // The meter is optional -- a temperature has no natural full scale until
 // one is chosen (see PageOverview), and a tile with `fraction` left at -1
-// drops the bar and closes up.
+// drops the bar and closes up. With `history`, the last minute is drawn as
+// a line over the meter, so now and just now read together.
 
 import QtQuick
 import "../../services"
@@ -23,6 +24,10 @@ Item {
     property real fraction: -1
     property bool critical: false
     property bool available: true
+    // samples for the line, one a second; empty for none
+    property var history: []
+    property real historyFloor: 0
+    property real historyCeiling: 1
 
     signal activated()
 
@@ -69,6 +74,16 @@ Item {
             font.family: Theme.fontText
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontTitle
+        }
+
+        Spark {
+            visible: root.history.length > 0
+            width: parent.width
+            height: Theme.row(26)
+            bare: true
+            series: [{ values: root.history, color: root.critical ? Theme.alert : Theme.accent, fill: true }]
+            floor: root.historyFloor
+            ceiling: root.historyCeiling
         }
 
         Meter {
