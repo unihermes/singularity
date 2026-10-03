@@ -108,7 +108,11 @@ Singleton {
         }
         if (kind === "log") {
             // the id carries a path, which can hold a colon in principle
-            terminal(check.id, "less +G '" + parts.slice(1).join(":") + "'")
+            // the warnings and errors the row counted, not the whole log of
+            // reloads around them; -R draws the log's colours, where plain
+            // less calls the file binary and quits
+            var path = "'" + parts.slice(1).join(":") + "'"
+            terminal(check.id, "grep -E 'ERROR|WARN' " + path + " | less -R +G")
         }
     }
 

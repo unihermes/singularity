@@ -132,13 +132,45 @@ fi
 # --- firmware ----------------------------------------------------------------
 # From fwupd's cached metadata, so this doesn't go to the network; the
 # repair refreshes it first. Exit 2 is fwupd's "nothing to do".
+#
+# A device fwupd won't update yet says why in its Problems: a laptop's
+# system firmware wants mains power, for one. Then there's nothing a click
+# can do, so the row says what will (plug in) rather than offering an
+# Update that fwupdmgr refuses.
 if command -v fwupdmgr &>/dev/null; then
 	out=$(timeout 20 fwupdmgr get-updates --json --no-unreported-check \
 		--no-metadata-check 2>/dev/null)
 	rc=$?
-	n=$(grep -o '"Releases"' <<<"$out" | wc -l)
-	if (( rc == 0 && n > 0 )); then
-		emit warn firmware "Firmware" "$n device(s) with an update" firmware Update
+	if (( rc == 0 )) && command -v python3 &>/dev/null; then
+		# one line per device: name, current, newest, blocking problems
+		mapfile -t fw < <(python3 -c '
+import json, sys
+try: d = json.load(sys.stdin)
+except Exception: sys.exit()
+for dev in d.get("Devices", []):
+    rel = dev.get("Releases", [])
+    if not rel: continue
+    newest = rel[0].get("Version", "")
+    print("\t".join([dev.get("Name", "?"), dev.get("Version", ""), newest,
+                     ",".join(dev.get("Problems", [])), ",".join(dev.get("Flags", []))]))
+' <<<"$out")
+	else
+		fw=()
+	fi
+	if (( rc == 0 && ${#fw[@]} > 0 )); then
+		IFS=$'\t' read -r name cur new problems flags <<<"${fw[0]}"
+		more=""
+		(( ${#fw[@]} > 1 )) && more=" and $(( ${#fw[@]} - 1 )) more"
+		what="$name $cur → $new$more"
+		if [[ $problems == *require-ac* ]]; then
+			emit warn firmware "Firmware" "$what · plug in the charger to install"
+		elif [[ -n $problems ]]; then
+			emit warn firmware "Firmware" "$what · fwupd won't yet: ${problems//,/, }"
+		elif [[ $flags == *needs-reboot* ]]; then
+			emit warn firmware "Firmware" "$what · installs on the next restart" firmware Update
+		else
+			emit warn firmware "Firmware" "$what" firmware Update
+		fi
 	elif (( rc == 0 || rc == 2 )); then
 		emit ok firmware "Firmware" "Up to date" firmware Refresh
 	else

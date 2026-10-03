@@ -979,12 +979,14 @@ Column {
     // what a bind that can't be edited here runs, and why not
     component BindReadout: SettingsIndent {
         id: ro
-        required property var row
+        // set by the Loader's component; undefined for the moment between
+        // the readout being built and the row arriving, or the row going
+        property var row: null
 
         SettingsField {
             labelWidth: root.editLabelWidth
             label: "Does"
-            hint: ro.row.reason
+            hint: ro.row ? ro.row.reason : ""
             searchable: false
 
             Label {
@@ -995,7 +997,7 @@ Column {
                 maximumLineCount: 4
                 color: Theme.text
                 font.pixelSize: Theme.fontSmall
-                text: ro.row.cmdSrc
+                text: ro.row ? ro.row.cmdSrc : ""
             }
         }
         Item {
@@ -1005,9 +1007,9 @@ Column {
             FlyoutChip {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Open at line " + ro.row.line
+                text: "Open at line " + (ro.row ? ro.row.line : "")
                 icon: "󰏌"
-                onClicked: root.openConf(ro.row.line)
+                onClicked: if (ro.row) root.openConf(ro.row.line)
             }
         }
     }
