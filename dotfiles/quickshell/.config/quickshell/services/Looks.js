@@ -49,7 +49,7 @@
 //                  floating bar or its islands; unstated, edgeGaps[barStyle]
 //     seeThrough   the bar's and panels' opacity, in percent
 //     focusedOpacity, unfocusedOpacity   Hyprland's windows' opacity when
-//                  focused and not, in percent
+//                  focused and not, in percent; unstated, the style's
 //     shadows, gradient, heavyLines, headingUpper, headingRule,
 //     barSeparator, levelColour   the Finish switches (Settings.qml)
 //
@@ -173,8 +173,6 @@ var settingsBase = {
     barStyle: "full",
     barPosition: "top",
     seeThrough: 100,
-    focusedOpacity: 100,
-    unfocusedOpacity: 100,
     shadows: true,
     heavyLines: false,
     levelColour: "accent",
@@ -217,6 +215,9 @@ function complete(look) {
     var fin = Styles.get(look.settings.style).finish
     for (var f in fin)
         if (look.settings[f] === undefined) look.settings[f] = fin[f]
+    var win = Styles.windows(look.settings.style)
+    for (var w in win)
+        if (look.settings[w] === undefined) look.settings[w] = win[w]
     for (var s in settingsBase)
         if (look.settings[s] === undefined) look.settings[s] = settingsBase[s]
     if (look.settings.edgeGap === undefined) look.settings.edgeGap = edgeGaps[look.settings.barStyle] || 0

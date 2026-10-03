@@ -658,13 +658,15 @@ Singleton {
         else adapter[key] = clamp(key, v)
     }
 
-    // A style arrives with its own Finish switches, so picking one always
-    // lands somewhere it was drawn for.
+    // A style arrives with its own Finish switches and window opacity, so
+    // picking one always lands somewhere it was drawn for.
     function setStyle(v) {
         if (Styles.order.indexOf(v) === -1) return
         adapter.style = v
         var fin = Styles.get(v).finish
         for (var k in fin) adapter[k] = fin[k]
+        var win = Styles.windows(v)
+        for (var w in win) adapter[w] = win[w]
     }
 
     // A bar shape arrives with its edge gap: the look's own when it's the
