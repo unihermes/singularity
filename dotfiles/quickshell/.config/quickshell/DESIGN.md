@@ -206,6 +206,15 @@ Settings') are laid out the same way.
   each app in the history is a row that opens a Popups switch, and a
   silent app's notifications go straight to the history (critical ones
   still pop up).
+- **Audio:** each device is a row (type icon, a plain name such as
+  Speaker or Dell S2417DG, where it is as the `note`, its level or Muted);
+  the default has the Default badge and the tick, and a click on another
+  makes it the default. Outputs with nothing plugged in (pactl's port
+  availability) fold into a Show N row. Under the rows sit the default's
+  Volume (grey and reading Muted while muted) and a Mute switch. Each app
+  playing or recording is a row (its icon, name, what it's playing, its
+  level, and "on <output>" when that isn't the default) that opens to
+  Volume, Mute and Plays on, which moves it with pactl.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

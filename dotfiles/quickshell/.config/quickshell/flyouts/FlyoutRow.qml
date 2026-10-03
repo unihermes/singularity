@@ -108,7 +108,7 @@ Item {
         anchors.leftMargin: leadText.visible ? Theme.spaceM : root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
         // up to whatever sits at the right, leaving the note its room
-        width: Math.max(0, Math.min(root.note === "" ? Infinity : implicitWidth,
+        width: Math.max(0, Math.min(root.note === "" ? Infinity : labelMetrics.advanceWidth + 1,
             root.labelEnd - Theme.spaceL - x - (noteText.visible ? noteText.implicitWidth + Theme.spaceM : 0)))
         text: root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
         elide: Text.ElideRight
@@ -122,6 +122,14 @@ Item {
         font.pixelSize: Theme.fontBody
         font.weight: Theme.weightBody
         opacity: root.pulse
+    }
+
+    // the label's full width, which an eliding Text's own implicitWidth
+    // can't give without a binding loop
+    TextMetrics {
+        id: labelMetrics
+        font: labelText.font
+        text: labelText.text
     }
 
     // where the label's room ends: the first thing at the right

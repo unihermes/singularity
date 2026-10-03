@@ -162,9 +162,9 @@ var entries = [
 
     // --- Audio -------------------------------------------------------------
     { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute speakers" },
-    { page: "audio", section: "Output", label: "Device",    keywords: "default sink source speakers headphones hdmi microphone" },
-    { page: "audio", section: "Output", label: "Output",    keywords: "sink speakers headphones device" },
-    { page: "audio", section: "Input",  label: "Input",     keywords: "source microphone mic device" },
+    { page: "audio", section: "Output", label: "Mute",      keywords: "silence speakers microphone mic off" },
+    { page: "audio", section: "Output", label: "Output",    keywords: "default sink speakers headphones hdmi displayport device" },
+    { page: "audio", section: "Input",  label: "Input",     keywords: "default source microphone mic device" },
     // The mixer's rows are named after whatever happens to be running, so
     // there is no fixed field label to point at. These name their heading
     // instead: the result opens the page, and highlights nothing.
