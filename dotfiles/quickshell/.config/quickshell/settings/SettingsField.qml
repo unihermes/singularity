@@ -17,6 +17,8 @@ Item {
     // a glyph before the label (a battery or plug), and a row that's off
     property string mark: ""
     property bool dimmed: false
+    // an image before the label and hint (an app's icon)
+    property string image: ""
     // A setting the look carries (Looks.js `settings`): while it differs
     // from the look's own value the label is marked, and the mark puts it
     // back. "" for a field that isn't one.
@@ -68,9 +70,21 @@ Item {
         Behavior on opacity { NumberAnimation { duration: Theme.dur(180); easing.type: Theme.ease } }
     }
 
+    Image {
+        id: leadImage
+        visible: root.image !== ""
+        anchors.verticalCenter: parent.verticalCenter
+        width: visible ? Theme.iconCell : 0
+        height: width
+        sourceSize: Qt.size(width * 2, height * 2)
+        source: root.image
+    }
+
     Column {
         id: labels
-        width: root.labelWidth - Theme.spaceXl
+        anchors.left: leadImage.visible ? leadImage.right : parent.left
+        anchors.leftMargin: leadImage.visible ? Theme.spaceM : 0
+        width: root.labelWidth - Theme.spaceXl - x
 
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1

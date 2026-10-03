@@ -95,7 +95,7 @@ run)
 	;;
 
 list)
-	# scope \t file \t name \t exec \t enabled \t runnable \t comment
+	# scope \t file \t name \t exec \t enabled \t runnable \t comment \t icon \t OnlyShowIn
 	#
 	# System entries are listed after the user's, and one that has been
 	# copied into ~/.config/autostart is left out of the system list -- the
@@ -106,17 +106,17 @@ list)
 		name=${file##*/}
 		on=no; enabled "$file" && on=yes
 		ok=no; runnable "$file" && ok=yes
-		printf 'user\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		printf 'user\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 			"$name" "$(field "$file" Name)" "$(exec_line "$file")" \
-			"$on" "$ok" "$(field "$file" Comment)"
+			"$on" "$ok" "$(field "$file" Comment)" "$(field "$file" Icon)" "$(field "$file" OnlyShowIn)"
 	done
 	for file in "$system_dir"/*.desktop; do
 		name=${file##*/}
 		[[ -e $user_dir/$name ]] && continue
 		ok=no; runnable "$file" && ok=yes
-		printf 'system\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		printf 'system\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
 			"$name" "$(field "$file" Name)" "$(exec_line "$file")" \
-			no "$ok" "$(field "$file" Comment)"
+			no "$ok" "$(field "$file" Comment)" "$(field "$file" Icon)" "$(field "$file" OnlyShowIn)"
 	done
 	;;
 

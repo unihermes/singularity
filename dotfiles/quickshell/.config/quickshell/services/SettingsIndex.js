@@ -173,8 +173,8 @@ var entries = [
 
     // --- Startup -----------------------------------------------------------
     { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
-    { page: "autostart", section: "Add",      label: "Application",  keywords: "autostart add app start login" },
-    { page: "autostart", section: "Packages", label: "From installed packages", keywords: "xdg autostart system entry keyring" },
+    { page: "autostart", section: "At login", label: "Add an app…",  keywords: "autostart add app application start login" },
+    { page: "autostart", section: "Packages", label: "From packages", keywords: "xdg autostart system installed entry keyring" },
 
     // --- File Types --------------------------------------------------------
     { page: "filetypes", section: "Common", label: "Web browser",  keywords: "default http https url link mimeapps" },

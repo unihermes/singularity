@@ -17,6 +17,8 @@
 // or start before the session, is a systemd user unit -- what's in
 // dotfiles/systemd -- and the failed ones show up in System > Health.
 
+import Quickshell
+import Quickshell.Io
 import QtQuick
 import "../services"
 import "../flyouts"
@@ -27,12 +29,7 @@ SettingsPage {
     sectioned: true
 
     title: "Startup"
-    description: "What starts at login, as entries in ~/.config/autostart."
-
-    // the app picked in the Add row, held until + Add is clicked
-    property var chosen: null
-
-    readonly property var apps: Apps.list("")
+    description: "What starts when you log in."
 
     Component.onCompleted: Autostart.refresh()
 
@@ -41,16 +38,39 @@ SettingsPage {
         function onWrote(message, isError) { page.say(message, isError) }
     }
 
-    // One entry: what it is, what it runs, and the chips that change it.
+    // an icon name or path from a desktop entry, as an image source
+    function iconSource(icon) {
+        if (!icon) return ""
+        return icon.startsWith("/") ? "file://" + icon : Quickshell.iconPath(icon, true)
+    }
+
+    // the user units that are enabled, to say which package entries one of
+    // them already covers (xdg-user-dirs.desktop and xdg-user-dirs.service)
+    property var units: []
+    Process {
+        running: true
+        command: ["systemctl", "--user", "list-unit-files", "--state=enabled", "--no-legend", "--plain"]
+        stdout: StdioCollector {
+            onStreamFinished: page.units = text.split("\n").map(l => l.split(/\s+/)[0]).filter(u => u !== "")
+        }
+    }
+    function unitFor(entry) {
+        var u = entry.file.replace(/\.desktop$/, ".service")
+        return units.indexOf(u) >= 0 ? u : ""
+    }
+
+    // One entry: its icon, what it is, what it runs, the switch, and Remove
+    // for the user's own.
     component Entry: SettingsField {
         id: row
         required property var entry
 
+        image: page.iconSource(entry.icon)
         label: entry.name
         // the command is the honest answer to "what is this", and for an
         // entry with no Comment it is the only one available
-        hint: (entry.runnable ? "" : "Unavailable here · ")
-            + (entry.comment !== "" ? entry.comment : entry.exec)
+        hint: entry.scope === "system" && page.unitFor(entry) !== "" ? "Already run by " + page.unitFor(entry)
+            : (entry.runnable ? "" : "Unavailable here · ") + (entry.comment !== "" ? entry.comment : entry.exec)
 
         // No verticalCenter on anything in here: the field's control slot
         // takes its height from childrenRect, so a child that centres itself
@@ -58,7 +78,7 @@ SettingsPage {
         // height is its tallest child's, whatever their positions.
         Row {
             anchors.right: parent.right
-            spacing: Theme.spaceS
+            spacing: Theme.spaceM
 
             Switch {
                 anchors.verticalCenter: parent.verticalCenter
@@ -72,19 +92,21 @@ SettingsPage {
             FlyoutChip {
                 visible: row.entry.scope === "user"
                 text: "Remove"
-                confirmText: "Confirm"
+                confirmText: "Remove " + row.entry.name + "?"
                 enabled: !AtomicFileWrite.busy
                 onClicked: Autostart.remove(row.entry)
             }
         }
     }
 
-    FlyoutHeading { text: "AT LOGIN" }
+    // --- at login ------------------------------------------------------------
+
+    FlyoutHeading { text: "AT LOGIN" + (Autostart.userEntries.length > 0 ? "  " + Autostart.userEntries.length : "") }
 
     FlyoutRow {
         visible: Autostart.loaded && Autostart.userEntries.length === 0
         enabled: false
-        label: "Nothing starts at login yet"
+        label: "Nothing of yours starts at login yet"
     }
 
     Repeater {
@@ -95,59 +117,126 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "ADD AN APPLICATION" }
+    // Add an app…: a search and the matching apps under it, a click adding
+    // one, as Add a rule… and Other network… open in place.
+    property bool adding: false
+    property string query: ""
+    // the apps not already starting at login, best matches first
+    readonly property var matches: adding
+        ? Apps.list(query).filter(a => !Autostart.userEntries.some(e => e.file === a.id + ".desktop"))
+        : []
+    readonly property int shownMatches: 6
 
-    SettingsField {
-        label: "Application"
-        hint: "Adds a desktop entry to ~/.config/autostart"
-
-        // An Item of its own height rather than a Row, so the dropdown and
-        // the button can centre against something fixed -- see the note in
-        // Entry above for why centring against the slot itself cannot work.
-        Item {
-            anchors.right: parent.right
-            width: picker.width + Theme.spaceS + addChip.width
-            height: Theme.rowHeightTall
-
-            SettingsDropdown {
-                id: picker
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(240)
-                model: page.apps
-                current: page.chosen
-                placeholder: "Choose an application…"
-                labelFor: v => v ? v.name : ""
-                onPicked: v => page.chosen = v
-            }
-
-            FlyoutChip {
-                id: addChip
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                // as tall as the box beside it, so the two read as one control
-                height: picker.height
-                text: "+ Add"
-                enabled: page.chosen !== null && !AtomicFileWrite.busy
-                onClicked: {
-                    Autostart.add(page.chosen)
-                    page.chosen = null
-                }
-            }
+    FlyoutRow {
+        label: "Add an app…"
+        trailing: "󰐕"
+        highlighted: page.adding
+        onActivated: {
+            page.adding = !page.adding
+            page.query = ""
+            search.text = ""
+            if (page.adding) Qt.callLater(search.forceFocus)
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "FROM INSTALLED PACKAGES" }
+    SettingsIndent {
+        visible: page.adding
 
-    SettingsNote { text: "Off until turned on; some repeat a user unit" }
+        Item {
+            width: parent.width
+            height: search.implicitHeight
+
+            FlyoutInput {
+                id: search
+                anchors.left: parent.left
+                anchors.right: cancel.left
+                anchors.rightMargin: Theme.spaceM
+                echoPassword: false
+                glyph: "󰍉"
+                placeholder: "Search apps"
+                onTextChanged: page.query = text
+                onAccepted: if (page.matches.length > 0) addRow.pick(page.matches[0])
+                onEscapePressed: page.adding = false
+            }
+            FlyoutChip {
+                id: cancel
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Cancel"
+                onClicked: page.adding = false
+            }
+        }
+
+        Repeater {
+            id: addRow
+            function pick(app) {
+                Autostart.add(app)
+                page.adding = false
+            }
+            model: page.matches.slice(0, page.shownMatches)
+
+            FlyoutRow {
+                required property var modelData
+                leadingImage: page.iconSource(modelData.icon)
+                leadingIcon: modelData.icon ? "" : "󰣆"
+                label: modelData.name
+                trailing: modelData.genericName || ""
+                onActivated: addRow.pick(modelData)
+            }
+        }
+
+        FlyoutRow {
+            visible: page.matches.length > page.shownMatches
+            enabled: false
+            label: "and " + (page.matches.length - page.shownMatches) + " more; type to narrow"
+        }
+        FlyoutRow {
+            visible: page.matches.length === 0
+            enabled: false
+            label: "No app matches"
+        }
+    }
+
+    // --- from packages ---------------------------------------------------------
+
+    // Only what could run here; entries for other desktops fold away.
+    readonly property var packageEntries: Autostart.systemEntries.filter(e => e.runnable)
+    readonly property var otherDesktops: Autostart.systemEntries.filter(e => !e.runnable)
+    property bool showOthers: false
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "FROM PACKAGES" }
+
+    SettingsNote { text: "Off until you turn one on" }
 
     Repeater {
-        model: Autostart.systemEntries
+        model: page.packageEntries
         Entry {
             required property var modelData
             entry: modelData
+        }
+    }
+
+    FlyoutRow {
+        visible: page.otherDesktops.length > 0
+        label: (page.showOthers ? "Hide " : "Show ") + page.otherDesktops.length + " for other desktops"
+        trailing: page.showOthers ? "󰅀" : "󰅂"
+        onActivated: page.showOthers = !page.showOthers
+    }
+
+    SettingsIndent {
+        visible: page.showOthers
+
+        Repeater {
+            model: page.otherDesktops
+            FlyoutRow {
+                required property var modelData
+                enabled: false
+                leadingImage: page.iconSource(modelData.icon)
+                leadingIcon: modelData.icon ? "" : "󰣆"
+                label: modelData.name
+                trailing: modelData.only !== "" ? "Only for " + modelData.only : "Can't run here"
+            }
         }
     }
 

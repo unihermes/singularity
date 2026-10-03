@@ -30,7 +30,7 @@ import QtQuick
 Singleton {
     id: root
 
-    // [{ scope, file, name, exec, enabled, runnable, comment }]
+    // [{ scope, file, name, exec, enabled, runnable, comment, icon, only }]
     // scope is "user" (in ~/.config/autostart) or "system" (available in
     // /etc/xdg/autostart and not copied across yet)
     property var entries: []
@@ -73,6 +73,10 @@ Singleton {
                         enabled: f[4] === "yes",
                         runnable: f[5] === "yes",
                         comment: f[6] || "",
+                        // a theme icon name or a path, "" for none
+                        icon: f[7] || "",
+                        // the desktops it's limited to, "GNOME, Unity", or ""
+                        only: (f[8] || "").split(";").filter(d => d !== "").join(", "),
                     })
                 }
                 root.entries = out
