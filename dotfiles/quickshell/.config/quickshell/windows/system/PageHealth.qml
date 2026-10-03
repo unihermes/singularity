@@ -41,41 +41,129 @@ SystemPage {
         return Health.checks.slice().sort((a, b) => (rank[a.status] || 3) - (rank[b.status] || 3))
     }
 
-    FlyoutHeading { text: "CHECKS" }
+    readonly property var problems: ordered.filter(c => c.status !== "ok")
+    readonly property var passing: ordered.filter(c => c.status === "ok")
 
-    Row {
+    // fixes that delete or switch something off take two clicks
+    function confirmFor(c) {
+        var kind = String(c.repairId || "").split(":")[0]
+        return kind === "clean" || kind === "disable" ? c.repairLabel + "?" : ""
+    }
+
+    FlyoutHeading { text: "STATUS" }
+
+    // the answer first: a tick or the count, when the checks ran, and the
+    // one button that runs them again
+    Item {
         width: parent.width
-        spacing: Theme.spaceL
+        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
 
         Text {
+            id: cardGlyph
+            anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            text: Health.lastScan === "" ? "Not checked yet" : "Checked at " + Health.lastScan
-            color: Theme.subtext
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.fontSmall
+            width: Theme.fontTitle * 1.4
+            horizontalAlignment: Text.AlignHCenter
+            text: Health.lastScan === "" ? "󰓙" : page.problems.length > 0 ? "󰀦" : "󰄬"
+            color: Health.lastScan === "" ? Theme.muted
+                : Health.problems > 0 ? Theme.alert
+                : Health.warnings > 0 ? Theme.textStrong : Theme.good
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontTitle
+        }
+
+        Column {
+            id: cardText
+            anchors.left: cardGlyph.right
+            anchors.leftMargin: Theme.spaceL
+            anchors.right: againChip.left
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 1
+
+            Text {
+                width: parent.width
+                elide: Text.ElideRight
+                text: Health.lastScan === "" ? (Health.scanning ? "Checking…" : "Not checked yet")
+                    : page.problems.length === 0 ? "All clear" : page.subtitle.charAt(0).toUpperCase() + page.subtitle.slice(1)
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fontTitle
+            }
+            Text {
+                width: parent.width
+                elide: Text.ElideRight
+                text: Health.lastScan === "" ? "Services, packages, disks, config links and the shell's log"
+                    : "Checked at " + Health.lastScan + " · " + page.passing.length + " of " + Health.checks.length + " passing"
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
         }
 
         FlyoutChip {
+            id: againChip
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
             text: Health.scanning ? "Checking…" : "Check again"
+            icon: "󰑐"
+            spinning: Health.scanning
             enabled: !Health.scanning
             onClicked: Health.scan()
         }
     }
 
+    // what needs a look, worst first, each with its fix; no heading at all
+    // when there's nothing in it
+    Item { width: 1; height: Theme.spaceM; visible: page.problems.length > 0 }
+    FlyoutHeading {
+        visible: page.problems.length > 0
+        text: "TO LOOK AT  " + page.problems.length
+    }
+
     Repeater {
-        model: page.ordered
+        model: page.problems
 
         HealthRow {
             required property var modelData
 
             status: modelData.status
-            label: modelData.label
+            // a disk check is named by its mount point alone
+            label: modelData.label.charAt(0) === "/" ? "Disk " + modelData.label : modelData.label
             detail: modelData.detail
             repairLabel: modelData.repairLabel
+            confirmText: page.confirmFor(modelData)
             busy: Health.busyRepair === modelData.id
             // relinking needs the repo the dotfiles came from; a config that
             // is a real file rather than a symlink has no repo to point at
+            repairEnabled: Health.busyRepair === ""
+                && (modelData.repairId !== "relink" || Health.repoPath !== "")
+            onRepaired: Health.repair(modelData)
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM; visible: page.passing.length > 0 }
+    FlyoutHeading {
+        visible: page.passing.length > 0
+        text: "PASSING  " + page.passing.length
+    }
+
+    Repeater {
+        model: page.passing
+
+        HealthRow {
+            required property var modelData
+
+            status: modelData.status
+            // a disk check is named by its mount point alone
+            label: modelData.label.charAt(0) === "/" ? "Disk " + modelData.label : modelData.label
+            detail: modelData.detail
+            // a pass can still offer something (Clean up, Refresh)
+            repairLabel: modelData.repairLabel
+            confirmText: page.confirmFor(modelData)
+            busy: Health.busyRepair === modelData.id
             repairEnabled: Health.busyRepair === ""
                 && (modelData.repairId !== "relink" || Health.repoPath !== "")
             onRepaired: Health.repair(modelData)
@@ -88,5 +176,5 @@ SystemPage {
         label: "No checks ran; is health-scan.sh executable?"
     }
 
-    SettingsNote { text: "Read-only. If the shell is down, run diagnose in a terminal" }
+    SettingsNote { text: "If the shell is down, run diagnose in a terminal" }
 }

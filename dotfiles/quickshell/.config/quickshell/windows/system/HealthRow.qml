@@ -24,6 +24,8 @@ Item {
     property string repairLabel: ""
     property bool busy: false
     property bool repairEnabled: true
+    // a fix that removes something asks first, reading this
+    property string confirmText: ""
 
     signal repaired()
 
@@ -84,6 +86,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         visible: root.repairLabel !== ""
         text: root.repairLabel
+        confirmText: root.confirmText
         enabled: root.repairEnabled && !root.busy
         onClicked: root.repaired()
     }

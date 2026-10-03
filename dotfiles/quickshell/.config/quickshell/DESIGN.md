@@ -318,6 +318,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   small level (`ProcessTable.machineShare`); ending one asks End <name>?
   in the row. At a glance is two columns. Quick actions are rows with an
   icon and a note saying what each does; Restart audio asks first.
+- **Health:** the same status card heads it (Check again on it), then TO
+  LOOK AT (problems, worst first, each with its fix) and PASSING, each
+  heading carrying its count and left out when empty. A fix that deletes
+  or switches something off (clean, disable) asks first.
 
 ## Headings
 
