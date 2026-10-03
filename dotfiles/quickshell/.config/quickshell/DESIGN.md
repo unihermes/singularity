@@ -261,6 +261,21 @@ Settings') are laid out the same way.
   ignoring on hover; Ignore a package… is the last row and opens a search
   of installed packages. Upkeep holds Orphaned packages and Reclaimable
   space, whose Clean up asks with the size first.
+- **Input:** each keyboard layout is a row (its name in words, the
+  variant or code as the note, Main on the first of two or more) that
+  opens to its Variant as a dropdown in words, Make it the main one and
+  Remove; Add a layout… searches evdev.lst by name or code. kb_layout and
+  kb_variant are always written together. The common XKB options are
+  named: Caps Lock key and Compose key dropdowns, and Switch layouts with
+  (segments) once there are two layouts; the rest of kb_options is Other
+  XKB options, whose hint shows the whole string. Repeat delay and rate,
+  Pointer speed (a tick at the device's own speed) and Scroll speed are
+  levels written when the drag ends, with a Try it field for the repeat.
+  Focus follows mouse is four tiles drawing two windows, the keyboard's in
+  accent and the wheel's dashed: Click, Always, Hover scrolls, Apart. The
+  touchpad's rows are grouped by `SettingsSubhead` (Clicking, Scrolling
+  and typing) inside the one section, and every hint says what the
+  current setting does.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

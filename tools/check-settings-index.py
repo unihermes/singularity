@@ -38,6 +38,7 @@ ALLOW = {
     ("display", "Refresh rate"): "a choice under each display",
     ("display", "Scale"): "a choice under each display",
     ("display", "Rotation"): "a choice under each display",
+    ("input", "Variant"): "a dropdown under each keyboard layout",
 }
 
 def main():
