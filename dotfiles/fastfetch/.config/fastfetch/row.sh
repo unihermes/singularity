@@ -34,7 +34,7 @@ cap() {
   fi
 }
 
-# a W-35-cell meter for "USED UNIT / TOTAL UNIT (PCT%)": the figures, to one
+# a W-36-cell meter for "USED UNIT / TOTAL UNIT (PCT%)": the figures, to one
 # decimal and sharing the unit when both have it, then the bar
 meter() {
   [[ $1 =~ ^([0-9.]+)\ ([A-Za-z]+)\ /\ ([0-9.]+)\ ([A-Za-z]+)\ \(([0-9]+)%\) ]] || { printf '\033[38;2;%sm%s' "$N_TEXT" "$1"; return; }
@@ -45,7 +45,7 @@ meter() {
   else
     printf -v f '%.*f %s / %.*f %s' $d "$u" "$uu" $d "$t" "$tu"
   fi
-  local n=$(( W - 35 )) on=$(( (p * (W - 35) + 50) / 100 ))
+  local n=$(( W - 36 )) on=$(( (p * (W - 36) + 50) / 100 ))
   printf '\033[38;2;%sm%-17s\033[38;2;%sm%s\033[38;2;%sm%s\033[38;2;%sm%4s%%' \
     "$N_TEXT" "$f" "$N_ACCENT" "$(printf -- '━%.0s' $(seq 1 $on))" \
     "$N_BORDER" "$( (( on < n )) && printf -- '━%.0s' $(seq 1 $(( n - on ))))" "$N_SUBTEXT" "$p"
@@ -66,7 +66,7 @@ case $1 in
     h=$2
     (( T_UPPER )) || { h=${h,,}; h=${h^}; }
     printf '\033[1;38;2;%sm%s\033[0;38;2;%sm %s\033[38;2;%sm ─ ─ ·\033[0m' \
-      "$N_ACCENT" "$h" "$N_MUTED" "$(printf -- '─%.0s' $(seq 1 $(( W - ${#h} - 7 ))))" "$N_BORDER"
+      "$N_ACCENT" "$h" "$N_MUTED" "$(printf -- '─%.0s' $(seq 1 $(( W - ${#h} - 6 ))))" "$N_BORDER"
     ;;
   *)
     label=$1
