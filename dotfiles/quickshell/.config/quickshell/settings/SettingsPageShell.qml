@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageShell.qml
 //
-// Alacritty's look, and the aliases in ~/.bashrc.
+// Alacritty's look, with a preview of it, and the aliases in ~/.bashrc.
 //
 // Two different kinds of instant, and the page says which is which.
 // Alacritty watches its own config, so a change there shows in every open
@@ -25,7 +25,7 @@ SettingsPage {
     sectioned: true
 
     title: "Terminal"
-    description: "Alacritty, and the aliases in ~/.bashrc."
+    description: "How Alacritty looks, and your shell aliases."
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string alacrittyPath:
@@ -192,69 +192,11 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    FlyoutHeading { text: "ALACRITTY" }
-
-    SettingsField {
-        label: "Font size"
-        hint: "In points"
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            readonly property real current: Number(page.tomlValue("font.size", 11.25))
-            value: Math.round(current * 2)
-            minimum: 12
-            maximum: 64
-            valueWidth: 56
-            displayValue: current.toFixed(1)
-            onStepped: delta => page.setToml("font", "size", (value + delta) / 2, "Font size " + ((value + delta) / 2).toFixed(1))
-        }
-    }
-
-    SettingsField {
-        label: "Opacity"
-        hint: "Background only; text stays solid"
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            readonly property real current: Number(page.tomlValue("window.opacity", 1))
-            value: Math.round(current * 20)
-            minimum: 6
-            maximum: 20
-            valueWidth: 56
-            displayValue: Math.round(current * 100) + "%"
-            onStepped: delta => page.setToml("window", "opacity", (value + delta) / 20, "Opacity " + (value + delta) * 5 + "%")
-        }
-    }
-
     // style = { shape = "Beam", blinking = "On" } is an inline table, so
     // it's read by pattern rather than parsed
     readonly property string cursorRaw: String(toml["cursor.style"] || "")
     readonly property string cursorShape: (/shape\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Block"])[1]
     readonly property string cursorBlinking: (/blinking\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Off"])[1]
-
-    SettingsField {
-        label: "Cursor"
-        hint: "Its shape"
-
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: ["Block", "Beam", "Underline"]
-            current: page.cursorShape
-            onPicked: v => page.setCursor(v, page.cursorBlinking)
-        }
-    }
-
-    SettingsField {
-        label: "Blinking cursor"
-        hint: "Blinks while the terminal has focus"
-
-        Switch {
-            anchors.right: parent.right
-            checked: page.cursorBlinking === "On" || page.cursorBlinking === "Always"
-            onToggled: page.setCursor(page.cursorShape, checked ? "Off" : "On")
-        }
-    }
 
     function setCursor(shape, blinking) {
         // written as a plain string value so setToml's line replace fits it
@@ -278,116 +220,361 @@ SettingsPage {
         writeFile(alacrittyPath, lines.join("\n"), "Cursor: " + shape, false)
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "BASH ALIASES" }
 
-    SettingsNote { text: "Open terminals need source ~/.bashrc" }
+    readonly property real fontSize: Number(tomlValue("font.size", 11.25))
+    readonly property real opacityNow: Number(tomlValue("window.opacity", 1))
+    // the opacity while the level is being dragged, written on release
+    property real opacityDragged: -1
+    readonly property real opacityShown: opacityDragged >= 0 ? opacityDragged : opacityNow
+    readonly property bool blinking: cursorBlinking === "On" || cursorBlinking === "Always"
 
-    Repeater {
-        model: page.aliases
+    FlyoutHeading { text: "ALACRITTY" }
 
-        Item {
-            id: aliasRow
-            required property var modelData
-            width: parent.width
-            height: Theme.rowHeightTall
+    // A terminal as it will look: the wallpaper through the background at
+    // the opacity, the prompt in the look's colours at the font size, and
+    // the cursor's shape and blink.
+    Rectangle {
+        id: term
+        width: parent.width
+        height: Theme.fit(150)
+        radius: Theme.radiusInner
+        color: "transparent"
+        border.width: Theme.borderWidth
+        border.color: Theme.frameStroke
+        clip: true
 
-            Rectangle {
-                anchors.fill: parent
-                anchors.leftMargin: -Theme.spaceS
-                anchors.rightMargin: -Theme.spaceS
-                radius: Theme.radiusInner
-                color: aliasMouse.containsMouse ? Theme.hoverFill : "transparent"
+        Image {
+            anchors.fill: parent
+            anchors.margins: Theme.borderWidth
+            fillMode: Image.PreserveAspectCrop
+            source: "file://" + page.home + "/.local/state/singularity/current-wallpaper"
+            sourceSize.width: 640
+            cache: false
+        }
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: Theme.borderWidth
+            color: Theme.base
+            opacity: page.opacityShown
+        }
+
+        // points to pixels, as Alacritty sizes its font
+        readonly property real px: page.fontSize * 96 / 72
+
+        Column {
+            x: Theme.spaceL
+            y: Theme.spaceM
+            spacing: 0
+
+            component Line: Text {
+                font.family: "UbuntuMono Nerd Font Mono"
+                font.pixelSize: term.px
+                color: Theme.text
+                textFormat: Text.PlainText
             }
-
-            MouseArea {
-                id: aliasMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                // click loads it into the fields below for editing
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    aliasName.text = aliasRow.modelData.name
-                    aliasValue.text = aliasRow.modelData.value
-                    aliasValue.forceFocus()
+            component Path: Rectangle {
+                width: pathText.implicitWidth + term.px * 0.6
+                height: pathText.implicitHeight
+                radius: Theme.radiusSmall
+                color: Theme.accent
+                Line {
+                    id: pathText
+                    anchors.centerIn: parent
+                    text: "~/Git/singularity"
+                    color: Theme.textOnAccent
                 }
             }
 
-            Text {
-                id: aliasNameText
-                anchors.left: parent.left
+            Path {}
+            Line { text: "❯ ls" }
+            Line { text: "dotfiles  README.md  tools" }
+            Line { text: " " }
+            Path {}
+            Row {
+                Line { id: promptChar; text: "❯ " }
+                Rectangle {
+                    readonly property real cell: promptChar.implicitWidth / 2
+                    anchors.bottom: page.cursorShape === "Underline" ? promptChar.bottom : undefined
+                    anchors.verticalCenter: page.cursorShape === "Underline" ? undefined : promptChar.verticalCenter
+                    width: page.cursorShape === "Beam" ? Math.max(2, term.px * 0.12) : cell
+                    height: page.cursorShape === "Underline" ? Math.max(2, term.px * 0.1) : promptChar.implicitHeight * 0.9
+                    color: Theme.textStrong
+                    opacity: page.blinking && blinkTimer.off ? 0 : 1
+                }
+            }
+        }
+
+        Timer {
+            id: blinkTimer
+            property bool off: false
+            interval: 600
+            repeat: true
+            running: page.blinking && term.visible && page.visible
+            onTriggered: off = !off
+            onRunningChanged: off = false
+        }
+
+        Text {
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: Theme.spaceM
+            text: "Alacritty, as it will look"
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontCaption
+        }
+    }
+
+    SettingsField {
+        label: "Font size"
+        hint: "In points"
+        FlyoutStepper {
+            anchors.right: parent.right
+            width: Theme.fit(170)
+            readonly property real current: page.fontSize
+            value: Math.round(current * 2)
+            minimum: 12
+            maximum: 64
+            valueWidth: 56
+            displayValue: current.toFixed(1)
+            onStepped: delta => page.setToml("font", "size", (value + delta) / 2, "Font size " + ((value + delta) / 2).toFixed(1))
+        }
+    }
+
+    // 30% to solid, in steps of 5
+    SettingsField {
+        label: "Opacity"
+        hint: page.opacityShown >= 1 ? "Solid" : "The wallpaper shows through the background"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.sp(10)
+
+            Slider {
+                width: Theme.fit(220)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(120)
-                elide: Text.ElideRight
-                text: aliasRow.modelData.name
+                value: (page.opacityShown - 0.3) / 0.7 * 100
+                onMoved: v => page.opacityDragged = Math.round((0.3 + v / 100 * 0.7) * 20) / 20
+                onReleased: {
+                    var v = page.opacityDragged
+                    if (v >= 0 && Math.abs(v - page.opacityNow) > 0.001)
+                        page.setToml("window", "opacity", v, "Opacity " + Math.round(v * 100) + "%")
+                    page.opacityDragged = -1
+                }
+            }
+            Text {
+                width: Theme.fs(52)
+                anchors.verticalCenter: parent.verticalCenter
+                horizontalAlignment: Text.AlignRight
+                text: Math.round(page.opacityShown * 100) + "%"
                 color: Theme.textStrong
                 font.family: Theme.fontText
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
-            Text {
-                anchors.left: aliasNameText.right
-                anchors.leftMargin: Theme.spaceXl
-                anchors.right: removeChip.left
-                anchors.rightMargin: Theme.spaceXl
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-                text: aliasRow.modelData.value
-                color: Theme.text
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            // on hover, as a flyout row's forget is: a Remove chip on every
-            // line made the list read as a column of buttons
-            HoverHandler { id: aliasHover }
-            IconButton {
-                id: removeChip
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                visible: aliasHover.hovered || armed
-                icon: "󰆴"
-                confirm: true
-                enabled: !AtomicFileWrite.busy
-                onClicked: page.removeAlias(aliasRow.modelData)
+        }
+    }
+
+    SettingsField {
+        label: "Cursor"
+        hint: page.blinking ? "Blinks while the terminal has focus" : "Steady"
+    }
+
+    // each tile draws its cursor between two letters
+    SettingsTiles {
+        columns: 3
+        tileHeight: Theme.fs(64)
+        model: ["Block", "Beam", "Underline"].map(v => ({ value: v, text: v }))
+        current: page.cursorShape
+        onPicked: v => page.setCursor(v, page.cursorBlinking)
+        art: Component {
+            Row {
+                id: art
+                readonly property string shape: parent ? parent.value : ""
+                spacing: 1
+                Text {
+                    id: letterA
+                    text: "a"
+                    color: Theme.text
+                    font.family: "UbuntuMono Nerd Font Mono"
+                    font.pixelSize: Theme.fs(20)
+                }
+                Item {
+                    width: art.shape === "Beam" ? 2 : letterA.implicitWidth
+                    height: letterA.implicitHeight
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: art.shape === "Underline" ? letterA.implicitHeight * 0.12 : letterA.implicitHeight * 0.08
+                        width: parent.width
+                        height: art.shape === "Underline" ? 2 : letterA.implicitHeight * 0.84
+                        color: Theme.textStrong
+                    }
+                }
+                Text {
+                    text: "b"
+                    color: Theme.text
+                    font.family: "UbuntuMono Nerd Font Mono"
+                    font.pixelSize: Theme.fs(20)
+                }
             }
         }
     }
 
-    Item {
-        width: parent.width
-        height: Theme.rowHeightTall
+    SettingsField {
+        label: "Blinking"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.blinking
+            onToggled: page.setCursor(page.cursorShape, page.blinking ? "Off" : "On")
+        }
+    }
+
+    // --- aliases ---------------------------------------------------------------
+
+    // the alias open under its row (its index), or -1; adding opens the last row
+    property int openAlias: -1
+    property bool addingAlias: false
+
+    // A name and a command, and Save / Cancel: an alias being edited, or a
+    // new one.
+    component AliasEditor: Item {
+        id: ed
+        property string name: ""
+        property string command: ""
+        property bool isNew: false
+        signal done()
+
+        width: parent ? parent.width : 0
+        height: nameIn.implicitHeight
+
+        // filled from the file each time it opens
+        onVisibleChanged: if (visible) {
+            nameIn.text = ed.name
+            cmdIn.text = ed.command
+        }
+
+        function save() {
+            if (page.addAlias(nameIn.text, cmdIn.text)) {
+                // a rename leaves the old line; take it out
+                if (!ed.isNew && nameIn.text.trim() !== ed.name) {
+                    var old = page.aliases.find(a => a.name === ed.name)
+                    if (old) Qt.callLater(() => page.removeAlias(old))
+                }
+                ed.done()
+            }
+        }
+        function focus() { (ed.isNew ? nameIn : cmdIn).forceFocus() }
 
         FlyoutInput {
-            id: aliasName
+            id: nameIn
             anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fit(112)
+            width: Theme.fit(150)
             echoPassword: false
             placeholder: "name"
-            onAccepted: aliasValue.forceFocus()
+            onAccepted: cmdIn.forceFocus()
+            onEscapePressed: ed.done()
         }
         FlyoutInput {
-            id: aliasValue
-            anchors.left: aliasName.right
-            anchors.leftMargin: Theme.spaceXxl
+            id: cmdIn
+            anchors.left: nameIn.right
+            anchors.leftMargin: Theme.spaceM
             anchors.right: saveChip.left
-            anchors.rightMargin: Theme.spaceXl
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.rightMargin: Theme.spaceM
             echoPassword: false
             placeholder: "command, e.g. git status"
-            onAccepted: saveChip.clicked()
+            onAccepted: ed.save()
+            onEscapePressed: ed.done()
         }
         FlyoutChip {
             id: saveChip
+            anchors.right: cancelChip.left
+            anchors.rightMargin: Theme.spaceS
+            anchors.verticalCenter: parent.verticalCenter
+            text: ed.isNew ? "Add" : "Save"
+            selected: true
+            enabled: !AtomicFileWrite.busy && nameIn.text.trim() !== "" && cmdIn.text.trim() !== ""
+            onClicked: ed.save()
+        }
+        FlyoutChip {
+            id: cancelChip
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: page.aliases.some(a => a.name === aliasName.text.trim()) ? "Save" : "+ Add"
-            enabled: !AtomicFileWrite.busy && aliasName.text.trim() !== ""
-            onClicked: if (page.addAlias(aliasName.text, aliasValue.text)) {
-                aliasName.text = ""
-                aliasValue.text = ""
+            text: "Cancel"
+            onClicked: ed.done()
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "BASH ALIASES" + (page.aliases.length > 0 ? "  " + page.aliases.length : "") }
+
+    SettingsNote { text: "New terminals pick them up; open ones need source ~/.bashrc" }
+
+    Repeater {
+        model: page.aliases
+
+        Column {
+            id: al
+            required property var modelData
+            required property int index
+            readonly property bool isOpen: page.openAlias === index
+
+            width: parent ? parent.width : 0
+
+            FlyoutRow {
+                label: al.modelData.name
+                note: al.modelData.value
+                highlighted: al.isOpen
+                trailing: al.isOpen ? "󰅀" : "󰅂"
+                onActivated: {
+                    page.addingAlias = false
+                    page.openAlias = al.isOpen ? -1 : al.index
+                    if (page.openAlias === al.index) Qt.callLater(editor.focus)
+                }
             }
+
+            SettingsIndent {
+                visible: al.isOpen
+
+                AliasEditor {
+                    id: editor
+                    name: al.modelData.name
+                    command: al.modelData.value
+                    onDone: page.openAlias = -1
+                }
+
+                FlyoutChip {
+                    text: "󰆴 Remove alias"
+                    confirmText: "Remove " + al.modelData.name + "?"
+                    enabled: !AtomicFileWrite.busy
+                    onClicked: {
+                        page.openAlias = -1
+                        page.removeAlias(al.modelData)
+                    }
+                }
+            }
+        }
+    }
+
+    FlyoutRow {
+        label: "Add an alias…"
+        trailing: "󰐕"
+        highlighted: page.addingAlias
+        onActivated: {
+            page.openAlias = -1
+            page.addingAlias = !page.addingAlias
+            if (page.addingAlias) Qt.callLater(newAlias.focus)
+        }
+    }
+
+    SettingsIndent {
+        visible: page.addingAlias
+
+        AliasEditor {
+            id: newAlias
+            isNew: true
+            onDone: page.addingAlias = false
         }
     }
 }

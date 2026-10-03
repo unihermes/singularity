@@ -232,6 +232,14 @@ Settings') are laid out the same way.
   Show all N types row; each type is a row named in words (Markdown
   document, its type small) with its app, opening to the apps that can
   take it, the current one ticked.
+- **Terminal:** a preview of Alacritty heads the page: the wallpaper
+  through the background at the opacity, the prompt (the path pill, then
+  ❯) in the look's colours at the font size, and the cursor's shape and
+  blink. Opacity is a level from 30% to solid, written when the drag ends.
+  The cursor's shape is three tiles, each drawing it between two letters,
+  with Blinking a switch. Each alias is a row (name, its command as the
+  note) that opens to the name and command with Save, and Remove alias in
+  two clicks; Add an alias… is the last row.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

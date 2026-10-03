@@ -191,8 +191,9 @@ var entries = [
     { page: "shell", section: "Alacritty", label: "Font size",  keywords: "terminal points" },
     { page: "shell", section: "Alacritty", label: "Opacity",    keywords: "terminal transparency background" },
     { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam underline shape" },
-    { page: "shell", section: "Alacritty", label: "Blinking cursor", keywords: "terminal blink" },
+    { page: "shell", section: "Alacritty", label: "Blinking", keywords: "terminal cursor blink" },
     { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc shortcut command" },
+    { page: "shell", section: "Bash aliases", label: "Add an alias…", keywords: "bashrc new shortcut command" },
 
     // --- Date & Time -------------------------------------------------------
     { page: "datetime", section: "Time zone", label: "Now",          keywords: "clock current time date utc offset" },
