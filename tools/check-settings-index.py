@@ -29,6 +29,12 @@ ALLOW = {
     ("bluetooth", "Reconnect by itself"): "a switch under each paired device",
     ("bluetooth", "Type"): "a readout under each paired device",
     ("bluetooth", "Address"): "a readout under each paired device",
+    ("display", "Status"): "a readout under each display that's off",
+    ("display", "Showing"): "a readout under each duplicated display",
+    ("display", "Resolution"): "a dropdown under each display",
+    ("display", "Refresh rate"): "a choice under each display",
+    ("display", "Scale"): "a choice under each display",
+    ("display", "Rotation"): "a choice under each display",
 }
 
 def main():

@@ -26,6 +26,10 @@ Item {
     property var trailingIcons: []
     // a glyph in a fixed cell before the label (a device's type)
     property string leadingIcon: ""
+    // a quieter word straight after the label (a display's connector)
+    property string note: ""
+    // a word in an accent tag before the trailing text (Primary)
+    property string badge: ""
     // something is in flight (connecting, pairing, a rescan): the row's
     // text pulses until it settles, and the row stops taking clicks
     property bool busy: false
@@ -91,8 +95,9 @@ Item {
         anchors.left: leadText.visible ? leadText.right : parent.left
         anchors.leftMargin: leadText.visible ? Theme.spaceM : root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
-        anchors.right: root.showAction ? actionBtn.left : iconCells.visible ? iconCells.left : trailingText.left
-        anchors.rightMargin: Theme.spaceL
+        // up to whatever sits at the right, leaving the note its room
+        width: Math.max(0, Math.min(root.note === "" ? Infinity : implicitWidth,
+            root.labelEnd - Theme.spaceL - x - (noteText.visible ? noteText.implicitWidth + Theme.spaceM : 0)))
         text: root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
         elide: Text.ElideRight
         color: {
@@ -103,6 +108,25 @@ Item {
         }
         font.family: Theme.fontText
         font.pixelSize: Theme.fontBody
+        font.weight: Theme.weightBody
+        opacity: root.pulse
+    }
+
+    // where the label's room ends: the first thing at the right
+    readonly property real labelEnd: showAction ? actionBtn.x
+        : badgeTag.visible ? badgeTag.x
+        : iconCells.visible ? iconCells.x : trailingText.x
+
+    Text {
+        id: noteText
+        visible: root.note !== ""
+        anchors.left: labelText.right
+        anchors.leftMargin: Theme.spaceM
+        anchors.baseline: labelText.baseline
+        text: root.note
+        color: Theme.subtext
+        font.family: Theme.fontText
+        font.pixelSize: Theme.fontCaption
         font.weight: Theme.weightBody
         opacity: root.pulse
     }
@@ -130,6 +154,28 @@ Item {
                 font.pixelSize: Theme.fontBody
                 font.weight: Theme.weightBody
             }
+        }
+    }
+
+    Rectangle {
+        id: badgeTag
+        visible: root.badge !== "" && !root.showAction
+        anchors.right: trailingText.left
+        anchors.rightMargin: root.trailing === "" ? 0 : Theme.spaceL
+        anchors.verticalCenter: parent.verticalCenter
+        width: badgeText.implicitWidth + Theme.spaceM * 2
+        height: badgeText.implicitHeight + Theme.spaceXs
+        radius: Theme.radiusSmall
+        color: Theme.accent
+
+        Text {
+            id: badgeText
+            anchors.centerIn: parent
+            text: root.badge
+            color: Theme.textOnAccent
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontCaption
+            font.weight: Theme.weightBody
         }
     }
 

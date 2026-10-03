@@ -6,10 +6,13 @@
 // What's listed comes from Hyprland (`hyprctl monitors -j`, as System does);
 // what's changed is the rule in monitors.lua in the state directory, followed
 // by a reload, which is what applies it. Until the first change there is no
-// monitors.lua, and hyprland.lua's own catch-all rule is the one in force. A display with a rule of its own has that rule edited. A
-// display that only matches the catch-all `output = ""` rule edits the
-// catch-all -- which on a laptop is the rule that matters -- and says so,
-// with "Own rule" to split it off into one for that output alone.
+// monitors.lua, and hyprland.lua's own catch-all rule is the one in force. A
+// display with a rule of its own has that rule edited. A display that only
+// matches the catch-all `output = ""` rule gets a rule of its own, copied
+// from the catch-all, so a change to one display never reaches the others.
+//
+// Each display is a row that opens its settings in place; the arrangement
+// picture above opens one too.
 //
 // With more than one display connected the page also picks between
 // extending and duplicating, which is the same rules and the same reload:
@@ -29,23 +32,39 @@ SettingsPage {
     sectioned: true
 
     title: "Display"
-    description: "Arrangement, resolution and scale, as hl.monitor() rules."
+    description: "Where your displays sit, and how each one draws."
 
     // [{ name, description, width, height, hz, scale, modes: ["WxH@R"] }]
     property var monitors: []
     // hl.monitor() calls, as HyprTables.readMonitors gives them
     property var rules: []
 
-    readonly property var scales: [1, 1.25, 1.5, 1.6, 1.75, 2]
+    readonly property var scales: [1, 1.25, 1.5, 1.75, 2]
+    readonly property var rotations: [{ value: 0, text: "Normal" }, { value: 1, text: "90°" },
+        { value: 2, text: "180°" }, { value: 3, text: "270°" }]
+
+    // the display open under its row, by name
+    property string openName: ""
 
     // The primary display: workspace 1 and the cursor start there, and
-    // duplicate mode copies it. The saved choice while that display is
-    // connected, otherwise the first Hyprland lists -- the built-in panel on
-    // a laptop, which is also what Hyprland falls back to with no choice.
+    // duplicate mode copies it. The saved choice while that display is on,
+    // otherwise the first one on that Hyprland lists -- the built-in panel
+    // on a laptop, which is also what Hyprland falls back to with no choice.
+    // A saved primary that is off (the panel with the lid shut) stays saved,
+    // and the first one on stands in for it.
     readonly property string stateDir: Settings.stateDir
     property string savedPrimary: ""
-    readonly property string primary: monitors.some(m => m.name === savedPrimary) ? savedPrimary
-        : monitors.length > 0 ? monitors[0].name : ""
+    readonly property var active: monitors.filter(m => !m.disabled)
+    readonly property string primary: active.some(m => m.name === savedPrimary) ? savedPrimary
+        : active.length > 0 ? active[0].name : monitors.length > 0 ? monitors[0].name : ""
+    readonly property var standIn: savedPrimary !== "" && savedPrimary !== primary
+        ? monitors.find(m => m.name === savedPrimary) || null : null
+
+    // The panel lid.sh has switched off while the lid is shut, if any.
+    property string lidOff: ""
+
+    function byName(name) { return monitors.find(m => m.name === name) || null }
+    function shortName(name) { var m = byName(name); return m ? m.short : name }
     // Read from Hyprland rather than the rules, so a mirror set anywhere
     // else (another config, hyprctl by hand) still shows up here.
     readonly property bool duplicating: monitors.some(m => m.mirrorOf !== "none")
@@ -73,10 +92,13 @@ SettingsPage {
     }
 
     function setField(mon, rule, key, value, message) {
-        if (!rule) {
-            // no rule matches at all: write one for this output
-            patchLua(src => HyprTables.addMonitor(src,
-                { output: mon.name, mode: "preferred", position: "auto", scale: 1, [key]: value }), message)
+        if (!rule || rule.output === "") {
+            // no rule of its own: write one for this output, starting from
+            // the catch-all's fields, so the change reaches no other display
+            var fields = { output: mon.name }
+            ;["mode", "position", "scale"].forEach(k => fields[k] = fieldValue(rule, k, k === "scale" ? 1 : k === "mode" ? "preferred" : "auto"))
+            fields[key] = value
+            patchLua(src => HyprTables.addMonitor(src, fields), message)
             return
         }
         var index = rule.index
@@ -230,11 +252,38 @@ SettingsPage {
            "position in an hl.monitor() rule isn't a plain value, edit it by hand")
     }
 
-    // copy the catch-all's fields into a rule naming this output
-    function ownRule(mon, rule) {
-        var fields = { output: mon.name }
-        ;["mode", "position", "scale"].forEach(k => fields[k] = fieldValue(rule, k, k === "scale" ? 1 : k === "mode" ? "preferred" : "auto"))
-        patchLua(src => HyprTables.addMonitor(src, fields), mon.name + " has its own rule now")
+    // "59.95" -> "59.95 Hz", "60.00" -> "60 Hz"
+    function hzText(hz) {
+        var v = Number(hz)
+        return (Math.abs(v - Math.round(v)) < 0.005 ? String(Math.round(v)) : v.toFixed(2)) + " Hz"
+    }
+    function resText(res) { return res.replace("x", " × ") }
+
+    // The rates Hyprland offers at one resolution, fastest first.
+    function ratesAt(mon, res) { return mon.modes.filter(m => m.split("@")[0] === res).map(m => m.split("@")[1]) }
+
+    // the offered rate nearest the one it's running at
+    function currentRate(mon) {
+        var rates = ratesAt(mon, mon.res)
+        var best = rates.length > 0 ? rates[0] : mon.hz.toFixed(2)
+        rates.forEach(r => { if (Math.abs(r - mon.hz) < Math.abs(best - mon.hz)) best = r })
+        return best
+    }
+
+    // Writes "WxH@R", or "preferred" for the mode Hyprland lists first --
+    // what the display asks for -- so the rule keeps following it.
+    function setMode(mon, rule, res, hz) {
+        var mode = res + "@" + hz
+        setField(mon, rule, "mode", mode === mon.modes[0] ? "preferred" : mode,
+            mon.short + " set to " + resText(res) + " at " + hzText(hz))
+    }
+
+    // A new resolution keeps the rate it's on where it can, else takes the
+    // fastest there is.
+    function setResolution(mon, rule, res) {
+        var rates = ratesAt(mon, res)
+        var keep = rates.find(r => Math.abs(r - mon.hz) < 0.05)
+        setMode(mon, rule, res, keep !== undefined ? keep : rates[0])
     }
 
     Process {
@@ -249,26 +298,27 @@ SettingsPage {
                 var data
                 try { data = JSON.parse(text) } catch (e) { page.say("hyprctl monitors didn't answer", true); return }
                 page.monitors = data.map(m => {
-                    var seen = {}
-                    // Hyprland lists modes best-first: keep every rate at the
-                    // current resolution, and only the first (fastest) of
-                    // the others, so a TV's fifteen modes don't bury the page
-                    var modes = (m.availableModes || []).map(s => s.replace(/Hz$/, ""))
-                        .filter(s => {
-                            var res = s.split("@")[0]
-                            var k = res === m.width + "x" + m.height ? s : res
-                            if (seen[k]) return false
-                            seen[k] = true
-                            return true
-                        })
+                    // every mode once, in Hyprland's order (best first)
+                    var all = []
+                    ;(m.availableModes || []).forEach(s => {
+                        s = s.replace(/Hz$/, "")
+                        if (all.indexOf(s) < 0) all.push(s)
+                    })
+                    var panel = /^(eDP|LVDS|DSI)-/.test(m.name)
+                    // the model when it's a name, not a panel's hex code
+                    var nice = panel ? "Built-in display"
+                        : m.model && !/^0x/i.test(m.model) ? m.model : m.description || m.name
                     // lw/lh: its size in layout coordinates, which is
                     // what x and y are measured in
                     var turned = m.transform % 2 === 1
                     return { name: m.name, description: m.description, width: m.width, height: m.height,
+                        nice: nice, short: panel ? "Built-in" : nice,
+                        icon: panel ? "󰌢" : "󰍹", modes: all, res: m.width + "x" + m.height,
+                        transform: m.transform,
                         x: m.x, y: m.y, disabled: m.disabled === true,
                         lw: (turned ? m.height : m.width) / m.scale,
                         lh: (turned ? m.width : m.height) / m.scale,
-                        hz: m.refreshRate, scale: m.scale, modes: modes,
+                        hz: m.refreshRate, scale: m.scale,
                         // "none" when the output stands on its own, else the
                         // id of the monitor it copies
                         mirrorOf: m.mirrorOf || "none" }
@@ -309,26 +359,60 @@ SettingsPage {
         })
     }
 
-    FlyoutHeading {
-        visible: page.monitors.length > 1
-        text: "ARRANGEMENT"
+    FileView {
+        path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/singularity-lid-docked"
+        printErrors: false
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: page.lidOff = text().trim()
+        onLoadFailed: page.lidOff = ""
     }
 
+    // what a display that's off says about it
+    function offText(mon) { return mon.name === lidOff ? "Off · lid shut" : "Off" }
+
+    // The picture: the displays taking part where Hyprland has them, and
+    // each one that's off to their left, where it can't overlap them.
+    readonly property var pictured: {
+        var out = arranged.map(m => Object.assign({ off: false }, m))
+        var b = { x0: 0, y0: 0, y1: 0 }
+        if (arranged.length > 0) {
+            b.x0 = Math.min(...arranged.map(m => m.x))
+            b.y0 = Math.min(...arranged.map(m => m.y))
+            b.y1 = Math.max(...arranged.map(m => m.y + m.lh))
+        }
+        monitors.filter(m => m.disabled).forEach(m => {
+            b.x0 -= m.lw
+            out.push(Object.assign({}, m, { off: true, offText: page.offText(m), icon: "󰛧",
+                x: b.x0, y: arranged.length > 0 ? Math.round((b.y0 + b.y1 - m.lh) / 2) : 0 }))
+        })
+        return out
+    }
+
+    FlyoutHeading { text: "ARRANGEMENT" }
+
     DisplayLayout {
-        visible: page.arranged.length > 1 && !page.duplicating
+        visible: page.monitors.length > 0
         width: parent.width
-        monitors: page.arranged
+        monitors: page.pictured
         primary: page.primary
+        selected: page.openName
         onMoved: (name, x, y) => page.arrange(name, x, y)
+        onPicked: name => page.openName = page.openName === name ? "" : name
+    }
+
+    SettingsNote {
+        visible: page.standIn !== null
+        text: page.standIn ? page.standIn.short + " is primary, but off; " + page.shortName(page.primary) + " stands in" : ""
     }
 
     // Only worth showing with somewhere to send the picture.
     SettingsField {
-        visible: page.monitors.length > 1
+        visible: page.active.length > 1
         label: "Arrangement"
         hint: page.duplicating
-            ? "Every display is showing " + page.primary
-            : "Duplicate shows " + page.primary + " on every display"
+            ? "Every display shows " + page.shortName(page.primary)
+            : "Each display has its own workspaces"
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -340,14 +424,14 @@ SettingsPage {
     }
 
     SettingsField {
-        visible: page.monitors.length > 1
+        visible: page.active.length > 1
         label: "Primary"
         hint: "Workspace 1 and the cursor start here"
 
         FlyoutSegmented {
             anchors.right: parent.right
             fill: false
-            model: page.monitors.map(m => m.name)
+            model: page.active.map(m => ({ value: m.name, text: m.short }))
             current: page.primary
             onPicked: v => page.setPrimary(v)
         }
@@ -361,16 +445,16 @@ SettingsPage {
         stdout: StdioCollector {
             onStreamFinished: {
                 var out = text.trim()
-                if (out === "ok") page.say("Workspace 1 is on " + page.primary + ", 2 onward on the others", false)
+                if (out === "ok") page.say("Workspace 1 is on " + page.shortName(page.primary) + ", 2 onward on the others", false)
                 else page.say("Couldn't reset workspaces: " + out.split("\n")[0], true)
             }
         }
     }
 
     SettingsField {
-        visible: page.monitors.length > 1 && !page.duplicating
+        visible: page.active.length > 1 && !page.duplicating
         label: "Workspaces"
-        hint: "1 on " + page.primary + ", 2 onward on the others"
+        hint: "1 on " + page.shortName(page.primary) + ", 2 onward on the others"
 
         FlyoutChip {
             anchors.right: parent.right
@@ -379,92 +463,140 @@ SettingsPage {
         }
     }
 
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "DISPLAYS" + "  " + page.monitors.length }
+
+    // A display's row, and the settings it opens under itself.
+    component DisplayBlock: Column {
+        id: mon
+        required property var modelData
+        readonly property var m: modelData
+        readonly property var rule: HyprTables.ruleFor(page.rules, m.name)
+        readonly property real ruleScale: Number(page.fieldValue(rule, "scale", 1))
+        readonly property bool mirrored: m.mirrorOf !== "none"
+        readonly property bool isOpen: page.openName === m.name
+        readonly property string rate: page.currentRate(m)
+        readonly property var rates: page.ratesAt(m, m.res)
+        // the resolutions on offer, in Hyprland's order; the first is native
+        readonly property var resolutions: m.modes.map(s => s.split("@")[0]).filter((r, i, a) => a.indexOf(r) === i)
+        readonly property string nativeRes: resolutions.length > 0 ? resolutions[0] : m.res
+
+        width: parent ? parent.width : 0
+
+        FlyoutRow {
+            leadingIcon: mon.m.disabled ? "󰛧" : mon.m.icon
+            label: mon.m.nice
+            note: mon.m.name
+            badge: !mon.m.disabled && mon.m.name === page.primary ? "Primary" : ""
+            highlighted: mon.isOpen
+            trailing: (mon.m.disabled ? page.offText(mon.m)
+                : mon.mirrored ? "Copying " + page.shortName(page.primary)
+                : page.resText(mon.m.res) + " · " + page.hzText(mon.rate)
+                    + (mon.ruleScale !== 1 ? " · " + Math.round(mon.ruleScale * 100) + "%" : ""))
+                + "  " + (mon.isOpen ? "󰅀" : "󰅂")
+            onActivated: page.openName = mon.isOpen ? "" : mon.m.name
+        }
+
+        SettingsIndent {
+            visible: mon.isOpen
+
+            // switched off: none of the rest would apply
+            SettingsValue {
+                visible: mon.m.disabled
+                label: "Status"
+                hint: mon.m.name === page.lidOff ? "It comes back on when the lid opens" : "Hyprland has it switched off"
+                value: page.offText(mon.m)
+            }
+
+            SettingsValue {
+                visible: !mon.m.disabled && mon.mirrored
+                label: "Showing"
+                hint: "Duplicate: the same picture everywhere"
+                value: "A copy of " + page.shortName(page.primary)
+            }
+
+            SettingsField {
+                visible: !mon.m.disabled
+                label: "Resolution"
+                hint: mon.m.res === mon.nativeRes ? "The display's own; sharpest" : "Below native, so it's scaled up"
+
+                SettingsDropdown {
+                    anchors.right: parent.right
+                    width: Theme.fit(200)
+                    model: mon.resolutions
+                    labelFor: r => page.resText(r) + (r === mon.nativeRes ? "  native" : "")
+                    current: mon.m.res
+                    onPicked: r => page.setResolution(mon.m, mon.rule, r)
+                }
+            }
+
+            SettingsField {
+                visible: !mon.m.disabled
+                label: "Refresh rate"
+                hint: mon.rates.length > 1 ? "How often it redraws" : "The only rate at this resolution"
+
+                FlyoutSegmented {
+                    visible: mon.rates.length > 1
+                    anchors.right: parent.right
+                    fill: false
+                    model: mon.rates.map(r => ({ value: r, text: page.hzText(r) }))
+                    current: mon.rate
+                    onPicked: r => page.setMode(mon.m, mon.rule, mon.m.res, r)
+                }
+                Text {
+                    visible: mon.rates.length <= 1
+                    anchors.right: parent.right
+                    text: page.hzText(mon.rate)
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+            }
+
+            SettingsField {
+                visible: !mon.m.disabled
+                label: "Scale"
+                hint: (mon.ruleScale === 1 ? "Native: " : "Looks like ")
+                    + Math.round(mon.m.lw) + " × " + Math.round(mon.m.lh)
+
+                FlyoutSegmented {
+                    anchors.right: parent.right
+                    fill: false
+                    // the rule's own value too, if it's none of these
+                    model: (page.scales.some(v => Math.abs(v - mon.ruleScale) < 0.001)
+                        ? page.scales : page.scales.concat([mon.ruleScale]).sort((a, b) => a - b))
+                        .map(v => ({ value: v, text: Math.round(v * 100) + "%" }))
+                    current: model.map(o => o.value).find(v => Math.abs(v - mon.ruleScale) < 0.001)
+                    onPicked: v => page.setField(mon.m, mon.rule, "scale", v, mon.m.short + " scaled to " + Math.round(v * 100) + "%")
+                }
+            }
+
+            SettingsField {
+                visible: !mon.m.disabled
+                label: "Rotation"
+                hint: "Turns the picture, for a display on its side"
+
+                FlyoutSegmented {
+                    anchors.right: parent.right
+                    fill: false
+                    model: page.rotations
+                    current: mon.m.transform
+                    onPicked: v => page.setField(mon.m, mon.rule, "transform", v,
+                        mon.m.short + (v === 0 ? " turned back to normal" : " turned " + page.rotations[v].text))
+                }
+            }
+        }
+    }
+
     Repeater {
         model: page.monitors
+        DisplayBlock {}
+    }
 
-        Column {
-            id: mon
-            required property var modelData
-            readonly property var rule: HyprTables.ruleFor(page.rules, modelData.name)
-            readonly property bool catchAll: rule !== null && rule.output === ""
-            readonly property var mode: page.fieldValue(rule, "mode", "preferred")
-            readonly property real ruleScale: Number(page.fieldValue(rule, "scale", 1))
-            readonly property bool mirrored: modelData.mirrorOf !== "none"
-
-            width: parent.width
-            spacing: Theme.spaceM
-            // its heading and rows sectioned as if they sat in the page
-            readonly property bool isSectionGroup: true
-            readonly property bool sectioned: page.sectioned
-            // nothing above it: the arrangement only shows for two or more
-            readonly property bool opensPage: page.monitors.length < 2
-
-            FlyoutHeading { text: mon.modelData.name + " · " + mon.modelData.description.toUpperCase() }
-
-            SettingsField {
-                label: "Now"
-                hint: mon.rule === null ? "No hl.monitor() rule matches it"
-                    : mon.catchAll ? "Set by the rule for every display"
-                    : "Set by its own rule"
-
-                Row {
-                    anchors.right: parent.right
-                    spacing: Theme.spaceL
-
-                    Text {
-                        height: Theme.chipHeight
-                        verticalAlignment: Text.AlignVCenter
-                        // a mirrored output reports the geometry it is
-                        // copying, so its own numbers would just be the
-                        // primary's repeated back
-                        text: mon.mirrored ? "Copying " + page.primary
-                            : mon.modelData.width + "×" + mon.modelData.height + " @ "
-                            + mon.modelData.hz.toFixed(2) + " Hz · scale " + mon.modelData.scale
-                        color: Theme.textStrong
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontBody
-                    }
-                    FlyoutChip {
-                        visible: mon.catchAll
-                        text: "Own rule"
-                        onClicked: page.ownRule(mon.modelData, mon.rule)
-                    }
-                }
-            }
-
-            SettingsField {
-                label: "Scale"
-                hint: mon.mirrored ? "Applies once this display is extended"
-                    : "1 is native; odd fractions get rounded"
-
-                SettingsDropdown {
-                    anchors.right: parent.right
-                    width: Theme.fit(160)
-                    // the rule's own value too, if it's none of the presets
-                    model: page.scales.some(v => Math.abs(v - mon.ruleScale) < 0.001)
-                        ? page.scales : page.scales.concat([mon.ruleScale])
-                    current: model.find(v => Math.abs(v - mon.ruleScale) < 0.001)
-                    onPicked: v => page.setField(mon.modelData, mon.rule, "scale", v, mon.modelData.name + " scale set to " + v)
-                }
-            }
-
-            SettingsField {
-                label: "Mode"
-                hint: mon.mirrored ? "Applies once this display is extended"
-                    : "preferred is what the display asks for"
-
-                SettingsDropdown {
-                    anchors.right: parent.right
-                    // the rule's own mode too, if the display doesn't list it
-                    readonly property var known: ["preferred", "highres", "highrr"].concat(mon.modelData.modes)
-                    model: known.indexOf(mon.mode) < 0 ? known.concat([mon.mode]) : known
-                    current: mon.mode
-                    onPicked: v => page.setField(mon.modelData, mon.rule, "mode", v, mon.modelData.name + " mode set to " + v)
-                }
-            }
-
-            Item { width: 1; height: Theme.spaceL }
-        }
+    FlyoutRow {
+        visible: page.monitors.length === 0
+        enabled: false
+        label: "Hyprland reports no displays"
     }
 }

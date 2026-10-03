@@ -122,9 +122,9 @@ Settings') are laid out the same way.
   `FlyoutRow`, as in the flyouts. No paragraphs.
 - **Sidebar:** the page on show has the accent tick, not a fill; the row
   the arrow keys are on (while searching) has the hover fill.
-- A Repeater's Column that holds its own heading and rows (Display's
-  per-monitor blocks) sets `isSectionGroup: true` and `sectioned`, so its
-  rows get sections as if they sat in the page.
+- A Repeater's Column that holds its own heading and rows sets
+  `isSectionGroup: true` and `sectioned`, so its rows get sections as if
+  they sat in the page.
 - A heading sharing its line with a control (Copy specs, the CPU / MEM
   sort) sits in an item marked `isSectionBreak` and `sectioned`; the
   control takes the heading's `lift` so the two stay level.
@@ -184,6 +184,18 @@ Settings') are laid out the same way.
   the IN RANGE heading, its icon turning while it runs (`FlyoutChip.icon`
   and `spinning`), and the unnamed devices are a last "Show N unnamed" row.
   Discoverable's hint counts down to BlueZ's timeout.
+- **Display:** the arrangement picture is always there: every connected
+  display to scale, one that's off drawn dashed to the left (Off · lid
+  shut). Dragging arranges, a click opens that display, and the open one
+  has the lit groove. Extend / Duplicate, Primary (segments by display
+  name) and Reset workspaces only show with two displays on; while the
+  saved primary is off, a note says which one stands in. Each display is
+  a row (type icon, name, the connector as its `note`, a Primary `badge`,
+  what it's running) that opens in place: Resolution (a dropdown, native
+  marked), Refresh rate (segments, or a readout when there's one), Scale
+  (100–200% segments, the hint saying what it looks like) and Rotation.
+  An off display opens to one Status line. Every change writes a rule for
+  that display alone, so nothing on the page names hl.monitor() rules.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip
