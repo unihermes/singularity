@@ -29,6 +29,7 @@ ALLOW = {
     ("bluetooth", "Reconnect by itself"): "a switch under each paired device",
     ("bluetooth", "Type"): "a readout under each paired device",
     ("bluetooth", "Address"): "a readout under each paired device",
+    ("datetime", "Zone name"): "only while the zone is an old alias",
     ("audio", "Plays on"): "a dropdown under each app playing",
     ("notifications", "Popups"): "a switch under each app",
     ("display", "Status"): "a readout under each display that's off",

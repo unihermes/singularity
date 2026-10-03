@@ -107,9 +107,9 @@ Item {
         anchors.left: leadText.visible ? leadText.right : parent.left
         anchors.leftMargin: leadText.visible ? Theme.spaceM : root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
-        // up to whatever sits at the right, leaving the note its room
+        // up to whatever sits at the right; the note takes what's left
         width: Math.max(0, Math.min(root.note === "" ? Infinity : labelMetrics.advanceWidth + 1,
-            root.labelEnd - Theme.spaceL - x - (noteText.visible ? noteText.implicitWidth + Theme.spaceM : 0)))
+            root.labelEnd - Theme.spaceL - x))
         text: root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
         elide: Text.ElideRight
         color: {
@@ -143,6 +143,8 @@ Item {
         anchors.left: labelText.right
         anchors.leftMargin: Theme.spaceM
         anchors.baseline: labelText.baseline
+        width: Math.max(0, root.labelEnd - Theme.spaceL - x)
+        elide: Text.ElideRight
         text: root.note
         color: Theme.subtext
         font.family: Theme.fontText

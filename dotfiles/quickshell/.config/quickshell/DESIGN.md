@@ -240,6 +240,14 @@ Settings') are laid out the same way.
   with Blinking a switch. Each alias is a row (name, its command as the
   note) that opens to the name and command with Save, and Remove alias in
   two clicks; Add an alias… is the last row.
+- **Date & Time:** a clock card heads the page (the time large and
+  ticking, then the date, the place with its abbreviation and offset, and
+  whether it's synchronised). Time zone is a row (the city and offset as
+  its note) that opens to a search by city, country or abbreviation; each
+  place shows its time now and offset, and a click sets it. A zone set by
+  an old alias (US/Eastern) offers its current name. Hour format's hint
+  reads the time as it will look, and a strip of weekday letters shows
+  where the calendar's week starts.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

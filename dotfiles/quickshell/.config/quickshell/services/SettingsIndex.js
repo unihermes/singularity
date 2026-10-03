@@ -196,10 +196,8 @@ var entries = [
     { page: "shell", section: "Bash aliases", label: "Add an alias…", keywords: "bashrc new shortcut command" },
 
     // --- Date & Time -------------------------------------------------------
-    { page: "datetime", section: "Time zone", label: "Now",          keywords: "clock current time date utc offset" },
-    { page: "datetime", section: "Time zone", label: "Region",       keywords: "timezone continent area" },
-    { page: "datetime", section: "Time zone", label: "Time zone",    keywords: "timezone tz city location timedatectl" },
-    { page: "datetime", section: "Time zone", label: "Set time automatically", keywords: "ntp network time sync timesyncd" },
+    { page: "datetime", section: "Time zone", label: "Time zone",    keywords: "timezone tz city country region location clock current time utc offset timedatectl" },
+    { page: "datetime", section: "Time zone", label: "Network time", keywords: "ntp set time automatically sync timesyncd" },
     { page: "datetime", section: "Clock and calendar", label: "Hour format", keywords: "12 24 hour am pm clock" },
     { page: "datetime", section: "Clock and calendar", label: "First day of the week", keywords: "calendar monday sunday saturday week start" },
 
