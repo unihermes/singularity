@@ -39,7 +39,6 @@ Singleton {
     property int pkgCount: -1
     property int aurCount: -1
     property int explicitCount: -1
-    property string lastUpgrade: ""
 
     // --- cpu / gpu / board ------------------------------------------------
 
@@ -300,19 +299,13 @@ Singleton {
         command: ["sh", "-c",
             "pacman -Qq | wc -l\n"
             + "pacman -Qqm | wc -l\n"
-            + "pacman -Qqe | wc -l\n"
-            // the last full upgrade, from pacman's own log
-            + "awk -F'[][]' '/starting full system upgrade/{t=$2} END{print t}' "
-            + "/var/log/pacman.log 2>/dev/null"]
+            + "pacman -Qqe | wc -l\n"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var f = text.split("\n")
                 root.pkgCount = Number(f[0])
                 root.aurCount = Number(f[1])
                 root.explicitCount = Number(f[2])
-                // pacman logs "2026-09-14T09:12:33+0100"; the date alone is
-                // what anyone reads off this line
-                root.lastUpgrade = (f[3] || "").trim().split("T")[0]
             }
         }
     }

@@ -354,6 +354,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   rows into their Settings pages; the ten hottest sensors as levels two
   across, then Show all N; fans and input devices as rows (inputs named as
   Hyprland matches them); tools as rows.
+- **Config:** the repository as the card (its name and branch, what's
+  uncommitted, the last commit; git status, Terminal and Editor on it);
+  the files under a search that matches name, purpose or path, grouped
+  as before with the folders last; logs as rows.
 
 ## Headings
 

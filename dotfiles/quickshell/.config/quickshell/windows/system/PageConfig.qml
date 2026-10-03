@@ -26,7 +26,7 @@ SystemPage {
     id: page
 
     title: "Config"
-    subtitle: "Click to edit; the folder button shows it in the file manager"
+    subtitle: "Click a file to edit it; the folder button shows it in the file manager"
 
     readonly property string home: Quickshell.env("HOME")
     // filled in by rootProc; empty until then, which simply leaves the
@@ -184,21 +184,98 @@ SystemPage {
         }
     }
 
-    // --- the lists ----------------------------------------------------------
+    // --- the repository -----------------------------------------------------
+
+    // branch, uncommitted changes and the last commit, from one git call
+    property string branch: ""
+    property int dirty: -1
+    property string lastCommit: ""
+
+    // after the command's own binding has caught up with the new path
+    onRepoChanged: if (repo !== "") Qt.callLater(() => gitProc.running = true)
+
+    Process {
+        id: gitProc
+        command: ["sh", "-c", "cd \"$1\" && git rev-parse --abbrev-ref HEAD && git status --porcelain | wc -l"
+            + " && git log -1 --format='%s · %cr'", "sh", page.repo]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var f = text.trim().split("\n")
+                page.branch = f[0] || ""
+                page.dirty = f.length > 1 ? Number(f[1]) : -1
+                page.lastCommit = f[2] || ""
+            }
+        }
+    }
+
+    FlyoutHeading { text: "REPOSITORY" }
+
+    HeadCard {
+        glyph: "󰊢"
+        glyphColor: page.repo === "" ? Theme.muted : Theme.textStrong
+        title: page.repo === "" ? "No checkout found"
+            : page.repo.split("/").pop() + (page.branch !== "" ? " · " + page.branch : "")
+        lines: page.repo === "" ? ["~/.config/quickshell isn't a link into a dotfiles repo"] : [
+            page.dirty < 0 ? "" : page.dirty === 0 ? "Nothing uncommitted"
+                : page.dirty + (page.dirty === 1 ? " file" : " files") + " changed, not committed",
+            page.lastCommit !== "" ? "Last commit: " + page.lastCommit : "",
+        ]
+
+        FlyoutChip {
+            text: "git status"
+            enabled: page.repo !== ""
+            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo,
+                "-e", "sh", "-c", "git status; git -P log --oneline -10; read -r _"])
+        }
+        FlyoutChip {
+            text: "Terminal"
+            enabled: page.repo !== ""
+            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo])
+        }
+        FlyoutChip {
+            text: "Editor"
+            enabled: page.repo !== ""
+            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo,
+                "-e", "nvim", "."])
+        }
+    }
+
+    // --- the files ----------------------------------------------------------
+
+    Item { width: 1; height: Theme.spaceS }
+    FlyoutHeading { text: "FILES" }
+
+    // forty-odd files: a search finds one by its name, what it's for or
+    // where it lives
+    FlyoutInput {
+        id: search
+        width: parent.width
+        echoPassword: false
+        glyph: "󰍉"
+        placeholder: "Search files: keybinds, lock screen, fstab…"
+        onTextChanged: page.query = text.trim().toLowerCase()
+        onEscapePressed: text = ""
+    }
+
+    property string query: ""
+    function matches(it) {
+        return query === "" || (it.label + "\n" + it.note + "\n" + it.path).toLowerCase().indexOf(query) >= 0
+    }
+    readonly property var shownGroups: groups.map(g => ({ heading: g.heading, items: g.items.filter(page.matches) }))
+        .concat([{ heading: "FOLDERS", items: folders.filter(f => f.path !== "" && page.matches(f)) }])
+        .filter(g => g.items.length > 0)
 
     Repeater {
-        model: page.groups
+        model: page.shownGroups
 
         Column {
             required property var modelData
-            required property int index
             width: parent.width
             spacing: Theme.spaceXs
             bottomPadding: Theme.spaceL
             // sectioned as if its rows sat in the page
             readonly property bool isSectionGroup: true
             readonly property bool sectioned: true
-            readonly property bool opensPage: index === 0
 
             FlyoutHeading { text: modelData.heading }
 
@@ -216,19 +293,10 @@ SystemPage {
         }
     }
 
-    FlyoutHeading { text: "FOLDERS" }
-
-    Repeater {
-        model: page.folders
-
-        LinkRow {
-            required property var modelData
-            visible: modelData.path !== ""
-            label: modelData.label
-            path: modelData.path
-            note: modelData.note
-            exists: page.has(modelData.path)
-        }
+    FlyoutRow {
+        visible: page.shownGroups.length === 0
+        enabled: false
+        label: "No file matches"
     }
 
     // --- logs ----------------------------------------------------------------
@@ -236,64 +304,32 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "LOGS" }
 
-    Flow {
-        width: parent.width
-        spacing: Theme.spaceM
-
-        FlyoutChip {
-            text: "Shell log"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "journalctl --user -t quickshell -b -e --no-pager || journalctl --user -b -e"])
-        }
-        FlyoutChip {
-            text: "Hyprland log"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "tail -n 200 -f /tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log"])
-        }
-        FlyoutChip {
-            text: "Pacman log"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "tail -n 400 /var/log/pacman.log | less +G"])
-        }
-        FlyoutChip {
-            text: "Boot errors"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "journalctl -b -p err -e"])
-        }
+    FlyoutRow {
+        leadingIcon: "󰈙"
+        label: "Shell log"
+        note: "Quickshell's own messages this boot"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "journalctl --user -t quickshell -b -e --no-pager || journalctl --user -b -e"])
     }
-
-    // --- git ------------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "REPOSITORY" }
-
-    InfoRow {
-        label: "Checkout"
-        value: page.repo !== "" ? page.repo : "not found"
-        valueColor: page.repo === "" ? Theme.alert : undefined
+    FlyoutRow {
+        leadingIcon: "󰈙"
+        label: "Hyprland log"
+        note: "The compositor's log, following as it grows"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "tail -n 200 -f /tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log"])
     }
-    InfoRow { label: "Last upgrade"; value: SystemSpecs.lastUpgrade || "--" }
-
-    Flow {
-        width: parent.width
-        spacing: Theme.spaceM
-
-        FlyoutChip {
-            text: "git status"
-            enabled: page.repo !== ""
-            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo,
-                "-e", "sh", "-c", "git status; git -P log --oneline -10; read -r _"])
-        }
-        FlyoutChip {
-            text: "Shell in repo"
-            enabled: page.repo !== ""
-            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo])
-        }
-        FlyoutChip {
-            text: "Editor in repo"
-            enabled: page.repo !== ""
-            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo,
-                "-e", "nvim", "."])
-        }
+    FlyoutRow {
+        leadingIcon: "󰏗"
+        label: "Pacman log"
+        note: "Every install, upgrade and removal"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "tail -n 400 /var/log/pacman.log | less +G"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰀦"
+        label: "Boot errors"
+        note: "Errors the system logged since it started"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "journalctl -b -p err -e"])
     }
 }
