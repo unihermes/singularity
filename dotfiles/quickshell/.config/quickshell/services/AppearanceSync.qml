@@ -866,6 +866,23 @@ Scope {
         onTriggered: root.writeGaps(true)
     }
 
+    // "<focused> <unfocused>" window opacity, as Hyprland's 0-1 fractions
+    function writeWindowOpacity(reload) {
+        var line = (Settings.focusedOpacity / 100) + " " + (Settings.unfocusedOpacity / 100)
+        AtomicFileWrite.write({
+            path: root.dir + "/window-opacity",
+            transform: () => line + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+
+    // Stepping either fires once per step; one reload at the end is enough.
+    Timer {
+        id: opacityDebounce
+        interval: 200
+        onTriggered: root.writeWindowOpacity(true)
+    }
+
     // How much of the screen's top edge the bar takes (0 when it sits at the
     // bottom), for hyprland.lua's rule that opens the sticky notes clear of
     // it. A rule can't read the reserved space itself.
@@ -974,6 +991,8 @@ Scope {
         function onIconThemeChanged() { root.writeIcons(); debounce.restart() }
         function onWindowAnimChanged() { root.writeWindowAnim(true) }
         function onEdgeGapChanged() { gapsDebounce.restart() }
+        function onFocusedOpacityChanged() { opacityDebounce.restart() }
+        function onUnfocusedOpacityChanged() { opacityDebounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
@@ -988,6 +1007,7 @@ Scope {
         writeBarTop(false)
         writeRounding(false)
         writeGaps(false)
+        writeWindowOpacity(false)
         writeWindowFrame(false)
         debounce.restart()
     }

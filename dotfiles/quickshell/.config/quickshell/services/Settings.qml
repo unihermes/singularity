@@ -88,6 +88,10 @@ Singleton {
     // px between the screen's edges and the windows (Hyprland's gaps_out,
     // handed over by AppearanceSync), and a floating bar or its islands
     readonly property alias edgeGap:     adapter.edgeGap
+    // Hyprland's focused and unfocused window opacity, in percent (handed
+    // over by AppearanceSync)
+    readonly property alias focusedOpacity:   adapter.focusedOpacity
+    readonly property alias unfocusedOpacity: adapter.unfocusedOpacity
     // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
     readonly property alias workspaceStyle: adapter.workspaceStyle
     // "stamp", "time", "seconds", "day", "long" or "iso" -- what the clock chip shows
@@ -495,6 +499,8 @@ Singleton {
     readonly property var limits: ({
         radius:    { min: 0,  max: 14 },
         edgeGap:   { min: 0,  max: 30 },
+        focusedOpacity:   { min: 50, max: 100 },
+        unfocusedOpacity: { min: 50, max: 100 },
         seeThrough: { min: 50, max: 100 },
         fontSize:  { min: 12, max: 22 },
         scrim:        { min: 0,  max: 80 },
@@ -802,6 +808,8 @@ Singleton {
             property string windowAnim: "popin"
             property string barStyle: "full"
             property int edgeGap: 0
+            property int focusedOpacity: 100
+            property int unfocusedOpacity: 100
             property string workspaceStyle: "pills"
             property string clockStyle: "stamp"
             property string windowStyle: "icons"

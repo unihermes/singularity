@@ -16,8 +16,8 @@ SettingsTab {
 
     HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
     Stepper { label: "Gaps at screen edges"; hint: Theme.barFull ? "" : "The bar floats this far in too"; key: "edgeGap"; suffix: "px" }
-    HyprPercent { label: "Focused opacity"; path: ["decoration"]; key: "active_opacity" }
-    HyprPercent { label: "Unfocused opacity"; path: ["decoration"]; key: "inactive_opacity" }
+    Stepper { label: "Focused opacity"; key: "focusedOpacity"; step: 5; suffix: "%" }
+    Stepper { label: "Unfocused opacity"; key: "unfocusedOpacity"; step: 5; suffix: "%" }
     HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
     HyprPercent { label: "Dim strength"; visible: page.hyprField(["decoration"], "dim_inactive").value === true; path: ["decoration"]; key: "dim_strength"; min: 0 }
     HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }

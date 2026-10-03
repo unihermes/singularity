@@ -98,6 +98,12 @@ local windowRounding = tonumber(singularityState("rounding", "")) or 6
 -- shape, so a floating bar and the windows keep the same gap; absent, 0.
 local edgeGap = tonumber(singularityState("gaps", "")) or 0
 
+-- "<focused> <unfocused>" window opacity from the Appearance page, 0-1;
+-- absent, both opaque
+local activeOpacity, inactiveOpacity = singularityState("window-opacity", ""):match("^(%S+)%s+(%S+)$")
+activeOpacity   = tonumber(activeOpacity) or 1
+inactiveOpacity = tonumber(inactiveOpacity) or 1
+
 -- "<border width> <shadow>" from the Appearance page's style: the border
 -- as thick as the shell's strokes, and its shadow ("none", "soft", "hard")
 local windowBorder, windowShadow = singularityState("window-frame", ""):match("^(%d+)%s+(%a+)$")
@@ -351,8 +357,8 @@ hl.config({
     decoration = {
         rounding         = windowRounding,
         rounding_power   = 2,
-        active_opacity   = 1,
-        inactive_opacity = 1,
+        active_opacity   = activeOpacity,
+        inactive_opacity = inactiveOpacity,
         dim_inactive = true,
         dim_strength = 0.4,
 

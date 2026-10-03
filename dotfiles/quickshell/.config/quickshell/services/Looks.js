@@ -48,6 +48,8 @@
 //     edgeGap      px between the screen's edges and the windows, and a
 //                  floating bar or its islands; unstated, edgeGaps[barStyle]
 //     seeThrough   the bar's and panels' opacity, in percent
+//     focusedOpacity, unfocusedOpacity   Hyprland's windows' opacity when
+//                  focused and not, in percent
 //     shadows, gradient, heavyLines, headingUpper, headingRule,
 //     barSeparator, levelColour   the Finish switches (Settings.qml)
 //
@@ -171,6 +173,8 @@ var settingsBase = {
     barStyle: "full",
     barPosition: "top",
     seeThrough: 100,
+    focusedOpacity: 100,
+    unfocusedOpacity: 100,
     shadows: true,
     heavyLines: false,
     levelColour: "accent",
