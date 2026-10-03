@@ -136,13 +136,16 @@ fi
 # A device fwupd won't update yet says why in its Problems: a laptop's
 # system firmware wants mains power, for one. Then there's nothing a click
 # can do, so the row says what will (plug in) rather than offering an
-# Update that fwupdmgr refuses.
+# Update that fwupdmgr refuses. A UEFI capsule is also staged on the EFI
+# system partition first, and a small ESP full of kernels fails that write
+# at the last step; that's checked here against the release's size.
 if command -v fwupdmgr &>/dev/null; then
 	out=$(timeout 20 fwupdmgr get-updates --json --no-unreported-check \
 		--no-metadata-check 2>/dev/null)
 	rc=$?
 	if (( rc == 0 )) && command -v python3 &>/dev/null; then
-		# one line per device: name, current, newest, blocking problems
+		# one line per device: name, current, newest, blocking problems,
+		# flags, the newest release's size in bytes
 		mapfile -t fw < <(python3 -c '
 import json, sys
 try: d = json.load(sys.stdin)
@@ -151,19 +154,35 @@ for dev in d.get("Devices", []):
     rel = dev.get("Releases", [])
     if not rel: continue
     newest = rel[0].get("Version", "")
-    print("\t".join([dev.get("Name", "?"), dev.get("Version", ""), newest,
-                     ",".join(dev.get("Problems", [])), ",".join(dev.get("Flags", []))]))
+    print("|".join([dev.get("Name", "?"), dev.get("Version", ""), newest,
+                     ",".join(dev.get("Problems", [])), ",".join(dev.get("Flags", [])),
+                     str(rel[0].get("Size", 0))]))
 ' <<<"$out")
 	else
 		fw=()
 	fi
 	if (( rc == 0 && ${#fw[@]} > 0 )); then
-		IFS=$'\t' read -r name cur new problems flags <<<"${fw[0]}"
+		# "|" rather than a tab: read collapses runs of whitespace, so an
+		# empty Problems would shift every field after it
+		IFS='|' read -r name cur new problems flags size <<<"${fw[0]}"
+		# the ESP: the first vfat mount of the usual three
+		espfree=-1 esp=""
+		for d in /efi /boot/efi /boot; do
+			if [[ $(findmnt -n -o FSTYPE --target "$d" 2>/dev/null | tail -n1) == vfat ]]; then
+				esp=$d
+				espfree=$(df -B1 --output=avail "$d" 2>/dev/null | tail -n1 | tr -d ' ')
+				break
+			fi
+		done
+		mb() { awk -v b="$1" 'BEGIN { printf "%.0f MB", b / 1048576 }'; }
 		more=""
 		(( ${#fw[@]} > 1 )) && more=" and $(( ${#fw[@]} - 1 )) more"
 		what="$name $cur → $new$more"
 		if [[ $problems == *require-ac* ]]; then
 			emit warn firmware "Firmware" "$what · plug in the charger to install"
+		# the capsule plus a little room for fwupd's own files
+		elif [[ $flags == *needs-reboot* ]] && (( espfree >= 0 && size > 0 && espfree < size + 2097152 )); then
+			emit bad firmware "Firmware" "$what · needs $(mb $((size + 2097152))) free on $esp, which has $(mb "$espfree")"
 		elif [[ -n $problems ]]; then
 			emit warn firmware "Firmware" "$what · fwupd won't yet: ${problems//,/, }"
 		elif [[ $flags == *needs-reboot* ]]; then
@@ -284,12 +303,13 @@ done < <(find "$HOME/.config/systemd" -xtype l 2>/dev/null)
 
 # --- the shell's own log -----------------------------------------------------
 # Where a QML error lands, and a QML error is why a flyout is missing often
-# enough to be worth surfacing next to the rest.
+# enough to be worth surfacing next to the rest. Counted by
+# shell-log-issues.sh: since the last reload, without other programs' noise.
 log=$HOME/.cache/quickshell.log
 if [[ -r $log ]]; then
-	errs=$(grep -cE "ERROR|WARN" "$log" 2>/dev/null)
+	errs=$("$(dirname "$0")/shell-log-issues.sh" "$log" | wc -l)
 	if (( errs > 0 )); then
-		emit warn shell-log "Shell log" "$errs error or warning lines" "log:$log" View
+		emit warn shell-log "Shell log" "$errs $( (( errs == 1 )) && echo line || echo lines) to read since the shell loaded" "log:$log" View
 	else
 		emit ok shell-log "Shell log" "Clean"
 	fi

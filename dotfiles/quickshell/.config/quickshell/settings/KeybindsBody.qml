@@ -1229,7 +1229,7 @@ Column {
                         spacing: Theme.spaceXs
 
                         Item { width: 1; height: Theme.spaceS }
-                        FlyoutHeading { text: group.modelData.name.toUpperCase() + "  " + group.modelData.rows.length }
+                        FlyoutHeading { text: group.modelData ? group.modelData.name.toUpperCase() + "  " + group.modelData.rows.length : "" }
 
                         Repeater {
                             model: group.modelData.rows
@@ -1340,8 +1340,9 @@ Column {
                         }
 
                         AddRow {
-                            slot: "add:" + group.modelData.name
-                            section: group.modelData.section
+                            // the group can go before its rows do, on a re-sort
+                            slot: group.modelData ? "add:" + group.modelData.name : ""
+                            section: group.modelData ? group.modelData.section : ""
                         }
                     }
                 }
