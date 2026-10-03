@@ -6,10 +6,10 @@
 #
 # The bundle holds what ~/.local/state/singularity keeps per user rather than
 # per machine: appearance.json (every file generated from it is rebuilt when
-# the shell starts), app usage, sticky notes and the wallpaper, with the image
-# itself when it isn't one of the repo's own. Monitor layout, the primary
-# display and Bluetooth state are left behind. Looks, window rules and
-# keybinds live in the repo, so git carries those.
+# the shell starts), app usage, sticky notes, window rules, workspace layout
+# pins and the wallpaper, with the image itself when it isn't one of the
+# repo's own. Monitor layout, the primary display and Bluetooth state are
+# left behind. Looks and keybinds live in the repo, so git carries those.
 #
 # calendars.conf holds secret feed addresses, so it only goes in with
 # --calendars. Import backs up every file it replaces, then restarts the
@@ -19,7 +19,7 @@ set -euo pipefail
 state="$HOME/.local/state/singularity"
 # relative to this script's real location, so the repo can live anywhere
 repo="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../..")"
-files=(appearance.json app-usage.json notes.json wallpaper.state)
+files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

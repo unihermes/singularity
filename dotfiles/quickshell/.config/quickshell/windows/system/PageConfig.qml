@@ -68,7 +68,7 @@ SystemPage {
                   note: "When the screen dims, locks and suspends" },
                 { label: "hyprlock.conf", path: home + "/.config/hypr/hyprlock.conf",
                   note: "The lock screen" },
-                { label: "window-rules.json", path: home + "/.config/singularity/window-rules.json",
+                { label: "window-rules.json", path: Settings.stateDir + "/window-rules.json",
                   note: "Per-application rules the Settings window edits" },
             ],
         },

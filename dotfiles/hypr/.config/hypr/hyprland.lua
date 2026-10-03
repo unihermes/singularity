@@ -954,8 +954,10 @@ local function ruleSize(size)
 end
 
 -- Per-app and popout exceptions live in
--- ~/.config/singularity/window-rules.json, edited from Settings > Window
--- Rules. This file keeps only the machinery the shell depends on.
+-- ~/.local/state/singularity/window-rules.json, edited from Settings > Window
+-- Rules; until that page first writes it, the defaults the repo ships in
+-- ~/.config/singularity/window-rules.defaults.json are used instead. This
+-- file keeps only the machinery the shell depends on.
 --
 -- Read on every load, after every rule above so an entry overrides this
 -- file's defaults (the later rule wins); within the file, the entry nearer
@@ -985,7 +987,8 @@ end
 local fullscreenRules = {}
 
 do
-    local f = io.open(os.getenv("HOME") .. "/.config/singularity/window-rules.json")
+    local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/window-rules.json")
+        or io.open(os.getenv("HOME") .. "/.config/singularity/window-rules.defaults.json")
     local rules = f and decodeJson(f:read("a")) or {}
     if f then f:close() end
     -- Bottom of the file first: when two rules set the same property the
@@ -1065,13 +1068,13 @@ do
 end
 
 -- Workspaces pinned to one layout whatever SUPER+M says, from
--- ~/.config/singularity/workspace-layouts.json -- { "1": "monocle",
+-- ~/.local/state/singularity/workspace-layouts.json -- { "1": "monocle",
 -- "3": "dwindle" } -- which the Settings window's Window Rules page writes.
 -- Anything not listed follows monocleEnabled. Read on every load, like
 -- window-rules.json.
 local workspaceLayouts = {}
 do
-    local f = io.open(os.getenv("HOME") .. "/.config/singularity/workspace-layouts.json")
+    local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/workspace-layouts.json")
     local pins = f and decodeJson(f:read("a")) or {}
     if f then f:close() end
     if type(pins) == "table" then

@@ -253,7 +253,7 @@ singularity/
     │   ├── services/       # singletons: Theme, Settings, Network, Audio, …
     │   └── scripts/        # helpers the shell runs
     ├── hypr/               # hyprland.lua, hypridle, hyprlock, lid.sh, helpers
-    ├── singularity/        # window rules, autostart, clean, diagnose, settings-bundle
+    ├── singularity/        # default window rules, autostart, clean, diagnose, settings-bundle
     ├── systemd/            # Bluetooth agent and power restore, WirePlumber drop-in
     ├── nvim/  alacritty/  starship/  fastfetch/  zathura/  floorp/
     ├── gtk/  fontconfig/  bash/

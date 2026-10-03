@@ -4,12 +4,14 @@
 // Every per-app and popout window rule: float and size, workspace,
 // fullscreen and pin.
 //
-// Saved to ~/.config/singularity/window-rules.json -- the repo's
-// dotfiles/singularity package, so the defaults (volume control, Thunar,
-// file dialogs, picture-in-picture...) ship with it and show up here like
-// any rule you add. hyprland.lua reads the file on every load and turns each
-// entry into hl.window_rule() calls placed after its own rules; every change
-// here writes the file and reloads Hyprland. Rules apply to windows as they
+// Saved to ~/.local/state/singularity/window-rules.json. Until the first
+// change that file doesn't exist and the page shows the defaults the repo
+// ships (volume control, Thunar, file dialogs, picture-in-picture...) from
+// ~/.config/singularity/window-rules.defaults.json; the first change copies
+// them into the state file with it, and from then on they are rules like any
+// other. hyprland.lua reads the same file, with the same fallback, on every
+// load and turns each entry into hl.window_rule() calls placed after its own
+// rules; every change here writes the file and reloads Hyprland. Rules apply to windows as they
 // open -- ones already open keep what they had until they are reopened.
 // New rules go on top, and where two rules disagree the higher one wins.
 //
@@ -33,8 +35,9 @@ SettingsPage {
     description: "How each app's windows open, and each workspace's layout."
 
 
-    readonly property string rulesPath:
-        (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/window-rules.json"
+    readonly property string rulesPath: Settings.stateDir + "/window-rules.json"
+    readonly property string defaultsPath:
+        (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/window-rules.defaults.json"
 
     // [{ label, class, title, regex, float, size, workspace (0 = any), fullscreen, pin }]
     property var rules: []
@@ -84,8 +87,7 @@ SettingsPage {
     // Workspaces pinned to one layout whatever SUPER+M says, as
     // { "1": "monocle", "3": "dwindle" }. hyprland.lua reads the file on
     // load; a workspace not listed follows SUPER+M.
-    readonly property string layoutsPath:
-        (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/workspace-layouts.json"
+    readonly property string layoutsPath: Settings.stateDir + "/workspace-layouts.json"
     property var layouts: ({})
 
     // Set one workspace's pin ("" to unpin) on top of whatever the file
@@ -245,7 +247,8 @@ SettingsPage {
         AtomicFileWrite.write({
             path: rulesPath,
             transform: text => {
-                var onDisk = parseRules(text)
+                // no state file yet: the page was showing the defaults
+                var onDisk = parseRules(text === "" ? defaultsFile.text() : text)
                 if (onDisk === null || JSON.stringify(onDisk) !== base) return null
                 return JSON.stringify(next, null, 2) + "\n"
             },
@@ -299,6 +302,17 @@ SettingsPage {
             page.rules = parsed || []
             if (parsed === null) page.say("window-rules.json isn't valid JSON, so no rules are shown", true)
         }
+        onLoadFailed: {
+            var parsed = page.parseRules(defaultsFile.text())
+            page.rules = parsed || []
+        }
+    }
+
+    FileView {
+        id: defaultsFile
+        path: page.defaultsPath
+        blockLoading: true
+        printErrors: false
     }
 
     FileView {
