@@ -31,6 +31,8 @@ Item {
     property int currentIndex: -1
     property var labelFor: v => String(v)
     property var fontFor: v => Theme.fontText
+    // an image source before a choice (an app's icon), "" for none
+    property var iconFor: v => ""
     // a choice's colour swatches, [] for none
     property var swatchesFor: v => []
     property int maxRows: 8
@@ -115,9 +117,21 @@ Item {
                     color: Theme.accent
                 }
 
+                Image {
+                    id: itemIcon
+                    readonly property string src: root.iconFor(item.modelData) || ""
+                    visible: src !== ""
+                    x: Theme.spaceL
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: visible ? Theme.fontBody : 0
+                    height: width
+                    sourceSize: Qt.size(Theme.fontBody * 2, Theme.fontBody * 2)
+                    source: src
+                }
+
                 Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spaceL
+                    anchors.left: itemIcon.visible ? itemIcon.right : parent.left
+                    anchors.leftMargin: itemIcon.visible ? Theme.spaceM : Theme.spaceL
                     anchors.right: itemSw.left
                     anchors.rightMargin: Theme.spaceM
                     anchors.verticalCenter: parent.verticalCenter

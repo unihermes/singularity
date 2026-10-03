@@ -32,6 +32,8 @@ Item {
     property var labelFor: v => String(v)
     // a choice's font, for a list of fonts set in themselves
     property var fontFor: v => Theme.fontText
+    // an image source before a choice and in the box (an app's icon)
+    property var iconFor: v => ""
     // what the box shows when nothing in the model is current
     property string placeholder: "Choose…"
     property int maxRows: 8
@@ -86,9 +88,21 @@ Item {
 
         ControlEdge { stroke: box.edge; sunken: true; radius: box.radius }
 
+        Image {
+            id: boxIcon
+            readonly property string src: root.currentIndex >= 0 ? root.iconFor(root.current) || "" : ""
+            visible: src !== ""
+            x: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            width: visible ? Theme.fontBody : 0
+            height: width
+            sourceSize: Qt.size(Theme.fontBody * 2, Theme.fontBody * 2)
+            source: src
+        }
+
         Text {
-            anchors.left: parent.left
-            anchors.leftMargin: Theme.spaceL
+            anchors.left: boxIcon.visible ? boxIcon.right : parent.left
+            anchors.leftMargin: boxIcon.visible ? Theme.spaceM : Theme.spaceL
             anchors.right: chevron.left
             anchors.rightMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
@@ -128,6 +142,7 @@ Item {
         currentIndex: root.currentIndex
         labelFor: root.labelFor
         fontFor: root.fontFor
+        iconFor: root.iconFor
         maxRows: root.maxRows
         onPicked: v => root.picked(v)
         onDismissed: root.open = false

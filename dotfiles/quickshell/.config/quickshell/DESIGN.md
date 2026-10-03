@@ -222,6 +222,16 @@ Settings') are laid out the same way.
   click adds one. From packages lists only the entries that can run here,
   saying when a user service already does the job; ones for other
   desktops aren't shown at all.
+- **File Types:** each common kind is a field whose hint says what it
+  covers (Links and web pages), or which of its types have no default,
+  with a dropdown of apps and their icons (`SettingsDropdown.iconFor`).
+  The dropdown offers the apps that declare the kind's main type; the
+  others that could open it sit behind its last entry, Other apps that
+  can open it (N)…. Office documents, spreadsheets, presentations and
+  calendar invites are common kinds too. Every type is a search with a
+  Show all N types row; each type is a row named in words (Markdown
+  document, its type small) with its app, opening to the apps that can
+  take it, the current one ticked.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip
