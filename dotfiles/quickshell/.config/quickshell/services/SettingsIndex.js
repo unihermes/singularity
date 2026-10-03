@@ -202,14 +202,13 @@ var entries = [
     { page: "datetime", section: "Clock and calendar", label: "First day of the week", keywords: "calendar monday sunday saturday week start" },
 
     // --- Software Update ---------------------------------------------------
-    { page: "updates", section: "Checking", label: "Check for updates", keywords: "update interval how often pacman checkupdates schedule" },
+    { page: "updates", section: "Status",   label: "Status",            keywords: "update now check now last checked last upgrade pacman log syu upgraded" },
+    { page: "updates", section: "Checking", label: "Check for updates", keywords: "update interval how often pacman checkupdates schedule next check" },
     { page: "updates", section: "Checking", label: "Include the AUR",   keywords: "aur yay packages" },
-    { page: "updates", section: "Checking", label: "Last checked",      keywords: "update check now refresh" },
-    { page: "updates", section: "Checking", label: "Last upgrade",      keywords: "pacman log syu upgraded" },
-    { page: "updates", section: "Pending",  label: "Pending",           keywords: "updates available upgrade now yay" },
-    { page: "updates", section: "Ignored",  label: "Ignored",           keywords: "ignorepkg hold skip packages" },
-    { page: "updates", section: "Ignored",  label: "Ignore a package",  keywords: "ignorepkg hold skip add" },
-    { page: "updates", section: "Maintenance", label: "Maintenance",    keywords: "orphans cache clean pacman" },
+    { page: "updates", section: "Pending",  label: "Pending",           keywords: "updates available upgrade now yay versions" },
+    { page: "updates", section: "Ignored",  label: "Ignored",           keywords: "ignorepkg hold skip held back ignore a package" },
+    { page: "updates", section: "Upkeep",   label: "Orphaned packages", keywords: "orphans unused dependencies pacman maintenance" },
+    { page: "updates", section: "Upkeep",   label: "Reclaimable space", keywords: "cache clean up disk space paccache maintenance" },
 
     // --- Input -------------------------------------------------------------
     { page: "input", section: "Keyboard", label: "Layout",            keywords: "xkb us de language" },

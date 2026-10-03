@@ -4,11 +4,12 @@
 // Software updates: how often Updates.qml checks, whether the AUR is part of
 // it, and packages to leave alone -- all kept in Settings.qml, so the bar's
 // Updates module and flyout follow at once. What's pending and the upgrade
-// itself are Updates.qml's, as the flyout uses them; the maintenance rows
-// are Health's package checks, with the same repair buttons as System's
-// Health page.
+// itself are Updates.qml's, as the flyout uses them; the upkeep rows are
+// Health's package checks, with the same repair buttons as System's Health
+// page.
 
 import Quickshell
+import Quickshell.Io
 import QtQuick
 import "../services"
 import "../flyouts"
@@ -27,17 +28,28 @@ SettingsPage {
         return m === 0 ? "Manually" : m < 60 ? m + " min" : m === 60 ? "Hourly" : m === 1440 ? "Daily" : (m / 60) + " h"
     }
 
-    // "20:14, 12 min ago", "Tue 22 Sep, 09:03"
+    // "01:17, 12 min ago", "Yesterday, 19:36", "Tue 22 Sep, 09:03"
     function when(d) {
         if (!d) return "Not yet"
-        var mins = Math.round((Date.now() - d.getTime()) / 60000)
+        var mins = Math.round((clock.date.getTime() - d.getTime()) / 60000)
         if (mins < 1) return Qt.formatTime(d, Theme.timeFormat) + ", just now"
         if (mins < 60) return Qt.formatTime(d, Theme.timeFormat) + ", " + mins + " min ago"
-        if (mins < 1440 && d.getDate() === new Date().getDate()) return "Today, " + Qt.formatTime(d, Theme.timeFormat)
+        var day = new Date(clock.date.getFullYear(), clock.date.getMonth(), clock.date.getDate())
+        if (d >= day) return "Today, " + Qt.formatTime(d, Theme.timeFormat)
+        if (d >= new Date(day.getTime() - 86400000)) return "Yesterday, " + Qt.formatTime(d, Theme.timeFormat)
         return Qt.formatDateTime(d, Theme.hours("ddd d MMM, HH:mm"))
     }
 
-    readonly property var maintenance: Health.checks.filter(c => c.id === "orphans" || c.id === "cache")
+    // "1.2.0-1  →  1.<b>3.0-1</b>": the part of the version that moves, brighter
+    function verChange(from, to) {
+        var i = 0
+        while (i < from.length && i < to.length && from[i] === to[i]) i++
+        while (i > 0 && !/[.:+-]/.test(from[i - 1])) i--
+        return from + "  →  " + to.slice(0, i) + "<font color=\"" + Theme.textStrong + "\">" + to.slice(i) + "</font>"
+    }
+
+    readonly property var orphans: Health.checks.find(c => c.id === "orphans") || null
+    readonly property var reclaim: Health.checks.find(c => c.id === "reclaim") || null
 
     function ignore(name) {
         if (Settings.updateIgnore.indexOf(name) >= 0) return
@@ -49,11 +61,41 @@ SettingsPage {
         say(name + " is back in updates", false)
     }
 
-    Component.onCompleted: Health.scan()
+    Component.onCompleted: {
+        Health.scan()
+        installedProc.running = true
+    }
+
+    // the "ago"s and the next check move on by the minute
+    SystemClock {
+        id: clock
+        precision: SystemClock.Minutes
+    }
+
+    // every installed package, { name, version, aur }, for the search under
+    // Ignore a package…; `pacman -Qm` marks the ones from the AUR
+    property var installed: []
+    readonly property int aurInstalled: installed.filter(p => p.aur).length
+
+    Process {
+        id: installedProc
+        command: ["sh", "-c", "pacman -Q; echo; pacman -Qmq"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var parts = text.split("\n\n")
+                var aur = {}
+                ;(parts[1] || "").split("\n").forEach(n => { if (n) aur[n] = true })
+                page.installed = (parts[0] || "").split("\n").filter(l => l).map(l => {
+                    var f = l.split(" ")
+                    return { name: f[0], version: f[1] || "", aur: !!aur[f[0]] }
+                })
+            }
+        }
+    }
 
     // --- layout --------------------------------------------------------------
 
-    FlyoutHeading { text: "CHECKING" }
+    FlyoutHeading { text: "STATUS" }
 
     SettingsNote {
         visible: !Updates.available
@@ -61,9 +103,111 @@ SettingsPage {
         alert: true
     }
 
+    // how things stand: the count large, when it last looked and last
+    // upgraded, and both actions
+    Item {
+        width: parent.width
+        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
+
+        Text {
+            id: cardGlyph
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fontTitle * 1.4
+            horizontalAlignment: Text.AlignHCenter
+            text: Updates.count > 0 || Updates.lastChecked === null ? "󰚰" : "󰄬"
+            color: Updates.count > 0 ? Theme.accent : Updates.lastChecked === null ? Theme.muted : Theme.good
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontTitle
+        }
+
+        Column {
+            id: cardText
+            anchors.left: cardGlyph.right
+            anchors.leftMargin: Theme.spaceL
+            anchors.right: cardChips.left
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 1
+
+            Text {
+                width: parent.width
+                elide: Text.ElideRight
+                text: Updates.checking && Updates.lastChecked === null ? "Checking…"
+                    : Updates.lastChecked === null ? "Not checked yet"
+                    : Updates.count === 0 ? "Up to date"
+                    : Updates.count + (Updates.count === 1 ? " update" : " updates")
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fontTitle
+            }
+            Text {
+                width: parent.width
+                elide: Text.ElideRight
+                visible: text !== ""
+                text: Updates.aurCount > 0 ? Updates.aurCount + " from the AUR" : ""
+                color: Theme.text
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+            Text {
+                width: parent.width
+                elide: Text.ElideRight
+                text: Updates.checking ? "Checking now…"
+                    : Updates.lastChecked === null ? "The first check runs a minute after the shell starts"
+                    : "Checked " + page.when(Updates.lastChecked).replace(", ", " · ")
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+            Text {
+                width: parent.width
+                elide: Text.ElideRight
+                visible: Updates.lastUpgrade !== null
+                text: "Last upgrade " + page.when(Updates.lastUpgrade).replace(/^(Today|Yesterday)/, s => s.toLowerCase())
+                    + (Updates.lastUpgradeCount > 0 ? ", " + Updates.lastUpgradeCount
+                        + (Updates.lastUpgradeCount === 1 ? " package" : " packages") : "")
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+        }
+
+        Row {
+            id: cardChips
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceS
+
+            FlyoutChip {
+                text: "Check now"
+                icon: "󰑐"
+                spinning: Updates.checking
+                enabled: Updates.available && !Updates.checking
+                onClicked: Updates.refresh()
+            }
+            FlyoutChip {
+                text: Updates.updating ? "Updating…" : "Update now"
+                icon: "󰚰"
+                enabled: Updates.count > 0 && !Updates.updating
+                onClicked: Updates.update()
+            }
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "CHECKING" }
+
     SettingsField {
         label: "Check for updates"
-        hint: "The bar shows a count when there are some"
+        hint: Settings.updateInterval === 0 ? "Only when you press Check now"
+            : Updates.checking ? "Checking now…"
+            : Updates.nextCheck === null || Updates.nextCheck <= clock.date ? "Next check in a minute or so"
+            : "Next check at " + Qt.formatTime(Updates.nextCheck, Theme.timeFormat)
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -80,7 +224,9 @@ SettingsPage {
 
     SettingsField {
         label: "Include the AUR"
-        hint: "Checked with yay -Qua"
+        hint: !Settings.updateAur ? "Only the official repositories are checked"
+            : page.aurInstalled > 0 ? page.aurInstalled + " AUR packages installed, checked with yay"
+            : "Checked with yay"
 
         Switch {
             anchors.right: parent.right
@@ -92,151 +238,185 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Last checked"
-        hint: Updates.checking ? "Checking now…" : ""
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceL
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: page.when(Updates.lastChecked)
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            FlyoutChip {
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Check now"
-                enabled: Updates.available && !Updates.checking
-                onClicked: Updates.refresh()
-            }
-        }
-    }
-
-    SettingsValue {
-        label: "Last upgrade"
-        hint: "pacman's last full upgrade"
-        value: page.when(Updates.lastUpgrade)
-    }
-
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PENDING" }
+    FlyoutHeading { text: Updates.count > 0 ? "PENDING  " + Updates.count : "PENDING" }
 
-    SettingsField {
-        label: "Pending"
-        // before the first check (a minute after the shell starts) there's
-        // nothing to say yet, rather than a reassurance it hasn't earned
-        hint: Updates.checking ? "Checking…"
-            : Updates.lastChecked === null ? "Not checked yet"
-            : Updates.count === 0 ? "Everything is up to date"
-            : Updates.count + (Updates.count === 1 ? " package" : " packages")
-                + (Updates.aurCount > 0 ? ", " + Updates.aurCount + " from the AUR" : "")
+    property bool showAllPending: false
+    readonly property int shortList: 10
 
-        FlyoutChip {
-            anchors.right: parent.right
-            text: "Update now"
-            enabled: Updates.count > 0
-            onClicked: Updates.update()
-        }
+    FlyoutRow {
+        visible: Updates.count === 0
+        enabled: false
+        label: Updates.checking ? "Checking…"
+            : Updates.lastChecked === null ? "Not checked yet" : "Everything is up to date"
     }
 
     Repeater {
-        model: Updates.packages
+        model: page.showAllPending ? Updates.packages : Updates.packages.slice(0, page.shortList)
 
-        SettingsField {
+        FlyoutRow {
             required property var modelData
-            label: modelData.name + (modelData.aur ? "  ·aur" : "")
-            hint: modelData.from + "  →  " + modelData.to
-
-            FlyoutChip {
-                anchors.right: parent.right
-                text: "Ignore"
-                onClicked: page.ignore(modelData.name)
-            }
+            leadingIcon: "󰏗"
+            label: modelData.name
+            note: page.verChange(modelData.from, modelData.to)
+            noteStyled: true
+            trailing: modelData.aur ? "AUR" : "repo"
+            actionText: "Ignore"
+            onAction: page.ignore(modelData.name)
         }
+    }
+
+    FlyoutRow {
+        visible: Updates.count > page.shortList
+        label: page.showAllPending ? "Show fewer" : "Show all " + Updates.count
+        trailing: page.showAllPending ? "󰅀" : (Updates.count - page.shortList) + " more  󰅂"
+        onActivated: page.showAllPending = !page.showAllPending
     }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "IGNORED" }
 
-    SettingsNote { text: "Left out of the count; passed to yay --ignore" }
+    FlyoutRow {
+        visible: Settings.updateIgnore.length === 0
+        enabled: false
+        label: "Nothing is left out of updates"
+    }
 
+    // each one says whether it's holding an update back
     Repeater {
         model: Settings.updateIgnore
 
-        SettingsField {
+        FlyoutRow {
             required property string modelData
+            readonly property var held: Updates.found.find(p => p.name === modelData) || null
+            leadingIcon: "󰏤"
             label: modelData
-
-            FlyoutChip {
-                anchors.right: parent.right
-                text: "Remove"
-                onClicked: page.unignore(modelData)
-            }
+            trailing: held ? "held back · " + held.to + " waiting" : "nothing new"
+            actionText: "Stop ignoring"
+            onAction: page.unignore(modelData)
         }
     }
 
-    SettingsField {
-        label: "Ignore a package"
+    property bool adding: false
+    property string query: ""
+    readonly property int shownMatches: 6
+    // names starting with the search first, then any containing it
+    readonly property var matches: {
+        if (!adding) return []
+        var q = query.trim().toLowerCase()
+        var free = installed.filter(p => Settings.updateIgnore.indexOf(p.name) < 0)
+        if (q === "") return free
+        var starts = [], rest = []
+        free.forEach(p => {
+            var i = p.name.indexOf(q)
+            if (i === 0) starts.push(p)
+            else if (i > 0) rest.push(p)
+        })
+        return starts.concat(rest)
+    }
 
-        Item {
-            anchors.right: parent.right
-            width: Theme.fit(240) + Theme.spaceS + addChip.width
-            height: Theme.rowHeightTall
+    FlyoutRow {
+        leadingIcon: "󰐕"
+        label: "Ignore a package…"
+        highlighted: page.adding
+        trailing: page.adding ? "󰅀" : "󰅂"
+        onActivated: {
+            page.adding = !page.adding
+            search.text = ""
+            if (page.adding) Qt.callLater(search.forceFocus)
+        }
+    }
 
-            FlyoutInput {
-                id: ignoreName
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(240)
-                echoPassword: false
-                placeholder: "package name"
-                onAccepted: addChip.clicked()
+    SettingsIndent {
+        visible: page.adding
+
+        FlyoutInput {
+            id: search
+            echoPassword: false
+            glyph: "󰍉"
+            placeholder: "Search installed packages"
+            onTextChanged: page.query = text
+            onAccepted: if (page.matches.length > 0) matchRows.pick(page.matches[0])
+            onEscapePressed: page.adding = false
+        }
+
+        Repeater {
+            id: matchRows
+            function pick(p) {
+                page.adding = false
+                page.ignore(p.name)
             }
-            FlyoutChip {
-                id: addChip
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                // as tall as the field beside it, so the two read as one control
-                height: ignoreName.height
-                text: "+ Add"
-                enabled: /^[a-z0-9@._+-]+$/i.test(ignoreName.text.trim())
-                onClicked: if (enabled) {
-                    page.ignore(ignoreName.text.trim())
-                    ignoreName.text = ""
-                }
+            model: page.matches.slice(0, page.shownMatches)
+
+            FlyoutRow {
+                required property var modelData
+                label: modelData.name
+                note: modelData.version
+                trailing: modelData.aur ? "AUR" : "repo"
+                onActivated: matchRows.pick(modelData)
             }
+        }
+
+        FlyoutRow {
+            visible: page.matches.length > page.shownMatches
+            enabled: false
+            label: "and " + (page.matches.length - page.shownMatches) + " more; type to narrow"
+        }
+        FlyoutRow {
+            visible: page.installed.length > 0 && page.matches.length === 0
+            enabled: false
+            label: "No installed package matches"
         }
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "MAINTENANCE" }
+    FlyoutHeading { text: "UPKEEP" }
 
     FlyoutRow {
-        visible: page.maintenance.length === 0
+        visible: !page.orphans && !page.reclaim
         enabled: false
         label: Health.scanning ? "Looking…" : "pacman isn't available"
     }
 
-    Repeater {
-        model: page.maintenance
+    SettingsField {
+        visible: page.orphans !== null
+        label: "Orphaned packages"
+        hint: !page.orphans ? "" : page.orphans.status === "ok" ? "None: every dependency is still used" : page.orphans.detail
 
-        SettingsField {
-            required property var modelData
-            label: modelData.label
-            hint: modelData.detail
+        FlyoutChip {
+            anchors.right: parent.right
+            visible: !!page.orphans && page.orphans.status !== "ok" && !!page.orphans.repairId
+            text: page.orphans ? page.orphans.repairLabel || "Remove" : ""
+            enabled: Health.busyRepair === ""
+            onClicked: Health.repair(page.orphans)
+        }
+    }
 
-            FlyoutChip {
-                anchors.right: parent.right
-                visible: !!modelData.repairId
-                text: modelData.repairLabel || "Fix"
-                enabled: Health.busyRepair === ""
-                onClicked: Health.repair(modelData)
-            }
+    // the size goes in the question
+    SettingsField {
+        id: reclaimField
+        readonly property string size: {
+            var m = page.reclaim ? /^About ([\d.]+ [KMGT]?B)/.exec(page.reclaim.detail) : null
+            return m ? m[1] : ""
+        }
+        visible: page.reclaim !== null
+        label: "Reclaimable space"
+        // "About 380 MB: AUR builds 337 MB, old packages 37 MB" -> "380 MB in AUR builds, old packages"
+        hint: {
+            if (Health.busyRepair === "reclaim") return "Cleaning…"
+            if (!page.reclaim) return ""
+            var m = /^About ([^:]+): (.*)$/.exec(page.reclaim.detail)
+            return m ? m[1] + " in " + m[2].split(", ").map(s => s.replace(/ [\d.]+ [KMGT]?B$/, "")).join(", ")
+                : page.reclaim.detail
+        }
+
+        FlyoutChip {
+            anchors.right: parent.right
+            text: page.reclaim ? page.reclaim.repairLabel || "Clean up" : ""
+            icon: "󰃢"
+            confirmText: reclaimField.size !== "" ? "Clean up " + reclaimField.size + "?" : "Clean up?"
+            enabled: Health.busyRepair === "" && reclaimField.size !== ""
+            onClicked: Health.repair(page.reclaim)
         }
     }
 }

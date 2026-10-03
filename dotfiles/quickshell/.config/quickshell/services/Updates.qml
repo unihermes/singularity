@@ -35,6 +35,13 @@ Singleton {
     property var lastChecked: null
     // when pacman last ran a full upgrade, from its log; null if never
     property var lastUpgrade: null
+    // how many packages that upgrade changed
+    property int lastUpgradeCount: 0
+    readonly property bool updating: updateProc.running
+    // when the timer next checks: an interval after the last check, which
+    // restarts it; null while checking only by hand
+    readonly property var nextCheck: Settings.updateInterval > 0 && lastChecked !== null && every.running
+        ? new Date(lastChecked.getTime() + Settings.updateInterval * 60000) : null
 
     function refresh() {
         if (!available || checkProc.running) return
@@ -119,17 +126,21 @@ Singleton {
         }
         onExited: {
             root.checking = false
+            if (every.running) every.restart()
             logProc.running = true
         }
     }
 
     Process {
         id: logProc
-        command: ["sh", "-c", "grep 'starting full system upgrade' /var/log/pacman.log | tail -n1"]
+        // the last upgrade's start, then how many packages it upgraded
+        command: ["sh", "-c", "awk '/starting full system upgrade/ { t = $1; n = 0 } "
+            + "/\\[ALPM\\] upgraded / { n++ } END { if (t) print t, n }' /var/log/pacman.log"]
         stdout: StdioCollector {
             onStreamFinished: {
-                var m = /^\[([^\]]+)\]/.exec(text.trim())
+                var m = /^\[([^\]]+)\]\s+(\d+)/.exec(text.trim())
                 root.lastUpgrade = m ? new Date(m[1].replace(/([+-]\d\d)(\d\d)$/, "$1:$2")) : null
+                root.lastUpgradeCount = m ? Number(m[2]) : 0
             }
         }
     }
@@ -147,6 +158,7 @@ Singleton {
     }
 
     Timer {
+        id: every
         interval: Math.max(1, Settings.updateInterval) * 60000
         repeat: true
         running: root.available && Settings.updateInterval > 0

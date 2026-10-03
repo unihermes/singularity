@@ -248,6 +248,19 @@ Settings') are laid out the same way.
   an old alias (US/Eastern) offers its current name. Hour format's hint
   reads the time as it will look, and a strip of weekday letters shows
   where the calendar's week starts.
+- **Software Update:** a status card heads the page (the update icon,
+  accent while there are some and a green tick when up to date, the count
+  large, when it last checked, the last upgrade and how many packages it
+  changed, then Check now and Update now). Check for updates' hint says
+  when the next check runs, and Include the AUR how many AUR packages there
+  are. Each pending package is one row (package icon, name, the version
+  change as its note with the moving part brighter, repo or AUR at the
+  end); Ignore takes the end on hover (`FlyoutRow.actionText`, a chip that
+  acts on one click, for what's easily undone). Ten, then Show all N.
+  Ignored packages are rows saying what each holds back, with Stop
+  ignoring on hover; Ignore a package… is the last row and opens a search
+  of installed packages. Upkeep holds Orphaned packages and Reclaimable
+  space, whose Clean up asks with the size first.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

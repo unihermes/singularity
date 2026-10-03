@@ -30,6 +30,8 @@ Item {
     property string leadingImage: ""
     // a quieter word straight after the label (a display's connector)
     property string note: ""
+    // the note is styled text, for a part drawn brighter (a version's change)
+    property bool noteStyled: false
     // a word in an accent tag before the trailing text (Primary)
     property string badge: ""
     // something is in flight (connecting, pairing, a rescan): the row's
@@ -50,6 +52,9 @@ Item {
     property string actionHint: ""
     readonly property bool actionArmed: actionBtn.armed
     signal action()
+    // or, for what's easily undone (ignore a package), a chip with this text
+    // that acts on the first click
+    property string actionText: ""
 
     width: parent ? parent.width : 0
     implicitHeight: Theme.rowHeight
@@ -133,7 +138,7 @@ Item {
     }
 
     // where the label's room ends: the first thing at the right
-    readonly property real labelEnd: showAction ? actionBtn.x
+    readonly property real labelEnd: showAction ? (actionText !== "" ? actionChip.x : actionBtn.x)
         : badgeTag.visible ? badgeTag.x
         : iconCells.visible ? iconCells.x : trailingText.x
 
@@ -146,6 +151,7 @@ Item {
         width: Math.max(0, root.labelEnd - Theme.spaceL - x)
         elide: Text.ElideRight
         text: root.note
+        textFormat: root.noteStyled ? Text.StyledText : Text.PlainText
         color: Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontCaption
@@ -154,7 +160,7 @@ Item {
     }
 
     HoverHandler { id: rowHover }
-    readonly property bool showAction: actionIcon !== "" && enabled && !busy && (rowHover.hovered || actionArmed)
+    readonly property bool showAction: (actionIcon !== "" || actionText !== "") && enabled && !busy && (rowHover.hovered || actionArmed)
 
     Row {
         id: iconCells
@@ -244,11 +250,20 @@ Item {
     // after the row's MouseArea, so it sits on top and takes its own clicks
     IconButton {
         id: actionBtn
-        visible: root.showAction
+        visible: root.showAction && root.actionText === ""
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         icon: root.actionIcon
         confirm: true
+        onClicked: root.action()
+    }
+
+    FlyoutChip {
+        id: actionChip
+        visible: root.showAction && root.actionText !== ""
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.actionText
         onClicked: root.action()
     }
 }
