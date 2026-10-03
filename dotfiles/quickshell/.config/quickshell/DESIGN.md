@@ -409,6 +409,10 @@ groove, or fill with the accent, when active.
   value, with a thin white marker at the level.
 - **Segmented:** a channel strip, `rowHeight` tall (taller than chips). The chosen segment fills with the accent
   inside a 2px dark groove, with white text.
+- **Stepper:** one control, not three: a field frame (outer line and
+  groove) holding −, the value and +, the buttons bare inside it and
+  filled on hover (`FlyoutStepper`, which every flyout and Settings
+  stepper uses). A ring of names (a style) shows ‹ › and wraps.
 - **Chip/button:** surface ground with an outer line and groove. Hover
   brightens the outer line, and selected fills with the accent. Armed
   (confirm-twice) is the alert fill.

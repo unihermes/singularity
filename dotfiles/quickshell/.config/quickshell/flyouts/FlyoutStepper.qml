@@ -50,11 +50,23 @@ Item {
         font.pixelSize: Theme.fontBody
     }
 
-    Row {
+    // one control: a frame holding the minus, the value and the plus, the
+    // buttons bare inside it and filled on hover
+    Rectangle {
         id: controls
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.spaceXs
+        width: inner.width + inset * 2
+        height: Theme.controlSize
+        readonly property int inset: Theme.frameChannel ? Theme.channelWidth
+            : Theme.frameDouble ? Theme.frameInset + Theme.borderWidth : Theme.borderWidth
+        readonly property color edge: minus.hovered || plus.hovered ? Theme.strokeHover : Theme.stroke
+        radius: Theme.radiusInner
+        color: Theme.fieldFill
+        border.width: Theme.controlBorder(edge)
+        border.color: Theme.controlStroke(edge)
+
+        ControlEdge { stroke: controls.edge; sunken: true; radius: controls.radius }
 
         component Button: Rectangle {
             id: btn
@@ -62,17 +74,13 @@ Item {
             // at an end of the range the button is inert rather than hidden,
             // so the row doesn't reflow every time you reach a limit
             property bool live: true
+            readonly property bool hovered: ma.containsMouse
             signal pressed()
 
             width: Theme.controlSize
-            height: Theme.controlSize
-            readonly property color edge: btn.live ? Theme.stroke : Theme.surface
-            radius: Theme.radiusSmall
-            color: Theme.controlFill((btn.live && ma.containsMouse) ? Theme.hoverFill : "transparent")
-            border.width: Theme.controlBorder(edge)
-            border.color: Theme.controlStroke(edge)
-
-            ControlEdge { stroke: btn.edge; sunken: ma.pressed; radius: btn.radius }
+            height: controls.height - controls.inset * 2
+            radius: Math.max(0, controls.radius - controls.inset)
+            color: btn.live && ma.containsMouse ? Theme.hoverFill : "transparent"
 
             Text {
                 anchors.centerIn: parent
@@ -93,34 +101,41 @@ Item {
             }
         }
 
-        Button {
-            glyph: root.wrap ? "󰅁" : "−"
-            live: root.wrap || root.value > root.minimum
-            onPressed: root.stepped(-1)
-        }
+        Row {
+            id: inner
+            x: controls.inset
+            anchors.verticalCenter: parent.verticalCenter
 
-        // Fixed width, wide enough for the longest value the range can
-        // produce: letting it hug the text would shuffle both buttons
-        // sideways every time the number gained or lost a digit.
-        Item {
-            width: root.scaledValueWidth
-            height: Theme.controlSize
-
-            Text {
-                anchors.centerIn: parent
-                text: root.displayValue !== "" ? root.displayValue : root.value + root.suffix
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-
-                font.pixelSize: Theme.fontBody
+            Button {
+                id: minus
+                glyph: root.wrap ? "󰅁" : "−"
+                live: root.wrap || root.value > root.minimum
+                onPressed: root.stepped(-1)
             }
-        }
 
-        Button {
-            glyph: root.wrap ? "󰅂" : "+"
-            live: root.wrap || root.value < root.maximum
-            onPressed: root.stepped(1)
+            // Fixed width, wide enough for the longest value the range can
+            // produce: letting it hug the text would shuffle both buttons
+            // sideways every time the number gained or lost a digit.
+            Item {
+                width: root.scaledValueWidth
+                height: minus.height
+
+                Text {
+                    anchors.centerIn: parent
+                    text: root.displayValue !== "" ? root.displayValue : root.value + root.suffix
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+            }
+
+            Button {
+                id: plus
+                glyph: root.wrap ? "󰅂" : "+"
+                live: root.wrap || root.value < root.maximum
+                onPressed: root.stepped(1)
+            }
         }
     }
 }
