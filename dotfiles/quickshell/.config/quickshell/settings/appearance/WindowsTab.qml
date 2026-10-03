@@ -15,7 +15,7 @@ SettingsTab {
     FlyoutHeading { text: "WINDOWS" }
 
     HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
-    HyprInt { label: "Gaps at screen edges"; path: ["general"]; key: "gaps_out"; max: 40 }
+    Stepper { label: "Gaps at screen edges"; hint: Theme.barFull ? "" : "The bar floats this far in too"; key: "edgeGap"; suffix: "px" }
     HyprPercent { label: "Focused opacity"; path: ["decoration"]; key: "active_opacity" }
     HyprPercent { label: "Unfocused opacity"; path: ["decoration"]; key: "inactive_opacity" }
     HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }

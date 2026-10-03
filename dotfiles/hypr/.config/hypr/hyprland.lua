@@ -94,6 +94,10 @@ local tabActive, tabInactive, tabText, tabTextInactive, tabAccent =
 -- corners so windows and panels round alike; absent, 6.
 local windowRounding = tonumber(singularityState("rounding", "")) or 6
 
+-- The gap at the screen's edges, written by the Appearance page from its bar
+-- shape, so a floating bar and the windows keep the same gap; absent, 0.
+local edgeGap = tonumber(singularityState("gaps", "")) or 0
+
 -- "<border width> <shadow>" from the Appearance page's style: the border
 -- as thick as the shell's strokes, and its shadow ("none", "soft", "hard")
 local windowBorder, windowShadow = singularityState("window-frame", ""):match("^(%d+)%s+(%a+)$")
@@ -331,7 +335,7 @@ local GROUPBAR_HEIGHT = 26
 hl.config({
     general = {
         gaps_in     = 1,
-        gaps_out    = 0,
+        gaps_out    = edgeGap,
         border_size = windowBorder,
 
         col = {

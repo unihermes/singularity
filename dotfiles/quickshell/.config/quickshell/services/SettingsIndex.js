@@ -120,7 +120,7 @@ var entries = [
     { page: "appearance", section: "System",        label: "Cursor",               keywords: "pointer mouse theme bibata" },
     { page: "appearance", section: "System",        label: "Cursor size",          keywords: "pointer mouse px big" },
     { page: "appearance", section: "Windows",       label: "Gaps between windows", keywords: "gaps_in hyprland tiling" },
-    { page: "appearance", section: "Windows",       label: "Gaps at screen edges", keywords: "gaps_out hyprland" },
+    { page: "appearance", section: "Windows",       label: "Gaps at screen edges", keywords: "gaps_out hyprland bar floating islands margin inset" },
     { page: "appearance", section: "Windows",       label: "Focused opacity",      keywords: "active_opacity transparency" },
     { page: "appearance", section: "Windows",       label: "Unfocused opacity",    keywords: "inactive_opacity transparency" },
     { page: "appearance", section: "Windows",       label: "Dim unfocused",        keywords: "dim_inactive" },

@@ -85,6 +85,9 @@ Singleton {
     readonly property alias windowAnim:  adapter.windowAnim
     // "full", "floating" or "islands"
     readonly property alias barStyle:    adapter.barStyle
+    // px between the screen's edges and the windows (Hyprland's gaps_out,
+    // handed over by AppearanceSync), and a floating bar or its islands
+    readonly property alias edgeGap:     adapter.edgeGap
     // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
     readonly property alias workspaceStyle: adapter.workspaceStyle
     // "stamp", "time", "seconds", "day", "long" or "iso" -- what the clock chip shows
@@ -483,6 +486,7 @@ Singleton {
     // out of range is corrected by the same numbers the UI enforces.
     readonly property var limits: ({
         radius:    { min: 0,  max: 14 },
+        edgeGap:   { min: 0,  max: 30 },
         seeThrough: { min: 50, max: 100 },
         fontSize:  { min: 12, max: 22 },
         scrim:        { min: 0,  max: 80 },
@@ -632,6 +636,7 @@ Singleton {
         else if (key === "look") applyLook(v)
         else if (key === "accent") adapter.accent = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
         else if (key === "style") setStyle(v)
+        else if (key === "barStyle") setBarStyle(v)
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
         // free text, such as the workspace names
@@ -646,6 +651,15 @@ Singleton {
         adapter.style = v
         var fin = Styles.get(v).finish
         for (var k in fin) adapter[k] = fin[k]
+    }
+
+    // A bar shape arrives with its edge gap: the look's own when it's the
+    // look's shape, the shape's usual one otherwise.
+    function setBarStyle(v) {
+        if (choices.barStyle.indexOf(v) === -1) return
+        adapter.barStyle = v
+        adapter.edgeGap = lookBaseline.barStyle === v && lookBaseline.edgeGap !== undefined
+            ? lookBaseline.edgeGap : Looks.edgeGaps[v]
     }
 
     // See-through defaults lower on the wallpaper palette, so the wallpaper
@@ -779,6 +793,7 @@ Singleton {
             property string iconTheme: "kora"
             property string windowAnim: "popin"
             property string barStyle: "full"
+            property int edgeGap: 0
             property string workspaceStyle: "pills"
             property string clockStyle: "stamp"
             property string windowStyle: "icons"

@@ -29,7 +29,7 @@ SettingsTab {
 
     SettingsField {
         label: "Bar shape"
-        hint: "Where flyouts sit follows it"
+        hint: "Where flyouts sit and the gaps at screen edges follow it"
         Choices { key: "barStyle" }
     }
 

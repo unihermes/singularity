@@ -45,6 +45,8 @@
 //     barStyle     "full" edge to edge, "floating" inset and rounded, or
 //                  "islands", each group of modules on its own ground
 //     density      "compact", "normal" or "roomy": spacing, bar height, gaps
+//     edgeGap      px between the screen's edges and the windows, and a
+//                  floating bar or its islands; unstated, edgeGaps[barStyle]
 //     seeThrough   the bar's and panels' opacity, in percent
 //     shadows, gradient, heavyLines, headingUpper, headingRule,
 //     barSeparator, levelColour   the Finish switches (Settings.qml)
@@ -189,6 +191,10 @@ var settingsBase = {
     levelStyle: "pill",
 }
 
+// The edge gap each bar shape starts at: a full bar runs to the screen's
+// edges and the windows meet it, a floating one leaves room all round.
+var edgeGaps = { full: 0, floating: 10, islands: 10 }
+
 // The parts of the fixed half the Appearance page can also adjust, copied
 // into `settings` in the units Settings stores ("" for no accent, scrim in
 // percent), so picking the look sets them like the rest.
@@ -209,6 +215,7 @@ function complete(look) {
         if (look.settings[f] === undefined) look.settings[f] = fin[f]
     for (var s in settingsBase)
         if (look.settings[s] === undefined) look.settings[s] = settingsBase[s]
+    if (look.settings.edgeGap === undefined) look.settings.edgeGap = edgeGaps[look.settings.barStyle] || 0
     var a = adjustable(look)
     for (var k in a)
         if (look.settings[k] === undefined) look.settings[k] = a[k]

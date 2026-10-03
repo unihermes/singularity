@@ -849,6 +849,23 @@ Scope {
         })
     }
 
+    // The windows' gap from the screen's edges, which a floating bar keeps too
+    function writeGaps(reload) {
+        var g = String(Settings.edgeGap)
+        AtomicFileWrite.write({
+            path: root.dir + "/gaps",
+            transform: () => g + "\n",
+            after: reload ? "hyprctl reload config-only >/dev/null" : "",
+        })
+    }
+
+    // Stepping the gap fires once per step; one reload at the end is enough.
+    Timer {
+        id: gapsDebounce
+        interval: 200
+        onTriggered: root.writeGaps(true)
+    }
+
     // How much of the screen's top edge the bar takes (0 when it sits at the
     // bottom), for hyprland.lua's rule that opens the sticky notes clear of
     // it. A rule can't read the reserved space itself.
@@ -956,6 +973,7 @@ Scope {
         function onCursorSizeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onIconThemeChanged() { root.writeIcons(); debounce.restart() }
         function onWindowAnimChanged() { root.writeWindowAnim(true) }
+        function onEdgeGapChanged() { gapsDebounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
@@ -969,6 +987,7 @@ Scope {
         writeGroupbar(false)
         writeBarTop(false)
         writeRounding(false)
+        writeGaps(false)
         writeWindowFrame(false)
         debounce.restart()
     }

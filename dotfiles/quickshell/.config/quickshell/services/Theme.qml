@@ -346,7 +346,8 @@ Singleton {
     readonly property string barPosition: Settings.barPosition
     readonly property int barHeight:  resolved.barHeight
     // A floating bar sits inset from the screen edges on its own rounded,
-    // stroked ground; barMargin is that inset. barExtent is how far from the
+    // stroked ground; barMargin is that inset, the same gap the windows keep
+    // from the screen's edges (Settings.edgeGap). barExtent is how far from the
     // screen edge anything anchored to the bar (flyouts, toasts) starts --
     // with a floating bar, the same gap again below it.
     //
@@ -355,7 +356,7 @@ Singleton {
     readonly property bool barFloating: Settings.barStyle === "floating"
     readonly property bool barIslands:  Settings.barStyle === "islands"
     readonly property bool barFull:     !barFloating && !barIslands
-    readonly property int barMargin:  barFull ? 0 : 6
+    readonly property int barMargin:  barFull ? 0 : Settings.edgeGap
     readonly property int barExtent:  barHeight + barMargin * 2
     // between the bar's (or an island's) edge and its outermost module
     readonly property int barInset: barFloating ? spaceXs : barIslands ? spaceM
