@@ -807,10 +807,12 @@ LY
 #!/bin/sh
 # Written by singularity's install.sh. ly runs `info.sh <line>` for each
 # status line at the greeter's bottom-right: battery, power, wifi, kernel, last.
-# ly right-aligns each line by its length in bytes, so every line is padded
-# to the same byte count to line the stack up on its left edge.
+# ly right-aligns each line by its length in bytes but draws it by
+# characters, so the lines are kept to ASCII, where the two agree, and each
+# is padded to the longest of the five: the stack lines up on its left edge
+# and the longest line ends at the screen's right edge.
 export LC_ALL=C
-out() { printf '%-72s' "$(printf '%-12s%s' "$1" "$2")"; }
+out() { printf '%-12s%s' "$1" "$2"; }
 read_num() { v=$(cat "$1" 2>/dev/null); echo "${v:-0}"; }
 dur() { [ "$1" -ge 60 ] && printf '%dh %02dm' $(($1 / 60)) $(($1 % 60)) || printf '%dm' "$1"; }
 
@@ -832,12 +834,14 @@ battery_state() {
   rate=${rate#-}
 }
 
+# one status line, unpadded
+line() {
 case $1 in
 battery)
   battery_state || { out battery 'none'; exit; }
   filled=$(((pct + 5) / 10)) bar='' i=0
   while [ $i -lt 10 ]; do
-    [ $i -lt $filled ] && bar="$bar■" || bar="$bar·"
+    [ $i -lt $filled ] && bar="$bar=" || bar="$bar-"
     i=$((i + 1))
   done
   case $status in
@@ -860,16 +864,16 @@ power)
     Charging) text="charging at $watts W" ;;
     *) text='idle' ;;
   esac
-  [ "$design" -gt 0 ] && text="$text  ·  health $((full * 100 / design))%"
+  [ "$design" -gt 0 ] && text="$text, health $((full * 100 / design))%"
   out power "$text" ;;
 wifi)
   for w in /sys/class/net/*/wireless; do [ -d "$w" ] && break; done
   [ -d "$w" ] || { out wifi 'none'; exit; }
   dev=${w%/wireless}; dev=${dev##*/}
   link=$(iw dev "$dev" link 2>/dev/null)
-  ssid=$(printf '%s\n' "$link" | sed -n 's/^[[:space:]]*SSID: //p')
+  ssid=$(printf '%s\n' "$link" | sed -n 's/^[[:space:]]*SSID: //p' | tr -c ' -~\n' '?')
   signal=$(printf '%s\n' "$link" | sed -n 's/^[[:space:]]*signal: //p')
-  if [ -n "$ssid" ]; then out wifi "$ssid${signal:+  ·  signal $signal}"
+  if [ -n "$ssid" ]; then out wifi "$ssid${signal:+, signal $signal}"
   else out wifi 'not connected'; fi ;;
 kernel)
   out kernel "linux $(uname -r)" ;;
@@ -885,6 +889,15 @@ $(lastlog2 2>/dev/null | awk 'NR > 1 && $NF ~ /^[0-9][0-9][0-9][0-9]$/ {
 EOF
   out 'last login' "$text" ;;
 esac
+}
+
+# the longest of the five sets the width every line is padded to
+width=0
+for l in battery power wifi kernel last; do
+  t=$(line $l)
+  [ ${#t} -gt $width ] && width=${#t}
+done
+printf '%-*s' "$width" "$(line "$1")"
 LY
     sudo chmod 755 /etc/ly/info.sh
     # Edit keys in place rather than shipping a whole config.ini: pacman keeps
