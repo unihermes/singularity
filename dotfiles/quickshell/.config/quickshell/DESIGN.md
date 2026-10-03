@@ -333,6 +333,9 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Memory:** the card (in use, of what, available, swap) over the
   minute; the stacked strip with its parts two across under it; swap and
   writeback two across; the largest processes sorted by memory.
+- **Processes:** the full table with CPU as a share of the machine and its
+  level, totals two across, and the terminal tools as rows saying what
+  each shows.
 
 ## Headings
 

@@ -43,6 +43,8 @@ Column {
     readonly property int pidW:  Theme.fs(64)
     readonly property int userW: Theme.fs(74)
     readonly property int cpuW:  Theme.fs(52)
+    // the CPU level's room, beside the figure
+    readonly property int levelW: machineShare ? Theme.fs(80) + Theme.spaceM : 0
     readonly property int memW:  Theme.fs(62)
     readonly property int killW: Theme.fs(22)
 
@@ -103,7 +105,7 @@ Column {
             visible: root.detailed
             anchors.right: parent.right
             anchors.rightMargin: root.killW + Theme.spaceL + root.memW + Theme.spaceL
-                + root.cpuW + Theme.spaceL
+                + root.cpuW + Theme.spaceL + root.levelW
             anchors.verticalCenter: parent.verticalCenter
             width: root.userW
             text: "User"
