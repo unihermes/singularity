@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/DropdownMenu.qml
 //
-// The open list of a dropdown, shared by FlyoutSelect (in a flyout) and
+// The open list of a dropdown, shared by LookStepper (in a flyout) and
 // SettingsDropdown (on a Settings page): every choice as a row, the current
 // one ticked, scrolling past `maxRows`.
 //

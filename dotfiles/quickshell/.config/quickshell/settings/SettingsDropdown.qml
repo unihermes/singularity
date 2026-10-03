@@ -6,7 +6,7 @@
 // it (or over it, near the bottom of the window) with the current one
 // ticked. The list scrolls past `maxRows`.
 //
-// The list is a DropdownMenu, as FlyoutSelect's is, in an overlay filling
+// The list is a DropdownMenu, as LookStepper's is, in an overlay filling
 // the window, so it escapes the page's Flickable and a list opened at the
 // bottom of a long page isn't cut off. The page can't scroll while it's
 // open.

@@ -109,6 +109,28 @@ Style: `channel` (frame `channel` in `Styles.js`).
 - Timer tab: the time large (`fontHero`) with what it is underneath, then the
   minute stepper and the chips.
 
+### Control Centre
+
+- **Submenus** have no Back row: the heading reads
+  `CONTROL CENTRE › APPEARANCE`, the first part smaller and quieter, and
+  clicking it goes back (`FlyoutHeading.crumb`).
+- **Appearance** is sectioned like any flyout (its Column is a section
+  group): LOOK, WALLPAPER, BAR, TEXT & MOTION, then the way out.
+  - The look is a card (`LookStepper`): the name large between ‹ and ›,
+    which step through the looks and apply each, "N of M · K changed",
+    and the palette as a band; a click on the name opens the list.
+    Style is a wrapping stepper (`FlyoutStepper.wrap`) with the style's
+    hint under it.
+  - The wallpaper picture (name in words, the transport on it) has every
+    wallpaper as a strip of thumbnails under it, the current one lit.
+    Colours are two tiles, Look's own and Wallpaper, each showing the
+    palette it gives; Intensity is a wrapping stepper once Wallpaper is on.
+  - One setting a line: See-through has its slider short beside the value
+    (`FlyoutSliderRow.inline`), Font size is a stepper, Animations is
+    Off · Fast · Normal.
+  - It ends with two chips on one line: Reset (two clicks, greyed while
+    the look is as designed) and Settings.
+
 ## Settings pages
 
 Every page sets `sectioned: true` on its `SettingsPage`. The System

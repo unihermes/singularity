@@ -16,6 +16,10 @@
 // old order. The empty spacer Item a page puts before the next heading
 // stays, so folded sections keep their gaps.
 //
+// `crumb` names the page above this one ("CONTROL CENTRE › APPEARANCE"):
+// it's drawn quieter before the text, and a click on it is the way back
+// (crumbClicked), so a submenu needs no Back row.
+//
 // The first heading of a bar flyout can be drawn as its title instead
 // (Theme.flyoutTitle): on a strip of ground across the panel's top, or as a
 // title bar in the accent with a close box.
@@ -34,6 +38,8 @@ Item {
 
     property string text: ""
     property var hints: []
+    property string crumb: ""
+    signal crumbClicked()
 
     readonly property bool isFlyoutHeading: true
     readonly property bool collapsible: mirrorOf ? mirrorOf.collapsible
@@ -208,10 +214,46 @@ Item {
         font: label.font
     }
 
+    Row {
+        id: crumbRow
+        visible: root.crumb !== ""
+        anchors.left: prefix.visible ? prefix.right : parent.left
+        anchors.leftMargin: prefix.visible ? Theme.spaceS : 0
+        anchors.verticalCenter: label.verticalCenter
+        spacing: Theme.spaceXs
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            // smaller and unspaced, so both names fit a narrow flyout
+            text: Theme.heading(root.crumb)
+            color: crumbMouse.containsMouse ? root.titleInk : Theme.subtext
+            font.family: Theme.fontHeading
+            font.pixelSize: Theme.fontCaption
+            font.weight: label.font.weight
+
+            MouseArea {
+                id: crumbMouse
+                anchors.fill: parent
+                anchors.margins: -Theme.spaceXs
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.crumbClicked()
+            }
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: "󰅂"
+            color: Theme.subtext
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontCaption
+        }
+    }
+
     Text {
         id: label
-        anchors.left: prefix.visible ? prefix.right : parent.left
-        anchors.leftMargin: prefix.visible ? Theme.spaceM : 0
+        anchors.left: crumbRow.visible ? crumbRow.right : prefix.visible ? prefix.right : parent.left
+        anchors.leftMargin: crumbRow.visible ? Theme.spaceXs : prefix.visible ? Theme.spaceM : 0
         anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
         anchors.verticalCenterOffset: root.asTitle ? 0 : root.lift
         text: Theme.heading(root.text)
@@ -219,7 +261,8 @@ Item {
         font.family: Theme.fontHeading
         font.pixelSize: Theme.fontSmall
         font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
-        font.letterSpacing: Theme.headingSpacing
+        // tighter beside a crumb, which shares the line
+        font.letterSpacing: root.crumb !== "" ? Theme.headingSpacing / 2 : Theme.headingSpacing
     }
 
     Rectangle {

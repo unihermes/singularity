@@ -31,6 +31,10 @@ Column {
     property bool live: true
     // named points under the slider (Slider.qml's `marks`), in this row's units
     property var marks: []
+    // the slider short, beside the value on the label's line, for a row
+    // that doesn't need a full-width track's precision
+    property bool inline: false
+    property int inlineWidth: 80
 
     // fired while dragging (on release when !live), already snapped and clamped
     signal moved(real value)
@@ -58,7 +62,8 @@ Column {
         }
 
         Text {
-            anchors.right: parent.right
+            anchors.right: root.inline ? track.left : parent.right
+            anchors.rightMargin: root.inline ? Theme.spaceM : 0
             anchors.verticalCenter: parent.verticalCenter
             // a named point reads as its name
             text: {
@@ -70,10 +75,21 @@ Column {
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontBody
         }
+
+        // the track sits here when inline, under the line otherwise
+        Item {
+            id: track
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.inline ? Theme.fit(root.inlineWidth) : 0
+            height: slider.height
+        }
     }
 
     Slider {
-        width: parent.width
+        id: slider
+        parent: root.inline ? track : root
+        width: root.inline ? track.width : root.width
         enabled: root.enabled
         marks: root.marks.map(m => ({
             at: (m.at - root.minimum) / Math.max(1, root.maximum - root.minimum) * 100,

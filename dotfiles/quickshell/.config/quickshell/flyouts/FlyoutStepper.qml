@@ -29,6 +29,9 @@ Item {
     // the value cell is fixed-width so the buttons don't shuffle; widen it
     // for values with more digits than the appearance metrics have
     property int valueWidth: 34
+    // a ring of named choices (a style) rather than a number: the buttons
+    // are ‹ › and never go inert, stepping past either end wrapping round
+    property bool wrap: false
     readonly property int scaledValueWidth: Math.max(Theme.fs(valueWidth), Theme.fit(valueWidth))
 
     signal stepped(int delta)
@@ -75,7 +78,7 @@ Item {
                 anchors.centerIn: parent
                 text: btn.glyph
                 color: btn.live ? (ma.containsMouse ? Theme.textStrong : Theme.text) : Theme.textDisabled
-                font.family: Theme.fontText
+                font.family: root.wrap ? Theme.fontIcon : Theme.fontText
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
             }
@@ -91,8 +94,8 @@ Item {
         }
 
         Button {
-            glyph: "−"
-            live: root.value > root.minimum
+            glyph: root.wrap ? "󰅁" : "−"
+            live: root.wrap || root.value > root.minimum
             onPressed: root.stepped(-1)
         }
 
@@ -115,8 +118,8 @@ Item {
         }
 
         Button {
-            glyph: "+"
-            live: root.value < root.maximum
+            glyph: root.wrap ? "󰅂" : "+"
+            live: root.wrap || root.value < root.maximum
             onPressed: root.stepped(1)
         }
     }

@@ -226,7 +226,7 @@ OverlayWindow {
             // FlyoutHeading and FlyoutDivider make room for the sections
             readonly property bool sectioned: true
 
-            // Marks the page FlyoutSelect looks for when an open dropdown
+            // Marks the page LookStepper looks for when an open dropdown
             // needs a box to put its overlay in (see that file) -- the same
             // marker SettingsPage gives SettingsDropdown.
             readonly property bool isFlyoutPage: true

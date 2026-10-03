@@ -14,11 +14,12 @@ import Quickshell.Io
 import QtQuick
 import "../services"
 import "../bar"
+import "../services/Styles.js" as Styles
 
 FlyoutPanel {
     id: controlCentre
     flyout: "controlcentre"
-    menuWidth: 230
+    menuWidth: 250
     // first module in the bar -- run it into the left corner
     edgeMargin: 0
 
@@ -114,16 +115,13 @@ FlyoutPanel {
             Quickshell.execDetached(["sh", "-c", "qs kill; sleep 0.3; exec quickshell > ~/.cache/quickshell.log 2>&1"])
     }
 
+    // a submenu's heading leads with CONTROL CENTRE, the way back
     FlyoutHeading {
+        crumb: controlCentre.page === "" ? "" : "CONTROL CENTRE"
         text: controlCentre.page === ""
             ? "CONTROL CENTRE"
             : (controlCentre.pageTitles[controlCentre.page] || "")
-    }
-
-    FlyoutRow {
-        visible: controlCentre.page !== ""
-        label: "󰅁  Back"
-        onActivated: controlCentre.page = ""
+        onCrumbClicked: controlCentre.page = ""
     }
 
     // root: Power on its own at the top, then everyday things, then
@@ -387,34 +385,51 @@ FlyoutPanel {
 
     // --- Appearance -------------------------------------------
     // Quick changes only -- the few things worth flipping without opening
-    // a window: the look, the wallpaper and the colours it feeds, where the
-    // bar sits and how solid it is, text size and motion. Everything else
-    // (bar and module styles, frames, fonts, geometry, defaults) is on
-    // Settings > Appearance, one row away at the bottom.
+    // a window: the look and its style, the wallpaper and the colours it
+    // feeds, where the bar sits and how solid it is, text size and motion.
+    // Everything else is on Settings > Appearance, a chip away at the end.
     //
-    // Short choices are segmented strips, so every option is one click and
-    // on show; the looks are a FlyoutSelect, which opens in place with each
-    // look's palette beside its name; numbers are sliders.
+    // The look steps with ‹ › (LookStepper) and the style the same way,
+    // the wallpapers are all on show as a strip, and the colours are two
+    // tiles showing the palette each gives. One setting per line where it
+    // fits.
 
     Column {
         id: appearancePage
         visible: controlCentre.page === "appearance"
         width: parent.width
         spacing: Theme.spaceM
+        // its headings and rows get sections as if they sat in the panel
+        readonly property bool isSectionGroup: true
+        readonly property bool sectioned: true
 
-        function label(v) { return Settings.choiceLabel(v) }
-        function seg(key) {
-            return (Settings.choices[key] || []).map(v => ({ value: v, text: label(v) }))
+        readonly property var styleOrder: Settings.choices.style
+        function styleStep(d) {
+            var n = styleOrder.length
+            Settings.set("style", styleOrder[(styleOrder.indexOf(Settings.style) + d + n) % n])
         }
-        // a look's palette, dark to light, then its accent if it has one
-        function swatches(name) {
-            var l = LookStore.looks[name]
+        readonly property var schemes: Settings.choices.colourScheme
+        // monet_pale_lillies -> Monet pale lillies
+        function prettyName(n) {
+            var s = n.replace(/[_-]+/g, " ").trim()
+            return s === "" ? s : s[0].toUpperCase() + s.slice(1)
+        }
+        // the colours each mode gives, dark to light then the accent; the
+        // wallpaper's only once matugen has made them for this image
+        readonly property var ownColours: {
+            var l = LookStore.looks[Settings.look]
             if (!l) return []
             var p = l.palette
             return [p.base, p.border, p.subtext, p.text].concat(l.accent ? [l.accent] : [])
         }
+        readonly property var wallColours: {
+            var c = Wallpaper.wanted ? Wallpaper.palette
+                : Wallpaper.cacheValid(Wallpaper.cache) && Wallpaper.cache.image === Wallpaper.current ? Wallpaper.cache.colors
+                : null
+            return c ? [c.base, c.muted, c.subtext, c.text, c.bright] : []
+        }
 
-        // one open select at a time; closed on the way out
+        // one open list at a time; closed on the way out
         QtObject { id: selects; property var open: null }
         onVisibleChanged: if (!visible) selects.open = null
 
@@ -422,32 +437,35 @@ FlyoutPanel {
 
         FlyoutHeading { text: "LOOK" }
 
-        FlyoutSelect {
-            label: "Preset"
-            group: selects
-            model: LookStore.order
-            current: Settings.look
-            // a look with hand edits on top of it is no longer quite that look
-            valueSuffix: Settings.lookPristine ? "" : " *"
-            labelFor: v => LookStore.looks[v] ? LookStore.looks[v].name : v
-            swatchesFor: v => appearancePage.swatches(v)
-            onPicked: v => Settings.set("look", v)
-        }
+        LookStepper { group: selects }
 
-        FlyoutSelect {
+        FlyoutStepper {
             label: "Style"
-            group: selects
-            model: Settings.choices.style
-            current: Settings.style
-            labelFor: v => Settings.choiceLabel(v, "style")
-            onPicked: v => Settings.set("style", v)
+            wrap: true
+            valueWidth: 76
+            displayValue: Settings.choiceLabel(Settings.style, "style")
+            onStepped: d => appearancePage.styleStep(d)
         }
 
-        // The preview is the control: click it for the next wallpaper, or
+        Text {
+            width: parent.width
+            elide: Text.ElideRight
+            text: Styles.get(Settings.style).hint
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontCaption
+        }
+
+        // --- Wallpaper ---
+
+        FlyoutHeading { text: "WALLPAPER" }
+
+        // The picture is the control: click it for the next wallpaper, or
         // use the chips in its corner.
         ClippingRectangle {
             width: parent.width
-            height: Math.round(width * 9 / 16)
+            height: Math.round(width / 2)
             radius: Theme.radiusInner
             color: Theme.base
             border.width: Theme.borderWidth
@@ -487,7 +505,7 @@ FlyoutPanel {
                     anchors.rightMargin: Theme.spaceS
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
-                    text: Wallpaper.name !== "" ? Wallpaper.name : "No wallpaper"
+                    text: Wallpaper.name !== "" ? appearancePage.prettyName(Wallpaper.name) : "No wallpaper"
                     color: Theme.textStrong
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
@@ -509,24 +527,153 @@ FlyoutPanel {
             }
         }
 
-        // colours: grey, or taken from the image above
-        FlyoutSegmented {
-            model: appearancePage.seg("colourMode")
-            current: Settings.colourMode
-            onPicked: v => Settings.set("colourMode", v)
+        // every wallpaper, six to a line, the one showing lit
+        Grid {
+            id: strip
+            visible: Wallpaper.images.length > 1
+            width: parent.width
+            columns: 6
+            spacing: Theme.spaceXs
+            readonly property real cell: (width - spacing * (columns - 1)) / columns
+
+            Repeater {
+                model: Wallpaper.images
+
+                ClippingRectangle {
+                    id: thumb
+                    required property string modelData
+                    readonly property bool isCurrent: modelData === Wallpaper.current
+                    width: strip.cell
+                    height: Math.round(strip.cell * 0.625)
+                    radius: Theme.radiusSmall
+                    color: Theme.base
+
+                    Image {
+                        anchors.fill: parent
+                        source: "file://" + thumb.modelData
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        sourceSize.width: 96
+                    }
+
+                    // the lit groove round the current one, a stroke on hover
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: thumb.radius
+                        color: "transparent"
+                        border.width: thumb.isCurrent ? 2 : Theme.borderWidth
+                        border.color: thumb.isCurrent ? Theme.selectedStroke
+                            : thumbMouse.containsMouse ? Theme.textStrong : Theme.stroke
+                    }
+
+                    MouseArea {
+                        id: thumbMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Wallpaper.set(thumb.modelData)
+                    }
+                }
+            }
+        }
+
+        // colours: the look's own, or tinted by the picture above
+        Row {
+            id: colourTiles
+            width: parent.width
+            spacing: Theme.spaceS
+
+            Repeater {
+                model: [
+                    { value: "grayscale", text: "Look's own", colours: appearancePage.ownColours },
+                    { value: "wallpaper", text: "Wallpaper", colours: appearancePage.wallColours },
+                ]
+
+                Rectangle {
+                    id: tile
+                    required property var modelData
+                    readonly property bool isCurrent: Settings.colourMode === modelData.value
+                    width: (colourTiles.width - colourTiles.spacing) / 2
+                    height: tileCol.implicitHeight + Theme.spaceS * 2
+                    radius: Theme.radiusInner
+                    color: tileMouse.containsMouse && !isCurrent ? Theme.hoverFill : Theme.fieldFill
+                    border.width: isCurrent ? 2 : Theme.borderWidth
+                    border.color: isCurrent ? Theme.selectedStroke
+                        : tileMouse.containsMouse ? Theme.strokeHover : Theme.stroke
+
+                    Column {
+                        id: tileCol
+                        x: Theme.spaceM
+                        y: Theme.spaceS
+                        width: parent.width - Theme.spaceM * 2
+                        spacing: Theme.spaceXs
+
+                        Text {
+                            width: parent.width
+                            elide: Text.ElideRight
+                            text: tile.modelData.text
+                            color: tile.isCurrent ? Theme.textStrong : Theme.text
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontCaption
+                        }
+
+                        // its palette, or the picture itself until there is one
+                        ClippingRectangle {
+                            width: parent.width
+                            height: Theme.fs(10)
+                            radius: Theme.radiusSmall
+                            color: Theme.base
+
+                            Row {
+                                visible: tile.modelData.colours.length > 0
+                                anchors.fill: parent
+
+                                Repeater {
+                                    model: tile.modelData.colours
+
+                                    Rectangle {
+                                        required property var modelData
+                                        width: parent.width / tile.modelData.colours.length
+                                        height: parent.height
+                                        color: modelData
+                                    }
+                                }
+                            }
+
+                            Image {
+                                visible: tile.modelData.colours.length === 0
+                                anchors.fill: parent
+                                source: Wallpaper.current !== "" ? "file://" + Wallpaper.current : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                sourceSize.width: 160
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: tileMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Settings.set("colourMode", tile.modelData.value)
+                    }
+                }
+            }
         }
 
         // only means anything once the colours come from the image
-        FlyoutSelect {
+        FlyoutStepper {
             visible: Settings.colourMode === "wallpaper"
             label: "Intensity"
-            group: selects
-            enabled: !Wallpaper.generating
-            model: Settings.choices.colourScheme
-            current: Settings.colourScheme
-            labelFor: v => appearancePage.label(v)
-            valueSuffix: Wallpaper.generating ? " …" : ""
-            onPicked: v => Settings.set("colourScheme", v)
+            wrap: true
+            valueWidth: 84
+            displayValue: Settings.choiceLabel(Settings.colourScheme) + (Wallpaper.generating ? " …" : "")
+            onStepped: d => {
+                var n = appearancePage.schemes.length
+                Settings.set("colourScheme", appearancePage.schemes[(appearancePage.schemes.indexOf(Settings.colourScheme) + d + n) % n])
+            }
         }
 
         // --- Bar ---
@@ -542,6 +689,7 @@ FlyoutPanel {
 
         FlyoutSliderRow {
             label: "See-through"
+            inline: true
             suffix: "%"
             // fives: nothing between two of them is visible anyway
             step: 5
@@ -555,42 +703,56 @@ FlyoutPanel {
 
         FlyoutHeading { text: "TEXT & MOTION" }
 
-        FlyoutSliderRow {
+        // a step a click: each one rescales this panel
+        FlyoutStepper {
             label: "Font size"
             suffix: "px"
-            // applied on release: it rescales this panel, slider included
-            live: false
             value: Settings.fontSize
             minimum: Settings.limits.fontSize.min
             maximum: Settings.limits.fontSize.max
-            onMoved: v => Settings.set("fontSize", v)
+            onStepped: d => Settings.set("fontSize", Settings.fontSize + d)
         }
 
-        FlyoutSliderRow {
-            label: "Animations"
-            suffix: "%"
-            value: Settings.animTime
-            minimum: Settings.limits.animTime.min
-            maximum: Settings.limits.animTime.max
-            marks: Settings.animTimeMarks
-            onMoved: v => Settings.set("animTime", v)
+        // the slider's named points, across the line under the label;
+        // anything between them is Settings' to set
+        Text {
+            text: "Animations"
+            color: Theme.text
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontBody
+        }
+
+        FlyoutSegmented {
+            model: Settings.animTimeMarks.map(m => ({ value: m.at, text: m.label }))
+            current: Settings.animTime
+            onPicked: v => Settings.set("animTime", v)
         }
 
         // --- the way out ---
 
         FlyoutDivider {}
 
-        FlyoutRow {
-            label: "Reset look"
-            enabled: !Settings.lookPristine
-            onActivated: Settings.resetLook()
-        }
+        Row {
+            id: wayOut
+            width: parent.width
+            spacing: Theme.spaceS
 
-        // everything this page leaves out
-        FlyoutRow {
-            label: "More in Settings"
-            trailing: "󰁔"
-            onActivated: scope.openSettings("appearance")
+            FlyoutChip {
+                width: (wayOut.width - wayOut.spacing) / 2
+                icon: "󰕌"
+                text: "Reset"
+                confirmText: "Reset look?"
+                enabled: !Settings.lookPristine
+                onClicked: Settings.resetLook()
+            }
+
+            // everything this page leaves out
+            FlyoutChip {
+                width: (wayOut.width - wayOut.spacing) / 2
+                text: "Settings  󰁔"
+                onClicked: scope.openSettings("appearance")
+            }
         }
     }
 
