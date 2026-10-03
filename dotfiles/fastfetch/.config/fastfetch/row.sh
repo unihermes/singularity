@@ -16,13 +16,14 @@
 #
 # Colours, capsule shape and heading case come from term-colors.sh, which
 # Quickshell (AppearanceSync.qml) writes for the current look. The block is
-# 46 columns so logo and block together fit a half-screen terminal.
+# W columns wide; the logo and block together should fit a half-screen
+# terminal.
 N_SURFACE='26;26;26' N_OVERLAY='36;36;36' N_BORDER='48;48;48'
 N_MUTED='77;77;77' N_SUBTEXT='122;122;122' N_TEXT='208;226;250'
 N_BRIGHT='235;235;235' N_ACCENT='85;85;200' N_ON_ACCENT='235;235;235'
 T_ROUND=1 T_UPPER=1
 . "$HOME/.local/state/singularity/term-colors.sh" 2>/dev/null
-W=46
+W=52
 
 # a capsule: ground, foreground, text; round caps only when the look has a radius
 cap() {
@@ -33,7 +34,7 @@ cap() {
   fi
 }
 
-# a 12-cell meter for "USED UNIT / TOTAL UNIT (PCT%)": the figures, rounded to
+# a W-34-cell meter for "USED UNIT / TOTAL UNIT (PCT%)": the figures, rounded to
 # 3 significant digits and sharing the unit when both have it, then the bar
 meter() {
   [[ $1 =~ ^([0-9.]+)\ ([A-Za-z]+)\ /\ ([0-9.]+)\ ([A-Za-z]+)\ \(([0-9]+)%\) ]] || { printf '\033[38;2;%sm%s' "$N_TEXT" "$1"; return; }
@@ -44,10 +45,10 @@ meter() {
   else
     printf -v f '%.*f %s / %.*f %s' $d "$u" "$uu" $d "$t" "$tu"
   fi
-  local on=$(( (p * 12 + 50) / 100 ))
+  local n=$(( W - 34 )) on=$(( (p * (W - 34) + 50) / 100 ))
   printf '\033[38;2;%sm%-15s\033[38;2;%sm%s\033[38;2;%sm%s\033[38;2;%sm%4s%%' \
     "$N_TEXT" "$f" "$N_ACCENT" "$(printf -- '━%.0s' $(seq 1 $on))" \
-    "$N_BORDER" "$( (( on < 12 )) && printf -- '━%.0s' $(seq 1 $(( 12 - on ))))" "$N_SUBTEXT" "$p"
+    "$N_BORDER" "$( (( on < n )) && printf -- '━%.0s' $(seq 1 $(( n - on ))))" "$N_SUBTEXT" "$p"
 }
 
 case $1 in
