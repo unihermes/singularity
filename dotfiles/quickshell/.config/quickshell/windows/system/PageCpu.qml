@@ -6,6 +6,7 @@
 // an average of 25% across eight threads is a very different machine from
 // one thread pinned at 100%, and only the bars tell the two apart.
 
+import Quickshell
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
@@ -19,15 +20,31 @@ SystemPage {
     title: "CPU"
     subtitle: SystemSpecs.cpuModel || "--"
 
-    Gauge {
-        label: "Total"
-        fraction: SystemStats.cpu
-        value: SystemStats.cpuHistory.length > 0 ? Format.pct(SystemStats.cpu) : "--"
-        critical: SystemStats.cpu >= 0.9
+    // the window, for the rows that open another page
+    readonly property var win: {
+        var p = page.parent
+        while (p && p.currentPage === undefined) p = p.parent
+        return p
+    }
+    function go(id) { if (win) win.select(id) }
+
+    FlyoutHeading { text: "NOW" }
+
+    // the total large, the clocks and the heat beside it, and its minute
+    HeadCard {
+        glyph: "󰻠"
+        glyphColor: SystemStats.cpu >= 0.9 ? Theme.alert : Theme.textStrong
+        title: SystemStats.cpuHistory.length > 0 ? Format.pct(SystemStats.cpu) + " busy" : "--"
+        lines: [
+            SystemStats.cpuMhz > 0 ? (SystemStats.cpuMhz / 1000).toFixed(2) + " GHz average, "
+                + (SystemStats.cpuMhzPeak / 1000).toFixed(2) + " GHz peak" : "",
+            (SystemStats.tempC >= 0 ? Math.round(SystemStats.tempC) + "°C" : "")
+                + (PpdProfile.profile !== "" ? (SystemStats.tempC >= 0 ? " · " : "") + PpdProfile.profile + " profile" : ""),
+        ]
     }
 
     Spark {
-        series: [{ values: SystemStats.cpuHistory, color: Theme.text, fill: true }]
+        series: [{ values: SystemStats.cpuHistory, color: Theme.accent, fill: true }]
         ceiling: 1
         caption: "60s · peak " + (SystemStats.cpuHistory.length > 0
             ? Format.pct(Math.max.apply(null, SystemStats.cpuHistory)) : "--")
@@ -64,7 +81,7 @@ SystemPage {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.fs(34)
-                    text: "#" + index
+                    text: index
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
@@ -117,9 +134,12 @@ SystemPage {
     FlyoutHeading { text: "SCHEDULING" }
 
     InfoRow {
-        label: "Load average"
+        label: "Load (1, 5, 15 min)"
+        // and what that is per thread, which is the figure that means
+        // something: past 1.00, work is queueing
         value: SystemStats.load1.toFixed(2) + "  ·  " + SystemStats.load5.toFixed(2)
-            + "  ·  " + SystemStats.load15.toFixed(2) + "   (1 · 5 · 15 min)"
+            + "  ·  " + SystemStats.load15.toFixed(2)
+            + (SystemStats.cores.length > 0 ? ",  " + (SystemStats.load1 / SystemStats.cores.length).toFixed(2) + " a thread" : "")
         valueColor: SystemStats.cores.length > 0 && SystemStats.load1 > SystemStats.cores.length
             ? Theme.alert : undefined
     }
@@ -133,9 +153,12 @@ SystemPage {
         label: "Energy preference"
         value: SystemStats.epp
     }
-    InfoRow {
+    // the one thing here that can be changed, where it's changed
+    FlyoutRow {
         label: "Power profile"
-        value: PpdProfile.profile !== "" ? PpdProfile.profile : "not available"
+        note: PpdProfile.profile !== "" ? PpdProfile.profile : "not available"
+        trailing: "Settings  󰅂"
+        onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
     }
     InfoRow { label: "Scaling driver"; value: SystemSpecs.cpuDriver || "--" }
 
@@ -144,37 +167,41 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "SILICON" }
 
-    InfoRow { label: "Model";  value: SystemSpecs.cpuModel || "--" }
-    InfoRow { label: "Vendor"; value: SystemSpecs.cpuVendor || "--" }
-    InfoRow {
-        label: "Topology"
-        value: SystemSpecs.cpuCores > 0
-            ? SystemSpecs.cpuCores + " cores  ·  " + SystemSpecs.cpuThreads + " threads"
-            : SystemStats.cores.length + " threads"
-    }
-    InfoRow {
-        label: "Clock range"
-        value: SystemSpecs.cpuMaxMhz > 0
-            ? (SystemSpecs.cpuMinMhz / 1000).toFixed(2) + " – "
-              + (SystemSpecs.cpuMaxMhz / 1000).toFixed(2) + " GHz" : "--"
-    }
-    InfoRow {
-        label: "Clock now"
-        value: SystemStats.cpuMhz > 0
-            ? (SystemStats.cpuMhz / 1000).toFixed(2) + " GHz avg  ·  "
-              + (SystemStats.cpuMhzPeak / 1000).toFixed(2) + " GHz peak" : "--"
-    }
-    InfoRow { label: "Cache"; value: SystemSpecs.cpuCache || "--" }
-    InfoRow {
-        label: "Package temp"
-        value: SystemStats.tempC >= 0 ? Math.round(SystemStats.tempC) + "°C" : "no sensor"
-        valueColor: SystemStats.tempC >= 90 ? Theme.alert : undefined
+    // two columns, as the Overview's facts; the model is the page's
+    // subtitle, and the clocks and heat are in the card
+    Grid {
+        id: silicon
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        InfoRow { width: silicon.cell; label: "Vendor"; value: SystemSpecs.cpuVendor || "--" }
+        InfoRow {
+            width: silicon.cell
+            label: "Topology"
+            value: SystemSpecs.cpuCores > 0
+                ? SystemSpecs.cpuCores + " cores · " + SystemSpecs.cpuThreads + " threads"
+                : SystemStats.cores.length + " threads"
+        }
+        InfoRow {
+            width: silicon.cell
+            label: "Clock range"
+            value: SystemSpecs.cpuMaxMhz > 0
+                ? (SystemSpecs.cpuMinMhz / 1000).toFixed(2) + " – "
+                  + (SystemSpecs.cpuMaxMhz / 1000).toFixed(2) + " GHz" : "--"
+        }
+        InfoRow { width: silicon.cell; label: "Cache"; value: SystemSpecs.cpuCache || "--" }
     }
 
     // --- heaviest -----------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "HEAVIEST PROCESSES" }
+    ProcessTable { heading: "HEAVIEST PROCESSES"; reserveRows: 5; machineShare: true }
 
-    ProcessTable { reserveRows: 5 }
+    FlyoutRow {
+        label: "All processes"
+        trailing: "󰅂"
+        onActivated: page.go("processes")
+    }
 }

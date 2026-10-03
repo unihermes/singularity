@@ -322,6 +322,14 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   LOOK AT (problems, worst first, each with its fix) and PASSING, each
   heading carrying its count and left out when empty. A fix that deletes
   or switches something off (clean, disable) asks first.
+- **Head cards:** a System page that has one answer opens on it in a
+  `HeadCard` (glyph, the answer large, a line or two, the page's actions
+  at its end), under a NOW or STATUS heading.
+- **CPU:** the card (how busy, average and peak clock, temperature and
+  profile) over the minute's graph; threads as levels two across; Load
+  with its per-thread figure; Power profile a row into Settings; the
+  silicon facts two across; heaviest processes as a share of the machine
+  with All processes under them.
 
 ## Headings
 
