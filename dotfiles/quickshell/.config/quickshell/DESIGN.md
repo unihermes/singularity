@@ -349,6 +349,11 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   right now and the pack two across, the pack's wear as its own level;
   the profile segments with their one-line point; Idle and lid into
   Settings, Suspend asking first.
+- **Hardware:** the card (the machine's name, CPU and RAM, GPU, Copy specs
+  on it) over the identity two across; displays and the audio output as
+  rows into their Settings pages; the ten hottest sensors as levels two
+  across, then Show all N; fans and input devices as rows (inputs named as
+  Hyprland matches them); tools as rows.
 
 ## Headings
 

@@ -24,54 +24,60 @@ SystemPage {
     title: "Hardware"
     subtitle: [SystemSpecs.board, SystemSpecs.chassis].filter(x => x).join("  ·  ")
 
+    readonly property var win: {
+        var p = page.parent
+        while (p && p.currentPage === undefined) p = p.parent
+        return p
+    }
+    function go(id) { if (win) win.select(id) }
+    function grid2(w, spacing) { return (w - spacing) / 2 }
+
     // --- identity -----------------------------------------------------------
 
-    Item {
-        readonly property bool isSectionBreak: true
-        readonly property bool sectioned: true
-        width: parent.width
-        height: Math.max(Theme.controlSize, machineHeading.implicitHeight)
+    FlyoutHeading { text: "MACHINE" }
 
-        FlyoutHeading {
-            id: machineHeading
-            anchors.left: parent.left
-            anchors.right: copyBtn.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            text: "MACHINE"
-        }
+    // what it is in two lines, and the one action worth having here
+    HeadCard {
+        glyph: /laptop|notebook|portable/i.test(SystemSpecs.chassis) ? "󰌢" : "󰇄"
+        title: SystemSpecs.board || "This machine"
+        lines: [
+            [SystemSpecs.cpuModel, SystemStats.memTotalKb > 0 ? Format.kib(SystemStats.memTotalKb) + " RAM" : ""]
+                .filter(x => x).join(" · "),
+            SystemSpecs.gpuModel || "",
+        ]
 
         FlyoutChip {
-            id: copyBtn
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: machineHeading.lift
             text: SystemSpecs.copied ? "Copied" : "Copy specs"
-            selected: SystemSpecs.copied
+            icon: SystemSpecs.copied ? "󰄬" : "󰆏"
             onClicked: SystemSpecs.copySummary()
         }
     }
 
-    InfoRow { label: "Board";    value: SystemSpecs.board || "--" }
-    InfoRow { label: "Chassis";  value: SystemSpecs.chassis || "--" }
-    InfoRow {
-        label: "Firmware"
-        value: [SystemSpecs.biosVendor, SystemSpecs.biosVersion].filter(x => x).join(" ") || "--"
-    }
-    InfoRow {
-        visible: SystemSpecs.biosDate !== ""
-        label: "Firmware date"
-        value: SystemSpecs.biosDate
-    }
-    InfoRow { label: "CPU"; value: SystemSpecs.cpuModel || "--" }
-    InfoRow {
-        label: "Memory"
-        value: SystemStats.memTotalKb > 0 ? Format.kib(SystemStats.memTotalKb) : "--"
-    }
-    InfoRow {
-        label: "Buses"
-        value: SystemSpecs.pciCount < 0 ? "--"
-            : SystemSpecs.pciCount + " PCI devices  ·  " + SystemSpecs.usbCount + " USB devices"
+    Grid {
+        id: idGrid
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: page.grid2(width, columnSpacing)
+
+        InfoRow { width: idGrid.cell; label: "Chassis"; value: SystemSpecs.chassis || "--" }
+        InfoRow {
+            width: idGrid.cell
+            label: "Firmware"
+            value: [SystemSpecs.biosVendor, SystemSpecs.biosVersion].filter(x => x).join(" ") || "--"
+        }
+        InfoRow {
+            width: idGrid.cell
+            visible: SystemSpecs.biosDate !== ""
+            label: "Firmware date"
+            value: SystemSpecs.biosDate
+        }
+        InfoRow {
+            width: idGrid.cell
+            label: "Buses"
+            value: SystemSpecs.pciCount < 0 ? "--"
+                : SystemSpecs.pciCount + " PCI · " + SystemSpecs.usbCount + " USB"
+        }
     }
 
     // --- graphics -----------------------------------------------------------
@@ -79,39 +85,45 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "GRAPHICS" }
 
-    InfoRow { label: "GPU";    value: SystemSpecs.gpuModel || "--" }
-    InfoRow { label: "Driver"; value: SystemSpecs.gpuDriver || "--" }
-    InfoRow { label: "Mesa";   value: SystemSpecs.mesaVersion || "--" }
+    InfoRow { label: "GPU"; value: SystemSpecs.gpuModel || "--" }
+    Grid {
+        id: gpuGrid
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: page.grid2(width, columnSpacing)
 
+        InfoRow { width: gpuGrid.cell; label: "Driver"; value: SystemSpecs.gpuDriver || "--" }
+        InfoRow { width: gpuGrid.cell; label: "Mesa"; value: SystemSpecs.mesaVersion || "--" }
+    }
+
+    // each display a row, into Settings › Display
     Repeater {
         model: SystemSpecs.monitors
 
-        Column {
+        FlyoutRow {
             required property var modelData
-            width: parent.width
-            spacing: 0
-
-            InfoRow {
-                label: SystemSpecs.monitors.length > 1 ? "Display " + modelData.name : "Display"
-                value: modelData.width + " × " + modelData.height + " @ " + modelData.hz + " Hz"
-                    + (modelData.scale && modelData.scale !== 1
-                        ? "  ·  ×" + Number(modelData.scale).toFixed(2) : "")
-            }
-            InfoRow {
-                visible: modelData.description !== ""
-                label: "  " + modelData.name
-                value: modelData.description
-            }
+            leadingIcon: "󰍹"
+            label: modelData.description || modelData.name
+            note: modelData.name
+            trailing: modelData.width + "×" + modelData.height + " @ " + modelData.hz + " Hz"
+                + (modelData.scale && modelData.scale !== 1 ? " · ×" + Number(modelData.scale).toFixed(2) : "")
+                + "  󰅂"
+            onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "display"])
         }
     }
-    InfoRow { visible: SystemSpecs.monitors.length === 0; label: "Display"; value: "--" }
+    FlyoutRow { visible: SystemSpecs.monitors.length === 0; enabled: false; label: "No displays reported" }
 
     // --- sensors ------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "SENSORS" }
 
-    // two columns, hottest first down the left, as the CPU page's threads
+    // the hottest ten, two columns, hottest first down the left; the rest
+    // behind Show all, as the long lists in Settings
+    property bool allSensors: false
+    readonly property var shownSensors: allSensors ? SystemStats.sensors : SystemStats.sensors.slice(0, 10)
+
     Grid {
         id: sensorGrid
         width: parent.width
@@ -119,14 +131,14 @@ SystemPage {
         columnSpacing: Theme.spaceXl
         rowSpacing: Theme.spaceM
         flow: Grid.TopToBottom
-        rows: Math.ceil(SystemStats.sensors.length / 2)
+        rows: Math.ceil(page.shownSensors.length / 2)
 
         Repeater {
-            model: SystemStats.sensors
+            model: page.shownSensors
 
             BarRow {
                 required property var modelData
-                width: (sensorGrid.width - sensorGrid.columnSpacing) / 2
+                width: page.grid2(sensorGrid.width, sensorGrid.columnSpacing)
                 label: modelData.label
                 sublabel: modelData.chip
                 value: Math.round(modelData.c) + "°C"
@@ -138,6 +150,13 @@ SystemPage {
         }
     }
 
+    FlyoutRow {
+        visible: SystemStats.sensors.length > 10
+        label: page.allSensors ? "Show fewer" : "Show all " + SystemStats.sensors.length
+        trailing: page.allSensors ? "󰅀" : (SystemStats.sensors.length - 10) + " more  󰅂"
+        onActivated: page.allSensors = !page.allSensors
+    }
+
     SettingsNote {
         visible: SystemStats.sensors.length === 0
         text: "No hwmon temperature nodes are readable"
@@ -146,10 +165,14 @@ SystemPage {
     Repeater {
         model: SystemStats.fans
 
-        InfoRow {
+        FlyoutRow {
             required property var modelData
-            label: modelData.label + "  (" + modelData.chip + ")"
-            value: modelData.rpm > 0 ? Math.round(modelData.rpm) + " rpm" : "stopped"
+            enabled: false
+            leadingIcon: "󰈐"
+            label: modelData.label
+            note: modelData.chip
+            trailing: modelData.rpm > 0 ? Math.round(modelData.rpm) + " rpm" : "stopped"
+            trailingIsValue: true
         }
     }
 
@@ -158,13 +181,12 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "AUDIO" }
 
-    InfoRow {
-        label: "Output"
-        value: Audio.ready && Audio.sink.description ? Audio.sink.description : "--"
-    }
-    InfoRow {
-        label: "Volume"
-        value: Audio.ready ? Audio.percent + "%" + (Audio.muted ? "  ·  muted" : "") : "--"
+    FlyoutRow {
+        leadingIcon: Audio.ready && Audio.muted ? "󰝟" : "󰕾"
+        label: Audio.ready && Audio.sink.description ? Audio.sink.description : "No output"
+        note: Audio.ready ? Audio.percent + "%" + (Audio.muted ? " · muted" : "") : ""
+        trailing: "Settings  󰅂"
+        onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "audio"])
     }
 
     // --- input --------------------------------------------------------------
@@ -172,47 +194,54 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "INPUT" }
 
+    SettingsNote { text: "Named as Hyprland matches them, for device rules" }
+
     Repeater {
         model: SystemSpecs.inputs
 
-        InfoRow {
+        FlyoutRow {
             required property var modelData
-            label: modelData.kind
-            value: modelData.name + (modelData.detail ? "  ·  " + modelData.detail : "")
+            enabled: false
+            leadingIcon: ({ Keyboard: "󰌌", Pointer: "󰍽", Touch: "󰆽", Tablet: "󰓷" })[modelData.kind] || "󰌌"
+            label: modelData.name
+            note: modelData.kind.toLowerCase() + (modelData.detail ? " · " + modelData.detail : "")
         }
     }
-    InfoRow { visible: SystemSpecs.inputs.length === 0; label: "Devices"; value: "--" }
+    FlyoutRow { visible: SystemSpecs.inputs.length === 0; enabled: false; label: "No input devices reported" }
 
     // --- tools --------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "TOOLS" }
 
-    Flow {
-        width: parent.width
-        spacing: Theme.spaceM
-
-        FlyoutChip {
-            text: "PCI devices"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lspci -k; read -r _"])
-        }
-        FlyoutChip {
-            text: "USB devices"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lsusb -t; lsusb; read -r _"])
-        }
-        FlyoutChip {
-            text: "Loaded modules"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lsmod | less"])
-        }
-        FlyoutChip {
-            text: "Kernel messages"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "journalctl -k -b -e"])
-        }
-        FlyoutChip {
-            text: "Hyprland devices"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "hyprctl devices; read -r _"])
-        }
+    FlyoutRow {
+        leadingIcon: "󰘚"
+        label: "PCI devices"
+        note: "lspci -k: each card and the driver it uses"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lspci -k; read -r _"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰗮"
+        label: "USB devices"
+        note: "What's plugged in, as a tree"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lsusb -t; lsusb; read -r _"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰏗"
+        label: "Loaded modules"
+        note: "lsmod: the kernel's drivers in use"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lsmod | less"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰈙"
+        label: "Kernel messages"
+        note: "This boot's kernel log"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "journalctl -k -b -e"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰌌"
+        label: "Hyprland devices"
+        note: "hyprctl devices, with every name in full"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "hyprctl devices; read -r _"])
     }
 }
