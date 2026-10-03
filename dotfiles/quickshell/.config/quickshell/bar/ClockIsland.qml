@@ -5,7 +5,8 @@
 // something changes it shows that instead of the time, then eases back.
 //
 //   volume / brightness  a level meter
-//   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock)
+//   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock),
+//   the lid              or the lid just closed or opened
 //
 // While a timer runs (services/Timers.qml) it shows that and the clock in
 // place of the time, sized to them, with the timer's progress as the fill.
@@ -101,7 +102,10 @@ BarModule {
     onMiddleClicked: Timers.togglePause()
 
     function show(kind, icon, text, fill, ms) {
-        if (!ready || !Settings.clockIsland || !root.visible) return
+        // the startup guard is for levels only: a mode is always a real key
+        // or lid event, and the lid's can land on a bar that has only just
+        // opened, with a display that came or went
+        if ((!ready && kind !== "mode") || !Settings.clockIsland || !root.visible) return
         root.kind = kind
         root.evIcon = icon
         root.evText = text
