@@ -11,6 +11,7 @@ import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
 import "../../flyouts"
+import "../../settings"
 // the page's own building blocks next door; QML needs the directory named
 import "../system"
 
@@ -22,55 +23,6 @@ SystemPage {
         : SystemStats.connType + " via " + SystemStats.iface
           + (Network.ssid !== "" && SystemStats.connType === "Wi-Fi" ? "  ·  " + Network.ssid : "")
 
-    Spark {
-        readonly property real peak: Math.max(65536,
-            Math.max.apply(null, SystemStats.rxHistory.concat(SystemStats.txHistory, [0])))
-        series: [
-            { values: SystemStats.rxHistory, color: Theme.text, fill: true },
-            { values: SystemStats.txHistory, color: Theme.subtext, fill: false },
-        ]
-        ceiling: peak * 1.15
-        caption: "↓ ↑ · peak " + Format.rate(peak)
-    }
-
-    InfoRow { label: "Download"; value: "↓ " + Format.rate(SystemStats.rxRate) }
-    InfoRow { label: "Upload";   value: "↑ " + Format.rate(SystemStats.txRate) }
-    InfoRow {
-        label: "Since link up"
-        value: SystemStats.rxTotal > 0
-            ? "↓ " + Format.bytes(SystemStats.rxTotal) + "   ↑ " + Format.bytes(SystemStats.txTotal)
-            : "--"
-    }
-
-    // --- the connection -----------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "CONNECTION" }
-
-    InfoRow {
-        label: "Interface"
-        value: SystemStats.iface !== "" ? SystemStats.iface : "offline"
-        valueColor: SystemStats.iface === "" ? Theme.alert : undefined
-    }
-    InfoRow { label: "Type"; value: SystemStats.connType || "--" }
-    InfoRow {
-        visible: SystemStats.connType === "Wi-Fi"
-        label: "Network"
-        value: Network.ssid !== "" ? Network.ssid : "--"
-    }
-    InfoRow {
-        visible: SystemStats.connType === "Wi-Fi"
-        label: "Signal"
-        // dBm, and what it means: -50 is next to the router, -70 is the far
-        // side of the flat, below -80 is where throughput collapses
-        value: SystemStats.signalDbm < 1000
-            ? SystemStats.signalDbm + " dBm  ·  " + page.signalWord(SystemStats.signalDbm) : "--"
-        valueColor: SystemStats.signalDbm < 1000 && SystemStats.signalDbm <= -80 ? Theme.alert : undefined
-    }
-    InfoRow { label: "IPv4 address"; value: SystemStats.ipAddr || "--" }
-    InfoRow { label: "Gateway";      value: SystemStats.gateway || "--" }
-    InfoRow { label: "Resolvers";    value: SystemStats.dns || "--" }
-
     function signalWord(dbm) {
         if (dbm >= -50) return "excellent"
         if (dbm >= -60) return "good"
@@ -78,11 +30,83 @@ SystemPage {
         if (dbm >= -80) return "weak"
         return "very weak"
     }
+    readonly property bool wifi: SystemStats.connType === "Wi-Fi"
+
+    FlyoutHeading { text: "NOW" }
+
+    // the link in use: its name, how fast it's moving, how good the signal
+    // is, and the way to change it
+    HeadCard {
+        glyph: SystemStats.iface === "" ? "󰖪" : page.wifi ? "󰖩" : "󰈀"
+        glyphColor: SystemStats.iface === "" ? Theme.muted : Theme.textStrong
+        title: SystemStats.iface === "" ? "Offline"
+            : page.wifi && Network.ssid !== "" ? Network.ssid : SystemStats.connType + " · " + SystemStats.iface
+        lines: SystemStats.iface === "" ? ["No default route"] : [
+            "↓ " + Format.rate(Math.max(0, SystemStats.rxRate)) + "   ↑ " + Format.rate(Math.max(0, SystemStats.txRate))
+                + (page.wifi && SystemStats.signalDbm < 1000
+                    ? "  ·  signal " + page.signalWord(SystemStats.signalDbm) + " (" + SystemStats.signalDbm + " dBm)" : ""),
+            SystemStats.rxTotal > 0 ? "Since the link came up ↓ " + Format.bytes(SystemStats.rxTotal)
+                + "  ↑ " + Format.bytes(SystemStats.txTotal) : "",
+        ]
+
+        FlyoutChip {
+            text: "Settings  󰅂"
+            onClicked: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "network"])
+        }
+    }
+
+    Spark {
+        readonly property real peak: Math.max(65536,
+            Math.max.apply(null, SystemStats.rxHistory.concat(SystemStats.txHistory, [0])))
+        series: [
+            { values: SystemStats.rxHistory, color: Theme.accent, fill: true },
+            { values: SystemStats.txHistory, color: Theme.subtext, fill: false },
+        ]
+        ceiling: peak * 1.15
+        caption: "60s · ↓ ↑ · peak " + Format.rate(peak)
+    }
+
+    // --- the connection -----------------------------------------------------
+
+    Item { width: 1; height: Theme.spaceS }
+    FlyoutHeading { text: "CONNECTION" }
+
+    Grid {
+        id: conn
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        InfoRow {
+            width: conn.cell
+            label: "Interface"
+            value: SystemStats.iface !== "" ? SystemStats.iface : "offline"
+            valueColor: SystemStats.iface === "" ? Theme.alert : undefined
+        }
+        InfoRow { width: conn.cell; label: "Type"; value: SystemStats.connType || "--" }
+        InfoRow { width: conn.cell; label: "IPv4 address"; value: SystemStats.ipAddr || "--" }
+        InfoRow { width: conn.cell; label: "Gateway"; value: SystemStats.gateway || "--" }
+        InfoRow { width: conn.cell; label: "Resolvers"; value: SystemStats.dns || "--" }
+        InfoRow {
+            width: conn.cell
+            visible: page.wifi
+            label: "Signal"
+            // dBm, and what it means: -50 is next to the router, -70 is the
+            // far side of the flat, below -80 is where throughput collapses
+            value: SystemStats.signalDbm < 1000 ? SystemStats.signalDbm + " dBm" : "--"
+            valueColor: SystemStats.signalDbm < 1000 && SystemStats.signalDbm <= -80 ? Theme.alert : undefined
+        }
+    }
 
     // --- every interface ----------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "INTERFACES" }
+
+    // one row each, the one carrying traffic ticked; a row opens to its
+    // addresses
+    property string openIface: ""
 
     Repeater {
         model: SystemStats.interfaces
@@ -90,94 +114,70 @@ SystemPage {
         Column {
             id: ifc
             required property var modelData
-            readonly property bool active: modelData.name === SystemStats.iface
-
+            readonly property bool open: page.openIface === modelData.name
             width: parent.width
-            spacing: 0
-            // each block is a card's worth of lines; the gap keeps two
-            // interfaces from reading as one
-            bottomPadding: Theme.spaceM
 
-            Item {
-                width: parent.width
-                height: Theme.chipHeight
-
-                Rectangle {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.indicatorWidth
-                    height: parent.height - 4
-                    radius: width / 2
-                    color: Theme.accent
-                    visible: ifc.active
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: ifc.active ? Theme.spaceM : 0
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.name
-                    color: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontBody
-                }
-
-                Text {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.state.toLowerCase()
-                    color: modelData.state === "UP" ? Theme.text : Theme.muted
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
-                }
+            FlyoutRow {
+                leadingIcon: ifc.modelData.name.startsWith("w") ? "󰖩"
+                    : ifc.modelData.name === "lo" ? "󰑓" : "󰈀"
+                label: ifc.modelData.name
+                note: ifc.modelData.ipv4 || ""
+                badge: ifc.modelData.name === SystemStats.iface ? "In use" : ""
+                highlighted: ifc.open
+                // the loopback has no carrier to report, and says "unknown"
+                trailing: (ifc.modelData.name === "lo" ? "loopback" : ifc.modelData.state.toLowerCase())
+                    + "  " + (ifc.open ? "󰅀" : "󰅂")
+                onActivated: page.openIface = ifc.open ? "" : ifc.modelData.name
             }
 
-            InfoRow { label: "IPv4"; value: modelData.ipv4 || "--" }
-            InfoRow { visible: modelData.ipv6 !== ""; label: "IPv6"; value: modelData.ipv6 }
-            InfoRow { visible: modelData.mac !== ""; label: "MAC"; value: modelData.mac }
-            InfoRow { label: "MTU"; value: modelData.mtu > 0 ? String(modelData.mtu) : "--" }
+            SettingsIndent {
+                visible: ifc.open
+
+                InfoRow { label: "IPv4"; value: ifc.modelData.ipv4 || "--" }
+                InfoRow { visible: ifc.modelData.ipv6 !== ""; label: "IPv6"; value: ifc.modelData.ipv6 }
+                InfoRow { visible: ifc.modelData.mac !== ""; label: "MAC"; value: ifc.modelData.mac }
+                InfoRow { label: "MTU"; value: ifc.modelData.mtu > 0 ? String(ifc.modelData.mtu) : "--" }
+            }
         }
     }
 
-    Text {
-        width: parent.width
+    FlyoutRow {
         visible: SystemStats.interfaces.length === 0
-        text: "No interfaces reported yet."
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontSmall
+        enabled: false
+        label: "No interfaces reported yet"
     }
 
     // --- tools --------------------------------------------------------------
 
+    Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "TOOLS" }
 
-    Flow {
-        width: parent.width
-        spacing: Theme.spaceM
-
-        FlyoutChip {
-            text: "Ping test"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "ping -c 10 1.1.1.1; read -r _"])
-        }
-        FlyoutChip {
-            text: "Trace route"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "command -v tracepath >/dev/null && tracepath 1.1.1.1 || ip route get 1.1.1.1; read -r _"])
-        }
-        FlyoutChip {
-            text: "Listening ports"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "ss -tulpn; read -r _"])
-        }
-        FlyoutChip {
-            text: "Routing table"
-            onClicked: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-                "ip route; echo; ip -6 route; read -r _"])
-        }
+    FlyoutRow {
+        leadingIcon: "󰓅"
+        label: "Ping test"
+        note: "Ten pings to 1.1.1.1: is the internet there, and how far"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "ping -c 10 1.1.1.1; read -r _"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰑪"
+        label: "Trace route"
+        note: "Each hop on the way to 1.1.1.1"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "command -v tracepath >/dev/null && tracepath 1.1.1.1 || ip route get 1.1.1.1; read -r _"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰒍"
+        label: "Listening ports"
+        note: "What on this machine accepts connections"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "ss -tulpn; read -r _"])
+    }
+    FlyoutRow {
+        leadingIcon: "󰛳"
+        label: "Routing table"
+        note: "Where each kind of traffic goes"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+            "ip route; echo; ip -6 route; read -r _"])
     }
 }

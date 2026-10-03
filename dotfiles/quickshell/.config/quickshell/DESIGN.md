@@ -340,6 +340,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   the minute; filesystems as levels with free and percent; disks as
   rows; Upkeep as on Software Update (Health's orphans and reclaimable
   space, Clean up asking with the size); tools as rows.
+- **Network:** the card (the network's name, rates, signal in words and
+  dBm, traffic since the link came up, Settings on it) over the minute;
+  the connection two across; each interface a row (In use badge, its
+  address as the note) opening to its addresses; tools as rows.
 
 ## Headings
 
