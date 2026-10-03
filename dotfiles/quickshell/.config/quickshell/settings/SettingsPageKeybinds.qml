@@ -23,8 +23,8 @@ SettingsPage {
         page: page
         // the scrolling pages' width: their scroll bar's gutter is left free
         width: parent.width - Theme.scrollGutter
-        // search, toolbar and status line, a spacing after each -- the rest
-        // is the list
-        bodyHeight: page.bodyHeight - searchHeight - Theme.rowHeightTall - Theme.headingHeight - Theme.spaceM * 3
+        // search and status line, a spacing after each -- the rest is the
+        // list (which gives up room to the lookup line and the ticked bar)
+        bodyHeight: page.bodyHeight - Theme.rowHeightTall - Theme.spaceM - Theme.headingHeight - Theme.spaceM * 2
     }
 }

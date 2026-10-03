@@ -276,6 +276,17 @@ Settings') are laid out the same way.
   touchpad's rows are grouped by `SettingsSubhead` (Clicking, Scrolling
   and typing) inside the one section, and every hint says what the
   current setting does.
+- **Keybinds:** one page, no tabs: your binds, then SUGGESTED (the
+  presets you don't have yet, by pack; Show added brings the rest). Each
+  bind is one line (keycaps, the description, the command quieter in the
+  rest of the line, a lock on the few that can't be edited) and opens in
+  place: the editor (Keys with Record, Does as Command or Lua, Description,
+  Options, Section, Delete asking first), or for a locked one what it runs,
+  why, and Open at line N. Lua actions are editable; one over several
+  lines is kept as written. Each group ends with Add a bind…, its section
+  chosen. Press keys beside the search looks a combo up by pressing it,
+  showing the bind on it or offering Add a bind on it. The search and the
+  lookup filter both lists; the ticked-presets bar sits under the list.
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

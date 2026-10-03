@@ -8,13 +8,15 @@
 // This is not a Lua interpreter. It tokenizes (so strings and comments can't
 // fool it), tracks block nesting, resolves top-level `local x = "literal"`
 // strings, and expands numeric for-loops so loop-generated binds still show
-// up. Only a bind in its simplest shape is offered for editing:
+// up. Only a bind in its simplest shapes is offered for editing:
 //
 //   hl.bind("KEYS" | ident .. " + KEYS", hl.dsp.exec_cmd("cmd" | ident) [, { opts }])
+//   hl.bind("KEYS" | ident .. " + KEYS", <a Lua action, any expression> [, { opts }])
 //
-// on lines of its own, outside any block. Everything else is listed read-only
-// with the reason, because rewriting an expression it only half understands
-// is how a config gets broken.
+// on lines of its own, outside any block. A Lua action is only ever kept as
+// written or replaced whole, never rewritten in part. Everything else is
+// listed read-only with the reason, because rewriting an expression it only
+// half understands is how a config gets broken.
 //
 // Categories come from marker comments, `-- --- Window Management ---`; a
 // section banner (`---- WINDOW RULES ----`) ends the current one.
@@ -447,7 +449,6 @@ function parse(src) {
         var reason = ""
         if (loops.length) reason = "Made by a loop"
         else if (call.frames.length) reason = "Inside other code"
-        else if (!isExec) reason = "Runs a Hyprland action rather than a command"
         else if (keysForm === "expr") reason = "Its keys are worked out in code"
         else if (cmdForm === "expr") reason = "Its command is worked out in code"
         else if (!ownLines) reason = "Shares its line with other code"
@@ -658,7 +659,9 @@ function editBind(model, row, fields) {
     var keysChanged = keys !== row.keys
     // for a command, compare the command rather than the source: unchanged
     // text keeps `exec_cmd(terminal)` as the ident it was written as
-    var cmdChanged = kind === "lua" ? oneLine(fields.src) !== row.cmdSrc
+    // a Lua action spread over lines reads the same on one: only a real
+    // change rewrites it
+    var cmdChanged = kind === "lua" ? oneLine(fields.src) !== oneLine(row.cmdSrc)
         : !row.isExec || fields.command !== row.command
     var newKeys = keysChanged ? keysSource(keys, row.keysIdent || model.prefixIdent, model.locals) : row.keysSrc
     var newCmd = cmdChanged ? actionSource(fields) : row.cmdSrc
