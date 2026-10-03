@@ -39,8 +39,6 @@ Singleton {
     property int pkgCount: -1
     property int aurCount: -1
     property int explicitCount: -1
-    property int orphanCount: -1
-    property string cacheSize: ""
     property string lastUpgrade: ""
 
     // --- cpu / gpu / board ------------------------------------------------
@@ -296,16 +294,13 @@ Singleton {
     }
 
     // pacman -Qm is exactly the AUR set: packages installed from outside the
-    // sync repos. That's what yay counts too, without needing yay. -Qtdq is
-    // the orphan set: dependencies nothing depends on any more.
+    // sync repos. That's what yay counts too, without needing yay.
     Process {
         id: pkgProc
         command: ["sh", "-c",
             "pacman -Qq | wc -l\n"
             + "pacman -Qqm | wc -l\n"
             + "pacman -Qqe | wc -l\n"
-            + "pacman -Qqtd 2>/dev/null | wc -l\n"
-            + "du -sh /var/cache/pacman/pkg 2>/dev/null | cut -f1\n"
             // the last full upgrade, from pacman's own log
             + "awk -F'[][]' '/starting full system upgrade/{t=$2} END{print t}' "
             + "/var/log/pacman.log 2>/dev/null"]
@@ -315,11 +310,9 @@ Singleton {
                 root.pkgCount = Number(f[0])
                 root.aurCount = Number(f[1])
                 root.explicitCount = Number(f[2])
-                root.orphanCount = Number(f[3])
-                root.cacheSize = (f[4] || "").trim()
                 // pacman logs "2026-09-14T09:12:33+0100"; the date alone is
                 // what anyone reads off this line
-                root.lastUpgrade = (f[5] || "").trim().split("T")[0]
+                root.lastUpgrade = (f[3] || "").trim().split("T")[0]
             }
         }
     }

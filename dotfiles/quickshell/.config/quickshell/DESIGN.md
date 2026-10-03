@@ -336,6 +336,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Processes:** the full table with CPU as a share of the machine and its
   level, totals two across, and the terminal tools as rows saying what
   each shows.
+- **Storage:** the card (free on /, how full, reading and writing) over
+  the minute; filesystems as levels with free and percent; disks as
+  rows; Upkeep as on Software Update (Health's orphans and reclaimable
+  space, Clean up asking with the size); tools as rows.
 
 ## Headings
 
