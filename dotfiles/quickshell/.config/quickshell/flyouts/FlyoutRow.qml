@@ -26,6 +26,8 @@ Item {
     property var trailingIcons: []
     // a glyph in a fixed cell before the label (a device's type)
     property string leadingIcon: ""
+    // an image in the same cell, for an app's own icon
+    property string leadingImage: ""
     // a quieter word straight after the label (a display's connector)
     property string note: ""
     // a word in an accent tag before the trailing text (Primary)
@@ -74,9 +76,19 @@ Item {
         visible: root.highlighted
     }
 
+    Image {
+        visible: root.leadingImage !== "" && root.leadingIcon === ""
+        anchors.centerIn: leadText
+        width: Theme.fontBody
+        height: width
+        sourceSize: Qt.size(width * 2, height * 2)
+        source: root.leadingImage
+        opacity: root.pulse
+    }
+
     Text {
         id: leadText
-        visible: root.leadingIcon !== ""
+        visible: root.leadingIcon !== "" || root.leadingImage !== ""
         anchors.left: parent.left
         anchors.leftMargin: root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter

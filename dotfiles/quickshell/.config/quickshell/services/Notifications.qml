@@ -15,7 +15,8 @@
 //
 // Anything that arrived since the history was last opened is unread, which
 // is the number the bar module shows. Do Not Disturb holds the popups back;
-// notifications still land in the history, unread.
+// notifications still land in the history, unread. An app silenced in
+// Settings is held the same way, on its own.
 
 pragma Singleton
 
@@ -241,7 +242,9 @@ Singleton {
             root.history = [entry].concat(rest).slice(0, root.maxEntries)
             const others = root.popups.filter(p => !old || p.key !== old.key)
             // critical ones (a battery about to die) still come through DND
-            const hold = root.dnd && n.urgency !== NotificationUrgency.Critical
+            // and an app's silencing
+            const hold = (root.dnd || Settings.notifSilent.indexOf(n.appName) >= 0)
+                && n.urgency !== NotificationUrgency.Critical
             root.popups = hold || n.lastGeneration ? others : [entry].concat(others)
             root.now = time
             if (root.viewing) root.lastSeen = time

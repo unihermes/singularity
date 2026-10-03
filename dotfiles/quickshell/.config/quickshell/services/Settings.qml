@@ -318,6 +318,14 @@ Singleton {
         if (["notifTimeout", "notifTimeoutLow", "notifTimeoutCritical"].indexOf(key) >= 0)
             adapter[key] = Math.max(0, Math.min(60, Math.round(s)))
     }
+    // Apps whose popups are held (by app name): their notifications go
+    // straight to the history, except critical ones
+    readonly property alias notifSilent: adapter.notifSilent
+    function setNotifSilent(app, on) {
+        var l = adapter.notifSilent.filter(x => x !== app)
+        if (on) l.push(app)
+        adapter.notifSilent = l
+    }
     function setNotifPosition(x, y) {
         if (["left", "center", "right"].indexOf(x) >= 0) adapter.notifPositionX = x
         if (["top", "bottom"].indexOf(y) >= 0) adapter.notifPositionY = y
@@ -847,6 +855,7 @@ Singleton {
             property int notifQuietFrom: 1320
             property int notifQuietTo: 420
             property bool notifDndBySchedule: false
+            property var notifSilent: []
             property int notifTimeout: 8
             property int notifTimeoutLow: 4
             property int notifTimeoutCritical: 16

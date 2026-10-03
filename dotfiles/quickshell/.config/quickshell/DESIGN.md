@@ -196,6 +196,16 @@ Settings') are laid out the same way.
   (100–200% segments, the hint saying what it looks like) and Rotation.
   An off display opens to one Status line. Every change writes a rule for
   that display alone, so nothing on the page names hl.monitor() rules.
+- **Notifications:** a status card (the bell large, Notifications on or
+  Do Not Disturb, why and until when, the history's count, the switch),
+  with a History row under it (Open, and Clear all in two clicks). Then
+  Popups (the spot picker, Group by app, and Send a test on the heading),
+  How long popups stay as segments (4 s · 8 s · 16 s · 30 s · Never),
+  Quiet hours (the switch; on, a midnight-to-midnight strip with the
+  window filled and a marker at now, then Starts and Ends), and Apps:
+  each app in the history is a row that opens a Popups switch, and a
+  silent app's notifications go straight to the history (critical ones
+  still pop up).
 - **Power & Idle:** the profile segments carry their icons and the hint
   says what the chosen one does. The battery is a card (charge large, then
   state, time left, the Custom band and health) over a full-fill level chip

@@ -149,9 +149,9 @@ var entries = [
     { page: "display", section: "",  label: "Displays",     keywords: "monitor resolution refresh rate hz scale hidpi fractional rotation rotate transform portrait mode" },
 
     // --- Notifications -----------------------------------------------------
-    { page: "notifications", section: "Quick actions", label: "Do Not Disturb", keywords: "dnd silence mute" },
-    { page: "notifications", section: "Quick actions", label: "Clear all",      keywords: "dismiss history" },
-    { page: "notifications", section: "Quick actions", label: "Open the history", keywords: "panel centre center list" },
+    { page: "notifications", section: "", label: "Status",                      keywords: "dnd do not disturb silence mute" },
+    { page: "notifications", section: "Status", label: "History",               keywords: "clear all dismiss open panel centre center list" },
+    { page: "notifications", section: "", label: "Apps",                        keywords: "per-app silent silence mute app popups" },
     { page: "notifications", section: "Quiet hours", label: "Quiet hours",     keywords: "schedule dnd do not disturb night automatic time" },
     { page: "notifications", section: "Quiet hours", label: "Starts",          keywords: "quiet hours schedule dnd from begin time" },
     { page: "notifications", section: "Quiet hours", label: "Ends",            keywords: "quiet hours schedule dnd until finish time" },
