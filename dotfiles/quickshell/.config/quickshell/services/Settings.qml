@@ -92,6 +92,9 @@ Singleton {
     // over by AppearanceSync)
     readonly property alias focusedOpacity:   adapter.focusedOpacity
     readonly property alias unfocusedOpacity: adapter.unfocusedOpacity
+    // Alacritty's background opacity, in percent (handed over by
+    // AppearanceSync in the terminal's imported config)
+    readonly property alias terminalOpacity:  adapter.terminalOpacity
     // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
     readonly property alias workspaceStyle: adapter.workspaceStyle
     // "stamp", "time", "seconds", "day", "long" or "iso" -- what the clock chip shows
@@ -501,6 +504,7 @@ Singleton {
         edgeGap:   { min: 0,  max: 30 },
         focusedOpacity:   { min: 50, max: 100 },
         unfocusedOpacity: { min: 50, max: 100 },
+        terminalOpacity:  { min: 30, max: 100 },
         seeThrough: { min: 50, max: 100 },
         fontSize:  { min: 12, max: 22 },
         scrim:        { min: 0,  max: 80 },
@@ -812,6 +816,7 @@ Singleton {
             property int edgeGap: 0
             property int focusedOpacity: 100
             property int unfocusedOpacity: 100
+            property int terminalOpacity: 90
             property string workspaceStyle: "pills"
             property string clockStyle: "stamp"
             property string windowStyle: "icons"

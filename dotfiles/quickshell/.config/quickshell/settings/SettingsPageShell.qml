@@ -222,7 +222,9 @@ SettingsPage {
 
 
     readonly property real fontSize: Number(tomlValue("font.size", 11.25))
-    readonly property real opacityNow: Number(tomlValue("window.opacity", 1))
+    // Settings' rather than this file's, so looks and styles can set it;
+    // AppearanceSync writes it into the config alacritty.toml imports
+    readonly property real opacityNow: Settings.terminalOpacity / 100
     // the opacity while the level is being dragged, written on release
     property real opacityDragged: -1
     readonly property real opacityShown: opacityDragged >= 0 ? opacityDragged : opacityNow
@@ -345,6 +347,7 @@ SettingsPage {
     // 30% to solid, in steps of 5
     SettingsField {
         label: "Opacity"
+        lookKey: "terminalOpacity"
         hint: page.opacityShown >= 1 ? "Solid" : "The wallpaper shows through the background"
 
         Row {
@@ -359,7 +362,7 @@ SettingsPage {
                 onReleased: {
                     var v = page.opacityDragged
                     if (v >= 0 && Math.abs(v - page.opacityNow) > 0.001)
-                        page.setToml("window", "opacity", v, "Opacity " + Math.round(v * 100) + "%")
+                        Settings.set("terminalOpacity", v * 100)
                     page.opacityDragged = -1
                 }
             }

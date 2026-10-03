@@ -123,6 +123,7 @@ var entries = [
     { page: "appearance", section: "Windows",       label: "Gaps at screen edges", keywords: "gaps_out hyprland bar floating islands margin inset" },
     { page: "appearance", section: "Windows",       label: "Focused opacity",      keywords: "active_opacity transparency" },
     { page: "appearance", section: "Windows",       label: "Unfocused opacity",    keywords: "inactive_opacity transparency" },
+    { page: "appearance", section: "Windows",       label: "Terminal opacity",     keywords: "alacritty transparency background" },
     { page: "appearance", section: "Windows",       label: "Dim unfocused",        keywords: "dim_inactive" },
     { page: "appearance", section: "Windows",       label: "Blur",                 keywords: "hyprland decoration" },
     { page: "appearance", section: "Windows",       label: "Dim strength",         keywords: "dim_strength unfocused darken" },

@@ -27,10 +27,11 @@
 //   glass      grounds a further 30% see-through, with a light hairline
 //   square     every corner square, whatever Roundness says
 //   finish     what picking the style sets the Finish switches to
-//   windows    optional: Hyprland's window opacity, in percent, as
-//              { focusedOpacity, unfocusedOpacity }; left out, both 100.
-//              Picking the style sets them, and they stay adjustable on
-//              the Windows tab
+//   windows    optional: window opacity, in percent, as { focusedOpacity,
+//              unfocusedOpacity, terminalOpacity } -- Hyprland's focused
+//              and unfocused windows, and Alacritty's background; left out,
+//              windowDefaults'. Picking the style sets them, and they stay
+//              adjustable on the Windows tab
 
 .pragma library
 
@@ -104,11 +105,13 @@ var densityBar = { compact: { height: 28, gap: 2 }, normal: { height: 32, gap: 2
 
 function get(name) { return styles[name] || styles.channel }
 
-// the window opacity picking the style sets, with the opaque default filled in
+var windowDefaults = { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 }
+
+// the window opacity picking the style sets, with windowDefaults filled in
 function windows(name) {
-    var w = get(name).windows || {}
-    return { focusedOpacity: w.focusedOpacity !== undefined ? w.focusedOpacity : 100,
-             unfocusedOpacity: w.unfocusedOpacity !== undefined ? w.unfocusedOpacity : 100 }
+    var w = get(name).windows || {}, out = {}
+    for (var k in windowDefaults) out[k] = w[k] !== undefined ? w[k] : windowDefaults[k]
+    return out
 }
 
 // s: { style, radius, barStyle, density, seeThrough, shadows, heavyLines, flyoutAnim }

@@ -83,7 +83,8 @@ SettingsPage {
     // of changes; the same as its field's label, so "Show" can find it
     readonly property var keyLabels: ({
         style: "Style", radius: "Roundness", barStyle: "Bar shape", edgeGap: "Gaps at screen edges",
-        focusedOpacity: "Focused opacity", unfocusedOpacity: "Unfocused opacity", density: "Density",
+        focusedOpacity: "Focused opacity", unfocusedOpacity: "Unfocused opacity",
+        terminalOpacity: "Terminal opacity", density: "Density",
         seeThrough: "See-through", scrim: "Overlay dimming", barSeparator: "Separators",
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
         headingUpper: "Capital headings", headingRule: "Heading rule",
@@ -97,7 +98,7 @@ SettingsPage {
         accent: "Accent", levelColour: "Level colour",
     })
     readonly property var keyUnits: ({ radius: "px", edgeGap: "px", seeThrough: "%", scrim: "%",
-                                         focusedOpacity: "%", unfocusedOpacity: "%" })
+                                         focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%" })
     function valueText(k, v) {
         if (typeof v === "boolean") return v ? "on" : "off"
         if (typeof v === "number") return v + (keyUnits[k] || "")

@@ -6,7 +6,6 @@ import = ["~/.local/state/singularity/alacritty.toml"]
 
 [window]
 padding = { x = 12, y = 10 }
-opacity = 0.9
 decorations = "none"
 dynamic_padding = true
 
@@ -33,14 +32,16 @@ unfocused_hollow = true
 [scrolling]
 history = 10000
 
-# --- colours --------------------------------------------------------------
+# --- colours and opacity --------------------------------------------------
 # Written by the shell (quickshell/services/AppearanceSync.qml) from the active
 # look, so the terminal changes with it; alacritty watches imports and recolours
 # open windows live. The 16 ANSI slots are a lightness ramp in the look's own
 # tones rather than hues, so everything that colours its output -- ls, git diff,
-# compiler errors -- stays legible but monochrome. Anything set in this file
-# overrides the import, which is why there is no [colors] block here. Until the
-# shell has run once the file doesn't exist and alacritty uses its defaults.
+# compiler errors -- stays legible but monochrome. The background's opacity
+# comes from there too (Settings.terminalOpacity), so looks and styles can set
+# it. Anything set in this file overrides the import, which is why there is no
+# [colors] block or window.opacity here. Until the shell has run once the file
+# doesn't exist and alacritty uses its defaults.
 
 [[keyboard.bindings]]
 key = "Return"
