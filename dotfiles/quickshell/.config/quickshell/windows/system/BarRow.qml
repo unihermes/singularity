@@ -1,11 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/BarRow.qml
 //
-// A label and its figure on one line with a full-width meter under them --
-// for the things whose name is too long to share a line with a bar the way
-// Gauge does it: a filesystem's mount point and device, an interface, a
-// sensor. Gauge is still the right shape for the short fixed labels (CPU,
-// RAM, Swap); this is the one for everything with a name of its own.
+// A label and its figure on one line with a full-width meter under them,
+// for anything with a name of its own: a filesystem's mount point and
+// device, a sensor, the battery's capacity left.
 
 import QtQuick
 import "../../services"

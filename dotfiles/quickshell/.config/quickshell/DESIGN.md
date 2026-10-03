@@ -344,6 +344,11 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   dBm, traffic since the link came up, Settings on it) over the minute;
   the connection two across; each interface a row (In use badge, its
   address as the note) opening to its addresses; tools as rows.
+- **Power:** the card (charge and state, draw and time left, capacity
+  against new, Settings on it) over the charge as a full-width level;
+  right now and the pack two across, the pack's wear as its own level;
+  the profile segments with their one-line point; Idle and lid into
+  Settings, Suspend asking first.
 
 ## Headings
 
