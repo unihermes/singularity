@@ -25,26 +25,37 @@ SystemPage {
                                        : "  ·  no swap")
         : ""
 
-    Gauge {
-        label: "In use"
-        fraction: SystemStats.mem
-        value: Format.pct(SystemStats.mem)
-        critical: SystemStats.mem >= 0.9
+    // the window, for the row that opens Processes
+    readonly property var win: {
+        var p = page.parent
+        while (p && p.currentPage === undefined) p = p.parent
+        return p
     }
+    function go(id) { if (win) win.select(id) }
+    // the largest by memory, on the memory page
+    Component.onCompleted: SystemStats.procSort = "mem"
 
-    Gauge {
-        label: "Swap"
-        fraction: SystemStats.swap
-        available: SystemStats.swapTotalKb > 0
-        value: SystemStats.swapTotalKb > 0 ? Format.pct(SystemStats.swap) : "none"
-        // swap in use at all isn't a problem; swap mostly full is
-        critical: SystemStats.swapTotalKb > 0 && SystemStats.swap >= 0.8
+    FlyoutHeading { text: "NOW" }
+
+    // in use against what's installed, and what the kernel could hand out
+    HeadCard {
+        glyph: "󰘚"
+        glyphColor: SystemStats.mem >= 0.9 ? Theme.alert : Theme.textStrong
+        title: Format.kib(SystemStats.memUsedKb) + " in use"
+        lines: [
+            Format.pct(SystemStats.mem) + " of " + Format.kib(SystemStats.memTotalKb)
+                + " · " + Format.kib(SystemStats.memAvailKb) + " available",
+            SystemStats.swapTotalKb > 0
+                ? "Swap " + Format.kib(SystemStats.swapTotalKb - SystemStats.swapFreeKb) + " of "
+                  + Format.kib(SystemStats.swapTotalKb) + " used"
+                : "No swap",
+        ]
     }
 
     Spark {
-        series: [{ values: SystemStats.memHistory, color: Theme.text, fill: true }]
+        series: [{ values: SystemStats.memHistory, color: Theme.accent, fill: true }]
         ceiling: 1
-        caption: "RAM · 60s"
+        caption: "60s · RAM in use"
     }
 
     // --- breakdown ----------------------------------------------------------
@@ -98,56 +109,72 @@ SystemPage {
         font.pixelSize: Theme.fontSmall
     }
 
-    InfoRow {
-        label: "Applications"
-        value: Format.kib(SystemStats.memUsedKb) + "   " + Format.pct(SystemStats.mem)
-    }
-    InfoRow {
-        label: "Available"
-        value: Format.kib(SystemStats.memAvailKb)
-            + "   " + Format.pct(SystemStats.memTotalKb > 0 ? SystemStats.memAvailKb / SystemStats.memTotalKb : 0)
-    }
-    InfoRow { label: "Page cache";  value: Format.kib(SystemStats.cachedKb) }
-    InfoRow { label: "Buffers";     value: Format.kib(SystemStats.buffersKb) }
-    InfoRow { label: "Shared (tmpfs)"; value: Format.kib(SystemStats.shmemKb) }
-    InfoRow { label: "Kernel slab"; value: Format.kib(SystemStats.slabKb) }
-    InfoRow {
-        label: "Truly free"
-        value: Format.kib(SystemStats.memFreeKb)
+    // two across, so the breakdown reads beside the strip it explains
+    Grid {
+        id: parts
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        InfoRow {
+            width: parts.cell
+            label: "Applications"
+            value: Format.kib(SystemStats.memUsedKb) + "  " + Format.pct(SystemStats.mem)
+        }
+        InfoRow {
+            width: parts.cell
+            label: "Available"
+            value: Format.kib(SystemStats.memAvailKb) + "  "
+                + Format.pct(SystemStats.memTotalKb > 0 ? SystemStats.memAvailKb / SystemStats.memTotalKb : 0)
+        }
+        InfoRow { width: parts.cell; label: "Page cache"; value: Format.kib(SystemStats.cachedKb) }
+        InfoRow { width: parts.cell; label: "Buffers"; value: Format.kib(SystemStats.buffersKb) }
+        InfoRow { width: parts.cell; label: "Shared (tmpfs)"; value: Format.kib(SystemStats.shmemKb) }
+        InfoRow { width: parts.cell; label: "Kernel slab"; value: Format.kib(SystemStats.slabKb) }
+        InfoRow { width: parts.cell; label: "Truly free"; value: Format.kib(SystemStats.memFreeKb) }
     }
 
-    // --- writeback ----------------------------------------------------------
+    // --- swap and writeback ---------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "WRITEBACK" }
+    FlyoutHeading { text: "SWAP AND WRITEBACK" }
 
-    SettingsNote { text: "Changed in memory, not yet written to disk" }
+    Grid {
+        id: more
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
 
-    InfoRow { label: "Dirty";      value: Format.kib(SystemStats.dirtyKb) }
-    InfoRow { label: "In flight";  value: Format.kib(SystemStats.writebackKb) }
-
-    // --- swap ---------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "SWAP" }
-
-    InfoRow {
-        label: "Total"
-        value: SystemStats.swapTotalKb > 0 ? Format.kib(SystemStats.swapTotalKb) : "none configured"
+        InfoRow {
+            width: more.cell
+            label: "Swap"
+            value: SystemStats.swapTotalKb > 0
+                ? Format.kib(SystemStats.swapTotalKb - SystemStats.swapFreeKb) + " of " + Format.kib(SystemStats.swapTotalKb)
+                : "none configured"
+            // swap in use at all isn't a problem; swap mostly full is
+            valueColor: SystemStats.swapTotalKb > 0 && SystemStats.swap >= 0.8 ? Theme.alert : undefined
+        }
+        InfoRow {
+            width: more.cell
+            label: "Swap free"
+            value: SystemStats.swapTotalKb > 0 ? Format.kib(SystemStats.swapFreeKb) : "--"
+        }
+        // changed in memory, not yet on disk
+        InfoRow { width: more.cell; label: "Dirty"; value: Format.kib(SystemStats.dirtyKb) }
+        InfoRow { width: more.cell; label: "Writing now"; value: Format.kib(SystemStats.writebackKb) }
     }
-    InfoRow {
-        visible: SystemStats.swapTotalKb > 0
-        label: "Used"
-        value: Format.kib(SystemStats.swapTotalKb - SystemStats.swapFreeKb)
-    }
-    InfoRow {
-        visible: SystemStats.swapTotalKb > 0
-        label: "Free"
-        value: Format.kib(SystemStats.swapFreeKb)
-    }
+    SettingsNote { text: "Dirty: changed in memory, not yet written to disk" }
 
     // --- heaviest -----------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    ProcessTable { heading: "LARGEST PROCESSES"; reserveRows: 5; showSort: true }
+    ProcessTable { heading: "LARGEST PROCESSES"; reserveRows: 5; showSort: true; machineShare: true }
+
+    FlyoutRow {
+        label: "All processes"
+        trailing: "󰅂"
+        onActivated: page.go("processes")
+    }
 }

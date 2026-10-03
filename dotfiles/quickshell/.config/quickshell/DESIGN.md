@@ -330,6 +330,9 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   with its per-thread figure; Power profile a row into Settings; the
   silicon facts two across; heaviest processes as a share of the machine
   with All processes under them.
+- **Memory:** the card (in use, of what, available, swap) over the
+  minute; the stacked strip with its parts two across under it; swap and
+  writeback two across; the largest processes sorted by memory.
 
 ## Headings
 
