@@ -1045,13 +1045,24 @@ do
     end
 end
 
--- The global layout mode, toggled by SUPER+M. In memory only: nothing
--- outside this file reads it, and it resets to monocle on a reload.
+-- The global layout mode, toggled by SUPER+M. Kept in a runtime file so a
+-- reload (which the Appearance page does for most of its settings) doesn't
+-- drop a tiled session back into monocle with its windows still tiled --
+-- they'd sit under every monocle floater and ALT+Tab couldn't raise them.
+-- Back to monocle at login.
 --
 -- The rest of monocle is hooks, run in-process on Hyprland's event thread so
 -- no other event can land mid-way: window.open sizes each new window,
 -- window.active (maximizeFocused) keeps whatever you land on full and on top.
+local LAYOUT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-layout"
 local monocleEnabled = true
+do
+    local f = io.open(LAYOUT_FILE)
+    if f then
+        monocleEnabled = f:read("l") ~= "dwindle"
+        f:close()
+    end
+end
 
 -- Workspaces pinned to one layout whatever SUPER+M says, from
 -- ~/.config/singularity/workspace-layouts.json -- { "1": "monocle",
@@ -1865,6 +1876,11 @@ hl.on("workspace.active", function() applyLayoutRules() end)
 -- says so. Global so the SUPER+M bind can reach it.
 function toggleLayout()
     monocleEnabled = not monocleEnabled
+    local f = io.open(LAYOUT_FILE, "w")
+    if f then
+        f:write(monocleEnabled and "monocle\n" or "dwindle\n")
+        f:close()
+    end
 
     local ws = hl.get_active_workspace()
     local pin = ws and workspaceLayouts[tostring(ws.id)]
