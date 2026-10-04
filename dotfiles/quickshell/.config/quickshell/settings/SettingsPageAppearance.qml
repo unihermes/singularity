@@ -23,8 +23,8 @@
 // Two stores behind it. The shell's own look is Settings.qml, the same
 // values the Control Centre edits, so the two always agree and a change
 // here applies the moment it's made. The Windows tab is the `general` and
-// `decoration` tables in hyprland.lua, written as the Input page writes
-// `input`: through HyprLuaWrite, then a reload.
+// `decoration` tables in hyprland.lua; its changes go to the state
+// directory's hyprland.json, as the Input page's do, then a reload.
 //
 // Each tab is its own file in appearance/, as are the pieces they share;
 // this file keeps what they all reach through `page`.
@@ -137,6 +137,8 @@ SettingsPage {
     readonly property bool blurOn: hyprField(["decoration", "blur"], "enabled").value === true
 
     function hyprField(path, key) {
+        var o = HyprLuaWrite.override(path, key)
+        if (o !== undefined) return { editable: true, value: o }
         var t = conf[path.join(".")]
         if (!t) return { editable: false, value: hyprDefaults[path.join(".") + "." + key] }
         var f = t[key]
@@ -154,12 +156,7 @@ SettingsPage {
     }
 
     function setHypr(path, key, v, message) {
-        HyprLuaWrite.patch(src => HyprTables.setConfig(src, path, key, v), message,
-            path.join(".") + "." + key + " isn't a plain value in hyprland.lua, edit it by hand",
-            (ok, msg) => {
-                page.say(msg, !ok)
-                page.reread()
-            })
+        HyprLuaWrite.setLocal([[path, key, v]], message, (ok, msg) => page.say(msg, !ok))
     }
 
     Component.onCompleted: {

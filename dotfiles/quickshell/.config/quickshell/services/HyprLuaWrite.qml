@@ -1,10 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/HyprLuaWrite.qml
 //
-// The one write path into hyprland.lua, shared by the Keybinds editor and the
-// Settings window's Input and Appearance pages, and into monitors.lua, the
-// Display page's hl.monitor() rules. Those are per machine, so they live in
-// the state directory, and hyprland.lua runs the file with dofile.
+// The one write path into hyprland.lua, used by the Keybinds editor, and into
+// the per-machine files hyprland.lua loads from the state directory:
+// monitors.lua, the Display page's hl.monitor() rules, and hyprland.json,
+// the hl.config tables the Input and Appearance pages change. Those two stay
+// out of the repo; binds are meant to be committed.
 //
 // A singleton, so there is exactly one of it however many of those are open:
 // as a per-page instance, each kept its own queue, and the standalone Keybinds
@@ -18,13 +19,12 @@
 // `hyprctl configerrors`, so a value Hyprland rejects is reported rather than
 // silently doing nothing. Undo puts the backup back.
 //
-// Two ways in. write() takes a whole new file and leaves the staleness
-// check to the caller (Keybinds, whose edits are offsets into the text it
-// parsed). patch() takes a function of the current text instead -- for the
-// Settings pages, which set one field by name and so can always be applied
-// to whatever is on disk at the moment the write runs.
+// write() takes a whole new hyprland.lua and leaves the staleness check to
+// the caller (Keybinds, whose edits are offsets into the text it parsed).
+// setLocal() sets fields by name in hyprland.json as it is on disk when the
+// write runs, then reloads the same way.
 //
-// Both report through a callback rather than a signal: with one shared
+// Each reports through a callback rather than a signal: with one shared
 // instance, a signal would hand every open page every other page's result.
 
 pragma Singleton
@@ -40,6 +40,10 @@ Singleton {
     readonly property string confPath: home + "/.config/hypr/hyprland.lua"
     readonly property string backupPath: Settings.stateDir + "/hyprland.lua.bak"
     readonly property string monitorsPath: Settings.stateDir + "/monitors.lua"
+    readonly property string localPath: Settings.stateDir + "/hyprland.json"
+
+    // hyprland.json parsed: { input: { follow_mouse: 2, touchpad: {…} }, … }
+    property var overrides: ({})
 
     // hyprland.lua writes queued or running; pages hold off re-reading the
     // file on change notifications while their own write lands
@@ -64,11 +68,48 @@ Singleton {
         })
     }
 
-    // transform(text) returns the new text, or null when it can't make the
-    // change (the field isn't a plain value); refusal is the message given.
-    // done(ok, message) gets one line for a status bar.
-    function patch(transform, message, refusal, done) {
-        enqueue(src => src === "" ? null : transform(src), true, reporter("hyprland.lua", message, refusal, done))
+    // the value hyprland.json sets for path + key, or undefined
+    function override(path, key) {
+        var t = overrides
+        for (var i = 0; i < path.length && t; i++) t = t[path[i]]
+        return t && typeof t === "object" ? t[key] : undefined
+    }
+
+    // sets: [[path, key, value]], written together so one reload applies
+    // them; done(ok, message) gets one line for a status bar
+    function setLocal(sets, message, done) {
+        pending++
+        AtomicFileWrite.write({
+            path: localPath,
+            transform: src => {
+                var o = src.trim() === "" ? {} : JSON.parse(src)
+                sets.forEach(s => {
+                    var t = o
+                    s[0].forEach(k => t = t[k] = (t[k] && typeof t[k] === "object") ? t[k] : {})
+                    t[s[1]] = s[2]
+                })
+                return JSON.stringify(o, null, 2) + "\n"
+            },
+            after: afterWrite,
+            done: (status, detail) => {
+                pending--
+                localFile.reload()
+                reporter("hyprland.json", message, "hyprland.json doesn't parse, fix or delete it", done)(status, detail)
+            }
+        })
+    }
+
+    FileView {
+        id: localFile
+        path: root.localPath
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try { root.overrides = JSON.parse(text()) || {} }
+            catch (e) { root.overrides = {} }
+        }
+        onLoadFailed: root.overrides = {}
     }
 
     // The same for monitors.lua, which starts out missing: transform gets

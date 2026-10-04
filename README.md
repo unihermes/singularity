@@ -223,9 +223,11 @@ the shell, into `~/.local/state/singularity/`:
   (battery, power, Wi-Fi, kernel, last login).
 - **Floorp** gets a `userChrome.css` and `user.js` built into its profile.
 
-Anything the shell saves (settings, display rules, the wallpaper, the
-generated colour files) lives in `~/.local/state/singularity/`, never in the
-repo. Deleting it resets the shell to its defaults.
+Anything the shell saves (settings, display rules, input and window
+settings, the wallpaper, the generated colour files) lives in
+`~/.local/state/singularity/`, never in the repo. Deleting it resets the
+shell to its defaults. The one exception is the Keybinds editor, which
+edits `hyprland.lua` itself so binds can be committed.
 
 ## Repository layout
 

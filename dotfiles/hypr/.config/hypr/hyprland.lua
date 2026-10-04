@@ -508,6 +508,33 @@ hl.gesture({
     action    = "workspace",
 })
 
+-- Local settings: what Settings > Input and Appearance > Windows change is
+-- kept in ~/.local/state/singularity/hyprland.json, hl.config tables applied
+-- over the ones above, so those changes stay on this machine. JSON comes
+-- from json.lua beside this file; missing or broken, nothing is applied.
+-- Each value is applied on its own, so one Hyprland rejects skips only
+-- itself (and still shows in `hyprctl configerrors`).
+local decodeJson
+do
+    local ok, decoder = pcall(dofile, os.getenv("HOME") .. "/.config/hypr/json.lua")
+    decodeJson = ok and decoder or function() return nil end
+    local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/hyprland.json")
+    local t = f and decodeJson(f:read("a"))
+    if f then f:close() end
+
+    local function apply(tbl, wrap)
+        for k, v in pairs(tbl) do
+            local function nest(x) return wrap({ [k] = x }) end
+            if type(v) == "table" then
+                apply(v, nest)
+            else
+                pcall(hl.config, nest(v))
+            end
+        end
+    end
+    if type(t) == "table" then apply(t, function(x) return x end) end
+end
+
 ---------------------
 ---- KEYBINDINGS ----
 ---------------------
@@ -990,13 +1017,8 @@ end
 -- but this". Popouts are matched by title, since dialogs inherit their
 -- app's class.
 --
--- JSON comes from json.lua beside this file, loaded with pcall: missing or
--- broken, the rules are treated as empty rather than breaking the config.
-local decodeJson
-do
-    local ok, decoder = pcall(dofile, os.getenv("HOME") .. "/.config/hypr/json.lua")
-    decodeJson = ok and decoder or function() return nil end
-end
+-- JSON comes from decodeJson (see Local settings): missing or broken, the
+-- rules are treated as empty rather than breaking the config.
 
 -- Classes are matched whole and literally: "org.pwmt.zathura" must not also
 -- match "orgXpwmtYzathura", so every regex metacharacter is escaped.

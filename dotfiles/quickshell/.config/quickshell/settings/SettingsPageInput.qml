@@ -1,7 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageInput.qml
 //
-// Keyboard, mouse and touchpad: the `input = { }` table in hyprland.lua.
+// Keyboard, mouse and touchpad: the `input = { }` table in hyprland.lua, with
+// changes made here kept in the state directory's hyprland.json.
 //
 // Every change is written to the file and followed by a config reload, which
 // is what applies it -- there's no separate live path. `hyprctl keyword`
@@ -31,7 +32,7 @@ SettingsPage {
     sectioned: true
 
     title: "Input"
-    description: "Keyboard, mouse and touchpad, from hyprland.lua's input table."
+    description: "Keyboard, mouse and touchpad, kept on this machine."
 
     property var conf: ({ found: false, fields: {}, touchpad: {} })
 
@@ -44,6 +45,8 @@ SettingsPage {
     })
 
     function field(sub, key) {
+        var o = HyprLuaWrite.override(sub ? ["input", sub] : ["input"], key)
+        if (o !== undefined) return { editable: true, value: o }
         var table = sub === "touchpad" ? conf.touchpad : conf.fields
         var f = table[key]
         return f === undefined ? { editable: true, value: defaults[key], unset: true } : f
@@ -52,18 +55,15 @@ SettingsPage {
     function value(sub, key) { return field(sub, key).value }
 
     function set(sub, key, v, message) {
-        patchLua(src => HyprTables.setInput(src, sub, key, v), message,
-            (sub ? sub + "." : "") + key + " isn't a plain value in hyprland.lua, edit it by hand")
+        HyprLuaWrite.setLocal([[sub ? ["input", sub] : ["input"], key, v]], message, page.reported)
     }
 
     // several keys in one write, so one reload applies them together
     function setMany(pairs, message) {
-        patchLua(src => {
-            for (var i = 0; i < pairs.length && src !== null; i++)
-                src = HyprTables.setInput(src, "", pairs[i][0], pairs[i][1])
-            return src
-        }, message, "The keyboard keys aren't plain values in hyprland.lua, edit them by hand")
+        HyprLuaWrite.setLocal(pairs.map(p => [["input"], p[0], p[1]]), message, page.reported)
     }
+
+    function reported(ok, msg) { page.say(msg, !ok) }
 
     function reread() {
         luaFile.reload()
@@ -85,15 +85,6 @@ SettingsPage {
         watchChanges: true
         printErrors: false
         onFileChanged: if (!HyprLuaWrite.busy) page.reread()
-    }
-
-    // HyprLuaWrite is shared with the Keybinds editor and the other pages;
-    // each result comes back to the page that asked for it
-    function patchLua(transform, message, refusal) {
-        HyprLuaWrite.patch(transform, message, refusal, (ok, msg) => {
-            page.say(msg, !ok)
-            page.reread()
-        })
     }
 
     // --- layouts -------------------------------------------------------------

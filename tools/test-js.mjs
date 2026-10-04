@@ -113,17 +113,11 @@ test("ChannelPath snaps near edges and closes its outline", () => {
     assert.doesNotMatch(d, /NaN/)
 })
 
-test("HyprTables reads and rewrites hl.config fields in place", () => {
+test("HyprTables reads hl.config fields", () => {
     const T = load("HyprTables.js")
     const deco = T.readConfig(hyprland, ["decoration"])
     assert.ok(deco && deco.dim_strength && deco.dim_strength.editable)
-    const out = T.setConfig(hyprland, ["decoration"], "dim_strength", 0.25)
-    assert.notEqual(out, null)
-    assert.equal(T.readConfig(out, ["decoration"]).dim_strength.value, 0.25)
-    // nothing else moved: only that one line differs
-    const a = hyprland.split("\n"), b = out.split("\n")
-    assert.equal(a.length, b.length)
-    assert.equal(a.filter((l, i) => l !== b[i]).length, 1)
+    assert.equal(T.readInput(hyprland).fields.kb_layout.value, "us")
     assert.equal(T.readConfig(hyprland, ["no_such_table"]), null)
 })
 

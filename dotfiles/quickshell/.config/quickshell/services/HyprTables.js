@@ -1,16 +1,18 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/HyprTables.js
 //
-// Reads and rewrites plain `key = value` fields in hyprland.lua's table
-// constructors, for the Settings window: the tables inside hl.config
-// (`input` and its `touchpad`, `general`, `decoration`), and the table each
-// hl.monitor() call takes (in monitors.lua, see HyprLuaWrite). Plain functions over source text, like HyprBinds.js, whose
-// tokenizer this uses so strings and comments can't fool it.
+// Reads plain `key = value` fields in hyprland.lua's table constructors, for
+// the Settings window: the tables inside hl.config (`input` and its
+// `touchpad`, `general`, `decoration`), whose changes go to hyprland.json
+// (see HyprLuaWrite), and reads and rewrites the table each hl.monitor()
+// call takes, in monitors.lua. Plain functions over source text, like
+// HyprBinds.js, whose tokenizer this uses so strings and comments can't
+// fool it.
 //
 // Only a field whose value is one literal token (a number, a string, true or
-// false) is rewritten in place. Anything computed is left alone and reported
-// as not editable, rather than replaced with a literal that silently drops
-// whatever the expression meant.
+// false) is read or rewritten. Anything computed is reported as not
+// editable, rather than replaced with a literal that silently drops whatever
+// the expression meant.
 
 .import "HyprBinds.js" as HyprBinds
 
@@ -154,15 +156,6 @@ function readConfig(src, path) {
     return open < 0 ? null : read(toks, open)
 }
 
-// Set key in the table at `path`. null when there is no such table (it isn't
-// created: a missing section is more likely a hand-restructured file than
-// one to add to) or the existing value isn't a literal.
-function setConfig(src, path, key, value) {
-    var toks = code(src)
-    var open = configTable(toks, path)
-    return open < 0 ? null : setIn(src, toks, open, key, value)
-}
-
 // --- input ---------------------------------------------------------------
 
 // The `input = { }` table: the first one passed inside an hl.config({ }).
@@ -177,34 +170,6 @@ function readInput(src) {
     if (open < 0) return { found: false, fields: {}, touchpad: {} }
     var tp = descend(toks, open, ["touchpad"])
     return { found: true, fields: read(toks, open), touchpad: tp >= 0 ? read(toks, tp) : {} }
-}
-
-// sub: "" for input itself, "touchpad" for input.touchpad
-function setInput(src, sub, key, value) {
-    var toks = code(src)
-    var open = inputTable(toks)
-    if (open < 0) return null
-    if (sub !== "") {
-        var tp = descend(toks, open, [sub])
-        if (tp < 0) {
-            // no sub-table yet: add one, then set the field in it
-            var withSub = setInRaw(src, toks, open, sub)
-            return withSub === null ? null : setInput(withSub, sub, key, value)
-        }
-        open = tp
-    }
-    return setIn(src, toks, open, key, value)
-}
-
-function setInRaw(src, toks, open, key) {
-    var ents = entries(toks, open)
-    var last = ents.list[ents.list.length - 1]
-    if (!last) return null
-    var indent = indentAt(src, last.keyStart)
-    var at = last.sep >= 0 ? toks[last.sep].e : last.e
-    var comma = last.sep >= 0 ? "" : ","
-    return src.slice(0, at) + comma + "\n\n" + indent + key + " = {\n" + indent + "},"
-        + src.slice(at)
 }
 
 // --- monitors ------------------------------------------------------------
