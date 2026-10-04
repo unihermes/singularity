@@ -304,8 +304,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user reset-failed hypridle.service; systemctl --user start hypridle.service || hypridle")
     -- Stop logind suspending on lid close: the lid binds below just blank the
     -- screen, and hypridle suspends after 20 min idle. Released when
-    -- Hyprland exits.
-    hl.exec_cmd("systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' tail --pid=$(pidof -s Hyprland) -f /dev/null")
+    -- Hyprland exits (waitpid blocks on a pidfd; it doesn't poll).
+    hl.exec_cmd("systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' waitpid $(pidof -s Hyprland)")
     -- QML warnings go to a log rather than the TTY. `exec` replaces the
     -- /bin/sh that hl.exec_cmd wraps this in, so no idle shell sits in the
     -- tree as quickshell's parent (same for the relay below).
