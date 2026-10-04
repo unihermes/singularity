@@ -235,7 +235,12 @@ Singleton {
         var lines = statFile.text().split("\n")
         var nextCores = [], nextPrev = []
         for (var i = 0; i < lines.length; i++) {
-            var f = lines[i].trim().split(/\s+/)
+            var line = lines[i].trim()
+            if (line === "") continue
+            // the cpu lines come first; nothing after is needed, and the
+            // next one (intr) runs to thousands of fields
+            if (!line.startsWith("cpu")) break
+            var f = line.split(/\s+/)
             if (f[0] === "cpu") {
                 var all = busy(f, cpuPrev)
                 if (all.frac >= 0) {
@@ -248,8 +253,6 @@ Singleton {
                 var c = busy(f, corePrev[n])
                 nextCores.push(Math.max(0, c.frac))
                 nextPrev.push(c.sample)
-            } else if (f[0] !== "" && !f[0].startsWith("cpu")) {
-                break   // the cpu lines come first; nothing after is needed
             }
         }
         if (corePrev.length === nextPrev.length) cores = nextCores
