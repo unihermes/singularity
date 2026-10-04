@@ -54,22 +54,20 @@ SettingsPage {
         return n ? (n.description || n.nickname || n.name) : ""
     }
 
-    // The words every device's name starts with -- usually the sound card,
-    // "Alder Lake Smart Sound Technology Audio Controller" -- shown once as
-    // the hint rather than at the front of every choice.
-    readonly property string cardName: {
-        var names = devices.map(n => nodeName(n).split(" "))
-        if (names.length < 2) return ""
-        var n = 0
-        while (names.every(w => w.length > n + 1 && w[n] === names[0][n])) n++
-        return names[0].slice(0, n).join(" ")
-    }
-
-    // a device's name without the card's
+    // A device's name without the words it shares with the card's other
+    // devices: "Speaker", not "Alder Lake Smart Sound Technology Audio
+    // Controller Speaker". A card with one device, a USB headset say, keeps
+    // its whole name, which is the only thing telling it apart.
     function shortName(n) {
         var name = nodeName(n)
-        return cardName !== "" && name.indexOf(cardName + " ") === 0
-            ? name.slice(cardName.length + 1) : name
+        var card = n ? (n.properties || {})["device.id"] : undefined
+        if (card === undefined) return name
+        var names = devices.filter(d => (d.properties || {})["device.id"] === card)
+            .map(d => nodeName(d).split(" "))
+        if (names.length < 2) return name
+        var k = 0
+        while (names.every(w => w.length > k + 1 && w[k] === names[0][k])) k++
+        return name.split(" ").slice(k).join(" ")
     }
 
     // An app's own name for itself, falling back to the node's. Pipewire fills
@@ -113,12 +111,16 @@ SettingsPage {
                 var parts = text.trim().split("\n")
                 var sinks = [], inputs = []
                 try { sinks = JSON.parse(parts[0] || "[]"); inputs = JSON.parse(parts[1] || "[]") } catch (e) { return }
+                // pactl numbers sinks by object.serial, which only matches
+                // the node id for devices there since boot
+                var nodeOf = {}
+                sinks.forEach(s => nodeOf[s.index] = Number((s.properties || {})["object.id"]))
                 page.unplugged = sinks.filter(s => s.ports && s.ports.length > 0
-                    && s.ports.every(p => p.availability === "not available")).map(s => Number(s.index))
+                    && s.ports.every(p => p.availability === "not available")).map(s => nodeOf[s.index])
                 var on = {}
                 inputs.forEach(i => {
                     var id = Number((i.properties || {})["object.id"])
-                    if (!isNaN(id)) on[id] = { input: i.index, sink: Number(i.sink) }
+                    if (!isNaN(id)) on[id] = { input: i.index, sink: nodeOf[i.sink] }
                 })
                 page.playsOn = on
             }
@@ -149,7 +151,7 @@ SettingsPage {
     function moveTo(stream, sink) {
         var on = playsOn[stream.id]
         if (!on) return
-        moveProc.command = ["pactl", "move-sink-input", String(on.input), String(sink.id)]
+        moveProc.command = ["pactl", "move-sink-input", String(on.input), sink.name]
         moveProc.running = true
         page.say(page.appName(stream) + " plays on " + page.plainName(sink), false)
     }
