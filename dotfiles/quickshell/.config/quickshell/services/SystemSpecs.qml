@@ -285,9 +285,19 @@ Singleton {
         id: bootProc
         command: ["sh", "-c", "systemd-analyze 2>/dev/null | head -1"]
         stdout: StdioCollector {
+            // "Startup finished in 6.430s (firmware) + ... = 13.010s" becomes
+            // "13.0s · firmware 6.4s · ...": the total first, so a narrow row
+            // cuts the breakdown rather than the answer
             onStreamFinished: {
-                // "Startup finished in 4.2s (firmware) + ... = 21.3s"
-                root.bootLine = text.trim().replace(/^Startup finished in\s*/, "")
+                var t = text.trim().replace(/^Startup finished in\s*/, "")
+                var short = x => x.replace(/(\d+\.\d+)s/g, (m, n) => Number(n).toFixed(1) + "s")
+                var eq = t.lastIndexOf("=")
+                var parts = (eq >= 0 ? t.slice(0, eq) : t).split("+").map(p => {
+                    var m = /^\s*(.+?)\s*\((.+)\)\s*$/.exec(p)
+                    return m ? m[2] + " " + short(m[1]) : short(p.trim())
+                })
+                if (eq >= 0) parts.unshift(short(t.slice(eq + 1).trim()))
+                root.bootLine = parts.join(" · ")
             }
         }
     }
