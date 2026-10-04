@@ -183,7 +183,7 @@ SystemPage {
 
     FlyoutRow {
         leadingIcon: Audio.ready && Audio.muted ? "󰝟" : "󰕾"
-        label: Audio.ready && Audio.sink.description ? Audio.sink.description : "No output"
+        label: Audio.ready ? Audio.sink.nickname || Audio.sink.description || "No output" : "No output"
         note: Audio.ready ? Audio.percent + "%" + (Audio.muted ? " · muted" : "") : ""
         trailing: "Settings  󰅂"
         onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "audio"])
