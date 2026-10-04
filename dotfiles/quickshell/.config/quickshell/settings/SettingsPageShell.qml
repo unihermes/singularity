@@ -117,7 +117,8 @@ SettingsPage {
         return "'" + s.replace(/'/g, "'\\''") + "'"
     }
 
-    function addAlias(name, value) {
+    // oldName renames that alias in place, in the same write
+    function addAlias(name, value, oldName) {
         name = name.trim()
         if (!/^[A-Za-z0-9_.:-]+$/.test(name)) { say("An alias name is letters, digits and _ . : - only", true); return false }
         if (value.trim() === "") { say("The alias needs a command", true); return false }
@@ -128,8 +129,12 @@ SettingsPage {
         var current = parseAliases(text)
         var line = "alias " + name + "=" + shQuote(value.trim())
         var existing = current.find(a => a.name === name)
+        var old = oldName && oldName !== name ? current.find(a => a.name === oldName) : null
         if (existing) {
             lines[existing.line] = line
+            if (old) lines.splice(old.line, 1)
+        } else if (old) {
+            lines[old.line] = line
         } else if (current.length > 0) {
             lines.splice(current[current.length - 1].line + 1, 0, line)
         } else {
@@ -137,7 +142,8 @@ SettingsPage {
             var at = lines.length && lines[lines.length - 1] === "" ? lines.length - 1 : lines.length
             lines.splice(at, 0, line)
         }
-        writeFile(bashrcPath, lines.join("\n"), (existing ? "Changed " : "Added ") + name + ", in new terminals", true)
+        writeFile(bashrcPath, lines.join("\n"), (old ? "Renamed " + oldName + " to " + name
+            : existing ? "Changed " + name : "Added " + name) + ", in new terminals", true)
         return true
     }
 
@@ -459,16 +465,9 @@ SettingsPage {
         }
 
         function save() {
-            if (page.addAlias(nameIn.text, cmdIn.text)) {
-                // a rename leaves the old line; take it out
-                if (!ed.isNew && nameIn.text.trim() !== ed.name) {
-                    var old = page.aliases.find(a => a.name === ed.name)
-                    if (old) Qt.callLater(() => page.removeAlias(old))
-                }
-                ed.done()
-            }
+            if (page.addAlias(nameIn.text, cmdIn.text, ed.isNew ? "" : ed.name)) ed.done()
         }
-        function focus() { (ed.isNew ? nameIn : cmdIn).forceFocus() }
+        function focusField() { (ed.isNew ? nameIn : cmdIn).forceFocus() }
 
         FlyoutInput {
             id: nameIn
@@ -533,7 +532,7 @@ SettingsPage {
                 onActivated: {
                     page.addingAlias = false
                     page.openAlias = al.isOpen ? -1 : al.index
-                    if (page.openAlias === al.index) Qt.callLater(editor.focus)
+                    if (page.openAlias === al.index) Qt.callLater(editor.focusField)
                 }
             }
 
@@ -567,7 +566,7 @@ SettingsPage {
         onActivated: {
             page.openAlias = -1
             page.addingAlias = !page.addingAlias
-            if (page.addingAlias) Qt.callLater(newAlias.focus)
+            if (page.addingAlias) Qt.callLater(newAlias.focusField)
         }
     }
 
