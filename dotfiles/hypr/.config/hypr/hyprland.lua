@@ -1127,6 +1127,12 @@ end
 -- of window.open for a window that takes focus, and these hooks are
 -- registered ahead of monocle's, which would fill it. Windows open before
 -- this load (a reload) are known already and left alone.
+--
+-- Firefox-based browsers ignore the size a page asks for and open every
+-- popup at their default 1280x1040, so theirs are given one here.
+local POPUP_SIZES = {
+    floorp = { 960, 720 }, ["zen-browser"] = { 960, 720 }, firefox = { 960, 720 },
+}
 local launchWaiting = false
 local knownWindows = {}
 for _, w in ipairs(hl.get_windows()) do knownWindows[w.address] = true end
@@ -1151,6 +1157,8 @@ local function holdPopup(win)
             hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
             hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
             hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = addr }))
+            local size = POPUP_SIZES[win.class]
+            if size then hl.dispatch(hl.dsp.window.resize({ x = size[1], y = size[2], window = addr })) end
             hl.dispatch(hl.dsp.window.center({ window = addr }))
             return
         end
