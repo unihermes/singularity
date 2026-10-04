@@ -110,84 +110,33 @@ SettingsPage {
     FlyoutHeading { text: "STATUS" }
 
     // the joined network: its strength, name and kind, and the radio switch
-    Item {
-        width: parent.width
-        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
-
-        Text {
-            id: cardGlyph
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fontTitle * 1.4
-            horizontalAlignment: Text.AlignHCenter
-            text: page.online && page.joinedBars > 0 ? page.strengthGlyphs[page.joinedBars - 1]
-                : page.listening ? "󰤮" : "󰤭"
-            color: page.online ? Theme.textStrong : Theme.muted
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontTitle
+    HeadCard {
+        glyph: page.online && page.joinedBars > 0 ? page.strengthGlyphs[page.joinedBars - 1]
+            : page.listening ? "󰤮" : "󰤭"
+        glyphColor: page.online ? Theme.textStrong : Theme.muted
+        title: Network.device === "" ? "No wireless device"
+            : !Network.powered ? "Wi-Fi is off"
+            : page.online ? Network.ssid
+            : "Not connected"
+        lines: {
+            if (Network.device === "") return ["iwd has no station device"]
+            if (!Network.powered) return ["Turn it on to see networks"]
+            if (!page.online) return ["Pick a network below"]
+            var parts = []
+            if (page.joined) parts.push(page.securityWord(page.joined.security))
+            if (page.linkFreq > 0) parts.push(page.bandOf(page.linkFreq))
+            if (page.joinedBars > 0) parts.push(page.strengthWord(page.joinedBars))
+            return [parts.join("  ·  ")]
         }
-
-        Column {
-            id: cardText
-            anchors.left: cardGlyph.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: radio.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Network.device === "" ? "No wireless device"
-                    : !Network.powered ? "Wi-Fi is off"
-                    : page.online ? Network.ssid
-                    : "Not connected"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: {
-                    if (Network.device === "") return "iwd has no station device"
-                    if (!Network.powered) return "Turn it on to see networks"
-                    if (!page.online) return "Pick a network below"
-                    var parts = []
-                    if (page.joined) parts.push(page.securityWord(page.joined.security))
-                    if (page.linkFreq > 0) parts.push(page.bandOf(page.linkFreq))
-                    if (page.joinedBars > 0) parts.push(page.strengthWord(page.joinedBars))
-                    return parts.join("  ·  ")
-                }
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
+        rule: page.online
 
         Switch {
-            id: radio
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
             checked: Network.powered
             enabled: Network.device !== ""
             onToggled: {
                 Network.setPowered(!Network.powered)
                 page.say(Network.powered ? "Radio off" : "Radio on", false)
             }
-        }
-
-        // keeps the card apart from the readouts under it
-        Rectangle {
-            visible: page.online
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Theme.borderWidth
-            color: Theme.stroke
         }
     }
 

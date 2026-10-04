@@ -367,49 +367,12 @@ SettingsPage {
     FlyoutHeading { text: "BATTERY" }
 
     // the charge now, what it's doing, and its health
-    Item {
+    HeadCard {
         visible: Battery.present
-        width: parent.width
-        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
-
-        Text {
-            id: cardGlyph
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fontTitle * 1.4
-            horizontalAlignment: Text.AlignHCenter
-            text: Battery.present && Battery.device.state === UPowerDeviceState.Charging
-                ? page.glyphs.charging : page.batteryGlyph(Battery.percent)
-            color: Theme.textStrong
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontTitle
-        }
-
-        Column {
-            id: cardText
-            anchors.left: cardGlyph.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            Text {
-                text: Battery.percent + "%"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: page.batteryLine()
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
+        glyph: Battery.present && Battery.device.state === UPowerDeviceState.Charging
+            ? page.glyphs.charging : page.batteryGlyph(Battery.percent)
+        title: Battery.percent + "%"
+        lines: [page.batteryLine()]
     }
 
     // The charge as a level chip. In Custom the resume-to-stop band

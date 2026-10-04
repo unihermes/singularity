@@ -1,14 +1,13 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/windows/system/HeadCard.qml
+// ~/.config/quickshell/flyouts/HeadCard.qml
 //
-// The card at the top of a System page, as Settings' Network and Software
-// Update pages have: a glyph, the answer large, a line or two of what's
-// behind it, and the page's own actions at its end (the chips go in as
-// children).
+// The card at the top of a System or Settings page: a glyph, the answer
+// large, a line or two of what's behind it, and the page's own actions at
+// its end (the chips or a switch go in as children). `rule` draws a
+// hairline under it, to keep it apart from the rows that follow.
 
 import QtQuick
-import "../../services"
-import "../../flyouts"
+import "../services"
 
 Item {
     id: root
@@ -18,6 +17,7 @@ Item {
     property string title: ""
     // quieter lines under the title; empty ones are left out
     property var lines: []
+    property bool rule: false
 
     default property alias actions: chips.data
 
@@ -74,5 +74,13 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceS
+    }
+
+    Rectangle {
+        visible: root.rule
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: Theme.borderWidth
+        color: Theme.stroke
     }
 }

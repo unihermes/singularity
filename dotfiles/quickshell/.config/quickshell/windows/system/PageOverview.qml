@@ -144,76 +144,30 @@ SystemPage {
     // window opens.
     readonly property var needsLook: Health.checks.filter(c => c.status !== "ok")
 
-    Item {
-        width: parent.width
-        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
+    HeadCard {
+        glyph: Health.lastScan === "" ? "󰓙" : Health.problems + Health.warnings > 0 ? "󰀦" : "󰄬"
+        glyphColor: Health.lastScan === "" ? Theme.muted
+            : Health.problems > 0 ? Theme.alert
+            : Health.warnings > 0 ? Theme.textStrong : Theme.good
+        title: Health.scanning ? "Checking…"
+            : Health.lastScan === "" ? "Not checked yet"
+            : Health.problems > 0 ? Health.problems + (Health.problems === 1 ? " problem" : " problems")
+                + (Health.warnings > 0 ? ", " + Health.warnings + " to look at" : "")
+            : Health.warnings > 0 ? Health.warnings + " to look at"
+            : "All clear"
+        lines: [Health.lastScan === "" ? "Run checks looks at services, packages, disks and config"
+            : "Checked at " + Health.lastScan + " · " + Health.checks.length + " checks"]
 
-        Text {
-            id: cardGlyph
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fontTitle * 1.4
-            horizontalAlignment: Text.AlignHCenter
-            text: Health.lastScan === "" ? "󰓙" : Health.problems + Health.warnings > 0 ? "󰀦" : "󰄬"
-            color: Health.lastScan === "" ? Theme.muted
-                : Health.problems > 0 ? Theme.alert
-                : Health.warnings > 0 ? Theme.textStrong : Theme.good
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontTitle
+        FlyoutChip {
+            text: "Run checks"
+            icon: "󰑐"
+            spinning: Health.scanning
+            enabled: !Health.scanning
+            onClicked: Health.scan()
         }
-
-        Column {
-            id: cardText
-            anchors.left: cardGlyph.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: cardChips.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Health.scanning ? "Checking…"
-                    : Health.lastScan === "" ? "Not checked yet"
-                    : Health.problems > 0 ? Health.problems + (Health.problems === 1 ? " problem" : " problems")
-                        + (Health.warnings > 0 ? ", " + Health.warnings + " to look at" : "")
-                    : Health.warnings > 0 ? Health.warnings + " to look at"
-                    : "All clear"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Health.lastScan === "" ? "Run checks looks at services, packages, disks and config"
-                    : "Checked at " + Health.lastScan + " · " + Health.checks.length + " checks"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
-
-        Row {
-            id: cardChips
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceS
-
-            FlyoutChip {
-                text: "Run checks"
-                icon: "󰑐"
-                spinning: Health.scanning
-                enabled: !Health.scanning
-                onClicked: Health.scan()
-            }
-            FlyoutChip {
-                text: "Open Health  󰅂"
-                onClicked: page.go("health")
-            }
+        FlyoutChip {
+            text: "Open Health  󰅂"
+            onClicked: page.go("health")
         }
     }
 

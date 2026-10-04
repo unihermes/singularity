@@ -170,58 +170,15 @@ SettingsPage {
     FlyoutHeading { text: "TIME ZONE" }
 
     // the time now, large and ticking, and where and how it's kept
-    Item {
-        width: parent.width
-        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
-
-        Text {
-            id: cardGlyph
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fontTitle * 1.4
-            horizontalAlignment: Text.AlignHCenter
-            text: "󰥔"
-            color: Theme.textStrong
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontTitle
-        }
-
-        Column {
-            id: cardText
-            anchors.left: cardGlyph.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            Text {
-                text: Qt.formatTime(clock.date, Theme.hours("HH:mm:ss"))
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: [Qt.formatDate(clock.date, "ddd d MMM yyyy"),
-                       page.zone === "" ? "" : page.cityOf(page.canonical) + ", " + page.zoneAbbrev.replace(/, UTC.*/, "")
-                           + (page.current ? " (" + page.offText(page.current.offset) + ")" : ""),
-                       !page.ntp ? "set by hand" : page.synced ? "synchronised over the network" : "waiting for a time server"
-                      ].filter(t => t !== "").join("  ·  ")
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
-
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Theme.borderWidth
-            color: Theme.stroke
-        }
+    HeadCard {
+        glyph: "󰥔"
+        title: Qt.formatTime(clock.date, Theme.hours("HH:mm:ss"))
+        lines: [[Qt.formatDate(clock.date, "ddd d MMM yyyy"),
+                 page.zone === "" ? "" : page.cityOf(page.canonical) + ", " + page.zoneAbbrev.replace(/, UTC.*/, "")
+                     + (page.current ? " (" + page.offText(page.current.offset) + ")" : ""),
+                 !page.ntp ? "set by hand" : page.synced ? "synchronised over the network" : "waiting for a time server"
+                ].filter(t => t !== "").join("  ·  ")]
+        rule: true
     }
 
     // the zone; it opens to a search of every place

@@ -68,72 +68,22 @@ SettingsPage {
     FlyoutHeading { text: "STATUS" }
 
     // whether popups show, and why: the bell, the state, the switch
-    Item {
-        width: parent.width
-        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
-
-        Text {
-            id: cardGlyph
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fontTitle * 1.4
-            horizontalAlignment: Text.AlignHCenter
-            text: Notifications.dnd ? "󰂛" : "󰂚"
-            color: Notifications.dnd ? Theme.muted : Theme.textStrong
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontTitle
-        }
-
-        Column {
-            id: cardText
-            anchors.left: cardGlyph.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: dndSwitch.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Notifications.dnd ? "Do Not Disturb" : "Notifications on"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: [!Notifications.dnd ? "Popups show as they arrive"
-                        : Settings.notifDndBySchedule ? "Quiet hours, until " + page.hm(Settings.notifQuietTo)
-                        : "Popups held, except critical ones",
-                       Notifications.count === 0 ? "the history is empty"
-                        : Notifications.count + " in the history"
-                        + (Notifications.unread > 0 ? ", " + Notifications.unread + " unread" : "")
-                      ].join("  ·  ")
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
+    HeadCard {
+        glyph: Notifications.dnd ? "󰂛" : "󰂚"
+        glyphColor: Notifications.dnd ? Theme.muted : Theme.textStrong
+        title: Notifications.dnd ? "Do Not Disturb" : "Notifications on"
+        lines: [[!Notifications.dnd ? "Popups show as they arrive"
+                  : Settings.notifDndBySchedule ? "Quiet hours, until " + page.hm(Settings.notifQuietTo)
+                  : "Popups held, except critical ones",
+                 Notifications.count === 0 ? "the history is empty"
+                  : Notifications.count + " in the history"
+                  + (Notifications.unread > 0 ? ", " + Notifications.unread + " unread" : "")
+                ].join("  ·  ")]
+        rule: true
 
         Switch {
-            id: dndSwitch
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
             checked: Notifications.dnd
             onToggled: Notifications.toggleDnd()
-        }
-
-        // keeps the card apart from the row under it
-        Rectangle {
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Theme.borderWidth
-            color: Theme.stroke
         }
     }
 

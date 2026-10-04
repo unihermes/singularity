@@ -112,78 +112,27 @@ SettingsPage {
     FlyoutHeading { text: "ADAPTER" }
 
     // the adapter: its name, interface and what's on it, and the power switch
-    Item {
-        width: parent.width
-        implicitHeight: Math.max(Theme.fieldHeight, cardText.implicitHeight + Theme.spaceL * 2)
-
-        Text {
-            id: cardGlyph
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fontTitle * 1.4
-            horizontalAlignment: Text.AlignHCenter
-            text: !page.poweredOn ? BtKind.adapterOff
-                : page.connectedCount > 0 ? BtKind.adapterLinked : BtKind.adapterOn
-            color: page.poweredOn ? Theme.textStrong : Theme.muted
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontTitle
-        }
-
-        Column {
-            id: cardText
-            anchors.left: cardGlyph.right
-            anchors.leftMargin: Theme.spaceL
-            anchors.right: power.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: !page.adapter ? "No adapter found"
-                    : page.blocked ? "Blocked by rfkill"
-                    : !page.poweredOn ? "Bluetooth is off"
-                    : page.adapter.name
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: !page.adapter ? "BlueZ reports no Bluetooth adapter"
-                    : page.blocked ? "Unblock it to power on"
-                    : !page.poweredOn ? "Turn it on to reach your devices"
-                    : [page.adapter.adapterId,
-                       page.paired.length + " paired",
-                       page.connectedCount > 0 ? page.connectedCount + " connected" : "nothing connected"
-                      ].join("  ·  ")
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
+    HeadCard {
+        glyph: !page.poweredOn ? BtKind.adapterOff
+            : page.connectedCount > 0 ? BtKind.adapterLinked : BtKind.adapterOn
+        glyphColor: page.poweredOn ? Theme.textStrong : Theme.muted
+        title: !page.adapter ? "No adapter found"
+            : page.blocked ? "Blocked by rfkill"
+            : !page.poweredOn ? "Bluetooth is off"
+            : page.adapter.name
+        lines: [!page.adapter ? "BlueZ reports no Bluetooth adapter"
+            : page.blocked ? "Unblock it to power on"
+            : !page.poweredOn ? "Turn it on to reach your devices"
+            : [page.adapter.adapterId,
+               page.paired.length + " paired",
+               page.connectedCount > 0 ? page.connectedCount + " connected" : "nothing connected"
+              ].join("  ·  ")]
+        rule: page.poweredOn
 
         Switch {
-            id: power
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
             checked: page.poweredOn
             enabled: !!page.adapter && !page.blocked
             onToggled: page.setPowered(!page.poweredOn)
-        }
-
-        // keeps the card apart from the switches under it
-        Rectangle {
-            visible: page.poweredOn
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Theme.borderWidth
-            color: Theme.stroke
         }
     }
 
