@@ -5,11 +5,12 @@
 // popups (flyouts/NotificationPopups.qml), the history flyout
 // (flyouts/NotificationsFlyout.qml), the bar module and Settings.
 //
-// The history is the shell's own record of what arrived, kept in
-// ~/.local/state/singularity/notifications.json. An entry stays until it's
-// cleared from the history by hand -- not when its popup goes, the sender
-// withdraws it, or the shell restarts. Transient notifications are the
-// exception: by the spec they aren't kept, so they go with their popup.
+// The history is the shell's own record of what arrived this session, kept
+// in $XDG_RUNTIME_DIR/singularity-notifications.json, which goes at logout.
+// An entry stays until it's cleared from the history by hand -- not when its
+// popup goes, the sender withdraws it, or the shell restarts. Transient
+// notifications are the exception: by the spec they aren't kept, so they go
+// with their popup.
 // While the sender still holds a notification its entry carries it as
 // `live`, which is what its actions and attached image need.
 //
@@ -274,7 +275,7 @@ Singleton {
 
     FileView {
         id: view
-        path: Quickshell.env("HOME") + "/.local/state/singularity/notifications.json"
+        path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/singularity-notifications.json"
         preload: true
         blockLoading: true
         atomicWrites: true
