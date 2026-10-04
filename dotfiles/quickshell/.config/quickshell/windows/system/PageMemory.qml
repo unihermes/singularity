@@ -7,6 +7,7 @@
 // kernel hands that back the instant anything asks. So the gauge is built
 // on MemAvailable, and the breakdown below shows where the rest went.
 
+import Quickshell.Widgets
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
@@ -70,13 +71,13 @@ SystemPage {
         width: parent.width
         height: Theme.meterHeight + 4
 
-        Rectangle {
+        ClippingRectangle {
+            id: strip
             anchors.fill: parent
             radius: Math.min(height / 2, Theme.radius)
             color: Theme.meterTrack
             border.width: Theme.borderWidth
             border.color: Theme.meterStroke
-            clip: true
 
             readonly property real total: Math.max(1, SystemStats.memTotalKb)
 
@@ -85,8 +86,8 @@ SystemPage {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
-                width: parent.width * SystemStats.memUsedKb / parent.total
-                radius: parent.radius
+                width: parent.width * SystemStats.memUsedKb / strip.total
+                radius: strip.radius
                 color: SystemStats.mem >= 0.9 ? Theme.alert : Theme.meterFill
             }
 
@@ -94,7 +95,7 @@ SystemPage {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 anchors.left: usedBand.right
-                width: parent.width * (SystemStats.cachedKb + SystemStats.buffersKb) / parent.total
+                width: parent.width * (SystemStats.cachedKb + SystemStats.buffersKb) / strip.total
                 color: Theme.muted
             }
         }

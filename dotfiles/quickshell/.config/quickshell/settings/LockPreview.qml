@@ -7,11 +7,12 @@
 // writes the positions; hyprlock.conf has the field's).
 
 import Quickshell
+import Quickshell.Widgets
 import QtQuick
 import QtQuick.Effects
 import "../services"
 
-Item {
+ClippingRectangle {
     id: root
 
     // "wallpaper", "screenshot" or "plain"
@@ -29,7 +30,8 @@ Item {
     readonly property int clockPx: ({ small: 40, large: 64, huge: 110 })[size] || 64
 
     implicitHeight: width * 10 / 16
-    clip: true
+    radius: Theme.radiusInner
+    color: Theme.base
 
     // the background: the wallpaper, or a desktop standing in for the
     // screenshot hyprlock takes
@@ -52,11 +54,11 @@ Item {
             Rectangle { width: parent.width; height: 44 * root.k; color: Theme.bar }
             Rectangle {
                 x: 120 * root.k; y: 110 * root.k; width: 980 * root.k; height: 620 * root.k
-                color: Theme.panel; border.width: 1; border.color: Theme.muted; radius: 3
+                color: Theme.panel; border.width: 1; border.color: Theme.muted; radius: Theme.panelFrameRadius * root.k
             }
             Rectangle {
                 x: 1160 * root.k; y: 110 * root.k; width: 640 * root.k; height: 940 * root.k
-                color: Theme.panel; border.width: 1; border.color: Theme.muted; radius: 3
+                color: Theme.panel; border.width: 1; border.color: Theme.muted; radius: Theme.panelFrameRadius * root.k
             }
         }
     }
@@ -119,7 +121,7 @@ Item {
             y: 598
             width: 260
             height: 44
-            radius: Theme.radius * 2
+            radius: Theme.radius
             color: Theme.surface
             border.width: 2
             border.color: Theme.border

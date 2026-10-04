@@ -3,6 +3,7 @@
 //
 // Split out of shell.qml. Self-contained: only needs the Media singleton.
 
+import Quickshell.Widgets
 import QtQuick
 import "../services"
 
@@ -30,7 +31,7 @@ FlyoutPanel {
         width: parent.width
         height: artFrame.height
 
-        Rectangle {
+        ClippingRectangle {
             id: artFrame
             // takes the art's own shape, so album covers stay square and
             // video thumbnails 16:9; anything outside that range is cropped
@@ -42,12 +43,10 @@ FlyoutPanel {
             color: Theme.meterTrack
             border.width: Theme.borderWidth
             border.color: Theme.stroke
-            clip: true
 
             Image {
                 id: art
                 anchors.fill: parent
-                anchors.margins: 1
                 source: mediaFlyout.player ? mediaFlyout.player.trackArtUrl : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true

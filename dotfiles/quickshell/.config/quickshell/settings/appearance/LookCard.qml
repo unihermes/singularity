@@ -7,13 +7,14 @@
 // its palette, accent, corners, strokes and font.
 
 import Quickshell
+import Quickshell.Widgets
 import QtQuick
 import "../../services/Styles.js" as Styles
 import "../../services"
 import "../../flyouts"
 import ".."
 
-Rectangle {
+ClippingRectangle {
     id: pv
     required property var look
     readonly property var pal: look.palette
@@ -34,7 +35,6 @@ Rectangle {
 
     // the desktop behind it: the look's deepest ground
     color: pal.base
-    clip: true
 
     // bar
     Rectangle {

@@ -15,6 +15,7 @@
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Widgets
 import QtQuick
 import "../services"
 import "../flyouts"
@@ -241,7 +242,7 @@ SettingsPage {
     // A terminal as it will look: the wallpaper through the background at
     // the opacity, the prompt in the look's colours at the font size, and
     // the cursor's shape and blink.
-    Rectangle {
+    ClippingRectangle {
         id: term
         width: parent.width
         height: Theme.fit(150)
@@ -249,11 +250,9 @@ SettingsPage {
         color: "transparent"
         border.width: Theme.borderWidth
         border.color: Theme.frameStroke
-        clip: true
 
         Image {
             anchors.fill: parent
-            anchors.margins: Theme.borderWidth
             fillMode: Image.PreserveAspectCrop
             source: "file://" + page.home + "/.local/state/singularity/current-wallpaper"
             sourceSize.width: 640
@@ -261,7 +260,6 @@ SettingsPage {
         }
         Rectangle {
             anchors.fill: parent
-            anchors.margins: Theme.borderWidth
             color: Theme.base
             opacity: page.opacityShown
         }

@@ -3,20 +3,20 @@
 //
 
 import Quickshell
+import Quickshell.Widgets
 import QtQuick
 import "../../services"
 import "../../flyouts"
 import "../../bar"
 import ".."
 
-Rectangle {
+ClippingRectangle {
     id: lp
     readonly property real sc: 0.62
     width: parent ? parent.width : 0
     height: Math.round(stage.height * sc) + Theme.spaceL * 2
     radius: Theme.radiusInner
     color: Theme.base
-    clip: true
 
     Image {
         anchors.fill: parent

@@ -6,6 +6,7 @@
 // one chosen. The bar is drawn where it sits, since the popups clear it.
 
 import Quickshell
+import Quickshell.Widgets
 import QtQuick
 import "../services"
 
@@ -29,17 +30,15 @@ Item {
             : height - (barBottom ? barH : 0) - height * 0.04 - card.height
     }
 
-    Rectangle {
+    ClippingRectangle {
         anchors.fill: parent
-        radius: 3
+        radius: Theme.radiusSmall
         color: Theme.base
         border.width: 1
         border.color: Theme.border
-        clip: true
 
         Image {
             anchors.fill: parent
-            anchors.margins: 1
             source: "file://" + Quickshell.env("HOME") + "/.local/state/singularity/current-wallpaper"
             sourceSize.width: 320
             fillMode: Image.PreserveAspectCrop
@@ -48,9 +47,8 @@ Item {
         }
 
         Rectangle {
-            x: 1
-            y: root.barBottom ? root.height - root.barH - 1 : 1
-            width: parent.width - 2
+            y: root.barBottom ? parent.height - root.barH : 0
+            width: parent.width
             height: root.barH
             color: Theme.bar
         }
@@ -66,7 +64,7 @@ Item {
         y: root.cardY(hoverY)
         width: card.width
         height: card.height
-        radius: 2
+        radius: Math.min(Theme.radiusSmall, height / 4)
         color: "transparent"
         border.width: 1
         border.color: Theme.subtext
@@ -78,7 +76,7 @@ Item {
         height: Math.round(root.height * 0.17)
         x: root.cardX(root.posX)
         y: root.cardY(root.posY)
-        radius: 2
+        radius: Math.min(Theme.radiusSmall, height / 4)
         color: Theme.surface
         border.width: 1
         border.color: Theme.muted
