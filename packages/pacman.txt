@@ -69,6 +69,8 @@ iw
 pipewire
 pipewire-pulse
 wireplumber
+# realtime priority for the audio threads, so a busy CPU doesn't crackle
+rtkit
 pavucontrol
 # the chime when a timer runs out (quickshell/services/Timers.qml)
 sound-theme-freedesktop
