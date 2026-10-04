@@ -390,10 +390,13 @@ SettingsPage {
                         onPositionChanged: mouse => {
                             if (pressed) page.dragTo = page.ruleAt(mapToItem(rulesList, mouse.x, mouse.y).y)
                         }
+                        // reset before moving: the move rebuilds the list,
+                        // and this delegate with it
                         onReleased: {
-                            if (page.dragTo >= 0 && page.dragTo !== page.dragFrom) page.moveRule(page.dragFrom, page.dragTo)
+                            var from = page.dragFrom, to = page.dragTo
                             page.dragFrom = -1
                             page.dragTo = -1
+                            if (to >= 0 && to !== from) page.moveRule(from, to)
                         }
                         onCanceled: { page.dragFrom = -1; page.dragTo = -1 }
                     }

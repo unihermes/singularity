@@ -157,11 +157,13 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         // picked() first: closing collapses list.model right
-                        // away, tearing down this delegate -- calling it
-                        // after left `root` and `item` already gone, so the
-                        // pick silently never fired.
-                        if (!item.isCurrent) root.picked(item.modelData)
-                        root.dismissed()
+                        // away, tearing down this delegate, after which
+                        // `root` and `item` no longer resolve. A pick that
+                        // rebuilds the page does the same, so the menu is
+                        // held in a local first.
+                        var menu = root
+                        if (!item.isCurrent) menu.picked(item.modelData)
+                        menu.dismissed()
                     }
                 }
             }
