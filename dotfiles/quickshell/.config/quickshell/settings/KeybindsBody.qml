@@ -566,6 +566,20 @@ Column {
 
     // --- key capture -----------------------------------------------------
 
+    // While keys are being recorded or looked up, Hyprland sits in an empty
+    // submap, so a combo reaches this page instead of running its bind.
+    // Escape always gets out: the submap's one bind is non-consuming, so the
+    // page sees it too, and it works even if the shell has gone away.
+    readonly property bool holdingKeys: capturing || finding
+    readonly property string holdKeys: 'if not singularityCapture then '
+        + 'hl.define_submap("singularity-capture", function() '
+        + 'hl.bind("Escape", hl.dsp.submap("reset"), { non_consuming = true }) end) '
+        + 'singularityCapture = true end '
+        + 'hl.dispatch(hl.dsp.submap("singularity-capture"))'
+    readonly property string releaseKeys: 'hl.dispatch(hl.dsp.submap("reset"))'
+    onHoldingKeysChanged: Quickshell.execDetached(["hyprctl", "eval", holdingKeys ? holdKeys : releaseKeys])
+    Component.onDestruction: if (holdingKeys) Quickshell.execDetached(["hyprctl", "eval", releaseKeys])
+
     // the editor's sink takes the keys once it sees capturing go true
     function startCapture() {
         captureMods = ""
@@ -968,12 +982,18 @@ Column {
             }
         }
 
-        Component.onCompleted: Qt.callLater(() => {
-            if (root.capturing) captureSink.forceActiveFocus()
-            else if (root.editFocus === "keys") keysInput.forceFocus()
-            else if (root.editFocus === "cmd" && cmdInput.visible) cmdInput.forceFocus()
-            else descInput.forceFocus()
-        })
+        // a Timer rather than Qt.callLater: a save rebuilds the list, and an
+        // editor made and dropped in that rebuild takes its timer with it
+        Timer {
+            running: true
+            interval: 0
+            onTriggered: {
+                if (root.capturing) captureSink.forceActiveFocus()
+                else if (root.editFocus === "keys") keysInput.forceFocus()
+                else if (root.editFocus === "cmd" && cmdInput.visible) cmdInput.forceFocus()
+                else descInput.forceFocus()
+            }
+        }
     }
 
     // what a bind that can't be edited here runs, and why not
