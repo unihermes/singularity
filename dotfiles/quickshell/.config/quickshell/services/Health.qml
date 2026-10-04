@@ -106,7 +106,8 @@ Singleton {
             return
         }
         if (kind === "firmware") {
-            terminal(check.id, "fwupdmgr refresh; fwupdmgr update")
+            terminal(check.id, "rm -f \"${XDG_CACHE_HOME:-$HOME/.cache}/singularity/fwupd-updates\"; "
+                + "fwupdmgr refresh; fwupdmgr update")
             return
         }
         // the log kinds carry a path, which can hold a colon in principle

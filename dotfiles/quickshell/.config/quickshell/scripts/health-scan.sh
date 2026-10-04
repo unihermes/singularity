@@ -142,10 +142,23 @@ fi
 # Update that fwupdmgr refuses. A UEFI capsule is also staged on the EFI
 # system partition first, and a small ESP full of kernels fails that write
 # at the last step; that's checked here against the release's size.
+#
+# Asking starts fwupd if it isn't running, which takes seconds, so while it
+# isn't, its last answer is reused for up to six hours. The firmware repair
+# deletes that copy.
+fwcache=${XDG_CACHE_HOME:-$HOME/.cache}/singularity/fwupd-updates
 if command -v fwupdmgr &>/dev/null; then
-	out=$(timeout 20 fwupdmgr get-updates --json --no-unreported-check \
-		--no-metadata-check 2>/dev/null)
-	rc=$?
+	if ! systemctl -q is-active fwupd && [[ -n $(find "$fwcache" -mmin -360 2>/dev/null) ]]; then
+		{ read -r rc; out=$(cat); } < "$fwcache"
+	else
+		out=$(timeout 20 fwupdmgr get-updates --json --no-unreported-check \
+			--no-metadata-check 2>/dev/null)
+		rc=$?
+		if (( rc == 0 || rc == 2 )); then
+			mkdir -p "${fwcache%/*}"
+			printf '%s\n%s' "$rc" "$out" > "$fwcache"
+		fi
+	fi
 	if (( rc == 0 )) && command -v python3 &>/dev/null; then
 		# one line per device: name, current, newest, blocking problems,
 		# flags, the newest release's size in bytes
