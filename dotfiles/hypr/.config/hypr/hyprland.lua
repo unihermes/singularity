@@ -1013,12 +1013,19 @@ local fullscreenRules = {}
 -- from it, which share its class. So it only applies while none of the app's
 -- windows is open -- launching it, or opening a file in it from Thunar --
 -- or for a moment after a bind or the launcher runs something (markLaunch),
--- which covers a second Thunar window. Each record is { tag, rules, on }:
--- every window of the app carries the tag, so the open ones can be counted.
+-- which covers a second Thunar window. Each record is { tag, rules, held,
+-- on }: every window of the app carries the tag, so the open ones can be
+-- counted.
 --
--- Switching a rule back on re-applies its tags to every window it matches,
--- so a popup opened while it was off would leave monocle then. The open hook
--- below tags those popups "app-held", which the rules don't match.
+-- While an app rule is off, its "held" rules are on instead: the popup
+-- stays out of monocle, floating at the size it asked for, centred -- in
+-- dwindle it tiles as usual.
+--
+-- Switching a rule on re-applies its tags to every window it matches, so
+-- the open hook below tags each window "app-held" or "app-opened" for which
+-- side it opened on, and each side's rules don't match the other's windows.
+-- Its "monocle-exempt" is set there as a plain tag, since a held rule's
+-- goes when the rule is switched off.
 local appRules = {}
 
 -- A short tag name for an app rule's class, the same on every load: tags
@@ -1097,6 +1104,13 @@ do
             if app then
                 -- the fullscreen rule is switched by applyLayoutRules
                 app.rules = { applied, exemptRule or nil }
+                local heldMatch = { class = match.class, tag = "negative:app-opened" }
+                app.held = {
+                    hl.window_rule({ name = name .. "-held", match = heldMatch,
+                        tag = "-monocle", maximize = false, center = true, enabled = false }),
+                    hl.window_rule({ name = name .. "-held-exempt", match = heldMatch,
+                        tag = "+monocle-exempt", enabled = false }),
+                }
                 hl.window_rule({ name = name .. "-app", match = match, tag = "+" .. app.tag })
                 table.insert(appRules, app)
             end
@@ -1946,6 +1960,7 @@ local function syncAppRules(closing)
     for _, app in ipairs(appRules) do
         app.on = launchPending[app.tag] or not open[app.tag]
         for _, r in ipairs(app.rules) do r:set_enabled(app.on) end
+        for _, r in ipairs(app.held) do r:set_enabled(not app.on) end
     end
     applyLayoutRules()
 end
@@ -1971,9 +1986,9 @@ hl.on("window.open", function(win)
     if not win then return end
     for _, app in ipairs(appRules) do
         if hasTag(win, app.tag) then
-            if not app.on then
-                hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = "address:" .. win.address }))
-            end
+            local addr = "address:" .. win.address
+            hl.dispatch(hl.dsp.window.tag({ tag = app.on and "+app-opened" or "+app-held", window = addr }))
+            if not app.on then hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr })) end
             launchPending[app.tag] = nil
         end
     end
