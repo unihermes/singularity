@@ -1118,6 +1118,48 @@ do
     end
 end
 
+-- A window an app opens by itself -- a sign-in popup, a dialog -- comes up
+-- at the size it asked for, centred, rather than filling the screen in
+-- monocle: one from a process that already has a window, unless a bind or
+-- the launcher has just run something (markLaunch). Any app, rule or not.
+--
+-- Decided once per window, as it first shows up: window.active comes ahead
+-- of window.open for a window that takes focus, and these hooks are
+-- registered ahead of monocle's, which would fill it. Windows open before
+-- this load (a reload) are known already and left alone.
+local launchWaiting = false
+local knownWindows = {}
+for _, w in ipairs(hl.get_windows()) do knownWindows[w.address] = true end
+
+local function holdPopup(win)
+    if not win or knownWindows[win.address] then return end
+    knownWindows[win.address] = true
+    if win.class == "org.quickshell" or type(win.tags) ~= "table" then return end
+    local monocle = false
+    for _, t in ipairs(win.tags) do
+        if t == "monocle" or t == "monocle*" then monocle = true end
+    end
+    if not monocle then return end
+    if launchWaiting then
+        launchWaiting = false
+        return
+    end
+    for _, w in ipairs(hl.get_windows()) do
+        if w.pid == win.pid and w.address ~= win.address then
+            local addr = "address:" .. win.address
+            -- monocleRule's tag is a rule's, so it carries the *
+            hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
+            hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
+            hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = addr }))
+            hl.dispatch(hl.dsp.window.center({ window = addr }))
+            return
+        end
+    end
+end
+hl.on("window.active", function() holdPopup(hl.get_active_window()) end)
+hl.on("window.open", holdPopup)
+hl.on("window.close", function(win) if win then knownWindows[win.address] = nil end end)
+
 -- The global layout mode, toggled by SUPER+M. Kept in a runtime file so a
 -- reload (which the Appearance page does for most of its settings) doesn't
 -- drop a tiled session back into monocle with its windows still tiled --
@@ -1967,17 +2009,20 @@ end
 syncAppRules()
 
 -- A bind or the launcher just ran something: every app rule is on for the
--- next few seconds, or until that app's window opens. Global so Quickshell's
+-- next few seconds, or until that app's window opens, and the next window
+-- to open isn't taken for a popup (holdPopup). Global so Quickshell's
 -- launcher can call it through `hyprctl eval`.
 local launchGen = 0
 function markLaunch()
     launchGen = launchGen + 1
     local gen = launchGen
     for _, app in ipairs(appRules) do launchPending[app.tag] = true end
+    launchWaiting = true
     syncAppRules()
     hl.timer(function()
         if gen ~= launchGen then return end
         launchPending = {}
+        launchWaiting = false
         syncAppRules()
     end, { timeout = 4000, type = "oneshot" })
 end
