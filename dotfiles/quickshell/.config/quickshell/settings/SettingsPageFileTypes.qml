@@ -389,7 +389,7 @@ SettingsPage {
                 return ids
             }
             current: hr.shown
-            labelFor: id => id === hr.more ? "Other apps that can open it (" + hr.others.length + ")…" : page.appName(id)
+            labelFor: id => id === hr.more ? "More apps (" + hr.others.length + ")…" : page.appName(id)
             iconFor: id => id === hr.more ? "" : page.appIcon(id)
             placeholder: hr.chosen === "mixed" ? "Mixed" : "Choose an app"
             onPicked: id => {
