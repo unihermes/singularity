@@ -1131,7 +1131,7 @@ end
 -- Firefox-based browsers ignore the size a page asks for and open every
 -- popup at their default 1280x1040, so theirs are given one here.
 local POPUP_SIZES = {
-    floorp = { 960, 720 }, ["zen-browser"] = { 960, 720 }, firefox = { 960, 720 },
+    floorp = { 960, 720 }, zen = { 960, 720 }, firefox = { 960, 720 },
 }
 local launchWaiting = false
 local knownWindows = {}

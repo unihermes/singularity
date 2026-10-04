@@ -30,7 +30,7 @@
     "fullscreen": false,
     "pin": false,
     "label": "Browser sign-in popups",
-    "class": "^(zen-browser|firefox|floorp)$",
+    "class": "^(zen|zen-browser|firefox|floorp)$",
     "title": "about:blank",
     "regex": true,
     "size": "960 540"
