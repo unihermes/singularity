@@ -10,7 +10,7 @@
 # repair of its own -- if a check can't be fixed in one command, it says so by
 # leaving those fields empty.
 #
-#   status \t id \t label \t detail \t repairId \t repairLabel
+#   status \t id \t label \t detail \t repairId \t repairLabel [\t repairId \t repairLabel]...
 #
 # status is ok | warn | bad. Healthy rows are emitted too: a page that only
 # listed problems would say nothing at all on a working machine, which is
@@ -24,11 +24,14 @@
 #   relink                   the repo's link.sh, in a terminal
 #   pacdiff                  pacdiff, in a terminal
 #   firmware                 fwupdmgr refresh + update, in a terminal
-#   log:<path>               tail the file, in a terminal
+#   log:<path>               page through the shell log's issues, in a terminal
+#   log-fix:<path>           hand those lines to Claude Code in the repo, in a terminal
+#   log-dismiss:<path>       hide the lines there are now until new ones appear
 set -uo pipefail
 
 emit() {
-	printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "${5-}" "${6-}"
+	local IFS=$'\t'
+	printf '%s\n' "$*"
 }
 
 # --- enabled units that aren't running ---------------------------------------
@@ -309,7 +312,10 @@ log=$HOME/.cache/quickshell.log
 if [[ -r $log ]]; then
 	errs=$("$(dirname "$0")/shell-log-issues.sh" "$log" | wc -l)
 	if (( errs > 0 )); then
-		emit warn shell-log "Shell log" "$errs $( (( errs == 1 )) && echo line || echo lines) to read since the shell loaded" "log:$log" View
+		fix=()
+		command -v claude >/dev/null && fix=("log-fix:$log" "Fix with Claude")
+		emit warn shell-log "Shell log" "$errs $( (( errs == 1 )) && echo line || echo lines) to read since the shell loaded" \
+			"log:$log" View "log-dismiss:$log" Dismiss "${fix[@]}"
 	else
 		emit ok shell-log "Shell log" "Clean"
 	fi

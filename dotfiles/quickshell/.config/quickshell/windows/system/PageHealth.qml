@@ -50,6 +50,11 @@ SystemPage {
         return kind === "clean" || kind === "disable" ? c.repairLabel + "?" : ""
     }
 
+    // Fix with Claude runs in the repo, so it needs one
+    function moreFor(c) {
+        return c.more.filter(m => !m.id.startsWith("log-fix:") || Health.repoPath !== "")
+    }
+
     FlyoutHeading { text: "STATUS" }
 
     // the answer first: a tick or the count, when the checks ran, and the
@@ -92,13 +97,14 @@ SystemPage {
             label: modelData.label.charAt(0) === "/" ? "Disk " + modelData.label : modelData.label
             detail: modelData.detail
             repairLabel: modelData.repairLabel
+            more: page.moreFor(modelData)
             confirmText: page.confirmFor(modelData)
             busy: Health.busyRepair === modelData.id
             // relinking needs the repo the dotfiles came from; a config that
             // is a real file rather than a symlink has no repo to point at
             repairEnabled: Health.busyRepair === ""
                 && (modelData.repairId !== "relink" || Health.repoPath !== "")
-            onRepaired: Health.repair(modelData)
+            onRepaired: id => Health.repair(modelData, id)
         }
     }
 
@@ -120,11 +126,12 @@ SystemPage {
             detail: modelData.detail
             // a pass can still offer something (Clean up, Refresh)
             repairLabel: modelData.repairLabel
+            more: page.moreFor(modelData)
             confirmText: page.confirmFor(modelData)
             busy: Health.busyRepair === modelData.id
             repairEnabled: Health.busyRepair === ""
                 && (modelData.repairId !== "relink" || Health.repoPath !== "")
-            onRepaired: Health.repair(modelData)
+            onRepaired: id => Health.repair(modelData, id)
         }
     }
 

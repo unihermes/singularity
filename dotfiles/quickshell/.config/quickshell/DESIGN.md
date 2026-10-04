@@ -343,7 +343,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Health:** the same status card heads it (Check again on it), then TO
   LOOK AT (problems, worst first, each with its fix) and PASSING, each
   heading carrying its count and left out when empty. A fix that deletes
-  or switches something off (clean, disable) asks first.
+  or switches something off (clean, disable) asks first. A row can carry
+  more than one fix: Shell log offers View, Dismiss (hides the lines there
+  are now until new ones appear) and Fix with Claude (Claude Code in the
+  repo, handed those lines).
 - **Head cards:** a System page that has one answer opens on it in a
   `HeadCard` (glyph, the answer large, a line or two, the page's actions
   at its end), under a NOW or STATUS heading.

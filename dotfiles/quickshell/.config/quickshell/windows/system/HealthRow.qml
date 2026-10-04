@@ -2,7 +2,7 @@
 // ~/.config/quickshell/windows/system/HealthRow.qml
 //
 // One check on the Health page: a status dot, what was checked, what was
-// found under it, and -- when there is one -- the button that fixes it.
+// found under it, and -- when there are any -- the buttons that fix it.
 //
 // The dot carries the status on its own rather than colouring the label:
 // every other row in this window uses label colour for emphasis, and a red
@@ -22,12 +22,15 @@ Item {
     property string label: ""
     property string detail: ""
     property string repairLabel: ""
+    // further repairs, [{ id, label }], drawn after the first
+    property var more: []
     property bool busy: false
     property bool repairEnabled: true
     // a fix that removes something asks first, reading this
     property string confirmText: ""
 
-    signal repaired()
+    // id is "" for the first repair
+    signal repaired(string id)
 
     readonly property bool problem: status !== "ok"
     readonly property color tone: status === "bad" ? Theme.alert
@@ -53,7 +56,7 @@ Item {
     Column {
         anchors.left: dot.right
         anchors.leftMargin: Theme.spaceXl
-        anchors.right: fix.visible ? fix.left : parent.right
+        anchors.right: fixes.left
         anchors.rightMargin: Theme.spaceL
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
@@ -80,14 +83,29 @@ Item {
         }
     }
 
-    FlyoutChip {
-        id: fix
+    Row {
+        id: fixes
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        visible: root.repairLabel !== ""
-        text: root.repairLabel
-        confirmText: root.confirmText
-        enabled: root.repairEnabled && !root.busy
-        onClicked: root.repaired()
+        spacing: Theme.spaceS
+
+        FlyoutChip {
+            visible: root.repairLabel !== ""
+            text: root.repairLabel
+            confirmText: root.confirmText
+            enabled: root.repairEnabled && !root.busy
+            onClicked: root.repaired("")
+        }
+
+        Repeater {
+            model: root.more
+
+            FlyoutChip {
+                required property var modelData
+                text: modelData.label
+                enabled: root.repairEnabled && !root.busy
+                onClicked: root.repaired(modelData.id)
+            }
+        }
     }
 }

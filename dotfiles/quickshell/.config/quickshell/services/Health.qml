@@ -31,8 +31,9 @@ import QtQuick
 Singleton {
     id: root
 
-    // [{ status, id, label, detail, repairId, repairLabel }], in the order
-    // the script emitted them. "ok" rows are kept: a page listing only
+    // [{ status, id, label, detail, repairId, repairLabel, more }], in the
+    // order the script emitted them; more is any further [{ id, label }]
+    // repairs after the first. "ok" rows are kept: a page listing only
     // problems says nothing on a healthy machine, which looks the same as a
     // page that failed to run.
     property var checks: []
@@ -68,9 +69,11 @@ Singleton {
     // thing to offer.
     property string repoPath: ""
 
-    function repair(check) {
-        if (busyRepair !== "" || !check || !check.repairId) return
-        var parts = String(check.repairId).split(":")
+    // runs the check's first repair, or the one named by id
+    function repair(check, id) {
+        id = id || (check ? check.repairId : "")
+        if (busyRepair !== "" || !check || !id) return
+        var parts = String(id).split(":")
         var kind = parts[0]
 
         if (kind === "restart" || kind === "disable") {
@@ -106,13 +109,29 @@ Singleton {
             terminal(check.id, "fwupdmgr refresh; fwupdmgr update")
             return
         }
+        // the log kinds carry a path, which can hold a colon in principle
+        var issues = home + "/.config/quickshell/scripts/shell-log-issues.sh"
+        var path = "'" + parts.slice(1).join(":") + "'"
         if (kind === "log") {
-            // the id carries a path, which can hold a colon in principle
-            // the lines the row counted (shell-log-issues.sh), not the whole
-            // log of reloads around them; -R draws the log's colours, where plain
-            // less calls the file binary and quits
-            var path = "'" + parts.slice(1).join(":") + "'"
-            terminal(check.id, home + "/.config/quickshell/scripts/shell-log-issues.sh " + path + " | less -R +G")
+            // the lines the row counted, not the whole log of reloads around
+            // them; -R draws the log's colours, where plain less calls the
+            // file binary and quits
+            terminal(check.id, issues + " " + path + " | less -R +G")
+            return
+        }
+        if (kind === "log-dismiss") {
+            busyRepair = check.id
+            act.command = [issues, "--dismiss", parts.slice(1).join(":")]
+            act.running = true
+            return
+        }
+        if (kind === "log-fix") {
+            // Claude Code in the repo, handed the lines without their colours
+            if (repoPath === "") return
+            terminal(check.id, "cd '" + repoPath + "' && claude \"These warnings and errors are in the "
+                + "Quickshell log since the shell last loaded. Find their cause in "
+                + "dotfiles/quickshell/.config/quickshell and fix it:\n\n$(" + issues + " " + path
+                + " | sed 's/\\x1b\\[[0-9;]*m//g')\"")
         }
     }
 
@@ -164,7 +183,10 @@ Singleton {
                         detail: f[3],
                         repairId: f[4] || "",
                         repairLabel: f[5] || "",
+                        more: [],
                     }
+                    for (var j = 6; j + 1 < f.length; j += 2)
+                        row.more.push({ id: f[j], label: f[j + 1] })
                     // A unit can be both enabled-but-inactive and failed. The
                     // failed record is the one worth showing and is emitted
                     // second, so it replaces its twin rather than doubling it.
