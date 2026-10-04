@@ -332,8 +332,8 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Overview:** four cards (CPU, Memory, Temp, Battery), each with its
   last minute as a line over its level (`StatCard.history`; temperature
   drawn from 30 °C), then the network's minute as one slim strip with its
-  live rates. SystemStats samples its cheap per-second files from shell
-  start, so every graph opens full. Health is a card (the count or All
+  live rates. SystemStats samples only while the window is open, so the
+  graphs start empty and fill over the first minute. Health is a card (the count or All
   clear, when the checks ran, Run checks and Open Health) with rows only
   for what needs a look, each opening where it's fixed, and one quiet line
   for what's fine. Process CPU is a share of the whole machine with a

@@ -26,12 +26,9 @@
 // list (5s), `df` for the filesystems (30s), and one-off probes for the
 // temperature node and the battery's path.
 //
-// The cheap per-second reads (CPU, memory, load, temperature, disk and
-// network counters: files, no processes) run from shell start, so the
-// minute of history behind the Overview's graphs is there the moment the
-// window opens. Everything that shells out polls only while `active` is
-// true -- the window binds it to its own visibility. shell.qml reads
-// `history` to build this at startup.
+// Everything runs only while `active` is true -- the window binds it to its
+// own visibility -- so with the window shut nothing is sampled at all. The
+// graphs start empty on each open and fill over the next minute.
 
 pragma Singleton
 
@@ -144,8 +141,6 @@ Singleton {
     // the CPU package in °C, and the battery's percentage, for the cards
     property var tempHistory: []
     property var batHistory: []
-    // read by shell.qml so the singleton (and its sampling) starts with it
-    readonly property bool history: true
 
     // --- processes -------------------------------------------------------
 
@@ -413,13 +408,9 @@ Singleton {
         }
     }
 
-    property int tick: 0
     function sampleAll() {
         sampleCpu(); sampleMem(); sampleLoad(); sampleTemp()
         sampleDisk(); sampleNet(); sampleUptime()
-        // the 3 s timer reads the battery while the window is open; with
-        // it shut, every 30 s keeps the history's line honest
-        if (!active && tick++ % 30 === 0) sampleBattery()
         if (tempC >= 0) tempHistory = pushHistory(tempHistory, tempC)
         var cap = Number(bat.capacity)
         if (!isNaN(cap) && batFile.path !== "") batHistory = pushHistory(batHistory, cap / 100)
@@ -467,7 +458,7 @@ Singleton {
     Timer {
         interval: 1000
         repeat: true
-        running: true
+        running: root.active
         triggeredOnStart: true
         onTriggered: root.sampleAll()
     }
@@ -501,12 +492,18 @@ Singleton {
         onTriggered: if (!dfProc.running) dfProc.running = true
     }
 
-    // the per-second sampling never stops, so its baselines and history
-    // carry on; only what the slower timers fill is cleared, so a list
-    // from the last visit doesn't flash up before the first refresh
-    onActiveChanged: if (active) {
+    // Cleared on close, so the next open starts fresh: rates from new
+    // baselines rather than one averaged over the time it was shut, empty
+    // graphs, and no list from the last visit flashing up before the first
+    // refresh.
+    onActiveChanged: if (!active) {
         procs = []
         killPid = -1
+        cpuPrev = null; corePrev = []; netPrev = null; diskPrev = null
+        cpuHistory = []; memHistory = []; tempHistory = []; batHistory = []
+        diskReadHistory = []; diskWriteHistory = []; rxHistory = []; txHistory = []
+        cpu = 0; cores = []
+        diskRead = diskWrite = rxRate = txRate = -1
     }
 
     Component.onCompleted: {
