@@ -54,6 +54,15 @@
   ) !important;
 }
 
+/* tracker.gg's favicon is an SVG whose gradient animates forever, so with
+   its bookmark on the toolbar the whole window repaints every frame, even
+   with nothing else moving (over half a core). Its toolbar button draws a
+   still copy of the icon in its place; the site sets the animated one again
+   on every visit, so this can't be fixed in the favicon store. */
+#PlacesToolbarItems > .bookmark-item[image^="page-icon:https://tracker.gg/"] > .toolbarbutton-icon {
+  content: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='16' fill='%23E2263C'/><svg x='14' viewBox='0 0 68.65 23.441' width='96' fill='%23EFEFEF'><path d='M13.814,38.442H7.535V20.86H0V15H40.228a4.2,4.2,0,0,1,4.186,4.186v6.447a4.2,4.2,0,0,1-4.186,4.186H39.6l4.814,8.623H37.549l-5.065-8.916H28.967V24.209c3.1-.084,6.112.084,9.084-.084V20.86H27.628V38.442H21.349V20.86c-2.6.042-5.065-.042-7.535.084Z' transform='translate(0 -15)'/><path d='M115.279,38.442H109V15h7.954l8.791,13.479V15h6.279V38.442h-6.865l-9.879-14.526Z' transform='translate(-63.372 -15)'/></svg></svg>") !important;
+}
+
 /* WORKAROUND (Floorp 12.19.0) -- delete this whole block, down to the END
    marker, once Floorp fixes it.
 
