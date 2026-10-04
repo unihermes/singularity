@@ -115,9 +115,11 @@ Singleton {
         var path = "'" + parts.slice(1).join(":") + "'"
         if (kind === "log") {
             // the lines the row counted, not the whole log of reloads around
-            // them; -R draws the log's colours, where plain less calls the
-            // file binary and quits
-            terminal(check.id, issues + " " + path + " | less -R +G")
+            // them; paged from the end when they don't fit, where +G on a
+            // short text scrolls it off the screen; -R draws the colours
+            terminal(check.id, "out=$(" + issues + " " + path + "); "
+                + "if [ $(printf '%s\\n' \"$out\" | wc -l) -lt $(tput lines) ]; then printf '%s\\n' \"$out\"; "
+                + "else printf '%s\\n' \"$out\" | less -R +G; fi")
             return
         }
         if (kind === "log-dismiss") {
