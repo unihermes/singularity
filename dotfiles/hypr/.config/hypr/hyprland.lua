@@ -517,6 +517,21 @@ hl.gesture({
 
 local mod = "SUPER"
 
+-- A command run from a bind marks a launch first, so the window it opens
+-- gets its app's window rule even with another of the app's windows open
+-- (see markLaunch). Wrapped here rather than per bind so that binds keep the
+-- plain hl.dsp.exec_cmd("...") form the Keybinds window reads and writes.
+do
+    local execCmd = hl.dsp.exec_cmd
+    hl.dsp.exec_cmd = function(...)
+        local dispatcher = execCmd(...)
+        return function()
+            if markLaunch then markLaunch() end
+            hl.dispatch(dispatcher)
+        end
+    end
+end
+
 -- --- Launchers ---
 hl.bind("CTRL + SPACE",      hl.dsp.exec_cmd(menu))  -- Open app launcher
 hl.bind(mod .. " + Return",  hl.dsp.exec_cmd(terminal))  -- Open terminal
@@ -989,8 +1004,32 @@ local function literalRegex(text)
     return (text:gsub("[%.%^%$%*%+%?%(%)%[%]%{%}%|\\]", "\\%0"))
 end
 
--- The "fullscreen" entries' rules, which follow the layout like monocleRule.
+-- The "fullscreen" entries' rules, which follow the layout like monocleRule:
+-- { rule, app } with app the entry's appRules record, if it has one.
 local fullscreenRules = {}
+
+-- An entry that names a class and no title is an app rule: it's meant for
+-- the window you open, not for the sign-in popups and dialogs the app opens
+-- from it, which share its class. So it only applies while none of the app's
+-- windows is open -- launching it, or opening a file in it from Thunar --
+-- or for a moment after a bind or the launcher runs something (markLaunch),
+-- which covers a second Thunar window. Each record is { tag, rules, on }:
+-- every window of the app carries the tag, so the open ones can be counted.
+--
+-- Switching a rule back on re-applies its tags to every window it matches,
+-- so a popup opened while it was off would leave monocle then. The open hook
+-- below tags those popups "app-held", which the rules don't match.
+local appRules = {}
+
+-- A short tag name for an app rule's class, the same on every load: tags
+-- outlive a reload, and the entry's position in the file can change.
+local function classTag(class)
+    local h = 5381
+    for c in class:gmatch(".") do
+        h = (h * 33 + c:byte()) % 4294967296
+    end
+    return string.format("app-%08x", h)
+end
 
 do
     local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/window-rules.json")
@@ -1019,6 +1058,12 @@ do
             local name = "settings-rule-" .. n
             local rule = { name = name, match = match }
             local exempt = r.float or r.pin or r.fullscreen
+            local app = not match.title and { tag = classTag(match.class), rules = {}, on = true } or nil
+            local appMatch = match
+            if app then
+                appMatch = { class = match.class, tag = "negative:app-held" }
+                rule.match = appMatch
+            end
             -- Floating, pinned and fullscreen windows all leave monocle: its
             -- open hook would otherwise resize them to fill the screen a
             -- moment after this rule put them where they belong.
@@ -1036,19 +1081,24 @@ do
             if r.pin then rule.pin = true end
             local ws = tonumber(r.workspace)
             if ws and ws >= 1 and ws <= MAX_WORKSPACES then rule.workspace = tostring(math.floor(ws)) end
-            hl.window_rule(rule)
+            local applied = hl.window_rule(rule)
             -- Its own rule so applyLayoutRules can switch it off in dwindle,
             -- where every window opens tiled (see keepNewWindowTiled).
             if r.fullscreen then
-                table.insert(fullscreenRules,
-                    hl.window_rule({ name = name .. "-fullscreen", match = match, fullscreen = true }))
+                table.insert(fullscreenRules, { app = app,
+                    rule = hl.window_rule({ name = name .. "-fullscreen", match = appMatch, fullscreen = true }) })
             end
             -- A second rule, because one rule carries one tag: this marks the
             -- window as exempt for SUPER+M's sweep (toggleLayout), which has
             -- to decide about windows that were already open without being
             -- able to ask which rules matched them.
-            if exempt then
-                hl.window_rule({ name = name .. "-exempt", match = match, tag = "+monocle-exempt" })
+            local exemptRule = exempt
+                and hl.window_rule({ name = name .. "-exempt", match = appMatch, tag = "+monocle-exempt" })
+            if app then
+                -- the fullscreen rule is switched by applyLayoutRules
+                app.rules = { applied, exemptRule or nil }
+                hl.window_rule({ name = name .. "-app", match = match, tag = "+" .. app.tag })
+                table.insert(appRules, app)
             end
         end
     end
@@ -1868,7 +1918,7 @@ local function applyLayoutRules(announce)
     if ws and ws.special then return end
     local on = monocleOn(ws)
     monocleRule:set_enabled(on)
-    for _, rule in ipairs(fullscreenRules) do rule:set_enabled(on) end
+    for _, f in ipairs(fullscreenRules) do f.rule:set_enabled(on and (not f.app or f.app.on)) end
     if announce or (rulesMonocle ~= nil and rulesMonocle ~= on) then
         hl.exec_cmd("qs ipc call layout set " .. (on and "monocle" or "dwindle"))
     end
@@ -1878,6 +1928,58 @@ applyLayoutRules()
 -- wrapped: the event handler is called with the workspace, and anything
 -- truthy in that first argument would toast on every workspace change
 hl.on("workspace.active", function() applyLayoutRules() end)
+
+-- The app rules' switch (see appRules): on while none of the app's windows
+-- is open, or while a launch is pending. `closing` is a window that's on its
+-- way out but still listed.
+local launchPending = {}
+local function syncAppRules(closing)
+    if #appRules == 0 then return end
+    local open = {}
+    for _, w in ipairs(hl.get_windows()) do
+        if w.address ~= closing then
+            for _, app in ipairs(appRules) do
+                if hasTag(w, app.tag) then open[app.tag] = true end
+            end
+        end
+    end
+    for _, app in ipairs(appRules) do
+        app.on = launchPending[app.tag] or not open[app.tag]
+        for _, r in ipairs(app.rules) do r:set_enabled(app.on) end
+    end
+    applyLayoutRules()
+end
+syncAppRules()
+
+-- A bind or the launcher just ran something: every app rule is on for the
+-- next few seconds, or until that app's window opens. Global so Quickshell's
+-- launcher can call it through `hyprctl eval`.
+local launchGen = 0
+function markLaunch()
+    launchGen = launchGen + 1
+    local gen = launchGen
+    for _, app in ipairs(appRules) do launchPending[app.tag] = true end
+    syncAppRules()
+    hl.timer(function()
+        if gen ~= launchGen then return end
+        launchPending = {}
+        syncAppRules()
+    end, { timeout = 4000, type = "oneshot" })
+end
+
+hl.on("window.open", function(win)
+    if not win then return end
+    for _, app in ipairs(appRules) do
+        if hasTag(win, app.tag) then
+            if not app.on then
+                hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = "address:" .. win.address }))
+            end
+            launchPending[app.tag] = nil
+        end
+    end
+    syncAppRules()
+end)
+hl.on("window.close", function(win) syncAppRules(win and win.address) end)
 
 -- SUPER+M: monocle or dwindle everywhere that isn't pinned. The rules only
 -- act at map time, so the windows already open on the workspace are

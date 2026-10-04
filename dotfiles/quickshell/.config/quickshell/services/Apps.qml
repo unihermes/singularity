@@ -80,6 +80,10 @@ Singleton {
         counts = next
         usageFile.setText(JSON.stringify(next))
 
+        // So the window gets its app's window rule even with another of the
+        // app's windows open (hyprland.lua's markLaunch).
+        Quickshell.execDetached(["hyprctl", "eval", "markLaunch()"])
+
         // execute() runs the Exec line as-is, which for a terminal
         // app (htop, nvim) means a process with no terminal to draw
         // in -- it starts and dies unseen. Those get wrapped.
