@@ -83,16 +83,19 @@ Singleton {
 
     Process {
         id: probe
+        // the user units follow a "--user" line
         command: ["sh", "-c",
-            "systemctl --failed --plain --no-legend 2>/dev/null | awk '{print \"system \" $1}'; "
-            + "systemctl --user --failed --plain --no-legend 2>/dev/null | awk '{print \"user \" $1}'"]
+            "systemctl --failed --plain --no-legend 2>/dev/null; echo --user; "
+            + "systemctl --user --failed --plain --no-legend 2>/dev/null"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var out = []
-                var lines = text.trim().split("\n")
+                var user = false
+                var lines = text.split("\n")
                 for (var i = 0; i < lines.length; i++) {
-                    var f = lines[i].trim().split(" ")
-                    if (f.length === 2 && f[1] !== "") out.push({ name: f[1], user: f[0] === "user" })
+                    var name = lines[i].trim().split(/\s+/)[0]
+                    if (name === "--user") user = true
+                    else if (name !== "") out.push({ name: name, user: user })
                 }
                 root.notifyNew(out)
                 root.units = out
