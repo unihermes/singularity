@@ -121,6 +121,8 @@ Singleton {
     readonly property color meterFill:     Settings.levelColour === "good" ? good
         : Settings.levelColour === "text" ? text : accent
     readonly property color gaugeFill:     meterFill
+    // text on a level-colour fill, chosen as textOnAccent is
+    readonly property color textOnMeter: 0.299 * meterFill.r + 0.587 * meterFill.g + 0.114 * meterFill.b > 0.65 ? "#111111" : "#ffffff"
     // the dimming behind full-screen overlays
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // Flyouts', windows' and cards' ground, and the bar's: See-through, and

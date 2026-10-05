@@ -191,7 +191,7 @@ FlyoutPanel {
                     Text {
                         anchors.centerIn: parent
                         text: cell.day.getDate()
-                        color: cell.isToday ? Theme.base : cell.inMonth ? Theme.text : Theme.muted
+                        color: cell.isToday ? Theme.textOnMeter : cell.inMonth ? Theme.text : Theme.muted
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontBody
                         font.weight: cell.isToday ? Theme.weightStrong : Theme.weightBody
