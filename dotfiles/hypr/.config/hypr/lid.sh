@@ -8,13 +8,13 @@
 # back on and calls all of that off; left untouched, the screen goes off
 # again open_hold later.
 #
-#   lid.sh event    from hyprland.lua's lid-switch binds, on open and close
+#   lid.sh event    from binds.lua's lid-switch binds, on open and close
 #   lid.sh sleep    from hypridle's before_sleep_cmd, before every suspend
 #   lid.sh resume   from hypridle's after_sleep_cmd, after every wake-up
 #   lid.sh fire     from the suspend timer this script arms
-#   lid.sh displays from hyprland.lua, whenever a display comes or goes
+#   lid.sh displays from displays.lua, whenever a display comes or goes
 #
-# logind would suspend the moment the lid shuts, so hyprland.lua holds its
+# logind would suspend the moment the lid shuts, so autostart.lua holds its
 # lid-switch inhibitor and this handles the lid instead.
 #
 # Why each piece is shaped the way it is:
@@ -45,7 +45,7 @@
 #   Without hibernation set up (link.sh only), it's plain suspend as before.
 # - Blanking the panel means holding misc:key_press_enables_dpms and
 #   mouse_move_enables_dpms off for as long as the lid is shut. They are on
-#   in hyprland.lua so that any key or mouse movement wakes a wrongly-blanked
+#   in looks.lua so that any key or mouse movement wakes a wrongly-blanked
 #   screen -- but the act of closing the lid presses the keyboard and the
 #   touchpad against it, and those events land after the debounce and turn
 #   the panel straight back on, so a first close often didn't stay dark.
@@ -72,7 +72,7 @@
 # - With an external monitor connected the laptop is docked: closing the lid
 #   switches the built-in panel off altogether, so its workspaces move to
 #   the other displays and the cursor can't wander onto it, and nothing
-#   suspends. The panel's name goes in $docked_file and hyprland.lua, on the
+#   suspends. The panel's name goes in $docked_file and displays.lua, on the
 #   reload that follows, disables it; opening the lid removes the file and
 #   reloads again, and the panel comes back with its own rule. A display
 #   plugged in or pulled out with the lid shut is handled the same way
@@ -319,7 +319,7 @@ bare_displays() {
         END { for (n in seen) if (!seen[n]) print n }'
 }
 
-# Switch the panel off (or back on) through hyprland.lua; a no-op when it
+# Switch the panel off (or back on) through displays.lua; a no-op when it
 # already is, which is what keeps the displays hook the reload sets off from
 # going round again.
 panel_off() {
@@ -411,7 +411,7 @@ displays)
     # When a display comes or goes Hyprland slides the others into new
     # places, but leaves layer surfaces -- the bar, the wallpaper -- where
     # the displays used to be: the bar floats mid-screen or off it. See
-    # singularityNudgeDisplays() in hyprland.lua. The displays can still be
+    # singularityNudgeDisplays() in displays.lua. The displays can still be
     # settling (the panel coming back takes a moment), so check and go again.
     for _ in 1 2 3; do
         hyprctl eval 'singularityNudgeDisplays()' >/dev/null

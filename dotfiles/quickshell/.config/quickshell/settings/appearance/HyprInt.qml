@@ -23,8 +23,8 @@ SettingsField {
     // gaps can be a "top,right,bottom,left" string; that stays hand-edited
     readonly property bool live: field.editable && typeof field.value === "number"
 
-    hint: !field.editable ? "Not a plain value in hyprland.lua"
-        : !live ? "Set per side in hyprland.lua (" + field.value + ")" : note
+    hint: !field.editable ? "Not a plain value in looks.lua"
+        : !live ? "Set per side in looks.lua (" + field.value + ")" : note
 
     FlyoutStepper {
         anchors.right: parent.right

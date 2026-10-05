@@ -3,7 +3,7 @@
 //
 // The Keybinds editor, one list:
 //
-//   every hl.bind() in hyprland.lua, grouped by the config's
+//   every hl.bind() in binds.lua, grouped by the config's
 //   `-- --- Section ---` markers, one line each; a bind opens in place to
 //   edit it (or, for the few too tangled to rewrite, to what it runs and
 //   why), and each group ends with Add a bind…
@@ -48,9 +48,9 @@ Column {
     // the SettingsPage this sits on, for its toast
     required property var page
 
-    readonly property string confPath: HyprLuaWrite.confPath
+    readonly property string confPath: HyprLuaWrite.bindsPath
     readonly property string home: Quickshell.env("HOME")
-    // "~/.config/hypr/hyprland.lua" reads better than the absolute path
+    // "~/.config/hypr/binds.lua" reads better than the absolute path
     readonly property string shortConfPath: confPath.indexOf(home) === 0
         ? "~" + confPath.slice(home.length) : confPath
 
@@ -128,7 +128,7 @@ Column {
         model = HyprBinds.parse(text)
         if (fromDisk && (editMode !== "" || openRow)) {
             closeEditor()
-            say("hyprland.lua changed on disk, editor closed", true)
+            say("binds.lua changed on disk, editor closed", true)
         }
     }
 
@@ -519,7 +519,7 @@ Column {
         luaFile.reload()
         if (luaFile.text() !== model.src) {
             reparse(true)
-            say("hyprland.lua changed on disk since it was read; nothing written", true)
+            say("binds.lua changed on disk since it was read; nothing written", true)
             return
         }
         if (newText === model.src) { closeEditor(); return }
@@ -533,7 +533,7 @@ Column {
         luaFile.reload()
         if (luaFile.text() !== lastWritten) {
             lastWritten = ""
-            say("hyprland.lua has changed since the last write; not undoing over it", true)
+            say("binds.lua has changed since the last write; not undoing over it", true)
             return
         }
         pendingMessage = "Undone"
@@ -554,7 +554,7 @@ Column {
         }
         if (status !== "ok") {
             lastWritten = ""
-            say("Couldn't write hyprland.lua" + (detail ? ": " + detail.split("\n")[0] : ""), true)
+            say("Couldn't write binds.lua" + (detail ? ": " + detail.split("\n")[0] : ""), true)
             return
         }
         closeEditor()

@@ -4,7 +4,7 @@
 # A desktop environment is what normally runs ~/.config/autostart at login;
 # Hyprland doesn't, so an .desktop file dropped there by an application -- or
 # by Settings > Startup -- did nothing at all on this machine. This is the
-# piece that makes those entries mean something. hyprland.lua runs `run` once
+# piece that makes those entries mean something. autostart.lua runs `run` once
 # per session; Settings reads `list` and writes the files.
 #
 # It deliberately differs from the XDG spec in one way. The spec says an entry

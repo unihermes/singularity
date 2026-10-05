@@ -49,7 +49,7 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **Settings for everything.** Displays, input, power and idle, the lock
   screen, window rules, keybinds, notifications, audio, Bluetooth, Wi-Fi,
   startup apps, file types, updates. Every page writes the real config file
-  (hyprland.lua, hypridle.conf, lid.sh, mimeapps.list, …) in place.
+  (binds.lua, hypridle.conf, lid.sh, mimeapps.list, …) in place.
 - **One-command install, safe to rerun.** Every step is idempotent, and
   configs you already had are backed up rather than overwritten.
 - **Fast, quiet boot** on the XPS 13 it was built on, with the reasons for
@@ -241,7 +241,7 @@ Anything the shell saves (settings, display rules, input and window
 settings, the wallpaper, the generated colour files) lives in
 `~/.local/state/singularity/`, never in the repo. Deleting it resets the
 shell to its defaults. The one exception is the Keybinds editor, which
-edits `hyprland.lua` itself so binds can be committed.
+edits `~/.config/hypr/binds.lua` itself so binds can be committed.
 
 For anything the GUI doesn't cover, put Lua in
 `~/.local/state/singularity/custom.lua`. `hyprland.lua` runs it last, so it
@@ -275,7 +275,7 @@ singularity/
     │   ├── windows/        # Settings, System, Keybinds and Notes windows
     │   ├── services/       # singletons: Theme, Settings, Network, Audio, …
     │   └── scripts/        # helpers the shell runs
-    ├── hypr/               # hyprland.lua, hypridle, hyprlock, lid.sh, helpers
+    ├── hypr/               # hyprland.lua and its modules, hypridle, hyprlock, lid.sh, helpers
     ├── singularity/        # default window rules, autostart, clean, diagnose, settings-bundle
     ├── systemd/            # Bluetooth agent and power restore, WirePlumber drop-in
     ├── nvim/  alacritty/  starship/  fastfetch/  zathura/  floorp/
@@ -297,7 +297,7 @@ runs, for whatever is staged:
 |---|---|
 | `tools/check-settings-index.py` | A Settings field that search can't find, or a search entry for a field that's gone |
 | `tools/check-unused.py` | Files, functions, properties and signals nothing reads |
-| `node --test tools/test-js.mjs` | Regressions in the plain-JS modules: the calculator, time windows, formats, Style resolution, the channel outline, and the readers/writers of `hyprland.lua` |
+| `node --test tools/test-js.mjs` | Regressions in the plain-JS modules: the calculator, time windows, formats, Style resolution, the channel outline, and the readers/writers of the Hyprland modules |
 
 GitHub Actions runs all three on every push, plus `bash -n` on every script
 and `luac -p` on every Lua file.

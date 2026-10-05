@@ -290,7 +290,7 @@ SettingsPage {
             },
             refusal: "hypridle.conf changed on disk; nothing written",
             // whichever way it was started -- the unit, or the bare fallback
-            // hyprland.lua uses when the unit won't start
+            // autostart.lua uses when the unit won't start
             after: "pkill -x hypridle; "
                 + "systemctl --user reset-failed hypridle.service 2>/dev/null; "
                 + "systemctl --user restart hypridle.service 2>/dev/null || setsid -f hypridle >/dev/null 2>&1",

@@ -16,7 +16,7 @@ SettingsField {
     property string key: ""
     readonly property var field: page.hyprField(path, key)
 
-    hint: field.editable ? note : "Not a plain value in hyprland.lua"
+    hint: field.editable ? note : "Not a plain value in looks.lua"
     property string note: ""
 
     Switch {

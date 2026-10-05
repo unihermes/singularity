@@ -11,7 +11,7 @@
 // show up as changes to commit.
 //
 //   wofi.css    -- wofi's own stylesheet, rewritten. wofi parses CSS from a
-//                  string, so it can't @import anything; hyprland.lua
+//                  string, so it can't @import anything; binds.lua
 //                  launches it with --style pointed here. Every hex from the
 //                  reference look's ramp (Looks.reference -- the one the
 //                  template is written in) becomes the current colour for
@@ -60,7 +60,7 @@
 //                  Qt/GTK4 apps). GTK3's theme is adw-gtk3, libadwaita's look
 //                  ported to GTK3 with its colours left as named ones, so GTK3
 //                  and GTK4 apps draw the same widgets in the same colours.
-//   qt6ct.conf  -- Qt apps (QT_QPA_PLATFORMTHEME=qt6ct, hyprland.lua) have no
+//   qt6ct.conf  -- Qt apps (QT_QPA_PLATFORMTHEME=qt6ct, env.lua) have no
 //                  live dconf-style path, so this is a real file, read at each
 //                  Qt app's next launch: Fusion, the palette above, the icon
 //                  theme and the system font.
@@ -826,7 +826,7 @@ Scope {
 
     // The window animation style and the border colours (the accent for the
     // focused window, the ramp's border for the rest): state files
-    // hyprland.lua reads on load, then a config-only reload.
+    // shared.lua reads on load, then a config-only reload.
     function writeWindowAnim(reload) {
         var style = Settings.windowAnim
         AtomicFileWrite.write({
@@ -855,7 +855,7 @@ Scope {
         })
     }
 
-    // The tab bar over hyprland.lua's grouped windows, always in the look's
+    // The tab bar over Hyprland's grouped windows (looks.lua), always in the look's
     // colours: the lit tab like a selected row with an accent line over it,
     // the rest like the bar.
     function writeGroupbar(reload) {
@@ -903,7 +903,7 @@ Scope {
     }
 
     // How much of the screen's top edge the bar takes (0 when it sits at the
-    // bottom), for hyprland.lua's rule that opens the sticky notes clear of
+    // bottom), for windows.lua's rule that opens the sticky notes clear of
     // it. A rule can't read the reserved space itself.
     function writeBarTop(reload) {
         var top = Theme.barPosition === "top" ? Theme.barExtent : 0

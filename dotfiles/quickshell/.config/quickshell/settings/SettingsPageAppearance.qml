@@ -23,7 +23,7 @@
 // Two stores behind it. The shell's own look is Settings.qml, the same
 // values the Control Centre edits, so the two always agree and a change
 // here applies the moment it's made. The Windows tab is the `general` and
-// `decoration` tables in hyprland.lua; its changes go to the state
+// `decoration` tables in looks.lua; its changes go to the state
 // directory's hyprland.json, as the Input page's do, then a reload.
 //
 // Each tab is its own file in appearance/, as are the pieces they share;
@@ -120,7 +120,7 @@ SettingsPage {
 
     SystemTab { id: tab_system; page: page }
 
-    // --- windows: reading and writing hyprland.lua ---------------------------
+    // --- windows: looks.lua, and hyprland.json over it ------------------------
 
     // { "general": {key: {editable, value}}, "decoration.blur": ... }, a
     // table being null when the file doesn't have it
@@ -152,7 +152,7 @@ SettingsPage {
         var out = {}
         tablePaths.forEach(p => out[p.join(".")] = src === "" ? null : HyprTables.readConfig(src, p))
         conf = out
-        if (src === "") say("Couldn't read " + HyprLuaWrite.confPath, true)
+        if (src === "") say("Couldn't read " + HyprLuaWrite.looksPath, true)
     }
 
     function setHypr(path, key, v, message) {
@@ -168,7 +168,7 @@ SettingsPage {
 
     FileView {
         id: luaFile
-        path: HyprLuaWrite.confPath
+        path: HyprLuaWrite.looksPath
         blockLoading: true
         watchChanges: true
         printErrors: false

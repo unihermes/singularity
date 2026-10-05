@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/HyprLuaWrite.qml
 //
-// The one write path into hyprland.lua, used by the Keybinds editor, and into
-// the per-machine files hyprland.lua loads from the state directory:
+// The one write path into binds.lua, used by the Keybinds editor, and into
+// the per-machine files the Hyprland config loads from the state directory:
 // monitors.lua, the Display page's hl.monitor() rules, and hyprland.json,
 // the hl.config tables the Input and Appearance pages change. Those two stay
 // out of the repo; binds are meant to be committed.
@@ -19,7 +19,7 @@
 // `hyprctl configerrors`, so a value Hyprland rejects is reported rather than
 // silently doing nothing. Undo puts the backup back.
 //
-// write() takes a whole new hyprland.lua and leaves the staleness check to
+// write() takes a whole new binds.lua and leaves the staleness check to
 // the caller (Keybinds, whose edits are offsets into the text it parsed).
 // setLocal() sets fields by name in hyprland.json as it is on disk when the
 // write runs, then reloads the same way.
@@ -37,15 +37,21 @@ Singleton {
     id: root
 
     readonly property string home: Quickshell.env("HOME")
-    readonly property string confPath: home + "/.config/hypr/hyprland.lua"
-    readonly property string backupPath: Settings.stateDir + "/hyprland.lua.bak"
+    // hyprland.lua only runs these modules, one per part of the config; the
+    // pages read the plain fields of the tables in input, looks and displays
+    readonly property string hyprDir: home + "/.config/hypr/"
+    readonly property string bindsPath: hyprDir + "binds.lua"
+    readonly property string inputPath: hyprDir + "input.lua"
+    readonly property string looksPath: hyprDir + "looks.lua"
+    readonly property string displaysPath: hyprDir + "displays.lua"
+    readonly property string backupPath: Settings.stateDir + "/binds.lua.bak"
     readonly property string monitorsPath: Settings.stateDir + "/monitors.lua"
     readonly property string localPath: Settings.stateDir + "/hyprland.json"
 
     // hyprland.json parsed: { input: { follow_mouse: 2, touchpad: {…} }, … }
     property var overrides: ({})
 
-    // hyprland.lua writes queued or running; pages hold off re-reading the
+    // binds.lua and monitors.lua writes queued or running; pages hold off re-reading the
     // file on change notifications while their own write lands
     property int pending: 0
     readonly property bool busy: pending > 0
@@ -56,7 +62,7 @@ Singleton {
     function enqueue(transform, backup, done, path) {
         pending++
         AtomicFileWrite.write({
-            path: path || confPath,
+            path: path || bindsPath,
             transform: transform,
             check: "lua",
             backup: backup ? (path ? path + ".bak" : backupPath) : "",

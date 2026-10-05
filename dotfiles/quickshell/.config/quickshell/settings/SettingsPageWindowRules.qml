@@ -9,7 +9,7 @@
 // ships (volume control, Thunar, file dialogs, picture-in-picture...) from
 // ~/.config/singularity/window-rules.defaults.json; the first change copies
 // them into the state file with it, and from then on they are rules like any
-// other. hyprland.lua reads the same file, with the same fallback, on every
+// other. windows.lua reads the same file, with the same fallback, on every
 // load and turns each entry into hl.window_rule() calls placed after its own
 // rules; every change here writes the file and reloads Hyprland. Rules apply to windows as they
 // open -- ones already open keep what they had until they are reopened.
@@ -50,7 +50,7 @@ SettingsPage {
     }))
 
     // a floating window's size: natural, presets in pixels, and shares of
-    // the screen ("60% 60%", which hyprland.lua turns into monitor_w*0.6)
+    // the screen ("60% 60%", which windows.lua turns into monitor_w*0.6)
     readonly property var sizes: ["", "640 400", "800 500", "960 540", "1240 690", "1440 900", "1600 900",
         "50% 50%", "60% 60%", "80% 80%"]
     function validSize(v) { return /^\d+%? \d+%?$/.test(v || "") }
@@ -85,7 +85,7 @@ SettingsPage {
     property bool adding: false
 
     // Workspaces pinned to one layout whatever SUPER+M says, as
-    // { "1": "monocle", "3": "dwindle" }. hyprland.lua reads the file on
+    // { "1": "monocle", "3": "dwindle" }. windows.lua reads the file on
     // load; a workspace not listed follows SUPER+M.
     readonly property string layoutsPath: Settings.stateDir + "/workspace-layouts.json"
     property var layouts: ({})
@@ -146,7 +146,7 @@ SettingsPage {
     }
 
     // A rule naming no class never reaches Quickshell's own windows --
-    // hyprland.lua adds that exclusion -- so it isn't counted here either.
+    // windows.lua adds that exclusion -- so it isn't counted here either.
     function openCount(rule) {
         return openWindows.filter(w => (rule.class || w.class !== "org.quickshell")
             && fieldMatches(rule.class, rule.regex, w.class)

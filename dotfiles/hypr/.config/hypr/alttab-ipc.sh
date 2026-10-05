@@ -2,7 +2,7 @@
 # Sends one call to the "alttab" IPC target: `alttab-ipc.sh <function> [arg]`.
 #
 # Prefers alttab-relay (alttab-relay.cpp, started alongside quickshell in
-# hyprland.lua) over `qs ipc call` -- see that file for why: `qs` is ~45ms of
+# autostart.lua) over `qs ipc call` -- see that file for why: `qs` is ~45ms of
 # process-spawn overhead on its own, which alone can be longer than a fast
 # ALT+Tab tap-and-release takes start to finish. Falls back to `qs` when the
 # relay isn't reachable, so alt-tab still works (just slower) if the relay

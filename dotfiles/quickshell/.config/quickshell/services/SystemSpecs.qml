@@ -255,7 +255,7 @@ Singleton {
     }
 
     // Keyboards, mice and touchpads as Hyprland sees them -- the names here
-    // are the ones a device rule in hyprland.lua has to match, which is the
+    // are the ones a device rule in input.lua has to match, which is the
     // reason to show them at all.
     Process {
         id: inputsProc

@@ -6,7 +6,7 @@
 // What's listed comes from Hyprland (`hyprctl monitors -j`, as System does);
 // what's changed is the rule in monitors.lua in the state directory, followed
 // by a reload, which is what applies it. Until the first change there is no
-// monitors.lua, and hyprland.lua's own catch-all rule is the one in force. A
+// monitors.lua, and displays.lua's own catch-all rule is the one in force. A
 // display with a rule of its own has that rule edited. A display that only
 // matches the catch-all `output = ""` rule gets a rule of its own, copied
 // from the catch-all, so a change to one display never reaches the others.
@@ -76,7 +76,7 @@ SettingsPage {
         monitorsProc.running = true
     }
 
-    // What monitors.lua starts from: hyprland.lua's default rule, which is
+    // What monitors.lua starts from: displays.lua's default rule, which is
     // what applies while the file doesn't exist.
     function seed() {
         confFile.reload()
@@ -345,7 +345,7 @@ SettingsPage {
 
     FileView {
         id: confFile
-        path: HyprLuaWrite.confPath
+        path: HyprLuaWrite.displaysPath
         blockLoading: true
         printErrors: false
     }
@@ -437,7 +437,7 @@ SettingsPage {
         }
     }
 
-    // singularityResetWorkspaces() lives in hyprland.lua; anything it
+    // singularityResetWorkspaces() lives in displays.lua; anything it
     // prints means the eval failed.
     Process {
         id: resetProc

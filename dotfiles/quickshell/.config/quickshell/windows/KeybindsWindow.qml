@@ -7,7 +7,7 @@
 // the page's toast -- so the two are one editor in two places.
 //
 // The ground and Escape come from WindowChrome.qml; floating and centring
-// from the "quickshell-windows" rule in hyprland.lua, as for Settings.
+// from the "quickshell-windows" rule in windows.lua, as for Settings.
 
 import Quickshell
 import QtQuick
@@ -51,7 +51,7 @@ FloatingWindow {
         window: root
         eyebrow: "DESKTOP CONFIGURATION"
         title: "Keybinds"
-        subtitle: "Every shortcut in hyprland.lua, and presets worth adding"
+        subtitle: "Every shortcut in binds.lua, and presets worth adding"
     }
 
     WindowPanel {

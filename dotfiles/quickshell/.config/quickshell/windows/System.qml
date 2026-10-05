@@ -19,7 +19,7 @@
 // Theme.windowSize, the same size as Settings.
 //
 // Floating and centring come from the "quickshell-windows" rule in
-// hyprland.lua, as for Settings.
+// windows.lua, as for Settings.
 
 import Quickshell
 import QtQuick

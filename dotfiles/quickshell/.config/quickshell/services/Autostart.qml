@@ -7,7 +7,7 @@
 // .desktop file in that directory -- dropped there by an application's own
 // "run at login" checkbox as much as by hand -- did precisely nothing. The
 // piece that runs them at login is ~/.config/singularity/autostart.sh, called
-// from hyprland.lua; this service is the same script's `list` output plus the
+// from autostart.lua; this service is the same script's `list` output plus the
 // writes that turn an entry on and off. Its header documents the one place
 // the behaviour deliberately differs from the spec: a /etc/xdg/autostart
 // entry is opt-in here rather than on by default.

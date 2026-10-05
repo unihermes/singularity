@@ -1,7 +1,7 @@
 // Minimal persistent relay for the ALT+Tab switcher's IPC calls.
 //
 // Each ALT+Tab press needs to reach Quickshell's IPC target "alttab" (via
-// alttab-ipc.sh, which hyprland.lua's binds run). Doing that with the `qs` CLI works, but `qs` is the same monolithic
+// alttab-ipc.sh, which binds.lua's binds run). Doing that with the `qs` CLI works, but `qs` is the same monolithic
 // binary as the shell itself -- it links Widgets/Quick/Qml/Gui/DBus/OpenGL
 // on top of Core/Network, and the dynamic linker pays for all of that on
 // every single invocation even though `ipc call` only ever touches Core and
@@ -216,7 +216,7 @@ int main(int argc, char** argv) {
 	// loop gets to it, and a commit that follows a Tab by a few ms can be
 	// handled first, and written into a connection Quickshell has already
 	// closed. Looking the instance up per call is also what makes the relay
-	// launch-order independent of quickshell (see hyprland.lua) and
+	// launch-order independent of quickshell (see autostart.lua) and
 	// self-healing across a quickshell restart mid-session.
 	//
 	// Still a blocking wait here (not another connect()+signal), but that's

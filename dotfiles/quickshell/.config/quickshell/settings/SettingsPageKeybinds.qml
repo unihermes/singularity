@@ -13,7 +13,7 @@ SettingsPage {
     sectioned: true
 
     title: "Keybinds"
-    description: "Every shortcut in hyprland.lua, and presets worth adding."
+    description: "Every shortcut in binds.lua, and presets worth adding."
     scrolls: false
 
     function focusSearch() { body.focusSearch() }

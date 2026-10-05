@@ -20,7 +20,7 @@ SettingsField {
     readonly property bool live: field.editable && typeof field.value === "number"
     readonly property int pct: live ? Math.round(field.value * 100) : 100
 
-    hint: live ? "" : "Not a plain value in hyprland.lua"
+    hint: live ? "" : "Not a plain value in looks.lua"
 
     FlyoutStepper {
         anchors.right: parent.right

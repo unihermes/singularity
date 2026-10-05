@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Screenshot, saved to disk and copied to the clipboard. Bound to Print and
-# its modifiers in hyprland.lua.
+# its modifiers in binds.lua.
 #
 #   screenshot.sh [area]   drag out a region with slurp
 #   screenshot.sh window   the active window

@@ -38,7 +38,7 @@ Singleton {
     function refresh() { if (!scan.running) scan.running = true }
 
     // A fresh process, since that's the only way Qt rereads fonts. Detached,
-    // so it outlives this one; the log goes where hyprland.lua sends it.
+    // so it outlives this one; the log goes where autostart.lua sends it.
     function restartShell() {
         Quickshell.execDetached(["sh", "-c",
             "qs kill; sleep 0.5; setsid quickshell > \"$HOME/.cache/quickshell.log\" 2>&1 < /dev/null &"])

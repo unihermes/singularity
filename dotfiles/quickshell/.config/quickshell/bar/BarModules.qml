@@ -1093,7 +1093,7 @@ Item {
     // set off by a hairline, whose rounded end is the group's own corner.
     // Without groups it's a slim chip of the style's own, with a short bar
     // in it. A click hides every window on the workspace
-    // (singularityShowDesktop() in hyprland.lua, also SUPER+D); it lights
+    // (singularityShowDesktop() in windows.lua, also SUPER+D); it lights
     // with the accent while they're hidden, and a second click brings them
     // back.
     Item {

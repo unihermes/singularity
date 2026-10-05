@@ -41,7 +41,7 @@ OverlayWindow {
     property int selected: 0
 
     // The gesture this switcher belongs to, from the Tab press that opened
-    // it (hyprland.lua's altTabWatchGen, carried through the relay). -1 when
+    // it (alttab.lua's altTabWatchGen, carried through the relay). -1 when
     // the caller sent none. shell.qml matches the ALT release against it --
     // see the altTabPendingCommitGen comment there.
     property int gen: -1
@@ -105,7 +105,7 @@ OverlayWindow {
     //
     // That release also bounces focus back on Hyprland's own timing, which
     // can land after the focus below; retryTimer repeats the focus once,
-    // shortly after, to correct it. Maximizing is hyprland.lua's focus hook.
+    // shortly after, to correct it. Maximizing is windows.lua's focus hook.
     function commit() {
         const win = windows[selected]
         scope.openFlyout = ""
@@ -148,7 +148,7 @@ OverlayWindow {
     visible: open && windows.length > 0
     // Exclusive, because a focused client is the only thing that sees a
     // modifier release. A release before this window has the keyboard is
-    // caught by hyprland.lua's key-state poll instead; this grab is the fast
+    // caught by alttab.lua's key-state poll instead; this grab is the fast
     // path, and whichever notices first wins. (Not a GlobalShortcut on bare
     // ALT: that changes how Hyprland treats ALT everywhere.)
     focusMode: WlrKeyboardFocus.Exclusive
@@ -164,7 +164,7 @@ OverlayWindow {
         anchors.fill: parent
         focus: true
 
-        // Only Escape: Tab, SHIFT+Tab and grave are bound in hyprland.lua and
+        // Only Escape: Tab, SHIFT+Tab and grave are bound in binds.lua and
         // never reach this window.
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape) {

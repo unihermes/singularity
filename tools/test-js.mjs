@@ -1,6 +1,6 @@
 // Tests for the shell's plain-JS modules (services/*.js): the calculator,
 // time windows, number formats, style resolution, the channel outline, and
-// the readers/writers of hyprland.lua's tables and binds.
+// the readers/writers of the Hyprland config's tables and binds.
 //
 // The modules are QML JavaScript: `.pragma library` at the top, and
 // `.import "X.js" as X` for another module. load() strips the pragma, loads
@@ -19,7 +19,8 @@ import { fileURLToPath } from "node:url"
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 const services = path.join(repo, "dotfiles/quickshell/.config/quickshell/services")
-const hyprland = fs.readFileSync(path.join(repo, "dotfiles/hypr/.config/hypr/hyprland.lua"), "utf8")
+const hypr = (name) => fs.readFileSync(path.join(repo, "dotfiles/hypr/.config/hypr", name), "utf8")
+const looks = hypr("looks.lua"), input = hypr("input.lua"), binds = hypr("binds.lua")
 
 const Qt = { formatDateTime: (d) => d.toISOString() }
 const loaded = {}
@@ -115,15 +116,15 @@ test("ChannelPath snaps near edges and closes its outline", () => {
 
 test("HyprTables reads hl.config fields", () => {
     const T = load("HyprTables.js")
-    const deco = T.readConfig(hyprland, ["decoration"])
+    const deco = T.readConfig(looks, ["decoration"])
     assert.ok(deco && deco.dim_strength && deco.dim_strength.editable)
-    assert.equal(T.readInput(hyprland).fields.kb_layout.value, "us")
-    assert.equal(T.readConfig(hyprland, ["no_such_table"]), null)
+    assert.equal(T.readInput(input).fields.kb_layout.value, "us")
+    assert.equal(T.readConfig(looks, ["no_such_table"]), null)
 })
 
 test("HyprBinds parses the real config and round-trips an edit", () => {
     const B = load("HyprBinds.js")
-    const model = B.parse(hyprland)
+    const model = B.parse(binds)
     assert.ok(model.rows.length > 20)
     assert.ok(model.rows.some((r) => r.editable))
     const row = model.rows.find((r) => r.editable && r.isExec)

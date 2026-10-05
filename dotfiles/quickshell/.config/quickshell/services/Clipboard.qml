@@ -2,7 +2,7 @@
 // ~/.config/quickshell/services/Clipboard.qml
 //
 // Clipboard history from cliphist, for the launcher (Launcher.qml). The history is
-// captured by `wl-paste --watch cliphist store`, started from hyprland.lua.
+// captured by `wl-paste --watch cliphist store`, started from autostart.lua.
 
 pragma Singleton
 

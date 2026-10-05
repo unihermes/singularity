@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/HyprTables.js
 //
-// Reads plain `key = value` fields in hyprland.lua's table constructors, for
+// Reads plain `key = value` fields in the Hyprland config's table constructors, for
 // the Settings window: the tables inside hl.config (`input` and its
 // `touchpad`, `general`, `decoration`), whose changes go to hyprland.json
 // (see HyprLuaWrite), and reads and rewrites the table each hl.monitor()
@@ -226,7 +226,7 @@ function addMonitor(src, fields) {
 }
 
 // The hl.monitor() calls in src that name a literal output, on their own as
-// a monitors.lua would hold them: the start of one copied from hyprland.lua's
+// a monitors.lua would hold them: the start of one copied from displays.lua's
 // default rule.
 function copyMonitors(src) {
     var out = ""

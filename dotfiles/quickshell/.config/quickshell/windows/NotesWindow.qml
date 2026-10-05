@@ -3,7 +3,7 @@
 //
 // Sticky notes: a small window of tabbed notes, toggled with SUPER+N. It
 // floats pinned over every workspace in the top-right corner of the screen,
-// placed there by hyprland.lua's "notes" rule and open hook rather than
+// placed there by windows.lua's "notes" rule and open hook rather than
 // centred like Settings and System. The notes themselves are
 // services/Notes.qml, saved as you type.
 //

@@ -4,7 +4,7 @@
 // Settings: a header, a search bar across the full width, and under it two
 // framed panels -- the numbered Sections on the left, the open page on the
 // right. Changes apply as they're made -- there is no Save -- and each page
-// writes straight to the thing it controls (mimeapps.list, hyprland.lua,
+// writes straight to the thing it controls (mimeapps.list, binds.lua,
 // hypridle.conf, pipewire) rather than to a store of its own -- except
 // Appearance and Notifications, whose settings are Settings.qml's, shared
 // with the Control Centre and the notification flyout.
@@ -24,7 +24,7 @@
 // at all while Settings is shut.
 //
 // Floating and centring come from the "quickshell-windows" rule in
-// hyprland.lua, as for System.
+// windows.lua, as for System.
 
 import Quickshell
 import Quickshell.Io

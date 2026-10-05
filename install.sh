@@ -65,7 +65,7 @@ log "linking dotfiles"
 ./link.sh
 
 log "building alttab-relay"
-# The ALT+Tab switcher's fast path (see hyprland.lua and
+# The ALT+Tab switcher's fast path (see alttab.lua and
 # dotfiles/hypr/.config/hypr/alttab-relay.cpp for why it exists) talks to
 # Quickshell over a private, unversioned wire format, and needs
 # -mno-direct-extern-access to work around a protected-symbol linking issue

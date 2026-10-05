@@ -145,7 +145,7 @@ ShellRoot {
         function open(page: string): void { settingsWindow.open(page) }
     }
 
-    // hyprland.lua's singularityShowDesktop(), after it tags or untags
+    // windows.lua's singularityShowDesktop(), after it tags or untags
     // windows: tags aren't announced, and the bar's button reads them
     IpcHandler {
         target: "desktop"
@@ -201,7 +201,7 @@ ShellRoot {
 
     AppearanceSync {}
 
-    // SUPER+W, arriving from hyprland.lua via `qs ipc call overlay toggle`.
+    // SUPER+W, arriving from binds.lua via `qs ipc call overlay toggle`.
     // A signal rather than a direct call because the overlays live inside
     // Variants (one per screen) and aren't addressable from out here; each
     // screen's scope listens and only the focused monitor's acts.
@@ -212,7 +212,7 @@ ShellRoot {
         function toggle(): void { root.workspaceOverlayToggled() }
     }
 
-    // SUPER+M, arriving from hyprland.lua via `qs ipc call layout <mode>`
+    // SUPER+M, arriving from windows.lua via `qs ipc call layout <mode>`
     // right after it flips monocleEnabled. Same per-screen signal relay as
     // the overlay above: only the focused monitor shows the toast.
     signal layoutModeChanged(string mode)
@@ -222,7 +222,7 @@ ShellRoot {
         function set(mode: string): void { root.layoutModeChanged(mode) }
     }
 
-    // Caps Lock / Num Lock, from hyprland.lua's pass-through binds on the two
+    // Caps Lock / Num Lock, from binds.lua's pass-through binds on the two
     // keys: `qs ipc call locks changed caps|num`. Each call flips the shell's
     // own copy of the state and toasts it straight away, rather than reading
     // it: the bind fires on press, and xkb only turns a lock off when the key
@@ -339,7 +339,7 @@ ShellRoot {
     // switcher on the first and steps it on the rest. commit() when ALT comes
     // up. Same per-screen signal relay as the overlay above.
     //
-    // `gen` is the gesture id minted by the bind (hyprland.lua's
+    // `gen` is the gesture id minted by the bind (alttab.lua's
     // altTabWatchGen): each command carries its Tab's id, and the ALT release
     // the id of the gesture's last Tab, so a release that arrives before its
     // switcher exists is applied to that switcher and no other. tab()'s id

@@ -6,7 +6,7 @@
 // application to either.
 //
 // Hyprland runs no XDG autostart of its own -- the entries only mean anything
-// because ~/.config/singularity/autostart.sh runs them from hyprland.lua, and
+// because ~/.config/singularity/autostart.sh runs them from autostart.lua, and
 // that script's header is where the rules live. The one worth repeating here,
 // since it is a surprise otherwise, is that a package's own entry is off
 // until it is turned on: the spec says those run by default, but none of them

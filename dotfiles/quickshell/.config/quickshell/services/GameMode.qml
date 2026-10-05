@@ -2,8 +2,8 @@
 // ~/.config/quickshell/services/GameMode.qml
 //
 // Game Mode: Hyprland without animations, blur, shadows, gaps or rounding.
-// The switch is a state file, game-mode ("on" or "off"), that hyprland.lua
-// reads on load and lays over everything else it sets, so turning it off
+// The switch is a state file, game-mode ("on" or "off"), that the Hyprland
+// config reads on load and lays over everything else it sets (overrides.lua), so turning it off
 // and reloading restores the desktop as it was. Kept across restarts, like
 // the rest of the state directory.
 

@@ -6,7 +6,7 @@
 // fan the kernel exposes.
 //
 // The device names under INPUT are Hyprland's own, which is the reason to
-// print them: a device rule in hyprland.lua has to match one of these
+// print them: a device rule in input.lua has to match one of these
 // strings exactly, and guessing it is the usual way that goes wrong.
 
 import Quickshell

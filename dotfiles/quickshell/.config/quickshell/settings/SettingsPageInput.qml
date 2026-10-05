@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageInput.qml
 //
-// Keyboard, mouse and touchpad: the `input = { }` table in hyprland.lua, with
+// Keyboard, mouse and touchpad: the `input = { }` table in input.lua, with
 // changes made here kept in the state directory's hyprland.json.
 //
 // Every change is written to the file and followed by a config reload, which
@@ -69,7 +69,7 @@ SettingsPage {
         luaFile.reload()
         luaFile.waitForJob()
         conf = HyprTables.readInput(luaFile.text())
-        if (!conf.found) say("No input = { } table inside hl.config in hyprland.lua", true)
+        if (!conf.found) say("No input = { } table inside hl.config in input.lua", true)
     }
 
     Component.onCompleted: {
@@ -80,7 +80,7 @@ SettingsPage {
 
     FileView {
         id: luaFile
-        path: HyprLuaWrite.confPath
+        path: HyprLuaWrite.inputPath
         blockLoading: true
         watchChanges: true
         printErrors: false

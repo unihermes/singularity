@@ -384,7 +384,7 @@ Singleton {
     readonly property var lockedWidgets: ["controlcentre"]
 
     // Workspaces 1..n have SUPER+n binds and are the only valid targets for a
-    // window rule. Must match MAX_WORKSPACES in hyprland.lua.
+    // window rule. Must match MAX_WORKSPACES in binds.lua.
     readonly property int workspaceCount: 5
 
     readonly property var widgetSections: ["left", "centre", "right"]

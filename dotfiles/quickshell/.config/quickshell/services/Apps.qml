@@ -81,7 +81,7 @@ Singleton {
         usageFile.setText(JSON.stringify(next))
 
         // So the window gets its app's window rule even with another of the
-        // app's windows open (hyprland.lua's markLaunch).
+        // app's windows open (windows.lua's markLaunch).
         Quickshell.execDetached(["hyprctl", "eval", "markLaunch()"])
 
         // execute() runs the Exec line as-is, which for a terminal
@@ -129,7 +129,7 @@ Singleton {
         return "󰖯"
     }
 
-    // hyprland.lua's TABS keep each tab of a group a window of its own.
+    // windows.lua's TABS keep each tab of a group a window of its own.
     // Everything that lists windows shows a group once, as the tab focused
     // most recently (the one on top), so this is true for the tabs behind it.
     // `ipc` and each of `ipcs` are shaped like hyprctl clients -j entries.
