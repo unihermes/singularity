@@ -800,18 +800,30 @@ Scope {
 
     FileView { id: wofiOut;   path: root.dir + "/wofi.css"; printErrors: false }
 
-    // Animation time reaches Hyprland through a state file its Lua config
-    // reads on load, then a config-only reload (no monitor re-probe, so no
-    // flicker). Written in one shell command so the reload can't run before
-    // the write lands. At startup the file is only written, not reloaded:
-    // Hyprland read the same value when it started.
+    // The state files below are read by the Hyprland config on load, so a
+    // change needs a config-only reload (no monitor re-probe, so no
+    // flicker). One reload covers every file written in a burst: a look
+    // switch changes borders, rounding, gaps, opacity and more at once, and a
+    // reload each re-ran the whole config half a dozen times.
+    function hyprWrite(name, text, reload) {
+        AtomicFileWrite.write({
+            path: root.dir + "/" + name,
+            transform: () => text,
+            done: status => { if (reload && status === "ok") hyprReload.restart() },
+        })
+    }
+
+    Timer {
+        id: hyprReload
+        interval: 150
+        onTriggered: Quickshell.execDetached(["hyprctl", "reload", "config-only"])
+    }
+
+    // Animation time. At startup this and the files below are only written,
+    // not reloaded: Hyprland read the same values when it started.
     function writeHyprAnimations(reload) {
         var time = String(Settings.animTime)
-        AtomicFileWrite.write({
-            path: root.dir + "/animations",
-            transform: () => time + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("animations", time + "\n", reload)
     }
 
     // The pointer and icon themes reach Hyprland the same way, for the
@@ -849,30 +861,18 @@ Scope {
     // shared.lua reads on load, then a config-only reload.
     function writeWindowAnim(reload) {
         var style = Settings.windowAnim
-        AtomicFileWrite.write({
-            path: root.dir + "/window-anim",
-            transform: () => style + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("window-anim", style + "\n", reload)
     }
     function writeBorders(reload) {
         var line = "rgba(" + hex(Theme.strokeFocus).slice(1) + "ff) rgba(" + hex(Theme.border).slice(1) + "ff)"
-        AtomicFileWrite.write({
-            path: root.dir + "/borders",
-            transform: () => line + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("borders", line + "\n", reload)
     }
 
     // Window corners, rounded like the shell's panels, so its own windows'
     // frames fill Hyprland's clip and every other window matches them.
     function writeRounding(reload) {
         var r = String(Theme.panelFrameRadius)
-        AtomicFileWrite.write({
-            path: root.dir + "/rounding",
-            transform: () => r + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("rounding", r + "\n", reload)
     }
 
     // The tab bar over Hyprland's grouped windows (looks.lua), always in the look's
@@ -881,21 +881,13 @@ Scope {
     function writeGroupbar(reload) {
         var rgba = c => "rgba(" + hex(c).slice(1) + "ff)"
         var line = [Theme.selectedFill, Theme.bar, Theme.text, Theme.subtext, Theme.accent].map(rgba).join(" ")
-        AtomicFileWrite.write({
-            path: root.dir + "/groupbar",
-            transform: () => line + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("groupbar", line + "\n", reload)
     }
 
     // The windows' gap from the screen's edges, which a floating bar keeps too
     function writeGaps(reload) {
         var g = String(Settings.edgeGap)
-        AtomicFileWrite.write({
-            path: root.dir + "/gaps",
-            transform: () => g + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("gaps", g + "\n", reload)
     }
 
     // Stepping the gap fires once per step; one reload at the end is enough.
@@ -908,11 +900,7 @@ Scope {
     // "<focused> <unfocused>" window opacity, as Hyprland's 0-1 fractions
     function writeWindowOpacity(reload) {
         var line = (Settings.focusedOpacity / 100) + " " + (Settings.unfocusedOpacity / 100)
-        AtomicFileWrite.write({
-            path: root.dir + "/window-opacity",
-            transform: () => line + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("window-opacity", line + "\n", reload)
     }
 
     // Stepping either fires once per step; one reload at the end is enough.
@@ -927,11 +915,7 @@ Scope {
     // it. A rule can't read the reserved space itself.
     function writeBarTop(reload) {
         var top = Theme.barPosition === "top" ? Theme.barExtent : 0
-        AtomicFileWrite.write({
-            path: root.dir + "/bar-top",
-            transform: () => top + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("bar-top", top + "\n", reload)
     }
 
     // Stepping the height fires once per step; one reload at the end is enough.
@@ -952,11 +936,7 @@ Scope {
     // style's soft or hard shadow, or none.
     function writeWindowFrame(reload) {
         var line = Theme.borderWidth + " " + Theme.shadow
-        AtomicFileWrite.write({
-            path: root.dir + "/window-frame",
-            transform: () => line + "\n",
-            after: reload ? "hyprctl reload config-only >/dev/null" : "",
-        })
+        root.hyprWrite("window-frame", line + "\n", reload)
     }
 
     Timer {
