@@ -46,6 +46,7 @@ FlyoutPanel {
         visible: netFlyout.pendingSsid !== ""
         placeholder: "passphrase"
         onAccepted: netFlyout.connectTo(netFlyout.pendingSsid, text)
+        onEscapePressed: { netFlyout.pendingSsid = ""; text = "" }
     }
 
     FlyoutRow {
@@ -95,6 +96,7 @@ FlyoutPanel {
             busy: connecting
             trailing: {
                 if (connecting) return "connecting"
+                if (Network.failedSsid === modelData.ssid) return "failed"
                 if (modelData.connected) return ""
                 if (!modelData.known && modelData.security !== "open") return "key"
                 return "•".repeat(Math.max(1, modelData.bars))

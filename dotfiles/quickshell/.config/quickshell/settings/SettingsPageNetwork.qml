@@ -87,6 +87,13 @@ SettingsPage {
         details.restart()
     }
 
+    Connections {
+        target: Network
+        function onConnectFailed(ssid, reason) {
+            page.say("Couldn't join " + ssid + (reason ? " — " + reason : ""), true)
+        }
+    }
+
     function connectTo(ssid, passphrase, hidden) {
         Network.connect(ssid, passphrase, hidden)
         page.say("Connecting to " + ssid + "…", false)
@@ -227,7 +234,8 @@ SettingsPage {
             label: netRow.modelData.ssid
             busy: netRow.connecting
             highlighted: netRow.prompting
-            trailing: netRow.connecting ? "connecting" : ""
+            trailing: netRow.connecting ? "connecting"
+                : Network.failedSsid === netRow.modelData.ssid ? "failed" : ""
             trailingIcons: [
                 !netRow.modelData.known && netRow.modelData.security !== "open" ? "󰌾" : "",
                 page.strengthGlyphs[Math.max(1, netRow.modelData.bars) - 1]

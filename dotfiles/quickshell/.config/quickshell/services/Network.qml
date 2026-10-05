@@ -38,6 +38,10 @@ Singleton {
     property string listError: ""
     // the SSID an iwctl connect is running for, or ""
     property string connecting: ""
+    // the SSID the last connect failed for, or "" (cleared by the next one)
+    property string failedSsid: ""
+    // after a connect fails, with iwctl's reason ("Operation failed", ...)
+    signal connectFailed(string ssid, string reason)
     readonly property bool scanning: scanProc.running
 
     function setPowered(on) {
@@ -67,6 +71,7 @@ Singleton {
         var cmd = ["iwctl"]
         if (passphrase) cmd.push("--passphrase", passphrase)
         cmd.push("station", device, hidden ? "connect-hidden" : "connect", name)
+        failedSsid = ""
         if (connectProc.running) { pendingConnect = { cmd: cmd, ssid: name }; return }
         connecting = name
         connectProc.command = cmd
@@ -261,7 +266,16 @@ Singleton {
     Process {
         id: connectProc
         command: ["true"]
-        onExited: {
+        stdout: StdioCollector { id: connectOut }
+        stderr: StdioCollector { id: connectErr }
+        onExited: code => {
+            // a failure superseded by a newer request isn't worth reporting
+            if (code !== 0 && !root.pendingConnect) {
+                var reason = (connectErr.text + connectOut.text)
+                    .replace(/\x1b\[[0-9;]*m/g, "").trim().split("\n").pop()
+                root.failedSsid = root.connecting
+                root.connectFailed(root.connecting, reason)
+            }
             if (root.pendingConnect) {
                 connectProc.command = root.pendingConnect.cmd
                 root.connecting = root.pendingConnect.ssid
