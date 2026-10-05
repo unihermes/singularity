@@ -110,10 +110,12 @@ var PACKS = [
               lua: "hl.dsp.focus({ workspace = \"e+1\" })" },
             { keys: "SUPER + mouse_up", desc: "Scroll to the previous workspace", section: "Workspaces",
               lua: "hl.dsp.focus({ workspace = \"e-1\" })" },
+            // windows.lua's helpers, so these use the special:scratchpad
+            // workspace the bar marks and the terminal rule opens on
             { keys: "SUPER + grave", desc: "Show or hide the scratchpad", section: "Workspaces",
-              lua: "hl.dsp.workspace.toggle_special(\"magic\")" },
-            { keys: "SUPER + SHIFT + grave", desc: "Send window to the scratchpad", section: "Workspaces",
-              lua: "hl.dsp.window.move({ workspace = \"special:magic\" })" },
+              lua: "function() toggleScratchpad(terminal) end" },
+            { keys: "SUPER + SHIFT + grave", desc: "Move window into or out of the scratchpad", section: "Workspaces",
+              lua: "function() toggleStashed() end" },
         ],
     },
     {
