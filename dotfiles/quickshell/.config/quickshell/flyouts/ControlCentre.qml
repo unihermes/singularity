@@ -336,6 +336,14 @@ FlyoutPanel {
             onActivated: Notifications.toggleDnd()
         }
 
+        FlyoutAction {
+            icon: "󰊴"
+            label: "Game Mode"
+            status: GameMode.active ? "Effects and gaps off" : ""
+            checked: GameMode.active
+            onActivated: GameMode.toggle()
+        }
+
         // Only while it's on: a warmth control for a light that's off
         // is a setting you can't see the effect of.
         FlyoutStepper {

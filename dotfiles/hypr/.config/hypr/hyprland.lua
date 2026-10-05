@@ -54,7 +54,12 @@ end
 local animTime   = singularityState("animations", "100")
 local animFactor = math.max(0, math.min(100,
     tonumber(animTime) or ({ normal = 100, fast = 50, off = 0 })[animTime] or 100)) / 100
-local animOff    = animFactor == 0
+-- Game Mode, the Control Centre's switch: "on" in its state file strips the
+-- desktop's effects -- animations here, and blur, shadows, gaps and rounding
+-- after the local settings below, so it outranks them without touching them
+-- and turning it off brings every one back as it was.
+local gameMode   = singularityState("game-mode", "") == "on"
+local animOff    = animFactor == 0 or gameMode
 
 -- How windows open, close, minimize and restore, picked on the Appearance
 -- page. "fade" is popin at full size, so the window only fades, and "none"
@@ -533,6 +538,14 @@ do
         end
     end
     if type(t) == "table" then apply(t, function(x) return x end) end
+end
+
+if gameMode then
+    hl.config({
+        general    = { gaps_in = 0, gaps_out = 0 },
+        decoration = { rounding = 0, shadow = { enabled = false }, blur = { enabled = false } },
+        animations = { enabled = false },
+    })
 end
 
 ---------------------

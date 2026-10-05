@@ -174,6 +174,15 @@ ShellRoot {
         function open(): void { keybindsWindow.open() }
     }
 
+    // `qs ipc call gamemode toggle`, for a keybind; the Control Centre's
+    // Quick Actions has the switch
+    IpcHandler {
+        target: "gamemode"
+        function toggle(): void { GameMode.toggle() }
+        function set(on: bool): void { GameMode.set(on) }
+        function get(): bool { return GameMode.active }
+    }
+
     // `qs ipc call look cycle` / `qs ipc call look set soft` -- for a keybind
     // that steps through the looks without opening anything
     IpcHandler {

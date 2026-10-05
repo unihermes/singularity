@@ -129,6 +129,9 @@ file to a timestamped `~/.config-backup-*` first. Nothing is deleted.
 
 The bar is clickable throughout: the Arch logo opens the Control Centre, and
 each module opens a flyout with its controls and a "More in Settings" link.
+Its Quick Actions include **Game Mode**, which turns off Hyprland's
+animations, blur, shadows, gaps and rounding until you switch it back
+(`qs ipc call gamemode toggle` from a keybind).
 
 ## Looks and Styles
 
