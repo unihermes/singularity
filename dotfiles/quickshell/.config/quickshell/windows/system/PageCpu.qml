@@ -157,7 +157,7 @@ SystemPage {
     FlyoutRow {
         label: "Power profile"
         note: PpdProfile.profile !== "" ? PpdProfile.profile : "not available"
-        trailing: "Settings  󰅂"
+        trailing: "Settings  󰁔"
         onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
     }
     InfoRow { label: "Scaling driver"; value: SystemSpecs.cpuDriver || "--" }

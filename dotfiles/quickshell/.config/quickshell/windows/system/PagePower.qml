@@ -49,7 +49,7 @@ SystemPage {
         ]
 
         FlyoutChip {
-            text: "Settings  󰅂"
+            text: "Settings  󰁔"
             onClicked: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
         }
     }
@@ -230,7 +230,7 @@ SystemPage {
         leadingIcon: "󰒲"
         label: "Idle and lid"
         note: "When the screen dims, locks and the machine sleeps"
-        trailing: "Settings  󰅂"
+        trailing: "Settings  󰁔"
         onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
     }
     // sleeping cuts whatever's running off, so it asks first

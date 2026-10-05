@@ -252,7 +252,7 @@ FlyoutPanel {
     FlyoutRow {
         visible: ClaudeShell.hasChanges
         label: root.showDiff ? "Hide diff" : "Show diff"
-        trailing: root.showDiff ? "󰅃" : "󰅀"
+        trailing: root.showDiff ? "󰅀" : "󰅂"
         onActivated: root.showDiff = !root.showDiff
     }
 

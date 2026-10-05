@@ -27,14 +27,17 @@ FlyoutPanel {
             : (trayMenu.item ? trayMenu.item.menu : null)
     }
 
-    FlyoutHeading {
-        text: trayMenu.item ? (trayMenu.item.title || trayMenu.item.id || "MENU").toUpperCase() : "MENU"
-    }
+    readonly property string appTitle: item ? (item.title || item.id || "MENU").toUpperCase() : "MENU"
+    function entryTitle(entry) { return entry.text.replace(/_/g, "").toUpperCase() }
 
-    FlyoutRow {
-        visible: trayMenu.stack.length > 0
-        label: "󰅁  Back"
-        onActivated: trayMenu.stack = trayMenu.stack.slice(0, -1)
+    // in a submenu the heading leads with the menu above, the way back
+    FlyoutHeading {
+        crumb: trayMenu.stack.length === 0 ? ""
+            : trayMenu.stack.length === 1 ? trayMenu.appTitle
+            : trayMenu.entryTitle(trayMenu.stack[trayMenu.stack.length - 2])
+        text: trayMenu.stack.length === 0 ? trayMenu.appTitle
+            : trayMenu.entryTitle(trayMenu.stack[trayMenu.stack.length - 1])
+        onCrumbClicked: trayMenu.stack = trayMenu.stack.slice(0, -1)
     }
 
     // with the tray drawer on: keep this app's icon out of the drawer

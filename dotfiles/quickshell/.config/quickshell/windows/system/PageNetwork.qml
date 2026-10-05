@@ -50,7 +50,7 @@ SystemPage {
         ]
 
         FlyoutChip {
-            text: "Settings  󰅂"
+            text: "Settings  󰁔"
             onClicked: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "network"])
         }
     }

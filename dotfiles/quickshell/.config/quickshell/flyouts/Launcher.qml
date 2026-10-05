@@ -310,13 +310,23 @@ OverlayWindow {
                         height: root.rowHeight
 
                         // the row the keys are on, lit as Settings lights
-                        // its search hits: a fill and a quiet stroke
+                        // its search hits: a fill and a quiet stroke, a tick
+                        // on the left edge and a grey chevron
                         Rectangle {
                             anchors.fill: parent
                             radius: Theme.radiusInner
                             color: row.current ? Theme.selectedFill : "transparent"
                             border.width: Theme.borderWidth
                             border.color: row.current ? Theme.strokeHover : "transparent"
+                        }
+
+                        Rectangle {
+                            visible: row.current
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Theme.indicatorWidth
+                            height: parent.height - 6
+                            radius: width / 2
+                            color: Theme.accent
                         }
 
                         Item {
@@ -401,12 +411,11 @@ OverlayWindow {
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spaceL
                             anchors.verticalCenter: parent.verticalCenter
-                            text: ">"
+                            text: "󰅂"
                             visible: !root.line
                             opacity: row.current ? 1 : 0
                             color: Theme.subtext
-                            font.family: Theme.fontText
-                            font.weight: Theme.weightBody
+                            font.family: Theme.fontIcon
                             font.pixelSize: Theme.fontSmall
                         }
 

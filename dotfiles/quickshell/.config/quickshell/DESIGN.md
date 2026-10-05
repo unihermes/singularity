@@ -405,6 +405,24 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - Readout rows (`trailingIsValue`, `enabled: false`): grey label and white
   value.
 
+## Chevrons
+
+One meaning per glyph: right goes somewhere, down opens here, left goes
+back. Always the Nerd glyphs (`Theme.fontIcon`), never a typed `>`.
+
+| Meaning | Glyph | Where |
+|---|---|---|
+| Page on show in a sidebar | tick + accent 󰅂 | `SettingsSectionRow`; hovered rows show a grey 󰅂 |
+| Row the arrow keys are on | fill + tick + grey 󰅂 | Launcher, Settings search hits |
+| Tab on show | accent fill, no chevron | Settings tabs, `FlyoutSegmented` |
+| Goes deeper in the same flyout or window | 󰅂 | submenus, tray submenus, other System pages, Open Health |
+| Leaves for another window | 󰁔 | More in Settings, System's "Settings" |
+| Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more", Claude's diff |
+| Dropdown | 󰅀 → 󰅃 | `DropdownMenu`, `SettingsDropdown` |
+| Back | breadcrumb heading (`crumb`), no Back row | Control Centre, tray menu, window menu |
+| Breadcrumb separator | 󰅂 | `FlyoutHeading` |
+| Stepper | 󰅁 󰅂 | `LookStepper`, `FlyoutStepper` (wrap), calendar months |
+
 ## Controls (level-chip style)
 
 Controls are small channels: an outer line plus a groove. They light the

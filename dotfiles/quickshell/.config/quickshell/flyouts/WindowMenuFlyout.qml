@@ -47,8 +47,12 @@ FlyoutPanel {
         dispatch("hl.dsp.window." + fn + "({window=\"" + target + "\"" + (extra ? ", " + extra : "") + "})")
     }
 
+    // on the move page the heading leads with the window, the way back
     FlyoutHeading {
-        text: (winMenu.ipc.class || winMenu.ipc.title || "WINDOW").toUpperCase()
+        readonly property string name: (winMenu.ipc.class || winMenu.ipc.title || "WINDOW").toUpperCase()
+        crumb: winMenu.movePage ? name : ""
+        text: winMenu.movePage ? "MOVE TO WORKSPACE" : name
+        onCrumbClicked: winMenu.movePage = false
     }
 
     // ---- main page ----
@@ -97,11 +101,6 @@ FlyoutPanel {
     }
 
     // ---- move page ----
-    FlyoutRow {
-        visible: winMenu.movePage
-        label: "󰅁  Back"
-        onActivated: winMenu.movePage = false
-    }
     Repeater {
         model: winMenu.movePage ? Settings.workspaceCount : 0
 

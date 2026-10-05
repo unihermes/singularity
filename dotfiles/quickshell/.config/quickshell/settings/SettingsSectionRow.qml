@@ -10,10 +10,11 @@
 // Sections come in groups, set apart by a rule over each group's first row
 // (`ruleAbove`).
 //
-// Two ways to be lit: `selected` is the page on show (a tick and a
-// chevron), `current` is where the arrow keys are while the search field
-// has focus (a fill). They differ because both can be true of different
-// rows at once.
+// Two ways to be lit: `selected` is the page on show (a tick and an
+// accent chevron), `current` is where the arrow keys are while the search
+// field has focus (a fill, a tick and a grey chevron). They differ because
+// both can be true of different rows at once. A hovered row shows the grey
+// chevron too, as a way in.
 
 import QtQuick
 import "../services"
@@ -60,9 +61,10 @@ Item {
             color: root.current || mouse.containsMouse ? Theme.hoverFill : "transparent"
         }
 
-        // the page on show: a tick on the left edge, as a selected row
+        // the page on show, or the arrow keys' row: a tick on the left edge,
+        // as a selected row
         Rectangle {
-            visible: root.selected
+            visible: root.selected || root.current
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.indicatorWidth
             height: parent.height - 6
@@ -135,11 +137,10 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            text: ">"
-            visible: root.selected || root.current
+            text: "󰅂"
+            visible: root.selected || root.current || mouse.containsMouse
             color: root.selected ? Theme.accent : Theme.subtext
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
+            font.family: Theme.fontIcon
             font.pixelSize: Theme.fontSmall
         }
 

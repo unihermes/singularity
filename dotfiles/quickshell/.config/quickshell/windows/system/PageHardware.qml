@@ -108,7 +108,7 @@ SystemPage {
             note: modelData.name
             trailing: modelData.width + "×" + modelData.height + " @ " + modelData.hz + " Hz"
                 + (modelData.scale && modelData.scale !== 1 ? " · ×" + Number(modelData.scale).toFixed(2) : "")
-                + "  󰅂"
+                + "  󰁔"
             onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "display"])
         }
     }
@@ -185,7 +185,7 @@ SystemPage {
         leadingIcon: Audio.ready && Audio.muted ? "󰝟" : "󰕾"
         label: Audio.ready ? Audio.sink.nickname || Audio.sink.description || "No output" : "No output"
         note: Audio.ready ? Audio.percent + "%" + (Audio.muted ? " · muted" : "") : ""
-        trailing: "Settings  󰅂"
+        trailing: "Settings  󰁔"
         onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "audio"])
     }
 

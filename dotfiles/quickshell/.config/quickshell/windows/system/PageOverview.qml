@@ -186,7 +186,7 @@ SystemPage {
         leadingIcon: "󰚰"
         label: Updates.count + (Updates.count === 1 ? " update pending" : " updates pending")
         note: Updates.packages.slice(0, 3).map(p => p.name).join(", ") + (Updates.count > 3 ? "…" : "")
-        trailing: "󰅂"
+        trailing: "󰁔"
         onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "updates"])
     }
     Repeater {
