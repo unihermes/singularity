@@ -73,8 +73,19 @@ Singleton {
         afterApply.restart()
     }
 
+    // A run still going is stopped first and the staging copy dropped once
+    // it has exited: discarding under it would delete files Claude is still
+    // writing, and its exit would land in the cleared conversation.
     function discard() {
-        stop()
+        if (runProc.running) {
+            runProc.discarding = true
+            stop()
+            return
+        }
+        dropStaging()
+    }
+
+    function dropStaging() {
         Quickshell.execDetached({ command: [script, "discard"], environment: env })
         reset()
     }
@@ -171,6 +182,7 @@ Singleton {
         property string stderrText: ""
         property bool gotResult: false
         property bool stopped: false
+        property bool discarding: false
         environment: root.env
 
         stdout: SplitParser {
@@ -184,10 +196,15 @@ Singleton {
             onStreamFinished: runProc.stderrText = text.trim()
         }
         onExited: (code, status) => {
+            root.running = false
+            if (discarding) {
+                discarding = false
+                root.dropStaging()
+                return
+            }
             if (!gotResult)
                 root.say("error", stopped ? "Stopped"
                     : (stderrText || "claude exited with code " + code))
-            root.running = false
             root.activity = ""
             root.unseen = true
             root.refreshDiff()
