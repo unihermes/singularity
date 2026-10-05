@@ -45,6 +45,12 @@ Item {
 
     signal activated()
 
+    // makes the row itself two clicks, for what can't be undone: the first
+    // arms it -- alert-red, reading confirmText -- and the second, within
+    // three seconds, emits activated()
+    property string confirmText: ""
+    readonly property bool armed: disarm.running
+
     // An optional second action (forget a network, remove a device), shown
     // on hover in place of the trailing text: an IconButton in confirm mode,
     // since what it does can't be undone from here. Armed, the label asks.
@@ -115,10 +121,11 @@ Item {
         // up to whatever sits at the right; the note takes what's left
         width: Math.max(0, Math.min(root.note === "" ? Infinity : labelMetrics.advanceWidth + 1,
             root.labelEnd - Theme.spaceL - x))
-        text: root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
+        text: root.armed ? root.confirmText
+            : root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
         elide: Text.ElideRight
         color: {
-            if (root.alert) return Theme.alert
+            if (root.alert || root.armed) return Theme.alert
             if (!root.enabled) return Theme.subtext
             if (root.highlighted || mouse.containsMouse) return Theme.textStrong
             return Theme.text
@@ -244,8 +251,14 @@ Item {
         hoverEnabled: root.enabled && !root.busy
         enabled: root.enabled && !root.busy
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.activated()
+        onClicked: {
+            if (root.confirmText !== "" && !disarm.running) { disarm.restart(); return }
+            disarm.stop()
+            root.activated()
+        }
     }
+
+    Timer { id: disarm; interval: 3000 }
 
     // after the row's MouseArea, so it sits on top and takes its own clicks
     IconButton {

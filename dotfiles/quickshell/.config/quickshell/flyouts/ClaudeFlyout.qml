@@ -269,6 +269,7 @@ FlyoutPanel {
         visible: ClaudeShell.hasChanges || ClaudeShell.transcript.length > 0
         label: ClaudeShell.hasChanges ? "Discard" : "New conversation"
         trailing: ClaudeShell.hasChanges ? "󰅖" : "󰐕"
+        confirmText: ClaudeShell.hasChanges ? "Discard changes?" : ""
         onActivated: ClaudeShell.discard()
     }
 

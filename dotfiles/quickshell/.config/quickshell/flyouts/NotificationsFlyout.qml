@@ -81,6 +81,7 @@ FlyoutPanel {
         label: "Clear all"
         trailing: "󰎟"
         enabled: Notifications.count > 0
+        confirmText: "Clear " + Notifications.count + "?"
         onActivated: Notifications.clearAll()
     }
 
