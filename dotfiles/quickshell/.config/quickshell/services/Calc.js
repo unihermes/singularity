@@ -41,8 +41,8 @@ function tokenise(src) {
     var out = [], i = 0
     while (i < src.length) {
         var c = src[i]
-        if (c === " " || c === "\t" || c === ",") { i++; continue }
-        if ("+-*/^()%".indexOf(c) !== -1) { out.push({ t: c }); i++; continue }
+        if (c === " " || c === "\t") { i++; continue }
+        if ("+-*/^()%,".indexOf(c) !== -1) { out.push({ t: c }); i++; continue }
         if (/[0-9.]/.test(c)) {
             var m = /^(0x[0-9a-fA-F_]+|0b[01_]+|[0-9_]*\.?[0-9_]+(e[+-]?[0-9]+)?)/.exec(src.slice(i))
             if (!m) throw "bad number"
@@ -144,7 +144,7 @@ function parse(tokens) {
             if (tok.v in FUNCS) {
                 expect("(")
                 var args = [expr()]
-                while (peek() && peek().t !== ")") args.push(expr())
+                while (peek() && peek().t === ",") { take(); args.push(expr()) }
                 expect(")")
                 return FUNCS[tok.v].apply(null, args)
             }
