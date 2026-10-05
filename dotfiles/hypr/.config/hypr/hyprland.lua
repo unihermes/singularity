@@ -2115,3 +2115,17 @@ function toggleLayout()
         setWindowMonocle(w, monocleEnabled, mon)
     end
 end
+
+-- Escape hatch for anything the GUI doesn't cover: ~/.local/state/singularity/
+-- custom.lua is run last, so whatever it sets wins over everything above, and
+-- it stays on this machine. A missing file is fine; one that fails to load or
+-- errors partway says so in a notification, keeping whatever ran before the
+-- error.
+do
+    local path = os.getenv("HOME") .. "/.local/state/singularity/custom.lua"
+    local ok, err = pcall(dofile, path)
+    if not ok and not tostring(err):find("cannot open", 1, true) then
+        hl.exec_cmd("notify-send -a Hyprland -u critical 'custom.lua' '"
+            .. tostring(err):gsub("'", "’") .. "'")
+    end
+end

@@ -243,6 +243,11 @@ settings, the wallpaper, the generated colour files) lives in
 shell to its defaults. The one exception is the Keybinds editor, which
 edits `hyprland.lua` itself so binds can be committed.
 
+For anything the GUI doesn't cover, put Lua in
+`~/.local/state/singularity/custom.lua`. `hyprland.lua` runs it last, so it
+overrides everything else and stays on this machine; if it fails to load,
+a notification says where.
+
 ## Repository layout
 
 ```
