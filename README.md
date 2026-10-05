@@ -249,6 +249,8 @@ edits `hyprland.lua` itself so binds can be committed.
 singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
+├── update.sh               # pull, relink, install newly listed packages
+├── migrations/             # one-off fixes for older setups, run once by link.sh
 ├── packages/               # pacman.txt and aur.txt, one package per line
 ├── wallpapers/
 ├── tools/                  # checks run by the pre-commit hook and CI

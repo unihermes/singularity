@@ -73,37 +73,28 @@ backup_conflicts() {
 
 backup_conflicts
 
-# Saved state from where it lived before ~/.local/state/singularity: the
-# neutrino directory, and Quickshell's per-shell state directory, which is
-# keyed by a hash of the shell's path (the newest copy wins).
+# One-off fixes for machines set up by an older Singularity, in
+# migrations/NNN-name.sh. Each newer than the stamped number runs once, in
+# order, in its own bash with $state, log and die; a fresh machine runs
+# them all, so each checks before it changes anything. Take the next number
+# for a new one and never renumber one that has shipped.
 state="$HOME/.local/state/singularity"
-if [[ -d $HOME/.local/state/neutrino && ! -e $state ]]; then
-  mv "$HOME/.local/state/neutrino" "$state"
-  log "moved ~/.local/state/neutrino to ${state#"$HOME/"}"
-fi
-for f in appearance.json app-usage.json; do
-  [[ -e $state/$f ]] && continue
-  old=$(ls -t "$HOME"/.local/state/quickshell/by-shell/*/"$f" 2>/dev/null | head -1)
-  if [[ -n $old ]]; then
-    mkdir -p "$state"
-    cp -- "$old" "$state/$f"
-    log "copied Quickshell's $f to ${state#"$HOME/"}"
-  fi
+stamp="$state/migration"
+done_n=$(cat "$stamp" 2>/dev/null || echo 0)
+export state
+export -f log die
+shopt -s nullglob
+for m in migrations/[0-9][0-9][0-9]-*.sh; do
+  n=$((10#${m:11:3}))
+  (( n > done_n )) || continue
+  bash -euo pipefail "$m" || die "migration $m failed"
+  mkdir -p "$state"
+  echo "$n" > "$stamp"
+  done_n=$n
 done
 
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
-
-# Links into packages since removed from dotfiles/. stow only touches the
-# packages it's handed, so it never clears these, and they're left dangling.
-#   ~/.icons  the XCursor fallback, now written by the shell (AppearanceSync)
-#   ~/.config/swaync  notifications, now the shell's own
-for old in "$HOME/.icons" "$HOME/.config/swaync"; do
-  if [[ -L $old && ! -e $old && $(readlink -- "$old") == *dotfiles/* ]]; then
-    rm -- "$old"
-    log "  removed stale link ${old#"$HOME/"}"
-  fi
-done
 
 # File-manager bookmarks (GTK's, which Thunar shows in its side pane) for
 # the usual folders. Not stowed: the paths hold the home directory, and the
