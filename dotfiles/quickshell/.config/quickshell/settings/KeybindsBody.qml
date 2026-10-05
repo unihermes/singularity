@@ -345,21 +345,26 @@ Column {
         return out
     }
 
-    // ticked presets whose combo is already used for something else
+    // ticked presets whose combo is already used for something else, in the
+    // file or by another ticked preset (the catalogue has a few on purpose:
+    // the Focus pack's vim keys are other packs' launchers)
     readonly property int selectedTaken: {
         if (selectionCount === 0 || !model) return 0
-        var n = 0
-        HyprPresets.PACKS.forEach(p => p.binds.forEach(b => {
-            if (selection[HyprPresets.id(b)] === true && HyprPresets.status(model, b).state === "taken") n++
-        }))
-        return n
+        var picked = selectedPresets()
+        var combos = {}
+        picked.forEach(b => {
+            var k = HyprBinds.normalizeKeys(b.keys)
+            combos[k] = (combos[k] || 0) + 1
+        })
+        return picked.filter(b => combos[HyprBinds.normalizeKeys(b.keys)] > 1
+            || HyprPresets.status(model, b).state === "taken").length
     }
 
     function addSelected() {
         if (busy || selectionCount === 0) return
         if (selectedTaken > 0 && !presetAck) {
             presetAck = true
-            say(selectedTaken + " of these combos are already used for something else · Add again to bind them anyway", true)
+            say(selectedTaken + " of these combos are already used, in your config or by another ticked preset · Add again to bind them anyway", true)
             return
         }
         var list = selectedPresets()

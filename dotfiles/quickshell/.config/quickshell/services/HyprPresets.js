@@ -219,10 +219,10 @@ var PACKS = [
         name: "Session and power",
         note: "Locking, logging out, shutting down",
         binds: [
-            { keys: "SUPER + SHIFT + E", desc: "Log out", section: "Session",
-              lua: "hl.dsp.exit()" },
+            { keys: "SUPER + SHIFT + E", desc: "Open the power menu", section: "Session",
+              cmd: "qs ipc call power menu" },
             { keys: "SUPER + CTRL + L", desc: "Lock the screen", section: "Session",
-              needs: ["hyprlock"], cmd: "hyprlock" },
+              needs: ["hyprlock"], cmd: "loginctl lock-session" },
             { keys: "SUPER + CTRL + BackSpace", desc: "Suspend", section: "Session",
               cmd: "systemctl suspend" },
             { keys: "SUPER + CTRL + Delete", desc: "Turn the screens off", section: "Session",
