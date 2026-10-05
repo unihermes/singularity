@@ -330,8 +330,8 @@ Scope {
         function onLockDateChanged() { debounce.restart() }
     }
 
-    // The accent, and whichever of base or bright reads better on it -- the
-    // text colour for anything drawn on an accent fill (a text selection).
+    // The text colour for anything drawn on an accent fill (a text
+    // selection): the shell's own, so apps' highlights read like its tabs.
     function luminance(c) {
         var lin = v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
         return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b)
@@ -340,7 +340,7 @@ Scope {
         var la = luminance(a), lb = luminance(b)
         return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
     }
-    function onAccent() { return onColor(Theme.accent) }
+    function onAccent() { return Theme.textOnAccent }
 
     // Whichever of base or bright reads better on a fill of c.
     function onColor(c) {
@@ -395,20 +395,28 @@ Scope {
             vars += "  --" + k.replace(/_/g, "-") + ": " + o[k] + ";\n"
         }
         vars += "}\n"
-        // Stock Adwaita, the fallback when adw-gtk3 isn't installed, has its
-        // colours compiled into its rules; this at least carries the accent.
+        // Selected text and items as a solid accent fill, focused or not, the
+        // way Qt and the browsers draw them. libadwaita would tint text 30%
+        // and grey out selected rows, and stock Adwaita (GTK3's fallback
+        // when adw-gtk3 isn't installed) has its own blue compiled in.
+        // A user sheet outranks the theme whatever the selectors.
         var selection = "selection, *:selected, *:selected:focus, row:selected, treeview.view:selected,\n"
             + "entry selection, textview text selection, label selection {\n"
             + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n}\n"
         // GTK4 without libadwaita still reads the named colours
-        var gtk3 = header + named + selection, gtk4 = header + vars + named
+        var gtk3 = header + named + selection, gtk4 = header + vars + named + selection
         AtomicFileWrite.write({ path: root.dir + "/gtk3.css", transform: () => gtk3 })
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
     }
 
-    // Gecko takes any of its system colours from a ui.<name> pref. Zen's
-    // accent (zen.theme.accent-color) defaults to AccentColor, so it follows
-    // ui.accentcolor unless it was picked by hand in Zen's own settings.
+    // Gecko takes any of its system colours from a ui.<name> pref. Every
+    // highlight is the accent: selected text (also in an unfocused window),
+    // selected rows, and find-in-page, whose current match is the accent
+    // (one step off it in blue: Gecko inverts a match that's exactly the
+    // selection colour) and whose other matches (Highlight All) are it
+    // halfway to base, where Gecko would draw them green and magenta.
+    // Zen's accent (zen.theme.accent-color) is pinned to it too, so a colour
+    // picked in Zen's own settings doesn't outlast the next start.
     // The chrome is dark or light with the look (toolbar-theme: 0 dark,
     // 1 light), and pages follow the chrome (content-override 2) -- unless a
     // theme extension is on, whose colours decide both instead.
@@ -416,6 +424,9 @@ Scope {
 
     function browserPrefs() {
         var a = hex(Theme.accent), t = hex(onAccent())
+        var others = mix(Theme.accent, Theme.base, 0.5)
+        var blue = Math.round(Theme.accent.b * 255)
+        var found = a.slice(0, 5) + (blue > 0 ? blue - 1 : 1).toString(16).padStart(2, "0")
         var pref = (k, v) => 'user_pref("' + k + '", ' + v + ');'
         var str = v => '"' + v + '"'
         var scheme = Theme.isLight ? "1" : "0"
@@ -424,6 +435,11 @@ Scope {
             pref("ui.highlight", str(a)), pref("ui.highlighttext", str(t)),
             pref("ui.selecteditem", str(a)), pref("ui.selecteditemtext", str(t)),
             pref("ui.accentcolor", str(a)), pref("ui.accentcolortext", str(t)),
+            pref("ui.textSelectDisabledBackground", str(a)),
+            pref("ui.-moz-cellhighlight", str(a)), pref("ui.-moz-cellhighlighttext", str(t)),
+            pref("ui.textSelectAttentionBackground", str(found)), pref("ui.textSelectAttentionForeground", str(t)),
+            pref("ui.textHighlightBackground", str(others)), pref("ui.textHighlightForeground", str(hex(Theme.text))),
+            pref("zen.theme.accent-color", str(a)),
             pref("toolkit.legacyUserProfileCustomizations.stylesheets", "true")]
     }
 
