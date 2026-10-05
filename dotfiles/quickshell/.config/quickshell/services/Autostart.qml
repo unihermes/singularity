@@ -158,6 +158,16 @@ Singleton {
         })
     }
 
+    // One argument of an Exec line, quoted the way the desktop entry spec
+    // and autostart.sh's `sh -c` both read it: a literal % doubled, and an
+    // argument with a space or a shell character in double quotes, with
+    // " ` $ and \ escaped inside them.
+    function execArg(a) {
+        a = String(a).replace(/%/g, "%%")
+        if (a !== "" && !/[\s"'\\><~|&;$*?#()`]/.test(a)) return a
+        return '"' + a.replace(/(["`$\\])/g, "\\$1") + '"'
+    }
+
     // A desktop entry picked in Settings, written as a new autostart file.
     // Exec is rebuilt from the parsed command rather than copied from the
     // application's own Exec line, which is where the field codes (%U, %f)
@@ -176,7 +186,7 @@ Singleton {
             + "Type=Application\n"
             + "Name=" + app.name + "\n"
             + (app.icon ? "Icon=" + app.icon + "\n" : "")
-            + "Exec=" + cmd.join(" ") + "\n"
+            + "Exec=" + cmd.map(execArg).join(" ") + "\n"
             + "Hidden=false\n"
             + "X-Singularity-Added=true\n"
 

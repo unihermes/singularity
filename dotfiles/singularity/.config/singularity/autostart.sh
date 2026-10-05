@@ -70,9 +70,9 @@ enabled() {
 
 # Field codes are for a file manager passing arguments to an application;
 # nothing is being passed here, and left in place they arrive as a literal
-# "%u" argument that some programs then try to open.
+# "%u" argument that some programs then try to open. %% is a literal %.
 exec_line() {
-	field "$1" Exec | sed -E 's/%[fFuUdDnNickvm]//g; s/[[:space:]]+$//'
+	field "$1" Exec | sed -E 's/%%/\x01/g; s/%[fFuUdDnNickvm]//g; s/\x01/%/g; s/[[:space:]]+$//'
 }
 
 case ${1:-run} in
