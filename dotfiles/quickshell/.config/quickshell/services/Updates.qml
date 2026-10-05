@@ -13,6 +13,9 @@
 // minutes (Settings -> Software Update). Packages in Settings.updateIgnore
 // are left out of the count and the upgrade, and the AUR only counts while
 // Settings.updateAur is on.
+//
+// The same checks also fetch the Singularity clone the shell is stowed from
+// and count the commits waiting upstream; updateRepo() runs its update.sh.
 
 pragma Singleton
 
@@ -43,7 +46,53 @@ Singleton {
     readonly property var nextCheck: Settings.updateInterval > 0 && lastChecked !== null && every.running
         ? new Date(lastChecked.getTime() + Settings.updateInterval * 60000) : null
 
+    // --- Singularity's own clone --------------------------------------------
+
+    // the clone, found from where shell.qml links to; "" when it isn't a link
+    property string repoPath: ""
+    // "ok", "fetch" (counted against the last fetch), "noupstream", "none"
+    property string repoState: ""
+    property string repoUpstream: ""
+    property int repoBehind: 0
+    property int repoAhead: 0
+    // [{ hash, time, subject }], newest first
+    property var repoCommits: []
+    // packages upstream's packages/*.txt list that aren't installed
+    property var repoNewPackages: []
+    property bool repoChecking: false
+    // set when update.sh starts; it calls `updates finished` when it ends
+    property bool repoUpdating: false
+
+    function refreshRepo() {
+        if (repoProc.running) return
+        repoChecking = true
+        repoProc.running = true
+    }
+
+    // In a detached terminal: a pull that changes the shell reloads it, and a
+    // Process child would go down with the old one.
+    function updateRepo() {
+        if (repoUpdating || repoPath === "" || repoBehind === 0) return
+        repoUpdating = true
+        Quickshell.execDetached(["alacritty", "--class", "singularity-update", "-e", "bash", "-c",
+            "trap 'qs ipc call updates finished >/dev/null 2>&1' EXIT; trap exit HUP TERM; cd \"$1\" && ./update.sh; "
+            + "if [ $? -eq 0 ]; then notify-send -a Updates 'Singularity updated' 'Pulled, relinked and installed'; "
+            + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi",
+            "bash", repoPath])
+    }
+
+    function saveCache() {
+        cache.save({
+            found: root.found,
+            lastChecked: root.lastChecked ? root.lastChecked.toISOString() : null,
+            repo: { path: root.repoPath, state: root.repoState, upstream: root.repoUpstream,
+                behind: root.repoBehind, ahead: root.repoAhead, commits: root.repoCommits,
+                newPackages: root.repoNewPackages },
+        })
+    }
+
     function refresh() {
+        refreshRepo()
         if (!available || checkProc.running) return
         checking = true
         checkProc.running = true
@@ -121,7 +170,7 @@ Singleton {
                 out.sort((a, b) => a.name.localeCompare(b.name))
                 root.found = out
                 root.lastChecked = new Date()
-                cache.save({ found: root.found, lastChecked: root.lastChecked.toISOString() })
+                root.saveCache()
             }
         }
         onExited: {
@@ -142,6 +191,64 @@ Singleton {
                 root.lastUpgrade = m ? new Date(m[1].replace(/([+-]\d\d)(\d\d)$/, "$1:$2")) : null
                 root.lastUpgradeCount = m ? Number(m[2]) : 0
             }
+        }
+    }
+
+    // Fetches, then reports, one line each:
+    //   PATH <clone>  STATE <state>  UPSTREAM origin/main  COUNT <ahead> <behind>
+    //   COMMIT <hash> <unix time> <subject>  NEW <package>
+    Process {
+        id: repoProc
+        command: ["sh", "-c",
+            "p=$(readlink -f \"$HOME/.config/quickshell/shell.qml\" 2>/dev/null); "
+            + "case \"$p\" in */dotfiles/*) r=${p%%/dotfiles/*} ;; *) echo 'STATE none'; exit ;; esac; "
+            + "echo \"PATH $r\"; cd \"$r\" || exit; "
+            + "u=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) || { echo 'STATE noupstream'; exit; }; "
+            + "echo \"UPSTREAM $u\"; "
+            + "if GIT_TERMINAL_PROMPT=0 timeout 60 git fetch --quiet 2>/dev/null; then echo 'STATE ok'; else echo 'STATE fetch'; fi; "
+            + "git rev-list --left-right --count 'HEAD...@{u}' | sed 's/^/COUNT /'; "
+            + "git log --format='COMMIT %h %ct %s' 'HEAD..@{u}'; "
+            + "for f in pacman aur; do git show \"@{u}:packages/$f.txt\" 2>/dev/null; done "
+            + "| sed -e 's/#.*//' -e '/^[[:space:]]*$/d' | xargs -r pacman -T | sed 's/^/NEW /'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var path = "", state = "", upstream = "", ahead = 0, behind = 0, commits = [], fresh = []
+                text.split("\n").forEach(line => {
+                    var m = /^(\S+) ?(.*)$/.exec(line)
+                    if (!m) return
+                    var v = m[2]
+                    if (m[1] === "PATH") path = v
+                    else if (m[1] === "STATE") state = v
+                    else if (m[1] === "UPSTREAM") upstream = v
+                    else if (m[1] === "COUNT") {
+                        var n = v.split(/\s+/)
+                        ahead = Number(n[0]) || 0
+                        behind = Number(n[1]) || 0
+                    } else if (m[1] === "COMMIT") {
+                        var c = /^(\S+) (\d+) (.*)$/.exec(v)
+                        if (c) commits.push({ hash: c[1], time: Number(c[2]) * 1000, subject: c[3] })
+                    } else if (m[1] === "NEW") fresh.push(v)
+                })
+                root.repoPath = path
+                root.repoState = state
+                root.repoUpstream = upstream
+                root.repoAhead = ahead
+                root.repoBehind = behind
+                root.repoCommits = commits
+                root.repoNewPackages = fresh
+                root.saveCache()
+            }
+        }
+        onExited: root.repoChecking = false
+    }
+
+    IpcHandler {
+        target: "updates"
+        // `qs ipc call updates check`
+        function check(): void { root.refresh() }
+        function finished(): void {
+            root.repoUpdating = false
+            root.refresh()
         }
     }
 
@@ -176,9 +283,20 @@ Singleton {
         id: cache
         name: "updates"
         onRestored: data => {
-            if (root.lastChecked !== null || !Array.isArray(data.found)) return
-            root.found = data.found
-            root.lastChecked = data.lastChecked ? new Date(data.lastChecked) : null
+            if (root.lastChecked === null && Array.isArray(data.found)) {
+                root.found = data.found
+                root.lastChecked = data.lastChecked ? new Date(data.lastChecked) : null
+            }
+            var r = data.repo
+            if (root.repoState === "" && r && typeof r === "object") {
+                root.repoPath = r.path || ""
+                root.repoState = r.state || ""
+                root.repoUpstream = r.upstream || ""
+                root.repoBehind = r.behind || 0
+                root.repoAhead = r.ahead || 0
+                root.repoCommits = Array.isArray(r.commits) ? r.commits : []
+                root.repoNewPackages = Array.isArray(r.newPackages) ? r.newPackages : []
+            }
         }
     }
 

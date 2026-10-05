@@ -4,7 +4,8 @@
 // Software updates: how often Updates.qml checks, whether the AUR is part of
 // it, and packages to leave alone -- all kept in Settings.qml, so the bar's
 // Updates module and flyout follow at once. What's pending and the upgrade
-// itself are Updates.qml's, as the flyout uses them; the upkeep rows are
+// itself are Updates.qml's, as the flyout uses them, and so is the
+// Singularity clone's status and update.sh; the upkeep rows are
 // Health's package checks, with the same repair buttons as System's Health
 // page.
 
@@ -46,6 +47,21 @@ SettingsPage {
         while (i < from.length && i < to.length && from[i] === to[i]) i++
         while (i > 0 && !/[.:+-]/.test(from[i - 1])) i--
         return from + "  →  " + to.slice(0, i) + "<font color=\"" + Theme.textStrong + "\">" + to.slice(i) + "</font>"
+    }
+
+    // "3 commits behind origin/main · 1 local commit: merge by hand"
+    readonly property string repoHint: {
+        var behind = Updates.repoBehind, ahead = Updates.repoAhead
+        if (Updates.repoState === "") return Updates.repoChecking ? "Checking…" : "Not checked yet"
+        if (Updates.repoState === "none") return "~/.config/quickshell isn't a link into a clone"
+        if (Updates.repoState === "noupstream") return "The branch tracks no remote branch"
+        var parts = [behind === 0 ? "Up to date with " + Updates.repoUpstream
+            : behind + (behind === 1 ? " commit" : " commits") + " behind " + Updates.repoUpstream]
+        if (ahead > 0)
+            parts.push(ahead + (ahead === 1 ? " local commit" : " local commits")
+                + (behind > 0 ? ": merge by hand" : " not pushed"))
+        if (Updates.repoState === "fetch") parts.push("couldn't reach the remote")
+        return parts.join(" · ")
     }
 
     readonly property var orphans: Health.checks.find(c => c.id === "orphans") || null
@@ -186,8 +202,8 @@ SettingsPage {
             FlyoutChip {
                 text: "Check now"
                 icon: "󰑐"
-                spinning: Updates.checking
-                enabled: Updates.available && !Updates.checking
+                spinning: Updates.checking || Updates.repoChecking
+                enabled: !Updates.checking && !Updates.repoChecking
                 onClicked: Updates.refresh()
             }
             FlyoutChip {
@@ -197,6 +213,53 @@ SettingsPage {
                 onClicked: Updates.update()
             }
         }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: Updates.repoBehind > 0 ? "SINGULARITY  " + Updates.repoBehind : "SINGULARITY" }
+
+    // pulls, relinks and installs new packages; a fast-forward only, so not
+    // while local commits are in the way
+    SettingsField {
+        label: "Repository"
+        hint: page.repoHint
+
+        FlyoutChip {
+            anchors.right: parent.right
+            text: Updates.repoUpdating ? "Updating…" : "Update"
+            icon: "󰚰"
+            enabled: Updates.repoBehind > 0 && Updates.repoAhead === 0 && !Updates.repoUpdating
+            onClicked: Updates.updateRepo()
+        }
+    }
+
+    FlyoutRow {
+        visible: Updates.repoBehind > 0 && Updates.repoNewPackages.length > 0
+        enabled: false
+        leadingIcon: "󰏗"
+        label: "Installs " + Updates.repoNewPackages.join(", ")
+        trailing: "new in packages/"
+    }
+
+    property bool showAllCommits: false
+
+    Repeater {
+        model: page.showAllCommits ? Updates.repoCommits : Updates.repoCommits.slice(0, page.shortList)
+
+        FlyoutRow {
+            required property var modelData
+            enabled: false
+            leadingIcon: "󰜘"
+            label: modelData.subject
+            trailing: page.when(new Date(modelData.time))
+        }
+    }
+
+    FlyoutRow {
+        visible: Updates.repoCommits.length > page.shortList
+        label: page.showAllCommits ? "Show fewer" : "Show all " + Updates.repoCommits.length
+        trailing: page.showAllCommits ? "󰅀" : (Updates.repoCommits.length - page.shortList) + " more  󰅂"
+        onActivated: page.showAllCommits = !page.showAllCommits
     }
 
     Item { width: 1; height: Theme.spaceM }

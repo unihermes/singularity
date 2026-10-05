@@ -204,6 +204,7 @@ var entries = [
 
     // --- Software Update ---------------------------------------------------
     { page: "updates", section: "Status",   label: "Status",            keywords: "update now check now last checked last upgrade pacman log syu upgraded" },
+    { page: "updates", section: "Singularity", label: "Repository",     keywords: "singularity git pull commits behind dotfiles clone self update update.sh link.sh new packages" },
     { page: "updates", section: "Checking", label: "Check for updates", keywords: "update interval how often pacman checkupdates schedule next check" },
     { page: "updates", section: "Checking", label: "Include the AUR",   keywords: "aur yay packages" },
     { page: "updates", section: "Pending",  label: "Pending",           keywords: "updates available upgrade now yay versions" },

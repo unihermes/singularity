@@ -273,7 +273,11 @@ Settings') are laid out the same way.
 - **Software Update:** a status card heads the page (the update icon,
   accent while there are some and a green tick when up to date, the count
   large, when it last checked, the last upgrade and how many packages it
-  changed, then Check now and Update now). Check for updates' hint says
+  changed, then Check now and Update now). Singularity follows: Repository
+  says how far the clone is behind its upstream (and local commits, which
+  disable Update since update.sh only fast-forwards), then a row naming
+  packages the pull would install, then the incoming commits, newest first
+  with their time, ten then Show all N. Check for updates' hint says
   when the next check runs, and Include the AUR how many AUR packages there
   are. Each pending package is one row (package icon, name, the version
   change as its note with the moving part brighter, repo or AUR at the

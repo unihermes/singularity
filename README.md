@@ -113,6 +113,17 @@ a machine where you only want the configs, or after adding a folder under
 every start), and that file would block the link; `link.sh` moves any such
 file to a timestamped `~/.config-backup-*` first. Nothing is deleted.
 
+### Updating
+
+```bash
+./update.sh
+```
+
+Pulls (fast-forward only), relinks, and installs whatever `packages/*.txt`
+lists that isn't installed yet. Settings › Software Update shows how many
+commits the clone is behind and runs this from its Update button. There are
+no version numbers: git is the version.
+
 ## First steps
 
 | Keys | Opens |
