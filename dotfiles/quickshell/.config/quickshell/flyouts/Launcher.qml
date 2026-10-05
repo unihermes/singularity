@@ -256,6 +256,11 @@ OverlayWindow {
                     var v = root.view
                     v.currentIndex = Math.max(0, v.currentIndex - (root.gridOn ? root.gridColumns : 1))
                 }
+                // a grid or a single line steps sideways with Left and Right,
+                // which then stop moving the text cursor (Shift+arrow still selects)
+                sidewaysKeys: root.gridOn || root.line
+                onLeftPressed: root.view.currentIndex = Math.max(0, root.view.currentIndex - 1)
+                onRightPressed: root.view.currentIndex = Math.min(root.view.count - 1, root.view.currentIndex + 1)
                 onEscapePressed: root.requestClose()
                 onTabPressed: root.stepMode(1)
                 onBackTabPressed: root.stepMode(-1)

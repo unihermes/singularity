@@ -36,6 +36,11 @@ Item {
     // key event while the cursor is here.
     signal upPressed()
     signal downPressed()
+    // Left and Right too, but only when this is set (a grid or a row of
+    // items); otherwise they move the text cursor as usual
+    property bool sidewaysKeys: false
+    signal leftPressed()
+    signal rightPressed()
     signal escapePressed()
     signal tabPressed()
     signal backTabPressed()
@@ -155,6 +160,14 @@ Item {
         onAccepted: root.accepted()
         Keys.onUpPressed: root.upPressed()
         Keys.onDownPressed: root.downPressed()
+        Keys.onLeftPressed: event => {
+            if (root.sidewaysKeys && !(event.modifiers & Qt.ShiftModifier)) root.leftPressed()
+            else event.accepted = false
+        }
+        Keys.onRightPressed: event => {
+            if (root.sidewaysKeys && !(event.modifiers & Qt.ShiftModifier)) root.rightPressed()
+            else event.accepted = false
+        }
         Keys.onEscapePressed: root.escapePressed()
         Keys.onTabPressed: root.tabPressed()
         Keys.onBacktabPressed: root.backTabPressed()
