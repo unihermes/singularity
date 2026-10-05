@@ -28,7 +28,10 @@ Singleton {
     property real feelsF: 0
     property real feelsC: 0
     property int humidity: 0
-    property string wind: ""
+    property real windMph: 0
+    property real windKmph: 0
+    property string windDir: ""
+    readonly property string wind: ready ? (metric ? windKmph + " km/h " : windMph + " mph ") + windDir : ""
     property bool isNight: false
     // today's sunrise and sunset, minutes after midnight; -1 until known
     property int sunriseMin: -1
@@ -78,7 +81,8 @@ Singleton {
         root.tempF = Number(c.temp_F); root.tempC = Number(c.temp_C)
         root.feelsF = Number(c.FeelsLikeF); root.feelsC = Number(c.FeelsLikeC)
         root.humidity = Number(c.humidity)
-        root.wind = c.windspeedMiles + " mph " + c.winddir16Point
+        root.windMph = Number(c.windspeedMiles); root.windKmph = Number(c.windspeedKmph)
+        root.windDir = c.winddir16Point
 
         var astro = d.weather[0].astronomy[0]
         var now = new Date(), mins = now.getHours() * 60 + now.getMinutes()
