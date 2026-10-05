@@ -221,8 +221,10 @@ restores it.
 `services/AppearanceSync.qml` renders the current look for everything outside
 the shell, into `~/.local/state/singularity/`:
 
-- **GTK 3/4 and Qt** apps take the ramp and accent (adw-gtk3, qt6ct), and the
-  theme, icons, cursor and fonts are set through gsettings. Change them on
+- **GTK 3/4 and Qt** apps take the ramp and accent (adw-gtk3, qt6ct) and the
+  style's corners, density and frames (a GTK user sheet and a qt6ct
+  stylesheet), and the theme, icons, cursor and fonts are set through
+  gsettings. Change them on
   the Appearance page; hand edits are overwritten.
 - **Alacritty, starship, fastfetch and zathura** recolour live. The terminal's
   16 ANSI colours are a lightness ramp in the look's tones, so output stays
