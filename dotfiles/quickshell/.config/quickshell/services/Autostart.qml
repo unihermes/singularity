@@ -193,10 +193,19 @@ Singleton {
 
     // Only ever a file in ~/.config/autostart. Removing one that came from
     // /etc/xdg/autostart drops back to the system entry, which is off.
+    // Queued, so a second removal clicked while the first is running isn't
+    // dropped by the busy Process.
     function remove(entry) {
         if (entry.scope !== "user") return
-        rm.command = ["rm", "-f", userDir + "/" + entry.file]
-        rm.pendingMessage = entry.name + " removed from startup"
+        rm.pending.push({ file: userDir + "/" + entry.file, message: entry.name + " removed from startup" })
+        nextRemove()
+    }
+
+    function nextRemove() {
+        if (rm.running || rm.pending.length === 0) return
+        var job = rm.pending.shift()
+        rm.command = ["rm", "-f", "--", job.file]
+        rm.pendingMessage = job.message
         rm.running = true
     }
 
@@ -214,11 +223,13 @@ Singleton {
 
     Process {
         id: rm
+        property var pending: []
         property string pendingMessage: ""
         command: ["true"]
         onExited: (code) => {
             root.wrote(code === 0 ? pendingMessage : "Couldn't remove the entry", code !== 0)
             root.refresh()
+            root.nextRemove()
         }
     }
 }

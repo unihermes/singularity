@@ -43,6 +43,9 @@ Singleton {
         // optimistic, so the tick moves the instant it is clicked; the
         // re-read on exit settles it if PPD refuses or degrades it
         profile = name
+        // a pick made while the last is still being set waits for it, and
+        // only the newest such pick is kept
+        if (setProc.running) { setProc.pending = name; return }
         setProc.command = ["busctl", "set-property"].concat(busPath, ["ActiveProfile", "s", name])
         setProc.running = true
     }
@@ -59,9 +62,16 @@ Singleton {
 
     Process {
         id: setProc
+        property string pending: ""
         stderr: StdioCollector { id: setErr }
         onExited: code => {
             root.setFinished(code === 0, setErr.text.trim().split("\n")[0])
+            if (pending !== "") {
+                var p = pending
+                pending = ""
+                root.set(p)
+                return
+            }
             root.refresh()
         }
     }

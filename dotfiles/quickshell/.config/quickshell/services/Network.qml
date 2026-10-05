@@ -44,8 +44,7 @@ Singleton {
         if (device === "") return
         powered = on    // optimistic; powerProc settles it
         if (!on) ssid = ""
-        powerSet.command = ["iwctl", "device", device, "set-property", "Powered", on ? "on" : "off"]
-        powerSet.running = true
+        queue(powerSet, ["iwctl", "device", device, "set-property", "Powered", on ? "on" : "off"])
     }
 
     // Only when asked (the Rescan rows in the flyout and on the Settings
@@ -77,8 +76,7 @@ Singleton {
     // Drops the saved passphrase, so iwd stops auto-joining it. Forgetting
     // the network you're on disconnects it too.
     function forget(name) {
-        forgetProc.command = ["iwctl", "known-networks", name, "forget"]
-        forgetProc.running = true
+        queue(forgetProc, ["iwctl", "known-networks", name, "forget"])
     }
 
     // Whether iwd joins a saved network by itself when it's in range. A
@@ -86,9 +84,21 @@ Singleton {
     function setAutoConnect(name, on) {
         var k = knownNetworks.find(n => n.ssid === name)
         if (!k) return
-        autoProc.command = ["busctl", "set-property", "net.connman.iwd", k.path,
-            "net.connman.iwd.KnownNetwork", "AutoConnect", "b", on ? "true" : "false"]
-        autoProc.running = true
+        queue(autoProc, ["busctl", "set-property", "net.connman.iwd", k.path,
+            "net.connman.iwd.KnownNetwork", "AutoConnect", "b", on ? "true" : "false"])
+    }
+
+    // One command at a time per process, in order: a Process that is still
+    // running ignores a new command, so a second click (the radio toggled
+    // twice, two networks forgotten in a row) was dropped.
+    function queue(proc, cmd) {
+        proc.pending.push(cmd)
+        next(proc)
+    }
+    function next(proc) {
+        if (proc.running || proc.pending.length === 0) return
+        proc.command = proc.pending.shift()
+        proc.running = true
     }
 
     function refreshStatus() {
@@ -240,8 +250,12 @@ Singleton {
     // below catches that reconnect when it lands.
     Process {
         id: powerSet
+        property var pending: []
         command: ["true"]
-        onExited: powerProc.running = true
+        onExited: {
+            if (!powerProc.running) powerProc.running = true
+            root.next(powerSet)
+        }
     }
 
     Process {
@@ -263,16 +277,22 @@ Singleton {
 
     Process {
         id: autoProc
+        property var pending: []
         command: ["true"]
-        onExited: root.refreshList()
+        onExited: {
+            root.refreshList()
+            root.next(autoProc)
+        }
     }
 
     Process {
         id: forgetProc
+        property var pending: []
         command: ["true"]
         onExited: {
             root.refreshStatus()
             root.refreshList()
+            root.next(forgetProc)
         }
     }
 
