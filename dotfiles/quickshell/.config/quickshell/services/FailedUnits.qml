@@ -24,13 +24,16 @@ Singleton {
 
     function refresh() { if (!probe.running) probe.running = true }
 
-    // status and recent log in a terminal, held open until a key is pressed
+    // Status and recent log in a terminal, held open until a key is pressed.
+    // The unit goes in as an argument, not into the script: escaped names
+    // (systemd-fsck@dev-disk-by\x2duuid-….service) lose their backslashes
+    // to the shell otherwise.
     function showLog(u) {
         var scope = u.user ? "--user " : ""
-        Quickshell.execDetached(["alacritty", "--class", "singularity-unit-log", "-e", "sh", "-c",
-            "systemctl " + scope + "status --no-pager " + u.name + "; echo; "
-            + "journalctl " + scope + "-u " + u.name + " -n 40 --no-pager; echo; "
-            + "read -rsn1 -p 'press any key to close'"])
+        Quickshell.execDetached(["alacritty", "--class", "singularity-unit-log", "-e", "bash", "-c",
+            "systemctl " + scope + "status --no-pager -- \"$1\"; echo; "
+            + "journalctl " + scope + "-u \"$1\" -n 40 --no-pager; echo; "
+            + "read -rsn1 -p 'press any key to close'", "bash", u.name])
     }
 
     // System units go through polkit, so these prompt for a password there.
