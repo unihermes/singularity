@@ -154,8 +154,16 @@ Item {
             else if (mouse.button === Qt.RightButton) root.rightClicked()
             else root.activated()
         }
+        // accumulate to one notch per step so a touchpad flick doesn't
+        // jump the level, and sideways swipes (y = 0) do nothing
+        property real wheelAccum: 0
         onWheel: wheel => {
-            if (root.acceptWheel) root.wheeled(wheel.angleDelta.y > 0 ? 1 : -1)
+            if (!root.acceptWheel) return
+            wheelAccum += wheel.angleDelta.y
+            while (Math.abs(wheelAccum) >= 120) {
+                root.wheeled(wheelAccum > 0 ? 1 : -1)
+                wheelAccum -= wheelAccum > 0 ? 120 : -120
+            }
         }
     }
 }
