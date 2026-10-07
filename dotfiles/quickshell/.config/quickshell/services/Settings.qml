@@ -97,6 +97,8 @@ Singleton {
     readonly property alias terminalOpacity:  adapter.terminalOpacity
     // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
     readonly property alias workspaceStyle: adapter.workspaceStyle
+    // "arch", "menu", "dashboard", "cog", "home" or "star" -- the Control Centre button's glyph
+    readonly property alias controlIcon: adapter.controlIcon
     // "stamp", "time", "seconds", "day", "long" or "iso" -- what the clock chip shows
     readonly property alias clockStyle:  adapter.clockStyle
     readonly property alias windowStyle: adapter.windowStyle
@@ -162,6 +164,7 @@ Singleton {
         windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
         barStyle:     ["full", "floating", "islands"],
         workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman", "names", "apps"],
+        controlIcon:  ["arch", "menu", "dashboard", "cog", "home", "star"],
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
         windowStyle:  ["icons", "titled", "glide", "lift", "inset", "segmented", "spotlight", "tabs", "index", "dots"],
         windowScope:  ["workspace", "all"],
@@ -199,7 +202,8 @@ Singleton {
         "mono": "Mono", "mirror": "Mirrored", "line": "Line", "lift": "Lift", "edge": "Screen edge",
         "number": "Number", "row": "Row", "list": "List", "grid": "Grid", "strip": "Strip",
         "dim": "Dimmed", "clear": "Clear", "solid": "Solid", "banner": "Banner", "centre": "Centre",
-        "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
+        "arch": "Arch", "menu": "Menu", "dashboard": "Dashboard", "cog": "Cog", "home": "Home",
+        "star": "Star", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
     })
     // where one value means different things under different settings
     readonly property var keyedLabels: ({
@@ -818,6 +822,7 @@ Singleton {
             property int unfocusedOpacity: 100
             property int terminalOpacity: 90
             property string workspaceStyle: "pills"
+            property string controlIcon: "arch"
             property string clockStyle: "stamp"
             property string windowStyle: "icons"
             property string windowScope: "workspace"

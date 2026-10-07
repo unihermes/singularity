@@ -48,7 +48,7 @@ Item {
     // distro/menu button conventionally lives.
     BarModule {
         id: ccBtn
-        icon: "󰣇"
+        icon: Theme.controlGlyph
         active: screenScope.openFlyout === "controlcentre"
         onActivated: screenScope.toggleFlyout("controlcentre", ccBtn)
     }

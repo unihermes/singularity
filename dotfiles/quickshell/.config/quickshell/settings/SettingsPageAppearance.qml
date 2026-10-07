@@ -89,7 +89,7 @@ SettingsPage {
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
         headingUpper: "Capital headings", headingRule: "Heading rule",
         fontFamily: "Font", barPosition: "Position", workspaceStyle: "Workspaces",
-        clockStyle: "Clock", windowStyle: "Open windows", windowScope: "Windows shown",
+        controlIcon: "Control Centre icon", clockStyle: "Clock", windowStyle: "Open windows", windowScope: "Windows shown",
         iconTint: "App icons", vizStyle: "Visualizer", flyoutAnim: "Flyouts open",
         launcherLayout: "Launcher layout", launcherPosition: "Launcher position",
         launcherDetails: "Launcher details", notifStyle: "Notification popups",

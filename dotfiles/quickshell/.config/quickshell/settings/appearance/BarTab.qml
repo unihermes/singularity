@@ -32,6 +32,12 @@ SettingsTab {
     FlyoutHeading { text: "MODULES" }
 
     SettingsField {
+        label: "Control Centre icon"
+        hint: "The button at the bar's start"
+        Choice { key: "controlIcon" }
+    }
+
+    SettingsField {
         label: "Visualizer"
         hint: "The audio spectrum while sound plays"
         Choices { key: "vizStyle" }

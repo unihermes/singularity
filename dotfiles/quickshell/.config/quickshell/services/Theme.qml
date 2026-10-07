@@ -368,6 +368,10 @@ Singleton {
     // what the Names style calls each workspace, "" where it has none
     readonly property var workspaceNames: Settings.workspaceNames.split(",").map(s => s.trim())
     readonly property string clockStyle: Settings.clockStyle
+    // the Control Centre button's glyph
+    readonly property string controlGlyph: ({
+        arch: "󰣇", menu: "󰍜", dashboard: "󰕮", cog: "󰒓", home: "󰋜", star: "󰓎",
+    })[Settings.controlIcon] || "󰣇"
     // the open-windows strip and app icons in the bar -- see Looks.js
     readonly property string windowStyle: Settings.windowStyle
     readonly property string windowScope: Settings.windowScope

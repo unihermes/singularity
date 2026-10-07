@@ -110,6 +110,7 @@ var entries = [
     { page: "appearance", section: "Panels",        label: "Launcher position",    keywords: "launcher centre top fullscreen dim" },
     { page: "appearance", section: "Panels",        label: "Launcher layout",      keywords: "launcher apps grid list dmenu spotlight" },
     { page: "appearance", section: "System",        label: "Flyouts open",         keywords: "animation drop fade scale menu popup" },
+    { page: "appearance", section: "Bar",           label: "Control Centre icon",  keywords: "button logo glyph arch menu home star cog dashboard" },
     { page: "appearance", section: "Bar",           label: "Visualizer",           keywords: "audio spectrum music bars cava" },
     { page: "appearance", section: "Bar",           label: "Open windows",         keywords: "taskbar tasks apps icons titles tabs glide lift inset segmented spotlight index dots" },
     { page: "appearance", section: "Bar",           label: "Windows shown",        keywords: "taskbar workspace all scope" },

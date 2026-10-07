@@ -66,6 +66,8 @@
 //                  "names"    the names in Settings.workspaceNames, numbers
 //                             for the rest
 //                  "apps"     the icon of an app open on each, a dot when empty
+//     controlIcon  the Control Centre button's glyph: "arch", "menu",
+//                  "dashboard", "cog", "home" or "star"
 //     clockStyle   "stamp"    23:50:02 | 09/18/26
 //                  "time"     23:50
 //                  "seconds"  23:50:02
@@ -179,6 +181,7 @@ var settingsBase = {
     heavyLines: false,
     levelColour: "accent",
     workspaceStyle: "pills",
+    controlIcon: "arch",
     clockStyle: "stamp",
     windowStyle: "icons",
     windowScope: "workspace",
