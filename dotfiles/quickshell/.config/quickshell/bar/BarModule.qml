@@ -22,6 +22,7 @@ Item {
     property bool dimmed: false
     property bool acceptWheel: false
     property int padH: Theme.modulePadH
+    property int iconSize: Theme.iconSize
     // -1 for a normal chip; 0..1 replaces the readout with a fill bar and
     // the exact number moves into the flyout
     property real fillValue: -1
@@ -83,7 +84,7 @@ Item {
             text: root.icon
             color: root.iconColor.a > 0 ? root.iconColor : root.fg
             font.family: Theme.fontIcon
-            font.pixelSize: Theme.iconSize
+            font.pixelSize: root.iconSize
 
             Rectangle {
                 visible: root.badge > 0

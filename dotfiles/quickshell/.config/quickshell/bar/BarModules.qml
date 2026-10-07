@@ -49,6 +49,9 @@ Item {
     BarModule {
         id: ccBtn
         icon: Theme.controlGlyph
+        // one size whichever glyph is chosen, a little over the other modules'
+        iconSize: Math.min(Theme.moduleHeight - 4, Theme.iconSize + 4)
+        fixedWidth: Theme.moduleWidth
         active: screenScope.openFlyout === "controlcentre"
         onActivated: screenScope.toggleFlyout("controlcentre", ccBtn)
     }
