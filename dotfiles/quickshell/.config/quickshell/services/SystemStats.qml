@@ -126,6 +126,9 @@ Singleton {
     // prefix dropped: status, capacity, cycle_count, voltage_now, ...
     property var bat: ({})
     property bool acOnline: false
+    // [{ t, w }] draw readings over the last two minutes, which batWatts
+    // averages: the instantaneous reading swings with every burst of load
+    property var batDraw: []
 
     // --- uptime ----------------------------------------------------------
 
@@ -401,7 +404,13 @@ Singleton {
             var m = lines[i].match(/^POWER_SUPPLY_([A-Z0-9_]+)=(.*)$/)
             if (m) kv[m[1].toLowerCase()] = m[2]
         }
+        // A plug-in or unplug flips what the draw means, so the window starts over
+        if (kv.status !== bat.status) batDraw = []
         bat = kv
+        var w = rawWatts(kv), now = Date.now()
+        var draw = batDraw.filter(function (d) { return now - d.t < 120000 })
+        if (w > 0) draw.push({ t: now, w: w })
+        batDraw = draw
         if (acFile.path !== "") {
             acFile.reload()
             acOnline = acFile.text().trim() === "1"
@@ -432,23 +441,29 @@ Singleton {
     readonly property real batNowWh:    bat.status !== undefined ? wh("now") : -1
     readonly property real batFullWh:   bat.status !== undefined ? wh("full") : -1
     readonly property real batDesignWh: bat.status !== undefined ? wh("full_design") : -1
-    // Draw in watts. power_now is watts already; current_now needs the
-    // voltage to get there.
-    readonly property real batWatts: {
-        if (bat.status === undefined) return -1
-        var p = Number(bat.power_now)
+    // Draw in watts from one uevent reading. power_now is watts already;
+    // current_now needs the voltage to get there.
+    function rawWatts(b) {
+        var p = Number(b.power_now)
         if (!isNaN(p) && p > 0) return p / 1e6
-        var i = Number(bat.current_now), v = Number(bat.voltage_now)
+        var i = Number(b.current_now), v = Number(b.voltage_now)
         if (!isNaN(i) && i > 0 && v > 0) return i * v / 1e12
         return -1
+    }
+    // The mean draw over the last two minutes, or as much of them as has
+    // been sampled since the window opened
+    readonly property real batWatts: {
+        if (bat.status === undefined || batDraw.length === 0) return -1
+        var sum = 0
+        for (var i = 0; i < batDraw.length; i++) sum += batDraw[i].w
+        return sum / batDraw.length
     }
     // What the pack holds now against what it held new: the number that says
     // whether a battery is worn out, which the percentage never does.
     readonly property real batHealth: batFullWh > 0 && batDesignWh > 0
         ? batFullWh / batDesignWh : -1
     readonly property bool batCharging: String(bat.status || "") === "Charging"
-    // Hours left at the current draw -- the pack's own estimate, not a
-    // smoothed one, so it swings while the load does.
+    // Hours left at the two-minute average draw
     readonly property real batHours: batWatts > 0 && batNowWh > 0
         ? (batCharging ? (batFullWh - batNowWh) : batNowWh) / batWatts : -1
 
@@ -500,7 +515,7 @@ Singleton {
         procs = []
         killPid = -1
         cpuPrev = null; corePrev = []; netPrev = null; diskPrev = null
-        cpuHistory = []; memHistory = []; tempHistory = []; batHistory = []
+        cpuHistory = []; memHistory = []; tempHistory = []; batHistory = []; batDraw = []
         diskReadHistory = []; diskWriteHistory = []; rxHistory = []; txHistory = []
         cpu = 0; cores = []
         diskRead = diskWrite = rxRate = txRate = -1
