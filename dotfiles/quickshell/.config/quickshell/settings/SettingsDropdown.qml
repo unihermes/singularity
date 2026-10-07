@@ -34,6 +34,8 @@ Item {
     property var fontFor: v => Theme.fontText
     // an image source before a choice and in the box (an app's icon)
     property var iconFor: v => ""
+    // an icon-font glyph before a choice and in the box
+    property var glyphFor: v => ""
     // what the box shows when nothing in the model is current
     property string placeholder: "Choose…"
     property int maxRows: 8
@@ -101,8 +103,22 @@ Item {
         }
 
         Text {
-            anchors.left: boxIcon.visible ? boxIcon.right : parent.left
-            anchors.leftMargin: boxIcon.visible ? Theme.spaceM : Theme.spaceL
+            id: boxGlyph
+            readonly property string g: root.currentIndex >= 0 ? root.glyphFor(root.current) || "" : ""
+            visible: g !== ""
+            x: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            width: visible ? Theme.fontIconSize : 0
+            horizontalAlignment: Text.AlignHCenter
+            text: g
+            color: Theme.textStrong
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontIconSize
+        }
+
+        Text {
+            anchors.left: boxIcon.visible ? boxIcon.right : boxGlyph.visible ? boxGlyph.right : parent.left
+            anchors.leftMargin: boxIcon.visible || boxGlyph.visible ? Theme.spaceM : Theme.spaceL
             anchors.right: chevron.left
             anchors.rightMargin: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
@@ -143,6 +159,7 @@ Item {
         labelFor: root.labelFor
         fontFor: root.fontFor
         iconFor: root.iconFor
+        glyphFor: root.glyphFor
         maxRows: root.maxRows
         onPicked: v => root.picked(v)
         onDismissed: root.open = false

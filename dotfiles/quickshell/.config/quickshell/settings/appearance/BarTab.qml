@@ -34,7 +34,7 @@ SettingsTab {
     SettingsField {
         label: "Control Centre icon"
         hint: "The button at the bar's start"
-        Choice { key: "controlIcon" }
+        Choice { key: "controlIcon"; glyphs: Theme.controlGlyphs }
     }
 
     SettingsField {

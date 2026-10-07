@@ -33,6 +33,8 @@ Item {
     property var fontFor: v => Theme.fontText
     // an image source before a choice (an app's icon), "" for none
     property var iconFor: v => ""
+    // an icon-font glyph before a choice, where there is no image
+    property var glyphFor: v => ""
     // a choice's colour swatches, [] for none
     property var swatchesFor: v => []
     property int maxRows: 8
@@ -130,8 +132,22 @@ Item {
                 }
 
                 Text {
-                    anchors.left: itemIcon.visible ? itemIcon.right : parent.left
-                    anchors.leftMargin: itemIcon.visible ? Theme.spaceM : Theme.spaceL
+                    id: itemGlyph
+                    readonly property string g: root.glyphFor(item.modelData) || ""
+                    visible: g !== ""
+                    x: Theme.spaceL
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: visible ? Theme.fontIconSize : 0
+                    horizontalAlignment: Text.AlignHCenter
+                    text: g
+                    color: item.isCurrent || itemMouse.containsMouse ? Theme.textStrong : Theme.text
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontIconSize
+                }
+
+                Text {
+                    anchors.left: itemIcon.visible ? itemIcon.right : itemGlyph.visible ? itemGlyph.right : parent.left
+                    anchors.leftMargin: itemIcon.visible || itemGlyph.visible ? Theme.spaceM : Theme.spaceL
                     anchors.right: itemSw.left
                     anchors.rightMargin: Theme.spaceM
                     anchors.verticalCenter: parent.verticalCenter

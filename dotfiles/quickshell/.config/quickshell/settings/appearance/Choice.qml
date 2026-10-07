@@ -25,5 +25,8 @@ SettingsDropdown {
     model: Settings.choices[key] || []
     current: Settings[key]
     labelFor: v => page.label(v, key)
+    // set where a setting's values have glyphs to show beside them
+    property var glyphs: ({})
+    glyphFor: v => glyphs[v] || ""
     onPicked: v => Settings.set(key, v)
 }

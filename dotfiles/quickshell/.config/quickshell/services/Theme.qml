@@ -369,9 +369,13 @@ Singleton {
     readonly property var workspaceNames: Settings.workspaceNames.split(",").map(s => s.trim())
     readonly property string clockStyle: Settings.clockStyle
     // the Control Centre button's glyph
-    readonly property string controlGlyph: ({
+    readonly property var controlGlyphs: ({
         arch: "󰣇", menu: "󰍜", dashboard: "󰕮", cog: "󰒓", home: "󰋜", star: "󰓎",
-    })[Settings.controlIcon] || "󰣇"
+        vortex: "󰢘", horizon: "󰺕", blackhole: "󰀘", atom: "󰝨", rocket: "󰑣", ghost: "󰊠",
+        planet: "󰇧", sparkle: "󰙴", infinity: "󰛤",
+        radar: "󰐷", moon: "󰖔",
+    })
+    readonly property string controlGlyph: controlGlyphs[Settings.controlIcon] || "󰣇"
     // the open-windows strip and app icons in the bar -- see Looks.js
     readonly property string windowStyle: Settings.windowStyle
     readonly property string windowScope: Settings.windowScope
