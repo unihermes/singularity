@@ -496,6 +496,33 @@ PanelWindow {
         ModuleSeparators { slots: rightSlots }
     }
 
+    // The pinned modules' hitboxes run on to the screen's edges (full width
+    // only; a floating bar has a gap there that isn't the bar), so the
+    // corners click: a strip from the edge to the module's own, forwarding
+    // the click to it.
+    Repeater {
+        model: Theme.barFull ? [
+            { key: "controlcentre", side: "left" },
+            { key: "desktop", side: "right" },
+        ] : []
+
+        MouseArea {
+            id: edge
+            required property var modelData
+            readonly property Item target: bar.widgetItem(modelData.key)
+            readonly property bool onLeft: modelData.side === "left"
+            enabled: !!target && target.visible
+            y: barBody.y
+            height: barBody.height
+            // the module's edge in window coordinates, followed as it slides
+            readonly property real edgeX: target ? target.parent.x + target.x + (onLeft ? 0 : target.width) : 0
+            x: onLeft ? 0 : edgeX
+            width: onLeft ? edgeX : bar.width - edgeX
+            cursorShape: Qt.PointingHandCursor
+            onClicked: target.activated()
+        }
+    }
+
     // Keep Awake. The Wayland idle-inhibit protocol, rather than
     // `systemd-inhibit`: idle daemons (hypridle and friends) watch
     // this protocol, and it needs no process kept alive. It only

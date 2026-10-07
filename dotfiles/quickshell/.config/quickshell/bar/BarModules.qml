@@ -1113,6 +1113,9 @@ Item {
             })
         }
 
+        signal activated()
+        onActivated: Quickshell.execDetached(["hyprctl", "eval", "singularityShowDesktop()"])
+
         property bool slideX: false
         Behavior on x {
             enabled: desktopBtn.slideX
@@ -1162,7 +1165,7 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: Quickshell.execDetached(["hyprctl", "eval", "singularityShowDesktop()"])
+            onClicked: desktopBtn.activated()
         }
     }
 }

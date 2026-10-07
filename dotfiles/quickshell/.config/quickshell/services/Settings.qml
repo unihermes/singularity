@@ -391,6 +391,12 @@ Singleton {
     // the page that would un-hide it.
     readonly property var lockedWidgets: ["controlcentre"]
 
+    // Fixed in place: Control Centre first on the left, Show Desktop last on
+    // the right, so each can be hit by throwing the pointer into a corner
+    // (Bar.qml's edge strips). widgetLayout() puts them there whatever the
+    // saved layout says, and the Bar Widgets list won't drag them.
+    readonly property var pinnedWidgets: ["controlcentre", "desktop"]
+
     // Workspaces 1..n have SUPER+n binds and are the only valid targets for a
     // window rule. Must match MAX_WORKSPACES in binds.lua.
     readonly property int workspaceCount: 5
@@ -439,6 +445,13 @@ Singleton {
             else row.splice(at, 0, key2)
             placed[key2] = true
         }
+        out.left = out.left.filter(k => k !== "controlcentre")
+        out.centre = out.centre.filter(k => k !== "controlcentre")
+        out.right = out.right.filter(k => k !== "controlcentre" && k !== "desktop")
+        out.left = out.left.filter(k => k !== "desktop")
+        out.centre = out.centre.filter(k => k !== "desktop")
+        out.left.unshift("controlcentre")
+        out.right.push("desktop")
         return out
     }
 

@@ -54,6 +54,9 @@ Column {
         to = Math.max(1, to)
         if (from === to || from < 1 || from >= widgetModel.count || to >= widgetModel.count) return
         if (widgetModel.get(from).header) return
+        // the pinned rows stay put, and nothing is dragged past them
+        if (Settings.pinnedWidgets.indexOf(widgetModel.get(from).key) !== -1
+            || Settings.pinnedWidgets.indexOf(widgetModel.get(to).key) !== -1) return
         widgetModel.move(from, to, 1)
         revision++
         commit()
@@ -110,6 +113,7 @@ Column {
             readonly property var info: root.meta[key] || { label: key, icon: "" }
             readonly property bool locked: Settings.lockedWidgets.indexOf(key) !== -1
             readonly property bool dragging: grip.pressed
+            readonly property bool pinned: Settings.pinnedWidgets.indexOf(key) !== -1
 
             width: list.width
             height: root.rowHeight
@@ -166,6 +170,7 @@ Column {
                     height: parent.height
 
                     Text {
+                        visible: !row.pinned
                         anchors.centerIn: parent
                         text: "󰇝"
                         color: row.dragging ? Theme.textStrong
@@ -177,7 +182,7 @@ Column {
                     MouseArea {
                         id: grip
                         anchors.fill: parent
-                        enabled: !row.header
+                        enabled: !row.header && !row.pinned
                         hoverEnabled: true
                         preventStealing: true
                         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
@@ -238,7 +243,7 @@ Column {
                     trailingInset: pin.visible ? pin.width + Theme.spaceS : 0
                     // the locked row says why it has no switch, rather than
                     // looking like a broken one
-                    trailingIcon: row.locked ? "󰌾" : ""
+                    trailingIcon: row.locked ? "󰌾" : row.pinned ? "󰐃" : ""
                     onActivated: if (!row.locked)
                         Settings.setWidgetVisible(row.key, !Settings.widgetVisible(row.key))
                 }
