@@ -39,14 +39,10 @@ FlyoutPanel {
 
     property string appQuery: ""
     property point lastPointer: Qt.point(-1, -1)
-    // Re-read the saved layout each time the page opens, so the
-    // lists never show an order from before a reset or a hand edit.
     onPageChanged: if (page === "quick") {
         rfkillRead.running = true
     } else if (page === "power") {
         Session.refresh()
-    } else if (page === "widgets") {
-        widgetsList.refill()
     } else if (page === "apps") {
         appQuery = ""
         appSearch.text = ""
@@ -274,7 +270,6 @@ FlyoutPanel {
         spacing: Theme.spaceM
 
         BarWidgetList {
-            id: widgetsList
             meta: Settings.widgetMeta
         }
 
@@ -284,10 +279,7 @@ FlyoutPanel {
             label: "Reset to defaults"
 
             enabled: !Settings.widgetsDefault
-            onActivated: {
-                Settings.resetWidgets()
-                widgetsList.refill()
-            }
+            onActivated: Settings.resetWidgets()
         }
     }
 

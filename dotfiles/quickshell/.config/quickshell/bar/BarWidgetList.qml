@@ -63,7 +63,7 @@ Column {
     }
 
     // walk the rows, assigning each module to the header above it
-    function commit() {
+    function shown() {
         var layout = { left: [], centre: [], right: [] }
         var sec = "left"
         for (var i = 0; i < widgetModel.count; i++) {
@@ -71,8 +71,17 @@ Column {
             if (r.header) sec = r.key
             else layout[sec].push(r.key)
         }
-        Settings.setWidgetLayout(layout)
+        return layout
     }
+
+    function commit() { Settings.setWidgetLayout(shown()) }
+
+    // Follows the saved layout when something else changes it (the list on
+    // another screen, a reset, a look with its own layout), so a drag here
+    // never writes back an order from before. Its own commits already match,
+    // so a drag in progress keeps its rows.
+    readonly property string saved: JSON.stringify(Settings.widgetLayout())
+    onSavedChanged: if (JSON.stringify(shown()) !== saved) refill()
 
     // the section a row sits in: the key of the nearest header above it
     function sectionAt(index) {
