@@ -27,59 +27,21 @@ SettingsPage {
     title: "Audio"
     description: "Where sound goes, how loud, and each app's share."
 
-    readonly property var devices: Pipewire.nodes.values.filter(n => n.audio && !n.isStream)
-    readonly property var sinks: devices.filter(n => n.isSink)
-    readonly property var sources: devices.filter(n => !n.isSink)
-
-    // Streams split by Pipewire's own media.class rather than by isSink:
-    // for a stream that flag reads as the direction of the node it feeds,
-    // which is the opposite of how it reads on a device and easy to get
-    // backwards. media.class says exactly which it is.
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
     // The lists below are ScriptModels: these arrays are made afresh when any
     // node comes or goes (a notification's sound), and a bare array would
     // rebuild every row, cutting off a volume drag or an open dropdown.
-    readonly property var playing: streams.filter(n => page.mediaClass(n) === "Stream/Output/Audio")
-    readonly property var recording: streams.filter(n => page.mediaClass(n) === "Stream/Input/Audio")
-
-    function mediaClass(n) {
-        return (n && n.properties) ? (n.properties["media.class"] || "") : ""
-    }
+    readonly property var devices: Audio.devices
+    readonly property var sinks: Audio.sinks
+    readonly property var sources: Audio.sources
+    readonly property var streams: Audio.streams
+    readonly property var playing: Audio.playing
+    readonly property var recording: Audio.recording
 
     // audio.volume / audio.muted stay invalid until a node is tracked, and
     // that goes for the streams too -- without them here every app row would
     // sit at 0% and refuse to move.
     PwObjectTracker {
         objects: page.devices.concat(page.streams)
-    }
-
-    function nodeName(n) {
-        return n ? (n.description || n.nickname || n.name) : ""
-    }
-
-    // A device's name without the words it shares with the card's other
-    // devices: "Speaker", not "Alder Lake Smart Sound Technology Audio
-    // Controller Speaker". A card with one device, a USB headset say, keeps
-    // its whole name, which is the only thing telling it apart.
-    function shortName(n) {
-        var name = nodeName(n)
-        var card = n ? (n.properties || {})["device.id"] : undefined
-        if (card === undefined) return name
-        var names = devices.filter(d => (d.properties || {})["device.id"] === card)
-            .map(d => nodeName(d).split(" "))
-        if (names.length < 2) return name
-        var k = 0
-        while (names.every(w => w.length > k + 1 && w[k] === names[0][k])) k++
-        return name.split(" ").slice(k).join(" ")
-    }
-
-    // An app's own name for itself, falling back to the node's. Pipewire fills
-    // application.name for anything launched normally; a bare node (a script
-    // piping into pw-play, the visualiser's capture) may only have a name.
-    function appName(n) {
-        if (!n) return ""
-        var p = n.properties || {}
-        return p["application.name"] || n.description || n.nickname || n.name
     }
 
     // What it's playing, when that's something other than the app's own name:
@@ -92,7 +54,7 @@ SettingsPage {
         if (!n) return ""
         var p = n.properties || {}
         var media = p["media.name"] || ""
-        if (media === page.appName(n)) return ""
+        if (media === Audio.appName(n)) return ""
         var tail = media.substring(media.lastIndexOf("/") + 1)
         return tail !== "" ? tail : media
     }
@@ -156,32 +118,16 @@ SettingsPage {
         if (!on) return
         moveProc.command = ["pactl", "move-sink-input", String(on.input), sink.name]
         moveProc.running = true
-        page.say(page.appName(stream) + " plays on " + page.plainName(sink), false)
+        page.say(Audio.appName(stream) + " plays on " + Audio.plainName(sink), false)
     }
 
     // --- names -----------------------------------------------------------------
 
-    // "HDMI / DisplayPort 1 Output [Dell S2417DG] (Stereo)" -> the screen's
-    // name, and "DisplayPort 1" for where it is; with no screen named, the
-    // port is the name
-    function plainName(n) {
-        var name = shortName(n)
-        var m = name.match(/DisplayPort (\d+)[^\[]*(?:\[([^\]]+)\])?/)
-        if (m) return m[2] || "DisplayPort " + m[1]
-        return name.replace(/ \((Stereo|Mono|Analog Stereo|Digital Stereo)\)$/, "")
-    }
     function where(n) {
-        var m = shortName(n).match(/DisplayPort (\d+)[^\[]*\[/)
+        var m = Audio.shortName(n).match(/DisplayPort (\d+)[^\[]*\[/)
         if (m) return "DisplayPort " + m[1]
         var bus = (n && n.properties) ? n.properties["device.bus"] || "" : ""
         return bus === "bluetooth" ? "Bluetooth" : bus === "usb" ? "USB" : bus === "pci" ? "built in" : ""
-    }
-    function glyph(n) {
-        if (!n) return ""
-        if (!n.isSink) return "󰍬"
-        var bus = n.properties ? n.properties["device.bus"] || "" : ""
-        if (bus === "bluetooth") return "󰋋"
-        return /DisplayPort|HDMI/.test(nodeName(n)) ? "󰍹" : "󰓃"
     }
     function levelText(n) {
         if (!n || !n.ready || !n.audio) return "--"
@@ -249,8 +195,8 @@ SettingsPage {
         signal chosen(var node)
         readonly property bool isDefault: modelData === current
 
-        leadingIcon: page.glyph(modelData)
-        label: page.plainName(modelData)
+        leadingIcon: Audio.glyph(modelData)
+        label: Audio.plainName(modelData)
         note: page.unplugged.indexOf(modelData.id) >= 0 ? "nothing plugged in" : page.where(modelData)
         badge: isDefault ? "Default" : ""
         highlighted: isDefault
@@ -285,7 +231,7 @@ SettingsPage {
             current: Pipewire.defaultAudioSink
             onChosen: node => {
                 Pipewire.preferredDefaultAudioSink = node
-                page.say("Output: " + page.plainName(node), false)
+                page.say("Output: " + Audio.plainName(node), false)
             }
         }
     }
@@ -307,7 +253,7 @@ SettingsPage {
     Level {
         visible: !!Pipewire.defaultAudioSink
         node: Pipewire.defaultAudioSink
-        hint: page.plainName(Pipewire.defaultAudioSink)
+        hint: Audio.plainName(Pipewire.defaultAudioSink)
     }
     Mute {
         visible: !!Pipewire.defaultAudioSink
@@ -325,7 +271,7 @@ SettingsPage {
             current: Pipewire.defaultAudioSource
             onChosen: node => {
                 Pipewire.preferredDefaultAudioSource = node
-                page.say("Input: " + page.plainName(node), false)
+                page.say("Input: " + Audio.plainName(node), false)
             }
         }
     }
@@ -340,7 +286,7 @@ SettingsPage {
     Level {
         visible: !!Pipewire.defaultAudioSource
         node: Pipewire.defaultAudioSource
-        hint: page.plainName(Pipewire.defaultAudioSource)
+        hint: Audio.plainName(Pipewire.defaultAudioSource)
     }
     Mute {
         visible: !!Pipewire.defaultAudioSource
@@ -375,11 +321,11 @@ SettingsPage {
         FlyoutRow {
             leadingImage: app.iconName !== "" ? Quickshell.iconPath(app.iconName, true) : ""
             leadingIcon: app.iconName === "" ? (app.playback ? "󰓃" : "󰍬") : ""
-            label: page.appName(app.n)
+            label: Audio.appName(app.n)
             note: page.streamDetail(app.n)
             highlighted: app.isOpen
             trailing: (app.playback && app.sink && app.sink !== Pipewire.defaultAudioSink
-                    ? "on " + page.plainName(app.sink) + "    " : "")
+                    ? "on " + Audio.plainName(app.sink) + "    " : "")
                 + page.levelText(app.n) + "  " + (app.isOpen ? "󰅀" : "󰅂")
             onActivated: page.openStream = app.isOpen ? null : app.n
         }
@@ -403,7 +349,7 @@ SettingsPage {
                     current: app.sink
                     enabled: app.target !== null
                     placeholder: "…"
-                    labelFor: s => page.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
+                    labelFor: s => Audio.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
                     onPicked: s => { if (s !== app.sink) page.moveTo(app.n, s) }
                 }
             }

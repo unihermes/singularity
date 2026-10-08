@@ -136,6 +136,14 @@ Style: `channel` (frame `channel` in `Styles.js`).
   won't split the section.
 - Content clears both frames: `padX` and `padY` in `FlyoutPanel`.
 
+### Volume flyout
+
+Output, Input and Apps tabs (a `FlyoutSegmented`), from the looks mockups
+(2026-10-08). Output and Input list their devices when there's more than one
+(outputs with nothing plugged in left out), then the default's level and
+mute; Apps is each playing app with its own level, a click on its name
+muting it. The name helpers are `Audio`'s, shared with the Audio page.
+
 ### Clock flyout
 
 - **Tabs**, one shown at a time, picked from a segmented strip in its own
