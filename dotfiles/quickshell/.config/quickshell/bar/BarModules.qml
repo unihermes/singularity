@@ -915,7 +915,7 @@ Item {
         icon: player && player.isPlaying ? "󰏤" : "󰐊"
         label: !player ? ""
             : (player.trackArtist ? player.trackArtist + " – " : "") + (player.trackTitle || player.identity)
-        labelMaxWidth: 220
+        labelMaxWidth: Theme.fit(220)
         active: screenScope.openFlyout === "media"
         onActivated: screenScope.toggleFlyout("media", mediaBtn)
         onMiddleClicked: if (player && player.canTogglePlaying) player.togglePlaying()
