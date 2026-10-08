@@ -152,8 +152,15 @@ SettingsPage {
         grace = m ? Number(m[1]) : 0
     }
 
+    // With a grace period the step runs hyprlock itself rather than through
+    // lock_cmd, so it carries lock_cmd's refocus after the unlock too (see
+    // hypridle.conf): without it the active window takes no keys.
+    readonly property string refocus: "hyprctl eval 'local w = hl.get_active_window(); "
+        + "if w then hl.dispatch(hl.dsp.focus({ window = \"address:\" .. w.address })) end'"
+
     function setGrace(seconds) {
-        var cmd = seconds > 0 ? "pidof hyprlock || hyprlock --grace " + seconds : "loginctl lock-session"
+        var cmd = seconds > 0 ? "pidof hyprlock || (hyprlock --grace " + seconds + "; " + refocus + ")"
+            : "loginctl lock-session"
         AtomicFileWrite.write({
             path: idlePath,
             transform: text => {
