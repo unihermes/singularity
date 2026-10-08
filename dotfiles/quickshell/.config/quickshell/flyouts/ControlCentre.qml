@@ -64,9 +64,19 @@ FlyoutPanel {
     // changes it often enough to be worth a poll.
     property bool airplane: false
 
+    // A Process that is still running ignores a new command, so a toggle
+    // made while the last one runs waits here; only the latest one counts.
+    property var airplaneNext: null
+
     function setAirplane(on) {
         airplane = on
-        rfkillSet.command = ["rfkill", on ? "block" : "unblock", "all"]
+        airplaneNext = on
+        if (!rfkillSet.running) applyAirplane()
+    }
+
+    function applyAirplane() {
+        rfkillSet.command = ["rfkill", airplaneNext ? "block" : "unblock", "all"]
+        airplaneNext = null
         rfkillSet.running = true
     }
 
@@ -83,7 +93,10 @@ FlyoutPanel {
 
     Process {
         id: rfkillSet
-        onExited: rfkillRead.running = true
+        onExited: {
+            if (controlCentre.airplaneNext !== null) controlCentre.applyAirplane()
+            else rfkillRead.running = true
+        }
     }
 
     function launch(entry) {
