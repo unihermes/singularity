@@ -319,16 +319,16 @@ SystemPage {
     FlyoutRow {
         leadingIcon: "󰈙"
         label: "Shell log"
-        note: "Quickshell's own messages this boot"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-            "journalctl --user -t quickshell -b -e --no-pager || journalctl --user -b -e"])
+        note: "Quickshell's own messages since it started"
+        onActivated: Quickshell.execDetached(["alacritty", "-e", "less", "-R", "+G",
+            Quickshell.env("HOME") + "/.cache/quickshell.log"])
     }
     FlyoutRow {
         leadingIcon: "󰈙"
         label: "Hyprland log"
         note: "The compositor's log, following as it grows"
         onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
-            "tail -n 200 -f /tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log"])
+            "tail -n 200 -f \"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log\""])
     }
     FlyoutRow {
         leadingIcon: "󰏗"
