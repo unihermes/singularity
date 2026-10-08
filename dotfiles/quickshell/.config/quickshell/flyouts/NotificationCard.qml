@@ -181,7 +181,9 @@ Item {
         Text {
             width: parent.width
             visible: text !== "" && root.expanded
-            text: root.entry.body
+            // without its <img> tags: the server doesn't offer body images,
+            // and StyledText would fetch one from wherever it points
+            text: String(root.entry.body || "").replace(/<img\b[^>]*>/gi, "")
             textFormat: Text.StyledText
             wrapMode: Text.Wrap
             maximumLineCount: root.bodyLines
