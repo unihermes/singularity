@@ -70,25 +70,7 @@ FlyoutRow {
         } else if (device.paired) {
             device.connect()
         } else {
-            // Native pair() works because bt-agent.service keeps a pairing
-            // agent registered -- without one BlueZ fails this with "No
-            // agent available for request type 2" and the row silently
-            // reverts to its previous state.
-            device.pair()
-        }
-    }
-
-    Connections {
-        target: root.device
-        function onPairedChanged() {
-            if (!root.device.paired) return
-            // a device that isn't trusted is not allowed to reconnect itself
-            // when you power it back on
-            root.device.trusted = true
-            // pair() returns once the bond exists, which is not the same as
-            // the device being usable -- headphones bond and then sit idle
-            // until something connects them
-            if (!root.device.connected) root.device.connect()
+            BtPairing.pair(device)
         }
     }
 }

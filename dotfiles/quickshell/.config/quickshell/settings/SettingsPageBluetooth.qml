@@ -15,6 +15,7 @@
 // discoverable and pairable, each device's settings, the nearby list
 // uncapped, and a way to see the unnamed devices the flyout only counts.
 
+import Quickshell
 import Quickshell.Bluetooth
 import QtQuick
 import "../services"
@@ -350,7 +351,7 @@ SettingsPage {
     }
 
     Repeater {
-        model: page.poweredOn ? page.paired : []
+        model: ScriptModel { values: page.poweredOn ? page.paired : [] }
         PairedDevice {}
     }
 
@@ -397,7 +398,7 @@ SettingsPage {
     }
 
     Repeater {
-        model: page.poweredOn ? page.nearby : []
+        model: ScriptModel { values: page.poweredOn ? page.nearby : [] }
         BtDeviceRow { required property var modelData; device: modelData; detailed: true }
     }
 

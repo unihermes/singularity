@@ -3,6 +3,7 @@
 //
 // Split out of shell.qml. Needs bar's adapter-state helpers.
 
+import Quickshell
 import Quickshell.Bluetooth
 import QtQuick
 import "../services"
@@ -79,55 +80,51 @@ FlyoutPanel {
     }
 
     // things you've paired before, whether or not they're in range
-    function btSaved() {
-        return btByName(btAll().filter(function(d) {
-            return d.paired || d.connected
-        }))
-    }
+    readonly property var saved: btByName(btAll().filter(function(d) {
+        return d.paired || d.connected
+    }))
 
     // everything else the scan turned up
-    function btNearby() {
-        return btByName(btAll().filter(function(d) {
-            return !d.paired && !d.connected && btFlyout.btKeep(d)
-        }))
-    }
+    readonly property var nearby: btByName(btAll().filter(function(d) {
+        return !d.paired && !d.connected && btFlyout.btKeep(d)
+    }))
 
-    function btHiddenCount() {
-        return btAll().filter(function(d) {
-            return !d.paired && !d.connected && !btFlyout.btKeep(d)
-        }).length
-    }
+    readonly property int hiddenCount: btAll().filter(function(d) {
+        return !d.paired && !d.connected && !btFlyout.btKeep(d)
+    }).length
 
     FlyoutHeading {
         text: "SAVED"
-        visible: btFlyout.btSaved().length > 0
+        visible: btFlyout.saved.length > 0
     }
 
+    // ScriptModels, not the bare arrays: each change during a scan makes a
+    // fresh array, which would rebuild every row
     Repeater {
-        model: btFlyout.btSaved()
+        model: ScriptModel { values: btFlyout.saved }
         BtDeviceRow { required property var modelData; device: modelData }
     }
 
     FlyoutHeading {
         text: "NEARBY"
-        visible: btFlyout.btNearby().length > 0
+        visible: btFlyout.nearby.length > 0
     }
 
     Repeater {
-        model: btFlyout.btNearby().slice(0, 10)
+        model: ScriptModel { values: btFlyout.nearby.slice(0, 10) }
         BtDeviceRow { required property var modelData; device: modelData }
     }
 
     FlyoutRow {
         label: "No devices"
         enabled: false
-        visible: btFlyout.btSaved().length === 0 && btFlyout.btNearby().length === 0
+        visible: btFlyout.saved.length === 0 && btFlyout.nearby.length === 0
     }
 
     FlyoutRow {
-        label: "+ " + btFlyout.btHiddenCount() + " unnamed"
+        label: "+ " + btFlyout.hiddenCount + " unnamed"
         enabled: false
-        visible: btFlyout.btHiddenCount() > 0
+        visible: btFlyout.hiddenCount > 0
     }
 
     FlyoutDivider {}
