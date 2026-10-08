@@ -29,10 +29,14 @@ Shape {
         // The hole is the fill band's own outline round the group, and the
         // CurveRenderer drops a hole whose edges lie exactly on the path
         // (a square group with its flyout flush to one side). A hair
-        // smaller, it cuts cleanly; the quarter pixel doesn't show.
-        if (hole) p += " " + ChannelPath.roundRect(hole.x0 + holeInset, hole.y0 + holeInset,
-                                                   hole.x1 - holeInset, hole.y1 - holeInset,
-                                                   Math.max(0, hole.r - holeInset))
+        // narrower, it cuts cleanly; the quarter pixel doesn't show. Only
+        // the fill band's hole, and only at the sides: anywhere else the
+        // quarter pixel lands on the group's first row of pixels, which then
+        // looks a pixel shorter with the flyout open.
+        var inset = d === Theme.channelWidth ? holeInset : 0
+        if (hole) p += " " + ChannelPath.roundRect(hole.x0 + inset, hole.y0,
+                                                   hole.x1 - inset, hole.y1,
+                                                   Math.max(0, hole.r - inset))
         return p
     }
 
