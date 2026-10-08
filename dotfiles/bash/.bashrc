@@ -43,4 +43,5 @@ alias clean='~/.config/singularity/clean.sh'
 alias diagnose='~/.config/singularity/diagnose.sh'
 alias settings-bundle='~/.config/singularity/settings-bundle.sh'
 alias singularity='cd ~/Git/singularity/ && claude'
+alias todo="awk '/^Open items:/{f=1;next} /^\(Done/{exit} f&&NF' ~/.claude/projects/${HOME//\//-}-Git-singularity/memory/todo-list.md"
 alias linoffice-stop='~/.local/bin/linoffice/linoffice.sh --stopcontainer'
