@@ -32,6 +32,7 @@ Column {
         FlyoutChip {
             anchors.right: parent.right
             text: "Undo all"
+            confirmText: "Undo " + Settings.lookDiffs.length + "?"
             onClicked: {
                 Settings.undoLookChanges()
                 page.say(Settings.baselineIsDefault ? "Saved default restored"

@@ -390,6 +390,7 @@ SettingsTab {
         FlyoutChip {
             anchors.right: parent.right
             text: "Reset"
+            confirmText: "Reset?"
             enabled: !Settings.isDefault
             onClicked: {
                 Settings.reset()
@@ -406,6 +407,7 @@ SettingsTab {
         FlyoutChip {
             anchors.right: parent.right
             text: "Forget"
+            confirmText: "Forget it?"
             enabled: Settings.hasUserDefault
             onClicked: {
                 Settings.factoryReset()
