@@ -47,8 +47,12 @@ Singleton {
 
     signal wrote(string message, bool isError)
 
+    // A refresh asked for while one runs is run again after it: the one
+    // running may have read the files before the write that asked.
+    property bool refreshAgain: false
     function refresh() {
-        if (!lister.running) lister.running = true
+        if (lister.running) refreshAgain = true
+        else lister.running = true
     }
 
     Component.onCompleted: refresh()
@@ -82,6 +86,10 @@ Singleton {
                 root.entries = out
                 root.loaded = true
             }
+        }
+        onExited: if (root.refreshAgain) {
+            root.refreshAgain = false
+            running = true
         }
     }
 
