@@ -64,6 +64,7 @@ var entries = [
     { page: "lockscreen", section: "Password", label: "Grace period", keywords: "hyprlock grace delay password unlock idle" },
     { page: "lockscreen", section: "Lid",      label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh delay after minutes" },
     { page: "lockscreen", section: "Lid",      label: "Lock right away", keywords: "lid close lock immediately" },
+    { page: "lockscreen", section: "Lid",      label: "Hibernate", keywords: "lid hibernate hibernation suspend-then-hibernate disk power off battery" },
 
     // --- Appearance --------------------------------------------------------
     { page: "appearance", section: "Look",          label: "Look",                 keywords: "theme preset style" },

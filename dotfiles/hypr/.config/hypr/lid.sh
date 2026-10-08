@@ -43,7 +43,8 @@
 #   Settings moves it out by the difference. The close time is stamped in wall-clock time, which
 #   does run during sleep, so a stray wake an hour or more after the lid
 #   shut hibernates straight away instead of restarting that delay.
-#   Without hibernation set up (link.sh only), it's plain suspend as before.
+#   Without hibernation set up (link.sh only), or with hibernate=0, it's
+#   plain suspend.
 # - Blanking the panel means holding misc:key_press_enables_dpms and
 #   mouse_move_enables_dpms off for as long as the lid is shut. They are on
 #   in looks.lua so that any key or mouse movement wakes a wrongly-blanked
@@ -98,10 +99,11 @@
 set -u
 
 unit=singularity-lid-suspend
-# Settings -> Lock Screen edits these three in place
+# Settings -> Lock Screen edits these four in place
 close_action=suspend  # suspend | screen-off (never suspends on its own)
 lock_on_close=0    # 1: lock as soon as the lid shuts, not just before sleep
 close_delay=300    # lid shut this long -> suspend
+hibernate=1        # 0: a shut lid only ever suspends, never hibernates
 rewake_delay=60    # woke up with the lid still shut -> suspend again after this
 retry_delay=60     # suspend refused (a blocking inhibitor) -> try again
 move_slop=40       # px the pointer must travel on a stray wake to count as a person
@@ -467,7 +469,10 @@ fire)
     # no stamp (the shell restarted with the lid shut): count from now
     [[ -s $closed_at ]] || date -d "-$close_delay sec" +%s > "$closed_at"
     shut_for=$(( $(date +%s) - $(cat "$closed_at") ))
-    if (( shut_for >= hibernate_after )) && can Hibernate; then
+    if (( ! hibernate )); then
+        log "lid closed for ${shut_for}s: suspending (hibernation off)"
+        action=suspend
+    elif (( shut_for >= hibernate_after )) && can Hibernate; then
         log "lid closed for ${shut_for}s: hibernating"
         action=hibernate
     elif can SuspendThenHibernate; then

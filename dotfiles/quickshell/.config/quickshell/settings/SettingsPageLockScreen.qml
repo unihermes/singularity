@@ -198,6 +198,9 @@ SettingsPage {
     property string closeAction: "suspend"
     property int closeDelay: 300
     property bool lockOnClose: false
+    property bool hibernate: true
+    // an older lid.sh without the setting: the switch can't write it
+    property bool hibernateFound: false
 
     function rereadLid() {
         lidFile.reload()
@@ -208,6 +211,8 @@ SettingsPage {
         closeAction = (m = /^close_action=([\w-]+)/m.exec(text)) ? m[1] : "suspend"
         closeDelay = (m = /^close_delay=(\d+)/m.exec(text)) ? Number(m[1]) : 300
         lockOnClose = (m = /^lock_on_close=(\d)/m.exec(text)) ? m[1] === "1" : false
+        hibernateFound = (m = /^hibernate=(\d)/m.exec(text)) !== null
+        hibernate = m ? m[1] === "1" : true
     }
 
     function setLid(name, value, message) {
@@ -481,6 +486,23 @@ SettingsPage {
             checked: page.lockOnClose
             onToggled: page.setLid("lock_on_close", page.lockOnClose ? 0 : 1,
                 page.lockOnClose ? "Locks when it goes to sleep" : "Locks as soon as the lid closes")
+        }
+    }
+
+    // lid.sh's suspend-then-hibernate; the power menu's Hibernate stays
+    SettingsField {
+        label: "Hibernate"
+        hint: !Session.canHibernate ? "Needs hibernation set up (install.sh)"
+            : page.closeAction !== "suspend" ? "Only when the lid suspends"
+            : page.hibernate ? "Saved to disk after an hour shut"
+            : "Stays asleep while the lid is shut"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.hibernate && Session.canHibernate
+            enabled: page.hibernateFound && Session.canHibernate && page.closeAction === "suspend"
+            onToggled: page.setLid("hibernate", page.hibernate ? 0 : 1,
+                page.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
         }
     }
 }
