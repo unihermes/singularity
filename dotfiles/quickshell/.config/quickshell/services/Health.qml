@@ -208,7 +208,7 @@ Singleton {
                 }
                 root.checks = out
                 root.scanning = false
-                root.lastScan = Qt.formatDateTime(new Date(), "HH:mm")
+                root.lastScan = Qt.formatDateTime(new Date(), Theme.timeFormat)
             }
         }
     }

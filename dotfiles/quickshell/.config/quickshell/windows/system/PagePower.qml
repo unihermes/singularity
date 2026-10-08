@@ -220,7 +220,7 @@ SystemPage {
         InfoRow {
             width: sessGrid.cell
             label: "Booted"
-            value: Qt.formatDateTime(SystemStats.bootTime, "ddd d MMM, HH:mm")
+            value: Qt.formatDateTime(SystemStats.bootTime, Theme.hours("ddd d MMM, HH:mm"))
         }
     }
     // systemd-analyze's line is too long for half the width
