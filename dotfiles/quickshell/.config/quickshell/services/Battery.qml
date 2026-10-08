@@ -13,6 +13,8 @@ import QtQuick
 import "Format.js" as Format
 
 Singleton {
+    id: root
+
     // UPower's DisplayDevice is a synthetic aggregate: it reports a
     // percentage but not necessarily powerSupply, so isLaptopBattery is
     // false on it and it can't be used to decide whether this machine even
@@ -54,15 +56,21 @@ Singleton {
         // -A waits for the notification to close and prints the action picked
         if (PpdProfile.profile !== "power-saver")
             cmd.push("-A", "saver=Power saver")
-        alert.command = cmd
-        alert.running = false
-        alert.running = true
+        var proc = critical ? criticalAlert : lowAlert
+        proc.command = cmd
+        proc.running = false
+        proc.running = true
     }
 
+    // One per level: restarting a shared one for the 5% warning killed the
+    // 15% one's notify-send, which is what was waiting for its button.
+    function picked(text) { if (text.trim() === "saver") PpdProfile.set("power-saver") }
     Process {
-        id: alert
-        stdout: StdioCollector {
-            onStreamFinished: if (text.trim() === "saver") PpdProfile.set("power-saver")
-        }
+        id: lowAlert
+        stdout: StdioCollector { onStreamFinished: root.picked(text) }
+    }
+    Process {
+        id: criticalAlert
+        stdout: StdioCollector { onStreamFinished: root.picked(text) }
     }
 }
