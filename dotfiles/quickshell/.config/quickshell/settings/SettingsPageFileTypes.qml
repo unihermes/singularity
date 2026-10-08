@@ -179,8 +179,18 @@ SettingsPage {
     function setDefault(appId, types) {
         var declared = apps[appId] ? types.filter(t => handles(apps[appId], t)) : types
         if (declared.length === 0) return
-        setProc.pending = appName(appId) + " now opens " + (declared.length === 1 ? declared[0] : declared.length + " types")
-        setProc.command = ["xdg-mime", "default", appId].concat(declared)
+        setProc.queue.push({ command: ["xdg-mime", "default", appId].concat(declared),
+            message: appName(appId) + " now opens " + (declared.length === 1 ? declared[0] : declared.length + " types") })
+        nextSet()
+    }
+
+    // One xdg-mime at a time, in order: a Process still running ignores a
+    // new command, so a click made meanwhile was lost.
+    function nextSet() {
+        if (setProc.running || setProc.queue.length === 0) return
+        var job = setProc.queue.shift()
+        setProc.pending = job.message
+        setProc.command = job.command
         setProc.running = true
     }
 
@@ -334,11 +344,13 @@ SettingsPage {
     Process {
         id: setProc
         property string pending: ""
+        property var queue: []
         stderr: StdioCollector { id: setErr }
         onExited: code => {
             if (code === 0) page.say(pending, false)
             else page.say("xdg-mime failed: " + (setErr.text.trim().split("\n")[0] || "exit " + code), true)
-            defaultsProc.running = true
+            if (queue.length > 0) page.nextSet()
+            else defaultsProc.running = true
         }
     }
 
