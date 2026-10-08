@@ -1261,9 +1261,9 @@ end)
 hl.on("window.close", function(win) syncAppRules(win and win.address) end)
 
 -- SUPER+M: monocle or dwindle everywhere that isn't pinned. The rules only
--- act at map time, so the windows already open on the workspace are
--- converted here too. On a pinned workspace nothing moves and the toast
--- says so. Global so the SUPER+M bind can reach it.
+-- act at map time, so the windows already open are converted here too. On
+-- a pinned workspace nothing moves and the toast says so. Global so the
+-- SUPER+M bind can reach it.
 function toggleLayout()
     monocleEnabled = not monocleEnabled
     local f = io.open(LAYOUT_FILE, "w")
@@ -1284,10 +1284,12 @@ function toggleLayout()
 
     applyLayoutRules(true)
 
-    local win = hl.get_active_window()
-    if not win or not win.workspace then return end
-    local mon = win.monitor or hl.get_active_monitor()
-    for _, w in ipairs(win.workspace:get_windows()) do
-        setWindowMonocle(w, monocleEnabled, mon)
+    -- every workspace that follows SUPER+M, not just this one; hidden
+    -- windows (SUPER+C) keep their state, or one would tile back in unseen
+    for _, w in ipairs(hl.get_windows()) do
+        if w.workspace and not w.workspace.special and not workspaceLayouts[tostring(w.workspace.id)]
+                and not stateOf(w.address).minimized then
+            setWindowMonocle(w, monocleEnabled, w.monitor or hl.get_active_monitor())
+        end
     end
 end
