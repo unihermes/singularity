@@ -248,17 +248,31 @@ Scope {
         })
     }
 
-    // A Zed theme in the look's colours only; Zed's own shapes, spacing and
-    // fonts stay. The chrome sits on the bar's ground and the editor on base,
-    // as in nvim, and syntax follows nvim's scheme too: weight and lightness
-    // instead of hue. The accent marks the cursor, selection, focus and the
-    // current line number; good and alert carry git and diagnostic state.
-    // Zed watches its themes directory, so open windows recolour.
+    // Zed's code colours: a fixed palette in hue (One Dark's and One Light's),
+    // since code reads better in colour than in the look's greys.
+    readonly property var zedCode: ({
+        dark:  { text: "#c8ccd4", comment: "#7f848e", keyword: "#c678dd", func: "#61afef",
+                 string: "#98c379", number: "#d19a66", type: "#e5c07b", tag: "#e06c75",
+                 escape: "#56b6c2", punct: "#a0a7b4" },
+        light: { text: "#383a42", comment: "#a0a1a7", keyword: "#a626a4", func: "#4078f2",
+                 string: "#50a14f", number: "#986801", type: "#c18401", tag: "#e45649",
+                 escape: "#0184bc", punct: "#696c77" },
+    })
+
+    // A Zed theme: the window (panels, tabs, bars, menus) in the look's
+    // colours, and the editor a step lighter than the shell's base with
+    // zedCode for the code. Zed's own shapes, spacing and fonts stay. The
+    // accent marks the cursor, selection, focus and the current line number;
+    // good and alert carry git and diagnostic state. Zed watches its themes
+    // directory, so open windows recolour.
     function renderZed() {
         var h = c => hex(c)
         // #rrggbbaa, the alpha as 0..1
         var ha = (c, a) => hex(c) + ("0" + Math.round(a * 255).toString(16)).slice(-2)
         var tint = (c, t) => mix(Theme.base, c, t)
+        var ed = Theme.isLight ? Theme.base : mixColor(Theme.surface, Theme.overlay, 0.5)
+        var lift = t => mix(ed, Theme.isLight ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1), t)
+        var code = Theme.isLight ? zedCode.light : zedCode.dark
         var s = {
             "background": h(Theme.bar),
             "surface.background": h(Theme.bar),
@@ -296,10 +310,10 @@ Scope {
             "status_bar.background": h(Theme.bar),
             "title_bar.background": h(Theme.bar),
             "title_bar.inactive_background": h(Theme.bar),
-            "toolbar.background": h(Theme.base),
+            "toolbar.background": h(ed),
             "tab_bar.background": h(Theme.bar),
             "tab.inactive_background": h(Theme.bar),
-            "tab.active_background": h(Theme.base),
+            "tab.active_background": h(ed),
             "search.match_background": ha(Theme.subtext, 0.3),
             "search.active_match_background": ha(Theme.accent, 0.45),
             "scrollbar.thumb.background": ha(Theme.muted, 0.5),
@@ -307,20 +321,20 @@ Scope {
             "scrollbar.thumb.border": "#00000000",
             "scrollbar.track.background": "#00000000",
             "scrollbar.track.border": "#00000000",
-            "editor.foreground": h(Theme.text),
-            "editor.background": h(Theme.base),
-            "editor.gutter.background": h(Theme.base),
+            "editor.foreground": code.text,
+            "editor.background": h(ed),
+            "editor.gutter.background": h(ed),
             "editor.subheader.background": h(Theme.bar),
-            "editor.active_line.background": ha(Theme.surface, 0.6),
-            "editor.highlighted_line.background": h(Theme.surface),
+            "editor.active_line.background": lift(0.035),
+            "editor.highlighted_line.background": lift(0.06),
             "editor.line_number": h(Theme.muted),
             "editor.active_line_number": h(Theme.accent),
             "editor.hover_line_number": h(Theme.subtext),
-            "editor.invisible": h(Theme.overlay),
-            "editor.wrap_guide": h(Theme.surface),
-            "editor.active_wrap_guide": h(Theme.overlay),
-            "editor.document_highlight.read_background": h(Theme.surface),
-            "editor.document_highlight.write_background": h(Theme.overlay),
+            "editor.invisible": lift(0.12),
+            "editor.wrap_guide": lift(0.05),
+            "editor.active_wrap_guide": lift(0.1),
+            "editor.document_highlight.read_background": lift(0.07),
+            "editor.document_highlight.write_background": lift(0.11),
             "terminal.background": h(Theme.base),
             "terminal.foreground": h(Theme.text),
             "terminal.bright_foreground": h(Theme.bright),
@@ -357,31 +371,30 @@ Scope {
         s.players = [{ cursor: h(Theme.accent), background: h(Theme.accent),
                        selection: ha(Theme.accent, 0.3) }]
 
-        // the same roles nvim's colors/singularity.lua gives its groups
-        var st = (c, o) => Object.assign({ color: h(c), font_style: null, font_weight: null }, o || {})
+        var st = (c, o) => Object.assign({ color: c, font_style: null, font_weight: null }, o || {})
         var bold = { font_weight: 700 }, italic = { font_style: "italic" }
         s.syntax = {
-            "comment": st(Theme.muted, italic), "comment.doc": st(Theme.muted, italic),
-            "string": st(Theme.subtext), "string.escape": st(Theme.text),
-            "string.regex": st(Theme.text), "string.special": st(Theme.text),
-            "string.special.symbol": st(Theme.text), "text.literal": st(Theme.subtext),
-            "number": st(Theme.text), "boolean": st(Theme.text, bold), "constant": st(Theme.text),
-            "keyword": st(Theme.bright, bold), "function": st(Theme.bright, bold),
-            "constructor": st(Theme.bright), "type": st(Theme.text, bold), "enum": st(Theme.text, bold),
-            "variant": st(Theme.text), "variable": st(Theme.text),
-            "variable.parameter": st(Theme.text, italic), "variable.special": st(Theme.text, italic),
-            "property": st(Theme.text), "namespace": st(Theme.text), "label": st(Theme.text),
-            "operator": st(Theme.subtext), "punctuation": st(Theme.subtext),
-            "punctuation.bracket": st(Theme.subtext), "punctuation.delimiter": st(Theme.subtext),
-            "punctuation.list_marker": st(Theme.subtext), "punctuation.markup": st(Theme.subtext),
-            "punctuation.special": st(Theme.subtext), "preproc": st(Theme.subtext),
-            "attribute": st(Theme.subtext, italic), "tag": st(Theme.bright),
-            "selector": st(Theme.bright), "selector.pseudo": st(Theme.subtext),
-            "title": st(Theme.bright, bold), "emphasis": st(Theme.text, italic),
-            "emphasis.strong": st(Theme.text, bold), "link_text": st(Theme.subtext),
-            "link_uri": st(Theme.subtext, italic), "embedded": st(Theme.text),
-            "primary": st(Theme.text), "hint": st(Theme.muted), "predictive": st(Theme.muted, italic),
-            "diff.plus": st(Theme.good), "diff.minus": st(Theme.alert),
+            "comment": st(code.comment, italic), "comment.doc": st(code.comment, italic),
+            "string": st(code.string), "string.escape": st(code.escape),
+            "string.regex": st(code.escape), "string.special": st(code.escape),
+            "string.special.symbol": st(code.escape), "text.literal": st(code.string),
+            "number": st(code.number), "boolean": st(code.number), "constant": st(code.number),
+            "keyword": st(code.keyword), "function": st(code.func),
+            "constructor": st(code.type), "type": st(code.type), "enum": st(code.type),
+            "variant": st(code.number), "variable": st(code.text),
+            "variable.parameter": st(code.tag, italic), "variable.special": st(code.tag, italic),
+            "property": st(code.tag), "namespace": st(code.type), "label": st(code.func),
+            "operator": st(code.escape), "punctuation": st(code.punct),
+            "punctuation.bracket": st(code.punct), "punctuation.delimiter": st(code.punct),
+            "punctuation.list_marker": st(code.tag), "punctuation.markup": st(code.tag),
+            "punctuation.special": st(code.escape), "preproc": st(code.keyword),
+            "attribute": st(code.number, italic), "tag": st(code.tag),
+            "selector": st(code.keyword), "selector.pseudo": st(code.escape),
+            "title": st(code.tag, bold), "emphasis": st(code.text, italic),
+            "emphasis.strong": st(code.number, bold), "link_text": st(code.func),
+            "link_uri": st(code.escape, italic), "embedded": st(code.text),
+            "primary": st(code.text), "hint": st(code.comment), "predictive": st(code.comment, italic),
+            "diff.plus": st(code.string), "diff.minus": st(code.tag),
         }
         var text = JSON.stringify({
             "$schema": "https://zed.dev/schema/themes/v0.2.0.json",

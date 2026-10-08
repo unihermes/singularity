@@ -234,8 +234,9 @@ the shell, into `~/.local/state/singularity/`:
   `Ctrl+P`, `Ctrl+Shift+F`, `Ctrl+B`, `F2`, `F12`) builds every highlight,
   plugins included, from the look, and open editors recolour live.
 - **Claude Code** gets a `custom:singularity` theme.
-- **Zed** gets a Singularity theme, colours only, and recolours live. Its
-  settings put files on the left and agent chats on the right, like VS Code.
+- **Zed**'s window (panels, tabs, menus) takes the look's colours and
+  recolours live; the code keeps its own fixed colour palette. Its settings
+  put files on the left and agent chats on the right, like VS Code.
 - **ly**, the greeter, runs on a VT without true colour, so `install.sh`
   loads the Singularity ramp into the VT palette and adds a status stack
   (battery, power, Wi-Fi, kernel, last login).
