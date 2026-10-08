@@ -143,93 +143,106 @@ OverlayWindow {
         })
     }
 
-    PanelFrame {
-        id: box
-        bare: root.grown
-        ground: Theme.surface
-        x: {
-            var free = Math.max(root.edgeMargin,
-                                Math.min(root.anchorX - width / 2,
-                                         root.width - width - root.edgeMargin))
-            // the centre group's flyouts stay centred on their module (the
-            // clock's on the clock), however close a group edge comes
-            if (!root.grown || root.section === "centre") return Math.round(free)
-            // within reach of a group edge, flush with it: the nearer one when
-            // both are in reach, so a box about the group's width lines up
-            // on the side its module is on
-            var near = root.snapReach
-            var d0 = Math.abs(free - root.group.x0)
-            var d1 = Math.abs(free + width - root.group.x1)
-            if (d0 < near && d0 <= d1) return root.group.x0
-            if (d1 < near) return root.group.x1 - width
-            return Math.round(free)
-        }
-        // Hangs off whichever edge the bar is on: below it at the top,
-        // above it at the bottom. Measured from the far edge in the bottom
-        // case so the box grows upward as rows are added, which keeps it
-        // pinned to the bar instead of sliding down over the screen edge.
-        y: root.grown ? (atBottom ? root.group.y0 - height : root.group.y1)
-            : atBottom ? root.height - root.topOffset - height
-            : root.topOffset
-        // its own width, except within a fillet and corner of its group's:
-        // that close, a jog would be too short to read as a step, so it
-        // takes the group's width and both sides run straight
-        readonly property real ownWidth: Theme.fit(root.menuWidth) + (root.padX - Theme.panelPad) * 2
-        width: root.grown && root.section !== "centre"
-                && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
-            ? root.group.x1 - root.group.x0 : ownWidth
-        height: contentColumn.implicitHeight + root.padY * 2
+    // A drop slides the box out from under the bar, but the flyout is a layer
+    // above the bar's: unclipped, the box's edge would pass over the chip it
+    // opened from, which then looks briefly shorter. Everything on the bar's
+    // side of the box's own edge is cut off instead.
+    Item {
+        id: dropClip
+        readonly property bool cuts: Theme.flyoutAnim === "drop" && !root.grown
+        y: cuts && !box.atBottom ? root.topOffset : 0
+        width: root.width
+        height: cuts ? root.height - root.topOffset : root.height
+        clip: cuts
 
-        readonly property bool atBottom: Theme.barPosition === "bottom"
-        // a tab's corners at the bar are square, so it hangs from it
-        readonly property int barCorner: Theme.flyoutAttach === "tab" ? 0 : radius
-        topLeftRadius: atBottom ? radius : barCorner
-        topRightRadius: atBottom ? radius : barCorner
-        bottomLeftRadius: atBottom ? barCorner : radius
-        bottomRightRadius: atBottom ? barCorner : radius
+        PanelFrame {
+            id: box
+            bare: root.grown
+            ground: Theme.surface
+            x: {
+                var free = Math.max(root.edgeMargin,
+                                    Math.min(root.anchorX - width / 2,
+                                             root.width - width - root.edgeMargin))
+                // the centre group's flyouts stay centred on their module (the
+                // clock's on the clock), however close a group edge comes
+                if (!root.grown || root.section === "centre") return Math.round(free)
+                // within reach of a group edge, flush with it: the nearer one when
+                // both are in reach, so a box about the group's width lines up
+                // on the side its module is on
+                var near = root.snapReach
+                var d0 = Math.abs(free - root.group.x0)
+                var d1 = Math.abs(free + width - root.group.x1)
+                if (d0 < near && d0 <= d1) return root.group.x0
+                if (d1 < near) return root.group.x1 - width
+                return Math.round(free)
+            }
+            // Hangs off whichever edge the bar is on: below it at the top,
+            // above it at the bottom. Measured from the far edge in the bottom
+            // case so the box grows upward as rows are added, which keeps it
+            // pinned to the bar instead of sliding down over the screen edge.
+            y: (root.grown ? (atBottom ? root.group.y0 - height : root.group.y1)
+                : atBottom ? root.height - root.topOffset - height
+                : root.topOffset) - dropClip.y
+            // its own width, except within a fillet and corner of its group's:
+            // that close, a jog would be too short to read as a step, so it
+            // takes the group's width and both sides run straight
+            readonly property real ownWidth: Theme.fit(root.menuWidth) + (root.padX - Theme.panelPad) * 2
+            width: root.grown && root.section !== "centre"
+                    && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
+                ? root.group.x1 - root.group.x0 : ownWidth
+            height: contentColumn.implicitHeight + root.padY * 2
 
-        opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
-        // drop: slides out from under the bar; scale: grows from the edge
-        // at the bar, centred on the chip
-        // a grown flyout only fades: its frame is joined to the bar
-        transform: Translate {
-            y: Theme.flyoutAnim === "drop" && !root.grown ? (1 - root.reveal) * Theme.sp(10) * (box.atBottom ? 1 : -1) : 0
-        }
-        scale: Theme.flyoutAnim === "scale" && !root.grown ? 0.9 + 0.1 * root.reveal : 1
-        transformOrigin: atBottom ? Item.Bottom : Item.Top
+            readonly property bool atBottom: Theme.barPosition === "bottom"
+            // a tab's corners at the bar are square, so it hangs from it
+            readonly property int barCorner: Theme.flyoutAttach === "tab" ? 0 : radius
+            topLeftRadius: atBottom ? radius : barCorner
+            topRightRadius: atBottom ? radius : barCorner
+            bottomLeftRadius: atBottom ? barCorner : radius
+            bottomRightRadius: atBottom ? barCorner : radius
 
-        Behavior on height {
-            NumberAnimation { duration: Theme.dur(90); easing.type: Theme.ease }
-        }
+            opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
+            // drop: slides out from under the bar; scale: grows from the edge
+            // at the bar, centred on the chip
+            // a grown flyout only fades: its frame is joined to the bar
+            transform: Translate {
+                y: Theme.flyoutAnim === "drop" && !root.grown ? (1 - root.reveal) * Theme.sp(10) * (box.atBottom ? 1 : -1) : 0
+            }
+            scale: Theme.flyoutAnim === "scale" && !root.grown ? 0.9 + 0.1 * root.reveal : 1
+            transformOrigin: atBottom ? Item.Bottom : Item.Top
 
-        // absorbs clicks so they don't fall through to the backdrop
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {}
-        }
+            Behavior on height {
+                NumberAnimation { duration: Theme.dur(90); easing.type: Theme.ease }
+            }
 
-        SectionRuns {
-            x: Theme.channelWidth + root.sectionGap
-            width: box.width - x * 2
-            height: box.height
-            column: contentColumn
-            columnY: contentColumn.y
-            padY: root.sectionPadY
-        }
+            // absorbs clicks so they don't fall through to the backdrop
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {}
+            }
 
-        Column {
-            id: contentColumn
-            x: root.padX
-            y: root.padY
-            width: parent.width - root.padX * 2
-            spacing: Theme.spaceM
-            // FlyoutHeading and FlyoutDivider make room for the sections
-            readonly property bool sectioned: true
+            SectionRuns {
+                x: Theme.channelWidth + root.sectionGap
+                width: box.width - x * 2
+                height: box.height
+                column: contentColumn
+                columnY: contentColumn.y
+                padY: root.sectionPadY
+            }
 
-            // Marks the page LookStepper looks for when an open dropdown
-            // needs a box to put its overlay in (see that file) -- the same
-            // marker SettingsPage gives SettingsDropdown.
-            readonly property bool isFlyoutPage: true
+            Column {
+                id: contentColumn
+                x: root.padX
+                y: root.padY
+                width: parent.width - root.padX * 2
+                spacing: Theme.spaceM
+                // FlyoutHeading and FlyoutDivider make room for the sections
+                readonly property bool sectioned: true
+
+                // Marks the page LookStepper looks for when an open dropdown
+                // needs a box to put its overlay in (see that file) -- the same
+                // marker SettingsPage gives SettingsDropdown.
+                readonly property bool isFlyoutPage: true
+            }
         }
     }
 
@@ -252,7 +265,7 @@ OverlayWindow {
         readonly property real far: box.atBottom ? root.height - inset : inset
         readonly property real near: box.atBottom ? root.height - inset - Theme.moduleHeight : inset + Theme.moduleHeight
         // the box's edge facing the bar
-        readonly property real edge: box.atBottom ? box.y + box.height : box.y
+        readonly property real edge: dropClip.y + (box.atBottom ? box.y + box.height : box.y)
         readonly property real y0: Math.min(far, edge)
         readonly property real y1: Math.max(far, edge)
 
