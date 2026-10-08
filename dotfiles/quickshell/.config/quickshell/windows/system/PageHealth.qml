@@ -47,7 +47,7 @@ SystemPage {
     // fixes that delete or switch something off take two clicks
     function confirmFor(c) {
         var kind = String(c.repairId || "").split(":")[0]
-        return kind === "clean" || kind === "disable" ? c.repairLabel + "?" : ""
+        return kind === "clean" || kind === "disable" || kind === "orphans" ? c.repairLabel + "?" : ""
     }
 
     // Fix with Claude runs in the repo, so it needs one

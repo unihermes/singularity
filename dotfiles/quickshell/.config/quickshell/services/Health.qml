@@ -90,6 +90,12 @@ Singleton {
             terminal(check.id, "yay -S --needed " + parts.slice(1).join(":"))
             return
         }
+        // pacman lists them and asks before removing anything
+        if (kind === "orphans") {
+            terminal(check.id, "orphans=$(pacman -Qdtq); "
+                + "if [ -n \"$orphans\" ]; then sudo pacman -Rns $orphans; else echo 'No orphaned packages'; fi")
+            return
+        }
         if (kind === "clean") {
             terminal(check.id, home + "/.config/singularity/clean.sh")
             return

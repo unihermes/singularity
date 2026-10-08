@@ -450,6 +450,7 @@ SettingsPage {
             anchors.right: parent.right
             visible: !!page.orphans && page.orphans.status !== "ok" && !!page.orphans.repairId
             text: page.orphans ? page.orphans.repairLabel || "Remove" : ""
+            confirmText: "Remove them?"
             enabled: Health.busyRepair === ""
             onClicked: Health.repair(page.orphans)
         }

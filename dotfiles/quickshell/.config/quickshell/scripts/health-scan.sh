@@ -21,6 +21,7 @@
 #   disable:<scope>:<unit>   systemctl [--user] disable
 #   install:<tools>          yay -S, in a terminal
 #   clean                    clean.sh, in a terminal
+#   orphans                  pacman -Rns on the orphans alone, in a terminal
 #   relink                   the repo's link.sh, in a terminal
 #   pacdiff                  pacdiff, in a terminal
 #   firmware                 fwupdmgr refresh + update, in a terminal
@@ -112,7 +113,7 @@ if command -v pacman &>/dev/null; then
 	orphans=$(pacman -Qqtd 2>/dev/null | wc -l)
 	if (( orphans > 0 )); then
 		emit warn orphans "Orphaned packages" \
-			"$orphans installed as a dependency, now unused" clean Remove
+			"$orphans installed as a dependency, now unused" orphans Remove
 	else
 		emit ok orphans "Orphaned packages" "None"
 	fi
