@@ -10,9 +10,14 @@
 //   none    no stroke -- the ground alone marks the edge
 //   channel an outer line, a dark groove and an inner line (Channel.qml),
 //           with rounder corners to clear them
+//   ledger  one 2px stroke in ink (Theme.stroke), its hard shadow offset
+//   corners accent marks at the corners over a faint hairline, glowing
+//           with the style's glow option
+// Terminal's scanlines option lays faint lines across the ground.
 // ModuleFrame is the bar chip's tighter version of the same look.
 
 import QtQuick
+import QtQuick.Effects
 import "../services"
 
 Rectangle {
@@ -32,8 +37,8 @@ Rectangle {
         GradientStop { position: 0; color: Theme.shadeTop(root.color) }
         GradientStop { position: 1; color: Theme.shadeBottom(root.color) }
     }
-    border.width: Theme.frameStroked && !bare && !channel ? Theme.borderWidth : 0
-    border.color: Theme.stroke
+    border.width: (Theme.frameStroked || Theme.frameCorners) && !bare && !channel ? Theme.borderWidth : 0
+    border.color: Theme.frameCorners ? Theme.cornerHairline : Theme.stroke
 
     // false for panels inside a window Hyprland already shadows
     property bool shadowed: true
@@ -41,6 +46,32 @@ Rectangle {
     Shadow {
         radius: root.radius
         opaque: root.shadowed && !root.bare && Theme.panelOpacity >= 1
+    }
+
+    // Corners' glow: the accent bleeding out round the panel
+    RectangularShadow {
+        visible: Theme.frameCorners && Theme.glow && !root.bare
+        anchors.fill: parent
+        z: -1
+        blur: Theme.sp(22)
+        color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.22)
+    }
+
+    CornerMarks {
+        visible: Theme.frameCorners && !root.bare
+        length: Theme.cornerLarge
+        thickness: Theme.opt("big") ? 2 : 1
+        color: Theme.accent
+    }
+
+    // Terminal's scanlines: a dark line every third pixel
+    Image {
+        visible: Theme.style === "terminal" && Theme.opt("scan") && !root.bare
+        anchors.fill: parent
+        anchors.margins: root.border.width
+        fillMode: Image.Tile
+        smooth: false
+        source: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAADCAYAAABS3WWCAAAAD0lEQVR4nGNgYGDQY4ADAAIJAC9ov5mQAAAAAElFTkSuQmCC"
     }
 
     Channel {

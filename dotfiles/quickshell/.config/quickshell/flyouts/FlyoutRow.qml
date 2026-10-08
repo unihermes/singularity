@@ -65,12 +65,40 @@ Item {
     width: parent ? parent.width : 0
     implicitHeight: Theme.rowHeight
 
+    // How the active entry is marked is the style's (Theme.rowMark): a
+    // tick on the left edge, an accent-tinted ground, the whole row filled
+    // (accent, or ink under Ledger), a > prompt, or corner marks
+    readonly property string mark: Theme.rowMark
+    readonly property bool filled: root.highlighted && mark === "fill"
+    // text on a filled row
+    readonly property color fillInk: Theme.style === "ledger" ? Theme.panel : Theme.textOnAccent
+
     Rectangle {
         anchors.fill: parent
         anchors.leftMargin: -Theme.spaceS
         anchors.rightMargin: -Theme.spaceS
-        radius: Theme.radiusInner
-        color: mouse.containsMouse ? Theme.hoverFill : "transparent"
+        radius: mark === "corners" ? 0 : Theme.radiusInner
+        color: root.filled ? (Theme.style === "ledger" ? Theme.text : Theme.accent)
+            : root.highlighted && mark === "tint" ? Qt.tint(Theme.panel, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.24))
+            : root.highlighted && mark === "corners" ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.12)
+            : mouse.containsMouse ? Theme.hoverFill : "transparent"
+
+        CornerMarks {
+            visible: root.highlighted && root.mark === "corners"
+            color: Theme.accent
+        }
+    }
+
+    // Ledger's ruled rows
+    Rectangle {
+        visible: Theme.style === "ledger" && Theme.opt("rules")
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
+        height: 1
+        color: Theme.border
     }
 
     // left edge tick on the active entry, instead of a fill: a filled row
@@ -84,7 +112,20 @@ Item {
         radius: width / 2
         color: Theme.accent
 
-        visible: root.highlighted
+        visible: root.highlighted && root.mark === "tick"
+    }
+
+    // Terminal's prompt before the active entry
+    Text {
+        visible: root.highlighted && root.mark === "prompt"
+        anchors.right: parent.left
+        anchors.rightMargin: -Theme.spaceS
+        anchors.verticalCenter: parent.verticalCenter
+        text: ">"
+        color: Theme.accent
+        font.family: Theme.fontText
+        font.pixelSize: Theme.fontBody
+        font.weight: Theme.weightStrong
     }
 
     Image {
@@ -127,6 +168,8 @@ Item {
         color: {
             if (root.alert || root.armed) return Theme.alert
             if (!root.enabled) return Theme.subtext
+            if (root.filled) return root.fillInk
+            if (root.highlighted && root.mark === "prompt") return Theme.accent
             if (root.highlighted || mouse.containsMouse) return Theme.textStrong
             return Theme.text
         }
@@ -224,7 +267,8 @@ Item {
         // the information itself, so it reads strong. On a clickable row
         // it's decoration -- a chevron, a check -- and stays quiet; a state
         // in flight (connecting) sits between the two.
-        color: root.trailingIsValue ? Theme.textStrong
+        color: root.filled ? root.fillInk
+            : root.trailingIsValue ? Theme.textStrong
             : root.busy ? Theme.text
             : root.enabled ? Theme.muted : Theme.textDisabled
         // icon glyphs turn up here (the check/ban marks on toggle rows),

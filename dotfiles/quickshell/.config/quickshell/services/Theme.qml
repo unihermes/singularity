@@ -43,10 +43,14 @@ Singleton {
 
     // Everything the style and the dials beside it decide (Styles.resolve)
     readonly property var resolved: Styles.resolve({
-        style: Settings.style, radius: Settings.radius, barStyle: Settings.barStyle,
+        style: Settings.style, styleOptions: Settings.styleOptions, radius: Settings.radius, barStyle: Settings.barStyle,
         density: Settings.density, seeThrough: Settings.seeThrough, shadows: Settings.shadows,
         heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim })
-    readonly property string style: Settings.style
+    // the style in force, its renamed forms resolved: what every
+    // component that draws its own way per style switches on
+    readonly property string style: resolved.styleName
+    // one of the style's own options (Styles.js `options`), on or off
+    function opt(id) { return Styles.has(Settings.styleOptions, id) }
 
     // The look's own ramp. In wallpaper colour mode each role is swapped for
     // the matching tone from the wallpaper's palette (see Wallpaper.qml);
@@ -110,7 +114,9 @@ Singleton {
     readonly property color fieldFill:     surface
     // Glass draws one light hairline instead of the ramp's border
     readonly property bool glass: resolved.glass
-    readonly property color stroke: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.14) : Qt.rgba(1, 1, 1, 0.14)) : border
+    // Ledger draws in ink, the ramp's text colour
+    readonly property color stroke: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.14) : Qt.rgba(1, 1, 1, 0.14))
+        : frameLedger ? text : border
     readonly property color strokeHover:   muted
     readonly property color strokeFocus:   hasAccent ? accent : subtext
     readonly property color textDisabled:  muted
@@ -129,7 +135,11 @@ Singleton {
     // further under Glass. The desktop shows through only where Hyprland
     // blurs or nothing's behind.
     readonly property real panelOpacity:   resolved.opacity / 100
-    readonly property color panelFill:     Qt.rgba(panel.r, panel.g, panel.b, panelOpacity)
+    // Glass's accent-tinted option takes a little of the accent into it
+    readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
+    readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
+    // Glass and Corners' glow option: lit things and panels glow in the accent
+    readonly property bool glow: (glass || frameCorners) && opt("glow")
 
     // --- type ------------------------------------------------------------------
 
@@ -192,7 +202,8 @@ Singleton {
     readonly property int radius:      resolved.radius
     // flyouts, windows, cards and wofi; and a floating bar or islands
     readonly property int panelRadius: resolved.panelRadius
-    readonly property int barRadius:   resolved.barRadius
+    // a capsule's floating bar or islands are pills
+    readonly property int barRadius:   style === "capsule" && !barFull ? barHeight / 2 : resolved.barRadius
     // One step in from the outer stroke. Floored at 0 because the radius is
     // user-settable down to square, and a negative radius draws nothing.
     readonly property int radiusInner: Math.max(0, radius - 2)
@@ -209,10 +220,20 @@ Singleton {
     // "channel": an outer line, a dark groove, an inner line; lit states
     // light the groove in the accent (Channel.qml)
     readonly property bool frameChannel: frameStyle === "channel"
+    // "ledger": one stroke, 2px and in ink, with a hard offset shadow
+    readonly property bool frameLedger: frameStyle === "ledger"
+    // "corners": only the corners drawn (CornerMarks.qml), over a faint hairline
+    readonly property bool frameCorners: frameStyle === "corners"
     // bevel: drawn with Bevel pairs rather than a border
     readonly property bool frameChiselled: frameBevel
     // every style but these draws the plain outer stroke
-    readonly property bool frameStroked: !frameChiselled && !frameNone
+    readonly property bool frameStroked: !frameChiselled && !frameNone && !frameCorners
+    // Corners' hairline under its marks
+    readonly property color cornerHairline: Qt.rgba(border.r, border.g, border.b, 0.6)
+    // how long a corner mark runs: on chips and controls, and on panels
+    // (shorter without Corners' large-corners option)
+    readonly property int cornerSmall: 6
+    readonly property int cornerLarge: opt("big") ? 12 : 7
 
     // The channel's three bands, outside in: the outer line, the groove,
     // the inner line. channelWidth is all of them, the first clear pixel.
@@ -236,7 +257,7 @@ Singleton {
     // under None kept only where a lit or focused state shows.
     function controlBorder(c) {
         if (frameStroked) return borderWidth
-        if (frameChiselled) return 0
+        if (frameChiselled || frameCorners) return 0
         return Qt.colorEqual(c, stroke) || Qt.colorEqual(c, "transparent") ? 0 : borderWidth
     }
     function controlStroke(c) {
@@ -259,6 +280,12 @@ Singleton {
     readonly property var bevel: look.bevel || { light: Qt.lighter(border, 1.8), dark: Qt.darker(border, 1.8) }
     readonly property color bevelLight: bevel.light
     readonly property color bevelDark:  bevel.dark
+    // How a list marks its current row (FlyoutRow): "tick" on the left
+    // edge, "tint" an accent-tinted ground, "fill" the whole row in the
+    // accent (in ink under Ledger), "prompt" a > before it, or "corners"
+    readonly property string rowMark: ({
+        solid: "tint", capsule: "tint", bevel: "fill", terminal: "prompt", corners: "corners",
+        ledger: opt("invert") ? "fill" : "tick" })[style] || "tick"
     // the left-edge bar marking the current row in a list
     readonly property int indicatorWidth: 2
     readonly property int meterHeight: 6
@@ -355,8 +382,10 @@ Singleton {
     //
     // Islands are inset the same way, each group of modules on its own
     // floating ground instead of one bar.
-    readonly property bool barFloating: Settings.barStyle === "floating"
-    readonly property bool barIslands:  Settings.barStyle === "islands"
+    // Capsule's one-pill option joins islands into one floating pill
+    readonly property bool barOnePill: style === "capsule" && opt("one") && Settings.barStyle !== "full"
+    readonly property bool barFloating: Settings.barStyle === "floating" || barOnePill
+    readonly property bool barIslands:  Settings.barStyle === "islands" && !barOnePill
     readonly property bool barFull:     !barFloating && !barIslands
     readonly property int barMargin:  barFull ? 0 : Settings.edgeGap
     readonly property int barExtent:  barHeight + barMargin * 2
@@ -409,7 +438,8 @@ Singleton {
     // a bar module under the pointer -- see Looks.js and ModuleFrame
     readonly property string hoverStyle: resolved.hoverStyle
     // between the bar's modules, and the room each gap takes with one
-    readonly property string barSeparator: Settings.barSeparator
+    // Terminal's pipes option puts a line where its brackets were
+    readonly property string barSeparator: style === "terminal" && opt("pipes") ? "line" : Settings.barSeparator
     readonly property int moduleSpacing: moduleGap + (barSeparator === "none" ? 0 : spaceL)
     // notification popups -- see Looks.js and NotificationCard
     readonly property string notifStyle: Settings.notifStyle
@@ -432,6 +462,8 @@ Singleton {
     // "grouped": each section of the bar is one channel (shell.qml), and
     // its modules are bare chips inside it, sized to the channel's interior
     readonly property bool moduleGrouped: moduleStyle === "grouped"
+    // the styles whose open chip fills with the accent
+    readonly property bool moduleOpenFill: moduleStyle === "filled" || moduleStyle === "pill" || moduleStyle === "boxed"
     readonly property int groupHeight: moduleHeight + 2
     readonly property int groupRadius: radius > 0 ? radius + channelWidth : 0
     // "grown": a flyout hangs off its module's group, one outline round both

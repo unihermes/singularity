@@ -43,9 +43,9 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **A shell of its own.** Bar, flyouts, Control Centre, launcher, notification
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
-- **Looks and Styles.** 20+ looks (GNOME 2, CDE, NeXTSTEP, Gruvbox,
-  Catppuccin, Nord, …) on top of ten Styles that draw all of the chrome at
-  once, so no combination of settings can clash.
+- **Looks and Styles.** Eleven looks (Classic, Kanagawa, Catppuccin, Nord,
+  Signal, Sonar, …) on top of eleven Styles that draw all of the chrome,
+  controls included, at once, so no combination of settings can clash.
 - **Settings for everything.** Displays, input, power and idle, the lock
   screen, window rules, keybinds, notifications, audio, Bluetooth, Wi-Fi,
   startup apps, file types, updates. Every page writes the real config file
@@ -156,18 +156,23 @@ pale blue text and a single indigo accent (`#5555c8`):
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
 | `#d0e2fa` text | `#ebebeb` bright | | |
 
-It ships with the classic desktops GNOME 2, Breeze Dark, Greybird, CDE,
-NeXTSTEP, Elementary and Ambiance, and the palettes Gruvbox (dark and light),
-Catppuccin Mocha and Latte, Tokyo Night, Nord, Rosé Pine Moon and Dawn,
-Everforest, Kanagawa and One Dark.
+It also ships with **Classic** (Singularity as it first was, double-stroked),
+Kanagawa, Everforest, Catppuccin Mocha, Tokyo Night, Breeze Dark, Nord,
+Platinum (Mac OS 8 after dark), **Signal** (black ink on white, like a
+printed form) and **Sonar** (a teal heads-up display). Each one also picks
+its own bar arrangement, density, font, workspaces, window strip and
+notification popups.
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
-meters, section frames, the heading mark and where flyouts sit. There are
-ten: Channel, Lined, Flat, Retro, Minimal, Basic, Capsule, Glass, Tabbed and
-Terminal. Beside it are only dials that move everything together
-(Roundness, Bar shape, Density, See-through) and a few finishing switches.
+meters, section frames, the heading mark, where flyouts sit, and its own
+switches, sliders, segmented controls and buttons. There are eleven:
+Channel, Double, Solid, Capsule, Glass, Bevel, Terminal, Underline, Tabbed,
+Ledger and Corners. Each has three options of its own (Terminal's scanlines,
+Capsule's one-pill bar, Corners' glow, …). Beside it are only dials that
+move everything together (Roundness, Bar shape, Density, See-through) and a
+few finishing switches.
 
-<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance's Style tab: a live preview and the ten Styles" width="720"></p>
+<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance's Style tab: a live preview and the eleven Styles" width="720"></p>
 
 Pick a look from **Settings → Appearance → Look**, the Control Centre, or a
 keybind (`qs ipc call look cycle`, `qs ipc call look set <name>`). The other

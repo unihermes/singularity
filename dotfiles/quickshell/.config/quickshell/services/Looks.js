@@ -27,7 +27,7 @@
 //     accent         the one hue for marks: selection ticks, focus, current
 //                    items. null = the ramp's bright, a colourless look
 //     good, alert    status hues
-//     bevel          { light, dark }, or null: the Retro style's chiselled
+//     bevel          { light, dark }, or null: the Bevel style's chiselled
 //                    edge (Bevel.qml); null computes a pair off `border`
 //     scrim          how dark full-screen overlays dim the desktop
 //     motion         a factor on every animation; 0 for a look that should
@@ -54,6 +54,8 @@
 //                  unstated, the style's
 //     shadows, gradient, heavyLines, headingUpper, headingRule,
 //     barSeparator, levelColour   the Finish switches (Settings.qml)
+//     styleOptions the style's own options that are on, comma-joined ids
+//                  (Styles.js `options`); unstated, the style's
 //
 // The content keys in `settings`:
 //     barPosition  "top" or "bottom"
@@ -217,7 +219,7 @@ function adjustable(look) {
 function complete(look) {
     for (var b in base)
         if (look[b] === undefined) look[b] = base[b]
-    var fin = Styles.get(look.settings.style).finish
+    var fin = Styles.finish(look.settings.style)
     for (var f in fin)
         if (look.settings[f] === undefined) look.settings[f] = fin[f]
     var win = Styles.windows(look.settings.style)

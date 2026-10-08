@@ -19,6 +19,8 @@ Item {
 
     property real radius: 0
     property bool opaque: true
+    // how far a hard shadow sits down and right
+    property int offset: Theme.shadowOffset
 
     anchors.fill: parent
     z: -1
@@ -35,8 +37,8 @@ Item {
 
     Rectangle {
         visible: Theme.shadow === "hard"
-        x: Theme.shadowOffset
-        y: Theme.shadowOffset
+        x: root.offset
+        y: root.offset
         width: parent.width
         height: parent.height
         radius: root.radius

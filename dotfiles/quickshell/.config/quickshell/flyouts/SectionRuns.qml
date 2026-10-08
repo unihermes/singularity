@@ -8,6 +8,8 @@
 //   double   an outer stroke and an inner one inset
 //   single   one stroke
 //   bevel    a sunken chisel, a well in the raised panel
+//   ledger   one 2px ink stroke
+//   corners  short marks at the corners
 //   none     the ground alone
 // Put it beside the column, under it, and say where the column's top sits
 // in this item.
@@ -77,6 +79,8 @@ Item {
                 color: root.fill
                 border.width: Theme.frameStroked ? Theme.borderWidth : 0
                 border.color: Theme.stroke
+
+                CornerMarks { visible: Theme.frameCorners }
 
                 Rectangle {
                     visible: Theme.frameDouble

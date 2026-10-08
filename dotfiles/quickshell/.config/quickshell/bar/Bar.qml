@@ -61,7 +61,12 @@ PanelWindow {
     // their text stay solid so the bar is still readable over a busy
     // wallpaper.
     // Theme.gradient: every ground below shaded top to bottom
-    readonly property color barGround: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+    // Glass's accent-tinted option mixes a little of the accent in
+    readonly property color barTone: Theme.glass && Theme.opt("tint")
+        ? Qt.tint(Theme.bar, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25)) : Theme.bar
+    readonly property color barGround: Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b, Theme.barOpacity)
+    // a floating bar's or island's edge: Corners' is only a faint hairline
+    readonly property color barEdge: Theme.frameCorners ? Theme.cornerHairline : Theme.stroke
     property Gradient barShading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }
         GradientStop { position: 1; color: Theme.shadeBottom(bar.barGround) }
@@ -74,7 +79,7 @@ PanelWindow {
         gradient: Theme.gradient ? bar.barShading : null
         radius: Theme.barFloating ? Theme.barRadius : 0
         border.width: Theme.barFloating ? Theme.borderWidth : 0
-        border.color: Theme.stroke
+        border.color: bar.barEdge
     }
 
     // Islands: the same ground, but one per group of modules, each
@@ -97,7 +102,7 @@ PanelWindow {
             color: bar.barGround
             gradient: Theme.gradient ? bar.barShading : null
             border.width: Theme.borderWidth
-            border.color: Theme.stroke
+            border.color: bar.barEdge
         }
     }
 
@@ -433,9 +438,10 @@ PanelWindow {
     }
 
     // hairline on the bar's inner edge, so it reads as a surface
-    // rather than a strip of background
+    // rather than a strip of background; Underline's hairline option
+    // can leave it out
     Rectangle {
-        visible: Theme.barFull
+        visible: Theme.barFull && (Theme.style !== "underline" || Theme.opt("hair"))
         y: Theme.barPosition === "bottom" ? 0 : parent.height - height
         width: parent.width
         height: Theme.borderWidth

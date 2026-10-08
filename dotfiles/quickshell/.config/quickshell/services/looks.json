@@ -1,161 +1,53 @@
 {
-    "gnome2": {
-        "name": "GNOME 2",
-        "description": "Clearlooks on a Sunday: a soft grey panel with gentle gradients, Tango blue, a task list of tabs",
+    "classic": {
+        "name": "Classic",
+        "description": "Singularity as it was until October: the same greys and indigo, a double-stroked chip for every module, a full bar",
         "palette": {
-            "base": "#d3d0ca",
-            "bar": "#e8e6e3",
-            "panel": "#f2f1f0",
-            "surface": "#e6e4e0",
-            "overlay": "#dad7d2",
-            "border": "#b6b2ab",
-            "muted": "#8f8b84",
-            "subtext": "#555753",
-            "text": "#2e3436",
-            "bright": "#000000"
+            "base": "#0b0b0b",
+            "bar": "#121212",
+            "panel": "#141414",
+            "surface": "#1a1a1a",
+            "overlay": "#242424",
+            "border": "#303030",
+            "muted": "#4d4d4d",
+            "subtext": "#7a7a7a",
+            "text": "#d0e2fa",
+            "bright": "#ebebeb"
         },
-        "accent": "#3465a4",
-        "good": "#4e9a06",
-        "alert": "#cc0000",
-        "scrim": 0.3,
+        "accent": "#5555c8",
+        "good": "#7d9b7d",
+        "alert": "#a87676",
         "settings": {
-            "style": "lined",
-            "radius": 4,
-            "density": "compact",
-            "fontFamily": "Hack Nerd Font",
-            "barStyle": "full",
-            "workspaceStyle": "numbers",
-            "clockStyle": "day",
-            "windowStyle": "tabs",
-            "gradient": true,
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "breeze": {
-        "name": "Breeze Dark",
-        "description": "KDE Plasma: a slate taskbar along the bottom, bare icons with a blue line above the focused one",
-        "palette": {
-            "base": "#141618",
-            "bar": "#202326",
-            "panel": "#202326",
-            "surface": "#292c30",
-            "overlay": "#31363b",
-            "border": "#3e4349",
-            "muted": "#5d6369",
-            "subtext": "#a1a9b1",
-            "text": "#e6e8ea",
-            "bright": "#fcfcfc"
-        },
-        "accent": "#3daee9",
-        "good": "#27ae60",
-        "alert": "#da4453",
-        "scrim": 0.4,
-        "layout": {
-            "left": [
-                "controlcentre",
-                "workspaces",
-                "windows"
-            ],
-            "centre": [],
-            "right": [
-                "media",
-                "privacy",
-                "failed",
-                "updates",
-                "claude",
-                "notifications",
-                "tray",
-                "network",
-                "bluetooth",
-                "volume",
-                "brightness",
-                "battery",
-                "weather",
-                "clock"
-            ],
-            "hidden": [
-                "visualizer"
-            ],
-            "anchor": ""
-        },
-        "settings": {
-            "style": "lined",
-            "radius": 4,
+            "style": "double",
+            "radius": 6,
             "density": "normal",
-            "fontFamily": "Hack Nerd Font",
+            "fontFamily": "UbuntuMono Nerd Font",
             "barStyle": "full",
-            "barPosition": "bottom",
-            "workspaceStyle": "numbers",
-            "clockStyle": "time",
+            "workspaceStyle": "pills",
             "windowStyle": "icons",
-            "launcherLayout": "grid",
-            "seeThrough": 96,
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
+            "clockStyle": "stamp",
+            "notifStyle": "full"
         }
     },
-    "greybird": {
-        "name": "Greybird",
-        "description": "Xfce's Greybird: plain light greys, a thin top panel, window buttons, nothing in the way",
+    "kanagawa": {
+        "name": "Kanagawa",
         "palette": {
-            "base": "#c6c6c6",
-            "bar": "#dcdcdc",
-            "panel": "#ededed",
-            "surface": "#e2e2e2",
-            "overlay": "#d2d2d2",
-            "border": "#a6a6a6",
-            "muted": "#878787",
-            "subtext": "#4f4f4f",
-            "text": "#212121",
-            "bright": "#000000"
+            "base": "#16161d",
+            "bar": "#1f1f28",
+            "panel": "#1f1f28",
+            "surface": "#2a2a37",
+            "overlay": "#363646",
+            "border": "#54546d",
+            "muted": "#727169",
+            "subtext": "#c8c093",
+            "text": "#dcd7ba",
+            "bright": "#f4f0dc"
         },
-        "accent": "#398ee7",
-        "good": "#4e9a06",
-        "alert": "#cc0000",
-        "scrim": 0.3,
-        "settings": {
-            "style": "lined",
-            "radius": 3,
-            "density": "compact",
-            "fontFamily": "FiraCode Nerd Font",
-            "barStyle": "full",
-            "workspaceStyle": "numbers",
-            "clockStyle": "time",
-            "windowStyle": "tabs",
-            "gradient": true,
-            "powerStyle": "list",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "cde": {
-        "name": "CDE",
-        "description": "The Unix workstation: a bevelled front panel along the bottom, teal and lavender-grey, maroon marks, workspaces in the middle",
-        "palette": {
-            "base": "#e7e8ee",
-            "bar": "#7a9ea9",
-            "panel": "#aeb2c3",
-            "surface": "#b9bdcc",
-            "overlay": "#c8cbd8",
-            "border": "#6b6f7d",
-            "muted": "#6b6f7d",
-            "subtext": "#2f3240",
-            "text": "#000000",
-            "bright": "#000000"
-        },
-        "accent": "#8b2d3a",
-        "good": "#2e7d32",
-        "alert": "#b00020",
-        "bevel": {
-            "light": "#e3e5ec",
-            "dark": "#4f5361"
-        },
-        "motion": 0.5,
-        "scrim": 0.35,
+        "accent": "#7e9cd8",
+        "good": "#98bb6c",
+        "alert": "#e46876",
+        "scrim": 0.45,
+        "description": "Sumi ink and crystal blue: heavy double strokes on a floating bar along the bottom, Roman numerals in the middle",
         "layout": {
             "left": [
                 "controlcentre",
@@ -166,19 +58,19 @@
                 "workspaces"
             ],
             "right": [
-                "media",
                 "privacy",
                 "failed",
                 "updates",
                 "claude",
                 "notifications",
                 "tray",
-                "network",
+                "media",
+                "weather",
                 "bluetooth",
+                "network",
                 "volume",
                 "brightness",
-                "battery",
-                "weather"
+                "battery"
             ],
             "hidden": [
                 "visualizer"
@@ -186,395 +78,22 @@
             "anchor": "workspaces"
         },
         "settings": {
-            "style": "retro",
-            "radius": 0,
-            "density": "compact",
-            "fontFamily": "Terminess Nerd Font",
-            "barStyle": "full",
+            "style": "double",
+            "styleOptions": "slash",
+            "heavyLines": true,
+            "radius": 3,
+            "density": "normal",
+            "fontFamily": "BlexMono Nerd Font",
+            "barStyle": "floating",
             "barPosition": "bottom",
-            "workspaceStyle": "numbers",
-            "clockStyle": "time",
-            "windowStyle": "icons",
-            "powerStyle": "list",
-            "levelStyle": "number",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "nextstep": {
-        "name": "NeXTSTEP",
-        "description": "1989's workstation in four greys: bevelled tiles, black title bars, no colour at all",
-        "palette": {
-            "base": "#7a7a7a",
-            "bar": "#a8a8a8",
-            "panel": "#aaaaaa",
-            "surface": "#b6b6b6",
-            "overlay": "#c6c6c6",
-            "border": "#555555",
-            "muted": "#6a6a6a",
-            "subtext": "#2e2e2e",
-            "text": "#000000",
-            "bright": "#000000"
-        },
-        "accent": null,
-        "good": "#2f5f2f",
-        "alert": "#7a1f1f",
-        "bevel": {
-            "light": "#ffffff",
-            "dark": "#555555"
-        },
-        "motion": 0.5,
-        "scrim": 0.35,
-        "settings": {
-            "style": "retro",
-            "radius": 0,
-            "density": "compact",
-            "fontFamily": "BlexMono Nerd Font",
-            "barStyle": "full",
-            "workspaceStyle": "blocks",
-            "clockStyle": "day",
-            "iconTint": "mono",
-            "powerStyle": "list",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "elementary": {
-        "name": "Elementary",
-        "description": "Pantheon: a light, airy top bar, the clock centred, one blueberry accent and plenty of room",
-        "palette": {
-            "base": "#e2e2e2",
-            "bar": "#fafafa",
-            "panel": "#fafafa",
-            "surface": "#f2f2f2",
-            "overlay": "#e8e8e8",
-            "border": "#d4d4d4",
-            "muted": "#a0a0a0",
-            "subtext": "#666666",
-            "text": "#333333",
-            "bright": "#1a1a1a"
-        },
-        "accent": "#3689e6",
-        "good": "#68b723",
-        "alert": "#c6262e",
-        "scrim": 0.3,
-        "settings": {
-            "style": "flat",
-            "radius": 10,
-            "density": "roomy",
-            "fontFamily": "CommitMono Nerd Font",
-            "barStyle": "full",
-            "workspaceStyle": "dots",
-            "clockStyle": "day",
+            "workspaceStyle": "roman",
             "windowStyle": "dots",
-            "launcherLayout": "grid",
-            "seeThrough": 90,
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "good"
-        }
-    },
-    "ambiance": {
-        "name": "Ambiance",
-        "description": "Ubuntu 10.04 to 16.04: a dark gradient panel, the window title on the left, a warm orange accent",
-        "palette": {
-            "base": "#1f1e1b",
-            "bar": "#3c3b37",
-            "panel": "#3c3b37",
-            "surface": "#47463f",
-            "overlay": "#55534c",
-            "border": "#5f5d57",
-            "muted": "#7d7a73",
-            "subtext": "#b8b5ae",
-            "text": "#dfdbd2",
-            "bright": "#ffffff"
-        },
-        "accent": "#f07746",
-        "good": "#87a556",
-        "alert": "#df382c",
-        "scrim": 0.45,
-        "settings": {
-            "style": "flat",
-            "radius": 4,
-            "density": "compact",
-            "fontFamily": "UbuntuMono Nerd Font",
-            "barStyle": "full",
-            "workspaceStyle": "blocks",
             "clockStyle": "day",
-            "windowStyle": "titled",
-            "gradient": true,
-            "launcherLayout": "grid",
-            "launcherPosition": "full",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "gruvbox": {
-        "name": "Gruvbox",
-        "description": "Warm retro browns, orange and aqua: filled blocks on a floating bar",
-        "palette": {
-            "base": "#1d2021",
-            "bar": "#282828",
-            "panel": "#282828",
-            "surface": "#32302f",
-            "overlay": "#3c3836",
-            "border": "#504945",
-            "muted": "#665c54",
-            "subtext": "#a89984",
-            "text": "#ebdbb2",
-            "bright": "#fbf1c7"
-        },
-        "accent": "#fe8019",
-        "good": "#b8bb26",
-        "alert": "#fb4934",
-        "scrim": 0.45,
-        "settings": {
-            "style": "flat",
-            "radius": 4,
-            "density": "normal",
-            "fontFamily": "Mononoki Nerd Font",
-            "barStyle": "floating",
-            "workspaceStyle": "numbers",
-            "clockStyle": "day",
-            "headingUpper": true,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "gruvboxlight": {
-        "name": "Gruvbox Light",
-        "description": "Gruvbox on cream paper: burnt orange and sea green, filled blocks on a floating bar",
-        "palette": {
-            "base": "#e2d3a6",
-            "bar": "#fbf1c7",
-            "panel": "#fbf1c7",
-            "surface": "#f2e5bc",
-            "overlay": "#ebdbb2",
-            "border": "#d5c4a1",
-            "muted": "#a89984",
-            "subtext": "#7c6f64",
-            "text": "#3c3836",
-            "bright": "#1d2021"
-        },
-        "accent": "#af3a03",
-        "good": "#79740e",
-        "alert": "#9d0006",
-        "scrim": 0.3,
-        "settings": {
-            "style": "flat",
-            "radius": 4,
-            "density": "normal",
-            "fontFamily": "Mononoki Nerd Font",
-            "barStyle": "floating",
-            "workspaceStyle": "numbers",
-            "clockStyle": "day",
-            "headingUpper": true,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "mocha": {
-        "name": "Catppuccin Mocha",
-        "description": "Soothing pastels on deep mauve-grey: pill islands, mauve and green",
-        "palette": {
-            "base": "#11111b",
-            "bar": "#181825",
-            "panel": "#1e1e2e",
-            "surface": "#313244",
-            "overlay": "#45475a",
-            "border": "#585b70",
-            "muted": "#6c7086",
-            "subtext": "#a6adc8",
-            "text": "#cdd6f4",
-            "bright": "#ffffff"
-        },
-        "accent": "#cba6f7",
-        "good": "#a6e3a1",
-        "alert": "#f38ba8",
-        "scrim": 0.45,
-        "settings": {
-            "style": "capsule",
-            "radius": 12,
-            "density": "roomy",
-            "fontFamily": "FiraCode Nerd Font",
-            "barStyle": "islands",
-            "workspaceStyle": "dots",
-            "clockStyle": "day",
-            "vizStyle": "rise",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "good"
-        }
-    },
-    "latte": {
-        "name": "Catppuccin Latte",
-        "description": "Catppuccin by daylight: milky greys, violet and green, pill islands",
-        "palette": {
-            "base": "#dce0e8",
-            "bar": "#e6e9ef",
-            "panel": "#eff1f5",
-            "surface": "#e6e9ef",
-            "overlay": "#ccd0da",
-            "border": "#bcc0cc",
-            "muted": "#9ca0b0",
-            "subtext": "#6c6f85",
-            "text": "#4c4f69",
-            "bright": "#262838"
-        },
-        "accent": "#8839ef",
-        "good": "#40a02b",
-        "alert": "#d20f39",
-        "scrim": 0.3,
-        "settings": {
-            "style": "capsule",
-            "radius": 12,
-            "density": "roomy",
-            "fontFamily": "FiraCode Nerd Font",
-            "barStyle": "islands",
-            "workspaceStyle": "dots",
-            "clockStyle": "day",
-            "vizStyle": "rise",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "good"
-        }
-    },
-    "tokyonight": {
-        "name": "Tokyo Night",
-        "description": "Downtown after dark: deep indigo, neon blue and violet, underlined readouts on a floating bar",
-        "palette": {
-            "base": "#16161e",
-            "bar": "#1a1b26",
-            "panel": "#1a1b26",
-            "surface": "#24283b",
-            "overlay": "#292e42",
-            "border": "#3b4261",
-            "muted": "#565f89",
-            "subtext": "#a9b1d6",
-            "text": "#c0caf5",
-            "bright": "#ffffff"
-        },
-        "accent": "#7aa2f7",
-        "good": "#9ece6a",
-        "alert": "#f7768e",
-        "scrim": 0.45,
-        "settings": {
-            "style": "minimal",
-            "radius": 6,
-            "density": "normal",
-            "fontFamily": "CommitMono Nerd Font",
-            "barStyle": "floating",
-            "workspaceStyle": "lines",
-            "clockStyle": "day",
-            "barSeparator": "dot",
-            "headingUpper": true,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "nord": {
-        "name": "Nord",
-        "description": "Arctic blue-greys and a frosty cyan: quiet ghost chips on rounded islands",
-        "palette": {
-            "base": "#242933",
-            "bar": "#2e3440",
-            "panel": "#2e3440",
-            "surface": "#3b4252",
-            "overlay": "#434c5e",
-            "border": "#4c566a",
-            "muted": "#616e88",
-            "subtext": "#aeb7c6",
-            "text": "#d8dee9",
-            "bright": "#eceff4"
-        },
-        "accent": "#88c0d0",
-        "good": "#a3be8c",
-        "alert": "#bf616a",
-        "scrim": 0.4,
-        "motion": 0.8,
-        "settings": {
-            "style": "flat",
-            "radius": 8,
-            "density": "roomy",
-            "fontFamily": "SpaceMono Nerd Font",
-            "barStyle": "islands",
-            "workspaceStyle": "dots",
-            "clockStyle": "time",
-            "headingUpper": true,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "rosepine": {
-        "name": "Rosé Pine Moon",
-        "description": "All natural pine, faux fur and a bit of soho vibes: dusky violet, rose and gold, serif headings",
-        "palette": {
-            "base": "#1b1a2b",
-            "bar": "#232136",
-            "panel": "#232136",
-            "surface": "#2a273f",
-            "overlay": "#393552",
-            "border": "#44415a",
-            "muted": "#6e6a86",
-            "subtext": "#908caa",
-            "text": "#e0def4",
-            "bright": "#ffffff"
-        },
-        "accent": "#ea9a97",
-        "good": "#9ccfd8",
-        "alert": "#eb6f92",
-        "scrim": 0.45,
-        "settings": {
-            "style": "minimal",
-            "radius": 8,
-            "density": "normal",
-            "fontFamily": "BlexMono Nerd Font",
-            "barStyle": "floating",
-            "workspaceStyle": "dots",
-            "clockStyle": "long",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "rosepinedawn": {
-        "name": "Rosé Pine Dawn",
-        "description": "Rosé Pine in the morning: warm parchment, rose and pine, serif headings",
-        "palette": {
-            "base": "#ece3da",
-            "bar": "#faf4ed",
-            "panel": "#fffaf3",
-            "surface": "#f4ede8",
-            "overlay": "#efe6df",
-            "border": "#dfdad9",
-            "muted": "#9893a5",
-            "subtext": "#797593",
-            "text": "#575279",
-            "bright": "#2a2546"
-        },
-        "accent": "#d7827e",
-        "good": "#56949f",
-        "alert": "#b4637a",
-        "scrim": 0.3,
-        "settings": {
-            "style": "minimal",
-            "radius": 8,
-            "density": "normal",
-            "fontFamily": "BlexMono Nerd Font",
-            "barStyle": "floating",
-            "workspaceStyle": "dots",
-            "clockStyle": "long",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
+            "notifStyle": "banner"
         }
     },
     "everforest": {
         "name": "Everforest",
-        "description": "A comfortable green forest: soft sage and sand, filled rounded islands, nothing harsh",
         "palette": {
             "base": "#232a2e",
             "bar": "#2d353b",
@@ -592,189 +111,395 @@
         "alert": "#e67e80",
         "scrim": 0.4,
         "motion": 0.8,
+        "description": "Sage and sand on roomy islands, the chips tinted green, the workspaces in the middle",
+        "layout": {
+            "left": [
+                "controlcentre",
+                "windows"
+            ],
+            "centre": [
+                "workspaces"
+            ],
+            "right": [
+                "privacy",
+                "failed",
+                "updates",
+                "claude",
+                "notifications",
+                "tray",
+                "media",
+                "weather",
+                "clock",
+                "bluetooth",
+                "network",
+                "volume",
+                "brightness",
+                "battery"
+            ],
+            "hidden": [
+                "visualizer"
+            ],
+            "anchor": "workspaces"
+        },
         "settings": {
-            "style": "flat",
+            "style": "solid",
+            "styleOptions": "tint",
             "radius": 10,
             "density": "roomy",
             "fontFamily": "Mononoki Nerd Font",
             "barStyle": "islands",
+            "workspaceStyle": "dots",
+            "windowStyle": "icons",
+            "clockStyle": "time",
+            "notifStyle": "compact"
+        }
+    },
+    "mocha": {
+        "name": "Catppuccin Mocha",
+        "palette": {
+            "base": "#11111b",
+            "bar": "#181825",
+            "panel": "#1e1e2e",
+            "surface": "#313244",
+            "overlay": "#45475a",
+            "border": "#585b70",
+            "muted": "#6c7086",
+            "subtext": "#a6adc8",
+            "text": "#cdd6f4",
+            "bright": "#ffffff"
+        },
+        "accent": "#cba6f7",
+        "good": "#a6e3a1",
+        "alert": "#f38ba8",
+        "scrim": 0.45,
+        "description": "Pastels on mauve-grey: one long pill for a bar, labelled switches, everything rounded",
+        "settings": {
+            "style": "capsule",
+            "styleOptions": "labels,one",
+            "radius": 10,
+            "density": "roomy",
+            "fontFamily": "FiraCode Nerd Font",
+            "barStyle": "islands",
             "workspaceStyle": "pills",
-            "clockStyle": "day",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
+            "windowStyle": "icons",
+            "clockStyle": "time",
+            "notifStyle": "full"
         }
     },
-    "kanagawa": {
-        "name": "Kanagawa",
-        "description": "Hokusai's Great Wave in ink: sumi navy, crystal blue and carp yellow, serif headings, the date written out",
+    "tokyonight": {
+        "name": "Tokyo Night",
         "palette": {
-            "base": "#16161d",
-            "bar": "#1f1f28",
-            "panel": "#1f1f28",
-            "surface": "#2a2a37",
-            "overlay": "#363646",
-            "border": "#54546d",
-            "muted": "#727169",
-            "subtext": "#c8c093",
-            "text": "#dcd7ba",
-            "bright": "#f4f0dc"
+            "base": "#16161e",
+            "bar": "#1a1b26",
+            "panel": "#1a1b26",
+            "surface": "#24283b",
+            "overlay": "#292e42",
+            "border": "#3b4261",
+            "muted": "#565f89",
+            "subtext": "#a9b1d6",
+            "text": "#c0caf5",
+            "bright": "#ffffff"
         },
-        "accent": "#7e9cd8",
-        "good": "#98bb6c",
-        "alert": "#e46876",
+        "accent": "#7aa2f7",
+        "good": "#9ece6a",
+        "alert": "#f7768e",
         "scrim": 0.45,
-        "settings": {
-            "style": "lined",
-            "radius": 2,
-            "density": "normal",
-            "fontFamily": "BlexMono Nerd Font",
-            "barStyle": "full",
-            "workspaceStyle": "numbers",
-            "clockStyle": "long",
-            "barSeparator": "line",
-            "headingUpper": false,
-            "headingRule": true,
-            "levelColour": "accent"
-        }
-    },
-    "onedark": {
-        "name": "One Dark",
-        "description": "Atom and VS Code's familiar dark: a compact status bar along the bottom, flat readouts, a blue accent",
-        "palette": {
-            "base": "#1b1d23",
-            "bar": "#21252b",
-            "panel": "#282c34",
-            "surface": "#2c313a",
-            "overlay": "#333842",
-            "border": "#3e4451",
-            "muted": "#5c6370",
-            "subtext": "#8b929e",
-            "text": "#abb2bf",
-            "bright": "#e6e9ef"
+        "description": "Deep indigo and neon blue: a compact floating bar, dots between modules, accent lines above, the window's title beside its icon",
+        "layout": {
+            "left": [
+                "controlcentre",
+                "workspaces",
+                "windows"
+            ],
+            "centre": [],
+            "right": [
+                "privacy",
+                "failed",
+                "updates",
+                "claude",
+                "notifications",
+                "tray",
+                "media",
+                "weather",
+                "clock",
+                "bluetooth",
+                "network",
+                "volume",
+                "brightness",
+                "battery"
+            ],
+            "hidden": [
+                "visualizer"
+            ],
+            "anchor": ""
         },
-        "accent": "#61afef",
-        "good": "#98c379",
-        "alert": "#e06c75",
-        "scrim": 0.45,
         "settings": {
-            "style": "lined",
-            "radius": 4,
+            "style": "underline",
+            "styleOptions": "over",
+            "barSeparator": "dot",
+            "radius": 6,
             "density": "compact",
+            "fontFamily": "CommitMono Nerd Font",
+            "barStyle": "floating",
+            "workspaceStyle": "numbers",
+            "windowStyle": "titled",
+            "clockStyle": "day",
+            "notifStyle": "banner"
+        }
+    },
+    "breeze": {
+        "name": "Breeze Dark",
+        "palette": {
+            "base": "#141618",
+            "bar": "#202326",
+            "panel": "#202326",
+            "surface": "#292c30",
+            "overlay": "#31363b",
+            "border": "#3e4349",
+            "muted": "#5d6369",
+            "subtext": "#a1a9b1",
+            "text": "#e6e8ea",
+            "bright": "#fcfcfc"
+        },
+        "accent": "#3daee9",
+        "good": "#27ae60",
+        "alert": "#da4453",
+        "scrim": 0.4,
+        "description": "KDE Plasma: a roomy slate taskbar along the bottom with window tabs, blue lines above, dots between modules",
+        "layout": {
+            "left": [
+                "controlcentre",
+                "clock",
+                "windows"
+            ],
+            "centre": [
+                "workspaces"
+            ],
+            "right": [
+                "privacy",
+                "failed",
+                "updates",
+                "claude",
+                "notifications",
+                "tray",
+                "media",
+                "weather",
+                "bluetooth",
+                "network",
+                "volume",
+                "brightness",
+                "battery"
+            ],
+            "hidden": [
+                "visualizer"
+            ],
+            "anchor": "workspaces"
+        },
+        "settings": {
+            "style": "underline",
+            "styleOptions": "hair,over",
+            "barSeparator": "dot",
+            "radius": 4,
+            "density": "roomy",
             "fontFamily": "Hack Nerd Font",
             "barStyle": "full",
             "barPosition": "bottom",
             "workspaceStyle": "numbers",
-            "clockStyle": "time",
-            "windowStyle": "titled",
-            "launcherPosition": "top",
-            "headingUpper": true,
-            "headingRule": true,
-            "levelColour": "good"
+            "windowStyle": "tabs",
+            "clockStyle": "stamp",
+            "notifStyle": "compact"
         }
     },
-    "basic": {
-        "name": "Basic",
-        "description": "Grayscale with nothing but grounds and text: no outlines, no marks",
+    "nord": {
+        "name": "Nord",
         "palette": {
-            "base": "#0b0b0b",
-            "bar": "#121212",
-            "panel": "#141414",
-            "surface": "#1a1a1a",
-            "overlay": "#242424",
-            "border": "#303030",
-            "muted": "#4d4d4d",
-            "subtext": "#7a7a7a",
-            "text": "#d0e2fa",
-            "bright": "#ebebeb"
+            "base": "#242933",
+            "bar": "#2e3440",
+            "panel": "#2e3440",
+            "surface": "#3b4252",
+            "overlay": "#434c5e",
+            "border": "#4c566a",
+            "muted": "#616e88",
+            "subtext": "#aeb7c6",
+            "text": "#d8dee9",
+            "bright": "#eceff4"
         },
-        "accent": "#5b8def",
-        "good": "#7d9b7d",
-        "alert": "#a87676",
-        "settings": {
-            "style": "basic",
-            "radius": 4,
-            "density": "normal",
-            "fontFamily": "UbuntuMono Nerd Font"
-        }
-    },
-    "frost": {
-        "name": "Frost",
-        "description": "Frosted blue-grey glass over the blur, a floating bar",
-        "palette": {
-            "base": "#0e1116",
-            "bar": "#141922",
-            "panel": "#171d27",
-            "surface": "#1e2532",
-            "overlay": "#283142",
-            "border": "#364156",
-            "muted": "#56627a",
-            "subtext": "#8a96ab",
-            "text": "#dbe4f0",
-            "bright": "#f4f7fb"
-        },
-        "accent": "#5fb3c9",
-        "good": "#7fb59a",
-        "alert": "#d07f8a",
-        "settings": {
-            "style": "glass",
-            "radius": 10,
-            "barStyle": "floating",
-            "seeThrough": 85,
-            "density": "normal",
-            "fontFamily": "UbuntuMono Nerd Font"
-        }
-    },
-    "workbench": {
-        "name": "Workbench",
-        "description": "Warm greys with orange tabs that flyouts hang from",
-        "palette": {
-            "base": "#100f0e",
-            "bar": "#171615",
-            "panel": "#1b1a18",
-            "surface": "#22201e",
-            "overlay": "#2c2a27",
-            "border": "#3a3733",
-            "muted": "#57534d",
-            "subtext": "#8c867d",
-            "text": "#e6dfd3",
-            "bright": "#f7f2ea"
-        },
-        "accent": "#e08a3c",
-        "good": "#8fae7c",
-        "alert": "#c9776b",
+        "accent": "#88c0d0",
+        "good": "#a3be8c",
+        "alert": "#bf616a",
+        "scrim": 0.4,
+        "motion": 0.8,
+        "description": "Arctic blue-greys: flyouts hanging from frosty cyan tabs",
         "settings": {
             "style": "tabbed",
-            "radius": 4,
+            "styleOptions": "lift",
+            "shadows": true,
+            "headingUpper": true,
+            "radius": 6,
             "density": "normal",
-            "fontFamily": "UbuntuMono Nerd Font"
+            "fontFamily": "SpaceMono Nerd Font",
+            "barStyle": "full",
+            "workspaceStyle": "dots",
+            "windowStyle": "icons",
+            "clockStyle": "time",
+            "notifStyle": "full"
         }
     },
-    "phosphor": {
-        "name": "Phosphor",
-        "description": "Green phosphor on black: brackets, block meters, square edges",
+    "platinum": {
+        "name": "Platinum",
+        "description": "Mac OS 8's platinum after dark: graphite bevels, a compact menu-bar strip, lavender title bars",
         "palette": {
-            "base": "#050805",
-            "bar": "#0a0f0a",
-            "panel": "#0c120c",
-            "surface": "#111a11",
-            "overlay": "#182418",
-            "border": "#223322",
-            "muted": "#345034",
-            "subtext": "#5f8f5f",
-            "text": "#9fe39f",
-            "bright": "#d4ffd4"
+            "base": "#151517",
+            "bar": "#2f2f33",
+            "panel": "#2d2d31",
+            "surface": "#36363b",
+            "overlay": "#404046",
+            "border": "#4c4c53",
+            "muted": "#64646c",
+            "subtext": "#a4a4ad",
+            "text": "#e2e2e7",
+            "bright": "#ffffff"
         },
-        "accent": "#4ade80",
-        "good": "#4ade80",
-        "alert": "#e06c6c",
+        "accent": "#7f7fe0",
+        "good": "#7fb07f",
+        "alert": "#d06a6a",
+        "bevel": {
+            "light": "#55555c",
+            "dark": "#0e0e10"
+        },
+        "layout": {
+            "left": [
+                "controlcentre",
+                "workspaces",
+                "windows"
+            ],
+            "centre": [],
+            "right": [
+                "privacy",
+                "failed",
+                "updates",
+                "claude",
+                "notifications",
+                "tray",
+                "media",
+                "weather",
+                "clock",
+                "bluetooth",
+                "network",
+                "volume",
+                "brightness",
+                "battery"
+            ],
+            "hidden": [
+                "visualizer"
+            ],
+            "anchor": ""
+        },
         "settings": {
-            "style": "terminal",
+            "style": "bevel",
+            "styleOptions": "title",
+            "gradient": false,
+            "shadows": true,
             "radius": 0,
             "density": "compact",
-            "fontFamily": "UbuntuMono Nerd Font",
+            "fontFamily": "CaskaydiaCove Nerd Font",
+            "barStyle": "full",
             "workspaceStyle": "numbers",
-            "clockStyle": "iso"
+            "windowStyle": "titled",
+            "clockStyle": "time",
+            "notifStyle": "full"
+        }
+    },
+    "signal": {
+        "name": "Signal",
+        "description": "Black ink on white with a signal red: heavy boxes, offset shadows, a printed form",
+        "palette": {
+            "base": "#e3e1da",
+            "bar": "#faf9f6",
+            "panel": "#faf9f6",
+            "surface": "#efede8",
+            "overlay": "#e6e3dc",
+            "border": "#bdbab2",
+            "muted": "#8a877f",
+            "subtext": "#55524b",
+            "text": "#151515",
+            "bright": "#000000"
+        },
+        "accent": "#d6402a",
+        "good": "#2f7a4a",
+        "alert": "#c22a2a",
+        "scrim": 0.3,
+        "settings": {
+            "style": "ledger",
+            "radius": 0,
+            "density": "roomy",
+            "fontFamily": "MartianMono Nerd Font",
+            "barStyle": "floating",
+            "workspaceStyle": "blocks",
+            "windowStyle": "tabs",
+            "clockStyle": "day",
+            "notifStyle": "full"
+        }
+    },
+    "sonar": {
+        "name": "Sonar",
+        "description": "Deep navy and a glowing teal readout: corner brackets, a heads-up display",
+        "palette": {
+            "base": "#040a0f",
+            "bar": "#08121a",
+            "panel": "#0b1620",
+            "surface": "#0f1e2a",
+            "overlay": "#152836",
+            "border": "#1f3a4c",
+            "muted": "#2f566d",
+            "subtext": "#6f97ad",
+            "text": "#cfe6f2",
+            "bright": "#f0fbff"
+        },
+        "accent": "#2fd4c4",
+        "good": "#5fc98a",
+        "alert": "#ec6a6a",
+        "scrim": 0.5,
+        "layout": {
+            "left": [
+                "controlcentre",
+                "windows"
+            ],
+            "centre": [
+                "workspaces"
+            ],
+            "right": [
+                "privacy",
+                "failed",
+                "updates",
+                "claude",
+                "notifications",
+                "tray",
+                "media",
+                "weather",
+                "clock",
+                "bluetooth",
+                "network",
+                "volume",
+                "brightness",
+                "battery"
+            ],
+            "hidden": [
+                "visualizer"
+            ],
+            "anchor": "workspaces"
+        },
+        "settings": {
+            "style": "corners",
+            "styleOptions": "big,dash,glow",
+            "radius": 0,
+            "density": "normal",
+            "fontFamily": "Iosevka Nerd Font",
+            "barStyle": "floating",
+            "workspaceStyle": "lines",
+            "windowStyle": "icons",
+            "clockStyle": "seconds",
+            "notifStyle": "compact"
         }
     }
 }

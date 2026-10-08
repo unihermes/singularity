@@ -532,12 +532,12 @@ Item {
                             Behavior on color { ColorAnimation { duration: Theme.durFast } }
                         }
 
-                        // "above": a rule along the chip's top edge, just inside
-                        // the double frame's inner stroke
+                        // "above" and "under": a rule along the chip's top or
+                        // bottom edge, just inside the double frame's inner stroke
                         Rectangle {
-                            visible: winIcon.mark === "above"
+                            visible: winIcon.mark === "above" || winIcon.mark === "under"
                             anchors.horizontalCenter: glyphBox.horizontalCenter
-                            y: 4
+                            y: winIcon.mark === "above" ? 4 : parent.height - height - 4
                             width: glyphBox.width + Theme.spaceXs
                             height: Theme.indicatorWidth
                             radius: height / 2

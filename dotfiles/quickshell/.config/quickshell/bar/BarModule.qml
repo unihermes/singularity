@@ -60,7 +60,8 @@ Item {
 
     // Gauge icons are always bright: they sit on top of the fill, and the
     // fill sweeps under them, so anything dimmer loses contrast as it passes.
-    readonly property color fg: (active || fillValue >= 0)
+    readonly property color fg: active && fillValue < 0 && Theme.moduleOpenFill ? Theme.textOnAccent
+        : (active || fillValue >= 0)
         ? Theme.textStrong
         : (dimmed ? Theme.textDisabled : Theme.text)
 

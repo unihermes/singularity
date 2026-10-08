@@ -59,6 +59,9 @@ Singleton {
     readonly property alias look:        adapter.look
     // how all the chrome is drawn: one of Styles.order (Styles.js)
     readonly property alias style:       adapter.style
+    // the style's own options that are on, as comma-joined ids (Styles.js
+    // `options`; Theme.opt reads them)
+    readonly property alias styleOptions: adapter.styleOptions
     // the bar's and panels' opacity, in percent
     readonly property alias seeThrough:  adapter.seeThrough
     // The Finish switches, safe with any style: its shadow on or off, every
@@ -688,10 +691,17 @@ Singleton {
     function setStyle(v) {
         if (Styles.order.indexOf(v) === -1) return
         adapter.style = v
-        var fin = Styles.get(v).finish
+        var fin = Styles.finish(v)
         for (var k in fin) adapter[k] = fin[k]
         var win = Styles.windows(v)
         for (var w in win) adapter[w] = win[w]
+    }
+
+    // one of the current style's own options (Styles.js), on or off
+    function setStyleOption(id, on) {
+        var l = adapter.styleOptions.split(",").filter(x => x !== "" && x !== id)
+        if (on) l.push(id)
+        adapter.styleOptions = l.sort().join(",")
     }
 
     // A bar shape arrives with its edge gap: the look's own when it's the
@@ -803,6 +813,14 @@ Singleton {
         // (Neither this object nor the singleton root has a Component
         // attached object to hook instead.)
         onLoaded: {
+            // a style since renamed or merged (Styles.renamed), drawn as
+            // it was; the Finish switches are left as they were set
+            var old = adapter.style
+            if (Styles.renamed[old]) {
+                adapter.style = Styles.renamed[old]
+                var c = Styles.carried[old]
+                for (var k in c) adapter[k] = c[k]
+            }
             root.ready = true
         }
         onLoadFailed: root.ready = true
@@ -822,6 +840,7 @@ Singleton {
             property string colourVariant: "dark"
             property string look: "singularity"
             property string style: "channel"
+            property string styleOptions: ""
             property int seeThrough: 100
             property bool shadows: true
             property bool heavyLines: false

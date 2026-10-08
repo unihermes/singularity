@@ -11,22 +11,61 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 ## Styles
 
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
-Channel, Lined, Flat, Retro, Minimal, Basic, Capsule, Glass, Tabbed and
-Terminal. A style sets the frame, bar modules, hover, level chips, focused
-window mark, flyout titles, heading prefix and where flyouts sit, all at
-once. Beside it are only dials that move everything together (Roundness, Bar
-shape, Density, See-through) and Finish switches that are safe with any style
-(separators, shadows, shaded grounds, heavy lines, heading caps and rule).
+Channel, Double, Solid, Capsule, Glass, Bevel, Terminal, Underline, Tabbed,
+Ledger and Corners (settled 2026-10-08 from two rounds of mockups; Lined,
+Flat, Basic, Retro and Minimal were renamed or merged into them, and a saved
+old name still resolves through `Styles.renamed`). A style sets the frame,
+bar modules, hover, level chips, focused window mark, flyout titles, heading
+prefix and where flyouts sit, all at once. Beside it are only dials that move
+everything together (Roundness, Bar shape, Density, See-through) and Finish
+switches that are safe with any style (separators, shadows, shaded grounds,
+heavy lines, heading caps and rule).
+
+**Each style has three options of its own** (`options` in Styles.js), shown
+first under Finish on the Style tab. An option either stands for one of the
+shared Finish settings (`key`), or is an id in `Settings.styleOptions`, read
+with `Theme.opt(id)`. Picking a style sets them all (`Styles.finish`); a look
+can state its own `styleOptions`.
+
+**Each style draws its own controls**, keyed on `Theme.style`:
+
+| Style | Switch | Slider | Segments | Chip/button | Current row |
+|---|---|---|---|---|---|
+| Channel | no knob; accent fill in the groove | level chip with a marker | channel strip | outer line + groove | tick |
+| Double | stroked box, square knob turns accent | stroked well, fill inside | stroked strip, chosen ringed in accent | double-stroked chip | tick |
+| Solid | fat pill, white knob | thick bar | sunken track, raised accent pill | filled block | accent-tinted ground |
+| Capsule | pill (On / Off with `labels`) | tall pill | separate pills | pill | accent-tinted ground |
+| Glass | frosted track, knob glows | thin line, glowing round thumb | frosted strip | glass chip | tick |
+| Bevel | sunken checkbox, tick | groove + raised block thumb | radio buttons | raised button | whole row in the accent |
+| Terminal | `[x]` / `[ ]` | blocks | `(•)` / `( )` | `[ label ]` | `>` in the accent |
+| Underline | thin rail, round knob | hairline + dot | text tabs, underlined | accent text link | tick |
+| Tabbed | two-way Off \| On | ten notches | folder tabs | outlined chip | tick |
+| Ledger | ink box stamped ON/OFF | ruler with ticks | ink boxes, chosen inverted | ink box, hard shadow | row in ink (`invert`) |
+| Corners | bracketed square knob | dashes + diamond | bracketed cells | corner marks, spaced caps | accent corners |
+
+- **Bar chips:** Double outlines every module with an inner stroke 2px in,
+  faint at rest (lit with `lit`); Solid, Capsule, Glass and Ledger fill the
+  open chip with the accent, and their open level chips keep the level and
+  take an accent ring instead; Underline puts a short accent line under (or,
+  with `over`, above) the open module; Ledger boxes each in 2px ink with a
+  hard 2px shadow; Corners draws only corner marks (`CornerMarks.qml`).
+- **Panels:** Ledger is one 2px ink stroke (`Theme.stroke` is the ramp's
+  text) with the hard shadow; Corners is accent corner marks over a faint
+  hairline, glowing with `glow`; Terminal's `scan` lays scanlines over panels.
+- Capsule's `one` joins islands into one floating pill; Glass's `blur` and
+  `tint` change its frost; Bevel's `title` turns its title bars off and on;
+  Terminal's `pipes` swaps brackets for line separators.
 
 Across every style, a chosen segment, tab or chip fills with the accent
-(text in `Theme.textOnAccent`); only Channel adds its groove round it. Tabbed
-draws the open module as a real tab: its sides and top are stroked down
-into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
-Terminal keeps every corner square whatever Roundness says (the style's
-`square`), and its brackets hug their content with the gap between chips, and its
-level chips show five blocks beside the icon. The shell's layers blur what's
-behind them (a Hyprland layer rule), so Glass and see-through grounds stay
-readable.
+(text in `Theme.textOnAccent`) unless its row in the table says otherwise.
+Tabbed draws the open module as a real tab: its sides and top are stroked
+down into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
+Bevel, Terminal, Ledger and Corners keep every corner square whatever
+Roundness says (the style's `square`). Terminal's brackets hug their content
+with the gap between chips, and its level chips show five blocks beside the
+icon. The shell's layers blur what's behind them (a Hyprland layer rule), so
+Glass and see-through grounds stay readable. Level chips fill the whole chip
+in every style.
 
 Don't add a setting that changes one piece's frame on its own: that's what
 made combinations clash. A new look of a piece belongs in a style. Theme reads

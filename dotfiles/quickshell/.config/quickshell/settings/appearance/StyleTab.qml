@@ -11,11 +11,12 @@ import "../../flyouts"
 import ".."
 
 SettingsTab {
+    id: styleTab
     tabId: "style"
 
     FlyoutHeading { text: "STYLE" }
 
-    Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 5 }
+    Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 4 }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SHAPE" }
@@ -80,27 +81,40 @@ SettingsTab {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "FINISH" }
 
+    // the style's own three options first
+    Repeater {
+        model: Styles.get(Settings.style).options
+        StyleOption { required property var modelData; option: modelData }
+    }
+
+    // then the shared switches its options don't already stand for
+    readonly property var optionKeys: Styles.get(Settings.style).options.map(o => o.key || "")
+
     SettingsField {
+        visible: styleTab.optionKeys.indexOf("barSeparator") === -1
         label: "Separators"
         hint: "Between the bar's modules"
         Choice { key: "barSeparator" }
     }
 
     FinishSwitch {
+        visible: styleTab.optionKeys.indexOf("shadows") === -1
         label: "Shadows"; key: "shadows"
         live: Styles.get(Settings.style).shadow !== "none"
         hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
     }
 
-    FinishSwitch { label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
+    FinishSwitch { visible: styleTab.optionKeys.indexOf("gradient") === -1; label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
 
     FinishSwitch {
+        visible: styleTab.optionKeys.indexOf("heavyLines") === -1
         label: "Heavy lines"; key: "heavyLines"
-        live: Styles.get(Settings.style).lines
-        hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
+        live: Styles.get(Settings.style).lines && Theme.frameStyle !== "ledger"
+        hint: !Styles.get(Settings.style).lines ? "This style has no lines"
+            : Theme.frameStyle === "ledger" ? "Ledger's ink is always 2px" : "Every stroke 2px, windows' borders too"
     }
 
-    FinishSwitch { label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
+    FinishSwitch { visible: styleTab.optionKeys.indexOf("headingUpper") === -1; label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
 
     FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
 
@@ -114,6 +128,7 @@ SettingsTab {
             readonly property int cw: Theme.fs(24)
             readonly property int ch: Theme.fs(16)
             readonly property int r: Math.min(Theme.radius, 5)
+            readonly property color ink: Theme.text
             width: Theme.fs(64)
             height: Theme.fs(34)
 
@@ -155,30 +170,39 @@ SettingsTab {
                         readonly property bool lit: modelData
                         width: ya.cw; height: ya.ch
 
+                        // Ledger's hard shadow
                         Rectangle {
+                            visible: ya.v === "ledger"
+                            x: 2; y: 2; width: parent.width; height: parent.height
+                            color: ya.ink
+                        }
+                        Rectangle {
+                            id: face
                             anchors.fill: parent
-                            visible: ya.v !== "minimal" && ya.v !== "terminal" && ya.v !== "channel"
-                                && !(ya.v === "basic" && !chip.lit) && !(ya.v === "tabbed" && !chip.lit)
-                            radius: ya.v === "capsule" ? height / 2 : ya.v === "retro" ? 0
-                                : ya.v === "tabbed" ? 0 : ya.r
-                            color: ya.v === "glass" ? Qt.rgba(1, 1, 1, chip.lit ? 0.16 : 0.08)
-                                : ya.v === "lined" ? Theme.panel
+                            visible: ["channel", "terminal", "underline", "corners"].indexOf(ya.v) === -1
+                                && !(ya.v === "tabbed" && !chip.lit)
+                            radius: ya.v === "capsule" ? height / 2
+                                : ["bevel", "tabbed", "ledger"].indexOf(ya.v) !== -1 ? 0 : ya.r
+                            color: ya.v === "glass" ? (chip.lit ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Qt.rgba(1, 1, 1, 0.08))
+                                : ya.v === "double" ? (chip.lit ? Theme.overlay : Theme.panel)
                                 : ya.v === "tabbed" ? Theme.panel
-                                : ya.v === "retro" ? Theme.surface
-                                : (ya.v === "flat" || ya.v === "capsule") && chip.lit ? Theme.accent
-                                : Theme.overlay
-                            border.width: ya.v === "lined" || ya.v === "glass" ? 1 : 0
-                            border.color: ya.v === "glass" ? Qt.rgba(1, 1, 1, 0.2) : chip.lit ? Theme.accent : Theme.border
+                                : ya.v === "bevel" ? (chip.lit ? Theme.overlay : Theme.surface)
+                                : ya.v === "ledger" ? (chip.lit ? Theme.accent : Theme.panel)
+                                : chip.lit ? Theme.accent : ya.v === "capsule" ? Theme.overlay : Theme.surface
+                            border.width: ya.v === "double" || ya.v === "glass" ? 1 : ya.v === "ledger" ? 2 : 0
+                            border.color: ya.v === "glass" ? Qt.rgba(1, 1, 1, 0.2)
+                                : ya.v === "ledger" ? ya.ink
+                                : chip.lit ? Theme.accent : Theme.border
 
                             Rectangle {
-                                visible: ya.v === "lined"
+                                visible: ya.v === "double"
                                 anchors.fill: parent; anchors.margins: 2
                                 radius: Math.max(0, parent.radius - 2)
                                 color: "transparent"
-                                border.width: 1; border.color: Theme.overlay
+                                border.width: 1; border.color: chip.lit ? Theme.muted : Theme.surface
                             }
                             Bevel {
-                                visible: ya.v === "retro"
+                                visible: ya.v === "bevel"
                                 anchors.fill: parent
                                 raised: !chip.lit
                                 light: Theme.bevelLight; dark: Theme.bevelDark
@@ -197,19 +221,30 @@ SettingsTab {
                             color: Theme.overlay
                             border.width: 2; border.color: Theme.accent
                         }
+                        // Corners: the marks only
+                        CornerMarks {
+                            visible: ya.v === "corners"
+                            length: 5
+                            thickness: 1
+                            color: chip.lit ? Theme.accent : Theme.muted
+                        }
                         // the icon
                         Rectangle {
+                            visible: ya.v !== "terminal"
                             anchors.centerIn: parent
                             width: Theme.fs(8); height: Theme.fs(5)
                             radius: 1
-                            color: (ya.v === "flat" || ya.v === "capsule") && chip.lit ? Theme.bright : Theme.text
+                            color: chip.lit && ["solid", "capsule", "ledger", "glass"].indexOf(ya.v) !== -1 ? "#ffffff"
+                                : chip.lit && ya.v === "corners" ? Theme.accent : Theme.text
                         }
-                        // Minimal: a rule under each, lit under the open one
+                        // Underline: an accent line under the open one
                         Rectangle {
-                            visible: ya.v === "minimal"
+                            visible: ya.v === "underline" && chip.lit
                             anchors.bottom: parent.bottom
-                            width: parent.width; height: 2
-                            color: chip.lit ? Theme.accent : Theme.border
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: parent.width - 6; height: 2
+                            radius: 1
+                            color: Theme.accent
                         }
                         Text {
                             visible: ya.v === "terminal"

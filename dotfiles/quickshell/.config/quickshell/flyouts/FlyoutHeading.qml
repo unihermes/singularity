@@ -273,7 +273,19 @@ Item {
         anchors.rightMargin: root.hints.length > 0 || chevron.visible ? Theme.spaceL : 0
         anchors.verticalCenter: label.verticalCenter
         height: Theme.borderWidth
-        color: Theme.stroke
+        // Corners' dashed option draws it as dashes instead
+        readonly property bool dashed: Theme.frameCorners && Theme.opt("dash")
+        color: dashed ? "transparent" : Theme.stroke
+        clip: true
+
+        Row {
+            visible: parent.dashed
+            spacing: 3
+            Repeater {
+                model: parent.visible ? Math.ceil(parent.parent.width / 6) : 0
+                Rectangle { width: 3; height: Theme.borderWidth; color: Theme.stroke }
+            }
+        }
     }
 
     Text {
