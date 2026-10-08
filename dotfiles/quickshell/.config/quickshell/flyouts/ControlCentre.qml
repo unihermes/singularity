@@ -110,9 +110,7 @@ FlyoutPanel {
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/screenshot.sh text"])
         else if (act === "colourpick")
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/colour-pick.sh"])
-        // relaunched the way autostart.lua starts it, so the log stays in one place
-        else if (act === "restartshell")
-            Quickshell.execDetached(["sh", "-c", "qs kill; sleep 0.3; exec quickshell > ~/.cache/quickshell.log 2>&1"])
+        else if (act === "restartshell") Session.restartShell()
     }
 
     // a submenu's heading leads with CONTROL CENTRE, the way back

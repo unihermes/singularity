@@ -71,7 +71,7 @@ SettingsTab {
         FlyoutChip {
             anchors.right: parent.right
             text: "Restart shell"
-            onClicked: Fonts.restartShell()
+            onClicked: Session.restartShell()
         }
     }
 

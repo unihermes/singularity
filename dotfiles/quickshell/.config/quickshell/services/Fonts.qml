@@ -6,7 +6,7 @@
 // -- asking it for a family it doesn't know silently draws some fallback
 // face instead. So `available` is what Qt itself knows, not what fc-list
 // says is on disk; a font installed since startup shows up in `pending`
-// until the shell is restarted (restartShell()).
+// until the shell is restarted (Session.restartShell()).
 //
 // A look or saved setting naming a font that isn't available (or isn't on
 // the list at all -- only monospace faces are) resolves to the first one.
@@ -36,13 +36,6 @@ Singleton {
     }
 
     function refresh() { if (!scan.running) scan.running = true }
-
-    // A fresh process, since that's the only way Qt rereads fonts. Detached,
-    // so it outlives this one; the log goes where autostart.lua sends it.
-    function restartShell() {
-        Quickshell.execDetached(["sh", "-c",
-            "qs kill; sleep 0.5; setsid quickshell > \"$HOME/.cache/quickshell.log\" 2>&1 < /dev/null &"])
-    }
 
     Process {
         id: scan

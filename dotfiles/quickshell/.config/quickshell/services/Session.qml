@@ -24,6 +24,14 @@ Singleton {
     function refresh() { hibernateCheck.running = true }
     Component.onCompleted: refresh()
 
+    // A fresh process: the Control Centre's Restart shell, and the only way
+    // Qt rereads fonts (Fonts.qml). Detached, so it outlives this one; the
+    // log goes where autostart.lua sends it.
+    function restartShell() {
+        Quickshell.execDetached(["sh", "-c",
+            "qs kill; sleep 0.5; setsid quickshell > \"$HOME/.cache/quickshell.log\" 2>&1 < /dev/null &"])
+    }
+
     Process {
         id: hibernateCheck
         command: ["busctl", "call", "org.freedesktop.login1", "/org/freedesktop/login1",
