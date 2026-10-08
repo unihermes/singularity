@@ -40,11 +40,12 @@ SettingsPage {
         && TimeWindow.contains(Settings.notifQuietFrom, Settings.notifQuietTo, new Date(0, 0, 0, 0, nowMin))
 
     // [{ app, count, icon }]: every app in the history, most first, then
-    // any silenced app with nothing in it
+    // any silenced app with nothing in it. `app` is the name as sent, "" for
+    // an app that gives none, since that's what silencing is matched on.
     readonly property var apps: {
         var by = {}, order = []
         Notifications.history.forEach(e => {
-            var a = e.appName || "Unknown"
+            var a = e.appName || ""
             if (!by[a]) { by[a] = { app: a, count: 0, icon: e.icon || "" }; order.push(a) }
             by[a].count++
             if (!by[a].icon && e.icon) by[a].icon = e.icon
@@ -53,7 +54,8 @@ SettingsPage {
         Settings.notifSilent.forEach(a => { if (!by[a]) list.push({ app: a, count: 0, icon: "" }) })
         return list
     }
-    property string openApp: ""
+    // the app open for its settings, null for none ("" is a nameless app)
+    property var openApp: null
 
     // A sample popup, where and as they'll appear. Transient, so it isn't
     // kept in the history.
@@ -345,12 +347,12 @@ SettingsPage {
         FlyoutRow {
             leadingImage: blk.modelData.icon
             leadingIcon: blk.modelData.icon === "" ? "󰂚" : ""
-            label: blk.app
+            label: blk.app !== "" ? blk.app : "Unknown"
             highlighted: blk.isOpen
             trailing: (blk.silent ? "Silent    " : "")
                 + (blk.modelData.count > 0 ? blk.modelData.count + " in the history" : "none in the history")
                 + "  " + (blk.isOpen ? "󰅀" : "󰅂")
-            onActivated: page.openApp = blk.isOpen ? "" : blk.app
+            onActivated: page.openApp = blk.isOpen ? null : blk.app
         }
 
         SettingsIndent {
