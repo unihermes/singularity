@@ -91,19 +91,76 @@ SettingsPage {
         return f && f.editable ? f.value : fallback
     }
 
+    // A change to how a display draws (mode, scale, rotation) waits to be
+    // kept: one the display can't show leaves nothing to click, so unless
+    // Keep is pressed it goes back after `revertSecs`.
+    // { name, key, value (the old one), label }, or null
+    property var trial: null
+    property int trialLeft: 0
+    readonly property int revertSecs: 15
+    readonly property var drawKeys: ["mode", "scale", "transform"]
+    readonly property var drawDefaults: ({ mode: "preferred", scale: 1, transform: 0 })
+
+    function keepTrial() {
+        trial = null
+        trialTimer.stop()
+        say("Kept", false)
+    }
+
+    function revertTrial() {
+        var t = trial
+        trial = null
+        trialTimer.stop()
+        var mon = byName(t.name)
+        if (!mon) return
+        writeField(mon, HyprTables.ruleFor(rules, t.name), t.key, t.value, t.label + " put back")
+    }
+
+    Timer {
+        id: trialTimer
+        interval: 1000
+        repeat: true
+        onTriggered: if (--page.trialLeft <= 0) page.revertTrial()
+    }
+
+    // mode, scale and rotation go on trial; anything else is written as is
     function setField(mon, rule, key, value, message) {
+        if (drawKeys.indexOf(key) < 0) { writeField(mon, rule, key, value, message); return }
+        if (trial && trial.name !== mon.name) keepTrial()
+        // a second change during one trial still goes back to before the first
+        var before = trial ? trial.value : fieldValue(rule, key, drawDefaults[key])
+        var label = trial ? trial.label : mon.short + "'s " + (key === "mode" ? "mode" : key === "scale" ? "scale" : "rotation")
+        writeField(mon, rule, key, value, message, ok => {
+            if (!ok) return
+            trial = { name: mon.name, key: key, value: before, label: label }
+            trialLeft = revertSecs
+            trialTimer.restart()
+        })
+    }
+
+    function writeField(mon, rule, key, value, message, then) {
+        patchLua(fieldPatch(mon, rule, key, value), message,
+            key + " in that hl.monitor() rule isn't a plain value, edit it by hand", then)
+    }
+
+    function fieldPatch(mon, rule, key, value) {
         if (!rule || rule.output === "") {
             // no rule of its own: write one for this output, starting from
             // the catch-all's fields, so the change reaches no other display
             var fields = { output: mon.name }
             ;["mode", "position", "scale"].forEach(k => fields[k] = fieldValue(rule, k, k === "scale" ? 1 : k === "mode" ? "preferred" : "auto"))
             fields[key] = value
-            patchLua(src => HyprTables.addMonitor(src, fields), message)
-            return
+            return src => HyprTables.addMonitor(src, fields)
         }
         var index = rule.index
-        patchLua(src => HyprTables.setMonitor(src, index, key, value), message,
-            key + " in that hl.monitor() rule isn't a plain value, edit it by hand")
+        return src => HyprTables.setMonitor(src, index, key, value)
+    }
+
+    // leaving the page mid-trial is no answer, so it goes back then too
+    Component.onDestruction: if (trial) {
+        var mon = byName(trial.name)
+        if (mon) HyprLuaWrite.patchMonitors(fieldPatch(mon, HyprTables.ruleFor(rules, trial.name), trial.key, trial.value),
+            () => "", "", "", () => {})
     }
 
     // Extend gives every display its own area; duplicate points all the
@@ -352,12 +409,35 @@ SettingsPage {
 
     // HyprLuaWrite is shared with the Keybinds editor and the other pages;
     // each result comes back to the page that asked for it
-    function patchLua(transform, message, refusal) {
+    function patchLua(transform, message, refusal, then) {
         HyprLuaWrite.patchMonitors(transform, seed, message, refusal, (ok, msg) => {
             page.say(msg, !ok)
             page.reread()
+            if (then) then(ok)
         })
     }
+
+    // the change on trial, pinned over the rows so it's in reach wherever
+    // the page is scrolled
+    pinned: Item {
+        width: parent ? parent.width : 0
+        height: trialRow.height + Theme.spaceL
+
+        SettingsField {
+            id: trialRow
+            label: "Keep this?"
+            hint: page.trial ? page.trial.label + " goes back in " + page.trialLeft + " s" : ""
+            searchable: false
+
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceS
+                FlyoutChip { text: "Revert"; onClicked: page.revertTrial() }
+                FlyoutChip { text: "Keep"; selected: true; onClicked: page.keepTrial() }
+            }
+        }
+    }
+    pinnedVisible: trial !== null
 
     FileView {
         path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/singularity-lid-docked"

@@ -34,6 +34,7 @@ ALLOW = {
     ("notifications", "Popups"): "a switch under each app",
     ("display", "Status"): "a readout under each display that's off",
     ("display", "Showing"): "a readout under each duplicated display",
+    ("display", "Keep this?"): "only while a display change waits to be kept",
     ("display", "Resolution"): "a dropdown under each display",
     ("display", "Refresh rate"): "a choice under each display",
     ("display", "Scale"): "a choice under each display",
