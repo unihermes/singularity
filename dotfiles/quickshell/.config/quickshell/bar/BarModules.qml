@@ -70,12 +70,22 @@ Item {
         // each mark already sits in a slot 2px wider on either side
         padH: Theme.modulePadH - 2
 
+        // 1..workspaceCount, and any workspace past those while it exists
+        // (opened by hyprctl or a script, as the binds stop at the count)
+        readonly property var ids: {
+            const n = Settings.workspaceCount
+            const extra = Hyprland.workspaces.values.map(w => w.id).filter(id => id > n)
+            return Array.from({ length: n }, (_, i) => i + 1).concat(extra.sort((a, b) => a - b))
+        }
+
         Repeater {
-            model: Settings.workspaceCount
+            // a ScriptModel, so a workspace appearing doesn't rebuild the
+            // others mid-animation
+            model: ScriptModel { values: wsFrame.ids }
 
             Item {
-                required property int index
-                readonly property int wsId: index + 1
+                required property int modelData
+                readonly property int wsId: modelData
                 readonly property bool current: Hyprland.focusedWorkspace
                     ? Hyprland.focusedWorkspace.id === wsId
                     : false
