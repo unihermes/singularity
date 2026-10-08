@@ -19,6 +19,7 @@
 // left, so the read happens while someone is looking at it and stops when
 // they leave.
 
+import Quickshell
 import Quickshell.Io
 import QtQuick
 import "../services"
@@ -283,8 +284,10 @@ SettingsPage {
         }
     }
 
+    // Matched by SSID: each list refresh brings new objects, and rebuilding
+    // the rows would drop a passphrase being typed into one
     Repeater {
-        model: page.listening ? page.savedNear : []
+        model: ScriptModel { values: page.listening ? page.savedNear : []; objectProp: "ssid" }
         NetworkRow {}
     }
 
@@ -305,9 +308,12 @@ SettingsPage {
     }
 
     Repeater {
-        model: !page.listening ? []
-            : page.showAll ? page.others
-            : page.others.slice(0, page.shortList)
+        model: ScriptModel {
+            objectProp: "ssid"
+            values: !page.listening ? []
+                : page.showAll ? page.others
+                : page.others.slice(0, page.shortList)
+        }
         NetworkRow {}
     }
 
