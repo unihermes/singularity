@@ -148,8 +148,8 @@ Item {
         // text scrolled out of view past either end stays inside the frame
         clip: true
         color: Theme.textStrong
-        selectionColor: Theme.muted
-        selectedTextColor: Theme.textStrong
+        selectionColor: Theme.selectedStroke
+        selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
 
         font.family: Theme.fontText
         font.weight: Theme.weightBody

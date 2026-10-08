@@ -157,7 +157,7 @@ FloatingWindow {
                         width: Math.max(Theme.fit(60), contentWidth + 2)
                         color: Theme.textStrong
                         selectionColor: Theme.selectedStroke
-                        selectedTextColor: Theme.textStrong
+                        selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
                         font.family: Theme.fontText
                         font.pixelSize: Theme.fontSmall
                         font.bold: true
@@ -246,7 +246,7 @@ FloatingWindow {
                 persistentSelection: true
                 color: Theme.text
                 selectionColor: Theme.selectedStroke
-                selectedTextColor: Theme.textStrong
+                selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
                 font.family: Theme.fontText
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
