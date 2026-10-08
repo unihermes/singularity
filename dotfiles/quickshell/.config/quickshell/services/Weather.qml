@@ -32,10 +32,19 @@ Singleton {
     property real windKmph: 0
     property string windDir: ""
     readonly property string wind: ready ? (metric ? windKmph + " km/h " : windMph + " mph ") + windDir : ""
-    property bool isNight: false
     // today's sunrise and sunset, minutes after midnight; -1 until known
     property int sunriseMin: -1
     property int sunsetMin: -1
+    // against the clock, not the fetch, so the icon turns at sunset
+    // rather than at the next refresh after it
+    readonly property int nowMin: clock.hours * 60 + clock.minutes
+    readonly property bool isNight: sunriseMin >= 0 && sunsetMin >= 0
+        && (nowMin < sunriseMin || nowMin >= sunsetMin)
+
+    SystemClock {
+        id: clock
+        precision: SystemClock.Minutes
+    }
     // [{ date, hiF, loF, hiC, loC, code, condition }]
     property var forecast: []
     property var updated: null
@@ -85,11 +94,8 @@ Singleton {
         root.windDir = c.winddir16Point
 
         var astro = d.weather[0].astronomy[0]
-        var now = new Date(), mins = now.getHours() * 60 + now.getMinutes()
-        var rise = root.minutesOf(astro.sunrise), set = root.minutesOf(astro.sunset)
-        root.isNight = rise >= 0 && set >= 0 && (mins < rise || mins >= set)
-        root.sunriseMin = rise
-        root.sunsetMin = set
+        root.sunriseMin = root.minutesOf(astro.sunrise)
+        root.sunsetMin = root.minutesOf(astro.sunset)
 
         var f = []
         for (var i = 0; i < d.weather.length; i++) {
