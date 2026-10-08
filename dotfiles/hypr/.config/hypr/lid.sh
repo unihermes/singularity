@@ -38,8 +38,9 @@
 #   user timer's clock stops while asleep, but suspend-then-hibernate sets an
 #   RTC alarm that wakes the machine and hibernates it. Its delay is fixed in
 #   /etc/systemd/sleep.conf.d/singularity.conf (install.sh writes it) as
-#   hibernate_after - close_delay, so the usual close -> suspend -> hibernate
-#   lands at an hour. The close time is stamped in wall-clock time, which
+#   hibernate_after less the default close_delay, so the usual close ->
+#   suspend -> hibernate lands at an hour; a longer close_delay set in
+#   Settings moves it out by the difference. The close time is stamped in wall-clock time, which
 #   does run during sleep, so a stray wake an hour or more after the lid
 #   shut hibernates straight away instead of restarting that delay.
 #   Without hibernation set up (link.sh only), it's plain suspend as before.

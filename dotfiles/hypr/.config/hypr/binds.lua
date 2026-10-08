@@ -174,8 +174,9 @@ hl.bind("ALT + Print",   hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh text"))  
 hl.bind(mod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh text"))  -- Copy the text in an area
 
 -- --- Lid ---
--- Close turns the screen off and suspends after 5 min if it's still shut;
--- open turns it back on and cancels that. logind's own lid handling is
+-- Close turns the screen off and, after the delay set in Settings > Lock
+-- Screen, suspends if it's still shut; open turns it back on and cancels
+-- that. logind's own lid handling is
 -- inhibited in autostart.lua so this is the only thing acting on the lid. All of
 -- it -- the debounce for this laptop's bouncing lid switch, the suspend
 -- timer, re-suspending after a wake with the lid shut, docked mode -- lives
@@ -183,7 +184,7 @@ hl.bind(mod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh tex
 -- backstop: any key or mouse movement wakes a wrongly-blanked screen. lid.sh
 -- turns both off while the lid is shut, or the keyboard and touchpad the
 -- closing lid presses on would wake the panel it just blanked.
-hl.bind("switch:on:Lid Switch",  hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid closed: screen off, suspend after 5 min
+hl.bind("switch:on:Lid Switch",  hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid closed: screen off, suspend later if still shut
 hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid opened: screen on
 
 -- --- Function Keys ---
