@@ -243,6 +243,9 @@ SettingsPage {
     // so a quick run of clicks still lands in order.
     function save(next, message) {
         var base = JSON.stringify(rules)
+        // in parseRules' shape, key order included, so the next save's
+        // comparison with the file holds
+        next = next.map(normalise)
         rules = next
         AtomicFileWrite.write({
             path: rulesPath,
