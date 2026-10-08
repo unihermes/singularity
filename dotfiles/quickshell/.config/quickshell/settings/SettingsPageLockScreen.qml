@@ -112,6 +112,13 @@ SettingsPage {
     }
 
     function writeLock(block, values, message) {
+        // shown at once, so a second step before the write lands builds on
+        // this one; the re-read after it puts the file's values back
+        if (block === "background") {
+            var next = Object.assign({}, background)
+            for (var k in values) next[k] = values[k] === null ? undefined : String(values[k])
+            background = next
+        }
         AtomicFileWrite.write({
             path: lockPath,
             transform: text => text === "" ? null : setInBlock(text, block, values),
