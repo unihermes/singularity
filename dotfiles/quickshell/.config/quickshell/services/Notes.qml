@@ -87,12 +87,17 @@ Singleton {
         onTriggered: root.save()
     }
 
+    // a reload or restart inside the half second would lose the last edits
+    Component.onDestruction: flush()
+
     FileView {
         id: view
         path: Quickshell.env("HOME") + "/.local/state/singularity/notes.json"
         preload: true
         blockLoading: true
         atomicWrites: true
+        // written before returning, so the save on the way out lands
+        blockWrites: true
         // no file until the first note is written
         printErrors: false
 
