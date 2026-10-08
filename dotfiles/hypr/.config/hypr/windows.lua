@@ -734,18 +734,6 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.fullscreen", keepNewWindowTiled)
 
--- LinOffice (Office in a Windows VM over FreeRDP RemoteApp): each app also
--- maps an untitled ~21x21 helper window at the screen's corner, with the
--- app's class. It showed as a second, empty Word/Excel window in the strip
--- and ALT+Tab, so it's parked on a special workspace that's never shown.
--- Matched on size too: Office's menus and dropdowns are untitled as well.
-hl.on("window.open", function(win)
-    if not win or not win.xwayland or win.title ~= "" then return end
-    if not (win.class or ""):match("^Microsoft ") then return end
-    if win.size.x > 32 or win.size.y > 32 then return end
-    hl.dispatch(hl.dsp.window.move({ workspace = "special:rdp-helpers", window = "address:" .. win.address, follow = false }))
-end)
-
 -- SUPER+SHIFT+n and dragging between workspaces: the window takes on the
 -- destination's layout. This fires before workspace.active does, so the
 -- rules may still be set for the workspace it left -- which is fine, since
