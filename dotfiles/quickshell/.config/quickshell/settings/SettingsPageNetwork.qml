@@ -74,7 +74,7 @@ SettingsPage {
         var d = new Date(iso)
         var now = new Date()
         return d.toDateString() === now.toDateString()
-            ? "Today, " + Qt.formatTime(d, "hh:mm")
+            ? "Today, " + Qt.formatTime(d, Theme.timeFormat)
             : Qt.formatDate(d, d.getFullYear() === now.getFullYear() ? "d MMM" : "d MMM yyyy")
     }
 
@@ -141,8 +141,9 @@ SettingsPage {
             checked: Network.powered
             enabled: Network.device !== ""
             onToggled: {
+                // setPowered flips `powered` at once, so it reads the new state
                 Network.setPowered(!Network.powered)
-                page.say(Network.powered ? "Radio off" : "Radio on", false)
+                page.say(Network.powered ? "Radio on" : "Radio off", false)
             }
         }
     }
@@ -325,7 +326,7 @@ SettingsPage {
 
     FlyoutRow {
         visible: page.listening && page.others.length > page.shortList
-        label: page.showAll ? "Show fewer" : "Show all " + Network.networks.length
+        label: page.showAll ? "Show fewer" : "Show all " + page.others.length
         trailing: page.showAll ? "󰅀" : (page.others.length - page.shortList) + " more  󰅂"
         onActivated: page.showAll = !page.showAll
     }
