@@ -294,18 +294,12 @@ SystemPage {
         onActivated: Updates.refresh()
     }
     // sound stops for a moment, so it asks first
-    property bool audioArmed: false
-    Timer { id: audioDisarm; interval: 3000; onTriggered: page.audioArmed = false }
     FlyoutRow {
         leadingIcon: "󰕾"
-        label: page.audioArmed ? "Restart audio?" : "Restart audio"
-        alert: page.audioArmed
+        label: "Restart audio"
+        confirmText: "Restart audio?"
         note: "PipeWire and WirePlumber; sound stops for a second"
-        onActivated: {
-            if (!page.audioArmed) { page.audioArmed = true; audioDisarm.restart(); return }
-            page.audioArmed = false
-            audioRestartProc.running = true
-        }
+        onActivated: audioRestartProc.running = true
     }
     FlyoutRow {
         leadingIcon: "󰑐"

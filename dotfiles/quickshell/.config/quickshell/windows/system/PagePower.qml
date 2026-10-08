@@ -234,18 +234,12 @@ SystemPage {
         onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
     }
     // sleeping cuts whatever's running off, so it asks first
-    property bool suspendArmed: false
-    Timer { id: suspendDisarm; interval: 3000; onTriggered: page.suspendArmed = false }
     FlyoutRow {
         leadingIcon: "󰤄"
-        label: page.suspendArmed ? "Suspend now?" : "Suspend"
-        alert: page.suspendArmed
+        label: "Suspend"
+        confirmText: "Suspend now?"
         note: "Sleep until a key or the lid wakes it"
-        onActivated: {
-            if (!page.suspendArmed) { page.suspendArmed = true; suspendDisarm.restart(); return }
-            page.suspendArmed = false
-            Quickshell.execDetached(["systemctl", "suspend"])
-        }
+        onActivated: Quickshell.execDetached(["systemctl", "suspend"])
     }
     FlyoutRow {
         leadingIcon: "󰄧"
