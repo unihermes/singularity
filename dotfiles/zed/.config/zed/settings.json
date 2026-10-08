@@ -1,0 +1,53 @@
+// Singularity - Zed
+// ~/.config/zed/settings.json
+//
+// Laid out like VS Code: files, git and outline on the left, agent chats on
+// the right, the terminal along the bottom. The colours are the shell's
+// look: AppearanceSync.qml writes themes/singularity.json, and Zed recolours
+// when it changes. Zed writes settings changed in its UI back into this file.
+{
+  "base_keymap": "VSCode",
+  "theme": "Singularity",
+  "ui_font_size": 16,
+  "buffer_font_family": "ProggyVector",
+  "buffer_font_size": 15,
+  "minimap": {
+    "show": "always"
+  },
+  "title_bar": {
+    "button_layout": "platform_default",
+    "show_branch_status_icon": true
+  },
+  "project_panel": {
+    "button": true,
+    "dock": "left"
+  },
+  "git_panel": {
+    "dock": "left"
+  },
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "agent": {
+    "dock": "right",
+    "threads_sidebar": {
+      "position": "right"
+    }
+  },
+  "terminal": {
+    "dock": "bottom"
+  },
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry"
+    }
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false
+  }
+}

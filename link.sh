@@ -19,6 +19,9 @@ mkdir -p "$HOME/.config"
 # read. Without this the wireplumber/bluez ordering drop-in is silently
 # ignored on a fresh machine.
 mkdir -p "$HOME/.config/systemd/user/wireplumber.service.d"
+# The same for Zed: only settings.json is ours. A linked directory would put
+# the generated theme (themes/singularity.json) and Zed's own files in the repo.
+mkdir -p "$HOME/.config/zed/themes"
 
 # Enumerate the packages explicitly rather than passing a `*/` glob. Two traps
 # there: stow collects package names during option parsing, so a `--` before

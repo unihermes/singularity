@@ -13,6 +13,8 @@ lazygit
 nodejs
 npm
 alacritty
+# the editor with agent chats; dotfiles/zed lays it out like VS Code
+zed
 stow
 git
 openssh
