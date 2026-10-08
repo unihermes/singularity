@@ -47,6 +47,9 @@ Singleton {
 
     property var queue: []
     property var current: null
+    // the new text, handed to the script on stdin once it starts: as an
+    // argument it hit Linux's 128 KB limit on any one argument
+    property string pendingText: ""
 
     function write(job) {
         queue = queue.concat([job])
@@ -84,8 +87,10 @@ Singleton {
             if (out === null || out === undefined) { report(job, "refused", job.refusal || ""); continue }
             if (out === src) { report(job, "unchanged", ""); continue }
             current = job
-            proc.command = ["sh", "-c", script, "sh", job.path, out,
+            pendingText = out
+            proc.command = ["sh", "-c", script, "sh", job.path,
                 job.check || "", job.backup || "", job.after || ""]
+            proc.stdinEnabled = true
             proc.running = true
             return
         }
@@ -102,8 +107,8 @@ Singleton {
     // keeps the file's mode, which a fresh temp file would otherwise reset.
     readonly property string script: `
         exec 2>&1
-        t=$(readlink -m -- "$1") && mkdir -p -- "\${t%/*}" && printf %s "$2" > "$t.new" || { echo write; exit; }
-        case $3 in
+        t=$(readlink -m -- "$1") && mkdir -p -- "\${t%/*}" && cat > "$t.new" || { echo write; exit; }
+        case $2 in
             bash) out=$(bash -n "$t.new" 2>&1) || { echo syntax; printf "%s\\n" "$out"; rm -f -- "$t.new"; exit; } ;;
             lua)  if command -v luac >/dev/null 2>&1; then
                       out=$(luac -p "$t.new" 2>&1) || { echo syntax; printf "%s\\n" "$out"; rm -f -- "$t.new"; exit; }
@@ -111,17 +116,23 @@ Singleton {
         esac
         if [ -e "$t" ]; then
             chmod --reference="$t" -- "$t.new" 2>/dev/null
-            if [ -n "$4" ]; then
-                { mkdir -p -- "\${4%/*}" && cp -- "$t" "$4"; } || { rm -f -- "$t.new"; echo write; exit; }
+            if [ -n "$3" ]; then
+                { mkdir -p -- "\${3%/*}" && cp -- "$t" "$3"; } || { rm -f -- "$t.new"; echo write; exit; }
             fi
         fi
         mv -f -- "$t.new" "$t" || { rm -f -- "$t.new"; echo write; exit; }
         echo ok
-        [ -z "$5" ] || eval "$5"`
+        [ -z "$4" ] || eval "$4"`
 
     Process {
         id: proc
         command: ["true"]
+        // written whole, then stdin closed so cat sees the end
+        onStarted: {
+            write(root.pendingText)
+            root.pendingText = ""
+            stdinEnabled = false
+        }
         onRunningChanged: if (!running) root.next()
         stdout: StdioCollector {
             onStreamFinished: {
