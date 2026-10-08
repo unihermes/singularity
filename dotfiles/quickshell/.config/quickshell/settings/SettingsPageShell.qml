@@ -69,10 +69,10 @@ SettingsPage {
 
     // Set key in [table], replacing its line, or adding it under the table
     // header (and the header at the end of the file if there isn't one).
-    function setToml(table, key, value, message) {
-        alacrittyFile.reload()
-        alacrittyFile.waitForJob()
-        var lines = alacrittyFile.text().split("\n")
+    // Applied to the file as it is when the write runs, so steps queue
+    // rather than each being built on a read the one before replaces.
+    function tomlSet(text, table, key, value) {
+        var lines = text.split("\n")
         var cur = "", headerAt = -1, lastInTable = -1
         for (var i = 0; i < lines.length; i++) {
             var l = lines[i].trim()
@@ -83,13 +83,28 @@ SettingsPage {
             var km = new RegExp("^(\\s*" + key + "\\s*=\\s*)([^#]*?)(\\s*(#.*)?)$").exec(lines[i])
             if (km) {
                 lines[i] = km[1] + tomlLiteral(value) + km[3]
-                return writeFile(alacrittyPath, lines.join("\n"), message, false)
+                return lines.join("\n")
             }
         }
         var entry = key + " = " + tomlLiteral(value)
         if (headerAt < 0) lines.push("", "[" + table + "]", entry)
         else lines.splice(lastInTable + 1, 0, entry)
-        writeFile(alacrittyPath, lines.join("\n"), message, false)
+        return lines.join("\n")
+    }
+
+    function setToml(table, key, value, message) {
+        var t = Object.assign({}, toml)
+        t[table + "." + key] = tomlLiteral(value)
+        toml = t
+        AtomicFileWrite.write({
+            path: alacrittyPath,
+            transform: text => tomlSet(text, table, key, value),
+            done: (status, detail) => {
+                if (status === "ok" || status === "unchanged") page.say(message, false)
+                else page.say("Couldn't write the file", true)
+                page.reread()
+            }
+        })
     }
 
     FileView {
@@ -108,7 +123,11 @@ SettingsPage {
         var out = []
         text.split("\n").forEach((line, i) => {
             var m = /^\s*alias\s+([A-Za-z0-9_.:-]+)=(?:'([^']*)'|"((?:[^"\\]|\\.)*)"|(\S+))\s*$/.exec(line)
-            if (m) out.push({ name: m[1], value: m[2] !== undefined ? m[2] : m[3] !== undefined ? m[3] : m[4], line: i })
+            // the command as the shell would see it, quotes and escapes
+            // undone, since a save writes it back single-quoted
+            if (m) out.push({ name: m[1], line: i, value: m[2] !== undefined ? m[2]
+                : m[3] !== undefined ? m[3].replace(/\\(["\\$`])/g, "$1")
+                : m[4].replace(/\\(.)/g, "$1") })
         })
         return out
     }
