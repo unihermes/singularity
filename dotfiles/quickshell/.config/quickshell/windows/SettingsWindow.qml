@@ -270,7 +270,7 @@ FloatingWindow {
 
                 // keep the arrow keys' row on screen
                 function reveal(i) {
-                    var row = listCol.children[i]
+                    var row = rowRepeater.itemAt(i)
                     if (!row) return
                     if (row.y < contentY) contentY = row.y
                     else if (row.y + row.height > contentY + height) contentY = row.y + row.height - height
@@ -282,6 +282,7 @@ FloatingWindow {
                     spacing: 0
 
                     Repeater {
+                        id: rowRepeater
                         model: root.rows
 
                         SettingsSectionRow {
