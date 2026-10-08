@@ -24,6 +24,8 @@ bibata-cursor-theme-bin
 # apps
 spotify
 claude-desktop
+# reference manager; its add-in cites from LibreOffice
+zotero-bin
 
 # Discord client mod. Read the PKGBUILD before trusting any Discord mod, same
 # as the zen-browser warning above -- these packages run arbitrary code
