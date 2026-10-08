@@ -36,6 +36,9 @@ SettingsPage {
     // which is the opposite of how it reads on a device and easy to get
     // backwards. media.class says exactly which it is.
     readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
+    // The lists below are ScriptModels: these arrays are made afresh when any
+    // node comes or goes (a notification's sound), and a bare array would
+    // rebuild every row, cutting off a volume drag or an open dropdown.
     readonly property var playing: streams.filter(n => page.mediaClass(n) === "Stream/Output/Audio")
     readonly property var recording: streams.filter(n => page.mediaClass(n) === "Stream/Input/Audio")
 
@@ -277,7 +280,7 @@ SettingsPage {
     FlyoutHeading { text: "OUTPUT" }
 
     Repeater {
-        model: page.sinksShown
+        model: ScriptModel { values: page.sinksShown }
         DeviceRow {
             current: Pipewire.defaultAudioSink
             onChosen: node => {
@@ -317,7 +320,7 @@ SettingsPage {
     FlyoutHeading { text: "INPUT" }
 
     Repeater {
-        model: page.sources
+        model: ScriptModel { values: page.sources }
         DeviceRow {
             current: Pipewire.defaultAudioSource
             onChosen: node => {
@@ -411,7 +414,7 @@ SettingsPage {
     FlyoutHeading { text: "PLAYING" + (page.playing.length > 0 ? "  " + page.playing.length : "") }
 
     Repeater {
-        model: page.playing
+        model: ScriptModel { values: page.playing }
         AppBlock {}
     }
 
@@ -428,7 +431,7 @@ SettingsPage {
     }
 
     Repeater {
-        model: page.recording
+        model: ScriptModel { values: page.recording }
         AppBlock { playback: false }
     }
 }
