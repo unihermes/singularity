@@ -90,17 +90,16 @@ FlyoutPanel {
         FlyoutRow {
             required property var modelData
             label: modelData.ssid
-            // "key" marks the ones that will ask for a passphrase
-            // rather than connecting straight away
             readonly property bool connecting: Network.connecting === modelData.ssid
             busy: connecting
-            trailing: {
-                if (connecting) return "connecting"
-                if (Network.failedSsid === modelData.ssid) return "failed"
-                if (modelData.connected) return ""
-                if (!modelData.known && modelData.security !== "open") return "key"
-                return "•".repeat(Math.max(1, modelData.bars))
-            }
+            trailing: connecting ? "connecting"
+                : Network.failedSsid === modelData.ssid ? "failed" : ""
+            // the lock marks the ones that will ask for a passphrase rather
+            // than connecting straight away
+            trailingIcons: [
+                !modelData.known && modelData.security !== "open" ? "󰌾" : "",
+                Network.strengthGlyphs[Math.max(1, modelData.bars) - 1]
+            ]
             highlighted: modelData.connected
             // only a saved network has anything to forget
             actionIcon: modelData.known ? "󰆴" : ""

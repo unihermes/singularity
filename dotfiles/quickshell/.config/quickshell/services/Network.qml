@@ -44,6 +44,9 @@ Singleton {
     signal connectFailed(string ssid, string reason)
     readonly property bool scanning: scanProc.running
 
+    // a network's strength by bars (1..4), as the flyout and Settings draw it
+    readonly property var strengthGlyphs: ["󰤟", "󰤢", "󰤥", "󰤨"]
+
     function setPowered(on) {
         if (device === "") return
         powered = on    // optimistic; powerProc settles it

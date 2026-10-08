@@ -59,7 +59,6 @@ SettingsPage {
     readonly property var savedNear: Network.networks.filter(n => n.known && !n.connected)
     readonly property var others: Network.networks.filter(n => !n.known && !n.connected)
 
-    readonly property var strengthGlyphs: ["󰤟", "󰤢", "󰤥", "󰤨"]
     function barsOf(dbm) { return dbm >= -60 ? 4 : dbm >= -67 ? 3 : dbm >= -75 ? 2 : 1 }
     function strengthWord(bars) { return ["", "Weak", "Fair", "Good", "Strong"][bars] }
     function securityWord(type) {
@@ -118,7 +117,7 @@ SettingsPage {
 
     // the joined network: its strength, name and kind, and the radio switch
     HeadCard {
-        glyph: page.online && page.joinedBars > 0 ? page.strengthGlyphs[page.joinedBars - 1]
+        glyph: page.online && page.joinedBars > 0 ? Network.strengthGlyphs[page.joinedBars - 1]
             : page.listening ? "󰤮" : "󰤭"
         glyphColor: page.online ? Theme.textStrong : Theme.muted
         title: Network.device === "" ? "No wireless device"
@@ -164,7 +163,7 @@ SettingsPage {
             spacing: Theme.spaceM
 
             Text {
-                text: page.strengthGlyphs[page.barsOf(page.linkDbm) - 1]
+                text: Network.strengthGlyphs[page.barsOf(page.linkDbm) - 1]
                 color: Theme.textStrong
                 font.family: Theme.fontIcon
                 font.pixelSize: Theme.fontBody
@@ -238,7 +237,7 @@ SettingsPage {
                 : Network.failedSsid === netRow.modelData.ssid ? "failed" : ""
             trailingIcons: [
                 !netRow.modelData.known && netRow.modelData.security !== "open" ? "󰌾" : "",
-                page.strengthGlyphs[Math.max(1, netRow.modelData.bars) - 1]
+                Network.strengthGlyphs[Math.max(1, netRow.modelData.bars) - 1]
             ]
             onActivated: page.joinOrPrompt(netRow.modelData)
         }
