@@ -58,7 +58,8 @@ FlyoutPanel {
     // ---- main page ----
     FlyoutRow {
         visible: !winMenu.movePage
-        label: "󰖯  Focus"
+        leadingIcon: "󰖯"
+        label: "Focus"
         onActivated: {
             Hyprland.dispatch("hl.dsp.focus({window=\"" + winMenu.target + "\"})")
             winMenu.win("bring_to_top")
@@ -66,18 +67,21 @@ FlyoutPanel {
     }
     FlyoutRow {
         visible: !winMenu.movePage
-        label: winMenu.ipc.floating ? "󰕰  Tile" : "󰖲  Float"
+        leadingIcon: winMenu.ipc.floating ? "󰕰" : "󰖲"
+        label: winMenu.ipc.floating ? "Tile" : "Float"
         onActivated: winMenu.win("float", "action=\"toggle\"")
     }
     FlyoutRow {
         visible: !winMenu.movePage
-        label: "󰊓  Fullscreen"
+        leadingIcon: "󰊓"
+        label: "Fullscreen"
         highlighted: (winMenu.ipc.fullscreen || 0) > 0
         onActivated: winMenu.win("fullscreen")
     }
     FlyoutRow {
         visible: !winMenu.movePage
-        label: "󰐃  Pin to all workspaces"
+        leadingIcon: "󰐃"
+        label: "Pin to all workspaces"
         highlighted: !!winMenu.ipc.pinned
         // Hyprland only pins floating windows
         enabled: !!winMenu.ipc.floating
@@ -85,14 +89,16 @@ FlyoutPanel {
     }
     FlyoutRow {
         visible: !winMenu.movePage
-        label: "󰍹  Move to workspace"
+        leadingIcon: "󰍹"
+        label: "Move to workspace"
         trailing: "󰅂"
         onActivated: winMenu.movePage = true
     }
     FlyoutDivider { visible: !winMenu.movePage }
     FlyoutRow {
         visible: !winMenu.movePage
-        label: "󰅖  Close"
+        leadingIcon: "󰅖"
+        label: "Close"
         // a second, harsher action for a window that ignores the polite one
         actionIcon: "󰚌"
         actionHint: "Force kill"

@@ -44,7 +44,8 @@ FlyoutPanel {
     FlyoutRow {
         visible: Settings.trayDrawer && trayMenu.stack.length === 0 && !!trayMenu.item
         readonly property bool pinned: !!trayMenu.item && Settings.trayPinned.indexOf(trayMenu.item.id) !== -1
-        label: pinned ? "󰐄  Unpin from the bar" : "󰐃  Pin to the bar"
+        leadingIcon: pinned ? "󰐄" : "󰐃"
+        label: pinned ? "Unpin from the bar" : "Pin to the bar"
         onActivated: {
             Settings.setTrayPinned(trayMenu.item.id, !pinned)
             scope.openFlyout = ""
