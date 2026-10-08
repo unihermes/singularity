@@ -12,6 +12,8 @@
 #   - the desktop portal refusing a second app ID (Qt, every launch)
 #   - a media player's property failing to update as the player goes away
 #     (quickshell's MPRIS polling racing the player's exit)
+#   - Qt's Wayland text input disabling a surface after focus has moved on
+#     ("Trying to disable ... but ... is focused", on any field losing focus)
 #
 # --dismiss marks every line there is now as read: later runs skip them
 # until the shell starts a new log (each run has its own id, in the
@@ -40,6 +42,7 @@ awk -v skip="${mline:-0}" '
 	plain ~ /INFO: (Reloading configuration|Launching config)/ { n = 0; next }
 	plain ~ /(ERROR|WARN)/ {
 		if (plain ~ /Failed to register with host portal/) next
+		if (plain ~ /qt\.qpa\.wayland\.textinput/) next
 		if (plain ~ /Error updating property org\.mpris\.MediaPlayer2/) next
 		if (plain ~ /org\.mpris\.MediaPlayer2.*Position/) next
 		if (plain ~ /quickshell\.dbus\.properties: QDBusError\(.*ServiceUnknown/) next
