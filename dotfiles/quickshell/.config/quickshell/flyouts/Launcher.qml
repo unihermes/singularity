@@ -110,6 +110,7 @@ OverlayWindow {
         list.currentIndex = 0
         grid.currentIndex = 0
         if (clipMode) Clipboard.refresh()
+        if (fileMode) Files.refreshRecent()
         Files.clear()
         Qt.callLater(search.forceFocus)
     }

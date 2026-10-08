@@ -39,8 +39,11 @@ Singleton {
 
     // [{ name, path, dir, isDir }]
     property var results: []
-    // the same shape, from recently-used.xbel, newest first
+    // the same shape, from recently-used.xbel, newest first: only the ones
+    // still on disk, as the list keeps a file after it's deleted
     property var recent: []
+    // every file entry in the .xbel, before that check
+    property var bookmarked: []
     property bool searching: false
     property string query: ""
     readonly property bool available: true
@@ -144,7 +147,30 @@ Singleton {
                 out.push(e2)
             }
             out.sort(function (a, b) { return a.modified < b.modified ? 1 : -1 })
-            root.recent = out.slice(0, root.maxResults)
+            root.bookmarked = out
+            root.refreshRecent()
+        }
+    }
+
+    // Whether each is still there, newest first, until there are enough.
+    // Also when the launcher opens on files, for a deletion since the .xbel
+    // last changed.
+    function refreshRecent() {
+        existing.running = false
+        existing.command = ["sh", "-c",
+            "n=0; for p; do [ -e \"$p\" ] || continue; printf '%s\\0' \"$p\"; n=$((n+1)); [ $n -ge " + root.maxResults + " ] && break; done",
+            "sh"].concat(root.bookmarked.map(e => e.path))
+        existing.running = true
+    }
+
+    Process {
+        id: existing
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var there = ({})
+                text.split("\0").forEach(p => there[p] = true)
+                root.recent = root.bookmarked.filter(e => there[e.path]).slice(0, root.maxResults)
+            }
         }
     }
 
