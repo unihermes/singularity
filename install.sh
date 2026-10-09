@@ -482,6 +482,34 @@ else
   edit_cmdline "" "quiet loglevel=3 rd.udev.log_level=3 systemd.show_status=false"
 fi
 
+# --- boot splash and menu ------------------------------------------------
+# archinstall bakes Arch's logo into the unified kernel image (--splash in
+# the mkinitcpio preset), and systemd-stub paints it over the firmware's own
+# logo. Without it the firmware logo stays up until the greeter.
+for preset in /etc/mkinitcpio.d/*.preset; do
+  grep -Eqs '^[^#]*--splash' "$preset" || continue
+  log "removing the Arch splash from ${preset##*/}"
+  [[ -f $preset.singularity.bak ]] || sudo cp "$preset" "$preset.singularity.bak"
+  sudo sed -i -E '/^[^#]/ s/ ?--splash[= ][^ "'\'']*//' "$preset"
+  rebuild_initramfs=1
+done
+
+# systemd-boot's menu stays hidden and the default entry boots straight away;
+# hold Space (or any key) as the firmware hands over to bring the menu up.
+# A timeout set with `bootctl set-timeout` lives in an EFI variable and beats
+# loader.conf, so that goes too.
+esp=$(sudo bootctl -p 2>/dev/null || true)
+loaderconf=$esp/loader/loader.conf
+if [[ -n $esp ]] && sudo test -f "$loaderconf" && ! sudo grep -Eqx 'timeout[[:space:]]+0' "$loaderconf"; then
+  log "hiding the boot menu"
+  sudo test -f "$loaderconf.singularity.bak" || sudo cp "$loaderconf" "$loaderconf.singularity.bak"
+  sudo sed -i -E '/^[[:space:]]*timeout([[:space:]]|$)/d' "$loaderconf"
+  echo 'timeout 0' | sudo tee -a "$loaderconf" >/dev/null
+fi
+if [[ -e /sys/firmware/efi/efivars/LoaderConfigTimeout-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f ]]; then
+  sudo bootctl set-timeout "" || true
+fi
+
 # The IPU6 webcam's sensor never satisfies its firmware dependency (missing
 # fwnode graph endpoint), so the kernel spends its default ~10s deferred-probe
 # window waiting on it every boot before giving up. Telling it to give up in

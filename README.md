@@ -99,9 +99,10 @@ finishes and pick **Hyprland** in the greeter.
 5. Rebuilds font and icon caches, sets the default apps, and sets
    LibreOffice up like Word (ribbon, Office formats, a Word-like template)
 6. Quiets the kernel command line (systemd-boot, a unified kernel image or
-   GRUB), stops iwd blocking the greeter and masks unused TPM setup. On a
-   laptop it also sets up a hibernation swapfile and applies the laptop's
-   boot fixes: vfat in the initramfs, panel self refresh and the webcam stack
+   GRUB), drops the Arch splash from the kernel image, hides the
+   systemd-boot menu, stops iwd blocking the greeter and masks unused TPM
+   setup. On a laptop it also sets up a hibernation swapfile and applies the
+   laptop's boot fixes: vfat in the initramfs, panel self refresh and the webcam stack
    switched off. On the desktop it loads the NVIDIA driver from the
    initramfs and lets the motherboard fan driver (`it87`) load. The
    initramfs is rebuilt once, at the end
@@ -453,6 +454,10 @@ error; after a Quickshell update it's usually a renamed import.
 
 **Watching boot.** `BOOT_VERBOSE=1 ./install.sh laptop` turns systemd's `[ OK ]`
 lines back on; rerun without it to go quiet again.
+
+**Getting to the boot menu.** It's hidden; hold `Space` while the firmware
+logo is up to bring it in. `timeout` in `/boot/loader/loader.conf` (backed
+up to `loader.conf.singularity.bak`) shows it every boot again.
 
 **Wrong font or icon names.** Nerd Font and icon theme names vary; check the
 real strings with `fc-list : family | grep -i ubuntu`, `fc-match monospace`
