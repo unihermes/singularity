@@ -114,6 +114,7 @@ Singleton {
     readonly property alias overviewBackdrop: adapter.overviewBackdrop
     readonly property alias overviewLayout: adapter.overviewLayout
     readonly property alias altTabStyle: adapter.altTabStyle
+    readonly property alias altTabScope: adapter.altTabScope
     readonly property alias lockNotifs:  adapter.lockNotifs
     readonly property alias lockMedia:   adapter.lockMedia
     readonly property alias lockDate:    adapter.lockDate
@@ -180,6 +181,7 @@ Singleton {
         overviewBackdrop: ["dim", "clear", "solid"],
         overviewLayout: ["grid", "strip"],
         altTabStyle:  ["icons", "titled", "previews"],
+        altTabScope:  ["workspace", "all"],
         lockClockPlace: ["centre", "top", "corner"],
         lockClockSize: ["small", "large", "huge"],
         barSeparator: ["none", "line", "double", "dot", "dots", "capped"],
@@ -860,6 +862,7 @@ Singleton {
             property string overviewBackdrop: "dim"
             property string overviewLayout: "grid"
             property string altTabStyle: "icons"
+            property string altTabScope: "workspace"
             property bool lockNotifs: false
             property bool lockMedia: false
             property bool lockDate: false

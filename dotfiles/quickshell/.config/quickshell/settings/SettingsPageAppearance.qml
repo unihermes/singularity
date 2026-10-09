@@ -94,7 +94,8 @@ SettingsPage {
         iconTint: "App icons", vizStyle: "Visualizer", flyoutAnim: "Flyouts open",
         launcherLayout: "Launcher layout", launcherPosition: "Launcher position",
         launcherDetails: "Launcher details", notifStyle: "Notification popups",
-        altTabStyle: "Window switcher", overviewLayout: "Workspace overview",
+        altTabStyle: "Window switcher", altTabScope: "Switcher windows",
+        overviewLayout: "Workspace overview",
         overviewBackdrop: "Overview backdrop", powerStyle: "Power menu", levelStyle: "Level popup",
         accent: "Accent", levelColour: "Level colour",
     })

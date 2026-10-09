@@ -429,6 +429,7 @@ Singleton {
     readonly property string overviewLayout: Settings.overviewLayout
     // the ALT+Tab switcher -- see Looks.js and AltTabSwitcher
     readonly property string altTabStyle: Settings.altTabStyle
+    readonly property string altTabScope: Settings.altTabScope
     // a bar module under the pointer -- see Looks.js and ModuleFrame
     readonly property string hoverStyle: resolved.hoverStyle
     // between the bar's modules, and the room each gap takes with one

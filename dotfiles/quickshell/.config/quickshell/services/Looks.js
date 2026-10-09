@@ -120,6 +120,8 @@
 //     altTabStyle  the ALT+Tab switcher's cards: "icons", "titled" an icon
 //                  over each window's title, "previews" a still of each
 //                  window with its app's icon in the corner
+//     altTabScope  which windows ALT+Tab offers: "workspace" the focused
+//                  workspace's, "all" every workspace's
 //     overviewLayout SUPER+W's workspaces: a "grid" three across, or a
 //                  "strip" of every workspace in one row
 //     overviewBackdrop behind the overview: the desktop "dim"med by the
@@ -194,6 +196,7 @@ var settingsBase = {
     launcherDetails: true,
     notifStyle: "full",
     altTabStyle: "icons",
+    altTabScope: "workspace",
     overviewLayout: "grid",
     overviewBackdrop: "dim",
     powerStyle: "row",

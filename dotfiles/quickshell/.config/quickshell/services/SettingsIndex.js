@@ -101,6 +101,7 @@ var entries = [
     { page: "appearance", section: "Panels",        label: "Overview backdrop",    keywords: "super w overview background dim solid clear" },
     { page: "appearance", section: "Panels",        label: "Workspace overview",   keywords: "super w overview grid row strip expose" },
     { page: "appearance", section: "Panels",        label: "Window switcher",      keywords: "alt tab switcher previews thumbnails icons titles" },
+    { page: "appearance", section: "Panels",        label: "Switcher windows",     keywords: "alt tab switcher all workspaces every workspace current scope" },
     { page: "appearance", section: "Bar",           label: "Clock format",         keywords: "custom time date format pattern qt" },
     { page: "appearance", section: "Bar",           label: "Tray drawer",          keywords: "system tray hide collapse chevron pin icons" },
     { page: "appearance", section: "Bar",           label: "Workspace names",      keywords: "label rename workspaces web code chat" },

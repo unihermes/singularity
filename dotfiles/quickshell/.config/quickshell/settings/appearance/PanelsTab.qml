@@ -58,6 +58,12 @@ SettingsTab {
     }
 
     SettingsField {
+        label: "Switcher windows"
+        hint: "Which windows ALT+Tab offers"
+        Choices { key: "altTabScope" }
+    }
+
+    SettingsField {
         label: "Workspace overview"
         hint: "SUPER+W's layout"
         Choices { key: "overviewLayout" }

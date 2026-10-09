@@ -69,13 +69,18 @@ OverlayWindow {
         // ALT+Tab reaches them
         const cs = (clients || []).filter(c => c.class)
 
-        // Only offer windows on the workspace you're actually looking at.
-        // That's the focused window's workspace (focusHistoryID 0) rather
-        // than some separately-queried "current workspace", so it's exactly
-        // the workspace this same read of hyprctl agrees you're on.
+        // Offer the windows on the workspace you're actually looking at, or
+        // with Theme.altTabScope "all" every regular workspace's too (not
+        // special ones, as in the bar) -- focusing one on another workspace
+        // takes you there. "Looking at" is the focused window's workspace
+        // (focusHistoryID 0) rather than some separately-queried "current
+        // workspace", so it's exactly the workspace this same read of
+        // hyprctl agrees you're on.
         const current = cs.find(c => c.focusHistoryID === 0)
+        const all = Theme.altTabScope === "all"
         const onWs = current
-            ? cs.filter(c => c.workspace && c.workspace.id === current.workspace.id)
+            ? cs.filter(c => c.workspace && (c.workspace.id === current.workspace.id
+                                             || (all && c.workspace.id > 0)))
             : cs
         onWs.sort((a, b) => a.focusHistoryID - b.focusHistoryID)
         const listed = onWs.filter(c => !Apps.isBackTab(c, onWs))
