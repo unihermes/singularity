@@ -101,7 +101,9 @@ Singleton {
                     else if (name !== "") out.push({ name: name, user: user })
                 }
                 root.notifyNew(out)
-                root.units = out
+                // only on a change: a new array rebuilds the flyout's rows,
+                // and with them any half-confirmed button
+                if (JSON.stringify(out) !== JSON.stringify(root.units)) root.units = out
             }
         }
     }
