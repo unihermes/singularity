@@ -91,6 +91,16 @@ if gaps.top == 0 and gaps.right == 0 and gaps.bottom == 0 and gaps.left == 0 the
     })
 end
 
+-- Only a window smaller than the usable area has a border; one filling it
+-- has nothing to set it apart from. A floater's border is drawn outside its
+-- rect, so on a filled one it would also run a pixel past the screen's edge
+-- -- onto the next display along, where two sit side by side. Floaters are
+-- tagged "filled" by syncFillBorder() below; a tiled window alone on its
+-- workspace, or maximized, fills the area too.
+hl.window_rule({ name = "filled-borderless", match = { tag = "filled" }, border_size = 0 })
+hl.window_rule({ name = "lone-tiled-borderless", match = { float = false, workspace = "w[tv1]" }, border_size = 0 })
+hl.window_rule({ name = "maximized-borderless", match = { fullscreen_state_internal = 1 }, border_size = 0 })
+
 -- The bar's standalone windows (System, Keybinds, Settings): Quickshell
 -- FloatingWindows, class org.quickshell, which size themselves in QML. They
 -- float centred at that size -- no size here.
@@ -608,6 +618,19 @@ local function isMonocleExempt(win)
     return win.class == "org.quickshell" or hasTag(win, "monocle-exempt")
 end
 
+-- Tags a floater "filled" while it fills its monitor and takes the tag off
+-- once it doesn't, so the filled-borderless rule above drops its border.
+-- Run after every resize this file makes; one resized by the mouse is
+-- caught when focus next changes.
+local function syncFillBorder(addr)
+    local win = hl.get_window("address:" .. addr)
+    if not win then return end
+    local filled = win.floating and win.monitor ~= nil and isFitted(win, fillArea(win, win.monitor))
+    if filled ~= hasTag(win, "filled") then
+        hl.dispatch(hl.dsp.window.tag({ tag = (filled and "+" or "-") .. "filled", window = "address:" .. addr }))
+    end
+end
+
 -- Fills `win` to the monitor's usable rect without touching its floating
 -- state -- callers decide whether it needs floating first.
 local function sizeToFullFloat(win, mon)
@@ -617,6 +640,7 @@ local function sizeToFullFloat(win, mon)
     local addr = "address:" .. win.address
     hl.dispatch(hl.dsp.window.resize({ x = math.floor(area.w), y = math.floor(area.h), window = addr }))
     hl.dispatch(hl.dsp.window.move({ x = math.floor(area.x), y = math.floor(area.y), window = addr }))
+    syncFillBorder(win.address)
 end
 
 -- A floating window is maximized by filling the usable area, never with
@@ -796,6 +820,11 @@ local function maximizeFocused()
 end
 
 hl.on("window.active", maximizeFocused)
+-- and a floater resized by the mouse gets its border back, or loses it
+hl.on("window.active", function()
+    local win = hl.get_active_window()
+    if win then syncFillBorder(win.address) end
+end)
 
 -- Re-checked on close too, rather than relying on how Hyprland sequences
 -- the focus change around it.
@@ -826,6 +855,9 @@ hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
 -- and after every load, for a changed edge gap
 hl.timer(refitMonocle, { timeout = 200, type = "oneshot" })
+hl.timer(function()
+    for _, w in ipairs(hl.get_windows()) do syncFillBorder(w.address) end
+end, { timeout = 300, type = "oneshot" })
 
 -- TABS. Apps with no tabs of their own open each file in a window of its
 -- own; these open theirs as tabs of one Hyprland group instead, joining the
@@ -903,10 +935,7 @@ end)
 --
 -- A tiled window uses Hyprland's own maximize toggle. A monocle floater has
 -- nothing to toggle, so it shrinks to 70% centred and grows back.
-function toggleMaximize()
-    local win = hl.get_active_window()
-    if not win then return end
-
+local function toggleMaximizeWin(win)
     if win.floating and hasTag(win, "monocle") then
         local addr = "address:" .. win.address
         if stateOf(win.address).small then
@@ -963,6 +992,13 @@ function toggleMaximize()
     else
         stateOf(win.address).small = true
     end
+end
+
+function toggleMaximize()
+    local win = hl.get_active_window()
+    if not win then return end
+    toggleMaximizeWin(win)
+    syncFillBorder(win.address)
 end
 
 -- Hides a window below the screen, or restores it, the way windows open
