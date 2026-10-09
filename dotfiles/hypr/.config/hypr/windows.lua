@@ -1016,7 +1016,9 @@ end
 -- Refocusing a hidden window any other way restores it too -- see
 -- maximizeFocused() above.
 local function hiddenRect(r, mon)
-    local y = windowAnim == "drop" and mon.y - r.h - 100 or mon.y + mon.height + 100
+    -- mon.height is in pixels; the layout is in logical ones, so a scaled
+    -- monitor (0.75 makes 1080 rows 1440 tall) would leave it half on screen
+    local y = windowAnim == "drop" and mon.y - r.h - 100 or mon.y + math.ceil(mon.height / mon.scale) + 100
     return { x = r.x, y = y, w = r.w, h = r.h }
 end
 
