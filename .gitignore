@@ -28,3 +28,7 @@ __pycache__/
 # GTK's bookmarks, written by link.sh with this machine's home directory
 # and rewritten by the file manager; lands here when gtk-3.0 is a stowed link
 dotfiles/gtk/.config/gtk-3.0/bookmarks
+
+# This machine's idle ladder, copied by link.sh from a hypridle-*.defaults.conf
+# and edited by Settings; lands here when hypr is a stowed link
+dotfiles/hypr/.config/hypr/hypridle.conf

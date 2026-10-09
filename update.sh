@@ -35,9 +35,7 @@ main() {
 
   local -a want new
   mapfile -t want < <(list packages/pacman.txt)
-  if [[ $machine == laptop ]]; then
-    mapfile -t -O "${#want[@]}" want < <(list packages/laptop.txt)
-  fi
+  mapfile -t -O "${#want[@]}" want < <(list "packages/$machine.txt")
   mapfile -t new < <(pacman -T "${want[@]}" || true)
   if (( ${#new[@]} > 0 )); then
     log "installing ${new[*]}"
@@ -46,6 +44,9 @@ main() {
 
   # Not --noconfirm: the PKGBUILD diffs are worth reading, as in install.sh.
   mapfile -t want < <(list packages/aur.txt)
+  if [[ -f packages/aur-$machine.txt ]]; then
+    mapfile -t -O "${#want[@]}" want < <(list "packages/aur-$machine.txt")
+  fi
   mapfile -t new < <(pacman -T "${want[@]}" || true)
   if (( ${#new[@]} > 0 )); then
     log "installing ${new[*]} from the AUR"

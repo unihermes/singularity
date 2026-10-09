@@ -79,6 +79,20 @@ backup_conflicts
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
 
+# The idle ladder (hypridle.conf) is this machine's own, not the repo's:
+# Settings edits it, and the laptop and desktop want different timeouts. So
+# it's copied once from the default for the machine type install.sh
+# recorded (the laptop's when there's none), only where there's none yet.
+# A link left dangling by an older checkout, where it was stowed, goes first.
+idle="$HOME/.config/hypr/hypridle.conf"
+[[ -L $idle && ! -e $idle ]] && rm -f "$idle"
+if [[ ! -e $idle ]]; then
+  machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null || true)
+  [[ $machine == desktop ]] || machine=laptop
+  cp "dotfiles/singularity/.config/singularity/hypridle-$machine.defaults.conf" "$idle"
+  log "wrote ${idle#"$HOME/"} ($machine default)"
+fi
+
 # File-manager bookmarks (GTK's, which Thunar shows in its side pane) for
 # the usual folders. Not stowed: the paths hold the home directory, and the
 # file manager rewrites the file as bookmarks are added, so it's written

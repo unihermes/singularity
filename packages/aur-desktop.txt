@@ -1,0 +1,10 @@
+# AUR packages only the desktop gets (./install.sh desktop), on top of
+# aur.txt. One per line, # comments allowed.
+
+# Fan curves for the case, CPU and GPU fans, like FanControl on Windows.
+# The motherboard headers need the it87 driver install.sh sets up.
+coolercontrol
+# The in-tree it87 driver finds this board's IT8689E and reads it, but its PWM
+# writes do nothing: every header kept its speed from 0% to 100%. This
+# out-of-tree build replaces it; DKMS builds it against linux-headers.
+it87-dkms-git

@@ -1,0 +1,12 @@
+# Repo packages only the desktop gets (./install.sh desktop), on top of
+# pacman.txt. One per line, # comments allowed.
+
+# The RTX 4070's driver. Without it the screen runs on the firmware's
+# framebuffer (simpledrm): one fixed 1024x768 mode, no vsync, so everything
+# is low-res and tears. nvidia-open is the one for Turing and newer, built
+# for the stock linux kernel; nvidia-utils comes with it.
+nvidia-open
+# VA-API on NVDEC, so browsers decode video on the GPU
+libva-nvidia-driver
+# Headers for the stock kernel, so DKMS can build it87-dkms-git (aur-desktop.txt)
+linux-headers

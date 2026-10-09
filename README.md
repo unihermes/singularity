@@ -91,7 +91,8 @@ finishes and pick **Hyprland** in the greeter.
 1. Syncs the system and installs `base-devel git stow`
 2. Bootstraps `yay` from `yay-bin` if it isn't there
 3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`, plus
-   `packages/laptop.txt` on a laptop
+   `packages/laptop.txt` on a laptop or `packages/desktop.txt` (the NVIDIA
+   driver) and `packages/aur-desktop.txt` (CoolerControl) on the desktop
 4. Links `dotfiles/` into `$HOME` with GNU stow (`link.sh`) and builds the
    `alttab-relay` helper
 5. Rebuilds font and icon caches, sets the default apps, and sets
@@ -100,11 +101,13 @@ finishes and pick **Hyprland** in the greeter.
    GRUB), stops iwd blocking the greeter and masks unused TPM setup. On a
    laptop it also sets up a hibernation swapfile and applies the laptop's
    boot fixes: vfat in the initramfs, panel self refresh and the webcam stack
-   switched off. The initramfs is rebuilt once, at
-   the end
+   switched off. On the desktop it loads the NVIDIA driver from the
+   initramfs and lets the motherboard fan driver (`it87`) load. The
+   initramfs is rebuilt once, at the end
 7. Enables iwd, systemd-networkd and -resolved, PipeWire, Bluetooth (with its
    pairing agent and power restore), power-profiles-daemon, the AC-power
-   profile switch (laptop only), and the `ly` greeter
+   profile switch (laptop only), CoolerControl's daemon (desktop only), and
+   the `ly` greeter
 
 `--needed`, `stow -R` and `enable --now` make every step a no-op the second
 time, so rerunning it is always safe.
@@ -275,7 +278,7 @@ singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
-├── packages/               # pacman.txt, laptop.txt and aur.txt, one per line
+├── packages/               # pacman.txt, aur.txt and the per-machine lists, one per line
 ├── wallpapers/
 ├── tools/                  # checks run by the pre-commit hook and CI
 │   ├── git-hooks/pre-commit
@@ -294,8 +297,8 @@ singularity/
     │   ├── windows/        # Settings, System, Keybinds and Notes windows
     │   ├── services/       # singletons: Theme, Settings, Network, Audio, …
     │   └── scripts/        # helpers the shell runs
-    ├── hypr/               # hyprland.lua and its modules, hypridle, hyprlock, lid.sh, helpers
-    ├── singularity/        # default window rules, autostart, clean, diagnose, settings-bundle
+    ├── hypr/               # hyprland.lua and its modules, hyprlock, lid.sh, helpers
+    ├── singularity/        # default window rules and idle ladders, autostart, clean, diagnose, settings-bundle
     ├── systemd/            # Bluetooth agent and power restore, WirePlumber drop-in
     ├── nvim/  zed/  alacritty/  starship/  fastfetch/  zathura/  floorp/
     ├── gtk/  fontconfig/  bash/
@@ -351,7 +354,8 @@ greeter's dependencies around it:
   goes in `MODULES=()` in `/etc/mkinitcpio.conf` (backed up first).
 - **iwd** is `Type=dbus` and needs crypto modules before claiming its bus
   name, while ly waits on `network.target`; a drop-in sets `Type=exec`.
-- **TPM setup** (`systemd-tpm2-setup*`, `systemd-pcrproduct`) is masked unless
+- **TPM setup** (`systemd-tpm2-setup*`, `systemd-pcrproduct`,
+  `systemd-pcrlogin@`) is masked unless
   `/etc/crypttab` asks for a TPM unlock. The TPM's contents are untouched, so
   Windows and BitLocker are unaffected.
 - **The webcam** is switched off: `/etc/modprobe.d/singularity-vsc.conf`

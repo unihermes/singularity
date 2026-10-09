@@ -93,7 +93,7 @@ SettingsPage {
 
     // A change to how a display draws (mode, scale, rotation) waits to be
     // kept: one the display can't show leaves nothing to click, so unless
-    // Keep is pressed it goes back after `revertSecs`.
+    // Keep is pressed, or the page closed, it goes back after `revertSecs`.
     // { name, key, value (the old one), label }, or null
     property var trial: null
     property int trialLeft: 0
@@ -156,12 +156,9 @@ SettingsPage {
         return src => HyprTables.setMonitor(src, index, key, value)
     }
 
-    // leaving the page mid-trial is no answer, so it goes back then too
-    Component.onDestruction: if (trial) {
-        var mon = byName(trial.name)
-        if (mon) HyprLuaWrite.patchMonitors(fieldPatch(mon, HyprTables.ruleFor(rules, trial.name), trial.key, trial.value),
-            () => "", "", "", () => {})
-    }
+    // Closing the window or leaving the page mid-trial keeps the change:
+    // whoever did that could see the display well enough to do it. Only the
+    // timer running out (or Revert) puts it back.
 
     // Extend gives every display its own area; duplicate points all the
     // others at `primary` through hl.monitor()'s `mirror`. One patch for

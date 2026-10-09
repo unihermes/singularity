@@ -11,6 +11,13 @@ user_pref("media.webrtc.camera.allow-pipewire", true);
 user_pref("xpinstall.signatures.required", false);
 user_pref("extensions.autoDisableScopes", 14);
 
+// Size pages by the display's logical pixels on every monitor. Firefox's
+// fractional scaling draws in the physical pixels of a display scaled below
+// 1 (the 1080p one at 0.75 on the desktop), so pages there come out a
+// different size than on the other monitor and layout.css.devPixelsPerPx
+// can't match both. Without it the compositor scales Floorp down instead.
+user_pref("widget.wayland.fractional-scale.enabled", false);
+
 // No telemetry, data reporting or studies, and no Floorp experiments
 user_pref("datareporting.healthreport.uploadEnabled", false);
 user_pref("datareporting.policy.dataSubmissionEnabled", false);

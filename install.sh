@@ -20,9 +20,10 @@ usage: ./install.sh laptop|desktop
 EOF
 }
 
-# What kind of machine this is. Everything marked `if (( laptop ))` below,
-# and packages/laptop.txt, is skipped on a desktop. Recorded so update.sh
-# installs the same package lists.
+# What kind of machine this is. Everything marked `if (( laptop ))` below
+# is skipped on a desktop, and packages/laptop.txt or packages/desktop.txt
+# is installed on top of pacman.txt. Recorded so update.sh installs the same
+# package lists.
 case ${1:-} in
   laptop)  laptop=1 ;;
   desktop) laptop=0 ;;
@@ -67,10 +68,8 @@ echo "$machine" > "$machinefile"
 
 log "installing repo packages for a $machine"
 read_list pacman_pkgs packages/pacman.txt
-if (( laptop )); then
-  read_list laptop_pkgs packages/laptop.txt
-  pacman_pkgs+=("${laptop_pkgs[@]}")
-fi
+read_list machine_pkgs "packages/$machine.txt"
+pacman_pkgs+=("${machine_pkgs[@]}")
 if (( ${#pacman_pkgs[@]} > 0 )); then
   sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
 fi
@@ -82,6 +81,10 @@ log "installing AUR packages"
 # timing out and asking again partway through a long build.
 aur_failed=0
 read_list aur_pkgs packages/aur.txt
+if [[ -f packages/aur-$machine.txt ]]; then
+  read_list machine_aur packages/aur-$machine.txt
+  aur_pkgs+=("${machine_aur[@]}")
+fi
 if (( ${#aur_pkgs[@]} > 0 )); then
   yay -S --needed --sudoloop --answerclean None "${aur_pkgs[@]}" || aur_failed=1
 fi
@@ -172,7 +175,9 @@ fi
 # look (AppearanceSync), and this selects it. settings.json is Claude Code's
 # own file, so it's edited in place rather than stowed, and a theme picked
 # with /theme since is left alone -- only unset or built-in dark is replaced.
-python3 - <<'PY' || warn "could not select the Claude Code theme -- pick Singularity under /theme"
+# The fullscreen renderer is set the same way (unless /tui picked one): it is
+# the one where highlighting text in Claude copies it.
+python3 - <<'PY' || warn "could not set up Claude Code -- pick Singularity under /theme, then /tui fullscreen"
 import json, os
 path = os.path.expanduser("~/.claude/settings.json")
 try:
@@ -180,8 +185,11 @@ try:
         settings = json.load(f)
 except FileNotFoundError:
     settings = {}
+before = dict(settings)
 if settings.get("theme", "dark") == "dark":
     settings["theme"] = "custom:singularity"
+settings.setdefault("tui", "fullscreen")
+if settings != before:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path + ".new", "w") as f:
         json.dump(settings, f, indent=2)
@@ -486,22 +494,53 @@ fi
 # a little of that same stall. (The cursor freeze itself turned out to be a
 # separate logind race -- see the deferred-probe fix above.)
 mkconf=/etc/mkinitcpio.conf
-early_modules=(vfat mac_hid mousedev joydev)
-if (( laptop )) && [[ -f $mkconf ]]; then
-  missing=()
-  for m in "${early_modules[@]}"; do
+# early_modules MODULE... -- adds whichever aren't there yet to MODULES=().
+early_modules() {
+  local m missing=()
+  [[ -f $mkconf ]] || return 0
+  for m in "$@"; do
     grep -Eq "^MODULES=\(.*\<$m\>" "$mkconf" || missing+=("$m")
   done
-  if (( ${#missing[@]} )); then
-    log "loading ${missing[*]} from the initramfs"
-    [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
-    if grep -q '^MODULES=(' "$mkconf"; then
-      sudo sed -i -E "s/^MODULES=\(([^)]*)\)/MODULES=(\1 ${missing[*]})/; s/^MODULES=\( /MODULES=(/" "$mkconf"
-    else
-      echo "MODULES=(${missing[*]})" | sudo tee -a "$mkconf" >/dev/null
-    fi
-    rebuild_initramfs=1
+  (( ${#missing[@]} )) || return 0
+  log "loading ${missing[*]} from the initramfs"
+  [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
+  if grep -q '^MODULES=(' "$mkconf"; then
+    sudo sed -i -E "s/^MODULES=\(([^)]*)\)/MODULES=(\1 ${missing[*]})/; s/^MODULES=\( /MODULES=(/" "$mkconf"
+  else
+    echo "MODULES=(${missing[*]})" | sudo tee -a "$mkconf" >/dev/null
   fi
+  rebuild_initramfs=1
+}
+if (( laptop )); then
+  early_modules vfat mac_hid mousedev joydev
+fi
+
+# --- nvidia (desktop) ----------------------------------------------------
+# The desktop's display hangs off its RTX 4070. nvidia-drm sets modeset and
+# fbdev itself these days, so all it needs is loading early: from the
+# initramfs it takes the screen over from the firmware framebuffer before the
+# greeter starts, instead of the greeter coming up on simpledrm (1024x768,
+# no vsync) and Hyprland finding a display it then can't drive properly.
+# nvidia-utils already blacklists nouveau, and modconf carries that into the
+# initramfs.
+if (( ! laptop )) && pacman -Q nvidia-open &>/dev/null; then
+  early_modules nvidia nvidia_modeset nvidia_uvm nvidia_drm
+fi
+
+# --- fans (desktop) ------------------------------------------------------
+# The B650I AORUS ULTRA's fan headers sit on an ITE IT8689E, driven by
+# it87-dkms-git (aur-desktop.txt) since the in-tree it87 can't set its fan
+# speeds. Gigabyte's ACPI tables also claim the chip's I/O ports, so either
+# driver refuses to load ("ACPI: OSL: Resource conflict") unless told to
+# ignore that. Without it CoolerControl only sees the GPU fans. Loaded from
+# modules-load.d at boot, not the initramfs: nothing needs it that early.
+fanconf=/etc/modprobe.d/singularity-it87.conf
+fanload=/etc/modules-load.d/singularity-it87.conf
+if (( ! laptop )) && ! grep -qs 'ignore_resource_conflict=1' "$fanconf"; then
+  log "setting up the motherboard fan driver"
+  echo 'options it87 ignore_resource_conflict=1' | sudo tee "$fanconf" >/dev/null
+  echo 'it87' | sudo tee "$fanload" >/dev/null
+  sudo modprobe it87 || warn "it87 did not load -- is it87-dkms-git built? see dkms status"
 fi
 
 # --- panel self refresh --------------------------------------------------
@@ -813,6 +852,13 @@ if have_unit power-profiles-daemon.service; then
   sudo systemctl enable --now power-profiles-daemon.service
 fi
 
+# CoolerControl's daemon applies the fan curves, with or without its window
+# open.
+if (( ! laptop )) && have_unit coolercontrold.service; then
+  log "enabling coolercontrold"
+  sudo systemctl enable --now coolercontrold.service
+fi
+
 if (( laptop )) && have_unit power-profiles-daemon.service; then
   # performance on AC, balanced on battery. PPD has no such rule of its own --
   # it only exposes ActiveProfile for something else to drive, which the bar
@@ -890,12 +936,12 @@ fi
 # TPM-unlocked LUKS, secure boot off. Masking only stops the setup running; it
 # does not touch what is stored in the TPM, so Windows and BitLocker are
 # unaffected. Left alone if crypttab asks for a TPM unlock. The setup also
-# allocates the NvPCRs, so systemd-pcrproduct, which measures into one, fails
-# every boot without it and is masked too.
+# allocates the NvPCRs, so systemd-pcrproduct and systemd-pcrlogin@ (one per
+# login), which measure into them, fail every boot without it and are masked too.
 if ! grep -qs 'tpm2-device' /etc/crypttab; then
   log "masking systemd TPM setup"
   sudo systemctl mask systemd-tpm2-setup-early.service systemd-tpm2-setup.service \
-    systemd-pcrproduct.service
+    systemd-pcrproduct.service systemd-pcrlogin@.service
 fi
 
 # Display manager. Deliberately NOT --now: ly takes over a VT, and starting it
