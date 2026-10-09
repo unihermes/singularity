@@ -832,18 +832,22 @@ hl.on("window.active", maximizeFocused)
 -- fullscreen game. Left fullscreen it keeps the workspace's input: the
 -- window you picked is raised and focused but every click lands on the
 -- fullscreen one under it, and moving the pointer hands it the keyboard
--- back. It goes fullscreen again when it's next focused. Only true
--- fullscreen (2): a maximized window (1) is how dwindle mode fills, and
--- maximizeFocused handles those.
+-- back. Only Hyprland's side of it is dropped: the app is still told it's
+-- fullscreen (fullscreen_state's client half), so a browser keeps its video
+-- filling the window instead of leaving the page's fullscreen, and focusing
+-- it again puts it straight back -- unless the app has left fullscreen of
+-- its own accord meanwhile. Only true fullscreen (2): a maximized window
+-- (1) is how dwindle mode fills, and maximizeFocused handles those.
 local function yieldFullscreen()
     local win = hl.get_active_window()
     if not win or not win.workspace then return end
     local st = stateOf(win.address)
-    if st.yieldedFullscreen then
+    local yielded = st.yieldedFullscreen
+    if yielded then
         st.yieldedFullscreen = nil
-        if win.fullscreen == 0 then
-            hl.dispatch(hl.dsp.window.fullscreen({
-                mode = "fullscreen", action = "set", window = "address:" .. win.address }))
+        if win.fullscreen == 0 and win.fullscreen_client == yielded.client then
+            hl.dispatch(hl.dsp.window.fullscreen_state({
+                internal = 2, client = yielded.client, window = "address:" .. win.address }))
         end
         return
     end
@@ -851,9 +855,9 @@ local function yieldFullscreen()
     for _, w in ipairs(hl.get_windows()) do
         if w.address ~= win.address and w.fullscreen == 2 and w.workspace
                 and w.workspace.id == win.workspace.id then
-            stateOf(w.address).yieldedFullscreen = true
-            hl.dispatch(hl.dsp.window.fullscreen({
-                mode = "fullscreen", action = "unset", window = "address:" .. w.address }))
+            stateOf(w.address).yieldedFullscreen = { client = w.fullscreen_client }
+            hl.dispatch(hl.dsp.window.fullscreen_state({
+                internal = 0, client = w.fullscreen_client, window = "address:" .. w.address }))
             hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
         end
     end
