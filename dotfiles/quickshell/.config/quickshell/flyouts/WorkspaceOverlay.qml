@@ -35,13 +35,6 @@ OverlayWindow {
     // Which cell a drag is currently hovering, so it can highlight. -1 for none.
     property int dropTarget: -1
 
-    // The shell's own standalone windows are part of the bar, not apps you're
-    // running, so they're left out of the cells and the counts -- same rule the
-    // bar's window strip and WINDOWS flyout follow.
-    function isShellWindow(tl) {
-        return !!(tl.lastIpcObject && tl.lastIpcObject.class === "org.quickshell")
-    }
-
     visible: open
     // Exclusive, not OnDemand: Escape has to work without clicking into the
     // overlay first, and it is transient, so focus returns when it closes.
@@ -127,7 +120,7 @@ OverlayWindow {
                         readonly property var windows: {
                             const ws = Hyprland.workspaces.values.find(w => w.id === cell.wsId)
                             if (!ws || !ws.toplevels) return []
-                            return ws.toplevels.values.filter(tl => !root.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
+                            return ws.toplevels.values.filter(tl => !Apps.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
                         }
 
                         // a row of every workspace has to fit the screen

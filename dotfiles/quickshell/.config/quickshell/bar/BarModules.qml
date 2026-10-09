@@ -197,7 +197,7 @@ Item {
             id: scratchMark
             readonly property var ws: Hyprland.workspaces.values.find(w => w.name === "special:scratchpad") || null
             readonly property int count: ws
-                ? ws.toplevels.values.filter(t => !barModules.bar.isShellWindow(t)).length : 0
+                ? ws.toplevels.values.filter(t => !Apps.isShellWindow(t)).length : 0
             readonly property var monitor: Hyprland.monitorFor(barModules.screenScope.modelData)
             // the monitor's own report until the first activespecial event
             readonly property bool shown: {

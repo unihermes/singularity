@@ -107,11 +107,44 @@ Singleton {
     // here: they all share org.quickshell's, and draw their glyph instead.
     function iconForClass(cls) {
         if (!cls || String(cls) === "org.quickshell") return ""
-        var entry = DesktopEntries.heuristicLookup(cls)
-        var path = entry && entry.icon ? Quickshell.iconPath(entry.icon, true) : ""
-        if (path === "") path = Quickshell.iconPath(cls, true)
-        if (path === "") path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
-        return path
+        var c = byClass(cls)
+        if (c.icon === undefined) {
+            var path = c.entry && c.entry.icon ? Quickshell.iconPath(c.entry.icon, true) : ""
+            if (path === "") path = Quickshell.iconPath(cls, true)
+            if (path === "") path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
+            c.icon = path
+        }
+        return c.icon
+    }
+
+    // What a window class resolves to, looked up once: every window list
+    // asks again for each window whenever the window list changes, and
+    // heuristicLookup() walks every desktop entry. { entry, icon }, icon
+    // filled in on first ask. Cleared when the entries or the icon theme
+    // change, which also re-runs the bindings that read it.
+    property var classCache: ({})
+    function byClass(cls) {
+        var cache = classCache
+        if (!cache[cls]) cache[cls] = { entry: DesktopEntries.heuristicLookup(cls) }
+        return cache[cls]
+    }
+    Connections {
+        target: DesktopEntries.applications
+        function onValuesChanged() { root.classCache = {} }
+    }
+    Connections {
+        target: Settings
+        function onIconThemeChanged() { root.classCache = {} }
+    }
+
+    // The shell's own windows (Settings, System, Keybinds, Notes), which all
+    // share one class. They show up in the window strip and in ALT+Tab like
+    // anything else you have open -- real toplevels you can focus and work
+    // in. What they stay out of is the shell's own bookkeeping: the
+    // workspace flyout and overlay, counting towards whether a workspace has
+    // anything on it, and tray-icon matching.
+    function isShellWindow(tl) {
+        return !!(tl.lastIpcObject && tl.lastIpcObject.class === "org.quickshell")
     }
 
     // When no icon file can be found, something still has to be drawn: an
@@ -151,7 +184,7 @@ Singleton {
     // title (Settings, System…), since they all share one class.
     function nameForWindow(cls, title) {
         if (String(cls) === "org.quickshell") return String(title || "Singularity")
-        var entry = cls ? DesktopEntries.heuristicLookup(cls) : null
+        var entry = cls ? byClass(cls).entry : null
         if (entry && entry.name) return entry.name
         var bare = String(cls || "").replace(/^.*\./, "")
         return bare.charAt(0).toUpperCase() + bare.slice(1)

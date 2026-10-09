@@ -49,6 +49,9 @@ FlyoutPanel {
                 anchors.fill: parent
                 source: mediaFlyout.player ? mediaFlyout.player.trackArtUrl : ""
                 fillMode: Image.PreserveAspectCrop
+                // decoded at the frame's size, not the art's: a browser's
+                // video thumbnail can be several megapixels
+                sourceSize.height: artFrame.height * 2
                 asynchronous: true
                 visible: status === Image.Ready
             }

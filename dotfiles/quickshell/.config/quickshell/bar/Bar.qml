@@ -238,7 +238,7 @@ PanelWindow {
         for (var pass = 0; pass < 2; pass++) {
             for (var i = 0; i < tls.length; i++) {
                 var ipc = tls[i].lastIpcObject
-                if (!ipc || isShellWindow(tls[i])) continue
+                if (!ipc || Apps.isShellWindow(tls[i])) continue
                 var names = [norm(ipc.class), norm(ipc.initialClass)]
                 for (var n = 0; n < names.length; n++) {
                     var c = names[n]
@@ -256,18 +256,6 @@ PanelWindow {
         return null
     }
 
-    // The shell's own standalone windows (System, Keybinds).
-    // They show up in the window strip and in ALT+Tab like anything
-    // else you have open -- they are real toplevels you can focus and
-    // work in. What they stay out of is the shell's own bookkeeping:
-    // the workspace flyout, and counting towards whether a workspace
-    // has anything on it (a workspace holding only a Settings window
-    // still reads as empty), and tray-icon matching, which is looking
-    // for the app a tray item belongs to.
-    function isShellWindow(tl) {
-        return !!(tl.lastIpcObject && tl.lastIpcObject.class === "org.quickshell")
-    }
-
     // an app open on workspace `id` for the workspace indicator's
     // apps style -- the first that isn't one of the shell's windows
     // -- as { source, glyph }, or null when there's none
@@ -279,7 +267,7 @@ PanelWindow {
             var tls = wss[i].toplevels.values
             for (var j = 0; j < tls.length; j++) {
                 var ipc = tls[j].lastIpcObject
-                if (!ipc || !ipc.class || isShellWindow(tls[j])) continue
+                if (!ipc || !ipc.class || Apps.isShellWindow(tls[j])) continue
                 return { source: entryCount > 0 ? Apps.iconForClass(ipc.class) : "",
                          glyph: Apps.glyphForWindow(ipc.class, ipc.title) }
             }
@@ -293,7 +281,7 @@ PanelWindow {
             if (wss[i].id !== id) continue
             var tls = wss[i].toplevels.values
             for (var j = 0; j < tls.length; j++)
-                if (!isShellWindow(tls[j])) return true
+                if (!Apps.isShellWindow(tls[j])) return true
             return false
         }
         return false
@@ -306,7 +294,7 @@ PanelWindow {
         for (var i = 0; i < wss.length; i++) {
             var tls = wss[i].toplevels.values
             for (var j = 0; j < tls.length; j++) {
-                if (isShellWindow(tls[j]) || Apps.isBackTabToplevel(tls[j])) continue
+                if (Apps.isShellWindow(tls[j]) || Apps.isBackTabToplevel(tls[j])) continue
                 var ipc = tls[j].lastIpcObject
                 out.push({
                     ws: wss[i].id,

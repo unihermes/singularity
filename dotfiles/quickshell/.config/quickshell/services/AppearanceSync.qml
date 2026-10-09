@@ -794,7 +794,7 @@ Scope {
         var suffix = Theme.isLight ? "" : "-dark"
         var iface = "org.gnome.desktop.interface"
         var q = s => "'" + String(s).replace(/'/g, "'\\''") + "'"
-        gtkSync.command = ["sh", "-c",
+        var cmd = ["sh", "-c",
             "gsettings set " + iface + " font-name " + q(font) + "; " +
             "gsettings set " + iface + " document-font-name " + q(font) + "; " +
             "gsettings set " + iface + " monospace-font-name " + q(monoFont) + "; " +
@@ -807,6 +807,13 @@ Scope {
             "gsettings set " + iface + " icon-theme " + q(Settings.iconTheme) + "; " +
             "gsettings set " + iface + " cursor-theme " + q(Settings.cursorTheme) + "; " +
             "gsettings set " + iface + " cursor-size " + Settings.cursorSize]
+        // only when something in it changed: every set is announced to each
+        // running GTK app, which restyles itself, and most renders (a colour,
+        // a radius) change none of these
+        if (cmd.join("\n") === gtkSync.sent) return
+        if (gtkSync.running) { gtkSync.again = true; return }
+        gtkSync.sent = cmd.join("\n")
+        gtkSync.command = cmd
         gtkSync.running = true
     }
 
@@ -901,7 +908,14 @@ Scope {
         function onHeadingUpperChanged() { debounce.restart() }
     }
 
-    Process { id: gtkSync }
+    Process {
+        id: gtkSync
+        // the command last run, so an unchanged one isn't run again
+        property string sent: ""
+        // a change that arrived while this was running, run once it's done
+        property bool again: false
+        onExited: if (again) { again = false; root.renderGtk() }
+    }
 
 
     // watched, so editing ~/.config/wofi/style.css regenerates the copy wofi uses
