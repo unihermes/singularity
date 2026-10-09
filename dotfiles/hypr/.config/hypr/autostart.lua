@@ -30,10 +30,12 @@ hl.on("hyprland.start", function()
     -- Quickshell lazily, so order doesn't matter. QT_FORCE_STDERR_LOGGING
     -- keeps its self-test messages in the log file rather than the journal.
     hl.exec_cmd("exec env QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
-    -- Lifts the shadows on displays that show them darker than the others
-    -- (display-curve.c), by model, so it follows the display between ports
-    -- and machines. Lower lifts more.
-    hl.exec_cmd("exec ~/.config/hypr/display-curve 'DELL P2418HZm=0.7' > ~/.cache/display-curve.log 2>&1")
+    -- Lifts the shadows on the desktop's second monitor, which shows them
+    -- darker than the one beside it (display-curve.c). Matched by model, so
+    -- it follows the monitor between ports. Lower lifts more.
+    if S.desktop then
+        hl.exec_cmd("exec ~/.config/hypr/display-curve 'DELL P2418HZm=0.7' > ~/.cache/display-curve.log 2>&1")
+    end
     -- env alone does not retheme the cursor Hyprland draws over the desktop
     hl.exec_cmd("hyprctl setcursor " .. S.cursorTheme .. " " .. S.cursorSize)
     -- the saved wallpaper, or a random one from wallpapers/ when shuffle is on

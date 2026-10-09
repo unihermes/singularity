@@ -37,6 +37,9 @@ S.animFactor = math.max(0, math.min(100, tonumber(S.state("animations", "100")) 
 -- touching them and turning it off brings every one back as it was.
 S.gameMode = S.state("game-mode", "") == "on"
 S.animOff  = S.animFactor == 0 or S.gameMode
+-- Which machine install.sh set this up as. The desktop's own display fixes
+-- (displays.lua, autostart.lua) apply only there.
+S.desktop = S.state("machine", "") == "desktop"
 
 -- speed is in 100ms units (3 = 300ms), so lower is faster. SUPER+C times its
 -- hand-made animations by these; see toggleMinimize() in windows.lua.
