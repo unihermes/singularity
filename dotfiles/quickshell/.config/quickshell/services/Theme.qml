@@ -403,7 +403,9 @@ Singleton {
     readonly property string controlGlyph: controlGlyphs[Settings.controlIcon] || "󰣇"
     // the open-windows strip and app icons in the bar -- see Looks.js
     readonly property string windowStyle: Settings.windowStyle
-    readonly property string windowScope: Settings.windowScope
+    // ALT+Tab reaching every workspace takes the bar's strip with it, so
+    // the bar shows every window the switcher can reach
+    readonly property string windowScope: Settings.altTabScope === "all" ? "all" : Settings.windowScope
     readonly property string windowMark: resolved.windowMark
     readonly property string iconTint: Settings.iconTint
     // under panels and solid chips -- see Looks.js and flyouts/Shadow.qml

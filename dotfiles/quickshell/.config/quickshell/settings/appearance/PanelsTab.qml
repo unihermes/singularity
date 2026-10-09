@@ -59,7 +59,8 @@ SettingsTab {
 
     SettingsField {
         label: "Switcher windows"
-        hint: "Which windows ALT+Tab offers"
+        hint: Settings.altTabScope === "all" ? "Every workspace's, in the bar too"
+            : "Which windows ALT+Tab offers"
         Choices { key: "altTabScope" }
     }
 

@@ -97,9 +97,20 @@ SettingsTab {
     }
 
     SettingsField {
+        id: windowsShown
         label: "Windows shown"
-        hint: "All workspaces, grouped with a rule"
-        Choices { key: "windowScope" }
+        // held at every workspace while ALT+Tab offers them all
+        // (Theme.windowScope)
+        readonly property bool forced: Settings.altTabScope === "all"
+        dimmed: forced
+        hint: forced ? "All workspaces, as the window switcher is set to"
+            : "All workspaces, grouped with a rule"
+        Choices {
+            key: "windowScope"
+            live: !windowsShown.forced
+            value: windowsShown.forced ? "all" : Settings.windowScope
+            opacity: live ? 1 : 0.4
+        }
     }
 
     SettingsField {
