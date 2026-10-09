@@ -36,5 +36,7 @@ fastfetch
 eval "$(starship init bash)"
 
 # Anything else of your own: ~/.bashrc.local is never in the repo, so edit
-# that rather than this file.
-[[ -r ~/.bashrc.local ]] && . ~/.bashrc.local
+# that rather than this file. An `if`, not `[[ ]] &&`: this is the last line,
+# and a missing file would leave $? at 1 for the first prompt, which starship
+# draws as a failed command (the prompt character in the alert colour).
+if [[ -r ~/.bashrc.local ]]; then . ~/.bashrc.local; fi
