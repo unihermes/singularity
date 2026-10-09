@@ -363,7 +363,7 @@ Singleton {
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "media", "clock", "weather"],
         right:  ["privacy", "failed", "updates", "claude", "notifications", "tray",
-                 "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
+                 "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
     // Every module's name and icon on the Bar Widgets page. A new module
@@ -389,6 +389,7 @@ Singleton {
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },
         claude:        { label: "Claude",         icon: "󰚩" },
+        cooling:       { label: "Cooling",        icon: "󰈐" },
         desktop:       { label: "Show Desktop",   icon: "󰇄" },
     })
 

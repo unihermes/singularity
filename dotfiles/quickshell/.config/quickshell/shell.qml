@@ -747,6 +747,9 @@ ShellRoot {
         // bluetooth
         LazyFlyout { name: "bluetooth"; scope: screenScope; BluetoothFlyout { scope: screenScope; bar: screenScope.barWindow } }
 
+        // cooling (desktops)
+        LazyFlyout { name: "cooling"; scope: screenScope; CoolingFlyout { scope: screenScope; systemWin: system } }
+
         // battery
         LazyFlyout { name: "battery"; scope: screenScope; BatteryFlyout { scope: screenScope } }
 

@@ -133,6 +133,17 @@ Output, Input and Apps tabs (a `FlyoutSegmented`), from the looks mockups
 mute; Apps is each playing app with its own level, a click on its name
 muting it. The name helpers are `Audio`'s, shared with the Audio page.
 
+### Cooling
+
+Desktops only (`services/Cooling.qml`). The bar module is a plain fan icon,
+as slim as Bluetooth's, with no level fill (settled 2026-10-09); it turns
+the alert colour only when the CPU or GPU reaches 85 °C. The flyout: the
+hottest reading in the heading, the last three minutes of CPU and GPU as
+one graph, CPU, GPU (load and draw as its note) and Drive as readouts, then
+FANS: each header that has turned, its PWM duty as the note and its rpm,
+then the card's own fans. Fan names come from the machine's
+`fan-names.json` in the state directory, never the repo.
+
 ### Clock flyout
 
 - **Tabs**, one shown at a time, picked from a segmented strip in its own

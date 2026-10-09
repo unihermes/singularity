@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/BarModules.qml
 //
-// The bar's 19 modules (and the widgetItems registry shell.qml's Bar
+// The bar's 20 modules (and the widgetItems registry shell.qml's Bar
 // Widgets reordering keys off of), split out of shell.qml so the bar's
 // layout plumbing isn't buried under every module's own logic.
 //
@@ -42,7 +42,7 @@ Item {
         visualizer: vizFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn,
         failed: failedBtn, updates: updatesBtn, claude: claudeBtn,
-        desktop: desktopBtn })
+        cooling: coolingBtn, desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
     // distro/menu button conventionally lives.
@@ -749,6 +749,18 @@ Item {
         id: clock
         visible: Settings.widgetVisible("clock")
         screenScope: barModules.screenScope
+    }
+
+    // Temperatures and fans, desktops only (services/Cooling.qml). A plain
+    // icon like Bluetooth's; it only turns the alert colour when the CPU or
+    // GPU runs hot.
+    BarModule {
+        id: coolingBtn
+        visible: Cooling.available
+        icon: "󰈐"
+        iconColor: Cooling.hottest >= Cooling.hotC ? Theme.alert : "transparent"
+        active: screenScope.openFlyout === "cooling"
+        onActivated: screenScope.toggleFlyout("cooling", coolingBtn)
     }
 
     BarModule {
