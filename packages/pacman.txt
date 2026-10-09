@@ -85,6 +85,12 @@ gvfs
 gvfs-mtp
 tumbler
 ffmpegthumbnailer
+# tumbler's thumbnailers for PDF, office, EPUB and RAW files: optional
+# deps, so without these Thunar shows plain icons for them
+poppler-glib
+libgsf
+libgepub
+libopenraw
 xarchiver
 
 # notifications + secrets
