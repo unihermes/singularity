@@ -120,7 +120,7 @@ SettingsPage {
     // configures it by itself and there is nothing here to switch
     HeadCard {
         visible: Network.wiredDevice !== ""
-        glyph: "󰈀"
+        glyph: "󰛳"
         glyphColor: Network.wired ? Theme.textStrong : Theme.muted
         title: Network.wired ? "Ethernet connected"
             : Network.wiredState === "no-carrier" || Network.wiredState === "off" ? "Ethernet unplugged"

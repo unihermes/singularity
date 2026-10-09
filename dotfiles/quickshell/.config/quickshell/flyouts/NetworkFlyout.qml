@@ -69,7 +69,7 @@ FlyoutPanel {
     // goes to its details in Settings
     FlyoutAction {
         visible: netFlyout.pendingSsid === "" && Network.wiredDevice !== ""
-        icon: "󰈀"
+        icon: "󰛳"
         label: "Ethernet"
         status: (Network.wired ? "Connected"
             : Network.wiredState === "no-carrier" || Network.wiredState === "off" ? "Unplugged"

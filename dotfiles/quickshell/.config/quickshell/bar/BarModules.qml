@@ -768,7 +768,7 @@ Item {
         // arcs: its neighbours (volume, battery, power) are all
         // solid, and the thin one read as a different weight.
         // A cable that's up wins: it's the route out when both are.
-        icon: Network.wired ? "󰈀" : Network.ssid !== "" ? "󰤨" : "󰤮"
+        icon: Network.wired ? "󰛳" : Network.ssid !== "" ? "󰤨" : "󰤮"
         active: screenScope.openFlyout === "network"
         dimmed: !Network.wired && Network.ssid === ""
         onActivated: {
