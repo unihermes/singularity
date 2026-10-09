@@ -33,7 +33,7 @@ hl.on("hyprland.start", function()
     -- Lifts the shadows on displays that show them darker than the others
     -- (display-curve.c), by model, so it follows the display between ports
     -- and machines. Lower lifts more.
-    hl.exec_cmd("exec ~/.config/hypr/display-curve 'DELL P2418HZm=0.6' > ~/.cache/display-curve.log 2>&1")
+    hl.exec_cmd("exec ~/.config/hypr/display-curve 'DELL P2418HZm=0.7' > ~/.cache/display-curve.log 2>&1")
     -- env alone does not retheme the cursor Hyprland draws over the desktop
     hl.exec_cmd("hyprctl setcursor " .. S.cursorTheme .. " " .. S.cursorSize)
     -- the saved wallpaper, or a random one from wallpapers/ when shuffle is on
