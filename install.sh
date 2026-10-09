@@ -49,11 +49,12 @@ fi
 log "installing AUR packages"
 # Not --noconfirm: you want to see the PKGBUILD diffs before anything builds.
 # --answerclean None only skips the "rebuild from scratch?" prompt; diffs and
-# the install confirmation still stop for you.
+# the install confirmation still stop for you. --sudoloop keeps sudo from
+# timing out and asking again partway through a long build.
 aur_failed=0
 read_list aur_pkgs packages/aur.txt
 if (( ${#aur_pkgs[@]} > 0 )); then
-  yay -S --needed --answerclean None "${aur_pkgs[@]}" || aur_failed=1
+  yay -S --needed --sudoloop --answerclean None "${aur_pkgs[@]}" || aur_failed=1
 fi
 # An AUR build breaking should not stop dotfiles and services from being set
 # up. It gets reported again at the end so it cannot be missed.
@@ -159,34 +160,197 @@ if settings.get("theme", "dark") == "dark":
     os.replace(path + ".new", path)
 PY
 
-# --- boot verbosity ------------------------------------------------------
-# Quiet by default: no kernel or unit output on startup or shutdown. Set
-# BOOT_VERBOSE=1 to get systemd's [ OK ] lines back, which is worth doing when
-# a boot hangs and you need to see which unit it hung on:
-#
-#   BOOT_VERBOSE=1 ./install.sh
+# LibreOffice set up to feel like Word: the ribbon (Tabbed) in every app,
+# .docx/.xlsx/.pptx as the save formats, a Normal.ott default template with
+# Word's styles in Carlito (Calibri's metric twin), and Zotero's add-in.
+# Everything lands in the user profile, so any of it can be changed back in
+# LibreOffice afterwards. Done once: a profile that already has the template
+# is left alone.
+setup_libreoffice() {
+  local user="$HOME/.config/libreoffice/4/user" work oxt
+  command -v soffice &>/dev/null || return 0
+  [[ -e $user/template/Normal.ott ]] && return 0
+  if pgrep -x soffice.bin &>/dev/null; then
+    warn "LibreOffice is open, so it was left as it is. Close it and rerun ./install.sh"
+    return 0
+  fi
+  log "setting LibreOffice up like Word"
+  work=$(mktemp -d)
+
+  # The template, written flat and converted. Word's Normal: 11 pt, 1.08 line
+  # spacing, 8 pt after; headings in its blue, each followed by Normal; Letter
+  # with 1 in margins and tab stops every half inch.
+  cat > "$work/Normal.fodt" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+ xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+ office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.text">
+ <office:font-face-decls>
+  <style:font-face style:name="Carlito" svg:font-family="Carlito" style:font-family-generic="swiss" style:font-pitch="variable"/>
+ </office:font-face-decls>
+ <office:styles>
+  <style:default-style style:family="paragraph">
+   <style:paragraph-properties style:tab-stop-distance="0.5in" fo:hyphenation-ladder-count="no-limit" style:writing-mode="page"/>
+   <style:text-properties style:font-name="Carlito" fo:font-size="11pt" fo:language="en" fo:country="US" fo:hyphenate="false"
+    style:font-name-asian="Carlito" style:font-size-asian="11pt" style:font-name-complex="Carlito" style:font-size-complex="11pt"/>
+  </style:default-style>
+  <style:style style:name="Standard" style:family="paragraph" style:class="text">
+   <style:paragraph-properties fo:margin-top="0pt" fo:margin-bottom="8pt" fo:line-height="108%" fo:orphans="2" fo:widows="2"/>
+  </style:style>
+  <style:style style:name="Text_20_body" style:display-name="Text Body" style:family="paragraph" style:parent-style-name="Standard" style:class="text"/>
+  <style:style style:name="Heading" style:family="paragraph" style:parent-style-name="Standard" style:next-style-name="Standard" style:class="text">
+   <style:paragraph-properties fo:margin-bottom="0pt" fo:keep-with-next="always"/>
+   <style:text-properties fo:color="#2f5496" style:font-name="Carlito" style:font-name-asian="Carlito" style:font-name-complex="Carlito"/>
+  </style:style>
+  <style:style style:name="Heading_20_1" style:display-name="Heading 1" style:family="paragraph" style:parent-style-name="Heading" style:next-style-name="Standard" style:default-outline-level="1" style:class="text">
+   <style:paragraph-properties fo:margin-top="12pt"/>
+   <style:text-properties fo:font-size="16pt" fo:font-weight="normal" style:font-size-asian="16pt" style:font-weight-asian="normal" style:font-size-complex="16pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="Heading_20_2" style:display-name="Heading 2" style:family="paragraph" style:parent-style-name="Heading" style:next-style-name="Standard" style:default-outline-level="2" style:class="text">
+   <style:paragraph-properties fo:margin-top="2pt"/>
+   <style:text-properties fo:font-size="13pt" fo:font-weight="normal" style:font-size-asian="13pt" style:font-weight-asian="normal" style:font-size-complex="13pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="Heading_20_3" style:display-name="Heading 3" style:family="paragraph" style:parent-style-name="Heading" style:next-style-name="Standard" style:default-outline-level="3" style:class="text">
+   <style:paragraph-properties fo:margin-top="2pt"/>
+   <style:text-properties fo:color="#1f3763" fo:font-size="12pt" fo:font-weight="normal" style:font-size-asian="12pt" style:font-weight-asian="normal" style:font-size-complex="12pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="Title" style:family="paragraph" style:parent-style-name="Standard" style:next-style-name="Standard" style:class="chapter">
+   <style:paragraph-properties fo:margin-bottom="0pt" fo:line-height="100%" fo:text-align="start"/>
+   <style:text-properties fo:font-size="28pt" fo:letter-spacing="-0.5pt" style:font-size-asian="28pt" style:font-size-complex="28pt"/>
+  </style:style>
+  <style:style style:name="Subtitle" style:family="paragraph" style:parent-style-name="Standard" style:next-style-name="Standard" style:class="chapter">
+   <style:paragraph-properties fo:margin-top="0pt" fo:text-align="start"/>
+   <style:text-properties fo:color="#595959" fo:letter-spacing="0.75pt" style:font-size-asian="11pt" style:font-size-complex="11pt"/>
+  </style:style>
+ </office:styles>
+ <office:automatic-styles>
+  <style:page-layout style:name="pm1">
+   <style:page-layout-properties fo:page-width="8.5in" fo:page-height="11in" style:print-orientation="portrait"
+    fo:margin-top="1in" fo:margin-bottom="1in" fo:margin-left="1in" fo:margin-right="1in"/>
+  </style:page-layout>
+ </office:automatic-styles>
+ <office:master-styles>
+  <style:master-page style:name="Standard" style:page-layout-name="pm1"/>
+ </office:master-styles>
+ <office:body>
+  <office:text>
+   <text:p text:style-name="Standard"/>
+  </office:text>
+ </office:body>
+</office:document>
+EOF
+
+  # A headless run also creates the profile on a machine where LibreOffice
+  # has never opened, so the registry below has a file to go into.
+  mkdir -p "$user/template"
+  if ! soffice --headless --infilter="OpenDocument Text Flat XML" --convert-to ott:writer8_template \
+      --outdir "$user/template" "$work/Normal.fodt" >/dev/null 2>&1; then
+    rm -rf -- "$work"
+    warn "LibreOffice could not write the Normal template, so it was left as it is"
+    return 0
+  fi
+  rm -rf -- "$work"
+
+  python3 -I - "$user/registrymodifications.xcu" <<'EOF'
+import sys
+
+TABBED = "notebookbar.ui"
+MODES = "/org.openoffice.Office.UI.ToolbarMode"
+FACTORY = "/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Factory['{}']"
+
+settings = [
+    (MODES, f"Active{app}", TABBED) for app in ("Writer", "Calc", "Impress", "Draw")
+] + [
+    (f"{MODES}/Applications/org.openoffice.Office.UI.ToolbarMode:Application['{app}']", "Active", TABBED)
+    for app in ("Writer", "Calc", "Impress", "Draw")
+] + [
+    (f"{MODES}/Applications/org.openoffice.Office.UI.ToolbarMode:Application['{app}']"
+     "/Modes/org.openoffice.Office.UI.ToolbarMode:ModeEntry['Tabbed']", "HasMenubar", "false")
+    for app in ("Writer", "Calc", "Impress", "Draw")
+] + [
+    (FACTORY.format("com.sun.star.text.TextDocument"), "ooSetupFactoryDefaultFilter", "MS Word 2007 XML"),
+    (FACTORY.format("com.sun.star.sheet.SpreadsheetDocument"), "ooSetupFactoryDefaultFilter", "Calc MS Excel 2007 XML"),
+    (FACTORY.format("com.sun.star.presentation.PresentationDocument"), "ooSetupFactoryDefaultFilter", "Impress MS PowerPoint 2007 XML"),
+    (FACTORY.format("com.sun.star.text.TextDocument"), "ooSetupFactoryTemplateFile", "$(user)/template/Normal.ott"),
+    ("/org.openoffice.Office.Common/Save/Document", "WarnAlienFormat", "false"),
+    # Fonts for documents that don't come from the template (HTML, plain text).
+    *[("/org.openoffice.Office.Writer/DefaultFont", f, "Carlito")
+      for f in ("Standard", "Heading", "List", "Caption", "Index")],
+]
+
+path = sys.argv[1]
+try:
+    lines = open(path, encoding="utf-8").read().splitlines()
+except FileNotFoundError:
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<oor:items xmlns:oor="http://openoffice.org/2001/registry" '
+             'xmlns:xs="http://www.w3.org/2001/XMLSchema" '
+             'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">',
+             '</oor:items>']
+
+keys = {f'<item oor:path="{p}"><prop oor:name="{n}"' for p, n, _ in settings}
+lines = [l for l in lines if not any(l.startswith(k) for k in keys)]
+end = lines.index("</oor:items>")
+lines[end:end] = [
+    f'<item oor:path="{p}"><prop oor:name="{n}" oor:op="fuse"><value>{v}</value></prop></item>'
+    for p, n, v in settings
+]
+open(path, "w", encoding="utf-8").write("\n".join(lines) + "\n")
+EOF
+
+  # Zotero's add-in ships inside Zotero. Without Zotero now, install it later
+  # from Zotero's Settings › Cite › Word Processors.
+  oxt=$(compgen -G "/usr/lib/zotero*/integration/libreoffice/Zotero_LibreOffice_Integration.oxt" | head -n1 || true)
+  if [[ -n $oxt ]]; then
+    unopkg add --force --suppress-license "$oxt" &>/dev/null ||
+      warn "could not add Zotero's LibreOffice add-in -- add it from Zotero's Settings › Cite"
+  fi
+}
+setup_libreoffice
+
+# --- kernel command line -------------------------------------------------
+# Where it lives depends on the boot loader: a unified kernel image bakes in
+# /etc/kernel/cmdline, systemd-boot reads the options line of each loader
+# entry, and GRUB builds grub.cfg from GRUB_CMDLINE_LINUX_DEFAULT. Every
+# change below goes through edit_cmdline, and the image or grub.cfg is
+# rebuilt once, at the end of the boot section.
 #
 # Every file touched is backed up first. A malformed options line -- a lost
-# root= UUID above all -- is an unbootable machine, and systemd-boot will not
-# tell you why.
-BOOT_VERBOSE=${BOOT_VERBOSE:-0}
+# root= UUID above all -- is an unbootable machine, and the boot loader will
+# not tell you why.
+cmdline_mode="" cmdline_files=()
+if [[ -f /etc/kernel/cmdline ]]; then
+  cmdline_mode=plain cmdline_files=(/etc/kernel/cmdline)
+elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
+  cmdline_mode=options
+  mapfile -t cmdline_files < <(grep -l '^options' /boot/loader/entries/*.conf || true)
+elif [[ -f /etc/default/grub ]] && command -v grub-mkconfig &>/dev/null; then
+  cmdline_mode=grub cmdline_files=(/etc/default/grub)
+else
+  warn "no systemd-boot entry, /etc/kernel/cmdline or GRUB config found, leaving the kernel command line alone"
+fi
+cmdline_changed=0
+rebuild_initramfs=0
 
 # Puts the rewritten cmdline in $1 over $2, and only when it holds different
-# options: a rerun that changes nothing then doesn't rebuild the initramfs.
-# Compared as a sorted set of words, since the verbosity knobs are always
-# re-appended at the end and would otherwise trade places with every token
-# added after them. Never an empty or truncated one either -- that is an
-# unbootable machine. Returns 0 only when it wrote, which is what the
-# unified-kernel-image callers rebuild on; the loader-entry callers add
-# `|| true`, so set -e doesn't end the run over a file left as it was.
-words() { tr -s ' \t' '\n\n' < "$1" | sort; }
+# options: a rerun that changes nothing then rebuilds nothing. Compared as a
+# sorted set of words, since edit_cmdline always re-appends at the end and the
+# tokens would otherwise trade places on every run. Never an empty or
+# truncated one either -- that is an unbootable machine. GRUB's defaults have
+# no root= (grub-mkconfig adds it), so that check is for the other two, and
+# its quoted variable is unwrapped so the first token compares like the rest.
+words() { sed -E 's/^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"$/\1/' "$1" | tr -s ' \t' '\n\n' | sort; }
 install_cmdline() {
   local tmp=$1 f=$2
   if [[ $(words "$tmp") == "$(words "$f")" ]]; then
     rm -f "$tmp"
     return 1
   fi
-  if [[ -s $tmp ]] && grep -q 'root=' "$tmp"; then
+  if [[ -s $tmp ]] && { [[ $cmdline_mode == grub ]] || grep -q 'root=' "$tmp"; }; then
+    [[ -f $f.singularity.bak ]] || sudo cp "$f" "$f.singularity.bak"
     sudo cp "$tmp" "$f"
     rm -f "$tmp"
     return 0
@@ -196,91 +360,61 @@ install_cmdline() {
   return 1
 }
 
-set_boot_verbosity() {
-  local f=$1 mode=$2 want=$3 tmp
-  [[ -f $f ]] || return 1
-  [[ -f $f.singularity.bak ]] || sudo cp "$f" "$f.singularity.bak"
-  tmp=$(mktemp)
-  # Filter the cmdline token by token rather than substituting patterns out of
-  # it. Adjacent options share the space between them, so a global s/// can
-  # only ever delete every other one: `quiet loglevel=3 splash` loses quiet and
-  # splash and keeps loglevel.
-  awk -v mode="$mode" -v want="$want" '
-    function clean(s,   i, n, a, out) {
-      n = split(s, a, /[ \t]+/)
-      out = ""
-      for (i = 1; i <= n; i++) {
-        if (a[i] == "") continue
-        # drop every verbosity knob, then add back the ones we want
-        if (a[i] ~ /^(quiet|splash|loglevel=[0-9]|rd\.udev\.log_level=[0-9])$/) continue
-        if (a[i] ~ /^(rd\.)?systemd\.show_status=/) continue
-        out = out (out == "" ? "" : " ") a[i]
+# edit_cmdline KEY TOKENS -- drop every KEY= token, or with an empty KEY every
+# verbosity knob, and append TOKENS, leaving every other token untouched.
+# Filtered token by token rather than substituting patterns out: adjacent
+# options share the space between them, so a global s/// can only ever
+# delete every other one (`quiet loglevel=3 splash` loses quiet and splash
+# and keeps loglevel).
+edit_cmdline() {
+  local key=$1 add=$2 f tmp
+  for f in "${cmdline_files[@]}"; do
+    tmp=$(mktemp)
+    awk -v mode="$cmdline_mode" -v key="$key" -v add="$add" '
+      function edit(s,   i, n, a, out) {
+        n = split(s, a, /[ \t]+/)
+        out = ""
+        for (i = 1; i <= n; i++) {
+          if (a[i] == "") continue
+          if (key != "" && index(a[i], key "=") == 1) continue
+          if (key == "" && a[i] ~ /^(quiet|splash|loglevel=[0-9]|rd\.udev\.log_level=[0-9]|(rd\.)?systemd\.show_status=.*)$/) continue
+          out = out (out == "" ? "" : " ") a[i]
+        }
+        return out (out == "" ? "" : " ") add
       }
-      if (want == "verbose")
-        return out " systemd.show_status=1"
-      return out " quiet loglevel=3 rd.udev.log_level=3 systemd.show_status=false"
-    }
-    mode == "options" && /^[[:space:]]*options[[:space:]]/ {
-      sub(/^[[:space:]]*options[[:space:]]+/, "")
-      print "options " clean($0)
-      next
-    }
-    mode == "plain" && NF { print clean($0); next }
-    { print }
-  ' "$f" > "$tmp"
-  install_cmdline "$tmp" "$f"
+      mode == "options" && /^[[:space:]]*options[[:space:]]/ {
+        sub(/^[[:space:]]*options[[:space:]]+/, "")
+        print "options " edit($0)
+        next
+      }
+      mode == "plain" && NF { print edit($0); next }
+      mode == "grub" && /^GRUB_CMDLINE_LINUX_DEFAULT=/ {
+        sub(/^GRUB_CMDLINE_LINUX_DEFAULT=/, "")
+        gsub(/^["\047]|["\047]$/, "")
+        print "GRUB_CMDLINE_LINUX_DEFAULT=\"" edit($0) "\""
+        next
+      }
+      { print }
+    ' "$f" > "$tmp"
+    install_cmdline "$tmp" "$f" && cmdline_changed=1
+  done
+  return 0
 }
 
+# --- boot verbosity ------------------------------------------------------
+# Quiet by default: no kernel or unit output on startup or shutdown. Set
+# BOOT_VERBOSE=1 to get systemd's [ OK ] lines back, which is worth doing when
+# a boot hangs and you need to see which unit it hung on:
+#
+#   BOOT_VERBOSE=1 ./install.sh
+BOOT_VERBOSE=${BOOT_VERBOSE:-0}
 if (( BOOT_VERBOSE )); then
   log "making the boot verbose"
-  boot_want=verbose
+  edit_cmdline "" "systemd.show_status=1"
 else
   log "making the boot quiet"
-  boot_want=quiet
+  edit_cmdline "" "quiet loglevel=3 rd.udev.log_level=3 systemd.show_status=false"
 fi
-
-if [[ -f /etc/kernel/cmdline ]]; then
-  # Unified kernel image: the cmdline is baked in, so editing the file alone
-  # changes nothing until the image is rebuilt.
-  set_boot_verbosity /etc/kernel/cmdline plain "$boot_want" && sudo mkinitcpio -P
-elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
-  for entry in /boot/loader/entries/*.conf; do
-    grep -q '^options' "$entry" && set_boot_verbosity "$entry" options "$boot_want" || true
-  done
-else
-  warn "no systemd-boot entry or /etc/kernel/cmdline found, leaving boot alone"
-fi
-
-# set_cmdline_token FILE MODE KEY VALUE -- replace (or append) a single
-# key=value kernel cmdline token, leaving every other token untouched.
-# Adjacent options share the space between them, so a global s/// can only
-# ever delete every other one; splitting into tokens first avoids that.
-set_cmdline_token() {
-  local f=$1 mode=$2 key=$3 value=$4 tmp
-  [[ -f $f ]] || return 1
-  grep -Eq "(^|[[:space:]])${key}=${value}([[:space:]]|\$)" "$f" && return 1
-  [[ -f $f.singularity.bak ]] || sudo cp "$f" "$f.singularity.bak"
-  tmp=$(mktemp)
-  awk -v mode="$mode" -v key="$key" -v value="$value" '
-    function fix(s,   i, n, a, out) {
-      n = split(s, a, /[ \t]+/)
-      out = ""
-      for (i = 1; i <= n; i++) {
-        if (a[i] == "" || a[i] ~ ("^" key "=")) continue
-        out = out (out == "" ? "" : " ") a[i]
-      }
-      return out " " key "=" value
-    }
-    mode == "options" && /^[[:space:]]*options[[:space:]]/ {
-      sub(/^[[:space:]]*options[[:space:]]+/, "")
-      print "options " fix($0)
-      next
-    }
-    mode == "plain" && NF { print fix($0); next }
-    { print }
-  ' "$f" > "$tmp"
-  install_cmdline "$tmp" "$f"
-}
 
 # The IPU6 webcam's sensor never satisfies its firmware dependency (missing
 # fwnode graph endpoint), so the kernel spends its default ~10s deferred-probe
@@ -304,18 +438,9 @@ set_cmdline_token() {
 # every module's init ends in async_synchronize_full(), which waits on all
 # outstanding async probes system-wide. It doesn't help the webcam controller
 # below, which is why that one is blacklisted instead.)
-for kv in "deferred_probe_timeout=1" "driver_async_probe=intel_ish_ipc"; do
-  key=${kv%%=*}; value=${kv#*=}
-  if [[ -f /etc/kernel/cmdline ]]; then
-    log "setting kernel cmdline: $kv"
-    set_cmdline_token /etc/kernel/cmdline plain "$key" "$value" && sudo mkinitcpio -P
-  elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
-    log "setting kernel cmdline: $kv"
-    for entry in /boot/loader/entries/*.conf; do
-      grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value" || true
-    done
-  fi
-done
+# Both are harmless on hardware without these devices.
+edit_cmdline deferred_probe_timeout "deferred_probe_timeout=1"
+edit_cmdline driver_async_probe "driver_async_probe=intel_ish_ipc"
 
 # --- boot speed ----------------------------------------------------------
 # /boot (the ESP) is vfat, and vfat is a module. With the webcam enabled, the
@@ -328,8 +453,7 @@ done
 # mac_hid, mousedev and joydev are autoloaded for every pointer device and hit
 # the same module-loading queue, so preloading them from the initramfs saves
 # a little of that same stall. (The cursor freeze itself turned out to be a
-# separate logind race -- see the deferred-probe fix below.)
-log "loading vfat and input modules from the initramfs"
+# separate logind race -- see the deferred-probe fix above.)
 mkconf=/etc/mkinitcpio.conf
 early_modules=(vfat mac_hid mousedev joydev)
 if [[ -f $mkconf ]]; then
@@ -338,13 +462,14 @@ if [[ -f $mkconf ]]; then
     grep -Eq "^MODULES=\(.*\<$m\>" "$mkconf" || missing+=("$m")
   done
   if (( ${#missing[@]} )); then
+    log "loading ${missing[*]} from the initramfs"
     [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
     if grep -q '^MODULES=(' "$mkconf"; then
       sudo sed -i -E "s/^MODULES=\(([^)]*)\)/MODULES=(\1 ${missing[*]})/; s/^MODULES=\( /MODULES=(/" "$mkconf"
     else
       echo "MODULES=(${missing[*]})" | sudo tee -a "$mkconf" >/dev/null
     fi
-    sudo mkinitcpio -P
+    rebuild_initramfs=1
   fi
 fi
 
@@ -358,7 +483,7 @@ psrconf=/etc/modprobe.d/singularity-i915.conf
 if ! grep -qs 'enable_psr=0' "$psrconf"; then
   log "disabling i915 panel self refresh"
   echo 'options i915 enable_psr=0' | sudo tee "$psrconf" >/dev/null
-  sudo mkinitcpio -P
+  rebuild_initramfs=1
 fi
 
 # --- webcam (off) --------------------------------------------------------
@@ -372,7 +497,7 @@ vscmods=(mei_vsc ivsc_csi ivsc_ace intel_ipu6 ov01a10)
 if [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
   log "switching the webcam off"
   printf 'blacklist %s\n' "${vscmods[@]}" | sudo tee "$vscconf" >/dev/null
-  sudo mkinitcpio -P
+  rebuild_initramfs=1
 fi
 
 # --- hibernation ---------------------------------------------------------
@@ -387,49 +512,68 @@ fi
 # swapfile is found by its filesystem's UUID plus the physical offset of its
 # first block, so the offset is re-read every run -- recreating the file
 # moves it, and a stale offset means a normal boot instead of a resume.
-swapfile=/swapfile
-ram_gib=$(awk '/^MemTotal:/ { print int($2 / 1048576) + 1 }' /proc/meminfo)
-if [[ ! -f $swapfile ]]; then
-  log "creating a ${ram_gib}G swapfile for hibernation"
-  sudo mkswap -U clear --size "${ram_gib}G" --file "$swapfile" >/dev/null
-fi
-if ! grep -Eq "^$swapfile[[:space:]]" /etc/fstab; then
-  [[ -f /etc/fstab.singularity.bak ]] || sudo cp /etc/fstab /etc/fstab.singularity.bak
-  printf '%s none swap defaults 0 0\n' "$swapfile" | sudo tee -a /etc/fstab >/dev/null
-fi
-swapon --show=NAME --noheadings | grep -qx "$swapfile" || sudo swapon "$swapfile"
-
-if [[ -f $mkconf ]] && ! grep -Eq '^HOOKS=\(.*\<resume\>' "$mkconf"; then
-  log "adding the resume hook to the initramfs"
-  [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
-  # after filesystems and before fsck: the image has to be read back before
-  # anything checks or mounts the disk it came from
-  if grep -Eq '^HOOKS=\(.*\<fsck\>' "$mkconf"; then
-    sudo sed -i -E '/^HOOKS=/ s/\<fsck\>/resume fsck/' "$mkconf"
-  else
-    sudo sed -i -E '/^HOOKS=/ s/\)/ resume)/' "$mkconf"
+#
+# Any step failing (no room on the disk, a snapshotted btrfs subvolume, ...)
+# only costs hibernation, so it warns and the install carries on.
+setup_hibernation() {
+  local swapfile=/swapfile fstype ram_gib uuid offset
+  fstype=$(findmnt -no FSTYPE -T /)
+  ram_gib=$(awk '/^MemTotal:/ { print int($2 / 1048576) + 1 }' /proc/meminfo)
+  if [[ ! -f $swapfile ]]; then
+    log "creating a ${ram_gib}G swapfile for hibernation"
+    # btrfs needs the file NOCOW and in one extent, which its own tool does
+    if [[ $fstype == btrfs ]]; then
+      sudo btrfs filesystem mkswapfile --size "${ram_gib}G" --uuid clear "$swapfile" >/dev/null
+    else
+      sudo mkswap -U clear --size "${ram_gib}G" --file "$swapfile" >/dev/null
+    fi || { sudo rm -f "$swapfile"; return 1; }
   fi
-  sudo mkinitcpio -P
-fi
+  # into fstab only once it has been seen to work, or every boot fails a unit
+  swapon --show=NAME --noheadings | grep -qx "$swapfile" || sudo swapon "$swapfile" || return 1
+  if ! grep -Eq "^$swapfile[[:space:]]" /etc/fstab; then
+    [[ -f /etc/fstab.singularity.bak ]] || sudo cp /etc/fstab /etc/fstab.singularity.bak
+    printf '%s none swap defaults 0 0\n' "$swapfile" | sudo tee -a /etc/fstab >/dev/null
+  fi
 
-resume_uuid=$(findmnt -no UUID -T "$swapfile")
-resume_offset=$(sudo filefrag -v "$swapfile" | awk '$1 == "0:" { sub(/\.\.$/, "", $4); print $4; exit }')
-if [[ -n $resume_uuid && -n $resume_offset ]]; then
-  for kv in "resume=UUID=$resume_uuid" "resume_offset=$resume_offset"; do
-    key=${kv%%=*}; value=${kv#*=}
-    if [[ -f /etc/kernel/cmdline ]]; then
-      grep -Eq "(^|[[:space:]])$kv([[:space:]]|\$)" /etc/kernel/cmdline && continue
-      log "setting kernel cmdline: $kv"
-      set_cmdline_token /etc/kernel/cmdline plain "$key" "$value" && sudo mkinitcpio -P
-    elif compgen -G "/boot/loader/entries/*.conf" >/dev/null; then
-      log "setting kernel cmdline: $kv"
-      for entry in /boot/loader/entries/*.conf; do
-        grep -q '^options' "$entry" && set_cmdline_token "$entry" options "$key" "$value" || true
-      done
+  # With the systemd hook, systemd-hibernate-resume does this job itself and
+  # the busybox-only resume hook has nothing to add.
+  if [[ -f $mkconf ]] && ! grep -Eq '^HOOKS=\(.*\<(resume|systemd)\>' "$mkconf"; then
+    log "adding the resume hook to the initramfs"
+    [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
+    # after filesystems and before fsck: the image has to be read back before
+    # anything checks or mounts the disk it came from
+    if grep -Eq '^HOOKS=\(.*\<fsck\>' "$mkconf"; then
+      sudo sed -i -E '/^HOOKS=/ s/\<fsck\>/resume fsck/' "$mkconf"
+    else
+      sudo sed -i -E '/^HOOKS=/ s/\)/ resume)/' "$mkconf"
     fi
-  done
-else
-  warn "couldn't locate $swapfile on disk, hibernation won't resume"
+    rebuild_initramfs=1
+  fi
+
+  uuid=$(findmnt -no UUID -T "$swapfile")
+  # filefrag's physical offset is wrong on btrfs, whose own tool gives the
+  # one resume_offset wants
+  if [[ $fstype == btrfs ]]; then
+    offset=$(sudo btrfs inspect-internal map-swapfile -r "$swapfile" 2>/dev/null || true)
+  else
+    offset=$(sudo filefrag -v "$swapfile" 2>/dev/null | awk '$1 == "0:" { sub(/\.\.$/, "", $4); print $4; exit }' || true)
+  fi
+  [[ -n $uuid && -n $offset ]] || return 1
+  edit_cmdline resume "resume=UUID=$uuid"
+  edit_cmdline resume_offset "resume_offset=$offset"
+}
+setup_hibernation || warn "couldn't set up the hibernation swapfile, so hibernation won't resume"
+
+# Everything above that changed what the boot reads, applied once.
+if (( cmdline_changed )); then
+  case $cmdline_mode in
+    plain) rebuild_initramfs=1 ;;
+    grub)  log "regenerating grub.cfg"; sudo grub-mkconfig -o /boot/grub/grub.cfg ;;
+  esac
+fi
+if (( rebuild_initramfs )); then
+  log "rebuilding the initramfs"
+  sudo mkinitcpio -P
 fi
 
 # How long a closed lid's suspend lasts before it hibernates. lid.sh suspends
@@ -610,6 +754,8 @@ if [[ ! -L /etc/resolv.conf ]]; then
   [[ -f /etc/resolv.conf ]] && sudo cp /etc/resolv.conf /etc/resolv.conf.singularity.bak
   sudo ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 fi
+# The user units linked from dotfiles/systemd are new to the user manager.
+systemctl --user daemon-reload || true
 systemctl --user enable --now pipewire pipewire-pulse wireplumber ||
   warn "could not enable the pipewire user units"
 
@@ -681,14 +827,16 @@ fi
 # cat` shows the reasoning next to the unit.
 if command -v bt-agent &>/dev/null; then
   log "enabling the bluetooth pairing agent"
-  systemctl --user enable --now bt-agent.service
+  systemctl --user enable --now bt-agent.service ||
+    warn "could not enable the bluetooth pairing agent"
 fi
 
 # See the unit's own comment: rfkill, volume and brightness already survive a
 # reboot on their own (systemd-rfkill, wireplumber, systemd-backlight); this
 # is the missing piece for Bluetooth's own adapter power.
 log "enabling Bluetooth power state restore"
-systemctl --user enable --now bt-power-restore.service
+systemctl --user enable --now bt-power-restore.service ||
+  warn "could not enable Bluetooth power state restore"
 
 
 # iwd is Type=dbus, so systemd waits for it to claim its bus name before

@@ -60,7 +60,7 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 ## Requirements
 
 - Arch Linux, installed with the archinstall **Minimal** profile (or any Arch
-  system with `sudo`)
+  system with `sudo`), booting with systemd-boot or GRUB on ext4 or btrfs
 - An internet connection during the install
 - Your own user account; `install.sh` refuses to run as root
 
@@ -88,10 +88,13 @@ finishes and pick **Hyprland** in the greeter.
 3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`
 4. Links `dotfiles/` into `$HOME` with GNU stow (`link.sh`) and builds the
    `alttab-relay` helper
-5. Rebuilds font and icon caches, makes Thunar the folder handler, and quiets
-   the kernel command line
-6. Applies the boot fixes: vfat in the initramfs, iwd no longer blocking the
-   greeter, the webcam stack switched off, unused TPM setup masked
+5. Rebuilds font and icon caches, sets the default apps, and sets
+   LibreOffice up like Word (ribbon, Office formats, a Word-like template)
+6. Quiets the kernel command line (systemd-boot, a unified kernel image or
+   GRUB), sets up a hibernation swapfile, and applies the boot fixes: vfat in
+   the initramfs, iwd no longer blocking the greeter, the webcam stack
+   switched off, unused TPM setup masked. The initramfs is rebuilt once, at
+   the end
 7. Enables iwd, systemd-networkd and -resolved, PipeWire, Bluetooth (with its
    pairing agent and power restore), power-profiles-daemon, the AC-power
    profile switch, and the `ly` greeter
@@ -265,7 +268,6 @@ singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
-├── migrations/             # one-off fixes for older setups, run once by link.sh
 ├── packages/               # pacman.txt and aur.txt, one package per line
 ├── wallpapers/
 ├── tools/                  # checks run by the pre-commit hook and CI
@@ -361,8 +363,10 @@ show where boot time goes.
 - **Networking is iwd + systemd-networkd + resolved**, not NetworkManager.
   Connect from the bar or `iwctl station wlan0 connect <SSID>`.
 - **Hibernation** needs a disk swapfile (zram can't hold the image), so
-  `install.sh` creates a RAM-sized `/swapfile`, adds the `resume` hook and
-  sets `resume=`/`resume_offset=`. The image is capped at 4 GB so resuming
+  `install.sh` creates a RAM-sized `/swapfile`, adds the `resume` hook (not
+  needed with a systemd initramfs) and sets `resume=`/`resume_offset=`. If
+  the swapfile can't be made (too little disk, a snapshotted btrfs
+  subvolume), the install carries on without hibernation. The image is capped at 4 GB so resuming
   doesn't decompress gigabytes of page cache single-threaded. Recreating the
   swapfile moves it; rerun `install.sh` afterwards.
 - **State that survives a reboot**: rfkill, volume and brightness persist on

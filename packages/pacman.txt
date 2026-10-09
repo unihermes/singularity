@@ -184,7 +184,7 @@ xdg-utils
 
 # apps
 obsidian
-# office suite, set up to feel like Word by migrations/005-libreoffice-word.sh.
+# office suite, set up to feel like Word by install.sh.
 # Carlito and Caladea have Calibri's and Cambria's metrics, so .docx files
 # keep their line breaks. Zotero's LibreOffice add-in runs on Java.
 libreoffice-still

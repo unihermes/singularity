@@ -76,26 +76,6 @@ backup_conflicts() {
 
 backup_conflicts
 
-# One-off fixes for machines set up by an older Singularity, in
-# migrations/NNN-name.sh. Each newer than the stamped number runs once, in
-# order, in its own bash with $state, log and die; a fresh machine runs
-# them all, so each checks before it changes anything. Take the next number
-# for a new one and never renumber one that has shipped.
-state="$HOME/.local/state/singularity"
-stamp="$state/migration"
-done_n=$(cat "$stamp" 2>/dev/null || echo 0)
-export state
-export -f log die
-shopt -s nullglob
-for m in migrations/[0-9][0-9][0-9]-*.sh; do
-  n=$((10#${m:11:3}))
-  (( n > done_n )) || continue
-  bash -euo pipefail "$m" || die "migration $m failed"
-  mkdir -p "$state"
-  echo "$n" > "$stamp"
-  done_n=$n
-done
-
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
 
