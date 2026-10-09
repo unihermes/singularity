@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/BarModules.qml
 //
-// The bar's 21 modules (and the widgetItems registry shell.qml's Bar
+// The bar's 20 modules (and the widgetItems registry shell.qml's Bar
 // Widgets reordering keys off of), split out of shell.qml so the bar's
 // layout plumbing isn't buried under every module's own logic.
 //
@@ -42,7 +42,7 @@ Item {
         visualizer: vizFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn,
         failed: failedBtn, updates: updatesBtn, claude: claudeBtn,
-        cooling: coolingBtn, vms: vmsBtn, desktop: desktopBtn })
+        cooling: coolingBtn, desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
     // distro/menu button conventionally lives.
@@ -1086,16 +1086,6 @@ Item {
             FailedUnits.refresh()
             screenScope.toggleFlyout("failed", failedBtn)
         }
-    }
-
-    // while a libvirt VM runs in the session (services/VirtualMachines.qml)
-    BarModule {
-        id: vmsBtn
-        visible: VirtualMachines.active && Settings.widgetVisible("vms")
-        icon: "󰒋"
-        label: VirtualMachines.running.length > 1 ? String(VirtualMachines.running.length) : ""
-        active: screenScope.openFlyout === "vms"
-        onActivated: screenScope.toggleFlyout("vms", vmsBtn)
     }
 
     BarModule {

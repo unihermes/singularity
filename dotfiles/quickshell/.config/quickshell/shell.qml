@@ -784,9 +784,6 @@ ShellRoot {
         // failed units
         LazyFlyout { name: "failed"; scope: screenScope; FailedFlyout { scope: screenScope } }
 
-        // running virtual machines
-        LazyFlyout { name: "vms"; scope: screenScope; VirtualMachinesFlyout { scope: screenScope } }
-
         // updates
         LazyFlyout { name: "updates"; scope: screenScope; UpdatesFlyout { scope: screenScope } }
 

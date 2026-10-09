@@ -362,7 +362,7 @@ Singleton {
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "media", "clock", "weather"],
-        right:  ["privacy", "failed", "updates", "claude", "notifications", "vms", "tray",
+        right:  ["privacy", "failed", "updates", "claude", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
@@ -390,7 +390,6 @@ Singleton {
         updates:       { label: "Updates",        icon: "󰚰" },
         claude:        { label: "Claude",         icon: "󰚩" },
         cooling:       { label: "Cooling",        icon: "󰈐" },
-        vms:           { label: "Virtual Machines", icon: "󰒋" },
         desktop:       { label: "Show Desktop",   icon: "󰇄" },
     })
 

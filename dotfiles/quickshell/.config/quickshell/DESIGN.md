@@ -143,13 +143,6 @@ heading is that monitor's level. With one display it's a bare slider;
 with more, a labelled slider each (the model name, this bar's monitor
 first, the built-in panel last), then Night Light.
 
-### Virtual Machines
-
-Shows beside the tray only while a libvirt VM runs in the session, a
-count beside it when there's more than one. The flyout gives each VM
-Open window, Shut down (asks the guest; reads Shutting down… until it's
-gone) and Force off (two clicks), under the VM's name once there are two.
-
 ### Cooling
 
 Desktops only (`services/Cooling.qml`). The bar module is a plain fan icon,
