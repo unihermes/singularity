@@ -826,6 +826,39 @@ local function maximizeFocused()
 end
 
 hl.on("window.active", maximizeFocused)
+
+-- Focusing another window over a fullscreen one (ALT+Tab, the window strip,
+-- the overlay) takes it out of fullscreen, as Windows does with a
+-- fullscreen game. Left fullscreen it keeps the workspace's input: the
+-- window you picked is raised and focused but every click lands on the
+-- fullscreen one under it, and moving the pointer hands it the keyboard
+-- back. It goes fullscreen again when it's next focused. Only true
+-- fullscreen (2): a maximized window (1) is how dwindle mode fills, and
+-- maximizeFocused handles those.
+local function yieldFullscreen()
+    local win = hl.get_active_window()
+    if not win or not win.workspace then return end
+    local st = stateOf(win.address)
+    if st.yieldedFullscreen then
+        st.yieldedFullscreen = nil
+        if win.fullscreen == 0 then
+            hl.dispatch(hl.dsp.window.fullscreen({
+                mode = "fullscreen", action = "set", window = "address:" .. win.address }))
+        end
+        return
+    end
+    if win.fullscreen ~= 0 then return end
+    for _, w in ipairs(hl.get_windows()) do
+        if w.address ~= win.address and w.fullscreen == 2 and w.workspace
+                and w.workspace.id == win.workspace.id then
+            stateOf(w.address).yieldedFullscreen = true
+            hl.dispatch(hl.dsp.window.fullscreen({
+                mode = "fullscreen", action = "unset", window = "address:" .. w.address }))
+            hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+        end
+    end
+end
+hl.on("window.active", yieldFullscreen)
 -- and a floater resized by the mouse gets its border back, or loses it
 hl.on("window.active", function()
     local win = hl.get_active_window()
