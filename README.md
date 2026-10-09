@@ -105,7 +105,8 @@ finishes and pick **Hyprland** in the greeter.
    switched off. On the desktop it loads the NVIDIA driver from the
    initramfs and lets the motherboard fan driver (`it87`) load. The
    initramfs is rebuilt once, at the end
-7. Enables iwd, systemd-networkd and -resolved, PipeWire, Bluetooth (with its
+7. Enables iwd, systemd-networkd and -resolved (and disables NetworkManager
+   if archinstall turned it on), PipeWire, Bluetooth (with its
    pairing agent and power restore), power-profiles-daemon, the AC-power
    profile switch (laptop only), CoolerControl's daemon (desktop only), and
    the `ly` greeter
@@ -404,7 +405,9 @@ show where boot time goes.
 <summary>Networking, hibernation and other notes</summary>
 
 - **Networking is iwd + systemd-networkd + resolved**, not NetworkManager.
-  Connect from the bar or `iwctl station wlan0 connect <SSID>`.
+  Connect from the bar or `iwctl station wlan0 connect <SSID>`. If
+  archinstall enabled NetworkManager, `install.sh` disables it (two managers
+  give every port two addresses), so join your Wi-Fi again after the reboot.
 - **Hibernation** needs a disk swapfile (zram can't hold the image), so
   `install.sh` creates a RAM-sized `/swapfile`, adds the `resume` hook (not
   needed with a systemd initramfs) and sets `resume=`/`resume_offset=`. If

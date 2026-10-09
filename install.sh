@@ -812,6 +812,17 @@ sudo usermod -aG seat "$USER"
 # over the interface. networkd does nothing without a .network file and a
 # Minimal install may not have one, so DHCP configs are added only when
 # /etc/systemd/network has none. Existing configs are left alone.
+#
+# Both links count towards "online", and wait-online (below) is satisfied by
+# either one. Marking the wired port RequiredForOnline=no instead left Wi-Fi
+# as the only link that counted, so a machine on Ethernet with Wi-Fi idle
+# reported itself offline, and systemd-timesyncd, which waits for networkd to
+# say online, never set the clock.
+wired_network='[Match]
+Type=ether
+
+[Network]
+DHCP=yes'
 if ! compgen -G "/etc/systemd/network/*.network" >/dev/null; then
   log "adding DHCP configs for systemd-networkd"
   sudo mkdir -p /etc/systemd/network
@@ -823,19 +834,35 @@ Type=wlan
 DHCP=yes
 IgnoreCarrierLoss=3s
 NET
-  # RequiredForOnline=no: an unplugged port would otherwise make
-  # systemd-networkd-wait-online sit out its full timeout.
-  sudo tee /etc/systemd/network/20-wired.network >/dev/null <<'NET'
-[Match]
-Type=ether
-
-[Link]
-RequiredForOnline=no
-
-[Network]
-DHCP=yes
-NET
+  printf '%s\n' "$wired_network" | sudo tee /etc/systemd/network/20-wired.network >/dev/null
+elif [[ $(cat /etc/systemd/network/20-wired.network 2>/dev/null) == $'[Match]\nType=ether\n\n[Link]\nRequiredForOnline=no\n\n[Network]\nDHCP=yes' ]]; then
+  # The config an earlier install.sh wrote, unedited: bring it up to date.
+  log "letting the wired link count towards being online"
+  printf '%s\n' "$wired_network" | sudo tee /etc/systemd/network/20-wired.network >/dev/null
+  systemctl is-active -q systemd-networkd && sudo networkctl reload
 fi
+# --any: one link online is enough, so an unplugged port or idle Wi-Fi never
+# makes boot sit out wait-online's full timeout.
+sudo mkdir -p /etc/systemd/system/systemd-networkd-wait-online.service.d
+printf '[Service]\nExecStart=\nExecStart=/usr/lib/systemd/systemd-networkd-wait-online --any\n' |
+  sudo tee /etc/systemd/system/systemd-networkd-wait-online.service.d/singularity.conf >/dev/null
+sudo systemctl daemon-reload
+
+# archinstall's network options can leave NetworkManager (and the
+# wpa_supplicant it drives) enabled. It then runs DHCP on the same ports as
+# networkd, so each one gets two addresses, and fights iwd over Wi-Fi. It is
+# disabled, not removed, and keeps running until the next boot so this run
+# does not drop the connection; Wi-Fi networks it knew have to be joined
+# again from the bar, since iwd keeps its own list.
+for unit in NetworkManager.service NetworkManager-wait-online.service wpa_supplicant.service; do
+  if systemctl is-enabled -q "$unit" 2>/dev/null; then
+    log "disabling $unit (iwd and systemd-networkd manage the network)"
+    sudo systemctl disable "$unit"
+    if [[ $unit == NetworkManager.service ]]; then
+      warn "NetworkManager is off from the next boot: join Wi-Fi again from the bar"
+    fi
+  fi
+done
 sudo systemctl enable --now iwd systemd-networkd systemd-resolved
 # resolved only answers apps that ask it, so resolv.conf has to point at its
 # stub. Done after resolved is running so DNS is never pointed at nothing. A
