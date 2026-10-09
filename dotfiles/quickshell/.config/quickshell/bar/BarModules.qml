@@ -1118,32 +1118,26 @@ Item {
     // Show desktop, as on Windows: a slim button at the end of its group,
     // set off by a hairline, whose rounded end is the group's own corner.
     // Without groups it's a slim chip of the style's own, with a short bar
-    // in it. A click hides every window on the workspace
-    // (singularityShowDesktop() in windows.lua, also SUPER+D); it lights
-    // with the accent while they're hidden, and a second click brings them
-    // back.
+    // in it. A click hides every window on every workspace and screen, at
+    // once with no animation (singularityShowDesktop() in windows.lua, also
+    // SUPER+D); it lights with the accent while they're hidden, and a
+    // second click brings them back.
     Item {
         id: desktopBtn
         visible: Settings.widgetVisible("desktop")
         readonly property bool grouped: Theme.moduleGrouped
-        // a window on the focused workspace that it hid is still hidden
-        readonly property bool shown: {
-            var ws = Hyprland.focusedWorkspace
-            if (!ws) return false
-            return ws.toplevels.values.some(t => {
-                var tags = t.lastIpcObject ? t.lastIpcObject.tags || [] : []
-                return tags.indexOf("showdesktop") !== -1
-            })
-        }
+        // a window it hid, on any workspace, is still hidden
+        readonly property bool shown: Hyprland.toplevels.values.some(t => {
+            var tags = t.lastIpcObject ? t.lastIpcObject.tags || [] : []
+            return tags.indexOf("showdesktop") !== -1
+        })
 
         signal activated()
         onActivated: Quickshell.execDetached(["hyprctl", "eval", "singularityShowDesktop()"])
 
+        // shell.qml sets it on every module; this one never slides or
+        // fades, whatever the animation settings
         property bool slideX: false
-        Behavior on x {
-            enabled: desktopBtn.slideX
-            NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
-        }
 
         implicitWidth: grouped ? Theme.sp(8) : chip.implicitWidth
         implicitHeight: Theme.barHeight
@@ -1160,7 +1154,6 @@ Item {
                 radius: width / 2
                 color: desktopBtn.shown ? Theme.accent
                     : desktopMouse.containsMouse ? Theme.text : Theme.muted
-                Behavior on color { ColorAnimation { duration: Theme.durFast } }
             }
         }
 
@@ -1174,7 +1167,6 @@ Item {
             bottomRightRadius: topRightRadius
             color: desktopBtn.shown ? Theme.accent
                 : desktopMouse.containsMouse ? Theme.overlay : "transparent"
-            Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
             Rectangle {
                 width: Theme.borderWidth

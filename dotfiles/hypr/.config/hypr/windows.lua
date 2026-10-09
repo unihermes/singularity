@@ -502,8 +502,10 @@ end
 
 -- Puts a SUPER+C-hidden window back where it was and forgets it was
 -- hidden: slid back, or faded in where it was (growing from windowShrink
--- for the styles that have one), and tiled again if it was tiled.
-local function restoreMinimized(win)
+-- for the styles that have one), and tiled again if it was tiled. With
+-- `instant` it's put straight back with no animation, whatever the style;
+-- the caller holds no_anim on it (see singularityShowDesktop).
+local function restoreMinimized(win, instant)
     local st = stateOf(win.address)
     local saved = st.minimized
     st.minimized = nil
@@ -543,7 +545,11 @@ local function restoreMinimized(win)
         if saved.tiled then afterAnimation(windowSpeed, retile) end
     end
 
-    if windowSlides then
+    if instant then
+        moveTo(addr, saved)
+        setProp(addr, "opacity", "1")
+        if saved.tiled then retile() end
+    elseif windowSlides then
         show()
     else
         jumpTo(addr, windowShrink and shrunk(saved) or saved, show)
@@ -1014,7 +1020,7 @@ local function hiddenRect(r, mon)
     return { x = r.x, y = y, w = r.w, h = r.h }
 end
 
-local function minimizeWindow(win)
+local function minimizeWindow(win, instant)
     local st = stateOf(win.address)
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
@@ -1076,7 +1082,9 @@ local function minimizeWindow(win)
                 mode = r.fullscreen == 1 and "maximized" or "fullscreen", action = "unset", window = addr }))
         end
         hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
-        jumpTo(addr, r, hide)
+        if instant then moveTo(addr, hiddenRect(r, mon)) else jumpTo(addr, r, hide) end
+    elseif instant then
+        moveTo(addr, hiddenRect(r, mon))
     else
         hide()
     end
@@ -1089,18 +1097,20 @@ function toggleMinimize()
 end
 
 -- SUPER+D and the bar's show-desktop button. With any window showing on
--- the active workspace, hides them all as SUPER+C does, tagged
+-- any workspace of any monitor, hides them all as SUPER+C does, tagged
 -- "showdesktop"; with none, brings back the ones it tagged and focuses the
--- one used last. Bringing one back any other way (the window strip,
--- ALT+Tab) drops its tag. The bar reads the tag to light its button, so
--- it's told to look again. A global so the button can run it through
--- `hyprctl eval`.
+-- one used last on the active workspace. Always instant, whatever the
+-- animation settings: every window it touches holds no_anim until the
+-- moves have been drawn, so neither the hidden windows nor the tiles
+-- reflowing around them animate. The scratchpad and other special
+-- workspaces are left alone. Bringing one back any other way (the window
+-- strip, ALT+Tab) drops its tag. The bar reads the tag to light its
+-- button, so it's told to look again. A global so the button can run it
+-- through `hyprctl eval`.
 function singularityShowDesktop()
-    local ws = hl.get_active_workspace()
-    if not ws or ws.special then return end
     local showing, hidden = {}, {}
     for _, w in ipairs(hl.get_windows()) do
-        if w.mapped and not w.hidden and w.workspace and w.workspace.id == ws.id
+        if w.mapped and not w.hidden and w.workspace and not w.workspace.special
                 and w.class ~= "org.quickshell" then
             if not stateOf(w.address).minimized then
                 showing[#showing + 1] = w
@@ -1109,19 +1119,31 @@ function singularityShowDesktop()
             end
         end
     end
+    local touched = #showing > 0 and showing or hidden
+    if #touched == 0 then return end
+    for _, w in ipairs(touched) do setProp("address:" .. w.address, "no_anim", "1") end
+
     if #showing > 0 then
         for _, w in ipairs(showing) do
             hl.dispatch(hl.dsp.window.tag({ tag = "+showdesktop", window = "address:" .. w.address }))
-            minimizeWindow(w)
+            minimizeWindow(w, true)
         end
-    elseif #hidden > 0 then
+    else
+        local ws = hl.get_active_workspace()
         local last
         for _, w in ipairs(hidden) do
-            restoreMinimized(w)
-            if not last or w.focus_history_id < last.focus_history_id then last = w end
+            restoreMinimized(w, true)
+            if ws and w.workspace.id == ws.id
+                    and (not last or w.focus_history_id < last.focus_history_id) then
+                last = w
+            end
         end
-        hl.dispatch(hl.dsp.focus({ window = "address:" .. last.address }))
+        if last then hl.dispatch(hl.dsp.focus({ window = "address:" .. last.address })) end
     end
+
+    hl.timer(function()
+        for _, w in ipairs(touched) do setProp("address:" .. w.address, "no_anim", "0") end
+    end, { timeout = 30, type = "oneshot" })
     hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
 end
 

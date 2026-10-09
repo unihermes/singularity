@@ -102,7 +102,9 @@ Style: `channel` (frame `channel` in `Styles.js`).
   on top. Never show a level as an underline or thin rule.
 - **Show desktop** ends the right group: a slim slot past a hairline, whose
   rounded end is the group's own corner. Hover is the overlay fill; while
-  the desktop shows it fills with the accent.
+  the desktop shows it fills with the accent. It hides every window on
+  every workspace and screen, and it never animates, neither the windows
+  nor its own fill, whatever the animation settings.
 - Icon-only, by design; no text readouts beside icons.
 
 ## Flyouts
