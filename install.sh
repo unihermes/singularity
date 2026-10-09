@@ -74,6 +74,17 @@ if (( ${#pacman_pkgs[@]} > 0 )); then
   sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
 fi
 
+# Arch's makepkg.conf turns on debug, so every AUR build also produced a
+# <name>-debug package that yay then installed. The user config is read after
+# /etc/makepkg.conf and the last debug/!debug in OPTIONS wins. Appended only
+# if the file says nothing about debug, so your own choice stands.
+makepkg_conf=${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf
+if ! grep -qs 'debug' "$makepkg_conf"; then
+  log "turning off -debug packages for AUR builds"
+  mkdir -p "${makepkg_conf%/*}"
+  printf '# singularity: no <name>-debug package next to every AUR build\nOPTIONS+=(!debug)\n' >> "$makepkg_conf"
+fi
+
 log "installing AUR packages"
 # Not --noconfirm: you want to see the PKGBUILD diffs before anything builds.
 # --answerclean None only skips the "rebuild from scratch?" prompt; diffs and
@@ -863,7 +874,12 @@ for unit in NetworkManager.service NetworkManager-wait-online.service wpa_suppli
     fi
   fi
 done
+# LLMNR is a Windows-era name lookup that resolved answers on every interface
+# (port 5355). Nothing here uses it; mDNS (.local names) stays on.
+sudo mkdir -p /etc/systemd/resolved.conf.d
+printf '[Resolve]\nLLMNR=no\n' | sudo tee /etc/systemd/resolved.conf.d/singularity.conf >/dev/null
 sudo systemctl enable --now iwd systemd-networkd systemd-resolved
+sudo systemctl try-reload-or-restart systemd-resolved
 # resolved only answers apps that ask it, so resolv.conf has to point at its
 # stub. Done after resolved is running so DNS is never pointed at nothing. A
 # resolv.conf that is already a symlink is left alone.
@@ -875,6 +891,10 @@ fi
 systemctl --user daemon-reload || true
 systemctl --user enable --now pipewire pipewire-pulse wireplumber ||
   warn "could not enable the pipewire user units"
+
+# Weekly paccache (pacman-contrib) keeps the last three versions of each
+# package, enough to downgrade from, so the cache stops growing forever.
+sudo systemctl enable --now paccache.timer
 
 # Nothing enables BlueZ on a Minimal install, and the bar's Bluetooth module
 # and the pairing agent below both need its daemon.

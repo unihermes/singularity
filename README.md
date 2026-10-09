@@ -108,8 +108,10 @@ finishes and pick **Hyprland** in the greeter.
 7. Enables iwd, systemd-networkd and -resolved (and disables NetworkManager
    if archinstall turned it on), PipeWire, Bluetooth (with its
    pairing agent and power restore), power-profiles-daemon, the AC-power
-   profile switch (laptop only), CoolerControl's daemon (desktop only), and
-   the `ly` greeter
+   profile switch (laptop only), CoolerControl's daemon (desktop only), a
+   weekly `paccache` clean (keeps three versions of each package) and the
+   `ly` greeter. resolved's LLMNR is switched off, and AUR builds stop
+   making `-debug` packages (`~/.config/pacman/makepkg.conf`)
 
 `--needed`, `stow -R` and `enable --now` make every step a no-op the second
 time, so rerunning it is always safe.
