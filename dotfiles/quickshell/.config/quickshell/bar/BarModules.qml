@@ -807,16 +807,22 @@ Item {
         onWheeled: d => Audio.setVolume(Audio.percent + d * 5)
     }
 
+    // The monitor under this bar, over DDC/CI when it answers
+    // (DdcBrightness), else the backlight (Brightness) -- a laptop's panel,
+    // or every screen on a machine with no DDC monitor.
     BarModule {
         id: brightBtn
-        visible: Brightness.available && Settings.widgetVisible("brightness")
+        readonly property string output: screenScope.modelData.name
+        readonly property bool ddc: DdcBrightness.has(output)
+        readonly property int level: ddc ? DdcBrightness.level(output) : Brightness.level
+        visible: (ddc ? level >= 0 : Brightness.available) && Settings.widgetVisible("brightness")
         fixedWidth: Theme.moduleWidth
         icon: "󰃠"
-        fillValue: Brightness.level / 100
+        fillValue: level / 100
         active: screenScope.openFlyout === "brightness"
         acceptWheel: true
         onActivated: screenScope.toggleFlyout("brightness", brightBtn)
-        onWheeled: d => Brightness.set(Brightness.level + d * 5)
+        onWheeled: d => ddc ? DdcBrightness.set(output, level + d * 5) : Brightness.set(level + d * 5)
     }
 
     BarModule {

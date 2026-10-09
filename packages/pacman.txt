@@ -195,6 +195,9 @@ java-runtime
 
 # power, backlight, bluetooth
 brightnessctl
+# External monitors' brightness over DDC/CI (services/DdcBrightness.qml); its
+# package loads i2c-dev and gives the seat user the /dev/i2c-* nodes
+ddcutil
 upower
 # BlueZ itself: the bar's Bluetooth module and flyout talk to its daemon
 bluez

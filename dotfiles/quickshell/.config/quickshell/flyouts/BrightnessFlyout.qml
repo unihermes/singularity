@@ -1,6 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BrightnessFlyout.qml
 //
+// One slider per display it can set (see `controls`), then Night Light.
 // Needs root's Night Light state --
 // see the toggle in ControlCentre's Quick Actions for the same fields.
 // Night Light's schedule is set here and run by shell.qml.
@@ -16,12 +17,49 @@ FlyoutPanel {
 
     required property var shellRoot
 
-    FlyoutHeading { text: "BRIGHTNESS  " + Brightness.level + "%" }
+    // Every display it can set: the backlight, and each monitor that
+    // answers DDC/CI, the one under this bar first. One is a bare slider
+    // as before; more get a labelled slider each.
+    readonly property string output: scope.modelData.name
+    readonly property var controls: {
+        var out = []
+        var ds = DdcBrightness.displays.slice()
+            .filter(d => DdcBrightness.level(d.output) >= 0)
+            .sort((a, b) => (b.output === output) - (a.output === output))
+        for (var i = 0; i < ds.length; i++)
+            out.push({ output: ds[i].output, label: ds[i].model || ds[i].output })
+        if (Brightness.available) out.push({ output: "", label: "Built-in display" })
+        return out
+    }
+    function levelOf(o) { return o === "" ? Brightness.level : DdcBrightness.level(o) }
+    function setOf(o, v) { if (o === "") Brightness.set(v); else DdcBrightness.set(o, v) }
+
+    // the monitors' own buttons may have moved them since the last look
+    onOpenChanged: if (open) DdcBrightness.refresh()
+    Component.onCompleted: if (open) DdcBrightness.refresh()
+
+    FlyoutHeading {
+        text: "BRIGHTNESS  " + (brightnessFlyout.controls.length > 0
+            ? brightnessFlyout.levelOf(brightnessFlyout.controls[0].output) + "%" : "—")
+    }
 
     Slider {
+        visible: brightnessFlyout.controls.length === 1
         width: parent.width
-        value: Brightness.level
-        onMoved: v => Brightness.set(v)
+        value: visible ? brightnessFlyout.levelOf(brightnessFlyout.controls[0].output) : 0
+        onMoved: v => brightnessFlyout.setOf(brightnessFlyout.controls[0].output, v)
+    }
+
+    Repeater {
+        model: brightnessFlyout.controls.length > 1 ? brightnessFlyout.controls : []
+
+        FlyoutSliderRow {
+            required property var modelData
+            label: modelData.label
+            suffix: "%"
+            value: brightnessFlyout.levelOf(modelData.output)
+            onMoved: v => brightnessFlyout.setOf(modelData.output, v)
+        }
     }
 
     FlyoutDivider {}

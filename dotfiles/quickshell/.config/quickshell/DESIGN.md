@@ -135,6 +135,14 @@ Output, Input and Apps tabs (a `FlyoutSegmented`), from the looks mockups
 mute; Apps is each playing app with its own level, a click on its name
 muting it. The name helpers are `Audio`'s, shared with the Audio page.
 
+### Brightness flyout
+
+Each bar's brightness module is the monitor under it: over DDC/CI when the
+monitor answers (`DdcBrightness`), else the backlight. The flyout's
+heading is that monitor's level. With one display it's a bare slider;
+with more, a labelled slider each (the model name, this bar's monitor
+first, the built-in panel last), then Night Light.
+
 ### Cooling
 
 Desktops only (`services/Cooling.qml`). The bar module is a plain fan icon,
