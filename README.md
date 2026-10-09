@@ -102,9 +102,10 @@ finishes and pick **Hyprland** in the greeter.
    GRUB), drops the Arch splash from the kernel image, hides the
    systemd-boot menu, stops iwd blocking the greeter and masks unused TPM
    setup. On a laptop it also sets up a hibernation swapfile and applies the
-   laptop's boot fixes: vfat in the initramfs, panel self refresh and the webcam stack
-   switched off. On the desktop it loads the NVIDIA driver from the
-   initramfs and lets the motherboard fan driver (`it87`) load. The
+   laptop's boot fixes: vfat in the initramfs, panel self refresh and the
+   webcam stack switched off. On the desktop it loads the NVIDIA driver from
+   the initramfs (leaving the integrated GPU out of it), probes the SATA
+   ports in parallel and lets the motherboard fan driver (`it87`) load. The
    initramfs is rebuilt once, at the end
 7. Enables iwd, systemd-networkd and -resolved (and disables NetworkManager
    if archinstall turned it on), PipeWire, Bluetooth (with its

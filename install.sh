@@ -580,8 +580,31 @@ fi
 # no vsync) and Hyprland finding a display it then can't drive properly.
 # nvidia-utils already blacklists nouveau, and modconf carries that into the
 # initramfs.
+#
+# With nvidia named in MODULES the kms hook has nothing left to do but pull
+# in the CPU's integrated GPU (amdgpu on the Ryzen) and its firmware. The
+# initramfs then waits on that probe before mounting root -- about 2s, with
+# no screen on the iGPU to show for it -- and the kernel image grows by the
+# firmware the boot loader has to read and hash. Without the hook, amdgpu
+# loads after the switch to the real root, alongside everything else.
 if (( ! laptop )) && pacman -Q nvidia-open &>/dev/null; then
   early_modules nvidia nvidia_modeset nvidia_uvm nvidia_drm
+  if grep -Eq '^HOOKS=\(.*\<kms\>' "$mkconf"; then
+    log "leaving the integrated GPU out of the initramfs"
+    [[ -f $mkconf.singularity.bak ]] || sudo cp "$mkconf" "$mkconf.singularity.bak"
+    sudo sed -i -E '/^HOOKS=/ { s/ kms\>//; s/\(kms /(/ }' "$mkconf"
+    rebuild_initramfs=1
+  fi
+fi
+
+# --- SATA probing (desktop) ----------------------------------------------
+# The B650 chipset's AHCI controller sets the staggered spin-up flag, so the
+# kernel brings its SATA ports up one after another, ~0.3s per empty port,
+# and holds off starting /init until every one has answered. Ignoring the
+# flag probes them in parallel. Staggering exists to spread spinning disks'
+# power-on draw; SSDs don't care, and desktop PSUs have the headroom.
+if (( ! laptop )); then
+  edit_cmdline libahci.ignore_sss "libahci.ignore_sss=1"
 fi
 
 # --- fans (desktop) ------------------------------------------------------
