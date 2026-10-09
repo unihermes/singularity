@@ -766,10 +766,11 @@ Item {
         visible: Settings.widgetVisible("network")
         // the filled strength glyph, not the outlined md-wifi
         // arcs: its neighbours (volume, battery, power) are all
-        // solid, and the thin one read as a different weight
-        icon: Network.ssid !== "" ? "󰤨" : "󰤮"
+        // solid, and the thin one read as a different weight.
+        // A cable that's up wins: it's the route out when both are.
+        icon: Network.wired ? "󰈀" : Network.ssid !== "" ? "󰤨" : "󰤮"
         active: screenScope.openFlyout === "network"
-        dimmed: Network.ssid === ""
+        dimmed: !Network.wired && Network.ssid === ""
         onActivated: {
             // the networks iwd already knows of; a fresh scan
             // only from the flyout's Rescan row

@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NetworkFlyout.qml
 //
-// The iwd network list and passphrase prompt. The state and the iwctl
-// calls live in services/Network.qml.
+// The wired link's state, the iwd network list and passphrase prompt. The
+// state and the iwctl calls live in services/Network.qml.
 
 import QtQuick
 import "../services"
@@ -30,7 +30,9 @@ FlyoutPanel {
     FlyoutHeading {
         text: netFlyout.pendingSsid !== ""
             ? "PASSPHRASE"
-            : (Network.ssid !== "" ? "NETWORK  " + Network.ssid : "NETWORK  offline")
+            : Network.ssid !== "" ? "NETWORK  " + Network.ssid
+            : Network.wired ? "NETWORK  Ethernet"
+            : "NETWORK  offline"
     }
 
     // --- passphrase prompt ---
@@ -63,6 +65,19 @@ FlyoutPanel {
     }
 
     // --- network list ---
+    // the cable, on a machine that has a port; nothing to switch, so a click
+    // goes to its details in Settings
+    FlyoutAction {
+        visible: netFlyout.pendingSsid === "" && Network.wiredDevice !== ""
+        icon: "󰈀"
+        label: "Ethernet"
+        status: (Network.wired ? "Connected"
+            : Network.wiredState === "no-carrier" || Network.wiredState === "off" ? "Unplugged"
+            : "No address yet") + "  ·  " + Network.wiredDevice
+        checkable: false
+        onActivated: scope.openSettings("network")
+    }
+
     // the radio, as a switch like the Settings page's
     FlyoutAction {
         visible: netFlyout.pendingSsid === ""

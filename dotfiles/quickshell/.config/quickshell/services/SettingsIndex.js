@@ -21,7 +21,7 @@
 
 var entries = [
     // --- Network -----------------------------------------------------------
-    { page: "network", section: "Status", label: "Status",     keywords: "wifi wi-fi wireless radio iwd on off ssid connected joined" },
+    { page: "network", section: "Status", label: "Status",     keywords: "wifi wi-fi wireless radio iwd on off ssid connected joined ethernet wired cable lan networkd" },
     { page: "network", section: "Status", label: "Interface",  keywords: "device wlan adapter" },
     { page: "network", section: "Status", label: "IP address", keywords: "ipv4 dhcp address copy" },
     { page: "network", section: "Status", label: "Gateway",    keywords: "router default route copy" },

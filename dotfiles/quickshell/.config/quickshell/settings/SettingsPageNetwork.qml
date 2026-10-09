@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageNetwork.qml
 //
-// Wi-Fi: the radio, what it's joined to, the networks in range, and every
-// network iwd has saved.
+// The wired link's state, then Wi-Fi: the radio, what it's joined to, the
+// networks in range, and every network iwd has saved.
 //
 // The state and the iwctl calls live in services/Network.qml, shared with the
 // bar module, its flyout and the Control Centre's toggle -- so a connection
@@ -31,7 +31,7 @@ SettingsPage {
     sectioned: true
 
     title: "Network"
-    description: "Wi-Fi through iwd, which keeps the passphrases."
+    description: "Ethernet through systemd-networkd, Wi-Fi through iwd, which keeps the passphrases."
 
     // "" while browsing; the SSID whose passphrase row is open
     property string pendingSsid: ""
@@ -115,6 +115,19 @@ SettingsPage {
     // --- status ---------------------------------------------------------
 
     FlyoutHeading { text: "STATUS" }
+
+    // the cable, on a machine with a port: only its state, as networkd
+    // configures it by itself and there is nothing here to switch
+    HeadCard {
+        visible: Network.wiredDevice !== ""
+        glyph: "󰈀"
+        glyphColor: Network.wired ? Theme.textStrong : Theme.muted
+        title: Network.wired ? "Ethernet connected"
+            : Network.wiredState === "no-carrier" || Network.wiredState === "off" ? "Ethernet unplugged"
+            : "Ethernet has no address yet"
+        lines: [Network.wiredDevice]
+        rule: true
+    }
 
     // the joined network: its strength, name and kind, and the radio switch
     HeadCard {

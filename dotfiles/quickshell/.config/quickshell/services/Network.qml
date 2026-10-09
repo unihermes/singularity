@@ -1,9 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Network.qml
 //
-// Wi-Fi through iwd, for the bar's network module, its flyout and the
-// Control Centre's Wi-Fi toggle. Quickshell.Networking's only backend is
-// NetworkManager, so this shells out to iwctl and busctl instead.
+// Wi-Fi through iwd and the wired link through systemd-networkd, for the
+// bar's network module, its flyout and the Settings page.
+// Quickshell.Networking's only backend is NetworkManager, so this shells out
+// to iwctl, busctl and networkctl instead.
 //
 // A singleton, like Weather and Updates. This used to live on the bar in
 // shell.qml, which is instantiated once per screen, so every poll ran once
@@ -44,11 +45,26 @@ Singleton {
     signal connectFailed(string ssid, string reason)
     readonly property bool scanning: scanProc.running
 
+    // The wired link: the Ethernet interface networkd manages (the one
+    // that's up, if there are several), or "" on a machine without one.
+    property string wiredDevice: ""
+    // networkd's OperationalState for it: "routable" once it has an address
+    // and a route out, "carrier"/"degraded" with a cable in but no lease
+    // yet, "no-carrier" unplugged
+    property string wiredState: ""
+    readonly property bool wired: wiredState === "routable"
+
     // a network's strength by bars (1..4), as the flyout and Settings draw it
     readonly property var strengthGlyphs: ["󰤟", "󰤢", "󰤥", "󰤨"]
 
-    function setPowered(on) {
+    // `restoring` is the saved choice being put back; anything else is the
+    // user flipping the radio, which is remembered (see wifiPref).
+    function setPowered(on, restoring) {
         if (device === "") return
+        if (!restoring) {
+            powerRestored = true
+            wifiPref.setText(on ? "on\n" : "off\n")
+        }
         powered = on    // optimistic; powerProc settles it
         if (!on) ssid = ""
         queue(powerSet, ["iwctl", "device", device, "set-property", "Powered", on ? "on" : "off"])
@@ -248,9 +264,39 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 var v = text.trim()
-                if (v !== "") root.powered = (v === "on")
+                if (v === "") return
+                root.powered = (v === "on")
+                root.restorePower()
             }
         }
+    }
+
+    // Whether the radio was last left on or off from the shell, kept across
+    // reboots. iwd powers every device on whenever it starts, so without
+    // this Wi-Fi turned off in the bar came back on at the next boot (or
+    // iwd restart). The choice is put back once each time the device
+    // appears; until the shell starts at login, iwd's default holds.
+    //
+    // Only the shell's own toggles are recorded: a Powered change seen on
+    // the bus may be iwd's start-up default rather than anyone's choice.
+    property bool powerRestored: false
+    onDeviceChanged: if (device === "") powerRestored = false
+
+    function restorePower() {
+        if (powerRestored || device === "") return
+        powerRestored = true
+        var want = wifiPref.text().trim()
+        if (want === "off" && powered) setPowered(false, true)
+        else if (want === "on" && !powered) setPowered(true, true)
+    }
+
+    FileView {
+        id: wifiPref
+        path: Quickshell.env("HOME") + "/.local/state/singularity/wifi"
+        blockLoading: true
+        atomicWrites: true
+        // no file until the radio is first toggled
+        printErrors: false
     }
 
     // Powering the radio back on doesn't hand back an SSID at once: iwd
@@ -362,6 +408,56 @@ Singleton {
         id: iwdRewatch
         interval: 5000
         onTriggered: iwdWatch.running = true
+    }
+
+    // The wired link, from networkd's own view of its links. Read again when
+    // networkd says a link's state moved -- a cable plugged in or pulled,
+    // a lease gained or lost -- the same way iwd is watched above.
+    function refreshWired() { if (!wiredProc.running) wiredProc.running = true }
+
+    Process {
+        id: wiredProc
+        command: ["networkctl", "list", "--json=short"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var links = []
+                try { links = JSON.parse(text).Interfaces || [] } catch (e) {}
+                var rank = s => s === "routable" ? 3 : s === "no-carrier" || s === "off" ? 1 : 2
+                var best = null
+                for (var i = 0; i < links.length; i++) {
+                    var l = links[i]
+                    if (l.Type !== "ether" || l.AdministrativeState === "unmanaged") continue
+                    if (!best || rank(l.OperationalState) > rank(best.OperationalState)) best = l
+                }
+                root.wiredDevice = best ? best.Name : ""
+                root.wiredState = best ? best.OperationalState : ""
+            }
+        }
+    }
+
+    Process {
+        id: networkdWatch
+        command: ["gdbus", "monitor", "--system", "--dest", "org.freedesktop.network1"]
+        running: true
+        stdout: SplitParser {
+            onRead: line => {
+                if (/OperationalState|is now owned by/.test(line)) wiredSettle.restart()
+            }
+        }
+        onExited: networkdRewatch.restart()
+    }
+
+    Timer {
+        id: networkdRewatch
+        interval: 5000
+        onTriggered: { networkdWatch.running = true; root.refreshWired() }
+    }
+
+    Timer {
+        id: wiredSettle
+        interval: 300
+        onTriggered: root.refreshWired()
     }
 
     Timer {
