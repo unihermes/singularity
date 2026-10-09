@@ -28,8 +28,16 @@ main() {
 
   ./link.sh
 
+  # install.sh records whether this is a laptop or a desktop
+  local machine
+  machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null) \
+    || die "no machine type recorded: run ./install.sh laptop|desktop once"
+
   local -a want new
   mapfile -t want < <(list packages/pacman.txt)
+  if [[ $machine == laptop ]]; then
+    mapfile -t -O "${#want[@]}" want < <(list packages/laptop.txt)
+  fi
   mapfile -t new < <(pacman -T "${want[@]}" || true)
   if (( ${#new[@]} > 0 )); then
     log "installing ${new[*]}"

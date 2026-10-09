@@ -19,7 +19,7 @@ the terminal, the editor, GTK and Qt apps, the greeter and even Claude Code
 change together when you pick a new look.
 
 ```bash
-git clone https://github.com/unihermes/singularity.git && cd singularity && ./install.sh
+git clone https://github.com/unihermes/singularity.git && cd singularity && ./install.sh laptop
 ```
 
 ![The Singularity desktop: the bar, a terminal and Thunar over the wallpaper](.github/assets/desktop.jpg)
@@ -73,8 +73,13 @@ written for that hardware and skip themselves where they don't apply.
 ```bash
 sudo pacman -S --needed git
 git clone https://github.com/unihermes/singularity.git ~/singularity
-cd ~/singularity && ./install.sh
+cd ~/singularity && ./install.sh laptop    # or: ./install.sh desktop
 ```
+
+`laptop` gets everything. `desktop` leaves out what only a laptop needs:
+`packages/laptop.txt`, the boot fixes for the laptop's hardware, hibernation,
+the touchpad wake rule, the battery charge helper, the AC-power profile switch
+and the greeter's battery lines. `update.sh` remembers which one you picked.
 
 Clone it somewhere you'll keep it: the configs are symlinked from this folder,
 so moving it later leaves `~/.config` pointing nowhere. Reboot when it
@@ -85,19 +90,21 @@ finishes and pick **Hyprland** in the greeter.
 
 1. Syncs the system and installs `base-devel git stow`
 2. Bootstraps `yay` from `yay-bin` if it isn't there
-3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`
+3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`, plus
+   `packages/laptop.txt` on a laptop
 4. Links `dotfiles/` into `$HOME` with GNU stow (`link.sh`) and builds the
    `alttab-relay` helper
 5. Rebuilds font and icon caches, sets the default apps, and sets
    LibreOffice up like Word (ribbon, Office formats, a Word-like template)
 6. Quiets the kernel command line (systemd-boot, a unified kernel image or
-   GRUB), sets up a hibernation swapfile, and applies the boot fixes: vfat in
-   the initramfs, iwd no longer blocking the greeter, the webcam stack
-   switched off, unused TPM setup masked. The initramfs is rebuilt once, at
+   GRUB), stops iwd blocking the greeter and masks unused TPM setup. On a
+   laptop it also sets up a hibernation swapfile and applies the laptop's
+   boot fixes: vfat in the initramfs, panel self refresh and the webcam stack
+   switched off. The initramfs is rebuilt once, at
    the end
 7. Enables iwd, systemd-networkd and -resolved, PipeWire, Bluetooth (with its
    pairing agent and power restore), power-profiles-daemon, the AC-power
-   profile switch, and the `ly` greeter
+   profile switch (laptop only), and the `ly` greeter
 
 `--needed`, `stow -R` and `enable --now` make every step a no-op the second
 time, so rerunning it is always safe.
@@ -268,7 +275,7 @@ singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
-├── packages/               # pacman.txt and aur.txt, one package per line
+├── packages/               # pacman.txt, laptop.txt and aur.txt, one per line
 ├── wallpapers/
 ├── tools/                  # checks run by the pre-commit hook and CI
 │   ├── git-hooks/pre-commit
@@ -396,7 +403,7 @@ doesn't start it, since it would take over the VT mid-install.
 **No bar.** Run `quickshell` from a terminal in the session to see the QML
 error; after a Quickshell update it's usually a renamed import.
 
-**Watching boot.** `BOOT_VERBOSE=1 ./install.sh` turns systemd's `[ OK ]`
+**Watching boot.** `BOOT_VERBOSE=1 ./install.sh laptop` turns systemd's `[ OK ]`
 lines back on; rerun without it to go quiet again.
 
 **Wrong font or icon names.** Nerd Font and icon theme names vary; check the

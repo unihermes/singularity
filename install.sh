@@ -10,6 +10,28 @@ die()  { printf '\033[1;31mxx\033[0m %s\n'    "$*" >&2; exit 1; }
 # Strip comments and blank lines from a package list.
 list() { sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$1"; }
 
+usage() {
+  cat <<'EOF'
+usage: ./install.sh laptop|desktop
+
+  laptop   everything, with hibernation, the battery helpers and the
+           laptop's boot and power fixes
+  desktop  the same desktop without the laptop-only packages and fixes
+EOF
+}
+
+# What kind of machine this is. Everything marked `if (( laptop ))` below,
+# and packages/laptop.txt, is skipped on a desktop. Recorded so update.sh
+# installs the same package lists.
+case ${1:-} in
+  laptop)  laptop=1 ;;
+  desktop) laptop=0 ;;
+  -h|--help) usage; exit 0 ;;
+  *) usage >&2; exit 2 ;;
+esac
+machine=$1
+machinefile=${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine
+
 if [[ $EUID -eq 0 ]]; then
   die "run as your user, not root (sudo is called where it is needed)"
 fi
@@ -40,8 +62,15 @@ read_list() {
   mapfile -t _out < <(list "$2")
 }
 
-log "installing repo packages"
+mkdir -p "${machinefile%/*}"
+echo "$machine" > "$machinefile"
+
+log "installing repo packages for a $machine"
 read_list pacman_pkgs packages/pacman.txt
+if (( laptop )); then
+  read_list laptop_pkgs packages/laptop.txt
+  pacman_pkgs+=("${laptop_pkgs[@]}")
+fi
 if (( ${#pacman_pkgs[@]} > 0 )); then
   sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
 fi
@@ -406,7 +435,7 @@ edit_cmdline() {
 # BOOT_VERBOSE=1 to get systemd's [ OK ] lines back, which is worth doing when
 # a boot hangs and you need to see which unit it hung on:
 #
-#   BOOT_VERBOSE=1 ./install.sh
+#   BOOT_VERBOSE=1 ./install.sh laptop
 BOOT_VERBOSE=${BOOT_VERBOSE:-0}
 if (( BOOT_VERBOSE )); then
   log "making the boot verbose"
@@ -439,8 +468,10 @@ fi
 # outstanding async probes system-wide. It doesn't help the webcam controller
 # below, which is why that one is blacklisted instead.)
 # Both are harmless on hardware without these devices.
-edit_cmdline deferred_probe_timeout "deferred_probe_timeout=1"
-edit_cmdline driver_async_probe "driver_async_probe=intel_ish_ipc"
+if (( laptop )); then
+  edit_cmdline deferred_probe_timeout "deferred_probe_timeout=1"
+  edit_cmdline driver_async_probe "driver_async_probe=intel_ish_ipc"
+fi
 
 # --- boot speed ----------------------------------------------------------
 # /boot (the ESP) is vfat, and vfat is a module. With the webcam enabled, the
@@ -456,7 +487,7 @@ edit_cmdline driver_async_probe "driver_async_probe=intel_ish_ipc"
 # separate logind race -- see the deferred-probe fix above.)
 mkconf=/etc/mkinitcpio.conf
 early_modules=(vfat mac_hid mousedev joydev)
-if [[ -f $mkconf ]]; then
+if (( laptop )) && [[ -f $mkconf ]]; then
   missing=()
   for m in "${early_modules[@]}"; do
     grep -Eq "^MODULES=\(.*\<$m\>" "$mkconf" || missing+=("$m")
@@ -480,7 +511,7 @@ fi
 # the cmdline, so the boot-verbosity rewrite above can never drop it. The
 # modconf hook copies it into the initramfs, where i915 loads (kms hook).
 psrconf=/etc/modprobe.d/singularity-i915.conf
-if ! grep -qs 'enable_psr=0' "$psrconf"; then
+if (( laptop )) && ! grep -qs 'enable_psr=0' "$psrconf"; then
   log "disabling i915 panel self refresh"
   echo 'options i915 enable_psr=0' | sudo tee "$psrconf" >/dev/null
   rebuild_initramfs=1
@@ -494,7 +525,7 @@ fi
 # hangs shutdown. Blacklisting the whole chain means none of it loads.
 vscconf=/etc/modprobe.d/singularity-vsc.conf
 vscmods=(mei_vsc ivsc_csi ivsc_ace intel_ipu6 ov01a10)
-if [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
+if (( laptop )) && [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
   log "switching the webcam off"
   printf 'blacklist %s\n' "${vscmods[@]}" | sudo tee "$vscconf" >/dev/null
   rebuild_initramfs=1
@@ -562,7 +593,9 @@ setup_hibernation() {
   edit_cmdline resume "resume=UUID=$uuid"
   edit_cmdline resume_offset "resume_offset=$offset"
 }
-setup_hibernation || warn "couldn't set up the hibernation swapfile, so hibernation won't resume"
+if (( laptop )); then
+  setup_hibernation || warn "couldn't set up the hibernation swapfile, so hibernation won't resume"
+fi
 
 # Everything above that changed what the boot reads, applied once.
 if (( cmdline_changed )); then
@@ -580,7 +613,7 @@ fi
 # 5 min after the lid shuts and wants hibernation at 1 h, so 55 min here;
 # change both together (close_delay and hibernate_after in lid.sh).
 sleepconf=/etc/systemd/sleep.conf.d/singularity.conf
-if ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
+if (( laptop )) && ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
   log "hibernating after 55 min of lid-closed suspend"
   sudo mkdir -p "${sleepconf%/*}"
   printf '[Sleep]\nHibernateDelaySec=55min\n' | sudo tee "$sleepconf" >/dev/null
@@ -605,7 +638,7 @@ fi
 # CONFIG_HIBERNATION_COMP_LZ4 unset, so hibernate.compressor= only takes lzo.
 imageconf=/etc/tmpfiles.d/singularity-hibernate.conf
 image_size=4294967296
-if ! grep -qs "image_size .* $image_size\$" "$imageconf"; then
+if (( laptop )) && ! grep -qs "image_size .* $image_size\$" "$imageconf"; then
   log "capping the hibernation image at $((image_size / 1024 ** 3))G"
   printf 'w /sys/power/image_size - - - - %s\n' "$image_size" \
     | sudo tee "$imageconf" >/dev/null
@@ -622,7 +655,7 @@ fi
 # machine's VEN_0488:00 so it holds for any I2C-HID touchpad.
 # lid.sh's stay_dark() is the in-session net for the strays this stops here.
 touchpadrule=/etc/udev/rules.d/90-singularity-touchpad-wake.rules
-if ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
+if (( laptop )) && ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
   log "disarming the touchpad as a wake source"
   sudo mkdir -p "${touchpadrule%/*}"
   printf '%s\n' \
@@ -644,7 +677,7 @@ fi
 # the driver refuses any value the firmware doesn't take. Root-owned in
 # /usr/local/bin rather than linked from the dotfiles, so the user can't
 # change what runs as root.
-if compgen -G '/sys/class/power_supply/BAT*/charge_types' >/dev/null; then
+if (( laptop )) && compgen -G '/sys/class/power_supply/BAT*/charge_types' >/dev/null; then
   log "installing the battery charge helper"
   sudo tee /usr/local/bin/singularity-charge >/dev/null <<'CHARGE'
 #!/bin/sh
@@ -778,7 +811,9 @@ have_unit() {
 if have_unit power-profiles-daemon.service; then
   log "enabling power-profiles-daemon"
   sudo systemctl enable --now power-profiles-daemon.service
+fi
 
+if (( laptop )) && have_unit power-profiles-daemon.service; then
   # performance on AC, balanced on battery. PPD has no such rule of its own --
   # it only exposes ActiveProfile for something else to drive, which the bar
   # already does on demand via busctl (see PpdProfile.qml) -- so a udev rule
@@ -917,13 +952,19 @@ LY
     # The status lines in the greeter's bottom-right corner, one [lbl:*] entry
     # each. ly runs these as root before anyone logs in, so they only read
     # sysfs and root-readable tools.
-    sudo tee /etc/ly/info.sh >/dev/null <<'LY'
+    # A desktop has no battery, so it shows only the last three.
+    if (( laptop )); then
+      ly_lines="battery power wifi kernel last"
+    else
+      ly_lines="wifi kernel last"
+    fi
+    sed "s/@LINES@/$ly_lines/" <<'LY' | sudo tee /etc/ly/info.sh >/dev/null
 #!/bin/sh
 # Written by singularity's install.sh. ly runs `info.sh <line>` for each
-# status line at the greeter's bottom-right: battery, power, wifi, kernel, last.
+# status line at the greeter's bottom-right: @LINES@.
 # ly right-aligns each line by its length in bytes but draws it by
 # characters, so the lines are kept to ASCII, where the two agree, and each
-# is padded to the longest of the five: the stack lines up on its left edge
+# is padded to the longest of them: the stack lines up on its left edge
 # and the longest line ends at the screen's right edge.
 export LC_ALL=C
 out() { printf '%-12s%s' "$1" "$2"; }
@@ -1005,9 +1046,9 @@ EOF
 esac
 }
 
-# the longest of the five sets the width every line is padded to
+# the longest line sets the width every line is padded to
 width=0
-for l in battery power wifi kernel last; do
+for l in @LINES@; do
   t=$(line $l)
   [ ${#t} -gt $width ] && width=${#t}
 done
@@ -1052,9 +1093,9 @@ LY
     set_ly box_title $' singularity '
     {
       echo '# singularity status lines, bottom-right; refresh is in clock ticks (seconds)'
-      for line in battery:30 power:10 wifi:10 kernel:0 last:0; do
-        printf '[lbl:%s]\ncmd = /etc/ly/info.sh %s\nrefresh = %s\n' \
-          "${line%:*}" "${line%:*}" "${line#*:}"
+      for line in $ly_lines; do
+        case $line in battery) refresh=30 ;; power|wifi) refresh=10 ;; *) refresh=0 ;; esac
+        printf '[lbl:%s]\ncmd = /etc/ly/info.sh %s\nrefresh = %s\n' "$line" "$line" "$refresh"
       done
     } | sudo tee -a /etc/ly/config.ini >/dev/null
   fi
