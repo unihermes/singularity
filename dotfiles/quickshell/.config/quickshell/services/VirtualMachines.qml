@@ -38,8 +38,10 @@ Singleton {
     // name -> true while a shutdown asked for is still under way
     property var stopping: ({})
 
+    // --attach: a VM with no SPICE port (listen none) is reached through
+    // libvirt, which a viewer's default read-only connection can't do
     function open(name) {
-        Quickshell.execDetached(["virt-viewer", "--connect", uri, "--reconnect",
+        Quickshell.execDetached(["virt-viewer", "--connect", uri, "--attach", "--reconnect",
                                  "--auto-resize=always", name])
     }
     // asks the guest to shut down (ACPI), as its power button would
