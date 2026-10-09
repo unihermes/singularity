@@ -114,9 +114,8 @@ Singleton {
     readonly property color fieldFill:     surface
     // Glass draws one light hairline instead of the ramp's border
     readonly property bool glass: resolved.glass
-    // Ledger draws in ink, the ramp's text colour
     readonly property color stroke: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.14) : Qt.rgba(1, 1, 1, 0.14))
-        : frameLedger ? text : border
+        : border
     readonly property color strokeHover:   muted
     readonly property color strokeFocus:   hasAccent ? accent : subtext
     readonly property color textDisabled:  muted
@@ -220,8 +219,6 @@ Singleton {
     // "channel": an outer line, a dark groove, an inner line; lit states
     // light the groove in the accent (Channel.qml)
     readonly property bool frameChannel: frameStyle === "channel"
-    // "ledger": one stroke, 2px and in ink, with a hard offset shadow
-    readonly property bool frameLedger: frameStyle === "ledger"
     // "corners": only the corners drawn (CornerMarks.qml), over a faint hairline
     readonly property bool frameCorners: frameStyle === "corners"
     // bevel: drawn with Bevel pairs rather than a border
@@ -282,10 +279,9 @@ Singleton {
     readonly property color bevelDark:  bevel.dark
     // How a list marks its current row (FlyoutRow): "tick" on the left
     // edge, "tint" an accent-tinted ground, "fill" the whole row in the
-    // accent (in ink under Ledger), "prompt" a > before it, or "corners"
+    // accent, or "corners"
     readonly property string rowMark: ({
-        solid: "tint", capsule: "tint", bevel: "fill", terminal: "prompt", corners: "corners",
-        ledger: opt("invert") ? "fill" : "tick" })[style] || "tick"
+        solid: "tint", capsule: "tint", bevel: "fill", corners: "corners" })[style] || "tick"
     // the left-edge bar marking the current row in a list
     readonly property int indicatorWidth: 2
     readonly property int meterHeight: 6
@@ -415,8 +411,6 @@ Singleton {
     readonly property int shadowOffset: Math.max(3, borderWidth * 2)
     // the bar's audio visualizer -- see Looks.js
     readonly property string vizStyle: Settings.vizStyle
-    // how a gauge chip shows its level -- see Looks.js and ModuleFrame
-    readonly property string gaugeStyle: resolved.gaugeStyle
     // a top-to-bottom shading on grounds -- see Looks.js
     readonly property bool gradient: Settings.gradient
     function shadeTop(c) { return Qt.tint(c, Qt.rgba(1, 1, 1, isLight ? 0.35 : 0.06)) }
@@ -438,8 +432,7 @@ Singleton {
     // a bar module under the pointer -- see Looks.js and ModuleFrame
     readonly property string hoverStyle: resolved.hoverStyle
     // between the bar's modules, and the room each gap takes with one
-    // Terminal's pipes option puts a line where its brackets were
-    readonly property string barSeparator: style === "terminal" && opt("pipes") ? "line" : Settings.barSeparator
+    readonly property string barSeparator: Settings.barSeparator
     readonly property int moduleSpacing: moduleGap + (barSeparator === "none" ? 0 : spaceL)
     // notification popups -- see Looks.js and NotificationCard
     readonly property string notifStyle: Settings.notifStyle
@@ -463,7 +456,7 @@ Singleton {
     // its modules are bare chips inside it, sized to the channel's interior
     readonly property bool moduleGrouped: moduleStyle === "grouped"
     // the styles whose open chip fills with the accent
-    readonly property bool moduleOpenFill: moduleStyle === "filled" || moduleStyle === "pill" || moduleStyle === "boxed"
+    readonly property bool moduleOpenFill: moduleStyle === "filled" || moduleStyle === "pill"
     readonly property int groupHeight: moduleHeight + 2
     readonly property int groupRadius: radius > 0 ? radius + channelWidth : 0
     // "grown": a flyout hangs off its module's group, one outline round both
@@ -481,17 +474,13 @@ Singleton {
     // original 28 at the default 34, and the floor keeps the double border
     // from eating the whole chip at the smallest bar height.
     readonly property int moduleHeight: Math.max(18, barHeight - 6)
-    // brackets hug their content, and leave the gap between chips instead,
-    // so neighbours read "[a] [b]" rather than "[ a ][ b ]"
-    readonly property int modulePadH:   moduleStyle === "bracket" ? sp(2) : sp(6)
+    readonly property int modulePadH:   sp(6)
     // gap between adjacent modules, the same on both sides of the bar
-    readonly property int moduleGap:    resolved.moduleGap + (moduleStyle === "bracket" ? spaceS : 0)
+    readonly property int moduleGap:    resolved.moduleGap
     // Shared width for the gauge modules only, so their fill bars are
     // directly comparable. The icon-only chips hug their content instead --
     // padding them out to match would just add dead space.
-    // Segments sit beside the icon rather than under it, so they get the
-    // room of a whole icon more.
-    readonly property int moduleWidth:  gaugeStyle === "segments" ? 76 : 54
+    readonly property int moduleWidth:  54
     // The double frame eats 8px of the chip (outer stroke + a 2px-inset inner
     // one), so the icon is sized to the space left inside it. Capped to the
     // chip, so a large Font Size can't push icons out of it.

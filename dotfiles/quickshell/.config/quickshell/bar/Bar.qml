@@ -438,10 +438,9 @@ PanelWindow {
     }
 
     // hairline on the bar's inner edge, so it reads as a surface
-    // rather than a strip of background; Underline's hairline option
-    // can leave it out
+    // rather than a strip of background
     Rectangle {
-        visible: Theme.barFull && (Theme.style !== "underline" || Theme.opt("hair"))
+        visible: Theme.barFull
         y: Theme.barPosition === "bottom" ? 0 : parent.height - height
         width: parent.width
         height: Theme.borderWidth

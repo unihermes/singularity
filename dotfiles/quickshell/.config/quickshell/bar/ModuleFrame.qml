@@ -8,9 +8,6 @@
 //   filled   a solid ground, no stroke
 //   ghost    bare until hovered or open
 //   pill     filled, fully rounded
-//   bracket  bare, between [ and ] in the text face -- a terminal status line
-//   underline bare; a short accent line under (or over) the open one
-//   boxed    a 2px ink box with a hard offset shadow -- Ledger
 //   cornered marks at the corners only -- Corners
 //   grouped  bare inside its section's channel (shell.qml): a fill on hover,
 //            an accent ring while open, a gauge filling the whole chip
@@ -43,7 +40,7 @@ Item {
     // when > 0 the chip is pinned to this width instead of hugging content
     property int fixedWidth: 0
     // the width the chip adds around its content
-    readonly property int chrome: padH * 2 + frame.bracketW * 2
+    readonly property int chrome: padH * 2
     // the drawn chip's height, which can be less than the item's
     readonly property real chipHeight: frame.height
 
@@ -76,16 +73,11 @@ Item {
             : contentRow.implicitWidth + root.chrome
         readonly property string style: Theme.moduleStyle
         readonly property bool solid: style === "filled" || style === "pill"
-        readonly property bool brackets: style === "bracket" && !Theme.opt("pipes")
-        readonly property bool underline: style === "underline"
         readonly property bool grouped: style === "grouped"
-        readonly property bool boxed: style === "boxed"
         readonly property bool cornered: style === "cornered"
-        readonly property int bracketW: brackets ? Math.ceil(bracketMetrics.advanceWidth) : 0
         // the gauge draws in the chip's interior
         readonly property bool track: root.gauge
-        readonly property string gaugeStyle: Theme.gaugeStyle
-        // filled with the accent while open (Solid, Capsule, Glass, Ledger);
+        // filled with the accent while open (Solid, Capsule, Glass);
         // a level chip keeps its fill and takes an accent ring instead
         readonly property bool openFill: Theme.moduleOpenFill && root.active && !root.gauge
         readonly property bool openRing: root.active && (grouped || (Theme.moduleOpenFill && root.gauge))
@@ -94,35 +86,30 @@ Item {
         readonly property color restFill: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06))
             : Theme.style === "solid" && Theme.opt("tint") ? Qt.tint(Theme.surface, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16))
             : Theme.surface
-        readonly property real level: Math.max(0, Math.min(1, root.fillValue))
 
         readonly property bool bevel: Theme.frameChiselled && style === "outline"
 
-        height: grouped ? Theme.groupHeight - Theme.channelWidth * 2
-            : boxed ? Theme.moduleHeight - 2 : Theme.moduleHeight
+        height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
         radius: style === "pill" ? height / 2 : Theme.radius
         color: grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
             : openFill ? (Theme.glass ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Theme.accent)
             : root.hoverStyle === "fill" ? (Theme.glass ? Theme.stroke : Theme.overlay)
             : cornered && root.active ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16)
-            // Ledger's box is solid, so its offset shadow stays behind it
-            : boxed ? Theme.bar
-            : brackets || underline || cornered || style === "bracket" ? "transparent"
+            : cornered ? "transparent"
             // open under a tab-style flyout: the flyout's own ground, so
             // the chip reads as the tab it hangs from
             : root.active ? (Theme.flyoutAttach === "tab" ? Theme.panelFill : Theme.selectedFill)
             : solid ? restFill : "transparent"
 
-        border.width: !grouped && (boxed || root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked)) ? Theme.borderWidth : 0
-        border.color: boxed ? Theme.stroke
-            : root.active || root.hoverStyle === "outline" ? Theme.strokeFocus : Theme.stroke
+        border.width: !grouped && (root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked)) ? Theme.borderWidth : 0
+        border.color: root.active || root.hoverStyle === "outline" ? Theme.strokeFocus : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
         Shadow {
             radius: frame.radius
-            opaque: frame.solid || frame.boxed
-            offset: frame.boxed ? Theme.borderWidth : Theme.shadowOffset
+            opaque: frame.solid
+            offset: Theme.shadowOffset
         }
 
         // Glass and Corners' glow, round the open chip
@@ -173,45 +160,6 @@ Item {
             thickness: Theme.borderWidth
         }
 
-        TextMetrics {
-            id: bracketMetrics
-            font: leftBracket.font
-            text: "["
-        }
-
-        Text {
-            id: leftBracket
-            visible: frame.brackets
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            text: "["
-            color: root.active ? Theme.accent : Theme.muted
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.barLabelSize
-        }
-
-        Text {
-            visible: frame.brackets
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            text: "]"
-            color: leftBracket.color
-            font: leftBracket.font
-        }
-
-        // Underline's mark on the open module: a short accent line under it,
-        // or over it with the style's lines-above option
-        Rectangle {
-            visible: frame.underline && root.active
-            x: Theme.spaceM
-            y: Theme.opt("over") ? 0 : parent.height - height
-            width: parent.width - Theme.spaceM * 2
-            height: Math.max(2, Theme.borderWidth * 2)
-            radius: height / 2
-            color: Theme.accent
-        }
-
         // Tabbed's accent edge option: the open tab's outer edge lit
         Rectangle {
             visible: Theme.style === "tabbed" && Theme.opt("lift") && root.active
@@ -224,23 +172,21 @@ Item {
         // Flush inside the double border: the outer stroke sits at 0..1, the
         // inner one at 2..3, so 3 is the first clear pixel. Matching that
         // exactly is what makes the bar touch the border with no gap.
-        readonly property int barInset: grouped ? 0 : boxed ? Theme.borderWidth + 1 : 3
+        readonly property int barInset: grouped ? 0 : 3
 
         // The bar is the whole interior now, with the icon sitting on top of
         // it rather than beside it.
         Rectangle {
             id: track
-            visible: frame.track && frame.gaugeStyle === "fill"
+            visible: frame.track
             anchors.fill: parent
             anchors.margins: frame.barInset
-            anchors.leftMargin: frame.barInset + frame.bracketW
-            anchors.rightMargin: frame.barInset + frame.bracketW
             // one less than the inner stroke's radius, being one pixel
             // further in, so the curves stay concentric -- floored because
             // the radius is user-settable down to square
             radius: frame.style === "pill" ? height / 2 : frame.grouped ? frame.radius : Theme.radiusSmall
             color: frame.grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
-                : frame.underline || frame.cornered ? "transparent" : Theme.meterTrack
+                : frame.cornered ? "transparent" : Theme.meterTrack
 
 
             Rectangle {
@@ -253,41 +199,13 @@ Item {
                     ? 0
                     : Math.max(radius * 2, parent.width * Math.min(1, root.fillValue))
                 radius: parent.radius
-                // Underline's level is a soft wash of the colour, not a block
-                color: frame.underline ? Qt.alpha(root.fillColor, 0.38) : root.fillColor
+                color: root.fillColor
 
                 Behavior on width {
                     NumberAnimation { duration: Theme.dur(120); easing.type: Theme.ease }
                 }
                 Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
-            }
-        }
-
-        // "segments": five blocks beside the icon, lit up to the level, as
-        // a terminal meter would draw them
-        Row {
-            visible: frame.track && frame.gaugeStyle === "segments"
-            anchors.fill: parent
-            anchors.margins: frame.barInset + 1
-            anchors.leftMargin: root.padH + frame.bracketW + contentRow.width + root.spacing
-            anchors.rightMargin: frame.barInset + frame.bracketW
-            spacing: Math.max(1, Theme.borderWidth)
-
-            Repeater {
-                model: 5
-                Rectangle {
-                    required property int index
-                    width: (parent.width - parent.spacing * 4) / 5
-                    height: parent.height
-                    radius: Math.min(Theme.radiusSmall, 2)
-                    // a block is lit once the level passes its midpoint, and
-                    // the first stays lit above zero so a low level still shows;
-                    // unlit ones in the stroke colour, so all five read
-                    color: frame.level > 0 && (index === 0 || frame.level >= (index + 0.5) / 5)
-                        ? root.fillColor : Theme.border
-                    Behavior on color { ColorAnimation { duration: Theme.dur(120) } }
-                }
             }
         }
 
@@ -310,7 +228,7 @@ Item {
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter
-            x: frame.track && !frame.grouped ? root.padH + frame.bracketW : Math.round((parent.width - width) / 2)
+            x: frame.track && !frame.grouped ? root.padH : Math.round((parent.width - width) / 2)
             spacing: root.spacing
         }
     }

@@ -10,15 +10,13 @@
 //
 // Each style:
 //   frame      how panels and chips are stroked (Theme.frame*): "channel",
-//              "double", "single", "bevel", "ledger" (2px ink), "corners"
-//              (only the corners drawn) or "none"
+//              "double", "single", "bevel", "corners" (only the corners
+//              drawn) or "none"
 //   modules    the bar chips (ModuleFrame): "grouped", "outline", "filled",
-//              "pill", "ghost", "underline", "bracket", "boxed" (ledger's
-//              ink box) or "cornered"
+//              "pill", "ghost" or "cornered"
 //   hover      a bar module under the pointer: "none", "fill" or "outline"
-//   gauge      the level chips: "fill" or "segments"
 //   mark       how the open-windows strip marks the focused window:
-//              "pill", "ground", "box", "above" or "under"
+//              "pill", "ground", "box" or "above"
 //   title      a flyout's first heading: "none" or "titlebar"
 //   shadow     the kind the Shadows switch turns on: "none", "soft", "hard"
 //   lines      whether it has strokes, i.e. whether Heavy lines does anything
@@ -48,22 +46,22 @@
 
 .pragma library
 
-var order = ["channel", "double", "solid", "capsule", "glass", "bevel", "terminal", "underline", "tabbed", "ledger", "corners"]
+var order = ["channel", "double", "solid", "capsule", "glass", "bevel", "tabbed", "corners"]
 
 // styles that were renamed or merged, so a saved name still lands somewhere
-var renamed = { lined: "double", flat: "solid", basic: "solid", retro: "bevel", minimal: "underline" }
+var renamed = { lined: "double", flat: "solid", basic: "solid", retro: "bevel",
+    minimal: "tabbed", underline: "tabbed", terminal: "corners", ledger: "bevel" }
 // what a saved renamed style carries over as: the options and switches
 // that draw it as it was (Basic was Solid without shadows)
 var carried = {
     lined: { styleOptions: "" }, flat: { styleOptions: "" },
     basic: { styleOptions: "", shadows: false }, retro: { styleOptions: "title" },
-    minimal: { styleOptions: "hair" },
 }
 
 var styles = {
     channel: {
         name: "Channel", hint: "Grooved bands; flyouts grow from the bar groups",
-        frame: "channel", modules: "grouped", hover: "fill", gauge: "fill", mark: "pill", title: "none",
+        frame: "channel", modules: "grouped", hover: "fill", mark: "pill", title: "none",
         shadow: "none", lines: true, attach: "grown", anim: "fade", prefix: "//",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
         options: [],
@@ -72,7 +70,7 @@ var styles = {
     },
     double: {
         name: "Double", hint: "Outlined chips, a stroke inside each",
-        frame: "double", modules: "outline", hover: "fill", gauge: "fill", mark: "pill", title: "none",
+        frame: "double", modules: "outline", hover: "fill", mark: "pill", title: "none",
         shadow: "none", lines: true, attach: "auto", anim: "drop", prefix: "",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
         options: [
@@ -84,7 +82,7 @@ var styles = {
     },
     solid: {
         name: "Solid", hint: "Filled blocks, no strokes",
-        frame: "none", modules: "filled", hover: "fill", gauge: "fill", mark: "ground", title: "none",
+        frame: "none", modules: "filled", hover: "fill", mark: "ground", title: "none",
         shadow: "soft", lines: false, attach: "floating", anim: "scale", prefix: "",
         finish: { barSeparator: "none", headingUpper: true, headingRule: false },
         options: [
@@ -96,7 +94,7 @@ var styles = {
     },
     capsule: {
         name: "Capsule", hint: "Every chip, control and island a pill",
-        frame: "none", modules: "pill", hover: "fill", gauge: "fill", mark: "pill", title: "none",
+        frame: "none", modules: "pill", hover: "fill", mark: "pill", title: "none",
         shadow: "soft", lines: false, attach: "floating", anim: "scale", prefix: "",
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false },
         options: [
@@ -108,7 +106,7 @@ var styles = {
     },
     glass: {
         name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
-        frame: "single", modules: "filled", hover: "fill", gauge: "fill", mark: "ground", title: "none",
+        frame: "single", modules: "filled", hover: "fill", mark: "ground", title: "none",
         shadow: "soft", lines: false, attach: "floating", anim: "fade", prefix: "", glass: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
         options: [
@@ -120,7 +118,7 @@ var styles = {
     },
     bevel: {
         name: "Bevel", hint: "Raised edges and title bars",
-        frame: "bevel", modules: "outline", hover: "none", gauge: "fill", mark: "box", title: "titlebar",
+        frame: "bevel", modules: "outline", hover: "none", mark: "box", title: "titlebar",
         shadow: "hard", lines: true, attach: "auto", anim: "none", prefix: "", square: true,
         finish: { barSeparator: "none", headingUpper: false, headingRule: true },
         options: [
@@ -130,33 +128,9 @@ var styles = {
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
-    terminal: {
-        name: "Terminal", hint: "Brackets, block meters, text controls",
-        frame: "single", modules: "bracket", hover: "none", gauge: "segments", mark: "box", title: "none",
-        shadow: "none", lines: true, attach: "auto", anim: "none", prefix: ">", square: true,
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
-        options: [
-            { id: "pipes", label: "Pipes instead of brackets", hint: "a │ b │ c along the bar", on: false },
-            { id: "hash", label: "# headings", hint: "# before headings instead of >", on: true },
-            { id: "scan", label: "Scanlines", hint: "Faint lines across panels", on: false },
-        ],
-        windows: { focusedOpacity: 100, unfocusedOpacity: 90, terminalOpacity: 85 },
-    },
-    underline: {
-        name: "Underline", hint: "Bare modules, short accent lines",
-        frame: "single", modules: "underline", hover: "fill", gauge: "fill", mark: "under", title: "none",
-        shadow: "soft", lines: true, attach: "auto", anim: "drop", prefix: "",
-        finish: { gradient: false, headingUpper: true, headingRule: true },
-        options: [
-            { id: "hair", label: "Hairline along the bar", hint: "A rule on the bar's inner edge", on: true },
-            { id: "over", label: "Lines above", hint: "Accent lines over things instead of under", on: true },
-            { key: "barSeparator", value: "dot", label: "Dots between modules", hint: "A small dot in each gap", on: false },
-        ],
-        windows: { focusedOpacity: 100, unfocusedOpacity: 95, terminalOpacity: 85 },
-    },
     tabbed: {
         name: "Tabbed", hint: "Flyouts hang from the open tab",
-        frame: "single", modules: "ghost", hover: "fill", gauge: "fill", mark: "above", title: "none",
+        frame: "single", modules: "ghost", hover: "fill", mark: "above", title: "none",
         shadow: "soft", lines: true, attach: "tab", anim: "drop", prefix: "",
         finish: { barSeparator: "none", gradient: false, headingRule: true },
         options: [
@@ -166,21 +140,9 @@ var styles = {
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
     },
-    ledger: {
-        name: "Ledger", hint: "Ink boxes and hard offset shadows",
-        frame: "ledger", modules: "boxed", hover: "fill", gauge: "fill", mark: "box", title: "none",
-        shadow: "hard", lines: true, attach: "floating", anim: "none", prefix: "■", square: true,
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
-        options: [
-            { key: "shadows", label: "Offset shadows", hint: "A hard ink shadow under chips and panels", on: true },
-            { id: "rules", label: "Ruled rows", hint: "A line under every row", on: true },
-            { id: "invert", label: "Inverted selection", hint: "The chosen row in ink, not a tick", on: true },
-        ],
-        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
-    },
     corners: {
         name: "Corners", hint: "Only the corners drawn",
-        frame: "corners", modules: "cornered", hover: "fill", gauge: "fill", mark: "box", title: "none",
+        frame: "corners", modules: "cornered", hover: "fill", mark: "box", title: "none",
         shadow: "soft", lines: true, attach: "auto", anim: "fade", prefix: "▸", square: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
         options: [
@@ -191,6 +153,11 @@ var styles = {
         windows: { focusedOpacity: 100, unfocusedOpacity: 95, terminalOpacity: 90 },
     },
 }
+
+// the dropped styles land on their replacement's own options
+var dropped = ["minimal", "underline", "terminal", "ledger"]
+for (var d = 0; d < dropped.length; d++)
+    carried[dropped[d]] = { styleOptions: finish(renamed[dropped[d]]).styleOptions }
 
 // bar height and the gap between modules, by density
 var densityBar = { compact: { height: 28, gap: 2 }, normal: { height: 32, gap: 2 }, roomy: { height: 36, gap: 4 } }
@@ -233,28 +200,23 @@ function resolve(s) {
     var radius = st.square ? 0 : s.radius
     var prefix = st.prefix
     if (name === "double") prefix = has(s.styleOptions, "slash") ? "//" : ""
-    if (name === "terminal" && has(s.styleOptions, "hash")) prefix = "#"
-    var mark = st.mark
-    if (name === "underline" && has(s.styleOptions, "over")) mark = "above"
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
         styleName: styles[name] ? name : "channel",
         frameStyle: st.frame,
         moduleStyle: st.modules,
         hoverStyle: st.hover,
-        gaugeStyle: st.gauge,
-        windowMark: mark,
+        windowMark: st.mark,
         flyoutTitle: name === "bevel" && !has(s.styleOptions, "title") ? "none" : st.title,
         shadow: s.shadows ? st.shadow : "none",
-        // ledger's ink is always 2px; Heavy lines doubles the rest
-        borderWidth: st.frame === "ledger" || (s.heavyLines && st.lines) ? 2 : 1,
+        borderWidth: s.heavyLines && st.lines ? 2 : 1,
         radius: radius,
         panelRadius: radius,
         barRadius: radius,
         flyoutAttach: attach,
         flyoutAnim: !s.flyoutAnim || s.flyoutAnim === "auto" ? st.anim : s.flyoutAnim,
         barHeight: bar.height,
-        moduleGap: bar.gap + (st.modules === "boxed" ? 3 : 0),
+        moduleGap: bar.gap,
         opacity: Math.round(s.seeThrough * see),
         headingPrefix: prefix,
         glass: !!st.glass,

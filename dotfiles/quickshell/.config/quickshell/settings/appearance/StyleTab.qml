@@ -109,9 +109,8 @@ SettingsTab {
     FinishSwitch {
         visible: styleTab.optionKeys.indexOf("heavyLines") === -1
         label: "Heavy lines"; key: "heavyLines"
-        live: Styles.get(Settings.style).lines && Theme.frameStyle !== "ledger"
-        hint: !Styles.get(Settings.style).lines ? "This style has no lines"
-            : Theme.frameStyle === "ledger" ? "Ledger's ink is always 2px" : "Every stroke 2px, windows' borders too"
+        live: Styles.get(Settings.style).lines
+        hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
     }
 
     FinishSwitch { visible: styleTab.optionKeys.indexOf("headingUpper") === -1; label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
@@ -128,7 +127,6 @@ SettingsTab {
             readonly property int cw: Theme.fs(24)
             readonly property int ch: Theme.fs(16)
             readonly property int r: Math.min(Theme.radius, 5)
-            readonly property color ink: Theme.text
             width: Theme.fs(64)
             height: Theme.fs(34)
 
@@ -170,28 +168,20 @@ SettingsTab {
                         readonly property bool lit: modelData
                         width: ya.cw; height: ya.ch
 
-                        // Ledger's hard shadow
-                        Rectangle {
-                            visible: ya.v === "ledger"
-                            x: 2; y: 2; width: parent.width; height: parent.height
-                            color: ya.ink
-                        }
                         Rectangle {
                             id: face
                             anchors.fill: parent
-                            visible: ["channel", "terminal", "underline", "corners"].indexOf(ya.v) === -1
+                            visible: ["channel", "corners"].indexOf(ya.v) === -1
                                 && !(ya.v === "tabbed" && !chip.lit)
                             radius: ya.v === "capsule" ? height / 2
-                                : ["bevel", "tabbed", "ledger"].indexOf(ya.v) !== -1 ? 0 : ya.r
+                                : ["bevel", "tabbed"].indexOf(ya.v) !== -1 ? 0 : ya.r
                             color: ya.v === "glass" ? (chip.lit ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Qt.rgba(1, 1, 1, 0.08))
                                 : ya.v === "double" ? (chip.lit ? Theme.overlay : Theme.panel)
                                 : ya.v === "tabbed" ? Theme.panel
                                 : ya.v === "bevel" ? (chip.lit ? Theme.overlay : Theme.surface)
-                                : ya.v === "ledger" ? (chip.lit ? Theme.accent : Theme.panel)
                                 : chip.lit ? Theme.accent : ya.v === "capsule" ? Theme.overlay : Theme.surface
-                            border.width: ya.v === "double" || ya.v === "glass" ? 1 : ya.v === "ledger" ? 2 : 0
+                            border.width: ya.v === "double" || ya.v === "glass" ? 1 : 0
                             border.color: ya.v === "glass" ? Qt.rgba(1, 1, 1, 0.2)
-                                : ya.v === "ledger" ? ya.ink
                                 : chip.lit ? Theme.accent : Theme.border
 
                             Rectangle {
@@ -230,30 +220,11 @@ SettingsTab {
                         }
                         // the icon
                         Rectangle {
-                            visible: ya.v !== "terminal"
                             anchors.centerIn: parent
                             width: Theme.fs(8); height: Theme.fs(5)
                             radius: 1
-                            color: chip.lit && ["solid", "capsule", "ledger", "glass"].indexOf(ya.v) !== -1 ? "#ffffff"
+                            color: chip.lit && ["solid", "capsule", "glass"].indexOf(ya.v) !== -1 ? "#ffffff"
                                 : chip.lit && ya.v === "corners" ? Theme.accent : Theme.text
-                        }
-                        // Underline: an accent line under the open one
-                        Rectangle {
-                            visible: ya.v === "underline" && chip.lit
-                            anchors.bottom: parent.bottom
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: parent.width - 6; height: 2
-                            radius: 1
-                            color: Theme.accent
-                        }
-                        Text {
-                            visible: ya.v === "terminal"
-                            anchors.centerIn: parent
-                            text: "[    ]"
-                            color: chip.lit ? Theme.accent : Theme.muted
-                            font.family: Theme.fontText
-                            font.pixelSize: Theme.fs(14)
-                            font.weight: Theme.weightStrong
                         }
                     }
                 }

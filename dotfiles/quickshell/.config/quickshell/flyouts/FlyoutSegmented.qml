@@ -59,16 +59,14 @@ Item {
     //   double     a stroked strip; the chosen one ringed in accent
     //   solid      a sunken track with a raised accent pill
     //   capsule    separate pills          glass   a frosted strip
-    //   bevel      radio buttons           terminal  (•) and ( ) text
-    //   underline  text tabs over a hairline, the chosen one underlined
-    //   tabbed     folder tabs             ledger  ink boxes, the chosen inverted
+    //   bevel      radio buttons           tabbed  folder tabs
     //   corners    bracketed cells
     readonly property string kind: Theme.style
     // drawn as a row of separate choices rather than one strip
-    readonly property bool loose: ["capsule", "bevel", "terminal", "corners"].indexOf(kind) !== -1
-    readonly property int gap: kind === "bevel" || kind === "terminal" ? Theme.spaceL
+    readonly property bool loose: ["capsule", "bevel", "corners"].indexOf(kind) !== -1
+    readonly property int gap: kind === "bevel" ? Theme.spaceL
         : kind === "capsule" || kind === "corners" ? Theme.spaceS : 0
-    readonly property int edge: loose || kind === "underline" || kind === "tabbed" ? 0
+    readonly property int edge: loose || kind === "tabbed" ? 0
         : kind === "solid" || kind === "glass" ? Theme.spaceXs : Theme.borderWidth
 
     Rectangle {
@@ -77,12 +75,12 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: root.fill ? parent.width : segs.implicitWidth + root.edge * 2
         height: Theme.rowHeight
-        radius: root.kind === "ledger" ? 0 : root.kind === "solid" || root.kind === "glass" ? Theme.radius : Theme.radiusInner
-        color: root.loose || root.kind === "underline" || root.kind === "tabbed" ? "transparent"
+        radius: root.kind === "solid" || root.kind === "glass" ? Theme.radius : Theme.radiusInner
+        color: root.loose || root.kind === "tabbed" ? "transparent"
             : root.kind === "solid" ? Theme.meterTrack
             : root.kind === "glass" ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06))
             : Theme.controlFill("transparent")
-        border.width: root.loose || root.kind === "solid" || root.kind === "underline" || root.kind === "tabbed" ? 0
+        border.width: root.loose || root.kind === "solid" || root.kind === "tabbed" ? 0
             : Theme.controlBorder(Theme.stroke)
         border.color: root.kind === "glass" ? Theme.stroke : Theme.controlStroke(Theme.stroke)
 
@@ -91,9 +89,9 @@ Item {
             sunken: true; radius: strip.radius
         }
 
-        // underline and tabbed: the hairline the tabs stand on
+        // tabbed: the hairline the tabs stand on
         Rectangle {
-            visible: root.kind === "underline" || root.kind === "tabbed"
+            visible: root.kind === "tabbed"
             anchors.bottom: parent.bottom
             width: parent.width
             height: Theme.borderWidth
@@ -117,14 +115,13 @@ Item {
                     required property int index
                     readonly property bool on: root.valueOf(modelData) === root.current
                     readonly property bool hot: segMouse.containsMouse
-                    // bevel's radio and terminal's (•) sit before the text
-                    readonly property int lead: root.kind === "bevel" ? radio.width + Theme.spaceS
-                        : root.kind === "terminal" ? termMark.implicitWidth : 0
+                    // bevel's radio sits before the text
+                    readonly property int lead: root.kind === "bevel" ? radio.width + Theme.spaceS : 0
 
                     height: segs.height
-                    implicitWidth: lead + segText.implicitWidth + (root.kind === "bevel" || root.kind === "terminal" ? 0 : Theme.spaceL * 2)
+                    implicitWidth: lead + segText.implicitWidth + (root.kind === "bevel" ? 0 : Theme.spaceL * 2)
                     // shared out evenly when the strip is stretched
-                    width: root.fill && !(root.kind === "bevel" || root.kind === "terminal")
+                    width: root.fill && root.kind !== "bevel"
                         ? (strip.width - root.edge * 2 - root.gap * (rep.count - 1)) / rep.count : implicitWidth
 
                     // the segment's ground
@@ -133,9 +130,9 @@ Item {
                         anchors.fill: parent
                         anchors.margins: root.loose || root.edge === 0 || root.kind === "solid" || root.kind === "glass" ? 0 : 1
                         anchors.bottomMargin: root.kind === "tabbed" ? 0 : anchors.margins
-                        visible: root.kind !== "bevel" && root.kind !== "terminal"
+                        visible: root.kind !== "bevel"
                         radius: root.kind === "capsule" ? height / 2
-                            : root.kind === "ledger" || root.kind === "corners" || root.kind === "underline" ? 0
+                            : root.kind === "corners" ? 0
                             : root.kind === "tabbed" ? Theme.radiusSmall
                             : root.kind === "solid" || root.kind === "glass" ? Math.max(0, Theme.radius - 2)
                             : Theme.radiusSmall
@@ -145,10 +142,8 @@ Item {
                             var k = root.kind
                             if (seg.on) {
                                 if (k === "double" || k === "tabbed") return Theme.overlay
-                                if (k === "ledger") return Theme.text
                                 if (k === "glass") return Theme.isLight ? Qt.rgba(1, 1, 1, 0.7) : Qt.rgba(1, 1, 1, 0.2)
                                 if (k === "corners") return Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16)
-                                if (k === "underline") return "transparent"
                                 return Theme.accent
                             }
                             if (seg.hot) return Theme.hoverFillSoft
@@ -164,16 +159,6 @@ Item {
                             color: seg.on ? Theme.accent : seg.hot ? Theme.textStrong : Theme.muted
                         }
 
-                        // underline: the chosen tab's accent line
-                        Rectangle {
-                            visible: root.kind === "underline" && seg.on
-                            x: Theme.spaceM
-                            y: Theme.opt("over") ? 0 : parent.height - height
-                            width: parent.width - Theme.spaceM * 2
-                            height: Math.max(2, Theme.borderWidth * 2)
-                            radius: height / 2
-                            color: Theme.accent
-                        }
                         // tabbed: the chosen tab opens into the hairline below it
                         Rectangle {
                             visible: root.kind === "tabbed" && seg.on
@@ -185,12 +170,12 @@ Item {
                         }
                     }
 
-                    // the hairline between joined segments; ledger's is ink
+                    // the hairline between joined segments
                     Rectangle {
-                        visible: seg.index > 0 && !root.loose && root.kind !== "underline" && root.kind !== "tabbed"
+                        visible: seg.index > 0 && !root.loose && root.kind !== "tabbed"
                             && root.kind !== "solid" && root.kind !== "glass"
                         width: Theme.borderWidth
-                        height: root.kind === "ledger" ? parent.height : parent.height - Theme.spaceS * 2
+                        height: parent.height - Theme.spaceS * 2
                         anchors.verticalCenter: parent.verticalCenter
                         color: Theme.stroke
                     }
@@ -216,18 +201,6 @@ Item {
                         }
                     }
 
-                    // terminal's (•) / ( )
-                    Text {
-                        id: termMark
-                        visible: root.kind === "terminal"
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: seg.on ? "(•) " : "( ) "
-                        color: seg.on ? Theme.accent : Theme.muted
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontSmall
-                    }
-
                     Text {
                         id: segText
                         anchors.verticalCenter: parent.verticalCenter
@@ -236,13 +209,11 @@ Item {
                         color: {
                             var k = root.kind
                             if (seg.on) {
-                                if (k === "ledger") return Theme.panel
-                                if (k === "double" || k === "glass" || k === "bevel" || k === "terminal"
-                                        || k === "underline") return Theme.textStrong
+                                if (k === "double" || k === "glass" || k === "bevel") return Theme.textStrong
                                 if (k === "tabbed" || k === "corners") return Theme.accent
                                 return Theme.textOnAccent
                             }
-                            return seg.hot ? Theme.textStrong : k === "underline" || k === "tabbed" ? Theme.subtext : Theme.text
+                            return seg.hot ? Theme.textStrong : k === "tabbed" ? Theme.subtext : Theme.text
                         }
                         font.family: Theme.fontText
                         font.weight: Theme.weightBody

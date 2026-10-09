@@ -13,9 +13,9 @@
 //   st         the style's own table (Styles.get)
 //   density    "compact", "normal" or "roomy"
 //
-// What carries over: corners (Roundness; Capsule's pills, Terminal's
+// What carries over: corners (Roundness; Capsule's pills, Bevel's
 // square), Density's control heights, and the style's frame on controls
-// and panels -- single, double or channel strokes, Ledger's ink, Bevel's bevels, none --
+// and panels -- single, double or channel strokes, Bevel's bevels, none --
 // with hover drawn the style's way. Shadows, see-through, title bars and
 // heading case stay the toolkit's, so apps keep their own legibility.
 //
@@ -56,7 +56,7 @@ function setup(t) {
         check: pill ? 9999 : Math.min(r.radius, 4),
         h: heights[t.density] || heights.normal,
         // a control's resting stroke, and the one it takes under the pointer
-        stroke: r.frameStyle === "channel" ? c.muted : r.frameStyle === "ledger" ? c.text : c.border,
+        stroke: r.frameStyle === "channel" ? c.muted : c.border,
         strokeHover: r.frameStyle === "channel" ? c.subtext : c.muted,
         bevelLight: scale(c.border, 1.8), bevelDark: scale(c.border, 1 / 1.8),
     }
@@ -86,7 +86,6 @@ function panelFrame(o, bg) {
     case "double": return rings([[w, c.border], [2, bg], [w, c.muted]])
     case "channel": return rings([[w, c.muted], [2, c.base], [w, c.border]])
     case "bevel": return bevel(o, false)
-    case "ledger": return rings([[w, c.text]])
     case "corners": return rings([[w, alpha(c.border, 0.6)]])
     case "none": return []
     }
@@ -185,7 +184,6 @@ function gtk(t, v) {
         double: ["inset 0 -" + o.w + "px " + c.border, "inset 0 -" + (o.w + 2) + "px " + c.surface, "inset 0 -" + (2 * o.w + 2) + "px " + c.muted],
         channel: ["inset 0 -" + o.w + "px " + c.border, "inset 0 -" + (o.w + 2) + "px " + c.base, "inset 0 -" + (2 * o.w + 2) + "px " + c.muted],
         bevel: bevel(o, false),
-        ledger: ["inset 0 -" + o.w + "px " + c.text],
         corners: ["inset 0 -" + o.w + "px " + alpha(c.border, 0.6)],
         none: [],
     }[o.frame]

@@ -9,9 +9,7 @@
 //   solid      a thick bar          capsule   a tall pill
 //   glass      a thin frosted line with a round accent thumb
 //   bevel      a sunken groove and a raised block thumb
-//   terminal   a row of blocks      tabbed    ten notches
-//   underline  a hairline and a dot
-//   ledger     a ruler: an ink box with ticks under it and a pointer
+//   tabbed     ten notches
 //   corners    dashes and a diamond
 
 import QtQuick
@@ -56,8 +54,6 @@ Item {
         readonly property string kind: Theme.style
         readonly property real frac: Math.max(0, Math.min(1, root.value / 100))
         readonly property bool hot: drag.pressed || drag.containsMouse
-        // the ruler's ticks and pointer hang below its box
-        readonly property int boxH: kind === "ledger" ? Math.round(height * 0.6) : height
 
         // channel: a level chip, filled inside a dark groove, with a bright
         // marker at the level
@@ -96,54 +92,38 @@ Item {
         }
 
         // a well with the fill inside it: double (a stroked well), solid
-        // (a thick bar), capsule (a tall pill), ledger (a 2px ink box)
+        // (a thick bar), capsule (a tall pill)
         Rectangle {
             id: well
-            visible: ["double", "solid", "capsule", "ledger"].indexOf(track.kind) !== -1
-            readonly property int pad: track.kind === "double" ? Theme.borderWidth + 2
-                : track.kind === "ledger" ? Theme.borderWidth : 0
-            y: track.kind === "ledger" ? 0 : Math.round((parent.height - height) / 2)
+            visible: ["double", "solid", "capsule"].indexOf(track.kind) !== -1
+            readonly property int pad: track.kind === "double" ? Theme.borderWidth + 2 : 0
+            y: Math.round((parent.height - height) / 2)
             width: parent.width
             height: track.kind === "double" ? Math.round(track.height * 0.75)
                 : track.kind === "solid" ? Math.round(track.height * 0.6)
-                : track.kind === "capsule" ? track.height
-                : track.boxH
-            radius: track.kind === "ledger" ? 0
-                : track.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : height / 2
-            color: track.kind === "double" || track.kind === "ledger" ? "transparent"
+                : track.height
+            radius: track.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : height / 2
+            color: track.kind === "double" ? "transparent"
                 : track.kind === "capsule" ? Theme.overlay : Theme.meterTrack
-            border.width: track.kind === "double" || track.kind === "ledger" ? Theme.borderWidth : 0
-            border.color: track.kind === "ledger" ? Theme.stroke : track.hot ? Theme.strokeHover : Theme.stroke
+            border.width: track.kind === "double" ? Theme.borderWidth : 0
+            border.color: track.hot ? Theme.strokeHover : Theme.stroke
 
             Rectangle {
                 x: well.pad
                 y: well.pad
                 height: well.height - well.pad * 2
                 width: track.frac <= 0 ? 0 : Math.max(height, (well.width - well.pad * 2) * track.frac)
-                radius: track.kind === "ledger" ? 0 : Math.max(0, well.radius - well.pad)
+                radius: Math.max(0, well.radius - well.pad)
                 color: root.fillColor
             }
         }
 
-        // Ledger's ruler: a tick every tenth under the box, and a pointer
-        Repeater {
-            model: track.kind === "ledger" ? 11 : 0
-            Rectangle {
-                required property int index
-                x: Math.min(track.width - width, track.width * index / 10)
-                y: track.boxH + 2
-                width: 1
-                height: index % 5 === 0 ? track.height - track.boxH - 2 : Math.round((track.height - track.boxH - 2) / 2)
-                color: Theme.stroke
-            }
-        }
-
         // a thin line with a thumb: glass (frosted, a round accent thumb
-        // that glows), underline (a hairline and a dot), corners (dashes
-        // and a diamond), bevel (a sunken groove and a raised block)
+        // that glows), corners (dashes and a diamond), bevel (a sunken
+        // groove and a raised block)
         Rectangle {
             id: line
-            visible: ["glass", "underline", "corners", "bevel"].indexOf(track.kind) !== -1
+            visible: ["glass", "corners", "bevel"].indexOf(track.kind) !== -1
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: track.kind === "glass" || track.kind === "bevel" ? 4 : Math.max(2, Theme.borderWidth * 2)
@@ -205,7 +185,7 @@ Item {
                 anchors.fill: parent
                 rotation: track.kind === "corners" ? 45 : 0
                 scale: track.kind === "corners" ? 0.75 : 1
-                radius: track.kind === "glass" || track.kind === "underline" ? width / 2 : 0
+                radius: track.kind === "glass" ? width / 2 : 0
                 color: track.kind === "bevel" ? Theme.panel : root.fillColor
                 border.width: track.kind === "glass" ? 2 : 0
                 border.color: Theme.isLight ? Qt.rgba(1, 1, 1, 0.9) : Qt.rgba(1, 1, 1, 0.3)
@@ -220,13 +200,13 @@ Item {
             }
         }
 
-        // steps: terminal's blocks, tabbed's ten notches
+        // tabbed's ten notches
         Row {
-            visible: track.kind === "terminal" || track.kind === "tabbed"
-            readonly property int count: track.kind === "tabbed" ? 10 : Math.max(8, Math.floor(track.width / 7))
+            visible: track.kind === "tabbed"
+            readonly property int count: 10
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
-            height: track.kind === "tabbed" ? Math.round(track.height * 0.45) : Math.round(track.height * 0.75)
+            height: Math.round(track.height * 0.45)
             spacing: 2
             Repeater {
                 model: parent.visible ? parent.count : 0
@@ -235,8 +215,8 @@ Item {
                     readonly property bool lit: track.frac > 0 && (index + 0.5) / parent.count <= track.frac
                     width: (parent.width - parent.spacing * (parent.count - 1)) / parent.count
                     height: parent.height
-                    radius: track.kind === "tabbed" ? Math.min(2, Theme.radiusSmall) : 0
-                    color: lit ? root.fillColor : track.kind === "tabbed" ? Theme.overlay : Qt.alpha(Theme.muted, 0.45)
+                    radius: Math.min(2, Theme.radiusSmall)
+                    color: lit ? root.fillColor : Theme.overlay
                 }
             }
         }

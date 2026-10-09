@@ -44,7 +44,7 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
 - **Looks and Styles.** Eleven looks (Classic, Kanagawa, Catppuccin, Nord,
-  Signal, Sonar, …) on top of eleven Styles that draw all of the chrome,
+  Signal, Sonar, …) on top of eight Styles that draw all of the chrome,
   controls included, at once, so no combination of settings can clash.
 - **Settings for everything.** Displays, input, power and idle, the lock
   screen, window rules, keybinds, notifications, audio, Bluetooth, Wi-Fi,
@@ -165,14 +165,14 @@ notification popups.
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
 meters, section frames, the heading mark, where flyouts sit, and its own
-switches, sliders, segmented controls and buttons. There are eleven:
-Channel, Double, Solid, Capsule, Glass, Bevel, Terminal, Underline, Tabbed,
-Ledger and Corners. Each has three options of its own (Terminal's scanlines,
-Capsule's one-pill bar, Corners' glow, …). Beside it are only dials that
+switches, sliders, segmented controls and buttons. There are eight:
+Channel, Double, Solid, Capsule, Glass, Bevel, Tabbed and Corners. Each has
+three options of its own (Glass's heavy blur, Capsule's one-pill bar,
+Corners' glow, …). Beside it are only dials that
 move everything together (Roundness, Bar shape, Density, See-through) and a
 few finishing switches.
 
-<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance's Style tab: a live preview and the eleven Styles" width="720"></p>
+<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance's Style tab: a live preview and the Styles" width="720"></p>
 
 Pick a look from **Settings → Appearance → Look**, the Control Centre, or a
 keybind (`qs ipc call look cycle`, `qs ipc call look set <name>`). The other

@@ -13,10 +13,7 @@
 //   capsule    a pill; with the style's labels option it says On or Off
 //   glass      a frosted track, the knob glowing when on
 //   bevel      a sunken checkbox with a tick
-//   terminal   [x] and [ ] in the text face
-//   underline  a thin rail with a round knob
 //   tabbed     a two-way Off | On
-//   ledger     an ink box stamped ON or OFF
 //   corners    a bracketed square knob
 //
 // `interactive: false` for a switch inside a row that takes the click
@@ -41,17 +38,15 @@ Item {
     readonly property color onFill: Theme.meterFill
 
     implicitWidth: kind === "bevel" ? h
-        : kind === "terminal" ? termText.implicitWidth
         : kind === "tabbed" ? twoWay.implicitWidth
-        : kind === "ledger" ? Math.max(Theme.row(34), stamp.implicitWidth + Theme.spaceL)
         : kind === "capsule" && Theme.opt("labels") ? Theme.row(46)
         : kind === "solid" ? Theme.row(34)
         : Theme.switchWidth
     implicitHeight: kind === "solid" ? Theme.row(20) : h
     opacity: enabled ? 1 : 0.5
 
-    // --- tracks with a knob: double, solid, capsule, glass, underline, corners
-    readonly property bool knobbed: ["double", "solid", "capsule", "glass", "underline", "corners"].indexOf(kind) !== -1
+    // --- tracks with a knob: double, solid, capsule, glass, corners
+    readonly property bool knobbed: ["double", "solid", "capsule", "glass", "corners"].indexOf(kind) !== -1
         && !(kind === "capsule" && Theme.opt("labels"))
 
     Rectangle {
@@ -59,7 +54,7 @@ Item {
         visible: root.knobbed
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
-        height: root.kind === "underline" ? Math.max(4, Theme.borderWidth * 3) : parent.height
+        height: parent.height
         radius: root.kind === "double" ? Math.min(height / 2, Theme.radiusInner)
             : root.kind === "corners" ? 0 : height / 2
         color: {
@@ -68,7 +63,6 @@ Item {
             case "corners": return root.checked ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18) : "transparent"
             case "glass": return root.checked ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.6)
                 : Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
-            case "underline": return root.checked ? Qt.rgba(root.onFill.r, root.onFill.g, root.onFill.b, 0.45) : Theme.border
             default: return root.checked ? root.onFill : Theme.overlay
             }
         }
@@ -95,9 +89,8 @@ Item {
     Rectangle {
         id: knob
         visible: root.knobbed
-        readonly property int inset: root.kind === "underline" ? 0
-            : root.kind === "solid" ? 2 : Math.max(2, Math.round(root.h / 5))
-        width: root.kind === "underline" ? Math.round(root.h * 0.85) : root.height - inset * 2
+        readonly property int inset: root.kind === "solid" ? 2 : Math.max(2, Math.round(root.h / 5))
+        width: root.height - inset * 2
         height: width
         radius: root.kind === "double" ? Math.min(width / 2, Theme.radiusSmall)
             : root.kind === "corners" ? 0 : width / 2
@@ -106,7 +99,6 @@ Item {
         color: {
             switch (root.kind) {
             case "double": case "corners": return root.checked ? Theme.accent : Theme.muted
-            case "underline": return root.checked ? root.onFill : Theme.subtext
             case "solid": return "#ffffff"
             default: return root.checked ? "#ffffff" : Theme.muted
             }
@@ -195,18 +187,6 @@ Item {
         }
     }
 
-    // --- terminal: [x] / [ ]
-    Text {
-        id: termText
-        visible: root.kind === "terminal"
-        anchors.verticalCenter: parent.verticalCenter
-        text: root.checked ? "[x]" : "[ ]"
-        color: root.checked ? Theme.accent : root.hovered ? Theme.textStrong : Theme.muted
-        font.family: Theme.fontText
-        font.weight: Theme.weightStrong
-        font.pixelSize: Theme.fontBody
-    }
-
     // --- tabbed: Off | On, the state's half lit
     Rectangle {
         id: twoWay
@@ -242,25 +222,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    // --- ledger: an ink box stamped with the state
-    Rectangle {
-        visible: root.kind === "ledger"
-        anchors.fill: parent
-        color: root.checked ? Theme.accent : "transparent"
-        border.width: Theme.borderWidth
-        border.color: Theme.stroke
-        Text {
-            id: stamp
-            anchors.centerIn: parent
-            text: root.checked ? "ON" : "OFF"
-            color: root.checked ? Theme.textOnAccent : Theme.text
-            font.family: Theme.fontText
-            font.weight: Theme.weightStrong
-            font.pixelSize: Theme.fontCaption
-            font.letterSpacing: 1
         }
     }
 

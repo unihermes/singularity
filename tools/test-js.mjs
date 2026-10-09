@@ -86,7 +86,7 @@ test("Format picks units from the number", () => {
     assert.equal(F.pct(0.456), "46%")
 })
 
-test("Styles resolve every style, and Terminal is square", () => {
+test("Styles resolve every style, and Bevel is square", () => {
     const S = load("Styles.js")
     const base = { radius: 6, barStyle: "full", density: "normal", seeThrough: 100, shadows: true, heavyLines: false }
     for (const name of S.order) {
@@ -94,12 +94,15 @@ test("Styles resolve every style, and Terminal is square", () => {
         assert.ok(r.frameStyle && r.moduleStyle, name)
         assert.equal(r.barHeight, 32, name)
     }
-    assert.equal(S.resolve(Object.assign({ style: "terminal" }, base)).radius, 0)
+    assert.equal(S.resolve(Object.assign({ style: "bevel" }, base)).radius, 0)
     assert.equal(S.resolve(Object.assign({ style: "channel" }, base)).radius, 6)
     assert.equal(S.resolve(Object.assign({ style: "lined" }, base)).flyoutAttach, "flush")
     assert.equal(S.resolve(Object.assign({ style: "lined" }, base, { barStyle: "floating" })).flyoutAttach, "floating")
     assert.equal(S.resolve(Object.assign({ style: "glass" }, base)).opacity, 70)
     assert.equal(S.resolve(Object.assign({ style: "nope" }, base)).frameStyle, "channel")
+    // dropped styles land on a replacement, with its own options
+    assert.equal(S.resolve(Object.assign({ style: "ledger" }, base)).styleName, "bevel")
+    assert.equal(S.carried.terminal.styleOptions, S.finish("corners").styleOptions)
 })
 
 test("ChannelPath snaps near edges and closes its outline", () => {

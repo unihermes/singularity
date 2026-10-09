@@ -234,8 +234,7 @@
             "anchor": ""
         },
         "settings": {
-            "style": "underline",
-            "styleOptions": "over",
+            "style": "glass",
             "barSeparator": "dot",
             "radius": 6,
             "density": "compact",
@@ -296,8 +295,7 @@
             "anchor": "workspaces"
         },
         "settings": {
-            "style": "underline",
-            "styleOptions": "hair,over",
+            "style": "solid",
             "barSeparator": "dot",
             "radius": 4,
             "density": "roomy",
@@ -430,7 +428,7 @@
         "alert": "#c22a2a",
         "scrim": 0.3,
         "settings": {
-            "style": "ledger",
+            "style": "double",
             "radius": 0,
             "density": "roomy",
             "fontFamily": "MartianMono Nerd Font",

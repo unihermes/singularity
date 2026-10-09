@@ -96,35 +96,18 @@ ClippingRectangle {
                     width: modelData ? 22 : 14
                     height: miniBar.height - 6
                     radius: pv.mod === "pill" ? height / 2 : Math.min(pv.r, 4)
-                    readonly property bool bare: pv.mod === "bracket" || pv.mod === "underline" || pv.mod === "cornered"
                     // the styles whose open chip fills with the accent
-                    readonly property bool openFill: pv.mod === "filled" || pv.mod === "pill" || pv.mod === "boxed"
-                    color: bare ? "transparent"
+                    readonly property bool openFill: pv.mod === "filled" || pv.mod === "pill"
+                    color: pv.mod === "cornered" ? "transparent"
                         : modelData ? (openFill ? pv.accent : pv.pal.overlay)
-                        : pv.mod === "outline" || pv.mod === "ghost" ? "transparent"
-                        : pv.mod === "boxed" ? pv.pal.bar : pv.pal.surface
-                    border.width: pv.mod === "outline" || pv.mod === "boxed" ? pv.bw : 0
-                    border.color: pv.mod === "boxed" ? pv.pal.text : modelData ? pv.accent : pv.pal.border
-                    Rectangle {
-                        visible: pv.mod === "underline" && parent.modelData
-                        anchors.bottom: parent.bottom
-                        width: parent.width
-                        height: 2
-                        color: pv.accent
-                    }
+                        : pv.mod === "outline" || pv.mod === "ghost" ? "transparent" : pv.pal.surface
+                    border.width: pv.mod === "outline" ? pv.bw : 0
+                    border.color: modelData ? pv.accent : pv.pal.border
                     CornerMarks {
                         visible: pv.mod === "cornered"
                         length: 4
                         thickness: 1
                         color: parent.modelData ? pv.accent : pv.pal.muted
-                    }
-                    Text {
-                        visible: pv.mod === "bracket"
-                        anchors.centerIn: parent
-                        text: "[" + " ".repeat(parent.modelData ? 2 : 1) + "]"
-                        color: parent.modelData ? pv.accent : pv.pal.muted
-                        font.family: pv.ls.fontFamily
-                        font.pixelSize: parent.height
                     }
                 }
             }
@@ -144,8 +127,7 @@ ClippingRectangle {
         color: pv.pal.panel
         opacity: 1
         border.width: pv.stroked ? pv.bw : 0
-        border.color: pv.ls.frameStyle === "ledger" ? pv.pal.text
-            : pv.ls.frameStyle === "corners" ? Qt.alpha(pv.pal.border, 0.6) : pv.pal.border
+        border.color: pv.ls.frameStyle === "corners" ? Qt.alpha(pv.pal.border, 0.6) : pv.pal.border
 
         Bevel {
             visible: pv.bevelled

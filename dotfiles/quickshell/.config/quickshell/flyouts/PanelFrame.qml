@@ -10,10 +10,8 @@
 //   none    no stroke -- the ground alone marks the edge
 //   channel an outer line, a dark groove and an inner line (Channel.qml),
 //           with rounder corners to clear them
-//   ledger  one 2px stroke in ink (Theme.stroke), its hard shadow offset
 //   corners accent marks at the corners over a faint hairline, glowing
 //           with the style's glow option
-// Terminal's scanlines option lays faint lines across the ground.
 // ModuleFrame is the bar chip's tighter version of the same look.
 
 import QtQuick
@@ -62,16 +60,6 @@ Rectangle {
         length: Theme.cornerLarge
         thickness: Theme.opt("big") ? 2 : 1
         color: Theme.accent
-    }
-
-    // Terminal's scanlines: a dark line every third pixel
-    Image {
-        visible: Theme.style === "terminal" && Theme.opt("scan") && !root.bare
-        anchors.fill: parent
-        anchors.margins: root.border.width
-        fillMode: Image.Tile
-        smooth: false
-        source: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAADCAYAAABS3WWCAAAAD0lEQVR4nGNgYGDQY4ADAAIJAC9ov5mQAAAAAElFTkSuQmCC"
     }
 
     Channel {
