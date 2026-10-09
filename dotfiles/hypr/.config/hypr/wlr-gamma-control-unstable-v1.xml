@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The requests and events of wlr-protocols' gamma-control protocol that
+     display-curve.c uses (copyright 2015 Giulio Camuffo, 2018 Simon Ser;
+     MIT licence), so the build needs no wlr-protocols package. -->
+<protocol name="wlr_gamma_control_unstable_v1">
+  <interface name="zwlr_gamma_control_manager_v1" version="1">
+    <request name="get_gamma_control">
+      <arg name="id" type="new_id" interface="zwlr_gamma_control_v1"/>
+      <arg name="output" type="object" interface="wl_output"/>
+    </request>
+    <request name="destroy" type="destructor"/>
+  </interface>
+  <interface name="zwlr_gamma_control_v1" version="1">
+    <event name="gamma_size">
+      <arg name="size" type="uint"/>
+    </event>
+    <request name="set_gamma">
+      <arg name="fd" type="fd"/>
+    </request>
+    <event name="failed"/>
+    <request name="destroy" type="destructor"/>
+  </interface>
+</protocol>
