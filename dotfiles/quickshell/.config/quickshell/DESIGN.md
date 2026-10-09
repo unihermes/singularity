@@ -12,8 +12,7 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
 Channel, Double, Solid, Capsule, Glass, Bevel, Tabbed and Corners (settled
-2026-10-08 from two rounds of mockups; an unknown saved name draws as
-Channel). A style sets the frame,
+2026-10-08 from two rounds of mockups). A style sets the frame,
 bar modules, hover, level chips, focused window mark, flyout titles, heading
 prefix and where flyouts sit, all at once. Beside it are only dials that move
 everything together (Roundness, Bar shape, Density, See-through) and Finish

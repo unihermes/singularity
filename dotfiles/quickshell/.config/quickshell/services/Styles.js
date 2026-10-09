@@ -147,7 +147,7 @@ var styles = {
 // bar height and the gap between modules, by density
 var densityBar = { compact: { height: 28, gap: 2 }, normal: { height: 32, gap: 2 }, roomy: { height: 36, gap: 4 } }
 
-function get(name) { return styles[name] || styles.channel }
+function get(name) { return styles[name] }
 
 var windowDefaults = { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 }
 
@@ -178,21 +178,20 @@ function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 
 // s: { style, styleOptions, radius, barStyle, density, seeThrough, shadows, heavyLines, flyoutAnim }
 function resolve(s) {
-    var name = styles[s.style] ? s.style : "channel"
-    var st = styles[name]
+    var st = styles[s.style]
     var bar = densityBar[s.density] || densityBar.normal
     var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
     var prefix = st.prefix
-    if (name === "double") prefix = has(s.styleOptions, "slash") ? "//" : ""
+    if (s.style === "double") prefix = has(s.styleOptions, "slash") ? "//" : ""
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
-        styleName: name,
+        styleName: s.style,
         frameStyle: st.frame,
         moduleStyle: st.modules,
         hoverStyle: st.hover,
         windowMark: st.mark,
-        flyoutTitle: name === "bevel" && !has(s.styleOptions, "title") ? "none" : st.title,
+        flyoutTitle: s.style === "bevel" && !has(s.styleOptions, "title") ? "none" : st.title,
         shadow: s.shadows ? st.shadow : "none",
         borderWidth: s.heavyLines && st.lines ? 2 : 1,
         radius: radius,

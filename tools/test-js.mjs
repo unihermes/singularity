@@ -99,7 +99,6 @@ test("Styles resolve every style, and Bevel is square", () => {
     assert.equal(S.resolve(Object.assign({ style: "double" }, base)).flyoutAttach, "flush")
     assert.equal(S.resolve(Object.assign({ style: "double" }, base, { barStyle: "floating" })).flyoutAttach, "floating")
     assert.equal(S.resolve(Object.assign({ style: "glass" }, base)).opacity, 70)
-    assert.equal(S.resolve(Object.assign({ style: "nope" }, base)).frameStyle, "channel")
 })
 
 test("ChannelPath snaps near edges and closes its outline", () => {
