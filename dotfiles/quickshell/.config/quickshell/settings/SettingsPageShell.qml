@@ -1,11 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageShell.qml
 //
-// Alacritty's look, with a preview of it, and the aliases in ~/.bashrc.
+// Alacritty's look, with a preview of it, and the aliases in ~/.bash_aliases
+// (which ~/.bashrc sources). Both files are this machine's own copies, seeded
+// by link.sh, so nothing written here shows up in the repo.
 //
 // Two different kinds of instant, and the page says which is which.
 // Alacritty watches its own config, so a change there shows in every open
-// terminal the moment it's written. .bashrc is only read when a shell
+// terminal the moment it's written. The aliases are only read when a shell
 // starts, so alias edits apply to new terminals -- the ones already open
 // keep what they had until `source ~/.bashrc`.
 //
@@ -31,7 +33,7 @@ SettingsPage {
     readonly property string home: Quickshell.env("HOME")
     readonly property string alacrittyPath:
         (Quickshell.env("XDG_CONFIG_HOME") || home + "/.config") + "/alacritty/alacritty.toml"
-    readonly property string bashrcPath: home + "/.bashrc"
+    readonly property string aliasesPath: home + "/.bash_aliases"
 
     // --- alacritty -----------------------------------------------------------
 
@@ -142,9 +144,9 @@ SettingsPage {
         name = name.trim()
         if (!/^[A-Za-z0-9_.:-]+$/.test(name)) { say("An alias name is letters, digits and _ . : - only", true); return false }
         if (value.trim() === "") { say("The alias needs a command", true); return false }
-        bashrcFile.reload()
-        bashrcFile.waitForJob()
-        var text = bashrcFile.text()
+        aliasesFile.reload()
+        aliasesFile.waitForJob()
+        var text = aliasesFile.text()
         var lines = text.split("\n")
         var current = parseAliases(text)
         var line = "alias " + name + "=" + shQuote(value.trim())
@@ -162,31 +164,31 @@ SettingsPage {
             var at = lines.length && lines[lines.length - 1] === "" ? lines.length - 1 : lines.length
             lines.splice(at, 0, line)
         }
-        writeFile(bashrcPath, lines.join("\n"), (old ? "Renamed " + oldName + " to " + name
+        writeFile(aliasesPath, lines.join("\n"), (old ? "Renamed " + oldName + " to " + name
             : existing ? "Changed " + name : "Added " + name) + ", in new terminals", true)
         return true
     }
 
     function removeAlias(a) {
-        bashrcFile.reload()
-        bashrcFile.waitForJob()
-        var lines = bashrcFile.text().split("\n")
+        aliasesFile.reload()
+        aliasesFile.waitForJob()
+        var lines = aliasesFile.text().split("\n")
         var fresh = parseAliases(lines.join("\n")).find(x => x.name === a.name && x.line === a.line)
-        if (!fresh) { say("~/.bashrc changed on disk; nothing removed", true); reread(); return }
+        if (!fresh) { say("~/.bash_aliases changed on disk; nothing removed", true); reread(); return }
         lines.splice(a.line, 1)
-        writeFile(bashrcPath, lines.join("\n"), "Removed " + a.name + ", in new terminals", true)
+        writeFile(aliasesPath, lines.join("\n"), "Removed " + a.name + ", in new terminals", true)
     }
 
     FileView {
-        id: bashrcFile
-        path: page.bashrcPath
+        id: aliasesFile
+        path: page.aliasesPath
         blockLoading: true
         printErrors: false
     }
 
     // --- shared --------------------------------------------------------------
 
-    // .bashrc edits are checked with `bash -n` first. The callers build the
+    // Alias edits are checked with `bash -n` first. The callers build the
     // whole file from a read made just before, so a second write can't be
     // queued behind the first -- it would be built on the text the first one
     // is about to replace.
@@ -209,9 +211,9 @@ SettingsPage {
         alacrittyFile.reload()
         alacrittyFile.waitForJob()
         toml = parseToml(alacrittyFile.text())
-        bashrcFile.reload()
-        bashrcFile.waitForJob()
-        aliases = parseAliases(bashrcFile.text())
+        aliasesFile.reload()
+        aliasesFile.waitForJob()
+        aliases = parseAliases(aliasesFile.text())
     }
 
     Component.onCompleted: reread()

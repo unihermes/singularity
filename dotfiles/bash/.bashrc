@@ -29,17 +29,12 @@ fastfetch() {
 [[ -r $look_state/starship.toml ]] && export STARSHIP_CONFIG=$look_state/starship.toml
 fastfetch
 
-alias ls='ls -A --color=auto'
-alias grep='grep --color=auto'
-alias vim='nvim'
-alias vi='nvim'
+# Aliases: this machine's own, edited by Settings > Terminal (link.sh seeds
+# it from the repo's default).
+[[ -r ~/.bash_aliases ]] && . ~/.bash_aliases
 
 eval "$(starship init bash)"
 
-# unihermes edits
-alias nbash='nvim ~/.bashrc && source ~/.bashrc'
-alias ff='clear && fastfetch'
-alias clean='~/.config/singularity/clean.sh'
-alias diagnose='~/.config/singularity/diagnose.sh'
-alias settings-bundle='~/.config/singularity/settings-bundle.sh'
-alias singularity='cd ~/singularity/ && claude'
+# Anything else of your own: ~/.bashrc.local is never in the repo, so edit
+# that rather than this file.
+[[ -r ~/.bashrc.local ]] && . ~/.bashrc.local

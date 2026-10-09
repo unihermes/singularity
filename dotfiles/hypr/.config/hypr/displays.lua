@@ -26,10 +26,9 @@ end
 -- ones clipped to white. The same resolution at PC timings (CVT reduced
 -- blanking, 59.94 Hz) is read as full range. Keyed on the EDID's model name,
 -- read from sysfs since a mirrored display isn't in hl.get_monitors() and
--- nothing is there yet at launch. The desktop's monitors only.
-local pcTimings = S.desktop and {
-    ["DELL P2418HZm"] = "modeline 138.50 1920 1968 2000 2080 1080 1083 1088 1111 +hsync -vsync",
-} or {}
+-- nothing is there yet at launch. Which displays, and the modeline for each,
+-- is this machine's display-fixes.lua (see shared.lua).
+local pcTimings = type(S.displayFixes.pcTimings) == "table" and S.displayFixes.pcTimings or {}
 
 local function readAll(cmd)
     local p = io.popen(cmd)

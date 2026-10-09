@@ -29,7 +29,7 @@ fi
 
 # The plain-JS modules' tests, when one of them or the tests are staged
 # (test-js.mjs also reads the Hyprland modules, so they count too).
-if git diff --cached --name-only | grep -qE 'quickshell/services/.*\.js$|tools/test-js\.mjs|hypr/\.config/hypr/[a-z]+\.lua'; then
+if git diff --cached --name-only | grep -qE 'quickshell/services/.*\.js$|tools/test-js\.mjs|hypr/\.config/hypr/[a-z]+\.lua|binds\.defaults\.lua'; then
     if ! node --test tools/test-js.mjs >/tmp/singularity-test-js.log 2>&1; then
         grep -E '^not ok|✖|Error|expected|actual' /tmp/singularity-test-js.log | head -30
         echo

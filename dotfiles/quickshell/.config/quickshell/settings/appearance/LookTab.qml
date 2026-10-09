@@ -167,8 +167,9 @@ SettingsTab {
                 }
 
                 // Remove, in the preview's corner: two clicks, since it
-                // deletes the look from looks.json and there's no undo short
-                // of git. Its own ground, so it reads over any preview.
+                // hides the look and there's no undo short of editing
+                // looks-removed.json. Its own ground, so it reads over any
+                // preview.
                 Rectangle {
                     id: removeBox
                     visible: LookStore.removable(card.modelData)

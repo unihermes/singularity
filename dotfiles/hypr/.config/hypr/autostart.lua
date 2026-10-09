@@ -30,11 +30,20 @@ hl.on("hyprland.start", function()
     -- Quickshell lazily, so order doesn't matter. QT_FORCE_STDERR_LOGGING
     -- keeps its self-test messages in the log file rather than the journal.
     hl.exec_cmd("exec env QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
-    -- Lifts the shadows on the desktop's second monitor, which shows them
-    -- darker than the one beside it (display-curve.c). Matched by model, so
-    -- it follows the monitor between ports. Lower lifts more.
-    if S.desktop then
-        hl.exec_cmd("exec ~/.config/hypr/display-curve 'DELL P2418HZm=0.7' > ~/.cache/display-curve.log 2>&1")
+    -- Lifts the shadows on displays that show them darker than the others
+    -- (display-curve.c), the ones this machine's display-fixes.lua lists
+    -- under toneCurves (see shared.lua). Matched by model, so the lift
+    -- follows a monitor between ports.
+    do
+        local args = {}
+        for model, exponent in pairs(type(S.displayFixes.toneCurves) == "table" and S.displayFixes.toneCurves or {}) do
+            if type(model) == "string" and tonumber(exponent) then
+                args[#args + 1] = "'" .. model:gsub("'", "") .. "=" .. tonumber(exponent) .. "'"
+            end
+        end
+        if #args > 0 then
+            hl.exec_cmd("exec ~/.config/hypr/display-curve " .. table.concat(args, " ") .. " > ~/.cache/display-curve.log 2>&1")
+        end
     end
     -- env alone does not retheme the cursor Hyprland draws over the desktop
     hl.exec_cmd("hyprctl setcursor " .. S.cursorTheme .. " " .. S.cursorSize)

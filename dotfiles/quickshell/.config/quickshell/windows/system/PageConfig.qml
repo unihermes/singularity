@@ -63,7 +63,7 @@ SystemPage {
                 { label: "hyprland.lua", path: home + "/.config/hypr/hyprland.lua",
                   note: "Runs the modules beside it in order, then custom.lua" },
                 { label: "binds.lua", path: home + "/.config/hypr/binds.lua",
-                  note: "Every keybind — what the Keybinds window edits" },
+                  note: "Every keybind — this machine's copy, what the Keybinds window edits" },
                 { label: "windows.lua", path: home + "/.config/hypr/windows.lua",
                   note: "Window rules, monocle, the scratchpad, tabs" },
                 { label: "looks.lua", path: home + "/.config/hypr/looks.lua",
@@ -88,6 +88,8 @@ SystemPage {
             heading: "HYPRLAND SCRIPTS",
             items: [
                 { label: "lid.sh", path: home + "/.config/hypr/lid.sh", note: "Lid open and close" },
+                { label: "lid.conf", path: Settings.stateDir + "/lid.conf",
+                  note: "What the lid does here — written by the Lock Screen page" },
                 { label: "screenshot.sh", path: home + "/.config/hypr/screenshot.sh", note: "Region, window and full captures" },
                 { label: "wallpaper.sh", path: home + "/.config/hypr/wallpaper.sh", note: "Setting and cycling the wallpaper" },
                 { label: "alttab-ipc.sh", path: home + "/.config/hypr/alttab-ipc.sh", note: "The window switcher's driver" },
@@ -99,7 +101,9 @@ SystemPage {
             items: [
                 { label: "alacritty.toml", path: home + "/.config/alacritty/alacritty.toml", note: "Font, padding, colours" },
                 { label: "starship.toml", path: home + "/.config/starship.toml", note: "The prompt" },
-                { label: ".bashrc", path: home + "/.bashrc", note: "Aliases, exports, shell options" },
+                { label: ".bashrc", path: home + "/.bashrc", note: "Exports, shell options — the repo's" },
+                { label: ".bash_aliases", path: home + "/.bash_aliases", note: "Aliases — what the Terminal page edits" },
+                { label: ".bashrc.local", path: home + "/.bashrc.local", note: "Your own additions, never in the repo" },
                 { label: "fastfetch config.jsonc", path: home + "/.config/fastfetch/config.jsonc", note: "The login banner" },
             ],
         },

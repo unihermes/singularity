@@ -18,7 +18,8 @@
 // carries, which can then be adjusted one by one. A field holding such a
 // setting is marked while it differs from the look, and the mark puts it
 // back; the Look tab lists every such change. Every look but the fallback
-// can be removed from its card, which deletes it from looks.json.
+// can be removed from its card, which hides it on this machine
+// (LookStore's looks-removed.json); looks.json itself is left alone.
 //
 // Two stores behind it. The shell's own look is Settings.qml, the same
 // values the Control Centre edits, so the two always agree and a change

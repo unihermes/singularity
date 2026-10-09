@@ -2,13 +2,14 @@
 // ~/.config/quickshell/services/LookStore.qml
 //
 // Every look the shell can wear: the built-in fallback from Looks.js, plus
-// whatever looks.json (beside this file) defines. Kept as data rather than
-// code so a look can be removed from the Appearance page -- which deletes its
-// entry from looks.json itself, not just hides it. The fallback can't be
-// removed: it's what everything falls back to when a look goes missing.
+// whatever looks.json (beside this file) defines, less the ones removed on
+// this machine. The fallback can't be removed: it's what everything falls
+// back to when a look goes missing.
 //
-// looks.json is in the repo, so a removed look comes back with
-// `git checkout -- services/looks.json`.
+// looks.json is the repo's and is only read. Removing a look from the
+// Appearance page adds its name to looks-removed.json in the state
+// directory instead, so the repo is left alone; taking the name out of that
+// file brings the look back.
 
 pragma Singleton
 
@@ -21,43 +22,47 @@ Singleton {
     id: root
 
     readonly property string path: Quickshell.shellPath("services/looks.json")
+    readonly property string removedPath: Quickshell.env("HOME") + "/.local/state/singularity/looks-removed.json"
 
     // looks.json as parsed, before completion from Looks.base
     property var fileLooks: ({})
+    // names removed on this machine, from looks-removed.json
+    property var removed: []
 
     // name -> complete look; the fallback first, then the file's own order
     readonly property var looks: {
         var out = {}
         out[Looks.fallback] = Looks.looks[Looks.fallback]
         for (var k in fileLooks)
-            if (k !== Looks.fallback) out[k] = Looks.complete(fileLooks[k])
+            if (k !== Looks.fallback && removed.indexOf(k) < 0) out[k] = Looks.complete(fileLooks[k])
         return out
     }
     readonly property var order: Object.keys(looks)
 
-    function removable(name) { return name !== Looks.fallback && !!fileLooks[name] }
+    function removable(name) { return name !== Looks.fallback && !!fileLooks[name] && removed.indexOf(name) < 0 }
 
     // done(ok, message)
     function remove(name, done) {
         if (!removable(name)) return
         var label = looks[name].name
         AtomicFileWrite.write({
-            path: root.path,
+            path: root.removedPath,
             transform: text => {
-                var j
-                try { j = JSON.parse(text) } catch (e) { return null }
-                if (!j[name]) return null
-                delete j[name]
+                var j = []
+                try { j = text.trim() === "" ? [] : JSON.parse(text) } catch (e) { return null }
+                if (!Array.isArray(j)) return null
+                if (j.indexOf(name) >= 0) return null
+                j.push(name)
                 return JSON.stringify(j, null, 4) + "\n"
             },
-            refusal: "looks.json no longer has " + label + ", or isn't valid JSON",
+            refusal: "looks-removed.json already has " + label + ", or isn't valid JSON",
             // done() before the reload: the caller is usually the removed
             // look's own carousel card, which the reload destroys, taking
             // the callback's scope with it
             done: (status, detail) => {
                 if (done) done(status === "ok", status === "ok" ? label + " removed"
                     : "Couldn't remove " + label + (detail ? ": " + detail : ""))
-                file.reload()
+                removedFile.reload()
             }
         })
     }
@@ -96,5 +101,20 @@ Singleton {
         onFileChanged: reload()
         onLoaded: root.parse(text())
         onLoadFailed: root.fileLooks = {}
+    }
+
+    FileView {
+        id: removedFile
+        path: root.removedPath
+        printErrors: false
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                var j = JSON.parse(text())
+                root.removed = Array.isArray(j) ? j : []
+            } catch (e) { root.removed = [] }
+        }
+        onLoadFailed: root.removed = []
     }
 }

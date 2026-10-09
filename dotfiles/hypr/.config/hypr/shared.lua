@@ -37,9 +37,18 @@ S.animFactor = math.max(0, math.min(100, tonumber(S.state("animations", "100")) 
 -- touching them and turning it off brings every one back as it was.
 S.gameMode = S.state("game-mode", "") == "on"
 S.animOff  = S.animFactor == 0 or S.gameMode
--- Which machine install.sh set this up as. The desktop's own display fixes
--- (displays.lua, autostart.lua) apply only there.
-S.desktop = S.state("machine", "") == "desktop"
+-- This machine's own fixes for particular displays, keyed on the model name
+-- in their EDID; nothing in the repo names a monitor. A Lua file returning
+--   { pcTimings  = { ["DELL P2418HZm"] = "modeline 138.50 ..." },
+--     toneCurves = { ["DELL P2418HZm"] = 0.7 } }
+-- pcTimings: a display whose native 1080p60 is a TV timing gets this mode
+-- instead (displays.lua). toneCurves: display-curve lifts its shadows,
+-- out = in^value, lower lifting more (autostart.lua). Missing or broken,
+-- there are none.
+do
+    local ok, t = pcall(dofile, os.getenv("HOME") .. "/.local/state/singularity/display-fixes.lua")
+    S.displayFixes = ok and type(t) == "table" and t or {}
+end
 
 -- speed is in 100ms units (3 = 300ms), so lower is faster. SUPER+C times its
 -- hand-made animations by these; see toggleMinimize() in windows.lua.

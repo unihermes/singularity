@@ -1,7 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageLockScreen.qml
 //
-// The lock screen, and what the lid does. Three files, each edited in place:
+// The lock screen, and what the lid does. Three files, all this machine's
+// own, none of them in the repo:
 //
 //   hyprlock.conf   the background block (path, blur_passes, brightness) and
 //                   the clock label's text. Colours and font come from the
@@ -9,7 +10,9 @@
 //   hypridle.conf   the grace period, as --grace on the idle lock's command.
 //                   Only that listener gets it: a lock before sleep or by
 //                   hand always asks for the password.
-//   lid.sh          close_action, close_delay and lock_on_close.
+//   lid.conf        close_action, close_delay, lock_on_close and hibernate,
+//                   in the state directory; lid.sh reads them over its own
+//                   defaults.
 //
 // hyprlock reads its config at each lock and lid.sh at each lid event, so
 // only hypridle needs a restart.
@@ -32,7 +35,7 @@ SettingsPage {
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
     readonly property string lockPath: hyprDir + "/hyprlock.conf"
     readonly property string idlePath: hyprDir + "/hypridle.conf"
-    readonly property string lidPath: hyprDir + "/lid.sh"
+    readonly property string lidPath: Settings.stateDir + "/lid.conf"
     readonly property string wallpaperLink: "~/.local/state/singularity/current-wallpaper"
 
     // --- hyprlock.conf -------------------------------------------------------
@@ -193,18 +196,19 @@ SettingsPage {
         return s === 0 ? "Off" : s < 60 ? s + " s" : (s / 60) + " min"
     }
 
-    // --- lid, in lid.sh ------------------------------------------------------
+    // --- lid, in lid.conf ----------------------------------------------------
 
     property string closeAction: "suspend"
     property int closeDelay: 300
     property bool lockOnClose: false
     property bool hibernate: true
 
+    // lid.sh's defaults until the file says otherwise; a missing file is
+    // every default
     function rereadLid() {
         lidFile.reload()
         lidFile.waitForJob()
         var text = lidFile.text()
-        if (text === "") { say("Couldn't read " + lidPath, true); return }
         var m
         closeAction = (m = /^close_action=([\w-]+)/m.exec(text)) ? m[1] : "suspend"
         closeDelay = (m = /^close_delay=(\d+)/m.exec(text)) ? Number(m[1]) : 300
@@ -213,15 +217,14 @@ SettingsPage {
     }
 
     function setLid(name, value, message) {
-        var re = new RegExp("^(" + name + "=)[\\w-]+", "m")
+        var re = new RegExp("^" + name + "=.*$", "m")
         AtomicFileWrite.write({
             path: lidPath,
-            transform: text => re.test(text) ? text.replace(re, "$1" + value) : null,
-            refusal: "lid.sh has no " + name + "; nothing written",
-            check: "bash",
+            transform: text => re.test(text) ? text.replace(re, name + "=" + value)
+                : text + (text === "" || text.endsWith("\n") ? "" : "\n") + name + "=" + value + "\n",
             done: (status, detail) => {
                 if (status === "ok" || status === "unchanged") page.say(message, false)
-                else page.say(status === "refused" ? detail : "Couldn't write lid.sh", true)
+                else page.say("Couldn't write lid.conf", true)
                 page.rereadLid()
             }
         })

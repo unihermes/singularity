@@ -742,7 +742,7 @@ Singleton {
     // values no look sets (font size, motion, colour mode).
     function resetLook() { applyLook(adapter.look) }
 
-    // Deletes a look from looks.json. Anything still pointing at it -- the
+    // Removes a look on this machine (LookStore). Anything still pointing at it -- the
     // look in use, or the saved default -- moves to the fallback first, so
     // nothing is left naming a look that no longer exists.
     // done(ok, message)

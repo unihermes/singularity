@@ -1,5 +1,10 @@
 # Singularity - Alacritty
 # ~/.config/alacritty/alacritty.toml
+#
+# This machine's own copy. link.sh copies the repo's default
+# (~/.config/singularity/alacritty.defaults.toml) here only where there's none yet, so
+# what Settings or you change never shows up in the repo; changing the
+# default only changes what a fresh install starts with.
 
 [general]
 import = ["~/.local/state/singularity/alacritty.toml"]

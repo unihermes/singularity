@@ -49,7 +49,8 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **Settings for everything.** Displays, input, power and idle, the lock
   screen, window rules, keybinds, notifications, audio, Bluetooth, Wi-Fi,
   startup apps, file types, updates. Every page writes the real config file
-  (binds.lua, hypridle.conf, lid.sh, mimeapps.list, …) in place.
+  (binds.lua, hypridle.conf, hyprlock.conf, mimeapps.list, …) in place,
+  and never one in the repo (see [Your settings](#your-settings)).
 - **One-command install, safe to rerun.** Every step is idempotent, and
   configs you already had are backed up rather than overwritten.
 - **Fast, quiet boot** on the XPS 13 it was built on, with the reasons for
@@ -194,7 +195,8 @@ Look tab lists those changes with a way back for each. **Set as default**
 saves your setup as the point Reset returns to.
 
 Looks live in `quickshell/services/looks.json` (copy an entry to make your
-own); Styles are in `services/Styles.js`; `DESIGN.md` in the shell's folder
+own; removing one from its card only hides it on that machine, in
+`~/.local/state/singularity/looks-removed.json`); Styles are in `services/Styles.js`; `DESIGN.md` in the shell's folder
 is the design reference for every element.
 
 ## The shell
@@ -260,16 +262,46 @@ the shell, into `~/.local/state/singularity/`:
   (battery, power, Wi-Fi, kernel, last login).
 - **Floorp** gets a `userChrome.css` and `user.js` built into its profile.
 
-Anything the shell saves (settings, display rules, input and window
-settings, the wallpaper, the generated colour files) lives in
-`~/.local/state/singularity/`, never in the repo. Deleting it resets the
-shell to its defaults. The one exception is the Keybinds editor, which
-edits `~/.config/hypr/binds.lua` itself so binds can be committed.
+### Your settings
 
-For anything the GUI doesn't cover, put Lua in
-`~/.local/state/singularity/custom.lua`. `hyprland.lua` runs it last, so it
-overrides everything else and stays on this machine; if it fails to load,
-a notification says where.
+The repo is the stock setup, the same for everyone who clones it. Nothing
+you change on a machine, through Settings or by hand in the places below,
+ever shows up in `git status`, so `update.sh` always pulls cleanly and your
+changes survive it.
+
+- **Everything the shell saves** (settings, display rules, input and window
+  settings, the lid, removed looks, the wallpaper, the generated colour
+  files) lives in `~/.local/state/singularity/`. Deleting it resets the
+  shell to its defaults.
+- **Config files Settings or the app itself rewrites** are this machine's
+  own copies, made by `link.sh` from the `*.defaults.*` files in
+  `dotfiles/singularity/.config/singularity/`, only where there's none yet,
+  and ignored by git:
+
+  | Your copy | Edited by | Stock default |
+  |---|---|---|
+  | `~/.config/hypr/binds.lua` | Keybinds | `binds.defaults.lua` |
+  | `~/.config/hypr/hypridle.conf` | Power & Idle, Lock Screen | `hypridle-laptop/desktop.defaults.conf` |
+  | `~/.config/hypr/hyprlock.conf` | Lock Screen | `hyprlock.defaults.conf` |
+  | `~/.config/alacritty/alacritty.toml` | Terminal | `alacritty.defaults.toml` |
+  | `~/.bash_aliases` | Terminal | `bash_aliases.defaults.sh` |
+  | `~/.config/zed/settings.json` | Zed | `zed-settings.defaults.json` |
+
+  To go back to stock, delete your copy and run `./link.sh`. A change to a
+  default reaches a fresh install, not a machine that already has its copy.
+- **Your own additions:** `~/.bashrc.local` for the shell, and
+  `~/.local/state/singularity/custom.lua` for Hyprland. `hyprland.lua` runs
+  `custom.lua` last, so it overrides everything else; if it fails to load,
+  a notification says where.
+- **Fixes for a particular monitor** go in
+  `~/.local/state/singularity/display-fixes.lua`: PC timings for a 1080p
+  display that crushes blacks, and a lifted tone curve for one that shows
+  shadows too dark, keyed on the model name in its EDID. The format is in
+  `hypr/shared.lua`.
+
+Everything else under `dotfiles/` is linked straight into `~/.config`, so
+editing it there edits the repo: that's how you change the stock setup
+itself (see [Development](#development)).
 
 ## Repository layout
 
@@ -298,9 +330,9 @@ singularity/
     │   ├── services/       # singletons: Theme, Settings, Network, Audio, …
     │   └── scripts/        # helpers the shell runs
     ├── hypr/               # hyprland.lua and its modules, hyprlock, lid.sh, helpers
-    ├── singularity/        # default window rules and idle ladders, autostart, clean, diagnose, settings-bundle
+    ├── singularity/        # the *.defaults.* files link.sh copies, autostart, clean, diagnose, settings-bundle
     ├── systemd/            # Bluetooth agent and power restore, WirePlumber drop-in
-    ├── nvim/  zed/  alacritty/  starship/  fastfetch/  zathura/  floorp/
+    ├── nvim/  starship/  fastfetch/  zathura/  floorp/
     ├── gtk/  fontconfig/  bash/
     └── wofi/               # fallback launcher when the shell is down
 ```

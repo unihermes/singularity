@@ -119,24 +119,23 @@ else
   warn "alttab-relay failed to build -- alttab-ipc.sh will fall back to \`qs ipc call\` (slower, but works)"
 fi
 
-if (( ! laptop )); then
-  log "building display-curve"
-  # Holds the lifted tone curve for the desktop's second monitor, which shows
-  # shadows too dark (see dotfiles/hypr/.config/hypr/display-curve.c). Only a
-  # missing lift if it fails, so a warning.
-  curve_dir="dotfiles/hypr/.config/hypr"
-  curve_gen=$(mktemp -d)
-  if wayland-scanner client-header "$curve_dir/wlr-gamma-control-unstable-v1.xml" \
-        "$curve_gen/wlr-gamma-control-unstable-v1-client-protocol.h" \
-      && wayland-scanner private-code "$curve_dir/wlr-gamma-control-unstable-v1.xml" "$curve_gen/protocol.c" \
-      && cc -O2 -I"$curve_gen" "$curve_dir/display-curve.c" "$curve_gen/protocol.c" \
-        -o "$curve_dir/display-curve" -lwayland-client -lm; then
-    log "display-curve built"
-  else
-    warn "display-curve failed to build -- displays listed in autostart.lua keep their own tone curve"
-  fi
-  rm -rf "$curve_gen"
+log "building display-curve"
+# Holds a lifted tone curve on displays that show shadows too dark, the ones
+# this machine's display-fixes.lua lists (see
+# dotfiles/hypr/.config/hypr/display-curve.c). Only a missing lift if it
+# fails, so a warning.
+curve_dir="dotfiles/hypr/.config/hypr"
+curve_gen=$(mktemp -d)
+if wayland-scanner client-header "$curve_dir/wlr-gamma-control-unstable-v1.xml" \
+      "$curve_gen/wlr-gamma-control-unstable-v1-client-protocol.h" \
+    && wayland-scanner private-code "$curve_dir/wlr-gamma-control-unstable-v1.xml" "$curve_gen/protocol.c" \
+    && cc -O2 -I"$curve_gen" "$curve_dir/display-curve.c" "$curve_gen/protocol.c" \
+      -o "$curve_dir/display-curve" -lwayland-client -lm; then
+  log "display-curve built"
+else
+  warn "display-curve failed to build -- displays listed in display-fixes.lua keep their own tone curve"
 fi
+rm -rf "$curve_gen"
 
 log "applying system settings"
 fc-cache -f

@@ -194,7 +194,7 @@ ShellRoot {
         function saveDefault(): void { Settings.saveAsDefault() }
         function resetToDefault(): void { Settings.reset() }
         function isDefault(): bool { return Settings.isDefault }
-        // deletes the look from looks.json; the fallback look can't be removed
+        // hides the look on this machine; the fallback look can't be removed
         function remove(name: string): void { Settings.removeLook(name) }
 
     }

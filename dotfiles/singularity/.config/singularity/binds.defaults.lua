@@ -2,8 +2,9 @@
 -- ~/.config/hypr/binds.lua
 --
 -- Every keybind. The Keybinds window (Settings > Keybinds, SUPER+K) reads
--- and rewrites this file and no other, so its changes land in the repo, to
--- be committed.
+-- and rewrites this file and no other. It's this machine's own: link.sh
+-- copies the repo's default (~/.config/singularity/binds.defaults.lua) only
+-- where there's none yet, so edits never show up in the repo.
 -- Sections are marker comments, `-- --- Name ---`: the window groups binds
 -- by them and adds new ones to the end of the chosen section. It edits a
 -- bind on a line of its own in the plain forms -- see HyprBinds.js -- and

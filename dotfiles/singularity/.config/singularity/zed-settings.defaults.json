@@ -1,10 +1,16 @@
 // Singularity - Zed
 // ~/.config/zed/settings.json
 //
+// This machine's own copy. link.sh copies the repo's default
+// (~/.config/singularity/zed-settings.defaults.json) here only where there's none yet, so
+// what Settings or you change never shows up in the repo; changing the
+// default only changes what a fresh install starts with.
+//
 // Laid out like VS Code: files, git and outline on the left, agent chats on
 // the right, the terminal along the bottom. The colours are the shell's
 // look: AppearanceSync.qml writes themes/singularity.json, and Zed recolours
-// when it changes. Zed writes settings changed in its UI back into this file.
+// when it changes. Zed writes settings changed in its UI back into
+// this file.
 {
   "base_keymap": "VSCode",
   "theme": "Singularity",

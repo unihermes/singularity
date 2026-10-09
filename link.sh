@@ -19,8 +19,7 @@ mkdir -p "$HOME/.config"
 # read. Without this the wireplumber/bluez ordering drop-in is silently
 # ignored on a fresh machine.
 mkdir -p "$HOME/.config/systemd/user/wireplumber.service.d"
-# The same for Zed: only settings.json is ours. A linked directory would put
-# the generated theme (themes/singularity.json) and Zed's own files in the repo.
+# Zed's themes directory, where AppearanceSync writes the generated theme.
 mkdir -p "$HOME/.config/zed/themes"
 
 # Enumerate the packages explicitly rather than passing a `*/` glob. Two traps
@@ -79,19 +78,35 @@ backup_conflicts
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
 
-# The idle ladder (hypridle.conf) is this machine's own, not the repo's:
-# Settings edits it, and the laptop and desktop want different timeouts. So
-# it's copied once from the default for the machine type install.sh
-# recorded (the laptop's when there's none), only where there's none yet.
-# A link left dangling by an older checkout, where it was stowed, goes first.
-idle="$HOME/.config/hypr/hypridle.conf"
-[[ -L $idle && ! -e $idle ]] && rm -f "$idle"
-if [[ ! -e $idle ]]; then
-  machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null || true)
-  [[ $machine == desktop ]] || machine=laptop
-  cp "dotfiles/singularity/.config/singularity/hypridle-$machine.defaults.conf" "$idle"
-  log "wrote ${idle#"$HOME/"} ($machine default)"
-fi
+# The files Settings (or the app itself) rewrites are this machine's own, not
+# the repo's: they're copied once from a default in ~/.config/singularity,
+# only where there's none yet, and git ignores the copies. So every clone
+# starts from the same stock setup, and nothing changed on a machine ever
+# shows up as a change to commit. A link left dangling by an older checkout,
+# where the file was stowed, goes first.
+defaults=dotfiles/singularity/.config/singularity
+seed() {
+  local src=$defaults/$1 dst=$2 dir
+  dir=$(dirname "$dst")
+  [[ -L $dir && ! -e $dir ]] && rm -f "$dir"
+  [[ -L $dst && ! -e $dst ]] && rm -f "$dst"
+  [[ -e $dst ]] && return 0
+  mkdir -p "$dir"
+  cp "$src" "$dst"
+  log "wrote ${dst#"$HOME/"}${3:+ ($3)}"
+}
+
+# The idle ladder: the laptop and desktop want different timeouts, so it's
+# the default for the machine type install.sh recorded (the laptop's when
+# there's none).
+machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null || true)
+[[ $machine == desktop ]] || machine=laptop
+seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$machine default"
+seed binds.defaults.lua          "$HOME/.config/hypr/binds.lua"
+seed hyprlock.defaults.conf      "$HOME/.config/hypr/hyprlock.conf"
+seed alacritty.defaults.toml     "$HOME/.config/alacritty/alacritty.toml"
+seed zed-settings.defaults.json  "$HOME/.config/zed/settings.json"
+seed bash_aliases.defaults.sh    "$HOME/.bash_aliases"
 
 # File-manager bookmarks (GTK's, which Thunar shows in its side pane) for
 # the usual folders. Not stowed: the paths hold the home directory, and the

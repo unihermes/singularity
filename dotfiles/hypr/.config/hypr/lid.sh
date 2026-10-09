@@ -99,7 +99,7 @@
 set -u
 
 unit=singularity-lid-suspend
-# Settings -> Lock Screen edits these four in place
+# Settings -> Lock Screen's four, overridden from lid.conf below
 close_action=suspend  # suspend | screen-off (never suspends on its own)
 lock_on_close=0    # 1: lock as soon as the lid shuts, not just before sleep
 close_delay=300    # lid shut this long -> suspend
@@ -116,6 +116,19 @@ hibernating="${XDG_RUNTIME_DIR:-/tmp}/singularity-hibernating"
 hold_marker="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-hold"
 input_seen="${XDG_RUNTIME_DIR:-/tmp}/singularity-input"
 idle_seen="${XDG_RUNTIME_DIR:-/tmp}/singularity-idle"
+
+# What Settings -> Lock Screen chose, kept on this machine in the state
+# directory rather than in this file: name=value lines, and only those four
+# names are taken.
+lid_conf="${XDG_STATE_HOME:-$HOME/.local/state}/singularity/lid.conf"
+if [[ -r $lid_conf ]]; then
+    while IFS='=' read -r key value; do
+        case $key in
+            close_action|lock_on_close|close_delay|hibernate)
+                [[ $value =~ ^[A-Za-z0-9-]+$ ]] && printf -v "$key" '%s' "$value" ;;
+        esac
+    done < "$lid_conf"
+fi
 
 log() { logger -t singularity-lid -- "$*"; }
 

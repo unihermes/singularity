@@ -4,8 +4,9 @@
 // The one write path into binds.lua, used by the Keybinds editor, and into
 // the per-machine files the Hyprland config loads from the state directory:
 // monitors.lua, the Display page's hl.monitor() rules, and hyprland.json,
-// the hl.config tables the Input and Appearance pages change. Those two stay
-// out of the repo; binds are meant to be committed.
+// the hl.config tables the Input and Appearance pages change. All of them
+// stay out of the repo: binds.lua is this machine's copy of the repo's
+// binds.defaults.lua, made by link.sh.
 //
 // A singleton, so there is exactly one of it however many of those are open:
 // as a per-page instance, each kept its own queue, and the standalone Keybinds

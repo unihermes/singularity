@@ -8,8 +8,10 @@
 # per machine: appearance.json (every file generated from it is rebuilt when
 # the shell starts), app usage, sticky notes, window rules, workspace layout
 # pins and the wallpaper, with the image itself when it isn't one of the
-# repo's own. Monitor layout, the primary display and Bluetooth state are
-# left behind. Looks and keybinds live in the repo, so git carries those.
+# repo's own, and the looks removed from the Appearance page. Monitor layout,
+# the primary display, the lid and Bluetooth state are left behind, as are
+# the copies link.sh makes of the repo's defaults (keybinds, hypridle,
+# hyprlock, alacritty, aliases): copy those by hand if you want them.
 #
 # calendars.conf holds secret feed addresses, so it only goes in with
 # --calendars. Import backs up every file it replaces, then restarts the
@@ -19,7 +21,7 @@ set -euo pipefail
 state="$HOME/.local/state/singularity"
 # relative to this script's real location, so the repo can live anywhere
 repo="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../..")"
-files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state)
+files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state looks-removed.json)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

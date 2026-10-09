@@ -20,7 +20,8 @@ import { fileURLToPath } from "node:url"
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 const services = path.join(repo, "dotfiles/quickshell/.config/quickshell/services")
 const hypr = (name) => fs.readFileSync(path.join(repo, "dotfiles/hypr/.config/hypr", name), "utf8")
-const looks = hypr("looks.lua"), input = hypr("input.lua"), binds = hypr("binds.lua")
+const looks = hypr("looks.lua"), input = hypr("input.lua")
+const binds = fs.readFileSync(path.join(repo, "dotfiles/singularity/.config/singularity/binds.defaults.lua"), "utf8")
 
 const Qt = { formatDateTime: (d) => d.toISOString() }
 const loaded = {}
