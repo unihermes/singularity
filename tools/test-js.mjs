@@ -96,13 +96,10 @@ test("Styles resolve every style, and Bevel is square", () => {
     }
     assert.equal(S.resolve(Object.assign({ style: "bevel" }, base)).radius, 0)
     assert.equal(S.resolve(Object.assign({ style: "channel" }, base)).radius, 6)
-    assert.equal(S.resolve(Object.assign({ style: "lined" }, base)).flyoutAttach, "flush")
-    assert.equal(S.resolve(Object.assign({ style: "lined" }, base, { barStyle: "floating" })).flyoutAttach, "floating")
+    assert.equal(S.resolve(Object.assign({ style: "double" }, base)).flyoutAttach, "flush")
+    assert.equal(S.resolve(Object.assign({ style: "double" }, base, { barStyle: "floating" })).flyoutAttach, "floating")
     assert.equal(S.resolve(Object.assign({ style: "glass" }, base)).opacity, 70)
     assert.equal(S.resolve(Object.assign({ style: "nope" }, base)).frameStyle, "channel")
-    // dropped styles land on a replacement, with its own options
-    assert.equal(S.resolve(Object.assign({ style: "ledger" }, base)).styleName, "bevel")
-    assert.equal(S.carried.terminal.styleOptions, S.finish("corners").styleOptions)
 })
 
 test("ChannelPath snaps near edges and closes its outline", () => {

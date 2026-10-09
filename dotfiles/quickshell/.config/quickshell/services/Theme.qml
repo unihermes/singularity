@@ -46,7 +46,7 @@ Singleton {
         style: Settings.style, styleOptions: Settings.styleOptions, radius: Settings.radius, barStyle: Settings.barStyle,
         density: Settings.density, seeThrough: Settings.seeThrough, shadows: Settings.shadows,
         heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim })
-    // the style in force, its renamed forms resolved: what every
+    // the style in force, channel for an unknown name: what every
     // component that draws its own way per style switches on
     readonly property string style: resolved.styleName
     // one of the style's own options (Styles.js `options`), on or off

@@ -101,8 +101,8 @@ Item {
             : root.active ? (Theme.flyoutAttach === "tab" ? Theme.panelFill : Theme.selectedFill)
             : solid ? restFill : "transparent"
 
-        border.width: !grouped && (root.hoverStyle === "outline" || (style === "outline" && Theme.frameStroked)) ? Theme.borderWidth : 0
-        border.color: root.active || root.hoverStyle === "outline" ? Theme.strokeFocus : Theme.stroke
+        border.width: style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
+        border.color: root.active ? Theme.strokeFocus : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 

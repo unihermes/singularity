@@ -367,38 +367,12 @@ fi
 # Visual Sensing Controller re-enumerates under the v4l2 subdevs WirePlumber
 # holds open, so closing them later oopses the kernel in subdev_close and
 # hangs shutdown. Blacklisting the whole chain means none of it loads.
-#
-# This also clears out what earlier runs installed to make the camera work:
-# the deferred-load timer, the hibernation unit and hook, and the
-# v4l2-relayd virtual webcam.
 vscconf=/etc/modprobe.d/singularity-vsc.conf
 vscmods=(mei_vsc ivsc_csi ivsc_ace intel_ipu6 ov01a10)
 if [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
   log "switching the webcam off"
   printf 'blacklist %s\n' "${vscmods[@]}" | sudo tee "$vscconf" >/dev/null
   sudo mkinitcpio -P
-fi
-webcam_leftovers=(
-  /etc/systemd/system/singularity-vsc.service
-  /etc/systemd/system/singularity-vsc.timer
-  /etc/systemd/system/singularity-camera-sleep.service
-  /usr/local/libexec/singularity-camera-sleep
-  /usr/lib/systemd/system-sleep/singularity-camera
-  /etc/modules-load.d/v4l2loopback.conf
-  /etc/modprobe.d/v4l2loopback.conf
-  /etc/v4l2-relayd.d/webcam.conf
-  /etc/systemd/system/v4l2-relayd@.service.d/libcamera.conf
-)
-found=()
-for f in "${webcam_leftovers[@]}"; do [[ -e $f ]] && found+=("$f"); done
-if (( ${#found[@]} )); then
-  log "removing the old webcam setup"
-  for unit in singularity-vsc.timer singularity-camera-sleep.service v4l2-relayd@webcam.service; do
-    sudo systemctl disable --now "$unit" 2>/dev/null || true
-  done
-  sudo rm -f "${found[@]}"
-  sudo rmdir /etc/v4l2-relayd.d /etc/systemd/system/v4l2-relayd@.service.d 2>/dev/null || true
-  sudo systemctl daemon-reload
 fi
 
 # --- hibernation ---------------------------------------------------------
@@ -715,14 +689,6 @@ fi
 # is the missing piece for Bluetooth's own adapter power.
 log "enabling Bluetooth power state restore"
 systemctl --user enable --now bt-power-restore.service
-
-# Quickshell is the notification daemon. A swaync left from an earlier
-# install is D-Bus-activated, and would take the name first when something
-# notifies before the shell is up; masking its unit stops the activation.
-if systemctl --user cat swaync.service &>/dev/null; then
-  log "masking swaync, which the shell replaces"
-  systemctl --user mask --now swaync.service
-fi
 
 
 # iwd is Type=dbus, so systemd waits for it to claim its bus name before

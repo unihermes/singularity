@@ -29,11 +29,8 @@ end
 
 -- Animation time from the bar's Appearance page: a percentage of each speed
 -- in looks.lua (speed is a duration, so 50 is twice as quick), and 0 turns
--- animations off entirely. The words "normal", "fast" and "off" are the older
--- form of the same file.
-local animTime = S.state("animations", "100")
-S.animFactor = math.max(0, math.min(100,
-    tonumber(animTime) or ({ normal = 100, fast = 50, off = 0 })[animTime] or 100)) / 100
+-- animations off entirely.
+S.animFactor = math.max(0, math.min(100, tonumber(S.state("animations", "100")) or 100)) / 100
 -- Game Mode, the Control Centre's switch: "on" in its state file strips the
 -- desktop's effects -- animations here, and blur, shadows, gaps and rounding
 -- in overrides.lua, after the local settings, so it outranks them without

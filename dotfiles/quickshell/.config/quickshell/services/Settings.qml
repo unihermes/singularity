@@ -812,17 +812,7 @@ Singleton {
         // is no file yet and the declared defaults are already correct.
         // (Neither this object nor the singleton root has a Component
         // attached object to hook instead.)
-        onLoaded: {
-            // a style since renamed or merged (Styles.renamed), drawn as
-            // it was; the Finish switches are left as they were set
-            var old = adapter.style
-            if (Styles.renamed[old]) {
-                adapter.style = Styles.renamed[old]
-                var c = Styles.carried[old]
-                for (var k in c) adapter[k] = c[k]
-            }
-            root.ready = true
-        }
+        onLoaded: root.ready = true
         onLoadFailed: root.ready = true
 
         onFileChanged: reload()

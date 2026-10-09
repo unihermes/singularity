@@ -14,7 +14,7 @@
 //              drawn) or "none"
 //   modules    the bar chips (ModuleFrame): "grouped", "outline", "filled",
 //              "pill", "ghost" or "cornered"
-//   hover      a bar module under the pointer: "none", "fill" or "outline"
+//   hover      a bar module under the pointer: "none" or "fill"
 //   mark       how the open-windows strip marks the focused window:
 //              "pill", "ground", "box" or "above"
 //   title      a flyout's first heading: "none" or "titlebar"
@@ -47,16 +47,6 @@
 .pragma library
 
 var order = ["channel", "double", "solid", "capsule", "glass", "bevel", "tabbed", "corners"]
-
-// styles that were renamed or merged, so a saved name still lands somewhere
-var renamed = { lined: "double", flat: "solid", basic: "solid", retro: "bevel",
-    minimal: "tabbed", underline: "tabbed", terminal: "corners", ledger: "bevel" }
-// what a saved renamed style carries over as: the options and switches
-// that draw it as it was (Basic was Solid without shadows)
-var carried = {
-    lined: { styleOptions: "" }, flat: { styleOptions: "" },
-    basic: { styleOptions: "", shadows: false }, retro: { styleOptions: "title" },
-}
 
 var styles = {
     channel: {
@@ -154,15 +144,10 @@ var styles = {
     },
 }
 
-// the dropped styles land on their replacement's own options
-var dropped = ["minimal", "underline", "terminal", "ledger"]
-for (var d = 0; d < dropped.length; d++)
-    carried[dropped[d]] = { styleOptions: finish(renamed[dropped[d]]).styleOptions }
-
 // bar height and the gap between modules, by density
 var densityBar = { compact: { height: 28, gap: 2 }, normal: { height: 32, gap: 2 }, roomy: { height: 36, gap: 4 } }
 
-function get(name) { return styles[renamed[name] || name] || styles.channel }
+function get(name) { return styles[name] || styles.channel }
 
 var windowDefaults = { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 }
 
@@ -193,8 +178,8 @@ function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 
 // s: { style, styleOptions, radius, barStyle, density, seeThrough, shadows, heavyLines, flyoutAnim }
 function resolve(s) {
-    var name = renamed[s.style] || s.style
-    var st = get(name)
+    var name = styles[s.style] ? s.style : "channel"
+    var st = styles[name]
     var bar = densityBar[s.density] || densityBar.normal
     var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
@@ -202,7 +187,7 @@ function resolve(s) {
     if (name === "double") prefix = has(s.styleOptions, "slash") ? "//" : ""
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
-        styleName: styles[name] ? name : "channel",
+        styleName: name,
         frameStyle: st.frame,
         moduleStyle: st.modules,
         hoverStyle: st.hover,

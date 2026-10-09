@@ -199,8 +199,6 @@ SettingsPage {
     property int closeDelay: 300
     property bool lockOnClose: false
     property bool hibernate: true
-    // an older lid.sh without the setting: the switch can't write it
-    property bool hibernateFound: false
 
     function rereadLid() {
         lidFile.reload()
@@ -211,8 +209,7 @@ SettingsPage {
         closeAction = (m = /^close_action=([\w-]+)/m.exec(text)) ? m[1] : "suspend"
         closeDelay = (m = /^close_delay=(\d+)/m.exec(text)) ? Number(m[1]) : 300
         lockOnClose = (m = /^lock_on_close=(\d)/m.exec(text)) ? m[1] === "1" : false
-        hibernateFound = (m = /^hibernate=(\d)/m.exec(text)) !== null
-        hibernate = m ? m[1] === "1" : true
+        hibernate = (m = /^hibernate=(\d)/m.exec(text)) ? m[1] === "1" : true
     }
 
     function setLid(name, value, message) {
@@ -500,7 +497,7 @@ SettingsPage {
         Switch {
             anchors.right: parent.right
             checked: page.hibernate && Session.canHibernate
-            enabled: page.hibernateFound && Session.canHibernate && page.closeAction === "suspend"
+            enabled: Session.canHibernate && page.closeAction === "suspend"
             onToggled: page.setLid("hibernate", page.hibernate ? 0 : 1,
                 page.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
         }

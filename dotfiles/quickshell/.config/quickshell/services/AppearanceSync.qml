@@ -722,11 +722,8 @@ Scope {
     // everything else in the file as it was.
     function withBlock(text, open, close, lines) {
         var esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        // a block from before the rename says "neutrino" where this says
-        // "singularity"; either is replaced
-        var re = new RegExp("\\n?" + esc(open) + "(?:neutrino|singularity)"
-            + esc(browserMark.replace(/^singularity/, "")) + "[\\s\\S]*?"
-            + esc(open) + "(?:neutrino|singularity)" + esc(": end" + close) + "\\n?")
+        var re = new RegExp("\\n?" + esc(open + browserMark) + "[\\s\\S]*?"
+            + esc(open + "singularity: end" + close) + "\\n?")
         var rest = text.replace(re, "\n").replace(/\n+$/, "")
         var block = [open + browserMark + close].concat(lines, [open + "singularity: end" + close])
         return (rest ? rest + "\n" : "") + block.join("\n") + "\n"
