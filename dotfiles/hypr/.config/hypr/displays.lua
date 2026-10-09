@@ -20,6 +20,46 @@ local function panelOffWhileLidShut()
     if panel and panel ~= "" then hl.monitor({ output = panel, disabled = true }) end
 end
 
+-- Displays whose native mode is a TV timing (CTA VIC 16, 1080p60) but whose
+-- EDID can't say they take full-range RGB: they assume the TV range, while
+-- the GPU sends the PC one, so dark greys are crushed to black and light
+-- ones clipped to white. The same resolution at PC timings (CVT reduced
+-- blanking, 59.94 Hz) is read as full range. Keyed on the EDID's model name,
+-- read from sysfs since a mirrored display isn't in hl.get_monitors() and
+-- nothing is there yet at launch.
+local pcTimings = {
+    ["DELL P2418HZm"] = "modeline 138.50 1920 1968 2000 2080 1080 1083 1088 1111 +hsync -vsync",
+}
+
+local function readAll(cmd)
+    local p = io.popen(cmd)
+    if not p then return "" end
+    local s = p:read("a") or ""
+    p:close()
+    return s
+end
+
+local function pcModeline(output)
+    if output == "" or output:find("[^%w%-]") then return nil end
+    local edid = readAll("cat /sys/class/drm/card*-" .. output .. "/edid 2>/dev/null")
+    for model, line in pairs(pcTimings) do
+        if edid:find(model, 1, true) then return line end
+    end
+end
+
+-- The rule with its TV-timed mode swapped for the PC one, for those displays.
+-- Any mode other than the native one is left as chosen.
+local function withPcTimings(rule)
+    local mode = rule.mode or "preferred"
+    if rule.disabled or not (mode == "preferred" or mode:match("^1920x1080@60")) then return rule end
+    local line = pcModeline(rule.output or "")
+    if not line then return rule end
+    local out = {}
+    for k, v in pairs(rule) do out[k] = v end
+    out.mode = line
+    return out
+end
+
 -- The Display page's rules for this machine's displays, in the state
 -- directory since they differ per machine. Until it has saved any, one rule
 -- for every display: empty output matches them all, which suits a laptop
@@ -28,6 +68,15 @@ end
 -- "auto" picks a HiDPI factor on a dense laptop panel, which makes the whole
 -- desktop look oversized. Nudge to 1.25 or 1.5 if 1 is too small; fractional
 -- values below 1 are not supported.
+--
+-- Every rule goes through withPcTimings, and a display that needs PC timings
+-- but has no rule of its own gets a copy of the catch-all with them.
+local monitorRule, named, catchAll = hl.monitor, {}, nil
+hl.monitor = function(rule)
+    named[rule.output] = true
+    if rule.output == "" then catchAll = rule end
+    return monitorRule(withPcTimings(rule))
+end
 if not pcall(dofile, os.getenv("HOME") .. "/.local/state/singularity/monitors.lua") then
     hl.monitor({
         output   = "",
@@ -35,6 +84,17 @@ if not pcall(dofile, os.getenv("HOME") .. "/.local/state/singularity/monitors.lu
         position = "auto",
         scale    = 1,
     })
+end
+hl.monitor = monitorRule
+if catchAll then
+    for output in readAll("grep -l '^connected' /sys/class/drm/card*-*/status 2>/dev/null"):gmatch("card%d+%-(%S-)/status") do
+        if not named[output] and pcModeline(output) then
+            local rule = {}
+            for k, v in pairs(catchAll) do rule[k] = v end
+            rule.output = output
+            hl.monitor(withPcTimings(rule))
+        end
+    end
 end
 
 panelOffWhileLidShut()
