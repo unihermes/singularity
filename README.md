@@ -301,6 +301,13 @@ changes survive it.
   display that crushes blacks, and a lifted tone curve for one that shows
   shadows too dark, keyed on the model name in its EDID. The format is in
   `hypr/shared.lua`.
+- **Keeping the greeter off a second monitor:** the console is mirrored on
+  every monitor at the smallest one's size, so a 1080p second screen shrinks
+  ly on a 1440p main one. Add `video=<connector>:d` (e.g. `video=DP-3:d`,
+  names in `/sys/class/drm/`) to the kernel command line
+  (`/etc/kernel/cmdline`, then `sudo mkinitcpio -P`, with a unified kernel
+  image) and rerun `install.sh`. ly then shows only on the others, and the monitor
+  comes back when you log in.
 
 Everything else under `dotfiles/` is linked straight into `~/.config`, so
 editing it there edits the repo: that's how you change the stock setup

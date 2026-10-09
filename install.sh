@@ -1048,7 +1048,9 @@ if [[ -n $dm_unit ]]; then
     sudo tee /etc/ly/singularity.sh >/dev/null <<'LY'
 #!/bin/sh
 # Written by singularity's install.sh. Run by ly (start_cmd) before it takes
-# the TTY: loads the Singularity ramp into the VT palette, slots 0-15.
+# the TTY: keeps the greeter off held-off monitors (outputs.sh) and loads the
+# Singularity ramp into the VT palette, slots 0-15.
+/etc/ly/outputs.sh
 [ "$TERM" = linux ] || exit 0
 i=0
 for c in 0b0b0b a87676 7d9b7d 969696 a0a0a0 aeaeae b8b8b8 d0e2fa \
@@ -1060,6 +1062,52 @@ done
 clear
 LY
     sudo chmod 755 /etc/ly/singularity.sh
+    # The console is one framebuffer mirrored on every monitor and the kernel
+    # sizes it to the smallest of them, so a 1080p second screen shrinks the
+    # greeter on a 1440p main one. A monitor named video=<connector>:d on the
+    # kernel command line never joins it, but that holds it off for the
+    # session too: outputs.sh hands it back at login (through sudo, the
+    # session runs as the user) and takes it away again at logout. If it is
+    # the only monitor plugged in, it is never held off.
+    sudo tee /etc/ly/outputs.sh >/dev/null <<'LY'
+#!/bin/sh
+# Written by singularity's install.sh. `outputs.sh [off|on]` holds the monitors
+# named as video=<connector>:d on the kernel command line off for the
+# greeter, or gives them back to the session.
+names=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^video=\([^:]*\):d$/\1/p')
+[ -n "$names" ] || exit 0
+state=${1:-off}
+if [ "$state" = off ]; then
+  state=on
+  for s in /sys/class/drm/card*-*/status; do
+    c=${s%/status}; c=${c##*/}; c=${c#card*-}
+    case " $(echo $names) " in *" $c "*) continue ;; esac
+    [ "$(cat "$s")" = connected ] && state=off && break
+  done
+fi
+for n in $names; do
+  for s in /sys/class/drm/card*-"$n"/status; do
+    [ -w "$s" ] || continue
+    if [ "$state" = off ]; then echo off; else echo detect; fi > "$s"
+  done
+done
+LY
+    sudo tee /etc/ly/login.sh >/dev/null <<'LY'
+#!/bin/sh
+# Written by singularity's install.sh. ly's login_cmd, run as the user: gives
+# the session back the monitors outputs.sh held off for the greeter.
+grep -q 'video=[^ ]*:d\( \|$\)' /proc/cmdline && sudo -n /etc/ly/outputs.sh on
+exec "$@"
+LY
+    sudo chmod 755 /etc/ly/outputs.sh /etc/ly/login.sh
+    tmp=$(mktemp)
+    echo '%wheel ALL=(root) NOPASSWD: /etc/ly/outputs.sh on' > "$tmp"
+    if sudo visudo -cqf "$tmp"; then
+      sudo install -m 440 "$tmp" /etc/sudoers.d/singularity-ly
+    else
+      warn "sudoers rule for /etc/ly/outputs.sh did not validate, held-off monitors stay off after login"
+    fi
+    rm -f "$tmp"
     # The status lines in the greeter's bottom-right corner, one [lbl:*] entry
     # each. ly runs these as root before anyone logs in, so they only read
     # sysfs and root-readable tools.
@@ -1184,6 +1232,8 @@ LY
     [[ -f /etc/ly/config.ini.singularity.bak ]] ||
       sudo cp /etc/ly/config.ini /etc/ly/config.ini.singularity.bak
     set_ly start_cmd /etc/ly/singularity.sh
+    set_ly login_cmd /etc/ly/login.sh
+    set_ly logout_cmd /etc/ly/outputs.sh
     set_ly full_color false
     set_ly bg 0x00000001            # slot 0, base   #0b0b0b
     set_ly fg 0x00000008            # slot 7, text   #d0e2fa (pale blue)
