@@ -26,6 +26,9 @@ spotify
 claude-desktop
 # reference manager; its add-in cites from LibreOffice
 zotero-bin
+# sends files to nearby devices over the local network. -bin is the prebuilt
+# release; plain localsend builds the Flutter app from source.
+localsend-bin
 
 # Discord client mod. Read the PKGBUILD before trusting any Discord mod, same
 # as the zen-browser warning above -- these packages run arbitrary code
