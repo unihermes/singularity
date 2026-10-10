@@ -212,6 +212,7 @@ end
 for name, match in pairs({ ["system-prompts"] = { class = PROMPT_CLASSES }, ["modal-dialogs"] = { modal = true } }) do
     hl.window_rule({ name = name, tag = "-monocle", match = match, float = true, center = true, maximize = false })
     hl.window_rule({ name = name .. "-exempt", match = match, tag = "+monocle-exempt" })
+    hl.window_rule({ name = name .. "-popout", match = match, tag = "+popout" })
 end
 
 -- A rule's size: "W H" in pixels, or either as a share of the screen
@@ -286,15 +287,54 @@ local function classTag(class)
     return string.format("app-%08x", h)
 end
 
+local userRules = {}
 do
     local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/window-rules.json")
         or io.open(os.getenv("HOME") .. "/.config/singularity/window-rules.defaults.json")
     local rules = f and S.decodeJson(f:read("a")) or {}
     if f then f:close() end
+    userRules = type(rules) == "table" and rules or {}
+end
+
+-- In monocle only the apps listed in Window Rules as "Fills" (an entry
+-- naming a class and no title that doesn't float, pin or go fullscreen) are
+-- filled to the screen: browsers and editors. Every other window opens
+-- naturally -- floating, centred, at the size it asks for. Classes here
+-- by Lua's equality for SUPER+M's sweep; the rule below by Hyprland's regex.
+local fillClasses = {}
+local fillMatch = {}
+for _, r in ipairs(userRules) do
+    if type(r) == "table" and type(r.class) == "string" and r.class ~= ""
+            and not (type(r.title) == "string" and r.title ~= "")
+            and not r.float and not r.pin and not r.fullscreen then
+        if r.regex then
+            table.insert(fillMatch, "(" .. r.class .. ")")
+        else
+            fillClasses[r.class] = true
+            table.insert(fillMatch, "(^" .. literalRegex(r.class) .. "$)")
+        end
+    end
+end
+local function isFillClass(class)
+    return class ~= nil and fillClasses[class] == true
+end
+
+-- After monocleRule and the shell's own rules, ahead of window-rules.json's
+-- entries so a float or size entry still wins. The shell's windows and the
+-- scratchpad are left out: they place themselves.
+local NOT_NATURAL = { "(^org\\.quickshell$)", "(^" .. SCRATCH_CLASS .. "$)" }
+for _, m in ipairs(fillMatch) do table.insert(NOT_NATURAL, m) end
+local naturalMatch = { float = false, class = "negative:" .. table.concat(NOT_NATURAL, "|") }
+local naturalRule = hl.window_rule({
+    name = "monocle-natural", match = naturalMatch,
+    tag = "-monocle", center = true, maximize = false,
+})
+
+do
+    local rules = userRules
     -- Bottom of the file first: when two rules set the same property the
     -- one applied last wins, and the page lists newest first, so this makes
     -- "higher in the list wins" -- a rule you just added beats the defaults.
-    rules = type(rules) == "table" and rules or {}
     for n = #rules, 1, -1 do
         local r = rules[n]
         local match = {}
@@ -337,6 +377,10 @@ do
             local ws = tonumber(r.workspace)
             if ws and ws >= 1 and ws <= S.maxWorkspaces then rule.workspace = tostring(math.floor(ws)) end
             local applied = hl.window_rule(rule)
+            -- an entry by title is for an app's popups: one icon in the bar
+            if match.title then
+                hl.window_rule({ name = name .. "-popout", match = match, tag = "+popout" })
+            end
             -- Its own rule so applyLayoutRules can switch it off in dwindle,
             -- where every window opens tiled (see keepNewWindowTiled).
             if r.fullscreen then
@@ -405,6 +449,8 @@ local function holdPopup(win)
             hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
             hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
             hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = addr }))
+            hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = addr }))
+            hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
             local size = POPUP_SIZES[win.class]
             if size then hl.dispatch(hl.dsp.window.resize({ x = size[1], y = size[2], window = addr })) end
             hl.dispatch(hl.dsp.window.center({ window = addr }))
@@ -723,12 +769,19 @@ local function setWindowMonocle(w, on, mon)
         -- class "" is a window that hasn't said what it is yet; leave it
         if not w.floating and w.class and w.class ~= "" and not isMonocleExempt(w) then
             hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
-            hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
-            sizeToFullFloat(w, mon)
+            if isFillClass(w.class) then
+                hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
+                sizeToFullFloat(w, mon)
+            else
+                -- not filled: floated where it is, centred
+                hl.dispatch(hl.dsp.window.tag({ tag = "+natural", window = addr }))
+                hl.dispatch(hl.dsp.window.center({ window = addr }))
+            end
         end
-    elseif w.floating and hasTag(w, "monocle") then
+    elseif w.floating and (hasTag(w, "monocle") or hasTag(w, "natural")) then
         hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
         hl.dispatch(hl.dsp.window.tag({ tag = "-monocle", window = addr }))
+        hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = addr }))
         stateOf(w.address).small = nil
     end
 end
@@ -758,9 +811,18 @@ local function onMonocleOpen(win)
     local on = monocleOn(win.workspace)
     local active = hl.get_active_workspace()
     local elsewhere = win.workspace and active and win.workspace.id ~= active.id
-    if elsewhere and on ~= isMonocleWin(win) and not (on and isMonocleExempt(win)) then
-        setWindowMonocle(win, on, win.monitor)
+    local fresh = hl.get_window("address:" .. win.address) or win
+    local natural = fresh.floating and hasTag(fresh, "natural")
+    if elsewhere and on ~= (isMonocleWin(fresh) or natural) and not (on and isMonocleExempt(fresh)) then
+        setWindowMonocle(fresh, on, fresh.monitor)
         return
+    end
+    -- One the natural rule floated, marked so SUPER+M tiles it again (the
+    -- rule's own tags go when it's switched off): floating, outside the
+    -- monocle stack, and not one of the shell's, a prompt or a popup.
+    if on and fresh.floating and not hasTag(fresh, "monocle") and not isMonocleExempt(fresh)
+            and not fresh.pinned and not hasTag(fresh, "popout") then
+        hl.dispatch(hl.dsp.window.tag({ tag = "+natural", window = "address:" .. win.address }))
     end
     -- Only the windows monocleRule floated. Exempt ones -- Quickshell's own
     -- Settings/System/Keybinds windows, window-rules.json entries -- keep
@@ -933,6 +995,14 @@ local function adoptDialog(addr)
     if not owner or owner.address == addr then return end
     if owner.pid ~= win.pid and not isPrompt(win.class) then return end
     dialogOwner[addr] = owner.address
+    -- the bar's open-windows strip folds popouts into one icon; tags
+    -- aren't announced, so it's told to look again
+    -- and as a dialog it's no natural window for SUPER+M to tile
+    hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = "address:" .. addr }))
+    if not hasTag(win, "popout") then
+        hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = "address:" .. addr }))
+        hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
+    end
 end
 
 -- Raises win's dialogs over it, then theirs over them.
@@ -1370,6 +1440,7 @@ local function applyLayoutRules(announce)
     if ws and ws.special then return end
     local on = monocleOn(ws)
     monocleRule:set_enabled(on)
+    naturalRule:set_enabled(on)
     for _, f in ipairs(fullscreenRules) do f.rule:set_enabled(on and (not f.app or f.app.on)) end
     if announce or (rulesMonocle ~= nil and rulesMonocle ~= on) then
         hl.exec_cmd("qs ipc call layout set " .. (on and "monocle" or "dwindle"))

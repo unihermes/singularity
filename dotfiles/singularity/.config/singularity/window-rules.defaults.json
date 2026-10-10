@@ -1,5 +1,45 @@
 [
   {
+    "float": false,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Floorp",
+    "class": "floorp"
+  },
+  {
+    "float": false,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Zen",
+    "class": "zen"
+  },
+  {
+    "float": false,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Zed",
+    "class": "dev.zed.Zed"
+  },
+  {
+    "float": false,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "VSCodium",
+    "class": "VSCodium"
+  },
+  {
+    "float": false,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "VSCodium (Wayland)",
+    "class": "codium"
+  },
+  {
     "float": true,
     "workspace": 0,
     "fullscreen": false,

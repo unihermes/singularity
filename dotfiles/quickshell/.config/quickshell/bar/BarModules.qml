@@ -314,7 +314,7 @@ Item {
         // an empty chip on a bare workspace would be a floating
         // rectangle with nothing in it
         visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
-        active: screenScope.openFlyout === "windowmenu"
+        active: screenScope.openFlyout === "windowmenu" || screenScope.openFlyout === "popouts"
         hoverWhole: false
         // the plain icon styles pad each icon by a hair, which would
         // otherwise stack on the chip's own padding
@@ -333,7 +333,8 @@ Item {
                 var m = iconRepeater.model
                 if (!a || !m) return -1
                 for (var i = 0; i < m.length; i++)
-                    if (m[i].address === a.address) return i
+                    if (m[i].address === a.address
+                            || (m[i].popouts && m[i].popouts.some(p => p.address === a.address))) return i
                 return -1
             }
             // the top of the marks under the icons: a pixel below an icon
@@ -576,6 +577,22 @@ Item {
                                 grey: winIcon.lift && !winIcon.lit
                             }
 
+                            // the popouts' icon: how many it holds
+                            Text {
+                                visible: !!winIcon.modelData.popouts && winIcon.modelData.popouts.length > 1
+                                z: 1
+                                // over the top corner, clear of the marks under the icon
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.rightMargin: -Theme.spaceXs - 1
+                                anchors.topMargin: -Theme.spaceXs
+                                text: visible ? winIcon.modelData.popouts.length : ""
+                                color: winIcon.focused ? Theme.accent : Theme.textStrong
+                                font.family: Theme.fontText
+                                font.weight: Font.Bold
+                                font.pixelSize: Math.round(parent.height * 0.55)
+                            }
+
                             // apps with no themed icon, and the shell's own windows
                             Text {
                                 anchors.centerIn: parent
@@ -685,6 +702,13 @@ Item {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: mouse => {
                                 var addr = "address:0x" + winIcon.modelData.address
+                                // the popouts' icon: two or more list in a flyout to
+                                // pick from; one is just that window
+                                var pops = winIcon.modelData.popouts
+                                if (pops && pops.length > 1) {
+                                    if (mouse.button !== Qt.MiddleButton) screenScope.toggleFlyout("popouts", winIcon)
+                                    return
+                                }
                                 if (mouse.button === Qt.RightButton) {
                                     var menu = barModules.windowMenu.ensure()
                                     // a different window's icon while the menu is

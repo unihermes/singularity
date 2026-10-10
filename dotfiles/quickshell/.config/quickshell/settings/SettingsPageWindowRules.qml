@@ -70,7 +70,7 @@ SettingsPage {
         rename: String.fromCodePoint(0xF03EB),
     })
     readonly property var opensHints: ({
-        tiled: "Takes its place in the layout",
+        tiled: "Fills the screen in monocle, tiles in dwindle; unlisted apps open at their own size",
         float: "Floats over the others",
         full: "Covers the bar too; monocle only",
         pin: "Floats above, on every workspace",
@@ -175,7 +175,7 @@ SettingsPage {
         var size = rule.size ? " " + (rule.size.split(" ")[0] === rule.size.split(" ")[1] && rule.size.indexOf("%") >= 0
             ? rule.size.split(" ")[0] : rule.size.replace(" ", "×")) : ""
         var parts = [rule.pin ? "On top" + size : rule.fullscreen ? "Fullscreen"
-            : rule.float ? "Float" + size : "Tiled"]
+            : rule.float ? "Float" + size : "Fills"]
         if (rule.workspace) parts.push("workspace " + rule.workspace)
         if (rule.fullscreen && (rule.pin || rule.float)) parts.push("fullscreen")
         return parts.join(" · ")
@@ -506,7 +506,7 @@ SettingsPage {
                             anchors.right: parent.right
                             fill: false
                             enabled: !AtomicFileWrite.busy
-                            model: [{ value: "tiled", text: "Tiled" }, { value: "float", text: "Float" },
+                            model: [{ value: "tiled", text: "Fills" }, { value: "float", text: "Float" },
                                 { value: "full", text: "Fullscreen" }, { value: "pin", text: "On top" }]
                             current: ruleCol.opensAs
                             onPicked: v => page.setOpensAs(ruleCol.index, v)

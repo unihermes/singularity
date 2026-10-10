@@ -210,6 +210,7 @@ PanelWindow {
             .filter(w => all ? w.id > 0 : w.id === wsId)
             .sort((x, y) => x.id - y.id)
         var icons = []
+        var popouts = []
         for (var i = 0; i < wss.length; i++) {
             var tls = wss[i].toplevels.values
             var first = true
@@ -217,6 +218,16 @@ PanelWindow {
                 var cls = tls[j].lastIpcObject ? tls[j].lastIpcObject.class : ""
                 if (!cls || Apps.isBackTabToplevel(tls[j])) continue
                 var ipc = tls[j].lastIpcObject
+                if (isPopout(ipc)) {
+                    popouts.push({
+                        source: Apps.iconForClass(cls),
+                        glyph: Apps.glyphForWindow(cls, ipc.title),
+                        name: Apps.nameForWindow(cls, ipc.title),
+                        address: tls[j].address,
+                        toplevel: tls[j],
+                    })
+                    continue
+                }
                 icons.push({
                     source: Apps.iconForClass(cls),
                     // drawn instead when nothing resolved, so a
@@ -233,7 +244,34 @@ PanelWindow {
                 first = false
             }
         }
+        // every popout in one icon at the end, which lists them
+        // (PopoutsFlyout) or, with just one, stands in for it
+        if (popouts.length > 0) {
+            var one = popouts.length === 1
+            icons.push({
+                popouts: popouts,
+                source: "",
+                glyph: "󰖲",
+                name: one ? popouts[0].name : "Popouts",
+                address: one ? popouts[0].address : "",
+                toplevel: one ? popouts[0].toplevel : null,
+                groupStart: icons.length > 0,
+            })
+        }
         return icons
+    }
+
+    // A window windows.lua marks as a popout -- a dialog, a sign-in or
+    // settings popup, a password prompt -- or one an app opened while it
+    // already had a window up (an app rule's "held" side). Rule-set tags
+    // carry a trailing "*".
+    function isPopout(ipc) {
+        var tags = ipc && ipc.tags ? ipc.tags : []
+        for (var i = 0; i < tags.length; i++) {
+            var t = String(tags[i]).replace(/\*$/, "")
+            if (t === "popout" || t === "app-held") return true
+        }
+        return false
     }
 
     // The open window belonging to a tray item, if any, so clicking
