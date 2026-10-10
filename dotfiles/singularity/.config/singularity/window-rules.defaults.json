@@ -52,6 +52,14 @@
     "workspace": 0,
     "fullscreen": false,
     "pin": false,
+    "label": "Zathura",
+    "class": "org.pwmt.zathura"
+  },
+  {
+    "float": false,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
     "label": "LibreOffice Writer",
     "class": "libreoffice-writer"
   },
