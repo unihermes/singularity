@@ -53,6 +53,10 @@ if #nvidia > 0 and driver then
     hl.env("LIBVA_DRIVER_NAME", "nvidia")
     hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
     hl.env("NVD_BACKEND", "direct")
+    -- nvidia-vaapi-driver opens /dev/nvidia* itself, which Zen's and
+    -- Floorp's media decoder (RDD) sandbox forbids, so without this their
+    -- video falls back to CPU decoding (see browserPrefs in AppearanceSync).
+    hl.env("MOZ_DISABLE_RDD_SANDBOX", "1")
     for _, card in ipairs(rest) do table.insert(nvidia, card) end
     hl.env("AQ_DRM_DEVICES", table.concat(nvidia, ":"))
 end

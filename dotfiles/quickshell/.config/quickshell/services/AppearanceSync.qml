@@ -625,7 +625,14 @@ Scope {
             pref("ui.textSelectAttentionBackground", str(found)), pref("ui.textSelectAttentionForeground", str(t)),
             pref("ui.textHighlightBackground", str(others)), pref("ui.textHighlightForeground", str(hex(Theme.text))),
             pref("zen.theme.accent-color", str(a)),
-            pref("toolkit.legacyUserProfileCustomizations.stylesheets", "true")]
+            pref("toolkit.legacyUserProfileCustomizations.stylesheets", "true"),
+            // Decode video on the GPU through VA-API. Gecko blocklists
+            // NVIDIA's VA-API driver, so without forcing it every video is
+            // decoded on the CPU (env.lua points VA-API at the right driver
+            // and lifts the sandbox it needs); a driver that can't decode a
+            // stream still falls back to software.
+            pref("media.ffmpeg.vaapi.enabled", "true"),
+            pref("media.hardware-video-decoding.force-enabled", "true")]
     }
 
     // Floorp's chrome in the look: the variables a theme (browser.theme, or
