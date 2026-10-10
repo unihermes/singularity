@@ -177,6 +177,7 @@ var entries = [
 
     // --- Startup -----------------------------------------------------------
     { page: "autostart", section: "When the PC starts", label: "Start", keywords: "boot default os operating system windows linux arch dual systemd-boot bootloader grub entry" },
+    { page: "autostart", section: "When the PC starts", label: "Restart into", keywords: "reboot restart windows bios uefi firmware setup once boot" },
     { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
     { page: "autostart", section: "At login", label: "Add an app…",  keywords: "autostart add app application start login" },
     { page: "autostart", section: "Packages", label: "From packages", keywords: "xdg autostart system installed entry keyring" },

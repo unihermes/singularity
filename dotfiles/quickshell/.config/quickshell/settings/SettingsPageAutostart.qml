@@ -9,8 +9,10 @@
 // The OS is systemd-boot's default entry. Its menu is hidden, so the
 // default is what boots. Both reading the entries and setting the default
 // need root, so they go through install.sh's singularity-boot helper and
-// pkexec (no password for the active session). The section only shows
-// when the helper is there and systemd-boot lists a second OS.
+// pkexec (no password for the active session). The choice only shows
+// when the helper is there and systemd-boot lists a second OS. Beside it,
+// a restart into another OS or the BIOS just this once, which logind does
+// without the helper.
 //
 // Hyprland runs no XDG autostart of its own -- the entries only mean anything
 // because ~/.config/singularity/autostart.sh runs them from autostart.lua, and
@@ -166,8 +168,10 @@ SettingsPage {
         }
     }
 
+    readonly property bool bootSection: bootEntries.length > 1 || Session.rebootTargets.length > 0
+
     FlyoutHeading {
-        visible: page.bootEntries.length > 1
+        visible: page.bootSection
         text: "WHEN THE PC STARTS"
     }
 
@@ -198,8 +202,33 @@ SettingsPage {
         }
     }
 
+    // Once only, then back to the default above: Session.rebootInto, the
+    // same as the Control Centre's Reboot chevron
+    SettingsField {
+        visible: Session.rebootTargets.length > 0
+        label: "Restart into"
+        hint: "Just this once"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+
+            Repeater {
+                model: Session.rebootTargets
+
+                FlyoutChip {
+                    required property var modelData
+                    icon: modelData.icon
+                    text: modelData.label
+                    confirmText: "Restart now?"
+                    onClicked: Session.rebootInto(modelData.act)
+                }
+            }
+        }
+    }
+
     Item {
-        visible: page.bootEntries.length > 1
+        visible: page.bootSection
         width: 1
         height: Theme.spaceM
     }

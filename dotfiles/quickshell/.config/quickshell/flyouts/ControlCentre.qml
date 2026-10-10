@@ -42,6 +42,7 @@ FlyoutPanel {
     onPageChanged: if (page === "quick") {
         rfkillRead.running = true
     } else if (page === "power") {
+        rebootOpen = false
         Session.refresh()
     } else if (page === "apps") {
         appQuery = ""
@@ -768,18 +769,48 @@ FlyoutPanel {
     }
 
     // --- Power ----------------------------------------------
-    // with the power menu's glyphs, so the two read as the same actions
+    // with the power menu's glyphs, so the two read as the same actions.
+    // Reboot's chevron drops the one-off reboots in under it (into Windows,
+    // into the BIOS); the row itself still just reboots. The power menu
+    // leaves them out.
+    property bool rebootOpen: false
+
     Repeater {
-        model: controlCentre.page === "power" ? Session.actions : []
+        model: {
+            if (controlCentre.page !== "power") return []
+            const list = []
+            for (const a of Session.actions) {
+                list.push(a)
+                if (a.act === "reboot" && controlCentre.rebootOpen)
+                    for (const t of Session.rebootTargets)
+                        list.push({ act: t.act, label: "Into " + t.label, icon: t.icon, into: true })
+            }
+            return list
+        }
 
         FlyoutAction {
+            id: powerRow
             required property var modelData
+            readonly property bool hasMore: modelData.act === "reboot" && Session.rebootTargets.length > 0
+            x: modelData.into ? Theme.iconCell : 0
+            width: parent ? parent.width - x : 0
             checkable: false
             icon: modelData.icon
             label: modelData.label
+            trailingInset: hasMore ? more.width : 0
             onActivated: {
                 scope.openFlyout = ""
-                Session.run(modelData.act)
+                if (modelData.into) Session.rebootInto(modelData.act)
+                else Session.run(modelData.act)
+            }
+
+            IconButton {
+                id: more
+                visible: powerRow.hasMore
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                icon: controlCentre.rebootOpen ? "󰅃" : "󰅀"
+                onClicked: controlCentre.rebootOpen = !controlCentre.rebootOpen
             }
         }
     }

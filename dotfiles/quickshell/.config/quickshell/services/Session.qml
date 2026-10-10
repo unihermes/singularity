@@ -2,7 +2,9 @@
 // ~/.config/quickshell/services/Session.qml
 //
 // Lock, suspend, log out and the rest, for the Control Centre's Power page
-// and the SUPER+SHIFT+E power menu. Also `resumed()`, for services that keep
+// and the SUPER+SHIFT+E power menu, plus the one-off reboots into another
+// OS or the firmware setup that only the Control Centre and Settings offer.
+// Also `resumed()`, for services that keep
 // time: Qt's timers run on the monotonic clock, which stops while the machine
 // sleeps, so anything due during a suspend or hibernate would otherwise fire
 // late by however long the machine was out.
@@ -21,7 +23,10 @@ Singleton {
     // hibernation step), none of which link.sh alone sets up.
     property bool canHibernate: false
 
-    function refresh() { hibernateCheck.running = true }
+    function refresh() {
+        hibernateCheck.running = true
+        rebootCheck.running = true
+    }
     Component.onCompleted: refresh()
 
     // A fresh process: the Control Centre's Restart shell, and the only way
@@ -39,6 +44,44 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: root.canHibernate = text.trim() === 's "yes"'
         }
+    }
+
+    // [{ act, label, icon }]: reboots that go somewhere else this once --
+    // Windows or macOS beside this one, then the firmware setup -- for
+    // rebootInto(). logind sets systemd-boot's one-shot entry or the
+    // firmware's boot-to-setup flag, which the active session may do with
+    // no password, so it needs no helper of its own. The entries come from
+    // logind too: systemd-boot hands it their ids at boot.
+    property var rebootTargets: []
+
+    Process {
+        id: rebootCheck
+        // one JSON line per answer, in this order; {} for one that fails
+        command: ["sh", "-c", `
+            m() { busctl --json=short "$1" org.freedesktop.login1 /org/freedesktop/login1 \\
+                    org.freedesktop.login1.Manager "$2" 2>/dev/null || echo '{}'; }
+            m call CanRebootToBootLoaderEntry
+            m get-property BootLoaderEntries
+            m call CanRebootToFirmwareSetup`]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const out = text.trim().split("\n").map(l => {
+                    try { return JSON.parse(l).data } catch (e) { return null }
+                })
+                const can = d => !!d && d[0] === "yes"
+                const oses = { "auto-windows": ["Windows", "󰖳"], "auto-osx": ["macOS", "󰀵"] }
+                let t = []
+                if (can(out[0]) && Array.isArray(out[1]))
+                    t = out[1].filter(id => oses[id]).map(id => ({ act: id, label: oses[id][0], icon: oses[id][1] }))
+                if (can(out[2])) t.push({ act: "firmware", label: "BIOS", icon: "󰘚" })
+                root.rebootTargets = t
+            }
+        }
+    }
+
+    function rebootInto(act) {
+        if (act === "firmware") Quickshell.execDetached(["systemctl", "reboot", "--firmware-setup"])
+        else Quickshell.execDetached(["systemctl", "reboot", "--boot-loader-entry=" + act])
     }
 
     // In menu order; `act` is what run() takes
