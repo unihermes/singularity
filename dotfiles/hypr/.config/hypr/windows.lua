@@ -297,9 +297,9 @@ end
 -- In monocle only the apps listed in Window Rules as "Fills" (an entry
 -- naming a class and no title that doesn't float, pin or go fullscreen) are
 -- filled to the screen: browsers and editors. Every other window opens
--- naturally -- floating, centred, at the size it asks for. Classes here
--- by Lua's equality for SUPER+M's sweep; the rule below by Hyprland's regex.
-local fillClasses = {}
+-- naturally -- floating, centred, at the size it asks for. Matched by
+-- Hyprland's regex, since a class can be one; SUPER+M's sweep asks the
+-- "rule-fill" tag the entries' rules below put on these apps' windows.
 local fillMatch = {}
 for _, r in ipairs(userRules) do
     if type(r) == "table" and type(r.class) == "string" and r.class ~= ""
@@ -308,13 +308,9 @@ for _, r in ipairs(userRules) do
         if r.regex then
             table.insert(fillMatch, "(" .. r.class .. ")")
         else
-            fillClasses[r.class] = true
             table.insert(fillMatch, "(^" .. literalRegex(r.class) .. "$)")
         end
     end
-end
-local function isFillClass(class)
-    return class ~= nil and fillClasses[class] == true
 end
 
 -- After monocleRule and the shell's own rules, ahead of window-rules.json's
@@ -391,6 +387,13 @@ do
             -- able to ask which rules matched them.
             local exemptRule = exempt
                 and hl.window_rule({ name = name .. "-exempt", match = appMatch, tag = "+monocle-exempt" })
+            -- And what the entry makes of a window, for that sweep to put it
+            -- the way it would open in the layout it's switching to. Always
+            -- on, unlike the app rules above, which are off while the app is
+            -- open: the sweep tells an app's popups from it by "app-held".
+            local intent = (r.float or r.pin) and "rule-float" or r.fullscreen and "rule-full"
+                or not match.title and "rule-fill"
+            hl.window_rule({ name = name .. "-intent", match = match, tag = "+" .. intent })
             if app then
                 -- the fullscreen rule is switched by applyLayoutRules
                 app.rules = { applied, exemptRule or nil }
@@ -754,20 +757,40 @@ local function unflagFloating(win)
 end
 hl.on("window.fullscreen", function(win) unflagFloating(win) end)
 
--- Moves one window into or out of monocle. SUPER+M's sweep, and any window
--- that lands on a workspace whose layout isn't the one the rules were set
--- for when it mapped (see applyLayoutRules below). Windows opened before
--- monocle was ever turned on have no "monocle" tag yet (the rule was
--- disabled when they mapped), so going into monocle falls back to the
--- exemption list for those; going out can trust the tag, since anything
--- wearing it was floated by this same machinery at some point.
+-- Moves one window into or out of monocle -- SUPER+M's sweep, and any
+-- window that lands on a workspace whose layout isn't the one the rules
+-- were set for when it mapped (see applyLayoutRules below) -- leaving it as
+-- it would have opened there, whatever it went through since. That's
+-- worked out from what Window Rules says of it (the "rule-*" tags), not
+-- from the tags it picked up as it mapped: an app rule is off while the
+-- app is open, and the tags it set go with it, so they can't be trusted
+-- once more than one app is open.
+--
+-- In monocle a fullscreen entry's window is fullscreen, a Fills app's
+-- fills the screen and any other floats where it is, centred. In dwindle
+-- they tile. A float or pin entry's window floats in both, and so do an
+-- app's dialogs and popups. A fullscreen the app asked for itself -- a
+-- game, a video -- is left alone.
 local function setWindowMonocle(w, on, mon)
+    -- class "" is a window that hasn't said what it is yet; leave it, and
+    -- the shell's windows and the scratchpad, which place themselves
+    if not w.class or w.class == "" or w.class == "org.quickshell" or w.class == SCRATCH_CLASS then return end
+    if w.pinned or hasTag(w, "rule-float") then return end
     local addr = "address:" .. w.address
+    local popup = hasTag(w, "app-held") or hasTag(w, "popout")
+    local full = hasTag(w, "rule-full") and not popup
     if on then
-        -- class "" is a window that hasn't said what it is yet; leave it
-        if not w.floating and w.class and w.class ~= "" and not isMonocleExempt(w) then
+        if full then
+            if not w.floating then hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr })) end
+            if w.fullscreen ~= 2 then
+                hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "set", window = addr }))
+            end
+        elseif not w.floating and w.fullscreen ~= 2 then
+            if w.fullscreen == 1 then
+                hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = addr }))
+            end
             hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
-            if isFillClass(w.class) then
+            if hasTag(w, "rule-fill") and not popup then
                 hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
                 sizeToFullFloat(w, mon)
             else
@@ -776,12 +799,23 @@ local function setWindowMonocle(w, on, mon)
                 hl.dispatch(hl.dsp.window.center({ window = addr }))
             end
         end
-    elseif w.floating and (hasTag(w, "monocle") or hasTag(w, "natural")) then
-        hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
-        hl.dispatch(hl.dsp.window.tag({ tag = "-monocle", window = addr }))
-        hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = addr }))
-        stateOf(w.address).small = nil
+        return
     end
+    if full and w.fullscreen ~= 0 then
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "unset", window = addr }))
+    end
+    -- a Fills app's window by its rule too: one that opened while another
+    -- of the app's was up, say, can have lost its monocle tag
+    if w.floating and (full or hasTag(w, "monocle") or hasTag(w, "natural")
+            or (hasTag(w, "rule-fill") and not popup)) then
+        hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
+    end
+    hl.dispatch(hl.dsp.window.tag({ tag = "-monocle", window = addr }))
+    hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = addr }))
+    -- the rule's copy of the tag, which carries the *
+    hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
+    hl.dispatch(hl.dsp.window.tag({ tag = "-filled", window = addr }))
+    stateOf(w.address).small = nil
 end
 
 -- In monocle right now: floated by the monocle machinery. The tag alone
@@ -791,6 +825,12 @@ end
 -- Floating isn't re-applied that way; it's set once, at map time.
 local function isMonocleWin(w)
     return w.floating and hasTag(w, "monocle")
+end
+
+-- Laid out for monocle by setWindowMonocle or the rules: filled, floated
+-- naturally, or a fullscreen entry's window floated under its fullscreen.
+local function inMonocleState(w)
+    return w.floating and (hasTag(w, "monocle") or hasTag(w, "natural") or hasTag(w, "rule-full"))
 end
 
 -- Sizes every window the monocle rule just floated, once, as it maps, so
@@ -810,8 +850,7 @@ local function onMonocleOpen(win)
     local active = hl.get_active_workspace()
     local elsewhere = win.workspace and active and win.workspace.id ~= active.id
     local fresh = hl.get_window("address:" .. win.address) or win
-    local natural = fresh.floating and hasTag(fresh, "natural")
-    if elsewhere and on ~= (isMonocleWin(fresh) or natural) and not (on and isMonocleExempt(fresh)) then
+    if elsewhere and on ~= inMonocleState(fresh) and not (on and isMonocleExempt(fresh)) then
         setWindowMonocle(fresh, on, fresh.monitor)
         return
     end
@@ -858,7 +897,7 @@ hl.on("window.fullscreen", keepNewWindowTiled)
 hl.on("window.move_to_workspace", function(win, ws)
     if not win or not ws or ws.special then return end
     local on = monocleOn(ws)
-    if on ~= isMonocleWin(win) then setWindowMonocle(win, on, ws.monitor or win.monitor) end
+    if on ~= inMonocleState(win) then setWindowMonocle(win, on, ws.monitor or win.monitor) end
 end)
 
 local function maximizeFocused()
