@@ -978,7 +978,11 @@ Item {
 
     // audio spectrum, in the meter colour, drawn as Theme.vizStyle: thin
     // pills growing from the middle (the workspace indicator's shape
-    // language), bars rising from the bottom, stacked dots, or one line
+    // language), bars rising from the bottom, stacked dots, or one line.
+    // No easing between cava's frames: a tween as long as a frame never
+    // stops, so the bar redrew at every monitor's refresh rate the whole
+    // time sound played, where now it redraws only on each of cava's 20
+    // frames a second (cava's own noise_reduction already smooths them).
     ModuleFrame {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
@@ -1009,7 +1013,6 @@ Item {
                     radius: vizFrame.style === "rise" ? Math.min(1, Theme.radiusSmall) : vizFrame.bandW / 2
                     height: Math.max(3, parent.height * band.v)
                     color: Theme.meterFill
-                    Behavior on height { NumberAnimation { duration: Theme.dur(60) } }
                 }
 
                 // four dots from the bottom, lit up to the band's level
@@ -1028,7 +1031,6 @@ Item {
                             color: Theme.meterFill
                             // index 0 is the top dot; the bottom one is always lit
                             opacity: band.v * 4 >= 3 - index || index === 3 ? 1 : 0.18
-                            Behavior on opacity { NumberAnimation { duration: Theme.dur(60) } }
                         }
                     }
                 }
