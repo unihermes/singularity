@@ -187,6 +187,33 @@ function toggleStashed()
     end
 end
 
+-- Prompts that come from a process of their own rather than the app asking:
+-- the polkit and keyring password prompts, pinentry, the screen-share
+-- picker, the file chooser portal. holdPopup below can't tell them from an
+-- app's first window (nothing else shares their process), so in monocle
+-- they'd fill the screen. They float centred at the size they ask for; the
+-- file chooser's size comes from window-rules.json, which wins over this.
+local PROMPTS = { "hyprpolkitagent", "gcr-prompter", "hyprland-share-picker",
+    "xdg-desktop-portal-gtk", "xdg-desktop-portal-hyprland" }
+-- pinentry's every flavour: pinentry-gtk, org.gnupg.pinentry-qt, ...
+local PROMPT_CLASSES = "^(" .. table.concat(PROMPTS, "|"):gsub("%.", "\\.")
+    .. "|(org\\.gnupg\\.)?pinentry-.*)$"
+local function isPrompt(class)
+    if not class then return false end
+    for _, c in ipairs(PROMPTS) do
+        if class == c then return true end
+    end
+    return class:match("^pinentry%-") ~= nil or class:match("^org%.gnupg%.pinentry%-") ~= nil
+end
+-- And any window that says it's modal (xdg-dialog-v1, or X11's
+-- _NET_WM_STATE_MODAL): a dialog by its own account, whatever its title.
+-- Hyprland already dims its parent and keeps clicks off it
+-- (general:modal_parent_blocking, decoration:dim_modal).
+for name, match in pairs({ ["system-prompts"] = { class = PROMPT_CLASSES }, ["modal-dialogs"] = { modal = true } }) do
+    hl.window_rule({ name = name, tag = "-monocle", match = match, float = true, center = true, maximize = false })
+    hl.window_rule({ name = name .. "-exempt", match = match, tag = "+monocle-exempt" })
+end
+
 -- A rule's size: "W H" in pixels, or either as a share of the screen
 -- ("60%"), which Hyprland takes as monitor_w*0.6 / monitor_h*0.6.
 local function ruleSize(size)
@@ -876,6 +903,71 @@ hl.on("window.close", maximizeFocused)
 -- window.close hands the closing window over, same as window.open does.
 hl.on("window.close", function(win)
     if win then windowState[win.address] = nil end
+end)
+
+-- Dialogs stay over the window they came from. Every monocle window is a
+-- floater, and maximizeFocused raises whichever one you focus, so a click
+-- off a file chooser or a sign-in popup onto the app behind it -- or
+-- ALT+Tab back to the app -- used to bury the dialog under it, where only
+-- ALT+Tab could find it again. As on Windows and macOS, an app's dialogs
+-- now come up with it: whenever a window is focused, its dialogs are raised
+-- over it, nested ones over theirs. Focus stays where you clicked.
+--
+-- Hyprland keeps an X11 dialog over its parent itself but not a Wayland
+-- one, and Lua isn't told a window's parent, so the owner is worked out as
+-- the dialog opens: the window focused just before it. That's only taken
+-- as its owner when they share a process (a browser's sign-in popup, an
+-- app's Preferences) or the dialog is one of the prompts above (the file
+-- chooser portal, polkit), and the dialog floats outside the monocle
+-- stack. A second window an app opens from a bind or the launcher is
+-- monocle or an app rule's opened side, and owns nothing.
+local dialogOwner = {}   -- dialog address -> owner address
+local focusedNow, focusedBefore = nil, nil
+
+local function adoptDialog(addr)
+    local win = hl.get_window("address:" .. addr)
+    if not win or not win.floating or win.class == "org.quickshell" then return end
+    if hasTag(win, "monocle") or hasTag(win, "app-opened") or win.pinned then return end
+    local ownerAddr = focusedNow == addr and focusedBefore or focusedNow
+    local owner = ownerAddr and hl.get_window("address:" .. ownerAddr)
+    if not owner or owner.address == addr then return end
+    if owner.pid ~= win.pid and not isPrompt(win.class) then return end
+    dialogOwner[addr] = owner.address
+end
+
+-- Raises win's dialogs over it, then theirs over them.
+local function raiseDialogs(addr, depth)
+    if depth > 4 then return end
+    for d, o in pairs(dialogOwner) do
+        if o == addr then
+            -- not bring_to_top, which only ever raises the active window
+            hl.dispatch(hl.dsp.window.alter_zorder({ mode = "top", window = "address:" .. d }))
+            raiseDialogs(d, depth + 1)
+        end
+    end
+end
+
+hl.on("window.active", function()
+    local win = hl.get_active_window()
+    if not win then return end
+    if win.address ~= focusedNow then focusedBefore, focusedNow = focusedNow, win.address end
+    -- On the next tick: the focus change raises the window itself once the
+    -- hooks have run, which would put it back over its dialogs.
+    local addr = win.address
+    hl.timer(function() raiseDialogs(addr, 0) end, { timeout = 1, type = "oneshot" })
+end)
+-- A moment after it opens, once the rules' and holdPopup's tags are on it.
+hl.on("window.open", function(win)
+    if not win then return end
+    local addr = win.address
+    hl.timer(function() adoptDialog(addr) end, { timeout = 60, type = "oneshot" })
+end)
+hl.on("window.close", function(win)
+    if not win then return end
+    dialogOwner[win.address] = nil
+    for d, o in pairs(dialogOwner) do
+        if o == win.address then dialogOwner[d] = nil end
+    end
 end)
 
 -- Docking, undocking, or changing a display's resolution or arrangement
