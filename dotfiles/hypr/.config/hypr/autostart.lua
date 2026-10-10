@@ -7,17 +7,21 @@
 local S = require("shared")
 
 hl.on("hyprland.start", function()
-    -- Not UWSM, so graphical-session.target is never reached, and units
-    -- that hang off it (rather than D-Bus activation) have to be started by
-    -- hand. Starting the unit rather than the binary keeps its
-    -- respawn-on-crash and cgroup.
+    -- Not UWSM, so graphical-session.target is brought up by
+    -- hyprland-session.target (dotfiles/systemd), which the shutdown handler
+    -- below takes down again. The units that hang off it (rather than D-Bus
+    -- activation) aren't enabled, so they're started by hand. Starting the
+    -- unit rather than the binary keeps its respawn-on-crash and cgroup.
     --
-    -- reset-failed first: after Hyprland crashes and is restarted, the unit
-    -- has usually hit its start limit respawning into a missing Wayland
-    -- socket, and a plain `start` is then refused.
-    hl.exec_cmd("systemctl --user reset-failed hyprpolkitagent.service; systemctl --user start hyprpolkitagent.service")
-    -- Same for hypridle; the fallback runs it bare if the unit is missing.
-    hl.exec_cmd("systemctl --user reset-failed hypridle.service; systemctl --user start hypridle.service || hypridle")
+    -- reset-failed first: after Hyprland crashes and is restarted, the
+    -- session units have usually hit their start limit respawning into a
+    -- missing Wayland socket, and a plain `start` is then refused. The
+    -- hypridle fallback runs it bare if the unit is missing.
+    hl.exec_cmd("systemctl --user reset-failed hyprpolkitagent.service hypridle.service"
+        .. " xdg-desktop-portal-hyprland.service xdg-desktop-portal-gtk.service;"
+        .. " systemctl --user start hyprland-session.target;"
+        .. " systemctl --user start hyprpolkitagent.service;"
+        .. " systemctl --user start hypridle.service || hypridle")
     -- Stop logind suspending on lid close: the lid binds in binds.lua just blank the
     -- screen, and hypridle suspends after 20 min idle. Released when
     -- Hyprland exits (waitpid blocks on a pidfd; it doesn't poll).
@@ -58,4 +62,18 @@ hl.on("hyprland.start", function()
     -- otherwise races the bar for the screen. See the script's header for
     -- which entries it runs and why a package's own entry is opt-in.
     hl.exec_cmd("~/.config/singularity/autostart.sh run")
+end)
+
+-- Stop the session's units while the compositor is still here to see them
+-- off, rather than leaving them to crash on its closed socket and respawn
+-- into nothing until they hit their start limit. --no-block: a unit being
+-- stopped is never restarted, so queueing the stop jobs is enough, and
+-- Hyprland isn't held up waiting on them. io.popen rather than hl.exec_cmd
+-- so it has run before Hyprland goes on to exit (and unsets the Wayland
+-- variables it gave systemd). Logging out from the session menu does the
+-- same first (Session.qml), since that ends everything in the session at
+-- once, Hyprland and this included.
+hl.on("hyprland.shutdown", function()
+    local p = io.popen("systemctl --user stop --no-block hyprland-session.target")
+    if p then p:read("a"); p:close() end
 end)

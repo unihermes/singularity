@@ -1,0 +1,20 @@
+# Singularity - Hyprland's half of the systemd graphical session
+#
+# Hyprland isn't run through UWSM, so nothing brings graphical-session.target
+# up or, more to the point, down. The systemd user manager outlives a logout
+# (ly logs straight back in under the same one), so the units that are PartOf
+# the graphical session -- the portals, hyprpolkitagent, hypridle -- used to
+# outlive the compositor: they crashed on its vanished socket, respawned into
+# nothing until they hit their start limit, and the Hyprland portal stayed
+# failed into the next login.
+#
+# autostart.lua starts this when Hyprland starts. Logging out (Session.qml)
+# and Hyprland's own shutdown stop it while the compositor is still up, which
+# stops all of those units cleanly instead.
+# graphical-session.target refuses a manual start, hence a target to bind it.
+
+[Unit]
+Description=Hyprland session
+BindsTo=graphical-session.target
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target

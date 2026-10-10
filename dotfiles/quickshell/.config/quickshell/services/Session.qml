@@ -117,8 +117,18 @@ Singleton {
         // session scope) treats that as a crash and immediately relaunches
         // it, so nothing ever visibly closes. Killing the whole logind
         // session scope instead ends everything in it and drops back to
-        // the ly login screen.
-        else if (act === "logout") Quickshell.execDetached(["sh", "-c", "loginctl terminate-session \"$XDG_SESSION_ID\""])
+        // the ly login screen. Before that, the session's systemd units
+        // (portals, polkit agent, hypridle; see hyprland-session.target)
+        // are stopped while the compositor is still up -- the systemd user
+        // manager outlives the logout, and left running they crash on the
+        // closed socket and respawn until they hit their start limit. The
+        // timeout keeps a unit that won't stop from holding up the logout.
+        // Hyprland unsets the Wayland variables it gave systemd when it
+        // exits, but terminate-session may not let it get that far.
+        else if (act === "logout") Quickshell.execDetached(["sh", "-c",
+            "timeout 10 systemctl --user stop hyprland-session.target;"
+            + " systemctl --user unset-environment WAYLAND_DISPLAY DISPLAY HYPRLAND_INSTANCE_SIGNATURE;"
+            + " loginctl terminate-session \"$XDG_SESSION_ID\""])
         else if (act === "reboot") Quickshell.execDetached(["systemctl", "reboot"])
         else if (act === "poweroff") Quickshell.execDetached(["systemctl", "poweroff"])
     }
