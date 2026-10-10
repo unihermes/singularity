@@ -150,6 +150,7 @@ var entries = [
     { page: "display", section: "",  label: "Arrangement",  keywords: "monitor position extend duplicate mirror drag order left right above below layout" },
     { page: "display", section: "",  label: "Primary",      keywords: "monitor main workspace 1" },
     { page: "display", section: "",  label: "Workspaces",   keywords: "monitor reset external workspace 1 2 dock" },
+    { page: "display", section: "",  label: "Vibrance",     keywords: "digital vibrance saturation colour color vivid nvidia greyscale grayscale shader" },
     { page: "display", section: "",  label: "Displays",     keywords: "monitor resolution refresh rate hz scale hidpi fractional rotation rotate transform portrait mode" },
 
     // --- Notifications -----------------------------------------------------

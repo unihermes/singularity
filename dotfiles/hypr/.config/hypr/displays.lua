@@ -114,6 +114,32 @@ if primaryDisplay ~= "" then
     hl.workspace_rule({ workspace = "1", monitor = primaryDisplay, default = true })
 end
 
+-- Digital vibrance, the Display page's slider: 0 (greyscale) to 100, 50
+-- leaving colours as they are. Anything else is vibrance.frag with the
+-- value filled in, as a screen shader on every display. The copy is named
+-- after the value, so a new one is a new path and Hyprland compiles it
+-- afresh, and it lives in the runtime directory, so the copies go at logout.
+-- A shader runs after everything else is drawn, so screenshots and
+-- recordings show it too.
+do
+    local vibrance = math.max(0, math.min(100, tonumber(S.state("vibrance", "50")) or 50))
+    local shader = ""
+    local src = vibrance ~= 50 and io.open(os.getenv("HOME") .. "/.config/hypr/vibrance.frag")
+    if src then
+        local text = src:read("a"):gsub("const float VIBRANCE = [^;]*;",
+            string.format("const float VIBRANCE = %.2f;", (vibrance - 50) / 50), 1)
+        src:close()
+        local path = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-vibrance-" .. vibrance .. ".frag"
+        local out = io.open(path, "w")
+        if out then
+            out:write(text)
+            out:close()
+            shader = path
+        end
+    end
+    hl.config({ decoration = { screen_shader = shader } })
+end
+
 -- One workspace per display, numbered from the primary: 1 on the primary,
 -- 2 on the next display along (left to right, then top to bottom), and so
 -- on. Every other workspace is gathered onto the primary. A global so the

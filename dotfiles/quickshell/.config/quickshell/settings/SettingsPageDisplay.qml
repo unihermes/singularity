@@ -540,6 +540,63 @@ SettingsPage {
         }
     }
 
+    // Digital vibrance, 0 (greyscale) to 100 with 50 leaving colours be:
+    // a state file displays.lua turns into a screen shader (vibrance.frag),
+    // then a config-only reload, as the primary display is. The slider moves
+    // live, so the writes wait for it to settle for a moment rather than
+    // reloading Hyprland on every step.
+    property int vibrance: 50
+    readonly property var vibranceMarks: [
+        { at: 0, label: "Greyscale" }, { at: 50, label: "Normal" }, { at: 100, label: "Vivid" },
+    ]
+
+    Timer {
+        id: vibranceWrite
+        interval: 150
+        onTriggered: {
+            var v = page.vibrance
+            AtomicFileWrite.write({
+                path: page.stateDir + "/vibrance",
+                transform: () => v + "\n",
+                after: "hyprctl reload config-only >/dev/null || echo \"Hyprland didn't reload\"",
+                done: (status, detail) => {
+                    if ((status === "ok" || status === "unchanged") && detail === "") return
+                    page.say(status === "ok" || status === "unchanged"
+                        ? "Vibrance saved, but " + detail.split("\n")[0] : "Couldn't save vibrance", true)
+                }
+            })
+        }
+    }
+
+    FileView {
+        path: page.stateDir + "/vibrance"
+        printErrors: false
+        blockLoading: true
+        onLoaded: {
+            var v = parseInt(text().trim())
+            page.vibrance = isNaN(v) ? 50 : Math.max(0, Math.min(100, v))
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "COLOUR" }
+
+    SettingsField {
+        label: "Vibrance"
+        hint: page.vibrance === 50 ? "How strongly colours show, on every display"
+            : "On every display; screenshots show it too"
+
+        FlyoutSliderRow {
+            anchors.right: parent.right
+            width: Theme.fit(260)
+            label: ""
+            suffix: "%"
+            value: page.vibrance
+            marks: page.vibranceMarks
+            onMoved: v => { page.vibrance = v; vibranceWrite.restart() }
+        }
+    }
+
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "DISPLAYS" + "  " + page.monitors.length }
 
