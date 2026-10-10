@@ -16,7 +16,7 @@ FlyoutPanel {
     id: root
     flyout: "claude"
     menuWidth: 440
-    keyboardExclusive: open
+    keyboardExclusive: true
 
     property bool showDiff: false
 

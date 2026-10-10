@@ -15,9 +15,8 @@ FlyoutPanel {
     required property var bar
 
     // "" when browsing the list; an SSID while its passphrase is
-    // being typed. Only then does the panel take keyboard focus.
+    // being typed
     property string pendingSsid: ""
-    wantsKeyboard: pendingSsid !== ""
     onOpenChanged: if (!open) { pendingSsid = ""; pass.text = "" }
 
     function connectTo(ssid, passphrase) {

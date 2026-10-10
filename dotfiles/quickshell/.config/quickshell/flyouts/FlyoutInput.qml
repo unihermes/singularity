@@ -12,9 +12,9 @@
 // A search box is the same field with a `glyph` in front, lit while it has
 // focus, and key `hints` at its far end: the launcher's and Settings'.
 //
-// The panel it sits in must ask for keyboard focus (FlyoutPanel.wantsKeyboard)
-// -- a layer-shell surface gets no key events at all otherwise, and the field
-// would look focused while silently dropping every keystroke.
+// The panel it sits in must hold keyboard focus -- a layer-shell surface gets
+// no key events at all otherwise, and the field would look focused while
+// silently dropping every keystroke. A FlyoutPanel holds it while open.
 
 import QtQuick
 import "../services"

@@ -1,16 +1,24 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutPanel.qml
 //
-// Shared shell for every bar flyout: a full-screen, transparent,
-// click-through-everywhere-except-the-box layer-shell surface. The
-// full-screen size (rather than sizing to the box) is what makes
-// "click anywhere else closes it" possible -- a MouseArea behind the
-// box catches the click and closes the flyout; the box has its own
-// MouseArea on top of that one, so clicks that land on the box itself
-// don't reach the backdrop. The box itself is PanelFrame.qml.
+// Shared shell for every bar flyout: a full-screen, transparent layer-shell
+// surface with the box on it. The box itself is PanelFrame.qml.
+//
+// How it goes away, the same on every flyout:
+//   - a press anywhere else on this screen: the Backdrop behind the box
+//   - a press anywhere else at all, the other monitor included: DismissGrab
+//   - Escape: the panel holds the keyboard while open (OnDemand, which
+//     Hyprland focuses as it maps), and focus goes back when it closes
+//   - this monitor's workspace changing under it, by a bind or otherwise
+// The bar is left out of the surface's input, so it stays live under an
+// open flyout: another module opens its flyout in one click rather than
+// two, its own module closes it, and scrolling on a chip still works. A
+// press on the bar's ground closes it (Bar.qml). Nothing takes input while
+// the flyout fades out, so a click straight after closing isn't lost.
 
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import QtQuick
 import "../services"
 import "../services/ChannelPath.js" as ChannelPath
@@ -31,16 +39,9 @@ OverlayWindow {
     function requestClose() { scope.openFlyout = "" }
 
     property real menuWidth: 240
-    // A layer-shell surface receives no key events unless it asks for focus,
-    // so a text field in here would look focused and silently swallow every
-    // keystroke. Only the panels that actually contain an input set this --
-    // taking focus unconditionally would steal it from the focused window
-    // every time any flyout opened.
-    property bool wantsKeyboard: false
-    // Stronger than wantsKeyboard: take the keyboard the moment the surface
-    // is mapped, not on the next click into it. For search-as-you-type, where
-    // making the user click the field first defeats the point. Safe because
-    // the panel is transient -- focus goes back when it closes.
+    // Exclusive keyboard focus rather than OnDemand: nothing else can take
+    // the keyboard from it. Fixed, not bound to anything that changes while
+    // it's up (see focusMode).
     property bool keyboardExclusive: false
     // distance from the bar's screen edge to the near edge of the box
     property real topOffset: Theme.flyoutOffset
@@ -120,15 +121,40 @@ OverlayWindow {
     readonly property int padY: Theme.channelWidth * 2 + sectionGap + sectionPadY
 
     visible: open || reveal > 0
-    focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive
-        : root.wantsKeyboard ? WlrKeyboardFocus.OnDemand
-        : WlrKeyboardFocus.None
+    // One mode for as long as the surface is up, fading out included: a
+    // change while mapped doesn't focus it, and a step up to Exclusive ends
+    // the grab (DismissGrab). Hyprland hands the keyboard back on unmap.
+    focusMode: root.keyboardExclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
     layerNamespace: "singularity-flyout"
 
-    // backdrop: anywhere that isn't the box
-    MouseArea {
-        anchors.fill: parent
-        onClicked: root.requestClose()
+    // input: the whole screen but the bar's strip while open, nothing while
+    // it fades out
+    mask: Region {
+        item: root.open ? inputArea : null
+        Region { item: barArea; intersection: Intersection.Subtract }
+    }
+    Item { id: inputArea; anchors.fill: parent }
+    Item {
+        id: barArea
+        readonly property real barHeight: scope.barWindow ? scope.barWindow.implicitHeight : 0
+        y: root.atBottom ? root.height - barHeight : 0
+        width: root.width
+        height: barHeight
+    }
+
+    DismissGrab {
+        panel: root
+        also: scope.allBars
+    }
+
+    Connections {
+        target: Hyprland.monitorFor(root.screen)
+        function onActiveWorkspaceChanged() { if (root.open) root.requestClose() }
+    }
+
+    // anywhere that isn't the box
+    Backdrop {
+        onDismissed: root.requestClose()
     }
 
     GrownFrame {
@@ -149,6 +175,9 @@ OverlayWindow {
     // side of the box's own edge is cut off instead.
     Item {
         id: dropClip
+        // Escape from anywhere in the box that doesn't take it itself
+        focus: true
+        Keys.onEscapePressed: root.requestClose()
         readonly property bool cuts: Theme.flyoutAnim === "drop" && !root.grown
         y: cuts && !box.atBottom ? root.topOffset : 0
         width: root.width
@@ -214,11 +243,7 @@ OverlayWindow {
                 NumberAnimation { duration: Theme.dur(90); easing.type: Theme.ease }
             }
 
-            // absorbs clicks so they don't fall through to the backdrop
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {}
-            }
+            Absorber {}
 
             SectionRuns {
                 x: Theme.channelWidth + root.sectionGap

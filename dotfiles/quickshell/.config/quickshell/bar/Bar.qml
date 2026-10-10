@@ -45,6 +45,19 @@ PanelWindow {
     // window that starts transparent can show any opacity after.
     color: "transparent"
 
+    // An open flyout leaves the bar out of its input (FlyoutPanel), so a
+    // press here that no module takes -- the bar's ground, the gap round a
+    // floating one, a button a module doesn't answer -- is the click off
+    // that closes it. Under everything else in the bar.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        onPressed: mouse => {
+            mouse.accepted = false
+            bar.shellRoot.closeFlyouts(null)
+        }
+    }
+
     // Where the bar is drawn: the whole window when full width, inset
     // from the screen edge and sides when floating. The modules lay
     // out inside this, not the window.

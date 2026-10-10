@@ -47,11 +47,13 @@ OverlayWindow {
         color: Theme.overviewBackdrop === "solid" ? Theme.base
             : Theme.overviewBackdrop === "clear" ? "transparent" : Theme.scrim
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.requestClose()
+        Backdrop {
+            onDismissed: root.requestClose()
         }
     }
+
+    // a press on the other monitor too
+    DismissGrab { panel: root }
 
     // Keys attaches to Items, not to the window itself -- putting these
     // directly on the PanelWindow silently does nothing ("Could not attach
@@ -81,11 +83,7 @@ OverlayWindow {
         width: body.implicitWidth + Theme.panelPad * 4
         height: body.implicitHeight + Theme.panelPad * 4
 
-        // absorbs clicks so they don't reach the backdrop and close the overlay
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {}
-        }
+        Absorber {}
 
         Column {
             id: body

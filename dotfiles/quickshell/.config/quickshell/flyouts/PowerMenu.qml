@@ -48,11 +48,13 @@ OverlayWindow {
         anchors.fill: parent
         color: root.full ? Qt.rgba(Theme.base.r, Theme.base.g, Theme.base.b, 0.92) : Theme.scrim
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.requestClose()
+        Backdrop {
+            onDismissed: root.requestClose()
         }
     }
+
+    // a press on the other monitor too
+    DismissGrab { panel: root }
 
     // Keys only attach to an Item, not to the window
     FocusScope {
@@ -87,11 +89,7 @@ OverlayWindow {
         height: body.implicitHeight + Theme.panelPad * 4
         bare: root.full
 
-        // absorbs clicks so they don't reach the backdrop
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {}
-        }
+        Absorber {}
 
         Column {
             id: body

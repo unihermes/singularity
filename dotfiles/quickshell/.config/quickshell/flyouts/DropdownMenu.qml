@@ -12,6 +12,9 @@
 // of the page comes with it and swallows the click. The overlay also
 // escapes a page's Flickable, which clips.
 //
+// It closes like a flyout: a press anywhere off the list, with any button,
+// or its window losing focus to a click elsewhere.
+//
 // The dropdown places it (menuX, menuY, in overlayHost's coordinates) once,
 // when it opens. While it's open the catcher swallows the wheel, so the page
 // behind can't scroll out from under a list that doesn't follow it.
@@ -56,6 +59,11 @@ Item {
     enabled: visible
 
     onOpenChanged: if (open) list.positionViewAtIndex(Math.max(0, currentIndex), ListView.Center)
+
+    // The catcher only covers its own window: a click into another one
+    // reaches that window instead, and this one loses focus.
+    readonly property bool windowActive: Window.active
+    onWindowActiveChanged: if (open && !windowActive) dismissed()
 
     MouseArea {
         anchors.fill: parent

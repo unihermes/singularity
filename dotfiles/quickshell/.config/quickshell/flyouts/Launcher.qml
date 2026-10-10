@@ -167,10 +167,12 @@ OverlayWindow {
         color: Theme.scrim
     }
 
-    MouseArea {
-        anchors.fill: parent
-        onClicked: root.requestClose()
+    Backdrop {
+        onDismissed: root.requestClose()
     }
+
+    // a press on the other monitor too
+    DismissGrab { panel: root }
 
     // Every row is the height of two lines, whether or not it has a second,
     // so the fill and stroke of the current row always clear its text and
@@ -208,10 +210,8 @@ OverlayWindow {
         bottomLeftRadius: root.atBottom ? barCorner : radius
         bottomRightRadius: root.atBottom ? barCorner : radius
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {}
-        }
+
+        Absorber {}
 
         Column {
             id: body

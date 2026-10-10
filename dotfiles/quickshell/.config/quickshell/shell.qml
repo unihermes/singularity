@@ -405,7 +405,16 @@ ShellRoot {
     // activespecial events; a monitor with no event yet isn't listed
     property var specialShown: ({})
 
+    // One flyout open across every screen, as on one: opening one closes
+    // whatever another screen had up. `except` is the scope that keeps its
+    // own, null to close them all (a press on a bar's ground).
+    function closeFlyouts(except) {
+        for (const s of screens.instances)
+            if (s !== except) s.openFlyout = ""
+    }
+
     Variants {
+        id: screens
         model: Quickshell.screens
 
         Scope {
@@ -414,6 +423,11 @@ ShellRoot {
 
             // name of the open flyout, "" for none
             property string openFlyout: ""
+            onOpenFlyoutChanged: if (openFlyout !== "") root.closeFlyouts(screenScope)
+
+            // every screen's bar: a press on any of them doesn't count as a
+            // click off an open flyout (DismissGrab)
+            readonly property var allBars: screens.instances.map(s => s.barWindow)
 
             // The bar, for the lazily built flyouts. `bar: bar` inside a
             // LazyFlyout would bind the flyout's own `bar` property to

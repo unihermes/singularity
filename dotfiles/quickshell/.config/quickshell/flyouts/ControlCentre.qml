@@ -35,7 +35,6 @@ FlyoutPanel {
     property string page: ""
     // always reopen at the top level
     onOpenChanged: if (!open) page = ""
-    keyboardExclusive: open && page === "apps"
 
     property string appQuery: ""
     property point lastPointer: Qt.point(-1, -1)

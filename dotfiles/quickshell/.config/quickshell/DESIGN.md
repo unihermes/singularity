@@ -126,6 +126,14 @@ Style: `channel` (frame `channel` in `Styles.js`).
   **directly** in the flyout's column; a divider nested inside a sub-Column
   won't split the section.
 - Content clears both frames: `padX` and `padY` in `FlyoutPanel`.
+- **Closing:** one flyout open across all screens. It closes on a press
+  anywhere off it, with any button and on any monitor (`Backdrop`,
+  `DismissGrab`), on Escape, and when its monitor's workspace changes. The
+  dismissing press isn't passed through to what's under it, except on the
+  bar: the bar stays live under a flyout, so another module opens its own in
+  one click and its own module closes it. Overlays (launcher, power menu,
+  workspace grid) close the same way. A panel's box takes every press its
+  rows don't (`Absorber`).
 
 ### Volume flyout
 
