@@ -314,7 +314,7 @@ Item {
         // an empty chip on a bare workspace would be a floating
         // rectangle with nothing in it
         visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
-        active: screenScope.openFlyout === "windowmenu" || screenScope.openFlyout === "popouts"
+        active: screenScope.openFlyout === "windowmenu" || screenScope.openFlyout === "appwindows"
         hoverWhole: false
         // the plain icon styles pad each icon by a hair, which would
         // otherwise stack on the chip's own padding
@@ -333,8 +333,7 @@ Item {
                 var m = iconRepeater.model
                 if (!a || !m) return -1
                 for (var i = 0; i < m.length; i++)
-                    if (m[i].address === a.address
-                            || (m[i].popouts && m[i].popouts.some(p => p.address === a.address))) return i
+                    if (m[i].windows.some(w => w.address === a.address)) return i
                 return -1
             }
             // the top of the marks under the icons: a pixel below an icon
@@ -374,7 +373,15 @@ Item {
                         readonly property string mark: style === "icons" || style === "titled"
                             ? Theme.windowMark : ""
                         readonly property bool underMark: mark === "pill"
-                        readonly property string title: modelData.toplevel ? modelData.toplevel.title || "" : ""
+                        // the app's window in focus, else its main one
+                        readonly property var shown: {
+                            var a = Hyprland.activeToplevel
+                            var ws = modelData.windows
+                            for (var i = 0; a && i < ws.length; i++)
+                                if (ws[i].address === a.address) return ws[i]
+                            return modelData
+                        }
+                        readonly property string title: shown.toplevel ? shown.toplevel.title || "" : ""
                         // room for the rule between workspaces, in "all" scope
                         readonly property int lead: modelData.groupStart ? Theme.spaceS + 1 : 0
                         readonly property int iconPx: spot && !focused ? Theme.barFs(12)
@@ -577,22 +584,6 @@ Item {
                                 grey: winIcon.lift && !winIcon.lit
                             }
 
-                            // the popouts' icon: how many it holds
-                            Text {
-                                visible: !!winIcon.modelData.popouts && winIcon.modelData.popouts.length > 1
-                                z: 1
-                                // over the top corner, clear of the marks under the icon
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.rightMargin: -Theme.spaceXs - 1
-                                anchors.topMargin: -Theme.spaceXs
-                                text: visible ? winIcon.modelData.popouts.length : ""
-                                color: winIcon.focused ? Theme.accent : Theme.textStrong
-                                font.family: Theme.fontText
-                                font.weight: Font.Bold
-                                font.pixelSize: Math.round(parent.height * 0.55)
-                            }
-
                             // apps with no themed icon, and the shell's own windows
                             Text {
                                 anchors.centerIn: parent
@@ -701,12 +692,23 @@ Item {
                             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                             cursorShape: Qt.PointingHandCursor
                             onClicked: mouse => {
-                                var addr = "address:0x" + winIcon.modelData.address
-                                // the popouts' icon: two or more list in a flyout to
-                                // pick from; one is just that window
-                                var pops = winIcon.modelData.popouts
-                                if (pops && pops.length > 1) {
-                                    if (mouse.button !== Qt.MiddleButton) screenScope.toggleFlyout("popouts", winIcon)
+                                // the app's window in focus, or its main one
+                                var target = winIcon.shown.address
+                                var addr = "address:0x" + target
+                                var bar = barModules.bar
+                                // an app with two or more windows lists them in a
+                                // flyout to pick from; a different app's icon while
+                                // it's open retargets it rather than closing it
+                                if (mouse.button === Qt.LeftButton && winIcon.modelData.windows.length > 1) {
+                                    if (screenScope.openFlyout === "appwindows"
+                                            && bar.appWindowsKey !== winIcon.modelData.key) {
+                                        bar.appWindowsKey = winIcon.modelData.key
+                                        screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
+                                        screenScope.flyoutAnchorW = winIcon.width
+                                        return
+                                    }
+                                    bar.appWindowsKey = winIcon.modelData.key
+                                    screenScope.toggleFlyout("appwindows", winIcon)
                                     return
                                 }
                                 if (mouse.button === Qt.RightButton) {
@@ -714,14 +716,14 @@ Item {
                                     // a different window's icon while the menu is
                                     // open retargets it rather than closing it
                                     if (screenScope.openFlyout === "windowmenu"
-                                            && menu.address !== winIcon.modelData.address) {
-                                        menu.address = winIcon.modelData.address
+                                            && menu.address !== target) {
+                                        menu.address = target
                                         menu.movePage = false
                                         screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
                                         screenScope.flyoutAnchorW = winIcon.width
                                         return
                                     }
-                                    menu.address = winIcon.modelData.address
+                                    menu.address = target
                                     menu.movePage = false
                                     screenScope.toggleFlyout("windowmenu", winIcon)
                                 } else if (mouse.button === Qt.MiddleButton) {

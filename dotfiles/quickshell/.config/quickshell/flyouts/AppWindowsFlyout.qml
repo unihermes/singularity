@@ -1,10 +1,11 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/flyouts/PopoutsFlyout.qml
+// ~/.config/quickshell/flyouts/AppWindowsFlyout.qml
 //
-// The popouts' icon in the bar's open-windows strip, when it holds more
-// than one: every dialog, sign-in popup and prompt in the strip's scope, a
-// row each. A row brings that window up; its close action closes it.
-// Which windows are popouts is windows.lua's call (Bar.isPopout).
+// An app's icon in the bar's open-windows strip, when the app has more
+// than one window: every one of them, its dialogs and popups after its own
+// windows, a row each, as the Windows taskbar lists a grouped app's. A row
+// brings that window up; its close action closes it. Which windows are
+// popouts is windows.lua's call (Bar.isPopout).
 
 import Quickshell
 import Quickshell.Hyprland
@@ -13,26 +14,29 @@ import "../services"
 
 FlyoutPanel {
     id: root
-    flyout: "popouts"
-    menuWidth: 280
+    flyout: "appwindows"
+    menuWidth: 300
 
     required property var bar
 
     onOpenChanged: if (open) Hyprland.refreshToplevels()
 
-    // the strip's own list, so the two never disagree
-    readonly property var popouts: {
+    // the strip's own entry for the app, so the two never disagree
+    readonly property var app: {
         var icons = bar ? bar.focusedWorkspaceIcons() : []
-        var last = icons.length > 0 ? icons[icons.length - 1] : null
-        return last && last.popouts ? last.popouts : []
+        var key = bar ? bar.appWindowsKey : ""
+        for (var i = 0; i < icons.length; i++)
+            if (icons[i].key === key) return icons[i]
+        return null
     }
-    // nothing left to pick from: close
-    onPopoutsChanged: if (open && popouts.length === 0) requestClose()
+    readonly property var windows: app ? app.windows : []
+    // down to one window or none: nothing left to pick from
+    onWindowsChanged: if (open && windows.length < 2) requestClose()
 
-    FlyoutHeading { text: "POPOUTS" }
+    FlyoutHeading { text: root.app ? root.app.name.toUpperCase() : "" }
 
     Repeater {
-        model: root.popouts
+        model: root.windows
 
         FlyoutRow {
             required property var modelData
@@ -40,7 +44,7 @@ FlyoutPanel {
             leadingImage: modelData.source
             leadingIcon: modelData.source === "" ? modelData.glyph : ""
             label: modelData.toplevel ? modelData.toplevel.title || modelData.name : modelData.name
-            note: modelData.name
+            note: modelData.popout ? "Popout" : ""
             highlighted: !!Hyprland.activeToplevel && Hyprland.activeToplevel.address === modelData.address
             actionIcon: "󰅖"
             actionHint: "Close"

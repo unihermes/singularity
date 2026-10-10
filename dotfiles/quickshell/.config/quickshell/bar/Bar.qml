@@ -189,13 +189,14 @@ PanelWindow {
         a.enabled = on
     }
 
-    // {source, address} for every window open on the focused
-    // workspace, via each window's wmClass -> .desktop entry -> icon.
-    // address lets the icon's click handler focus that exact window.
-    // The windows the open-windows strip shows: the focused
-    // workspace's, or with Theme.windowScope "all" every workspace's
-    // in workspace order, each group's first marked so the strip can
-    // rule it off from the one before.
+    // One icon per app on the focused workspace -- or with
+    // Theme.windowScope "all" on each workspace, in workspace order, each
+    // workspace's first marked so the strip can rule it off from the one
+    // before -- as on the Windows taskbar. Its windows, the app's dialogs
+    // and popups among them, are listed in `windows`: with one the icon
+    // stands for it, with more a click lists them (AppWindowsFlyout). The
+    // icon's own address and toplevel are the app's main window: its
+    // first that isn't a popout, else its first.
     function focusedWorkspaceIcons() {
         // read this so the binding re-evaluates once the desktop
         // entry scan (async at startup) finishes populating it
@@ -210,56 +211,57 @@ PanelWindow {
             .filter(w => all ? w.id > 0 : w.id === wsId)
             .sort((x, y) => x.id - y.id)
         var icons = []
-        var popouts = []
         for (var i = 0; i < wss.length; i++) {
             var tls = wss[i].toplevels.values
+            var apps = {}
             var first = true
             for (var j = 0; j < tls.length; j++) {
-                var cls = tls[j].lastIpcObject ? tls[j].lastIpcObject.class : ""
-                if (!cls || Apps.isBackTabToplevel(tls[j])) continue
                 var ipc = tls[j].lastIpcObject
-                if (isPopout(ipc)) {
-                    popouts.push({
-                        source: Apps.iconForClass(cls),
-                        glyph: Apps.glyphForWindow(cls, ipc.title),
-                        name: Apps.nameForWindow(cls, ipc.title),
-                        address: tls[j].address,
-                        toplevel: tls[j],
-                    })
-                    continue
-                }
-                icons.push({
+                var cls = ipc ? ipc.class : ""
+                if (!cls || Apps.isBackTabToplevel(tls[j])) continue
+                var win = {
                     source: Apps.iconForClass(cls),
                     // drawn instead when nothing resolved, so a
                     // window is never silently missing from the strip
-                    glyph: Apps.glyphForWindow(cls, ipc ? ipc.title : ""),
+                    glyph: Apps.glyphForWindow(cls, ipc.title),
                     // for the index style, which names the app
-                    name: Apps.nameForWindow(cls, ipc ? ipc.title : ""),
+                    name: Apps.nameForWindow(cls, ipc.title),
                     address: tls[j].address,
                     // live, for the title styles; read in the
                     // delegate so a title change doesn't rebuild the strip
                     toplevel: tls[j],
-                    groupStart: first && icons.length > 0,
-                })
-                first = false
+                    popout: isPopout(ipc),
+                }
+                var app = apps[cls]
+                if (!app) {
+                    app = apps[cls] = {
+                        key: wss[i].id + "/" + cls,
+                        source: win.source, glyph: win.glyph, name: win.name,
+                        address: win.address, toplevel: win.toplevel,
+                        main: !win.popout,
+                        windows: [],
+                        groupStart: first && icons.length > 0,
+                    }
+                    icons.push(app)
+                    first = false
+                } else if (!app.main && !win.popout) {
+                    app.glyph = win.glyph
+                    app.name = win.name
+                    app.address = win.address
+                    app.toplevel = win.toplevel
+                    app.main = true
+                }
+                app.windows.push(win)
             }
         }
-        // every popout in one icon at the end, which lists them
-        // (PopoutsFlyout) or, with just one, stands in for it
-        if (popouts.length > 0) {
-            var one = popouts.length === 1
-            icons.push({
-                popouts: popouts,
-                source: "",
-                glyph: "󰖲",
-                name: one ? popouts[0].name : "Popouts",
-                address: one ? popouts[0].address : "",
-                toplevel: one ? popouts[0].toplevel : null,
-                groupStart: icons.length > 0,
-            })
-        }
+        // the app's own windows ahead of its popouts
+        for (var k = 0; k < icons.length; k++)
+            icons[k].windows.sort((x, y) => (x.popout ? 1 : 0) - (y.popout ? 1 : 0))
         return icons
     }
+
+    // The app icon whose windows AppWindowsFlyout lists: its key.
+    property string appWindowsKey: ""
 
     // A window windows.lua marks as a popout -- a dialog, a sign-in or
     // settings popup, a password prompt -- or one an app opened while it

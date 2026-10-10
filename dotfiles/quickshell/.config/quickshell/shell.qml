@@ -786,8 +786,8 @@ ShellRoot {
             WindowMenuFlyout { scope: screenScope }
         }
 
-        // the open-windows strip's popouts icon, when it holds several
-        LazyFlyout { name: "popouts"; scope: screenScope; PopoutsFlyout { scope: screenScope; bar: screenScope.barWindow } }
+        // an app's icon in the open-windows strip, when it has several windows
+        LazyFlyout { name: "appwindows"; scope: screenScope; AppWindowsFlyout { scope: screenScope; bar: screenScope.barWindow } }
 
         // media
         LazyFlyout { name: "media"; scope: screenScope; MediaFlyout { scope: screenScope } }
