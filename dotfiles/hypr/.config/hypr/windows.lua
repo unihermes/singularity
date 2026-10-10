@@ -80,16 +80,14 @@ local function edgeGaps()
     return { top = g.top or 0, right = g.right or 0, bottom = g.bottom or 0, left = g.left or 0 }
 end
 
--- With no gap, a monocle window runs to the screen's edges, where rounded
--- corners would only show slivers of wallpaper and border; it stays square.
-local gaps = edgeGaps()
-if gaps.top == 0 and gaps.right == 0 and gaps.bottom == 0 and gaps.left == 0 then
-    hl.window_rule({
-        name     = "monocle-square",
-        match    = { tag = "monocle" },
-        rounding = 0,
-    })
-end
+-- A window that fills the screen or its usable area -- a filled floater,
+-- a maximized or fullscreen window, a tiled one alone on its workspace --
+-- stays square whatever the rounding setting: rounded corners there would
+-- only show slivers of wallpaper behind it.
+hl.window_rule({ name = "filled-square", match = { tag = "filled" }, rounding = 0 })
+hl.window_rule({ name = "lone-tiled-square", match = { float = false, workspace = "w[tv1]" }, rounding = 0 })
+hl.window_rule({ name = "maximized-square", match = { fullscreen_state_internal = 1 }, rounding = 0 })
+hl.window_rule({ name = "fullscreen-square", match = { fullscreen_state_internal = 2 }, rounding = 0 })
 
 -- Only a window smaller than the usable area has a border; one filling it
 -- has nothing to set it apart from. A floater's border is drawn outside its
