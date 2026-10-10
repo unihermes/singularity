@@ -510,6 +510,57 @@ if [[ -e /sys/firmware/efi/efivars/LoaderConfigTimeout-4a67b082-0a4c-41cf-b6c7-4
   sudo bootctl set-timeout "" || true
 fi
 
+# Which OS starts: the helper Settings → Startup uses to list systemd-boot's
+# entries and pick the default one. With the menu hidden that default is
+# what boots, so on a machine with Windows beside Arch this is the switch.
+# The pick goes in the LoaderEntryDefault EFI variable (`bootctl
+# set-default`), which beats loader.conf's `default` line and leaves the
+# file alone. Both need root -- the ESP is 0700 and EFI variables are
+# root-written -- so the page runs the helper through pkexec, and the
+# polkit action lets the active local session do that without a password.
+# The helper only sets an id systemd-boot itself lists. Root-owned in
+# /usr/local/bin for the same reason as singularity-charge below.
+if [[ -n $esp ]]; then
+  log "installing the boot entry helper"
+  sudo tee /usr/local/bin/singularity-boot >/dev/null <<'BOOT'
+#!/bin/sh
+# singularity-boot list            systemd-boot's entries, as bootctl's JSON
+# singularity-boot default ENTRY   boot ENTRY when nothing else is picked
+set -eu
+case ${1:-} in
+  list) exec bootctl list --json=short --no-pager ;;
+  default)
+    id=${2:-}
+    case $id in
+      ''|*[!A-Za-z0-9._@+-]*) echo "not an entry id: $id" >&2; exit 2 ;;
+    esac
+    bootctl list --json=short --no-pager | grep -Fq "\"id\":\"$id\"" \
+      || { echo "systemd-boot has no entry $id" >&2; exit 1; }
+    exec bootctl set-default "$id" ;;
+  *) echo "usage: singularity-boot list | default ENTRY" >&2; exit 2 ;;
+esac
+BOOT
+  sudo chmod 755 /usr/local/bin/singularity-boot
+
+  sudo tee /usr/share/polkit-1/actions/org.singularity.boot.policy >/dev/null <<'POLICY'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <action id="org.singularity.boot">
+    <description>Choose which operating system starts</description>
+    <message>Authentication is required to choose which operating system starts</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/singularity-boot</annotate>
+  </action>
+</policyconfig>
+POLICY
+fi
+
 # The IPU6 webcam's sensor never satisfies its firmware dependency (missing
 # fwnode graph endpoint), so the kernel spends its default ~10s deferred-probe
 # window waiting on it every boot before giving up. Telling it to give up in

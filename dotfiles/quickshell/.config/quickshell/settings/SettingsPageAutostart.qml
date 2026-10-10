@@ -1,9 +1,16 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAutostart.qml
 //
-// What runs when you log in: the entries in ~/.config/autostart, the ones
-// packages left in /etc/xdg/autostart, and a way to add an installed
-// application to either.
+// Which OS the PC starts, on a machine with more than one, then what runs
+// when you log in: the entries in ~/.config/autostart, the ones packages
+// left in /etc/xdg/autostart, and a way to add an installed application to
+// either.
+//
+// The OS is systemd-boot's default entry. Its menu is hidden, so the
+// default is what boots. Both reading the entries and setting the default
+// need root, so they go through install.sh's singularity-boot helper and
+// pkexec (no password for the active session). The section only shows
+// when the helper is there and systemd-boot lists a second OS.
 //
 // Hyprland runs no XDG autostart of its own -- the entries only mean anything
 // because ~/.config/singularity/autostart.sh runs them from autostart.lua, and
@@ -29,9 +36,69 @@ SettingsPage {
     sectioned: true
 
     title: "Startup"
-    description: "What starts when you log in."
+    description: "What starts when the PC boots and when you log in."
 
-    Component.onCompleted: Autostart.refresh()
+    Component.onCompleted: {
+        Autostart.refresh()
+        bootRead()
+    }
+
+    // --- boot ------------------------------------------------------------------
+
+    readonly property string bootHelper: "/usr/local/bin/singularity-boot"
+    // [{ id, text }]: the entries an OS boots from, in menu order -- not the
+    // firmware setup, the EFI default loader or the power entries
+    property var bootEntries: []
+    property string bootDefault: ""
+    // what's running now, to say so under the choice
+    property string bootSelected: ""
+    property bool bootBusy: false
+
+    function bootRead() { bootReader.running = true }
+
+    function bootName(e) {
+        if (e.id === "auto-windows") return "Windows"
+        if (e.id === "auto-osx") return "macOS"
+        return e.showTitle || e.title || e.id
+    }
+
+    Process {
+        id: bootReader
+        command: ["sh", "-c", "[ -x " + page.bootHelper + " ] && exec pkexec " + page.bootHelper + " list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var list
+                try { list = JSON.parse(text) } catch (e) { list = [] }
+                if (!Array.isArray(list)) list = []
+                var oses = list.filter(e => e.type !== "loader" && e.type !== "auto" || /^auto-(windows|osx)$/.test(e.id))
+                page.bootEntries = oses.map(e => ({ id: e.id, text: page.bootName(e) }))
+                var d = oses.find(e => e.isDefault), s = oses.find(e => e.isSelected)
+                page.bootDefault = d ? d.id : ""
+                page.bootSelected = s ? s.id : ""
+            }
+        }
+    }
+
+    Process {
+        id: bootWriter
+        stderr: StdioCollector { id: bootErr }
+        onExited: code => {
+            page.bootBusy = false
+            var e = bootErr.text.trim()
+            var name = (page.bootEntries.find(b => b.id === page.bootDefault) || { text: page.bootDefault }).text
+            if (code === 0) page.say(name + " starts from now on", false)
+            // 126/127: pkexec was dismissed or refused
+            else page.say("Not changed" + (e ? ": " + e : ""), true)
+            page.bootRead()
+        }
+    }
+
+    function bootSet(id) {
+        bootBusy = true
+        bootDefault = id
+        bootWriter.command = ["pkexec", bootHelper, "default", id]
+        bootWriter.running = true
+    }
 
     Connections {
         target: Autostart
@@ -97,6 +164,44 @@ SettingsPage {
                 onClicked: Autostart.remove(row.entry)
             }
         }
+    }
+
+    FlyoutHeading {
+        visible: page.bootEntries.length > 1
+        text: "WHEN THE PC STARTS"
+    }
+
+    SettingsField {
+        visible: page.bootEntries.length > 1
+        label: "Start"
+        hint: page.bootSelected === "" ? "Boots straight in, no menu"
+            : "Running " + (page.bootEntries.find(b => b.id === page.bootSelected) || { text: page.bootSelected }).text + " now"
+
+        FlyoutSegmented {
+            visible: page.bootEntries.length <= 3
+            anchors.right: parent.right
+            fill: false
+            model: page.bootEntries.map(b => ({ value: b.id, text: b.text }))
+            current: page.bootDefault
+            enabled: !page.bootBusy
+            onPicked: v => page.bootSet(v)
+        }
+        SettingsDropdown {
+            visible: page.bootEntries.length > 3
+            anchors.right: parent.right
+            width: Theme.fit(220)
+            model: page.bootEntries.map(b => b.id)
+            labelFor: v => (page.bootEntries.find(b => b.id === v) || { text: v }).text
+            current: page.bootDefault
+            enabled: !page.bootBusy
+            onPicked: v => page.bootSet(v)
+        }
+    }
+
+    Item {
+        visible: page.bootEntries.length > 1
+        width: 1
+        height: Theme.spaceM
     }
 
     // --- at login ------------------------------------------------------------
