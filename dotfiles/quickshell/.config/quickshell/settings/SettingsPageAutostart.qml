@@ -14,6 +14,13 @@
 // a restart into another OS or the BIOS just this once, which logind does
 // without the helper.
 //
+// Signing in at boot is ly's autologin: off, the greeter asks for the
+// password; on, ly starts Hyprland as you once when it starts, so a logout
+// still lands at the greeter. The state is read straight from ly's
+// config.ini (world-readable); changing it goes through install.sh's
+// singularity-autologin helper and pkexec, which asks for the password --
+// it is the one thing standing between the power button and the desktop.
+//
 // Hyprland runs no XDG autostart of its own -- the entries only mean anything
 // because ~/.config/singularity/autostart.sh runs them from autostart.lua, and
 // that script's header is where the rules live. The one worth repeating here,
@@ -43,6 +50,7 @@ SettingsPage {
     Component.onCompleted: {
         Autostart.refresh()
         bootRead()
+        autologinRead()
     }
 
     // --- boot ------------------------------------------------------------------
@@ -100,6 +108,56 @@ SettingsPage {
         bootDefault = id
         bootWriter.command = ["pkexec", bootHelper, "default", id]
         bootWriter.running = true
+    }
+
+    // --- signing in at boot ---------------------------------------------------
+
+    readonly property string autologinHelper: "/usr/local/bin/singularity-autologin"
+    // whether the helper is there at all, so the switch only shows with ly
+    property bool autologinAvailable: false
+    // ly logs this user in at boot -- you, or someone else ("" when off)
+    property string autologinUser: ""
+    readonly property bool autologinOn: autologinUser === Quickshell.env("USER")
+    property bool autologinBusy: false
+
+    function autologinRead() { autologinReader.running = true }
+
+    Process {
+        id: autologinReader
+        command: ["sh", "-c", "[ -x " + page.autologinHelper + " ] && grep -E '^auto_login_(user|session) = ' /etc/ly/config.ini"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var kv = {}
+                text.split("\n").forEach(l => {
+                    var m = l.match(/^(auto_login_\w+) = (.*)$/)
+                    if (m) kv[m[1]] = m[2].trim()
+                })
+                page.autologinAvailable = "auto_login_user" in kv
+                var on = kv.auto_login_user && kv.auto_login_user !== "null"
+                    && kv.auto_login_session && kv.auto_login_session !== "null"
+                page.autologinUser = on ? kv.auto_login_user : ""
+            }
+        }
+    }
+
+    Process {
+        id: autologinWriter
+        stderr: StdioCollector { id: autologinErr }
+        onExited: code => {
+            page.autologinBusy = false
+            var e = autologinErr.text.trim()
+            if (code === 0) page.say(page.autologinOn ? "Asks for the password at boot again"
+                                                      : "Starts without a password from the next boot", false)
+            // 126/127: pkexec was dismissed or refused
+            else page.say("Not changed" + (e ? ": " + e : ""), true)
+            page.autologinRead()
+        }
+    }
+
+    function autologinSet(on) {
+        autologinBusy = true
+        autologinWriter.command = ["pkexec", autologinHelper, on ? "on" : "off"]
+        autologinWriter.running = true
     }
 
     Connections {
@@ -169,6 +227,7 @@ SettingsPage {
     }
 
     readonly property bool bootSection: bootEntries.length > 1 || Session.rebootTargets.length > 0
+        || autologinAvailable
 
     FlyoutHeading {
         visible: page.bootSection
@@ -224,6 +283,22 @@ SettingsPage {
                     onClicked: Session.rebootInto(modelData.act)
                 }
             }
+        }
+    }
+
+    SettingsField {
+        visible: page.autologinAvailable
+        label: "Sign in at boot"
+        hint: page.autologinUser !== "" && !page.autologinOn
+                ? "Off for you; boots straight in as " + page.autologinUser
+            : page.autologinOn ? "Boots straight to the desktop; logging out still asks"
+            : "Asks for your password at the greeter"
+
+        Switch {
+            anchors.right: parent.right
+            checked: !page.autologinOn
+            enabled: !page.autologinBusy
+            onToggled: page.autologinSet(!page.autologinOn)
         }
     }
 

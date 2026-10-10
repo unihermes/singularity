@@ -1361,6 +1361,57 @@ LY
         printf '[lbl:%s]\ncmd = /etc/ly/info.sh %s\nrefresh = %s\n' "$line" "$line" "$refresh"
       done
     } | sudo tee -a /etc/ly/config.ini >/dev/null
+
+    # Signing in at boot: the helper Settings → Startup uses to turn ly's
+    # autologin on or off. ly logs auto_login_user straight into
+    # auto_login_session once, when it starts -- so at boot, never after a
+    # logout -- through the ly-autologin PAM service, which is pam_permit.
+    # The user is whoever ran it through pkexec (PKEXEC_UID), never an
+    # argument, so the page can't hand someone else's account a passwordless
+    # boot. Off is ly's stock setting and install.sh never sets it, so a rerun
+    # keeps what Settings picked. config.ini is world-readable, so the page
+    # reads the state itself.
+    sudo tee /usr/local/bin/singularity-autologin >/dev/null <<'AUTOLOGIN'
+#!/bin/sh
+# singularity-autologin on    boot straight into Hyprland as the pkexec caller
+# singularity-autologin off   ask for the password at the greeter again
+set -eu
+conf=/etc/ly/config.ini
+set_key() {
+  grep -q "^$1 = " "$conf" || { echo "ly's config has no $1" >&2; exit 1; }
+  sed -i "s|^$1 = .*|$1 = $2|" "$conf"
+}
+case ${1:-} in
+  on)
+    user=$(id -nu "${PKEXEC_UID:?run this through pkexec}")
+    [ "$PKEXEC_UID" -ne 0 ] || { echo "not for root" >&2; exit 1; }
+    set_key auto_login_user "$user"
+    set_key auto_login_session hyprland ;;
+  off)
+    set_key auto_login_user null
+    set_key auto_login_session null ;;
+  *) echo "usage: singularity-autologin on | off" >&2; exit 2 ;;
+esac
+AUTOLOGIN
+    sudo chmod 755 /usr/local/bin/singularity-autologin
+
+    sudo tee /usr/share/polkit-1/actions/org.singularity.autologin.policy >/dev/null <<'POLICY'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <action id="org.singularity.autologin">
+    <description>Choose whether signing in is needed at boot</description>
+    <message>Authentication is required to change signing in at boot</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/singularity-autologin</annotate>
+  </action>
+</policyconfig>
+POLICY
   fi
 else
   warn "no ly unit found. Units the package ships:"

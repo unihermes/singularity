@@ -264,7 +264,8 @@ the shell, into `~/.local/state/singularity/`:
   put files on the left and agent chats on the right, like VS Code.
 - **ly**, the greeter, runs on a VT without true colour, so `install.sh`
   loads the Singularity ramp into the VT palette and adds a status stack
-  (battery, power, Wi-Fi, kernel, last login).
+  (battery, power, Wi-Fi, kernel, last login). Settings → Startup can turn
+  on its autologin, so a fresh boot skips it; a logout still lands there.
 - **Floorp** gets a `userChrome.css` and `user.js` built into its profile.
 
 ### Your settings
