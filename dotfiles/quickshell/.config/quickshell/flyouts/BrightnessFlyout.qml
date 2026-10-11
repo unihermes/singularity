@@ -37,9 +37,17 @@ FlyoutPanel {
     function levelOf(o) { return o === "" ? Brightness.level : DdcBrightness.level(o) }
     function setOf(o, v) { if (o === "") Brightness.set(v); else DdcBrightness.set(o, v) }
 
-    // the monitors' own buttons may have moved them since the last look
-    onOpenChanged: if (open) DdcBrightness.refresh()
-    Component.onCompleted: if (open) DdcBrightness.refresh()
+    // The monitors' own buttons may have moved them since the last look.
+    // Read once the box is up, not as it opens: while a DDC read is on the
+    // wire the panel's first frame waits for it, and the flyout appeared
+    // half a second late.
+    onOpenChanged: if (open) refreshLater.restart(); else refreshLater.stop()
+    Component.onCompleted: if (open) refreshLater.restart()
+    Timer {
+        id: refreshLater
+        interval: Theme.dur(150) + 100
+        onTriggered: DdcBrightness.refresh()
+    }
 
     FlyoutHeading {
         text: "BRIGHTNESS  " + (brightnessFlyout.controls.length > 0
