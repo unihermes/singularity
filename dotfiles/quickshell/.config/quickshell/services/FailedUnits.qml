@@ -42,7 +42,7 @@ Singleton {
 
     // Queued, one at a time: assigning a new command to a Process that is
     // still running does nothing, so a second click before the first action
-    // finished (a polkit prompt can hold one open for a while) used to be
+    // finished (a polkit prompt can hold one open for a while) would be
     // dropped without a word.
     property var pending: []
 

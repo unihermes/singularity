@@ -377,8 +377,7 @@ Singleton {
     // device's Powered, and a station appearing or going (the radio powering
     // on or off, iwd restarting). Scanning and the BSS churn that comes with
     // it are ignored. A connect, disconnect or radio toggle made anywhere --
-    // iwctl in a terminal, the network roaming on its own -- shows at once,
-    // instead of up to fifteen seconds later from what used to be a poll.
+    // iwctl in a terminal, the network roaming on its own -- shows at once.
     //
     // Changes arrive in bursts (State steps through connecting to connected),
     // so they're gathered for a moment and read once.

@@ -369,9 +369,9 @@ ShellRoot {
     // A new/closed/moved window's class (and so its icon) doesn't show up
     // in Hyprland.toplevels until something re-requests the full client
     // list -- it isn't pushed with the openwindow event itself. Force that
-    // refetch right when it happens instead of waiting for the next
-    // incidental one (e.g. a workspace switch), which is what made new
-    // app icons take a while to appear.
+    // refetch right when it happens rather than waiting for the next
+    // incidental one (e.g. a workspace switch), so a new app's icon shows
+    // at once.
     Connections {
         target: Hyprland
         function onRawEvent(event) {

@@ -305,10 +305,10 @@ SettingsPage {
     }
 
     // Each change is made against the rules the page is showing, so it only
-    // goes to disk if the file still holds exactly those. A rule added by
-    // hand, or a `git pull`, while the page was open used to be overwritten
-    // by the next click; now that click is refused and the page reloads to
-    // show what's really there. Changes queue behind each other in
+    // goes to disk if the file still holds exactly those. After a rule added
+    // by hand, or a `git pull`, while the page was open, the next click is
+    // refused rather than overwriting it, and the page reloads to show
+    // what's really there. Changes queue behind each other in
     // AtomicFileWrite, and each one's `base` is the previous one's result,
     // so a quick run of clicks still lands in order.
     function save(next, message) {
