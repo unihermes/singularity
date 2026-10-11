@@ -411,56 +411,16 @@ do
     end
 end
 
--- A window an app opens by itself -- a sign-in popup, a dialog -- comes up
--- at the size it asked for, centred, rather than filling the screen in
--- monocle: one from a process that already has a window, unless a bind or
--- the launcher has just run something (markLaunch). Any app, rule or not.
---
--- Decided once per window, as it first shows up: window.active comes ahead
--- of window.open for a window that takes focus, and these hooks are
--- registered ahead of monocle's, which would fill it. Windows open before
--- this load (a reload) are known already and left alone.
---
--- Firefox-based browsers ignore the size a page asks for and open every
--- popup at their default 1280x1040, so theirs are given one here.
-local POPUP_SIZES = {
-    floorp = { 960, 720 }, zen = { 960, 720 }, firefox = { 960, 720 },
-}
+-- Popouts: see holdPopup() below. Registered here, ahead of monocle's
+-- hooks, which would fill the window; window.active comes ahead of
+-- window.open for a window that takes focus. Windows open before this load
+-- (a reload) are known already and left alone.
+local holdPopup
 local launchWaiting = false
 local knownWindows = {}
 for _, w in ipairs(hl.get_windows()) do knownWindows[w.address] = true end
-
-local function holdPopup(win)
-    if not win or knownWindows[win.address] then return end
-    knownWindows[win.address] = true
-    if win.class == "org.quickshell" or type(win.tags) ~= "table" then return end
-    local monocle = false
-    for _, t in ipairs(win.tags) do
-        if t == "monocle" or t == "monocle*" then monocle = true end
-    end
-    if not monocle then return end
-    if launchWaiting then
-        launchWaiting = false
-        return
-    end
-    for _, w in ipairs(hl.get_windows()) do
-        if w.pid == win.pid and w.address ~= win.address then
-            local addr = "address:" .. win.address
-            -- monocleRule's tag is a rule's, so it carries the *
-            hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
-            hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
-            hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = addr }))
-            hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = addr }))
-            hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
-            local size = POPUP_SIZES[win.class]
-            if size then hl.dispatch(hl.dsp.window.resize({ x = size[1], y = size[2], window = addr })) end
-            hl.dispatch(hl.dsp.window.center({ window = addr }))
-            return
-        end
-    end
-end
 hl.on("window.active", function() holdPopup(hl.get_active_window()) end)
-hl.on("window.open", holdPopup)
+hl.on("window.open", function(win) holdPopup(win) end)
 hl.on("window.close", function(win) if win then knownWindows[win.address] = nil end end)
 
 -- The global layout mode, toggled by SUPER+M. Kept in a runtime file so a
@@ -595,7 +555,7 @@ local function restoreMinimized(win, instant)
     for _, t in ipairs(type(win.tags) == "table" and win.tags or { win.tags }) do
         if t == "showdesktop" then
             hl.dispatch(hl.dsp.window.tag({ tag = "-showdesktop", window = addr }))
-            hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
+            hl.exec_cmd("qs ipc call desktop changed")
             break
         end
     end
@@ -699,7 +659,7 @@ end
 -- window-rules.json entries add, plus Quickshell's own windows, whose rule
 -- is part of this file's machinery rather than that list.
 local function isMonocleExempt(win)
-    return win.class == "org.quickshell" or hasTag(win, "monocle-exempt")
+    return win.class == "org.quickshell" or (hasTag(win, "monocle-exempt") and not hasTag(win, "promoted"))
 end
 
 -- Tags a floater "filled" while it fills its monitor and takes the tag off
@@ -1050,9 +1010,157 @@ end
 -- switching to it later is just a raise. Uses the window window.open hands
 -- over, not hl.get_active_window(), which can still be the previous window
 -- when a second one opens.
+-- POPOUTS. A window an app opens by itself -- a sign-in popup, a dialog,
+-- a second window -- is one from a process that already has a window up,
+-- unless a bind or the launcher has just run something (markLaunch). Any
+-- monocle or natural app, rule or not; decided once, as it first shows up.
+-- It floats over the window it came from, centred on it, at the size it
+-- was last left (per app and title), else the size it asks for. One asking
+-- for nearly the whole screen -- Firefox-based browsers ask 1280x1040 for
+-- every popup -- gets POPOUT_SHARE of it instead.
+local POPOUT_SHARE = { 0.5, 0.6 }
+local CASCADE = 32
+
+-- The key a popout's size is remembered under: its app and the title it
+-- opened with, unless that title looks like a document's, which changes.
+local function popoutKey(win)
+    local title = win.initial_title or win.title or ""
+    if title == "" or #title > 40 or title:find(" [-—–|] ") then return nil end
+    return "popout:" .. win.class .. ":" .. title
+end
+
+holdPopup = function(win)
+    if not win or knownWindows[win.address] then return end
+    knownWindows[win.address] = true
+    if not win.class or win.class == "" or win.class == "org.quickshell" or win.class == SCRATCH_CLASS then return end
+    if not win.floating or win.pinned or not monocleOn(win.workspace) then return end
+    -- not a Window Rules entry's, which places itself
+    if hasTag(win, "rule-float") or hasTag(win, "rule-full") then return end
+    if launchWaiting then
+        launchWaiting = false
+        return
+    end
+    -- its owner: the app's most recently used window, one of its main ones
+    -- if it has any
+    local owner, ownerMain
+    for _, w in ipairs(hl.get_windows()) do
+        if w.pid == win.pid and w.address ~= win.address and w.mapped then
+            local main = not (hasTag(w, "popout") or hasTag(w, "app-held"))
+            if not owner or (main and not ownerMain)
+                    or (main == ownerMain and w.focus_history_id < owner.focus_history_id) then
+                owner, ownerMain = w, main
+            end
+        end
+    end
+    if not owner then return end
+
+    local addr = "address:" .. win.address
+    -- monocleRule's tag is a rule's, so it carries the *
+    hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
+    hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
+    hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = addr }))
+    hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = addr }))
+    hl.exec_cmd("qs ipc call desktop changed")
+
+    local mon = win.monitor or hl.get_active_monitor()
+    if not mon then return end
+    local area = fillArea(win, mon)
+    local key = popoutKey(win)
+    stateOf(win.address).popoutKey = key
+    local w, h = win.size.x, win.size.y
+    local m = key and type(sizes[key]) == "table" and sizes[key][screenKind(area)]
+    if type(m) == "table" and tonumber(m.fw) and tonumber(m.fh) then
+        w, h = math.min(m.fw, 1) * area.w, math.min(m.fh, 1) * area.h
+    elseif w > area.w * 0.85 or h > area.h * 0.85 then
+        w, h = area.w * POPOUT_SHARE[1], area.h * POPOUT_SHARE[2]
+    end
+    -- over its owner when that's on the same monitor, else the screen's centre
+    local cx, cy = area.x + area.w / 2, area.y + area.h / 2
+    if owner.monitor and owner.monitor.id == mon.id and owner.workspace and win.workspace
+            and owner.workspace.id == win.workspace.id then
+        cx, cy = owner.at.x + owner.size.x / 2, owner.at.y + owner.size.y / 2
+    end
+    local x = math.max(area.x, math.min(cx - w / 2, area.x + area.w - w))
+    local y = math.max(area.y, math.min(cy - h / 2, area.y + area.h - h))
+    -- stepped down and right off another of the app's popouts already there
+    for _ = 1, 10 do
+        local taken = false
+        for _, o in ipairs(hl.get_windows()) do
+            if o.pid == win.pid and o.address ~= win.address and hasTag(o, "popout")
+                    and math.abs(o.at.x - x) < 8 and math.abs(o.at.y - y) < 8 then
+                taken = true
+            end
+        end
+        if not taken then break end
+        x = math.min(x + CASCADE, area.x + area.w - w)
+        y = math.min(y + CASCADE, area.y + area.h - h)
+    end
+    moveTo(addr, { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) })
+end
+
+-- Records a popout's size, as a share of the screen, under its key.
+local function rememberPopout(win)
+    local key = win and stateOf(win.address).popoutKey
+    if not key or not win.floating or win.fullscreen ~= 0 or not win.monitor then return end
+    if not (hasTag(win, "popout") or hasTag(win, "app-held")) then return end
+    local area = fillArea(win, win.monitor)
+    local fw, fh = math.min(win.size.x / area.w, 1), math.min(win.size.y / area.h, 1)
+    if fw >= SNAP_FILL and fh >= SNAP_FILL then return end
+    local entry = type(sizes[key]) == "table" and sizes[key] or {}
+    local kind = screenKind(area)
+    local old = entry[kind]
+    entry.t = os.time()
+    entry[kind] = { fx = 0, fy = 0, fw = fw, fh = fh }
+    sizes[key] = entry
+    if not (type(old) == "table" and num(old.fw) == num(fw) and num(old.fh) == num(fh)) then saveSizes() end
+end
+
+-- Makes a popout one of the app's main windows: filled and in the monocle
+-- stack for a Fills app, a natural window otherwise. Filling one does this
+-- (see fillFloating), as does the window strip's row action.
+local function promotePopout(win)
+    if not (hasTag(win, "popout") or hasTag(win, "app-held")) then return win end
+    local addr = "address:" .. win.address
+    -- The held app rule's copy of monocle-exempt stays while the rule is on,
+    -- so "promoted" tells isMonocleExempt() to look past it.
+    for _, t in ipairs({ "popout", "app-held", "monocle-exempt" }) do
+        hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = addr }))
+    end
+    hl.dispatch(hl.dsp.window.tag({ tag = "+promoted", window = addr }))
+    stateOf(win.address).popoutKey = nil
+    if monocleOn(win.workspace) then
+        hl.dispatch(hl.dsp.window.tag({ tag = hasTag(win, "rule-fill") and "+monocle" or "+natural", window = addr }))
+    end
+    hl.exec_cmd("qs ipc call desktop changed")
+    return hl.get_window(addr) or win
+end
+
+-- Fills a floater the user asked to fill, promoting it if it's a popout.
+local function fillByHand(win)
+    win = promotePopout(win)
+    if hasTag(win, "monocle") then
+        setShape(win, nil)
+        placeMonocle(win)
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+    else
+        fillFloating(win)
+    end
+end
+
+-- The window strip's "make main window": promoted where it is, and filled
+-- if it's a Fills app's.
+function promoteWindow(address)
+    local win = hl.get_window("address:" .. address)
+    if not win then return end
+    win = promotePopout(win)
+    if hasTag(win, "monocle") then
+        setShape(win, nil)
+        placeMonocle(win)
+    end
+end
+
 -- A window that isn't filled and would open right on top of another of
 -- the same app's steps down and to the right of it, like a deck of cards.
-local CASCADE = 32
 local function cascade(win)
     win = hl.get_window("address:" .. win.address) or win
     local mon = win.monitor
@@ -1212,7 +1320,9 @@ hl.on("window.active", function()
     if shapeWatch and (not win or win.address ~= shapeWatch) then
         local left = hl.get_window("address:" .. shapeWatch)
         captureShape(left)
-        rememberWindow(left and hl.get_window("address:" .. left.address))
+        left = left and hl.get_window("address:" .. left.address)
+        rememberWindow(left)
+        rememberPopout(left)
     end
     shapeWatch = win and win.address
 end)
@@ -1268,7 +1378,9 @@ hl.on("window.close", maximizeFocused)
 hl.on("window.close", function(win)
     if not win then return end
     captureShape(win)
-    rememberWindow(hl.get_window("address:" .. win.address) or win)
+    local last = hl.get_window("address:" .. win.address) or win
+    rememberWindow(last)
+    rememberPopout(last)
     windowState[win.address] = nil
 end)
 
@@ -1306,7 +1418,7 @@ local function adoptDialog(addr)
     hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = "address:" .. addr }))
     if not hasTag(win, "popout") then
         hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = "address:" .. addr }))
-        hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
+        hl.exec_cmd("qs ipc call desktop changed")
     end
 end
 
@@ -1473,7 +1585,7 @@ local function toggleMaximizeWin(win)
         if not isFitted(win, area) then
             -- whatever size it is now is the one to come back to
             st.restore = nil
-            fillFloating(win)
+            fillByHand(win)
         elseif st.restore then
             local r = st.restore
             st.restore = nil
@@ -1556,7 +1668,7 @@ function stepWindowSize(dir)
         setShape(win, shape)
         placeMonocle(win, mon)
     elseif not shape then
-        fillFloating(win)
+        fillByHand(win)
     else
         moveTo("address:" .. win.address, shapeRect(win, mon, shape))
     end
@@ -1702,7 +1814,7 @@ function singularityShowDesktop()
     hl.timer(function()
         for _, w in ipairs(touched) do setProp("address:" .. w.address, "no_anim", "0") end
     end, { timeout = 30, type = "oneshot" })
-    hl.dispatch(hl.dsp.exec_cmd("qs ipc call desktop changed"))
+    hl.exec_cmd("qs ipc call desktop changed")
 end
 
 -- After a reload, windows SUPER+C hid get their windowState back from the
