@@ -219,6 +219,7 @@ PanelWindow {
                 var ipc = tls[j].lastIpcObject
                 var cls = ipc ? ipc.class : ""
                 if (!cls || Apps.isBackTabToplevel(tls[j])) continue
+                var tags = windowTags(ipc)
                 var win = {
                     source: Apps.iconForClass(cls),
                     // drawn instead when nothing resolved, so a
@@ -230,11 +231,11 @@ PanelWindow {
                     // live, for the title styles; read in the
                     // delegate so a title change doesn't rebuild the strip
                     toplevel: tls[j],
-                    popout: isPopout(ipc),
+                    popout: isPopout(tags),
                     // the window a popout came from, and whether one of
                     // its popouts is blocking it (windows.lua's tags)
-                    from: tagSuffix(ipc, "from_0x"),
-                    blocked: hasTag(ipc, "blocked"),
+                    from: tagSuffix(tags, "from_0x"),
+                    blocked: tags.indexOf("blocked") >= 0,
                 }
                 var app = apps[cls]
                 if (!app) {
@@ -272,12 +273,8 @@ PanelWindow {
         var tags = ipc && ipc.tags ? ipc.tags : []
         return tags.map(t => String(t).replace(/\*$/, ""))
     }
-    function hasTag(ipc, name) {
-        return windowTags(ipc).indexOf(name) >= 0
-    }
-    // the rest of its first tag starting with `prefix`, or ""
-    function tagSuffix(ipc, prefix) {
-        var tags = windowTags(ipc)
+    // the rest of the first of `tags` starting with `prefix`, or ""
+    function tagSuffix(tags, prefix) {
         for (var i = 0; i < tags.length; i++)
             if (tags[i].startsWith(prefix)) return tags[i].slice(prefix.length)
         return ""
@@ -286,8 +283,8 @@ PanelWindow {
     // A window windows.lua marks as a popout -- a dialog, a sign-in or
     // settings popup, a password prompt -- or one an app opened while it
     // already had a window up (an app rule's "held" side).
-    function isPopout(ipc) {
-        return hasTag(ipc, "popout") || hasTag(ipc, "app-held")
+    function isPopout(tags) {
+        return tags.indexOf("popout") >= 0 || tags.indexOf("app-held") >= 0
     }
 
     // The open window belonging to a tray item, if any, so clicking

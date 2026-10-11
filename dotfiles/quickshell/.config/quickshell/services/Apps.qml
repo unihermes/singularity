@@ -176,7 +176,10 @@ Singleton {
         return false
     }
     function isBackTabToplevel(tl) {
-        return isBackTab(tl.lastIpcObject, Hyprland.toplevels.values.map(t => t.lastIpcObject))
+        var ipc = tl.lastIpcObject
+        // most windows aren't tabs: skip gathering every window for them
+        if (!ipc || !ipc.grouped || ipc.grouped.length < 2) return false
+        return isBackTab(ipc, Hyprland.toplevels.values.map(t => t.lastIpcObject))
     }
 
     // A short name for an open window's app: its desktop entry's name, else
