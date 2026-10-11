@@ -2,10 +2,12 @@
 // ~/.config/quickshell/flyouts/AppWindowsFlyout.qml
 //
 // An app's icon in the bar's open-windows strip, when the app has more
-// than one window: every one of them, its dialogs and popups after its own
-// windows, a row each, as the Windows taskbar lists a grouped app's. A row
-// brings that window up; its close action closes it. Which windows are
-// popouts is windows.lua's call (Bar.isPopout).
+// than one window: every one of them, a row each, as the Windows taskbar
+// lists a grouped app's. Each popout sits indented under the window it came
+// from; a window a popout is blocking is dimmed, with a lock. A row brings
+// that window up; its close action closes it, and a popout's square makes
+// it one of the app's own windows. Which windows are popouts, and whose, is
+// windows.lua's call (Bar.isPopout).
 
 import Quickshell
 import Quickshell.Hyprland
@@ -35,26 +37,77 @@ FlyoutPanel {
 
     FlyoutHeading { text: root.app ? root.app.name.toUpperCase() : "" }
 
-    Repeater {
-        model: root.windows
+    // the app's own windows, each followed by the popouts it opened; any
+    // popout whose window isn't known comes last, unindented
+    readonly property var rows: {
+        var mains = windows.filter(w => !w.popout)
+        var pops = windows.filter(w => w.popout)
+        var out = [], placed = {}
+        mains.forEach(w => {
+            out.push({ win: w, child: false })
+            pops.forEach(p => {
+                if (p.from === w.address) {
+                    out.push({ win: p, child: true })
+                    placed[p.address] = true
+                }
+            })
+        })
+        pops.forEach(p => { if (!placed[p.address]) out.push({ win: p, child: false }) })
+        return out
+    }
 
-        FlyoutRow {
+    Repeater {
+        model: root.rows
+
+        Item {
+            id: entry
             required property var modelData
+            readonly property var win: modelData.win
+            readonly property int indent: modelData.child ? Theme.fit(14) : 0
             width: parent ? parent.width : 0
-            leadingImage: modelData.source
-            leadingIcon: modelData.source === "" ? modelData.glyph : ""
-            label: modelData.toplevel ? modelData.toplevel.title || modelData.name : modelData.name
-            note: modelData.popout ? "Popout" : ""
-            highlighted: !!Hyprland.activeToplevel && Hyprland.activeToplevel.address === modelData.address
-            actionIcon: "󰅖"
-            actionHint: "Close"
-            onActivated: {
-                var addr = "address:0x" + modelData.address
-                root.requestClose()
-                Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-                Hyprland.dispatch("hl.dsp.window.alter_zorder({mode=\"top\", window=\"" + addr + "\"})")
+            implicitHeight: row.implicitHeight
+
+            // the elbow from the window above
+            Rectangle {
+                visible: entry.modelData.child
+                x: entry.indent - Theme.fit(9)
+                y: -Theme.fit(4)
+                width: 1
+                height: entry.height / 2 + Theme.fit(4)
+                color: Theme.muted
             }
-            onAction: Hyprland.dispatch("hl.dsp.window.close({window=\"address:0x" + modelData.address + "\"})")
+            Rectangle {
+                visible: entry.modelData.child
+                x: entry.indent - Theme.fit(9)
+                y: entry.height / 2
+                width: Theme.fit(6)
+                height: 1
+                color: Theme.muted
+            }
+
+            FlyoutRow {
+                id: row
+                x: entry.indent
+                width: entry.width - entry.indent
+                leadingImage: entry.win.source
+                leadingIcon: entry.win.source === "" ? entry.win.glyph : ""
+                label: entry.win.toplevel ? entry.win.toplevel.title || entry.win.name : entry.win.name
+                note: entry.win.popout && !entry.modelData.child ? "Popout" : ""
+                dimmed: entry.win.blocked
+                trailingIcons: entry.win.blocked ? ["󰌾"] : []
+                highlighted: !!Hyprland.activeToplevel && Hyprland.activeToplevel.address === entry.win.address
+                actionIcon: "󰅖"
+                actionHint: "Close"
+                extraIcon: entry.win.popout ? "󰖯" : ""
+                onActivated: {
+                    var addr = "address:0x" + entry.win.address
+                    root.requestClose()
+                    Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
+                    Hyprland.dispatch("hl.dsp.window.alter_zorder({mode=\"top\", window=\"" + addr + "\"})")
+                }
+                onAction: Hyprland.dispatch("hl.dsp.window.close({window=\"address:0x" + entry.win.address + "\"})")
+                onExtra: Quickshell.execDetached(["hyprctl", "eval", "promoteWindow(\"0x" + entry.win.address + "\")"])
+            }
         }
     }
 }

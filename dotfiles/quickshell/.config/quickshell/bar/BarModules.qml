@@ -648,22 +648,37 @@ Item {
                         }
 
                         // tucked a pixel under the icon rather than pinned to
-                        // the chip's edge, so it needn't push the icon up
-                        Rectangle {
+                        // the chip's edge, so it needn't push the icon up. An
+                        // app with more than one window gets a segment per
+                        // window (up to four), its own windows' grey and its
+                        // popouts' in the accent.
+                        Row {
                             id: pip
+                            readonly property var segs: winIcon.modelData.windows.slice(0, 4)
+                            readonly property bool split: segs.length > 1
                             visible: winIcon.underMark
                             anchors.top: glyphBox.bottom
                             anchors.topMargin: 1
                             anchors.horizontalCenter: glyphBox.horizontalCenter
-                            height: Theme.indicatorWidth
-                            radius: height / 2
-                            width: winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6)
-                            color: winIcon.focused ? Theme.accent
-                                : winIcon.hovered ? Theme.subtext : Theme.muted
-                            Behavior on width {
-                                NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                            spacing: 1
+                            Repeater {
+                                model: pip.segs
+                                Rectangle {
+                                    required property var modelData
+                                    height: Theme.indicatorWidth
+                                    radius: height / 2
+                                    width: !pip.split ? (winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6))
+                                        : modelData.popout ? Theme.barFs(winIcon.focused ? 6 : 4)
+                                        : Theme.barFs(winIcon.focused ? 7 : 4)
+                                    color: pip.split && modelData.popout ? Theme.accent
+                                        : !pip.split && winIcon.focused ? Theme.accent
+                                        : winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
+                                    Behavior on width {
+                                        NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                                    }
+                                    Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                                }
                             }
-                            Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
                         }
 
                         // the dots style's whole mark

@@ -231,6 +231,10 @@ PanelWindow {
                     // delegate so a title change doesn't rebuild the strip
                     toplevel: tls[j],
                     popout: isPopout(ipc),
+                    // the window a popout came from, and whether one of
+                    // its popouts is blocking it (windows.lua's tags)
+                    from: tagSuffix(ipc, "from_0x"),
+                    blocked: hasTag(ipc, "blocked"),
                 }
                 var app = apps[cls]
                 if (!app) {
@@ -263,17 +267,27 @@ PanelWindow {
     // The app icon whose windows AppWindowsFlyout lists: its key.
     property string appWindowsKey: ""
 
+    // windows.lua's tags on a window. Rule-set tags carry a trailing "*".
+    function windowTags(ipc) {
+        var tags = ipc && ipc.tags ? ipc.tags : []
+        return tags.map(t => String(t).replace(/\*$/, ""))
+    }
+    function hasTag(ipc, name) {
+        return windowTags(ipc).indexOf(name) >= 0
+    }
+    // the rest of its first tag starting with `prefix`, or ""
+    function tagSuffix(ipc, prefix) {
+        var tags = windowTags(ipc)
+        for (var i = 0; i < tags.length; i++)
+            if (tags[i].startsWith(prefix)) return tags[i].slice(prefix.length)
+        return ""
+    }
+
     // A window windows.lua marks as a popout -- a dialog, a sign-in or
     // settings popup, a password prompt -- or one an app opened while it
-    // already had a window up (an app rule's "held" side). Rule-set tags
-    // carry a trailing "*".
+    // already had a window up (an app rule's "held" side).
     function isPopout(ipc) {
-        var tags = ipc && ipc.tags ? ipc.tags : []
-        for (var i = 0; i < tags.length; i++) {
-            var t = String(tags[i]).replace(/\*$/, "")
-            if (t === "popout" || t === "app-held") return true
-        }
-        return false
+        return hasTag(ipc, "popout") || hasTag(ipc, "app-held")
     }
 
     // The open window belonging to a tray item, if any, so clicking

@@ -61,6 +61,13 @@ Item {
     // or, for what's easily undone (ignore a package), a chip with this text
     // that acts on the first click
     property string actionText: ""
+    // a plain second button before the action, acting on the first click
+    // (make a popout a main window)
+    property string extraIcon: ""
+    signal extra()
+    // the entry can't be used right now (a window a popout is blocking):
+    // its label and image go quiet, though it still takes clicks
+    property bool dimmed: false
 
     width: parent ? parent.width : 0
     implicitHeight: Theme.rowHeight
@@ -108,7 +115,7 @@ Item {
         height: width
         sourceSize: Qt.size(width * 2, height * 2)
         source: root.leadingImage
-        opacity: root.pulse
+        opacity: root.pulse * (root.dimmed ? 0.45 : 1)
     }
 
     Text {
@@ -140,7 +147,7 @@ Item {
         elide: Text.ElideRight
         color: {
             if (root.alert || root.armed) return Theme.alert
-            if (!root.enabled) return Theme.subtext
+            if (!root.enabled || root.dimmed) return Theme.subtext
             if (root.filled) return Theme.textOnAccent
             if (root.highlighted || mouse.containsMouse) return Theme.textStrong
             return Theme.text
@@ -160,7 +167,7 @@ Item {
     }
 
     // where the label's room ends: the first thing at the right
-    readonly property real labelEnd: showAction ? (actionText !== "" ? actionChip.x : actionBtn.x)
+    readonly property real labelEnd: showAction ? (extraIcon !== "" ? extraBtn.x : actionText !== "" ? actionChip.x : actionBtn.x)
         : badgeTag.visible ? badgeTag.x
         : iconCells.visible ? iconCells.x : trailingText.x
 
@@ -285,6 +292,16 @@ Item {
         icon: root.actionIcon
         confirm: true
         onClicked: root.action()
+    }
+
+    IconButton {
+        id: extraBtn
+        visible: root.showAction && root.extraIcon !== ""
+        anchors.right: root.actionText !== "" ? actionChip.left : actionBtn.left
+        anchors.rightMargin: Theme.spaceXs
+        anchors.verticalCenter: parent.verticalCenter
+        icon: root.extraIcon
+        onClicked: root.extra()
     }
 
     FlyoutChip {

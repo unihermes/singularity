@@ -1043,6 +1043,7 @@ local function setBlocked(ownerAddr, on)
     if not hl.get_window(addr) then return end
     setProp(addr, "no_focus", on and "1" or "0")
     hl.dispatch(hl.dsp.window.tag({ tag = (on and "+" or "-") .. "blocked", window = addr }))
+    hl.exec_cmd("qs ipc call desktop changed")
 end
 
 local function blockOwner(popAddr, ownerAddr)
@@ -1133,7 +1134,10 @@ holdPopup = function(win)
     if not owner then return end
 
     local addr = "address:" .. win.address
+    -- the window strip lists it under the window it came from
+    hl.dispatch(hl.dsp.window.tag({ tag = "+from_" .. owner.address, window = addr }))
     if ruled then
+        hl.exec_cmd("qs ipc call desktop changed")
         local mon = win.monitor or hl.get_active_monitor()
         local area = mon and fillArea(win, mon)
         if area and ownerMain and win.size.x <= area.w * 0.85 and win.size.y <= area.h * 0.85 then
@@ -1220,6 +1224,9 @@ local function promotePopout(win)
         hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = addr }))
     end
     hl.dispatch(hl.dsp.window.tag({ tag = "+promoted", window = addr }))
+    for _, t in ipairs(type(win.tags) == "table" and win.tags or { win.tags }) do
+        if tostring(t):match("^from_") then hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = addr })) end
+    end
     stateOf(win.address).popoutKey = nil
     if monocleOn(win.workspace) then
         hl.dispatch(hl.dsp.window.tag({ tag = hasTag(win, "rule-fill") and "+monocle" or "+natural", window = addr }))
