@@ -770,11 +770,12 @@ local function captureShape(win)
 end
 
 -- REMEMBERED SIZES. Each app's main window opens the way it was last left,
--- per kind of screen (wide, normal, tall): at its shape, or filled for a
--- Fills app. Any other app is never opened filled: one left filled keeps
--- the size it had before. Kept
--- in ~/.local/state/singularity/window-sizes.json as
--- { class = { normal = { fill = true } | { fx, fy, fw, fh }, t = time } },
+-- per kind of screen (wide, normal, tall): fullscreen, filled, or at its
+-- shape. A window only counts as filled when it actually fills the area
+-- (a Fills app, SUPER+X, the size ladder), not one that just opened big.
+-- Kept in ~/.local/state/singularity/window-sizes.json as
+-- { class = { normal = { fullscreen = true } | { fill = true }
+--   | { fx, fy, fw, fh }, t = time } },
 -- the 100 most recently used. Only monocle and natural windows count --
 -- not popouts, prompts, rule entries, pinned windows or the shell's own.
 local SIZES_FILE = os.getenv("HOME") .. "/.local/state/singularity/window-sizes.json"
@@ -794,10 +795,10 @@ end
 
 local function rememberable(win)
     return win and win.class and win.class ~= "" and win.class ~= "org.quickshell"
-        and win.class ~= SCRATCH_CLASS and win.floating and win.fullscreen == 0 and not win.pinned
+        and win.class ~= SCRATCH_CLASS and win.floating and win.fullscreen ~= 1 and not win.pinned
         and (hasTag(win, "monocle") or hasTag(win, "natural"))
         and not (hasTag(win, "popout") or hasTag(win, "app-held") or hasTag(win, "rule-float")
-            or hasTag(win, "monocle-exempt"))
+            or hasTag(win, "rule-full") or hasTag(win, "monocle-exempt"))
         and monocleOn(win.workspace)
 end
 
@@ -817,7 +818,9 @@ local function writeSizes()
             local parts = { '"t":' .. math.floor(sizes[class].t or 0) }
             for _, kind in ipairs({ "normal", "wide", "tall" }) do
                 local m = sizes[class][kind]
-                if type(m) == "table" and m.fill then
+                if type(m) == "table" and m.fullscreen then
+                    table.insert(parts, '"' .. kind .. '":{"fullscreen":true}')
+                elseif type(m) == "table" and m.fill then
                     table.insert(parts, '"' .. kind .. '":{"fill":true}')
                 elseif type(m) == "table" and m.fw then
                     table.insert(parts, string.format('"%s":{"fx":%s,"fy":%s,"fw":%s,"fh":%s}',
@@ -848,40 +851,49 @@ local function saveSizes()
     end, { timeout = 2000, type = "oneshot" })
 end
 
--- Records how `win` is now: a monocle window by its shape, a natural one
--- by where it actually is.
+-- Records how `win` is now: fullscreen, a monocle window by its shape, a
+-- natural one by where it actually is.
 local function rememberWindow(win)
     if not rememberable(win) or not win.monitor then return end
     local st = stateOf(win.address)
     if st.minimized then return end
     local area = fillArea(win, win.monitor)
-    local shape
-    if hasTag(win, "monocle") then
-        shape = st.shape
+    local m
+    if win.fullscreen == 2 then
+        m = { fullscreen = true }
     else
-        shape = shapeOf(win, win.monitor)
-        if not shape then return end
+        local shape
+        if hasTag(win, "monocle") then
+            shape = st.shape
+        elseif isFitted(win, area) then
+            shape = nil
+        else
+            shape = shapeOf(win, win.monitor)
+            if not shape then return end
+        end
+        m = shape and { fx = shape.fx, fy = shape.fy, fw = shape.fw, fh = shape.fh } or { fill = true }
     end
-    local m = shape and { fx = shape.fx, fy = shape.fy, fw = shape.fw, fh = shape.fh } or { fill = true }
     local entry = type(sizes[win.class]) == "table" and sizes[win.class] or {}
     local kind = screenKind(area)
     local old = entry[kind]
     entry.t = os.time()
     entry[kind] = m
     sizes[win.class] = entry
-    local same = type(old) == "table" and old.fill == m.fill
-        and (m.fill or (num(old.fx) == num(m.fx) and num(old.fy) == num(m.fy)
+    local same = type(old) == "table" and old.fullscreen == m.fullscreen and old.fill == m.fill
+        and (m.fullscreen or m.fill or (num(old.fx) == num(m.fx) and num(old.fy) == num(m.fy)
             and num(old.fw) == num(m.fw) and num(old.fh) == num(m.fh)))
     if not same then saveSizes() end
 end
 
--- The remembered shape for `win` on `mon`: false for filled, nil for none.
--- Another kind of screen's entry stands in when this kind has none.
+-- The remembered shape for `win` on `mon`: "fullscreen", false for filled,
+-- nil for none. Another kind of screen's entry stands in when this kind
+-- has none.
 local function recallShape(win, mon)
     local entry = sizes[win.class]
     if type(entry) ~= "table" then return nil end
     local m = entry[screenKind(fillArea(win, mon))] or entry.normal or entry.wide or entry.tall
     if type(m) ~= "table" then return nil end
+    if m.fullscreen then return "fullscreen" end
     if m.fill then return false end
     local fx, fy, fw, fh = tonumber(m.fx), tonumber(m.fy), tonumber(m.fw), tonumber(m.fh)
     if not (fx and fy and fw and fh) or fw <= 0 or fh <= 0 then return nil end
@@ -1322,12 +1334,22 @@ local function onMonocleOpen(win)
     if not on then return end
     fresh = hl.get_window("address:" .. win.address) or fresh
     local mon = fresh.monitor
-    local shape = rememberable(fresh) and mon and recallShape(fresh, mon)
+    local shape = nil
+    if rememberable(fresh) and mon then shape = recallShape(fresh, mon) end
+    local full = shape == "fullscreen"
+    if full then shape = nil end
     if hasTag(fresh, "monocle") then
-        if shape ~= nil then setShape(fresh, shape or nil) end
+        if shape ~= nil or full then setShape(fresh, shape or nil) end
         placeMonocle(fresh)
+    elseif shape == false then
+        sizeToFullFloat(fresh, mon)
     elseif shape then
         moveTo("address:" .. fresh.address, shapeRect(fresh, mon, shape))
+    end
+    if full then
+        hl.dispatch(hl.dsp.window.fullscreen({
+            mode = "fullscreen", action = "set", window = "address:" .. fresh.address }))
+        return
     end
     cascade(fresh)
 end
