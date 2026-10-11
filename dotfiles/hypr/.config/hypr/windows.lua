@@ -507,8 +507,12 @@ local function monocleOn(ws)
 end
 
 -- Per-window state this config keeps on top of Hyprland's own, by address:
---   small     -- unmaximized on purpose (SUPER+equal), so refocusing it does
---                not immediately undo the choice; see toggleMaximize() below
+--   shape     -- a monocle window's size and place; see shapeRect() below
+--   placedOn  -- the monitor placeMonocle() last fitted it to
+--   lastShape -- the shape SUPER+equal brings a filled monocle window back to
+--   small     -- a tiled window unmaximized on purpose (SUPER+equal), so
+--                refocusing it does not immediately undo the choice; see
+--                toggleMaximize() below
 --   minimized -- the {x, y, w, h} SUPER+C hid it from, and whether it was
 --                tiled (and fullscreen) before being floated to hide it;
 --                see toggleMinimize() below
@@ -723,6 +727,85 @@ local function sizeToFullFloat(win, mon)
     syncFillBorder(win.address)
 end
 
+-- A monocle window's shape (windowState.shape): nil fills the area, a
+-- {fx, fy, fw, fh} table is a rect in fractions of fillArea(), so it keeps
+-- its size and place relative to whichever monitor it is on. A shape within
+-- SNAP_FILL of the whole area counts as filling it.
+local SNAP_FILL = 0.94
+
+local function shapeRect(win, mon, shape)
+    local area = fillArea(win, mon)
+    if not shape then return area end
+    return {
+        x = area.x + shape.fx * area.w, y = area.y + shape.fy * area.h,
+        w = shape.fw * area.w, h = shape.fh * area.h,
+    }
+end
+
+local function centredShape(share)
+    return { fx = (1 - share) / 2, fy = (1 - share) / 2, fw = share, fh = share }
+end
+
+-- Also kept on the window as a "shape_…" tag (per mille), since
+-- windowState doesn't survive a config reload.
+local function shapeTag(shape)
+    return string.format("shape_%d_%d_%d_%d", math.floor(shape.fx * 1000 + 0.5),
+        math.floor(shape.fy * 1000 + 0.5), math.floor(shape.fw * 1000 + 0.5), math.floor(shape.fh * 1000 + 0.5))
+end
+
+local function setShape(win, shape)
+    local st = stateOf(win.address)
+    local addr = "address:" .. win.address
+    if st.shape then hl.dispatch(hl.dsp.window.tag({ tag = "-" .. shapeTag(st.shape), window = addr })) end
+    st.shape = shape
+    if shape then hl.dispatch(hl.dsp.window.tag({ tag = "+" .. shapeTag(shape), window = addr })) end
+end
+
+-- Sizes a monocle window to its shape on `mon`, if it isn't already. A
+-- hidden (SUPER+C) window is left where it is. placedOn records the
+-- monitor, so captureShape() can tell a window moved to another monitor,
+-- which is re-placed, from one resized by hand.
+local function placeMonocle(win, mon)
+    mon = mon or win.monitor or hl.get_active_monitor()
+    local st = stateOf(win.address)
+    if not mon or st.minimized then return end
+    st.placedOn = mon.id
+    local r = shapeRect(win, mon, st.shape)
+    if isFitted(win, r) then return syncFillBorder(win.address) end
+    local addr = "address:" .. win.address
+    hl.dispatch(hl.dsp.window.resize({ x = math.floor(r.w), y = math.floor(r.h), window = addr }))
+    hl.dispatch(hl.dsp.window.move({ x = math.floor(r.x), y = math.floor(r.y), window = addr }))
+    syncFillBorder(win.address)
+end
+
+-- Takes a monocle window's shape from where it actually is, so one moved or
+-- resized by the mouse or the arrow keys stays that way. One that has
+-- changed monitor since it was placed keeps its share of the screen, where
+-- it was dropped; a filled one is just filled again there.
+local function captureShape(win)
+    win = win and hl.get_window("address:" .. win.address)
+    if not (win and win.floating and hasTag(win, "monocle") and win.fullscreen == 0) then return end
+    local st = stateOf(win.address)
+    local mon = win.monitor
+    if not mon or st.minimized then return end
+    local moved = st.placedOn ~= mon.id
+    if moved and not st.shape then return end
+    if not moved and isFitted(win, shapeRect(win, mon, st.shape)) then return end
+    local area = fillArea(win, mon)
+    local fw = moved and st.shape.fw or math.min(win.size.x / area.w, 1)
+    local fh = moved and st.shape.fh or math.min(win.size.y / area.h, 1)
+    local shape = nil
+    if fw < SNAP_FILL or fh < SNAP_FILL then
+        shape = {
+            fx = math.max(0, math.min((win.at.x - area.x) / area.w, 1 - fw)),
+            fy = math.max(0, math.min((win.at.y - area.y) / area.h, 1 - fh)),
+            fw = fw, fh = fh,
+        }
+    end
+    setShape(win, shape)
+    placeMonocle(win, mon)
+end
+
 -- A floating window is maximized by filling the usable area, never with
 -- Hyprland's maximized flag: a floater carrying that flag ignores
 -- bring_to_top and window.move, so ALT+Tab left it covered and SUPER+C
@@ -736,11 +819,14 @@ local function fillFloating(win)
     local addr = "address:" .. win.address
     local st = stateOf(win.address)
     if hasTag(win, "monocle") then
-        st.small = nil
-    elseif not st.restore then
-        st.restore = { x = win.at.x, y = win.at.y, w = win.size.x, h = win.size.y }
+        setShape(win, nil)
+        placeMonocle(win)
+    else
+        if not st.restore then
+            st.restore = { x = win.at.x, y = win.at.y, w = win.size.x, h = win.size.y }
+        end
+        sizeToFullFloat(win)
     end
-    sizeToFullFloat(win)
     hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
     -- by selector: hl.get_window() returns nil for a bare address
     return hl.get_window(addr) or win
@@ -792,7 +878,7 @@ local function setWindowMonocle(w, on, mon)
             hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
             if hasTag(w, "rule-fill") and not popup then
                 hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
-                sizeToFullFloat(w, mon)
+                placeMonocle(w, mon)
             else
                 -- not filled: floated where it is, centred
                 hl.dispatch(hl.dsp.window.tag({ tag = "+natural", window = addr }))
@@ -815,6 +901,7 @@ local function setWindowMonocle(w, on, mon)
     -- the rule's copy of the tag, which carries the *
     hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
     hl.dispatch(hl.dsp.window.tag({ tag = "-filled", window = addr }))
+    setShape(w, nil)
     stateOf(w.address).small = nil
 end
 
@@ -864,7 +951,7 @@ local function onMonocleOpen(win)
     -- Only the windows monocleRule floated. Exempt ones -- Quickshell's own
     -- Settings/System/Keybinds windows, window-rules.json entries -- keep
     -- the size they open at.
-    if on and hasTag(win, "monocle") then sizeToFullFloat(win) end
+    if on and hasTag(win, "monocle") then placeMonocle(win) end
 end
 hl.on("window.open", onMonocleOpen)
 
@@ -928,10 +1015,7 @@ local function maximizeFocused()
             -- Re-fit a window left sized for a monitor it's no longer on
             -- (moved across, docked, undocked); backs up the monitor hooks
             -- below for when the layout hadn't settled as they fired.
-            local mon = win.monitor
-            if mon and not stateOf(win.address).small and not isFitted(win, fillArea(win, mon)) then
-                sizeToFullFloat(win, mon)
-            end
+            if win.monitor then placeMonocle(win, win.monitor) end
             hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
         end
         return
@@ -951,6 +1035,15 @@ local function maximizeFocused()
     hl.dispatch(hl.dsp.window.fullscreen({mode="maximized"}))
 end
 
+-- The window focus leaves keeps whatever shape the mouse gave it.
+local shapeWatch = nil
+hl.on("window.active", function()
+    local win = hl.get_active_window()
+    if shapeWatch and (not win or win.address ~= shapeWatch) then
+        captureShape(hl.get_window("address:" .. shapeWatch))
+    end
+    shapeWatch = win and win.address
+end)
 hl.on("window.active", maximizeFocused)
 
 -- Focusing another window over a fullscreen one (ALT+Tab, the window strip,
@@ -1080,12 +1173,11 @@ end)
 -- Docking, undocking, or changing a display's resolution or arrangement
 -- moves the monitors under every open window, and floaters aren't re-laid
 -- out. This re-fits every monocle window at once when that happens (the
--- focus hook only catches one at a time). Windows made small keep that size.
+-- focus hook only catches one at a time). Each keeps its shape.
 local function refitMonocle()
     for _, w in ipairs(hl.get_windows()) do
-        if w.floating and hasTag(w, "monocle") and not stateOf(w.address).small and monocleOn(w.workspace) then
-            local mon = w.monitor
-            if mon and not isFitted(w, fillArea(w, mon)) then sizeToFullFloat(w, mon) end
+        if w.floating and hasTag(w, "monocle") and monocleOn(w.workspace) and w.monitor then
+            placeMonocle(w, w.monitor)
         end
     end
 end
@@ -1095,8 +1187,12 @@ end
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
--- and after every load, for a changed edge gap
-hl.timer(refitMonocle, { timeout = 200, type = "oneshot" })
+-- and after every load, for a changed edge gap, keeping what the mouse did
+-- to the focused window first
+hl.timer(function()
+    captureShape(hl.get_active_window())
+    refitMonocle()
+end, { timeout = 200, type = "oneshot" })
 hl.timer(function()
     for _, w in ipairs(hl.get_windows()) do syncFillBorder(w.address) end
 end, { timeout = 300, type = "oneshot" })
@@ -1112,9 +1208,7 @@ local TABBED_CLASSES = {
 -- A monocle group is refitted as its tab bar comes and goes: the group
 -- moves as one, so fitting any member fits them all.
 local function refitGroup(win)
-    if isMonocleWin(win) and not stateOf(win.address).small and monocleOn(win.workspace) then
-        sizeToFullFloat(win)
-    end
+    if isMonocleWin(win) and monocleOn(win.workspace) then placeMonocle(win) end
 end
 
 hl.on("window.open", function(win)
@@ -1175,23 +1269,19 @@ end)
 -- records deliberate shrinks in windowState and maximizeFocused() leaves
 -- them alone.
 --
--- A tiled window uses Hyprland's own maximize toggle. A monocle floater has
--- nothing to toggle, so it shrinks to 70% centred and grows back.
+-- A tiled window uses Hyprland's own maximize toggle. A monocle floater
+-- switches between filling and the shape it had last (70% centred at first).
 local function toggleMaximizeWin(win)
     if win.floating and hasTag(win, "monocle") then
-        local addr = "address:" .. win.address
-        if stateOf(win.address).small then
-            sizeToFullFloat(win)
-            stateOf(win.address).small = nil
+        captureShape(win)
+        local st = stateOf(win.address)
+        if st.shape then
+            st.lastShape = st.shape
+            setShape(win, nil)
         else
-            local mon = win.monitor or hl.get_active_monitor()
-            if not mon then return end
-            local area = usableArea(mon)
-            hl.dispatch(hl.dsp.window.resize({
-                x = math.floor(area.w * 0.7), y = math.floor(area.h * 0.7), window = addr }))
-            hl.dispatch(hl.dsp.window.center({ window = addr }))
-            stateOf(win.address).small = true
+            setShape(win, st.lastShape or centredShape(0.7))
         end
+        placeMonocle(win)
         return
     end
 
@@ -1387,9 +1477,15 @@ end
 
 -- After a reload, windows SUPER+C hid get their windowState back from the
 -- tag it left. One a reload caught mid-fade, before the timer above moved
--- it away, is moved away now.
+-- it away, is moved away now. Monocle windows get their shape back, as
+-- placed on the monitor they're on.
 for _, w in ipairs(hl.get_windows()) do
+    if w.monitor and isMonocleWin(w) then stateOf(w.address).placedOn = w.monitor.id end
     for _, t in ipairs(type(w.tags) == "table" and w.tags or { w.tags }) do
+        local fx, fy, fw, fh = tostring(t):match("^shape_(%d+)_(%d+)_(%d+)_(%d+)$")
+        if fx then
+            stateOf(w.address).shape = { fx = fx / 1000, fy = fy / 1000, fw = fw / 1000, fh = fh / 1000 }
+        end
         local x, y, width, height, tiled, fullscreen =
             tostring(t):match("^minimized_(%-?%d+)_(%-?%d+)_(%d+)_(%d+)_([01])_(%d+)$")
         if x then
@@ -1412,15 +1508,15 @@ local NUDGE = 40
 local ARROWS = { left = { -1, 0 }, right = { 1, 0 }, up = { 0, -1 }, down = { 0, 1 } }
 
 local function isFullMonocle(win)
-    return isMonocleWin(win) and not stateOf(win.address).small
+    return isMonocleWin(win) and not stateOf(win.address).shape
 end
 
 -- Re-fits a monocle window to the monitor it landed on. The focus hook
 -- would catch it too, but only on the next focus change.
 local function refitAfterMove(win)
-    if not isMonocleWin(win) or stateOf(win.address).small then return end
+    if not isMonocleWin(win) then return end
     local moved = hl.get_window("address:" .. win.address)
-    if moved and moved.monitor then sizeToFullFloat(moved, moved.monitor) end
+    if moved and moved.monitor then placeMonocle(moved, moved.monitor) end
 end
 
 -- Tiled: along the layout, and on to the next monitor past its edge.
@@ -1437,6 +1533,7 @@ function moveWindowDir(dir)
     else
         local d = ARROWS[dir]
         hl.dispatch(hl.dsp.window.move({ x = d[1] * NUDGE, y = d[2] * NUDGE, relative = true }))
+        captureShape(win)
     end
 end
 
@@ -1456,6 +1553,7 @@ function resizeWindowDir(dir)
     if not win or isFullMonocle(win) then return end
     local d = ARROWS[dir]
     hl.dispatch(hl.dsp.window.resize({ x = d[1] * NUDGE, y = d[2] * NUDGE, relative = true }))
+    captureShape(win)
 end
 
 function sendToNextMonitor()
