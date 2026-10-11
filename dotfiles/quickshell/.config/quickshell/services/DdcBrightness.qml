@@ -34,6 +34,10 @@ Singleton {
     property var displays: []
     // output -> level 0..100
     property var levels: ({})
+    // outputs that have given a level at least once. Changes only when one
+    // first answers, so a list built from it isn't rebuilt by every read or
+    // write the way one built from `levels` would be.
+    property var answered: []
 
     readonly property bool available: displays.length > 0
 
@@ -49,6 +53,7 @@ Singleton {
         var next = Object.assign({}, levels)
         next[output] = v
         levels = next
+        if (answered.indexOf(output) < 0) answered = answered.concat([output])
     }
 
     function set(output, pct) {

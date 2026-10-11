@@ -19,12 +19,15 @@ FlyoutPanel {
 
     // Every display it can set: the backlight, and each monitor that
     // answers DDC/CI, the one under this bar first. One is a bare slider
-    // as before; more get a labelled slider each.
+    // as before; more get a labelled slider each. Built from who has
+    // answered, not from the levels: the levels change on every read and
+    // drag, and each change would rebuild the sliders -- twice over, a
+    // moment after opening, when the refresh below comes back.
     readonly property string output: scope.modelData.name
     readonly property var controls: {
         var out = []
         var ds = DdcBrightness.displays.slice()
-            .filter(d => DdcBrightness.level(d.output) >= 0)
+            .filter(d => DdcBrightness.answered.indexOf(d.output) >= 0)
             .sort((a, b) => (b.output === output) - (a.output === output))
         for (var i = 0; i < ds.length; i++)
             out.push({ output: ds[i].output, label: ds[i].model || ds[i].output })
