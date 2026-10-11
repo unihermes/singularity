@@ -471,6 +471,8 @@ end
 --   shape     -- a monocle window's size and place; see shapeRect() below
 --   placedOn  -- the monitor placeMonocle() last fitted it to
 --   lastShape -- the shape SUPER+equal brings a filled monocle window back to
+--   parked    -- moved below the screen while covered; see PARKING below
+--   settling  -- coming back from SUPER+C, still animating into place
 --   small     -- a tiled window unmaximized on purpose (SUPER+equal), so
 --                refocusing it does not immediately undo the choice; see
 --                toggleMaximize() below
@@ -576,6 +578,11 @@ local function restoreMinimized(win, instant)
                 mode = saved.fullscreen == 1 and "maximized" or "fullscreen", action = "set", window = addr }))
         end
     end
+    -- captureShape() leaves it alone until it has arrived
+    st.settling = true
+    afterAnimation(math.max(windowSpeed, fadeSpeed) + 1, function()
+        if current() then st.settling = nil end
+    end)
     local function show()
         if not current() then return end
         if windowAnim ~= "fade" then moveTo(addr, saved) end
@@ -729,7 +736,7 @@ end
 local function placeMonocle(win, mon)
     mon = mon or win.monitor or hl.get_active_monitor()
     local st = stateOf(win.address)
-    if not mon or st.minimized then return end
+    if not mon or st.minimized or st.parked then return end
     st.placedOn = mon.id
     local r = shapeRect(win, mon, st.shape)
     if isFitted(win, r) then return syncFillBorder(win.address) end
@@ -762,7 +769,7 @@ local function captureShape(win)
     if not (win and win.floating and hasTag(win, "monocle") and win.fullscreen == 0) then return end
     local st = stateOf(win.address)
     local mon = win.monitor
-    if not mon or st.minimized then return end
+    if not mon or st.minimized or st.parked or st.settling then return end
     local moved = st.placedOn ~= mon.id
     if moved and not st.shape then return end
     if not moved and isFitted(win, shapeRect(win, mon, st.shape)) then return end
@@ -857,7 +864,7 @@ end
 local function rememberWindow(win)
     if not rememberable(win) or not win.monitor then return end
     local st = stateOf(win.address)
-    if st.minimized then return end
+    if st.minimized or st.parked or st.settling then return end
     local area = fillArea(win, win.monitor)
     local m
     if win.fullscreen == 2 then
@@ -1845,6 +1852,18 @@ local function minimizeWindow(win, instant)
     local r = { x = math.floor(win.at.x), y = math.floor(win.at.y),
                 w = math.floor(win.size.x), h = math.floor(win.size.y),
                 tiled = tiled, fullscreen = tiled and win.fullscreen or 0 }
+    -- a parked window comes back where it was before it was parked
+    if st.parked then
+        local pr = shapeRect(win, mon, st.shape)
+        r.x, r.y, r.w, r.h = math.floor(pr.x), math.floor(pr.y), math.floor(pr.w), math.floor(pr.h)
+        hl.dispatch(hl.dsp.window.tag({ tag = string.format("-parked_%d_%d_%d_%d",
+            st.parked.x, st.parked.y, st.parked.w, st.parked.h), window = addr }))
+        if not hasTag(win, "monocle") then
+            r.x, r.y, r.w, r.h = st.parked.x, st.parked.y, st.parked.w, st.parked.h
+        end
+        st.parked = nil
+        instant = true
+    end
     st.minimized = r
     st.hideGen = (st.hideGen or 0) + 1
     local gen = st.hideGen
@@ -1903,6 +1922,135 @@ local function minimizeWindow(win, instant)
         hide()
     end
 end
+
+-- PARKING. In monocle the windows on a workspace are floaters stacked
+-- over each other, and Hyprland keeps drawing -- and sending frames to --
+-- the ones a filled window covers completely, so a video or an animated
+-- page behind it runs at full rate. Those are parked below the screen like
+-- a hidden window, where Hyprland throttles them as it does windows on
+-- hidden workspaces. Down each visible monocle workspace's stack from the
+-- top (hl.get_windows() lists windows bottom to top), everything stays
+-- down to the first window that covers the screen, plus the one
+-- under it, which shows as soon as the top one closes or hides. Focusing a
+-- parked window by any route brings it straight back. Popouts, pinned
+-- windows, tab groups and the shell's own are never parked. A
+-- "parked_x_y_w_h" tag carries where it was over a reload.
+local function parkable(w)
+    return w.mapped and w.floating and not w.pinned and not w.group and w.class ~= ""
+        and w.class ~= "org.quickshell" and w.class ~= SCRATCH_CLASS
+        and (hasTag(w, "monocle") or hasTag(w, "natural"))
+        and not (hasTag(w, "popout") or hasTag(w, "app-held"))
+end
+
+local function covers(w)
+    if w.fullscreen == 2 then return true end
+    local mon = w.workspace and w.workspace.monitor or w.monitor
+    if hasTag(w, "monocle") then return not stateOf(w.address).shape end
+    return mon ~= nil and isFitted(w, fillArea(w, mon))
+end
+
+local function parkTag(r)
+    return string.format("parked_%d_%d_%d_%d", r.x, r.y, r.w, r.h)
+end
+
+local function parkWin(w)
+    local st = stateOf(w.address)
+    local mon = w.workspace and w.workspace.monitor or w.monitor
+    if st.parked or st.minimized or st.settling or not mon then return end
+    local r = { x = math.floor(w.at.x), y = math.floor(w.at.y), w = math.floor(w.size.x), h = math.floor(w.size.y) }
+    st.parked = r
+    local addr = "address:" .. w.address
+    hl.dispatch(hl.dsp.window.tag({ tag = "+" .. parkTag(r), window = addr }))
+    jumpTo(addr, hiddenRect(r, mon))
+end
+
+-- Back where it was: a monocle window where its shape puts it on its
+-- workspace's monitor now, any other where it was parked from.
+local function unparkWin(w)
+    local st = stateOf(w.address)
+    local r = st.parked
+    if not r then return end
+    st.parked = nil
+    local addr = "address:" .. w.address
+    hl.dispatch(hl.dsp.window.tag({ tag = "-" .. parkTag(r), window = addr }))
+    if not w.floating then return end
+    local mon = w.workspace and w.workspace.monitor or w.monitor
+    if mon and hasTag(w, "monocle") then
+        local sr = shapeRect(w, mon, st.shape)
+        r = { x = math.floor(sr.x), y = math.floor(sr.y), w = math.floor(sr.w), h = math.floor(sr.h) }
+        st.placedOn = mon.id
+    end
+    jumpTo(addr, r)
+end
+
+local function syncParking()
+    local stacks = {}
+    for _, mon in ipairs(hl.get_monitors()) do
+        local ws = mon.active_workspace
+        if ws and monocleOn(ws) then stacks[ws.id] = {} end
+    end
+    for _, w in ipairs(hl.get_windows()) do
+        local st = stateOf(w.address)
+        local stack = w.workspace and stacks[w.workspace.id]
+        if stack and parkable(w) and not st.minimized then
+            table.insert(stack, 1, w)
+        elseif st.parked and not (w.workspace and monocleOn(w.workspace) and parkable(w)) then
+            -- out of monocle, or no longer a window that parks
+            unparkWin(w)
+        end
+    end
+    for _, stack in pairs(stacks) do
+        local keep = #stack
+        for i, w in ipairs(stack) do
+            if covers(w) then
+                keep = i + 1
+                break
+            end
+        end
+        for i, w in ipairs(stack) do
+            if i <= keep then unparkWin(w) else parkWin(w) end
+        end
+    end
+end
+
+-- Once per burst of events, on the next tick, when focus and the stack
+-- have settled.
+local parkPending = false
+local function scheduleParking()
+    if parkPending then return end
+    parkPending = true
+    hl.timer(function()
+        parkPending = false
+        syncParking()
+    end, { timeout = 1, type = "oneshot" })
+end
+
+-- The window focused comes back at once, ahead of the next frame, and
+-- goes on top of the stack -- a natural window too, which nothing else
+-- raises -- or the next sync would park it again.
+hl.on("window.active", function()
+    local win = hl.get_active_window()
+    if win and stateOf(win.address).parked then
+        unparkWin(win)
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+    end
+    scheduleParking()
+end)
+for _, ev in ipairs({ "window.open", "window.close", "window.fullscreen", "window.move_to_workspace",
+        "workspace.active", "monitor.added", "monitor.removed", "monitor.layout_changed" }) do
+    hl.on(ev, function() scheduleParking() end)
+end
+
+-- after a reload: the parked windows from the tag, then the stacks afresh
+for _, w in ipairs(hl.get_windows()) do
+    for _, t in ipairs(type(w.tags) == "table" and w.tags or { w.tags }) do
+        local x, y, pw, ph = tostring(t):match("^parked_(%-?%d+)_(%-?%d+)_(%d+)_(%d+)$")
+        if x then
+            stateOf(w.address).parked = { x = tonumber(x), y = tonumber(y), w = tonumber(pw), h = tonumber(ph) }
+        end
+    end
+end
+hl.timer(syncParking, { timeout = 300, type = "oneshot" })
 
 function toggleMinimize()
     local win = hl.get_active_window()
@@ -2161,4 +2309,5 @@ function toggleLayout()
             setWindowMonocle(w, monocleEnabled, w.monitor or hl.get_active_monitor())
         end
     end
+    scheduleParking()
 end
