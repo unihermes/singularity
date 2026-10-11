@@ -1029,6 +1029,81 @@ local function popoutKey(win)
     return "popout:" .. win.class .. ":" .. title
 end
 
+-- A dialog-sized popout blocks the window it came from until it's closed
+-- or promoted, the way a modal dialog does: the owner takes no clicks or
+-- focus (no_focus), and focusing it by any route -- ALT+Tab, the bar --
+-- brings up the popout instead. Popouts asking for nearly the whole
+-- screen (a browser's new window) don't block. Kept on tags as well --
+-- "owner_<address>" on the popout, "blocked" on the owner -- since the
+-- no_focus prop outlives a reload and this table doesn't.
+local popoutOwner = {}
+
+local function setBlocked(ownerAddr, on)
+    local addr = "address:" .. ownerAddr
+    if not hl.get_window(addr) then return end
+    setProp(addr, "no_focus", on and "1" or "0")
+    hl.dispatch(hl.dsp.window.tag({ tag = (on and "+" or "-") .. "blocked", window = addr }))
+end
+
+local function blockOwner(popAddr, ownerAddr)
+    popoutOwner[popAddr] = ownerAddr
+    hl.dispatch(hl.dsp.window.tag({ tag = "+owner_" .. ownerAddr, window = "address:" .. popAddr }))
+    setBlocked(ownerAddr, true)
+end
+
+local function releasePopout(popAddr)
+    local ownerAddr = popoutOwner[popAddr]
+    if not ownerAddr then return end
+    popoutOwner[popAddr] = nil
+    hl.dispatch(hl.dsp.window.tag({ tag = "-owner_" .. ownerAddr, window = "address:" .. popAddr }))
+    for _, o in pairs(popoutOwner) do
+        if o == ownerAddr then return end
+    end
+    setBlocked(ownerAddr, false)
+end
+
+-- The owner's most recently used popout.
+local function blockingPopout(ownerAddr)
+    local best
+    for p, o in pairs(popoutOwner) do
+        local w = o == ownerAddr and hl.get_window("address:" .. p)
+        if w and (not best or w.focus_history_id < best.focus_history_id) then best = w end
+    end
+    return best
+end
+
+do
+    for _, w in ipairs(hl.get_windows()) do
+        for _, t in ipairs(type(w.tags) == "table" and w.tags or { w.tags }) do
+            local o = tostring(t):match("^owner_(.+)$")
+            if o and hl.get_window("address:" .. o) then popoutOwner[w.address] = o end
+        end
+    end
+    for _, w in ipairs(hl.get_windows()) do
+        if hasTag(w, "blocked") and not blockingPopout(w.address) then setBlocked(w.address, false) end
+    end
+end
+
+hl.on("window.active", function()
+    local win = hl.get_active_window()
+    local pop = win and blockingPopout(win.address)
+    if not pop then return end
+    local addr = "address:" .. pop.address
+    -- next tick, after the hooks that raise the window just focused
+    hl.timer(function()
+        hl.dispatch(hl.dsp.focus({ window = addr }))
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+    end, { timeout = 1, type = "oneshot" })
+end)
+hl.on("window.close", function(win)
+    if not win then return end
+    releasePopout(win.address)
+    -- an owner closed under its popouts
+    for p, o in pairs(popoutOwner) do
+        if o == win.address then popoutOwner[p] = nil end
+    end
+end)
+
 holdPopup = function(win)
     if not win or knownWindows[win.address] then return end
     knownWindows[win.address] = true
@@ -1068,6 +1143,7 @@ holdPopup = function(win)
     local key = popoutKey(win)
     stateOf(win.address).popoutKey = key
     local w, h = win.size.x, win.size.y
+    local dialogSized = w <= area.w * 0.85 and h <= area.h * 0.85
     local m = key and type(sizes[key]) == "table" and sizes[key][screenKind(area)]
     if type(m) == "table" and tonumber(m.fw) and tonumber(m.fh) then
         w, h = math.min(m.fw, 1) * area.w, math.min(m.fh, 1) * area.h
@@ -1096,6 +1172,10 @@ holdPopup = function(win)
         y = math.min(y + CASCADE, area.y + area.h - h)
     end
     moveTo(addr, { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) })
+    if dialogSized and ownerMain then
+        blockOwner(win.address, owner.address)
+        hl.dispatch(hl.dsp.focus({ window = addr }))
+    end
 end
 
 -- Records a popout's size, as a share of the screen, under its key.
@@ -1120,6 +1200,7 @@ end
 -- (see fillFloating), as does the window strip's row action.
 local function promotePopout(win)
     if not (hasTag(win, "popout") or hasTag(win, "app-held")) then return win end
+    releasePopout(win.address)
     local addr = "address:" .. win.address
     -- The held app rule's copy of monocle-exempt stays while the rule is on,
     -- so "promoted" tells isMonocleExempt() to look past it.
