@@ -247,7 +247,7 @@ SettingsTab {
 
     SettingsField {
         label: "Current"
-        hint: Wallpaper.name !== "" ? Wallpaper.name : "No wallpaper"
+        hint: Wallpaper.title !== "" ? Wallpaper.title : "No wallpaper"
 
         Row {
             anchors.right: parent.right

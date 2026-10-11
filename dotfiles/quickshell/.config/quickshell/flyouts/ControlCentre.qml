@@ -420,11 +420,6 @@ FlyoutPanel {
             Settings.set("style", styleOrder[(styleOrder.indexOf(Settings.style) + d + n) % n])
         }
         readonly property var schemes: Settings.choices.colourScheme
-        // monet_pale_lillies -> Monet pale lillies
-        function prettyName(n) {
-            var s = n.replace(/[_-]+/g, " ").trim()
-            return s === "" ? s : s[0].toUpperCase() + s.slice(1)
-        }
         // the colours each mode gives, dark to light then the accent; the
         // wallpaper's only once matugen has made them for this image
         readonly property var ownColours: {
@@ -516,7 +511,7 @@ FlyoutPanel {
                     anchors.rightMargin: Theme.spaceS
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
-                    text: Wallpaper.name !== "" ? appearancePage.prettyName(Wallpaper.name) : "No wallpaper"
+                    text: Wallpaper.title !== "" ? Wallpaper.title : "No wallpaper"
                     color: Theme.textStrong
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody

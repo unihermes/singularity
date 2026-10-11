@@ -34,6 +34,11 @@ Singleton {
     property string current: ""
     readonly property int index: images.indexOf(current)
     readonly property string name: current === "" ? "" : current.substring(current.lastIndexOf("/") + 1).replace(/\.[^.]+$/, "")
+    // the name in words: monet_pale_lillies -> Monet pale lillies
+    readonly property string title: {
+        var s = name.replace(/[_-]+/g, " ").trim()
+        return s === "" ? s : s[0].toUpperCase() + s.slice(1)
+    }
 
     // role -> "#rrggbb", or null while there's no palette for the current
     // image and scheme (Theme then stays grayscale)
