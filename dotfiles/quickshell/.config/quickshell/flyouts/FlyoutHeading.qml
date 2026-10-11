@@ -298,6 +298,9 @@ Item {
         anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
         anchors.verticalCenter: label.verticalCenter
         text: root.collapsed ? "󰅂" : "󰅀"
+        // only while the pointer is on the heading, or the section is
+        // folded and needs finding again; the rule keeps its length either way
+        opacity: root.collapsed || foldMouse.containsMouse ? 1 : 0
         color: foldMouse.containsMouse ? Theme.text : Theme.subtext
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontSmall

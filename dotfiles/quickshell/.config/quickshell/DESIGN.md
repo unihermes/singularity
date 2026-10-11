@@ -472,6 +472,8 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - An accent `//` before each one, drawn a little lighter than the accent. It
   comes from the look's `heading.prefix`.
 - A line from the end of the heading to the right edge (`headingRule`).
+- A heading that folds its section shows its chevron only while the
+  pointer is on it, or while the section is folded (picked 2026-10-11).
 - In sectioned flyouts they get room above and below so the section frames
   clear them.
 
