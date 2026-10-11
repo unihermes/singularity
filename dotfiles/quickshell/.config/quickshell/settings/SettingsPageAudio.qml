@@ -240,6 +240,8 @@ SettingsPage {
         visible: page.sinksHidden > 0 || (page.showUnplugged && page.unplugged.length > 0)
         label: page.sinksHidden > 0 ? "Show " + page.sinksHidden + " with nothing plugged in"
             : "Hide the ones with nothing plugged in"
+        // opens in place, like every Show N row
+        trailing: page.sinksHidden > 0 ? "󰅂" : "󰅀"
         onActivated: page.showUnplugged = !page.showUnplugged
     }
 
