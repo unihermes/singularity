@@ -810,7 +810,9 @@ local function captureShape(win)
 end
 
 -- REMEMBERED SIZES. Each app's main window opens the way it was last left,
--- per kind of screen (wide, normal, tall): filled, or at its shape. Kept
+-- per kind of screen (wide, normal, tall): at its shape, or filled for a
+-- Fills app. Any other app is never opened filled: one left filled keeps
+-- the size it had before. Kept
 -- in ~/.local/state/singularity/window-sizes.json as
 -- { class = { normal = { fill = true } | { fx, fy, fw, fh }, t = time } },
 -- the 100 most recently used. Only monocle and natural windows count --
@@ -898,6 +900,7 @@ local function rememberWindow(win)
         shape = st.shape
     else
         shape = shapeOf(win, win.monitor)
+        if not shape then return end
     end
     local m = shape and { fx = shape.fx, fy = shape.fy, fw = shape.fw, fh = shape.fh } or { fill = true }
     local entry = type(sizes[win.class]) == "table" and sizes[win.class] or {}
@@ -1047,6 +1050,39 @@ end
 -- switching to it later is just a raise. Uses the window window.open hands
 -- over, not hl.get_active_window(), which can still be the previous window
 -- when a second one opens.
+-- A window that isn't filled and would open right on top of another of
+-- the same app's steps down and to the right of it, like a deck of cards.
+local CASCADE = 32
+local function cascade(win)
+    win = hl.get_window("address:" .. win.address) or win
+    local mon = win.monitor
+    if not mon or not win.workspace or not rememberable(win) then return end
+    if hasTag(win, "monocle") and not stateOf(win.address).shape then return end
+    local area = fillArea(win, mon)
+    local x, y = win.at.x, win.at.y
+    local function taken()
+        for _, o in ipairs(hl.get_windows()) do
+            if o.address ~= win.address and o.class == win.class and o.floating
+                    and o.workspace and o.workspace.id == win.workspace.id
+                    and math.abs(o.at.x - x) < 8 and math.abs(o.at.y - y) < 8 then
+                return true
+            end
+        end
+        return false
+    end
+    local steps = 0
+    while steps < 10 and taken() do
+        x, y = x + CASCADE, y + CASCADE
+        if x + win.size.x > area.x + area.w or y + win.size.y > area.y + area.h then
+            x, y = area.x + (steps + 1) * 8, area.y + (steps + 1) * 8
+        end
+        steps = steps + 1
+    end
+    if steps == 0 then return end
+    hl.dispatch(hl.dsp.window.move({ x = math.floor(x), y = math.floor(y), window = "address:" .. win.address }))
+    if hasTag(win, "monocle") then captureShape(win) end
+end
+
 local function onMonocleOpen(win)
     if not win then return end
     -- The rules follow the *active* workspace's layout, so a window that
@@ -1082,11 +1118,10 @@ local function onMonocleOpen(win)
     if hasTag(fresh, "monocle") then
         if shape ~= nil then setShape(fresh, shape or nil) end
         placeMonocle(fresh)
-    elseif shape == false then
-        sizeToFullFloat(fresh, mon)
     elseif shape then
         moveTo("address:" .. fresh.address, shapeRect(fresh, mon, shape))
     end
+    cascade(fresh)
 end
 hl.on("window.open", onMonocleOpen)
 
@@ -1470,6 +1505,61 @@ function toggleMaximize()
     local win = hl.get_active_window()
     if not win then return end
     toggleMaximizeWin(win)
+    syncFillBorder(win.address)
+end
+
+-- SUPER+equal and SUPER+minus: a floater steps up or down the ladder of
+-- sizes, as a share of the usable area -- 55%, 70%, 85%, filled -- about
+-- its own centre. A tiled window just maximizes or restores.
+local LADDER = { 0.55, 0.7, 0.85 }
+function stepWindowSize(dir)
+    local win = hl.get_active_window()
+    if not win or win.class == "org.quickshell" then return end
+    if not win.floating then
+        if dir > 0 or win.fullscreen ~= 0 then toggleMaximizeWin(win) end
+        return
+    end
+    win = unflagFloating(win)
+    local mon = win.monitor
+    if not mon or win.fullscreen ~= 0 then return end
+    local monocle = hasTag(win, "monocle")
+    if monocle then
+        captureShape(win)
+        win = hl.get_window("address:" .. win.address) or win
+    end
+    local cur = monocle and stateOf(win.address).shape or shapeOf(win, mon)
+    local size = cur and math.max(cur.fw, cur.fh) or 1
+    local share = nil
+    if dir > 0 then
+        for _, step in ipairs(LADDER) do
+            if step > size + 0.01 then share = step break end
+        end
+        if not cur then return end
+    else
+        for i = #LADDER, 1, -1 do
+            if LADDER[i] < size - 0.01 then share = LADDER[i] break end
+        end
+        if not share then return end
+    end
+    local shape = nil
+    if share then
+        local cx = cur and cur.fx + cur.fw / 2 or 0.5
+        local cy = cur and cur.fy + cur.fh / 2 or 0.5
+        shape = {
+            fx = math.max(0, math.min(cx - share / 2, 1 - share)),
+            fy = math.max(0, math.min(cy - share / 2, 1 - share)),
+            fw = share, fh = share,
+        }
+    end
+    if monocle then
+        if not shape then stateOf(win.address).lastShape = cur end
+        setShape(win, shape)
+        placeMonocle(win, mon)
+    elseif not shape then
+        fillFloating(win)
+    else
+        moveTo("address:" .. win.address, shapeRect(win, mon, shape))
+    end
     syncFillBorder(win.address)
 end
 

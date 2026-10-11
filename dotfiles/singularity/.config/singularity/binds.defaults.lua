@@ -56,8 +56,8 @@ hl.bind(mod .. " + Q",         hl.dsp.window.close())  -- Close window
 -- this file runs.
 hl.bind(mod .. " + X", function() toggleMaximize() end)  -- Maximize or restore window
 hl.bind(mod .. " + CTRL + F",  hl.dsp.window.fullscreen())  -- Fullscreen window, covering the bar
--- same action as double-clicking a window's titlebar
-hl.bind(mod .. " + equal",     function() toggleMaximize() end)  -- Maximize or restore window
+hl.bind(mod .. " + equal",     function() stepWindowSize(1) end)  -- Grow window a size step
+hl.bind(mod .. " + minus",     function() stepWindowSize(-1) end)  -- Shrink window a size step
 hl.bind(mod .. " + C",         function() toggleMinimize() end)  -- Minimize or restore window
 hl.bind(mod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))  -- Float or tile window
 hl.bind(mod .. " + P",         hl.dsp.window.pseudo())  -- Keep window's own size in its tile
