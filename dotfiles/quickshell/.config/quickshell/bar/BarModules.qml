@@ -1118,9 +1118,11 @@ Item {
 
     BarModule {
         id: updatesBtn
-        visible: Updates.count > 0 && Settings.widgetVisible("updates")
+        visible: (Updates.count > 0 || Updates.repoBehind > 0) && Settings.widgetVisible("updates")
         icon: "󰚰"
-        label: String(Updates.count)
+        // packages in the label, Singularity's commits to pull in the badge
+        label: Updates.count > 0 ? String(Updates.count) : ""
+        badge: Updates.repoBehind
         active: screenScope.openFlyout === "updates"
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
     }

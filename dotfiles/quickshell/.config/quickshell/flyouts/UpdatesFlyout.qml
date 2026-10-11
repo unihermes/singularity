@@ -2,6 +2,8 @@
 // ~/.config/quickshell/flyouts/UpdatesFlyout.qml
 //
 // Split out of shell.qml. Self-contained: only needs the Updates singleton.
+// Packages first, then Singularity's own commits waiting upstream, while
+// there are any.
 
 import QtQuick
 import "../services"
@@ -66,10 +68,50 @@ FlyoutPanel {
         }
     }
 
+    // Singularity's clone, behind its upstream
+    FlyoutDivider { visible: Updates.repoBehind > 0 }
+
+    FlyoutHeading {
+        visible: Updates.repoBehind > 0
+        text: "SINGULARITY  " + Updates.repoBehind
+            + (Updates.repoBehind === 1 ? " commit" : " commits") + " to pull"
+    }
+
+    Repeater {
+        model: Updates.repoBehind > 0 ? Updates.repoCommits.slice(0, 3) : []
+
+        FlyoutRow {
+            required property var modelData
+            enabled: false
+            leadingIcon: "󰜘"
+            label: modelData.subject
+        }
+    }
+
+    FlyoutRow {
+        visible: Updates.repoCommits.length > 3
+        enabled: false
+        label: "and " + (Updates.repoCommits.length - 3) + " more"
+    }
+
+    // a fast-forward only, as in Settings, so not past local commits
+    FlyoutRow {
+        visible: Updates.repoBehind > 0
+        label: Updates.repoUpdating ? "Pulling…"
+            : Updates.repoAhead > 0 ? "Local commits in the way" : "Pull now"
+        trailing: "󰇚"
+        busy: Updates.repoUpdating
+        enabled: Updates.repoAhead === 0 && !Updates.repoUpdating
+        onActivated: {
+            Updates.updateRepo()
+            scope.openFlyout = ""
+        }
+    }
+
     FlyoutDivider {}
 
     FlyoutRow {
-        label: "Update now"
+        label: Updates.repoBehind > 0 ? "Update packages" : "Update now"
         trailing: "󰚰"
         enabled: Updates.count > 0
         onActivated: {
@@ -79,9 +121,9 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        label: Updates.checking ? "Checking…" : "Check again"
+        label: Updates.checking || Updates.repoChecking ? "Checking…" : "Check again"
         trailing: Updates.lastChecked ? Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
-        busy: Updates.checking
+        busy: Updates.checking || Updates.repoChecking
         onActivated: Updates.refresh()
     }
 
