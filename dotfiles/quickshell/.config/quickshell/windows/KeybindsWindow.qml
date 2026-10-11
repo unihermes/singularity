@@ -49,7 +49,6 @@ FloatingWindow {
     WindowHeader {
         id: header
         window: root
-        eyebrow: "DESKTOP CONFIGURATION"
         title: "Keybinds"
         subtitle: "Every shortcut in binds.lua, and presets worth adding"
     }

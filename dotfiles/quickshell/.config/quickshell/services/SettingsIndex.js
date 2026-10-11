@@ -250,7 +250,7 @@ var entries = [
     { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },
 ]
 
-// Every entry, with its page's name and number folded in, so a result row
+// Every entry, with its page's name folded in, so a result row
 // has everything it needs and search can match the page name too -- plus
 // one entry per page, so a search can land on a whole section. `pages` is
 // the Settings window's own list.
@@ -259,12 +259,11 @@ function build(pages) {
     var out = []
     for (var i = 0; i < pages.length; i++) {
         var pg = pages[i]
-        byId[pg.id] = { page: pg, number: number(i) }
+        byId[pg.id] = { page: pg }
         out.push({
             page: pg.id,
             pageLabel: pg.label,
             icon: pg.icon,
-            number: number(i),
             section: "",
             label: pg.label,
             isPage: true,
@@ -278,7 +277,6 @@ function build(pages) {
             page: e.page,
             pageLabel: p.page.label,
             icon: p.page.icon,
-            number: p.number,
             section: e.section,
             label: e.label,
             isPage: false,
@@ -286,11 +284,6 @@ function build(pages) {
         })
     }
     return out
-}
-
-// "01", "02": the sections' numbering, shared with their hits
-function number(i) {
-    return (i < 9 ? "0" : "") + (i + 1)
 }
 
 // Every word of the query has to appear somewhere in the entry; the rank is

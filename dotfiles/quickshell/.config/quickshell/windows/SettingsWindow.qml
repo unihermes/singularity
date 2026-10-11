@@ -1,9 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/SettingsWindow.qml
 //
-// Settings: a header, a search bar across the full width, and under it two
-// framed panels -- the numbered Sections on the left, the open page on the
-// right. Changes apply as they're made -- there is no Save -- and each page
+// Settings: a one-line title bar holding the search, and under it two
+// framed panels -- the pages on the left, the open page on the right. Changes apply as they're made -- there is no Save -- and each page
 // writes straight to the thing it controls (mimeapps.list, binds.lua,
 // hypridle.conf, pipewire) rather than to a store of its own -- except
 // Appearance and Notifications, whose settings are Settings.qml's, shared
@@ -12,8 +11,8 @@
 // The ground and Escape come from WindowChrome.qml.
 //
 // Search: `/` (or a click) puts the cursor in the bar. Empty, the arrow keys
-// walk the sections and Enter opens one; typed into, the Sections panel lists
-// what matches from SettingsIndex.js instead -- whole sections and single
+// walk the pages and Enter opens one; typed into, the sidebar lists what
+// matches from SettingsIndex.js instead -- whole pages and single
 // settings -- and picking a setting opens its page and asks the page to
 // scroll to it and ring it. Escape clears the query, then leaves the bar,
 // then closes the window.
@@ -100,11 +99,11 @@ FloatingWindow {
 
     readonly property string query: searchBar.text.trim()
     readonly property var index: SettingsIndex.build(pages)
-    // the Sections panel's rows: the sections themselves, or what matched
+    // the sidebar's rows: the pages themselves, or what matched
     readonly property var rows: query === ""
-        ? pages.map((p, i) => ({ page: p.id, label: p.label, blurb: p.blurb, icon: p.icon, number: SettingsIndex.number(i), isPage: true, gap: !!p.gap }))
+        ? pages.map(p => ({ page: p.id, label: p.label, icon: p.icon, isPage: true, gap: !!p.gap }))
         : SettingsIndex.search(index, query, 30).map(e => ({
-            page: e.page, label: e.label, icon: e.icon, number: e.number, isPage: e.isPage,
+            page: e.page, label: e.label, icon: e.icon, isPage: e.isPage,
             blurb: e.isPage ? "Section"
                 : e.section === "" ? e.pageLabel : e.pageLabel + " · " + e.section,
             entry: e }))
@@ -140,23 +139,12 @@ FloatingWindow {
         }
     }
 
-    // this machine and the distribution's own name for itself, for the
-    // subtitle, as System shows them
+    // this machine's name, for the subtitle, as System shows it
     FileView {
         id: hostFile
         path: "/proc/sys/kernel/hostname"
         printErrors: false
         blockLoading: true
-    }
-    FileView {
-        id: osRelease
-        path: "/etc/os-release"
-        printErrors: false
-        blockLoading: true
-    }
-    readonly property string osName: {
-        var m = /^PRETTY_NAME="?([^"\n]*)"?$/m.exec(osRelease.text())
-        return m ? m[1] : "Linux"
     }
 
     WindowChrome {
@@ -173,29 +161,23 @@ FloatingWindow {
         }
     }
 
-    // --- header ------------------------------------------------------------
+    // --- title bar, with the search in it ----------------------------------
 
     WindowHeader {
         id: header
         window: root
-        eyebrow: "DESKTOP CONFIGURATION"
         title: "Settings"
-        subtitle: hostFile.text().trim() + " / " + root.osName
+        subtitle: hostFile.text().trim()
     }
-
-    // --- search bar --------------------------------------------------------
 
     FlyoutInput {
         id: searchBar
-        anchors.top: header.bottom
-        anchors.topMargin: Theme.spaceXl
-        x: Theme.windowPad
-        width: root.width - Theme.windowPad * 2
-        height: Theme.rowHeightTall + Theme.spaceM
+        parent: header.slot
+        anchors.fill: parent
         echoPassword: false
-        glyph: "/"
-        placeholder: "Search settings and sections"
-        hints: ["Up/Down navigate", "Enter select"]
+        glyph: "󰍉"
+        placeholder: "Search settings"
+        hints: focused ? ["Up/Down navigate", "Enter select"] : ["/ to focus"]
 
         onTextChanged: root.cursor = 0
         // however it got focus (`/` or a click), the arrows start from the
@@ -219,7 +201,7 @@ FloatingWindow {
 
     Item {
         id: panels
-        anchors.top: searchBar.bottom
+        anchors.top: header.bottom
         anchors.topMargin: Theme.spaceXl
         x: Theme.windowPad
         width: root.width - Theme.windowPad * 2
@@ -228,7 +210,7 @@ FloatingWindow {
         // leaves the window as it was and re-lays out what's inside
         height: root.height - y - Theme.windowPad
 
-        // sections, or what the search matched
+        // the pages, or what the search matched (under a count)
         WindowPanel {
             id: sidebar
             width: root.sidebarWidth
@@ -239,8 +221,9 @@ FloatingWindow {
                 x: Theme.panelPad
                 y: Theme.panelPad
                 width: parent.width - Theme.panelPad * 2
-                text: root.query === "" ? "SECTIONS"
-                    : root.rows.length === 1 ? "1 RESULT" : root.rows.length + " RESULTS"
+                visible: root.query !== ""
+                height: visible ? implicitHeight : 0
+                text: root.rows.length === 1 ? "1 RESULT" : root.rows.length + " RESULTS"
             }
 
             Text {
@@ -258,7 +241,7 @@ FloatingWindow {
             Flickable {
                 id: list
                 anchors.top: listHeading.bottom
-                anchors.topMargin: Theme.spaceL
+                anchors.topMargin: listHeading.visible ? Theme.spaceL : 0
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: Theme.panelPad
                 x: Theme.panelPad
@@ -289,10 +272,9 @@ FloatingWindow {
                             required property var modelData
                             required property int index
                             icon: modelData.icon
-                            number: modelData.number
                             label: modelData.label
-                            blurb: modelData.blurb
-                            ruleAbove: !!modelData.gap
+                            blurb: modelData.blurb || ""
+                            gapAbove: !!modelData.gap
                             selected: modelData.isPage && root.currentPage === modelData.page
                             current: root.searchFocused && root.cursor === index
                             onHovered: if (root.searchFocused) root.cursor = index

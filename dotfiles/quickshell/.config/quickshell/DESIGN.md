@@ -207,7 +207,14 @@ Settings') are laid out the same way.
 - **Notes and empty states:** a note under a heading is one line of
   `SettingsNote` (`alert` for a problem); an empty list is a disabled
   `FlyoutRow`, as in the flyouts. No paragraphs.
-- **Sidebar:** the page on show has the accent tick, not a fill; the row
+- **Window frame** (Settings, System, Keybinds; picked 2026-10-11): one
+  title bar line (`WindowHeader`): the accent bar, the name with the
+  hostname quieter after it, Settings' search in the rest of the line, and
+  Close. No eyebrow, no separate search row.
+- **Sidebar:** one line a page (icon and name, no numbers, no SECTIONS
+  heading), groups set apart by a gap. Search hits keep their second line
+  (the page and heading) under a RESULTS count.
+  The page on show has the accent tick, not a fill; the row
   the arrow keys are on (while searching) has the hover fill.
 - A Repeater's Column that holds its own heading and rows sets
   `isSectionGroup: true` and `sectioned`, so its rows get sections as if

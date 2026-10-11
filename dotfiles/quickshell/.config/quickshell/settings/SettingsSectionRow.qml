@@ -1,14 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsSectionRow.qml
 //
-// One row in the Settings window's Sections panel: a two-digit number, the
-// section's icon, a name, and a line under it saying what's there. The same
-// row carries a search hit -- the setting's name over the page and heading
-// it lives on, with that page's icon -- so the list looks the same whether
-// it's the sections or what matched.
+// One row in a window's sidebar (Settings, System): the page's icon and its
+// name, on one line. The same row carries a search hit -- the setting's
+// name over the page and heading it lives on (`blurb`), with that page's
+// icon -- so the list looks the same whether it's the pages or what matched.
 //
-// Sections come in groups, set apart by a rule over each group's first row
-// (`ruleAbove`).
+// Pages come in groups, set apart by a gap over each group's first row
+// (`gapAbove`).
 //
 // Two ways to be lit: `selected` is the page on show (a tick and an
 // accent chevron), `current` is where the arrow keys are while the search
@@ -22,38 +21,28 @@ import "../services"
 Item {
     id: root
 
-    property string number: ""
     property string icon: ""
     property string label: ""
     property string blurb: ""
     property bool selected: false
     property bool current: false
 
-    // a rule over the row, setting it apart from the group above; not part
+    // room over the row, setting it apart from the group above; not part
     // of what lights up or takes the click
-    property bool ruleAbove: false
-    readonly property int ruleSpace: ruleAbove ? Theme.spaceM + Theme.borderWidth : 0
+    property bool gapAbove: false
+    readonly property int gapSpace: gapAbove ? Theme.spaceL : 0
 
     signal clicked()
     signal hovered()
 
     width: parent ? parent.width : 0
     // just clear of the two lines of text, so a long list fits unscrolled
-    implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceS) + ruleSpace
-
-    Rectangle {
-        visible: root.ruleAbove
-        x: Theme.spaceL
-        y: Math.round((root.ruleSpace - height) / 2)
-        width: parent.width - Theme.spaceL * 2
-        height: Theme.borderWidth
-        color: Theme.stroke
-    }
+    implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceS) + gapSpace
 
     Item {
-        y: root.ruleSpace
+        y: root.gapSpace
         width: parent.width
-        height: parent.height - root.ruleSpace
+        height: parent.height - root.gapSpace
 
         Rectangle {
             anchors.fill: parent
@@ -72,22 +61,9 @@ Item {
             color: Theme.accent
         }
 
-        Text {
-            id: num
-            x: Theme.spaceL
-            width: Theme.fs(20)
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.number
-            color: root.selected ? Theme.accent : Theme.subtext
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.fontCaption
-        }
-
         Item {
             id: iconCell
-            anchors.left: num.right
-            anchors.leftMargin: Theme.spaceS
+            x: Theme.spaceL
             width: Theme.iconCell
             height: parent.height
 

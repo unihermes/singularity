@@ -13,8 +13,8 @@
 // once per session). Appearance settings are deliberately not duplicated
 // here -- they live in Settings.
 //
-// Laid out like Settings: the shared WindowHeader, then two framed panels
-// -- the numbered Sections on the left, the open page on the right. The
+// Laid out like Settings: the shared one-line WindowHeader, then two framed
+// panels -- the pages on the left, the open page on the right. The
 // ground and Escape are a bare WindowChrome.qml, and the window opens at
 // Theme.windowSize, the same size as Settings.
 //
@@ -75,16 +75,16 @@ FloatingWindow {
     // in groups: the summary, what's running, where things live, the
     // machine itself. `gap` starts a group.
     readonly property var pages: [
-        { id: "overview",  label: "Overview",  icon: "󰍹", blurb: "Health at a glance",       source: "system/PageOverview.qml" },
-        { id: "health",    label: "Health",    icon: "󰓙", blurb: "Problems and fixes", source: "system/PageHealth.qml" },
-        { id: "cpu",       label: "CPU",       icon: "󰻠", blurb: "Load, cores and clocks",   source: "system/PageCpu.qml", gap: true },
-        { id: "memory",    label: "Memory",    icon: "󰘚", blurb: "RAM, swap and zram",       source: "system/PageMemory.qml" },
-        { id: "processes", label: "Processes", icon: "󰅐", blurb: "What's running",           source: "system/PageProcesses.qml" },
-        { id: "storage",   label: "Storage",   icon: "󰋊", blurb: "Disks and mounts",         source: "system/PageStorage.qml", gap: true },
-        { id: "network",   label: "Network",   icon: "󰖩", blurb: "Links and throughput",     source: "system/PageNetwork.qml" },
-        { id: "power",     label: "Power",     icon: "󰂄", blurb: "Battery and profile",      source: "system/PagePower.qml" },
-        { id: "hardware",  label: "Hardware",  icon: "󰢻", blurb: "Devices and sensors",      source: "system/PageHardware.qml", gap: true },
-        { id: "config",    label: "Config",    icon: "󰈔", blurb: "The files behind it all",  source: "system/PageConfig.qml" },
+        { id: "overview",  label: "Overview",  icon: "󰍹", source: "system/PageOverview.qml" },
+        { id: "health",    label: "Health",    icon: "󰓙", source: "system/PageHealth.qml" },
+        { id: "cpu",       label: "CPU",       icon: "󰻠", source: "system/PageCpu.qml", gap: true },
+        { id: "memory",    label: "Memory",    icon: "󰘚", source: "system/PageMemory.qml" },
+        { id: "processes", label: "Processes", icon: "󰅐", source: "system/PageProcesses.qml" },
+        { id: "storage",   label: "Storage",   icon: "󰋊", source: "system/PageStorage.qml", gap: true },
+        { id: "network",   label: "Network",   icon: "󰖩", source: "system/PageNetwork.qml" },
+        { id: "power",     label: "Power",     icon: "󰂄", source: "system/PagePower.qml" },
+        { id: "hardware",  label: "Hardware",  icon: "󰢻", source: "system/PageHardware.qml", gap: true },
+        { id: "config",    label: "Config",    icon: "󰈔", source: "system/PageConfig.qml" },
     ]
     function select(id) {
         currentPage = id
@@ -100,9 +100,8 @@ FloatingWindow {
     WindowHeader {
         id: header
         window: root
-        eyebrow: "MACHINE STATUS"
         title: "System"
-        subtitle: (SystemSpecs.hostname || "--") + " / " + (SystemSpecs.distro || "Linux")
+        subtitle: (SystemSpecs.hostname || "--") + " · " + (SystemSpecs.distro || "Linux")
     }
 
     // --- panels ------------------------------------------------------------
@@ -124,17 +123,8 @@ FloatingWindow {
             width: root.sidebarWidth
             height: parent.height
 
-            FlyoutHeading {
-                id: listHeading
-                x: Theme.panelPad
-                y: Theme.panelPad
-                width: parent.width - Theme.panelPad * 2
-                text: "SECTIONS"
-            }
-
             Column {
-                anchors.top: listHeading.bottom
-                anchors.topMargin: Theme.spaceL
+                y: Theme.panelPad
                 x: Theme.panelPad
                 width: parent.width - Theme.panelPad * 2
                 spacing: 0
@@ -144,12 +134,9 @@ FloatingWindow {
 
                     SettingsSectionRow {
                         required property var modelData
-                        required property int index
-                        number: (index < 9 ? "0" : "") + (index + 1)
                         icon: modelData.icon
                         label: modelData.label
-                        blurb: modelData.blurb
-                        ruleAbove: !!modelData.gap
+                        gapAbove: !!modelData.gap
                         selected: root.currentPage === modelData.id
                         onClicked: root.select(modelData.id)
                     }
