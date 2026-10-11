@@ -16,6 +16,9 @@
 // old order. The empty spacer Item a page puts before the next heading
 // stays, so folded sections keep their gaps.
 //
+// `control` puts a control at the rule's far end, on the heading's line: a
+// flyout's radio switch, a scan button. A heading with one doesn't fold.
+//
 // `crumb` names the page above this one ("CONTROL CENTRE › APPEARANCE"):
 // it's drawn quieter before the text, and a click on it is the way back
 // (crumbClicked), so a submenu needs no Back row.
@@ -43,10 +46,11 @@ Item {
     property var hints: []
     property string crumb: ""
     signal crumbClicked()
+    property Component control: null
 
     readonly property bool isFlyoutHeading: true
     readonly property bool collapsible: mirrorOf ? mirrorOf.collapsible
-        : hints.length === 0 && headingsBeside() > 0
+        : hints.length === 0 && control === null && headingsBeside() > 0
     readonly property bool collapsed: mirrorOf ? mirrorOf.collapsed
         : holder.children.length > 0 || folding
 
@@ -59,7 +63,7 @@ Item {
     property bool folding: false
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.headingHeight + (asTitle ? Theme.spaceS : 0) + sectionRoom * (firstInColumn ? 1 : 2)
+    implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + (asTitle ? Theme.spaceS : 0) + sectionRoom * (firstInColumn ? 1 : 2)
 
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
@@ -272,8 +276,8 @@ Item {
         visible: Theme.headingRule && !root.asTitle
         anchors.left: label.right
         anchors.leftMargin: Theme.spaceL
-        anchors.right: chevron.visible ? chevron.left : hintRow.left
-        anchors.rightMargin: root.hints.length > 0 || chevron.visible ? Theme.spaceL : 0
+        anchors.right: controlBox.active ? controlBox.left : chevron.visible ? chevron.left : hintRow.left
+        anchors.rightMargin: root.hints.length > 0 || chevron.visible || controlBox.active ? Theme.spaceL : 0
         anchors.verticalCenter: label.verticalCenter
         height: Theme.borderWidth
         // Corners' dashed option draws it as dashes instead
@@ -342,6 +346,15 @@ Item {
                 root.toggle()
             }
         }
+    }
+
+    Loader {
+        id: controlBox
+        active: root.control !== null
+        sourceComponent: root.control
+        anchors.right: closeBox.visible ? closeBox.left : parent.right
+        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
+        anchors.verticalCenter: label.verticalCenter
     }
 
     // the title bar's close box

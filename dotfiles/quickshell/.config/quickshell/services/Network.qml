@@ -97,6 +97,12 @@ Singleton {
         connectProc.running = true
     }
 
+    // Leaves the network without forgetting it; iwd won't rejoin it by itself
+    // until it's picked again or the radio comes back.
+    function disconnect() {
+        if (device !== "") Quickshell.execDetached(["iwctl", "station", device, "disconnect"])
+    }
+
     // Drops the saved passphrase, so iwd stops auto-joining it. Forgetting
     // the network you're on disconnects it too.
     function forget(name) {

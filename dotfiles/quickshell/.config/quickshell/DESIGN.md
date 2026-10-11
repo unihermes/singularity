@@ -143,6 +143,18 @@ Output, Input and Apps tabs (a `FlyoutSegmented`), from the looks mockups
 mute; Apps is each playing app with its own level, a click on its name
 muting it. The name helpers are `Audio`'s, shared with the Audio page.
 
+### Network and Bluetooth flyouts
+
+Picked 2026-10-11. The radio's switch sits on the flyout's heading
+(`FlyoutHeading.control`). Network: the joined network is a `HeadCard`
+(strength glyph, name as written, Secured · Strong), with Disconnect on it
+while pointed at; NEARBY (count, Rescan as a turning `IconButton` on the
+heading) lists the five strongest others, then Show all N into Settings.
+Bluetooth: DEVICES (count, Scan on the heading) lists paired devices, then
+up to five new ones; each row has its type icon, the battery once
+connected, and Connected / Not connected, which pointing turns into a
+Connect or Disconnect chip. Removing a device is the Settings page's.
+
 ### Brightness flyout
 
 Each bar's brightness module is the monitor under it: over DDC/CI when the

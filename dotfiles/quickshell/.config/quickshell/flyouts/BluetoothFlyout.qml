@@ -1,7 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BluetoothFlyout.qml
 //
-// Split out of shell.qml. Needs bar's adapter-state helpers.
+// The radio switch on the heading, then DEVICES -- what you've paired, then
+// anything new the scan turned up -- with Scan on that heading. Needs bar's
+// adapter-state helpers.
 
 import Quickshell
 import Quickshell.Bluetooth
@@ -15,7 +17,7 @@ FlyoutPanel {
 
     required property var bar
 
-    // Discovery is started only by the Scan row, never by opening
+    // Discovery is started only by the Scan button, never by opening
     // the panel: it keeps the radio busy and churns the list, and
     // most visits here are to connect something already paired.
     // Closing still stops it, so a scan can't be left running.
@@ -25,32 +27,27 @@ FlyoutPanel {
         if (bar.btAdapterOn(a)) a.discovering = false
     }
 
-    FlyoutHeading { text: "BLUETOOTH" }
+    readonly property var adapter: Bluetooth.defaultAdapter
+    readonly property bool radioOn: bar.btAdapterOn(adapter)
 
-    // the radio, as a switch like the Settings page's
-    FlyoutAction {
-        readonly property var adapter: Bluetooth.defaultAdapter
-        icon: bar.btAdapterOn(adapter) ? "󰂯" : "󰂲"
-        label: "Bluetooth"
-        status: !adapter ? "No adapter"
-            : bar.btAdapterBlocked(adapter) ? "Blocked by rfkill" : ""
-        enabled: !!adapter && !bar.btAdapterBlocked(adapter)
-        checked: bar.btAdapterOn(adapter)
-        onActivated: bar.setBtPowered(adapter, !bar.btAdapterOn(adapter))
+    FlyoutHeading {
+        text: "BLUETOOTH"
+        control: btFlyout.adapter && !bar.btAdapterBlocked(btFlyout.adapter) ? radioSwitch : null
     }
 
-    FlyoutRow {
-        readonly property var adapter: Bluetooth.defaultAdapter
-        // discovery is meaningless with the radio off, and bluez
-        // errors rather than ignoring the request
-        visible: bar.btAdapterOn(adapter)
-        label: (adapter && adapter.discovering) ? "Scanning…" : "Scan"
-        trailing: (adapter && adapter.discovering) ? "stop" : ""
-        pulsing: !!adapter && adapter.discovering
-        onActivated: {
-            var a = Bluetooth.defaultAdapter
-            if (bar.btAdapterOn(a)) a.discovering = !a.discovering
+    Component {
+        id: radioSwitch
+        Switch {
+            checked: btFlyout.radioOn
+            onToggled: bar.setBtPowered(btFlyout.adapter, !btFlyout.radioOn)
         }
+    }
+
+    // why there's no switch
+    FlyoutRow {
+        visible: !btFlyout.adapter || bar.btAdapterBlocked(btFlyout.adapter)
+        enabled: false
+        label: !btFlyout.adapter ? "No adapter" : "Blocked by rfkill"
     }
 
     // BlueZ hands back everything the radio hears -- here ~27
@@ -89,42 +86,40 @@ FlyoutPanel {
         return !d.paired && !d.connected && btFlyout.btKeep(d)
     }))
 
-    readonly property int hiddenCount: btAll().filter(function(d) {
-        return !d.paired && !d.connected && !btFlyout.btKeep(d)
-    }).length
-
     FlyoutHeading {
-        text: "SAVED"
-        visible: btFlyout.saved.length > 0
+        visible: btFlyout.radioOn
+        text: "DEVICES" + (btFlyout.saved.length > 0 ? "  " + btFlyout.saved.length : "")
+        control: scanButton
+    }
+
+    // Discovery is meaningless with the radio off, and bluez errors rather
+    // than ignoring the request, so the button only shows with it on.
+    Component {
+        id: scanButton
+        IconButton {
+            icon: "󰑐"
+            spinning: btFlyout.adapter && btFlyout.adapter.discovering
+            onClicked: btFlyout.adapter.discovering = !btFlyout.adapter.discovering
+        }
     }
 
     // ScriptModels, not the bare arrays: each change during a scan makes a
     // fresh array, which would rebuild every row
     Repeater {
-        model: ScriptModel { values: btFlyout.saved }
+        model: ScriptModel { values: btFlyout.radioOn ? btFlyout.saved : [] }
         BtDeviceRow { required property var modelData; device: modelData }
     }
 
-    FlyoutHeading {
-        text: "NEARBY"
-        visible: btFlyout.nearby.length > 0
-    }
-
+    // what the scan found, under the saved ones
     Repeater {
-        model: ScriptModel { values: btFlyout.nearby.slice(0, 10) }
+        model: ScriptModel { values: btFlyout.radioOn ? btFlyout.nearby.slice(0, 5) : [] }
         BtDeviceRow { required property var modelData; device: modelData }
     }
 
     FlyoutRow {
-        label: "No devices"
+        label: btFlyout.adapter && btFlyout.adapter.discovering ? "Looking for devices…" : "No devices yet; scan to look"
         enabled: false
-        visible: btFlyout.saved.length === 0 && btFlyout.nearby.length === 0
-    }
-
-    FlyoutRow {
-        label: "+ " + btFlyout.hiddenCount + " unnamed"
-        enabled: false
-        visible: btFlyout.hiddenCount > 0
+        visible: btFlyout.radioOn && btFlyout.saved.length === 0 && btFlyout.nearby.length === 0
     }
 
     FlyoutDivider {}

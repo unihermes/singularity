@@ -12,6 +12,7 @@
 // process table's, shared with its hint line) sets `armed` instead.
 //
 // `lit` shows the glyph in the accent, for one that toggles a state (mute).
+// `spinning` turns the glyph while something it started runs (a scan).
 
 import QtQuick
 import "../services"
@@ -24,6 +25,7 @@ Rectangle {
     property bool confirm: false
     property bool armed: confirm && disarm.running
     property bool lit: false
+    property bool spinning: false
 
     signal clicked()
 
@@ -46,12 +48,22 @@ Rectangle {
     }
 
     Text {
+        id: glyph
         anchors.centerIn: parent
         text: root.armed ? "󰄬" : root.icon
         color: root.armed ? Theme.base : root.lit ? Theme.accent
             : mouse.containsMouse ? Theme.textStrong : Theme.subtext
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontIconSize
+    }
+
+    RotationAnimation {
+        target: glyph
+        running: root.spinning
+        loops: Animation.Infinite
+        from: 0; to: 360
+        duration: Theme.durPulse * 2
+        onRunningChanged: if (!running) glyph.rotation = 0
     }
 
     Timer { id: disarm; interval: 3000 }
