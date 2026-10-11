@@ -508,6 +508,24 @@ local function setProp(addr, prop, value)
     hl.dispatch(hl.dsp.window.set_prop({ prop = prop, value = value, window = addr }))
 end
 
+-- A window's tags as a list: Hyprland hands over a lone tag as a string.
+local function tagsOf(w)
+    return type(w.tags) == "table" and w.tags or { w.tags }
+end
+
+-- Tells the shell to re-read the windows, whose tags it shows (the window
+-- strip, the show-desktop button) but isn't told of. Once per tick, since
+-- one event can change several windows and each call starts a `qs`.
+local notifyPending = false
+local function notifyShell()
+    if notifyPending then return end
+    notifyPending = true
+    hl.timer(function()
+        notifyPending = false
+        hl.exec_cmd("qs ipc call desktop changed")
+    end, { timeout = 1, type = "oneshot" })
+end
+
 -- Sizes and places a floater at r = {x, y, w, h}: animated with the
 -- windows curve, or in one jump. Hyprland reads no_anim when it next draws,
 -- not when the move is dispatched, so the jump holds it for a moment before
@@ -555,10 +573,10 @@ local function restoreMinimized(win, instant)
     local addr = "address:" .. win.address
     hl.dispatch(hl.dsp.window.tag({ tag = "-" .. minimizedTag(saved), window = addr }))
     -- hidden by show desktop: the bar's button reads the tag
-    for _, t in ipairs(type(win.tags) == "table" and win.tags or { win.tags }) do
+    for _, t in ipairs(tagsOf(win)) do
         if t == "showdesktop" then
             hl.dispatch(hl.dsp.window.tag({ tag = "-showdesktop", window = addr }))
-            hl.exec_cmd("qs ipc call desktop changed")
+            notifyShell()
             break
         end
     end
@@ -1084,7 +1102,7 @@ local function setBlocked(ownerAddr, on)
     if not hl.get_window(addr) then return end
     setProp(addr, "no_focus", on and "1" or "0")
     hl.dispatch(hl.dsp.window.tag({ tag = (on and "+" or "-") .. "blocked", window = addr }))
-    hl.exec_cmd("qs ipc call desktop changed")
+    notifyShell()
 end
 
 local function blockOwner(popAddr, ownerAddr)
@@ -1116,7 +1134,7 @@ end
 
 do
     for _, w in ipairs(hl.get_windows()) do
-        for _, t in ipairs(type(w.tags) == "table" and w.tags or { w.tags }) do
+        for _, t in ipairs(tagsOf(w)) do
             local o = tostring(t):match("^owner_(.+)$")
             if o and hl.get_window("address:" .. o) then popoutOwner[w.address] = o end
         end
@@ -1178,7 +1196,7 @@ holdPopup = function(win)
     -- the window strip lists it under the window it came from
     hl.dispatch(hl.dsp.window.tag({ tag = "+from_" .. owner.address, window = addr }))
     if ruled then
-        hl.exec_cmd("qs ipc call desktop changed")
+        notifyShell()
         local mon = win.monitor or hl.get_active_monitor()
         local area = mon and fillArea(win, mon)
         if area and popupOpts.block and ownerMain and win.size.x <= area.w * 0.85 and win.size.y <= area.h * 0.85 then
@@ -1192,7 +1210,7 @@ holdPopup = function(win)
     hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
     hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = addr }))
     hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = addr }))
-    hl.exec_cmd("qs ipc call desktop changed")
+    notifyShell()
 
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
@@ -1265,14 +1283,14 @@ local function promotePopout(win)
         hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = addr }))
     end
     hl.dispatch(hl.dsp.window.tag({ tag = "+promoted", window = addr }))
-    for _, t in ipairs(type(win.tags) == "table" and win.tags or { win.tags }) do
+    for _, t in ipairs(tagsOf(win)) do
         if tostring(t):match("^from_") then hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = addr })) end
     end
     stateOf(win.address).popoutKey = nil
     if monocleOn(win.workspace) then
         hl.dispatch(hl.dsp.window.tag({ tag = hasTag(win, "rule-fill") and "+monocle" or "+natural", window = addr }))
     end
-    hl.exec_cmd("qs ipc call desktop changed")
+    notifyShell()
     return hl.get_window(addr) or win
 end
 
@@ -1538,10 +1556,10 @@ end)
 -- Dialogs stay over the window they came from. Every monocle window is a
 -- floater, and maximizeFocused raises whichever one you focus, so a click
 -- off a file chooser or a sign-in popup onto the app behind it -- or
--- ALT+Tab back to the app -- used to bury the dialog under it, where only
--- ALT+Tab could find it again. As on Windows and macOS, an app's dialogs
--- now come up with it: whenever a window is focused, its dialogs are raised
--- over it, nested ones over theirs. Focus stays where you clicked.
+-- ALT+Tab back to the app -- would bury the dialog under it. As on Windows
+-- and macOS, an app's dialogs come up with it instead: whenever a window is
+-- focused, its dialogs are raised over it, nested ones over theirs. Focus
+-- stays where you clicked.
 --
 -- Hyprland keeps an X11 dialog over its parent itself but not a Wayland
 -- one, and Lua isn't told a window's parent, so the owner is worked out as
@@ -1563,13 +1581,12 @@ local function adoptDialog(addr)
     if not owner or owner.address == addr then return end
     if owner.pid ~= win.pid and not isPrompt(win.class) then return end
     dialogOwner[addr] = owner.address
-    -- the bar's open-windows strip folds popouts into one icon; tags
-    -- aren't announced, so it's told to look again
-    -- and as a dialog it's no natural window for SUPER+M to tile
+    -- as a dialog it's no natural window for SUPER+M to tile
     hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = "address:" .. addr }))
+    -- the window strip lists popouts under the window they came from
     if not hasTag(win, "popout") then
         hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = "address:" .. addr }))
-        hl.exec_cmd("qs ipc call desktop changed")
+        notifyShell()
     end
 end
 
@@ -2043,7 +2060,7 @@ end
 
 -- after a reload: the parked windows from the tag, then the stacks afresh
 for _, w in ipairs(hl.get_windows()) do
-    for _, t in ipairs(type(w.tags) == "table" and w.tags or { w.tags }) do
+    for _, t in ipairs(tagsOf(w)) do
         local x, y, pw, ph = tostring(t):match("^parked_(%-?%d+)_(%-?%d+)_(%d+)_(%d+)$")
         if x then
             stateOf(w.address).parked = { x = tonumber(x), y = tonumber(y), w = tonumber(pw), h = tonumber(ph) }
@@ -2106,7 +2123,7 @@ function singularityShowDesktop()
     hl.timer(function()
         for _, w in ipairs(touched) do setProp("address:" .. w.address, "no_anim", "0") end
     end, { timeout = 30, type = "oneshot" })
-    hl.exec_cmd("qs ipc call desktop changed")
+    notifyShell()
 end
 
 -- After a reload, windows SUPER+C hid get their windowState back from the
@@ -2115,7 +2132,7 @@ end
 -- placed on the monitor they're on.
 for _, w in ipairs(hl.get_windows()) do
     if w.monitor and isMonocleWin(w) then stateOf(w.address).placedOn = w.monitor.id end
-    for _, t in ipairs(type(w.tags) == "table" and w.tags or { w.tags }) do
+    for _, t in ipairs(tagsOf(w)) do
         local fx, fy, fw, fh = tostring(t):match("^shape_(%d+)_(%d+)_(%d+)_(%d+)$")
         if fx then
             stateOf(w.address).shape = { fx = fx / 1000, fy = fy / 1000, fw = fw / 1000, fh = fh / 1000 }
