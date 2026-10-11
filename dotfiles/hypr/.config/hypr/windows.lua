@@ -370,7 +370,11 @@ do
             end
             if r.pin then rule.pin = true end
             local ws = tonumber(r.workspace)
-            if ws and ws >= 1 and ws <= S.maxWorkspaces then rule.workspace = tostring(math.floor(ws)) end
+            if ws and ws >= 1 and ws <= S.maxWorkspaces then
+                rule.workspace = tostring(math.floor(ws))
+                -- so followOwner leaves it where the entry put it
+                hl.window_rule({ name = name .. "-ws", match = match, tag = "+rule-ws" })
+            end
             local applied = hl.window_rule(rule)
             -- an entry by title is for an app's popups: one icon in the bar
             if match.title then
@@ -1164,22 +1168,18 @@ hl.on("window.close", function(win)
     end
 end)
 
-holdPopup = function(win)
-    if not win or knownWindows[win.address] then return end
-    knownWindows[win.address] = true
-    if not win.class or win.class == "" or win.class == "org.quickshell" or win.class == SCRATCH_CLASS then return end
-    if not win.floating or win.pinned or not monocleOn(win.workspace) then return end
-    -- A Window Rules entry's window places itself; one the entry marks as a
-    -- popout (a file or settings dialog) still blocks its owner.
-    if hasTag(win, "rule-full") then return end
-    local ruled = hasTag(win, "rule-float")
-    if ruled and not hasTag(win, "popout") then return end
-    if launchWaiting and not ruled then
-        launchWaiting = false
-        return
-    end
-    -- its owner: the app's most recently used window, one of its main ones
-    -- if it has any
+-- Whether a window is on the workspace in front of you -- the focused
+-- monitor's, or the scratchpad when it's shown over it -- where a new
+-- window maps. Focusing one that isn't would switch to it.
+local function onActiveWorkspace(win)
+    local mon = hl.get_active_monitor()
+    local active = mon and (mon.active_special_workspace or mon.active_workspace)
+    return win.workspace and active and win.workspace.id == active.id
+end
+
+-- The window a new one came from: the app's most recently used window, one
+-- of its main ones if it has any. Returns it and whether it's a main one.
+local function popoutOwnerOf(win)
     local owner, ownerMain
     for _, w in ipairs(hl.get_windows()) do
         if w.pid == win.pid and w.address ~= win.address and w.mapped then
@@ -1190,6 +1190,42 @@ holdPopup = function(win)
             end
         end
     end
+    return owner, ownerMain
+end
+
+-- A window an app opens by itself goes to the workspace of the window it
+-- came from, not the one you're on: a dialog from an app on another
+-- workspace waits there with it, silently, instead of covering what you're
+-- doing. Not one a bind or the launcher just asked for (markLaunch), a
+-- pinned one, or one a Window Rules entry sends to a workspace of its own.
+-- Returns the window as it is after the move.
+local function followOwner(win)
+    if launchWaiting or win.pinned or hasTag(win, "rule-ws") or not onActiveWorkspace(win) then return win end
+    local owner = popoutOwnerOf(win)
+    local ws = owner and owner.workspace
+    if not ws or ws.id == win.workspace.id then return win end
+    local special = ws.name and ws.name:find("^special:")
+    hl.dispatch(hl.dsp.window.move({ workspace = special and ws.name or ws.id,
+        window = "address:" .. win.address, follow = false }))
+    return hl.get_window("address:" .. win.address) or win
+end
+
+holdPopup = function(win)
+    if not win or knownWindows[win.address] then return end
+    knownWindows[win.address] = true
+    if not win.class or win.class == "" or win.class == "org.quickshell" or win.class == SCRATCH_CLASS then return end
+    win = followOwner(win)
+    if not win.floating or win.pinned or not monocleOn(win.workspace) then return end
+    -- A Window Rules entry's window places itself; one the entry marks as a
+    -- popout (a file or settings dialog) still blocks its owner.
+    if hasTag(win, "rule-full") then return end
+    local ruled = hasTag(win, "rule-float")
+    if ruled and not hasTag(win, "popout") then return end
+    if launchWaiting and not ruled then
+        launchWaiting = false
+        return
+    end
+    local owner, ownerMain = popoutOwnerOf(win)
     if not owner then return end
 
     local addr = "address:" .. win.address
@@ -1201,7 +1237,7 @@ holdPopup = function(win)
         local area = mon and fillArea(win, mon)
         if area and popupOpts.block and ownerMain and win.size.x <= area.w * 0.85 and win.size.y <= area.h * 0.85 then
             blockOwner(win.address, owner.address)
-            hl.dispatch(hl.dsp.focus({ window = addr }))
+            if onActiveWorkspace(win) then hl.dispatch(hl.dsp.focus({ window = addr })) end
         end
         return
     end
@@ -1249,7 +1285,7 @@ holdPopup = function(win)
     moveTo(addr, { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) })
     if popupOpts.block and dialogSized and ownerMain then
         blockOwner(win.address, owner.address)
-        hl.dispatch(hl.dsp.focus({ window = addr }))
+        if onActiveWorkspace(win) then hl.dispatch(hl.dsp.focus({ window = addr })) end
     end
 end
 
@@ -1359,10 +1395,11 @@ local function onMonocleOpen(win)
     -- Only then: on the active workspace the rules were right, and a
     -- window's state isn't settled yet (Quickshell's windows map before
     -- their class and float land, and looked like tiled apps).
-    local on = monocleOn(win.workspace)
-    local active = hl.get_active_workspace()
-    local elsewhere = win.workspace and active and win.workspace.id ~= active.id
+    -- Fetched again: followOwner may have just moved it.
     local fresh = hl.get_window("address:" .. win.address) or win
+    local on = monocleOn(fresh.workspace)
+    local active = hl.get_active_workspace()
+    local elsewhere = fresh.workspace and active and fresh.workspace.id ~= active.id
     if elsewhere and on ~= inMonocleState(fresh) and not (on and isMonocleExempt(fresh)) then
         setWindowMonocle(fresh, on, fresh.monitor)
         if not on then return end
