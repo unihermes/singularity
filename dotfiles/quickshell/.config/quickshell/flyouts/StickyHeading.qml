@@ -63,6 +63,7 @@ Item {
             x: root.columnX
             width: root.column.width
             text: root.current ? root.current.text : ""
+            asWritten: root.current ? root.current.asWritten : ""
             mirrorOf: root.current
             onMirrorToggled: {
                 var h = root.current

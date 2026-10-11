@@ -37,6 +37,9 @@ Item {
     id: root
 
     property string text: ""
+    // a name after the text, shown as written whatever the heading case
+    // (a network's name, which is case-sensitive)
+    property string asWritten: ""
     property var hints: []
     property string crumb: ""
     signal crumbClicked()
@@ -256,7 +259,7 @@ Item {
         anchors.leftMargin: crumbRow.visible ? Theme.spaceXs : prefix.visible ? Theme.spaceM : 0
         anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
         anchors.verticalCenterOffset: root.asTitle ? 0 : root.lift
-        text: Theme.heading(root.text)
+        text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "")
         color: root.titleInk
         font.family: Theme.fontHeading
         font.pixelSize: Theme.fontSmall

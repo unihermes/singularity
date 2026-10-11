@@ -27,11 +27,11 @@ FlyoutPanel {
     }
 
     FlyoutHeading {
-        text: netFlyout.pendingSsid !== ""
-            ? "PASSPHRASE"
-            : Network.ssid !== "" ? "NETWORK  " + Network.ssid
+        text: netFlyout.pendingSsid !== "" ? "PASSPHRASE"
+            : Network.ssid !== "" ? "NETWORK"
             : Network.wired ? "NETWORK  Ethernet"
             : "NETWORK  offline"
+        asWritten: netFlyout.pendingSsid === "" ? Network.ssid : ""
     }
 
     // --- passphrase prompt ---
@@ -91,7 +91,6 @@ FlyoutPanel {
     FlyoutRow {
         visible: netFlyout.pendingSsid === "" && Network.powered
         label: Network.scanning ? "Scanning…" : "Rescan"
-        trailing: Network.device
         busy: Network.scanning
         onActivated: Network.scan()
     }

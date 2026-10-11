@@ -35,8 +35,13 @@ FlyoutPanel {
     }
 
     function wsName(id) {
-        // special and named workspaces have negative ids
-        if (id < 0) return "Special"
+        // special workspaces have negative ids and go by their name:
+        // "special:scratchpad" reads Scratchpad
+        if (id < 0) {
+            var ws = Hyprland.workspaces.values.find(w => w.id === id)
+            var name = ws ? String(ws.name).replace(/^special:/, "") : ""
+            return name ? name.charAt(0).toUpperCase() + name.slice(1) : "Special"
+        }
         if (Theme.workspaceStyle === "roman")
             return ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][id - 1] || String(id)
         return String(id)

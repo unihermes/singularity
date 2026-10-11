@@ -142,7 +142,7 @@ FlyoutPanel {
     FlyoutRow {
         label: Weather.fetching ? "Refreshing…"
             : Weather.failed ? "Update failed, try again" : "Refresh"
-        trailing: Weather.updated ? Qt.formatTime(Weather.updated, Theme.timeFormat) : ""
+        trailing: Weather.updated ? "Updated " + Qt.formatTime(Weather.updated, Theme.timeFormat) : ""
         busy: Weather.fetching
         alert: Weather.failed && !Weather.fetching
         onActivated: Weather.refresh()

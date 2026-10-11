@@ -45,7 +45,7 @@ FlyoutPanel {
         // errors rather than ignoring the request
         visible: bar.btAdapterOn(adapter)
         label: (adapter && adapter.discovering) ? "Scanning…" : "Scan"
-        trailing: (adapter && adapter.discovering) ? "stop" : adapter ? adapter.adapterId : ""
+        trailing: (adapter && adapter.discovering) ? "stop" : ""
         pulsing: !!adapter && adapter.discovering
         onActivated: {
             var a = Bluetooth.defaultAdapter
