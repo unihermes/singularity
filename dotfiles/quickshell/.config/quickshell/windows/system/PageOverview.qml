@@ -81,7 +81,7 @@ SystemPage {
             historyFloor: 30
             historyCeiling: 100
             detail: SystemStats.sensors.length > 1
-                ? "CPU package · " + SystemStats.sensors.length + " sensors"
+                ? "CPU · " + SystemStats.sensors.length + " sensors"
                 : SystemStats.tempC >= 0 ? "CPU package" : "no sensor"
             onActivated: page.go("hardware")
         }
@@ -101,9 +101,11 @@ SystemPage {
                 : SystemStats.diskSize > 0 && SystemStats.diskUsed / SystemStats.diskSize >= 0.9
             history: SystemStats.batNowWh > 0 ? SystemStats.batHistory : []
             detail: SystemStats.batNowWh > 0
-                ? (SystemStats.batCharging ? "charging" : "on battery")
+                // short enough for a quarter-width card: the time, then the draw
+                ? (SystemStats.batHours > 0
+                    ? Format.duration(SystemStats.batHours * 3600) + (SystemStats.batCharging ? " to full" : " left")
+                    : SystemStats.batCharging ? "charging" : "on battery")
                   + (SystemStats.batWatts > 0 ? " · " + SystemStats.batWatts.toFixed(1) + " W" : "")
-                  + (SystemStats.batHours > 0 ? " · " + Format.duration(SystemStats.batHours * 3600) + " left" : "")
                 : SystemStats.diskSize > 0
                     ? Format.bytes(SystemStats.diskSize - SystemStats.diskUsed) + " free" : "--"
             onActivated: page.go(SystemStats.batNowWh > 0 ? "power" : "storage")

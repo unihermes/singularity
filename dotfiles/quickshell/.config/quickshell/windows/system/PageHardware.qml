@@ -104,7 +104,11 @@ SystemPage {
         FlyoutRow {
             required property var modelData
             leadingIcon: "󰍹"
-            label: modelData.description || modelData.name
+            // named as the Display page names it: a laptop's panel by what
+            // it is, a monitor by its model unless that's a hex code
+            label: /^(eDP|LVDS|DSI)-/.test(modelData.name) ? "Built-in display"
+                : modelData.model && !/^0x/i.test(modelData.model) ? modelData.model
+                : modelData.description || modelData.name
             note: modelData.name
             trailing: modelData.width + "×" + modelData.height + " @ " + modelData.hz + " Hz"
                 + (modelData.scale && modelData.scale !== 1 ? " · ×" + Number(modelData.scale).toFixed(2) : "")

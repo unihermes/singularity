@@ -576,6 +576,26 @@ Singleton {
     // ACPI zone, and knowing which one is hot is the whole point of a
     // sensor list. A sweep rather than a FileView each, because the set of
     // nodes isn't known until it's walked.
+    // hwmon's names in words: a chip by what it's on, a label the driver
+    // left as temp2 / fan1 as Sensor 2 / Fan 1
+    function chipName(c) {
+        if (c === "coretemp" || c === "k10temp" || c === "zenpower") return "CPU"
+        if (c === "nvme") return "SSD"
+        if (/^iwlwifi|^mt7|^ath/.test(c)) return "Wi-Fi card"
+        if (/^BAT/.test(c)) return "battery"
+        if (c === "amdgpu" || c === "nouveau" || c === "i915" || c === "xe") return "GPU"
+        if (c === "acpitz") return "ACPI zone"
+        if (/^dell_/.test(c)) return "Dell firmware"
+        return c
+    }
+    function sensorLabel(l) {
+        if (l === "Package id 0") return "CPU package"
+        if (l === "temp") return "Sensor"
+        if (/^temp\d+$/.test(l)) return "Sensor " + l.slice(4)
+        if (/^fan\d+$/.test(l)) return "Fan " + l.slice(3)
+        return l
+    }
+
     Process {
         id: sensorProc
         command: ["sh", "-c",
@@ -601,6 +621,18 @@ Singleton {
                     // showing; one with no tacho reads as a missing file
                     else fans.push({ chip: f[1], label: f[2], rpm: v })
                 }
+                // a label several sensors on one chip share (the Dell
+                // firmware's five Ambients) is numbered, in the chip's order
+                var seen = ({}), total = ({})
+                temps.forEach(t => total[t.chip + "|" + t.label] = (total[t.chip + "|" + t.label] || 0) + 1)
+                temps.forEach(t => {
+                    var k = t.chip + "|" + t.label
+                    if (total[k] > 1) t.label += " " + (seen[k] = (seen[k] || 0) + 1)
+                })
+                temps.concat(fans).forEach(t => {
+                    t.label = root.sensorLabel(t.label)
+                    t.chip = root.chipName(t.chip)
+                })
                 temps.sort((a, b) => b.c - a.c)
                 root.sensors = temps
                 root.fans = fans
