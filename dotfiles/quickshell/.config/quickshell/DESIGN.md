@@ -164,6 +164,16 @@ Check now, or Update now while there are some. Notifications empty is a
 card (All caught up); with history, Clear all is a chip on the heading,
 two clicks. Actions that can't do anything aren't shown.
 
+### Power menu and workspace grid
+
+Picked 2026-10-11. The power menu's list style is large rows: the icon at
+title size, the action over a line saying what it does, the key in a
+keycap at the end. The workspace grid (SUPER+W) is a card per workspace
+with windows, each window a row with its app icon and name and the title
+quieter after; a special workspace with windows (the scratchpad) has its
+own card, and the empty workspaces fold into one card of numbers, each
+still a jump and a drop target.
+
 ### Brightness flyout
 
 Each bar's brightness module is the monitor under it: over DDC/CI when the

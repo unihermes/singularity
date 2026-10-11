@@ -2,7 +2,8 @@
 // ~/.config/quickshell/flyouts/PowerMenu.qml
 //
 // SUPER+SHIFT+E: lock, suspend, log out, reboot or shut down, centred on the
-// focused monitor. Arrows and Enter pick one, each action's letter runs it
+// focused monitor -- as a row of tiles, or a list of large rows each saying
+// what it does (Theme.powerStyle). Arrows and Enter pick one, each action's letter runs it
 // straight away, Escape or a click outside closes. The same actions as the
 // Control Centre's Power page (services/Session.qml).
 
@@ -106,7 +107,7 @@ OverlayWindow {
             Grid {
                 id: row
                 columns: root.list ? 1 : root.actions.length
-                spacing: root.list ? Theme.spaceXs : root.full ? Theme.spaceXl : Theme.spaceL
+                spacing: root.list ? Theme.spaceS : root.full ? Theme.spaceXl : Theme.spaceL
 
                 Repeater {
                     model: root.actions
@@ -117,43 +118,77 @@ OverlayWindow {
                         required property int index
                         readonly property bool selected: root.current === index
 
-                        width: root.list ? Theme.fs(300) : root.full ? Theme.fs(160) : Theme.fs(104)
-                        height: root.list ? Theme.rowHeightTall + Theme.spaceM : width
+                        width: root.list ? Theme.fs(460) : root.full ? Theme.fs(160) : Theme.fs(104)
+                        height: root.list ? Theme.fs(54) : width
                         radius: Theme.radiusInner
                         color: selected ? Theme.selectedFill : Theme.surface
                         border.width: Theme.borderWidth
                         border.color: selected ? Theme.selectedStroke : Theme.border
 
-                        // a list row: icon, label, and the key at the far end
+                        // a list row: a large icon, the label over what it
+                        // does, and the key at the far end in a keycap
                         Text {
+                            id: rowIcon
                             visible: root.list
                             x: Theme.spaceL
+                            width: Theme.fontTitle * 1.4
+                            horizontalAlignment: Text.AlignHCenter
                             anchors.verticalCenter: parent.verticalCenter
                             text: tile.modelData.icon
                             color: tile.selected ? Theme.textStrong : Theme.text
                             font.family: Theme.fontIcon
-                            font.pixelSize: Theme.fontIconSize
+                            font.pixelSize: Theme.fontTitle
                         }
-                        Text {
+                        Column {
                             visible: root.list
-                            x: Theme.spaceL * 2 + Theme.fontIconSize
+                            anchors.left: rowIcon.right
+                            anchors.leftMargin: Theme.spaceL
+                            anchors.right: keycap.left
+                            anchors.rightMargin: Theme.spaceL
                             anchors.verticalCenter: parent.verticalCenter
-                            text: tile.modelData.label
-                            color: tile.selected ? Theme.textStrong : Theme.text
-                            font.family: Theme.fontText
-                            font.weight: Theme.weightBody
-                            font.pixelSize: Theme.fontBody
+                            spacing: 1
+
+                            Text {
+                                width: parent.width
+                                elide: Text.ElideRight
+                                text: tile.modelData.label
+                                color: tile.selected ? Theme.textStrong : Theme.text
+                                font.family: Theme.fontText
+                                font.weight: Theme.weightStrong
+                                font.pixelSize: Theme.fontBody + 2
+                            }
+                            Text {
+                                width: parent.width
+                                elide: Text.ElideRight
+                                text: tile.modelData.detail
+                                color: Theme.subtext
+                                font.family: Theme.fontText
+                                font.weight: Theme.weightBody
+                                font.pixelSize: Theme.fontCaption
+                            }
                         }
-                        Text {
+                        Rectangle {
+                            id: keycap
                             visible: root.list
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spaceL
                             anchors.verticalCenter: parent.verticalCenter
-                            text: tile.modelData.key
-                            color: Theme.subtext
-                            font.family: Theme.fontText
-                            font.weight: Theme.weightBody
-                            font.pixelSize: Theme.fontCaption
+                            width: Math.max(height, keyText.implicitWidth + Theme.spaceM * 2)
+                            height: keyText.implicitHeight + Theme.spaceXs
+                            radius: Theme.radiusSmall
+                            color: "transparent"
+                            border.width: Theme.borderWidth
+                            border.color: Theme.stroke
+
+                            Text {
+                                id: keyText
+                                anchors.centerIn: parent
+                                text: tile.modelData.key
+                                color: Theme.subtext
+                                font.family: Theme.fontText
+                                font.weight: Theme.weightBody
+                                font.pixelSize: Theme.fontSmall
+                            }
                         }
 
                         Column {

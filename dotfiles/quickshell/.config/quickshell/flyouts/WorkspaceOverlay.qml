@@ -1,9 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspaceOverlay.qml
 //
-// SUPER+W: every workspace at once, as a grid of cells. Click a cell to jump
-// to that workspace, click a window inside one to focus just that window, or
-// drag a window from one cell to another to move it there.
+// SUPER+W: every workspace at once, as a card each listing its windows by
+// app icon and name. Click a card to jump to that workspace, click a window
+// to focus just that window, or drag a window onto another card to move it
+// there. A special workspace with windows on it (the scratchpad) gets a card
+// of its own; the empty workspaces fold into one card of their numbers, each
+// still a place to jump or drop.
 //
 // Not a FlyoutPanel: those hang off the bar under the module that opened them
 // and lay their content out in a Column. This is centred on the screen and
@@ -27,13 +30,47 @@ OverlayWindow {
 
     function requestClose() { scope.openFlyout = "" }
 
-    // Hyprland reports workspace ids, but the grid should show the fixed
+    // Hyprland reports workspace ids, but the cards should show the fixed
     // workspaces the binds use whether or not they currently exist -- an empty
     // workspace has no id to enumerate, and jumping to one is still valid.
     readonly property int workspaceCount: Settings.workspaceCount
 
-    // Which cell a drag is currently hovering, so it can highlight. -1 for none.
-    property int dropTarget: -1
+    function windowsOf(ws) {
+        if (!ws || !ws.toplevels) return []
+        return ws.toplevels.values.filter(tl => !Apps.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
+    }
+
+    // The cards, in order: each numbered workspace with windows, then each
+    // special one with windows, then one card for the empty numbers.
+    // `target` is what a drop moves a window to: a number, or a special
+    // workspace's name ("special:scratchpad").
+    readonly property var cards: {
+        const wss = Hyprland.workspaces.values
+        const out = [], empty = []
+        for (let id = 1; id <= workspaceCount; id++) {
+            const wins = windowsOf(wss.find(w => w.id === id))
+            if (wins.length > 0) out.push({ kind: "ws", target: id, title: String(id), windows: wins })
+            else empty.push(id)
+        }
+        for (const ws of wss) {
+            if (ws.id >= 0) continue
+            const wins = windowsOf(ws)
+            const name = String(ws.name).replace(/^special:/, "")
+            if (wins.length > 0)
+                out.push({ kind: "special", target: ws.name, title: name.charAt(0).toUpperCase() + name.slice(1), windows: wins })
+        }
+        if (empty.length > 0) out.push({ kind: "empty", target: null, title: "Empty", windows: [], ids: empty })
+        return out
+    }
+
+    function jump(target) {
+        if (typeof target === "number") Hyprland.dispatch("hl.dsp.focus({workspace=" + target + "})")
+        else Hyprland.dispatch("hl.dsp.workspace.toggle_special(\"" + String(target).replace(/^special:/, "") + "\")")
+        requestClose()
+    }
+
+    // The drop target a drag is over, so it can light; null for none.
+    property var dropTarget: null
 
     visible: open
     // Exclusive, not OnDemand: Escape has to work without clicking into the
@@ -94,47 +131,59 @@ OverlayWindow {
             FlyoutHeading {
                 width: grid.width
                 text: "WORKSPACES"
-                hints: ["1-" + Math.min(9, root.workspaceCount) + " jump", "Drag a window to move it", "Esc close"]
+                hints: ["1-" + Math.min(9, root.workspaceCount) + " jump", "Drag an app to move it", "Esc close"]
             }
 
             Grid {
                 id: grid
-                columns: Theme.overviewLayout === "strip" ? root.workspaceCount : Math.min(3, root.workspaceCount)
+                columns: Theme.overviewLayout === "strip" ? root.cards.length : Math.min(3, root.cards.length)
                 spacing: Theme.spaceL
 
-                Repeater {
-                    model: root.workspaceCount
+                // The drop target under a point in the grid: a card's, or
+                // one of the empty card's numbers.
+                function targetAt(p) {
+                    const c = childAt(p.x, p.y)
+                    if (!c || c.card === undefined) return null
+                    if (c.card.kind !== "empty") return c.card.target
+                    const q = c.mapFromItem(grid, p.x, p.y)
+                    const chip = c.chipAt(q)
+                    return chip ? chip.wsId : null
+                }
 
-                    // One workspace. `index` is 0-based, Hyprland ids are 1-based.
+                Repeater {
+                    model: root.cards
+
                     Rectangle {
                         id: cell
-                        required property int index
-                        readonly property int wsId: index + 1
-                        readonly property bool isFocused:
-                            Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
-                        readonly property bool isDropTarget: root.dropTarget === wsId
-                        // Hyprland only creates a workspace object once something is
-                        // on it, so an empty workspace legitimately has none.
-                        readonly property var windows: {
-                            const ws = Hyprland.workspaces.values.find(w => w.id === cell.wsId)
-                            if (!ws || !ws.toplevels) return []
-                            return ws.toplevels.values.filter(tl => !Apps.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
+                        required property var modelData
+                        readonly property var card: modelData
+                        readonly property bool isFocused: card.kind === "ws"
+                            && Hyprland.focusedWorkspace !== null && Hyprland.focusedWorkspace.id === card.target
+                        readonly property bool isDropTarget: card.kind !== "empty" && root.dropTarget === card.target
+
+                        function chipAt(q) {
+                            const c = chips.childAt(q.x - chips.x, q.y - chips.y)
+                            return c && c.wsId !== undefined ? c : null
                         }
 
-                        // a row of every workspace has to fit the screen
+                        // a row of every card has to fit the screen
                         readonly property real shrink: Theme.overviewLayout === "strip"
-                            ? Math.min(1, (root.width * 0.9 / root.workspaceCount - grid.spacing) / Theme.fs(200)) : 1
-                        width: Math.round(Theme.fs(200) * shrink)
-                        height: Math.round(Theme.fs(132) * shrink)
+                            ? Math.min(1, (root.width * 0.9 / root.cards.length - grid.spacing) / Theme.fs(240)) : 1
+                        // the empty card as wide as its numbers in one line
+                        width: card.kind === "empty"
+                            ? Theme.spaceL * 2 + card.ids.length * (Theme.rowHeightTall + Theme.spaceS) - Theme.spaceS
+                            : Math.round(Theme.fs(240) * shrink)
+                        height: Math.max(Theme.fs(150), list.y + list.implicitHeight + Theme.spaceM)
                         radius: Theme.radiusInner
                         // the current workspace is lit as the power menu's
-                        // current tile is; a drop target takes the accent
-                        color: isDropTarget || cell.isFocused ? Theme.selectedFill : Theme.surface
+                        // current row is; a drop target takes the accent
+                        color: isDropTarget || isFocused ? Theme.selectedFill : Theme.surface
                         border.width: Theme.borderWidth
                         border.color: isDropTarget ? Theme.accent
-                            : cell.isFocused ? Theme.selectedStroke
+                            : isFocused ? Theme.selectedStroke
                             : wsMouse.containsMouse ? Theme.strokeHover
                             : Theme.border
+                        opacity: card.kind === "empty" ? 0.75 : 1
 
                         Behavior on border.color {
                             ColorAnimation { duration: Theme.durFast }
@@ -145,18 +194,16 @@ OverlayWindow {
                         MouseArea {
                             id: wsMouse
                             anchors.fill: parent
+                            enabled: cell.card.kind !== "empty"
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                Hyprland.dispatch("hl.dsp.focus({workspace=" + cell.wsId + "})")
-                                root.requestClose()
-                            }
+                            onClicked: root.jump(cell.card.target)
                         }
 
                         Text {
                             x: Theme.spaceL
                             y: Theme.spaceM
-                            text: cell.wsId
+                            text: cell.card.title
                             color: cell.isFocused ? Theme.textStrong : Theme.text
                             font.family: Theme.fontText
                             font.pixelSize: Theme.fontBody
@@ -167,22 +214,66 @@ OverlayWindow {
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spaceL
                             y: Theme.spaceM
-                            text: cell.windows.length === 0 ? "empty"
-                                : cell.windows.length + (cell.windows.length === 1 ? " window" : " windows")
+                            visible: cell.card.kind !== "empty"
+                            text: cell.card.windows.length + (cell.card.windows.length === 1 ? " window" : " windows")
                             color: Theme.muted
                             font.family: Theme.fontText
                             font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontSmall
                         }
 
-                        Column {
+                        // the empty card: its numbers, each a jump and a drop
+                        Flow {
+                            id: chips
+                            visible: cell.card.kind === "empty"
                             x: Theme.spaceL
-                            y: Theme.spaceM + Theme.rowHeight
+                            y: Theme.spaceM + Theme.rowHeight + Theme.spaceS
                             width: parent.width - Theme.spaceL * 2
+                            spacing: Theme.spaceS
+
+                            Repeater {
+                                model: cell.card.ids || []
+
+                                Rectangle {
+                                    required property int modelData
+                                    readonly property int wsId: modelData
+                                    width: Theme.rowHeightTall
+                                    height: Theme.rowHeightTall
+                                    radius: Theme.radiusInner
+                                    color: root.dropTarget === wsId ? Theme.selectedFill
+                                        : chipMouse.containsMouse ? Theme.hoverFill : "transparent"
+                                    border.width: Theme.borderWidth
+                                    border.color: root.dropTarget === wsId ? Theme.accent : Theme.border
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: parent.wsId
+                                        color: Theme.textStrong
+                                        font.family: Theme.fontText
+                                        font.weight: Theme.weightStrong
+                                        font.pixelSize: Theme.fontTitle
+                                    }
+
+                                    MouseArea {
+                                        id: chipMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.jump(parent.wsId)
+                                    }
+                                }
+                            }
+                        }
+
+                        Column {
+                            id: list
+                            x: Theme.spaceM
+                            y: Theme.spaceM + Theme.rowHeight + Theme.spaceS
+                            width: parent.width - Theme.spaceM * 2
                             spacing: Theme.spaceXs
 
                             Repeater {
-                                model: cell.windows
+                                model: cell.card.windows
 
                                 Rectangle {
                                     id: winRow
@@ -191,65 +282,76 @@ OverlayWindow {
                                         (modelData.lastIpcObject && modelData.lastIpcObject.class) || ""
 
                                     width: parent.width
-                                    height: Theme.rowHeightDense
+                                    height: Theme.rowHeightTall
                                     radius: Theme.radiusSmall
                                     color: winDrag.dragging ? Theme.selectedFill
                                         : winDrag.containsMouse ? Theme.hoverFill
-                                        : "transparent"
+                                        : Theme.panel
 
-                                    Row {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: Theme.spaceS
-                                        anchors.rightMargin: Theme.spaceS
-                                        spacing: Theme.spaceM
+                                    Item {
+                                        id: winIco
+                                        x: Theme.spaceM
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Theme.fontIconSize
+                                        height: Theme.fontIconSize
 
-                                        Item {
-                                            id: winIco
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            implicitWidth: Theme.fontSmall
-                                            implicitHeight: Theme.fontSmall
+                                        readonly property string iconPath: Apps.iconForClass(winRow.cls)
 
-                                            readonly property string iconPath: Apps.iconForClass(winRow.cls)
-
-                                            IconImage {
-                                                anchors.fill: parent
-                                                visible: winIco.iconPath !== ""
-                                                source: winIco.iconPath
-                                            }
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                visible: winIco.iconPath === ""
-                                                text: Apps.glyphForWindow(winRow.cls, winRow.modelData.title)
-                                                color: Theme.subtext
-                                                font.family: Theme.fontIcon
-                                                font.pixelSize: Theme.fontSmall
-                                            }
+                                        IconImage {
+                                            anchors.fill: parent
+                                            visible: winIco.iconPath !== ""
+                                            source: winIco.iconPath
                                         }
 
                                         Text {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            width: parent.width - winIco.width - parent.spacing
-
-                                            elide: Text.ElideRight
-                                            text: winRow.modelData.title || winRow.cls
+                                            anchors.centerIn: parent
+                                            visible: winIco.iconPath === ""
+                                            text: Apps.glyphForWindow(winRow.cls, winRow.modelData.title)
                                             color: Theme.subtext
-                                            font.family: Theme.fontText
-                                            font.weight: Theme.weightBody
-                                            font.pixelSize: Theme.fontSmall
+                                            font.family: Theme.fontIcon
+                                            font.pixelSize: Theme.fontIconSize
                                         }
                                     }
 
+                                    // the app's name, then the window's title quieter
+                                    Text {
+                                        id: appName
+                                        anchors.left: winIco.right
+                                        anchors.leftMargin: Theme.spaceM
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Math.min(implicitWidth, parent.width - x - Theme.spaceM)
+                                        elide: Text.ElideRight
+                                        text: Apps.nameForWindow(winRow.cls, winRow.modelData.title)
+                                        color: winDrag.containsMouse ? Theme.textStrong : Theme.text
+                                        font.family: Theme.fontText
+                                        font.weight: Theme.weightBody
+                                        font.pixelSize: Theme.fontBody
+                                    }
+
+                                    Text {
+                                        anchors.left: appName.right
+                                        anchors.leftMargin: Theme.spaceM
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: Theme.spaceM
+                                        anchors.baseline: appName.baseline
+                                        elide: Text.ElideRight
+                                        text: winRow.modelData.title !== appName.text ? winRow.modelData.title || "" : ""
+                                        color: Theme.subtext
+                                        font.family: Theme.fontText
+                                        font.weight: Theme.weightBody
+                                        font.pixelSize: Theme.fontCaption
+                                    }
+
                                     // Click focuses this window; dragging it onto
-                                    // another cell moves it there instead.
+                                    // another card moves it there instead.
                                     //
                                     // Hand-rolled rather than Qt's Drag/DropArea to
                                     // match BarWidgetList's reorder grip, the only
                                     // other drag in the shell: press, track the
-                                    // pointer against each cell's bounds, act on
-                                    // release. Nothing here needs a drag proxy item
-                                    // or mime data, so the native API would only add
-                                    // moving parts.
+                                    // pointer against the cards, act on release.
+                                    // Nothing here needs a drag proxy item or mime
+                                    // data, so the native API would only add moving
+                                    // parts.
                                     MouseArea {
                                         id: winDrag
                                         anchors.fill: parent
@@ -261,15 +363,8 @@ OverlayWindow {
                                         property real pressX: 0
                                         property real pressY: 0
 
-                                        function workspaceAt(mouse) {
-                                            const p = mapToItem(grid, mouse.x, mouse.y)
-                                            for (let i = 0; i < grid.children.length; i++) {
-                                                const c = grid.children[i]
-                                                if (c.wsId === undefined) continue
-                                                if (p.x >= c.x && p.x <= c.x + c.width
-                                                    && p.y >= c.y && p.y <= c.y + c.height) return c.wsId
-                                            }
-                                            return -1
+                                        function targetAt(mouse) {
+                                            return grid.targetAt(mapToItem(grid, mouse.x, mouse.y))
                                         }
 
                                         onPressed: mouse => {
@@ -286,23 +381,23 @@ OverlayWindow {
                                                 && Math.abs(mouse.x - pressX) < 6
                                                 && Math.abs(mouse.y - pressY) < 6) return
                                             dragging = true
-                                            const target = workspaceAt(mouse)
-                                            root.dropTarget = target === cell.wsId ? -1 : target
+                                            const target = targetAt(mouse)
+                                            root.dropTarget = target === cell.card.target ? null : target
                                         }
 
                                         onReleased: mouse => {
-                                            const target = dragging ? workspaceAt(mouse) : -1
+                                            const target = dragging ? targetAt(mouse) : null
                                             const addr = "address:0x" + winRow.modelData.address
-                                            root.dropTarget = -1
+                                            root.dropTarget = null
 
                                             if (!dragging) {
                                                 Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
                                                 root.requestClose()
-                                            } else if (target !== -1 && target !== cell.wsId) {
+                                            } else if (target !== null && target !== cell.card.target) {
                                                 // Move the dragged window, not
                                                 // whatever happens to be focused.
-                                                Hyprland.dispatch("hl.dsp.window.move({window=\"" + addr
-                                                    + "\", workspace=" + target + "})")
+                                                Hyprland.dispatch("hl.dsp.window.move({window=\"" + addr + "\", workspace="
+                                                    + (typeof target === "number" ? target : "\"" + target + "\", follow=false") + "})")
                                                 Hyprland.refreshToplevels()
                                             }
                                             dragging = false
@@ -310,20 +405,11 @@ OverlayWindow {
 
                                         onCanceled: {
                                             dragging = false
-                                            root.dropTarget = -1
+                                            root.dropTarget = null
                                         }
                                     }
                                 }
                             }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            visible: cell.windows.length === 0
-                            text: "󰇘"
-                            color: Theme.muted
-                            font.family: Theme.fontIcon
-                            font.pixelSize: Theme.fontIconSize
                         }
                     }
                 }
