@@ -138,12 +138,17 @@ var entries = [
     { page: "appearance", section: "Look",       label: "Factory reset",        keywords: "stock wipe" },
 
     // --- Window Rules ------------------------------------------------------
-    { page: "windowrules", section: "Rules", label: "Rules",             keywords: "app class float add new order drag reorder priority" },
-    { page: "windowrules", section: "Rules", label: "Add a rule…",       keywords: "app class pick running open now new" },
-    { page: "windowrules", section: "Rules", label: "Name",              keywords: "alias rename label title" },
-    { page: "windowrules", section: "Rules", label: "Opens as",          keywords: "float tiled fullscreen maximise maximize on top pin always above" },
-    { page: "windowrules", section: "Rules", label: "Size",              keywords: "natural window dimensions custom percent pixels" },
-    { page: "windowrules", section: "Rules", label: "Workspace",         keywords: "where it opens" },
+    { page: "windowrules", section: "Apps", label: "Apps",              keywords: "app class rules remembered sizes list" },
+    { page: "windowrules", section: "Apps", label: "Add a rule…",       keywords: "app class pick running open now new" },
+    { page: "windowrules", section: "Apps", label: "Name",              keywords: "alias rename label title" },
+    { page: "windowrules", section: "Apps", label: "Opens",             keywords: "as left float tiled fullscreen fills maximise maximize on top pin always above" },
+    { page: "windowrules", section: "Apps", label: "First time",        keywords: "own size filled fills default new" },
+    { page: "windowrules", section: "Apps", label: "Last left",         keywords: "remembered size forget memory restore" },
+    { page: "windowrules", section: "Apps", label: "Size",              keywords: "natural window dimensions custom percent pixels" },
+    { page: "windowrules", section: "Apps", label: "Workspace",         keywords: "where it opens" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Block the window they came from", keywords: "popup dialog modal block lock parent" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Open over their window", keywords: "popup dialog centre center parent owner" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Remember their sizes", keywords: "popup dialog size memory" },
     { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
 
     // --- Display -----------------------------------------------------------

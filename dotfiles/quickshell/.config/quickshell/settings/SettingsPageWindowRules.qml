@@ -1,8 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageWindowRules.qml
 //
-// Every per-app and popout window rule: float and size, workspace,
-// fullscreen and pin.
+// How each app's windows open, and its popups.
+//
+// Apps: every app with a rule or a size windows.lua remembers, one row each.
+// An app opens As left -- the way it was last left (filled, fullscreen or
+// its size; ~/.local/state/singularity/window-sizes.json), starting at its
+// own size or filled the first time ("own" on its rule) -- or always Float,
+// Fullscreen or On top. Popups and dialogs: the switches windows.lua reads
+// from popups.json, and the rules that match windows by title.
 //
 // Saved to ~/.local/state/singularity/window-rules.json. Until the first
 // change that file doesn't exist and the page shows the defaults the repo
@@ -13,7 +19,8 @@
 // load and turns each entry into hl.window_rule() calls placed after its own
 // rules; every change here writes the file and reloads Hyprland. Rules apply to windows as they
 // open -- ones already open keep what they had until they are reopened.
-// New rules go on top, and where two rules disagree the higher one wins.
+// New rules go on top of the file, and where two rules disagree the higher
+// one wins.
 //
 // Rules added here match one class, literally. The shipped popout entries
 // match on title patterns instead ("regex": true), which this page shows and
@@ -65,24 +72,80 @@ SettingsPage {
     }
 
     readonly property var glyphs: ({
-        drag: String.fromCodePoint(0xF01DD),
         pattern: String.fromCodePoint(0xF0451),
         rename: String.fromCodePoint(0xF03EB),
     })
     readonly property var opensHints: ({
-        tiled: "Fills the screen in monocle, tiles in dwindle; unlisted apps open at their own size",
-        float: "Floats over the others",
-        full: "Covers the bar too; monocle only",
+        left: "How you last left it",
+        tiled: "Fills the screen in monocle, tiles in dwindle",
+        float: "Floats over the others, always this size",
+        full: "Always covers the bar too; monocle only",
         pin: "Floats above, on every workspace",
     })
 
-    // the rule being renamed, given a custom size, and dragged (by index);
-    // the Add a rule… row open
+    // the rule being renamed and given a custom size (by index); the Add a
+    // rule… row open
     property int renaming: -1
     property int customFor: -1
-    property int dragFrom: -1
-    property int dragTo: -1
     property bool adding: false
+
+    // What windows.lua remembers, by class (popups' entries are keyed
+    // "popout:…" and aren't listed). Only windows.lua writes the file;
+    // Forget goes through it, since it holds the sizes in memory.
+    readonly property string sizesPath: Settings.stateDir + "/window-sizes.json"
+    property var remembered: ({})
+    function memOf(cls) {
+        var e = remembered[cls]
+        if (!e || typeof e !== "object") return null
+        return e.normal || e.wide || e.tall || null
+    }
+    function memWords(m) {
+        if (!m) return ""
+        if (m.fullscreen) return "Fullscreen"
+        if (m.fill) return "Filled"
+        return Math.round(m.fw * 100) + "% × " + Math.round(m.fh * 100) + "%"
+    }
+    function forget(cls, name) {
+        Quickshell.execDetached(["hyprctl", "eval", "forgetSize(" + JSON.stringify(cls) + ")"])
+        say("Forgot how " + name + " was left", false)
+    }
+
+    // The Apps list: each class rule, then each remembered app no rule
+    // matches. { index (into rules, -1 for none), cls }
+    readonly property var appEntries: {
+        var out = []
+        rules.forEach((r, i) => { if (r.class && !r.title) out.push({ index: i, cls: r.class }) })
+        Object.keys(remembered).forEach(c => {
+            if (c.indexOf("popout:") === 0) return
+            if (!rules.some(r => r.class && !r.title && fieldMatches(r.class, r.regex, c)))
+                out.push({ index: -1, cls: c })
+        })
+        return out
+    }
+    readonly property var titleEntries: rules.map((r, i) => ({ index: i, cls: r.class || "" })).filter(e => !!rules[e.index].title)
+
+    // The popup switches, as { block, over, remember }, each on unless false.
+    readonly property string popupsPath: Settings.stateDir + "/popups.json"
+    property var popupOpts: ({ block: true, over: true, remember: true })
+    function setPopupOpt(key, on) {
+        AtomicFileWrite.write({
+            path: popupsPath,
+            transform: text => {
+                var cur = {}
+                try { cur = text.trim() === "" ? {} : JSON.parse(text) } catch (e) { return null }
+                if (typeof cur !== "object" || Array.isArray(cur)) return null
+                cur[key] = on
+                return JSON.stringify(cur, null, 2) + "\n"
+            },
+            refusal: "popups.json isn't valid JSON; fix it by hand first",
+            after: "hyprctl reload config-only >/dev/null",
+            done: (status, detail) => {
+                if (status !== "ok" && status !== "unchanged")
+                    page.say(status === "refused" ? detail : "Couldn't write " + page.popupsPath, true)
+                popupsFile.reload()
+            }
+        })
+    }
 
     // Workspaces pinned to one layout whatever SUPER+M says, as
     // { "1": "monocle", "3": "dwindle" }. windows.lua reads the file on
@@ -153,8 +216,11 @@ SettingsPage {
             && fieldMatches(rule.title, rule.regex, w.title)).length
     }
 
+    // its name, else its app's name for a plain class, else what it matches
     function describe(rule) {
-        return rule.label || rule.class || rule.title
+        if (rule.label) return rule.label
+        if (rule.class && !rule.regex && !rule.title) return Apps.nameForWindow(rule.class, "")
+        return rule.class || rule.title
     }
 
     // which rule is expanded, by what it matches, so adding one on top
@@ -165,43 +231,46 @@ SettingsPage {
     // a search for one of a rule's settings unfolds the top rule, so there
     // is a field on screen to ring
     onHighlightChanged: {
-        if (openKey === "" && rules.length > 0
-                && ["Name", "Opens as", "Size", "Workspace"].indexOf(highlight) >= 0)
-            openKey = ruleKey(rules[0])
+        if (openKey === "" && appEntries.length > 0
+                && ["Name", "Opens", "First time", "Last left", "Size", "Workspace"].indexOf(highlight) >= 0)
+            openKey = entryKey(appEntries[0])
     }
+    function entryKey(e) { return e.index >= 0 ? ruleKey(rules[e.index]) : "\n\n" + e.cls }
 
     // a rule's settings in one line, for its row
     function summary(rule) {
         var size = rule.size ? " " + (rule.size.split(" ")[0] === rule.size.split(" ")[1] && rule.size.indexOf("%") >= 0
             ? rule.size.split(" ")[0] : rule.size.replace(" ", "×")) : ""
         var parts = [rule.pin ? "On top" + size : rule.fullscreen ? "Fullscreen"
-            : rule.float ? "Float" + size : "Fills"]
+            : rule.float ? "Float" + size : rule.title ? "Fills"
+            : memWords(memOf(rule.class)) || (rule.own ? "Own size" : "Fills")]
         if (rule.workspace) parts.push("workspace " + rule.workspace)
         if (rule.fullscreen && (rule.pin || rule.float)) parts.push("fullscreen")
         return parts.join(" · ")
     }
 
-    // the row under a point in the rules list, for a drag; -1 past the ends
-    function ruleAt(y) {
-        for (var i = 0; i < ruleRepeater.count; i++) {
-            var it = ruleRepeater.itemAt(i)
-            if (it && y >= it.y && y < it.y + it.height) return i
-        }
-        return y < 0 ? 0 : rules.length - 1
-    }
-
-    function moveRule(from, to) {
-        var next = rules.slice()
-        var r = next.splice(from, 1)[0]
-        next.splice(to, 0, r)
-        save(next, describe(r) + " moved " + (to < from ? "up" : "down"))
-    }
-
-    // one choice for float, fullscreen and on top, which overlap
+    // one choice for float, fullscreen and on top, which overlap; "left"
+    // and "tiled" are none of them
     function setOpensAs(index, v) {
         save(rules.map((r, i) => i !== index ? r : Object.assign({}, r,
             { float: v === "float", fullscreen: v === "full", pin: v === "pin" })),
             describe(rules[index]) + " updated")
+    }
+
+    // A change to an app with no rule yet: the rule is made with it, As
+    // left from its own size like before.
+    function setEntry(e, key, value) {
+        if (e.index >= 0) {
+            if (key === "opens") setOpensAs(e.index, value)
+            else setRule(e.index, key, value)
+            return
+        }
+        var r = { class: e.cls, own: true }
+        if (key === "opens") { r.float = value === "float"; r.fullscreen = value === "full"; r.pin = value === "pin" }
+        else r[key] = value
+        r = normalise(r)
+        save([r].concat(rules), "Rule added for " + e.cls)
+        openKey = ruleKey(r)
     }
 
     function normalise(r) {
@@ -217,6 +286,7 @@ SettingsPage {
         if (r.class) out.class = String(r.class)
         if (r.title) out.title = String(r.title)
         if (r.regex) out.regex = true
+        if (r.own) out.own = true
         if (validSize(r.size)) out.size = r.size
         return out
     }
@@ -319,6 +389,32 @@ SettingsPage {
     }
 
     FileView {
+        id: sizesFile
+        path: page.sizesPath
+        blockLoading: true
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try { page.remembered = JSON.parse(text()) || {} } catch (e) { page.remembered = {} }
+        }
+        onLoadFailed: page.remembered = {}
+    }
+
+    FileView {
+        id: popupsFile
+        path: page.popupsPath
+        blockLoading: true
+        printErrors: false
+        onLoaded: {
+            var d = {}
+            try { d = JSON.parse(text()) || {} } catch (e) { d = {} }
+            page.popupOpts = { block: d.block !== false, over: d.over !== false, remember: d.remember !== false }
+        }
+        onLoadFailed: page.popupOpts = { block: true, over: true, remember: true }
+    }
+
+    FileView {
         id: layoutsFile
         path: page.layoutsPath
         blockLoading: true
@@ -329,299 +425,22 @@ SettingsPage {
         onLoadFailed: page.layouts = {}
     }
 
-    FlyoutHeading { text: "RULES" + "  " + page.rules.length }
+    FlyoutHeading { text: "APPS" + "  " + page.appEntries.length }
 
-    SettingsNote { text: "Higher rules win where two disagree; drag to reorder" }
+    SettingsNote { text: "Apps with a rule or a remembered size" }
 
-    // The rules, and the Add a rule… row under them. In a Column of their
-    // own so a drag can find the row under the pointer.
     Column {
-        id: rulesList
         width: parent.width
 
         FlyoutRow {
-            visible: page.rules.length === 0
+            visible: page.appEntries.length === 0
             enabled: false
-            label: "No rules yet"
+            label: "No apps yet"
         }
 
         Repeater {
-            id: ruleRepeater
-            model: page.rules
-
-            Column {
-                id: ruleCol
-                required property var modelData
-                required property int index
-                readonly property var rule: modelData
-                readonly property bool expanded: page.openKey === page.ruleKey(rule)
-                readonly property int open: page.openCount(rule)
-                readonly property string opensAs: rule.pin ? "pin" : rule.fullscreen ? "full" : rule.float ? "float" : "tiled"
-
-                width: parent.width
-
-                FlyoutRow {
-                    id: ruleRow
-                    label: page.describe(ruleCol.rule)
-                    leadingIcon: page.glyphs.drag
-                    highlighted: ruleCol.expanded
-                    trailing: (ruleCol.open > 0 ? ruleCol.open + " open  ·  " : "")
-                        + (ruleCol.rule.regex ? page.glyphs.pattern + "  " : "")
-                        + page.summary(ruleCol.rule) + "  " + (ruleCol.expanded ? "󰅀" : "󰅂")
-                    onActivated: {
-                        page.openKey = ruleCol.expanded ? "" : page.ruleKey(ruleCol.rule)
-                        page.renaming = -1
-                    }
-
-                    // where a dragged rule would land: a line on this row's top or bottom edge
-                    Rectangle {
-                        visible: page.dragTo === ruleCol.index && page.dragFrom !== ruleCol.index
-                        width: parent.width
-                        height: Theme.indicatorWidth
-                        y: page.dragTo < page.dragFrom ? 0 : parent.height - height
-                        color: Theme.accent
-                    }
-
-                    // the handle: dragged up or down the list, dropped on release
-                    MouseArea {
-                        x: ruleRow.highlighted ? Theme.spaceM : 0
-                        width: Theme.iconCell
-                        height: parent.height
-                        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                        preventStealing: true
-                        onPressed: page.dragFrom = ruleCol.index
-                        onPositionChanged: mouse => {
-                            if (pressed) page.dragTo = page.ruleAt(mapToItem(rulesList, mouse.x, mouse.y).y)
-                        }
-                        // reset before moving: the move rebuilds the list,
-                        // and this delegate with it
-                        onReleased: {
-                            var from = page.dragFrom, to = page.dragTo
-                            page.dragFrom = -1
-                            page.dragTo = -1
-                            if (to >= 0 && to !== from) page.moveRule(from, to)
-                        }
-                        onCanceled: { page.dragFrom = -1; page.dragTo = -1 }
-                    }
-                }
-
-                SettingsIndent {
-                    visible: ruleCol.expanded
-
-                    // what a named or pattern rule really matches
-                    SettingsField {
-                        visible: !!(ruleCol.rule.regex || ruleCol.rule.title || ruleCol.rule.label)
-                        label: "Matches"
-                        hint: ruleCol.rule.regex ? "A pattern; edited in window-rules.json" : ""
-                    }
-                    Text {
-                        visible: !!(ruleCol.rule.regex || ruleCol.rule.title || ruleCol.rule.label)
-                        width: parent.width
-                        text: {
-                            var r = ruleCol.rule, parts = []
-                            if (r.class) parts.push("class " + (r.regex ? "~ " : "= ") + r.class)
-                            if (r.title) parts.push("title " + (r.regex ? "~ " : "= ") + r.title)
-                            return parts.join("   ")
-                        }
-                        wrapMode: Text.WrapAnywhere
-                        color: Theme.subtext
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontSmall
-                    }
-
-                    // the list's name for it, renamed in place; empty goes back to the class
-                    SettingsField {
-                        visible: page.renaming !== ruleCol.index
-                        label: "Name"
-                        hint: "What the list calls it"
-
-                        Row {
-                            anchors.right: parent.right
-                            spacing: Theme.spaceS
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: page.describe(ruleCol.rule)
-                                color: Theme.textStrong
-                                font.family: Theme.fontText
-                                font.weight: Theme.weightBody
-                                font.pixelSize: Theme.fontBody
-                            }
-                            IconButton {
-                                anchors.verticalCenter: parent.verticalCenter
-                                icon: page.glyphs.rename
-                                onClicked: {
-                                    page.renaming = ruleCol.index
-                                    nameInput.text = ruleCol.rule.label || ""
-                                    Qt.callLater(nameInput.forceFocus)
-                                }
-                            }
-                        }
-                    }
-
-                    Item {
-                        visible: page.renaming === ruleCol.index
-                        width: parent.width
-                        height: nameInput.implicitHeight
-
-                        FlyoutInput {
-                            id: nameInput
-                            anchors.left: parent.left
-                            anchors.right: nameSave.left
-                            anchors.rightMargin: Theme.spaceM
-                            echoPassword: false
-                            placeholder: ruleCol.rule.class || ruleCol.rule.title || ""
-                            hints: ["Enter save"]
-                            onAccepted: nameSave.clicked()
-                            onEscapePressed: page.renaming = -1
-                        }
-                        FlyoutChip {
-                            id: nameSave
-                            anchors.right: nameCancel.left
-                            anchors.rightMargin: Theme.spaceS
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "Save"
-                            selected: true
-                            onClicked: {
-                                var name = nameInput.text.trim()
-                                page.renaming = -1
-                                if (name !== (ruleCol.rule.label || "")) page.setRule(ruleCol.index, "label", name)
-                            }
-                        }
-                        FlyoutChip {
-                            id: nameCancel
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "Cancel"
-                            onClicked: page.renaming = -1
-                        }
-                    }
-
-                    SettingsField {
-                        label: "Opens as"
-                        hint: page.opensHints[ruleCol.opensAs]
-
-                        FlyoutSegmented {
-                            anchors.right: parent.right
-                            fill: false
-                            enabled: !AtomicFileWrite.busy
-                            model: [{ value: "tiled", text: "Fills" }, { value: "float", text: "Float" },
-                                { value: "full", text: "Fullscreen" }, { value: "pin", text: "On top" }]
-                            current: ruleCol.opensAs
-                            onPicked: v => page.setOpensAs(ruleCol.index, v)
-                        }
-                    }
-
-                    SettingsField {
-                        visible: ruleCol.opensAs === "float" || ruleCol.opensAs === "pin"
-                        label: "Size"
-                        hint: page.sizeHint(ruleCol.rule.size || "")
-
-                        SettingsDropdown {
-                            anchors.right: parent.right
-                            width: Theme.fit(200)
-                            // the presets, plus a size from the file that's none of them
-                            model: page.sizes.concat(page.sizes.indexOf(ruleCol.rule.size || "") < 0
-                                && page.customFor !== ruleCol.index ? [ruleCol.rule.size] : []).concat(["custom"])
-                            current: page.customFor === ruleCol.index ? "custom" : ruleCol.rule.size || ""
-                            labelFor: v => page.sizeLabel(v)
-                            onPicked: v => {
-                                if (v === "custom") {
-                                    page.customFor = ruleCol.index
-                                    var parts = (ruleCol.rule.size || "").split(" ")
-                                    customW.text = parts[0] || ""
-                                    customH.text = parts[1] || ""
-                                    Qt.callLater(customW.forceFocus)
-                                } else {
-                                    page.customFor = -1
-                                    page.setRule(ruleCol.index, "size", v)
-                                }
-                            }
-                        }
-                    }
-
-                    // a size of its own: pixels, or a percentage of the screen
-                    Item {
-                        visible: page.customFor === ruleCol.index && (ruleCol.opensAs === "float" || ruleCol.opensAs === "pin")
-                        width: parent.width
-                        height: customW.implicitHeight
-
-                        Row {
-                            anchors.right: parent.right
-                            spacing: Theme.spaceM
-
-                            FlyoutInput {
-                                id: customW
-                                width: Theme.fit(120)
-                                echoPassword: false
-                                placeholder: "width"
-                                onAccepted: customApply.clicked()
-                                onEscapePressed: page.customFor = -1
-                            }
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "×"
-                                color: Theme.subtext
-                                font.family: Theme.fontText
-                                font.weight: Theme.weightBody
-                                font.pixelSize: Theme.fontBody
-                            }
-                            FlyoutInput {
-                                id: customH
-                                width: Theme.fit(120)
-                                echoPassword: false
-                                placeholder: "height"
-                                onAccepted: customApply.clicked()
-                                onEscapePressed: page.customFor = -1
-                            }
-                            FlyoutChip {
-                                id: customApply
-                                anchors.verticalCenter: parent.verticalCenter
-                                readonly property string size: customW.text.trim() + " " + customH.text.trim()
-                                text: "Apply"
-                                selected: enabled
-                                enabled: page.validSize(size)
-                                onClicked: {
-                                    if (!page.validSize(size)) return
-                                    page.customFor = -1
-                                    page.setRule(ruleCol.index, "size", size)
-                                }
-                            }
-                        }
-                    }
-
-                    SettingsNote {
-                        visible: page.customFor === ruleCol.index && (ruleCol.opensAs === "float" || ruleCol.opensAs === "pin")
-                        text: "Pixels, or a percentage of the screen: 1000 × 70%"
-                    }
-
-                    SettingsField {
-                        label: "Workspace"
-                        hint: "Where it opens; Any is wherever you are"
-
-                        SettingsDropdown {
-                            anchors.right: parent.right
-                            width: Theme.fit(160)
-                            // Any, then every workspace the bar shows
-                            model: [0].concat(Array.from({ length: Settings.workspaceCount }, (_, i) => i + 1))
-                            current: ruleCol.rule.workspace || 0
-                            labelFor: v => v === 0 ? "Any" : "Workspace " + v
-                            onPicked: v => page.setRule(ruleCol.index, "workspace", v)
-                        }
-                    }
-
-                    FlyoutChip {
-                        text: "󰆴 Remove rule"
-                        confirmText: "Remove " + page.describe(ruleCol.rule) + "?"
-                        enabled: !AtomicFileWrite.busy
-                        onClicked: {
-                            page.openKey = ""
-                            page.removeRule(ruleCol.index)
-                        }
-                    }
-                }
-            }
+            model: page.appEntries
+            delegate: entryDelegate
         }
 
         // a rule for one more app: by its class, or picked from the open ones
@@ -697,6 +516,343 @@ SettingsPage {
                             text: modelData
                             onClicked: classInput.text = modelData
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "POPUPS AND DIALOGS" }
+
+    SettingsField {
+        label: "Block the window they came from"
+        hint: "Until the popup is closed or made a window"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.popupOpts.block
+            onToggled: page.setPopupOpt("block", !page.popupOpts.block)
+        }
+    }
+    SettingsField {
+        label: "Open over their window"
+        hint: "Centred on it, not the screen"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.popupOpts.over
+            onToggled: page.setPopupOpt("over", !page.popupOpts.over)
+        }
+    }
+    SettingsField {
+        label: "Remember their sizes"
+        hint: "Per app and title, like the apps' own"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.popupOpts.remember
+            onToggled: page.setPopupOpt("remember", !page.popupOpts.remember)
+        }
+    }
+
+    SettingsSubhead { visible: page.titleEntries.length > 0; caption: "Matched by title" }
+
+    Column {
+        width: parent.width
+
+        Repeater {
+            model: page.titleEntries
+            delegate: entryDelegate
+        }
+    }
+
+    // One app or title rule: its row, and its settings under it when open.
+    // An app with no rule yet (only a remembered size) gets one the moment
+    // anything but Forget is changed.
+    Component {
+        id: entryDelegate
+
+        Column {
+            id: entry
+            required property var modelData
+            readonly property var e: modelData
+            readonly property var rule: e.index >= 0 ? page.rules[e.index] : null
+            readonly property bool byTitle: !!(rule && rule.title)
+            readonly property bool expanded: page.openKey === page.entryKey(e)
+            readonly property int open: page.openCount(rule || { class: e.cls })
+            readonly property var mem: byTitle ? null : page.memOf(e.cls)
+            readonly property string opensAs: rule && rule.pin ? "pin" : rule && rule.fullscreen ? "full"
+                : rule && rule.float ? "float" : byTitle ? "tiled" : "left"
+            readonly property string first: rule && !rule.own ? "fill" : "own"
+
+            width: parent.width
+
+            FlyoutRow {
+                label: entry.rule ? page.describe(entry.rule) : Apps.nameForWindow(entry.e.cls, "")
+                highlighted: entry.expanded
+                trailing: (entry.open > 0 ? entry.open + " open  ·  " : "")
+                    + (entry.rule && entry.rule.regex ? page.glyphs.pattern + "  " : "")
+                    + (entry.rule ? page.summary(entry.rule) : page.memWords(entry.mem))
+                    + "  " + (entry.expanded ? "󰅀" : "󰅂")
+                onActivated: {
+                    page.openKey = entry.expanded ? "" : page.entryKey(entry.e)
+                    page.renaming = -1
+                }
+            }
+
+            SettingsIndent {
+                visible: entry.expanded
+
+                Text {
+                    width: parent.width
+                    text: {
+                        var r = entry.rule || { class: entry.e.cls }, parts = []
+                        if (r.class) parts.push("class " + (r.regex ? "~ " : "= ") + r.class)
+                        if (r.title) parts.push("title " + (r.regex ? "~ " : "= ") + r.title)
+                        return parts.join("   ") + (r.regex ? "  (a pattern; edited in window-rules.json)" : "")
+                    }
+                    wrapMode: Text.WrapAnywhere
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+
+                // the list's name for it, renamed in place; empty goes back to the class
+                SettingsField {
+                    visible: !!entry.rule && page.renaming !== entry.e.index
+                    label: "Name"
+                    hint: "What the list calls it"
+
+                    Row {
+                        anchors.right: parent.right
+                        spacing: Theme.spaceS
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: entry.rule ? page.describe(entry.rule) : ""
+                            color: Theme.textStrong
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontBody
+                        }
+                        IconButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            icon: page.glyphs.rename
+                            onClicked: {
+                                page.renaming = entry.e.index
+                                nameInput.text = entry.rule.label || ""
+                                Qt.callLater(nameInput.forceFocus)
+                            }
+                        }
+                    }
+                }
+
+                Item {
+                    visible: !!entry.rule && page.renaming === entry.e.index
+                    width: parent.width
+                    height: nameInput.implicitHeight
+
+                    FlyoutInput {
+                        id: nameInput
+                        anchors.left: parent.left
+                        anchors.right: nameSave.left
+                        anchors.rightMargin: Theme.spaceM
+                        echoPassword: false
+                        placeholder: entry.rule ? entry.rule.class || entry.rule.title || "" : ""
+                        hints: ["Enter save"]
+                        onAccepted: nameSave.clicked()
+                        onEscapePressed: page.renaming = -1
+                    }
+                    FlyoutChip {
+                        id: nameSave
+                        anchors.right: nameCancel.left
+                        anchors.rightMargin: Theme.spaceS
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Save"
+                        selected: true
+                        onClicked: {
+                            var name = nameInput.text.trim()
+                            page.renaming = -1
+                            if (name !== (entry.rule.label || "")) page.setRule(entry.e.index, "label", name)
+                        }
+                    }
+                    FlyoutChip {
+                        id: nameCancel
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Cancel"
+                        onClicked: page.renaming = -1
+                    }
+                }
+
+                SettingsField {
+                    label: "Opens"
+                    hint: page.opensHints[entry.opensAs]
+
+                    FlyoutSegmented {
+                        anchors.right: parent.right
+                        fill: false
+                        enabled: !AtomicFileWrite.busy
+                        model: [{ value: entry.byTitle ? "tiled" : "left", text: entry.byTitle ? "Fills" : "As left" },
+                            { value: "float", text: "Float" }, { value: "full", text: "Fullscreen" }, { value: "pin", text: "On top" }]
+                        current: entry.opensAs
+                        onPicked: v => page.setEntry(entry.e, "opens", v)
+                    }
+                }
+
+                SettingsField {
+                    visible: entry.opensAs === "left"
+                    label: "First time"
+                    hint: "Before there's anything to remember"
+
+                    FlyoutSegmented {
+                        anchors.right: parent.right
+                        fill: false
+                        enabled: !AtomicFileWrite.busy
+                        model: [{ value: "own", text: "Own size" }, { value: "fill", text: "Filled" }]
+                        current: entry.first
+                        onPicked: v => page.setEntry(entry.e, "own", v === "own" ? true : "")
+                    }
+                }
+
+                SettingsField {
+                    visible: entry.opensAs === "left"
+                    label: "Last left"
+                    hint: entry.mem ? "Opens like this next time" : "Nothing yet; how it's left is remembered"
+
+                    Row {
+                        anchors.right: parent.right
+                        spacing: Theme.spaceM
+                        visible: !!entry.mem
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: page.memWords(entry.mem)
+                            color: Theme.textStrong
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontBody
+                        }
+                        FlyoutChip {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Forget"
+                            confirmText: "Forget?"
+                            onClicked: page.forget(entry.e.cls, entry.rule ? page.describe(entry.rule) : Apps.nameForWindow(entry.e.cls, ""))
+                        }
+                    }
+                }
+
+                SettingsField {
+                    visible: entry.opensAs === "float" || entry.opensAs === "pin"
+                    label: "Size"
+                    hint: page.sizeHint(entry.rule ? entry.rule.size || "" : "")
+
+                    SettingsDropdown {
+                        anchors.right: parent.right
+                        width: Theme.fit(200)
+                        readonly property string size: entry.rule ? entry.rule.size || "" : ""
+                        // the presets, plus a size from the file that's none of them
+                        model: page.sizes.concat(page.sizes.indexOf(size) < 0
+                            && page.customFor !== entry.e.index ? [size] : []).concat(["custom"])
+                        current: page.customFor === entry.e.index ? "custom" : size
+                        labelFor: v => page.sizeLabel(v)
+                        onPicked: v => {
+                            if (v === "custom") {
+                                page.customFor = entry.e.index
+                                var parts = size.split(" ")
+                                customW.text = parts[0] || ""
+                                customH.text = parts[1] || ""
+                                Qt.callLater(customW.forceFocus)
+                            } else {
+                                page.customFor = -1
+                                page.setEntry(entry.e, "size", v)
+                            }
+                        }
+                    }
+                }
+
+                // a size of its own: pixels, or a percentage of the screen
+                Item {
+                    visible: page.customFor === entry.e.index && entry.e.index >= 0
+                        && (entry.opensAs === "float" || entry.opensAs === "pin")
+                    width: parent.width
+                    height: customW.implicitHeight
+
+                    Row {
+                        anchors.right: parent.right
+                        spacing: Theme.spaceM
+
+                        FlyoutInput {
+                            id: customW
+                            width: Theme.fit(120)
+                            echoPassword: false
+                            placeholder: "width"
+                            onAccepted: customApply.clicked()
+                            onEscapePressed: page.customFor = -1
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "×"
+                            color: Theme.subtext
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontBody
+                        }
+                        FlyoutInput {
+                            id: customH
+                            width: Theme.fit(120)
+                            echoPassword: false
+                            placeholder: "height"
+                            onAccepted: customApply.clicked()
+                            onEscapePressed: page.customFor = -1
+                        }
+                        FlyoutChip {
+                            id: customApply
+                            anchors.verticalCenter: parent.verticalCenter
+                            readonly property string size: customW.text.trim() + " " + customH.text.trim()
+                            text: "Apply"
+                            selected: enabled
+                            enabled: page.validSize(size)
+                            onClicked: {
+                                if (!page.validSize(size)) return
+                                page.customFor = -1
+                                page.setEntry(entry.e, "size", size)
+                            }
+                        }
+                    }
+                }
+
+                SettingsNote {
+                    visible: page.customFor === entry.e.index && entry.e.index >= 0
+                        && (entry.opensAs === "float" || entry.opensAs === "pin")
+                    text: "Pixels, or a percentage of the screen: 1000 × 70%"
+                }
+
+                SettingsField {
+                    label: "Workspace"
+                    hint: "Where it opens; Any is wherever you are"
+
+                    SettingsDropdown {
+                        anchors.right: parent.right
+                        width: Theme.fit(160)
+                        // Any, then every workspace the bar shows
+                        model: [0].concat(Array.from({ length: Settings.workspaceCount }, (_, i) => i + 1))
+                        current: entry.rule ? entry.rule.workspace || 0 : 0
+                        labelFor: v => v === 0 ? "Any" : "Workspace " + v
+                        onPicked: v => page.setEntry(entry.e, "workspace", v)
+                    }
+                }
+
+                FlyoutChip {
+                    visible: !!entry.rule
+                    text: "󰆴 Remove rule"
+                    confirmText: entry.rule ? "Remove " + page.describe(entry.rule) + "?" : ""
+                    enabled: !AtomicFileWrite.busy
+                    onClicked: {
+                        page.openKey = ""
+                        page.removeRule(entry.e.index)
                     }
                 }
             }

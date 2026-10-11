@@ -25,7 +25,7 @@ ALLOW = {
     # readouts inside one saved network, opened from its row
     ("network", "Security"): "a readout under each saved network",
     ("network", "Last joined"): "a readout under each saved network",
-    ("windowrules", "Matches"): "a readout under each named or pattern rule",
+    ("windowrules", "Open now"): "chips under the Add a rule… row while it's open",
     ("bluetooth", "Reconnect by itself"): "a switch under each paired device",
     ("bluetooth", "Type"): "a readout under each paired device",
     ("bluetooth", "Address"): "a readout under each paired device",

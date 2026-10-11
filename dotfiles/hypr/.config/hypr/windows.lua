@@ -294,9 +294,10 @@ do
     userRules = type(rules) == "table" and rules or {}
 end
 
--- In monocle only the apps listed in Window Rules as "Fills" (an entry
--- naming a class and no title that doesn't float, pin or go fullscreen) are
--- filled to the screen: browsers and editors. Every other window opens
+-- In monocle only the apps listed in Window Rules as opening "As left",
+-- filled the first time (an entry naming a class and no title that doesn't
+-- float, pin, go fullscreen or start at its own size, "own") are filled to
+-- the screen: browsers and editors. Every other window opens
 -- naturally -- floating, centred, at the size it asks for. Matched by
 -- Hyprland's regex, since a class can be one; SUPER+M's sweep asks the
 -- "rule-fill" tag the entries' rules below put on these apps' windows.
@@ -304,7 +305,7 @@ local fillMatch = {}
 for _, r in ipairs(userRules) do
     if type(r) == "table" and type(r.class) == "string" and r.class ~= ""
             and not (type(r.title) == "string" and r.title ~= "")
-            and not r.float and not r.pin and not r.fullscreen then
+            and not r.float and not r.pin and not r.fullscreen and not r.own then
         if r.regex then
             table.insert(fillMatch, "(" .. r.class .. ")")
         else
@@ -392,8 +393,8 @@ do
             -- on, unlike the app rules above, which are off while the app is
             -- open: the sweep tells an app's popups from it by "app-held".
             local intent = (r.float or r.pin) and "rule-float" or r.fullscreen and "rule-full"
-                or not match.title and "rule-fill"
-            hl.window_rule({ name = name .. "-intent", match = match, tag = "+" .. intent })
+                or not match.title and not r.own and "rule-fill"
+            if intent then hl.window_rule({ name = name .. "-intent", match = match, tag = "+" .. intent }) end
             if app then
                 -- the fullscreen rule is switched by applyLayoutRules
                 app.rules = { applied, exemptRule or nil }
@@ -885,6 +886,13 @@ local function rememberWindow(win)
     if not same then saveSizes() end
 end
 
+-- Settings > Window Rules' Forget: drops an app's remembered size at once.
+function forgetSize(class)
+    if sizes[class] == nil then return end
+    sizes[class] = nil
+    writeSizes()
+end
+
 -- The remembered shape for `win` on `mon`: "fullscreen", false for filled,
 -- nil for none. Another kind of screen's entry stands in when this kind
 -- has none.
@@ -1031,6 +1039,20 @@ end
 -- for nearly the whole screen -- Firefox-based browsers ask 1280x1040 for
 -- every popup -- gets POPOUT_SHARE of it instead.
 local POPOUT_SHARE = { 0.5, 0.6 }
+
+-- Settings > Window Rules' popup switches, in popups.json: { block, over,
+-- remember }, each on unless set false.
+local popupOpts = { block = true, over = true, remember = true }
+do
+    local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/popups.json")
+    local data = f and S.decodeJson(f:read("a"))
+    if f then f:close() end
+    if type(data) == "table" then
+        for k in pairs(popupOpts) do
+            if data[k] == false then popupOpts[k] = false end
+        end
+    end
+end
 local CASCADE = 32
 
 -- The key a popout's size is remembered under: its app and the title it
@@ -1152,7 +1174,7 @@ holdPopup = function(win)
         hl.exec_cmd("qs ipc call desktop changed")
         local mon = win.monitor or hl.get_active_monitor()
         local area = mon and fillArea(win, mon)
-        if area and ownerMain and win.size.x <= area.w * 0.85 and win.size.y <= area.h * 0.85 then
+        if area and popupOpts.block and ownerMain and win.size.x <= area.w * 0.85 and win.size.y <= area.h * 0.85 then
             blockOwner(win.address, owner.address)
             hl.dispatch(hl.dsp.focus({ window = addr }))
         end
@@ -1172,7 +1194,7 @@ holdPopup = function(win)
     stateOf(win.address).popoutKey = key
     local w, h = win.size.x, win.size.y
     local dialogSized = w <= area.w * 0.85 and h <= area.h * 0.85
-    local m = key and type(sizes[key]) == "table" and sizes[key][screenKind(area)]
+    local m = popupOpts.remember and key and type(sizes[key]) == "table" and sizes[key][screenKind(area)]
     if type(m) == "table" and tonumber(m.fw) and tonumber(m.fh) then
         w, h = math.min(m.fw, 1) * area.w, math.min(m.fh, 1) * area.h
     elseif w > area.w * 0.85 or h > area.h * 0.85 then
@@ -1180,7 +1202,7 @@ holdPopup = function(win)
     end
     -- over its owner when that's on the same monitor, else the screen's centre
     local cx, cy = area.x + area.w / 2, area.y + area.h / 2
-    if owner.monitor and owner.monitor.id == mon.id and owner.workspace and win.workspace
+    if popupOpts.over and owner.monitor and owner.monitor.id == mon.id and owner.workspace and win.workspace
             and owner.workspace.id == win.workspace.id then
         cx, cy = owner.at.x + owner.size.x / 2, owner.at.y + owner.size.y / 2
     end
@@ -1200,7 +1222,7 @@ holdPopup = function(win)
         y = math.min(y + CASCADE, area.y + area.h - h)
     end
     moveTo(addr, { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) })
-    if dialogSized and ownerMain then
+    if popupOpts.block and dialogSized and ownerMain then
         blockOwner(win.address, owner.address)
         hl.dispatch(hl.dsp.focus({ window = addr }))
     end
@@ -1209,7 +1231,7 @@ end
 -- Records a popout's size, as a share of the screen, under its key.
 local function rememberPopout(win)
     local key = win and stateOf(win.address).popoutKey
-    if not key or not win.floating or win.fullscreen ~= 0 or not win.monitor then return end
+    if not key or not popupOpts.remember or not win.floating or win.fullscreen ~= 0 or not win.monitor then return end
     if not (hasTag(win, "popout") or hasTag(win, "app-held")) then return end
     local area = fillArea(win, win.monitor)
     local fw, fh = math.min(win.size.x / area.w, 1), math.min(win.size.y / area.h, 1)

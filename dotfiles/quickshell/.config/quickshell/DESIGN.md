@@ -241,12 +241,18 @@ Settings') are laid out the same way.
   drawing the thing where it is (`PopupSpot`).
 - **Which pages are tabbed:** only Appearance. Every other page is one
   page with sections; prefer that over tabs.
-- **Window Rules:** rules are one-line rows (drag handle, name, a pattern
-  mark, how it opens) that open in place: Matches, Name with the pencil,
-  one Opens as choice (Tiled · Float · Fullscreen · On top), Size from a
-  dropdown of presets, shares of the screen and Custom…, Workspace, and
-  Remove. Rows reorder by dragging the handle. Add a rule… is the last row,
-  as Other network… is. Workspace layouts are segments per workspace.
+- **Window Rules:** one Apps list holds every app with a rule or a
+  remembered size (one-line rows: name, a pattern mark, how it opens, in
+  words: Filled, Fullscreen, 21% × 43%, Float 960×540). A row opens in
+  place: what it matches, Name with the pencil, Opens (As left · Float ·
+  Fullscreen · On top), for As left a First time choice (Own size ·
+  Filled, which is what the old Fills list was) and Last left with Forget,
+  Size for Float and On top, Workspace, and Remove. An app with only a
+  remembered size gets its rule on its first change. Add a rule… is the
+  last row, as Other network… is. Popups and dialogs is its own section:
+  three switches (block, open over their window, remember sizes), then the
+  rules matched by title. Workspace layouts are segments per workspace.
+  No reordering: new rules go on top of the file.
   The tab showing has white text on its accent fill, never dark. Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.
 - **Rows that open in place:** a row whose action needs more input (a
