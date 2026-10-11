@@ -1,27 +1,49 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/UpdatesFlyout.qml
 //
-// Split out of shell.qml. Self-contained: only needs the Updates singleton.
-// Packages first, then Singularity's own commits waiting upstream, while
-// there are any.
+// A card saying where things stand, with the one action that fits (Check
+// now, or Update now while there are some), then the packages, then
+// Singularity's own commits waiting upstream while there are any.
 
 import QtQuick
 import "../services"
 
 FlyoutPanel {
     flyout: "updates"
-    menuWidth: 300
+    menuWidth: 320
 
-    FlyoutHeading {
-        text: "UPDATES  " + Updates.count
-            + (Updates.aurCount > 0 ? "  (" + Updates.aurCount + " AUR)" : "")
-    }
+    FlyoutHeading { text: "UPDATES" }
 
-    FlyoutRow {
-        visible: Updates.count === 0
-        label: Updates.checking ? "Checking…"
-            : Updates.lastChecked === null ? "Not checked yet" : "Everything is up to date"
-        enabled: false
+    HeadCard {
+        id: card
+        readonly property bool some: Updates.count > 0
+        glyph: some || Updates.lastChecked === null ? "󰚰" : "󰄬"
+        glyphColor: some ? Theme.accent : Updates.lastChecked === null ? Theme.muted : Theme.good
+        title: Updates.checking && Updates.lastChecked === null ? "Checking…"
+            : Updates.lastChecked === null ? "Not checked"
+            : !some ? "Up to date"
+            : Updates.count + (Updates.count === 1 ? " update" : " updates")
+        lines: [
+            some && Updates.aurCount > 0 ? Updates.aurCount + " from the AUR" : "",
+            Updates.checking || Updates.repoChecking ? "Checking now…"
+                : Updates.lastChecked ? "Checked " + Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
+        ]
+
+        FlyoutChip {
+            visible: card.some
+            text: Updates.repoBehind > 0 ? "Update packages" : "Update now"
+            selected: true
+            onClicked: {
+                Updates.update()
+                scope.openFlyout = ""
+            }
+        }
+        FlyoutChip {
+            visible: !card.some
+            text: "Check now"
+            enabled: !Updates.checking && !Updates.repoChecking
+            onClicked: Updates.refresh()
+        }
     }
 
     ListView {
@@ -109,23 +131,6 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutRow {
-        label: Updates.repoBehind > 0 ? "Update packages" : "Update now"
-        trailing: "󰚰"
-        enabled: Updates.count > 0
-        onActivated: {
-            Updates.update()
-            scope.openFlyout = ""
-        }
-    }
-
-    FlyoutRow {
-        label: Updates.checking || Updates.repoChecking ? "Checking…" : "Check again"
-        trailing: Updates.lastChecked ? Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
-        busy: Updates.checking || Updates.repoChecking
-        onActivated: Updates.refresh()
-    }
 
     FlyoutRow {
         label: "More in Settings"

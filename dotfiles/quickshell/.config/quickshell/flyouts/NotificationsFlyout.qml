@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NotificationsFlyout.qml
 //
-// The notification history, newest first, with Do Not Disturb and Clear
-// all. Opening it marks everything read; what was new stays marked while
+// The notification history, newest first, with Clear all on the heading
+// while there's any, and Do Not Disturb. Empty, it says so in a card. Opening it marks everything read; what was new stays marked while
 // it's open.
 
 import QtQuick
@@ -19,12 +19,23 @@ FlyoutPanel {
 
     FlyoutHeading {
         text: "NOTIFICATIONS" + (Notifications.count > 0 ? "  " + Notifications.count : "")
+        control: Notifications.count > 0 ? clearChip : null
     }
 
-    FlyoutRow {
+    Component {
+        id: clearChip
+        FlyoutChip {
+            text: "Clear all"
+            confirmText: "Clear " + Notifications.count + "?"
+            onClicked: Notifications.clearAll()
+        }
+    }
+
+    HeadCard {
         visible: Notifications.count === 0
-        label: "No notifications"
-        enabled: false
+        glyph: "󰂚"
+        title: "All caught up"
+        lines: ["The history is empty"]
     }
 
     Item {
@@ -75,14 +86,6 @@ FlyoutPanel {
         status: Notifications.dnd ? "Popups are held" : ""
         checked: Notifications.dnd
         onActivated: Notifications.toggleDnd()
-    }
-
-    FlyoutRow {
-        label: "Clear all"
-        trailing: "󰎟"
-        enabled: Notifications.count > 0
-        confirmText: "Clear " + Notifications.count + "?"
-        onActivated: Notifications.clearAll()
     }
 
     FlyoutRow {

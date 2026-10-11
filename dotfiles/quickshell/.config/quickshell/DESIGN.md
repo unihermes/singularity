@@ -155,6 +155,15 @@ up to five new ones; each row has its type icon, the battery once
 connected, and Connected / Not connected, which pointing turns into a
 Connect or Disconnect chip. Removing a device is the Settings page's.
 
+### Updates and Notifications flyouts
+
+Picked 2026-10-11: each opens on where things stand. Updates is a
+`HeadCard` (the count, Up to date with a green tick, or Not checked; the
+AUR share; when it last checked) with the one action that fits on it:
+Check now, or Update now while there are some. Notifications empty is a
+card (All caught up); with history, Clear all is a chip on the heading,
+two clicks. Actions that can't do anything aren't shown.
+
 ### Brightness flyout
 
 Each bar's brightness module is the monitor under it: over DDC/CI when the
