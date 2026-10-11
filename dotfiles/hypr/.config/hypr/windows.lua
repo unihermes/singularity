@@ -778,6 +778,20 @@ local function placeMonocle(win, mon)
     syncFillBorder(win.address)
 end
 
+-- The shape a floater's geometry makes on `mon`: nil within SNAP_FILL of
+-- filling it. With `keep`, keeps that shape's size, just where it now is.
+local function shapeOf(win, mon, keep)
+    local area = fillArea(win, mon)
+    local fw = keep and keep.fw or math.min(win.size.x / area.w, 1)
+    local fh = keep and keep.fh or math.min(win.size.y / area.h, 1)
+    if fw >= SNAP_FILL and fh >= SNAP_FILL then return nil end
+    return {
+        fx = math.max(0, math.min((win.at.x - area.x) / area.w, 1 - fw)),
+        fy = math.max(0, math.min((win.at.y - area.y) / area.h, 1 - fh)),
+        fw = fw, fh = fh,
+    }
+end
+
 -- Takes a monocle window's shape from where it actually is, so one moved or
 -- resized by the mouse or the arrow keys stays that way. One that has
 -- changed monitor since it was placed keeps its share of the screen, where
@@ -791,19 +805,128 @@ local function captureShape(win)
     local moved = st.placedOn ~= mon.id
     if moved and not st.shape then return end
     if not moved and isFitted(win, shapeRect(win, mon, st.shape)) then return end
-    local area = fillArea(win, mon)
-    local fw = moved and st.shape.fw or math.min(win.size.x / area.w, 1)
-    local fh = moved and st.shape.fh or math.min(win.size.y / area.h, 1)
-    local shape = nil
-    if fw < SNAP_FILL or fh < SNAP_FILL then
-        shape = {
-            fx = math.max(0, math.min((win.at.x - area.x) / area.w, 1 - fw)),
-            fy = math.max(0, math.min((win.at.y - area.y) / area.h, 1 - fh)),
-            fw = fw, fh = fh,
-        }
-    end
-    setShape(win, shape)
+    setShape(win, shapeOf(win, mon, moved and st.shape))
     placeMonocle(win, mon)
+end
+
+-- REMEMBERED SIZES. Each app's main window opens the way it was last left,
+-- per kind of screen (wide, normal, tall): filled, or at its shape. Kept
+-- in ~/.local/state/singularity/window-sizes.json as
+-- { class = { normal = { fill = true } | { fx, fy, fw, fh }, t = time } },
+-- the 100 most recently used. Only monocle and natural windows count --
+-- not popouts, prompts, rule entries, pinned windows or the shell's own.
+local SIZES_FILE = os.getenv("HOME") .. "/.local/state/singularity/window-sizes.json"
+local SIZES_MAX = 100
+local sizes = {}
+do
+    local f = io.open(SIZES_FILE)
+    local data = f and S.decodeJson(f:read("a"))
+    if f then f:close() end
+    if type(data) == "table" then sizes = data end
+end
+
+local function screenKind(area)
+    local ratio = area.w / area.h
+    return ratio > 1.9 and "wide" or ratio < 1 and "tall" or "normal"
+end
+
+local function rememberable(win)
+    return win and win.class and win.class ~= "" and win.class ~= "org.quickshell"
+        and win.class ~= SCRATCH_CLASS and win.floating and win.fullscreen == 0 and not win.pinned
+        and (hasTag(win, "monocle") or hasTag(win, "natural"))
+        and not (hasTag(win, "popout") or hasTag(win, "app-held") or hasTag(win, "rule-float")
+            or hasTag(win, "monocle-exempt"))
+        and monocleOn(win.workspace)
+end
+
+local function num(v) return string.format("%.4f", v) end
+
+local function writeSizes()
+    local classes = {}
+    for class, entry in pairs(sizes) do
+        if type(entry) == "table" then table.insert(classes, class) end
+    end
+    table.sort(classes, function(a, b) return (sizes[a].t or 0) > (sizes[b].t or 0) end)
+    local lines = {}
+    for i, class in ipairs(classes) do
+        if i > SIZES_MAX then
+            sizes[class] = nil
+        else
+            local parts = { '"t":' .. math.floor(sizes[class].t or 0) }
+            for _, kind in ipairs({ "normal", "wide", "tall" }) do
+                local m = sizes[class][kind]
+                if type(m) == "table" and m.fill then
+                    table.insert(parts, '"' .. kind .. '":{"fill":true}')
+                elseif type(m) == "table" and m.fw then
+                    table.insert(parts, string.format('"%s":{"fx":%s,"fy":%s,"fw":%s,"fh":%s}',
+                        kind, num(m.fx), num(m.fy), num(m.fw), num(m.fh)))
+                end
+            end
+            local key = class:gsub('[%c"\\]', function(c) return string.format("\\u%04x", c:byte()) end)
+            table.insert(lines, string.format('  "%s": {%s}', key, table.concat(parts, ",")))
+        end
+    end
+    local tmp = SIZES_FILE .. ".tmp"
+    local f = io.open(tmp, "w")
+    if not f then return end
+    f:write("{\n" .. table.concat(lines, ",\n") .. "\n}\n")
+    f:close()
+    os.rename(tmp, SIZES_FILE)
+end
+
+-- Written a moment after the last change, so dragging focus around
+-- doesn't write the file for every window it passes.
+local sizesDirty = false
+local function saveSizes()
+    if sizesDirty then return end
+    sizesDirty = true
+    hl.timer(function()
+        sizesDirty = false
+        writeSizes()
+    end, { timeout = 2000, type = "oneshot" })
+end
+
+-- Records how `win` is now: a monocle window by its shape, a natural one
+-- by where it actually is.
+local function rememberWindow(win)
+    if not rememberable(win) or not win.monitor then return end
+    local st = stateOf(win.address)
+    if st.minimized then return end
+    local area = fillArea(win, win.monitor)
+    local shape
+    if hasTag(win, "monocle") then
+        shape = st.shape
+    else
+        shape = shapeOf(win, win.monitor)
+    end
+    local m = shape and { fx = shape.fx, fy = shape.fy, fw = shape.fw, fh = shape.fh } or { fill = true }
+    local entry = type(sizes[win.class]) == "table" and sizes[win.class] or {}
+    local kind = screenKind(area)
+    local old = entry[kind]
+    entry.t = os.time()
+    entry[kind] = m
+    sizes[win.class] = entry
+    local same = type(old) == "table" and old.fill == m.fill
+        and (m.fill or (num(old.fx) == num(m.fx) and num(old.fy) == num(m.fy)
+            and num(old.fw) == num(m.fw) and num(old.fh) == num(m.fh)))
+    if not same then saveSizes() end
+end
+
+-- The remembered shape for `win` on `mon`: false for filled, nil for none.
+-- Another kind of screen's entry stands in when this kind has none.
+local function recallShape(win, mon)
+    local entry = sizes[win.class]
+    if type(entry) ~= "table" then return nil end
+    local m = entry[screenKind(fillArea(win, mon))] or entry.normal or entry.wide or entry.tall
+    if type(m) ~= "table" then return nil end
+    if m.fill then return false end
+    local fx, fy, fw, fh = tonumber(m.fx), tonumber(m.fy), tonumber(m.fw), tonumber(m.fh)
+    if not (fx and fy and fw and fh) or fw <= 0 or fh <= 0 then return nil end
+    fw, fh = math.min(fw, 1), math.min(fh, 1)
+    return {
+        fx = math.max(0, math.min(fx, 1 - fw)), fy = math.max(0, math.min(fy, 1 - fh)),
+        fw = fw, fh = fh,
+    }
 end
 
 -- A floating window is maximized by filling the usable area, never with
@@ -939,7 +1062,8 @@ local function onMonocleOpen(win)
     local fresh = hl.get_window("address:" .. win.address) or win
     if elsewhere and on ~= inMonocleState(fresh) and not (on and isMonocleExempt(fresh)) then
         setWindowMonocle(fresh, on, fresh.monitor)
-        return
+        if not on then return end
+        fresh = hl.get_window("address:" .. win.address) or fresh
     end
     -- One the natural rule floated, marked so SUPER+M tiles it again (the
     -- rule's own tags go when it's switched off): floating, outside the
@@ -948,10 +1072,21 @@ local function onMonocleOpen(win)
             and not fresh.pinned and not hasTag(fresh, "popout") then
         hl.dispatch(hl.dsp.window.tag({ tag = "+natural", window = "address:" .. win.address }))
     end
-    -- Only the windows monocleRule floated. Exempt ones -- Quickshell's own
-    -- Settings/System/Keybinds windows, window-rules.json entries -- keep
-    -- the size they open at.
-    if on and hasTag(win, "monocle") then placeMonocle(win) end
+    -- The windows monocleRule floated are placed, and a natural one is put
+    -- where it was last left. Exempt ones -- Quickshell's own windows,
+    -- window-rules.json entries -- keep the size they open at.
+    if not on then return end
+    fresh = hl.get_window("address:" .. win.address) or fresh
+    local mon = fresh.monitor
+    local shape = rememberable(fresh) and mon and recallShape(fresh, mon)
+    if hasTag(fresh, "monocle") then
+        if shape ~= nil then setShape(fresh, shape or nil) end
+        placeMonocle(fresh)
+    elseif shape == false then
+        sizeToFullFloat(fresh, mon)
+    elseif shape then
+        moveTo("address:" .. fresh.address, shapeRect(fresh, mon, shape))
+    end
 end
 hl.on("window.open", onMonocleOpen)
 
@@ -1040,7 +1175,9 @@ local shapeWatch = nil
 hl.on("window.active", function()
     local win = hl.get_active_window()
     if shapeWatch and (not win or win.address ~= shapeWatch) then
-        captureShape(hl.get_window("address:" .. shapeWatch))
+        local left = hl.get_window("address:" .. shapeWatch)
+        captureShape(left)
+        rememberWindow(left and hl.get_window("address:" .. left.address))
     end
     shapeWatch = win and win.address
 end)
@@ -1094,7 +1231,10 @@ hl.on("window.close", maximizeFocused)
 
 -- window.close hands the closing window over, same as window.open does.
 hl.on("window.close", function(win)
-    if win then windowState[win.address] = nil end
+    if not win then return end
+    captureShape(win)
+    rememberWindow(hl.get_window("address:" .. win.address) or win)
+    windowState[win.address] = nil
 end)
 
 -- Dialogs stay over the window they came from. Every monocle window is a
