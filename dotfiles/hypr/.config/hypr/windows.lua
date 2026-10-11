@@ -1109,9 +1109,12 @@ holdPopup = function(win)
     knownWindows[win.address] = true
     if not win.class or win.class == "" or win.class == "org.quickshell" or win.class == SCRATCH_CLASS then return end
     if not win.floating or win.pinned or not monocleOn(win.workspace) then return end
-    -- not a Window Rules entry's, which places itself
-    if hasTag(win, "rule-float") or hasTag(win, "rule-full") then return end
-    if launchWaiting then
+    -- A Window Rules entry's window places itself; one the entry marks as a
+    -- popout (a file or settings dialog) still blocks its owner.
+    if hasTag(win, "rule-full") then return end
+    local ruled = hasTag(win, "rule-float")
+    if ruled and not hasTag(win, "popout") then return end
+    if launchWaiting and not ruled then
         launchWaiting = false
         return
     end
@@ -1130,6 +1133,15 @@ holdPopup = function(win)
     if not owner then return end
 
     local addr = "address:" .. win.address
+    if ruled then
+        local mon = win.monitor or hl.get_active_monitor()
+        local area = mon and fillArea(win, mon)
+        if area and ownerMain and win.size.x <= area.w * 0.85 and win.size.y <= area.h * 0.85 then
+            blockOwner(win.address, owner.address)
+            hl.dispatch(hl.dsp.focus({ window = addr }))
+        end
+        return
+    end
     -- monocleRule's tag is a rule's, so it carries the *
     hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
     hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
