@@ -22,6 +22,8 @@
 // Writes go through `xdg-mime default`, which edits ~/.config/mimeapps.list.
 // A group is only pointed at the types its chosen app actually declares, so
 // picking an image viewer without SVG support leaves SVGs where they were.
+// The pickers offer the apps that declare a type first, then every other
+// installed app behind "More apps", for an app whose MimeType= is missing.
 
 import Quickshell
 import Quickshell.Io
@@ -159,6 +161,20 @@ SettingsPage {
         return out.sort((x, y) => x.name.localeCompare(y.name))
     }
 
+    // Every installed app, declaring types or not, by name. The picker falls
+    // back to this for an app the type's MimeType= lines don't name.
+    readonly property var everyApp: {
+        var out = []
+        for (var id in names) out.push(apps[id] || { id: id, name: names[id], types: [], icon: icons[id] || "" })
+        return out.sort((x, y) => x.name.localeCompare(y.name))
+    }
+
+    // every app in `list` that isn't already in `taken`, by id
+    function notIn(list, taken) {
+        var ids = taken.map(a => a.id)
+        return list.filter(a => ids.indexOf(a.id) < 0)
+    }
+
     // The group's types an app could take that have no default yet.
     function unset(types) {
         return types.filter(t => current(t) === "" && candidates([t]).length > 0)
@@ -176,9 +192,11 @@ SettingsPage {
         return seen
     }
 
+    // An app picked from the full list may declare none of the types; it
+    // still gets all of them, since that's what was asked for.
     function setDefault(appId, types) {
-        var declared = apps[appId] ? types.filter(t => handles(apps[appId], t)) : types
-        if (declared.length === 0) return
+        var own = apps[appId] ? types.filter(t => handles(apps[appId], t)) : []
+        var declared = own.length > 0 ? own : types
         setProc.queue.push({ command: ["xdg-mime", "default", appId].concat(declared),
             message: appName(appId) + " now opens " + (declared.length === 1 ? declared[0] : declared.length + " types") })
         nextSet()
@@ -367,7 +385,11 @@ SettingsPage {
         property bool wide: false
         readonly property var made: page.declaring(types[0])
         readonly property var others: page.candidates(types).filter(a => made.indexOf(a) < 0)
-        readonly property var offered: wide || made.length === 0 ? made.concat(others) : made
+        // every installed app the list hasn't shown yet, once it's opened up
+        readonly property var rest: page.notIn(page.everyApp, made.concat(others))
+        readonly property var base: made.length === 0 ? made.concat(others) : made
+        readonly property var offered: wide ? made.concat(others, rest) : base
+        readonly property int hidden: page.everyApp.length - base.length
         readonly property string chosen: page.groupCurrent(types)
         // the default as one of the offered apps: a default naming another
         // entry of the same app (zathura.desktop against zathura-pdf-mupdf,
@@ -397,11 +419,11 @@ SettingsPage {
             model: {
                 var ids = hr.offered.map(a => a.id)
                 if (hr.shown !== "" && hr.shown !== "mixed" && ids.indexOf(hr.shown) < 0 && page.names[hr.shown]) ids.unshift(hr.shown)
-                if (!hr.wide && hr.others.length > 0 && hr.made.length > 0) ids.push(hr.more)
+                if (!hr.wide && hr.hidden > 0) ids.push(hr.more)
                 return ids
             }
             current: hr.shown
-            labelFor: id => id === hr.more ? "More apps (" + hr.others.length + ")…" : page.appName(id)
+            labelFor: id => id === hr.more ? "More apps (" + hr.hidden + ")…" : page.appName(id)
             iconFor: id => id === hr.more ? "" : page.appIcon(id)
             placeholder: hr.chosen === "mixed" ? "Mixed" : "Choose an app"
             onPicked: id => {
@@ -475,6 +497,10 @@ SettingsPage {
         required property string modelData
         readonly property string cur: page.current(modelData)
         readonly property bool isOpen: page.openType === modelData
+        // the apps that declare this type, then (once opened) every other one
+        readonly property var declaredBy: page.candidates([modelData])
+        property bool wide: false
+        readonly property var listed: wide ? declaredBy.concat(page.notIn(page.everyApp, declaredBy)) : declaredBy
 
         width: parent ? parent.width : 0
 
@@ -490,7 +516,7 @@ SettingsPage {
             visible: tb.isOpen
 
             Repeater {
-                model: tb.isOpen ? page.candidates([tb.modelData]) : []
+                model: tb.isOpen ? tb.listed : []
                 FlyoutRow {
                     required property var modelData
                     leadingImage: page.appIcon(modelData.id)
@@ -502,9 +528,14 @@ SettingsPage {
                 }
             }
             FlyoutRow {
-                visible: tb.isOpen && page.candidates([tb.modelData]).length === 0
+                visible: tb.isOpen && tb.declaredBy.length === 0
                 enabled: false
                 label: "No installed app opens it"
+            }
+            FlyoutRow {
+                visible: tb.isOpen && !tb.wide && page.everyApp.length > tb.declaredBy.length
+                label: "More apps (" + (page.everyApp.length - tb.declaredBy.length) + ")…"
+                onActivated: tb.wide = true
             }
         }
     }
