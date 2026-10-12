@@ -1,10 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsSectionRow.qml
 //
-// One row in a window's sidebar (Settings, System): the page's icon and its
-// name, on one line. The same row carries a search hit -- the setting's
-// name over the page and heading it lives on (`blurb`), with that page's
-// icon -- so the list looks the same whether it's the pages or what matched.
+// One row in a window's sidebar (Settings, System): the page's icon, its
+// name, and a line under it (`blurb`) saying what's there. A search hit
+// uses the same row -- the setting's name over the page and heading it
+// lives on, with that page's icon -- so the list looks the same whether
+// it's the pages or what matched.
 //
 // Pages come in groups, set apart by a gap over each group's first row
 // (`gapAbove`).

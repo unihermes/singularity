@@ -242,9 +242,10 @@ Settings') are laid out the same way.
   title bar line (`WindowHeader`): the accent bar, the name with the
   hostname quieter after it, Settings' search in the rest of the line, and
   Close. No eyebrow, no separate search row.
-- **Sidebar:** one line a page (icon and name, no numbers, no SECTIONS
-  heading), groups set apart by a gap. Search hits keep their second line
-  (the page and heading) under a RESULTS count.
+- **Sidebar:** a page is its icon, name and a second line of what's there
+  (no numbers, no SECTIONS heading), groups set apart by a gap. Search hits
+  use the same row, with the page and heading as the second line, under a
+  RESULTS count.
   The page on show has the accent tick, not a fill; the row
   the arrow keys are on (while searching) has the hover fill.
 - A Repeater's Column that holds its own heading and rows sets

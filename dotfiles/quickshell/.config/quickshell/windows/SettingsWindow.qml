@@ -101,7 +101,7 @@ FloatingWindow {
     readonly property var index: SettingsIndex.build(pages)
     // the sidebar's rows: the pages themselves, or what matched
     readonly property var rows: query === ""
-        ? pages.map(p => ({ page: p.id, label: p.label, icon: p.icon, isPage: true, gap: !!p.gap }))
+        ? pages.map(p => ({ page: p.id, label: p.label, blurb: p.blurb, icon: p.icon, isPage: true, gap: !!p.gap }))
         : SettingsIndex.search(index, query, 30).map(e => ({
             page: e.page, label: e.label, icon: e.icon, isPage: e.isPage,
             blurb: e.isPage ? "Section"
