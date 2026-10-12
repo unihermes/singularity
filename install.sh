@@ -1026,49 +1026,6 @@ if (( ! laptop )) && have_unit coolercontrold.service; then
   sudo systemctl enable --now coolercontrold.service
 fi
 
-if (( laptop )) && have_unit power-profiles-daemon.service; then
-  # performance on AC, balanced on battery. PPD has no such rule of its own --
-  # it only exposes ActiveProfile for something else to drive, which the bar
-  # already does on demand via busctl (see PpdProfile.qml) -- so a udev rule
-  # drives the same property on every charger plug/unplug. Its bus policy lets
-  # anyone set ActiveProfile with no polkit prompt, so udev running this as
-  # root needs nothing extra. Every power_supply device is checked rather than
-  # trusting whichever one fired the rule, since a USB-C-only laptop like this
-  # one can expose the charger as more than one power_supply.
-  #
-  # power_supply RUN+= rules fire on far more than plug/unplug -- this
-  # machine's USB-C controller reports a "change" uevent roughly once a
-  # second even while idle -- so the script only writes ActiveProfile when
-  # the computed target actually differs from what it last wrote. Without
-  # that guard, any manual profile pick made from the bar or Settings gets
-  # overwritten within a second by this script re-asserting the same AC-based
-  # value. The stamp lives in /run so a reboot (or AC state actually
-  # changing) is what invalidates it, not time.
-  log "installing AC-power profile switch"
-  sudo tee /usr/local/bin/singularity-power-profile >/dev/null <<'PROFILE'
-#!/bin/sh
-set -eu
-profile=balanced
-for f in /sys/class/power_supply/*/online; do
-  [ "$(cat "$f" 2>/dev/null)" = "1" ] && { profile=performance; break; }
-done
-stamp=/run/singularity-power-profile.last
-[ "$(cat "$stamp" 2>/dev/null || true)" = "$profile" ] && exit 0
-busctl set-property org.freedesktop.UPower.PowerProfiles \
-  /org/freedesktop/UPower/PowerProfiles \
-  org.freedesktop.UPower.PowerProfiles ActiveProfile s "$profile"
-printf %s "$profile" > "$stamp"
-PROFILE
-  sudo chmod +x /usr/local/bin/singularity-power-profile
-
-  sudo tee /etc/udev/rules.d/99-singularity-power-profile.rules >/dev/null <<'RULES'
-SUBSYSTEM=="power_supply", ATTR{type}=="Mains", RUN+="/usr/local/bin/singularity-power-profile"
-SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/local/bin/singularity-power-profile"
-RULES
-  sudo udevadm control --reload-rules
-  sudo /usr/local/bin/singularity-power-profile || true
-fi
-
 # Pairing agent. Without one BlueZ cannot complete a pairing at all -- see the
 # unit's own comment. It is a user service because it is per-session, and it
 # ships in dotfiles/systemd rather than being written here so `systemctl --user
