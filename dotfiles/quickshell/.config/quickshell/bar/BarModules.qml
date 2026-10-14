@@ -314,7 +314,6 @@ Item {
         // an empty chip on a bare workspace would be a floating
         // rectangle with nothing in it
         visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
-        active: screenScope.openFlyout === "windowmenu" || screenScope.openFlyout === "appwindows"
         hoverWhole: false
         // the plain icon styles pad each icon by a hair, which would
         // otherwise stack on the chip's own padding
@@ -357,7 +356,13 @@ Item {
                         required property var modelData
                         required property int index
                         readonly property bool focused: strip.focusIndex === index
-                        readonly property bool hovered: winMouse.containsMouse
+                        // the icon whose window menu or window list is open
+                        // is lit as if hovered, rather than the whole strip
+                        readonly property bool opened: screenScope.openFlyout === "appwindows"
+                            ? barModules.bar.appWindowsKey === modelData.key
+                            : screenScope.openFlyout === "windowmenu" && !!barModules.windowMenu.item
+                                && modelData.windows.some(w => w.address === barModules.windowMenu.item.address)
+                        readonly property bool hovered: winMouse.containsMouse || opened
                         readonly property bool lit: focused || hovered
                         readonly property string style: strip.style
                         readonly property bool dots: style === "dots"
@@ -455,6 +460,8 @@ Item {
                             height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight - 6
                             radius: grouped ? Theme.radius : Theme.radiusSmall
                             color: Theme.overlay
+                            border.width: winIcon.opened ? Theme.borderWidth : 0
+                            border.color: Theme.strokeFocus
                         }
 
                         // a tab's ground: lit under the focused window, a hover
