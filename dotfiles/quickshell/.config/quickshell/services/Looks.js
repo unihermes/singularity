@@ -50,7 +50,7 @@
 //     seeThrough   the bar's and panels' opacity, in percent
 //     focusedOpacity, unfocusedOpacity   Hyprland's windows' opacity when
 //                  focused and not, in percent; unstated, the style's
-//     terminalOpacity Alacritty's background opacity, in percent;
+//     terminalOpacity the terminal's background opacity, in percent;
 //                  unstated, the style's
 //     shadows, gradient, heavyLines, headingUpper, headingRule,
 //     barSeparator, levelColour   the Finish switches (Settings.qml)

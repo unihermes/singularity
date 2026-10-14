@@ -4,7 +4,7 @@
 -- LazyVim already covers most of the everyday ones -- Ctrl+S save, Shift+H/L
 -- between tabs, <space>e file tree, <space>ff files, <space>/ grep,
 -- <space>gg lazygit, <space>xx problems, <space>cf format, <space>cr rename.
--- These add the shortcuts other editors use. Alacritty speaks the kitty
+-- These add the shortcuts other editors use. Alacritty and Ghostty speak the kitty
 -- keyboard protocol, so Ctrl+/ , Ctrl+` and Ctrl+Shift+F arrive as
 -- themselves; ^_ and ^\ are the fallbacks for terminals that don't.
 

@@ -12,7 +12,9 @@ tree-sitter-cli
 lazygit
 nodejs
 npm
+# the two terminals Settings > Terminal picks between (singularity/terminal.sh)
 alacritty
+ghostty
 # the editor with agent chats; dotfiles/zed lays it out like VS Code
 zed
 stow

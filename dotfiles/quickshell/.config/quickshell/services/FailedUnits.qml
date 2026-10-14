@@ -30,7 +30,7 @@ Singleton {
     // to the shell otherwise.
     function showLog(u) {
         var scope = u.user ? "--user " : ""
-        Quickshell.execDetached(["alacritty", "--class", "singularity-unit-log", "-e", "bash", "-c",
+        Quickshell.execDetached([Settings.terminal, "--class", "singularity.unit-log", "-e", "bash", "-c",
             "systemctl " + scope + "status --no-pager -- \"$1\"; echo; "
             + "journalctl " + scope + "-u \"$1\" -n 40 --no-pager; echo; "
             + "read -rsn1 -p 'press any key to close'", "bash", u.name])

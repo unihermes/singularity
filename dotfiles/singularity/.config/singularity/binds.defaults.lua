@@ -21,7 +21,8 @@ local MAX_WORKSPACES = 5
 shared.maxWorkspaces = MAX_WORKSPACES
 
 -- The programs the launcher binds run: binary names, not .desktop names.
-local terminal    = "alacritty"
+-- The terminal is whichever Settings > Terminal picks (terminal.sh).
+local terminal    = "~/.config/singularity/terminal.sh"
 local fileManager = "thunar"
 local editor      = "codium"
 local zen         = "zen-browser"
@@ -30,7 +31,7 @@ local floorp      = "floorp"
 -- isn't running. pkill first so a second press dismisses wofi rather than
 -- stacking another. Its stylesheet is Quickshell's copy with the bar's corner
 -- radius applied (AppearanceSync.qml), else the repo's own.
-local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\"; }"
+local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\" --term ~/.config/singularity/terminal.sh; }"
 
 local mod = "SUPER"
 

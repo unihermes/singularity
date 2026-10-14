@@ -1099,7 +1099,7 @@ if [[ -n $dm_unit ]]; then
   # true colour: a 24-bit escape is squashed onto the nearest of its 16 palette
   # slots, so full_color with the ramp's hexes would come out as plain black
   # and white. Instead the palette itself becomes the ramp -- the same slots
-  # alacritty uses, except red and green, which carry the shell's alert and
+  # the terminals use, except red and green, which carry the shell's alert and
   # good tints so a failed login still reads as one -- and ly picks slots by
   # index. The palette is per-VT and only on the greeter's.
   if [[ -f /etc/ly/config.ini ]]; then

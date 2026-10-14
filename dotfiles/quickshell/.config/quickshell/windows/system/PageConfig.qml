@@ -99,7 +99,8 @@ SystemPage {
         {
             heading: "TERMINAL AND PROMPT",
             items: [
-                { label: "alacritty.toml", path: home + "/.config/alacritty/alacritty.toml", note: "Font, padding, colours" },
+                { label: "alacritty.toml", path: home + "/.config/alacritty/alacritty.toml", note: "Font, padding, cursor" },
+                { label: "config.ghostty", path: home + "/.config/ghostty/config.ghostty", note: "Font, padding, cursor" },
                 { label: "starship.toml", path: home + "/.config/starship.toml", note: "The prompt" },
                 { label: ".bashrc", path: home + "/.bashrc", note: "Exports, shell options — the repo's" },
                 { label: ".bash_aliases", path: home + "/.bash_aliases", note: "Aliases — what the Terminal page edits" },
@@ -240,18 +241,18 @@ SystemPage {
         FlyoutChip {
             text: "git status"
             enabled: page.repo !== ""
-            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo,
+            onClicked: Quickshell.execDetached([Settings.terminal, "--dir", page.repo,
                 "-e", "sh", "-c", "git status; git -P log --oneline -10; read -r _"])
         }
         FlyoutChip {
             text: "Terminal"
             enabled: page.repo !== ""
-            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo])
+            onClicked: Quickshell.execDetached([Settings.terminal, "--dir", page.repo])
         }
         FlyoutChip {
             text: "Editor"
             enabled: page.repo !== ""
-            onClicked: Quickshell.execDetached(["alacritty", "--working-directory", page.repo,
+            onClicked: Quickshell.execDetached([Settings.terminal, "--dir", page.repo,
                 "-e", "nvim", "."])
         }
     }
@@ -324,28 +325,28 @@ SystemPage {
         leadingIcon: "󰈙"
         label: "Shell log"
         note: "Quickshell's own messages since it started"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "less", "-R", "+G",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "less", "-R", "+G",
             Quickshell.env("HOME") + "/.cache/quickshell.log"])
     }
     FlyoutRow {
         leadingIcon: "󰈙"
         label: "Hyprland log"
         note: "The compositor's log, following as it grows"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "tail -n 200 -f \"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log\""])
     }
     FlyoutRow {
         leadingIcon: "󰏗"
         label: "Pacman log"
         note: "Every install, upgrade and removal"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "tail -n 400 /var/log/pacman.log | less +G"])
     }
     FlyoutRow {
         leadingIcon: "󰀦"
         label: "Boot errors"
         note: "Errors the system logged since it started"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "journalctl -b -p err -e"])
     }
 }

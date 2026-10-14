@@ -247,7 +247,7 @@ for group, spec in pairs(groups) do
 end
 
 -- Terminal buffers (the toggle terminal, lazygit) get the same ANSI slots
--- AppearanceSync gives alacritty: normal climbs muted -> text, bright climbs
+-- AppearanceSync gives the terminals: normal climbs muted -> text, bright climbs
 -- subtext -> bright, each ending on its role exactly.
 vim.g.terminal_color_0 = c.surface
 vim.g.terminal_color_8 = c.border

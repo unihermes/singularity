@@ -62,7 +62,7 @@ Column {
     // honours whatever this machine actually opens .lua with (LinkRow.qml
     // and the launcher's file search use the same script).
     function openConf(line) {
-        if (line > 0) Quickshell.execDetached(["alacritty", "-e", "nvim", "+" + line, confPath])
+        if (line > 0) Quickshell.execDetached([Settings.terminal, "-e", "nvim", "+" + line, confPath])
         else Quickshell.execDetached([home + "/.config/quickshell/scripts/open-file.sh", confPath])
     }
 

@@ -126,7 +126,7 @@ var entries = [
     { page: "appearance", section: "Windows",       label: "Gaps at screen edges", keywords: "gaps_out hyprland bar floating islands margin inset" },
     { page: "appearance", section: "Windows",       label: "Focused opacity",      keywords: "active_opacity transparency" },
     { page: "appearance", section: "Windows",       label: "Unfocused opacity",    keywords: "inactive_opacity transparency" },
-    { page: "appearance", section: "Windows",       label: "Terminal opacity",     keywords: "alacritty transparency background" },
+    { page: "appearance", section: "Windows",       label: "Terminal opacity",     keywords: "alacritty ghostty transparency background" },
     { page: "appearance", section: "Windows",       label: "Dim unfocused",        keywords: "dim_inactive" },
     { page: "appearance", section: "Windows",       label: "Blur",                 keywords: "hyprland decoration" },
     { page: "appearance", section: "Windows",       label: "Dim strength",         keywords: "dim_strength unfocused darken" },
@@ -201,10 +201,11 @@ var entries = [
     { page: "filetypes", section: "Common", label: "Email links",  keywords: "default mailto mimeapps" },
 
     // --- Terminal ----------------------------------------------------------
-    { page: "shell", section: "Alacritty", label: "Font size",  keywords: "terminal points" },
-    { page: "shell", section: "Alacritty", label: "Opacity",    keywords: "terminal transparency background" },
-    { page: "shell", section: "Alacritty", label: "Cursor",     keywords: "terminal block beam underline shape" },
-    { page: "shell", section: "Alacritty", label: "Blinking", keywords: "terminal cursor blink" },
+    { page: "shell", section: "Terminal app", label: "Terminal", keywords: "alacritty ghostty default emulator app" },
+    { page: "shell", section: "Look", label: "Font size",  keywords: "terminal alacritty ghostty points" },
+    { page: "shell", section: "Look", label: "Opacity",    keywords: "terminal alacritty ghostty transparency background" },
+    { page: "shell", section: "Look", label: "Cursor",     keywords: "terminal alacritty ghostty block beam underline shape" },
+    { page: "shell", section: "Look", label: "Blinking", keywords: "terminal cursor blink" },
     { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc bash_aliases shortcut command" },
     { page: "shell", section: "Bash aliases", label: "Add an alias…", keywords: "bashrc bash_aliases new shortcut command" },
 

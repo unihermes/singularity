@@ -187,7 +187,7 @@ Singleton {
         for (var i = 0; i < app.command.length; i++) cmd.push(app.command[i])
         // a terminal application has no terminal at login; give it one, the
         // same way the launcher does
-        if (app.runInTerminal) cmd = ["alacritty", "-e"].concat(cmd)
+        if (app.runInTerminal) cmd = [Settings.terminal, "-e"].concat(cmd)
 
         var file = app.id.replace(/\.desktop$/, "") + ".desktop"
         var text = "[Desktop Entry]\n"

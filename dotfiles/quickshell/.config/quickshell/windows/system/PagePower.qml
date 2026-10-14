@@ -245,7 +245,7 @@ SystemPage {
         leadingIcon: "󰄧"
         label: "Power history"
         note: "upower's record of charge and draw"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "command -v upower >/dev/null && upower -d || cat /sys/class/power_supply/BAT*/uevent; read -r _"])
     }
 }

@@ -105,6 +105,7 @@ seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$mach
 seed binds.defaults.lua          "$HOME/.config/hypr/binds.lua"
 seed hyprlock.defaults.conf      "$HOME/.config/hypr/hyprlock.conf"
 seed alacritty.defaults.toml     "$HOME/.config/alacritty/alacritty.toml"
+seed ghostty.defaults.ghostty    "$HOME/.config/ghostty/config.ghostty"
 seed zed-settings.defaults.json  "$HOME/.config/zed/settings.json"
 seed bash_aliases.defaults.sh    "$HOME/.bash_aliases"
 

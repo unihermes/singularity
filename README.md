@@ -149,7 +149,7 @@ no version numbers: git is the version.
 |---|---|
 | `SUPER + ,` | Settings |
 | `CTRL + SPACE` | Launcher: apps, then `Tab` for files, clipboard and the calculator |
-| `SUPER + Return` | Terminal (Alacritty) |
+| `SUPER + Return` | Terminal (Alacritty or Ghostty, picked on Settings › Terminal) |
 | `SUPER + K` | Every keybind, editable |
 | `SUPER + W` | All workspaces |
 | `SUPER + L` | Lock the screen |
@@ -251,10 +251,10 @@ the shell, into `~/.local/state/singularity/`:
   stylesheet), and the theme, icons, cursor and fonts are set through
   gsettings. Change them on
   the Appearance page; hand edits are overwritten.
-- **Alacritty, starship, fastfetch and zathura** recolour live. The terminal's
-  16 ANSI colours are a lightness ramp in the look's tones, so output stays
-  legible but monochrome (`renderAlacritty()` is the one place to change
-  that).
+- **Alacritty, Ghostty, starship, fastfetch and zathura** recolour live. The
+  terminals' 16 ANSI colours are a lightness ramp in the look's tones, so
+  output stays legible but monochrome (`ansiRamp()` is the one place to
+  change that).
 - **Neovim** ([LazyVim](https://lazyvim.org) with familiar shortcuts:
   `Ctrl+P`, `Ctrl+Shift+F`, `Ctrl+B`, `F2`, `F12`) builds every highlight,
   plugins included, from the look, and open editors recolour live.
@@ -290,6 +290,7 @@ changes survive it.
   | `~/.config/hypr/hypridle.conf` | Power & Idle, Lock Screen | `hypridle-laptop/desktop.defaults.conf` |
   | `~/.config/hypr/hyprlock.conf` | Lock Screen | `hyprlock.defaults.conf` |
   | `~/.config/alacritty/alacritty.toml` | Terminal | `alacritty.defaults.toml` |
+  | `~/.config/ghostty/config.ghostty` | Terminal | `ghostty.defaults.ghostty` |
   | `~/.bash_aliases` | Terminal | `bash_aliases.defaults.sh` |
   | `~/.config/zed/settings.json` | Zed | `zed-settings.defaults.json` |
 

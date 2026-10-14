@@ -74,7 +74,7 @@ Singleton {
     function updateRepo() {
         if (repoUpdating || repoPath === "" || repoBehind === 0) return
         repoUpdating = true
-        Quickshell.execDetached(["alacritty", "--class", "singularity-update", "-e", "bash", "-c",
+        Quickshell.execDetached([Settings.terminal, "--class", "singularity.update", "-e", "bash", "-c",
             "trap 'qs ipc call updates finished >/dev/null 2>&1' EXIT; trap exit HUP TERM; cd \"$1\" && ./update.sh; "
             + "if [ $? -eq 0 ]; then notify-send -a Updates 'Singularity updated' 'Pulled, relinked and installed'; "
             + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi",
@@ -116,7 +116,7 @@ Singleton {
         if (updateProc.running) return
         var flags = " --noconfirm --answerdiff None" + (Settings.updateAur ? "" : " --repo")
             + (Settings.updateIgnore.length > 0 ? " --ignore " + Settings.updateIgnore.join(",") : "")
-        updateProc.command = ["alacritty", "--class", "singularity-update", "-e", "sh", "-c",
+        updateProc.command = [Settings.terminal, "--class", "singularity.update", "-e", "sh", "-c",
             "yay -Syu" + flags + " --sudoloop --answerclean None --answeredit None --removemake; "
             + "if [ $? -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "
             + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi"]

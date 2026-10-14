@@ -364,12 +364,14 @@ Settings') are laid out the same way.
   Show all N types row; each type is a row named in words (Markdown
   document, its type small) with its app, opening to the apps that can
   take it, the current one ticked.
-- **Terminal:** a preview of Alacritty heads the page: the wallpaper
+- **Terminal:** the terminal app comes first, Alacritty or Ghostty as
+  segments. Under a heading named for it, a preview of it: the wallpaper
   through the background at the opacity, the prompt (the path pill, then
   ❯) in the look's colours at the font size, and the cursor's shape and
   blink. Opacity is a level from 30% to solid, written when the drag ends.
   The cursor's shape is three tiles, each drawing it between two letters,
-  with Blinking a switch. Each alias is a row (name, its command as the
+  with Blinking a switch; font size and cursor are written to both
+  terminals. Each alias is a row (name, its command as the
   note) that opens to the name and command with Save, and Remove alias in
   two clicks; Add an alias… is the last row.
 - **Date & Time:** a clock card heads the page (the time large and

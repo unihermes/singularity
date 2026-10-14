@@ -15,6 +15,5 @@ image_size=24
 no_actions=true
 hide_scroll=true
 gtk_dark=true
-term=alacritty
 key_expand=Tab
 matching=fuzzy

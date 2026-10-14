@@ -222,30 +222,30 @@ SystemPage {
         leadingIcon: "󰘚"
         label: "PCI devices"
         note: "lspci -k: each card and the driver it uses"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lspci -k; read -r _"])
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lspci -k; read -r _"])
     }
     FlyoutRow {
         leadingIcon: "󰗮"
         label: "USB devices"
         note: "What's plugged in, as a tree"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lsusb -t; lsusb; read -r _"])
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lsusb -t; lsusb; read -r _"])
     }
     FlyoutRow {
         leadingIcon: "󰏗"
         label: "Loaded modules"
         note: "lsmod: the kernel's drivers in use"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "lsmod | less"])
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lsmod | less"])
     }
     FlyoutRow {
         leadingIcon: "󰈙"
         label: "Kernel messages"
         note: "This boot's kernel log"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "journalctl -k -b -e"])
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "journalctl -k -b -e"])
     }
     FlyoutRow {
         leadingIcon: "󰌌"
         label: "Hyprland devices"
         note: "hyprctl devices, with every name in full"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c", "hyprctl devices; read -r _"])
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "hyprctl devices; read -r _"])
     }
 }

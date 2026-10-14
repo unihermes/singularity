@@ -22,7 +22,7 @@
 #   open-file.sh <path>
 set -u
 
-term=alacritty
+term=~/.config/singularity/terminal.sh
 editor=nvim
 filemanager=thunar
 

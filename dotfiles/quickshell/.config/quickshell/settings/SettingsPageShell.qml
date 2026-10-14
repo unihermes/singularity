@@ -1,19 +1,23 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageShell.qml
 //
-// Alacritty's look, with a preview of it, and the aliases in ~/.bash_aliases
-// (which ~/.bashrc sources). Both files are this machine's own copies, seeded
-// by link.sh, so nothing written here shows up in the repo.
+// Which terminal opens (Alacritty or Ghostty), its look with a preview of
+// it, and the aliases in ~/.bash_aliases (which ~/.bashrc sources). The
+// files are this machine's own copies, seeded by link.sh, so nothing written
+// here shows up in the repo.
+//
+// Font size and cursor are written to both terminals' configs, so switching
+// keeps them alike; the page shows the picked one's.
 //
 // Two different kinds of instant, and the page says which is which.
-// Alacritty watches its own config, so a change there shows in every open
-// terminal the moment it's written. The aliases are only read when a shell
-// starts, so alias edits apply to new terminals -- the ones already open
-// keep what they had until `source ~/.bashrc`.
+// Alacritty watches its own config and Ghostty is told to reload, so a change
+// there shows in every open terminal the moment it's written. The aliases
+// are only read when a shell starts, so alias edits apply to new terminals
+// -- the ones already open keep what they had until `source ~/.bashrc`.
 //
-// Both are line edits, like the other pages: a TOML key's value inside its
-// [table], or one `alias name='...'` line. Everything else in either file is
-// left as it was.
+// All are line edits, like the other pages: a TOML key's value inside its
+// [table], a Ghostty `key = value` line, or one `alias name='...'` line.
+// Everything else in each file is left as it was.
 
 import Quickshell
 import Quickshell.Io
@@ -28,11 +32,15 @@ SettingsPage {
     sectioned: true
 
     title: "Terminal"
-    description: "How Alacritty looks, and your shell aliases."
+    description: "Which terminal opens, how it looks, and your shell aliases."
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string alacrittyPath:
         (Quickshell.env("XDG_CONFIG_HOME") || home + "/.config") + "/alacritty/alacritty.toml"
+    readonly property string ghosttyPath:
+        (Quickshell.env("XDG_CONFIG_HOME") || home + "/.config") + "/ghostty/config.ghostty"
+    readonly property bool ghostty: Settings.terminalApp === "ghostty"
+    readonly property string appName: Settings.choiceLabel(Settings.terminalApp)
     readonly property string aliasesPath: home + "/.bash_aliases"
 
     // --- alacritty -----------------------------------------------------------
@@ -94,19 +102,84 @@ SettingsPage {
         return lines.join("\n")
     }
 
-    function setToml(table, key, value, message) {
-        var t = Object.assign({}, toml)
-        t[table + "." + key] = tomlLiteral(value)
-        toml = t
-        AtomicFileWrite.write({
-            path: alacrittyPath,
-            transform: text => tomlSet(text, table, key, value),
-            done: (status, detail) => {
-                if (status === "ok" || status === "unchanged") page.say(message, false)
-                else page.say("Couldn't write the file", true)
-                page.reread()
-            }
+    // --- ghostty -------------------------------------------------------------
+
+    // key -> value, the last one set winning, as Ghostty reads it. Only
+    // whole-line comments: a # in a value (a colour) is the value's.
+    property var kv: ({})
+
+    function parseKv(text) {
+        var out = {}
+        text.split("\n").forEach(line => {
+            var m = /^\s*([a-z0-9-]+)\s*=\s*(.*?)\s*$/.exec(line)
+            if (m) out[m[1]] = m[2]
         })
+        return out
+    }
+
+    // Each key's last line replaced, or the key added at the end.
+    function kvSet(text, values) {
+        var lines = text.split("\n")
+        for (var key in values) {
+            var at = -1
+            for (var i = 0; i < lines.length; i++)
+                if (new RegExp("^\\s*" + key + "\\s*=").test(lines[i])) at = i
+            var entry = key + " = " + values[key]
+            if (at >= 0) lines[at] = entry
+            else lines.splice(lines.length && lines[lines.length - 1] === "" ? lines.length - 1 : lines.length, 0, entry)
+        }
+        return lines.join("\n")
+    }
+
+    // --- both ----------------------------------------------------------------
+
+    // One change to each terminal's config, through transforms of the file as
+    // it is when the write runs. A config that doesn't exist yet is left
+    // alone rather than started without the colours it imports.
+    function writeBoth(alacritty, ghostty, message) {
+        var left = 2, failed = false
+        var finish = status => {
+            if (status === "write" || status === "syntax") failed = true
+            if (--left > 0) return
+            page.say(failed ? "Couldn't write the file" : message, failed)
+            page.reread()
+        }
+        AtomicFileWrite.write({ path: alacrittyPath, done: finish,
+                                transform: text => text === "" ? null : alacritty(text) })
+        AtomicFileWrite.write({ path: ghosttyPath, done: finish, after: "pkill -USR2 -x ghostty; true",
+                                transform: text => text === "" ? null : ghostty(text) })
+    }
+
+    function setFontSize(size) {
+        writeBoth(text => tomlSet(text, "font", "size", size),
+                  text => kvSet(text, { "font-size": String(size) }),
+                  "Font size " + size.toFixed(1))
+    }
+
+    readonly property var ghosttyCursors: ({ Block: "block", Beam: "bar", Underline: "underline" })
+
+    // Alacritty's style = { shape = "Beam", blinking = "On" } is an inline
+    // table, so its line is rewritten whole rather than through tomlSet.
+    function setCursor(shape, blinking) {
+        var style = 'style = { shape = "' + shape + '", blinking = "' + blinking + '" }'
+        writeBoth(text => {
+            var lines = text.split("\n")
+            var cur = ""
+            for (var i = 0; i < lines.length; i++) {
+                var m = /^\s*\[([^\]]+)\]/.exec(lines[i])
+                if (m) { cur = m[1].trim(); continue }
+                if (cur === "cursor" && /^\s*style\s*=/.test(lines[i])) {
+                    lines[i] = style
+                    return lines.join("\n")
+                }
+            }
+            var at = lines.findIndex(l => /^\s*\[cursor\]/.test(l))
+            if (at < 0) lines.push("", "[cursor]", style)
+            else lines.splice(at + 1, 0, style)
+            return lines.join("\n")
+        }, text => kvSet(text, { "cursor-style": ghosttyCursors[shape],
+                                 "cursor-style-blink": blinking === "Off" || blinking === "Never" ? "false" : "true" }),
+        "Cursor: " + shape + (blinking === "Off" ? "" : ", blinking"))
     }
 
     FileView {
@@ -114,6 +187,22 @@ SettingsPage {
         path: page.alacrittyPath
         blockLoading: true
         printErrors: false
+    }
+
+    FileView {
+        id: ghosttyFile
+        path: page.ghosttyPath
+        blockLoading: true
+        printErrors: false
+    }
+
+    // whether Ghostty can be picked yet: terminal.sh opens Alacritty until
+    // it's installed
+    property bool ghosttyInstalled: true
+    Process {
+        running: true
+        command: ["sh", "-c", "command -v ghostty"]
+        onExited: code => page.ghosttyInstalled = code === 0
     }
 
     // --- aliases -------------------------------------------------------------
@@ -211,6 +300,9 @@ SettingsPage {
         alacrittyFile.reload()
         alacrittyFile.waitForJob()
         toml = parseToml(alacrittyFile.text())
+        ghosttyFile.reload()
+        ghosttyFile.waitForJob()
+        kv = parseKv(ghosttyFile.text())
         aliasesFile.reload()
         aliasesFile.waitForJob()
         aliases = parseAliases(aliasesFile.text())
@@ -220,45 +312,42 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    // style = { shape = "Beam", blinking = "On" } is an inline table, so
-    // it's read by pattern rather than parsed
+    // the picked terminal's values, in Alacritty's words
     readonly property string cursorRaw: String(toml["cursor.style"] || "")
-    readonly property string cursorShape: (/shape\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Block"])[1]
-    readonly property string cursorBlinking: (/blinking\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Off"])[1]
+    readonly property string cursorShape: ghostty
+        ? ({ bar: "Beam", underline: "Underline" })[kv["cursor-style"]] || "Block"
+        : (/shape\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Block"])[1]
+    // unset, Ghostty blinks
+    readonly property string cursorBlinking: ghostty
+        ? (kv["cursor-style-blink"] === "false" ? "Off" : "On")
+        : (/blinking\s*=\s*"(\w+)"/.exec(cursorRaw) || [, "Off"])[1]
 
-    function setCursor(shape, blinking) {
-        // written as a plain string value so setToml's line replace fits it
-        alacrittyFile.reload()
-        alacrittyFile.waitForJob()
-        var lines = alacrittyFile.text().split("\n")
-        var cur = ""
-        for (var i = 0; i < lines.length; i++) {
-            var m = /^\s*\[([^\]]+)\]/.exec(lines[i])
-            if (m) { cur = m[1].trim(); continue }
-            if (cur === "cursor" && /^\s*style\s*=/.test(lines[i])) {
-                lines[i] = 'style = { shape = "' + shape + '", blinking = "' + blinking + '" }'
-                writeFile(alacrittyPath, lines.join("\n"), "Cursor: " + shape + (blinking === "Off" ? "" : ", blinking"), false)
-                return
-            }
-        }
-        // no style line: add one through the generic path
-        var at = lines.findIndex(l => /^\s*\[cursor\]/.test(l))
-        if (at < 0) lines.push("", "[cursor]", 'style = { shape = "' + shape + '", blinking = "' + blinking + '" }')
-        else lines.splice(at + 1, 0, 'style = { shape = "' + shape + '", blinking = "' + blinking + '" }')
-        writeFile(alacrittyPath, lines.join("\n"), "Cursor: " + shape, false)
-    }
-
-
-    readonly property real fontSize: Number(tomlValue("font.size", 11.25))
-    // Settings' rather than this file's, so looks and styles can set it;
-    // AppearanceSync writes it into the config alacritty.toml imports
+    readonly property real fontSize: ghostty ? Number(kv["font-size"] || 12) : Number(tomlValue("font.size", 11.25))
+    // Settings' rather than the configs', so looks and styles can set it;
+    // AppearanceSync writes it into the config each terminal imports
     readonly property real opacityNow: Settings.terminalOpacity / 100
     // the opacity while the level is being dragged, written on release
     property real opacityDragged: -1
     readonly property real opacityShown: opacityDragged >= 0 ? opacityDragged : opacityNow
     readonly property bool blinking: cursorBlinking === "On" || cursorBlinking === "Always"
 
-    FlyoutHeading { text: "ALACRITTY" }
+    FlyoutHeading { text: "TERMINAL APP" }
+
+    SettingsField {
+        label: "Terminal"
+        hint: page.ghostty && !page.ghosttyInstalled
+            ? "Ghostty isn't installed, so Alacritty opens until it is"
+            : "Opens on SUPER+Return and from the shell"
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: Settings.choices.terminalApp.map(v => ({ value: v, text: Settings.choiceLabel(v) }))
+            current: Settings.terminalApp
+            onPicked: v => Settings.set("terminalApp", v)
+        }
+    }
+
+    FlyoutHeading { text: page.appName.toUpperCase() }
 
     // A terminal as it will look: the wallpaper through the background at
     // the opacity, the prompt in the look's colours at the font size, and
@@ -285,7 +374,7 @@ SettingsPage {
             opacity: page.opacityShown
         }
 
-        // points to pixels, as Alacritty sizes its font
+        // points to pixels, as both terminals size their font
         readonly property real px: page.fontSize * 96 / 72
 
         Column {
@@ -345,7 +434,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: Theme.spaceM
-            text: "Alacritty, as it will look"
+            text: page.appName + ", as it will look"
             color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody
@@ -365,7 +454,7 @@ SettingsPage {
             maximum: 64
             valueWidth: 56
             displayValue: current.toFixed(1)
-            onStepped: delta => page.setToml("font", "size", (value + delta) / 2, "Font size " + ((value + delta) / 2).toFixed(1))
+            onStepped: delta => page.setFontSize((value + delta) / 2)
         }
     }
 

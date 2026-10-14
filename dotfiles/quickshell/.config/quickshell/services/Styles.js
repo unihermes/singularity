@@ -36,7 +36,7 @@
 //              ids in Settings.styleOptions, read with Theme.opt(id).
 //   windows    optional: window opacity, in percent, as { focusedOpacity,
 //              unfocusedOpacity, terminalOpacity } -- Hyprland's focused
-//              and unfocused windows, and Alacritty's background; left out,
+//              and unfocused windows, and the terminal's background; left out,
 //              windowDefaults'. Picking the style sets them, and they stay
 //              adjustable on the Windows tab
 //

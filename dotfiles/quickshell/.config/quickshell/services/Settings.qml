@@ -95,9 +95,14 @@ Singleton {
     // over by AppearanceSync)
     readonly property alias focusedOpacity:   adapter.focusedOpacity
     readonly property alias unfocusedOpacity: adapter.unfocusedOpacity
-    // Alacritty's background opacity, in percent (handed over by
-    // AppearanceSync in the terminal's imported config)
+    // The terminal's background opacity, in percent (handed over by
+    // AppearanceSync in the config each terminal imports)
     readonly property alias terminalOpacity:  adapter.terminalOpacity
+    // "alacritty" or "ghostty" -- the terminal everything opens. A system
+    // preference like systemFontFamily, not part of a look. Launches go
+    // through `terminal`, which reads it from the saved file.
+    readonly property alias terminalApp: adapter.terminalApp
+    readonly property string terminal: Quickshell.env("HOME") + "/.config/singularity/terminal.sh"
     // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
     readonly property alias workspaceStyle: adapter.workspaceStyle
     // one of choices.controlIcon -- the Control Centre button's glyph
@@ -163,6 +168,7 @@ Singleton {
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
         systemFontFamily: Looks.systemFonts,
+        terminalApp:  ["alacritty", "ghostty"],
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
         windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
@@ -212,7 +218,7 @@ Singleton {
         "star": "Star", "blackhole": "Black hole", "vortex": "Vortex", "horizon": "Event horizon",
         "radar": "Radar", "moon": "Moon", "atom": "Atom",
         "rocket": "Rocket", "ghost": "Ghost", "planet": "Planet", "sparkle": "Sparkle",
-        "infinity": "Infinity", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
+        "infinity": "Infinity", "alacritty": "Alacritty", "ghostty": "Ghostty", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
     })
     // where one value means different things under different settings
     readonly property var keyedLabels: ({
@@ -850,6 +856,7 @@ Singleton {
             property int focusedOpacity: 100
             property int unfocusedOpacity: 100
             property int terminalOpacity: 90
+            property string terminalApp: "alacritty"
             property string workspaceStyle: "pills"
             property string controlIcon: "arch"
             property string clockStyle: "stamp"

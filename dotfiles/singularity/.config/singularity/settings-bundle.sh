@@ -11,7 +11,7 @@
 # repo's own, and the looks removed from the Appearance page. Monitor layout,
 # the primary display, the lid and Bluetooth state are left behind, as are
 # the copies link.sh makes of the repo's defaults (keybinds, hypridle,
-# hyprlock, alacritty, aliases): copy those by hand if you want them.
+# hyprlock, alacritty, ghostty, aliases): copy those by hand if you want them.
 #
 # calendars.conf holds secret feed addresses, so it only goes in with
 # --calendars. Import backs up every file it replaces, then restarts the

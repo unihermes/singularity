@@ -1,0 +1,41 @@
+# Singularity - Ghostty
+# ~/.config/ghostty/config.ghostty
+#
+# This machine's own copy. link.sh copies the repo's default
+# (~/.config/singularity/ghostty.defaults.ghostty) here only where there's none
+# yet, so what Settings or you change never shows up in the repo; changing
+# the default only changes what a fresh install starts with. Settings >
+# Terminal edits font-size, cursor-style and cursor-style-blink here, the
+# same as in alacritty.toml, so both terminals stay alike.
+
+window-padding-x = 12
+window-padding-y = 10
+window-padding-balance = true
+window-decoration = none
+# Hyprland tiles the window, so it's resized all the time; the size popup
+# would show on every one.
+resize-overlay = never
+confirm-close-surface = false
+
+# The same font as Alacritty: UbuntuMono Nerd Font owns every glyph the
+# prompt uses, and the "Mono" variant keeps each to one cell.
+font-family = UbuntuMono Nerd Font Mono
+font-size = 12
+
+# A bar, blinking. Shell integration would otherwise force a bar at every
+# prompt whatever is set here, so its cursor feature is off.
+cursor-style = bar
+cursor-style-blink = true
+shell-integration-features = no-cursor
+
+keybind = shift+enter=text:\x1b\r
+
+# --- colours and opacity --------------------------------------------------
+# Written by the shell (quickshell/services/AppearanceSync.qml) from the
+# active look: the same ANSI ramp and Settings.terminalOpacity Alacritty
+# gets. It signals open Ghostty windows to reload, so they recolour live.
+# Unlike Alacritty's import, a config-file is read after this whole file and
+# wins over it, which is why there is no background, palette or
+# background-opacity here. The ? lets Ghostty start before the shell has
+# written it.
+config-file = ?~/.local/state/singularity/ghostty.conf

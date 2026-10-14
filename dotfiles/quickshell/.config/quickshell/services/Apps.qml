@@ -90,7 +90,7 @@ Singleton {
         if (entry.runInTerminal) {
             // command is a Qt list, not a JS array: concat() would
             // push it as one nested element instead of spreading it
-            var cmd = ["alacritty", "-e"]
+            var cmd = [Settings.terminal, "-e"]
             for (var i = 0; i < entry.command.length; i++) cmd.push(entry.command[i])
             Quickshell.execDetached(cmd)
         } else

@@ -313,7 +313,7 @@ SystemPage {
         leadingIcon: "󰈙"
         label: "This boot's journal"
         note: "journalctl -b in a terminal"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "journalctl", "-b", "-e"])
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "journalctl", "-b", "-e"])
     }
     FlyoutRow {
         leadingIcon: "󰈔"

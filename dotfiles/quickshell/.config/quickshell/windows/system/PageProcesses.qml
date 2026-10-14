@@ -74,28 +74,28 @@ SystemPage {
         leadingIcon: "󰆍"
         label: "htop"
         note: "Every process, sortable and searchable"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "command -v htop >/dev/null && htop || top"])
     }
     FlyoutRow {
         leadingIcon: "󰀦"
         label: "Failed units"
         note: "systemctl --failed, system and user"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "systemctl --failed; echo; systemctl --user --failed; read -r _"])
     }
     FlyoutRow {
         leadingIcon: "󰒓"
         label: "User services"
         note: "What systemd runs for you"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "systemctl --user list-units --type=service; read -r _"])
     }
     FlyoutRow {
         leadingIcon: "󰔟"
         label: "Startup blame"
         note: "What took longest at the last boot"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "systemd-analyze blame | head -40; read -r _"])
     }
 }

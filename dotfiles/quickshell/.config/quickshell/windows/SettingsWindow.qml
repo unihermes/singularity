@@ -81,7 +81,7 @@ FloatingWindow {
         { id: "audio",         label: "Audio",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
         { id: "autostart",     label: "Startup",       icon: "󰐊", blurb: "What runs at login",                source: "../settings/SettingsPageAutostart.qml", gap: true },
         { id: "filetypes",     label: "File Types",    icon: "󰈔", blurb: "Default apps",                      source: "../settings/SettingsPageFileTypes.qml" },
-        { id: "shell",         label: "Terminal",      icon: "󰆍", blurb: "Alacritty and aliases",             source: "../settings/SettingsPageShell.qml" },
+        { id: "shell",         label: "Terminal",      icon: "󰆍", blurb: "Terminal app and aliases",             source: "../settings/SettingsPageShell.qml" },
         { id: "datetime",      label: "Date & Time",   icon: "󰥔", blurb: "Time zone and clock",               source: "../settings/SettingsPageDateTime.qml" },
         { id: "updates",       label: "Software Update", icon: "󰚰", blurb: "Checks, AUR and ignored",         source: "../settings/SettingsPageUpdates.qml" },
         { id: "input",         label: "Input",         icon: "󰌌", blurb: "Keyboard and pointer",              source: "../settings/SettingsPageInput.qml", gap: true },

@@ -140,7 +140,8 @@ hl.window_rule({
 -- The scratchpad terminal (SUPER+grave): opens straight onto the special
 -- workspace, floating and centred. Out of monocle for the same reason as the
 -- shell's windows above -- its open hook would stretch it to fill the screen.
-local SCRATCH_CLASS = "singularity-scratch"
+-- A dot in it: Ghostty only takes a GTK application id as its class.
+local SCRATCH_CLASS = "singularity.scratch"
 hl.window_rule({
     name      = "scratchpad-terminal",
     tag       = "-monocle",

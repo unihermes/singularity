@@ -156,28 +156,28 @@ SystemPage {
         leadingIcon: "󰓅"
         label: "Ping test"
         note: "Ten pings to 1.1.1.1: is the internet there, and how far"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "ping -c 10 1.1.1.1; read -r _"])
     }
     FlyoutRow {
         leadingIcon: "󰑪"
         label: "Trace route"
         note: "Each hop on the way to 1.1.1.1"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "command -v tracepath >/dev/null && tracepath 1.1.1.1 || ip route get 1.1.1.1; read -r _"])
     }
     FlyoutRow {
         leadingIcon: "󰒍"
         label: "Listening ports"
         note: "What on this machine accepts connections"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "ss -tulpn; read -r _"])
     }
     FlyoutRow {
         leadingIcon: "󰛳"
         label: "Routing table"
         note: "Where each kind of traffic goes"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "ip route; echo; ip -6 route; read -r _"])
     }
 }

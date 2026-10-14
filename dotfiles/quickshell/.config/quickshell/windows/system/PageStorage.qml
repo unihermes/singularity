@@ -168,14 +168,14 @@ SystemPage {
         leadingIcon: "󰆍"
         label: "Disk usage"
         note: "ncdu over /, to find what's taking the room"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "command -v ncdu >/dev/null && ncdu / || { echo 'ncdu is not installed'; read -r _; }"])
     }
     FlyoutRow {
         leadingIcon: "󰋊"
         label: "Block devices"
         note: "lsblk: every partition, its filesystem and where it's mounted"
-        onActivated: Quickshell.execDetached(["alacritty", "-e", "sh", "-c",
+        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
             "lsblk -o NAME,SIZE,FSTYPE,FSUSE%,MOUNTPOINTS,MODEL; read -r _"])
     }
     FlyoutRow {
