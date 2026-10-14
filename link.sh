@@ -109,6 +109,19 @@ seed ghostty.defaults.ghostty    "$HOME/.config/ghostty/config.ghostty"
 seed zed-settings.defaults.json  "$HOME/.config/zed/settings.json"
 seed bash_aliases.defaults.sh    "$HOME/.bash_aliases"
 
+# A binds.lua seeded before Settings > Terminal named alacritty itself, so
+# SUPER+Return and the scratchpad ignored the pick. Point it at terminal.sh,
+# and give its wofi fallback the same terminal; only those exact stock lines
+# are touched, so a terminal chosen by hand stays.
+binds="$HOME/.config/hypr/binds.lua"
+if [[ -f $binds ]] && grep -q '^local terminal    = "alacritty"$' "$binds"; then
+  sed -i \
+    -e 's|^local terminal    = "alacritty"$|local terminal    = "~/.config/singularity/terminal.sh"|' \
+    -e 's|wofi --show drun --style \\"\$s\\"; }"$|wofi --show drun --style \\"$s\\" --term ~/.config/singularity/terminal.sh; }"|' \
+    "$binds"
+  log "binds.lua: the terminal is now Settings > Terminal's pick"
+fi
+
 # File-manager bookmarks (GTK's, which Thunar shows in its side pane) for
 # the usual folders. Not stowed: the paths hold the home directory, and the
 # file manager rewrites the file as bookmarks are added, so it's written
