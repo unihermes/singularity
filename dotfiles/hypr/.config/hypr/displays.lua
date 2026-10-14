@@ -65,8 +65,10 @@ end
 -- that gets docked. The page copies this rule to start the file.
 -- scale 1 is native resolution: everything as small as the panel can draw it.
 -- "auto" picks a HiDPI factor on a dense laptop panel, which makes the whole
--- desktop look oversized. Nudge to 1.25 or 1.5 if 1 is too small; fractional
--- values below 1 are not supported.
+-- desktop look oversized. Nudge to 1.25 or 1.5 if 1 is too small. Below 1
+-- (0.75 sizes a 1080p display like a 1440p one beside it) Wayland apps with
+-- fractional scaling stay sharp, but XWayland ones blur unless custom.lua
+-- sets xwayland force_zero_scaling, which draws them 1:1.
 --
 -- Every rule goes through withPcTimings, and a display that needs PC timings
 -- but has no rule of its own gets a copy of the catch-all with them.

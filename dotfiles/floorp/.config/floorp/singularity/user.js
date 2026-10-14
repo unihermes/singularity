@@ -11,12 +11,12 @@ user_pref("media.webrtc.camera.allow-pipewire", true);
 user_pref("xpinstall.signatures.required", false);
 user_pref("extensions.autoDisableScopes", 14);
 
-// Size pages by the display's logical pixels on every monitor. Firefox's
-// fractional scaling draws in the physical pixels of a display scaled below
-// 1 (the 1080p one at 0.75 on the desktop), so pages there come out a
-// different size than on the other monitor and layout.css.devPixelsPerPx
-// can't match both. Without it the compositor scales Floorp down instead.
-user_pref("widget.wayland.fractional-scale.enabled", false);
+// Draw at a fractionally scaled display's own scale, so pages are sharp and
+// the same size on every monitor (the 1080p one at 0.75 on the desktop
+// matches the 1440p one at 1). Off, the compositor shrinks or stretches
+// Floorp and it blurs. Needs layout.css.devPixelsPerPx left at its default
+// (-1): a fixed value pins Floorp to that size on every display.
+user_pref("widget.wayland.fractional-scale.enabled", true);
 
 // No telemetry, data reporting or studies, and no Floorp experiments
 user_pref("datareporting.healthreport.uploadEnabled", false);
