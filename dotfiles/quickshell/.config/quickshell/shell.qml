@@ -366,6 +366,16 @@ ShellRoot {
         function ping(): string { return "singularity-relay-pong" }
     }
 
+    // A client list asked for just before a window closed can arrive after
+    // its closewindow and bring the window back into Hyprland.toplevels, a
+    // dead icon in the strip until the next refresh. One more refresh once
+    // the close has settled clears it.
+    Timer {
+        id: closedSweep
+        interval: 300
+        onTriggered: Hyprland.refreshToplevels()
+    }
+
     // A new/closed/moved window's class (and so its icon) doesn't show up
     // in Hyprland.toplevels until something re-requests the full client
     // list -- it isn't pushed with the openwindow event itself. Force that
@@ -379,6 +389,7 @@ ShellRoot {
             if (n === "openwindow" || n === "closewindow" || n === "movewindow"
                 || n === "togglegroup" || n === "moveintogroup" || n === "moveoutofgroup") {
                 Hyprland.refreshToplevels()
+                if (n === "closewindow") closedSweep.restart()
             } else if (n === "activewindowv2") {
                 // Focus moves far more often than windows come and go, and a
                 // refresh re-evaluates everything bound to lastIpcObject on

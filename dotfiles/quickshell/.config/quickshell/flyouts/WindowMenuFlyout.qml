@@ -46,6 +46,12 @@ FlyoutPanel {
     function win(fn, extra) {
         dispatch("hl.dsp.window." + fn + "({window=\"" + target + "\"" + (extra ? ", " + extra : "") + "})")
     }
+    // no refresh: one sent alongside the close returns the window still
+    // open; the closewindow event refreshes once it's gone
+    function close(fn) {
+        Hyprland.dispatch("hl.dsp.window." + fn + "({window=\"" + target + "\"})")
+        requestClose()
+    }
 
     // on the move page the heading leads with the window, the way back
     FlyoutHeading {
@@ -102,8 +108,8 @@ FlyoutPanel {
         // a second, harsher action for a window that ignores the polite one
         actionIcon: "󰚌"
         actionHint: "Force kill"
-        onActivated: winMenu.win("close")
-        onAction: winMenu.win("kill")
+        onActivated: winMenu.close("close")
+        onAction: winMenu.close("kill")
     }
 
     // ---- move page ----
