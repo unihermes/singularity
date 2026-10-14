@@ -29,6 +29,9 @@ zotero-bin
 # sends files to nearby devices over the local network. -bin is the prebuilt
 # release; plain localsend builds the Flutter app from source.
 localsend-bin
+# AppImage manager: moves AppImages into ~/AppImages, writes their .desktop
+# entries so the launcher sees them, and checks for updates. Pulls in fuse2.
+gearlever
 
 # Discord client mod. Read the PKGBUILD before trusting any Discord mod, same
 # as the zen-browser warning above -- these packages run arbitrary code
