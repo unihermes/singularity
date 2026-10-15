@@ -105,16 +105,35 @@ Singleton {
     // own, then its bare last segment lowercased, for apps whose class is
     // reverse-DNS but whose icon isn't. The shell's own windows get no icon
     // here: they all share org.quickshell's, and draw their glyph instead.
+    //
+    // The scratchpad terminal (windows.lua's SCRATCH_CLASS) is the
+    // configured terminal under a class of its own, which the lookups below
+    // would match to Scratch's icon; it takes the terminal app's instead.
     function iconForClass(cls) {
         if (!cls || String(cls) === "org.quickshell") return ""
         var c = byClass(cls)
         if (c.icon === undefined) {
+            var scratch = String(cls) === "singularity.scratch"
+            if (scratch) c.entry = terminalEntry()
             var path = c.entry && c.entry.icon ? Quickshell.iconPath(c.entry.icon, true) : ""
-            if (path === "") path = Quickshell.iconPath(cls, true)
-            if (path === "") path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
+            if (path === "" && !scratch) path = Quickshell.iconPath(cls, true)
+            if (path === "" && !scratch) path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
             c.icon = path
         }
         return c.icon
+    }
+
+    // The desktop entry whose command runs Settings.terminalApp. Its id
+    // needn't be the command's name (Ghostty's is com.mitchellh.ghostty),
+    // so heuristicLookup() can't be handed the name.
+    function terminalEntry() {
+        var all = DesktopEntries.applications.values
+        for (var i = 0; i < all.length; i++) {
+            var cmd = all[i].command
+            if (cmd && cmd.length > 0 && String(cmd[0]).replace(/^.*\//, "") === Settings.terminalApp)
+                return all[i]
+        }
+        return null
     }
 
     // What a window class resolves to, looked up once: every window list
@@ -135,6 +154,7 @@ Singleton {
     Connections {
         target: Settings
         function onIconThemeChanged() { root.classCache = {} }
+        function onTerminalAppChanged() { root.classCache = {} }
     }
 
     // The shell's own windows (Settings, System, Keybinds, Notes), which all
