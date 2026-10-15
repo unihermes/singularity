@@ -10,6 +10,14 @@
 // named xdph-streaming-*. The node type flags are available without binding
 // every node, which is what makes watching them all cheap.
 //
+// Not every audio input stream is a microphone, though: one reading a
+// sink's monitor (stream.capture.sink) is listening to what's playing --
+// a loopback routing a virtual sink into the headset (arctis-manager's
+// ChatMix), a recorder of desktop audio. Those don't count. That flag is a
+// node property, which Pipewire only hands over for bound nodes, so the
+// audio input streams (a handful at most) are bound, and one counts once its
+// properties are in.
+//
 // Limit: an app that opens /dev/video* directly (older Chromium builds do)
 // never goes through Pipewire, so its camera use isn't seen.
 
@@ -26,6 +34,9 @@ Singleton {
     // visualizer, and that must not light the microphone indicator.
     readonly property var ignored: ["cava"]
 
+    readonly property var inStreams: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioInStream)
+    PwObjectTracker { objects: root.inStreams }
+
     function scan() {
         var mic = [], cam = [], screen = []
         var nodes = Pipewire.nodes.values
@@ -35,7 +46,9 @@ Singleton {
             if (ignored.indexOf(name) !== -1) continue
             var label = n.description || n.nickname || name
             if (name.startsWith("xdph-streaming")) screen.push("Screen share")
-            else if (n.type === PwNodeType.AudioInStream) mic.push(label)
+            else if (n.type === PwNodeType.AudioInStream) {
+                if (n.ready && String(n.properties["stream.capture.sink"]) !== "true") mic.push(label)
+            }
             else if (n.type === (PwNodeType.Video | PwNodeType.Stream | PwNodeType.Source)) cam.push(label)
         }
         return { mic: mic, camera: cam, screen: screen }
