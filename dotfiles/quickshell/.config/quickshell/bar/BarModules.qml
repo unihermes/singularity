@@ -906,7 +906,9 @@ Item {
     // system tray: one frame around every app's icon, like the
     // open-windows strip. Left raises the app's window (or activates
     // the app if it has none open), right opens the app's menu in a
-    // flyout, middle is the app's secondary action. Each icon lights on
+    // flyout, middle is the app's secondary action, and a double-click
+    // brings the app's window up whatever the app does with clicks
+    // (showApp below). Each icon lights on
     // its own, as the strip's do: a hover fill under it, outlined while its
     // menu is open.
     //
@@ -979,6 +981,111 @@ Item {
             Settings.setTrayOrder(out.concat(queue))
         }
 
+        // raise one of the app's windows, on whatever workspace it's on
+        function raise(win) {
+            var addr = "address:0x" + win.address
+            Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
+            Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+        }
+
+        // Double-click: bring the app's window up, whatever the app makes of
+        // a click. The double-click's first click has already raised the
+        // window or called activate(), but plenty of apps ignore activate()
+        // (Ayatana ones, like Spotify and Steam, don't have it at all) or
+        // answer it by toggling the window, so once that's had a moment to
+        // show a window the double-click goes further: the menu's own
+        // "Show ..."/"Restore"/"Open" entry, and failing that the app's
+        // desktop entry run again, which a running app takes as "show your
+        // window" (and a closed one as "start"). Then the window is raised
+        // as soon as it's mapped, wherever it opened.
+        property var showItem: null
+        property int showTries: 0
+        property int showWaits: 0
+        property int showRaises: 0
+        function showApp(item) {
+            showItem = item
+            showTries = -1
+            showWaits = 0
+            showRaises = 0
+            trayFrame.showTimer.interval = 400
+            trayFrame.showTimer.restart()
+        }
+        function showEntry() {
+            var entries = trayFrame.showOpener.children.values
+            var title = (showItem.title || "").toLowerCase()
+            var best = null, bestRank = 9
+            for (var i = 0; i < entries.length; i++) {
+                var e = entries[i]
+                if (e.isSeparator || e.hasChildren || !e.enabled) continue
+                var t = e.text.replace(/_/g, "").replace(/\.+$|…$/, "").trim().toLowerCase()
+                var rank = /^(show|restore|unhide)\b/.test(t) ? 0
+                    : t === "open" || t === "open " + title || /^open (app|window|main window)$/.test(t) ? 1
+                    : 9
+                if (rank < bestRank) { best = e; bestRank = rank }
+            }
+            return best
+        }
+        function desktopEntry(item) {
+            var tries = [item.id, item.title,
+                (item.id || "").replace(/(_status_icon_\d+|[-_]client|[-_]tray)$/i, "")]
+            for (var i = 0; i < tries.length; i++) {
+                if (!tries[i]) continue
+                var e = DesktopEntries.heuristicLookup(tries[i])
+                if (e) return e
+            }
+            return null
+        }
+        // (as properties: the frame's children all go into its row of items)
+        readonly property QsMenuOpener showOpener: QsMenuOpener {
+            menu: trayFrame.showItem && trayFrame.showItem.hasMenu ? trayFrame.showItem.menu : null
+        }
+        readonly property Timer showTimer: Timer {
+            onTriggered: {
+                var item = trayFrame.showItem
+                if (!item) return
+                var win = barModules.bar.trayItemWindow(item)
+                var active = Hyprland.activeToplevel
+                // done once the window has focus; a window only just mapped
+                // can let a focus request go by, so it's asked again until
+                // one takes
+                if (win && active && active.address === win.address) {
+                    trayFrame.showItem = null
+                    return
+                }
+                if (win) {
+                    // ...though not without end, for a window that's kept
+                    // from taking focus
+                    if (trayFrame.showRaises++ >= 8) { trayFrame.showItem = null; return }
+                    trayFrame.raise(win)
+                    if (trayFrame.showTries === -1) trayFrame.showTries = 0
+                    interval = 250
+                }
+                if (win || trayFrame.showTries !== -1) {
+                    if (++trayFrame.showTries < 48) restart()
+                    else trayFrame.showItem = null
+                } else {
+                    // a menu not read yet gets a little longer to arrive
+                    // before it's taken as having no entry to use
+                    if (item.hasMenu && trayFrame.showOpener.children.values.length === 0
+                            && trayFrame.showWaits++ < 4) {
+                        restart()
+                        return
+                    }
+                    var entry = trayFrame.showEntry()
+                    if (entry) {
+                        entry.triggered()
+                    } else {
+                        var app = trayFrame.desktopEntry(item)
+                        if (app) app.execute()
+                        else item.activate()
+                    }
+                    trayFrame.showTries = 0
+                    interval = 250
+                    restart()
+                }
+            }
+        }
+
         Repeater {
             id: trayRepeater
             model: trayFrame.ordered
@@ -1048,6 +1155,9 @@ Item {
                     // (the icon itself moves under the pointer once dragged)
                     property real pressX: 0
                     property bool moved: false
+                    // when the last left click landed, so a double-click's
+                    // second click isn't also taken as a click of its own
+                    property real lastClick: 0
 
                     onPressed: mouse => {
                         pressX = mapToItem(trayFrame, mouse.x, 0).x
@@ -1069,8 +1179,19 @@ Item {
                     }
                     onReleased: if (moved) trayFrame.drop()
                     onCanceled: { moved = false; trayFrame.dragFrom = -1; trayFrame.dragTo = -1; trayFrame.dragDx = 0 }
+                    onDoubleClicked: mouse => {
+                        if (moved || mouse.button !== Qt.LeftButton) return
+                        if (trayIcon.opened) screenScope.openFlyout = ""
+                        trayFrame.showApp(trayIcon.modelData)
+                    }
                     onClicked: mouse => {
                         if (moved) return
+                        if (mouse.button === Qt.LeftButton) {
+                            var now = Date.now()
+                            var second = now - lastClick < Qt.styleHints.mouseDoubleClickInterval
+                            lastClick = second ? 0 : now
+                            if (second) return
+                        }
                         var item = trayIcon.modelData
                         if (mouse.button === Qt.MiddleButton) {
                             item.secondaryActivate()
@@ -1086,13 +1207,8 @@ Item {
                             // app's activate() -- usually "show/hide main
                             // window" -- when there's nothing to raise
                             var win = barModules.bar.trayItemWindow(item)
-                            if (win) {
-                                var addr = "address:0x" + win.address
-                                Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-                                Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
-                            } else {
-                                item.activate()
-                            }
+                            if (win) trayFrame.raise(win)
+                            else item.activate()
                         }
                     }
                 }
