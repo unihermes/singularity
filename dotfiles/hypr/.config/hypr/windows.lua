@@ -824,6 +824,14 @@ local function screenKind(area)
     return ratio > 1.9 and "wide" or ratio < 1 and "tall" or "normal"
 end
 
+-- How long an app's splash or updater window stays up, at most. A window
+-- younger than this isn't remembered: a splash shares its app's class, so
+-- its size would become the size the real window opens at.
+local SPLASH_SECS = 10
+hl.on("window.open", function(win)
+    if win then stateOf(win.address).openedAt = os.time() end
+end)
+
 local function rememberable(win)
     return win and win.class and win.class ~= "" and win.class ~= "org.quickshell"
         and win.class ~= SCRATCH_CLASS and win.floating and win.fullscreen ~= 1 and not win.pinned
@@ -888,6 +896,7 @@ local function rememberWindow(win)
     if not rememberable(win) or not win.monitor then return end
     local st = stateOf(win.address)
     if st.minimized or st.parked or st.settling then return end
+    if st.openedAt and os.time() - st.openedAt < SPLASH_SECS then return end
     local area = fillArea(win, win.monitor)
     local m
     if win.fullscreen == 2 then
@@ -1360,7 +1369,6 @@ end
 -- real window opens, so holdPopup takes that one for a popout of the
 -- splash. When the splash then closes within SPLASH_SECS of it, leaving
 -- the app no main window, the "popout" was the main window: promote it.
-local SPLASH_SECS = 10
 hl.on("window.close", function(closed)
     if not closed then return end
     for _, w in ipairs(hl.get_windows()) do
