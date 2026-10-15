@@ -80,6 +80,18 @@ run)
 	mkdir -p "$(dirname "$log")"
 	printf '=== %s ===\n' "$(date '+%Y-%m-%d %H:%M:%S')" >>"$log"
 
+	# Hold the entries until the bar's tray is up. Quickshell starts in the
+	# same breath as this script and takes a moment to claim the
+	# StatusNotifierWatcher name, and an app that looks for a tray before
+	# then doesn't always look again: Qt and Electron apps (CoolerControl,
+	# Discord) settle on having no tray icon at all. 20 s at most, so a
+	# session without the bar still gets its autostart.
+	for (( i = 0; i < 100; i++ )); do
+		busctl --user status org.kde.StatusNotifierWatcher &>/dev/null && break
+		sleep 0.2
+	done
+	(( i == 100 )) && printf 'no tray after 20 s; starting entries anyway\n' >>"$log"
+
 	shopt -s nullglob
 	for file in "$user_dir"/*.desktop; do
 		name=${file##*/}
