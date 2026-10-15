@@ -1247,6 +1247,7 @@ holdPopup = function(win)
     hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr }))
     hl.dispatch(hl.dsp.window.tag({ tag = "+app-held", window = addr }))
     hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = addr }))
+    stateOf(win.address).heldFrom = { owner = owner.address, at = os.time() }
     notifyShell()
 
     local mon = win.monitor or hl.get_active_monitor()
@@ -1354,6 +1355,32 @@ function promoteWindow(address)
         placeMonocle(win)
     end
 end
+
+-- Splash and updater windows (Discord's, Steam's) are up when the app's
+-- real window opens, so holdPopup takes that one for a popout of the
+-- splash. When the splash then closes within SPLASH_SECS of it, leaving
+-- the app no main window, the "popout" was the main window: promote it.
+local SPLASH_SECS = 10
+hl.on("window.close", function(closed)
+    if not closed then return end
+    for _, w in ipairs(hl.get_windows()) do
+        local held = w.address ~= closed.address and windowState[w.address] and windowState[w.address].heldFrom
+        if held and held.owner == closed.address and os.time() - held.at <= SPLASH_SECS then
+            windowState[w.address].heldFrom = nil
+            local hasMain = false
+            for _, o in ipairs(hl.get_windows()) do
+                if o.pid == w.pid and o.address ~= w.address and o.address ~= closed.address and o.mapped
+                        and not (hasTag(o, "popout") or hasTag(o, "app-held")) then
+                    hasMain = true
+                end
+            end
+            if not hasMain then
+                hl.dispatch(hl.dsp.window.tag({ tag = "-owner_" .. closed.address, window = "address:" .. w.address }))
+                promoteWindow(w.address)
+            end
+        end
+    end
+end)
 
 -- A window that isn't filled and would open right on top of another of
 -- the same app's steps down and to the right of it, like a deck of cards.
