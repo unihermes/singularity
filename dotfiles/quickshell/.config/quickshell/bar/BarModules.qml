@@ -906,37 +906,171 @@ Item {
     // system tray: one frame around every app's icon, like the
     // open-windows strip. Left raises the app's window (or activates
     // the app if it has none open), right opens the app's menu in a
-    // flyout, middle is the app's secondary action.
+    // flyout, middle is the app's secondary action. Each icon lights on
+    // its own, as the strip's do: a hover fill under it, outlined while its
+    // menu is open.
+    //
+    // Dragging an icon sideways moves it; the order is saved by app id
+    // (Settings.trayOrder), so it survives restarts and an app that quits
+    // gets its old place back when it returns. Apps never placed go after
+    // the placed ones, in the order they registered. The neighbours slide
+    // aside while the icon is dragged, and the order is written once it's
+    // dropped: writing it mid-drag would rebuild the delegates, the dragged
+    // one included, and drop the pointer's grab.
     //
     // With the tray drawer on, only the pinned icons show until the chevron
     // opens the drawer.
     ModuleFrame {
         id: trayFrame
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.spaceM
+        spacing: 0
+        hoverWhole: false
+        // each icon carries half the gap on either side as its own hit and
+        // hover area, so the chip's padding gives that half back
+        padH: Theme.modulePadH - Theme.spaceM / 2
         visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
-        active: screenScope.openFlyout === "traymenu"
 
         property bool drawerOpen: false
 
+        readonly property int slotW: Theme.barFs(16) + Theme.spaceM
+
+        // the tray's items in the saved order
+        readonly property var ordered: {
+            var saved = Settings.trayOrder
+            var l = Array.from(SystemTray.items.values)
+            var rank = l.map((it, i) => {
+                var r = saved.indexOf(it.id)
+                return r === -1 ? saved.length + i : r
+            })
+            var idx = l.map((it, i) => i)
+            idx.sort((x, y) => rank[x] - rank[y])
+            return idx.map(i => l[i])
+        }
+        function shown(it) {
+            return !Settings.trayDrawer || drawerOpen || Settings.trayPinned.indexOf(it.id) !== -1
+        }
+        // each item's place among the icons showing, -1 for one hidden in
+        // the drawer
+        readonly property var slots: {
+            var n = 0
+            return ordered.map(it => shown(it) ? n++ : -1)
+        }
+
+        // the drag in progress: the dragged icon's slot, the slot it would
+        // drop into, and how far the pointer has carried it
+        property int dragFrom: -1
+        property int dragTo: -1
+        property real dragDx: 0
+
+        // moves the dragged icon among the showing ones, leaves the hidden
+        // ones where they are, and saves the result into the stored order
+        // without disturbing the places of apps that aren't running
+        function drop() {
+            var from = dragFrom, to = dragTo
+            dragFrom = -1; dragTo = -1; dragDx = 0
+            if (from === -1 || to === -1 || from === to) return
+            var ids = ordered.map(it => it.id)
+            var shownIds = ids.filter((id, i) => slots[i] !== -1)
+            var moved = shownIds.splice(from, 1)[0]
+            shownIds.splice(to, 0, moved)
+            var present = ids.map((id, i) => slots[i] === -1 ? id : shownIds.shift())
+            var queue = present.slice()
+            var out = Settings.trayOrder.map(id => present.indexOf(id) === -1 ? id : queue.shift())
+            Settings.setTrayOrder(out.concat(queue))
+        }
+
         Repeater {
             id: trayRepeater
-            model: SystemTray.items.values
+            model: trayFrame.ordered
 
-            TintedIcon {
+            Item {
                 id: trayIcon
                 required property var modelData
-                visible: !Settings.trayDrawer || trayFrame.drawerOpen
-                    || Settings.trayPinned.indexOf(modelData.id) !== -1
+                required property int index
+                readonly property int slot: trayFrame.slots[index] === undefined ? -1 : trayFrame.slots[index]
+                readonly property bool dragged: trayFrame.dragFrom !== -1 && trayFrame.dragFrom === slot
+                // the icon whose menu is open is lit as if hovered
+                readonly property bool opened: screenScope.openFlyout === "traymenu"
+                    && !!barModules.trayMenu.item && barModules.trayMenu.item.item === modelData
+                readonly property bool hovered: trayMouse.containsMouse || opened
+                // how far a neighbour steps aside for the dragged icon
+                readonly property real shift: {
+                    var f = trayFrame.dragFrom, t = trayFrame.dragTo
+                    if (f === -1 || dragged || slot === -1) return 0
+                    if (f < t && slot > f && slot <= t) return -trayFrame.slotW
+                    if (t < f && slot >= t && slot < f) return trayFrame.slotW
+                    return 0
+                }
+
+                visible: slot !== -1
                 anchors.verticalCenter: parent.verticalCenter
-                source: modelData.icon
-                implicitSize: Theme.barFs(16)
+                implicitWidth: trayFrame.slotW
+                implicitHeight: Theme.moduleHeight
+                z: dragged ? 1 : 0
+
+                transform: Translate {
+                    x: trayIcon.dragged ? trayFrame.dragDx : trayIcon.shift
+                    Behavior on x {
+                        enabled: !trayIcon.dragged
+                        NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
+                    }
+                }
+
+                // the hover fill under just this icon, sized as a whole
+                // module's hover is
+                Rectangle {
+                    readonly property bool grouped: Theme.moduleStyle === "grouped"
+                    visible: trayIcon.hovered || trayIcon.dragged
+                    anchors.centerIn: parent
+                    width: parent.width
+                    height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight - 6
+                    radius: grouped ? Theme.radius : Theme.radiusSmall
+                    color: Theme.overlay
+                    border.width: trayIcon.opened || trayIcon.dragged ? Theme.borderWidth : 0
+                    border.color: Theme.strokeFocus
+                }
+
+                TintedIcon {
+                    anchors.centerIn: parent
+                    source: trayIcon.modelData.icon
+                    implicitSize: Theme.barFs(16)
+                }
 
                 MouseArea {
+                    id: trayMouse
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    preventStealing: true
+                    cursorShape: trayIcon.dragged ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+
+                    // where the press landed, in the frame's coordinates
+                    // (the icon itself moves under the pointer once dragged)
+                    property real pressX: 0
+                    property bool moved: false
+
+                    onPressed: mouse => {
+                        pressX = mapToItem(trayFrame, mouse.x, 0).x
+                        moved = false
+                    }
+                    onPositionChanged: mouse => {
+                        if (!(pressedButtons & Qt.LeftButton)) return
+                        var dx = mapToItem(trayFrame, mouse.x, 0).x - pressX
+                        if (!moved && Math.abs(dx) < Theme.barFs(6)) return
+                        if (!moved) {
+                            moved = true
+                            trayFrame.dragFrom = trayIcon.slot
+                        }
+                        var last = trayFrame.slots.filter(s => s !== -1).length - 1
+                        trayFrame.dragDx = Math.max(-trayIcon.slot * trayFrame.slotW,
+                            Math.min((last - trayIcon.slot) * trayFrame.slotW, dx))
+                        trayFrame.dragTo = Math.max(0, Math.min(last,
+                            trayIcon.slot + Math.round(dx / trayFrame.slotW)))
+                    }
+                    onReleased: if (moved) trayFrame.drop()
+                    onCanceled: { moved = false; trayFrame.dragFrom = -1; trayFrame.dragTo = -1; trayFrame.dragDx = 0 }
                     onClicked: mouse => {
+                        if (moved) return
                         var item = trayIcon.modelData
                         if (mouse.button === Qt.MiddleButton) {
                             item.secondaryActivate()
@@ -965,10 +1099,12 @@ Item {
             }
         }
 
-        // the drawer's handle
+        // the drawer's handle, padded by the half gap the icons carry
         Text {
             visible: Settings.trayDrawer
             anchors.verticalCenter: parent.verticalCenter
+            leftPadding: Theme.spaceM / 2
+            rightPadding: Theme.spaceM / 2
             text: trayFrame.drawerOpen ? "󰅂" : "󰅁"
             color: drawerMouse.containsMouse ? Theme.textStrong : Theme.subtext
             font.family: Theme.fontIcon

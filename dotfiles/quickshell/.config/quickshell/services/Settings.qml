@@ -264,6 +264,10 @@ Singleton {
         if (on) l.push(id)
         adapter.trayPinned = l
     }
+    // the tray's order, by id, as the icons were last dragged into: apps
+    // not running keep their place in it for when they come back
+    readonly property alias trayOrder: adapter.trayOrder
+    function setTrayOrder(l) { adapter.trayOrder = l }
     // Each look keeps the wallpaper last shown with it, and picking the look
     // brings it back (Wallpaper.qml). lookWallpapers: look -> image path.
     readonly property alias wallpaperPerLook: adapter.wallpaperPerLook
@@ -879,6 +883,7 @@ Singleton {
             property string clockFormat: "ddd HH:mm"
             property bool trayDrawer: false
             property var trayPinned: []
+            property var trayOrder: []
             property string workspaceNames: ""
             property string barSeparator: "none"
             property bool notifGroup: false
