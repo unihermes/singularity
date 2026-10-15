@@ -597,6 +597,36 @@ SettingsPage {
         }
     }
 
+    // G-Sync / FreeSync: misc.vrr in hyprland.json, as the Appearance and
+    // Input pages keep their Hyprland settings -- 0 off, 2 while a window is
+    // fullscreen, 1 always. Hyprland's own default is off. It's the one
+    // setting for every display, since hl.monitor()'s own vrr isn't put in
+    // force by a reload; a display without adaptive sync ignores it.
+    readonly property int vrr: {
+        var v = HyprLuaWrite.override(["misc"], "vrr")
+        return v === undefined ? 0 : Number(v)
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "REFRESH" }
+
+    SettingsField {
+        label: "Variable refresh"
+        hint: page.vrr === 2 ? "G-Sync / FreeSync while a game is fullscreen"
+            : page.vrr === 1 ? "G-Sync / FreeSync everywhere; some desktops flicker"
+            : "G-Sync / FreeSync, on displays that have it"
+
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: [{ value: 0, text: "Off" }, { value: 2, text: "Fullscreen" }, { value: 1, text: "Always" }]
+            current: page.vrr
+            onPicked: v => HyprLuaWrite.setLocal([[["misc"], "vrr", v]],
+                "Variable refresh " + (v === 0 ? "off" : v === 2 ? "on in fullscreen" : "always on"),
+                (ok, msg) => page.say(msg, !ok))
+        }
+    }
+
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "DISPLAYS" + "  " + page.monitors.length }
 
