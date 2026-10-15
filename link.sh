@@ -122,6 +122,16 @@ if [[ -f $binds ]] && grep -q '^local terminal    = "alacritty"$' "$binds"; then
   log "binds.lua: the terminal is now Settings > Terminal's pick"
 fi
 
+# A hypridle.conf seeded while the screens-off step said hl.dsp.dpms("off")
+# and ("on"): a bare string is a toggle, so input that had already woken the
+# screens had them switched straight back off. Only those exact calls change.
+idle="$HOME/.config/hypr/hypridle.conf"
+if [[ -f $idle ]] && grep -qF 'hl.dsp.dpms("' "$idle"; then
+  sed -i -e 's|hl\.dsp\.dpms("off")|hl.dsp.dpms({ action = "off" })|g' \
+    -e 's|hl\.dsp\.dpms("on")|hl.dsp.dpms({ action = "on" })|g' "$idle"
+  log "hypridle.conf: screens-off step no longer toggles"
+fi
+
 # File-manager bookmarks (GTK's, which Thunar shows in its side pane) for
 # the usual folders. Not stowed: the paths hold the home directory, and the
 # file manager rewrites the file as bookmarks are added, so it's written

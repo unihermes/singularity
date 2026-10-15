@@ -164,10 +164,12 @@ can() {  # can Hibernate|SuspendThenHibernate
         org.freedesktop.login1.Manager "Can$1" 2>/dev/null) == 's "yes"' ]]
 }
 
+# A table, not hl.dsp.dpms("on"): a bare string is read as toggle, so every
+# repeat in the loops below flipped the screens rather than holding them.
 dpms() {  # dpms on|off [monitor]
-    local arg="\"$1\""
-    [[ -n ${2:-} ]] && arg+=", \"$2\""
-    hyprctl eval "hl.dispatch(hl.dsp.dpms($arg))" >/dev/null 2>&1
+    local arg="action = \"$1\""
+    [[ -n ${2:-} ]] && arg+=", monitor = \"$2\""
+    hyprctl eval "hl.dispatch(hl.dsp.dpms({ $arg }))" >/dev/null 2>&1
 }
 
 # whether input is allowed to wake a blanked screen. hl.config, not

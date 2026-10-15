@@ -108,7 +108,7 @@ Singleton {
         // lights it instead of treating it as a stray wake to keep dark.
         else if (act === "hibernate") Quickshell.execDetached(["sh", "-c", `
             m="$XDG_RUNTIME_DIR/singularity-hibernating"
-            dpms() { hyprctl eval "hl.dispatch(hl.dsp.dpms(\\"$1\\"))" >/dev/null; }
+            dpms() { hyprctl eval "hl.dispatch(hl.dsp.dpms({ action = \\"$1\\" }))" >/dev/null; }
             touch "$m"
             dpms off
             systemctl hibernate || { rm -f "$m"; dpms on; }`])
