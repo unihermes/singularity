@@ -434,7 +434,9 @@ show where boot time goes.
 - **Startup apps**: Hyprland has no XDG autostart, so
   `~/.config/singularity/autostart.sh` runs `~/.config/autostart` (managed in
   Settings → Startup). System-wide entries are listed but off until you turn
-  one on.
+  one on. An app that puts an icon in the tray starts there: if it opens its
+  window anyway (Spotify has no start-minimized option on Linux), the window
+  is closed once the icon is up.
 - **AUR safety**: read the PKGBUILD diffs yay shows. `install.sh` doesn't pass
   `--noconfirm` to the AUR step for this reason.
 - **Kora 2.0.0** dropped upstream symlinks; if icons half-resolve, check the

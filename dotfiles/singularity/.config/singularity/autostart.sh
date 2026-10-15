@@ -75,6 +75,59 @@ exec_line() {
 	field "$1" Exec | sed -E 's/%%/\x01/g; s/%[fFuUdDnNickvm]//g; s/\x01/%/g; s/[[:space:]]+$//'
 }
 
+# The session id of a process: setsid made each entry's launcher the leader of
+# its own session, and everything the app forks stays in it.
+sid() {
+	local stat
+	{ stat=$(<"/proc/$1/stat"); } 2>/dev/null || return 1
+	stat=${stat##*) }
+	read -r _ _ _ sid _ <<<"$stat"
+	printf '%s' "$sid"
+}
+
+# Start entries in the tray. Not every app can be asked to: Steam (-silent),
+# Discord (--start-minimized) and CoolerControl (its own setting) can, but
+# Spotify's --minimized is Windows-only and it always opens its window. So an
+# entry's window is closed for it -- only once the app has its tray icon up,
+# because closing the window of an app with no tray quits it, and because the
+# splash and updater windows some apps show first (Discord, Steam) come before
+# the icon and closing one of those aborts the start. An app that has had its
+# icon up for 5 s without opening a window started hidden by itself, and is
+# dropped from the watch, so a window the user then opens from the tray is
+# theirs. Nothing is watched past 60 s.
+to_tray() {
+	local -A watching=() iconed=()
+	local s item bus pid addr t
+	for s; do watching[$s]=1; done
+
+	for (( t = 0; t < 120 && ${#watching[@]}; t++ )); do
+		sleep 0.5
+
+		# ":1.77/org/ayatana/NotificationItem/spotify_client" -> session
+		for item in $(busctl --user get-property org.kde.StatusNotifierWatcher /StatusNotifierWatcher \
+			org.kde.StatusNotifierWatcher RegisteredStatusNotifierItems 2>/dev/null | tr -d '"'); do
+			bus=${item%%/*}
+			[[ $bus == *.* ]] || continue
+			pid=$(busctl --user call org.freedesktop.DBus / org.freedesktop.DBus \
+				GetConnectionUnixProcessID s "$bus" 2>/dev/null) || continue
+			s=$(sid "${pid#u }") || continue
+			[[ -n ${watching[$s]:-} && -z ${iconed[$s]:-} ]] && iconed[$s]=$t
+		done
+
+		while read -r addr pid; do
+			s=$(sid "$pid") || continue
+			[[ -n ${watching[$s]:-} && -n ${iconed[$s]:-} ]] || continue
+			printf 'tray %s: closing its window\n' "$(</proc/"$pid"/comm)"
+			hyprctl dispatch "hl.dsp.window.close({ window = \"address:0x$addr\" })" >/dev/null
+			unset "watching[$s]"
+		done < <(hyprctl clients | awk '/^Window /{ a = $2 } /^\tpid:/{ print a, $2 }')
+
+		for s in "${!iconed[@]}"; do
+			(( t - iconed[$s] >= 10 )) && unset "watching[$s]" "iconed[$s]"
+		done
+	done
+}
+
 case ${1:-run} in
 run)
 	mkdir -p "$(dirname "$log")"
@@ -93,6 +146,7 @@ run)
 	(( i == 100 )) && printf 'no tray after 20 s; starting entries anyway\n' >>"$log"
 
 	shopt -s nullglob
+	sessions=()
 	for file in "$user_dir"/*.desktop; do
 		name=${file##*/}
 		enabled "$file" || { printf 'skip %s (disabled)\n' "$name" >>"$log"; continue; }
@@ -103,7 +157,10 @@ run)
 
 		printf 'run  %s: %s\n' "$name" "$cmd" >>"$log"
 		setsid sh -c "$cmd" >>"$log" 2>&1 &
+		sessions+=($!)
 	done
+
+	(( ${#sessions[@]} )) && to_tray "${sessions[@]}" >>"$log" 2>&1 &
 	;;
 
 list)
