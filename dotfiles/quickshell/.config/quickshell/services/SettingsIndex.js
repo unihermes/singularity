@@ -79,7 +79,7 @@ var entries = [
     { page: "appearance", section: "Colours",       label: "Accent",               keywords: "colour color highlight hue" },
     { page: "appearance", section: "Colours",       label: "Custom accent",        keywords: "colour color hex rgb highlight" },
     { page: "appearance", section: "Colours",       label: "Level colour",         keywords: "meters levels volume brightness battery fill green second accent" },
-    { page: "appearance", section: "Style",         label: "Style",                keywords: "theme frames channel lined flat retro minimal basic capsule glass tabbed terminal modules" },
+    { page: "appearance", section: "Style",         label: "Style",                keywords: "theme frames channel lined flat retro minimal basic capsule glass tabbed terminal modules windows 10 square taskbar" },
     { page: "appearance", section: "Style",         label: "Roundness",            keywords: "rounding corners radius panels windows hyprland bar chips" },
     { page: "appearance", section: "Style",         label: "Bar shape",            keywords: "bar layout full width floating islands" },
     { page: "appearance", section: "Style",         label: "See-through",          keywords: "opacity transparency translucent glass bar panels" },

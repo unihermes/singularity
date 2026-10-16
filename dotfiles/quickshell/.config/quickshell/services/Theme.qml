@@ -225,6 +225,9 @@ Singleton {
     readonly property bool frameChiselled: frameBevel
     // every style but these draws the plain outer stroke
     readonly property bool frameStroked: !frameChiselled && !frameNone && !frameCorners
+    // the runs of rows inside a panel (SectionRuns): framed in every style
+    // but Flat, whose panels hold their rows bare
+    readonly property bool sectionFramed: style !== "flat"
     // Corners' hairline under its marks
     readonly property color cornerHairline: Qt.rgba(border.r, border.g, border.b, 0.6)
     // how long a corner mark runs: on chips and controls, and on panels
@@ -458,6 +461,9 @@ Singleton {
     // "grouped": each section of the bar is one channel (shell.qml), and
     // its modules are bare chips inside it, sized to the channel's interior
     readonly property bool moduleGrouped: moduleStyle === "grouped"
+    // "taskbar": bare slots the bar's full height, an accent rule on the
+    // screen edge's side of the open one
+    readonly property bool moduleTaskbar: moduleStyle === "taskbar"
     // the styles whose open chip fills with the accent
     readonly property bool moduleOpenFill: moduleStyle === "filled" || moduleStyle === "pill"
     readonly property int groupHeight: moduleHeight + 2
@@ -476,8 +482,8 @@ Singleton {
     // chips instead of a 28px chip swimming in it. The -6 reproduces the
     // original 28 at the default 34, and the floor keeps the double border
     // from eating the whole chip at the smallest bar height.
-    readonly property int moduleHeight: Math.max(18, barHeight - 6)
-    readonly property int modulePadH:   sp(6)
+    readonly property int moduleHeight: moduleTaskbar ? barHeight : Math.max(18, barHeight - 6)
+    readonly property int modulePadH:   moduleTaskbar ? sp(10) : sp(6)
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // Shared width for the gauge modules only, so their fill bars are

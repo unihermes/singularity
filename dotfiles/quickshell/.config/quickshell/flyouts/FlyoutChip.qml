@@ -7,7 +7,8 @@
 //
 // Each style draws its own: a stroked chip (with Double's inner stroke or
 // Bevel's raised edge), a filled block (Solid), a pill (Capsule), frosted
-// glass, or corner marks round spaced capitals (Corners).
+// glass, corner marks round spaced capitals (Corners), or a flat block
+// that takes a heavy outline under the pointer (Flat).
 //
 // `confirmText` makes it two clicks, for what can't be undone: the first
 // arms it -- alert-red, reading confirmText -- and the second emits
@@ -56,11 +57,14 @@ Item {
             : root.kind === "capsule" ? (root.hot ? Theme.surface : Theme.overlay)
             : root.kind === "glass" ? (root.hot ? Theme.stroke : frost)
             : root.kind === "corners" ? (root.hot ? Theme.overlay : "transparent")
+            : root.kind === "flat" ? Theme.overlay
             : Theme.controlFill(root.hot ? Theme.hoverFillSoft : "transparent")
         border.width: root.kind === "solid" || root.kind === "capsule" || root.kind === "corners" ? 0
             : root.kind === "glass" ? Theme.borderWidth
+            : root.kind === "flat" ? (root.hot && !root.armed && !root.selected ? Math.max(2, Theme.borderWidth * 2) : 0)
             : Theme.controlBorder(edge)
-        border.color: root.kind === "glass" ? Theme.stroke : Theme.controlStroke(edge)
+        border.color: root.kind === "glass" ? Theme.stroke
+            : root.kind === "flat" ? Theme.subtext : Theme.controlStroke(edge)
 
         CornerMarks {
             visible: root.kind === "corners"

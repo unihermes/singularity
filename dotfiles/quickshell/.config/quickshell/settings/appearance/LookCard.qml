@@ -100,7 +100,7 @@ ClippingRectangle {
                     readonly property bool openFill: pv.mod === "filled" || pv.mod === "pill"
                     color: pv.mod === "cornered" ? "transparent"
                         : modelData ? (openFill ? pv.accent : pv.pal.overlay)
-                        : pv.mod === "outline" || pv.mod === "ghost" ? "transparent" : pv.pal.surface
+                        : pv.mod === "outline" || pv.mod === "ghost" || pv.mod === "taskbar" ? "transparent" : pv.pal.surface
                     border.width: pv.mod === "outline" ? pv.bw : 0
                     border.color: modelData ? pv.accent : pv.pal.border
                     CornerMarks {

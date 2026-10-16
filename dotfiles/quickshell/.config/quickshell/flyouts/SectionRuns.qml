@@ -10,6 +10,7 @@
 //   bevel    a sunken chisel, a well in the raised panel
 //   corners  short marks at the corners
 //   none     the ground alone
+// and nothing at all under Flat (Theme.sectionFramed).
 // Put it beside the column, under it, and say where the column's top sits
 // in this item.
 
@@ -63,6 +64,7 @@ Item {
             width: root.width
             y: root.columnY + modelData.y0 - out
             height: modelData.y1 - modelData.y0 + out * 2
+            visible: Theme.sectionFramed
 
             Channel {
                 visible: Theme.frameChannel

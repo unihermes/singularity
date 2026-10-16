@@ -13,6 +13,10 @@ import ".."
 ClippingRectangle {
     id: lp
     readonly property real sc: 0.62
+    // the bar on its own edge, the flyout off it; the clock at the right
+    // end under Flat's Taskbar layout
+    readonly property bool atBottom: Theme.barPosition === "bottom"
+    readonly property bool clockRight: Settings.taskbarLayoutOn
     width: parent ? parent.width : 0
     height: Math.round(stage.height * sc) + Theme.spaceL * 2
     radius: Theme.radiusInner
@@ -36,39 +40,70 @@ ClippingRectangle {
         scale: lp.sc
         transformOrigin: Item.TopLeft
 
-        Rectangle {
+        Item {
+            id: previewBar
             width: parent.width
             height: Theme.barHeight
-            radius: Theme.barFloating ? Theme.barRadius : Theme.radiusSmall
-            color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
-            border.width: Theme.barFloating ? Theme.borderWidth : 0
-            border.color: Theme.stroke
-        }
+            y: lp.atBottom ? flyout.height + Theme.spaceS : 0
 
-        PreviewGroup {
-            x: Theme.barInset + Theme.moduleGap
-            ModuleFrame { PreviewGlyph { text: "󰣇" } }
-            ModuleFrame {
-                Row {
-                    spacing: Theme.spaceS
-                    anchors.verticalCenter: parent.verticalCenter
-                    Repeater {
-                        model: 4
-                        Rectangle {
-                            required property int index
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: index === 1 ? 18 : 6
-                            height: 6
-                            radius: 3
-                            color: index === 1 ? Theme.accent : Theme.muted
+            Rectangle {
+                width: parent.width
+                height: Theme.barHeight
+                radius: Theme.barFloating ? Theme.barRadius : Theme.radiusSmall
+                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                border.width: Theme.barFloating ? Theme.borderWidth : 0
+                border.color: Theme.stroke
+            }
+
+            PreviewGroup {
+                x: Theme.barInset + Theme.moduleGap
+                ModuleFrame { PreviewGlyph { text: "󰣇" } }
+                ModuleFrame {
+                    Row {
+                        spacing: Theme.spaceS
+                        anchors.verticalCenter: parent.verticalCenter
+                        Repeater {
+                            model: 4
+                            Rectangle {
+                                required property int index
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: index === 1 ? 18 : 6
+                                height: 6
+                                radius: 3
+                                color: index === 1 ? Theme.accent : Theme.muted
+                            }
                         }
                     }
                 }
             }
+
+            PreviewGroup {
+                visible: !lp.clockRight
+                anchors.horizontalCenter: parent.horizontalCenter
+                Loader { sourceComponent: lp.clockRight ? null : clockChip }
+            }
+
+            PreviewGroup {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.barInset + Theme.moduleGap
+                ModuleFrame { PreviewGlyph { text: "󰖩" } }
+                ModuleFrame {
+                    fixedWidth: Theme.moduleWidth
+                    fillValue: 0.45
+                    PreviewGlyph { text: "󰕾" }
+                }
+                ModuleFrame {
+                    fixedWidth: Theme.moduleWidth
+                    fillValue: 0.8
+                    fillColor: Theme.good
+                    PreviewGlyph { text: "󰂄" }
+                }
+                Loader { sourceComponent: lp.clockRight ? clockChip : null }
+            }
         }
 
-        PreviewGroup {
-            anchors.horizontalCenter: parent.horizontalCenter
+        Component {
+            id: clockChip
             ModuleFrame {
                 active: true
                 Text {
@@ -82,29 +117,12 @@ ClippingRectangle {
             }
         }
 
-        PreviewGroup {
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.barInset + Theme.moduleGap
-            ModuleFrame { PreviewGlyph { text: "󰖩" } }
-            ModuleFrame {
-                fixedWidth: Theme.moduleWidth
-                fillValue: 0.45
-                PreviewGlyph { text: "󰕾" }
-            }
-            ModuleFrame {
-                fixedWidth: Theme.moduleWidth
-                fillValue: 0.8
-                fillColor: Theme.good
-                PreviewGlyph { text: "󰂄" }
-            }
-        }
-
         PanelFrame {
             id: flyout
             readonly property int padX: Theme.channelWidth * 2 + 3 + Theme.spaceL
             readonly property int padY: Theme.channelWidth * 2 + 3 + Theme.spaceS
             anchors.right: parent.right
-            y: Theme.barHeight + Theme.spaceS
+            y: lp.atBottom ? 0 : Theme.barHeight + Theme.spaceS
             width: Theme.fit(260) + padX * 2
             height: flyCol.implicitHeight + padY * 2
             ground: Theme.surface

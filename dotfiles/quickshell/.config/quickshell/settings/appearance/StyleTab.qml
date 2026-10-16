@@ -148,6 +148,14 @@ SettingsTab {
                 width: ya.width - 4; height: ya.ch + 10
                 Channel { radius: ya.r + 4 }
             }
+            // Flat: the taskbar the slots sit in
+            Rectangle {
+                visible: ya.v === "flat"
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width; height: ya.ch + 8
+                color: Theme.bar
+                Rectangle { width: parent.width; height: 1; color: Theme.border }
+            }
             // Tabbed: the panel the open chip hangs into
             Rectangle {
                 visible: ya.v === "tabbed"
@@ -171,7 +179,7 @@ SettingsTab {
                         Rectangle {
                             id: face
                             anchors.fill: parent
-                            visible: ["channel", "corners"].indexOf(ya.v) === -1
+                            visible: ["channel", "corners", "flat"].indexOf(ya.v) === -1
                                 && !(ya.v === "tabbed" && !chip.lit)
                             radius: ya.v === "capsule" ? height / 2
                                 : ["bevel", "tabbed"].indexOf(ya.v) !== -1 ? 0 : ya.r
@@ -210,6 +218,15 @@ SettingsTab {
                             radius: ya.r
                             color: Theme.overlay
                             border.width: 2; border.color: Theme.accent
+                        }
+                        // Flat's open slot: a fill the taskbar's height, an
+                        // accent rule on its bottom edge
+                        Rectangle {
+                            visible: ya.v === "flat" && chip.lit
+                            y: -4
+                            width: parent.width; height: ya.ch + 8
+                            color: Theme.overlay
+                            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 2; color: Theme.accent }
                         }
                         // Corners: the marks only
                         CornerMarks {

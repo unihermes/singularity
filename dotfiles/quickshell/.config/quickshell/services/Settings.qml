@@ -430,7 +430,26 @@ Singleton {
     // new module after the battery at the far edge. One that ends its
     // section in the defaults (Show Desktop) ends it here too.
     function widgetLayout() {
-        var saved = adapter.barLayout || {}
+        if (!taskbarLayoutOn) return resolveLayout(adapter.barLayout)
+        var own = adapter.taskbarLayout || {}
+        return Object.keys(own).length > 0 ? resolveLayout(own) : taskbarOf(resolveLayout(adapter.barLayout))
+    }
+
+    // Flat's Taskbar layout option: the bar laid out as a taskbar, with
+    // nothing in the centre. Until it's rearranged (into taskbarLayout,
+    // kept apart so turning the option off brings the usual layout back)
+    // it's the usual one with the centre moved right: the clock to the
+    // end, just before Show Desktop, the rest ahead of the right's modules.
+    readonly property bool taskbarLayoutOn: adapter.style === "flat" && Styles.has(adapter.styleOptions, "taskbar")
+    function taskbarOf(l) {
+        var lead = l.centre.filter(k => k !== "clock")
+        var tail = l.centre.indexOf("clock") !== -1 ? ["clock"] : []
+        var right = l.right.filter(k => k !== "desktop")
+        return { left: l.left.slice(), centre: [], right: lead.concat(right, tail, ["desktop"]) }
+    }
+
+    function resolveLayout(saved) {
+        saved = saved || {}
         var known = [], homeOf = {}
         for (var s0 = 0; s0 < widgetSections.length; s0++) {
             var d = widgetDefaults[widgetSections[s0]]
@@ -497,12 +516,16 @@ Singleton {
     // The whole layout at once, since a move between sections changes two
     // of them. A fresh object, not a mutation: the adapter only notices --
     // and writes, and the bar only repositions -- on reassignment.
+    // Under the Taskbar layout it's the taskbar's own arrangement that's
+    // written.
     function setWidgetLayout(layout) {
-        adapter.barLayout = {
+        var l = {
             left:   (layout.left   || []).slice(),
             centre: (layout.centre || []).slice(),
             right:  (layout.right  || []).slice(),
         }
+        if (taskbarLayoutOn) adapter.taskbarLayout = l
+        else adapter.barLayout = l
     }
 
     // The centre module pinned to the exact middle of the bar. The other
@@ -515,6 +538,7 @@ Singleton {
 
     function resetWidgets() {
         adapter.barLayout = {}
+        adapter.taskbarLayout = {}
         adapter.barHidden = []
         adapter.centreAnchor = "clock"
     }
@@ -526,10 +550,9 @@ Singleton {
     readonly property bool widgetsDefault: {
         var noneHidden = (adapter.barHidden || []).length === 0
             && adapter.centreAnchor === "clock"
-        var ordersMatch = true
-        for (var section in widgetDefaults)
-            if (JSON.stringify(widgetOrder(section)) !== JSON.stringify(widgetDefaults[section]))
-                ordersMatch = false
+        var stock = resolveLayout({})
+        if (taskbarLayoutOn) stock = taskbarOf(stock)
+        var ordersMatch = JSON.stringify(widgetLayout()) === JSON.stringify(stock)
         return noneHidden && ordersMatch
     }
 
@@ -634,7 +657,8 @@ Singleton {
         if (hadOwn)
             adapter.ownLayout = { barLayout: adapter.barLayout, barHidden: adapter.barHidden,
                                   centreAnchor: adapter.centreAnchor }
-        setWidgetLayout(lay)
+        adapter.barLayout = { left: (lay.left || []).slice(), centre: (lay.centre || []).slice(),
+                              right: (lay.right || []).slice() }
         adapter.barHidden = (lay.hidden || []).slice()
         adapter.centreAnchor = lay.anchor !== undefined ? lay.anchor : "clock"
     }
@@ -925,6 +949,8 @@ Singleton {
             property string notifPositionY: "top"
             property string centreAnchor: "clock"
             property var barLayout: ({})
+            // Flat's Taskbar layout, once rearranged (widgetLayout)
+            property var taskbarLayout: ({})
             property var barHidden: []
             // Bar Widgets' arrangement, held while a look with its own
             // layout is on (applyLayout)

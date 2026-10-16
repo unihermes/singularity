@@ -13,7 +13,8 @@
 //              "double", "single", "bevel", "corners" (only the corners
 //              drawn) or "none"
 //   modules    the bar chips (ModuleFrame): "grouped", "outline", "filled",
-//              "pill", "ghost" or "cornered"
+//              "pill", "ghost", "cornered" or "taskbar" (bare slots the
+//              bar's full height, packed with no gaps)
 //   hover      a bar module under the pointer: "none" or "fill"
 //   mark       how the open-windows strip marks the focused window:
 //              "pill", "ground", "box" or "above"
@@ -32,8 +33,10 @@
 //              name. Each is { id, label, hint, on }: `on` is its state
 //              when the style is picked. An option with a `key` is one of
 //              the shared Finish settings (shadows, gradient, heavyLines,
-//              headingUpper, or barSeparator with `value`); the rest are
-//              ids in Settings.styleOptions, read with Theme.opt(id).
+//              headingUpper, or barSeparator or barPosition with `value`,
+//              and `off` for the value it takes when off, "none" if
+//              unstated); the rest are ids in Settings.styleOptions, read
+//              with Theme.opt(id).
 //   windows    optional: window opacity, in percent, as { focusedOpacity,
 //              unfocusedOpacity, terminalOpacity } -- Hyprland's focused
 //              and unfocused windows, and the terminal's background; left out,
@@ -46,7 +49,7 @@
 
 .pragma library
 
-var order = ["channel", "double", "solid", "capsule", "glass", "bevel", "tabbed", "corners"]
+var order = ["channel", "double", "solid", "capsule", "glass", "bevel", "tabbed", "corners", "flat"]
 
 var styles = {
     channel: {
@@ -142,6 +145,19 @@ var styles = {
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 95, terminalOpacity: 90 },
     },
+    flat: {
+        name: "Flat", hint: "Square and flat; a taskbar along the bottom",
+        frame: "single", modules: "taskbar", hover: "fill", mark: "pill", title: "none",
+        shadow: "soft", lines: true, attach: "auto", anim: "drop", prefix: "", square: true,
+        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false },
+        options: [
+            // Settings.widgetLayout() rearranges the bar while this is on
+            { id: "taskbar", label: "Taskbar layout", hint: "Status and the clock packed at the right", on: true },
+            { key: "barPosition", value: "bottom", off: "top", label: "Bar at the bottom", hint: "Along the screen's bottom edge", on: true },
+            { key: "shadows", label: "Shadows", hint: "Soft shadows under flyouts", on: true },
+        ],
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
+    },
 }
 
 // bar height and the gap between modules, by density
@@ -167,12 +183,15 @@ function finish(name) {
     var ids = []
     for (var i = 0; i < st.options.length; i++) {
         var o = st.options[i]
-        if (o.key) out[o.key] = o.value !== undefined ? (o.on ? o.value : "none") : o.on
+        if (o.key) out[o.key] = o.value !== undefined ? (o.on ? o.value : offValue(o)) : o.on
         else if (o.on) ids.push(o.id)
     }
     out.styleOptions = ids.join(",")
     return out
 }
+
+// what an option with a `value` sets when it's off
+function offValue(o) { return o.off !== undefined ? o.off : "none" }
 
 function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 
@@ -200,7 +219,7 @@ function resolve(s) {
         flyoutAttach: attach,
         flyoutAnim: !s.flyoutAnim || s.flyoutAnim === "auto" ? st.anim : s.flyoutAnim,
         barHeight: bar.height,
-        moduleGap: bar.gap,
+        moduleGap: st.modules === "taskbar" ? 0 : bar.gap,
         opacity: Math.round(s.seeThrough * see),
         headingPrefix: prefix,
         glass: !!st.glass,

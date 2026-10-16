@@ -345,7 +345,7 @@ Item {
                 spacing: strip.style === "tabs" || strip.style === "dots" || strip.style === "spotlight"
                         || strip.style === "index" ? Theme.spaceXs
                     : strip.style === "segmented" || strip.style === "inset"
-                        || strip.style === "lift" ? 0 : Theme.spaceS
+                        || strip.style === "lift" || Theme.moduleTaskbar ? 0 : Theme.spaceS
 
                 Repeater {
                     id: iconRepeater
@@ -378,6 +378,10 @@ Item {
                         readonly property string mark: style === "icons" || style === "titled"
                             ? Theme.windowMark : ""
                         readonly property bool underMark: mark === "pill"
+                        // Flat's taskbar: each icon a wide slot, the focused
+                        // one on a lit ground, the pips on the screen edge
+                        readonly property bool slotted: Theme.moduleTaskbar && (style === "icons" || style === "titled")
+                        readonly property bool slotLit: slotted && focused
                         // the app's window in focus, else its main one
                         readonly property var shown: {
                             var a = Hyprland.activeToplevel
@@ -404,7 +408,7 @@ Item {
                         // sits further in to clear the curve
                         readonly property int padX: spot ? Theme.spaceS + 2
                             : tabs || seg || indexed || inset ? Theme.spaceS
-                            : dots ? 1 : Theme.spaceS / 2
+                            : dots ? 1 : slotted ? Theme.spaceL : Theme.spaceS / 2
                         // tabs share a fixed budget, so a crowded workspace shortens
                         // every title rather than pushing into the bar's centre
                         readonly property int tabTitleMax: Math.max(Theme.fit(40), Math.min(Theme.fit(140),
@@ -448,16 +452,18 @@ Item {
 
                         // the hover fill under just this window, for the
                         // styles without a ground of their own, sized as a
-                        // whole module's hover is
+                        // whole module's hover is; on Flat's taskbar the
+                        // focused window's slot has it too
                         Rectangle {
                             readonly property bool grouped: Theme.moduleStyle === "grouped"
-                            visible: winIcon.hovered && !winIcon.tabs && !winIcon.seg && !winIcon.spot
+                            visible: (winIcon.hovered || winIcon.slotLit) && !winIcon.tabs && !winIcon.seg && !winIcon.spot
                                 && !winIcon.indexed && !winIcon.inset
                                 && winIcon.mark !== "ground" && winIcon.mark !== "box"
                             x: winIcon.lead
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width - winIcon.lead
-                            height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight - 6
+                            height: grouped ? Theme.groupHeight - Theme.channelWidth * 2
+                                : Theme.moduleTaskbar ? Theme.moduleHeight : Theme.moduleHeight - 6
                             radius: grouped ? Theme.radius : Theme.radiusSmall
                             color: Theme.overlay
                             border.width: winIcon.opened ? Theme.borderWidth : 0
@@ -569,7 +575,7 @@ Item {
                             // lifted a single pixel: just enough to clear the
                             // pip, so the icon still sits level with the
                             // chips around it
-                            anchors.verticalCenterOffset: winIcon.underMark || winIcon.glide ? -1 : 0
+                            anchors.verticalCenterOffset: (winIcon.underMark && !winIcon.slotted) || winIcon.glide ? -1 : 0
                             width: winIcon.iconPx
                             height: winIcon.iconPx
                             opacity: winIcon.lift ? (winIcon.focused ? 1 : winIcon.hovered ? 0.9 : 0.5)
@@ -655,7 +661,8 @@ Item {
                         }
 
                         // tucked a pixel under the icon rather than pinned to
-                        // the chip's edge, so it needn't push the icon up. An
+                        // the chip's edge, so it needn't push the icon up
+                        // (Flat's taskbar slots have it on the screen edge). An
                         // app with more than one window gets a segment per
                         // window (up to four), its own windows' grey and its
                         // popouts' in the accent.
@@ -664,8 +671,10 @@ Item {
                             readonly property var segs: winIcon.modelData.windows.slice(0, 4)
                             readonly property bool split: segs.length > 1
                             visible: winIcon.underMark
-                            anchors.top: glyphBox.bottom
-                            anchors.topMargin: 1
+                            // placed by y alone: switching anchors.top off
+                            // leaves y where the anchor last put it
+                            y: !winIcon.slotted ? glyphBox.y + glyphBox.height + 1
+                                : Theme.barPosition === "bottom" ? winIcon.height - height : 0
                             anchors.horizontalCenter: glyphBox.horizontalCenter
                             spacing: 1
                             Repeater {
@@ -674,7 +683,8 @@ Item {
                                     required property var modelData
                                     height: Theme.indicatorWidth
                                     radius: height / 2
-                                    width: !pip.split ? (winIcon.focused ? glyphBox.width - 2 : Theme.barFs(6))
+                                    width: !pip.split ? (winIcon.focused && winIcon.slotted ? winIcon.width - winIcon.lead
+                                            : winIcon.focused || winIcon.slotted ? glyphBox.width - 2 : Theme.barFs(6))
                                         : modelData.popout ? Theme.barFs(winIcon.focused ? 6 : 4)
                                         : Theme.barFs(winIcon.focused ? 7 : 4)
                                     color: pip.split && modelData.popout ? Theme.accent
@@ -1130,7 +1140,8 @@ Item {
                     visible: trayIcon.hovered || trayIcon.dragged
                     anchors.centerIn: parent
                     width: parent.width
-                    height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight - 6
+                    height: grouped ? Theme.groupHeight - Theme.channelWidth * 2
+                        : Theme.moduleTaskbar ? Theme.moduleHeight : Theme.moduleHeight - 6
                     radius: grouped ? Theme.radius : Theme.radiusSmall
                     color: Theme.overlay
                     border.width: trayIcon.opened || trayIcon.dragged ? Theme.borderWidth : 0

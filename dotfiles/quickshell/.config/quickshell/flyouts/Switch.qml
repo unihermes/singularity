@@ -15,6 +15,8 @@
 //   bevel      a sunken checkbox with a tick
 //   tabbed     a two-way Off | On
 //   corners    a bracketed square knob
+//   flat       a pill outlined in the text colour, round knob; on, the
+//              accent with a white knob
 //
 // `interactive: false` for a switch inside a row that takes the click
 // itself (FlyoutAction), so the whole row is the target.
@@ -41,12 +43,13 @@ Item {
         : kind === "tabbed" ? twoWay.implicitWidth
         : kind === "capsule" && Theme.opt("labels") ? Theme.row(46)
         : kind === "solid" ? Theme.row(34)
+        : kind === "flat" ? Theme.row(32)
         : Theme.switchWidth
     implicitHeight: kind === "solid" ? Theme.row(20) : h
     opacity: enabled ? 1 : 0.5
 
     // --- tracks with a knob: double, solid, capsule, glass, corners
-    readonly property bool knobbed: ["double", "solid", "capsule", "glass", "corners"].indexOf(kind) !== -1
+    readonly property bool knobbed: ["double", "solid", "capsule", "glass", "corners", "flat"].indexOf(kind) !== -1
         && !(kind === "capsule" && Theme.opt("labels"))
 
     Rectangle {
@@ -63,11 +66,14 @@ Item {
             case "corners": return root.checked ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18) : "transparent"
             case "glass": return root.checked ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.6)
                 : Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
+            case "flat": return root.checked ? root.onFill : "transparent"
             default: return root.checked ? root.onFill : Theme.overlay
             }
         }
-        border.width: root.kind === "double" || root.kind === "glass" ? Theme.borderWidth : 0
+        border.width: root.kind === "double" || root.kind === "glass" ? Theme.borderWidth
+            : root.kind === "flat" && !root.checked ? root.flatLine : 0
         border.color: root.kind === "glass" ? Theme.stroke
+            : root.kind === "flat" ? (root.hovered ? Theme.textStrong : Theme.text)
             : root.checked ? Theme.accent : root.hovered ? Theme.strokeHover : Theme.stroke
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
@@ -86,10 +92,14 @@ Item {
         }
     }
 
+    // Flat's outline, the knob's gap inside it
+    readonly property int flatLine: Math.max(2, Theme.borderWidth * 2)
+
     Rectangle {
         id: knob
         visible: root.knobbed
-        readonly property int inset: root.kind === "solid" ? 2 : Math.max(2, Math.round(root.h / 5))
+        readonly property int inset: root.kind === "solid" ? 2
+            : root.kind === "flat" ? root.flatLine + 2 : Math.max(2, Math.round(root.h / 5))
         width: root.height - inset * 2
         height: width
         radius: root.kind === "double" ? Math.min(width / 2, Theme.radiusSmall)
@@ -100,6 +110,7 @@ Item {
             switch (root.kind) {
             case "double": case "corners": return root.checked ? Theme.accent : Theme.muted
             case "solid": return "#ffffff"
+            case "flat": return root.checked ? "#ffffff" : root.hovered ? Theme.textStrong : Theme.text
             default: return root.checked ? "#ffffff" : Theme.muted
             }
         }

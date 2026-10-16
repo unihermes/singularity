@@ -7,6 +7,7 @@
 
 import Quickshell
 import QtQuick
+import "../../services/Styles.js" as Styles
 import "../../services"
 import "../../flyouts"
 import ".."
@@ -28,7 +29,7 @@ SettingsField {
         checked: so.on
         onToggled: {
             if (so.key === "") Settings.setStyleOption(so.option.id, !so.on)
-            else if (so.option.value !== undefined) Settings.set(so.key, so.on ? "none" : so.option.value)
+            else if (so.option.value !== undefined) Settings.set(so.key, so.on ? Styles.offValue(so.option) : so.option.value)
             else Settings.set(so.key, !so.on)
         }
     }

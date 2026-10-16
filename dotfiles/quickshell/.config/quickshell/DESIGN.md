@@ -12,7 +12,7 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
 Channel, Double, Solid, Capsule, Glass, Bevel, Tabbed and Corners (settled
-2026-10-08 from two rounds of mockups). A style sets the frame,
+2026-10-08 from two rounds of mockups), and Flat (2026-10-16). A style sets the frame,
 bar modules, hover, level chips, focused window mark, flyout titles, heading
 prefix and where flyouts sit, all at once. Beside it are only dials that move
 everything together (Roundness, Bar shape, Density, See-through) and Finish
@@ -37,6 +37,7 @@ can state its own `styleOptions`.
 | Bevel | sunken checkbox, tick | groove + raised block thumb | radio buttons | raised button | whole row in the accent |
 | Tabbed | two-way Off \| On | ten notches | folder tabs | outlined chip | tick |
 | Corners | bracketed square knob | dashes + diamond | bracketed cells | corner marks, spaced caps | accent corners |
+| Flat | pill outlined in the text colour; on, accent with a white knob | thin line, upright rounded thumb | separate flat blocks, 2px apart | flat block, heavy outline on hover | tick |
 
 - **Bar chips:** Double outlines every module with an inner stroke 2px in,
   faint at rest (lit with `lit`); Solid, Capsule and Glass fill the open
@@ -44,6 +45,21 @@ can state its own `styleOptions`.
   an accent ring instead; Corners draws only corner marks (`CornerMarks.qml`).
 - **Panels:** Corners is accent corner marks over a faint hairline, glowing
   with `glow`.
+- **Flat** is the Windows 10 take, in the look's own colours: square, one
+  hairline round panels, no frames round the runs of rows inside them
+  (`Theme.sectionFramed`), sentence-case headings with no rule. Its bar
+  modules are `taskbar` slots: bare, the bar's full height, packed with no
+  gap, a fill on hover and while open, a 2px accent rule along the screen
+  edge's side of the open one; level chips fill the whole slot at 70%. The
+  open-windows strip gives each icon a wide slot, the focused one lit, its
+  pip on the screen edge and the slot's full width.
+- Flat's `taskbar` option rearranges the bar (`Settings.widgetLayout`):
+  nothing in the centre, the clock at the right end before Show Desktop,
+  the other centre modules ahead of the right's. Rearranging it in Bar
+  Widgets writes `taskbarLayout`, kept apart from `barLayout`, so turning
+  the option off (or leaving Flat) brings the usual arrangement back. Its
+  `barPosition` option puts the bar at the bottom (an option's `off` is
+  the value it takes when off).
 - Capsule's `one` joins islands into one floating pill; Glass's `blur` and
   `tint` change its frost; Bevel's `title` turns its title bars off and on.
 
@@ -51,7 +67,7 @@ Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.textOnAccent`) unless its row in the table says otherwise.
 Tabbed draws the open module as a real tab: its sides and top are stroked
 down into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
-Bevel and Corners keep every corner square whatever Roundness says (the
+Bevel, Corners and Flat keep every corner square whatever Roundness says (the
 style's `square`). The shell's layers blur what's behind them (a Hyprland layer rule), so
 Glass and see-through grounds stay readable. Level chips fill the whole chip
 in every style.

@@ -60,12 +60,13 @@ Item {
     //   solid      a sunken track with a raised accent pill
     //   capsule    separate pills          glass   a frosted strip
     //   bevel      radio buttons           tabbed  folder tabs
-    //   corners    bracketed cells
+    //   corners    bracketed cells       flat    separate flat blocks
     readonly property string kind: Theme.style
     // drawn as a row of separate choices rather than one strip
-    readonly property bool loose: ["capsule", "bevel", "corners"].indexOf(kind) !== -1
+    readonly property bool loose: ["capsule", "bevel", "corners", "flat"].indexOf(kind) !== -1
     readonly property int gap: kind === "bevel" ? Theme.spaceL
-        : kind === "capsule" || kind === "corners" ? Theme.spaceS : 0
+        : kind === "capsule" || kind === "corners" ? Theme.spaceS
+        : kind === "flat" ? Theme.spaceXs : 0
     readonly property int edge: loose || kind === "tabbed" ? 0
         : kind === "solid" || kind === "glass" ? Theme.spaceXs : Theme.borderWidth
 
@@ -146,6 +147,7 @@ Item {
                                 if (k === "corners") return Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16)
                                 return Theme.accent
                             }
+                            if (k === "flat") return seg.hot ? Theme.muted : Theme.overlay
                             if (seg.hot) return Theme.hoverFillSoft
                             return k === "capsule" ? Theme.overlay : "transparent"
                         }

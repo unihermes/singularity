@@ -11,6 +11,8 @@
 //   cornered marks at the corners only -- Corners
 //   grouped  bare inside its section's channel (shell.qml): a fill on hover,
 //            an accent ring while open, a gauge filling the whole chip
+//   taskbar  a bare slot the bar's height -- Flat: a fill on hover and
+//            while open, an accent rule on the screen edge's side when open
 //
 // This exists so the chrome has one definition. BarModule draws an
 // icon/label pair in it, and the open-window icons draw a whole row of
@@ -75,6 +77,7 @@ Item {
         readonly property bool solid: style === "filled" || style === "pill"
         readonly property bool grouped: style === "grouped"
         readonly property bool cornered: style === "cornered"
+        readonly property bool taskbar: style === "taskbar"
         // the gauge draws in the chip's interior
         readonly property bool track: root.gauge
         // filled with the accent while open (Solid, Capsule, Glass);
@@ -160,19 +163,10 @@ Item {
             thickness: Theme.borderWidth
         }
 
-        // Tabbed's accent edge option: the open tab's outer edge lit
-        Rectangle {
-            visible: Theme.style === "tabbed" && Theme.opt("lift") && root.active
-            y: Theme.barPosition === "bottom" ? parent.height - height : 0
-            width: parent.width
-            height: Math.max(2, Theme.borderWidth * 2)
-            color: Theme.accent
-        }
-
         // Flush inside the double border: the outer stroke sits at 0..1, the
         // inner one at 2..3, so 3 is the first clear pixel. Matching that
         // exactly is what makes the bar touch the border with no gap.
-        readonly property int barInset: grouped ? 0 : 3
+        readonly property int barInset: grouped || taskbar ? 0 : 3
 
         // The bar is the whole interior now, with the icon sitting on top of
         // it rather than beside it.
@@ -185,7 +179,7 @@ Item {
             // further in, so the curves stay concentric -- floored because
             // the radius is user-settable down to square
             radius: frame.style === "pill" ? height / 2 : frame.grouped ? frame.radius : Theme.radiusSmall
-            color: frame.grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+            color: frame.grouped || frame.taskbar ? (root.active || hover.hovered ? Theme.overlay : "transparent")
                 : frame.cornered ? "transparent" : Theme.meterTrack
 
 
@@ -199,7 +193,9 @@ Item {
                     ? 0
                     : Math.max(radius * 2, parent.width * Math.min(1, root.fillValue))
                 radius: parent.radius
-                color: root.fillColor
+                // softened on Flat's bare taskbar, where a full-strength
+                // fill would outweigh everything round it
+                color: frame.taskbar ? Qt.alpha(root.fillColor, 0.7) : root.fillColor
 
                 Behavior on width {
                     NumberAnimation { duration: Theme.dur(120); easing.type: Theme.ease }
@@ -207,6 +203,16 @@ Item {
                 Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
             }
+        }
+
+        // Tabbed's accent edge option, and Flat's open slot: the outer
+        // edge lit, over any gauge fill
+        Rectangle {
+            visible: (Theme.style === "tabbed" && Theme.opt("lift") || frame.taskbar) && root.active
+            y: Theme.barPosition === "bottom" ? parent.height - height : 0
+            width: parent.width
+            height: Math.max(2, Theme.borderWidth * 2)
+            color: Theme.accent
         }
 
         // the open module's accent ring, over any gauge fill: grouped
@@ -228,7 +234,7 @@ Item {
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter
-            x: frame.track && !frame.grouped ? root.padH : Math.round((parent.width - width) / 2)
+            x: frame.track && !frame.grouped && !frame.taskbar ? root.padH : Math.round((parent.width - width) / 2)
             spacing: root.spacing
         }
     }

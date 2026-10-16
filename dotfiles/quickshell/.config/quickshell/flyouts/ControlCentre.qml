@@ -282,6 +282,13 @@ FlyoutPanel {
         width: parent.width
         spacing: Theme.spaceM
 
+        // Flat's Taskbar layout keeps an arrangement of its own
+        FlyoutRow {
+            visible: Settings.taskbarLayoutOn
+            label: "Taskbar layout, kept apart from yours"
+            enabled: false
+        }
+
         BarWidgetList {
             meta: Settings.widgetMeta
         }
