@@ -183,13 +183,17 @@ Channel, Double, Solid, Glass and Flat. Each has three options of its own
 move everything together (Roundness, Bar shape, Density, See-through) and a
 few finishing switches.
 
-<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance's Style tab: a live preview and the Styles" width="720"></p>
+<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance: a live preview and the Styles" width="720"></p>
 
-Pick a look from **Settings → Appearance → Look**, the Control Centre, or a
-keybind (`qs ipc call look cycle`, `qs ipc call look set <name>`). The other
-tabs adjust it; a dot marks every setting that differs from the look, and the
-Look tab lists those changes with a way back for each. **Set as default**
-saves your setup as the point Reset returns to.
+**Settings → Appearance** adjusts everything in five tabs (Theme, Bar,
+Panels, Desktop, Apps), each under a preview of what it changes: the
+palette role by role, any accent, the headings, Density's dials, the bar's
+arrangement (drag modules between Left, Centre, Right and Hidden) and size,
+the windows' borders, corners and shadow, the wallpaper's fit, and separate
+animation speeds. A dot marks every setting that differs from the
+baseline, and the strip above the tabs counts and lists those changes with
+a way back for each. **Save as default** saves your setup as the point
+Reset returns to.
 
 The look lives in `quickshell/services/Looks.js`, Styles in
 `services/Styles.js`; `DESIGN.md` in the shell's folder is the design
