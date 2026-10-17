@@ -4,8 +4,8 @@
 // The Bar and Panels tabs' tile pictures: each draws one value of a
 // setting the way the shell draws it, small, in the theme's colours.
 // `kind` names the setting (workspaceStyle, windowStyle, clockStyle,
-// controlIcon, vizStyle, launcherLayout, powerStyle); `value` is the
-// tile's own value, from the Loader it sits in.
+// controlIcon, vizStyle, launcherLayout, powerStyle, windowAnim); `value`
+// is the tile's own value, from the Loader it sits in.
 
 import Quickshell
 import QtQuick
@@ -317,5 +317,44 @@ Item {
                 Rectangle { width: Theme.fs(40); height: Theme.fs(4); radius: 1; color: Theme.muted }
             }
         }
+    }
+
+    // --- window animation: a window opening, over and over while hovered ---
+    Item {
+        id: anim
+        visible: art.kind === "windowAnim"
+        anchors.fill: parent
+        readonly property bool playing: !!art.parent && art.parent.hovered === true && art.value !== "none"
+        property real t: 1
+
+        NumberAnimation on t {
+            running: anim.playing
+            loops: Animation.Infinite
+            from: 0; to: 1.4
+            duration: 1100
+            onRunningChanged: if (!running) anim.t = 1
+        }
+
+        Rectangle {
+            readonly property real k: Math.min(1, anim.t)
+            readonly property real e: 1 - Math.pow(1 - k, 3)
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: art.value === "rise" ? (1 - e) * Theme.fs(14)
+                : art.value === "drop" ? -(1 - e) * Theme.fs(14) : 0
+            anchors.horizontalCenterOffset: art.value === "slide" ? -(1 - e) * Theme.fs(24) : 0
+            width: Theme.fs(34)
+            height: Theme.fs(22)
+            radius: 3
+            color: Theme.overlay
+            border.width: 1
+            border.color: Theme.subtext
+            opacity: art.value === "slide" || art.value === "rise" || art.value === "drop" ? 1 : e
+            scale: art.value === "popin" ? 0.6 + 0.4 * e : art.value === "zoom" ? 0.3 + 0.7 * e : 1
+            transform: Scale {
+                origin.y: Theme.fs(22)
+                yScale: art.value === "fold" ? Math.max(0.05, anim.e) : 1
+            }
+        }
+        readonly property real e: 1 - Math.pow(1 - Math.min(1, t), 3)
     }
 }

@@ -27,10 +27,16 @@ do
     S.decodeJson = ok and decoder or function() return nil end
 end
 
--- Animation time from the bar's Appearance page: a percentage of each speed
--- in looks.lua (speed is a duration, so 50 is twice as quick), and 0 turns
--- animations off entirely.
-S.animFactor = math.max(0, math.min(100, tonumber(S.state("animations", "100")) or 100)) / 100
+-- Animation time from the bar's Appearance page, "<all> <windows>
+-- <workspaces>": percentages of each speed in looks.lua (speed is a
+-- duration, so 50 is twice as quick). All scales everything and 0 turns
+-- animations off entirely; the other two scale their own leaves on top.
+do
+    local all, win, ws = S.state("animations", ""):match("^(%d+)%s+(%d+)%s+(%d+)$")
+    S.animFactor       = math.min(100, tonumber(all) or 100) / 100
+    S.windowsFactor    = math.min(200, tonumber(win) or 100) / 100
+    S.workspacesFactor = math.min(200, tonumber(ws) or 100) / 100
+end
 -- Game Mode, the Control Centre's switch: "on" in its state file strips the
 -- desktop's effects -- animations here, and blur, shadows, gaps and rounding
 -- in overrides.lua, after the local settings, so it outranks them without

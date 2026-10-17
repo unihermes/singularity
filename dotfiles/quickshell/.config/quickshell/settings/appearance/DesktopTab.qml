@@ -240,9 +240,14 @@ SettingsTab {
         }
     }
 
-    SettingsField {
-        label: "Window animation"
-        hint: "Open, close, minimize, scratchpad"
-        Choice { key: "windowAnim" }
-    }
+    Stepper { label: "Window speed"; hint: "Open, close, move; lower is quicker"; key: "animWindows"; step: 25; suffix: "%" }
+
+    Stepper { label: "Workspace speed"; hint: "Switching, and the scratchpad"; key: "animWorkspaces"; step: 25; suffix: "%" }
+
+    Stepper { label: "Shell speed"; hint: "Flyouts, hovers and meters"; key: "animShell"; step: 25; suffix: "%" }
+
+    // each tile plays its animation while the pointer is on it
+    Tiles { key: "windowAnim"; label: "Window animation"; hint: "Open, close, minimize, scratchpad"; art: animArt; columns: 4; tileHeight: Theme.fs(64) }
+
+    Component { id: animArt; ModuleArt { kind: "windowAnim" } }
 }

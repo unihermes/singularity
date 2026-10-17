@@ -361,7 +361,7 @@ Singleton {
     // Animation time. Every duration goes through dur(); at 0 they're all
     // zero, which Qt treats as an instant jump. A look can also opt out of
     // motion entirely (its `motion` factor).
-    readonly property real animFactor: look.motion * Settings.animTime / 100
+    readonly property real animFactor: look.motion * Settings.animTime / 100 * Settings.animShell / 100
     function dur(ms) { return Math.round(ms * animFactor) }
     // named steps: colour and hover changes / things appearing / meters filling
     readonly property int durFast:   dur(110)

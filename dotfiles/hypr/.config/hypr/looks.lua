@@ -62,8 +62,10 @@ local function tabFill(fill, accent)
     return { colors = colors, angle = 270 }
 end
 
+-- `factor` is the Appearance page's own speed for the leaf's kind
 local function animation(t)
-    t.speed   = t.speed * S.animFactor
+    t.speed   = t.speed * S.animFactor * (t.factor or 1)
+    t.factor  = nil
     t.enabled = t.enabled and not S.animOff
     hl.animation(t)
 end
@@ -178,14 +180,15 @@ local windowSpeed, fadeSpeed = S.windowSpeed, S.fadeSpeed
 local windowStyle, windowsAnimate = S.windowStyle, S.windowsAnimate
 animation({ leaf = "global",     enabled = true, speed = 3, bezier = "singularity" })
 animation({ leaf = "border",     enabled = true, speed = 3, bezier = "singularity" })
-animation({ leaf = "windows",    enabled = true, speed = windowSpeed, bezier = "singularity", style = windowStyle })
-animation({ leaf = "windowsIn",  enabled = windowsAnimate, speed = windowSpeed, bezier = "singularity", style = windowStyle })
-animation({ leaf = "windowsOut", enabled = windowsAnimate, speed = 1.5, bezier = "singularity", style = windowStyle })
-animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, bezier = "singularity" })
-animation({ leaf = "fadeIn",     enabled = windowsAnimate, speed = fadeSpeed, bezier = "singularity" })
-animation({ leaf = "fadeOut",    enabled = windowsAnimate, speed = fadeSpeed, bezier = "singularity" })
-animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "singularity", style = "slidefade 12%" })
-animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, bezier = "singularity",
+local win, ws = S.windowsFactor, S.workspacesFactor
+animation({ leaf = "windows",    enabled = true, speed = windowSpeed, factor = win, bezier = "singularity", style = windowStyle })
+animation({ leaf = "windowsIn",  enabled = windowsAnimate, speed = windowSpeed, factor = win, bezier = "singularity", style = windowStyle })
+animation({ leaf = "windowsOut", enabled = windowsAnimate, speed = 1.5, factor = win, bezier = "singularity", style = windowStyle })
+animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, factor = win, bezier = "singularity" })
+animation({ leaf = "fadeIn",     enabled = windowsAnimate, speed = fadeSpeed, factor = win, bezier = "singularity" })
+animation({ leaf = "fadeOut",    enabled = windowsAnimate, speed = fadeSpeed, factor = win, bezier = "singularity" })
+animation({ leaf = "workspaces", enabled = true, speed = 2, factor = ws, bezier = "singularity", style = "slidefade 12%" })
+animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, factor = ws, bezier = "singularity",
             style = scratchStyle })
 
 -- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which

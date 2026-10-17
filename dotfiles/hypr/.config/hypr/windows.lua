@@ -8,7 +8,7 @@
 -- `hyprctl eval` (singularityShowDesktop, markLaunch).
 
 local S = require("shared")
-local animOff, animFactor = S.animOff, S.animFactor
+local animOff, animFactor = S.animOff, S.animFactor * S.windowsFactor
 local windowAnim, windowSlides, windowShrink = S.windowAnim, S.windowSlides, S.windowShrink
 local windowSpeed, fadeSpeed = S.windowSpeed, S.fadeSpeed
 

@@ -1033,7 +1033,7 @@ Scope {
     // Animation time. At startup this and the files below are only written,
     // not reloaded: Hyprland read the same values when it started.
     function writeHyprAnimations(reload) {
-        var time = String(Settings.animTime)
+        var time = Settings.animTime + " " + Settings.animWindows + " " + Settings.animWorkspaces
         root.hyprWrite("animations", time + "\n", reload)
     }
 
@@ -1218,6 +1218,8 @@ Scope {
     Connections {
         target: Settings
         function onAnimTimeChanged() { animDebounce.restart() }
+        function onAnimWindowsChanged() { animDebounce.restart() }
+        function onAnimWorkspacesChanged() { animDebounce.restart() }
         function onSystemFontFamilyChanged() { debounce.restart() }
         function onCursorThemeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onCursorSizeChanged() { cursorDebounce.restart(); debounce.restart() }

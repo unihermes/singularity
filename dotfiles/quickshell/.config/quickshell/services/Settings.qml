@@ -42,6 +42,11 @@ Singleton {
     // how long animations take, as a percentage of their normal length:
     // 100 normal, 50 fast, 0 off
     readonly property alias animTime:    adapter.animTime
+    // and on top of it, the same for Hyprland's windows, its workspaces,
+    // and the shell's own motion (flyouts, hovers, meters)
+    readonly property alias animWindows: adapter.animWindows
+    readonly property alias animWorkspaces: adapter.animWorkspaces
+    readonly property alias animShell:   adapter.animShell
     // "grayscale" or "wallpaper"
     readonly property alias colourMode:  adapter.colourMode
     // a matugen scheme type; only read in wallpaper mode
@@ -643,6 +648,9 @@ Singleton {
         cursorSize:   { min: 16, max: 48 },
         wallpaperInterval: { min: 0, max: 1440 },
         animTime:     { min: 0,  max: 100 },
+        animWindows:  { min: 25, max: 200 },
+        animWorkspaces: { min: 25, max: 200 },
+        animShell:    { min: 25, max: 200 },
     })
 
     // The named points on the Animations slider, as animTime values.
@@ -657,6 +665,9 @@ Singleton {
             look: Looks.fallback,
             fontSize: 16,
             animTime: 100,
+            animWindows: 100,
+            animWorkspaces: 100,
+            animShell: 100,
             colourMode: "grayscale",
             colourScheme: "scheme-tonal-spot",
             colourVariant: "dark",
@@ -921,6 +932,9 @@ Singleton {
             property int fontSize: 16
 
             property int animTime: 100
+            property int animWindows: 100
+            property int animWorkspaces: 100
+            property int animShell: 100
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
             property string colourVariant: "dark"
