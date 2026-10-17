@@ -63,6 +63,10 @@
 //
 // The content keys in `settings`:
 //     barPosition  "top" or "bottom"
+//     flyoutWidth  bar flyouts' width, in percent of their own
+//     launcherRows results the launcher shows before it scrolls (four
+//                  more when it's full screen)
+//     notifWidth   notification popups' width, in px at the base font size
 //     workspaceStyle "pills"  the current workspace a long pill, others stubs
 //                  "dots"     one dot each, the current one lit
 //                  "lines"    one short rule each, the current one lit
@@ -201,6 +205,9 @@ var settingsBase = {
     barHeight: 32,
     barIconSize: 17,
     modulePad: 6,
+    flyoutWidth: 100,
+    launcherRows: 8,
+    notifWidth: 380,
     barStyle: "full",
     barPosition: "top",
     seeThrough: 100,

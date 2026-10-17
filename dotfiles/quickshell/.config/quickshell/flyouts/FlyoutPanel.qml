@@ -215,7 +215,7 @@ OverlayWindow {
             // its own width, except within a fillet and corner of its group's:
             // that close, a jog would be too short to read as a step, so it
             // takes the group's width and both sides run straight
-            readonly property real ownWidth: Theme.fit(root.menuWidth) + (root.padX - Theme.panelPad) * 2
+            readonly property real ownWidth: Theme.fit(root.menuWidth * Settings.flyoutWidth / 100) + (root.padX - Theme.panelPad) * 2
             width: root.grown && root.section !== "centre"
                     && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
                 ? root.group.x1 - root.group.x0 : ownWidth

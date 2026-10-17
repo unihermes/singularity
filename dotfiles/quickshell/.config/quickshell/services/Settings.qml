@@ -76,6 +76,10 @@ Singleton {
     readonly property alias barHeight:   adapter.barHeight
     readonly property alias barIconSize: adapter.barIconSize
     readonly property alias modulePad:   adapter.modulePad
+    // bar flyouts' width (percent), the launcher's rows, the popups' width
+    readonly property alias flyoutWidth: adapter.flyoutWidth
+    readonly property alias launcherRows: adapter.launcherRows
+    readonly property alias notifWidth:  adapter.notifWidth
     readonly property string density: {
         for (var k in Looks.densities) {
             var d = Looks.densities[k]
@@ -598,6 +602,9 @@ Singleton {
         barHeight: { min: 22, max: 52 },
         barIconSize: { min: 10, max: 28 },
         modulePad: { min: 0, max: 16 },
+        flyoutWidth: { min: 80, max: 150 },
+        launcherRows: { min: 3, max: 16 },
+        notifWidth: { min: 280, max: 560 },
         edgeGap:   { min: 0,  max: 30 },
         focusedOpacity:   { min: 50, max: 100 },
         unfocusedOpacity: { min: 50, max: 100 },
@@ -902,6 +909,9 @@ Singleton {
             property int barHeight: 32
             property int barIconSize: 17
             property int modulePad: 6
+            property int flyoutWidth: 100
+            property int launcherRows: 8
+            property int notifWidth: 380
             property string fontFamily: "UbuntuMono Nerd Font"
             property string systemFontFamily: "Ubuntu Nerd Font"
             property string cursorTheme: "Bibata-Modern-Classic"

@@ -144,7 +144,7 @@ ClippingRectangle {
             readonly property int padY: Theme.channelWidth * 2 + 3 + Theme.spaceS
             anchors.right: parent.right
             y: lp.atBottom ? 0 : Theme.barHeight + Theme.spaceS
-            width: Theme.fit(260) + padX * 2
+            width: Theme.fit(260 * Settings.flyoutWidth / 100) + padX * 2
             height: flyCol.implicitHeight + padY * 2
             ground: Theme.surface
 

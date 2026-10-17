@@ -87,7 +87,7 @@ OverlayWindow {
     readonly property bool line: Theme.launcherLayout === "line"
     readonly property bool gridOn: Theme.launcherLayout === "grid" && mode === "apps"
     readonly property bool details: Theme.launcherDetails && !line
-    readonly property int visibleRows: full ? 12 : 8
+    readonly property int visibleRows: Settings.launcherRows + (full ? 4 : 0)
     // whichever view is showing: the keys and the clicks drive this one
     readonly property var view: gridOn ? grid : list
 

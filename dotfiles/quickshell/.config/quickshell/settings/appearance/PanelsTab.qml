@@ -20,16 +20,14 @@ SettingsTab {
         Choice { key: "flyoutAnim" }
     }
 
+    Stepper { label: "Flyout width"; hint: "The bar's flyouts, for long names"; key: "flyoutWidth"; step: 10; suffix: "%" }
+
     Stepper { label: "Overlay dimming"; hint: "Behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "LAUNCHER" }
 
-    SettingsField {
-        label: "Launcher layout"
-        hint: "Rows, an icon grid, or one line"
-        Choices { key: "launcherLayout" }
-    }
+    Tiles { key: "launcherLayout"; label: "Launcher layout"; hint: "Rows, an icon grid, or one line"; art: launcherArt; columns: 3; tileHeight: Theme.fs(64) }
 
     SettingsField {
         label: "Launcher position"
@@ -50,6 +48,8 @@ SettingsTab {
         }
     }
 
+    Stepper { label: "Rows shown"; hint: "Results before it scrolls"; key: "launcherRows" }
+
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "NOTIFICATIONS" }
 
@@ -58,6 +58,8 @@ SettingsTab {
         hint: "How much each popup shows"
         Choices { key: "notifStyle" }
     }
+
+    Stepper { label: "Popup width"; hint: "Each notification popup"; key: "notifWidth"; step: 20; suffix: "px" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "OVERLAYS" }
@@ -87,11 +89,7 @@ SettingsTab {
         Choices { key: "overviewBackdrop" }
     }
 
-    SettingsField {
-        label: "Power menu"
-        hint: "How the power menu lays out"
-        Choices { key: "powerStyle" }
-    }
+    Tiles { key: "powerStyle"; label: "Power menu"; hint: "How the power menu lays out"; art: powerArt; columns: 3; tileHeight: Theme.fs(64) }
 
     SettingsField {
         label: "Level popup"
@@ -100,4 +98,6 @@ SettingsTab {
         Choices { key: "levelStyle"; live: !Settings.islandActive }
     }
 
+    Component { id: launcherArt; ModuleArt { kind: "launcherLayout" } }
+    Component { id: powerArt; ModuleArt { kind: "powerStyle" } }
 }

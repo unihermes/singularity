@@ -1,10 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/ModuleArt.qml
 //
-// The Bar tab's tile pictures: each draws one value of a module's style
-// the way the bar draws it, small, in the theme's colours. `kind` names
-// the setting (workspaceStyle, windowStyle, clockStyle, controlIcon,
-// vizStyle); `value` is the tile's own value, from the Loader it sits in.
+// The Bar and Panels tabs' tile pictures: each draws one value of a
+// setting the way the shell draws it, small, in the theme's colours.
+// `kind` names the setting (workspaceStyle, windowStyle, clockStyle,
+// controlIcon, vizStyle, launcherLayout, powerStyle); `value` is the
+// tile's own value, from the Loader it sits in.
 
 import Quickshell
 import QtQuick
@@ -230,6 +231,90 @@ Item {
                     height: 2
                     color: Theme.meterFill
                 }
+            }
+        }
+    }
+
+    // --- the launcher: a field, then rows, a grid of icons, or one line ---
+    Column {
+        visible: art.kind === "launcherLayout"
+        anchors.centerIn: parent
+        spacing: 3
+        Rectangle { width: Theme.fs(60); height: Theme.fs(6); radius: 2; color: Theme.base; border.width: 1; border.color: Theme.stroke }
+        Column {
+            visible: art.value === "list"
+            spacing: 2
+            Repeater {
+                model: 3
+                Rectangle {
+                    required property int index
+                    width: Theme.fs(60)
+                    height: Theme.fs(4)
+                    radius: 1
+                    color: index === 0 ? Theme.accent : Theme.muted
+                }
+            }
+        }
+        Grid {
+            visible: art.value === "grid"
+            columns: 4
+            spacing: 3
+            Repeater {
+                model: 8
+                Rectangle {
+                    required property int index
+                    width: Theme.fs(8)
+                    height: width
+                    radius: 2
+                    color: index === 0 ? Theme.accent : Theme.muted
+                }
+            }
+        }
+        Row {
+            visible: art.value === "line"
+            spacing: 3
+            Repeater {
+                model: 3
+                Rectangle {
+                    required property int index
+                    width: Theme.fs(18)
+                    height: Theme.fs(5)
+                    radius: 2
+                    color: index === 0 ? Theme.accent : Theme.muted
+                }
+            }
+        }
+    }
+
+    // --- the power menu: a row of tiles, a list, or full screen ---
+    Rectangle {
+        visible: art.kind === "powerStyle"
+        anchors.centerIn: parent
+        width: Theme.fs(70)
+        height: Theme.fs(28)
+        radius: 3
+        color: art.value === "full" ? Qt.rgba(0, 0, 0, 0.6) : "transparent"
+        Row {
+            visible: art.value !== "list"
+            anchors.centerIn: parent
+            spacing: 3
+            Repeater {
+                model: art.value === "full" ? 3 : 4
+                Rectangle {
+                    width: art.value === "full" ? Theme.fs(13) : Theme.fs(10)
+                    height: width
+                    radius: 2
+                    color: art.value === "full" ? Theme.subtext : Theme.muted
+                }
+            }
+        }
+        Column {
+            visible: art.value === "list"
+            anchors.centerIn: parent
+            spacing: 2
+            Repeater {
+                model: 4
+                Rectangle { width: Theme.fs(40); height: Theme.fs(4); radius: 1; color: Theme.muted }
             }
         }
     }

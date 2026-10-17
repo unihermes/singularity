@@ -42,7 +42,7 @@ OverlayWindow {
 
     Column {
         id: stack
-        width: Theme.fit(380)
+        width: Theme.fit(Settings.notifWidth)
         spacing: Theme.spaceM
         x: Settings.notifPositionX === "left" ? root.gap
             : Settings.notifPositionX === "center" ? (root.width - width) / 2
