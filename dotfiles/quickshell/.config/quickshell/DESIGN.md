@@ -13,14 +13,17 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
 Channel, Double, Solid, Glass (settled 2026-10-08 from two rounds of
 mockups) and Flat (2026-10-16). A style sets the frame,
-bar modules, hover, level chips, focused window mark, flyout titles, heading
-prefix and where flyouts sit, all at once. Beside it are only dials that move
-everything together (Roundness, Bar shape, Density, See-through) and Finish
-switches that are safe with any style (separators, shadows, shaded grounds,
-heavy lines, heading caps and rule).
+bar modules, hover, level chips, focused window mark and where flyouts sit,
+all at once, and starts the Finish switches and the heading mark off its
+own way. Beside it are dials that move everything together (Roundness, Bar
+shape, Density's Spacing and Row height, See-through), Finish switches that
+are safe with any style (separators, shadows, shaded grounds, heavy lines),
+and sizes and colours that don't touch a frame: the palette's roles, the
+status colours, the headings, the bar's height, icons and padding, and the
+windows' borders, corners and shadow.
 
 **Each style has three options of its own** (`options` in Styles.js), shown
-first under Finish on the Style tab. An option either stands for one of the
+first under Finish on the Theme tab. An option either stands for one of the
 shared Finish settings (`key`), or is an id in `Settings.styleOptions`, read
 with `Theme.opt(id)`. Picking a style sets them all (`Styles.finish`); a look
 can state its own `styleOptions`.
@@ -279,16 +282,33 @@ Settings') are laid out the same way.
 - **Hints:** one line, eliding if needed. Write them short, at most about 42
   characters ("Frames, chips and dividers"), with no lists of every choice.
   The label column is wider (`fit(320)`).
-- **Live preview (Appearance):** pinned above the rows on the Colours, Style,
-  Text, Bar and Panels tabs. It shows a scaled-down bar and flyout built
-  from the real components (`ModuleFrame`, `PanelFrame`, `FlyoutHeading`,
-  `Slider`, …) over the wallpaper, so it follows every setting and can't
-  drift from the shell. It's only built while one of those tabs shows.
+- **Appearance's tabs** (settled 2026-10-16, picks 1B…20A): Theme (style,
+  shape, finish, palette, accent, status, space, text, headings), Bar
+  (layout zones, the bar's size, a section per module with drawn tiles),
+  Panels (flyouts, launcher, notifications, overlays), Desktop (wallpaper,
+  windows in Gaps · Borders · Corners · Opacity · Dim and blur · Shadow and
+  tabs, motion) and Apps. Above the tabs, the changes strip (`ChangesBar`):
+  "N changed from …", Review (the list in place, with Undo all and Factory
+  reset), Save as default, Reset. A changed field's ● names the value it
+  puts back when hovered.
+- **Live preview (Appearance):** pinned above the rows on every tab, showing
+  what that tab changes (`LivePreview.kind`): the bar and a flyout (Theme,
+  Apps), the whole bar a little larger (Bar), the launcher in its layout
+  (Panels), two windows with their borders, corners, opacity and dimming
+  (Desktop). Built from the real components (`ModuleFrame`, `PanelFrame`,
+  `FlyoutHeading`, `Slider`, …) over the wallpaper, so it follows every
+  setting and can't drift from the shell.
+- **Bar layout on the Bar tab** (`BarZones`): Left, Centre and Right as
+  zones of module chips and a Hidden zone under them; a dragged chip is a
+  ghost following the pointer, an accent marker shows where it lands, and
+  the drop writes the layout and visibility like Bar Widgets.
 - **Lock Screen:** a live preview of the lock screen is pinned over the
   rows (`pinned`), with a Lock now chip on its corner, so Background and
   Clock place are plain segments. Under the clock's hint is the line as it
   will read. The lid is one row: [Suspend | Screen off] after [N min].
-- **Visual pickers:** a choice judged by eye (Style, Density) is a grid of tiles
+- **Visual pickers:** a choice judged by eye (Style, Workspaces, Open
+  windows, Clock, Control Centre icon, Visualizer, Launcher layout, Power
+  menu, Window animation; `ModuleArt` draws the pictures) is a grid of tiles
   (`SettingsTiles`), four across, or three when each tile is a small
   screen. Each tile draws what its value does; the current one has the lit
   groove. Numbers stay steppers, and on/off stays a switch.
@@ -451,8 +471,8 @@ Settings') are laid out the same way.
   off), and each step a switch: off comments its block out of
   hypridle.conf with `#~ `. Steps that differ only by power source carry a
   battery or plug mark (`SettingsField.mark`).
-- **No look summary card:** the Look tab's Changes list alone shows
-  what's changed.
+- **No look card:** Classic is the only look; the changes strip alone
+  shows what's changed.
 - **Changes are counted from the saved default** when one was saved with
   the look in use (`Settings.lookBaseline`), so Set as default empties the
   list. Otherwise they're counted from the look as designed. Undo, Undo
