@@ -47,12 +47,11 @@ FlyoutPanel {
     }
 
     // "month", "today" or "timer"
-    property string tab: "today"
-    readonly property string firstTab: Calendar.configured ? "today" : "month"
+    property string tab: "month"
 
-    // reset to this month, today and the first tab every time it opens, so
+    // reset to this month, today and the Month tab every time it opens, so
     // it never comes back up three months deep from last time
-    onOpenChanged: if (open) { monthOffset = 0; picked = null; tab = firstTab }
+    onOpenChanged: if (open) { monthOffset = 0; picked = null; tab = "month" }
 
     // wheel anywhere over the box pages; one step per notch, and touchpads
     // accumulate so a flick doesn't fly through a year
