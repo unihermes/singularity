@@ -180,7 +180,8 @@ The other seven are ports of well-known editor themes, each with its own
 Style, Roundness and font: **Arch** (the logo's blue, Double), **Nord**
 (Solid), **Dracula** (Glass), **Tokyo Night** (Channel), **Catppuccin
 Mocha** (Solid on a floating bar), **One Dark** (Double) and **Kanagawa**
-(Channel). Step through them from the Control Centre's Look card.
+(Channel). Pick one at the top of Appearance › Theme, or step through them from the
+Control Centre's Look card.
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
 meters, section frames, the heading mark, where flyouts sit, and its own

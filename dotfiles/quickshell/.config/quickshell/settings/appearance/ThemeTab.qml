@@ -8,6 +8,7 @@
 import Quickshell
 import QtQuick
 import "../../services/Styles.js" as Styles
+import "../../services/Looks.js" as Looks
 import "../../services"
 import "../../flyouts"
 import ".."
@@ -16,6 +17,14 @@ SettingsTab {
     id: styleTab
     tabId: "theme"
 
+    FlyoutHeading { text: "LOOK" }
+
+    Tiles {
+        key: "look"; label: "Look"; art: lookArt; columns: 4
+        hint: Looks.looks[Settings.look] ? Looks.looks[Settings.look].description : ""
+    }
+
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "STYLE" }
 
     Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 5 }
@@ -446,6 +455,41 @@ SettingsTab {
         label: "Heading size"
         hint: "Against body text"
         Choices { key: "headingSize" }
+    }
+
+    // A look in its own colours: the bar along the top, a line of text and
+    // a hint, and its accent as a pill
+    Component {
+        id: lookArt
+        Rectangle {
+            id: la
+            readonly property var look: Looks.looks[parent ? parent.value : ""] || Looks.looks[Looks.fallback]
+            readonly property var p: look.palette
+            readonly property color mark: look.accent || p.bright
+            width: Theme.fs(64)
+            height: Theme.fs(34)
+            radius: Math.min(Theme.radius, 5)
+            color: p.panel
+            border.color: p.border
+            clip: true
+
+            Rectangle {
+                width: parent.width; height: Theme.fs(7)
+                color: p.bar
+                Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: p.border }
+            }
+            Column {
+                x: Theme.fs(6); y: Theme.fs(12)
+                spacing: Theme.fs(4)
+                Rectangle { width: Theme.fs(30); height: Theme.fs(3); radius: height / 2; color: la.p.text }
+                Rectangle { width: Theme.fs(20); height: Theme.fs(3); radius: height / 2; color: la.p.subtext }
+            }
+            Rectangle {
+                anchors { right: parent.right; bottom: parent.bottom; margins: Theme.fs(5) }
+                width: Theme.fs(14); height: Theme.fs(7); radius: height / 2
+                color: la.mark
+            }
+        }
     }
 
     // Two bar chips, the right one open, as each style draws them
