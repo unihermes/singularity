@@ -116,7 +116,7 @@ Item {
                         : parent.current ? 22 : (parent.occupied ? 11 : 7)
                     // fully rounded: half the height makes a pill
                     // at any width, and a circle at the stub size
-                    radius: blocks ? Math.min(2, Theme.radiusSmall) : height / 2
+                    radius: blocks ? Math.min(2, Theme.radiusSmall) : Theme.pill(height)
                     color: parent.current ? Theme.accent
                         : blocks ? (parent.occupied ? Theme.subtext : "transparent")
                         : (parent.occupied ? Theme.subtext : Theme.muted)
@@ -178,7 +178,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: parent.width
                         height: Theme.indicatorWidth
-                        radius: height / 2
+                        radius: Theme.pill(height)
                         color: Theme.accent
                     }
                 }
@@ -491,7 +491,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: parent.width - Theme.spaceS * 2
                                 height: Theme.indicatorWidth
-                                radius: height / 2
+                                radius: Theme.pill(height)
                                 color: Theme.accent
                             }
                         }
@@ -505,7 +505,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width - winIcon.lead
                             height: winIcon.indexed ? Theme.moduleHeight - 8 : Theme.moduleHeight - 6
-                            radius: winIcon.spot ? height / 2 : Theme.radiusSmall
+                            radius: winIcon.spot ? Theme.pill(height) : Theme.radiusSmall
                             color: winIcon.focused
                                 ? (winIcon.indexed ? (Theme.hasAccent ? Theme.accent : Theme.selectedFill)
                                     : Qt.alpha(Theme.accent, 0.22))
@@ -668,7 +668,7 @@ Item {
                                 Rectangle {
                                     required property var modelData
                                     height: Theme.indicatorWidth
-                                    radius: height / 2
+                                    radius: Theme.pill(height)
                                     width: !pip.split ? (winIcon.focused && winIcon.slotted ? winIcon.width - winIcon.lead
                                             : winIcon.focused || winIcon.slotted ? glyphBox.width - 2 : Theme.barFs(6))
                                         : modelData.popout ? Theme.barFs(winIcon.focused ? 6 : 4)
@@ -692,7 +692,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             height: Theme.barFs(6)
                             width: winIcon.focused ? Theme.barFs(14) : height
-                            radius: height / 2
+                            radius: Theme.pill(height)
                             color: winIcon.focused ? Theme.accent
                                 : winIcon.hovered ? Theme.subtext : Theme.muted
                             Behavior on width {
@@ -775,7 +775,7 @@ Item {
                 y: strip.markY - Math.floor((Theme.indicatorWidth - 1) / 2)
                 width: target ? target.iconPx : 0
                 height: Theme.indicatorWidth
-                radius: height / 2
+                radius: Theme.pill(height)
                 color: Theme.accent
                 Behavior on x {
                     enabled: slider.visible
@@ -1279,7 +1279,7 @@ Item {
                     anchors.verticalCenter: vizFrame.style === "mirror" ? parent.verticalCenter : undefined
                     anchors.bottom: vizFrame.style === "rise" ? parent.bottom : undefined
                     width: vizFrame.bandW
-                    radius: vizFrame.style === "rise" ? Math.min(1, Theme.radiusSmall) : vizFrame.bandW / 2
+                    radius: vizFrame.style === "rise" ? Math.min(1, Theme.radiusSmall) : Theme.pill(vizFrame.bandW)
                     height: Math.max(3, parent.height * band.v)
                     color: Theme.meterFill
                 }
@@ -1296,7 +1296,7 @@ Item {
                             required property int index
                             width: vizFrame.bandW
                             height: vizFrame.bandW
-                            radius: width / 2
+                            radius: Theme.pill(width)
                             color: Theme.meterFill
                             // index 0 is the top dot; the bottom one is always lit
                             opacity: band.v * 4 >= 3 - index || index === 3 ? 1 : 0.18
@@ -1456,7 +1456,7 @@ Item {
             Rectangle {
                 width: Theme.sp(3)
                 height: Theme.iconSize - 2
-                radius: width / 2
+                radius: Theme.pill(width)
                 color: desktopBtn.shown ? Theme.accent
                     : desktopMouse.containsMouse ? Theme.text : Theme.muted
             }

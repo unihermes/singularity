@@ -123,7 +123,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.indicatorWidth
                     height: parent.height - 6
-                    radius: width / 2
+                    radius: Theme.pill(width)
                     color: Theme.accent
                 }
 

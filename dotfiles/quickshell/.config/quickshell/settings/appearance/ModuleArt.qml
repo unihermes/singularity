@@ -48,7 +48,7 @@ Item {
                         width: art.value === "pills" ? (ws.cur ? Theme.fs(16) : Theme.fs(6))
                             : art.value === "lines" ? Theme.fs(9) : art.value === "blocks" ? Theme.fs(9) : Theme.fs(7)
                         height: art.value === "lines" ? 2 : art.value === "blocks" ? Theme.fs(9) : art.value === "pills" ? Theme.fs(6) : Theme.fs(7)
-                        radius: art.value === "blocks" || art.value === "lines" ? 1 : height / 2
+                        radius: art.value === "blocks" || art.value === "lines" ? Math.min(1, Theme.radius) : Theme.pill(height)
                         color: art.value === "blocks" && !ws.cur && ws.index !== 3 ? "transparent" : ws.ink
                         border.width: art.value === "blocks" ? 1 : 0
                         border.color: Theme.muted
@@ -107,7 +107,7 @@ Item {
                     anchors.fill: parent
                     visible: wn.foc && ["inset", "segmented", "tabs", "index", "spotlight"].indexOf(art.value) !== -1
                         || (!wn.foc && art.value === "segmented")
-                    radius: art.value === "spotlight" ? height / 2 : Theme.radiusSmall
+                    radius: art.value === "spotlight" ? Theme.pill(height) : Theme.radiusSmall
                     color: art.value === "index" && wn.foc ? Theme.accent
                         : art.value === "inset" ? Theme.base
                         : wn.foc ? Theme.overlay : "transparent"
@@ -132,7 +132,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: wn.foc ? Theme.fs(12) : Theme.fs(5)
                         height: Theme.fs(5)
-                        radius: height / 2
+                        radius: Theme.pill(height)
                         color: wn.foc ? Theme.accent : Theme.muted
                     }
                     Text {
@@ -212,7 +212,7 @@ Item {
                     anchors.bottom: art.value === "rise" ? parent.bottom : undefined
                     width: parent.width
                     height: parent.height * band.modelData
-                    radius: width / 2
+                    radius: Theme.pill(width)
                     color: Theme.meterFill
                 }
                 Column {
@@ -221,7 +221,7 @@ Item {
                     spacing: 2
                     Repeater {
                         model: Math.max(1, Math.round(band.modelData * 4))
-                        Rectangle { width: Theme.fs(4); height: width; radius: width / 2; color: Theme.meterFill }
+                        Rectangle { width: Theme.fs(4); height: width; radius: Theme.pill(width); color: Theme.meterFill }
                     }
                 }
                 Rectangle {

@@ -96,7 +96,7 @@ Item {
                     parent.height / 2 - Theme.iconSize / 2 - height / 2 + 1)
                 height: Math.round(Theme.barFs(9) * 1.3)
                 width: Math.max(height, badgeText.implicitWidth + 4)
-                radius: height / 2
+                radius: Theme.pill(height)
                 color: Theme.accent
                 border.width: 1
                 border.color: Theme.bar

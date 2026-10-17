@@ -50,7 +50,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.fs(8)
                 height: width
-                radius: width / 2
+                radius: Theme.pill(width)
                 color: Theme.accent
             }
 

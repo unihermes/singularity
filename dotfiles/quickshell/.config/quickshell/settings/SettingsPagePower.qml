@@ -426,7 +426,7 @@ SettingsPage {
                     anchors.centerIn: parent
                     width: Theme.indicatorWidth * 3
                     height: parent.height
-                    radius: width / 2
+                    radius: Theme.pill(width)
                     color: Theme.accent
                     opacity: parent.pressed || parent.containsMouse ? 1 : 0
                 }
@@ -549,7 +549,7 @@ SettingsPage {
                     y: track.y - Theme.spaceM - height / 2
                     width: Theme.spaceS * 2
                     height: width
-                    radius: width / 2
+                    radius: Theme.pill(width)
                     color: modelData.on ? Theme.accent : Theme.muted
                 }
                 Text {

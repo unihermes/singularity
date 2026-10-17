@@ -47,7 +47,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.fs(8)
         height: width
-        radius: width / 2
+        radius: Theme.pill(width)
         color: root.problem ? root.tone : "transparent"
         border.width: Theme.borderWidth
         border.color: root.tone

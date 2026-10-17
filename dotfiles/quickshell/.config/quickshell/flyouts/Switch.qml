@@ -50,7 +50,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         height: parent.height
-        radius: root.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : height / 2
+        radius: root.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : Theme.pill(height)
         color: {
             switch (root.kind) {
             case "double": return "transparent"
@@ -87,7 +87,7 @@ Item {
             : root.kind === "flat" ? root.flatLine + 2 : Math.max(2, Math.round(root.h / 5))
         width: root.height - inset * 2
         height: width
-        radius: root.kind === "double" ? Math.min(width / 2, Theme.radiusSmall) : width / 2
+        radius: root.kind === "double" ? Math.min(width / 2, Theme.radiusSmall) : Theme.pill(width)
         anchors.verticalCenter: parent.verticalCenter
         x: root.checked ? root.width - width - inset : inset
         color: {

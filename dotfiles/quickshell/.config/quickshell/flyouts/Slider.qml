@@ -98,7 +98,7 @@ Item {
             y: Math.round((parent.height - height) / 2)
             width: parent.width
             height: Math.round(track.height * (track.kind === "double" ? 0.75 : 0.6))
-            radius: track.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : height / 2
+            radius: track.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : Theme.pill(height)
             color: track.kind === "double" ? "transparent" : Theme.meterTrack
             border.width: track.kind === "double" ? Theme.borderWidth : 0
             border.color: track.hot ? Theme.strokeHover : Theme.stroke
@@ -146,13 +146,13 @@ Item {
             RectangularShadow {
                 visible: track.kind === "glass" && Theme.glow
                 anchors.fill: parent
-                radius: width / 2
+                radius: Theme.pill(width)
                 blur: Theme.sp(10)
                 color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7)
             }
             Rectangle {
                 anchors.fill: parent
-                radius: width / 2
+                radius: Theme.pill(width)
                 color: track.kind === "flat" && track.hot ? Theme.textStrong : root.fillColor
                 border.width: track.kind === "glass" ? 2 : 0
                 border.color: Theme.isLight ? Qt.rgba(1, 1, 1, 0.9) : Qt.rgba(1, 1, 1, 0.3)

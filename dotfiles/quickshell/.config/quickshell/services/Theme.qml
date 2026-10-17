@@ -225,6 +225,9 @@ Singleton {
     readonly property int radiusInner: Math.max(0, radius - 2)
     // small controls inside a row: stepper buttons, drag handles
     readonly property int radiusSmall: Math.max(0, radius - 3)
+    // a pill, dot or capsule `size` px across its short side: fully round
+    // only as far as Roundness goes, so square at 0
+    function pill(size) { return Math.min(size / 2, radius) }
     // "double" draws a second stroke inset inside panels and bar modules.
     // "single" is the outer stroke alone. "none" draws no stroke at all
     // -- the ground colour alone marks the edge.

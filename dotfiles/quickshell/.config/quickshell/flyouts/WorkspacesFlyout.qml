@@ -81,7 +81,7 @@ FlyoutPanel {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 7
                     width: group.current ? 22 : 11
-                    radius: height / 2
+                    radius: Theme.pill(height)
                     color: group.current ? Theme.accent
                         : headMouse.containsMouse ? Theme.text : Theme.subtext
                     Behavior on width { NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease } }
@@ -179,7 +179,7 @@ FlyoutPanel {
                         anchors.topMargin: 1
                         anchors.horizontalCenter: glyphBox.horizontalCenter
                         height: Theme.indicatorWidth
-                        radius: height / 2
+                        radius: Theme.pill(height)
                         width: row.focused ? glyphBox.width - 2 : Theme.fs(6)
                         color: row.focused ? Theme.accent
                             : rowMouse.containsMouse ? Theme.subtext : Theme.muted

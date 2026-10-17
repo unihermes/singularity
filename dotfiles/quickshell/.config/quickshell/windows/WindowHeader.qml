@@ -46,7 +46,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.max(3, Theme.borderWidth * 3)
         height: titleText.implicitHeight
-        radius: width / 2
+        radius: Theme.pill(width)
         color: Theme.accent
     }
 

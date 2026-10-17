@@ -143,7 +143,7 @@ SettingsTab {
                         anchors.margins: Theme.spaceXs + 1
                         width: Theme.fs(7)
                         height: width
-                        radius: width / 2
+                        radius: Theme.pill(width)
                         color: Theme.accent
                         border.width: 1
                         border.color: Theme.base
@@ -481,12 +481,12 @@ SettingsTab {
             Column {
                 x: Theme.fs(6); y: Theme.fs(12)
                 spacing: Theme.fs(4)
-                Rectangle { width: Theme.fs(30); height: Theme.fs(3); radius: height / 2; color: la.p.text }
-                Rectangle { width: Theme.fs(20); height: Theme.fs(3); radius: height / 2; color: la.p.subtext }
+                Rectangle { width: Theme.fs(30); height: Theme.fs(3); radius: Theme.pill(height); color: la.p.text }
+                Rectangle { width: Theme.fs(20); height: Theme.fs(3); radius: Theme.pill(height); color: la.p.subtext }
             }
             Rectangle {
                 anchors { right: parent.right; bottom: parent.bottom; margins: Theme.fs(5) }
-                width: Theme.fs(14); height: Theme.fs(7); radius: height / 2
+                width: Theme.fs(14); height: Theme.fs(7); radius: Theme.pill(height)
                 color: la.mark
             }
         }
