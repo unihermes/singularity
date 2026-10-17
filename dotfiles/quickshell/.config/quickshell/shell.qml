@@ -183,7 +183,7 @@ ShellRoot {
         function get(): bool { return GameMode.active }
     }
 
-    // `qs ipc call look cycle` / `qs ipc call look set classic` -- for a keybind
+    // `qs ipc call look cycle` / `qs ipc call look set singularity` -- for a keybind
     // that steps through the looks without opening anything
     IpcHandler {
         target: "look"

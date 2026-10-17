@@ -680,32 +680,57 @@ Singleton {
         return d
     }
 
-    // What Reset returns to: stock, overlaid with whatever was last saved
-    // with "Set as default". Only keys stock knows are taken from the saved
-    // set, so a hand-edited or outdated file can't smuggle in anything else,
-    // and a key added to stock later still has a value.
-    readonly property var defaults: {
-        var d = {}, u = adapter.userDefaults || {}
-        for (var k in stockDefaults)
-            d[k] = u[k] !== undefined ? u[k] : stockDefaults[k]
+    // Each style keeps its own saved default (userDefaults, by style name).
+    // A style's stock default is stock with the style itself picked: its
+    // Finish switches and window opacity over the fallback look's values.
+    function styleStock(st) {
+        var d = {}
+        for (var k in stockDefaults) d[k] = stockDefaults[k]
+        if (stockDefaults.style !== st && Styles.get(st)) {
+            d.style = st
+            var fin = Styles.finish(st)
+            for (var f in fin) d[f] = fin[f]
+            var win = Styles.windows(st)
+            for (var w in win) d[w] = win[w]
+        }
         return d
     }
 
-    readonly property bool hasUserDefault: Object.keys(adapter.userDefaults || {}).length > 0
+    // the current style's saved default, {} when it has none
+    readonly property var styleDefault: (adapter.userDefaults || {})[adapter.style] || {}
 
-    // The current appearance becomes the default. A fresh object, so the
-    // adapter notices and writes it.
-    function saveAsDefault() {
-        var snap = {}
-        for (var k in stockDefaults) snap[k] = adapter[k]
-        adapter.userDefaults = snap
+    // What Reset returns to: the current style's stock, overlaid with
+    // whatever was last saved for it with "Save as default". Only keys stock
+    // knows are taken from the saved set, so a hand-edited or outdated file
+    // can't smuggle in anything else, and a key added to stock later still
+    // has a value.
+    readonly property var defaults: {
+        var d = styleStock(adapter.style), u = styleDefault
+        for (var k in d)
+            if (k !== "style" && u[k] !== undefined) d[k] = u[k]
+        return d
     }
 
-    // Forget the saved default and go back to stock.
+    readonly property bool hasUserDefault: Object.keys(styleDefault).length > 0
+
+    // The current appearance becomes the current style's default; the other
+    // styles' stay as they were. A fresh object, so the adapter notices and
+    // writes it.
+    function saveAsDefault() {
+        var snap = {}
+        for (var k in stockDefaults) if (k !== "style") snap[k] = adapter[k]
+        var all = {}, u = adapter.userDefaults || {}
+        for (var st in u) all[st] = u[st]
+        all[adapter.style] = snap
+        adapter.userDefaults = all
+    }
+
+    // Forget the current style's saved default and go back to its stock.
     function factoryReset() {
-        adapter.userDefaults = {}
-        root.applyLayout(adapter.look, stockDefaults.look)
-        for (var k in stockDefaults) adapter[k] = stockDefaults[k]
+        var all = {}, u = adapter.userDefaults || {}
+        for (var st in u) if (st !== adapter.style) all[st] = u[st]
+        adapter.userDefaults = all
+        reset()
     }
 
     // Everything the look carries, written at once. See-through is only
@@ -748,17 +773,20 @@ Singleton {
         adapter.centreAnchor = lay.anchor !== undefined ? lay.anchor : "clock"
     }
 
-    // What changes are counted from: the saved default when it was saved
-    // with the look in use, so saving clears the list; the look as designed
-    // otherwise.
-    readonly property bool baselineIsDefault: (adapter.userDefaults || {}).look === adapter.look
+    // What changes are counted from: the current style's saved default when
+    // it was saved with the look in use, so saving clears the list; the look
+    // as designed otherwise.
+    readonly property bool baselineIsDefault: styleDefault.look === adapter.look
     readonly property var lookBaseline: {
         var l = Looks.looks[adapter.look]
         if (!l) return {}
-        var u = adapter.userDefaults || {}
+        var u = styleDefault
         var b = {}
+        // the saved default holds no style: it's the one in use
         for (var k in l.settings)
-            b[k] = baselineIsDefault && u[k] !== undefined ? u[k] : l.settings[k]
+            b[k] = !baselineIsDefault ? l.settings[k]
+                : k === "style" ? adapter.style
+                : u[k] !== undefined ? u[k] : l.settings[k]
         return b
     }
 
@@ -941,7 +969,7 @@ Singleton {
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
             property string colourVariant: "dark"
-            property string look: "classic"
+            property string look: "singularity"
             property string style: "channel"
             property string styleOptions: ""
             property int seeThrough: 100
@@ -1063,7 +1091,8 @@ Singleton {
             // Bar Widgets' arrangement, held while a look with its own
             // layout is on (applyLayout)
             property var ownLayout: ({})
-            // the appearance saved with "Set as default"; {} means stock
+            // each style's appearance saved with "Save as default", by
+            // style name; a style missing means its stock
             property var userDefaults: ({})
 
         }

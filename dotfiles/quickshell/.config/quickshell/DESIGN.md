@@ -2,7 +2,7 @@
 
 The design decisions for the shell's UI, element by element. Read this before
 changing or adding UI, so new pieces match what is already there. Values come
-from `services/Theme.qml`; the look that sets them is `classic` in
+from `services/Theme.qml`; the look that sets them is `singularity` in
 `services/Looks.js`.
 
 The current design is **Channel** (settled 2026-10-01): grayscale, rounded,
@@ -474,9 +474,13 @@ Settings') are laid out the same way.
 - **Look tiles** open the Theme tab: each look drawn in its own colours
   (panel, bar, text, hint and accent pill), its description as the hint.
   The changes strip alone shows what's changed.
-- **Changes are counted from the saved default** when one was saved with
-  the look in use (`Settings.lookBaseline`), so Set as default empties the
-  list. Otherwise they're counted from the look as designed. Undo, Undo
+- **Each style keeps its own saved default** (`userDefaults`, by style):
+  Save as default and Reset act on the style in use only, and a style
+  never saved resets to its stock (the fallback look with the style's own
+  Finish switches).
+- **Changes are counted from the style's saved default** when one was
+  saved with the look in use (`Settings.lookBaseline`), so Save as default
+  empties the list. Otherwise they're counted from the look as designed. Undo, Undo
   all and the fields' ● marks go back to the same baseline.
 
 ## System window

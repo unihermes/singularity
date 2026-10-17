@@ -43,7 +43,7 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **A shell of its own.** Bar, flyouts, Control Centre, launcher, notification
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
-- **Looks and Styles.** Eight looks (Classic, Arch, Nord, Dracula, Tokyo
+- **Looks and Styles.** Eight looks (Singularity, Arch, Nord, Dracula, Tokyo
   Night, Catppuccin Mocha, One Dark, Kanagawa) on top of five Styles that draw
   all of the chrome, controls included, at once, so no combination of
   settings can clash.
@@ -167,7 +167,7 @@ animations, blur, shadows, gaps and rounding until you switch it back
 ## Looks and Styles
 
 A **look** is a palette and accent plus a starting point for every
-appearance setting. The default, **Classic**, is a grayscale ramp with pale
+appearance setting. The default, **Singularity**, is a grayscale ramp with pale
 blue text and a single indigo accent (`#5555c8`), drawn in the Double style:
 
 | | | | |
@@ -200,8 +200,9 @@ arrangement (drag modules between Left, Centre, Right and Hidden) and size,
 the windows' borders, corners and shadow, the wallpaper's fit, and separate
 animation speeds. A dot marks every setting that differs from the
 baseline, and the strip above the tabs counts and lists those changes with
-a way back for each. **Save as default** saves your setup as the point
-Reset returns to.
+a way back for each. **Save as default** saves your setup as the current
+Style's default, the point Reset returns to while that Style is in use;
+each Style keeps its own.
 
 The look lives in `quickshell/services/Looks.js`, Styles in
 `services/Styles.js`; `DESIGN.md` in the shell's folder is the design

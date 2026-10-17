@@ -72,7 +72,7 @@ var entries = [
     { page: "appearance", section: "Changes", label: "Reset", keywords: "revert reset to default" },
     { page: "appearance", section: "Changes", label: "Undo all", keywords: "changed modified customised customized differences undo revert" },
     { page: "appearance", section: "Changes", label: "Factory reset", keywords: "stock wipe" },
-    { page: "appearance", section: "Theme", label: "Look", keywords: "theme colours colors palette preset arch nord dracula tokyo night catppuccin mocha one dark kanagawa classic" },
+    { page: "appearance", section: "Theme", label: "Look", keywords: "theme colours colors palette preset arch nord dracula tokyo night catppuccin mocha one dark kanagawa singularity" },
     { page: "appearance", section: "Theme", label: "Style", keywords: "theme frames channel double solid glass flat lined modules windows 10 square taskbar" },
     { page: "appearance", section: "Theme", label: "Roundness", keywords: "rounding corners radius panels windows hyprland bar chips" },
     { page: "appearance", section: "Theme", label: "See-through", keywords: "opacity transparency translucent glass bar panels" },

@@ -115,7 +115,7 @@ Item {
                 anchors.verticalCenter: labelText.verticalCenter
                 // under the pointer, what clicking puts back
                 text: !resetMouse.containsMouse ? "●"
-                    : "󰑓 " + (Settings.baselineIsDefault ? "Default" : Settings.choiceLabel(Settings.look))
+                    : "󰑓 " + (Settings.baselineIsDefault ? Settings.choiceLabel(Settings.style, "style") + " default" : Settings.choiceLabel(Settings.look))
                       + (root.hostPage && root.hostPage.valueText
                          ? ": " + root.hostPage.valueText(root.lookKey, Settings.lookBaseline[root.lookKey]) : "")
                 color: resetMouse.containsMouse ? Theme.textStrong : Theme.accent

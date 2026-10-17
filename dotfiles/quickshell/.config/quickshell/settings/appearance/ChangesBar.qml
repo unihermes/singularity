@@ -2,7 +2,7 @@
 // ~/.config/quickshell/settings/appearance/ChangesBar.qml
 //
 // The strip above the Appearance tabs: how many settings differ from the
-// baseline (the saved default when it was saved with this look, the look as
+// baseline (the style's saved default when it was saved with this look, the look as
 // designed otherwise), with Save as default and Reset beside it. Review
 // opens the list of changes under it, each with a way to its field and a
 // way back, and Factory reset at its end.
@@ -22,7 +22,8 @@ Column {
         return null
     }
     property bool open: false
-    readonly property string baseName: Settings.baselineIsDefault ? "your default" : page.label(Settings.look)
+    readonly property string styleName: page.label(Settings.style, "style")
+    readonly property string baseName: Settings.baselineIsDefault ? styleName + "'s default" : page.label(Settings.look)
 
     width: parent ? parent.width : 0
     spacing: Theme.spaceS
@@ -56,7 +57,7 @@ Column {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Settings.lookPristine
-                    ? (Settings.baselineIsDefault ? "As you saved your default" : page.label(Settings.look) + " as designed")
+                    ? (Settings.baselineIsDefault ? "As you saved " + cb.styleName + "'s default" : page.label(Settings.look) + " as designed")
                     : Settings.lookDiffs.length + " changed from " + cb.baseName
                 color: Settings.lookPristine ? Theme.subtext : Theme.textStrong
                 font.family: Theme.fontText
@@ -76,14 +77,14 @@ Column {
                 selected: cb.open
                 onClicked: cb.open = !cb.open
             }
-            // two clicks: overwriting the old default can't be undone
+            // two clicks: overwriting the style's old default can't be undone
             FlyoutChip {
                 text: "Save as default"
                 confirmText: "Replace default?"
                 enabled: !Settings.isDefault
                 onClicked: {
                     Settings.saveAsDefault()
-                    page.say("Current appearance saved as the default", false)
+                    page.say("Current appearance saved as " + cb.styleName + "'s default", false)
                 }
             }
             FlyoutChip {
@@ -92,7 +93,7 @@ Column {
                 enabled: !Settings.isDefault
                 onClicked: {
                     Settings.reset()
-                    page.say("Appearance reset to the default", false)
+                    page.say("Appearance reset to " + cb.styleName + "'s default", false)
                 }
             }
         }
@@ -182,8 +183,8 @@ Column {
 
                 SettingsField {
                     label: "Factory reset"
-                    hint: Settings.hasUserDefault ? "Forget the saved default and go back to stock"
-                        : "No saved default — stock is the default"
+                    hint: Settings.hasUserDefault ? "Forget " + cb.styleName + "'s saved default and go back to its stock"
+                        : "No saved default for " + cb.styleName + " — its stock is the default"
 
                     FlyoutChip {
                         anchors.right: parent.right
@@ -192,7 +193,7 @@ Column {
                         enabled: Settings.hasUserDefault
                         onClicked: {
                             Settings.factoryReset()
-                            cb.page.say("Saved default cleared, back to stock", false)
+                            cb.page.say(cb.styleName + "'s saved default cleared, back to stock", false)
                         }
                     }
                 }

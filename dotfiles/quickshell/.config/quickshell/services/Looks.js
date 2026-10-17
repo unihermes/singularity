@@ -7,7 +7,7 @@
 // active, so switching look restyles everything at once.
 //
 // Switch looks from the Appearance page, the Control Centre, or a keybind:
-//   qs ipc call look cycle        qs ipc call look set classic
+//   qs ipc call look cycle        qs ipc call look set singularity
 //
 // A look has two halves:
 //
@@ -163,7 +163,7 @@
 .import "Styles.js" as Styles
 
 // the look used when the chosen one is gone
-var fallback = "classic"
+var fallback = "singularity"
 
 // shared defaults for the fixed half, so each look only states what differs
 var base = {
@@ -173,8 +173,8 @@ var base = {
 }
 
 var looks = {
-    classic: {
-        name: "Classic",
+    singularity: {
+        name: "Singularity",
         description: "Greys and indigo, a double-stroked chip for every module, a full bar",
         palette: {
             base: "#0b0b0b", bar: "#121212", panel: "#141414", surface: "#1a1a1a", overlay: "#242424",
@@ -390,7 +390,7 @@ var accents = [
 
 // The look the template configs (wofi, starship, fastfetch) are written in:
 // their colours are this ramp, and AppearanceSync maps each one to the current role.
-var reference = "classic"
+var reference = "singularity"
 
 // Fonts the Appearance page offers: monospace faces only, each as its plain
 // "Nerd Font" family. Not the "Nerd Font Mono" variant, which squashes every
