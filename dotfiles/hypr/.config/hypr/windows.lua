@@ -80,13 +80,21 @@ local function edgeGaps()
     return { top = g.top or 0, right = g.right or 0, bottom = g.bottom or 0, left = g.left or 0 }
 end
 
--- A window that fills the screen or its usable area -- a filled floater,
--- a maximized or fullscreen window, a tiled one alone on its workspace --
--- stays square whatever the rounding setting: rounded corners there would
--- only show slivers of wallpaper behind it.
-hl.window_rule({ name = "filled-square", match = { tag = "filled" }, rounding = 0 })
-hl.window_rule({ name = "lone-tiled-square", match = { float = false, workspace = "w[tv1]" }, rounding = 0 })
-hl.window_rule({ name = "maximized-square", match = { fullscreen_state_internal = 1 }, rounding = 0 })
+-- A window that fills the screen stays square whatever the rounding
+-- setting: rounded corners there would only show slivers of wallpaper
+-- behind it. A fullscreen window always does; a filled floater, a maximized
+-- window and a tiled one alone on its workspace only when there's no edge
+-- gap -- with one, they sit inside it like any other window and keep their
+-- corners.
+local function hasEdgeGap()
+    local g = edgeGaps()
+    return g.top > 0 or g.right > 0 or g.bottom > 0 or g.left > 0
+end
+if not hasEdgeGap() then
+    hl.window_rule({ name = "filled-square", match = { tag = "filled" }, rounding = 0 })
+    hl.window_rule({ name = "lone-tiled-square", match = { float = false, workspace = "w[tv1]" }, rounding = 0 })
+    hl.window_rule({ name = "maximized-square", match = { fullscreen_state_internal = 1 }, rounding = 0 })
+end
 hl.window_rule({ name = "fullscreen-square", match = { fullscreen_state_internal = 2 }, rounding = 0 })
 
 -- Only a window smaller than the usable area has a border; one filling it
