@@ -186,6 +186,102 @@ var looks = {
             style: "double", radius: 6, fontFamily: "UbuntuMono Nerd Font",
         },
     },
+    // The rest are ports of well-known editor themes: each one's own
+    // backgrounds and foregrounds laid along the ramp, its signature hue as
+    // the accent. Their accents are light, so accent fills say white text
+    // outright rather than leaving it to "auto".
+    arch: {
+        name: "Arch",
+        description: "Blue-black greys and the Arch logo's blue, outlined chips",
+        palette: {
+            base: "#0d1014", bar: "#12161b", panel: "#161a20", surface: "#1c2128", overlay: "#252b33",
+            border: "#313842", muted: "#4d5663", subtext: "#7c8794", text: "#dce4ec", bright: "#f4f7fa",
+        },
+        accent: "#1793d1",
+        good: "#57a773", alert: "#d9534f",
+        settings: {
+            style: "double", radius: 4, fontFamily: "Hack Nerd Font", accentText: "white",
+        },
+    },
+    nord: {
+        name: "Nord",
+        description: "Polar Night greys, Snow Storm text, a Frost blue accent",
+        palette: {
+            base: "#242933", bar: "#292e39", panel: "#2e3440", surface: "#3b4252", overlay: "#434c5e",
+            border: "#4c566a", muted: "#616e88", subtext: "#9aa3b5", text: "#d8dee9", bright: "#eceff4",
+        },
+        accent: "#81a1c1",
+        good: "#a3be8c", alert: "#bf616a",
+        settings: {
+            style: "solid", radius: 8, fontFamily: "JetBrainsMono Nerd Font", accentText: "white",
+        },
+    },
+    dracula: {
+        name: "Dracula",
+        description: "Dracula's purple-greys and purple, frosted glass",
+        palette: {
+            base: "#191a21", bar: "#21222c", panel: "#282a36", surface: "#303241", overlay: "#3a3c4e",
+            border: "#44475a", muted: "#6272a4", subtext: "#9aa3c4", text: "#f8f8f2", bright: "#ffffff",
+        },
+        accent: "#bd93f9",
+        good: "#50fa7b", alert: "#ff5555",
+        settings: {
+            style: "glass", radius: 10, fontFamily: "FiraCode Nerd Font", accentText: "white",
+        },
+    },
+    tokyonight: {
+        name: "Tokyo Night",
+        description: "Tokyo Night's deep indigo and its blue, grooved bands",
+        palette: {
+            base: "#13141c", bar: "#16161e", panel: "#1a1b26", surface: "#1f2335", overlay: "#292e42",
+            border: "#3b4261", muted: "#565f89", subtext: "#737aa2", text: "#c0caf5", bright: "#dfe5ff",
+        },
+        accent: "#7aa2f7",
+        good: "#9ece6a", alert: "#f7768e",
+        settings: {
+            style: "channel", radius: 6, fontFamily: "GeistMono Nerd Font", accentText: "white",
+        },
+    },
+    catppuccin: {
+        name: "Catppuccin Mocha",
+        description: "Mocha's soft darks and Mauve, solid blocks on a floating bar",
+        palette: {
+            base: "#11111b", bar: "#181825", panel: "#1e1e2e", surface: "#252536", overlay: "#313244",
+            border: "#45475a", muted: "#6c7086", subtext: "#a6adc8", text: "#cdd6f4", bright: "#eef1ff",
+        },
+        accent: "#cba6f7",
+        good: "#a6e3a1", alert: "#f38ba8",
+        settings: {
+            style: "solid", radius: 12, barStyle: "floating", fontFamily: "CaskaydiaCove Nerd Font",
+            accentText: "white",
+        },
+    },
+    onedark: {
+        name: "One Dark",
+        description: "Atom's One Dark greys and its blue, outlined chips",
+        palette: {
+            base: "#1b1d23", bar: "#21252b", panel: "#282c34", surface: "#2c313c", overlay: "#353b45",
+            border: "#3e4451", muted: "#5c6370", subtext: "#828997", text: "#abb2bf", bright: "#d7dae0",
+        },
+        accent: "#61afef",
+        good: "#98c379", alert: "#e06c75",
+        settings: {
+            style: "double", radius: 6, fontFamily: "SauceCodePro Nerd Font", accentText: "white",
+        },
+    },
+    kanagawa: {
+        name: "Kanagawa",
+        description: "Sumi ink and Fuji white, a Crystal Blue accent, grooved bands",
+        palette: {
+            base: "#16161d", bar: "#1a1a22", panel: "#1f1f28", surface: "#2a2a37", overlay: "#363646",
+            border: "#54546d", muted: "#727169", subtext: "#9e9a85", text: "#dcd7ba", bright: "#ede8cf",
+        },
+        accent: "#7e9cd8",
+        good: "#98bb6c", alert: "#c34043",
+        settings: {
+            style: "channel", radius: 4, fontFamily: "BlexMono Nerd Font", accentText: "white",
+        },
+    },
 }
 var order = Object.keys(looks)
 
@@ -282,7 +378,7 @@ function complete(look) {
         if (look.settings[k] === undefined) look.settings[k] = a[k]
     return look
 }
-complete(looks[fallback])
+for (var n in looks) complete(looks[n])
 
 // The accents the Appearance page offers besides the look's own: one per
 // hue around the wheel, at a lightness that reads on dark and light grounds.

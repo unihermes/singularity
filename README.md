@@ -43,7 +43,8 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **A shell of its own.** Bar, flyouts, Control Centre, launcher, notification
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
-- **Looks and Styles.** One look, Classic, on top of five Styles that draw
+- **Looks and Styles.** Eight looks (Classic, Arch, Nord, Dracula, Tokyo
+  Night, Catppuccin Mocha, One Dark, Kanagawa) on top of five Styles that draw
   all of the chrome, controls included, at once, so no combination of
   settings can clash.
 - **Settings for everything.** Displays, input, power and idle, the lock
@@ -166,7 +167,7 @@ animations, blur, shadows, gaps and rounding until you switch it back
 ## Looks and Styles
 
 A **look** is a palette and accent plus a starting point for every
-appearance setting. The one look, **Classic**, is a grayscale ramp with pale
+appearance setting. The default, **Classic**, is a grayscale ramp with pale
 blue text and a single indigo accent (`#5555c8`), drawn in the Double style:
 
 | | | | |
@@ -174,6 +175,12 @@ blue text and a single indigo accent (`#5555c8`), drawn in the Double style:
 | `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
 | `#d0e2fa` text | `#ebebeb` bright | | |
+
+The other seven are ports of well-known editor themes, each with its own
+Style, Roundness and font: **Arch** (the logo's blue, Double), **Nord**
+(Solid), **Dracula** (Glass), **Tokyo Night** (Channel), **Catppuccin
+Mocha** (Solid on a floating bar), **One Dark** (Double) and **Kanagawa**
+(Channel). Step through them from the Control Centre's Look card.
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
 meters, section frames, the heading mark, where flyouts sit, and its own

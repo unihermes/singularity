@@ -471,8 +471,8 @@ Settings') are laid out the same way.
   off), and each step a switch: off comments its block out of
   hypridle.conf with `#~ `. Steps that differ only by power source carry a
   battery or plug mark (`SettingsField.mark`).
-- **No look card:** Classic is the only look; the changes strip alone
-  shows what's changed.
+- **No look card:** looks are picked from the Control Centre (or
+  `qs ipc call look set`); the changes strip alone shows what's changed.
 - **Changes are counted from the saved default** when one was saved with
   the look in use (`Settings.lookBaseline`), so Set as default empties the
   list. Otherwise they're counted from the look as designed. Undo, Undo
