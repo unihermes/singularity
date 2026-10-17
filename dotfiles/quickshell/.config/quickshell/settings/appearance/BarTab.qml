@@ -13,6 +13,37 @@ import ".."
 SettingsTab {
     tabId: "bar"
 
+    FlyoutHeading { text: "LAYOUT" }
+
+    BarZones {}
+
+    // The centre module pinned to the bar's exact middle, the rest of the
+    // centre stacking outward from it; none centres the whole group
+    SettingsField {
+        label: "Centre anchor"
+        hint: "The module that stays dead centre"
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: [""].concat(Settings.widgetOrder("centre").filter(k => Settings.widgetVisible(k)))
+            current: Settings.centreAnchor
+            labelFor: v => v === "" ? "None" : (Settings.widgetMeta[v] || { label: v }).label
+            onPicked: v => Settings.setCentreAnchor(v)
+        }
+    }
+
+    SettingsField {
+        label: "Bar widgets"
+        hint: Settings.widgetsDefault ? "As it comes" : "Put every module back where it started"
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Reset layout"
+            confirmText: "Reset?"
+            enabled: !Settings.widgetsDefault
+            onClicked: Settings.resetWidgets()
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "BAR" }
 
     SettingsField {

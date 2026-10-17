@@ -101,6 +101,8 @@ var entries = [
     { page: "appearance", section: "Theme", label: "Font", keywords: "typeface family monospace shell bar" },
     { page: "appearance", section: "Theme", label: "Font size", keywords: "text scale px" },
     { page: "appearance", section: "Bar", label: "Position", keywords: "bar top bottom edge" },
+    { page: "appearance", section: "Bar", label: "Centre anchor", keywords: "pin middle centre clock bar widgets" },
+    { page: "appearance", section: "Bar", label: "Bar widgets", keywords: "arrange layout modules reset order hide show drag left centre right" },
     { page: "appearance", section: "Bar", label: "Bar shape", keywords: "bar layout full width floating islands" },
     { page: "appearance", section: "Bar", label: "Height", keywords: "bar height size tall thin px" },
     { page: "appearance", section: "Bar", label: "Icon size", keywords: "bar glyphs icons size px" },
