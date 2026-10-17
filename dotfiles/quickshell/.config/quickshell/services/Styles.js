@@ -51,7 +51,7 @@ var styles = {
         name: "Channel", hint: "Grooved bands; flyouts grow from the bar groups",
         frame: "channel", modules: "grouped", mark: "pill",
         shadow: "none", lines: true, attach: "grown", anim: "fade",
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true, headingMark: "//" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true, headingMark: "//", clockIsland: true },
         options: [],
         // solid windows; the terminal a touch see-through, as it always was
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
@@ -60,7 +60,7 @@ var styles = {
         name: "Double", hint: "Outlined chips, a stroke inside each",
         frame: "double", modules: "outline", mark: "pill",
         shadow: "none", lines: true, attach: "auto", anim: "drop",
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true, clockIsland: true },
         options: [
             { id: "lit", label: "Inner stroke always lit", hint: "Not only on the open chip", on: false },
             { key: "heavyLines", label: "Heavy lines", hint: "Every stroke 2px, windows' borders too", on: false },
@@ -72,7 +72,7 @@ var styles = {
         name: "Solid", hint: "Filled blocks, no strokes",
         frame: "none", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "scale",
-        finish: { barSeparator: "none", headingUpper: true, headingRule: false, headingMark: "" },
+        finish: { barSeparator: "none", headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
         options: [
             { key: "shadows", label: "Shadows", hint: "Soft shadows under chips and panels", on: true },
             { id: "tint", label: "Accent-tinted chips", hint: "The bar's chips take a little of the accent", on: false },
@@ -84,7 +84,7 @@ var styles = {
         name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
         frame: "single", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "fade", glass: true,
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
         options: [
             { id: "blur", label: "Heavy blur", hint: "Grounds a further step see-through", on: true },
             { id: "tint", label: "Accent-tinted glass", hint: "The frost takes a little of the accent", on: false },
@@ -96,7 +96,7 @@ var styles = {
         name: "Flat", hint: "Square and flat; a taskbar along the bottom",
         frame: "single", modules: "taskbar", mark: "pill",
         shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true,
-        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
         options: [
             // Settings.widgetLayout() rearranges the bar while this is on
             { id: "taskbar", label: "Taskbar layout", hint: "Status and the clock packed at the right", on: true },

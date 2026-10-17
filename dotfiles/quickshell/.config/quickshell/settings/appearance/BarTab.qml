@@ -165,6 +165,7 @@ SettingsTab {
 
     SettingsField {
         label: "Clock island"
+        lookKey: "clockIsland"
         hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar"
             : Settings.clockIsland ? "Volume and layout show in the clock"
             : "Separate toasts under the bar"

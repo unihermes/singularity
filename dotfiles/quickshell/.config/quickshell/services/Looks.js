@@ -52,7 +52,8 @@
 //     terminalOpacity the terminal's background opacity, in percent;
 //                  unstated, the style's
 //     shadows, gradient, heavyLines, headingUpper, headingRule, headingMark,
-//     barSeparator, levelColour   the Finish switches (Settings.qml)
+//     barSeparator, levelColour, clockIsland   the Finish switches
+//                  (Settings.qml)
 //     styleOptions the style's own options that are on, comma-joined ids
 //                  (Styles.js `options`); unstated, the style's
 //
