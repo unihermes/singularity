@@ -51,7 +51,7 @@
 //                  focused and not, in percent; unstated, the style's
 //     terminalOpacity the terminal's background opacity, in percent;
 //                  unstated, the style's
-//     shadows, gradient, heavyLines, headingUpper, headingRule,
+//     shadows, gradient, heavyLines, headingUpper, headingRule, headingMark,
 //     barSeparator, levelColour   the Finish switches (Settings.qml)
 //     styleOptions the style's own options that are on, comma-joined ids
 //                  (Styles.js `options`); unstated, the style's
@@ -191,6 +191,11 @@ var settingsBase = {
     // text on an accent fill: "auto" picks white or dark by the accent's
     // brightness
     accentText: "auto",
+    // the headings' mark's colour ("accent", "text", "muted") and their
+    // size against body text ("smaller", "same", "larger"); the mark
+    // itself (headingMark) comes with the style
+    headingMarkColour: "accent",
+    headingSize: "smaller",
     spacing: 100,
     rowScale: 100,
     barHeight: 32,

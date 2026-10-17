@@ -175,7 +175,7 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: label.verticalCenter
         text: Theme.headingPrefix
-        color: Theme.hasAccent ? Qt.lighter(Theme.accent, 1.4) : Theme.subtext
+        color: Theme.headingMarkColor
         font: label.font
     }
 
@@ -224,7 +224,7 @@ Item {
         text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "")
         color: Theme.headingColor
         font.family: Theme.fontHeading
-        font.pixelSize: Theme.fontSmall
+        font.pixelSize: Theme.fontHeadingSize
         font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
         // tighter beside a crumb, which shares the line
         font.letterSpacing: root.crumb !== "" ? Theme.headingSpacing / 2 : Theme.headingSpacing

@@ -21,7 +21,6 @@
 //   attach     where flyouts sit: "grown" from the bar group, "floating",
 //              or "auto": flush on a full-width bar, floating on the others
 //   anim       how flyouts open when Flyouts open is left to the style
-//   prefix     drawn in the accent before every heading
 //   glass      grounds a further 30% see-through, with a light hairline
 //   square     every corner square, whatever Roundness says
 //   finish     what picking the style sets the Finish switches to
@@ -51,8 +50,8 @@ var styles = {
     channel: {
         name: "Channel", hint: "Grooved bands; flyouts grow from the bar groups",
         frame: "channel", modules: "grouped", mark: "pill",
-        shadow: "none", lines: true, attach: "grown", anim: "fade", prefix: "//",
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
+        shadow: "none", lines: true, attach: "grown", anim: "fade",
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true, headingMark: "//" },
         options: [],
         // solid windows; the terminal a touch see-through, as it always was
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
@@ -60,20 +59,20 @@ var styles = {
     double: {
         name: "Double", hint: "Outlined chips, a stroke inside each",
         frame: "double", modules: "outline", mark: "pill",
-        shadow: "none", lines: true, attach: "auto", anim: "drop", prefix: "",
+        shadow: "none", lines: true, attach: "auto", anim: "drop",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
         options: [
             { id: "lit", label: "Inner stroke always lit", hint: "Not only on the open chip", on: false },
             { key: "heavyLines", label: "Heavy lines", hint: "Every stroke 2px, windows' borders too", on: false },
-            { id: "slash", label: "// before headings", hint: "An accent // ahead of each heading", on: true },
+            { key: "headingMark", value: "//", off: "", label: "// before headings", hint: "An accent // ahead of each heading", on: true },
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
     },
     solid: {
         name: "Solid", hint: "Filled blocks, no strokes",
         frame: "none", modules: "filled", mark: "ground",
-        shadow: "soft", lines: false, attach: "floating", anim: "scale", prefix: "",
-        finish: { barSeparator: "none", headingUpper: true, headingRule: false },
+        shadow: "soft", lines: false, attach: "floating", anim: "scale",
+        finish: { barSeparator: "none", headingUpper: true, headingRule: false, headingMark: "" },
         options: [
             { key: "shadows", label: "Shadows", hint: "Soft shadows under chips and panels", on: true },
             { id: "tint", label: "Accent-tinted chips", hint: "The bar's chips take a little of the accent", on: false },
@@ -84,8 +83,8 @@ var styles = {
     glass: {
         name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
         frame: "single", modules: "filled", mark: "ground",
-        shadow: "soft", lines: false, attach: "floating", anim: "fade", prefix: "", glass: true,
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
+        shadow: "soft", lines: false, attach: "floating", anim: "fade", glass: true,
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "" },
         options: [
             { id: "blur", label: "Heavy blur", hint: "Grounds a further step see-through", on: true },
             { id: "tint", label: "Accent-tinted glass", hint: "The frost takes a little of the accent", on: false },
@@ -96,8 +95,8 @@ var styles = {
     flat: {
         name: "Flat", hint: "Square and flat; a taskbar along the bottom",
         frame: "single", modules: "taskbar", mark: "pill",
-        shadow: "soft", lines: true, attach: "auto", anim: "drop", prefix: "", square: true,
-        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false },
+        shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true,
+        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "" },
         options: [
             // Settings.widgetLayout() rearranges the bar while this is on
             { id: "taskbar", label: "Taskbar layout", hint: "Status and the clock packed at the right", on: true },
@@ -145,8 +144,6 @@ function resolve(s) {
     var st = styles[s.style]
     var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
-    var prefix = st.prefix
-    if (s.style === "double") prefix = has(s.styleOptions, "slash") ? "//" : ""
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
         styleName: s.style,
@@ -164,7 +161,6 @@ function resolve(s) {
         // the gap between bar modules follows Spacing, never closing up
         moduleGap: st.modules === "taskbar" ? 0 : Math.max(1, Math.round(2 * s.spacing / 100)),
         opacity: Math.round(s.seeThrough * see),
-        headingPrefix: prefix,
         glass: !!st.glass,
     }
 }

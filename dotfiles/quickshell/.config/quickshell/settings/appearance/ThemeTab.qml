@@ -60,9 +60,6 @@ SettingsTab {
         hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
     }
 
-    FinishSwitch { visible: styleTab.optionKeys.indexOf("headingUpper") === -1; label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
-
-    FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "PALETTE" }
@@ -381,6 +378,75 @@ SettingsTab {
     }
 
     Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "HEADINGS" }
+
+    // The mark before every heading: a preset, none, or up to four
+    // characters of your own
+    readonly property var markPresets: ["//", "▸", "•", ""]
+    property bool customMark: markPresets.indexOf(Settings.headingMark) === -1
+
+    SettingsField {
+        label: "Mark"
+        lookKey: "headingMark"
+        hint: "Drawn before every heading"
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: [{ value: "//", text: "//" }, { value: "▸", text: "▸" }, { value: "•", text: "•" },
+                    { value: "", text: "None" }, { value: "custom", text: "Custom" }]
+            current: styleTab.customMark ? "custom" : Settings.headingMark
+            onPicked: v => {
+                styleTab.customMark = v === "custom"
+                if (v !== "custom") Settings.set("headingMark", v)
+            }
+        }
+    }
+
+    SettingsField {
+        visible: styleTab.customMark
+        label: "Your mark"
+        hint: "Up to four characters, Enter to apply"
+        FlyoutInput {
+            anchors.right: parent.right
+            width: Theme.fit(120)
+            echoPassword: false
+            placeholder: "»"
+            text: styleTab.markPresets.indexOf(Settings.headingMark) === -1 ? Settings.headingMark : ""
+            onAccepted: {
+                Settings.set("headingMark", text)
+                page.say("Heading mark set", false)
+            }
+        }
+    }
+
+    SettingsField {
+        label: "Mark colour"
+        hint: "The accent, lightened, or a grey"
+        Choices { key: "headingMarkColour" }
+    }
+
+    SettingsField {
+        label: "Case"
+        lookKey: "headingUpper"
+        hint: "Capitals, or as a title"
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: [{ value: true, text: "VOLUME" }, { value: false, text: "Volume" }]
+            current: Settings.headingUpper
+            onPicked: v => Settings.set("headingUpper", v)
+        }
+    }
+
+    FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
+
+    SettingsField {
+        label: "Heading size"
+        hint: "Against body text"
+        Choices { key: "headingSize" }
+    }
 
     // Two bar chips, the right one open, as each style draws them
     Component {

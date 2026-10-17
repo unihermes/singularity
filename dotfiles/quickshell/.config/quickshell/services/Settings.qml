@@ -177,6 +177,11 @@ Singleton {
     readonly property alias scrim:        adapter.scrim
     readonly property alias headingUpper: adapter.headingUpper
     readonly property alias headingRule:  adapter.headingRule
+    // the mark drawn before every heading ("" for none), its colour, and
+    // the headings' size against body text
+    readonly property alias headingMark:  adapter.headingMark
+    readonly property alias headingMarkColour: adapter.headingMarkColour
+    readonly property alias headingSize:  adapter.headingSize
 
     // What the accent picker offers: the look's own accent first, then the
     // presets in Looks.js, then the accent in use if it's a custom one.
@@ -198,6 +203,8 @@ Singleton {
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
         colourVariant: ["dark", "light"],
         accentText:   ["auto", "white", "dark"],
+        headingMarkColour: ["accent", "text", "muted"],
+        headingSize:  ["smaller", "same", "larger"],
         look:         Looks.order,
         style:        Styles.order,
         density:      ["compact", "normal", "roomy", "custom"],
@@ -253,7 +260,8 @@ Singleton {
         "star": "Star", "blackhole": "Black hole", "vortex": "Vortex", "horizon": "Event horizon",
         "radar": "Radar", "moon": "Moon", "atom": "Atom",
         "rocket": "Rocket", "ghost": "Ghost", "planet": "Planet", "sparkle": "Sparkle",
-        "infinity": "Infinity", "white": "White", "alacritty": "Alacritty", "ghostty": "Ghostty", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
+        "infinity": "Infinity", "white": "White", "smaller": "Smaller", "same": "Same",
+        "larger": "Larger", "muted": "Muted", "text": "Text", "alacritty": "Alacritty", "ghostty": "Ghostty", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
     })
     // where one value means different things under different settings
     readonly property var keyedLabels: ({
@@ -748,6 +756,7 @@ Singleton {
         else if (key === "accent" || hexKeys.indexOf(key) !== -1) adapter[key] = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
         else if (key === "style") setStyle(v)
         else if (key === "density") setDensity(v)
+        else if (key === "headingMark") adapter.headingMark = String(v).trim().slice(0, 4)
         else if (key === "barStyle") setBarStyle(v)
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
@@ -953,6 +962,9 @@ Singleton {
             property int scrim: 40
             property bool headingUpper: true
             property bool headingRule: true
+            property string headingMark: "//"
+            property string headingMarkColour: "accent"
+            property string headingSize: "smaller"
 
             property bool wallpaperShuffle: true
             property int wallpaperInterval: 0

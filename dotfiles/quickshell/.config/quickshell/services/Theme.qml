@@ -193,8 +193,14 @@ Singleton {
     readonly property real headingSpacing: headingUpper ? 1 : 0
     readonly property bool headingRule:    Settings.headingRule
     readonly property color headingColor:  bright
-    // drawn in the accent before every heading, "" for none
-    readonly property string headingPrefix: resolved.headingPrefix
+    // drawn before every heading, "" for none, in its own colour
+    readonly property string headingPrefix: Settings.headingMark
+    readonly property color headingMarkColor: Settings.headingMarkColour === "text" ? text
+        : Settings.headingMarkColour === "muted" ? muted
+        : hasAccent ? Qt.lighter(accent, 1.4) : subtext
+    // the headings' size against body text
+    readonly property int fontHeadingSize: Settings.headingSize === "larger" ? fs(18)
+        : Settings.headingSize === "same" ? fontBody : fontSmall
     // acronyms title case leaves alone
     readonly property var headingKeep: ["AUR", "CPU", "GPU", "RAM", "MEM", "IP", "DND", "USB",
                                         "HDMI", "VPN", "UI", "SSD", "OS", "WIFI"]
@@ -332,7 +338,7 @@ Singleton {
     // on/off switches (Switch.qml)
     readonly property int switchWidth:   row(28)
     readonly property int switchHeight:  row(16)
-    readonly property int headingHeight: fs(16)
+    readonly property int headingHeight: Math.max(fs(16), fontHeadingSize + 2)
     // the faint surface a window's framed panels sit on (WindowPanel.qml)
     readonly property color panelTint: Qt.rgba(surface.r, surface.g, surface.b, 0.35)
     // the scrim a caption bar sits on over an image, so its text reads
