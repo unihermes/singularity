@@ -128,7 +128,7 @@ FloatingWindow {
             return { text: [c ? c.text : "", Battery.present ? Battery.percent + "%" : ""].filter(t => t).join(" · ") }
         }
         case "appearance": {
-            var look = LookStore.looks[Settings.look], style = Styles.get(Settings.style)
+            var look = Looks.looks[Settings.look], style = Styles.get(Settings.style)
             return { text: [look ? look.name : Settings.look, style ? style.name : ""].filter(t => t).join(" · ") }
         }
         case "notifications":

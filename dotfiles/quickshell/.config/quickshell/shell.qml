@@ -183,7 +183,7 @@ ShellRoot {
         function get(): bool { return GameMode.active }
     }
 
-    // `qs ipc call look cycle` / `qs ipc call look set soft` -- for a keybind
+    // `qs ipc call look cycle` / `qs ipc call look set classic` -- for a keybind
     // that steps through the looks without opening anything
     IpcHandler {
         target: "look"
@@ -194,9 +194,6 @@ ShellRoot {
         function saveDefault(): void { Settings.saveAsDefault() }
         function resetToDefault(): void { Settings.reset() }
         function isDefault(): bool { return Settings.isDefault }
-        // hides the look on this machine; the fallback look can't be removed
-        function remove(name: string): void { Settings.removeLook(name) }
-
     }
 
     AppearanceSync {}

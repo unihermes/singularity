@@ -10,6 +10,7 @@
 import Quickshell.Widgets
 import QtQuick
 import "../services"
+import "../services/Looks.js" as Looks
 
 Item {
     id: root
@@ -20,7 +21,7 @@ Item {
     readonly property bool open: group ? group.open === root : ownOpen
     property bool ownOpen: false
 
-    readonly property var order: LookStore.order
+    readonly property var order: Looks.order
     readonly property int index: order.indexOf(Settings.look)
     readonly property int changes: Settings.lookDiffs.length
 
@@ -39,7 +40,7 @@ Item {
     }
     // a look's palette, dark to light, then its accent if it has one
     function swatches(name) {
-        var l = LookStore.looks[name]
+        var l = Looks.looks[name]
         if (!l) return []
         var p = l.palette
         return [p.base, p.border, p.subtext, p.text].concat(l.accent ? [l.accent] : [])
@@ -99,7 +100,7 @@ Item {
                     Text {
                         width: parent.width
                         elide: Text.ElideRight
-                        text: LookStore.looks[Settings.look] ? LookStore.looks[Settings.look].name : Settings.look
+                        text: Looks.looks[Settings.look] ? Looks.looks[Settings.look].name : Settings.look
                         color: Theme.textStrong
                         font.family: Theme.fontText
                         font.weight: Theme.weightStrong
@@ -152,7 +153,7 @@ Item {
         ClippingRectangle {
             id: band
             readonly property var colours: root.swatches(Settings.look)
-            readonly property bool accented: !!LookStore.looks[Settings.look] && !!LookStore.looks[Settings.look].accent
+            readonly property bool accented: !!Looks.looks[Settings.look] && !!Looks.looks[Settings.look].accent
             width: parent.width
             height: Theme.fs(14)
             radius: Theme.radiusSmall
@@ -186,7 +187,7 @@ Item {
         open: root.open
         model: root.order
         currentIndex: root.index
-        labelFor: v => LookStore.looks[v] ? LookStore.looks[v].name : v
+        labelFor: v => Looks.looks[v] ? Looks.looks[v].name : v
         swatchesFor: v => root.swatches(v)
         maxRows: 7
         onPicked: v => Settings.set("look", v)

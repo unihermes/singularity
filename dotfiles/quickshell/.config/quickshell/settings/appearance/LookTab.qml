@@ -45,9 +45,9 @@ SettingsTab {
             highlightFollowsCurrentItem: false
             // every card built up front, so none is created mid-scroll
             cacheBuffer: count * step
-            model: LookStore.order
+            model: Looks.order
             // open on the current look
-            Component.onCompleted: positionViewAtIndex(Math.max(0, LookStore.order.indexOf(Settings.look)), ListView.Center)
+            Component.onCompleted: positionViewAtIndex(Math.max(0, Looks.order.indexOf(Settings.look)), ListView.Center)
 
             readonly property real step: carousel.cardWidth + spacing
             readonly property real maxX: originX + Math.max(0, contentWidth - width)
@@ -105,7 +105,7 @@ SettingsTab {
                 id: card
                 required property string modelData
                 required property int index
-                readonly property var look: LookStore.looks[modelData]
+                readonly property var look: Looks.looks[modelData]
                 readonly property bool current: Settings.look === modelData
 
                 width: carousel.cardWidth
@@ -165,33 +165,6 @@ SettingsTab {
                         page.say(card.look.name + " look applied", false)
                     }
                 }
-
-                // Remove, in the preview's corner: two clicks, since it
-                // hides the look and there's no undo short of editing
-                // looks-removed.json. Its own ground, so it reads over any
-                // preview.
-                Rectangle {
-                    id: removeBox
-                    visible: LookStore.removable(card.modelData)
-                             && (cardMouse.containsMouse || removeHover.hovered || removeChip.armed)
-                    anchors.right: preview.right
-                    anchors.top: preview.top
-                    anchors.margins: Theme.spaceXs
-                    width: removeChip.width
-                    height: removeChip.height
-                    radius: Theme.radiusInner
-                    color: Theme.surface
-
-                    HoverHandler { id: removeHover }
-
-                    FlyoutChip {
-                        id: removeChip
-                        glyph: true
-                        text: "󰅖"
-                        confirmText: "Remove"
-                        onClicked: page.removeLook(card.modelData)
-                    }
-                }
             }
         }
 
@@ -222,7 +195,7 @@ SettingsTab {
             anchors.bottom: parent.bottom
             spacing: Theme.spaceS
             Repeater {
-                model: LookStore.order
+                model: Looks.order
                 Rectangle {
                     required property string modelData
                     required property int index

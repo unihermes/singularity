@@ -12,7 +12,7 @@
 // than one import-free global.
 //
 // Three layers, most specific wins:
-//   LookStore    the active look's palette and fixed style (see Looks.js)
+//   Looks.js     the active look's palette and fixed style
 //   Settings     what the Appearance page edits -- the style (Styles.js),
 //                roundness, bar shape, density, font, accent, colour mode --
 //                seeded by the look
@@ -38,8 +38,8 @@ Singleton {
 
     // --- the look ------------------------------------------------------------
 
-    readonly property string lookName: LookStore.looks[Settings.look] ? Settings.look : Looks.fallback
-    readonly property var look: LookStore.looks[lookName]
+    readonly property string lookName: Looks.looks[Settings.look] ? Settings.look : Looks.fallback
+    readonly property var look: Looks.looks[lookName]
 
     // Everything the style and the dials beside it decide (Styles.resolve)
     readonly property var resolved: Styles.resolve({

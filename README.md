@@ -43,9 +43,9 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **A shell of its own.** Bar, flyouts, Control Centre, launcher, notification
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
-- **Looks and Styles.** Eleven looks (Classic, Kanagawa, Catppuccin, Nord,
-  Signal, Sonar, …) on top of eight Styles that draw all of the chrome,
-  controls included, at once, so no combination of settings can clash.
+- **Looks and Styles.** One look, Classic, on top of eight Styles that draw
+  all of the chrome, controls included, at once, so no combination of
+  settings can clash.
 - **Settings for everything.** Displays, input, power and idle, the lock
   screen, window rules, keybinds, notifications, audio, Bluetooth, Wi-Fi,
   startup apps, file types, updates. Every page writes the real config file
@@ -166,21 +166,14 @@ animations, blur, shadows, gaps and rounding until you switch it back
 ## Looks and Styles
 
 A **look** is a palette and accent plus a starting point for every
-appearance setting. The default, **Singularity**, is one grayscale ramp with
-pale blue text and a single indigo accent (`#5555c8`):
+appearance setting. The one look, **Classic**, is a grayscale ramp with pale
+blue text and a single indigo accent (`#5555c8`), drawn in the Double style:
 
 | | | | |
 |---|---|---|---|
 | `#0b0b0b` base | `#121212` bar | `#141414` panel | `#1a1a1a` surface |
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
 | `#d0e2fa` text | `#ebebeb` bright | | |
-
-It also ships with **Classic** (Singularity as it first was, double-stroked),
-Kanagawa, Everforest, Catppuccin Mocha, Tokyo Night, Breeze Dark, Nord,
-Platinum (Mac OS 8 after dark), **Signal** (black ink on white, like a
-printed form) and **Sonar** (a teal heads-up display). Each one also picks
-its own bar arrangement, density, font, workspaces, window strip and
-notification popups.
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
 meters, section frames, the heading mark, where flyouts sit, and its own
@@ -199,10 +192,9 @@ tabs adjust it; a dot marks every setting that differs from the look, and the
 Look tab lists those changes with a way back for each. **Set as default**
 saves your setup as the point Reset returns to.
 
-Looks live in `quickshell/services/looks.json` (copy an entry to make your
-own; removing one from its card only hides it on that machine, in
-`~/.local/state/singularity/looks-removed.json`); Styles are in `services/Styles.js`; `DESIGN.md` in the shell's folder
-is the design reference for every element.
+The look lives in `quickshell/services/Looks.js`, Styles in
+`services/Styles.js`; `DESIGN.md` in the shell's folder is the design
+reference for every element.
 
 ## The shell
 
@@ -276,7 +268,7 @@ ever shows up in `git status`, so `update.sh` always pulls cleanly and your
 changes survive it.
 
 - **Everything the shell saves** (settings, display rules, input and window
-  settings, the lid, removed looks, the wallpaper, the generated colour
+  settings, the lid, the wallpaper, the generated colour
   files) lives in `~/.local/state/singularity/`. Deleting it resets the
   shell to its defaults.
 - **Config files Settings or the app itself rewrites** are this machine's

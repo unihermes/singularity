@@ -21,7 +21,7 @@ set -euo pipefail
 state="$HOME/.local/state/singularity"
 # relative to this script's real location, so the repo can live anywhere
 repo="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../..")"
-files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state looks-removed.json)
+files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

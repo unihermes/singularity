@@ -14,6 +14,7 @@ import Quickshell.Io
 import QtQuick
 import "../services"
 import "../bar"
+import "../services/Looks.js" as Looks
 import "../services/Styles.js" as Styles
 
 FlyoutPanel {
@@ -430,7 +431,7 @@ FlyoutPanel {
         // the colours each mode gives, dark to light then the accent; the
         // wallpaper's only once matugen has made them for this image
         readonly property var ownColours: {
-            var l = LookStore.looks[Settings.look]
+            var l = Looks.looks[Settings.look]
             if (!l) return []
             var p = l.palette
             return [p.base, p.border, p.subtext, p.text].concat(l.accent ? [l.accent] : [])

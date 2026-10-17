@@ -14,12 +14,10 @@
 //   System     motion, and the fonts, icons and cursor of other apps
 // Colours, Style, Bar and Panels open on a preview of the setup as it is.
 //
-// A look (LookStore) is a starting point: picking one sets everything it
+// A look (Looks.js) is a starting point: picking one sets everything it
 // carries, which can then be adjusted one by one. A field holding such a
 // setting is marked while it differs from the look, and the mark puts it
-// back; the Look tab lists every such change. Every look but the fallback
-// can be removed from its card, which hides it on this machine
-// (LookStore's looks-removed.json); looks.json itself is left alone.
+// back; the Look tab lists every such change.
 //
 // Two stores behind it. The shell's own look is Settings.qml, the same
 // values the Control Centre edits, so the two always agree and a change
@@ -76,7 +74,6 @@ SettingsPage {
 
     // on the page rather than the card: the reload after the write destroys
     // the removed look's card before the result comes back
-    function removeLook(name) { Settings.removeLook(name, (ok, msg) => say(msg, !ok)) }
 
     // --- the Look tab's changes ----------------------------------------------
 

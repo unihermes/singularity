@@ -6,13 +6,8 @@
 // Theme.hoverFill, Theme.rowHeight) and Theme answers from whichever look is
 // active, so switching look restyles everything at once.
 //
-// Only the fallback look lives here. The rest are data in looks.json, read by
-// LookStore.qml -- which is what everything asks for the list of looks -- so
-// the Appearance page can delete one outright. Each entry there has exactly
-// the shape described below.
-//
 // Switch looks from the Appearance page, the Control Centre, or a keybind:
-//   qs ipc call look cycle        qs ipc call look set singularity
+//   qs ipc call look cycle        qs ipc call look set classic
 //
 // A look has two halves:
 //
@@ -146,8 +141,8 @@
 
 .import "Styles.js" as Styles
 
-// the look that can't be removed, and the one used when the chosen look is gone
-var fallback = "singularity"
+// the look used when the chosen one is gone
+var fallback = "classic"
 
 // shared defaults for the fixed half, so each look only states what differs
 var base = {
@@ -158,9 +153,9 @@ var base = {
 }
 
 var looks = {
-    singularity: {
-        name: "Singularity",
-        description: "Grayscale channels: grouped bar, flyouts grown from it, // headings",
+    classic: {
+        name: "Classic",
+        description: "Greys and indigo, a double-stroked chip for every module, a full bar",
         palette: {
             base: "#0b0b0b", bar: "#121212", panel: "#141414", surface: "#1a1a1a", overlay: "#242424",
             border: "#303030", muted: "#4d4d4d", subtext: "#7a7a7a", text: "#d0e2fa", bright: "#ebebeb",
@@ -169,10 +164,11 @@ var looks = {
         // desaturated hard, so they read as a tinted grey rather than alerts
         good: "#7d9b7d", alert: "#a87676",
         settings: {
-            style: "channel", radius: 6, density: "normal", fontFamily: "UbuntuMono Nerd Font",
+            style: "double", radius: 6, density: "normal", fontFamily: "UbuntuMono Nerd Font",
         },
     },
 }
+var order = Object.keys(looks)
 
 // The settings a look doesn't state. Filled in rather than left out so
 // picking any look sets all of them -- otherwise leaving a bottom-bar look
@@ -247,7 +243,7 @@ var accents = [
 
 // The look the template configs (wofi, starship, fastfetch) are written in:
 // their colours are this ramp, and AppearanceSync maps each one to the current role.
-var reference = "singularity"
+var reference = "classic"
 
 // Fonts the Appearance page offers: monospace faces only, each as its plain
 // "Nerd Font" family. Not the "Nerd Font Mono" variant, which squashes every

@@ -147,7 +147,7 @@ Singleton {
     // What the accent picker offers: the look's own accent first, then the
     // presets in Looks.js, then the accent in use if it's a custom one.
     readonly property string lookAccent: {
-        var l = LookStore.looks[adapter.look]
+        var l = Looks.looks[adapter.look]
         return l && l.accent ? l.accent : ""
     }
     readonly property var accents: {
@@ -163,7 +163,7 @@ Singleton {
         colourMode:   ["grayscale", "wallpaper"],
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
         colourVariant: ["dark", "light"],
-        look:         LookStore.order,
+        look:         Looks.order,
         style:        Styles.order,
         density:      ["compact", "normal", "roomy"],
         fontFamily:   Fonts.available,
@@ -243,7 +243,7 @@ Singleton {
         if (key && keyedLabels[key] && keyedLabels[key][v]) return keyedLabels[key][v]
         if (key === "style") return Styles.get(v).name
         if (choiceLabels[v]) return choiceLabels[v]
-        if (LookStore.looks[v]) return LookStore.looks[v].name
+        if (Looks.looks[v]) return Looks.looks[v].name
         return Looks.fontLabels[v] || Looks.systemFontLabels[v] || v
     }
 
@@ -627,7 +627,7 @@ Singleton {
     // taken in grayscale mode: in wallpaper mode it keeps the lower wallpaper
     // default (see seeThroughDefaults), which a look's value would undo.
     function applyLook(name) {
-        var l = LookStore.looks[name]
+        var l = Looks.looks[name]
         if (!l) return
         root.applyLayout(adapter.look, name)
         adapter.look = name
@@ -641,7 +641,7 @@ Singleton {
     // The user's arrangement is set aside on the way in and put back on the
     // way out to a look without one.
     function applyLayout(from, to) {
-        var a = LookStore.looks[from], b = LookStore.looks[to]
+        var a = Looks.looks[from], b = Looks.looks[to]
         var lay = b && b.layout
         var hadOwn = !(a && a.layout)
         if (!lay) {
@@ -668,7 +668,7 @@ Singleton {
     // otherwise.
     readonly property bool baselineIsDefault: (adapter.userDefaults || {}).look === adapter.look
     readonly property var lookBaseline: {
-        var l = LookStore.looks[adapter.look]
+        var l = Looks.looks[adapter.look]
         if (!l) return {}
         var u = adapter.userDefaults || {}
         var b = {}
@@ -679,7 +679,7 @@ Singleton {
 
     // true while every value the look carries is still the baseline's --
     // what the Appearance page shows as unchanged vs "customised"
-    readonly property bool lookPristine: !!LookStore.looks[adapter.look] && lookDiffs.length === 0
+    readonly property bool lookPristine: !!Looks.looks[adapter.look] && lookDiffs.length === 0
 
     // the keys of the look's settings that no longer have the baseline's
     // value, for the Appearance page's list of changes and its fields' markers
@@ -758,7 +758,7 @@ Singleton {
     // handler, which would also fire on a reload of the file. Grayscale's
     // default is the look's own.
     readonly property var seeThroughDefaults: ({
-        grayscale: (LookStore.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.seeThrough,
+        grayscale: (Looks.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.seeThrough,
         wallpaper: 85,
     })
 
@@ -778,23 +778,6 @@ Singleton {
     // Back to the current look as designed, keeping the look itself and the
     // values no look sets (font size, motion, colour mode).
     function resetLook() { applyLook(adapter.look) }
-
-    // Removes a look on this machine (LookStore). Anything still pointing at it -- the
-    // look in use, or the saved default -- moves to the fallback first, so
-    // nothing is left naming a look that no longer exists.
-    // done(ok, message)
-    function removeLook(name, done) {
-        if (!LookStore.removable(name)) return
-        if (adapter.look === name) applyLook(Looks.fallback)
-        var u = adapter.userDefaults || {}
-        if (u.look === name) {
-            var c = {}
-            for (var k in u) c[k] = u[k]
-            c.look = Looks.fallback
-            adapter.userDefaults = c
-        }
-        LookStore.remove(name, done)
-    }
 
     // filter, not every(): every() stops at the first difference, and a
     // binding only re-runs for what it read last time (see widgetsDefault)
@@ -865,7 +848,7 @@ Singleton {
             property string colourMode: "grayscale"
             property string colourScheme: "scheme-tonal-spot"
             property string colourVariant: "dark"
-            property string look: "singularity"
+            property string look: "classic"
             property string style: "channel"
             property string styleOptions: ""
             property int seeThrough: 100

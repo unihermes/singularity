@@ -2,7 +2,7 @@
 
 The design decisions for the shell's UI, element by element. Read this before
 changing or adding UI, so new pieces match what is already there. Values come
-from `services/Theme.qml`; the look that sets them is `singularity` in
+from `services/Theme.qml`; the look that sets them is `classic` in
 `services/Looks.js`.
 
 The current design is **Channel** (settled 2026-10-01): grayscale, rounded,
