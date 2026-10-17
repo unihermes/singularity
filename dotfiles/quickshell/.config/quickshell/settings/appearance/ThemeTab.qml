@@ -329,7 +329,20 @@ SettingsTab {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SPACE" }
 
-    Tiles { key: "density"; label: "Density"; hint: "Spacing, bar height and gaps"; art: densityArt }
+    // a preset for the three dials: Spacing and Row height here, Height on
+    // the Bar tab; Custom shows once a dial leaves every preset
+    SettingsField {
+        label: "Density"
+        hint: Settings.density === "custom" ? "Your own: set by the dials" : "Presets for Spacing, Row height, bar height"
+        Choices {
+            key: "density"
+            model: Settings.density === "custom" ? Settings.choices.density : Settings.choices.density.slice(0, 3)
+        }
+    }
+
+    Stepper { label: "Spacing"; hint: "Every gap and padding"; key: "spacing"; step: 5; suffix: "%" }
+
+    Stepper { label: "Row height"; hint: "Lists, fields and chips; text never clips"; key: "rowScale"; step: 5; suffix: "%" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "TEXT" }
@@ -463,40 +476,6 @@ SettingsTab {
                             radius: 1
                             color: chip.lit && (ya.v === "solid" || ya.v === "glass") ? "#ffffff" : Theme.text
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    // rows packed as each density packs them
-    Component {
-        id: densityArt
-        Rectangle {
-            id: da
-            readonly property string v: parent ? parent.value : ""
-            readonly property int gap: v === "compact" ? 2 : v === "roomy" ? 6 : 4
-            width: Theme.fs(64)
-            height: Theme.fs(34)
-            radius: Theme.radius > 0 ? Theme.radius + 2 : 0
-            color: Theme.surface
-            border.width: Theme.borderWidth
-            border.color: Theme.muted
-            clip: true
-
-            Column {
-                x: da.gap + 4
-                y: da.gap + 3
-                width: da.width - x * 2
-                spacing: da.gap
-                Repeater {
-                    model: 4
-                    Rectangle {
-                        required property int index
-                        width: parent.width * (index === 0 ? 0.6 : 1)
-                        height: 3
-                        radius: 1.5
-                        color: index === 0 ? Theme.subtext : Theme.muted
                     }
                 }
             }

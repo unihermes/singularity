@@ -44,7 +44,7 @@ Singleton {
     // Everything the style and the dials beside it decide (Styles.resolve)
     readonly property var resolved: Styles.resolve({
         style: Settings.style, styleOptions: Settings.styleOptions, radius: Settings.radius, barStyle: Settings.barStyle,
-        density: Settings.density, seeThrough: Settings.seeThrough, shadows: Settings.shadows,
+        barHeight: Settings.barHeight, spacing: Settings.spacing, seeThrough: Settings.seeThrough, shadows: Settings.shadows,
         heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim })
     // the style in force: what every component that draws its own way
     // per style switches on
@@ -286,11 +286,12 @@ Singleton {
 
     // --- spacing ---------------------------------------------------------------
 
-    readonly property real density: Looks.densities[Settings.density] || 1
+    // Space's dials: Spacing on every gap and padding, Row height on rows
+    readonly property real density: Settings.spacing / 100
     function sp(n) { return Math.round(n * density) }
-    // A text-bearing row: scaled with the font, and with density at half
-    // strength so compact rows tighten without clipping their text.
-    readonly property real densityHalf: 1 + (density - 1) / 2
+    // A text-bearing row: scaled with the font, and with Row height, so
+    // compact rows tighten without clipping their text.
+    readonly property real densityHalf: Settings.rowScale / 100
     function row(n) { return Math.round(fs(n) * densityHalf) }
     // A box that holds text -- a flyout's or a window's size, a label
     // column. Grows with roomy, whose padding would otherwise eat into it,
@@ -472,7 +473,7 @@ Singleton {
     // original 28 at the default 34, and the floor keeps the double border
     // from eating the whole chip at the smallest bar height.
     readonly property int moduleHeight: moduleTaskbar ? barHeight : Math.max(18, barHeight - 6)
-    readonly property int modulePadH:   moduleTaskbar ? sp(10) : sp(6)
+    readonly property int modulePadH:   sp(Settings.modulePad + (moduleTaskbar ? 4 : 0))
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // Shared width for the gauge modules only, so their fill bars are
@@ -482,7 +483,7 @@ Singleton {
     // The double frame eats 8px of the chip (outer stroke + a 2px-inset inner
     // one), so the icon is sized to the space left inside it. Capped to the
     // chip, so a large Font Size can't push icons out of it.
-    readonly property int iconSize:     Math.min(moduleHeight - 8, barFs(17))
+    readonly property int iconSize:     Math.min(moduleHeight - 8, barFs(Settings.barIconSize))
     // one size for every bar label (clock, media, counts), capped the same way
     readonly property int barLabelSize: Math.min(moduleHeight - 8, barFs(15))
 }

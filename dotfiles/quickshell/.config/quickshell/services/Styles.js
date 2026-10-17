@@ -108,9 +108,6 @@ var styles = {
     },
 }
 
-// bar height and the gap between modules, by density
-var densityBar = { compact: { height: 28, gap: 2 }, normal: { height: 32, gap: 2 }, roomy: { height: 36, gap: 4 } }
-
 function get(name) { return styles[name] }
 
 var windowDefaults = { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 }
@@ -143,10 +140,9 @@ function offValue(o) { return o.off !== undefined ? o.off : "none" }
 
 function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 
-// s: { style, styleOptions, radius, barStyle, density, seeThrough, shadows, heavyLines, flyoutAnim }
+// s: { style, styleOptions, radius, barStyle, barHeight, spacing, seeThrough, shadows, heavyLines, flyoutAnim }
 function resolve(s) {
     var st = styles[s.style]
-    var bar = densityBar[s.density] || densityBar.normal
     var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
     var prefix = st.prefix
@@ -164,8 +160,9 @@ function resolve(s) {
         barRadius: radius,
         flyoutAttach: attach,
         flyoutAnim: !s.flyoutAnim || s.flyoutAnim === "auto" ? st.anim : s.flyoutAnim,
-        barHeight: bar.height,
-        moduleGap: st.modules === "taskbar" ? 0 : bar.gap,
+        barHeight: s.barHeight,
+        // the gap between bar modules follows Spacing, never closing up
+        moduleGap: st.modules === "taskbar" ? 0 : Math.max(1, Math.round(2 * s.spacing / 100)),
         opacity: Math.round(s.seeThrough * see),
         headingPrefix: prefix,
         glass: !!st.glass,

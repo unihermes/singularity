@@ -37,7 +37,13 @@
 //     radius       Roundness: chips, panels, the bar and Hyprland's windows
 //     barStyle     "full" edge to edge, "floating" inset and rounded, or
 //                  "islands", each group of modules on its own ground
-//     density      "compact", "normal" or "roomy": spacing, bar height, gaps
+//     spacing      every gap and padding, in percent (Theme.sp)
+//     rowScale     row heights, in percent (Theme.row); text never clips
+//     barHeight    the bar's height in px; its chips grow with it
+//     barIconSize  the bar's glyphs, in px at the base font size
+//     modulePad    px either side of each bar module, before spacing
+//                  (Settings.densities names the usual sets of the first
+//                  three)
 //     edgeGap      px between the screen's edges and the windows, and a
 //                  floating bar or its islands; unstated, edgeGaps[barStyle]
 //     seeThrough   the bar's and panels' opacity, in percent
@@ -166,7 +172,7 @@ var looks = {
         // desaturated hard, so they read as a tinted grey rather than alerts
         good: "#7d9b7d", alert: "#a87676",
         settings: {
-            style: "double", radius: 6, density: "normal", fontFamily: "UbuntuMono Nerd Font",
+            style: "double", radius: 6, fontFamily: "UbuntuMono Nerd Font",
         },
     },
 }
@@ -185,6 +191,11 @@ var settingsBase = {
     // text on an accent fill: "auto" picks white or dark by the accent's
     // brightness
     accentText: "auto",
+    spacing: 100,
+    rowScale: 100,
+    barHeight: 32,
+    barIconSize: 17,
+    modulePad: 6,
     barStyle: "full",
     barPosition: "top",
     seeThrough: 100,
@@ -293,7 +304,11 @@ var systemFontLabels = {
     "Ubuntu Nerd Font": "Ubuntu", "Noto Sans": "Noto Sans",
 }
 
-// Density, as a factor on every gap and padding (Theme.sp) and, at half
-// strength, on row heights (Theme.row) -- so compact rows tighten a little
-// while the space between them tightens more.
-var densities = { compact: 0.75, normal: 1, roomy: 1.3 }
+// Density's presets: Spacing, Row height and Bar height at once. Rows
+// move half as far as the gaps, so compact rows tighten a little while the
+// space between them tightens more.
+var densities = {
+    compact: { spacing: 75, rowScale: 88, barHeight: 28 },
+    normal:  { spacing: 100, rowScale: 100, barHeight: 32 },
+    roomy:   { spacing: 130, rowScale: 115, barHeight: 36 },
+}

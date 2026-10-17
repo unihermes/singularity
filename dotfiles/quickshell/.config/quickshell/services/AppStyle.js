@@ -10,7 +10,7 @@
 //   c          hex colours: the ramp (base … bright), accent, onAccent
 //   isLight    the ramp's ground is light
 //   r          Styles.resolve()'s result
-//   density    "compact", "normal" or "roomy"
+//   spacing, rowScale   Space's dials, in percent
 //
 // What carries over: corners (Roundness; Flat's square), Density's control
 // heights, and the style's frame on controls and panels -- single, double
@@ -37,8 +37,6 @@ function mix(a, b, t) {
 }
 function alpha(hex, a) { var v = rgb(hex); return "rgba(" + v.join(", ") + ", " + a + ")" }
 
-var heights = { compact: 28, normal: 34, roomy: 42 }
-
 function setup(t) {
     var c = t.c, r = t.r
     var w = r.borderWidth
@@ -49,13 +47,13 @@ function setup(t) {
         panel: r.radius,
         round: r.radius === 0 ? 0 : 9999,
         check: Math.min(r.radius, 4),
-        h: heights[t.density] || heights.normal,
+        h: Math.round(34 * t.rowScale / 100),
         // a control's resting stroke, and the one it takes under the pointer
         stroke: r.frameStyle === "channel" ? c.muted : c.border,
         strokeHover: r.frameStyle === "channel" ? c.subtext : c.muted,
     }
     o.pad = Math.max(1, Math.round((o.h - 24) / 2))
-    o.padX = Math.round(10 * ({ compact: 0.8, normal: 1, roomy: 1.3 }[t.density] || 1))
+    o.padX = Math.round(10 * t.spacing / 100)
     return o
 }
 

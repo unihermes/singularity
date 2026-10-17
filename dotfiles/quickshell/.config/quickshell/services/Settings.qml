@@ -69,8 +69,27 @@ Singleton {
     readonly property alias shadows:     adapter.shadows
     readonly property alias heavyLines:  adapter.heavyLines
     readonly property alias levelColour: adapter.levelColour
-    // "compact", "normal" or "roomy"
-    readonly property alias density:     adapter.density
+    // Space's dials and the bar's size (Looks.js); `density` names the
+    // preset they match, "custom" for none
+    readonly property alias spacing:     adapter.spacing
+    readonly property alias rowScale:    adapter.rowScale
+    readonly property alias barHeight:   adapter.barHeight
+    readonly property alias barIconSize: adapter.barIconSize
+    readonly property alias modulePad:   adapter.modulePad
+    readonly property string density: {
+        for (var k in Looks.densities) {
+            var d = Looks.densities[k]
+            if (d.spacing === adapter.spacing && d.rowScale === adapter.rowScale && d.barHeight === adapter.barHeight) return k
+        }
+        return "custom"
+    }
+    function setDensity(name) {
+        var d = Looks.densities[name]
+        if (!d) return
+        adapter.spacing = d.spacing
+        adapter.rowScale = d.rowScale
+        adapter.barHeight = d.barHeight
+    }
     readonly property alias fontFamily:  adapter.fontFamily
     // GTK/Qt apps' font -- independent of fontFamily above, which is only the
     // shell's own (bar, launcher, notifications). Not part of a look and not
@@ -181,7 +200,7 @@ Singleton {
         accentText:   ["auto", "white", "dark"],
         look:         Looks.order,
         style:        Styles.order,
-        density:      ["compact", "normal", "roomy"],
+        density:      ["compact", "normal", "roomy", "custom"],
         fontFamily:   Fonts.available,
         systemFontFamily: Looks.systemFonts,
         terminalApp:  ["alacritty", "ghostty"],
@@ -566,6 +585,11 @@ Singleton {
     // out of range is corrected by the same numbers the UI enforces.
     readonly property var limits: ({
         radius:    { min: 0,  max: 14 },
+        spacing:   { min: 50, max: 160 },
+        rowScale:  { min: 80, max: 130 },
+        barHeight: { min: 22, max: 52 },
+        barIconSize: { min: 10, max: 28 },
+        modulePad: { min: 0, max: 16 },
         edgeGap:   { min: 0,  max: 30 },
         focusedOpacity:   { min: 50, max: 100 },
         unfocusedOpacity: { min: 50, max: 100 },
@@ -723,6 +747,7 @@ Singleton {
         else if (key === "look") applyLook(v)
         else if (key === "accent" || hexKeys.indexOf(key) !== -1) adapter[key] = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
         else if (key === "style") setStyle(v)
+        else if (key === "density") setDensity(v)
         else if (key === "barStyle") setBarStyle(v)
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
@@ -863,7 +888,11 @@ Singleton {
             property bool shadows: true
             property bool heavyLines: false
             property string levelColour: "accent"
-            property string density: "normal"
+            property int spacing: 100
+            property int rowScale: 100
+            property int barHeight: 32
+            property int barIconSize: 17
+            property int modulePad: 6
             property string fontFamily: "UbuntuMono Nerd Font"
             property string systemFontFamily: "Ubuntu Nerd Font"
             property string cursorTheme: "Bibata-Modern-Classic"

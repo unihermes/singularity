@@ -13,7 +13,7 @@ import ".."
 SettingsTab {
     tabId: "bar"
 
-    FlyoutHeading { text: "LAYOUT" }
+    FlyoutHeading { text: "BAR" }
 
     SettingsField {
         label: "Position"
@@ -34,6 +34,12 @@ SettingsTab {
         hint: "Where flyouts sit and the gaps at screen edges follow it"
         Choices { key: "barStyle" }
     }
+
+    Stepper { label: "Height"; hint: "The bar; its chips grow with it"; key: "barHeight"; step: 2; suffix: "px" }
+
+    Stepper { label: "Icon size"; hint: "The bar's glyphs, at the base font size"; key: "barIconSize"; suffix: "px" }
+
+    Stepper { label: "Module padding"; hint: "Room either side of each module"; key: "modulePad"; suffix: "px" }
 
     SettingsField {
         visible: Styles.get(Settings.style).options.every(o => o.key !== "barSeparator")

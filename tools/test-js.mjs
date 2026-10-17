@@ -89,7 +89,7 @@ test("Format picks units from the number", () => {
 
 test("Styles resolve every style, and Flat is square", () => {
     const S = load("Styles.js")
-    const base = { radius: 6, barStyle: "full", density: "normal", seeThrough: 100, shadows: true, heavyLines: false }
+    const base = { radius: 6, barStyle: "full", barHeight: 32, spacing: 100, seeThrough: 100, shadows: true, heavyLines: false }
     for (const name of S.order) {
         const r = S.resolve(Object.assign({ style: name }, base))
         assert.ok(r.frameStyle && r.moduleStyle, name)

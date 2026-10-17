@@ -589,7 +589,7 @@ Scope {
         var c = {}
         for (var i = 0; i < roleNames.length; i++) c[roleNames[i]] = hex(Theme[roleNames[i]])
         c.accent = hex(Theme.accent); c.onAccent = hex(onAccent())
-        return { c: c, isLight: Theme.isLight, r: Theme.resolved, density: Settings.density }
+        return { c: c, isLight: Theme.isLight, r: Theme.resolved, spacing: Settings.spacing, rowScale: Settings.rowScale }
     }
 
     function renderGtkCss() {
