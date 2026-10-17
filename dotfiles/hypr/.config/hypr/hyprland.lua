@@ -75,7 +75,12 @@ do
         return function()
             local open, target = openWindow(cmd)
             if open then
-                if target then hl.dispatch(hl.dsp.focus({ window = "address:" .. target.address })) end
+                if target then
+                    local addr = "address:" .. target.address
+                    -- focus alone leaves a floating window under the others
+                    hl.dispatch(hl.dsp.focus({ window = addr }))
+                    hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+                end
                 return
             end
             if markLaunch then markLaunch() end
