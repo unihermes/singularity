@@ -6,7 +6,6 @@
 // through Theme.controlBorder()/controlStroke(), and puts one of these over
 // itself for the rest:
 //   double   an inner stroke, inset, as on bar modules
-//   bevel    a raised chisel on buttons, a sunken well on fields
 //   channel  a groove inside the stroke: dark at rest, the accent and
 //            twice as wide when the control is lit (focused, selected)
 // Single and none are the stroke alone (or none), so this draws nothing
@@ -50,14 +49,5 @@ Item {
         // fainter at rest, so the pair reads as one edge; lit with the state
         border.color: Qt.colorEqual(root.stroke, Theme.stroke)
             ? Qt.rgba(Theme.frameStroke.r, Theme.frameStroke.g, Theme.frameStroke.b, 0.45) : Theme.frameStroke
-    }
-
-    Bevel {
-        visible: Theme.frameChiselled
-        anchors.fill: parent
-        raised: !root.sunken
-        light: Theme.bevelLight
-        dark: Theme.bevelDark
-        thickness: Theme.borderWidth
     }
 }

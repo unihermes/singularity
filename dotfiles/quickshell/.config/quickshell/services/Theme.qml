@@ -137,8 +137,8 @@ Singleton {
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
-    // Glass and Corners' glow option: lit things and panels glow in the accent
-    readonly property bool glow: (glass || frameCorners) && opt("glow")
+    // Glass's glow option: lit things glow in the accent
+    readonly property bool glow: glass && opt("glow")
 
     // --- type ------------------------------------------------------------------
 
@@ -201,39 +201,26 @@ Singleton {
     readonly property int radius:      resolved.radius
     // flyouts, windows, cards and wofi; and a floating bar or islands
     readonly property int panelRadius: resolved.panelRadius
-    // a capsule's floating bar or islands are pills
-    readonly property int barRadius:   style === "capsule" && !barFull ? barHeight / 2 : resolved.barRadius
+    readonly property int barRadius:   resolved.barRadius
     // One step in from the outer stroke. Floored at 0 because the radius is
     // user-settable down to square, and a negative radius draws nothing.
     readonly property int radiusInner: Math.max(0, radius - 2)
     // small controls inside a row: stepper buttons, drag handles
     readonly property int radiusSmall: Math.max(0, radius - 3)
     // "double" draws a second stroke inset inside panels and bar modules.
-    // "single" is the outer stroke alone. "bevel" is Win95's chiselled 3D
-    // edge (see Bevel.qml) instead of either. "none" draws no stroke at all
+    // "single" is the outer stroke alone. "none" draws no stroke at all
     // -- the ground colour alone marks the edge.
     readonly property string frameStyle: resolved.frameStyle
     readonly property bool frameDouble: frameStyle === "double"
-    readonly property bool frameBevel:  frameStyle === "bevel"
     readonly property bool frameNone:   frameStyle === "none"
     // "channel": an outer line, a dark groove, an inner line; lit states
     // light the groove in the accent (Channel.qml)
     readonly property bool frameChannel: frameStyle === "channel"
-    // "corners": only the corners drawn (CornerMarks.qml), over a faint hairline
-    readonly property bool frameCorners: frameStyle === "corners"
-    // bevel: drawn with Bevel pairs rather than a border
-    readonly property bool frameChiselled: frameBevel
-    // every style but these draws the plain outer stroke
-    readonly property bool frameStroked: !frameChiselled && !frameNone && !frameCorners
+    // every style but None draws the plain outer stroke
+    readonly property bool frameStroked: !frameNone
     // the runs of rows inside a panel (SectionRuns): framed in every style
     // but Flat, whose panels hold their rows bare
     readonly property bool sectionFramed: style !== "flat"
-    // Corners' hairline under its marks
-    readonly property color cornerHairline: Qt.rgba(border.r, border.g, border.b, 0.6)
-    // how long a corner mark runs: on chips and controls, and on panels
-    // (shorter without Corners' large-corners option)
-    readonly property int cornerSmall: 6
-    readonly property int cornerLarge: opt("big") ? 12 : 7
 
     // The channel's three bands, outside in: the outer line, the groove,
     // the inner line. channelWidth is all of them, the first clear pixel.
@@ -253,11 +240,9 @@ Singleton {
     readonly property int panelFrameRadius: frameChannel ? channelPanelRadius : panelRadius
     // A control's own stroke inside a panel (chips, fields, steppers,
     // cards), given the colour its state asks for: kept for the stroked
-    // styles, dropped under Bevel -- ControlEdge.qml draws its edge -- and
-    // under None kept only where a lit or focused state shows.
+    // styles, and under None kept only where a lit or focused state shows.
     function controlBorder(c) {
         if (frameStroked) return borderWidth
-        if (frameChiselled || frameCorners) return 0
         return Qt.colorEqual(c, stroke) || Qt.colorEqual(c, "transparent") ? 0 : borderWidth
     }
     function controlStroke(c) {
@@ -273,18 +258,9 @@ Singleton {
     readonly property int borderWidth: resolved.borderWidth
     // how far the inner stroke sits inside a panel's outer one
     readonly property int frameInset:  3
-    // The bevel's own highlight/shadow pair, for looks that ask for one.
-    // Looks that don't (bevel: null) get a computed pair off the border
-    // colour, so frameBevel never has to be a look-specific escape hatch --
-    // any look can be switched to it from the Appearance page.
-    readonly property var bevel: look.bevel || { light: Qt.lighter(border, 1.8), dark: Qt.darker(border, 1.8) }
-    readonly property color bevelLight: bevel.light
-    readonly property color bevelDark:  bevel.dark
     // How a list marks its current row (FlyoutRow): "tick" on the left
-    // edge, "tint" an accent-tinted ground, "fill" the whole row in the
-    // accent, or "corners"
-    readonly property string rowMark: ({
-        solid: "tint", capsule: "tint", bevel: "fill", corners: "corners" })[style] || "tick"
+    // edge, or "tint" an accent-tinted ground
+    readonly property string rowMark: style === "solid" ? "tint" : "tick"
     // the left-edge bar marking the current row in a list
     readonly property int indicatorWidth: 2
     readonly property int meterHeight: 6
@@ -381,10 +357,8 @@ Singleton {
     //
     // Islands are inset the same way, each group of modules on its own
     // floating ground instead of one bar.
-    // Capsule's one-pill option joins islands into one floating pill
-    readonly property bool barOnePill: style === "capsule" && opt("one") && Settings.barStyle !== "full"
-    readonly property bool barFloating: Settings.barStyle === "floating" || barOnePill
-    readonly property bool barIslands:  Settings.barStyle === "islands" && !barOnePill
+    readonly property bool barFloating: Settings.barStyle === "floating"
+    readonly property bool barIslands:  Settings.barStyle === "islands"
     readonly property bool barFull:     !barFloating && !barIslands
     readonly property int barMargin:  barFull ? 0 : Settings.edgeGap
     readonly property int barExtent:  barHeight + barMargin * 2
@@ -413,7 +387,6 @@ Singleton {
     readonly property string iconTint: Settings.iconTint
     // under panels and solid chips -- see Looks.js and flyouts/Shadow.qml
     readonly property string shadow: resolved.shadow
-    readonly property int shadowOffset: Math.max(3, borderWidth * 2)
     // the bar's audio visualizer -- see Looks.js
     readonly property string vizStyle: Settings.vizStyle
     // a top-to-bottom shading on grounds -- see Looks.js
@@ -435,8 +408,6 @@ Singleton {
     // the ALT+Tab switcher -- see Looks.js and AltTabSwitcher
     readonly property string altTabStyle: Settings.altTabStyle
     readonly property string altTabScope: Settings.altTabScope
-    // a bar module under the pointer -- see Looks.js and ModuleFrame
-    readonly property string hoverStyle: resolved.hoverStyle
     // between the bar's modules, and the room each gap takes with one
     readonly property string barSeparator: Settings.barSeparator
     readonly property int moduleSpacing: moduleGap + (barSeparator === "none" ? 0 : spaceL)
@@ -446,7 +417,6 @@ Singleton {
     readonly property string launcherPosition: Settings.launcherPosition
     // the launcher -- see Looks.js and flyouts/Launcher.qml
     readonly property string launcherLayout: Settings.launcherLayout
-    readonly property string flyoutTitle: resolved.flyoutTitle
     readonly property string flyoutAttach: resolved.flyoutAttach
     // how flyouts open and where they sit -- see Looks.js and FlyoutPanel
     readonly property string flyoutAnim: resolved.flyoutAnim
@@ -465,7 +435,7 @@ Singleton {
     // screen edge's side of the open one
     readonly property bool moduleTaskbar: moduleStyle === "taskbar"
     // the styles whose open chip fills with the accent
-    readonly property bool moduleOpenFill: moduleStyle === "filled" || moduleStyle === "pill"
+    readonly property bool moduleOpenFill: moduleStyle === "filled"
     readonly property int groupHeight: moduleHeight + 2
     readonly property int groupRadius: radius > 0 ? radius + channelWidth : 0
     // "grown": a flyout hangs off its module's group, one outline round both

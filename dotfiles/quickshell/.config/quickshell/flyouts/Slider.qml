@@ -6,11 +6,8 @@
 // for the sake of one widget. A track drawn the style's way, and a drag:
 //   channel    a level chip, the fill in a dark groove, a bright marker
 //   double     a stroked well with the fill inside
-//   solid      a thick bar          capsule   a tall pill
+//   solid      a thick bar
 //   glass      a thin frosted line with a round accent thumb
-//   bevel      a sunken groove and a raised block thumb
-//   tabbed     ten notches
-//   corners    dashes and a diamond
 //   flat       a thin line, an upright rounded thumb
 
 import QtQuick
@@ -93,19 +90,16 @@ Item {
         }
 
         // a well with the fill inside it: double (a stroked well), solid
-        // (a thick bar), capsule (a tall pill)
+        // (a thick bar)
         Rectangle {
             id: well
-            visible: ["double", "solid", "capsule"].indexOf(track.kind) !== -1
+            visible: track.kind === "double" || track.kind === "solid"
             readonly property int pad: track.kind === "double" ? Theme.borderWidth + 2 : 0
             y: Math.round((parent.height - height) / 2)
             width: parent.width
-            height: track.kind === "double" ? Math.round(track.height * 0.75)
-                : track.kind === "solid" ? Math.round(track.height * 0.6)
-                : track.height
+            height: Math.round(track.height * (track.kind === "double" ? 0.75 : 0.6))
             radius: track.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : height / 2
-            color: track.kind === "double" ? "transparent"
-                : track.kind === "capsule" ? Theme.overlay : Theme.meterTrack
+            color: track.kind === "double" ? "transparent" : Theme.meterTrack
             border.width: track.kind === "double" ? Theme.borderWidth : 0
             border.color: track.hot ? Theme.strokeHover : Theme.stroke
 
@@ -120,44 +114,19 @@ Item {
         }
 
         // a thin line with a thumb: glass (frosted, a round accent thumb
-        // that glows), corners (dashes and a diamond), bevel (a sunken
-        // groove and a raised block), flat (an upright rounded thumb)
+        // that glows), flat (an upright rounded thumb)
         Rectangle {
             id: line
-            visible: ["glass", "corners", "bevel", "flat"].indexOf(track.kind) !== -1
+            visible: track.kind === "glass" || track.kind === "flat"
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
-            height: track.kind === "glass" || track.kind === "bevel" ? 4 : Math.max(2, Theme.borderWidth * 2)
+            height: track.kind === "glass" ? 4 : Math.max(2, Theme.borderWidth * 2)
             radius: track.kind === "glass" ? 2 : 0
             color: track.kind === "glass" ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.08) : Qt.rgba(1, 1, 1, 0.1))
-                : track.kind === "bevel" ? Theme.base
-                : track.kind === "corners" ? "transparent"
-                : track.kind === "flat" ? (track.hot ? Theme.subtext : Theme.muted) : Theme.border
-
-            Bevel {
-                visible: track.kind === "bevel"
-                anchors.fill: parent
-                raised: false
-                light: Theme.bevelLight
-                dark: Theme.bevelDark
-                thickness: 1
-            }
-
-            // Corners' dashes
-            Row {
-                visible: track.kind === "corners"
-                anchors.fill: parent
-                spacing: 3
-                clip: true
-                Repeater {
-                    model: track.kind === "corners" ? Math.ceil(line.width / 6) : 0
-                    Rectangle { width: 3; height: line.height; color: Theme.muted }
-                }
-            }
+                : track.hot ? Theme.subtext : Theme.muted
 
             // the part up to the value, in the level colour
             Rectangle {
-                visible: track.kind !== "bevel"
                 width: line.width * track.frac
                 height: parent.height
                 radius: parent.radius
@@ -168,11 +137,8 @@ Item {
         Item {
             id: thumb
             visible: line.visible
-            readonly property int size: track.kind === "bevel" || track.kind === "flat" ? track.height
-                : track.kind === "glass" ? Math.round(track.height * 0.85)
-                : track.kind === "corners" ? Math.round(track.height * 0.55) : Math.round(track.height * 0.62)
-            width: track.kind === "bevel" ? Math.round(size * 0.55)
-                : track.kind === "flat" ? Math.max(6, Math.round(size * 0.4)) : size
+            readonly property int size: track.kind === "flat" ? track.height : Math.round(track.height * 0.85)
+            width: track.kind === "flat" ? Math.max(6, Math.round(size * 0.4)) : size
             height: size
             anchors.verticalCenter: parent.verticalCenter
             x: Math.max(0, Math.min(track.width - width, track.width * track.frac - width / 2))
@@ -186,42 +152,10 @@ Item {
             }
             Rectangle {
                 anchors.fill: parent
-                rotation: track.kind === "corners" ? 45 : 0
-                scale: track.kind === "corners" ? 0.75 : 1
-                radius: track.kind === "glass" || track.kind === "flat" ? width / 2 : 0
-                color: track.kind === "bevel" ? Theme.panel
-                    : track.kind === "flat" && track.hot ? Theme.textStrong : root.fillColor
+                radius: width / 2
+                color: track.kind === "flat" && track.hot ? Theme.textStrong : root.fillColor
                 border.width: track.kind === "glass" ? 2 : 0
                 border.color: Theme.isLight ? Qt.rgba(1, 1, 1, 0.9) : Qt.rgba(1, 1, 1, 0.3)
-                Bevel {
-                    visible: track.kind === "bevel"
-                    anchors.fill: parent
-                    raised: true
-                    light: Theme.bevelLight
-                    dark: Theme.bevelDark
-                    thickness: Theme.borderWidth
-                }
-            }
-        }
-
-        // tabbed's ten notches
-        Row {
-            visible: track.kind === "tabbed"
-            readonly property int count: 10
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width
-            height: Math.round(track.height * 0.45)
-            spacing: 2
-            Repeater {
-                model: parent.visible ? parent.count : 0
-                Rectangle {
-                    required property int index
-                    readonly property bool lit: track.frac > 0 && (index + 0.5) / parent.count <= track.frac
-                    width: (parent.width - parent.spacing * (parent.count - 1)) / parent.count
-                    height: parent.height
-                    radius: Math.min(2, Theme.radiusSmall)
-                    color: lit ? root.fillColor : Theme.overlay
-                }
             }
         }
 

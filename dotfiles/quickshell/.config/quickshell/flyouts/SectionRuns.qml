@@ -7,8 +7,6 @@
 //   channel  the channel's three bands
 //   double   an outer stroke and an inner one inset
 //   single   one stroke
-//   bevel    a sunken chisel, a well in the raised panel
-//   corners  short marks at the corners
 //   none     the ground alone
 // and nothing at all under Flat (Theme.sectionFramed).
 // Put it beside the column, under it, and say where the column's top sits
@@ -81,8 +79,6 @@ Item {
                 border.width: Theme.frameStroked ? Theme.borderWidth : 0
                 border.color: Theme.stroke
 
-                CornerMarks { visible: Theme.frameCorners }
-
                 Rectangle {
                     visible: Theme.frameDouble
                     anchors.fill: parent
@@ -91,15 +87,6 @@ Item {
                     color: "transparent"
                     border.width: Theme.borderWidth
                     border.color: Theme.frameStroke
-                }
-
-                Bevel {
-                    visible: Theme.frameBevel
-                    anchors.fill: parent
-                    raised: false
-                    light: Theme.bevelLight
-                    dark: Theme.bevelDark
-                    thickness: Theme.borderWidth
                 }
             }
         }

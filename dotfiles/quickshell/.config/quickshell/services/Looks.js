@@ -22,8 +22,6 @@
 //     accent         the one hue for marks: selection ticks, focus, current
 //                    items. null = the ramp's bright, a colourless look
 //     good, alert    status hues
-//     bevel          { light, dark }, or null: the Bevel style's chiselled
-//                    edge (Bevel.qml); null computes a pair off `border`
 //     scrim          how dark full-screen overlays dim the desktop
 //     motion         a factor on every animation; 0 for a look that should
 //                    never move (e-ink)
@@ -147,7 +145,6 @@ var fallback = "classic"
 // shared defaults for the fixed half, so each look only states what differs
 var base = {
     accent: null,
-    bevel: null,
     scrim: 0.4,
     motion: 1,
 }

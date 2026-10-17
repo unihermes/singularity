@@ -10,14 +10,12 @@
 //   c          hex colours: the ramp (base … bright), accent, onAccent
 //   isLight    the ramp's ground is light
 //   r          Styles.resolve()'s result
-//   st         the style's own table (Styles.get)
 //   density    "compact", "normal" or "roomy"
 //
-// What carries over: corners (Roundness; Capsule's pills, Bevel's
-// square), Density's control heights, and the style's frame on controls
-// and panels -- single, double or channel strokes, Bevel's bevels, none --
-// with hover drawn the style's way. Shadows, see-through, title bars and
-// heading case stay the toolkit's, so apps keep their own legibility.
+// What carries over: corners (Roundness; Flat's square), Density's control
+// heights, and the style's frame on controls and panels -- single, double
+// or channel strokes, or none -- with a fill on hover. Shadows, see-through
+// and heading case stay the toolkit's, so apps keep their own legibility.
 //
 // A user sheet outranks the theme's rules whatever their selectors, so
 // every rule here sets only the properties it means to change, and states
@@ -33,8 +31,6 @@ function rgb(hex) {
 function toHex(v) {
     return "#" + v.map(x => ("0" + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2)).join("")
 }
-// Qt.lighter / Qt.darker on a grey-ish colour: every channel scaled
-function scale(hex, f) { return toHex(rgb(hex).map(x => x * f)) }
 function mix(a, b, t) {
     var x = rgb(a), y = rgb(b)
     return toHex(x.map((v, i) => v + (y[i] - v) * t))
@@ -44,21 +40,19 @@ function alpha(hex, a) { var v = rgb(hex); return "rgba(" + v.join(", ") + ", " 
 var heights = { compact: 28, normal: 34, roomy: 42 }
 
 function setup(t) {
-    var c = t.c, r = t.r, st = t.st
-    var pill = st.modules === "pill"
+    var c = t.c, r = t.r
     var w = r.borderWidth
     var o = {
-        c: c, r: r, st: st, w: w,
+        c: c, r: r, w: w,
         frame: r.frameStyle,
-        ctl: pill ? 9999 : r.radius,
-        panel: pill ? Math.max(12, r.radius) : r.radius,
+        ctl: r.radius,
+        panel: r.radius,
         round: r.radius === 0 ? 0 : 9999,
-        check: pill ? 9999 : Math.min(r.radius, 4),
+        check: Math.min(r.radius, 4),
         h: heights[t.density] || heights.normal,
         // a control's resting stroke, and the one it takes under the pointer
         stroke: r.frameStyle === "channel" ? c.muted : c.border,
         strokeHover: r.frameStyle === "channel" ? c.subtext : c.muted,
-        bevelLight: scale(c.border, 1.8), bevelDark: scale(c.border, 1 / 1.8),
     }
     o.pad = Math.max(1, Math.round((o.h - 24) / 2))
     o.padX = Math.round(10 * ({ compact: 0.8, normal: 1, roomy: 1.3 }[t.density] || 1))
@@ -74,10 +68,6 @@ function rings(list) {
     }
     return out
 }
-function bevel(o, sunken) {
-    var a = sunken ? o.bevelDark : o.bevelLight, b = sunken ? o.bevelLight : o.bevelDark
-    return ["inset " + o.w + "px " + o.w + "px " + a, "inset -" + o.w + "px -" + o.w + "px " + b]
-}
 // a panel's frame drawn on ground `bg`: cards, boxed lists, popovers, frames
 function panelFrame(o, bg) {
     var c = o.c, w = o.w
@@ -85,14 +75,11 @@ function panelFrame(o, bg) {
     case "single": return rings([[w, c.border]])
     case "double": return rings([[w, c.border], [2, bg], [w, c.muted]])
     case "channel": return rings([[w, c.muted], [2, c.base], [w, c.border]])
-    case "bevel": return bevel(o, false)
-    case "corners": return rings([[w, alpha(c.border, 0.6)]])
     case "none": return []
     }
     return null
 }
 function controlFrame(o, colour) {
-    if (o.frame === "bevel") return bevel(o, false)
     if (o.frame === "none") return []
     return rings([[o.w, colour]])
 }
@@ -133,33 +120,25 @@ function gtk(t, v) {
     css += block("list.boxed-list > row:first-child, list.content > row:first-child", { "border-top-left-radius": px(o.panel), "border-top-right-radius": px(o.panel) })
     css += block("list.boxed-list > row:last-child, list.content > row:last-child", { "border-bottom-left-radius": px(o.panel), "border-bottom-right-radius": px(o.panel) })
     css += block("modelbutton, " + (v === 4 ? "popover.menu > contents > * row, popover.menu modelbutton" : "menuitem") + ", .navigation-sidebar > row, placessidebar row, stacksidebar row",
-        { "border-radius": px(Math.max(0, o.ctl === 9999 ? 9999 : o.panel - 2)) })
+        { "border-radius": px(Math.max(0, o.panel - 2)) })
     css += block("check", { "border-radius": px(o.check) })
-    css += block("switch, " + slider, { "border-radius": px(o.round === 0 ? 0 : o.ctl === 9999 ? 9999 : Math.max(o.ctl, 2)) })
+    css += block("switch, " + slider, { "border-radius": px(o.round === 0 ? 0 : Math.max(o.ctl, 2)) })
     css += block("scale trough, scale highlight, scale fill, progressbar trough, progressbar progress, levelbar trough, levelbar block",
         { "border-radius": px(o.round === 0 ? 0 : 9999) })
     css += block("scale slider", { "border-radius": px(o.round === 0 ? 0 : 9999) })
-    css += block("notebook > header > tabs > tab, tabbar tab", { "border-radius": px(o.ctl === 9999 ? 9999 : o.ctl) })
+    css += block("notebook > header > tabs > tab, tabbar tab", { "border-radius": px(o.ctl) })
     css += block("headerbar", { "min-height": px(o.h + 12) })
 
 
-    // --- each style's strokes, bevels and hover ---
+    // --- each style's strokes and hover ---
     var rest = controlFrame(o, o.stroke)
-    var hoverOutline = t.r.hoverStyle === "outline"
     css += block(buttons + ", " + fields + ", check, radio, switch", { "box-shadow": shadowList(rest) })
     css += block("button.flat, button.titlebutton, button.circular.flat, headerbar button:not(.suggested-action):not(.destructive-action)", { "box-shadow": "none" })
-    if (o.frame !== "bevel" && o.frame !== "none") {
-        css += block("button:not(.flat):hover, menubutton > button:not(.flat):hover, dropdown > button:hover, combobox button.combo:hover" + (hoverOutline ? ", button.flat:hover" : ""),
+    if (o.frame !== "none") {
+        css += block("button:not(.flat):hover, menubutton > button:not(.flat):hover, dropdown > button:hover, combobox button.combo:hover",
             { "box-shadow": shadowList(rings([[o.w, o.strokeHover]])) })
         css += block("check:checked, radio:checked, switch:checked, button.suggested-action, button.destructive-action",
             { "box-shadow": "none" })
-    }
-    if (hoverOutline) css += block("button.flat:hover, button:not(.suggested-action):not(.destructive-action):hover, modelbutton:hover, .navigation-sidebar > row:hover",
-        { "background-color": "transparent", "background-image": "none" })
-    if (o.frame === "bevel") {
-        css += block("button:active, button:checked, button.flat:active, button.flat:checked", { "box-shadow": shadowList(bevel(o, true)) })
-        css += block(fields + ", check, radio, switch, scale trough, progressbar trough", { "box-shadow": shadowList(bevel(o, true)) })
-        css += block("button.flat:hover", { "box-shadow": shadowList(bevel(o, false)) })
     }
     // with no strokes, a control is found by its ground alone
     if (o.frame === "none") {
@@ -183,8 +162,6 @@ function gtk(t, v) {
         single: ["inset 0 -" + o.w + "px " + c.border],
         double: ["inset 0 -" + o.w + "px " + c.border, "inset 0 -" + (o.w + 2) + "px " + c.surface, "inset 0 -" + (2 * o.w + 2) + "px " + c.muted],
         channel: ["inset 0 -" + o.w + "px " + c.border, "inset 0 -" + (o.w + 2) + "px " + c.base, "inset 0 -" + (2 * o.w + 2) + "px " + c.muted],
-        bevel: bevel(o, false),
-        corners: ["inset 0 -" + o.w + "px " + alpha(c.border, 0.6)],
         none: [],
     }[o.frame]
     css += block("headerbar", { "box-shadow": shadowList(edge), "border-bottom": "none" })
@@ -197,7 +174,7 @@ function gtk(t, v) {
 }
 
 // The Qt stylesheet. Qt has no layered shadows, so double and channel are
-// a `double` border and bevels are two-tone borders; Fusion draws whatever
+// a `double` border; Fusion draws whatever
 // a rule here doesn't take over.
 function qss(t) {
     var o = setup(t), c = o.c, css = ""
@@ -211,29 +188,23 @@ function qss(t) {
         if (o.frame === "none") return "1px solid transparent"
         return lineW + "px solid " + col
     }
-    function bevelEdges(sunken) {
-        var a = sunken ? o.bevelDark : o.bevelLight, b = sunken ? o.bevelLight : o.bevelDark
-        return { "border-style": "solid", "border-width": lineW + "px",
-            "border-top-color": a, "border-left-color": a, "border-bottom-color": b, "border-right-color": b }
-    }
-    function rest(col) { return o.frame === "bevel" ? bevelEdges(false) : { "border": border(col) } }
+    function rest(col) { return { "border": border(col) } }
     function merge(a, b) { var out = {}; for (var k in a) out[k] = a[k]; for (var k2 in b) out[k2] = b[k2]; return out }
 
     css += block(buttons, merge(rest(o.stroke), {
         "background": c.surface, "color": c.text, "border-radius": ctlR,
         "min-height": px(o.h - 2 * o.pad - 2), "padding": px(o.pad) + " " + px(o.padX) }))
-    var hover = t.r.hoverStyle === "outline" ? { "border-color": o.strokeHover }
-        : t.r.hoverStyle === "none" ? {} : { "background": c.overlay }
-    if (o.frame !== "bevel" && o.frame !== "none" && t.r.hoverStyle !== "outline") hover["border-color"] = o.strokeHover
+    var hover = { "background": c.overlay }
+    if (o.frame !== "none") hover["border-color"] = o.strokeHover
     css += block("QPushButton:hover, QToolButton[popupMode]:hover, QComboBox:hover", hover)
     css += block("QPushButton:pressed, QPushButton:checked, QToolButton:checked",
-        merge(o.frame === "bevel" ? bevelEdges(true) : {}, { "background": c.overlay }))
+        { "background": c.overlay })
     css += block("QPushButton:default", { "background": c.accent, "color": c.onAccent, "border-color": c.accent })
     css += block("QPushButton:disabled, QComboBox:disabled, QLineEdit:disabled", { "color": c.muted })
     css += block("QToolButton", { "border-radius": ctlR, "padding": px(Math.max(2, o.pad - 1)) })
     css += block("QToolButton:hover", { "background": c.overlay })
 
-    css += block(fields, merge(o.frame === "bevel" ? bevelEdges(true) : { "border": border(o.stroke) }, {
+    css += block(fields, merge({ "border": border(o.stroke) }, {
         "background": c.bar, "color": c.text, "border-radius": ctlR, "min-height": px(o.h - 8),
         "padding": "0 " + px(Math.round(o.padX * 0.8)),
         "selection-background-color": c.accent, "selection-color": c.onAccent }))
@@ -241,8 +212,8 @@ function qss(t) {
     css += block("QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus", { "border": lineW + "px solid " + c.accent })
 
     css += block("QCheckBox::indicator, QRadioButton::indicator, QAbstractItemView::indicator", merge(
-        o.frame === "bevel" ? bevelEdges(true) : { "border": lineW + "px solid " + o.stroke },
-        { "width": "14px", "height": "14px", "background": o.frame === "none" ? c.overlay : c.bar, "border-radius": px(o.check === 9999 ? 8 : o.check) }))
+        { "border": lineW + "px solid " + o.stroke },
+        { "width": "14px", "height": "14px", "background": o.frame === "none" ? c.overlay : c.bar, "border-radius": px(o.check) }))
     css += block("QRadioButton::indicator", { "border-radius": o.round === 0 ? "0px" : "8px" })
     css += block("QCheckBox::indicator:checked, QRadioButton::indicator:checked, QAbstractItemView::indicator:checked",
         { "background": c.accent, "border-color": c.accent })
@@ -252,7 +223,7 @@ function qss(t) {
         : o.frame === "channel" ? (2 * lineW + 2) + "px double " + c.muted
         : o.frame === "none" ? "1px solid transparent"
         : lineW + "px solid " + c.border
-    var panel = o.frame === "bevel" ? bevelEdges(false) : { "border": panelBorder }
+    var panel = { "border": panelBorder }
     css += block("QGroupBox", merge(panel, { "border-radius": panelR, "margin-top": "1.4em", "padding": px(Math.round(o.padX * 0.8)), "background": c.surface }))
     css += block("QGroupBox::title", { "subcontrol-origin": "margin", "left": px(o.padX), "padding": "0 4px", "color": c.bright })
     css += block("QTabWidget::pane", merge(panel, { "border-radius": panelR, "top": "-1px", "background": c.surface }))
@@ -261,14 +232,14 @@ function qss(t) {
         "border-radius": ctlR, "margin": "2px", "min-height": px(o.h - 2 * o.pad - 6) })
     css += block("QTabBar::tab:selected", { "background": c.accent, "color": c.onAccent })
     css += block("QTabBar::tab:hover:!selected", { "background": c.overlay, "color": c.text })
-    css += block("QListView, QTreeView, QTableView, QListWidget, QTreeWidget", merge(o.frame === "bevel" ? bevelEdges(true) : { "border": panelBorder },
+    css += block("QListView, QTreeView, QTableView, QListWidget, QTreeWidget", merge({ "border": panelBorder },
         { "border-radius": panelR, "background": c.bar, "padding": "2px",
           "selection-background-color": c.accent, "selection-color": c.onAccent }))
-    css += block("QListView::item, QTreeView::item", { "border-radius": px(Math.max(0, o.ctl === 9999 ? 9999 : o.panel - 2)), "padding": px(Math.round(o.pad * 0.8)) + " " + px(6) })
+    css += block("QListView::item, QTreeView::item", { "border-radius": px(Math.max(0, o.panel - 2)), "padding": px(Math.round(o.pad * 0.8)) + " " + px(6) })
     css += block("QListView::item:hover, QTreeView::item:hover", { "background": c.overlay })
     css += block("QListView::item:selected, QTreeView::item:selected", { "background": c.accent, "color": c.onAccent })
     css += block("QMenu", merge(panel, { "background": t.isLight ? c.panel : c.overlay, "border-radius": panelR, "padding": "4px" }))
-    css += block("QMenu::item", { "padding": px(o.pad) + " " + px(o.padX + 6), "border-radius": px(Math.max(0, o.ctl === 9999 ? 9999 : o.panel - 2)) })
+    css += block("QMenu::item", { "padding": px(o.pad) + " " + px(o.padX + 6), "border-radius": px(Math.max(0, o.panel - 2)) })
     css += block("QMenu::item:selected", { "background": c.accent, "color": c.onAccent })
     css += block("QToolTip", { "border": border(c.border), "background": c.overlay, "color": c.text, "border-radius": panelR, "padding": "4px" })
 

@@ -16,7 +16,7 @@ SettingsTab {
 
     FlyoutHeading { text: "STYLE" }
 
-    Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 4 }
+    Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 5 }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SHAPE" }
@@ -25,7 +25,7 @@ SettingsTab {
         label: "Roundness"; key: "radius"; suffix: "px"
         enabled: !Styles.get(Settings.style).square
         hint: !enabled ? Styles.get(Settings.style).name + " keeps every corner square"
-            : Theme.moduleStyle === "pill" ? "Panels and windows; chips are pills" : "Chips, panels, the bar and every window"
+            : "Chips, panels, the bar and every window"
     }
 
     SettingsField {
@@ -156,14 +156,6 @@ SettingsTab {
                 color: Theme.bar
                 Rectangle { width: parent.width; height: 1; color: Theme.border }
             }
-            // Tabbed: the panel the open chip hangs into
-            Rectangle {
-                visible: ya.v === "tabbed"
-                x: ya.width / 2; y: ya.height / 2 + ya.ch / 2
-                width: ya.width / 2; height: ya.height - y
-                color: Theme.panel
-                border.width: 1; border.color: Theme.border
-            }
 
             Row {
                 anchors.centerIn: parent
@@ -179,15 +171,11 @@ SettingsTab {
                         Rectangle {
                             id: face
                             anchors.fill: parent
-                            visible: ["channel", "corners", "flat"].indexOf(ya.v) === -1
-                                && !(ya.v === "tabbed" && !chip.lit)
-                            radius: ya.v === "capsule" ? height / 2
-                                : ["bevel", "tabbed"].indexOf(ya.v) !== -1 ? 0 : ya.r
+                            visible: ya.v !== "channel" && ya.v !== "flat"
+                            radius: ya.r
                             color: ya.v === "glass" ? (chip.lit ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Qt.rgba(1, 1, 1, 0.08))
                                 : ya.v === "double" ? (chip.lit ? Theme.overlay : Theme.panel)
-                                : ya.v === "tabbed" ? Theme.panel
-                                : ya.v === "bevel" ? (chip.lit ? Theme.overlay : Theme.surface)
-                                : chip.lit ? Theme.accent : ya.v === "capsule" ? Theme.overlay : Theme.surface
+                                : chip.lit ? Theme.accent : Theme.surface
                             border.width: ya.v === "double" || ya.v === "glass" ? 1 : 0
                             border.color: ya.v === "glass" ? Qt.rgba(1, 1, 1, 0.2)
                                 : chip.lit ? Theme.accent : Theme.border
@@ -198,17 +186,6 @@ SettingsTab {
                                 radius: Math.max(0, parent.radius - 2)
                                 color: "transparent"
                                 border.width: 1; border.color: chip.lit ? Theme.muted : Theme.surface
-                            }
-                            Bevel {
-                                visible: ya.v === "bevel"
-                                anchors.fill: parent
-                                raised: !chip.lit
-                                light: Theme.bevelLight; dark: Theme.bevelDark
-                            }
-                            Rectangle {
-                                visible: ya.v === "tabbed"
-                                width: parent.width; height: 2
-                                color: Theme.accent
                             }
                         }
                         // Channel's open chip: a fill and an accent ring
@@ -228,20 +205,12 @@ SettingsTab {
                             color: Theme.overlay
                             Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 2; color: Theme.accent }
                         }
-                        // Corners: the marks only
-                        CornerMarks {
-                            visible: ya.v === "corners"
-                            length: 5
-                            thickness: 1
-                            color: chip.lit ? Theme.accent : Theme.muted
-                        }
                         // the icon
                         Rectangle {
                             anchors.centerIn: parent
                             width: Theme.fs(8); height: Theme.fs(5)
                             radius: 1
-                            color: chip.lit && ["solid", "capsule", "glass"].indexOf(ya.v) !== -1 ? "#ffffff"
-                                : chip.lit && ya.v === "corners" ? Theme.accent : Theme.text
+                            color: chip.lit && (ya.v === "solid" || ya.v === "glass") ? "#ffffff" : Theme.text
                         }
                     }
                 }

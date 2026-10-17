@@ -11,8 +11,8 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 ## Styles
 
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
-Channel, Double, Solid, Capsule, Glass, Bevel, Tabbed and Corners (settled
-2026-10-08 from two rounds of mockups), and Flat (2026-10-16). A style sets the frame,
+Channel, Double, Solid, Glass (settled 2026-10-08 from two rounds of
+mockups) and Flat (2026-10-16). A style sets the frame,
 bar modules, hover, level chips, focused window mark, flyout titles, heading
 prefix and where flyouts sit, all at once. Beside it are only dials that move
 everything together (Roundness, Bar shape, Density, See-through) and Finish
@@ -32,19 +32,13 @@ can state its own `styleOptions`.
 | Channel | no knob; accent fill in the groove | level chip with a marker | channel strip | outer line + groove | tick |
 | Double | stroked box, square knob turns accent | stroked well, fill inside | stroked strip, chosen ringed in accent | double-stroked chip | tick |
 | Solid | fat pill, white knob | thick bar | sunken track, raised accent pill | filled block | accent-tinted ground |
-| Capsule | pill (On / Off with `labels`) | tall pill | separate pills | pill | accent-tinted ground |
 | Glass | frosted track, knob glows | thin line, glowing round thumb | frosted strip | glass chip | tick |
-| Bevel | sunken checkbox, tick | groove + raised block thumb | radio buttons | raised button | whole row in the accent |
-| Tabbed | two-way Off \| On | ten notches | folder tabs | outlined chip | tick |
-| Corners | bracketed square knob | dashes + diamond | bracketed cells | corner marks, spaced caps | accent corners |
 | Flat | pill outlined in the text colour; on, accent with a white knob | thin line, upright rounded thumb | separate flat blocks, 2px apart | flat block, heavy outline on hover | tick |
 
 - **Bar chips:** Double outlines every module with an inner stroke 2px in,
-  faint at rest (lit with `lit`); Solid, Capsule and Glass fill the open
-  chip with the accent, and their open level chips keep the level and take
-  an accent ring instead; Corners draws only corner marks (`CornerMarks.qml`).
-- **Panels:** Corners is accent corner marks over a faint hairline, glowing
-  with `glow`.
+  faint at rest (lit with `lit`); Solid and Glass fill the open chip with
+  the accent, and their open level chips keep the level and take an accent
+  ring instead.
 - **Flat** is the Windows 10 take, in the look's own colours: square, one
   hairline round panels, no frames round the runs of rows inside them
   (`Theme.sectionFramed`), sentence-case headings with no rule. Its bar
@@ -60,15 +54,12 @@ can state its own `styleOptions`.
   the option off (or leaving Flat) brings the usual arrangement back. Its
   `barPosition` option puts the bar at the bottom (an option's `off` is
   the value it takes when off).
-- Capsule's `one` joins islands into one floating pill; Glass's `blur` and
-  `tint` change its frost; Bevel's `title` turns its title bars off and on.
+- Glass's `blur` and `tint` change its frost.
 
 Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.textOnAccent`) unless its row in the table says otherwise.
-Tabbed draws the open module as a real tab: its sides and top are stroked
-down into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
-Bevel, Corners and Flat keep every corner square whatever Roundness says (the
-style's `square`). The shell's layers blur what's behind them (a Hyprland layer rule), so
+Flat keeps every corner square whatever Roundness says (the style's
+`square`). The shell's layers blur what's behind them (a Hyprland layer rule), so
 Glass and see-through grounds stay readable. Level chips fill the whole chip
 in every style.
 
@@ -134,8 +125,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
   (13px).
 - **Sectioned:** each run of rows between headings and dividers sits in its
   own frame (panel ground, radius + 3), in place of divider lines. The frame
-  is the style's: a channel, a double or single stroke, a sunken bevel, or
-  the ground alone (`SectionRuns`). Settings pages and the System window
+  is the style's: a channel, a double or single stroke, or the ground
+  alone (`SectionRuns`). Settings pages and the System window
   are sectioned the same way under every style.
   `FlyoutPanel` works out the runs from the column's children. To start a new
   section, put a `FlyoutDivider` (or an item with `isSectionBreak: true`)

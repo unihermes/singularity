@@ -73,25 +73,16 @@ Item {
     implicitHeight: Theme.rowHeight
 
     // How the active entry is marked is the style's (Theme.rowMark): a
-    // tick on the left edge, an accent-tinted ground, the whole row filled
-    // with the accent, or corner marks
+    // tick on the left edge, or an accent-tinted ground
     readonly property string mark: Theme.rowMark
-    readonly property bool filled: root.highlighted && mark === "fill"
 
     Rectangle {
         anchors.fill: parent
         anchors.leftMargin: -Theme.spaceS
         anchors.rightMargin: -Theme.spaceS
-        radius: mark === "corners" ? 0 : Theme.radiusInner
-        color: root.filled ? Theme.accent
-            : root.highlighted && mark === "tint" ? Qt.tint(Theme.panel, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.24))
-            : root.highlighted && mark === "corners" ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.12)
+        radius: Theme.radiusInner
+        color: root.highlighted && mark === "tint" ? Qt.tint(Theme.panel, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.24))
             : mouse.containsMouse ? Theme.hoverFill : "transparent"
-
-        CornerMarks {
-            visible: root.highlighted && root.mark === "corners"
-            color: Theme.accent
-        }
     }
 
     // left edge tick on the active entry, instead of a fill: a filled row
@@ -148,7 +139,6 @@ Item {
         color: {
             if (root.alert || root.armed) return Theme.alert
             if (!root.enabled || root.dimmed) return Theme.subtext
-            if (root.filled) return Theme.textOnAccent
             if (root.highlighted || mouse.containsMouse) return Theme.textStrong
             return Theme.text
         }
@@ -246,8 +236,7 @@ Item {
         // the information itself, so it reads strong. On a clickable row
         // it's decoration -- a chevron, a check -- and stays quiet; a state
         // in flight (connecting) sits between the two.
-        color: root.filled ? Theme.textOnAccent
-            : root.trailingIsValue ? Theme.textStrong
+        color: root.trailingIsValue ? Theme.textStrong
             : root.busy ? Theme.text
             : root.enabled ? Theme.muted : Theme.textDisabled
         // icon glyphs turn up here (the check/ban marks on toggle rows),

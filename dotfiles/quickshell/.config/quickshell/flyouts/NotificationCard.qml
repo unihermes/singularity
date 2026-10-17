@@ -79,7 +79,7 @@ Item {
         Rectangle {
             visible: root.framed
             readonly property int inset: Theme.frameChannel ? Theme.channelWidth
-                : Theme.frameDouble || Theme.frameChiselled ? Theme.frameInset + Theme.borderWidth
+                : Theme.frameDouble ? Theme.frameInset + Theme.borderWidth
                 : Theme.frameStroked ? Theme.borderWidth : 0
             x: inset
             y: inset

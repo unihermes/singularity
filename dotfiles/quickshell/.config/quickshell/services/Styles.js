@@ -10,20 +10,16 @@
 //
 // Each style:
 //   frame      how panels and chips are stroked (Theme.frame*): "channel",
-//              "double", "single", "bevel", "corners" (only the corners
-//              drawn) or "none"
-//   modules    the bar chips (ModuleFrame): "grouped", "outline", "filled",
-//              "pill", "ghost", "cornered" or "taskbar" (bare slots the
-//              bar's full height, packed with no gaps)
-//   hover      a bar module under the pointer: "none" or "fill"
+//              "double", "single" or "none"
+//   modules    the bar chips (ModuleFrame): "grouped", "outline", "filled"
+//              or "taskbar" (bare slots the bar's full height, packed with
+//              no gaps)
 //   mark       how the open-windows strip marks the focused window:
-//              "pill", "ground", "box" or "above"
-//   title      a flyout's first heading: "none" or "titlebar"
-//   shadow     the kind the Shadows switch turns on: "none", "soft", "hard"
+//              "pill" or "ground"
+//   shadow     the kind the Shadows switch turns on: "none" or "soft"
 //   lines      whether it has strokes, i.e. whether Heavy lines does anything
-//   attach     where flyouts sit: "grown" from the bar group, "tab" hung
-//              from the bar, "floating", or "auto": flush on a full-width
-//              bar, floating on the others
+//   attach     where flyouts sit: "grown" from the bar group, "floating",
+//              or "auto": flush on a full-width bar, floating on the others
 //   anim       how flyouts open when Flyouts open is left to the style
 //   prefix     drawn in the accent before every heading
 //   glass      grounds a further 30% see-through, with a light hairline
@@ -49,12 +45,12 @@
 
 .pragma library
 
-var order = ["channel", "double", "solid", "capsule", "glass", "bevel", "tabbed", "corners", "flat"]
+var order = ["channel", "double", "solid", "glass", "flat"]
 
 var styles = {
     channel: {
         name: "Channel", hint: "Grooved bands; flyouts grow from the bar groups",
-        frame: "channel", modules: "grouped", hover: "fill", mark: "pill", title: "none",
+        frame: "channel", modules: "grouped", mark: "pill",
         shadow: "none", lines: true, attach: "grown", anim: "fade", prefix: "//",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
         options: [],
@@ -63,7 +59,7 @@ var styles = {
     },
     double: {
         name: "Double", hint: "Outlined chips, a stroke inside each",
-        frame: "double", modules: "outline", hover: "fill", mark: "pill", title: "none",
+        frame: "double", modules: "outline", mark: "pill",
         shadow: "none", lines: true, attach: "auto", anim: "drop", prefix: "",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
         options: [
@@ -75,7 +71,7 @@ var styles = {
     },
     solid: {
         name: "Solid", hint: "Filled blocks, no strokes",
-        frame: "none", modules: "filled", hover: "fill", mark: "ground", title: "none",
+        frame: "none", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "scale", prefix: "",
         finish: { barSeparator: "none", headingUpper: true, headingRule: false },
         options: [
@@ -85,21 +81,9 @@ var styles = {
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
-    capsule: {
-        name: "Capsule", hint: "Every chip, control and island a pill",
-        frame: "none", modules: "pill", hover: "fill", mark: "pill", title: "none",
-        shadow: "soft", lines: false, attach: "floating", anim: "scale", prefix: "",
-        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false },
-        options: [
-            { key: "shadows", label: "Shadows", hint: "Soft shadows under panels", on: true },
-            { id: "labels", label: "On / Off on switches", hint: "Switches say what they are", on: false },
-            { id: "one", label: "One pill for the whole bar", hint: "Islands joined into one long pill", on: true },
-        ],
-        windows: { focusedOpacity: 100, unfocusedOpacity: 95, terminalOpacity: 90 },
-    },
     glass: {
         name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
-        frame: "single", modules: "filled", hover: "fill", mark: "ground", title: "none",
+        frame: "single", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "fade", prefix: "", glass: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false },
         options: [
@@ -109,45 +93,9 @@ var styles = {
         ],
         windows: { focusedOpacity: 95, unfocusedOpacity: 85, terminalOpacity: 75 },
     },
-    bevel: {
-        name: "Bevel", hint: "Raised edges and title bars",
-        frame: "bevel", modules: "outline", hover: "none", mark: "box", title: "titlebar",
-        shadow: "hard", lines: true, attach: "auto", anim: "none", prefix: "", square: true,
-        finish: { barSeparator: "none", headingUpper: false, headingRule: true },
-        options: [
-            { id: "title", label: "Title bars on flyouts", hint: "An accent bar naming each flyout", on: true },
-            { key: "gradient", label: "Shaded grounds", hint: "A faint shade down the bar and panels", on: false },
-            { key: "shadows", label: "Hard drop shadow", hint: "A solid shadow under panels", on: true },
-        ],
-        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
-    },
-    tabbed: {
-        name: "Tabbed", hint: "Flyouts hang from the open tab",
-        frame: "single", modules: "ghost", hover: "fill", mark: "above", title: "none",
-        shadow: "soft", lines: true, attach: "tab", anim: "drop", prefix: "",
-        finish: { barSeparator: "none", gradient: false, headingRule: true },
-        options: [
-            { id: "lift", label: "Accent edge on the tab", hint: "The open tab's top edge in the accent", on: false },
-            { key: "shadows", label: "Shadows", hint: "Soft shadows under flyouts", on: false },
-            { key: "headingUpper", label: "Capital headings", hint: "VOLUME or Volume", on: false },
-        ],
-        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
-    },
-    corners: {
-        name: "Corners", hint: "Only the corners drawn",
-        frame: "corners", modules: "cornered", hover: "fill", mark: "box", title: "none",
-        shadow: "soft", lines: true, attach: "auto", anim: "fade", prefix: "▸", square: true,
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true },
-        options: [
-            { id: "big", label: "Large panel corners", hint: "Long accent corners on flyouts", on: true },
-            { id: "glow", label: "Glow on accents", hint: "Panels and lit chips glow", on: true },
-            { id: "dash", label: "Dashed rules", hint: "Headings' rules dashed", on: true },
-        ],
-        windows: { focusedOpacity: 100, unfocusedOpacity: 95, terminalOpacity: 90 },
-    },
     flat: {
         name: "Flat", hint: "Square and flat; a taskbar along the bottom",
-        frame: "single", modules: "taskbar", hover: "fill", mark: "pill", title: "none",
+        frame: "single", modules: "taskbar", mark: "pill",
         shadow: "soft", lines: true, attach: "auto", anim: "drop", prefix: "", square: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false },
         options: [
@@ -208,9 +156,7 @@ function resolve(s) {
         styleName: s.style,
         frameStyle: st.frame,
         moduleStyle: st.modules,
-        hoverStyle: st.hover,
         windowMark: st.mark,
-        flyoutTitle: s.style === "bevel" && !has(s.styleOptions, "title") ? "none" : st.title,
         shadow: s.shadows ? st.shadow : "none",
         borderWidth: s.heavyLines && st.lines ? 2 : 1,
         radius: radius,

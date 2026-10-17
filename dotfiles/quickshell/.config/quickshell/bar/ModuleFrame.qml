@@ -4,11 +4,8 @@
 // The bar's chip, wrapped around whatever you put in it. Children are laid
 // out in a centred Row. How it's drawn is Theme.moduleStyle:
 //   outline  an outer stroke, plus an inset inner one when frames are
-//            double, or a chiselled Bevel pair when they're bevel
+//            double
 //   filled   a solid ground, no stroke
-//   ghost    bare until hovered or open
-//   pill     filled, fully rounded
-//   cornered marks at the corners only -- Corners
 //   grouped  bare inside its section's channel (shell.qml): a fill on hover,
 //            an accent ring while open, a gauge filling the whole chip
 //   taskbar  a bare slot the bar's height -- Flat: a fill on hover and
@@ -59,13 +56,12 @@ Item {
     implicitWidth: frame.width
     implicitHeight: Theme.barHeight
 
-    // Theme.hoverStyle, while the pointer is on the chip and it isn't lit
+    // a fill while the pointer is on the chip and it isn't lit;
     // false for a chip whose items show their own hover (the open
     // windows): the chip itself then stays as it is under the pointer
     property bool hoverWhole: true
     HoverHandler { id: hover; enabled: root.hoverWhole }
     readonly property bool hovered: hover.hovered && !active
-    readonly property string hoverStyle: hovered ? Theme.hoverStyle : "none"
 
     Rectangle {
         id: frame
@@ -74,13 +70,12 @@ Item {
             ? root.fixedWidth
             : contentRow.implicitWidth + root.chrome
         readonly property string style: Theme.moduleStyle
-        readonly property bool solid: style === "filled" || style === "pill"
+        readonly property bool solid: style === "filled"
         readonly property bool grouped: style === "grouped"
-        readonly property bool cornered: style === "cornered"
         readonly property bool taskbar: style === "taskbar"
         // the gauge draws in the chip's interior
         readonly property bool track: root.gauge
-        // filled with the accent while open (Solid, Capsule, Glass);
+        // filled with the accent while open (Solid, Glass);
         // a level chip keeps its fill and takes an accent ring instead
         readonly property bool openFill: Theme.moduleOpenFill && root.active && !root.gauge
         readonly property bool openRing: root.active && (grouped || (Theme.moduleOpenFill && root.gauge))
@@ -90,18 +85,12 @@ Item {
             : Theme.style === "solid" && Theme.opt("tint") ? Qt.tint(Theme.surface, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16))
             : Theme.surface
 
-        readonly property bool bevel: Theme.frameChiselled && style === "outline"
-
         height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
-        radius: style === "pill" ? height / 2 : Theme.radius
+        radius: Theme.radius
         color: grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
             : openFill ? (Theme.glass ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Theme.accent)
-            : root.hoverStyle === "fill" ? (Theme.glass ? Theme.stroke : Theme.overlay)
-            : cornered && root.active ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16)
-            : cornered ? "transparent"
-            // open under a tab-style flyout: the flyout's own ground, so
-            // the chip reads as the tab it hangs from
-            : root.active ? (Theme.flyoutAttach === "tab" ? Theme.panelFill : Theme.selectedFill)
+            : root.hovered ? (Theme.glass ? Theme.stroke : Theme.overlay)
+            : root.active ? Theme.selectedFill
             : solid ? restFill : "transparent"
 
         border.width: style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
@@ -112,10 +101,9 @@ Item {
         Shadow {
             radius: frame.radius
             opaque: frame.solid
-            offset: Theme.shadowOffset
         }
 
-        // Glass and Corners' glow, round the open chip
+        // Glass's glow, round the open chip
         RectangularShadow {
             visible: Theme.glow && root.active
             anchors.fill: parent
@@ -123,20 +111,6 @@ Item {
             radius: frame.radius
             blur: Theme.sp(12)
             color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.45)
-        }
-
-        CornerMarks {
-            visible: frame.cornered
-            color: root.active ? Theme.accent : hover.hovered ? Theme.textStrong : Theme.muted
-        }
-
-        Bevel {
-            visible: frame.bevel
-            anchors.fill: parent
-            raised: true
-            light: Theme.bevelLight
-            dark: Theme.bevelDark
-            thickness: Theme.borderWidth
         }
 
         // inner stroke, inset -- the second half of the double border
@@ -149,18 +123,6 @@ Item {
             border.width: Theme.borderWidth
             // faint at rest unless Double's lit option is on
             border.color: root.active || Theme.opt("lit") ? Theme.frameStroke : Theme.surface
-        }
-
-        // the bevel's own second level: a sunken groove just inside the
-        // raised outer edge
-        Bevel {
-            visible: frame.bevel
-            anchors.fill: parent
-            anchors.margins: 2
-            raised: false
-            light: Theme.surface
-            dark: Theme.base
-            thickness: Theme.borderWidth
         }
 
         // Flush inside the double border: the outer stroke sits at 0..1, the
@@ -178,9 +140,9 @@ Item {
             // one less than the inner stroke's radius, being one pixel
             // further in, so the curves stay concentric -- floored because
             // the radius is user-settable down to square
-            radius: frame.style === "pill" ? height / 2 : frame.grouped ? frame.radius : Theme.radiusSmall
+            radius: frame.grouped ? frame.radius : Theme.radiusSmall
             color: frame.grouped || frame.taskbar ? (root.active || hover.hovered ? Theme.overlay : "transparent")
-                : frame.cornered ? "transparent" : Theme.meterTrack
+                : Theme.meterTrack
 
 
             Rectangle {
@@ -205,10 +167,9 @@ Item {
             }
         }
 
-        // Tabbed's accent edge option, and Flat's open slot: the outer
-        // edge lit, over any gauge fill
+        // Flat's open slot: the outer edge lit, over any gauge fill
         Rectangle {
-            visible: (Theme.style === "tabbed" && Theme.opt("lift") || frame.taskbar) && root.active
+            visible: frame.taskbar && root.active
             y: Theme.barPosition === "bottom" ? parent.height - height : 0
             width: parent.width
             height: Math.max(2, Theme.borderWidth * 2)

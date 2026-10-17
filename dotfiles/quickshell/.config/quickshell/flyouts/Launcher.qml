@@ -203,13 +203,6 @@ OverlayWindow {
             : root.atBottom ? parent.height - Theme.flyoutOffset - height
             : Theme.flyoutOffset
 
-        // a tab's corners at the bar are square, as the flyouts' are
-        readonly property int barCorner: root.underBar && Theme.flyoutAttach === "tab" ? 0 : radius
-        topLeftRadius: root.atBottom ? radius : barCorner
-        topRightRadius: root.atBottom ? radius : barCorner
-        bottomLeftRadius: root.atBottom ? barCorner : radius
-        bottomRightRadius: root.atBottom ? barCorner : radius
-
 
         Absorber {}
 

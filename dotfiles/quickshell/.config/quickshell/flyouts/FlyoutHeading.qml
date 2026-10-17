@@ -23,10 +23,6 @@
 // it's drawn quieter before the text, and a click on it is the way back
 // (crumbClicked), so a submenu needs no Back row.
 //
-// The first heading of a bar flyout can be drawn as its title instead
-// (Theme.flyoutTitle): on a strip of ground across the panel's top, or as a
-// title bar in the accent with a close box.
-//
 // Folding lasts while the window is open. The Settings and System windows
 // keep a `foldedSections` list (by page title and heading) on an item
 // above their pages, so a page left and come back to is as it was; the
@@ -63,30 +59,13 @@ Item {
     property bool folding: false
 
     width: parent ? parent.width : 0
-    implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + (asTitle ? Theme.spaceS : 0) + sectionRoom * (firstInColumn ? 1 : 2)
+    implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
 
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
-    readonly property int sectionRoom: parent && parent.sectioned === true && !asTitle ? Theme.spaceM : 0
+    readonly property int sectionRoom: parent && parent.sectioned === true ? Theme.spaceM : 0
     property bool firstInColumn: !!parent && parent.children[0] === root && (parent.isSectionGroup !== true || parent.opensPage === true)
     readonly property real lift: firstInColumn ? -sectionRoom / 2 : 0
-
-    // the first row of a bar flyout's column, drawn as its title
-    readonly property bool asTitle: Theme.flyoutTitle !== "none" && !mirrorOf
-        && !!parent && parent.isFlyoutPage === true && parent.children[0] === root
-    readonly property bool titleBar: asTitle && Theme.flyoutTitle === "titlebar"
-    // the panel around the column, for its corners
-    readonly property Item panel: parent ? parent.parent : null
-    // from the panel's edge in to the first clear pixel inside its frame
-    readonly property int frameIn: Theme.frameDouble || Theme.frameChiselled ? Theme.frameInset + Theme.borderWidth
-        : Theme.frameStroked ? Theme.borderWidth : 0
-    readonly property color titleInk: !titleBar ? Theme.headingColor
-        : Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
-
-    function closePanel() {
-        for (var p = parent; p; p = p.parent)
-            if (typeof p.requestClose === "function") { p.requestClose(); return }
-    }
 
     // other headings showing in the same column; while this one is hidden
     // (a flyout that's shut) there's no telling, so all of them count
@@ -189,34 +168,13 @@ Item {
         width: root.width
     }
 
-    // the title's ground, out to the panel's frame on three sides
-    Rectangle {
-        id: band
-        visible: root.asTitle
-        x: -Theme.panelPad + root.frameIn
-        y: -Theme.panelPad + root.frameIn
-        width: root.width + (Theme.panelPad - root.frameIn) * 2
-        height: root.height - y
-        topLeftRadius: root.panel ? Math.max(0, root.panel.topLeftRadius - root.frameIn) : 0
-        topRightRadius: root.panel ? Math.max(0, root.panel.topRightRadius - root.frameIn) : 0
-        color: root.titleBar ? (Theme.hasAccent ? Theme.accent : Theme.overlay) : Theme.surface
-
-        Rectangle {
-            visible: !root.titleBar
-            anchors.bottom: parent.bottom
-            width: parent.width
-            height: Theme.borderWidth
-            color: Theme.stroke
-        }
-    }
-
     // the look's mark before every heading (Theme.headingPrefix)
     Text {
         id: prefix
         visible: text !== ""
         anchors.left: parent.left
         anchors.verticalCenter: label.verticalCenter
-        text: root.titleBar ? "" : Theme.headingPrefix
+        text: Theme.headingPrefix
         color: Theme.hasAccent ? Qt.lighter(Theme.accent, 1.4) : Theme.subtext
         font: label.font
     }
@@ -233,7 +191,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             // smaller and unspaced, so both names fit a narrow flyout
             text: Theme.heading(root.crumb)
-            color: crumbMouse.containsMouse ? root.titleInk : Theme.subtext
+            color: crumbMouse.containsMouse ? Theme.headingColor : Theme.subtext
             font.family: Theme.fontHeading
             font.pixelSize: Theme.fontCaption
             font.weight: label.font.weight
@@ -261,10 +219,10 @@ Item {
         id: label
         anchors.left: crumbRow.visible ? crumbRow.right : prefix.visible ? prefix.right : parent.left
         anchors.leftMargin: crumbRow.visible ? Theme.spaceXs : prefix.visible ? Theme.spaceM : 0
-        anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
-        anchors.verticalCenterOffset: root.asTitle ? 0 : root.lift
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: root.lift
         text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "")
-        color: root.titleInk
+        color: Theme.headingColor
         font.family: Theme.fontHeading
         font.pixelSize: Theme.fontSmall
         font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
@@ -273,33 +231,20 @@ Item {
     }
 
     Rectangle {
-        visible: Theme.headingRule && !root.asTitle
+        visible: Theme.headingRule
         anchors.left: label.right
         anchors.leftMargin: Theme.spaceL
         anchors.right: controlBox.active ? controlBox.left : chevron.visible ? chevron.left : hintRow.left
         anchors.rightMargin: root.hints.length > 0 || chevron.visible || controlBox.active ? Theme.spaceL : 0
         anchors.verticalCenter: label.verticalCenter
         height: Theme.borderWidth
-        // Corners' dashed option draws it as dashes instead
-        readonly property bool dashed: Theme.frameCorners && Theme.opt("dash")
-        color: dashed ? "transparent" : Theme.stroke
-        clip: true
-
-        Row {
-            visible: parent.dashed
-            spacing: 3
-            Repeater {
-                model: parent.visible ? Math.ceil(parent.parent.width / 6) : 0
-                Rectangle { width: 3; height: Theme.borderWidth; color: Theme.stroke }
-            }
-        }
+        color: Theme.stroke
     }
 
     Text {
         id: chevron
         visible: root.collapsible
-        anchors.right: closeBox.visible ? closeBox.left : parent.right
-        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
+        anchors.right: parent.right
         anchors.verticalCenter: label.verticalCenter
         text: root.collapsed ? "󰅂" : "󰅀"
         // only while the pointer is on the heading, or the section is
@@ -312,8 +257,7 @@ Item {
 
     Row {
         id: hintRow
-        anchors.right: closeBox.visible ? closeBox.left : parent.right
-        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
+        anchors.right: parent.right
         anchors.verticalCenter: label.verticalCenter
         spacing: Theme.spaceXl
 
@@ -352,38 +296,7 @@ Item {
         id: controlBox
         active: root.control !== null
         sourceComponent: root.control
-        anchors.right: closeBox.visible ? closeBox.left : parent.right
-        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
-        anchors.verticalCenter: label.verticalCenter
-    }
-
-    // the title bar's close box
-    Rectangle {
-        id: closeBox
-        visible: root.titleBar
         anchors.right: parent.right
-        anchors.verticalCenter: band.verticalCenter
-        width: Theme.fontBody + Theme.spaceXs
-        height: width
-        radius: Math.min(Theme.radiusSmall, 3)
-        color: closeMouse.containsMouse ? Qt.rgba(root.titleInk.r, root.titleInk.g, root.titleInk.b, 0.18) : "transparent"
-        border.width: Theme.borderWidth
-        border.color: root.titleInk
-
-        Text {
-            anchors.centerIn: parent
-            text: "󰅖"
-            color: root.titleInk
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontSmall
-        }
-
-        MouseArea {
-            id: closeMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.closePanel()
-        }
+        anchors.verticalCenter: label.verticalCenter
     }
 }

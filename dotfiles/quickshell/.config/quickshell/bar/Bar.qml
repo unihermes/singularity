@@ -78,8 +78,6 @@ PanelWindow {
     readonly property color barTone: Theme.glass && Theme.opt("tint")
         ? Qt.tint(Theme.bar, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25)) : Theme.bar
     readonly property color barGround: Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b, Theme.barOpacity)
-    // a floating bar's or island's edge: Corners' is only a faint hairline
-    readonly property color barEdge: Theme.frameCorners ? Theme.cornerHairline : Theme.stroke
     property Gradient barShading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }
         GradientStop { position: 1; color: Theme.shadeBottom(bar.barGround) }
@@ -92,7 +90,7 @@ PanelWindow {
         gradient: Theme.gradient ? bar.barShading : null
         radius: Theme.barFloating ? Theme.barRadius : 0
         border.width: Theme.barFloating ? Theme.borderWidth : 0
-        border.color: bar.barEdge
+        border.color: Theme.stroke
     }
 
     // Islands: the same ground, but one per group of modules, each
@@ -115,7 +113,7 @@ PanelWindow {
             color: bar.barGround
             gradient: Theme.gradient ? bar.barShading : null
             border.width: Theme.borderWidth
-            border.color: bar.barEdge
+            border.color: Theme.stroke
         }
     }
 

@@ -87,7 +87,7 @@ test("Format picks units from the number", () => {
     assert.equal(F.pct(0.456), "46%")
 })
 
-test("Styles resolve every style, and Bevel is square", () => {
+test("Styles resolve every style, and Flat is square", () => {
     const S = load("Styles.js")
     const base = { radius: 6, barStyle: "full", density: "normal", seeThrough: 100, shadows: true, heavyLines: false }
     for (const name of S.order) {
@@ -95,7 +95,7 @@ test("Styles resolve every style, and Bevel is square", () => {
         assert.ok(r.frameStyle && r.moduleStyle, name)
         assert.equal(r.barHeight, 32, name)
     }
-    assert.equal(S.resolve(Object.assign({ style: "bevel" }, base)).radius, 0)
+    assert.equal(S.resolve(Object.assign({ style: "flat" }, base)).radius, 0)
     assert.equal(S.resolve(Object.assign({ style: "channel" }, base)).radius, 6)
     assert.equal(S.resolve(Object.assign({ style: "double" }, base)).flyoutAttach, "flush")
     assert.equal(S.resolve(Object.assign({ style: "double" }, base, { barStyle: "floating" })).flyoutAttach, "floating")

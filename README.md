@@ -43,7 +43,7 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **A shell of its own.** Bar, flyouts, Control Centre, launcher, notification
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
-- **Looks and Styles.** One look, Classic, on top of eight Styles that draw
+- **Looks and Styles.** One look, Classic, on top of five Styles that draw
   all of the chrome, controls included, at once, so no combination of
   settings can clash.
 - **Settings for everything.** Displays, input, power and idle, the lock
@@ -177,10 +177,9 @@ blue text and a single indigo accent (`#5555c8`), drawn in the Double style:
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
 meters, section frames, the heading mark, where flyouts sit, and its own
-switches, sliders, segmented controls and buttons. There are eight:
-Channel, Double, Solid, Capsule, Glass, Bevel, Tabbed and Corners. Each has
-three options of its own (Glass's heavy blur, Capsule's one-pill bar,
-Corners' glow, …). Beside it are only dials that
+switches, sliders, segmented controls and buttons. There are five:
+Channel, Double, Solid, Glass and Flat. Each has three options of its own
+(Glass's heavy blur, Flat's taskbar layout, …). Beside it are only dials that
 move everything together (Roundness, Bar shape, Density, See-through) and a
 few finishing switches.
 

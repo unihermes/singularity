@@ -29,9 +29,7 @@ ClippingRectangle {
     readonly property bool inset: ls.barStyle !== "full"
     readonly property bool atBottom: ls.barPosition === "bottom"
     readonly property string mod: ls.moduleStyle
-    readonly property bool bevelled: ls.frameStyle === "bevel"
-    readonly property bool stroked: !bevelled && ls.frameStyle !== "none"
-    readonly property var bv: look.bevel || { light: Qt.lighter(pal.border, 1.8), dark: Qt.darker(pal.border, 1.8) }
+    readonly property bool stroked: ls.frameStyle !== "none"
 
     // the desktop behind it: the look's deepest ground
     color: pal.base
@@ -45,31 +43,15 @@ ClippingRectangle {
         height: Theme.fs(18)
         radius: pv.floating ? Math.min(pv.r, height / 2) : 0
         color: pv.groundless ? "transparent" : pv.pal.bar
-        border.width: pv.floating && !pv.bevelled ? pv.bw : 0
+        border.width: pv.floating ? pv.bw : 0
         border.color: pv.pal.border
 
-        Bevel {
-            visible: pv.floating && pv.bevelled
-            anchors.fill: parent
-            light: pv.bv.light
-            dark: pv.bv.dark
-            thickness: pv.bw
-        }
-
         Rectangle {
-            visible: !pv.inset && !pv.bevelled
+            visible: !pv.inset
             y: pv.atBottom ? 0 : parent.height - height
             width: parent.width
             height: pv.bw
             color: pv.pal.border
-        }
-
-        Bevel {
-            visible: !pv.inset && pv.bevelled
-            anchors.fill: parent
-            light: pv.bv.light
-            dark: pv.bv.dark
-            thickness: pv.bw
         }
 
         // an island: its own ground around the chips
@@ -95,20 +77,13 @@ ClippingRectangle {
                     required property bool modelData
                     width: modelData ? 22 : 14
                     height: miniBar.height - 6
-                    radius: pv.mod === "pill" ? height / 2 : Math.min(pv.r, 4)
+                    radius: Math.min(pv.r, 4)
                     // the styles whose open chip fills with the accent
-                    readonly property bool openFill: pv.mod === "filled" || pv.mod === "pill"
-                    color: pv.mod === "cornered" ? "transparent"
-                        : modelData ? (openFill ? pv.accent : pv.pal.overlay)
-                        : pv.mod === "outline" || pv.mod === "ghost" || pv.mod === "taskbar" ? "transparent" : pv.pal.surface
+                    readonly property bool openFill: pv.mod === "filled"
+                    color: modelData ? (openFill ? pv.accent : pv.pal.overlay)
+                        : pv.mod === "outline" || pv.mod === "taskbar" ? "transparent" : pv.pal.surface
                     border.width: pv.mod === "outline" ? pv.bw : 0
                     border.color: modelData ? pv.accent : pv.pal.border
-                    CornerMarks {
-                        visible: pv.mod === "cornered"
-                        length: 4
-                        thickness: 1
-                        color: parent.modelData ? pv.accent : pv.pal.muted
-                    }
                 }
             }
         }
@@ -127,16 +102,7 @@ ClippingRectangle {
         color: pv.pal.panel
         opacity: 1
         border.width: pv.stroked ? pv.bw : 0
-        border.color: pv.ls.frameStyle === "corners" ? Qt.alpha(pv.pal.border, 0.6) : pv.pal.border
-
-        Bevel {
-            visible: pv.bevelled
-            anchors.fill: parent
-            raised: true
-            light: pv.bv.light
-            dark: pv.bv.dark
-            thickness: pv.bw
-        }
+        border.color: pv.pal.border
 
         Rectangle {
             visible: pv.ls.frameStyle === "double"
@@ -146,16 +112,6 @@ ClippingRectangle {
             color: "transparent"
             border.width: 1
             border.color: pv.pal.muted
-        }
-
-        Bevel {
-            visible: pv.bevelled
-            anchors.fill: parent
-            anchors.margins: 2
-            raised: false
-            light: pv.pal.surface
-            dark: pv.pal.base
-            thickness: pv.bw
         }
 
         Column {

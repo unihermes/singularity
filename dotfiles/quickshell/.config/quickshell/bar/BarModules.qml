@@ -458,7 +458,7 @@ Item {
                             readonly property bool grouped: Theme.moduleStyle === "grouped"
                             visible: (winIcon.hovered || winIcon.slotLit) && !winIcon.tabs && !winIcon.seg && !winIcon.spot
                                 && !winIcon.indexed && !winIcon.inset
-                                && winIcon.mark !== "ground" && winIcon.mark !== "box"
+                                && winIcon.mark !== "ground"
                             x: winIcon.lead
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width - winIcon.lead
@@ -538,33 +538,19 @@ Item {
                             }
                         }
 
-                        // "ground" and "box": a square behind or around the icon,
-                        // lit for the focused window, a hover fill for the rest
+                        // "ground": a square behind the icon, lit for the
+                        // focused window, a hover fill for the rest
                         Rectangle {
-                            visible: winIcon.mark === "ground" || winIcon.mark === "box"
+                            visible: winIcon.mark === "ground"
                             anchors.centerIn: glyphBox
                             width: glyphBox.width + Theme.spaceS
                             height: glyphBox.height + Theme.spaceS
                             radius: Theme.radiusSmall
-                            color: winIcon.mark === "ground" && winIcon.focused ? Theme.selectedFill
+                            color: winIcon.focused ? Theme.selectedFill
                                 : winIcon.hovered && !winIcon.focused ? Theme.overlay : "transparent"
                             border.width: winIcon.focused ? Theme.borderWidth : 0
-                            border.color: winIcon.mark === "box" ? Theme.accent : Theme.strokeFocus
+                            border.color: Theme.strokeFocus
                             Behavior on color { ColorAnimation { duration: Theme.durFast } }
-                        }
-
-                        // "above": a rule along the chip's top edge, just
-                        // inside the double frame's inner stroke
-                        Rectangle {
-                            visible: winIcon.mark === "above"
-                            anchors.horizontalCenter: glyphBox.horizontalCenter
-                            y: 4
-                            width: glyphBox.width + Theme.spaceXs
-                            height: Theme.indicatorWidth
-                            radius: height / 2
-                            color: Theme.accent
-                            opacity: winIcon.focused ? 1 : winIcon.hovered ? 0.4 : 0
-                            Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
                         }
 
                         Item {
@@ -736,7 +722,6 @@ Item {
                                             && bar.appWindowsKey !== winIcon.modelData.key) {
                                         bar.appWindowsKey = winIcon.modelData.key
                                         screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
-                                        screenScope.flyoutAnchorW = winIcon.width
                                         return
                                     }
                                     bar.appWindowsKey = winIcon.modelData.key
@@ -752,7 +737,6 @@ Item {
                                         menu.address = target
                                         menu.movePage = false
                                         screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
-                                        screenScope.flyoutAnchorW = winIcon.width
                                         return
                                     }
                                     menu.address = target

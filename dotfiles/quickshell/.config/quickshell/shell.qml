@@ -445,9 +445,6 @@ ShellRoot {
 
             // screen-local x the open flyout centres itself under
             property real flyoutAnchorX: 0
-            // the width of the module it opened from, which a tab-style
-            // flyout draws its tab round; 0 when it has none
-            property real flyoutAnchorW: 0
             // the bar section ("left", "centre", "right") of the module it
             // opened from, "" when none; a grown flyout hangs off its group
             property string flyoutSection: ""
@@ -475,7 +472,6 @@ ShellRoot {
                     return
                 }
                 screenScope.flyoutAnchorX = item.mapToItem(null, item.width / 2, 0).x
-                screenScope.flyoutAnchorW = item.width
                 screenScope.flyoutSection = screenScope.barWindow.sectionOf(item)
                 screenScope.openFlyout = name
             }
@@ -565,7 +561,6 @@ ShellRoot {
                         return
                     }
                     screenScope.flyoutAnchorX = screenScope.modelData.width / 2
-                    screenScope.flyoutAnchorW = 0
                     screenScope.flyoutSection = ""
                     screenScope.openFlyout = screenScope.openFlyout === "notifications" ? "" : "notifications"
                 }
@@ -583,7 +578,6 @@ ShellRoot {
                         return
                     }
                     screenScope.flyoutAnchorX = screenScope.modelData.width / 2
-                    screenScope.flyoutAnchorW = 0
                     screenScope.flyoutSection = ""
                     screenScope.openFlyout = screenScope.openFlyout === "claude" ? "" : "claude"
                 }
