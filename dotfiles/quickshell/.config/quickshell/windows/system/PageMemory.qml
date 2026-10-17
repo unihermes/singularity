@@ -19,7 +19,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Memory"
     subtitle: SystemStats.memTotalKb > 0
         ? Format.kib(SystemStats.memTotalKb) + " installed"
         + (SystemStats.swapTotalKb > 0 ? "  ·  " + Format.kib(SystemStats.swapTotalKb) + " swap"

@@ -18,7 +18,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Processes"
     subtitle: SystemStats.threadTotal + " threads, " + SystemStats.procRunning
         + " runnable  ·  sampled every 3 seconds"
 

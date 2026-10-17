@@ -18,7 +18,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Network"
     subtitle: SystemStats.iface === "" ? "No default route — offline"
         : SystemStats.connType + " via " + SystemStats.iface
           + (Network.ssid !== "" && SystemStats.connType === "Wi-Fi" ? "  ·  " + Network.ssid : "")

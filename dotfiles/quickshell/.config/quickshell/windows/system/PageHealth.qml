@@ -22,7 +22,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Health"
     subtitle: Health.scanning && Health.lastScan === "" ? "checking…"
         : Health.problems > 0
             ? Health.problems + (Health.problems === 1 ? " problem" : " problems")

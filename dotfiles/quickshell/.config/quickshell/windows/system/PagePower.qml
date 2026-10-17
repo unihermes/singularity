@@ -24,7 +24,6 @@ SystemPage {
     readonly property bool present: SystemStats.bat.status !== undefined
     readonly property int percent: Number(SystemStats.bat.capacity) || 0
 
-    title: "Power"
     subtitle: !present ? "No battery — this machine runs on mains only"
         : (SystemStats.batCharging ? "Charging" : SystemStats.acOnline ? "On mains" : "On battery")
           + (SystemStats.batHours > 0

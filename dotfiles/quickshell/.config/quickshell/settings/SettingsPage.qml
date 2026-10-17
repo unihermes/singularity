@@ -40,6 +40,9 @@ Item {
     property bool scrolls: true
     // off where a window header already names the page (the Keybinds window)
     property bool headed: true
+    // the page's name as its first heading; off where the window's title
+    // bar already names it (Settings › Page)
+    property bool titled: true
     // the label of the field a search result picked, "" for none; fields
     // find it by walking up to here, so they need this marker to stop on
     property string highlight: ""
@@ -196,7 +199,7 @@ Item {
         spacing: Theme.spaceS
 
         FlyoutHeading {
-            visible: !(root.sectioned && root.tabs.length > 0)
+            visible: root.titled && !(root.sectioned && root.tabs.length > 0)
             text: root.title.toUpperCase()
         }
 

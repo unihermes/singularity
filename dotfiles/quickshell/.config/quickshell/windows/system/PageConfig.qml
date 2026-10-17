@@ -25,7 +25,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Config"
     subtitle: "Click a file to edit it; the folder button shows it in the file manager"
 
     readonly property string home: Quickshell.env("HOME")

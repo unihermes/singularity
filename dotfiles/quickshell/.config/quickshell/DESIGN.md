@@ -257,13 +257,23 @@ Settings') are laid out the same way.
 - **Window frame** (Settings, System, Keybinds; picked 2026-10-11): one
   title bar line (`WindowHeader`): the accent bar, the name with the
   hostname quieter after it, Settings' search in the rest of the line, and
-  Close. No eyebrow, no separate search row.
-- **Sidebar:** a page is its icon, name and a second line of what's there
-  (no numbers, no SECTIONS heading), groups set apart by a gap. Search hits
-  use the same row, with the page and heading as the second line, under a
-  RESULTS count.
-  The page on show has the accent tick, not a fill; the row
-  the arrow keys are on (while searching) has the hover fill.
+  Close. No eyebrow, no separate search row. Inside a page (Settings and
+  System) it reads as a path: a back button where the bar was, the
+  window's name quieter (a click goes Home), 󰅂, the page's name. The page
+  itself then drops its own heading and keeps its one-line description.
+- **Home** (Settings and System; picked 2026-10-16): the windows open on
+  Home, not a page, and have no sidebar. Home is every page as a
+  full-width tile (`WindowHome`, `HomeRow`) in a centred column
+  (`fit(760)`), under group headings, each group one framed block with
+  hairlines between tiles. A tile: the icon in the accent, the name over
+  what's inside, what it's set to or reading now on the right (System's
+  CPU, Memory and Network add their minute as a small graph), a chevron.
+  A page fills the panel; Home is the back button or the window's name.
+  More in Settings rows and `open(page)` still go straight to a page.
+- **Search** (Settings): in the title bar everywhere. Typed into, the
+  panel lists the hits in Home's column under a RESULTS count (the page
+  under it is kept). Empty, on Home, the arrow keys walk the tiles; the
+  row the arrow keys are on has the hover fill.
 - A Repeater's Column that holds its own heading and rows sets
   `isSectionGroup: true` and `sectioned`, so its rows get sections as if
   they sat in the page.
@@ -461,18 +471,18 @@ Settings') are laid out the same way.
 
 Laid out like the sectioned Settings pages (`SystemPage`).
 
-- **Overview:** four cards (CPU, Memory, Temp, Battery), each with its
-  last minute as a line over its level (`StatCard.history`; temperature
-  drawn from 30 °C), then the network's minute as one slim strip with its
-  live rates. SystemStats samples only while the window is open, so the
-  graphs start empty and fill over the first minute. Health is a card (the count or All
-  clear, when the checks ran, Run checks and Open Health) with rows only
-  for what needs a look, each opening where it's fixed, and one quiet line
-  for what's fine. Process CPU is a share of the whole machine with a
-  small level (`ProcessTable.machineShare`); ending one asks End <name>?
-  in the row. At a glance is two columns. Quick actions are rows with an
-  icon and a note saying what each does; Restart audio asks first.
-- **Health:** the same status card heads it (Check again on it), then TO
+- **Home:** four cards (CPU, Memory, Temp, Battery; `HomeFigures`), each
+  with its last minute as a line over its level (`StatCard.history`;
+  temperature drawn from 30 °C), then the tiles in four groups: Status
+  (Health), Running, Devices, This machine. SystemStats samples only while
+  the window is open, so the graphs start empty and fill over the first
+  minute. Only the Health tile says something needs a look (its count,
+  red for a problem); there's no banner. No Overview page.
+- **Processes in a page's summary:** process CPU is a share of the whole
+  machine with a small level (`ProcessTable.machineShare`); ending one
+  asks End <name>? in the row.
+- **Health:** a status card heads it (the count or All clear, when the
+  checks ran, Check again), then TO
   LOOK AT (problems, worst first, each with its fix) and PASSING, each
   heading carrying its count and left out when empty. A fix that deletes
   or switches something off (clean, disable) asks first. A row can carry
@@ -542,7 +552,7 @@ back. Always the Nerd glyphs (`Theme.fontIcon`), never a typed `>`.
 
 | Meaning | Glyph | Where |
 |---|---|---|
-| Page on show in a sidebar | tick + accent 󰅂 | `SettingsSectionRow`; hovered rows show a grey 󰅂 |
+| A page from a window's Home | 󰅂, muted until hovered | `HomeRow` |
 | Row the arrow keys are on | fill + tick + grey 󰅂 | Launcher, Settings search hits |
 | Tab on show | accent fill, no chevron | Settings tabs, `FlyoutSegmented` |
 | Goes deeper in the same flyout or window | 󰅂 | submenus, tray submenus, other System pages, Open Health |

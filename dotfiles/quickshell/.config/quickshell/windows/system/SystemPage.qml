@@ -1,8 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/SystemPage.qml
 //
-// The frame every System page shares: a heading, one line saying what the
-// page is about, and a scrolling column for the page's own content. The
+// The frame every System page shares: one line saying what the page is
+// about (the window's title bar names it, System › Page), and a scrolling
+// column for the page's own content. The
 // same shape as SettingsPage.qml, without the status line -- these pages
 // read rather than write, so there is nothing to report back.
 //
@@ -21,7 +22,6 @@ import "../../flyouts"
 Item {
     id: root
 
-    property string title: ""
     property string subtitle: ""
 
     default property alias content: col.data
@@ -32,8 +32,6 @@ Item {
         id: header
         width: parent.width
         spacing: Theme.spaceS
-
-        FlyoutHeading { text: root.title.toUpperCase() }
 
         Text {
             width: parent.width

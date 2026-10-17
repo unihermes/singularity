@@ -2,8 +2,8 @@
 // ~/.config/quickshell/windows/system/ProcessTable.qml
 //
 // The heaviest processes, with a two-step kill on your own. Shared by the
-// Overview (a five-row summary, no sort buttons) and the Processes page
-// (the full table, sortable, with the pid and owner shown).
+// CPU and Memory pages (a five-row summary) and the Processes page (the
+// full table, sortable, with the pid and owner shown).
 //
 // How many rows arrive is SystemStats.procLimit's business, not this
 // file's -- the window sets it from the current page, so the summary isn't
@@ -18,7 +18,7 @@ Column {
     id: root
 
     // the CPU / MEM toggles and the pid+user columns: the full table on the
-    // Processes page, off for the Overview's summary
+    // Processes page, off for the five-row summaries
     property bool detailed: false
     // the CPU / MEM toggles on their own, for a page that cares about the
     // ranking but not about pids and owners (Memory)

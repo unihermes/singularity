@@ -18,7 +18,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Storage"
     subtitle: SystemStats.filesystems.length > 0
         ? SystemStats.filesystems.length + " mounted filesystems  ·  "
           + Format.bytes(SystemStats.filesystems.reduce((a, f) => a + f.size, 0)) + " total"

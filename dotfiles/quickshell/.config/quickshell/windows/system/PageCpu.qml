@@ -17,7 +17,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "CPU"
     subtitle: SystemSpecs.cpuModel || "--"
 
     // the window, for the rows that open another page
@@ -167,7 +166,7 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "SILICON" }
 
-    // two columns, as the Overview's facts; the model is the page's
+    // two columns, as the Hardware page's facts; the model is the page's
     // subtitle, and the clocks and heat are in the card
     Grid {
         id: silicon

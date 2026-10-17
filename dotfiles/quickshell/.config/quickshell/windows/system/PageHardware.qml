@@ -21,7 +21,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Hardware"
     subtitle: [SystemSpecs.board, SystemSpecs.chassis].filter(x => x).join("  ·  ")
 
     readonly property var win: {
