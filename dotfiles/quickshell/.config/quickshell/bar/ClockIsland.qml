@@ -41,18 +41,7 @@ BarModule {
         precision: (root.formats[Theme.clockStyle] || root.formats.stamp).indexOf("ss") >= 0 ? SystemClock.Seconds : SystemClock.Minutes
         enabled: root.visible
     }
-    // Thin spaces around the divider: in a monospace font an ordinary space
-    // is a full character wide, which left the time and date far apart.
-    // One format per clock style (Looks.js).
-    readonly property var formats: ({
-        stamp: "HH:mm:ss\u2009|\u2009MM/dd/yy",
-        time:  "HH:mm",
-        day:   "ddd d MMM\u2002HH:mm",
-        long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
-        seconds: "HH:mm:ss",
-        iso:   "yyyy-MM-dd\u2002HH:mm",
-        custom: Settings.clockFormat || "HH:mm",
-    })
+    readonly property var formats: Theme.clockFormats
     readonly property string timeText: Qt.formatDateTime(clockSource.date,
         Theme.hours(formats[Theme.clockStyle] || formats.stamp))
 

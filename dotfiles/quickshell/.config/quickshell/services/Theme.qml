@@ -396,6 +396,18 @@ Singleton {
     // what the Names style calls each workspace, "" where it has none
     readonly property var workspaceNames: Settings.workspaceNames.split(",").map(s => s.trim())
     readonly property string clockStyle: Settings.clockStyle
+    // One format per clock style (Looks.js). Thin spaces around the
+    // divider: in a monospace font an ordinary space is a full character
+    // wide, which left the time and date far apart.
+    readonly property var clockFormats: ({
+        stamp: "HH:mm:ss\u2009|\u2009MM/dd/yy",
+        time:  "HH:mm",
+        day:   "ddd d MMM\u2002HH:mm",
+        long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
+        seconds: "HH:mm:ss",
+        iso:   "yyyy-MM-dd\u2002HH:mm",
+        custom: Settings.clockFormat || "HH:mm",
+    })
     // the Control Centre button's glyph
     readonly property var controlGlyphs: ({
         arch: "󰣇", menu: "󰍜", dashboard: "󰕮", cog: "󰒓", home: "󰋜", star: "󰓎",

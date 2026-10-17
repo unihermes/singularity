@@ -80,40 +80,9 @@ SettingsTab {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "MODULES" }
-
-    SettingsField {
-        label: "Control Centre icon"
-        hint: "The button at the bar's start"
-        Choice { key: "controlIcon"; glyphs: Theme.controlGlyphs }
-    }
-
-    SettingsField {
-        label: "Visualizer"
-        hint: "The audio spectrum while sound plays"
-        Choices { key: "vizStyle" }
-    }
-
-    SettingsField {
-        label: "Tray drawer"
-        hint: Settings.trayDrawer ? "Icons fold behind a chevron"
-            : "Every tray icon shows"
-
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.trayDrawer
-            onToggled: Settings.set("trayDrawer", !Settings.trayDrawer)
-        }
-    }
-
-    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "WORKSPACES" }
 
-    SettingsField {
-        label: "Workspaces"
-        hint: "How the workspace indicator marks each one"
-        Choice { key: "workspaceStyle" }
-    }
+    Tiles { key: "workspaceStyle"; label: "Workspaces"; hint: "How the workspace indicator marks each one"; art: wsArt }
 
     // the names the Names workspace style shows, comma-separated in
     // workspace order; a blank one falls back to the number
@@ -141,11 +110,7 @@ SettingsTab {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "OPEN WINDOWS" }
 
-    SettingsField {
-        label: "Open windows"
-        hint: "How open windows are drawn"
-        Choice { key: "windowStyle" }
-    }
+    Tiles { key: "windowStyle"; label: "Open windows"; hint: "How open windows are drawn"; art: winArt; columns: 5 }
 
     SettingsField {
         id: windowsShown
@@ -173,11 +138,7 @@ SettingsTab {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "CLOCK" }
 
-    SettingsField {
-        label: "Clock"
-        hint: "What the clock chip shows"
-        Choice { key: "clockStyle" }
-    }
+    Tiles { key: "clockStyle"; label: "Clock"; hint: "What the clock chip shows"; art: clockArt }
 
     // the Custom clock style's pattern, in Qt's date format
     SettingsField {
@@ -215,4 +176,31 @@ SettingsTab {
         }
     }
 
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "CONTROL CENTRE" }
+
+    Tiles { key: "controlIcon"; label: "Control Centre icon"; hint: "The button at the bar's start"; art: iconArt; columns: 6; tileHeight: Theme.fs(58) }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "VISUALIZER AND TRAY" }
+
+    Tiles { key: "vizStyle"; label: "Visualizer"; hint: "The audio spectrum while sound plays"; art: vizArt }
+
+    SettingsField {
+        label: "Tray drawer"
+        hint: Settings.trayDrawer ? "Icons fold behind a chevron"
+            : "Every tray icon shows"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.trayDrawer
+            onToggled: Settings.set("trayDrawer", !Settings.trayDrawer)
+        }
+    }
+
+    Component { id: wsArt; ModuleArt { kind: "workspaceStyle" } }
+    Component { id: winArt; ModuleArt { kind: "windowStyle" } }
+    Component { id: clockArt; ModuleArt { kind: "clockStyle" } }
+    Component { id: iconArt; ModuleArt { kind: "controlIcon" } }
+    Component { id: vizArt; ModuleArt { kind: "vizStyle" } }
 }
