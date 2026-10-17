@@ -307,6 +307,12 @@ Item {
     //   index      no icons: a number and the app's name for each, the
     //              focused one on an accent ground
     //   dots       a dot per window, the focused one a short accent pill
+    // An app with more than one window says so in each: a pip per window
+    // under the icon (icons, titled, inset, segmented), a notch per window
+    // in glide's rail and tabs' underline, the window count on the icon's
+    // corner (lift, spotlight's small icons; "2/3" after the capsule's
+    // title), the edges of more slots above it (index), a ring round the
+    // dot (dots).
     ModuleFrame {
         id: windowIcons
         anchors.verticalCenter: parent.verticalCenter
@@ -391,6 +397,20 @@ Item {
                             return modelData
                         }
                         readonly property string title: shown.toplevel ? shown.toplevel.title || "" : ""
+                        // how many windows the app has, and which of them is shown
+                        readonly property int winCount: modelData.windows.length
+                        readonly property bool multi: winCount > 1
+                        readonly property int shownIndex: Math.max(0, modelData.windows.findIndex(w => w.address === shown.address))
+                        // the styles without a pip of their own grow one per
+                        // window when there's more than one
+                        readonly property bool morePips: multi && (mark === "ground" || inset || seg)
+                        readonly property bool pipsShown: underMark || morePips
+                        // the window count on the icon's corner
+                        readonly property bool badged: multi && (lift || (spot && !focused))
+                        // glide's rail: a notch per window under the icon
+                        readonly property int notchSegs: Math.min(4, winCount)
+                        readonly property real notchW: (iconPx - (notchSegs - 1)) / notchSegs
+                        readonly property bool notched: glide && multi
                         // room for the rule between workspaces, in "all" scope
                         readonly property int lead: modelData.groupStart ? Theme.spaceS + 1 : 0
                         readonly property int iconPx: spot && !focused ? Theme.barFs(12)
@@ -403,6 +423,7 @@ Item {
                             : indexed ? indexNum.implicitWidth + Theme.spaceS + indexName.width
                             : slotW + (titleText.width > 0
                                 ? Math.min(titleGap, titleText.width) + titleText.width : 0)
+                                + (spotCount.visible ? Theme.spaceS + spotCount.implicitWidth : 0)
                         readonly property int titleGap: spot ? Theme.spaceS : Theme.spaceXs
                         // spotlight's capsule is fully rounded, so its icon
                         // sits further in to clear the curve
@@ -485,14 +506,45 @@ Item {
                             border.color: Theme.strokeFocus
                             Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
-                            Rectangle {
-                                visible: winIcon.focused
+                            // the underline, a segment per window when the app
+                            // has more than one
+                            Row {
+                                id: tabLine
+                                readonly property int segs: winIcon.multi ? Math.min(4, winIcon.winCount) : 1
+                                visible: winIcon.focused || winIcon.multi
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                width: parent.width - Theme.spaceS * 2
-                                height: Theme.indicatorWidth
-                                radius: Theme.pill(height)
-                                color: Theme.accent
+                                spacing: 2
+                                Repeater {
+                                    model: tabLine.segs
+                                    Rectangle {
+                                        required property int index
+                                        width: (winIcon.width - winIcon.lead - Theme.spaceS * 2 - tabLine.spacing * (tabLine.segs - 1)) / tabLine.segs
+                                        height: Theme.indicatorWidth
+                                        radius: Theme.pill(height)
+                                        color: winIcon.focused && (tabLine.segs === 1 || index === Math.min(3, winIcon.shownIndex)) ? Theme.accent
+                                            : winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
+                                    }
+                                }
+                            }
+                        }
+
+                        // index: the top edges of more slots peeking out above
+                        // this one, one per extra window (up to two)
+                        Repeater {
+                            model: winIcon.indexed && winIcon.multi ? Math.min(2, winIcon.winCount - 1) : 0
+                            Item {
+                                required property int index
+                                readonly property int step: index + 1
+                                readonly property int groundTop: 4
+                                x: winIcon.lead + step * 3
+                                y: groundTop - step * 2
+                                width: winIcon.width - winIcon.lead - step * 6
+                                height: 2
+                                readonly property color edge: step === 1 ? Theme.subtext : Theme.muted
+                                Rectangle { width: parent.width; height: 1; color: parent.edge }
+                                Rectangle { width: 1; height: 2; color: parent.edge }
+                                Rectangle { x: parent.width - 1; width: 1; height: 2; color: parent.edge }
                             }
                         }
 
@@ -561,7 +613,8 @@ Item {
                             // lifted a single pixel: just enough to clear the
                             // pip, so the icon still sits level with the
                             // chips around it
-                            anchors.verticalCenterOffset: (winIcon.underMark && !winIcon.slotted) || winIcon.glide ? -1 : 0
+                            anchors.verticalCenterOffset: winIcon.morePips ? (winIcon.inset ? -2 : -1)
+                                : (winIcon.underMark && !winIcon.slotted) || winIcon.glide ? -1 : 0
                             width: winIcon.iconPx
                             height: winIcon.iconPx
                             opacity: winIcon.lift ? (winIcon.focused ? 1 : winIcon.hovered ? 0.9 : 0.5)
@@ -617,6 +670,41 @@ Item {
                             }
                         }
 
+                        // spotlight: which of the app's windows the capsule is
+                        Text {
+                            id: spotCount
+                            visible: winIcon.spot && winIcon.focused && winIcon.multi
+                            anchors.left: titleText.right
+                            anchors.leftMargin: Theme.spaceS
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: (winIcon.shownIndex + 1) + "/" + winIcon.winCount
+                            color: Theme.subtext
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.barLabelSize
+                        }
+
+                        // lift, and spotlight's small icons: the window count
+                        // on the icon's corner
+                        Rectangle {
+                            visible: winIcon.badged
+                            height: Theme.barFs(9)
+                            width: Math.max(height, badgeText.implicitWidth + 4)
+                            radius: Theme.pill(height)
+                            x: glyphBox.x + glyphBox.width - width / 2 - 1
+                            y: Math.max(0, glyphBox.y - height / 2 + 1)
+                            color: winIcon.focused && Theme.hasAccent ? Theme.accent : Theme.overlay
+                            Text {
+                                id: badgeText
+                                anchors.centerIn: parent
+                                text: winIcon.winCount
+                                color: winIcon.focused && Theme.hasAccent ? Theme.textOnAccent : Theme.text
+                                font.family: Theme.fontText
+                                font.weight: Theme.weightStrong
+                                font.pixelSize: Theme.barFs(8)
+                            }
+                        }
+
                         // index: the window's place in the strip and its app
                         Text {
                             id: indexNum
@@ -650,16 +738,18 @@ Item {
                         // the chip's edge, so it needn't push the icon up
                         // (Flat's taskbar slots have it on the screen edge). An
                         // app with more than one window gets a segment per
-                        // window (up to four), its own windows' grey and its
-                        // popouts' in the accent.
+                        // window (up to four), popouts' shorter, the focused
+                        // window's in the accent and the rest grey. Inset,
+                        // segmented and the "ground" mark show these only then.
                         Row {
                             id: pip
                             readonly property var segs: winIcon.modelData.windows.slice(0, 4)
                             readonly property bool split: segs.length > 1
-                            visible: winIcon.underMark
+                            visible: winIcon.pipsShown
                             // placed by y alone: switching anchors.top off
                             // leaves y where the anchor last put it
-                            y: !winIcon.slotted ? glyphBox.y + glyphBox.height + 1
+                            y: !winIcon.slotted || winIcon.morePips
+                                ? glyphBox.y + glyphBox.height + (winIcon.inset ? 3 : 1)
                                 : Theme.barPosition === "bottom" ? winIcon.height - height : 0
                             anchors.horizontalCenter: glyphBox.horizontalCenter
                             spacing: 1
@@ -667,14 +757,14 @@ Item {
                                 model: pip.segs
                                 Rectangle {
                                     required property var modelData
+                                    required property int index
                                     height: Theme.indicatorWidth
                                     radius: Theme.pill(height)
                                     width: !pip.split ? (winIcon.focused && winIcon.slotted ? winIcon.width - winIcon.lead
                                             : winIcon.focused || winIcon.slotted ? glyphBox.width - 2 : Theme.barFs(6))
                                         : modelData.popout ? Theme.barFs(winIcon.focused ? 6 : 4)
                                         : Theme.barFs(winIcon.focused ? 7 : 4)
-                                    color: pip.split && modelData.popout ? Theme.accent
-                                        : !pip.split && winIcon.focused ? Theme.accent
+                                    color: winIcon.focused && (!pip.split || index === Math.min(3, winIcon.shownIndex)) ? Theme.accent
                                         : winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
                                     Behavior on width {
                                         NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
@@ -699,6 +789,38 @@ Item {
                                 NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
                             }
                             Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                        }
+
+                        // dots: a ring round the dot of an app with more than
+                        // one window
+                        Rectangle {
+                            visible: winIcon.dots && winIcon.multi
+                            x: dot.x - 2
+                            anchors.verticalCenter: dot.verticalCenter
+                            width: dot.width + 4
+                            height: dot.height + 4
+                            radius: Theme.pill(height)
+                            color: "transparent"
+                            border.width: 1
+                            border.color: winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
+                        }
+
+                        // glide: the rail's notch per window under the icon,
+                        // which the slider lights for the window shown
+                        Row {
+                            visible: winIcon.notched
+                            x: glyphBox.x
+                            y: strip.markY - Math.floor((Theme.indicatorWidth - 1) / 2)
+                            spacing: 1
+                            Repeater {
+                                model: winIcon.notched ? winIcon.notchSegs : 0
+                                Rectangle {
+                                    width: winIcon.notchW
+                                    height: Theme.indicatorWidth
+                                    radius: Theme.pill(height)
+                                    color: winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
+                                }
+                            }
                         }
 
                         MouseArea {
@@ -771,9 +893,11 @@ Item {
                 readonly property Item target: strip.style === "glide" && strip.focusIndex >= 0
                     && strip.focusIndex < iconRepeater.count ? iconRepeater.itemAt(strip.focusIndex) : null
                 visible: target !== null
-                x: target ? stripRow.x + target.x + target.lead + target.padX : 0
+                x: target ? stripRow.x + target.x + target.lead + target.padX
+                    + (target.notched ? Math.min(3, target.shownIndex) * (target.notchW + 1) : 0) : 0
                 y: strip.markY - Math.floor((Theme.indicatorWidth - 1) / 2)
-                width: target ? target.iconPx : 0
+                width: target ? (target.notched ? target.notchW : target.iconPx) : 0
+                z: 1
                 height: Theme.indicatorWidth
                 radius: Theme.pill(height)
                 color: Theme.accent
