@@ -45,6 +45,25 @@ SettingsTab {
         }
     }
 
+    // a few apps' icons from the theme picked above
+    Row {
+        x: parent.width - width
+        spacing: Theme.spaceL
+        visible: DesktopThemes.preview.length > 0
+        Repeater {
+            model: DesktopThemes.preview
+            Image {
+                required property string modelData
+                width: Theme.fs(28)
+                height: width
+                sourceSize: Qt.size(width * 2, height * 2)
+                source: "file://" + modelData
+                asynchronous: true
+            }
+        }
+        Component.onCompleted: DesktopThemes.refreshPreview()
+    }
+
     SettingsField {
         label: "Cursor"
         hint: "Apps pick it up when next opened"
@@ -60,5 +79,15 @@ SettingsTab {
 
     Stepper { label: "Cursor size"; key: "cursorSize"; step: 4; suffix: "px" }
 
-    Stepper { label: "Terminal opacity"; hint: "Alacritty's background, also on the Terminal page"; key: "terminalOpacity"; step: 5; suffix: "%" }
+    SettingsField {
+        label: "Follow the style"
+        hint: Settings.appsFollowStyle ? "Corners, density and frames, as the shell" : "Apps keep their theme's own shapes"
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.appsFollowStyle
+            onToggled: Settings.set("appsFollowStyle", !Settings.appsFollowStyle)
+        }
+    }
+
+    Stepper { label: "Terminal opacity"; hint: "Also on the Terminal page"; key: "terminalOpacity"; step: 5; suffix: "%" }
 }

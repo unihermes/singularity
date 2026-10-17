@@ -526,6 +526,9 @@ Scope {
         function onLockClockSizeChanged() { debounce.restart() }
         function onLockClockPlaceChanged() { debounce.restart() }
         function onLockDateChanged() { debounce.restart() }
+        function onAppsFollowStyleChanged() { debounce.restart() }
+        function onRowScaleChanged() { debounce.restart() }
+        function onSpacingChanged() { debounce.restart() }
     }
 
     // The text colour for anything drawn on an accent fill (a text
@@ -610,8 +613,10 @@ Scope {
             + "entry selection, textview text selection, label selection {\n"
             + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n}\n"
         // GTK4 without libadwaita still reads the named colours
-        var gtk3 = header + named + selection + AppStyle.gtk(shape, 3)
-        var gtk4 = header + vars + named + selection + AppStyle.gtk(shape, 4)
+        // the style's shape on the widgets, unless the apps keep their own
+        var follow = Settings.appsFollowStyle
+        var gtk3 = header + named + selection + (follow ? AppStyle.gtk(shape, 3) : "")
+        var gtk4 = header + vars + named + selection + (follow ? AppStyle.gtk(shape, 4) : "")
         AtomicFileWrite.write({ path: root.dir + "/gtk3.css", transform: () => gtk3 })
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
     }
@@ -878,7 +883,7 @@ Scope {
             "disabled_colors=" + row(true),
             "inactive_colors=" + row(false)].join("\n") + "\n"
         AtomicFileWrite.write({ path: root.dir + "/qt6ct-colors.conf", transform: () => text })
-        var qss = AppStyle.qss(appStyleInput())
+        var qss = Settings.appsFollowStyle ? AppStyle.qss(appStyleInput()) : ""
         AtomicFileWrite.write({ path: root.dir + "/qt6ct.qss", transform: () => qss })
     }
 

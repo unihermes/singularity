@@ -166,6 +166,7 @@ var entries = [
     { page: "appearance", section: "Apps", label: "Icons", keywords: "icon theme kora apps gtk qt" },
     { page: "appearance", section: "Apps", label: "Cursor", keywords: "pointer mouse theme bibata" },
     { page: "appearance", section: "Apps", label: "Cursor size", keywords: "pointer mouse px big" },
+    { page: "appearance", section: "Apps", label: "Follow the style", keywords: "gtk qt apps shape corners rounding density frames theme own" },
     { page: "appearance", section: "Apps", label: "Terminal opacity", keywords: "alacritty ghostty transparency background" },
 
     // --- Window Rules ------------------------------------------------------
