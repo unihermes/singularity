@@ -268,18 +268,6 @@ Singleton {
     // not running keep their place in it for when they come back
     readonly property alias trayOrder: adapter.trayOrder
     function setTrayOrder(l) { adapter.trayOrder = l }
-    // Each look keeps the wallpaper last shown with it, and picking the look
-    // brings it back (Wallpaper.qml). lookWallpapers: look -> image path.
-    readonly property alias wallpaperPerLook: adapter.wallpaperPerLook
-    readonly property alias lookWallpapers: adapter.lookWallpapers
-    function setWallpaperPerLook(on) { adapter.wallpaperPerLook = on }
-    function setLookWallpaper(look, path) {
-        if (adapter.lookWallpapers[look] === path) return
-        var m = {}
-        for (var k in adapter.lookWallpapers) m[k] = adapter.lookWallpapers[k]
-        m[look] = path
-        adapter.lookWallpapers = m
-    }
     // The clock chip briefly turns into the volume/brightness level, the
     // layout just switched to, a new track or new notifications -- instead
     // of those showing as separate toasts under the bar.
@@ -905,8 +893,6 @@ Singleton {
             property bool headingRule: true
 
             property bool wallpaperShuffle: true
-            property bool wallpaperPerLook: false
-            property var lookWallpapers: ({})
             property int wallpaperInterval: 0
             property bool clockIsland: true
             property int nightLightKelvin: 4000

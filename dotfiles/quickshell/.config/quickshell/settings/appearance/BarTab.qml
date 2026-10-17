@@ -5,6 +5,7 @@
 
 import Quickshell
 import QtQuick
+import "../../services/Styles.js" as Styles
 import "../../services"
 import "../../flyouts"
 import ".."
@@ -26,6 +27,19 @@ SettingsTab {
             current: Settings.barPosition
             onPicked: v => Settings.set("barPosition", v)
         }
+    }
+
+    SettingsField {
+        label: "Bar shape"
+        hint: "Where flyouts sit and the gaps at screen edges follow it"
+        Choices { key: "barStyle" }
+    }
+
+    SettingsField {
+        visible: Styles.get(Settings.style).options.every(o => o.key !== "barSeparator")
+        label: "Separators"
+        hint: "Between the bar's modules"
+        Choice { key: "barSeparator" }
     }
 
     Item { width: 1; height: Theme.spaceM }

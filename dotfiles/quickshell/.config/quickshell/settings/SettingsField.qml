@@ -96,7 +96,9 @@ Item {
 
             Text {
                 id: labelText
-                width: Math.min(implicitWidth, parent.width - (resetMark.visible ? resetMark.width + Theme.spaceS : 0))
+                // room for the dot only: the mark's wider hover text runs
+                // on over the hint rather than eliding the label
+                width: Math.min(implicitWidth, parent.width - (resetMark.visible ? Theme.fs(14) + Theme.spaceS : 0))
                 text: (root.mark !== "" ? root.mark + "  " : "") + root.label
                 elide: Text.ElideRight
                 color: root.dimmed ? Theme.subtext : Theme.text
@@ -111,11 +113,26 @@ Item {
                 anchors.left: labelText.right
                 anchors.leftMargin: Theme.spaceS
                 anchors.verticalCenter: labelText.verticalCenter
+                // under the pointer, what clicking puts back
                 text: !resetMouse.containsMouse ? "●"
-                    : Settings.baselineIsDefault ? "󰑓 default" : "󰑓 " + Settings.choiceLabel(Settings.look) + "'s"
-                color: Theme.accent
+                    : "󰑓 " + (Settings.baselineIsDefault ? "Default" : Settings.choiceLabel(Settings.look))
+                      + (root.hostPage && root.hostPage.valueText
+                         ? ": " + root.hostPage.valueText(root.lookKey, Settings.lookBaseline[root.lookKey]) : "")
+                color: resetMouse.containsMouse ? Theme.textStrong : Theme.accent
                 font.family: Theme.fontIcon
                 font.pixelSize: resetMouse.containsMouse ? Theme.fontSmall : Theme.fontCaption
+                z: 1
+
+                Rectangle {
+                    visible: resetMouse.containsMouse
+                    anchors.fill: parent
+                    anchors.margins: -Theme.spaceXs
+                    z: -1
+                    radius: Theme.radiusSmall
+                    color: Theme.surface
+                    border.width: Theme.borderWidth
+                    border.color: Theme.accent
+                }
 
                 MouseArea {
                     id: resetMouse

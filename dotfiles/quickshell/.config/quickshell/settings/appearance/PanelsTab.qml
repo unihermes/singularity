@@ -12,6 +12,17 @@ import ".."
 SettingsTab {
     tabId: "panels"
 
+    FlyoutHeading { text: "FLYOUTS" }
+
+    SettingsField {
+        label: "Flyouts open"
+        hint: Theme.flyoutGrown ? "Grown flyouts always fade" : "How flyouts appear"
+        Choice { key: "flyoutAnim" }
+    }
+
+    Stepper { label: "Overlay dimming"; hint: "Behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
+
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "LAUNCHER" }
 
     SettingsField {

@@ -86,7 +86,7 @@ FloatingWindow {
         { id: "audio",         label: "Audio",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
         { id: "input",         label: "Input",         icon: "󰌌", blurb: "Keyboard and pointer",              source: "../settings/SettingsPageInput.qml" },
         { id: "power",         label: "Power & Idle",  icon: "󰂄", blurb: "Profile, idle and sleep",           source: "../settings/SettingsPagePower.qml" },
-        { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Look, colours and bar",             source: "../settings/SettingsPageAppearance.qml" },
+        { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Theme, bar and desktop",            source: "../settings/SettingsPageAppearance.qml" },
         { id: "lockscreen",    label: "Lock Screen",   icon: "󰌾", blurb: "Look, grace and lid",                source: "../settings/SettingsPageLockScreen.qml" },
         { id: "notifications", label: "Notifications", icon: "󰂚", blurb: "Do Not Disturb, popups",            source: "../settings/SettingsPageNotifications.qml" },
         { id: "windowrules",   label: "Window Rules",  icon: "󰖲", blurb: "App rules and layouts",             source: "../settings/SettingsPageWindowRules.qml" },

@@ -1,0 +1,202 @@
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/appearance/ChangesBar.qml
+//
+// The strip above the Appearance tabs: how many settings differ from the
+// baseline (the saved default when it was saved with this look, the look as
+// designed otherwise), with Save as default and Reset beside it. Review
+// opens the list of changes under it, each with a way to its field and a
+// way back, and Factory reset at its end.
+
+import Quickshell
+import QtQuick
+import "../../services"
+import "../../flyouts"
+import ".."
+
+Column {
+    id: cb
+    // the Appearance page this sits on, found by walking up
+    readonly property Item page: {
+        for (var p = parent; p; p = p.parent)
+            if (p.isSettingsPage === true) return p
+        return null
+    }
+    property bool open: false
+    readonly property string baseName: Settings.baselineIsDefault ? "your default" : page.label(Settings.look)
+
+    width: parent ? parent.width : 0
+    spacing: Theme.spaceS
+
+    Rectangle {
+        id: strip
+        width: parent.width
+        height: Theme.rowHeightTall + Theme.spaceS
+        radius: Theme.radiusInner
+        color: Theme.controlFill("transparent")
+        border.width: Theme.controlBorder(Theme.stroke)
+        border.color: Theme.controlStroke(Theme.stroke)
+
+        ControlEdge { sunken: true; radius: strip.radius }
+
+        Row {
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceM
+
+            Rectangle {
+                visible: !Settings.lookPristine
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fs(8)
+                height: width
+                radius: width / 2
+                color: Theme.accent
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Settings.lookPristine
+                    ? (Settings.baselineIsDefault ? "As you saved your default" : page.label(Settings.look) + " as designed")
+                    : Settings.lookDiffs.length + " changed from " + cb.baseName
+                color: Settings.lookPristine ? Theme.subtext : Theme.textStrong
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontSmall
+                font.weight: Theme.weightBody
+            }
+        }
+
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceS
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceS
+
+            FlyoutChip {
+                text: cb.open ? "Review  󰅃" : "Review  󰅀"
+                selected: cb.open
+                onClicked: cb.open = !cb.open
+            }
+            // two clicks: overwriting the old default can't be undone
+            FlyoutChip {
+                text: "Save as default"
+                confirmText: "Replace default?"
+                enabled: !Settings.isDefault
+                onClicked: {
+                    Settings.saveAsDefault()
+                    page.say("Current appearance saved as the default", false)
+                }
+            }
+            FlyoutChip {
+                text: "Reset"
+                confirmText: "Reset?"
+                enabled: !Settings.isDefault
+                onClicked: {
+                    Settings.reset()
+                    page.say("Appearance reset to the default", false)
+                }
+            }
+        }
+    }
+
+    // the changes, scrolling on their own past a handful
+    Rectangle {
+        id: list
+        visible: cb.open
+        width: parent.width
+        height: Math.min(changes.implicitHeight, Theme.fit(230)) + Theme.spaceS * 2
+        radius: Theme.radiusInner
+        color: Theme.controlFill("transparent")
+        border.width: Theme.controlBorder(Theme.stroke)
+        border.color: Theme.controlStroke(Theme.stroke)
+
+        ControlEdge { sunken: true; radius: list.radius }
+
+        Flickable {
+            id: flick
+            anchors.fill: parent
+            anchors.margins: Theme.spaceS
+            anchors.leftMargin: Theme.spaceL
+            anchors.rightMargin: Theme.spaceL
+            contentHeight: changes.implicitHeight
+            interactive: contentHeight > height
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+
+            Column {
+                id: changes
+                width: flick.width
+
+                Text {
+                    visible: Settings.lookPristine
+                    width: parent.width
+                    topPadding: Theme.spaceS
+                    bottomPadding: Theme.spaceS
+                    wrapMode: Text.WordWrap
+                    text: "Nothing changed. Anything you change on the tabs below shows up here."
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+
+                Repeater {
+                    model: Settings.lookDiffs
+
+                    SettingsField {
+                        id: change
+                        required property string modelData
+                        // shares its label with the field it stands for
+                        searchable: false
+                        label: cb.page.keyLabels[modelData] || modelData
+                        hint: cb.page.valueText(modelData, Settings.lookBaseline[modelData])
+                            + "  →  " + cb.page.valueText(modelData, Settings[modelData])
+
+                        Row {
+                            anchors.right: parent.right
+                            spacing: Theme.spaceS
+                            FlyoutChip {
+                                text: "Show"
+                                onClicked: cb.page.highlight = change.label
+                            }
+                            FlyoutChip {
+                                text: "Undo"
+                                onClicked: Settings.resetLookKey(change.modelData)
+                            }
+                        }
+                    }
+                }
+
+                SettingsField {
+                    visible: !Settings.lookPristine
+                    searchable: false
+                    label: "Undo all"
+                    hint: "Put every change back to " + cb.baseName
+
+                    FlyoutChip {
+                        anchors.right: parent.right
+                        text: "Undo all"
+                        confirmText: "Undo " + Settings.lookDiffs.length + "?"
+                        onClicked: Settings.undoLookChanges()
+                    }
+                }
+
+                SettingsField {
+                    label: "Factory reset"
+                    hint: Settings.hasUserDefault ? "Forget the saved default and go back to stock"
+                        : "No saved default — stock is the default"
+
+                    FlyoutChip {
+                        anchors.right: parent.right
+                        text: "Forget"
+                        confirmText: "Forget it?"
+                        enabled: Settings.hasUserDefault
+                        onClicked: {
+                            Settings.factoryReset()
+                            cb.page.say("Saved default cleared, back to stock", false)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

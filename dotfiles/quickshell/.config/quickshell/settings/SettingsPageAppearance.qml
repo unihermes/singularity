@@ -1,23 +1,20 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAppearance.qml
 //
-// Appearance, in tabs, from the broadest choice to the finest:
-//   Look       every look as a card; the wallpaper and how often a new one
-//              comes; what's been changed from the look in use, each with
-//              its way back; the saved default
-//   Colours    the palette and the accents
-//   Style      the style, its shape dials, the shell's font and size, and
-//              the Finish switches
-//   Bar        its layout, then its modules, workspaces, windows and clock
+// Appearance, in tabs, one per part of the screen:
+//   Theme      the style, its shape and finish, the colours, spacing, the
+//              shell's font and headings -- what restyles everything at once
+//   Bar        its arrangement, shape and size, then each module
 //   Panels     flyouts, the launcher, notifications and the overlays
-//   Windows    how Hyprland draws windows
-//   System     motion, and the fonts, icons and cursor of other apps
-// Colours, Style, Bar and Panels open on a preview of the setup as it is.
+//   Desktop    the wallpaper, how Hyprland draws windows, and motion
+//   Apps       the fonts, icons and cursor of other apps
+// Every tab opens on a preview of what it changes, under a strip counting
+// the changes from the baseline (ChangesBar), with Save as default and
+// Reset beside it.
 //
-// A look (Looks.js) is a starting point: picking one sets everything it
-// carries, which can then be adjusted one by one. A field holding such a
-// setting is marked while it differs from the look, and the mark puts it
-// back; the Look tab lists every such change.
+// The look (Looks.js) is the starting point: everything it carries can be
+// adjusted one by one. A field holding such a setting is marked while it
+// differs from the baseline, and the mark puts it back.
 //
 // Two stores behind it. The shell's own look is Settings.qml, the same
 // values the Control Centre edits, so the two always agree and a change
@@ -43,24 +40,21 @@ SettingsPage {
     sectioned: true
     // a small bar and flyout, drawn by the shell's own pieces, above the
     // tabs whose settings change how they look
-    pinned: LivePreview {}
-    pinnedVisible: ["colours", "style", "bar", "panels"].indexOf(tab) !== -1
+    banner: ChangesBar {}
+    pinned: LivePreview { kind: ({ bar: "bar", panels: "launcher", desktop: "windows" })[page.tab] || "flyout" }
 
     title: "Appearance"
-    description: "Pick a look, then change anything about it. Changes apply as you make them; a dot marks a setting that differs from the look."
+    description: "Changes apply as you make them; a dot marks a setting that differs from the baseline."
 
     tabs: [
-        { id: "look",      label: "Look",      icon: "󰏘" },
-        { id: "colours",   label: "Colours",   icon: "󰌁" },
-        { id: "style",     label: "Style",     icon: "󰆧" },
-        { id: "bar",       label: "Bar",       icon: "󰕰" },
-        { id: "panels",    label: "Panels",    icon: "󰕮" },
-        { id: "windows",   label: "Windows",   icon: "󰖲" },
-        { id: "system",    label: "System",    icon: "󰒓" },
+        { id: "theme",   label: "Theme",   icon: "󰏘" },
+        { id: "bar",     label: "Bar",     icon: "󰕰" },
+        { id: "panels",  label: "Panels",  icon: "󰕮" },
+        { id: "desktop", label: "Desktop", icon: "󰖲" },
+        { id: "apps",    label: "Apps",    icon: "󰀻" },
     ]
-    stickyColumn: ({ look: tab_look, colours: tab_colours, style: tab_style,
-                     bar: tab_bar, panels: tab_panels, windows: tab_windows,
-                     system: tab_system })[tab] || tab_look
+    stickyColumn: ({ theme: tab_theme, bar: tab_bar, panels: tab_panels,
+                     desktop: tab_desktop, apps: tab_apps })[tab] || tab_theme
 
     function label(v, key) { return Settings.choiceLabel(v, key) }
 
@@ -72,10 +66,7 @@ SettingsPage {
             f.lookKey = key
     }
 
-    // on the page rather than the card: the reload after the write destroys
-    // the removed look's card before the result comes back
-
-    // --- the Look tab's changes ----------------------------------------------
+    // --- the list of changes (ChangesBar) -------------------------------------
 
     // What each setting a look carries is called on this page, for the list
     // of changes; the same as its field's label, so "Show" can find it
@@ -105,19 +96,15 @@ SettingsPage {
         return page.label(v, k)
     }
 
-    LookTab { id: tab_look; page: page }
-
-    ColoursTab { id: tab_colours; page: page }
-
-    StyleTab { id: tab_style; page: page }
+    ThemeTab { id: tab_theme; page: page }
 
     BarTab { id: tab_bar; page: page }
 
     PanelsTab { id: tab_panels; page: page }
 
-    WindowsTab { id: tab_windows; page: page }
+    DesktopTab { id: tab_desktop; page: page }
 
-    SystemTab { id: tab_system; page: page }
+    AppsTab { id: tab_apps; page: page }
 
     // --- windows: looks.lua, and hyprland.json over it ------------------------
 

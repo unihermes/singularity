@@ -1075,14 +1075,14 @@ Scope {
         root.hyprWrite("window-anim", style + "\n", reload)
     }
     function writeBorders(reload) {
-        var line = "rgba(" + hex(Theme.strokeFocus).slice(1) + "ff) rgba(" + hex(Theme.border).slice(1) + "ff)"
+        var line = "rgba(" + hex(Theme.windowBorderActive).slice(1) + "ff) rgba(" + hex(Theme.windowBorderInactive).slice(1) + "ff)"
         root.hyprWrite("borders", line + "\n", reload)
     }
 
     // Window corners, rounded like the shell's panels, so its own windows'
     // frames fill Hyprland's clip and every other window matches them.
     function writeRounding(reload) {
-        var r = String(Theme.panelFrameRadius)
+        var r = String(Theme.windowRadius)
         root.hyprWrite("rounding", r + "\n", reload)
     }
 
@@ -1146,7 +1146,7 @@ Scope {
     // thickens the border with the shell's strokes, and Shadows picks the
     // style's soft or hard shadow, or none.
     function writeWindowFrame(reload) {
-        var line = Theme.borderWidth + " " + Theme.shadow
+        var line = Theme.windowBorderWidth + " " + Theme.shadow
         root.hyprWrite("window-frame", line + "\n", reload)
     }
 
@@ -1165,8 +1165,8 @@ Scope {
 
     Connections {
         target: Theme
-        function onPanelFrameRadiusChanged() { roundingDebounce.restart() }
-        function onBorderWidthChanged() { windowFrameDebounce.restart() }
+        function onWindowRadiusChanged() { roundingDebounce.restart() }
+        function onWindowBorderWidthChanged() { windowFrameDebounce.restart() }
         function onShadowChanged() { windowFrameDebounce.restart() }
     }
 
@@ -1179,8 +1179,8 @@ Scope {
 
     Connections {
         target: Theme
-        function onStrokeFocusChanged() { bordersDebounce.restart() }
-        function onBorderChanged() { bordersDebounce.restart() }
+        function onWindowBorderActiveChanged() { bordersDebounce.restart() }
+        function onWindowBorderInactiveChanged() { bordersDebounce.restart() }
     }
 
     Timer {

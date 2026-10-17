@@ -22,7 +22,8 @@
 // `sectioned` is the redesigned layout, page by page (DESIGN.md): with
 // channel frames each group of rows sits in a channel of its own, the tabs
 // are one segmented strip in place of the heading, and hints keep to one
-// line. `pinned` shows above the scrolling rows while `pinnedVisible`.
+// line. `pinned` shows above the scrolling rows while `pinnedVisible`, and
+// `banner` above the tabs.
 
 import QtQuick
 import "../services"
@@ -50,6 +51,7 @@ Item {
     property bool sectioned: false
     property Component pinned: null
     property bool pinnedVisible: true
+    property Component banner: null
 
     // [{ id, label, icon }] and the one showing; [] for an untabbed page
     property var tabs: []
@@ -213,6 +215,13 @@ Item {
             font.family: Theme.fontText
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
+        }
+
+        Loader {
+            width: parent.width
+            active: root.banner !== null
+            visible: active
+            sourceComponent: root.banner
         }
 
         // the tabs: icon and name, the one showing lit and underlined

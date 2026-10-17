@@ -55,7 +55,6 @@ Singleton {
         current = path
         Quickshell.execDetached([script, "set", path])
         saveState()
-        if (Settings.wallpaperPerLook) Settings.setLookWallpaper(Settings.look, path)
     }
 
     function step(d) {
@@ -130,17 +129,6 @@ Singleton {
     Connections {
         target: Settings
         function onWallpaperShuffleChanged() { root.saveState() }
-        // a look's own wallpaper, when it has one and the image still exists
-        function onLookChanged() {
-            if (!Settings.wallpaperPerLook) return
-            var p = Settings.lookWallpapers[Settings.look]
-            if (p && root.images.indexOf(p) !== -1) root.set(p)
-        }
-        // turning it on starts with the current pairing
-        function onWallpaperPerLookChanged() {
-            if (Settings.wallpaperPerLook && root.current !== "")
-                Settings.setLookWallpaper(Settings.look, root.current)
-        }
     }
 
     // A fresh random wallpaper every Settings.wallpaperInterval minutes.

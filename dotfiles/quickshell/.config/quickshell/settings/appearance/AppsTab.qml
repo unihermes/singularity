@@ -1,7 +1,7 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/SystemTab.qml
+// ~/.config/quickshell/settings/appearance/AppsTab.qml
 //
-// The Appearance page's System tab.
+// The Appearance page's Apps tab: how apps outside the shell look.
 
 import Quickshell
 import QtQuick
@@ -11,39 +11,8 @@ import "../../flyouts"
 import ".."
 
 SettingsTab {
-    tabId: "system"
+    tabId: "apps"
 
-    FlyoutHeading { text: "MOTION" }
-
-    SettingsField {
-        label: "Animations"
-        hint: "The shell's and Hyprland's"
-        FlyoutSliderRow {
-            anchors.right: parent.right
-            width: Theme.fit(260)
-            label: ""
-            suffix: "%"
-            value: Settings.animTime
-            minimum: Settings.limits.animTime.min
-            maximum: Settings.limits.animTime.max
-            marks: Settings.animTimeMarks
-            onMoved: v => Settings.set("animTime", v)
-        }
-    }
-
-    SettingsField {
-        label: "Window animation"
-        hint: "Open, close, minimize, scratchpad"
-        Choice { key: "windowAnim" }
-    }
-
-    SettingsField {
-        label: "Flyouts open"
-        hint: Theme.flyoutGrown ? "Grown flyouts always fade" : "How flyouts appear"
-        Choice { key: "flyoutAnim" }
-    }
-
-    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "APPS OUTSIDE THE SHELL" }
 
     // GTK/Qt apps' own font -- independent of the shell's Font under Text. Every
@@ -91,4 +60,5 @@ SettingsTab {
 
     Stepper { label: "Cursor size"; key: "cursorSize"; step: 4; suffix: "px" }
 
+    Stepper { label: "Terminal opacity"; hint: "Alacritty's background, also on the Terminal page"; key: "terminalOpacity"; step: 5; suffix: "%" }
 }

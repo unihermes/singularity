@@ -238,6 +238,13 @@ Singleton {
     // a panel's outer corners in the current frame style, which Hyprland's
     // window rounding follows (AppearanceSync)
     readonly property int panelFrameRadius: frameChannel ? channelPanelRadius : panelRadius
+    // Hyprland's windows, as AppearanceSync hands them over: rounded like
+    // the panels, bordered as thick as the strokes, the focused one in the
+    // accent
+    readonly property int windowRadius: panelFrameRadius
+    readonly property int windowBorderWidth: borderWidth
+    readonly property color windowBorderActive: strokeFocus
+    readonly property color windowBorderInactive: border
     // A control's own stroke inside a panel (chips, fields, steppers,
     // cards), given the colour its state asks for: kept for the stroked
     // styles, and under None kept only where a lit or focused state shows.

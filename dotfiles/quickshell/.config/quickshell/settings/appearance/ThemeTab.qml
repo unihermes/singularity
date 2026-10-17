@@ -1,7 +1,9 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/StyleTab.qml
+// ~/.config/quickshell/settings/appearance/ThemeTab.qml
 //
-// The Appearance page's Style tab.
+// The Appearance page's Theme tab: what restyles all of the chrome at
+// once -- the style and its shape, the colours, spacing, text and the
+// finishing touches.
 
 import Quickshell
 import QtQuick
@@ -12,7 +14,7 @@ import ".."
 
 SettingsTab {
     id: styleTab
-    tabId: "style"
+    tabId: "theme"
 
     FlyoutHeading { text: "STYLE" }
 
@@ -28,17 +30,186 @@ SettingsTab {
             : "Chips, panels, the bar and every window"
     }
 
-    SettingsField {
-        label: "Bar shape"
-        hint: "Where flyouts sit and the gaps at screen edges follow it"
-        Choices { key: "barStyle" }
-    }
-
-    Tiles { key: "density"; label: "Density"; hint: "Spacing, bar height and gaps"; art: densityArt }
-
     Stepper { label: "See-through"; hint: Theme.glass ? "The bar and panels; Glass adds more" : "The bar and every panel"; key: "seeThrough"; step: 5; suffix: "%" }
 
-    Stepper { label: "Overlay dimming"; hint: "Behind full-screen overlays"; key: "scrim"; step: 5; suffix: "%" }
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "FINISH" }
+
+    // the style's own three options first
+    Repeater {
+        model: Styles.get(Settings.style).options
+        StyleOption { required property var modelData; option: modelData }
+    }
+
+    // then the shared switches its options don't already stand for
+    readonly property var optionKeys: Styles.get(Settings.style).options.map(o => o.key || "")
+
+    FinishSwitch {
+        visible: styleTab.optionKeys.indexOf("shadows") === -1
+        label: "Shadows"; key: "shadows"
+        live: Styles.get(Settings.style).shadow !== "none"
+        hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
+    }
+
+    FinishSwitch { visible: styleTab.optionKeys.indexOf("gradient") === -1; label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
+
+    FinishSwitch {
+        visible: styleTab.optionKeys.indexOf("heavyLines") === -1
+        label: "Heavy lines"; key: "heavyLines"
+        live: Styles.get(Settings.style).lines
+        hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
+    }
+
+    FinishSwitch { visible: styleTab.optionKeys.indexOf("headingUpper") === -1; label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
+
+    FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "PALETTE" }
+
+    SettingsField {
+        label: "Palette"
+        hint: "Grayscale, or tones from the wallpaper"
+        Choices { key: "colourMode" }
+    }
+
+    SettingsField {
+        label: "Intensity"
+        visible: Settings.colourMode === "wallpaper"
+        hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only"
+            : Wallpaper.generating ? "Generating palette…"
+            : "How much wallpaper colour comes through"
+        Choices { key: "colourScheme"; live: Settings.colourMode === "wallpaper" }
+    }
+
+    SettingsField {
+        label: "Shade"
+        visible: Settings.colourMode === "wallpaper"
+        hint: Settings.colourMode !== "wallpaper" ? "Wallpaper palette only"
+            : "Dark or light grounds; apps follow"
+        Choices { key: "colourVariant"; live: Settings.colourMode === "wallpaper" }
+    }
+
+    // The palette in use, role by role, darkest to brightest.
+    Row {
+        id: swatches
+        width: parent.width
+        spacing: Theme.spaceS
+
+        readonly property var roles: ["base", "bar", "panel", "surface", "overlay",
+                                      "border", "muted", "subtext", "text", "bright"]
+
+        Repeater {
+            model: swatches.roles
+
+            Column {
+                id: sw
+                required property string modelData
+                width: (swatches.width - swatches.spacing * (swatches.roles.length - 1)) / swatches.roles.length
+                spacing: Theme.sp(3)
+
+                Rectangle {
+                    width: parent.width
+                    height: Theme.fieldHeight
+                    radius: Theme.radiusInner
+                    color: Theme[sw.modelData]
+                    border.width: Theme.borderWidth
+                    border.color: Theme.stroke
+                }
+                Text {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    text: sw.modelData
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+            }
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "ACCENT" }
+
+    // The look's own accent, the presets and None, with a gap after the
+    // look's own; a custom accent in use joins the end. Wraps rather than
+    // running under the label when the window is narrow. The wallpaper
+    // palette brings its own, so the picker rests while that's on.
+    SettingsField {
+        id: accentField
+        label: "Accent"
+        lookKey: "accent"
+        hint: Settings.colourMode === "wallpaper" ? "The wallpaper's own tone is used"
+            : Settings.lookAccent !== "" ? "Selection and focus. First is " + page.label(Settings.look) + "'s own"
+            : "Selection, focus, the current item"
+
+        readonly property int swatch: Theme.chipHeight
+        readonly property int gap: Theme.spaceS
+        // the look's own swatch is followed by a wider gap
+        readonly property int lead: Settings.lookAccent !== "" ? Theme.spaceM : 0
+
+        Flow {
+            id: accentFlow
+            anchors.right: parent.right
+            spacing: accentField.gap
+            enabled: Settings.colourMode !== "wallpaper"
+            opacity: enabled ? 1 : 0.4
+            width: Math.min(parent.width, Settings.accents.length * (accentField.swatch + accentField.gap)
+                + accentField.lead + noneChip.width)
+
+            Repeater {
+                model: Settings.accents
+
+                Item {
+                    id: swatch
+                    required property string modelData
+                    required property int index
+                    readonly property bool current: Settings.accent === modelData
+                    width: accentField.swatch + (index === 0 ? accentField.lead : 0)
+                    height: accentField.swatch
+
+                    Rectangle {
+                        width: accentField.swatch
+                        height: accentField.swatch
+                        radius: Theme.radiusSmall
+                        color: swatch.modelData
+                        border.width: swatch.current ? 2 : swatchMouse.containsMouse ? Theme.borderWidth : 0
+                        border.color: Theme.textStrong
+
+                        MouseArea {
+                            id: swatchMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Settings.set("accent", swatch.modelData)
+                        }
+                    }
+                }
+            }
+
+            FlyoutChip {
+                id: noneChip
+                text: "None"
+                selected: Settings.accent === ""
+                onClicked: Settings.set("accent", "")
+            }
+        }
+    }
+
+    HexAccent { label: "Custom accent"; key: "accent" }
+
+    SettingsField {
+        label: "Level colour"
+        hint: "Volume, brightness and battery fills"
+        Choices { key: "levelColour" }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "SPACE" }
+
+    Tiles { key: "density"; label: "Density"; hint: "Spacing, bar height and gaps"; art: densityArt }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "TEXT" }
@@ -77,46 +248,6 @@ SettingsTab {
     }
 
     Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "FINISH" }
-
-    // the style's own three options first
-    Repeater {
-        model: Styles.get(Settings.style).options
-        StyleOption { required property var modelData; option: modelData }
-    }
-
-    // then the shared switches its options don't already stand for
-    readonly property var optionKeys: Styles.get(Settings.style).options.map(o => o.key || "")
-
-    SettingsField {
-        visible: styleTab.optionKeys.indexOf("barSeparator") === -1
-        label: "Separators"
-        hint: "Between the bar's modules"
-        Choice { key: "barSeparator" }
-    }
-
-    FinishSwitch {
-        visible: styleTab.optionKeys.indexOf("shadows") === -1
-        label: "Shadows"; key: "shadows"
-        live: Styles.get(Settings.style).shadow !== "none"
-        hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
-    }
-
-    FinishSwitch { visible: styleTab.optionKeys.indexOf("gradient") === -1; label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
-
-    FinishSwitch {
-        visible: styleTab.optionKeys.indexOf("heavyLines") === -1
-        label: "Heavy lines"; key: "heavyLines"
-        live: Styles.get(Settings.style).lines
-        hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
-    }
-
-    FinishSwitch { visible: styleTab.optionKeys.indexOf("headingUpper") === -1; label: "Capital headings"; key: "headingUpper"; hint: "VOLUME or Volume" }
-
-    FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
-
 
     // Two bar chips, the right one open, as each style draws them
     Component {
