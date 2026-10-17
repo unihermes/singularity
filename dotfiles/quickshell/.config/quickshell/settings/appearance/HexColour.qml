@@ -1,9 +1,11 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/HexAccent.qml
+// ~/.config/quickshell/settings/appearance/HexColour.qml
 //
 // Settings[key] as any colour, #rrggbb (or #rgb, with or without the
 // #), applied on Enter. The swatch beside it previews what's typed while
-// it parses; a swatch picked above replaces what's typed.
+// it parses; a value set elsewhere (a swatch, a slider, a reset) replaces
+// what's typed. `fallback` is the colour shown for "" -- the look's own,
+// for a key that takes "" to mean that.
 
 import Quickshell
 import QtQuick
@@ -16,8 +18,13 @@ SettingsField {
     readonly property Item page: hostPage
 
     property string key: ""
-    hint: Settings.colourMode === "wallpaper" ? "Grayscale palette only"
-        : "Type a hex colour and press Enter"
+    property color fallback: "transparent"
+    // grayscale only, like the accent: the wallpaper palette brings its own
+    property bool grayscaleOnly: true
+    readonly property bool live: !grayscaleOnly || Settings.colourMode !== "wallpaper"
+    readonly property string value: Settings[key] || ""
+    lookKey: key
+    hint: !live ? "Grayscale palette only" : "Type a hex colour and press Enter"
 
     function parse(t) {
         var h = String(t).trim().replace(/^#/, "")
@@ -25,11 +32,13 @@ SettingsField {
         return /^[0-9a-fA-F]{6}$/.test(h) ? "#" + h.toLowerCase() : ""
     }
 
+    onValueChanged: hexInput.text = value
+
     Row {
         id: hexRow
         anchors.right: parent.right
         spacing: Theme.spaceL
-        enabled: Settings.colourMode !== "wallpaper"
+        enabled: hex.live
         opacity: enabled ? 1 : 0.4
         readonly property string typed: hex.parse(hexInput.text)
 
@@ -38,7 +47,7 @@ SettingsField {
             width: Theme.chipHeight
             height: Theme.chipHeight
             radius: Theme.radiusSmall
-            color: hexRow.typed !== "" ? hexRow.typed : "transparent"
+            color: hexRow.typed !== "" ? hexRow.typed : hex.fallback
             border.width: Theme.borderWidth
             border.color: Theme.stroke
         }
@@ -47,8 +56,8 @@ SettingsField {
             id: hexInput
             width: Theme.fit(110)
             echoPassword: false
-            placeholder: "#rrggbb"
-            text: Settings[hex.key] || ""
+            placeholder: hex.value === "" && hex.fallback.a > 0 ? String(hex.fallback) : "#rrggbb"
+            text: hex.value
             onAccepted: {
                 if (hexRow.typed === "") {
                     page.say("\"" + text.trim() + "\" isn't a hex colour", true)
@@ -58,13 +67,7 @@ SettingsField {
                 text = hexRow.typed
                 page.say(hex.label + " set to " + hexRow.typed, false)
             }
-            onEscapePressed: text = Settings[hex.key] || ""
-
-            // typing breaks the binding; follow a swatch picked above
-            Connections {
-                target: Settings
-                function onAccentChanged() { if (hex.key === "accent") hexInput.text = Settings.accent }
-            }
+            onEscapePressed: text = hex.value
         }
     }
 }

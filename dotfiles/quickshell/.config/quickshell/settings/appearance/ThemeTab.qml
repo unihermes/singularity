@@ -90,7 +90,19 @@ SettingsTab {
         Choices { key: "colourVariant"; live: Settings.colourMode === "wallpaper" }
     }
 
-    // The palette in use, role by role, darkest to brightest.
+    // The palette in use, role by role, darkest to brightest. In grayscale
+    // a swatch picks that role for the field under the strip; a role set
+    // apart from the look's own carries a dot.
+    property string paletteRole: "base"
+    readonly property var roleHints: ({
+        base: "The deepest ground: meter tracks, fields", bar: "The bar's ground",
+        panel: "Flyouts' and windows' ground", surface: "Cards, chips, a lit tab",
+        overlay: "Hover fills, the selected row", border: "Strokes and rules",
+        muted: "Inactive marks, the channel's outer line", subtext: "Hints and secondary text",
+        text: "Body text", bright: "Headings, values, emphasis",
+    })
+    function roleKey(r) { return "palette" + r.charAt(0).toUpperCase() + r.slice(1) }
+
     Row {
         id: swatches
         width: parent.width
@@ -98,6 +110,7 @@ SettingsTab {
 
         readonly property var roles: ["base", "bar", "panel", "surface", "overlay",
                                       "border", "muted", "subtext", "text", "bright"]
+        readonly property bool editable: Settings.colourMode !== "wallpaper"
 
         Repeater {
             model: swatches.roles
@@ -105,6 +118,7 @@ SettingsTab {
             Column {
                 id: sw
                 required property string modelData
+                readonly property bool picked: swatches.editable && styleTab.paletteRole === modelData
                 width: (swatches.width - swatches.spacing * (swatches.roles.length - 1)) / swatches.roles.length
                 spacing: Theme.sp(3)
 
@@ -113,21 +127,52 @@ SettingsTab {
                     height: Theme.fieldHeight
                     radius: Theme.radiusInner
                     color: Theme[sw.modelData]
-                    border.width: Theme.borderWidth
-                    border.color: Theme.stroke
+                    border.width: sw.picked ? 2 : Theme.borderWidth
+                    border.color: sw.picked ? Theme.accent : swMouse.containsMouse && swatches.editable ? Theme.strokeHover : Theme.stroke
+
+                    Rectangle {
+                        visible: (Settings[styleTab.roleKey(sw.modelData)] || "") !== ""
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: Theme.spaceXs + 1
+                        width: Theme.fs(7)
+                        height: width
+                        radius: width / 2
+                        color: Theme.accent
+                        border.width: 1
+                        border.color: Theme.base
+                    }
+
+                    MouseArea {
+                        id: swMouse
+                        anchors.fill: parent
+                        enabled: swatches.editable
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: styleTab.paletteRole = sw.modelData
+                    }
                 }
                 Text {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     text: sw.modelData
-                    color: Theme.subtext
+                    color: sw.picked ? Theme.textStrong : Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
                     font.pixelSize: Theme.fontSmall
                 }
             }
         }
+    }
+
+    // the role picked above, by hex; "" is the look's own
+    HexColour {
+        visible: swatches.editable
+        label: styleTab.paletteRole.charAt(0).toUpperCase() + styleTab.paletteRole.slice(1)
+        key: styleTab.roleKey(styleTab.paletteRole)
+        fallback: Theme.look.palette[styleTab.paletteRole]
+        hint: styleTab.roleHints[styleTab.paletteRole]
     }
 
     Item { width: 1; height: Theme.spaceM }
@@ -156,7 +201,7 @@ SettingsTab {
             spacing: accentField.gap
             enabled: Settings.colourMode !== "wallpaper"
             opacity: enabled ? 1 : 0.4
-            width: Math.min(parent.width, Settings.accents.length * (accentField.swatch + accentField.gap)
+            width: Math.min(parent.width, (Settings.accents.length + 1) * (accentField.swatch + accentField.gap)
                 + accentField.lead + noneChip.width)
 
             Repeater {
@@ -189,6 +234,32 @@ SettingsTab {
                 }
             }
 
+            // any colour: opens the picker below
+            Rectangle {
+                id: customSwatch
+                width: accentField.swatch
+                height: accentField.swatch
+                radius: Theme.radiusSmall
+                border.width: accentField.picking ? 2 : customMouse.containsMouse ? Theme.borderWidth : 0
+                border.color: Theme.textStrong
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: "#e5484d" }
+                    GradientStop { position: 0.25; color: "#f5b70a" }
+                    GradientStop { position: 0.5; color: "#30a46c" }
+                    GradientStop { position: 0.75; color: "#0091ff" }
+                    GradientStop { position: 1.0; color: "#8e4ec6" }
+                }
+
+                MouseArea {
+                    id: customMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: accentField.picking = !accentField.picking
+                }
+            }
+
             FlyoutChip {
                 id: noneChip
                 text: "None"
@@ -196,15 +267,64 @@ SettingsTab {
                 onClicked: Settings.set("accent", "")
             }
         }
+
+        property bool picking: false
     }
 
-    HexAccent { label: "Custom accent"; key: "accent" }
+    // The picker: the accent's hue and lightness, its saturation kept (with
+    // a floor, so a grey accent still has a hue to move through)
+    SettingsField {
+        id: hueField
+        visible: accentField.picking && Settings.colourMode !== "wallpaper"
+        label: "Hue"
+        hint: "Around the colour wheel"
+        readonly property color base: Settings.accent !== "" ? Settings.accent : "#5555c8"
+        function setHsl(h, l) {
+            Settings.set("accent", String(Qt.hsla(h, Math.max(0.3, base.hslSaturation), l, 1)))
+        }
+
+        Slider {
+            anchors.right: parent.right
+            width: Theme.fit(260)
+            value: Math.max(0, hueField.base.hslHue) * 100
+            onMoved: v => hueField.setHsl(v / 100, hueField.base.hslLightness)
+        }
+    }
+
+    SettingsField {
+        visible: hueField.visible
+        label: "Lightness"
+        hint: "From deep to pale"
+
+        Slider {
+            anchors.right: parent.right
+            width: Theme.fit(260)
+            value: hueField.base.hslLightness * 100
+            onMoved: v => hueField.setHsl(Math.max(0, hueField.base.hslHue), Math.max(0.15, Math.min(0.85, v / 100)))
+        }
+    }
+
+    HexColour { label: "Custom accent"; key: "accent"; fallback: Theme.accent }
+
+    SettingsField {
+        label: "Text on the accent"
+        hint: Settings.accentText === "auto" ? "White, or dark when the accent is too bright"
+            : "On tabs, chosen segments and lit chips"
+        Choices { key: "accentText" }
+    }
 
     SettingsField {
         label: "Level colour"
         hint: "Volume, brightness and battery fills"
         Choices { key: "levelColour" }
     }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "STATUS" }
+
+    HexColour { label: "Good"; key: "colourGood"; fallback: Theme.look.good; grayscaleOnly: false; hint: "Charging, connected, done; Enter to apply" }
+
+    HexColour { label: "Alert"; key: "colourAlert"; fallback: Theme.look.alert; grayscaleOnly: false; hint: "Critical battery, errors, armed buttons" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SPACE" }

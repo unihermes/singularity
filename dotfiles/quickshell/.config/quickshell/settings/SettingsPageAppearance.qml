@@ -85,14 +85,18 @@ SettingsPage {
         altTabStyle: "Window switcher", altTabScope: "Switcher windows",
         overviewLayout: "Workspace overview",
         overviewBackdrop: "Overview backdrop", powerStyle: "Power menu", levelStyle: "Level popup",
-        accent: "Accent", levelColour: "Level colour",
+        accent: "Accent", levelColour: "Level colour", accentText: "Text on the accent",
+        colourGood: "Good", colourAlert: "Alert",
+        paletteBase: "Base", paletteBar: "Bar", palettePanel: "Panel", paletteSurface: "Surface",
+        paletteOverlay: "Overlay", paletteBorder: "Border", paletteMuted: "Muted",
+        paletteSubtext: "Subtext", paletteText: "Text", paletteBright: "Bright",
     })
     readonly property var keyUnits: ({ radius: "px", edgeGap: "px", seeThrough: "%", scrim: "%",
                                          focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%" })
     function valueText(k, v) {
         if (typeof v === "boolean") return v ? "on" : "off"
         if (typeof v === "number") return v + (keyUnits[k] || "")
-        if (v === "") return "none"
+        if (v === "") return Settings.hexKeys.indexOf(k) !== -1 ? page.label(Settings.look) + "'s own" : "none"
         return page.label(v, k)
     }
 

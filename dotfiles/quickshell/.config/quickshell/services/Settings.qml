@@ -140,6 +140,21 @@ Singleton {
     // hex, "" for none, and the overlay dimming in percent. Then the
     // headings' Finish switches: caps, and the rule after them.
     readonly property alias accent:       adapter.accent
+    // The ramp's roles one by one and the status hues, "" for the look's
+    // own; and the text on accent fills (Looks.js)
+    readonly property alias paletteBase: adapter.paletteBase
+    readonly property alias paletteBar: adapter.paletteBar
+    readonly property alias palettePanel: adapter.palettePanel
+    readonly property alias paletteSurface: adapter.paletteSurface
+    readonly property alias paletteOverlay: adapter.paletteOverlay
+    readonly property alias paletteBorder: adapter.paletteBorder
+    readonly property alias paletteMuted: adapter.paletteMuted
+    readonly property alias paletteSubtext: adapter.paletteSubtext
+    readonly property alias paletteText: adapter.paletteText
+    readonly property alias paletteBright: adapter.paletteBright
+    readonly property alias colourGood:   adapter.colourGood
+    readonly property alias colourAlert:  adapter.colourAlert
+    readonly property alias accentText:   adapter.accentText
     readonly property alias scrim:        adapter.scrim
     readonly property alias headingUpper: adapter.headingUpper
     readonly property alias headingRule:  adapter.headingRule
@@ -163,6 +178,7 @@ Singleton {
         colourMode:   ["grayscale", "wallpaper"],
         colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
         colourVariant: ["dark", "light"],
+        accentText:   ["auto", "white", "dark"],
         look:         Looks.order,
         style:        Styles.order,
         density:      ["compact", "normal", "roomy"],
@@ -218,7 +234,7 @@ Singleton {
         "star": "Star", "blackhole": "Black hole", "vortex": "Vortex", "horizon": "Event horizon",
         "radar": "Radar", "moon": "Moon", "atom": "Atom",
         "rocket": "Rocket", "ghost": "Ghost", "planet": "Planet", "sparkle": "Sparkle",
-        "infinity": "Infinity", "alacritty": "Alacritty", "ghostty": "Ghostty", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
+        "infinity": "Infinity", "white": "White", "alacritty": "Alacritty", "ghostty": "Ghostty", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
     })
     // where one value means different things under different settings
     readonly property var keyedLabels: ({
@@ -230,6 +246,7 @@ Singleton {
         windowMark: { "pill": "Pill" },
         levelStyle: { "pill": "Bar" },
         levelColour: { "accent": "Accent", "good": "Green", "text": "Text" },
+        accentText: { "auto": "Auto" },
         launcherLayout: { "line": "One line" },
         launcherPosition: { "top": "Under the bar", "full": "Full screen" },
         powerStyle: { "full": "Full screen" },
@@ -695,13 +712,16 @@ Singleton {
         return Math.max(l.min, Math.min(l.max, Math.round(v)))
     }
 
+    // the colours that take a hex or "" (the look's own)
+    readonly property var hexKeys: ["paletteBase", "paletteBar", "palettePanel", "paletteSurface", "paletteOverlay", "paletteBorder", "paletteMuted", "paletteSubtext", "paletteText", "paletteBright", "colourGood", "colourAlert"]
+
     // Single entry point for the menu, so clamping can't be forgotten at a
     // call site and every write goes through one place.
     function set(key, v) {
         if (key === "barPosition") adapter.barPosition = (v === "bottom") ? "bottom" : "top"
         else if (key === "colourMode") setColourMode(v)
         else if (key === "look") applyLook(v)
-        else if (key === "accent") adapter.accent = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
+        else if (key === "accent" || hexKeys.indexOf(key) !== -1) adapter[key] = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
         else if (key === "style") setStyle(v)
         else if (key === "barStyle") setBarStyle(v)
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
@@ -888,6 +908,19 @@ Singleton {
             property string launcherLayout: "list"
             property string flyoutAnim: "auto"
             property string accent: "#5555c8"
+            property string paletteBase: ""
+            property string paletteBar: ""
+            property string palettePanel: ""
+            property string paletteSurface: ""
+            property string paletteOverlay: ""
+            property string paletteBorder: ""
+            property string paletteMuted: ""
+            property string paletteSubtext: ""
+            property string paletteText: ""
+            property string paletteBright: ""
+            property string colourGood: ""
+            property string colourAlert: ""
+            property string accentText: "auto"
             property int scrim: 40
             property bool headingUpper: true
             property bool headingRule: true

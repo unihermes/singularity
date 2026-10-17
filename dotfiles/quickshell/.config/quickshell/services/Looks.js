@@ -50,6 +50,11 @@
 //     styleOptions the style's own options that are on, comma-joined ids
 //                  (Styles.js `options`); unstated, the style's
 //
+//     paletteBase … paletteBright   one ramp role each, "" for the
+//                  look's own (grayscale only)
+//     colourGood, colourAlert       the status hues, "" for the look's own
+//     accentText   text on accent fills: "auto", "white" or "dark"
+//
 // The content keys in `settings`:
 //     barPosition  "top" or "bottom"
 //     workspaceStyle "pills"  the current workspace a long pill, others stubs
@@ -171,6 +176,15 @@ var order = Object.keys(looks)
 // picking any look sets all of them -- otherwise leaving a bottom-bar look
 // for one that doesn't say would keep the bar at the bottom.
 var settingsBase = {
+    // the ramp's roles one by one, "" for the look's own (grayscale only)
+    paletteBase: "", paletteBar: "", palettePanel: "", paletteSurface: "", paletteOverlay: "",
+    paletteBorder: "", paletteMuted: "", paletteSubtext: "", paletteText: "", paletteBright: "",
+    // the status hues, "" for the look's own
+    colourGood: "",
+    colourAlert: "",
+    // text on an accent fill: "auto" picks white or dark by the accent's
+    // brightness
+    accentText: "auto",
     barStyle: "full",
     barPosition: "top",
     seeThrough: 100,

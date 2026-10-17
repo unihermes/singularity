@@ -55,7 +55,16 @@ Singleton {
     // The look's own ramp. In wallpaper colour mode each role is swapped for
     // the matching tone from the wallpaper's palette (see Wallpaper.qml);
     // until one exists, or in grayscale mode, it's these.
-    readonly property var gray: look.palette
+    // Grayscale takes the roles set one by one on the Appearance page
+    // (Settings.paletteBase …) over the look's.
+    readonly property var gray: {
+        var p = look.palette, out = {}
+        for (var r in p) {
+            var v = Settings["palette" + r.charAt(0).toUpperCase() + r.slice(1)]
+            out[r] = v ? v : p[r]
+        }
+        return out
+    }
     readonly property var roles: Settings.colourMode === "wallpaper" && Wallpaper.palette
         ? Wallpaper.palette : gray
 
@@ -82,8 +91,8 @@ Singleton {
     // The only hues that don't follow the wallpaper, and deliberately so:
     // charging and critical are states you want to catch without reading
     // anything, and a red or green wallpaper would otherwise camouflage them.
-    readonly property color good:    look.good
-    readonly property color alert:   look.alert
+    readonly property color good:    Settings.colourGood || look.good
+    readonly property color alert:   Settings.colourAlert || look.alert
 
     // The look's one hue, for marks rather than text: selection ticks, focus
     // strokes, the current item, and meters in looks that ask for it. In
@@ -107,7 +116,10 @@ Singleton {
     // white wouldn't read (by perceived brightness; HSL lightness calls a
     // mid blue like #5555c8 light). Not named onAccent: QML reads an
     // on<Name> property as a signal handler, and it always came back black.
-    readonly property color textOnAccent: 0.299 * accent.r + 0.587 * accent.g + 0.114 * accent.b > 0.65 ? "#111111" : "#ffffff"
+    // Accent text on the Appearance page can also pin it either way.
+    readonly property color textOnAccent: Settings.accentText === "white" ? "#ffffff"
+        : Settings.accentText === "dark" ? "#111111"
+        : 0.299 * accent.r + 0.587 * accent.g + 0.114 * accent.b > 0.65 ? "#111111" : "#ffffff"
     // the inner half of a double frame
     readonly property color frameStroke:   muted
     // a field's ground: inputs, key-capture boxes
