@@ -56,13 +56,19 @@ SettingsTab {
         }
     }
 
+    SettingsField {
+        label: "Fit"
+        hint: "How it fills the screen"
+        Choices { key: "wallpaperFill" }
+    }
+
     // Every image, four to a row; click one to show it.
     Flow {
         id: grid
         width: parent.width
         spacing: Theme.spaceL
 
-        readonly property int columns: 4
+        readonly property int columns: 3
         readonly property real cellWidth: (width - spacing * (columns - 1)) / columns
 
         Repeater {
@@ -108,6 +114,26 @@ SettingsTab {
         font.family: Theme.fontText
         font.weight: Theme.weightBody
         font.pixelSize: Theme.fontBody
+    }
+
+    SettingsField {
+        label: "Folder"
+        hint: Wallpaper.images.length + " images in the repo's wallpapers/"
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Open folder"
+            onClicked: Quickshell.execDetached(["xdg-open", Wallpaper.folder])
+        }
+    }
+
+    SettingsField {
+        label: "Colours from it"
+        hint: Settings.colourMode === "wallpaper" ? "The palette follows the wallpaper" : "Switch the palette to this wallpaper's tones"
+        FlyoutChip {
+            anchors.right: parent.right
+            text: Settings.colourMode === "wallpaper" ? "Back to grayscale" : "Use its colours"
+            onClicked: Settings.set("colourMode", Settings.colourMode === "wallpaper" ? "grayscale" : "wallpaper")
+        }
     }
 
     Item { width: 1; height: Theme.spaceM }

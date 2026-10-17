@@ -28,6 +28,8 @@ Singleton {
     id: root
 
     readonly property string script: Quickshell.env("HOME") + "/.config/hypr/wallpaper.sh"
+    // where the images are: the repo's wallpapers/, beside the script's link
+    readonly property string folder: images.length > 0 ? images[0].substring(0, images[0].lastIndexOf("/")) : ""
     readonly property string stateDir: Settings.stateDir
 
     property var images: []
@@ -53,7 +55,7 @@ Singleton {
     function set(path) {
         if (!path || path === current) return
         current = path
-        Quickshell.execDetached([script, "set", path])
+        Quickshell.execDetached([script, "set", path, Settings.wallpaperFill])
         saveState()
     }
 
@@ -72,7 +74,8 @@ Singleton {
 
     function saveState() {
         if (current === "") return
-        stateFile.setText("shuffle=" + (Settings.wallpaperShuffle ? 1 : 0) + "\nwallpaper=" + current + "\n")
+        stateFile.setText("shuffle=" + (Settings.wallpaperShuffle ? 1 : 0) + "\nwallpaper=" + current
+            + "\nmode=" + Settings.wallpaperFill + "\n")
     }
 
     // Bumped whenever the mapping below changes, so a palette cached by an
@@ -129,6 +132,11 @@ Singleton {
     Connections {
         target: Settings
         function onWallpaperShuffleChanged() { root.saveState() }
+        // the same image again, fitted the new way
+        function onWallpaperFillChanged() {
+            root.saveState()
+            if (root.current !== "") Quickshell.execDetached([root.script, "set", root.current, Settings.wallpaperFill])
+        }
     }
 
     // A fresh random wallpaper every Settings.wallpaperInterval minutes.

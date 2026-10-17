@@ -54,6 +54,8 @@ Singleton {
     readonly property alias wallpaperShuffle: adapter.wallpaperShuffle
     // minutes between random wallpapers while logged in; 0 never changes it
     readonly property alias wallpaperInterval: adapter.wallpaperInterval
+    // how the wallpaper fits the screen: swaybg's fill, fit, center or tile
+    readonly property alias wallpaperFill: adapter.wallpaperFill
     // The active look (Looks.js). Choosing one writes everything it
     // carries, so a look always arrives whole.
     readonly property alias look:        adapter.look
@@ -225,6 +227,7 @@ Singleton {
         windowRounding: ["shell", "own"],
         windowShadow: ["style", "off", "small", "large"],
         tabBar:       ["shell", "accent"],
+        wallpaperFill: ["fill", "fit", "center", "tile"],
         look:         Looks.order,
         style:        Styles.order,
         density:      ["compact", "normal", "roomy", "custom"],
@@ -300,6 +303,7 @@ Singleton {
         windowRounding: { "shell": "Match shell", "own": "Own" },
         windowShadow: { "style": "Style's", "off": "Off", "small": "Small", "large": "Large" },
         tabBar: { "shell": "Shell's colours" },
+        wallpaperFill: { "fill": "Fill", "fit": "Fit", "center": "Centre", "tile": "Tile" },
         launcherLayout: { "line": "One line" },
         launcherPosition: { "top": "Under the bar", "full": "Full screen" },
         powerStyle: { "full": "Full screen" },
@@ -1010,6 +1014,7 @@ Singleton {
 
             property bool wallpaperShuffle: true
             property int wallpaperInterval: 0
+            property string wallpaperFill: "fill"
             property bool clockIsland: true
             property int nightLightKelvin: 4000
             property string nightLightSchedule: "off"
