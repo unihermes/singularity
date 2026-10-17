@@ -4,7 +4,8 @@
 -- What more than one of hyprland.lua's modules needs: the state files the
 -- shell's Settings write, read once per load, and a few constants. Every
 -- module gets the same table from require("shared"); binds.lua adds
--- maxWorkspaces and tabBinds to it for windows.lua.
+-- maxWorkspaces and tabBinds to it for windows.lua, and appClasses for
+-- hyprland.lua.
 
 local S = {}
 

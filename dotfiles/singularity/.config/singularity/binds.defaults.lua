@@ -27,6 +27,17 @@ local fileManager = "thunar"
 local editor      = "codium"
 local zen         = "zen-browser"
 local floorp      = "floorp"
+-- The window classes each of those opens: its bind focuses a window of the
+-- app already open rather than starting another (hyprland.lua). A command
+-- that's just a program name and isn't listed is taken as its own class.
+-- The terminal is either of the two Settings > Terminal offers.
+shared.appClasses = {
+    [terminal]    = { "Alacritty", "com.mitchellh.ghostty" },
+    [fileManager] = "thunar",
+    [editor]      = { "codium", "VSCodium" },
+    [zen]         = "zen",
+    [floorp]      = "floorp",
+}
 -- The Quickshell launcher (flyouts/Launcher.qml); wofi only if the shell
 -- isn't running. pkill first so a second press dismisses wofi rather than
 -- stacking another. Its stylesheet is Quickshell's copy with the bar's corner
