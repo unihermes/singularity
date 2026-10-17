@@ -76,6 +76,16 @@ Singleton {
     readonly property alias barHeight:   adapter.barHeight
     readonly property alias barIconSize: adapter.barIconSize
     readonly property alias modulePad:   adapter.modulePad
+    // How Hyprland draws windows beyond the Hyprland tables (Looks.js)
+    readonly property alias windowBorderWidth: adapter.windowBorderWidth
+    readonly property alias windowBorderFocused: adapter.windowBorderFocused
+    readonly property alias windowBorderFocusedHex: adapter.windowBorderFocusedHex
+    readonly property alias windowBorderUnfocused: adapter.windowBorderUnfocused
+    readonly property alias windowBorderUnfocusedHex: adapter.windowBorderUnfocusedHex
+    readonly property alias windowRounding: adapter.windowRounding
+    readonly property alias windowRadius: adapter.windowRadius
+    readonly property alias windowShadow: adapter.windowShadow
+    readonly property alias tabBar:      adapter.tabBar
     // bar flyouts' width (percent), the launcher's rows, the popups' width
     readonly property alias flyoutWidth: adapter.flyoutWidth
     readonly property alias launcherRows: adapter.launcherRows
@@ -209,6 +219,12 @@ Singleton {
         accentText:   ["auto", "white", "dark"],
         headingMarkColour: ["accent", "text", "muted"],
         headingSize:  ["smaller", "same", "larger"],
+        windowBorderWidth: ["style", "0", "1", "2", "3"],
+        windowBorderFocused: ["accent", "text", "custom"],
+        windowBorderUnfocused: ["border", "none", "custom"],
+        windowRounding: ["shell", "own"],
+        windowShadow: ["style", "off", "small", "large"],
+        tabBar:       ["shell", "accent"],
         look:         Looks.order,
         style:        Styles.order,
         density:      ["compact", "normal", "roomy", "custom"],
@@ -278,6 +294,12 @@ Singleton {
         levelStyle: { "pill": "Bar" },
         levelColour: { "accent": "Accent", "good": "Green", "text": "Text" },
         accentText: { "auto": "Auto" },
+        windowBorderWidth: { "style": "Style's", "0": "None", "1": "1px", "2": "2px", "3": "3px" },
+        windowBorderFocused: { "custom": "Custom" },
+        windowBorderUnfocused: { "border": "Border", "custom": "Custom" },
+        windowRounding: { "shell": "Match shell", "own": "Own" },
+        windowShadow: { "style": "Style's", "off": "Off", "small": "Small", "large": "Large" },
+        tabBar: { "shell": "Shell's colours" },
         launcherLayout: { "line": "One line" },
         launcherPosition: { "top": "Under the bar", "full": "Full screen" },
         powerStyle: { "full": "Full screen" },
@@ -603,6 +625,7 @@ Singleton {
         barIconSize: { min: 10, max: 28 },
         modulePad: { min: 0, max: 16 },
         flyoutWidth: { min: 80, max: 150 },
+        windowRadius: { min: 0, max: 30 },
         launcherRows: { min: 3, max: 16 },
         notifWidth: { min: 280, max: 560 },
         edgeGap:   { min: 0,  max: 30 },
@@ -752,7 +775,7 @@ Singleton {
     }
 
     // the colours that take a hex or "" (the look's own)
-    readonly property var hexKeys: ["paletteBase", "paletteBar", "palettePanel", "paletteSurface", "paletteOverlay", "paletteBorder", "paletteMuted", "paletteSubtext", "paletteText", "paletteBright", "colourGood", "colourAlert"]
+    readonly property var hexKeys: ["windowBorderFocusedHex", "windowBorderUnfocusedHex", "paletteBase", "paletteBar", "palettePanel", "paletteSurface", "paletteOverlay", "paletteBorder", "paletteMuted", "paletteSubtext", "paletteText", "paletteBright", "colourGood", "colourAlert"]
 
     // Single entry point for the menu, so clamping can't be forgotten at a
     // call site and every write goes through one place.
@@ -909,6 +932,15 @@ Singleton {
             property int barHeight: 32
             property int barIconSize: 17
             property int modulePad: 6
+            property string windowBorderWidth: "style"
+            property string windowBorderFocused: "accent"
+            property string windowBorderFocusedHex: ""
+            property string windowBorderUnfocused: "border"
+            property string windowBorderUnfocusedHex: ""
+            property string windowRounding: "shell"
+            property int windowRadius: 6
+            property string windowShadow: "style"
+            property string tabBar: "shell"
             property int flyoutWidth: 100
             property int launcherRows: 8
             property int notifWidth: 380

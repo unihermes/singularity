@@ -63,6 +63,13 @@
 //
 // The content keys in `settings`:
 //     barPosition  "top" or "bottom"
+//     windowBorderWidth   Hyprland's border: "style" (as thick as the
+//                  strokes) or "0".."3" px
+//     windowBorderFocused  "accent", "text" or "custom" (…FocusedHex)
+//     windowBorderUnfocused "border", "none" or "custom" (…UnfocusedHex)
+//     windowRounding  "shell" (the panels' corners) or "own" (windowRadius)
+//     windowShadow "style" (the style's, with Shadows), "off", "small", "large"
+//     tabBar       grouped windows' tab bar: "shell" colours or "accent"
 //     flyoutWidth  bar flyouts' width, in percent of their own
 //     launcherRows results the launcher shows before it scrolls (four
 //                  more when it's full screen)
@@ -205,6 +212,15 @@ var settingsBase = {
     barHeight: 32,
     barIconSize: 17,
     modulePad: 6,
+    windowBorderWidth: "style",
+    windowBorderFocused: "accent",
+    windowBorderFocusedHex: "",
+    windowBorderUnfocused: "border",
+    windowBorderUnfocusedHex: "",
+    windowRounding: "shell",
+    windowRadius: 6,
+    windowShadow: "style",
+    tabBar: "shell",
     flyoutWidth: 100,
     launcherRows: 8,
     notifWidth: 380,

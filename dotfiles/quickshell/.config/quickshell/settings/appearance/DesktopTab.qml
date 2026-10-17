@@ -111,17 +111,89 @@ SettingsTab {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "WINDOWS" }
+    FlyoutHeading { text: "GAPS" }
 
     HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
     Stepper { label: "Gaps at screen edges"; hint: Theme.barFull ? "" : "The bar floats this far in too"; key: "edgeGap"; suffix: "px" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "BORDERS" }
+
+    SettingsField {
+        label: "Border width"
+        hint: Settings.windowBorderWidth === "style" ? "As thick as the shell's strokes" : "Every window's border"
+        Choices { key: "windowBorderWidth" }
+    }
+
+    SettingsField {
+        label: "Focused border"
+        hint: "The window with focus"
+        Choices { key: "windowBorderFocused" }
+    }
+
+    HexColour {
+        visible: Settings.windowBorderFocused === "custom"
+        label: "Focused colour"
+        key: "windowBorderFocusedHex"
+        fallback: Theme.strokeFocus
+        grayscaleOnly: false
+    }
+
+    SettingsField {
+        label: "Unfocused border"
+        hint: "Every other window"
+        Choices { key: "windowBorderUnfocused" }
+    }
+
+    HexColour {
+        visible: Settings.windowBorderUnfocused === "custom"
+        label: "Unfocused colour"
+        key: "windowBorderUnfocusedHex"
+        fallback: Theme.border
+        grayscaleOnly: false
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "CORNERS" }
+
+    SettingsField {
+        label: "Window corners"
+        hint: Settings.windowRounding === "shell" ? "Rounded like the shell's panels" : "A rounding of their own"
+        Choices { key: "windowRounding" }
+    }
+
+    Stepper { visible: Settings.windowRounding === "own"; label: "Window rounding"; hint: "Corner radius"; key: "windowRadius"; suffix: "px" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "OPACITY" }
+
     Stepper { label: "Focused opacity"; key: "focusedOpacity"; step: 5; suffix: "%" }
     Stepper { label: "Unfocused opacity"; key: "unfocusedOpacity"; step: 5; suffix: "%" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "DIM AND BLUR" }
+
     HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
     HyprPercent { label: "Dim strength"; visible: page.hyprField(["decoration"], "dim_inactive").value === true; path: ["decoration"]; key: "dim_strength"; min: 0 }
     HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
     HyprInt { label: "Blur size"; visible: page.blurOn; note: "How far each pass spreads"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
     HyprInt { label: "Blur passes"; visible: page.blurOn; note: "More is smoother and costs more"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "SHADOW AND TABS" }
+
+    SettingsField {
+        label: "Window shadow"
+        hint: Settings.windowShadow === "style" ? (Theme.shadow === "none" ? "The style's: none, or Shadows is off" : "The style's soft shadow")
+            : "Under every window"
+        Choices { key: "windowShadow" }
+    }
+
+    SettingsField {
+        label: "Tab bar"
+        hint: "Over grouped windows: the open tab's fill"
+        Choices { key: "tabBar" }
+    }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "MOTION" }

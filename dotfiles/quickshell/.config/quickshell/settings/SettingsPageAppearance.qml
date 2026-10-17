@@ -75,6 +75,10 @@ SettingsPage {
         focusedOpacity: "Focused opacity", unfocusedOpacity: "Unfocused opacity",
         terminalOpacity: "Terminal opacity", spacing: "Spacing", rowScale: "Row height",
         barHeight: "Height", barIconSize: "Icon size", modulePad: "Module padding",
+        windowBorderWidth: "Border width", windowBorderFocused: "Focused border",
+        windowBorderFocusedHex: "Focused colour", windowBorderUnfocused: "Unfocused border",
+        windowBorderUnfocusedHex: "Unfocused colour", windowRounding: "Window corners",
+        windowRadius: "Window rounding", windowShadow: "Window shadow", tabBar: "Tab bar",
         flyoutWidth: "Flyout width", launcherRows: "Rows shown", notifWidth: "Popup width",
         seeThrough: "See-through", scrim: "Overlay dimming", barSeparator: "Separators",
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
@@ -96,7 +100,7 @@ SettingsPage {
     })
     readonly property var keyUnits: ({ radius: "px", edgeGap: "px", spacing: "%", rowScale: "%",
                                          barHeight: "px", barIconSize: "px", modulePad: "px",
-                                         flyoutWidth: "%", notifWidth: "px", seeThrough: "%", scrim: "%",
+                                         flyoutWidth: "%", notifWidth: "px", windowRadius: "px", seeThrough: "%", scrim: "%",
                                          focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%" })
     function valueText(k, v) {
         if (typeof v === "boolean") return v ? "on" : "off"

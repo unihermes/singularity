@@ -44,12 +44,12 @@ local activeOpacity, inactiveOpacity = S.state("window-opacity", ""):match("^(%S
 activeOpacity   = tonumber(activeOpacity) or 1
 inactiveOpacity = tonumber(inactiveOpacity) or 1
 
--- "<border width> <shadow>" from the Appearance page's style: the border
--- as thick as the shell's strokes, and its shadow ("none", "soft", "hard")
+-- "<border width> <shadow>" from the Appearance page: the border's width,
+-- and the shadow ("none", "small", "soft" -- the style's -- or "large")
 local windowBorder, windowShadow = S.state("window-frame", ""):match("^(%d+)%s+(%a+)$")
 windowBorder = tonumber(windowBorder) or 1
 windowShadow = windowShadow or "soft"
-local hardShadow = windowShadow == "hard"
+local shadowRange = ({ small = 8, soft = 18, large = 34 })[windowShadow] or 18
 
 -- The open tab's fill, with a line of the accent along its top edge. The
 -- groupbar has no colour of its own for that line (its indicator shares the
@@ -92,13 +92,13 @@ hl.config({
         dim_inactive = true,
         dim_strength = 0.4,
 
-        -- soft: black at 40 percent, blurred; hard: a solid offset copy
+        -- black at 40 percent, blurred as far as the size says
         shadow = {
             enabled      = windowShadow ~= "none",
-            range        = hardShadow and 2 or 18,
-            render_power = hardShadow and 1 or 3,
-            offset       = hardShadow and "4 4" or "0 0",
-            color        = hardShadow and "rgba(000000ff)" or "rgba(00000066)",
+            range        = shadowRange,
+            render_power = 3,
+            offset       = "0 0",
+            color        = "rgba(00000066)",
         },
 
         blur = {

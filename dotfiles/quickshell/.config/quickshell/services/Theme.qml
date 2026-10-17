@@ -259,10 +259,19 @@ Singleton {
     // Hyprland's windows, as AppearanceSync hands them over: rounded like
     // the panels, bordered as thick as the strokes, the focused one in the
     // accent
-    readonly property int windowRadius: panelFrameRadius
-    readonly property int windowBorderWidth: borderWidth
-    readonly property color windowBorderActive: strokeFocus
-    readonly property color windowBorderInactive: border
+    // accent, unless the Desktop tab sets them their own way
+    readonly property int windowRadius: Settings.windowRounding === "own" ? Settings.windowRadius : panelFrameRadius
+    readonly property int windowBorderWidth: Settings.windowBorderWidth === "style" ? borderWidth
+        : Number(Settings.windowBorderWidth)
+    readonly property color windowBorderActive: Settings.windowBorderFocused === "text" ? text
+        : Settings.windowBorderFocused === "custom" && Settings.windowBorderFocusedHex !== "" ? Settings.windowBorderFocusedHex
+        : strokeFocus
+    readonly property color windowBorderInactive: Settings.windowBorderUnfocused === "none" ? "transparent"
+        : Settings.windowBorderUnfocused === "custom" && Settings.windowBorderUnfocusedHex !== "" ? Settings.windowBorderUnfocusedHex
+        : border
+    // their shadow: the style's (with Shadows on), none, or a set size
+    readonly property string windowShadow: Settings.windowShadow === "style" ? shadow
+        : Settings.windowShadow === "off" ? "none" : Settings.windowShadow
     // A control's own stroke inside a panel (chips, fields, steppers,
     // cards), given the colour its state asks for: kept for the stroked
     // styles, and under None kept only where a lit or focused state shows.

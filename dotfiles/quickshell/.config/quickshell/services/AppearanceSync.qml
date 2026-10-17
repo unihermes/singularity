@@ -1075,7 +1075,8 @@ Scope {
         root.hyprWrite("window-anim", style + "\n", reload)
     }
     function writeBorders(reload) {
-        var line = "rgba(" + hex(Theme.windowBorderActive).slice(1) + "ff) rgba(" + hex(Theme.windowBorderInactive).slice(1) + "ff)"
+        var c = col => "rgba(" + hex(col).slice(1) + ("0" + Math.round(col.a * 255).toString(16)).slice(-2) + ")"
+        var line = c(Theme.windowBorderActive) + " " + c(Theme.windowBorderInactive)
         root.hyprWrite("borders", line + "\n", reload)
     }
 
@@ -1091,7 +1092,9 @@ Scope {
     // the rest like the bar.
     function writeGroupbar(reload) {
         var rgba = c => "rgba(" + hex(c).slice(1) + "ff)"
-        var line = [Theme.selectedFill, Theme.bar, Theme.text, Theme.subtext, Theme.accent].map(rgba).join(" ")
+        var lit = Settings.tabBar === "accent"
+        var line = [lit ? Theme.accent : Theme.selectedFill, Theme.bar, lit ? Theme.textOnAccent : Theme.text,
+                    Theme.subtext, Theme.accent].map(rgba).join(" ")
         root.hyprWrite("groupbar", line + "\n", reload)
     }
 
@@ -1146,7 +1149,7 @@ Scope {
     // thickens the border with the shell's strokes, and Shadows picks the
     // style's soft or hard shadow, or none.
     function writeWindowFrame(reload) {
-        var line = Theme.windowBorderWidth + " " + Theme.shadow
+        var line = Theme.windowBorderWidth + " " + Theme.windowShadow
         root.hyprWrite("window-frame", line + "\n", reload)
     }
 
@@ -1167,7 +1170,7 @@ Scope {
         target: Theme
         function onWindowRadiusChanged() { roundingDebounce.restart() }
         function onWindowBorderWidthChanged() { windowFrameDebounce.restart() }
-        function onShadowChanged() { windowFrameDebounce.restart() }
+        function onWindowShadowChanged() { windowFrameDebounce.restart() }
     }
 
     // A look switch changes both colours at once; one reload is enough.
@@ -1224,6 +1227,7 @@ Scope {
         function onFocusedOpacityChanged() { opacityDebounce.restart() }
         function onUnfocusedOpacityChanged() { opacityDebounce.restart() }
         function onTerminalOpacityChanged() { debounce.restart() }
+        function onTabBarChanged() { groupbarDebounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
