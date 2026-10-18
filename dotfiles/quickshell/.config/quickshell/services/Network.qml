@@ -2,18 +2,9 @@
 // ~/.config/quickshell/services/Network.qml
 //
 // Wi-Fi through iwd and the wired link through systemd-networkd, for the
-// bar's network module, its flyout and the Settings page.
-// Quickshell.Networking's only backend is NetworkManager, so this shells out
-// to iwctl, busctl and networkctl instead.
-//
-// A singleton, like Weather and Updates. This used to live on the bar in
-// shell.qml, which is instantiated once per screen, so every poll ran once
-// per connected monitor and each screen kept its own copy of the state.
-//
-// iwctl draws tables for humans: ANSI colour, a banner, and fixed-width
-// columns. The device and status reads strip the escapes and pick fields out
-// of that; the network list, where SSIDs with spaces make field splitting
-// unsafe, reads iwd over D-Bus instead (see listProc).
+// bar, its flyout and the Settings page (Quickshell.Networking needs
+// NetworkManager). Status reads strip iwctl's table formatting; the network
+// list comes from iwd over D-Bus.
 
 pragma Singleton
 
@@ -26,9 +17,7 @@ Singleton {
 
     property string device: ""
     property string ssid: ""
-    // iwd's Powered flag for the radio. Read from `device list`, not
-    // `station show`: a powered-off device has no station at all
-    // ("No station on device"), but still appears in the list.
+    // iwd's Powered, from `device list` (a powered-off device has no station)
     property bool powered: true
     // [{ connected, ssid, security, dbm, bars, known }], strongest first
     property var networks: []
@@ -48,9 +37,8 @@ Singleton {
     // The wired link: the Ethernet interface networkd manages (the one
     // that's up, if there are several), or "" on a machine without one.
     property string wiredDevice: ""
-    // networkd's OperationalState for it: "routable" once it has an address
-    // and a route out, "carrier"/"degraded" with a cable in but no lease
-    // yet, "no-carrier" unplugged
+    // networkd's OperationalState: "routable", "carrier"/"degraded" (no
+    // lease yet), "no-carrier"
     property string wiredState: ""
     readonly property bool wired: wiredState === "routable"
 
@@ -74,13 +62,8 @@ Singleton {
     // page), never on a timer or when the flyout opens.
     function scan() { if (device !== "" && !scanProc.running) scanProc.running = true }
 
-    // --passphrase rather than iwd's interactive prompt, which needs a tty.
-    // It does put the passphrase in this process's argv for the lifetime of
-    // the call, where anything running as this user could read it out of ps.
-    //
-    // One connect at a time: a Process already running ignores a new
-    // command, so a second click during the first would have been dropped.
-    // The latest request waits and runs when the current one exits.
+    // --passphrase (iwd's prompt needs a tty), which puts it in argv for the
+    // call. One connect at a time; the latest request waits.
     property var pendingConnect: null
 
     // `hidden` for a network that doesn't broadcast its name, which iwd
@@ -118,9 +101,8 @@ Singleton {
             "net.connman.iwd.KnownNetwork", "AutoConnect", "b", on ? "true" : "false"])
     }
 
-    // One command at a time per process, in order: a Process that is still
-    // running ignores a new command, so a second click (the radio toggled
-    // twice, two networks forgotten in a row) was dropped.
+    // one command at a time per process, in order (a running Process ignores
+    // a new command)
     function queue(proc, cmd) {
         proc.pending.push(cmd)
         next(proc)
@@ -176,18 +158,9 @@ Singleton {
         }
     }
 
-    // The network list comes from iwd's D-Bus API rather than
-    // `iwctl station get-networks`: that table had to be cut up by fixed
-    // column offsets, which any iwd release that reflowed its columns would
-    // break silently, and its signal column marks the empty bars with colour
-    // alone -- stripping the escapes left every network at full signal.
-    // busctl hands back JSON.
-    //
-    // Two calls, since the second needs a path out of the first: every iwd
-    // object (names, security, connected, known), then the station's
-    // networks in iwd's own order with signal strength. A failure at either
-    // step lands in listError for the flyout to show, instead of an empty
-    // list that looks like there's simply nothing in range.
+    // The network list from iwd's D-Bus API (busctl JSON): every iwd object,
+    // then the station's ordered networks with signal. A failure lands in
+    // listError for the flyout to show.
     property var objects: ({})
 
     function listFailed(why) {
@@ -277,14 +250,9 @@ Singleton {
         }
     }
 
-    // Whether the radio was last left on or off from the shell, kept across
-    // reboots. iwd powers every device on whenever it starts, so without
-    // this Wi-Fi turned off in the bar came back on at the next boot (or
-    // iwd restart). The choice is put back once each time the device
-    // appears; until the shell starts at login, iwd's default holds.
-    //
-    // Only the shell's own toggles are recorded: a Powered change seen on
-    // the bus may be iwd's start-up default rather than anyone's choice.
+    // the radio's on/off as last left from the shell, put back each time the
+    // device appears (iwd powers on at every start); only the shell's own
+    // toggles are recorded
     property bool powerRestored: false
     onDeviceChanged: if (device === "") powerRestored = false
 
@@ -305,9 +273,7 @@ Singleton {
         printErrors: false
     }
 
-    // Powering the radio back on doesn't hand back an SSID at once: iwd
-    // reconnects to a known network about a second later. The iwd watch
-    // below catches that reconnect when it lands.
+    // iwd reconnects about a second after power-on; the watch below catches it
     Process {
         id: powerSet
         property var pending: []
@@ -365,11 +331,7 @@ Singleton {
         }
     }
 
-    // iwd reports itself active before its interfaces are registered, so the
-    // one-shot probe at startup can come back empty. Everything else is
-    // gated on having a device, so without this retry that empty result
-    // would stick for the whole session and the bar would insist it is
-    // offline while the machine is plainly online.
+    // retries the startup probe: iwd reports active before its interfaces exist
     Timer {
         interval: 5000
         repeat: true
@@ -377,16 +339,9 @@ Singleton {
         onTriggered: if (!deviceProc.running) deviceProc.running = true
     }
 
-    // The status is re-read when iwd says it changed, not on a timer: a
-    // gdbus monitor on iwd's signals, filtered down to the ones that move
-    // what the bar shows -- the station's State and ConnectedNetwork, the
-    // device's Powered, and a station appearing or going (the radio powering
-    // on or off, iwd restarting). Scanning and the BSS churn that comes with
-    // it are ignored. A connect, disconnect or radio toggle made anywhere --
-    // iwctl in a terminal, the network roaming on its own -- shows at once.
-    //
-    // Changes arrive in bursts (State steps through connecting to connected),
-    // so they're gathered for a moment and read once.
+    // Status is re-read when iwd says it changed: a gdbus monitor filtered to
+    // State, ConnectedNetwork, Powered and stations coming or going, gathered
+    // for a moment since changes come in bursts.
     function iwdChanged(line) {
         if (line.indexOf("InterfacesAdded") !== -1 || line.indexOf("InterfacesRemoved") !== -1) {
             if (line.indexOf("net.connman.iwd.Station") === -1 && line.indexOf("net.connman.iwd.Device") === -1) return
@@ -415,9 +370,7 @@ Singleton {
         onTriggered: iwdWatch.running = true
     }
 
-    // The wired link, from networkd's own view of its links. Read again when
-    // networkd says a link's state moved -- a cable plugged in or pulled,
-    // a lease gained or lost -- the same way iwd is watched above.
+    // the wired link, re-read when networkd says a link's state moved
     function refreshWired() { if (!wiredProc.running) wiredProc.running = true }
 
     Process {
