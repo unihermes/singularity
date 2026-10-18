@@ -20,7 +20,8 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
   Search index is `services/SettingsIndex.js`; keep it in step with the pages.
 - `qs/windows/`: Settings, System, Keybinds, Notes windows.
 - `dotfiles/hypr/.config/hypr/`: `hyprland.lua` requires `shared`, `displays`, `env`,
-  `autostart`, `looks`, `input`, `overrides`, `binds`, `alttab`, `windows`.
+  `autostart`, `looks`, `input`, `overrides`, `binds`, `alttab`, `windows` (which requires
+  `window-rules` for the static rules and `window-keys` for the arrow keys).
 - `dotfiles/singularity/.config/singularity/*.defaults.*`: templates `link.sh` copies
   to the user's real files; Settings edits the copies, never the repo.
 - `qs/DESIGN.md`: the UI design reference. Read the section you need (grep its `##`
