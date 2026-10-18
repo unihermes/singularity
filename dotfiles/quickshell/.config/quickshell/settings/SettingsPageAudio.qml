@@ -261,12 +261,7 @@ SettingsPage {
         readonly property var n: modelData
         readonly property var target: page.playsOn[n.id] || null
         readonly property var sink: target ? page.sinks.find(s => s.id === target.sink) || null : null
-        // the stream's own icon name, else the app's by its binary (Floorp
-        // names none)
-        readonly property var props: n.properties || {}
-        readonly property string icon: props["application.icon-name"]
-            ? Quickshell.iconPath(props["application.icon-name"], true)
-            : Apps.iconForClass(props["application.process.binary"] || props["application.name"] || "")
+        readonly property string icon: Audio.appIcon(n)
 
         width: parent ? parent.width : 0
         implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceM, right.height + Theme.spaceS)

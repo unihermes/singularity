@@ -109,6 +109,14 @@ Singleton {
         return p["application.name"] || n.description || n.nickname || n.name
     }
 
+    // an app stream's icon path: its own icon name, else the app's found
+    // by its binary (Floorp names none); "" for neither
+    function appIcon(n) {
+        var p = (n && n.properties) || {}
+        return p["application.icon-name"] ? Quickshell.iconPath(p["application.icon-name"], true)
+            : Apps.iconForClass(p["application.process.binary"] || p["application.name"] || "")
+    }
+
     // Pipewire nodes are unbound by default: audio.volume / audio.muted stay
     // invalid until the node is tracked, so the sink has to be listed here
     // for anything to read or write it at all.

@@ -406,8 +406,7 @@ Settings') are laid out the same way.
   click making one the default. Outputs with nothing plugged in aren't
   listed. Every level is a mute button (red while muted, `IconButton
   .warn`), the slider (grey while muted) and the percent. PLAYING and
-  RECORDING are a mixer: each app's icon (the stream's icon name, else
-  `Apps.iconForClass` on its binary), name over what it's playing,
+  RECORDING are a mixer: each app's icon (`Audio.appIcon`), name over what it's playing,
   and on the right the output it plays on (a dropdown, moved with pactl)
   and its level; nothing opens.
 - **Startup:** your entries are fields with the app's icon

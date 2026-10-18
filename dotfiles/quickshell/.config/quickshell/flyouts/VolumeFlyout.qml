@@ -140,13 +140,13 @@ FlyoutPanel {
             readonly property var n: modelData
             readonly property bool ready: n.ready && !!n.audio
             readonly property bool muted: ready && n.audio.muted
-            readonly property string iconName: n.properties ? n.properties["application.icon-name"] || "" : ""
+            readonly property string icon: Audio.appIcon(n)
             width: parent ? parent.width : 0
 
             // the app's name; a click mutes it
             FlyoutRow {
-                leadingImage: app.iconName !== "" ? Quickshell.iconPath(app.iconName, true) : ""
-                leadingIcon: app.iconName === "" ? "󰓃" : ""
+                leadingImage: app.icon
+                leadingIcon: app.icon === "" ? "󰓃" : ""
                 label: Audio.appName(app.n)
                 trailing: !app.ready ? "" : app.muted ? "Muted" : Math.round(app.n.audio.volume * 100) + "%"
                 trailingIsValue: true
