@@ -1,79 +1,24 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/AppearanceSync.qml
 //
-// Carries the Appearance page's settings out to the apps that draw the same
-// chrome as the bar -- corner radius, the palette (the look's or the
-// wallpaper's), font, font size and frame style -- so the fallback launcher
-// and the other apps change with it.
-//
-// Everything lands in ~/.local/state/singularity/, never in ~/.config: those
-// directories are stow links into the repo, and generated files there would
-// show up as changes to commit.
-//
-//   wofi.css    -- wofi's own stylesheet, rewritten. wofi parses CSS from a
-//                  string, so it can't @import anything; binds.lua
-//                  launches it with --style pointed here. Every hex from the
-//                  reference look's ramp (Looks.reference -- the one the
-//                  template is written in) becomes the current colour for
-//                  that role, the font family becomes the current one, and
-//                  values tagged `@radius` / `@font` are recomputed.
-//   alacritty.toml -- the terminal's colours and background opacity
-//                  (Settings.terminalOpacity), imported by alacritty.toml.
-//                  alacritty watches imports, so open windows follow along.
-//   ghostty.conf -- the same for Ghostty, a config-file of its
-//                  config.ghostty. Ghostty doesn't watch it, so open
-//                  windows are sent SIGUSR2, which reloads them.
-//   nvim.lua    -- the editor's palette, read by nvim's colors/singularity.lua.
-//                  nvim watches it and recolours open sessions.
-//   ~/.claude/themes/singularity.json -- a Claude Code theme; Claude Code
-//                  only reads themes from there, and watches it.
-//   ~/.config/zed/themes/singularity.json -- a Zed theme, colours only
-//                  (renderZed). Zed watches the directory.
-//   hyprlock.conf -- hyprlang variables (colours, font, radius, stroke) that
-//                  hypr/hyprlock.conf sources. hyprlock reads it at each lock.
-//   gtk3.css, gtk4.css -- the look's ramp, accent and status hues as
-//                  libadwaita's named colours (renderGtkCss), then the
-//                  style's corners, density and frames (AppStyle.js),
-//                  @imported by gtk-3.0/gtk.css and gtk-4.0/gtk.css. GTK
-//                  reads them at each app's launch.
-//   qt6ct-colors.conf -- the same colours as a full QPalette (renderQtScheme);
-//                  qt6ct.conf points at it.
-//   qt6ct.qss   -- the style's shapes and frames as a Qt stylesheet
-//                  (AppStyle.js), loaded by qt6ct on top of Fusion.
-//   term-colors.sh -- the ramp, accent, text on the accent and heading colour
-//                  as "r;g;b" triples in shell variables, and the capsule
-//                  shape (T_ROUND) and heading case (T_UPPER), sourced by
-//                  starship-path.sh and fastfetch's row.sh.
-//   starship.toml, fastfetch.jsonc -- the repo's own configs, recoloured
-//                  (recolour). .bashrc points starship (STARSHIP_CONFIG) and
-//                  fastfetch (-c) at them when they exist.
-//   zathura     -- zathura's colours, included by zathurarc.
-//
-// Zen's and Floorp's active profiles get dark or light and the accent as
-// Gecko's selection and accent colours, in a marked block of their user.js
-// (browserPrefs), and Floorp its chrome in the look's colours in one of
-// chrome/userChrome.css (browserChrome). Floorp's two files are rebuilt from
-// the repo's floorp/singularity/ copies each time; the rest of Zen's is left
-// alone. Read at each browser start.
-//
-// GTK and Qt apps get dark or light, the icon and cursor themes, and the
-// system font -- this is the only place any of those are set. Not the
-// shell's own font (Settings.fontFamily/Theme.fontText), which is for the
-// shell's chrome alone (wofi and the bar): GTK/Qt use systemFontFamily
-// and systemFontSize below.
-//   gsettings   -- gtk-theme/color-scheme, the icon and cursor themes, and the
-//                  system font, written live to dconf (no file, so
-//                  nothing to watch -- GTK apps read dconf directly, and
-//                  xdg-desktop-portal-gtk forwards color-scheme to portal-aware
-//                  Qt/GTK4 apps). GTK3's theme is adw-gtk3, libadwaita's look
-//                  ported to GTK3 with its colours left as named ones, so GTK3
-//                  and GTK4 apps draw the same widgets in the same colours.
-//   qt6ct.conf  -- Qt apps (QT_QPA_PLATFORMTHEME=qt6ct, env.lua) have no
-//                  live dconf-style path, so this is a real file, read at each
-//                  Qt app's next launch: Fusion, the palette and stylesheet
-//                  above, the icon theme and the system font.
-//   ~/.local/share/icons/default/index.theme -- the XCursor fallback,
-//                  inheriting the cursor theme (writeCursor).
+// Carries the appearance out to the other apps. Everything lands in
+// ~/.local/state/singularity/ (never ~/.config, which links into the repo):
+//   wofi.css         wofi's stylesheet, recoloured from the reference look
+//   alacritty.toml   colours and opacity, imported (alacritty watches it)
+//   ghostty.conf     the same; open windows get SIGUSR2
+//   nvim.lua         the editor's palette (colors/singularity.lua, watched)
+//   ~/.claude/themes/singularity.json, ~/.config/zed/themes/singularity.json
+//   hyprlock.conf    hyprlang variables sourced by hypr/hyprlock.conf
+//   gtk3.css, gtk4.css   libadwaita colours + AppStyle.js shapes
+//   qt6ct-colors.conf, qt6ct.qss   QPalette colours + AppStyle.js stylesheet
+//   term-colors.sh   "r;g;b" triples for starship-path.sh and fastfetch
+//   starship.toml, fastfetch.jsonc   the repo's configs, recoloured
+//   zathura          zathura's colours
+// Zen's and Floorp's profiles get a marked block in user.js (browserPrefs)
+// and Floorp its userChrome.css (browserChrome). GTK and Qt apps also get
+// dark/light, icon and cursor themes and the system font, set only here:
+// gsettings for GTK (live), qt6ct.conf for Qt (next launch), and the
+// XCursor fallback index.theme.
 
 import Quickshell
 import Quickshell.Io
@@ -106,10 +51,8 @@ Scope {
         return Math.round(c.r * 255) + ";" + Math.round(c.g * 255) + ";" + Math.round(c.b * 255)
     }
 
-    // A config written in the reference look's colours (Looks.reference),
-    // in the current one: each ramp, accent or alert hex, and each ANSI
-    // truecolour triple (38;2;r;g;b or 48;2;r;g;b), becomes the current
-    // colour for its role.
+    // a config written in the reference look's colours, in the current one
+    // (hexes and ANSI truecolour triples)
     function recolour(text) {
         var look = Looks.looks[Looks.reference], ref = look.palette
         var roles = roleNames.map(r => [ref[r], Theme[r]]).concat([[look.accent, Theme.accent], [look.alert, Theme.alert]])
@@ -151,10 +94,8 @@ Scope {
 
     readonly property var ansiNames: ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"]
 
-    // The ANSI slots as a lightness ramp in the look's tones, the way the
-    // repo's grayscale terminal always was: normal climbs muted -> text,
-    // bright climbs subtext -> bright, each ending on its role exactly.
-    // Hexes in ansiNames order.
+    // the ANSI slots as a lightness ramp in the look's tones (normal: muted
+    // to text, bright: subtext to bright), in ansiNames order
     function ansiRamp() {
         var normal = [hex(Theme.surface)], bright = [hex(Theme.border)]
         for (var i = 1; i < 7; i++) {
@@ -212,9 +153,7 @@ Scope {
                                 after: "pkill -USR2 -x ghostty; true" })
     }
 
-    // nvim's palette as a Lua table: the ten roles plus the look's accent and
-    // status hues. colors/singularity.lua builds every highlight from it, and
-    // nvim watches the file, so open editors recolour like the terminal.
+    // nvim's palette as a Lua table: the ramp, accent and status hues
     function renderNvim() {
         var q = c => '"' + hex(c) + '"'
         var lines = ["-- Generated by quickshell/services/AppearanceSync.qml -- edits are overwritten.",
@@ -229,11 +168,9 @@ Scope {
         AtomicFileWrite.write({ path: root.dir + "/nvim.lua", transform: () => text })
     }
 
-    // A Claude Code theme over its own dark or light base: the look's ramp
-    // for text and chrome, the accent wherever Claude marks something (its
-    // name, prompts, spinners, meters), good and alert for success and
-    // error. Diff and subagent colours stay Claude's, since those hues carry
-    // meaning. Claude Code watches the directory, so open sessions recolour.
+    // A Claude Code theme: the look's ramp for text and chrome, the accent
+    // for Claude's marks, good/alert for success/error. Diff and subagent
+    // colours stay Claude's.
     function renderClaude() {
         var rgb = c => "rgb(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + ","
             + Math.round(c.b * 255) + ")"
@@ -281,12 +218,9 @@ Scope {
                  escape: "#0184bc", punct: "#696c77" },
     })
 
-    // A Zed theme: the window (panels, tabs, bars, menus) in the look's
-    // colours, and the editor a step lighter than the shell's base with
-    // zedCode for the code. Zed's own shapes, spacing and fonts stay. The
-    // accent marks the cursor, selection, focus and the current line number;
-    // good and alert carry git and diagnostic state. Zed watches its themes
-    // directory, so open windows recolour.
+    // A Zed theme, colours only: the window in the look, the editor a step
+    // over base with zedCode syntax, the accent for cursor, selection and
+    // focus, good/alert for git and diagnostics.
     function renderZed() {
         var h = c => hex(c)
         // #rrggbbaa, the alpha as 0..1
@@ -502,9 +436,8 @@ Scope {
     readonly property int clockSize: Theme.fs(Settings.lockClockSize === "small" ? 40
         : Settings.lockClockSize === "huge" ? 110 : 64)
 
-    // What the lock screen's info line shows besides the date: the track
-    // playing and the unread count, kept in a file lock-info.sh reads, since
-    // hyprlock can't ask the shell. Empty when both are off.
+    // the lock screen's info line besides the date (track, unread count),
+    // in a file lock-info.sh reads
     readonly property string lockInfo: {
         var out = []
         var p = Media.player
@@ -548,12 +481,9 @@ Scope {
         return contrast(c, Theme.base) >= contrast(c, Theme.bright) ? Theme.base : Theme.bright
     }
 
-    // The look in libadwaita's named colours, laid out the way the shell uses
-    // its ramp: windows and dialogs on panel, views (lists, text areas) a step
-    // down on bar, headerbars, sidebars, cards and tooltips a step up on
-    // surface, popovers lifted clear of the window. adw-gtk3 (GTK3) reads
-    // these as @define-color names and derives its older theme_* names from
-    // them; libadwaita (GTK4) reads them as CSS variables.
+    // The look in libadwaita's named colours: windows on panel, views on bar,
+    // headerbars, sidebars and cards on surface, popovers lifted. adw-gtk3
+    // reads them as @define-color, libadwaita as CSS variables.
     function gtkColours() {
         var text = hex(Theme.text), a = hex(Theme.accent), t = hex(onAccent())
         var alert = hex(Theme.alert), onAlert = hex(onColor(Theme.alert))
@@ -604,11 +534,8 @@ Scope {
             vars += "  --" + k.replace(/_/g, "-") + ": " + o[k] + ";\n"
         }
         vars += "}\n"
-        // Selected text and items as a solid accent fill, focused or not, the
-        // way Qt and the browsers draw them. libadwaita would tint text 30%
-        // and grey out selected rows, and stock Adwaita (GTK3's fallback
-        // when adw-gtk3 isn't installed) has its own blue compiled in.
-        // A user sheet outranks the theme whatever the selectors.
+        // selection as a solid accent fill, focused or not, as Qt and the
+        // browsers draw it (a user sheet outranks the theme)
         var selection = "selection, *:selected, *:selected:focus, row:selected, treeview.view:selected,\n"
             + "entry selection, textview text selection, label selection {\n"
             + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n}\n"
@@ -621,17 +548,11 @@ Scope {
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
     }
 
-    // Gecko takes any of its system colours from a ui.<name> pref. Every
-    // highlight is the accent: selected text (also in an unfocused window),
-    // selected rows, and find-in-page, whose current match is the accent
-    // (one step off it in blue: Gecko inverts a match that's exactly the
-    // selection colour) and whose other matches (Highlight All) are it
-    // halfway to base, where Gecko would draw them green and magenta.
-    // Zen's accent (zen.theme.accent-color) is pinned to it too, so a colour
-    // picked in Zen's own settings doesn't outlast the next start.
-    // The chrome is dark or light with the look (toolbar-theme: 0 dark,
-    // 1 light), and pages follow the chrome (content-override 2) -- unless a
-    // theme extension is on, whose colours decide both instead.
+    // Gecko's ui.<name> system colours: every highlight is the accent (a
+    // find match one step off it, which Gecko would otherwise invert; other
+    // matches halfway to base). Zen's accent is pinned to it. The chrome is
+    // dark or light with the look and pages follow it, unless a theme
+    // extension is on.
     readonly property string browserMark: "singularity: begin -- generated by quickshell AppearanceSync, edits are overwritten"
 
     function browserPrefs() {
@@ -653,34 +574,17 @@ Scope {
             pref("ui.textHighlightBackground", str(others)), pref("ui.textHighlightForeground", str(hex(Theme.text))),
             pref("zen.theme.accent-color", str(a)),
             pref("toolkit.legacyUserProfileCustomizations.stylesheets", "true"),
-            // Decode video on the GPU through VA-API. Gecko blocklists
-            // NVIDIA's VA-API driver, so without forcing it every video is
-            // decoded on the CPU (env.lua points VA-API at the right driver
-            // and lifts the sandbox it needs); a driver that can't decode a
-            // stream still falls back to software.
+            // VA-API decoding (Gecko blocklists NVIDIA's driver; env.lua sets it up)
             pref("media.ffmpeg.vaapi.enabled", "true"),
             pref("media.hardware-video-decoding.force-enabled", "true")]
     }
 
-    // Floorp's chrome in the look: the variables a theme (browser.theme, or
-    // the Firefox Color extension) would set, laid out like gtkColours -- the
-    // tab strip on bar, the toolbar and selected tab a step up on surface,
-    // the address bar on overlay, popups as GTK's popovers. All text is the
-    // look's text, not bright. userChrome.css is
-    // a user sheet, so its !important outranks a theme's inline values.
-    // Floorp's lightweight theme also hard-codes cyan (the urlbar's focus
-    // ring, links, primary buttons) and blue (the selected urlbar result) in
-    // place of the system colours above. They're all variables on :root;
-    // unlayered !important here outranks the browser's layered tokens.
-    // The line over the selected tab (.tab-context-line, Floorp's Photon UI)
-    // is --tab-line-color, which Lepton sets on #tabbrowser-tabs and on the
-    // line itself rather than inheriting it from :root, so it's set on all three.
-    // Lepton tells the selected tab by [selected="true"], but Gecko now sets
-    // `selected` bare, so its rules hide the line there (and grey it on hover);
-    // the last rule shows it on the tabs that are actually selected.
-    // The sound badge on tabs (its rules are in the repo's userChrome.css)
-    // is a disc between border and muted with a speaker halfway from subtext
-    // to bright -- #3a3a3a and #b4b4b4 on singularity.
+    // Floorp's chrome in the look, as the variables a theme would set (laid
+    // out like gtkColours); unlayered !important outranks the browser's
+    // tokens, including its hard-coded cyan and blue. The selected tab's
+    // line (--tab-line-color) is set where Lepton sets it, and shown on
+    // tabs with a bare `selected`, which Lepton's rules miss. Tab sound
+    // badge: a disc between border and muted, speaker between subtext and bright.
     function browserChrome() {
         var a = hex(Theme.accent), t = hex(onAccent())
         var popup = hex(Theme.isLight ? Theme.panel : Theme.overlay)
@@ -803,24 +707,13 @@ Scope {
         }
     }
 
-    // GTK/Qt apps' font size, and the fixed monospace face used for both
-    // toolkits' "fixed"/monospace slot. Independent of the bar's own font
-    // picker (Theme.fontText) -- only the family for general/UI text
-    // (Settings.systemFontFamily, set from Settings -> Appearance) is
-    // user-editable; everything else here stays put.
+    // GTK/Qt apps' font size and monospace face; only the UI family
+    // (systemFontFamily) is user-editable
     readonly property int systemFontSize: 11
     readonly property string systemMonoFontFamily: "UbuntuMono Nerd Font"
 
-    // GTK apps read font-name/document-font-name/gtk-theme/color-scheme
-    // straight from dconf -- so a value written here sticks live, the same
-    // way install.sh's one-time `gsettings set` did at install. Only the
-    // general-text keys follow Settings.systemFontFamily; monospace-font-name
-    // stays on systemMonoFontFamily regardless, and neither follows the bar's
-    // own font (Theme.fontText).
-    // One shell command, like writeHyprAnimations: several `gsettings set`
-    // calls in a row each start a fresh dbus round trip, and a change made
-    // mid-burst (a slider dragged across several steps) would otherwise
-    // launch one per step.
+    // GTK settings, written live to dconf in one shell command (a dragged
+    // slider would otherwise start a dbus round trip per step).
     function renderGtk() {
         var font = Settings.systemFontFamily + " " + systemFontSize
         var monoFont = systemMonoFontFamily + " " + systemFontSize
@@ -841,9 +734,7 @@ Scope {
             "gsettings set " + iface + " icon-theme " + q(Settings.iconTheme) + "; " +
             "gsettings set " + iface + " cursor-theme " + q(Settings.cursorTheme) + "; " +
             "gsettings set " + iface + " cursor-size " + Settings.cursorSize]
-        // only when something in it changed: every set is announced to each
-        // running GTK app, which restyles itself, and most renders (a colour,
-        // a radius) change none of these
+        // only when something changed: every set restyles each running GTK app
         if (cmd.join("\n") === gtkSync.sent) return
         if (gtkSync.running) { gtkSync.again = true; return }
         gtkSync.sent = cmd.join("\n")
@@ -851,18 +742,11 @@ Scope {
         gtkSync.running = true
     }
 
-    // Qt apps (QT_QPA_PLATFORMTHEME=qt6ct) have no dconf-style live path, so
-    // this is a real file -- picked up at each Qt app's next launch. `general`
-    // follows Settings.systemFontFamily the same way GTK's font-name does;
-    // `fixed` stays on systemMonoFontFamily. Neither follows the bar's own
-    // font picker. custom_palette has to be on, or qt6ct falls back to its
-    // style's own palette and color_scheme_path is ignored.
+    // Qt apps (qt6ct) read a real file at their next launch. custom_palette
+    // must be on, or color_scheme_path is ignored.
 
-    // The GTK colours above as QPalette's 21 roles, in its enum order: Window
-    // is GTK's window, Base its view, Button its headerbar and cards. Light
-    // through Shadow are Fusion's bevels, derived from Button the way
-    // QPalette's own constructor does. Accent (Qt 6.6's 22nd) is left out,
-    // so Qt takes it from Highlight.
+    // The GTK colours as QPalette's 21 roles in enum order; Light..Shadow are
+    // Fusion's bevels derived from Button. Accent is left to Highlight.
     function qtColours(disabled) {
         var fg = disabled ? Theme.muted : Theme.text
         var button = Theme.surface
@@ -998,10 +882,8 @@ Scope {
     ProfileList { id: floorpInstalls; path: Quickshell.env("HOME") + "/.config/floorp/installs.ini" }
     ProfileList { id: floorpProfiles; path: Quickshell.env("HOME") + "/.config/floorp/profiles.ini" }
 
-    // Floorp's own prefs and chrome, kept in the repo beside its profiles:
-    // the profile's user.js and userChrome.css are these plus the look's
-    // block, so they're linked into whichever profile is active, whatever
-    // its random name. Watched, so editing one rewrites the profile's copy.
+    // Floorp's prefs and chrome from the repo, plus the look's block, written
+    // into whichever profile is active; watched, so edits rewrite the copy
     component ProfileSource: FileView {
         property bool ready: false
         preload: true
@@ -1016,11 +898,8 @@ Scope {
 
     FileView { id: wofiOut;   path: root.dir + "/wofi.css"; printErrors: false }
 
-    // The state files below are read by the Hyprland config on load, so a
-    // change needs a config-only reload (no monitor re-probe, so no
-    // flicker). One reload covers every file written in a burst: a look
-    // switch changes borders, rounding, gaps, opacity and more at once, and a
-    // reload each re-ran the whole config half a dozen times.
+    // Hyprland state files, read on load: a change needs a config-only
+    // reload, one per burst of writes.
     function hyprWrite(name, text, reload) {
         AtomicFileWrite.write({
             path: root.dir + "/" + name,
@@ -1042,11 +921,8 @@ Scope {
         root.hyprWrite("animations", time + "\n", reload)
     }
 
-    // The pointer and icon themes reach Hyprland the same way, for the
-    // environment it gives apps at login: `cursor` holds "<theme> <size>",
-    // `icons` the icon theme. The pointer Hyprland draws itself changes live
-    // through setcursor; apps take a new cursor or icon theme from gsettings
-    // (renderGtk) or qt6ct (renderQt).
+    // Cursor and icon themes for Hyprland's login environment (`cursor`:
+    // "<theme> <size>", `icons`); the pointer changes live via setcursor.
     function writeCursor(apply) {
         var line = Settings.cursorTheme + " " + Settings.cursorSize
         AtomicFileWrite.write({
@@ -1055,11 +931,8 @@ Scope {
             after: apply ? "hyprctl setcursor '" + String(Settings.cursorTheme).replace(/'/g, "'\\''") + "' "
                 + Settings.cursorSize + " >/dev/null" : "",
         })
-        // The XCursor fallback, for apps that read neither gsettings nor
-        // XCURSOR_THEME -- older X11 clients, some Qt and Electron apps under
-        // XWayland -- which would otherwise draw Adwaita's pointer. libXcursor
-        // searches ~/.local/share/icons before ~/.icons, and this one isn't a
-        // link into the repo.
+        // the XCursor fallback, for apps that read neither gsettings nor
+        // XCURSOR_THEME
         var index = "[Icon Theme]\nName=Default\nComment=Default cursor theme\nInherits="
             + Settings.cursorTheme + "\n"
         AtomicFileWrite.write({
@@ -1072,9 +945,7 @@ Scope {
         AtomicFileWrite.write({ path: root.dir + "/icons", transform: () => theme + "\n" })
     }
 
-    // The window animation style and the border colours (the accent for the
-    // focused window, the ramp's border for the rest): state files
-    // shared.lua reads on load, then a config-only reload.
+    // window animation style and border colours, for shared.lua
     function writeWindowAnim(reload) {
         var style = Settings.windowAnim
         root.hyprWrite("window-anim", style + "\n", reload)
@@ -1092,9 +963,7 @@ Scope {
         root.hyprWrite("rounding", r + "\n", reload)
     }
 
-    // The tab bar over Hyprland's grouped windows (looks.lua), always in the look's
-    // colours: the lit tab like a selected row with an accent line over it,
-    // the rest like the bar.
+    // the tab bar over grouped windows (looks.lua), in the look's colours
     function writeGroupbar(reload) {
         var rgba = c => "rgba(" + hex(c).slice(1) + "ff)"
         var lit = Settings.tabBar === "accent"
@@ -1129,9 +998,8 @@ Scope {
         onTriggered: root.writeWindowOpacity(true)
     }
 
-    // How much of the screen's top edge the bar takes (0 when it sits at the
-    // bottom), for windows.lua's rule that opens the sticky notes clear of
-    // it. A rule can't read the reserved space itself.
+    // the bar's extent at the top (0 at the bottom), for the Notes rule in
+    // window-rules.lua
     function writeBarTop(reload) {
         var top = Theme.barPosition === "top" ? Theme.barExtent : 0
         root.hyprWrite("bar-top", top + "\n", reload)
@@ -1150,9 +1018,7 @@ Scope {
         function onBarExtentChanged() { barTopDebounce.restart() }
     }
 
-    // The windows' border width and shadow, from the style: Heavy lines
-    // thickens the border with the shell's strokes, and Shadows picks the
-    // style's soft or hard shadow, or none.
+    // the windows' border width and shadow, from the style
     function writeWindowFrame(reload) {
         var line = Theme.windowBorderWidth + " " + Theme.windowShadow
         root.hyprWrite("window-frame", line + "\n", reload)
