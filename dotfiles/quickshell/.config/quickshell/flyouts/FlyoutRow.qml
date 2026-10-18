@@ -24,6 +24,11 @@ Item {
     // that's empty: marks that have to line up down a list (a network's lock
     // and strength). "" leaves its cell blank.
     property var trailingIcons: []
+    // a quiet word before the last of those glyphs, in a fixed column (a
+    // network's strength in words beside its bars)
+    property string iconsNote: ""
+    // a quiet outlined word before everything at the right (Saved)
+    property string tag: ""
     // a glyph in a fixed cell before the label (a device's type)
     property string leadingIcon: ""
     // an image in the same cell, for an app's own icon
@@ -159,6 +164,7 @@ Item {
     // where the label's room ends: the first thing at the right
     readonly property real labelEnd: showAction ? (extraIcon !== "" ? extraBtn.x : actionText !== "" ? actionChip.x : actionBtn.x)
         : badgeTag.visible ? badgeTag.x
+        : quietTag.visible ? quietTag.x
         : iconCells.visible ? iconCells.x : trailingText.x
 
     Text {
@@ -189,18 +195,59 @@ Item {
         opacity: root.pulse
 
         Repeater {
+            id: iconRep
             model: root.trailingIcons
 
-            Text {
+            Row {
                 required property string modelData
-                width: Theme.iconCell
-                horizontalAlignment: Text.AlignHCenter
-                text: modelData
-                color: trailingText.color
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontBody
-                font.weight: Theme.weightBody
+                required property int index
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.iconsNote !== "" && index === iconRep.count - 1
+                    width: Theme.fit(52)
+                    horizontalAlignment: Text.AlignRight
+                    rightPadding: Theme.spaceS
+                    text: root.iconsNote
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontSmall
+                    font.weight: Theme.weightBody
+                }
+                Text {
+                    width: Theme.iconCell
+                    horizontalAlignment: Text.AlignHCenter
+                    text: modelData
+                    color: trailingText.color
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontBody
+                    font.weight: Theme.weightBody
+                }
             }
+        }
+    }
+
+    Rectangle {
+        id: quietTag
+        visible: root.tag !== "" && !root.showAction
+        anchors.right: iconCells.visible ? iconCells.left : trailingText.left
+        anchors.rightMargin: Theme.spaceL
+        anchors.verticalCenter: parent.verticalCenter
+        width: tagText.implicitWidth + Theme.spaceM * 2
+        height: tagText.implicitHeight + Theme.spaceXs
+        radius: Theme.radiusSmall
+        color: "transparent"
+        border.width: Theme.borderWidth
+        border.color: Theme.stroke
+
+        Text {
+            id: tagText
+            anchors.centerIn: parent
+            text: root.tag
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontCaption
+            font.weight: Theme.weightBody
         }
     }
 

@@ -1,10 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageNetwork.qml
 //
-// The wired link, then Wi-Fi: the radio, the joined network, those in range,
-// and every saved network (stop auto-joining, forget), on Network.qml shared
-// with the bar. Beyond the flyout: link details (from `ip` and `iw`, read
-// while the page is open), the full list and hidden networks.
+// The wired link, then Wi-Fi: the radio, the joined network with its link
+// details in a grid (from `ip` and `iw`, read while the page is open), one
+// list of what's in range (saved first), hidden networks, and every saved
+// network with Auto-join and Forget on its row; on Network.qml shared with
+// the bar.
 
 import Quickshell
 import Quickshell.Io
@@ -25,8 +26,6 @@ SettingsPage {
     // the Other network… form
     property bool hiddenOpen: false
     property bool hiddenSecured: true
-    // the saved network opened for its settings, or ""
-    property string openSaved: ""
     // past the strongest ten in Other networks
     property bool showAll: false
     readonly property int shortList: 10
@@ -146,41 +145,57 @@ SettingsPage {
         }
     }
 
-    component Detail: SettingsValue { hideEmpty: true; copyable: true }
+    // the link's details, two to a line
+    component Detail: SettingsValue {
+        width: (detailGrid.width - detailGrid.columnSpacing) / 2
+        labelWidth: Theme.fit(120)
+        hideEmpty: true
+        copyable: true
+    }
 
-    Detail { label: "Interface"; value: page.online ? Network.device : ""; copyable: false }
-    Detail { label: "IP address"; value: page.online ? page.ipAddr : "" }
-    Detail { label: "Gateway";    value: page.online ? page.gateway : "" }
-    Detail { label: "MAC";        value: page.online ? page.macAddr : "" }
-    Detail { label: "Speed";      value: page.online ? page.linkRate : ""; copyable: false }
+    Grid {
+        id: detailGrid
+        width: parent.width
+        visible: page.online
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
 
-    SettingsField {
-        label: "Signal"
-        visible: page.online && page.linkDbm < 0
+        Detail { label: "Interface"; value: page.online ? Network.device : ""; copyable: false }
+        Detail { label: "IP address"; value: page.online ? page.ipAddr : "" }
+        Detail { label: "Gateway";    value: page.online ? page.gateway : "" }
+        Detail { label: "MAC";        value: page.online ? page.macAddr : "" }
+        Detail { label: "Speed";      value: page.online ? page.linkRate : ""; copyable: false }
 
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceM
+        SettingsField {
+            label: "Signal"
+            width: (detailGrid.width - detailGrid.columnSpacing) / 2
+            labelWidth: Theme.fit(120)
+            visible: page.online && page.linkDbm < 0
 
-            Text {
-                text: Network.strengthGlyphs[page.barsOf(page.linkDbm) - 1]
-                color: Theme.textStrong
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                text: Math.round(page.linkDbm) + " dBm"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                text: "·  " + page.strengthWord(page.barsOf(page.linkDbm))
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceM
+
+                Text {
+                    text: Network.strengthGlyphs[page.barsOf(page.linkDbm) - 1]
+                    color: Theme.textStrong
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    text: Math.round(page.linkDbm) + " dBm"
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    text: "·  " + page.strengthWord(page.barsOf(page.linkDbm))
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
             }
         }
     }
@@ -203,7 +218,7 @@ SettingsPage {
             anchors.right: rescan.left
             anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            text: "SAVED NEARBY"
+            text: "IN RANGE  " + (page.savedNear.length + page.others.length)
         }
 
         FlyoutChip {
@@ -235,6 +250,8 @@ SettingsPage {
             highlighted: netRow.prompting
             trailing: netRow.connecting ? "connecting"
                 : Network.failedSsid === netRow.modelData.ssid ? "failed" : ""
+            tag: netRow.modelData.known ? "Saved" : ""
+            iconsNote: page.strengthWord(Math.max(1, netRow.modelData.bars))
             trailingIcons: [
                 !netRow.modelData.known && netRow.modelData.security !== "open" ? "󰌾" : "",
                 Network.strengthGlyphs[Math.max(1, netRow.modelData.bars) - 1]
@@ -283,27 +300,12 @@ SettingsPage {
         }
     }
 
-    // Matched by SSID: each list refresh brings new objects, and rebuilding
-    // the rows would drop a passphrase being typed into one
+    // One list, saved networks first, each strongest first. Matched by
+    // SSID: each list refresh brings new objects, and rebuilding the rows
+    // would drop a passphrase being typed into one
     Repeater {
         model: ScriptModel { values: page.listening ? page.savedNear : []; objectProp: "ssid" }
         NetworkRow {}
-    }
-
-    FlyoutRow {
-        visible: page.savedNear.length === 0 || !page.listening
-        enabled: false
-        label: Network.device === "" ? "No wireless device"
-            : !Network.powered ? "The radio is off"
-            : Network.listError !== "" ? Network.listError
-            : "No saved networks in range"
-    }
-
-    Item { width: 1; height: Theme.spaceM; visible: page.listening }
-
-    FlyoutHeading {
-        visible: page.listening
-        text: "OTHER NETWORKS  " + page.others.length
     }
 
     Repeater {
@@ -317,9 +319,12 @@ SettingsPage {
     }
 
     FlyoutRow {
-        visible: page.listening && page.others.length === 0
+        visible: !page.listening || page.savedNear.length + page.others.length === 0
         enabled: false
-        label: Network.scanning ? "Scanning…" : "Nothing else in range"
+        label: Network.device === "" ? "No wireless device"
+            : !Network.powered ? "The radio is off"
+            : Network.listError !== "" ? Network.listError
+            : Network.scanning ? "Scanning…" : "Nothing in range"
     }
 
     FlyoutRow {
@@ -409,54 +414,51 @@ SettingsPage {
 
     FlyoutHeading { text: "SAVED" + "  " + Network.knownNetworks.length }
 
+    // each on one row: where it is and when it last joined, Auto-join, and
+    // Forget on hover
     Repeater {
         model: Network.knownNetworks
 
-        Column {
+        SettingsField {
             id: saved
             required property var modelData
-            readonly property bool isOpen: page.openSaved === modelData.ssid
             readonly property string where: Network.ssid === modelData.ssid ? "Joined"
                 : Network.networks.some(n => n.ssid === modelData.ssid) ? "In range"
                 : "Not nearby"
 
-            width: parent.width
+            label: modelData.ssid
+            hint: [where, page.securityWord(modelData.security), modelData.hidden ? "Hidden" : "",
+                   where === "Joined" ? "" : "last " + page.lastJoined(modelData.last)].filter(t => t).join("  ·  ")
 
-            FlyoutRow {
-                label: saved.modelData.ssid
-                highlighted: saved.isOpen
-                trailing: saved.where + "  " + (saved.isOpen ? "󰅀" : "󰅂")
-                onActivated: page.openSaved = saved.isOpen ? "" : saved.modelData.ssid
-            }
+            HoverHandler { id: savedHover }
 
-            SettingsIndent {
-                visible: saved.isOpen
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceL
 
-                SettingsField {
-                    label: "Auto-join"
-                    hint: "Joins by itself when in range"
-                    Switch {
-                        anchors.right: parent.right
-                        checked: saved.modelData.auto
-                        onToggled: Network.setAutoConnect(saved.modelData.ssid, !saved.modelData.auto)
-                    }
-                }
-                SettingsValue {
-                    label: "Security"
-                    value: page.securityWord(saved.modelData.security) + (saved.modelData.hidden ? "  ·  Hidden" : "")
-                }
-                SettingsValue {
-                    label: "Last joined"
-                    value: saved.where === "Joined" ? "Joined now" : page.lastJoined(saved.modelData.last)
-                }
-                FlyoutChip {
-                    text: "󰆴 Forget network"
-                    confirmText: "Forget " + saved.modelData.ssid + "?"
+                IconButton {
+                    id: forget
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: savedHover.hovered || armed
+                    icon: "󰆴"
+                    confirm: true
                     onClicked: {
                         Network.forget(saved.modelData.ssid)
                         page.say("Forgot " + saved.modelData.ssid, false)
-                        page.openSaved = ""
                     }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: forget.armed ? "Click again to forget" : "Auto-join"
+                    color: forget.armed ? Theme.alert : Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+                Switch {
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: saved.modelData.auto
+                    onToggled: Network.setAutoConnect(saved.modelData.ssid, !saved.modelData.auto)
                 }
             }
         }

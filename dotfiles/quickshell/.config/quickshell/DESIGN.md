@@ -341,7 +341,7 @@ Settings') are laid out the same way.
   The tab showing has white text on its accent fill, never dark. Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.
 - **Rows that open in place:** a row whose action needs more input (a
-  network's passphrase, a hidden network, a saved network's settings)
+  network's passphrase, a hidden network)
   opens a block under itself, set in by a rule down its left side, and
   takes the accent tick while open. Not a prompt elsewhere on the page.
 - **Marks that line up:** icons at a row's end that repeat down a list (a
@@ -350,9 +350,15 @@ Settings') are laid out the same way.
 - **Copyable values:** an address worth pasting elsewhere is a
   `SettingsValue` with `copyable`: hover fills it, a click copies it, and it
   reads Copied in the good colour for a moment.
-- **Long lists:** the ten most useful rows, then a "Show all N" row. Network
-  puts the joined network in a card at the top (name large, strength icon,
-  security, band, the radio switch) and leaves it out of the lists below.
+- **Long lists:** the ten most useful rows, then a "Show all N" row.
+- **Network** (picked 2026-10-18, 1C 2A 3B 4B 5B 6A): the joined network
+  in a card (name large, strength icon, security, band, the radio switch)
+  with the link's details two to a line under it in the same block. Then
+  one IN RANGE list with Rescan on its heading: saved networks first,
+  tagged Saved, each row's strength as a word beside the bars, Other
+  network… last. SAVED rows carry everything: where it is, security and
+  when it last joined as the hint, the Auto-join switch, and Forget as a
+  bin on hover (two clicks).
 - **Bluetooth:** the adapter is a card the same way (its name, hci id, how
   many paired and connected, the power switch). Device rows carry the type
   icon on the left, and on the right the battery and Connected / Not
