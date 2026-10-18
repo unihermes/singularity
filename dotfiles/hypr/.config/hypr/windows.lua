@@ -951,6 +951,35 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.fullscreen", keepNewWindowTiled)
 
+-- A window that maps while a flyout holds the keyboard (Update now) gets no
+-- focus, and the flyout closing hands focus back to the window before it,
+-- which is raised over the new one. Once the last flyout closes, the new
+-- window is focused and raised instead.
+local FLYOUT_NS = "singularity-flyout"
+local openedUnderFlyout = nil
+local function flyoutUp(except)
+    for _, l in ipairs(hl.get_layers()) do
+        if l.namespace == FLYOUT_NS and l.mapped and l.address ~= except then return true end
+    end
+    return false
+end
+hl.on("window.open", function(win)
+    if win and flyoutUp() then openedUnderFlyout = win.address end
+end)
+hl.on("layer.closed", function(layer)
+    if not layer or layer.namespace ~= FLYOUT_NS or not openedUnderFlyout or flyoutUp(layer.address) then return end
+    local addr = "address:" .. openedUnderFlyout
+    openedUnderFlyout = nil
+    -- next tick, after Hyprland's own refocus
+    hl.timer(function()
+        local win = hl.get_window(addr)
+        local active = hl.get_active_window()
+        if not win or (active and active.address == win.address) or not onActiveWorkspace(win) then return end
+        hl.dispatch(hl.dsp.focus({ window = addr }))
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+    end, { timeout = 1, type = "oneshot" })
+end)
+
 -- A window moved to another workspace takes on its layout.
 hl.on("window.move_to_workspace", function(win, ws)
     if not win or not ws or ws.special then return end
