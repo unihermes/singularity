@@ -109,20 +109,22 @@ SettingsPage {
                page.paired.length + " paired",
                page.connectedCount > 0 ? page.connectedCount + " connected" : "nothing connected"
               ].join("  ·  ")]
-        FlyoutChip {
-            visible: page.poweredOn
-            text: !page.discoverable ? "Discoverable"
-                : page.discTimeout > 0 ? "Visible " + page.clock((page.discUntil - page.now) / 1000)
-                : "Visible"
-            selected: page.discoverable
-            onClicked: page.adapter.discoverable = !page.discoverable
-        }
-        FlyoutChip {
-            visible: page.poweredOn
-            text: "Pairable"
-            selected: !!page.adapter && page.adapter.pairable
-            onClicked: page.adapter.pairable = !page.adapter.pairable
-        }
+        besideTitle: [
+            FlyoutChip {
+                visible: page.poweredOn
+                text: !page.discoverable ? "Discoverable"
+                    : page.discTimeout > 0 ? "Visible " + page.clock((page.discUntil - page.now) / 1000)
+                    : "Visible"
+                selected: page.discoverable
+                onClicked: page.adapter.discoverable = !page.discoverable
+            },
+            FlyoutChip {
+                visible: page.poweredOn
+                text: "Pairable"
+                selected: !!page.adapter && page.adapter.pairable
+                onClicked: page.adapter.pairable = !page.adapter.pairable
+            }
+        ]
 
         Switch {
             checked: page.poweredOn

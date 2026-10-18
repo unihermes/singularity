@@ -360,8 +360,9 @@ Settings') are laid out the same way.
   when it last joined as the hint, the Auto-join switch, and Forget as a
   bin on hover (two clicks).
 - **Bluetooth** (picked 2026-10-18, 1B 2B 3B 4B 5A): the adapter is a card
-  the same way (its name, hci id, how many paired and connected), with
-  Discoverable and Pairable as toggle chips beside the power switch;
+  the same way (its name, hci id, how many paired and connected, the power
+  switch), with Discoverable and Pairable as toggle chips right after the
+  name (`HeadCard.besideTitle`);
   Discoverable's chip counts down to BlueZ's timeout (Visible 2:59).
   Paired devices are two-line rows (`BtPairedRow`): type icon, the name
   over its type and state, the battery as level chips (`BatteryChips`: one,
