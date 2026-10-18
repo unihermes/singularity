@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Link the dotfiles into $HOME and nothing else. No packages, no services, no
-# sudo. Use this when you only want configs on a machine, or to relink after
-# adding a new directory under dotfiles/.
+# Links the dotfiles into $HOME, nothing else (no packages, services or
+# sudo); rerun after adding a directory under dotfiles/.
 set -euo pipefail
 
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,28 +12,18 @@ command -v stow &>/dev/null || die "stow is not installed: sudo pacman -S stow"
 [[ -d dotfiles ]] || die "no dotfiles/ directory next to this script"
 
 mkdir -p "$HOME/.config"
-# systemd does not follow a drop-in *directory* that is itself a symlink, and
-# stow links a whole directory whenever the target doesn't exist yet. Creating
-# it first means stow links the .conf inside it instead, which systemd does
-# read. Without this the wireplumber/bluez ordering drop-in is silently
-# ignored on a fresh machine.
+# systemd won't follow a symlinked drop-in directory, so it's created and
+# stow links the .conf inside
 mkdir -p "$HOME/.config/systemd/user/wireplumber.service.d"
 # Zed's themes directory, where AppearanceSync writes the generated theme.
 mkdir -p "$HOME/.config/zed/themes"
 
-# Enumerate the packages explicitly rather than passing a `*/` glob. Two traps
-# there: stow collects package names during option parsing, so a `--` before
-# them terminates parsing and leaves stow with an empty list ("No packages to
-# stow or unstow"), and `*/` hands it names with trailing slashes.
+# packages listed explicitly: stow with `--` or a `*/` glob gets no packages
 mapfile -t stow_pkgs < <(find dotfiles -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
 (( ${#stow_pkgs[@]} > 0 )) || die "no package directories found under dotfiles/"
 
-# Move real files out of the way before stowing. Apps write their own configs
-# when none exist -- Hyprland regenerates ~/.config/hypr/hyprland.lua on every
-# start without one -- and that file then blocks stow from linking ours, so the
-# app keeps reading its own default forever. Nothing is deleted: conflicts go
-# to a timestamped backup. This is the safe version of `stow --adopt`, which
-# would instead pull the app's file into the repo over what you wrote.
+# Real files in the way (an app's self-written default) are moved to a
+# timestamped backup before stowing; the safe version of `stow --adopt`.
 backup_conflicts() {
   local backup="$HOME/.config-backup-$(date +%Y%m%d-%H%M%S)"
   local repo="$PWD"
@@ -46,15 +35,8 @@ backup_conflicts() {
       # A symlink is either already ours or stow's to replace. Only a real
       # file is a genuine conflict.
       if [[ -f $target && ! -L $target ]]; then
-        # ...unless it only looks real because a PARENT is a symlink into the
-        # repo. stow links a whole directory when the target does not exist, so
-        # ~/.config/hypr can be a link to dotfiles/hypr/.config/hypr, and the
-        # files "inside" it are the repo's own. Moving one of those empties the
-        # repo instead of protecting it. Test where the path really lands.
-        # -ef compares device and inode after following every symlink, so this
-        # asks exactly the right question: is the thing I am about to "rescue"
-        # the very file I am about to link? Cheaper and more reliable than
-        # comparing resolved path strings.
+        # ...unless it's the repo's own file through a parent link (-ef
+        # compares inodes after following links)
         if [[ $target -ef $src ]]; then
           continue
         fi
@@ -78,12 +60,9 @@ backup_conflicts
 log "linking: ${stow_pkgs[*]}"
 (cd dotfiles && stow -t "$HOME" -R "${stow_pkgs[@]}")
 
-# The files Settings (or the app itself) rewrites are this machine's own, not
-# the repo's: they're copied once from a default in ~/.config/singularity,
-# only where there's none yet, and git ignores the copies. So every clone
-# starts from the same stock setup, and nothing changed on a machine ever
-# shows up as a change to commit. A link left dangling by an older checkout,
-# where the file was stowed, goes first.
+# The files Settings rewrites are this machine's own: copied once from
+# ~/.config/singularity defaults where missing, git-ignored. A dangling link
+# from an older checkout goes first.
 defaults=dotfiles/singularity/.config/singularity
 seed() {
   local src=$defaults/$1 dst=$2 dir
@@ -96,9 +75,7 @@ seed() {
   log "wrote ${dst#"$HOME/"}${3:+ ($3)}"
 }
 
-# The idle ladder: the laptop and desktop want different timeouts, so it's
-# the default for the machine type install.sh recorded (the laptop's when
-# there's none).
+# the idle ladder's default per machine type (laptop's when unknown)
 machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null || true)
 [[ $machine == desktop ]] || machine=laptop
 seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$machine default"
@@ -109,10 +86,7 @@ seed ghostty.defaults.ghostty    "$HOME/.config/ghostty/config.ghostty"
 seed zed-settings.defaults.json  "$HOME/.config/zed/settings.json"
 seed bash_aliases.defaults.sh    "$HOME/.bash_aliases"
 
-# A binds.lua seeded before Settings > Terminal named alacritty itself, so
-# SUPER+Return and the scratchpad ignored the pick. Point it at terminal.sh,
-# and give its wofi fallback the same terminal; only those exact stock lines
-# are touched, so a terminal chosen by hand stays.
+# old seeded binds.lua: the stock alacritty lines point at terminal.sh
 binds="$HOME/.config/hypr/binds.lua"
 if [[ -f $binds ]] && grep -q '^local terminal    = "alacritty"$' "$binds"; then
   sed -i \
@@ -122,9 +96,7 @@ if [[ -f $binds ]] && grep -q '^local terminal    = "alacritty"$' "$binds"; then
   log "binds.lua: the terminal is now Settings > Terminal's pick"
 fi
 
-# A hypridle.conf seeded while the screens-off step said hl.dsp.dpms("off")
-# and ("on"): a bare string is a toggle, so input that had already woken the
-# screens had them switched straight back off. Only those exact calls change.
+# old seeded hypridle.conf: bare dpms toggles become explicit off/on
 idle="$HOME/.config/hypr/hypridle.conf"
 if [[ -f $idle ]] && grep -qF 'hl.dsp.dpms("' "$idle"; then
   sed -i -e 's|hl\.dsp\.dpms("off")|hl.dsp.dpms({ action = "off" })|g' \
@@ -132,10 +104,8 @@ if [[ -f $idle ]] && grep -qF 'hl.dsp.dpms("' "$idle"; then
   log "hypridle.conf: screens-off step no longer toggles"
 fi
 
-# File-manager bookmarks (GTK's, which Thunar shows in its side pane) for
-# the usual folders. Not stowed: the paths hold the home directory, and the
-# file manager rewrites the file as bookmarks are added, so it's written
-# once, only where there's none yet.
+# GTK bookmarks for the usual folders, written once (holds $HOME, and the
+# file manager rewrites it)
 bookmarks="$HOME/.config/gtk-3.0/bookmarks"
 if [[ ! -e $bookmarks ]]; then
   mkdir -p "$(dirname "$bookmarks")"
@@ -145,9 +115,7 @@ if [[ ! -e $bookmarks ]]; then
   log "wrote ${bookmarks#"$HOME/"}"
 fi
 
-# The repo's own hooks (tools/git-hooks): the pre-commit checks (Settings
-# search in step with the pages, nothing declared and never read, the JS
-# module tests).
+# the repo's pre-commit hooks
 [[ -d .git ]] && git config core.hooksPath tools/git-hooks
 
 log "done. verify a link with: ls -l ~/.config/hypr/hyprland.lua"
