@@ -1,23 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageNetwork.qml
 //
-// The wired link's state, then Wi-Fi: the radio, what it's joined to, the
-// networks in range, and every network iwd has saved.
-//
-// The state and the iwctl calls live in services/Network.qml, shared with the
-// bar module, its flyout and the Control Centre's toggle -- so a connection
-// made here shows up in all three without this page telling them.
-//
-// What this page has that the flyout doesn't: the radio switch, the link's
-// own details, the full list rather than the ten strongest, hidden networks,
-// and the saved networks gathered in one place, in range or not, to stop
-// auto-joining or forget. The flyout stays the quick path; this is the one
-// to open when something needs explaining.
-//
-// The details come from `ip` and `iw` rather than the service: nothing else
-// wants them, and a page is built when it's opened and destroyed when it's
-// left, so the read happens while someone is looking at it and stops when
-// they leave.
+// The wired link, then Wi-Fi: the radio, the joined network, those in range,
+// and every saved network (stop auto-joining, forget), on Network.qml shared
+// with the bar. Beyond the flyout: link details (from `ip` and `iw`, read
+// while the page is open), the full list and hidden networks.
 
 import Quickshell
 import Quickshell.Io
@@ -100,9 +87,7 @@ SettingsPage {
         pendingSsid = ""
     }
 
-    // A network's own row action: join it, or open its passphrase row. A
-    // known or open network needs neither -- iwd has the key already, or
-    // there is none. Clicking the open row again closes it.
+    // join a known or open network, else toggle its passphrase row
     function joinOrPrompt(net) {
         if (net.connected || Network.connecting === net.ssid) return
         if (net.known || net.security === "open") {
@@ -483,9 +468,7 @@ SettingsPage {
         label: "No saved networks"
     }
 
-    // Read together with the list, and again a moment after a connect
-    // settles: an address arrives from DHCP a little after iwd says it has
-    // joined, so reading once on connect would show the old one.
+    // re-read a moment after a connect, once DHCP has given an address
     Timer {
         id: details
         interval: 1200

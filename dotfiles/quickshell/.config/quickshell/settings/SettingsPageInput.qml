@@ -1,23 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageInput.qml
 //
-// Keyboard, mouse and touchpad: the `input = { }` table in input.lua, with
-// changes made here kept in the state directory's hyprland.json.
-//
-// Every change is written to the file and followed by a config reload, which
-// is what applies it -- there's no separate live path. `hyprctl keyword`
-// refuses to run under the Lua config, and a reload already re-reads every
-// input option, so writing first is both the only way that sticks and
-// effectively instant. The writes go through HyprLuaWrite, so each one is
-// syntax-checked, backed up, and checked against `hyprctl configerrors`.
-//
-// Values are read from the file, not from Hyprland: the page shows what's
-// configured, which is what survives a restart. A key the file doesn't set
-// shows Hyprland's default and is added on first change.
-//
-// Layouts, variants and the common XKB options are shown by name, from
-// xkeyboard-config's evdev.lst; kb_layout and kb_variant are written
-// together so the two comma lists can't fall out of line.
+// Keyboard, mouse and touchpad: input.lua's `input` table, changes kept in
+// hyprland.json through HyprLuaWrite and applied by a reload (`hyprctl
+// keyword` refuses under Lua). Values are read from the file; an unset key
+// shows Hyprland's default. Layouts, variants and XKB options by name from
+// evdev.lst; kb_layout and kb_variant are written together.
 
 import Quickshell
 import Quickshell.Io

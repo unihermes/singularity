@@ -1,16 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Brightness.qml
 //
-// Backlight level, 0..100. One instance for the whole shell rather than one
-// per bar: the backlight is system-wide, and a copy per screen meant every
-// monitor ran its own sysfs watcher and its own write debounce, each able to
-// echo the other's writes back as stale values.
-//
-// Read straight from sysfs and *watched*, not polled: the backlight
-// attribute emits change notifications, so the level follows the
-// XF86MonBrightness keys (and anything else that writes to it) the same way
-// the Pipewire-backed volume follows external changes. brightnessctl is
-// still used to write, since sysfs isn't user-writable.
+// Backlight level, 0..100, once for the whole shell. Read from sysfs and
+// watched (so the brightness keys show); written with brightnessctl.
 
 pragma Singleton
 
@@ -27,14 +19,9 @@ Singleton {
     property string backlightDir: ""
     property int maxRaw: 0
 
-    // A drag or a fast scroll can call this dozens of times a second.
-    // Spawning a brightnessctl process on every one made both jumpy: forking
-    // that often is real overhead, and with several in flight there's no
-    // guarantee they land in sysfs in launch order -- so the watched file
-    // could echo back an *older* value after a newer one, snapping the level
-    // backwards mid-drag. writeDebounce keeps one write in flight at a time;
-    // `echo` tells the file reload to trust this optimistic value over a
-    // stale echo while an adjustment is still active.
+    // one write in flight at a time (writeDebounce), as many brightnessctl
+    // runs could land out of order and snap the level back; `echo` trusts
+    // this value over a stale file echo while adjusting
     property int pendingWrite: -1
     property bool echo: false
 
@@ -59,9 +46,8 @@ Singleton {
         }
     }
 
-    // Cleared a little after the last set() call, not right after the
-    // debounced write fires -- the write is detached, so there's no signal
-    // for when it (and its resulting file event) has actually landed.
+    // cleared a little after the last set() (the write is detached, so
+    // there's no signal for when it lands)
     Timer {
         id: echoGuard
         interval: 350

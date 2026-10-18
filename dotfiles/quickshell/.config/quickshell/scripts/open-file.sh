@@ -2,23 +2,10 @@
 # Singularity - open a file the way the desktop should
 # ~/.config/quickshell/scripts/open-file.sh
 #
-# Used by the launcher's file-search mode (services/Files.qml). Plain
-# `xdg-open` silently does nothing for a good half of what a file search
-# turns up on this machine, in two separate ways:
-#
-#   - No handler at all. `xdg-mime query default text/markdown` and
-#     text/x-shellscript are both empty here, so xdg-open exits 0 having
-#     done nothing at all -- the file search looked broken because of it.
-#   - A handler that wants a terminal. text/plain maps to nvim.desktop,
-#     which is Terminal=true, and launching those needs xdg-terminal-exec,
-#     which isn't installed (and isn't in the repo's package list). xdg-open
-#     again does nothing.
-#
-# So: honour the configured handler when it can actually be launched, run
-# terminal handlers in a terminal, fall back to the editor for anything
-# text-shaped, and otherwise open the containing folder, which at least puts
-# the file in front of you with Thunar's own "Open With" a right-click away.
-#
+# For the launcher's file search: xdg-open silently does nothing for files
+# with no handler (markdown, shell scripts) or a terminal one (nvim, without
+# xdg-terminal-exec). So: the configured handler if it can launch, terminal
+# handlers in a terminal, the editor for text, else the containing folder.
 #   open-file.sh <path>
 set -u
 
@@ -43,9 +30,8 @@ type=${type%%;*}
 handler=$(xdg-mime query default "$type" 2>/dev/null | head -1)
 
 if [[ -n $handler ]]; then
-    # Find the .desktop file the handler names, to see whether it needs a
-    # terminal. Only the standard search path, and only the first hit,
-    # which is what xdg-open itself would use.
+    # the handler's .desktop (first hit on the standard path, as xdg-open),
+    # to see whether it needs a terminal
     desktop=""
     IFS=: read -ra dirs <<< "${XDG_DATA_HOME:-$HOME/.local/share}:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
     for d in "${dirs[@]}"; do

@@ -1,10 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutSegmented.qml
 //
-// A setting with two to four short choices, all on show: a label on the
-// left and the choices as one joined strip of segments on the right, the
-// current one lit. One click to any choice, where FlyoutRow's click-to-cycle
-// can cost two -- and you can see what the others are before you pick.
+// Two to four short choices as one joined strip, the current one lit.
 //
 //   FlyoutSegmented {
 //       label: "Position"
@@ -25,9 +22,8 @@ Item {
     property var labelFor: v => String(v)
     property var current
     property bool enabled: true
-    // Equal segments across the whole row when there's no label beside it
-    // (a flyout's own strip). Off, each segment hugs its text and the strip
-    // sits at the right -- a Settings field's control slot.
+    // equal segments across the row when there's no label; else they hug
+    // their text at the right (a Settings field)
     property bool fill: label === ""
 
     signal picked(var value)

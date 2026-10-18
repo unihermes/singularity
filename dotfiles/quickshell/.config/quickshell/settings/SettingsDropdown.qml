@@ -1,15 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsDropdown.qml
 //
-// A dropdown for a Settings field whose choices would not fit as a row of
-// chips: a box showing the current value, and a list of every choice under
-// it (or over it, near the bottom of the window) with the current one
-// ticked. The list scrolls past `maxRows`.
-//
-// The list is a DropdownMenu, as LookStepper's is, in an overlay filling
-// the window, so it escapes the page's Flickable and a list opened at the
-// bottom of a long page isn't cut off. The page can't scroll while it's
-// open.
+// A Settings dropdown: a box with the current value and a DropdownMenu of
+// every choice (above when near the bottom), in a window-wide overlay so
+// the page's Flickable can't cut it off.
 //
 //   SettingsDropdown {
 //       anchors.right: parent.right
