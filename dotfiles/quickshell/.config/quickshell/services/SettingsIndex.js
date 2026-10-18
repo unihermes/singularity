@@ -33,15 +33,14 @@ var entries = [
     { page: "bluetooth", section: "In range", label: "In range",     keywords: "scan discover pair headphones mouse keyboard nearby unnamed" },
 
     // --- Power & Idle ------------------------------------------------------
-    { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
-    { page: "power", section: "Battery", label: "Battery",             keywords: "battery level percent charging health time left stop at resume below limit band" },
-    { page: "power", section: "Battery", label: "Charging",            keywords: "battery charge mode limit cap bios standard adaptive express custom threshold 80 percent" },
+    { page: "power", section: "Power", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
+    { page: "power", section: "Power", label: "Power",               keywords: "battery level percent charging health time left stop at resume below limit band" },
+    { page: "power", section: "Power", label: "Charging",            keywords: "battery charge mode limit cap bios standard adaptive express custom threshold 80 percent" },
     { page: "power", section: "When idle", label: "Dim the screen",    keywords: "idle brightness timeout hypridle" },
     { page: "power", section: "When idle", label: "Lock",              keywords: "idle hyprlock timeout screen lock" },
     { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },
-    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout" },
+    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout on battery plugged in charger unplugged ac" },
     { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger unplugged" },
-    { page: "power", section: "When idle", label: "Suspend plugged in", keywords: "idle sleep timeout charger ac" },
     { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
     // --- Lock Screen -------------------------------------------------------

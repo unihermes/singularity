@@ -489,15 +489,17 @@ Settings') are laid out the same way.
   chosen. Press keys beside the search looks a combo up by pressing it,
   showing the bind on it or offering Add a bind on it. The search and the
   lookup filter both lists; the ticked-presets bar sits under the list.
-- **Power & Idle:** the profile segments carry their icons and the hint
-  says what the chosen one does. The battery is a card (charge large, then
-  state, time left, the Custom band and health) over a full-fill level chip
-  of the charge; in Custom the resume-to-stop band sits on the chip and its
-  ends are dragged, in steps of 5, in place of steppers. The idle steps
-  have a timeline above them (each step's icon at its time, muted when
-  off), and each step a switch: off comments its block out of
-  hypridle.conf with `#~ `. Steps that differ only by power source carry a
-  battery or plug mark (`SettingsField.mark`).
+- **Power & Idle** (picked 2026-10-18, 1B 2A 3B 4B 5B): one POWER section:
+  the battery card (charge large, then state, time left, the Custom band
+  and health) over a full-fill level chip of the charge (in Custom the
+  resume-to-stop band sits on it and its ends drag, in steps of 5), then
+  Profile (segments with their icons, the hint saying what it does) and
+  Charging. WHEN IDLE: a timeline of the steps (each step's icon at its
+  time, muted when off) whose dots drag to set the time, snapping to the
+  times on offer; then a row per step with its time as a dropdown (1 min
+  to 1 h, then Never, which comments its block out of hypridle.conf with
+  `#~ `). Suspend on battery and plugged in share one Suspend row, a
+  battery and a plug mark before their two dropdowns.
 - **Look tiles** open the Theme tab: each look drawn in its own colours
   (panel, bar, text, hint and accent pill), its description as the hint.
   The changes strip alone shows what's changed.

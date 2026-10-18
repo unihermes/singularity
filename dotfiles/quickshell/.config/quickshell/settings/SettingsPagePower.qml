@@ -1,8 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPagePower.qml
 //
-// Power profile (PpdProfile, remembered by PPD), battery charging and the
-// idle ladder. Charging is the BIOS's charge mode and Custom stop/resume,
+// One POWER section (the battery card and its charge, the power profile,
+// remembered by PPD, and charging), then the idle ladder: a timeline whose
+// dots drag to set each step's time, and a row per step with its time or
+// Never; suspend on battery and plugged in share one row. Charging is the BIOS's charge mode and Custom stop/resume,
 // read from sysfs and written by singularity-charge via pkexec once a drag
 // or stepper settles (each is a firmware write). The ladder is
 // hypridle.conf's listener blocks, edited in place: the `timeout = N`
@@ -284,6 +286,14 @@ SettingsPage {
     function minutes(s) {
         return s % 60 === 0 ? (s / 60) + " min" : (s / 60).toFixed(1) + " min"
     }
+    function timeText(s) { return s >= 3600 && s % 3600 === 0 ? (s / 3600) + " h" : minutes(s) }
+
+    // the times a step can take, in seconds; a step's own odd time is
+    // offered too
+    readonly property var stepTimes: [60, 120, 180, 240, 300, 450, 600, 900, 1200, 1800, 3600]
+    function nearestTime(sec) {
+        return stepTimes.reduce((a, b) => Math.abs(b - sec) < Math.abs(a - sec) ? b : a)
+    }
 
     Component.onCompleted: {
         reread()
@@ -321,28 +331,7 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    FlyoutHeading { text: "POWER PROFILE" }
-
-    SettingsField {
-        label: "Profile"
-        hint: PpdProfile.profile === "" ? "power-profiles-daemon isn't answering"
-            : page.profileHints[PpdProfile.profile] || ""
-
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: PpdProfile.choices.map(c => ({ value: c.value, text: page.glyphs[c.value] + " " + c.text }))
-            current: PpdProfile.profile
-            enabled: PpdProfile.profile !== "" && !PpdProfile.busy
-            onPicked: v => {
-                page.profilePending = true
-                PpdProfile.set(v)
-            }
-        }
-    }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "BATTERY" }
+    FlyoutHeading { text: "POWER" }
 
     // the charge now, what it's doing, and its health
     HeadCard {
@@ -450,6 +439,24 @@ SettingsPage {
     }
 
     SettingsField {
+        label: "Profile"
+        hint: PpdProfile.profile === "" ? "power-profiles-daemon isn't answering"
+            : page.profileHints[PpdProfile.profile] || ""
+
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: PpdProfile.choices.map(c => ({ value: c.value, text: page.glyphs[c.value] + " " + c.text }))
+            current: PpdProfile.profile
+            enabled: PpdProfile.profile !== "" && !PpdProfile.busy
+            onPicked: v => {
+                page.profilePending = true
+                PpdProfile.set(v)
+            }
+        }
+    }
+
+    SettingsField {
         label: "Charging"
         hint: page.chargeMode === "Custom" && page.chargeHelperFound
             ? "Drag the band's ends to set it" : page.chargeHint()
@@ -480,7 +487,9 @@ SettingsPage {
     Item {
         id: timeline
         visible: page.listeners.length > 0
-        readonly property real span: Math.max(60, ...page.listeners.map(l => l.timeout)) * 1.04
+        // held while a dot is dragged, so the scale doesn't move under it
+        property real heldSpan: 0
+        readonly property real span: heldSpan > 0 ? heldSpan : Math.max(60, ...page.listeners.map(l => l.timeout)) * 1.04
         width: parent.width
         implicitHeight: Theme.fontTitle + Theme.fontCaption + Theme.spaceL * 2 + Theme.spaceM
 
@@ -508,9 +517,28 @@ SettingsPage {
             model: page.listeners
 
             Item {
+                id: marker
                 required property var modelData
+                required property int index
                 x: track.x + track.width * modelData.timeout / timeline.span
                 y: Theme.spaceM
+
+                // a drag sets the step's time, to the nearest on offer
+                MouseArea {
+                    x: -Theme.spaceL
+                    width: Theme.spaceL * 2
+                    height: timeline.height - Theme.spaceM
+                    cursorShape: Qt.SizeHorCursor
+                    preventStealing: true
+                    onPressed: timeline.heldSpan = timeline.span
+                    onPositionChanged: mouse => {
+                        var at = mapToItem(track, mouse.x, 0).x / track.width * timeline.heldSpan
+                        var t = page.nearestTime(Math.max(0, at))
+                        if (t !== marker.modelData.timeout || !marker.modelData.on)
+                            page.setStep(marker.index, { timeout: t, on: true })
+                    }
+                    onReleased: timeline.heldSpan = 0
+                }
 
                 Text {
                     anchors.horizontalCenter: parent.left
@@ -534,7 +562,7 @@ SettingsPage {
                     anchors.horizontalCenter: parent.left
                     anchors.top: dot.bottom
                     anchors.topMargin: Theme.spaceS / 2
-                    text: page.minutes(modelData.timeout).replace(" min", "")
+                    text: page.timeText(modelData.timeout).replace(" min", "")
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
@@ -551,54 +579,65 @@ SettingsPage {
         }
     }
 
+    // A step's time as a dropdown, Never turning it off.
+    component StepTime: SettingsDropdown {
+        property int index: -1
+        readonly property var step: page.listeners[index]
+        width: Theme.fit(120)
+        model: (page.stepTimes.indexOf(step.timeout) >= 0 ? page.stepTimes
+            : page.stepTimes.concat([step.timeout]).sort((a, b) => a - b)).concat(["never"])
+        labelFor: v => v === "never" ? "Never" : page.timeText(v)
+        current: step.on ? step.timeout : "never"
+        onPicked: v => page.setStep(index, v === "never" ? { on: false } : { on: true, timeout: v })
+    }
+
+    // the battery-only suspend, which shares its row with the plain one
+    readonly property int batterySuspend: listeners.findIndex(l => l.label === "Suspend on battery")
+    readonly property int pluggedSuspend: batterySuspend < 0 ? -1 : listeners.findIndex(l => l.label === "Suspend")
+
     Repeater {
         // a file whose listeners changed under the page shows in file order
-        model: page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i)
+        model: (page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i))
+            .filter(i => i !== page.pluggedSuspend)
 
         SettingsField {
+            id: stepRow
             required property int modelData
             readonly property int index: modelData
             readonly property var step: page.listeners[index]
-            readonly property bool unplugged: step.label === "Suspend on battery"
-            // the plain suspend, beside one that only runs on battery
-            readonly property bool plugged: step.label === "Suspend"
-                && page.listeners.some(l => l.label === "Suspend on battery")
-            label: plugged ? "Suspend plugged in" : step.label
-            mark: unplugged ? page.glyphs.battery : plugged ? page.glyphs.plug : ""
-            hint: !step.on ? "Skipped" : page.stepHints[step.label] || ""
-            dimmed: !step.on
+            readonly property bool both: index === page.batterySuspend && page.pluggedSuspend >= 0
+            readonly property var plugged: both ? page.listeners[page.pluggedSuspend] : null
+            label: both ? "Suspend" : step.label
+            hint: both ? (step.on || plugged.on ? page.stepHints["Suspend"] : "Skipped")
+                : !step.on ? "Skipped" : page.stepHints[step.label] || ""
+            dimmed: both ? !step.on && !plugged.on : !step.on
 
             Row {
                 anchors.right: parent.right
                 spacing: Theme.spaceM
 
-                FlyoutStepper {
-                    visible: step.on
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.fit(170)
-                    // in 30-second steps
-                    value: Math.round(step.timeout / 30)
-                    minimum: 1
-                    maximum: 240
-                    valueWidth: 64
-                    displayValue: page.minutes(step.timeout)
-                    onStepped: delta => page.setStep(index, { timeout: Math.max(30, (value + delta) * 30) })
-                }
                 Text {
-                    visible: !step.on
+                    visible: stepRow.both
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.fit(170)
-                    horizontalAlignment: Text.AlignHCenter
-                    text: "Off"
+                    text: page.glyphs.battery
                     color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontBody
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontIconSize
                 }
-                Switch {
+                StepTime { index: stepRow.index; anchors.verticalCenter: parent.verticalCenter }
+                Text {
+                    visible: stepRow.both
                     anchors.verticalCenter: parent.verticalCenter
-                    checked: step.on
-                    onToggled: page.setStep(index, { on: !step.on })
+                    leftPadding: Theme.spaceL
+                    text: page.glyphs.plug
+                    color: Theme.subtext
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontIconSize
+                }
+                StepTime {
+                    visible: stepRow.both
+                    index: Math.max(0, page.pluggedSuspend)
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
         }
