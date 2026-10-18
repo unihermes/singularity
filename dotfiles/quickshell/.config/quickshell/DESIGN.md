@@ -251,23 +251,32 @@ Settings') are laid out the same way.
 - **Window frame** (Settings, System, Keybinds; picked 2026-10-11): one
   title bar line (`WindowHeader`): the accent bar, the name with the
   hostname quieter after it, Settings' search in the rest of the line, and
-  Close. No eyebrow, no separate search row. Inside a page (Settings and
-  System) it reads as a path: a back button where the bar was, the
-  window's name quieter (a click goes Home), 󰅂, the page's name. The page
-  itself then drops its own heading and keeps its one-line description.
-- **Home** (Settings and System; picked 2026-10-16): the windows open on
-  Home, not a page, and have no sidebar. Home is every page as a
-  full-width tile (`WindowHome`, `HomeRow`) in a centred column
-  (`fit(760)`), under group headings, each group one framed block with
-  hairlines between tiles. A tile: the icon in the accent, the name over
-  what's inside, what it's set to or reading now on the right (System's
-  CPU, Memory and Network add their minute as a small graph), a chevron.
-  A page fills the panel; Home is the back button or the window's name.
-  More in Settings rows and `open(page)` still go straight to a page.
-- **Search** (Settings): in the title bar everywhere. Typed into, the
-  panel lists the hits in Home's column under a RESULTS count (the page
-  under it is kept). Empty, on Home, the arrow keys walk the tiles; the
-  row the arrow keys are on has the hover fill.
+  Close. No eyebrow, no separate search row. Inside a System page it reads
+  as a path: a back button where the bar was, the window's name quieter (a
+  click goes Home), 󰅂, the page's name.
+- **Settings' two panels** (picked 2026-10-18, 1B 2C 3A 4C 5A 6B 7B): one
+  framed panel split by a hairline: the pages on the left (`fit(260)`), the
+  open page on the right. The sidebar groups the pages under `//` headings;
+  a row is the page's icon and name over what it's set to now (the old
+  Home's status, in its colour), or what's inside where nothing is cheap to
+  know (`SettingsSectionRow`). The page on show has the hover fill and the
+  accent tick. The page opens under its icon (lightened accent) and name at
+  `fontTitle`, then its own one-line description; the title bar stays
+  "Settings". It opens on the page it was left on (`lastPage`, kept by
+  shell.qml for the session); `open(page)` goes straight to that one.
+- **Home** (System; picked 2026-10-16): System opens on Home, not a page,
+  with no sidebar: every page as a full-width tile (`WindowHome`,
+  `HomeRow`) in a centred column (`fit(760)`), under group headings, each
+  group one framed block with hairlines between tiles. A tile: the icon in
+  the accent, the name over what's inside, what it's reading now on the
+  right (CPU, Memory and Network add their minute as a small graph), a
+  chevron. A page fills the panel; Home is the back button or the window's
+  name.
+- **Search** (Settings): in the title bar. Typed into, the sidebar lists
+  the hits under a RESULTS count in place of the pages (the page beside it
+  stays). With the bar focused, the arrow keys walk the pages, opening each
+  at once, or walk the hits; the hit the arrow keys are on has the hover
+  fill and tick.
 - A Repeater's Column that holds its own heading and rows sets
   `isSectionGroup: true` and `sectioned`, so its rows get sections as if
   they sat in the page.
@@ -569,6 +578,7 @@ back. Always the Nerd glyphs (`Theme.fontIcon`), never a typed `>`.
 | Meaning | Glyph | Where |
 |---|---|---|
 | A page from a window's Home | 󰅂, muted until hovered | `HomeRow` |
+| Page on show in Settings' sidebar | fill + tick + grey 󰅂 | `SettingsSectionRow` |
 | Row the arrow keys are on | fill + tick + grey 󰅂 | Launcher, Settings search hits |
 | Tab on show | accent fill, no chevron | Settings tabs, `FlyoutSegmented` |
 | Goes deeper in the same flyout or window | 󰅂 | submenus, tray submenus, other System pages, Open Health |

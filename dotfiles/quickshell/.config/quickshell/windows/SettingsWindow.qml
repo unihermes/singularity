@@ -1,12 +1,15 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/SettingsWindow.qml
 //
-// Settings: a title bar with the search, over one panel showing Home (a tile
-// per page, WindowHome.qml), the open page (Settings › Page, back to Home)
-// or search results (SettingsIndex.js; a hit opens its page and rings the
-// setting). Changes apply at once, written straight to what they control.
-// `/` focuses the search; Escape clears, leaves the bar, then closes. Every
-// open starts fresh on Home; the page Loader exists only while visible.
+// Settings: a title bar with the search, over one panel split by a
+// hairline: the pages on the left (each with what it's set to now) and the
+// open page on the right under its name. Typed into, the search lists its
+// hits (SettingsIndex.js) in place of the pages; a hit opens its page and
+// rings the setting. Changes apply at once, written straight to what they
+// control. `/` focuses the search, where the arrow keys walk the pages;
+// Escape clears, leaves the bar, then closes. It opens on the page it was
+// left on (`lastPage`, kept by shell.qml); the page Loader exists only
+// while visible.
 
 import Quickshell
 import Quickshell.Io
@@ -23,8 +26,10 @@ import "../services/Styles.js" as Styles
 FloatingWindow {
     id: root
 
-    // the open page, or "" for Home
-    property string currentPage: ""
+    // the open page, and the one the window was last left on
+    property string currentPage: pages[0].id
+    property string lastPage: ""
+    onCurrentPageChanged: lastPage = currentPage
     // the setting a search result picked, for the page to scroll to and ring
     property string highlight: ""
 
@@ -35,13 +40,14 @@ FloatingWindow {
     implicitWidth: Theme.windowSize.width
     implicitHeight: Theme.windowSize.height
 
-    // an unknown or empty page opens Home
+    // an unknown or empty page opens the last one
     function open(page) {
-        currentPage = pages.some(p => p.id === page) ? page : ""
+        var known = id => pages.some(p => p.id === id)
+        currentPage = known(page) ? page : known(lastPage) ? lastPage : pages[0].id
         highlight = ""
-        home.toTop()
         searchBar.text = ""
         visible = true
+        Qt.callLater(() => nav.reveal(currentPage))
     }
     function close() { visible = false }
 
@@ -50,8 +56,8 @@ FloatingWindow {
     onClosed: visible = false
     onVisibleChanged: if (visible) chrome.keySink.forceActiveFocus()
 
-    // in Home's groups, in Home's order: connections, the machine itself,
-    // how the desktop looks and behaves, apps, then the clock and updates
+    // the sidebar's groups, in order: connections, the machine itself, how
+    // the desktop looks and behaves, apps, then the clock and updates
     readonly property var groups: [
         { heading: "Connections", ids: ["network", "bluetooth"] },
         { heading: "Device",      ids: ["display", "audio", "input", "power"] },
@@ -79,10 +85,9 @@ FloatingWindow {
     ]
     readonly property var openPage: pages.find(p => p.id === currentPage) || null
 
-    // --- Home's tiles: what each page is set to now --------------------------
+    // --- the sidebar: what each page is set to now ---------------------------
 
-    // only where it's cheap to know; a tile without one shows just its name
-    // and what's inside
+    // only where it's cheap to know; a page without one shows what's inside
     readonly property var btAdapter: Bluetooth.defaultAdapter
     readonly property bool btOn: !!btAdapter && btAdapter.state === BluetoothAdapterState.Enabled
     readonly property var btConnected: btOn ? btAdapter.devices.values.filter(d => d.connected) : []
@@ -126,13 +131,14 @@ FloatingWindow {
     }
     // the devices' properties, which plainName() reads to shorten the
     // output's name, only arrive while something tracks them
-    PwObjectTracker { objects: root.visible && root.currentPage === "" ? Audio.devices : [] }
+    PwObjectTracker { objects: root.visible ? Audio.devices : [] }
 
-    readonly property var homeGroups: groups.map(g => ({
+    readonly property var navGroups: groups.map(g => ({
         heading: g.heading,
         items: g.ids.map(id => {
             var p = pages.find(p => p.id === id), st = status(id)
-            return { id: id, icon: p.icon, label: p.label, blurb: p.blurb, status: st.text, statusColor: st.color }
+            return { id: id, icon: p.icon, label: p.label,
+                     line: st.text || p.blurb, lineColor: st.text && st.color ? st.color : Theme.subtext }
         })
     }))
 
@@ -147,7 +153,7 @@ FloatingWindow {
 
     readonly property string query: searchBar.text.trim()
     readonly property var index: SettingsIndex.build(pages)
-    // what the arrow keys walk: Home's tiles, or what matched
+    // what the arrow keys walk: the pages, or what matched
     readonly property var rows: query === ""
         ? pages.map(p => ({ page: p.id, label: p.label, blurb: p.blurb, icon: p.icon, isPage: true }))
         : SettingsIndex.search(index, query, 30).map(e => ({
@@ -155,19 +161,24 @@ FloatingWindow {
             blurb: e.isPage ? "Section"
                 : e.section === "" ? e.pageLabel : e.pageLabel + " · " + e.section,
             entry: e }))
-    // the row the arrow keys are on; only drawn while the bar has focus
+    // the hit the arrow keys are on; only drawn while the bar has focus
     property int cursor: 0
     readonly property bool searchFocused: searchBar.focused
-    // walking Home's tiles: an empty query, with Home showing
-    readonly property bool walkingHome: query === "" && currentPage === ""
 
     function focusSearch() { searchBar.forceFocus() }
 
+    // with no query the arrows open the next page at once
     function moveCursor(delta) {
-        if (rows.length === 0 || (query === "" && !walkingHome)) return
+        if (rows.length === 0) return
+        if (query === "") {
+            var i = pages.findIndex(p => p.id === currentPage)
+            highlight = ""
+            currentPage = pages[(i + delta + pages.length) % pages.length].id
+            nav.reveal(currentPage)
+            return
+        }
         cursor = (cursor + delta + rows.length) % rows.length
-        if (walkingHome) home.reveal(rows[cursor].page)
-        else list.reveal(cursor)
+        list.reveal(cursor)
     }
 
     function activate(row) {
@@ -218,8 +229,6 @@ FloatingWindow {
         window: root
         title: "Settings"
         subtitle: hostFile.text().trim()
-        page: root.openPage ? root.openPage.label : ""
-        onBack: root.select("")
     }
 
     FlyoutInput {
@@ -232,15 +241,11 @@ FloatingWindow {
         hints: focused ? ["Up/Down navigate", "Enter select"] : ["/ to focus"]
 
         onTextChanged: root.cursor = 0
-        // however it got focus (`/` or a click), the arrows start from the
-        // open section
-        onFocusedChanged: if (focused)
-            root.cursor = root.query === "" ? Math.max(0, root.pages.findIndex(p => p.id === root.currentPage)) : 0
         onDownPressed: root.moveCursor(1)
         onUpPressed: root.moveCursor(-1)
         onTabPressed: root.moveCursor(1)
         onBackTabPressed: root.moveCursor(-1)
-        onAccepted: if (root.rows.length > 0 && (root.query !== "" || root.walkingHome))
+        onAccepted: if (root.rows.length > 0 && root.query !== "")
             root.activate(root.rows[root.cursor])
         // first clear the query, then leave the bar; the window's own
         // Escape closes it after that
@@ -250,7 +255,7 @@ FloatingWindow {
         }
     }
 
-    // --- the panel: Home, the open page, or what the search matched ---------
+    // --- the panel: the pages (or what the search matched), then the page --
 
     WindowPanel {
         id: panel
@@ -261,121 +266,226 @@ FloatingWindow {
         // the window's real size (a Font Size change leaves the window as is)
         height: root.height - y - Theme.windowPad
 
-        WindowHome {
-            id: home
+        Item {
+            id: side
             x: Theme.panelPad
             y: Theme.panelPad
-            width: parent.width - Theme.panelPad * 2
+            width: Theme.fit(260)
             height: parent.height - Theme.panelPad * 2
-            visible: root.walkingHome
-            groups: root.homeGroups
-            cursorId: root.searchFocused && root.rows.length > 0 ? root.rows[root.cursor].page : ""
-            onActivated: id => root.select(id)
-            onHovered: id => {
-                if (root.searchFocused) root.cursor = root.rows.findIndex(r => r.page === id)
-            }
-        }
-
-        // what the search matched, under a count, in Home's column
-        Item {
-            id: results
-            visible: root.query !== ""
-            readonly property int columnWidth: Math.min(Theme.fit(760), parent.width - Theme.panelPad * 2)
-            x: Math.round((parent.width - columnWidth) / 2)
-            y: Theme.panelPad
-            width: columnWidth
-            height: parent.height - Theme.panelPad * 2
-
-            FlyoutHeading {
-                id: listHeading
-                width: parent.width
-                text: root.rows.length === 1 ? "1 RESULT" : root.rows.length + " RESULTS"
-            }
-
-            Text {
-                anchors.top: listHeading.bottom
-                anchors.topMargin: Theme.spaceL
-                x: Theme.spaceL
-                visible: root.rows.length === 0
-                text: "Nothing matches"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
 
             Flickable {
-                id: list
-                anchors.top: listHeading.bottom
-                anchors.topMargin: Theme.spaceL
-                anchors.bottom: parent.bottom
-                width: parent.width
-                contentHeight: listCol.implicitHeight
+                id: nav
+                visible: root.query === ""
+                anchors.fill: parent
+                anchors.rightMargin: Theme.scrollGutter
+                contentHeight: navCol.implicitHeight
                 interactive: contentHeight > height
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
 
-                // keep the arrow keys' row on screen
-                function reveal(i) {
-                    var row = rowRepeater.itemAt(i)
-                    if (!row) return
-                    if (row.y < contentY) contentY = row.y
-                    else if (row.y + row.height > contentY + height) contentY = row.y + row.height - height
+                // keep the open page's row on screen, for the arrow keys
+                function reveal(id) {
+                    for (var g = 0; g < navGroupRep.count; g++) {
+                        var rows = navGroupRep.itemAt(g).rowRepeater
+                        for (var r = 0; r < rows.count; r++) {
+                            var row = rows.itemAt(r)
+                            if (row.pageId !== id) continue
+                            var y = row.mapToItem(navCol, 0, 0).y
+                            if (y < contentY) contentY = y
+                            else if (y + row.height > contentY + height) contentY = y + row.height - height
+                            return
+                        }
+                    }
                 }
 
                 Column {
-                    id: listCol
-                    width: list.width
-                    spacing: 0
+                    id: navCol
+                    width: nav.width
+                    spacing: Theme.spaceL
 
                     Repeater {
-                        id: rowRepeater
-                        model: root.query !== "" ? root.rows : []
+                        id: navGroupRep
+                        model: root.navGroups
 
-                        SettingsSectionRow {
+                        Column {
+                            id: navGroup
                             required property var modelData
-                            required property int index
-                            icon: modelData.icon
-                            label: modelData.label
-                            blurb: modelData.blurb || ""
-                            current: root.searchFocused && root.cursor === index
-                            onHovered: if (root.searchFocused) root.cursor = index
-                            onClicked: root.activate(modelData)
+                            property Item rowRepeater: navRows
+                            width: navCol.width
+                            spacing: Theme.spaceXs
+
+                            FlyoutHeading { width: parent.width; text: navGroup.modelData.heading.toUpperCase() }
+
+                            Repeater {
+                                id: navRows
+                                model: navGroup.modelData.items
+
+                                SettingsSectionRow {
+                                    required property var modelData
+                                    readonly property string pageId: modelData.id
+                                    icon: modelData.icon
+                                    label: modelData.label
+                                    blurb: modelData.line
+                                    blurbColor: modelData.lineColor
+                                    current: root.currentPage === modelData.id
+                                    onClicked: root.select(modelData.id)
+                                }
+                            }
                         }
                     }
                 }
             }
 
             ScrollBar {
-                anchors.right: list.right
-                anchors.rightMargin: -Theme.spaceS
-                flickable: list
+                anchors.right: parent.right
+                anchors.top: nav.top
+                height: nav.height
+                visible: nav.visible && nav.interactive
+                flickable: nav
+            }
+
+            // what the search matched, under a count
+            Item {
+                id: results
+                visible: root.query !== ""
+                anchors.fill: parent
+
+                FlyoutHeading {
+                    id: listHeading
+                    width: parent.width - Theme.scrollGutter
+                    text: root.rows.length === 1 ? "1 RESULT" : root.rows.length + " RESULTS"
+                }
+
+                Text {
+                    anchors.top: listHeading.bottom
+                    anchors.topMargin: Theme.spaceL
+                    x: Theme.spaceL
+                    visible: root.rows.length === 0
+                    text: "Nothing matches"
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+
+                Flickable {
+                    id: list
+                    anchors.top: listHeading.bottom
+                    anchors.topMargin: Theme.spaceS
+                    anchors.bottom: parent.bottom
+                    width: parent.width - Theme.scrollGutter
+                    contentHeight: listCol.implicitHeight
+                    interactive: contentHeight > height
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    // keep the arrow keys' row on screen
+                    function reveal(i) {
+                        var row = rowRepeater.itemAt(i)
+                        if (!row) return
+                        if (row.y < contentY) contentY = row.y
+                        else if (row.y + row.height > contentY + height) contentY = row.y + row.height - height
+                    }
+
+                    Column {
+                        id: listCol
+                        width: list.width
+                        spacing: 0
+
+                        Repeater {
+                            id: rowRepeater
+                            model: root.query !== "" ? root.rows : []
+
+                            SettingsSectionRow {
+                                required property var modelData
+                                required property int index
+                                icon: modelData.icon
+                                label: modelData.label
+                                blurb: modelData.blurb || ""
+                                current: root.searchFocused && root.cursor === index
+                                onHovered: if (root.searchFocused) root.cursor = index
+                                onClicked: root.activate(modelData)
+                            }
+                        }
+                    }
+                }
+
+                ScrollBar {
+                    anchors.right: parent.right
+                    anchors.top: list.top
+                    height: list.height
+                    flickable: list
+                }
             }
         }
 
-        // the open page; kept while a search covers it, so its state lives on
-        Loader {
-            id: pane
-            // sections folded on this window's pages (FlyoutHeading),
-            // kept across page switches and dropped with the window
-            property var foldedSections: []
-            // the tab each tabbed page was left on (SettingsPage.tabs)
-            property var pageTabs: ({})
-            x: Theme.panelPad
+        // the hairline between the pages and the page
+        Rectangle {
+            id: split
+            x: side.x + side.width + Theme.panelPad
             y: Theme.panelPad
-            width: parent.width - Theme.panelPad * 2
+            width: Theme.borderWidth
             height: parent.height - Theme.panelPad * 2
-            visible: root.query === ""
-            active: root.visible && root.openPage !== null
-            // built off the render loop, so the window maps at once and
-            // the page lands a moment later instead of holding up both
-            asynchronous: true
-            onLoaded: {
-                if (!item) return
-                item.titled = false
-                if (root.highlight !== "") item.highlight = root.highlight
+            color: Theme.stroke
+        }
+
+        Item {
+            id: pageArea
+            x: split.x + split.width + Theme.panelPad + Theme.spaceS
+            y: Theme.panelPad
+            width: parent.width - x - Theme.panelPad
+            height: parent.height - Theme.panelPad * 2
+
+            // the page's icon and name, large, over its own description
+            Row {
+                id: pageTitle
+                x: Theme.spaceS
+                spacing: Theme.spaceL
+                height: Math.max(pageIcon.implicitHeight, pageName.implicitHeight) + Theme.spaceS
+
+                Text {
+                    id: pageIcon
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.openPage ? root.openPage.icon : ""
+                    color: Theme.hasAccent ? Qt.lighter(Theme.accent, 1.4) : Theme.textStrong
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontTitle
+                }
+
+                Text {
+                    id: pageName
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.openPage ? root.openPage.label : ""
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontTitle
+                    font.weight: Theme.weightStrong
+                }
             }
-            source: root.openPage ? root.openPage.source : ""
+
+            // the open page; built fresh on each switch
+            Loader {
+                id: pane
+                // sections folded on this window's pages (FlyoutHeading),
+                // kept across page switches and dropped with the window
+                property var foldedSections: []
+                // the tab each tabbed page was left on (SettingsPage.tabs)
+                property var pageTabs: ({})
+                anchors.top: pageTitle.bottom
+                anchors.topMargin: Theme.spaceXs
+                anchors.bottom: parent.bottom
+                width: parent.width
+                active: root.visible && root.openPage !== null
+                // built off the render loop, so the window maps at once and
+                // the page lands a moment later instead of holding up both
+                asynchronous: true
+                onLoaded: {
+                    if (!item) return
+                    item.titled = false
+                    if (root.highlight !== "") item.highlight = root.highlight
+                }
+                source: root.openPage ? root.openPage.source : ""
+            }
         }
     }
 }

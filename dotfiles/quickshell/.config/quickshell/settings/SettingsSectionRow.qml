@@ -1,11 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsSectionRow.qml
 //
-// One of Settings' search hits: the setting's name over the page and
-// heading it lives on (`blurb`), with that page's icon.
+// A row of Settings' sidebar: a page's name over what it's set to, or a
+// search hit's name over the page and heading it lives on (`blurb`), with
+// the page's icon.
 //
-// `current` marks the arrow keys' row (fill, tick, chevron); hover shows
-// the fill and chevron.
+// `current` marks the page on show or the arrow keys' hit (fill, tick,
+// chevron); hover shows the fill and chevron.
 
 import QtQuick
 import "../services"
@@ -16,6 +17,7 @@ Item {
     property string icon: ""
     property string label: ""
     property string blurb: ""
+    property color blurbColor: Theme.subtext
     property bool current: false
 
     signal clicked()
@@ -83,7 +85,7 @@ Item {
                 visible: text !== ""
                 text: root.blurb
                 elide: Text.ElideRight
-                color: Theme.subtext
+                color: root.blurbColor
                 font.family: Theme.fontText
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontCaption
