@@ -373,18 +373,22 @@ Settings') are laid out the same way.
   sits on the IN RANGE heading, its icon turning while it runs
   (`FlyoutChip.icon` and `spinning`), and the unnamed devices are a last
   "Show N unnamed" row.
-- **Display:** the arrangement picture is always there: every connected
-  display to scale, one that's off drawn dashed to the left (Off · lid
-  shut). Dragging arranges, a click opens that display, and the open one
-  has the lit groove. Extend / Duplicate, Primary (segments by display
-  name) and Reset workspaces only show with two displays on; while the
-  saved primary is off, a note says which one stands in. Each display is
-  a row (type icon, name, the connector as its `note`, a Primary `badge`,
-  what it's running) that opens in place: Resolution (a dropdown, native
-  marked), Refresh rate (segments, or a readout when there's one), Scale
-  (100–200% segments, the hint saying what it looks like) and Rotation.
-  An off display opens to one Status line. Every change writes a rule for
-  that display alone, so nothing on the page names hl.monitor() rules.
+- **Display** (picked 2026-10-18, 1B 2B 3B 4B 5A): with one display, THIS
+  DISPLAY is a card (type icon, name, connector, what it's running) with
+  its settings straight under it, nothing to open: Resolution (a dropdown,
+  native marked), Refresh rate (segments, or a readout when there's one),
+  Scale (100–200% segments, the hint saying what it looks like) and
+  Rotation; an off display shows one Status line. With several, the
+  ARRANGEMENT picture comes first (every display to scale, one that's off
+  dashed to the left; dragging arranges, a click picks whose settings
+  show, the picked one has the lit groove), with Extend / Duplicate,
+  Primary and Reset workspaces; the section under it is named after the
+  picked display, a segmented strip of names over its settings. Then
+  EVERY DISPLAY: Vibrance and Variable refresh. A mode, scale or rotation
+  change waits in a bar floating at the page's foot (`SettingsPage.footer`):
+  Keep this?, Revert / Keep, and an accent line draining as the 15 s run
+  out. Every change writes a rule for that display alone, so nothing on
+  the page names hl.monitor() rules.
 - **Notifications:** a status card (the bell large, Notifications on or
   Do Not Disturb, why and until when, the history's count, the switch),
   with a History row under it (Open, and Clear all in two clicks). Then

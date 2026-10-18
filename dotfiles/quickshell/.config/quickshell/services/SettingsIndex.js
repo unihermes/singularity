@@ -181,7 +181,10 @@ var entries = [
     { page: "display", section: "",  label: "Workspaces",   keywords: "monitor reset external workspace 1 2 dock" },
     { page: "display", section: "",  label: "Vibrance",     keywords: "digital vibrance saturation colour color vivid nvidia greyscale grayscale shader" },
     { page: "display", section: "",  label: "Variable refresh", keywords: "vrr gsync g-sync freesync adaptive sync tearing stutter games fullscreen" },
-    { page: "display", section: "",  label: "Displays",     keywords: "monitor resolution refresh rate hz scale hidpi fractional rotation rotate transform portrait mode" },
+    { page: "display", section: "",  label: "Resolution",   keywords: "monitor native mode pixels" },
+    { page: "display", section: "",  label: "Refresh rate", keywords: "monitor hz mode" },
+    { page: "display", section: "",  label: "Scale",        keywords: "monitor hidpi fractional zoom size" },
+    { page: "display", section: "",  label: "Rotation",     keywords: "monitor rotate transform portrait" },
 
     // --- Notifications -----------------------------------------------------
     { page: "notifications", section: "", label: "Status",                      keywords: "dnd do not disturb silence mute" },

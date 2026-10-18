@@ -6,7 +6,8 @@
 // built fresh each visit. `highlight` scrolls to and rings a searched field;
 // `tabs` splits the page into isSettingsTab Columns (remembered while the
 // window is open); `sectioned` frames each group of rows (DESIGN.md);
-// `pinned` sits above the rows while `pinnedVisible`, `banner` above the tabs.
+// `pinned` sits above the rows while `pinnedVisible`, `banner` above the tabs,
+// `footer` floats over the foot of the rows while `footerVisible`.
 
 import QtQuick
 import "../services"
@@ -35,6 +36,9 @@ Item {
     property Component pinned: null
     property bool pinnedVisible: true
     property Component banner: null
+    property Component footer: null
+    property bool footerVisible: true
+    readonly property real footerHeight: footerLoader.visible ? footerLoader.height + Theme.spaceL : 0
 
     // [{ id, label, icon }] and the one showing; [] for an untabbed page
     property var tabs: []
@@ -378,9 +382,21 @@ Item {
                 width: flick.width - x * 2
                 spacing: Theme.spaceM
                 topPadding: root.sectioned ? Theme.channelWidth + Theme.spaceS : 0
-                // clear of the panel's rounded bottom border, as on System
-                bottomPadding: Theme.spaceXl
+                // clear of the panel's rounded bottom border, as on System,
+                // and of the footer
+                bottomPadding: Theme.spaceXl + root.footerHeight
             }
+        }
+
+        Loader {
+            id: footerLoader
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: Theme.spaceL
+            x: Theme.spaceS
+            width: flick.width - Theme.spaceS * 2
+            active: root.footer !== null && root.footerVisible
+            visible: active
+            sourceComponent: root.footer
         }
 
         // scroll indicator, as in the Keybinds list
@@ -413,7 +429,7 @@ Item {
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: shown ? Theme.spaceL : 0
+        anchors.bottomMargin: (shown ? Theme.spaceL : 0) + root.footerHeight
         width: Math.min(toastRow.implicitWidth + Theme.spaceXl * 2, parent.width - Theme.spaceXl * 2)
         height: toastRow.implicitHeight + Theme.spaceL * 2
         radius: Theme.radiusInner
