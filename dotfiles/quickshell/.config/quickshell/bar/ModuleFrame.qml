@@ -11,10 +11,8 @@
 //   taskbar  a bare slot the bar's height -- Flat: a fill on hover and
 //            while open, an accent rule on the screen edge's side when open
 //
-// This exists so the chrome has one definition. BarModule draws an
-// icon/label pair in it, and the open-window icons draw a whole row of
-// icons in a single one -- the alternative was a second hand-maintained
-// lookalike that would drift the first time the border changed.
+//
+// The one definition of the chip: BarModule and the open-window icons use it.
 
 import QtQuick
 import QtQuick.Effects
@@ -30,9 +28,8 @@ Item {
     // per-chip override, for the ones that look cramped at the shared value
     property int padH: Theme.modulePadH
 
-    // Gauge mode. -1 leaves the chip as a plain icon/label chip; 0..1 turns
-    // the right-hand side into a bar that fills with the value, and the
-    // content is left-aligned beside it instead of centred.
+    // gauge mode: -1 a plain chip; 0..1 a fill on the right, content
+    // left-aligned
     property real fillValue: -1
     readonly property bool gauge: fillValue >= 0
     property color fillColor: Theme.gaugeFill
@@ -56,9 +53,7 @@ Item {
     implicitWidth: frame.width
     implicitHeight: Theme.barHeight
 
-    // a fill while the pointer is on the chip and it isn't lit;
-    // false for a chip whose items show their own hover (the open
-    // windows): the chip itself then stays as it is under the pointer
+    // a hover fill on the whole chip; false when its items hover themselves
     property bool hoverWhole: true
     HoverHandler { id: hover; enabled: root.hoverWhole }
     readonly property bool hovered: hover.hovered && !active
@@ -125,9 +120,7 @@ Item {
             border.color: root.active || Theme.opt("lit") ? Theme.frameStroke : Theme.surface
         }
 
-        // Flush inside the double border: the outer stroke sits at 0..1, the
-        // inner one at 2..3, so 3 is the first clear pixel. Matching that
-        // exactly is what makes the bar touch the border with no gap.
+        // flush inside the double border (3 is the first clear pixel)
         readonly property int barInset: grouped || taskbar ? 0 : 3
 
         // The bar is the whole interior now, with the icon sitting on top of
@@ -137,9 +130,7 @@ Item {
             visible: frame.track
             anchors.fill: parent
             anchors.margins: frame.barInset
-            // one less than the inner stroke's radius, being one pixel
-            // further in, so the curves stay concentric -- floored because
-            // the radius is user-settable down to square
+        // one less than the inner stroke's radius, concentric, floored at 0
             radius: frame.grouped ? frame.radius : Theme.radiusSmall
             color: frame.grouped || frame.taskbar ? (root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
@@ -187,11 +178,8 @@ Item {
             border.color: Theme.accent
         }
 
-        // Drawn after the track, so the icon reads on top of the fill
-        // wherever the fill has reached.
-        // Placed by x rather than by swapping anchors.left for
-        // anchors.horizontalCenter: for a moment in between both are set,
-        // which pins the row to a width it keeps afterwards.
+        // after the track, so the icon reads over the fill; placed by x, as
+        // swapping anchors pins the row's width
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter

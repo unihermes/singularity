@@ -4,18 +4,11 @@
 // The Bar Widgets page's list: every bar module with a drag handle and a
 // show/hide switch, grouped under LEFT / CENTRE / RIGHT headers.
 //
-// It's one list, not three. The section headers are rows in it that never
-// move, so a module dragged past a header simply ends up on the other side
-// of it -- which is what moving it into another section means. Dragging
-// between three separate lists would need the row to leave one view and be
-// adopted by another mid-drag. Where a module sits relative to the headers
-// is written back as the layout.
 //
-// The list is a ListModel copy of the saved layout rather than bound to it.
-// ListModel.move() keeps the dragged row's delegate alive, so the pointer
-// stays attached to the row while it changes slots; rebuilding from a bound
-// array on every step would destroy the row mid-drag. Each move is written
-// straight back to Settings, which is what makes the bar follow live.
+// One list, with the section headers as fixed rows, so dragging past a
+// header moves a module to that section. A ListModel copy of the layout
+// (move() keeps the dragged delegate alive); each move is written straight
+// to Settings, so the bar follows live.
 
 import QtQuick
 import "../services"
@@ -76,10 +69,7 @@ Column {
 
     function commit() { Settings.setWidgetLayout(shown()) }
 
-    // Follows the saved layout when something else changes it (the list on
-    // another screen, a reset, a look with its own layout), so a drag here
-    // never writes back an order from before. Its own commits already match,
-    // so a drag in progress keeps its rows.
+    // follows layout changes made elsewhere; its own commits already match
     readonly property string saved: JSON.stringify(Settings.widgetLayout())
     onSavedChanged: if (JSON.stringify(shown()) !== saved) refill()
 

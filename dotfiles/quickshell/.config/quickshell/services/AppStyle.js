@@ -1,26 +1,16 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/AppStyle.js
 //
-// The current style (Styles.js) drawn onto other toolkits' widgets: a GTK
-// sheet for adw-gtk3 and libadwaita, and a Qt stylesheet for qt6ct's
-// Fusion. AppearanceSync appends gtk() to the colour sheets it writes and
-// points qt6ct at qss().
-//
-// Both take one plain object, t:
+// The style drawn onto other toolkits: gtk() a sheet for adw-gtk3 and
+// libadwaita, qss() a Qt stylesheet for qt6ct's Fusion (AppearanceSync
+// writes both). Both take t:
 //   c          hex colours: the ramp (base … bright), accent, onAccent
 //   isLight    the ramp's ground is light
 //   r          Styles.resolve()'s result
 //   spacing, rowScale   Space's dials, in percent
-//
-// What carries over: corners (Roundness; Flat's square), Density's control
-// heights, and the style's frame on controls and panels -- single, double
-// or channel strokes, or none -- with a fill on hover. Shadows, see-through
-// and heading case stay the toolkit's, so apps keep their own legibility.
-//
-// A user sheet outranks the theme's rules whatever their selectors, so
-// every rule here sets only the properties it means to change, and states
-// the theme draws (hover, checked, suggested) are restated where a rule
-// here would otherwise flatten them.
+// Carries corners, Density's heights and the frame on controls and panels;
+// shadows, see-through and heading case stay the toolkit's. Rules set only
+// what they change, restating theme states they'd otherwise flatten.
 
 .pragma library
 
@@ -171,9 +161,8 @@ function gtk(t, v) {
     return css
 }
 
-// The Qt stylesheet. Qt has no layered shadows, so double and channel are
-// a `double` border; Fusion draws whatever
-// a rule here doesn't take over.
+// the Qt stylesheet: double and channel become a `double` border; Fusion
+// draws the rest
 function qss(t) {
     var o = setup(t), c = o.c, css = ""
     var px = n => (n === 9999 ? Math.round(o.h / 2) : n) + "px"

@@ -1,25 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Privacy.qml
 //
-// Which apps are recording the microphone, the camera, or the screen right
-// now, for a bar indicator that only appears while one is.
-//
-// Read from Pipewire's node list. An app capturing audio shows up as an
-// audio *input stream* and an app capturing video as a video input stream;
-// a screen share is the source node xdg-desktop-portal-hyprland creates,
-// named xdph-streaming-*. The node type flags are available without binding
-// every node, which is what makes watching them all cheap.
-//
-// Not every audio input stream is a microphone, though: one reading a
-// sink's monitor (stream.capture.sink) is listening to what's playing --
-// a loopback routing a virtual sink into the headset (arctis-manager's
-// ChatMix), a recorder of desktop audio. Those don't count. That flag is a
-// node property, which Pipewire only hands over for bound nodes, so the
-// audio input streams (a handful at most) are bound, and one counts once its
-// properties are in.
-//
-// Limit: an app that opens /dev/video* directly (older Chromium builds do)
-// never goes through Pipewire, so its camera use isn't seen.
+// Which apps are recording the mic, camera or screen, for a bar indicator.
+// From Pipewire's node list: audio/video input streams and xdph-streaming-*
+// screen shares. Audio input streams are bound to read stream.capture.sink,
+// as one capturing a sink's monitor (loopbacks, desktop recorders) isn't a
+// mic. Apps opening /dev/video* directly aren't seen.
 
 pragma Singleton
 
