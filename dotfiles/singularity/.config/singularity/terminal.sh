@@ -2,13 +2,8 @@
 # Singularity - the terminal
 # ~/.config/singularity/terminal.sh
 #
-# Starts the terminal picked on Settings > Terminal (Settings.terminalApp,
-# saved in appearance.json): Alacritty or Ghostty. Everything that opens a
-# terminal goes through here -- SUPER+Return, the scratchpad, wofi, the
-# shell's "open in a terminal" actions -- so they all open the same one.
-#
-# One set of flags, handed to each terminal in its own spelling:
-#
+# Starts the terminal Settings > Terminal picked (Alacritty or Ghostty);
+# everything that opens a terminal goes through here. One set of flags:
 #   terminal.sh [--class NAME] [--dir PATH] [-e|--] [COMMAND ARGS…]
 #
 #   --class   the window's class (its Wayland app id). Ghostty only takes a
