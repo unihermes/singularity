@@ -1,20 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Settings.qml
 //
-// The handful of shell values the user can change at runtime, persisted to
-// JSON so they survive a restart. Everything here is written from the
-// Appearance pages (the Control Centre's, and the Settings window's) and the
-// few flyouts noted below; nothing else should assign to it.
-//
-// Theme reads these rather than exposing them directly, so the rest of the
-// shell keeps importing one geometry source (Theme.barHeight) and doesn't
-// have to know which values happen to be user-editable this week.
-//
-// Persistence is FileView + JsonAdapter: onAdapterUpdated fires whenever a
-// property on the adapter changes, so a write follows every edit without
-// any call site remembering to save. watchChanges + reload() is the other
-// half -- editing the file by hand (or a second shell instance writing it)
-// is picked up live rather than being silently overwritten.
+// The settings the user changes at runtime, persisted as JSON. Written only
+// through set() from Settings, the Control Centre and a few flyouts; Theme
+// reads them. FileView + JsonAdapter save on every change and pick up edits
+// to the file live (watchChanges).
 
 pragma Singleton
 
@@ -53,9 +43,8 @@ Singleton {
     readonly property alias colourScheme: adapter.colourScheme
     // "dark" or "light", likewise
     readonly property alias colourVariant: adapter.colourVariant
-    // pick a random wallpaper at login instead of restoring the last one.
-    // Mirrored into the wallpaper state file by Wallpaper.qml, since the
-    // login script can't read this JSON.
+    // a random wallpaper at login; mirrored to the wallpaper state file for
+    // the login script
     readonly property alias wallpaperShuffle: adapter.wallpaperShuffle
     // minutes between random wallpapers while logged in; 0 never changes it
     readonly property alias wallpaperInterval: adapter.wallpaperInterval
@@ -112,10 +101,8 @@ Singleton {
         adapter.barHeight = d.barHeight
     }
     readonly property alias fontFamily:  adapter.fontFamily
-    // GTK/Qt apps' font -- independent of fontFamily above, which is only the
-    // shell's own (bar, launcher, notifications). Not part of a look and not
-    // touched by reset()/isDefault, same as nightLightKelvin: it's a system
-    // preference, not an appearance the shell designs.
+    // GTK/Qt apps' font, apart from the shell's fontFamily; a system
+    // preference, so reset() leaves it
     readonly property alias systemFontFamily: adapter.systemFontFamily
     // The pointer and the apps' icons, system preferences in the same way:
     // a theme's directory name (DesktopThemes), and the pointer's size in px.
@@ -125,9 +112,8 @@ Singleton {
     // whether GTK and Qt apps take the style's corners, density and frames
     // (AppStyle.js), or keep their theme's own
     readonly property alias appsFollowStyle: adapter.appsFollowStyle
-    // How Hyprland's windows open, close and minimize (choices.windowAnim
-    // below), handed over by AppearanceSync through a state file. Like the
-    // rest of the Windows section, kept by Reset.
+    // how Hyprland's windows open, close and minimize (AppearanceSync); kept
+    // by Reset
     readonly property alias windowAnim:  adapter.windowAnim
     // "full", "floating" or "islands"
     readonly property alias barStyle:    adapter.barStyle
@@ -141,9 +127,7 @@ Singleton {
     // The terminal's background opacity, in percent (handed over by
     // AppearanceSync in the config each terminal imports)
     readonly property alias terminalOpacity:  adapter.terminalOpacity
-    // "alacritty" or "ghostty" -- the terminal everything opens. A system
-    // preference like systemFontFamily, not part of a look. Launches go
-    // through `terminal`, which reads it from the saved file.
+    // "alacritty" or "ghostty"; a system preference, read by `terminal`
     readonly property alias terminalApp: adapter.terminalApp
     readonly property string terminal: Quickshell.env("HOME") + "/.config/singularity/terminal.sh"
     // "pills", "dots", "lines", "blocks", "numbers" or "roman" -- the workspace indicator
@@ -179,9 +163,8 @@ Singleton {
     readonly property alias launcherLayout: adapter.launcherLayout
     // how flyouts open: "auto" leaves it to the style
     readonly property alias flyoutAnim:  adapter.flyoutAnim
-    // The look's adjustable fixed half (Looks.adjustable): its accent as a
-    // hex, "" for none, and the overlay dimming in percent. Then the
-    // headings' Finish switches: caps, and the rule after them.
+    // the look's adjustable half (Looks.adjustable): accent hex ("" for
+    // none), overlay dimming; then the headings' Finish switches
     readonly property alias accent:       adapter.accent
     // The ramp's roles one by one and the status hues, "" for the look's
     // own; and the text on accent fills (Looks.js)
@@ -318,9 +301,8 @@ Singleton {
         overviewLayout: { "strip": "One row" },
     })
 
-    // A choice's display name: the table above, then the look's or font's
-    // own name, then the raw value.
-    // `key`, when given, is the setting the value belongs to (keyedLabels)
+    // a choice's display name: the table above, then the look's or font's
+    // own, then the raw value. `key`: the setting it belongs to (keyedLabels)
     function choiceLabel(v, key) {
         if (key && keyedLabels[key] && keyedLabels[key][v]) return keyedLabels[key][v]
         if (key === "style") return Styles.get(v).name
@@ -350,16 +332,13 @@ Singleton {
     // not running keep their place in it for when they come back
     readonly property alias trayOrder: adapter.trayOrder
     function setTrayOrder(l) { adapter.trayOrder = l }
-    // The clock chip briefly turns into the volume/brightness level, the
-    // layout just switched to, a new track or new notifications -- instead
-    // of those showing as separate toasts under the bar.
+    // the clock chip briefly shows levels, layouts, tracks and notifications
+    // in place of toasts
     readonly property alias clockIsland: adapter.clockIsland
     function setClockIsland(on) { adapter.clockIsland = on }
     // whether the island is actually showing those, rather than the toasts
     readonly property bool islandActive: clockIsland && widgetVisible("clock")
-    // Night Light colour temperature in kelvin. Lower is warmer. Lives here
-    // for persistence only -- it isn't part of Appearance, so reset() and
-    // isDefault below leave it alone.
+    // Night Light's temperature in kelvin; not Appearance, so reset() leaves it
     readonly property alias nightLightKelvin: adapter.nightLightKelvin
     // Night Light's schedule: "off", "sun" (sunset to sunrise, from the
     // weather) or "custom" (the two times below, minutes after midnight)
@@ -377,16 +356,14 @@ Singleton {
     // "F" or "C", switched from the weather flyout
     readonly property alias weatherUnits: adapter.weatherUnits
     function setWeatherUnits(u) { adapter.weatherUnits = (u === "C") ? "C" : "F" }
-    // Date & Time: the hour format every clock in the shell uses, and the
-    // calendar's first weekday (0 Sunday .. 6 Saturday). System
-    // preferences like weatherUnits, so no look or reset touches them.
+    // Date & Time: the hour format and the calendar's first weekday (0 Sunday);
+    // system preferences, untouched by looks and reset
     readonly property alias clock24: adapter.clock24
     readonly property alias weekStart: adapter.weekStart
     function setClock24(on) { adapter.clock24 = !!on }
     function setWeekStart(d) { if (d === 0 || d === 1 || d === 6) adapter.weekStart = d }
-    // Software Update: minutes between checks (0 checks only when asked),
-    // whether the AUR is checked and upgraded too, and packages left out of
-    // both the count and the upgrade
+    // Software Update: minutes between checks (0: only when asked), the AUR,
+    // and packages left out
     readonly property alias updateInterval: adapter.updateInterval
     readonly property alias updateAur: adapter.updateAur
     readonly property alias updateIgnore: adapter.updateIgnore
@@ -405,9 +382,8 @@ Singleton {
     readonly property alias notifPositionX: adapter.notifPositionX
     readonly property alias notifPositionY: adapter.notifPositionY
     function setNotifDnd(on) { adapter.notifDnd = !!on }
-    // Quiet hours: Do Not Disturb on a daily window. notifDndBySchedule marks
-    // DND as the schedule's doing, so the window's end only turns off what
-    // it turned on.
+    // Quiet hours: DND on a daily window. notifDndBySchedule marks DND as the
+    // schedule's, so its end only undoes what it did.
     readonly property alias notifQuiet: adapter.notifQuiet
     readonly property alias notifQuietFrom: adapter.notifQuietFrom
     readonly property alias notifQuietTo: adapter.notifQuietTo
@@ -432,12 +408,9 @@ Singleton {
     }
 
     // --- Bar Widgets ---------------------------------------------------
-    // Order and visibility of the bar's modules, edited from the Control
-    // Centre's Bar Widgets page. Stored as what the user changed, and read
-    // back only through widgetOrder()/widgetVisible(), which reconcile it
-    // against the defaults below -- so a module added to the bar in a later
-    // update still appears, instead of being missing from a saved order that
-    // predates it.
+    // Order and visibility of the bar's modules, stored as what the user
+    // changed and read through widgetOrder()/widgetVisible(), which merge in
+    // modules added since.
 
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "windows"],
@@ -446,10 +419,8 @@ Singleton {
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
-    // Every module's name and icon on the Bar Widgets page. A new module
-    // needs an entry here, one in widgetDefaults above, and its item in
-    // BarModules.widgetItems -- shell.qml warns at load when the three
-    // disagree, rather than the page showing a blank icon and a raw key.
+    // Every module's name and icon. A new module also needs widgetDefaults
+    // and BarModules.widgetItems; Bar.qml warns when they disagree.
     readonly property var widgetMeta: ({
         controlcentre: { label: "Control Centre", icon: "󰣇" },
         workspaces:    { label: "Workspaces",     icon: "󰇘" },
@@ -477,10 +448,8 @@ Singleton {
     // the page that would un-hide it.
     readonly property var lockedWidgets: ["controlcentre"]
 
-    // Fixed in place: Control Centre first on the left, Show Desktop last on
-    // the right, so each can be hit by throwing the pointer into a corner
-    // (Bar.qml's edge strips). widgetLayout() puts them there whatever the
-    // saved layout says, and the Bar Widgets list won't drag them.
+    // fixed at the corners (Control Centre left, Show Desktop right), so the
+    // pointer can be thrown at them
     readonly property var pinnedWidgets: ["controlcentre", "desktop"]
 
     // Workspaces 1..n have SUPER+n binds and are the only valid targets for a
@@ -489,27 +458,16 @@ Singleton {
 
     readonly property var widgetSections: ["left", "centre", "right"]
 
-    // The effective layout: every known module in exactly one section, in
-    // order. A module goes where it was saved (first section wins if a hand
-    // edit lists it twice). Unknown keys in the file are dropped.
-    //
-    // A module that was never saved -- added to the bar since the layout was
-    // written -- goes beside its default neighbours: before the next module
-    // that follows it in the defaults, or after the one before it, or at the
-    // end if neither is in that section. Appending instead would put every
-    // new module after the battery at the far edge. One that ends its
-    // section in the defaults (Show Desktop) ends it here too.
+    // The effective layout: every known module in exactly one section. An
+    // unsaved module (new since) goes beside its default neighbours.
     function widgetLayout() {
         if (!taskbarLayoutOn) return resolveLayout(adapter.barLayout)
         var own = adapter.taskbarLayout || {}
         return Object.keys(own).length > 0 ? resolveLayout(own) : taskbarOf(resolveLayout(adapter.barLayout))
     }
 
-    // Flat's Taskbar layout option: the bar laid out as a taskbar, with
-    // nothing in the centre. Until it's rearranged (into taskbarLayout,
-    // kept apart so turning the option off brings the usual layout back)
-    // it's the usual one with the centre moved right: the clock to the
-    // end, just before Show Desktop, the rest ahead of the right's modules.
+    // Flat's Taskbar layout: nothing in the centre. Until rearranged (into
+    // taskbarLayout) it's the usual one with the centre moved right.
     readonly property bool taskbarLayoutOn: adapter.style === "flat" && Styles.has(adapter.styleOptions, "taskbar")
     function taskbarOf(l) {
         var lead = l.centre.filter(k => k !== "clock")
@@ -583,11 +541,8 @@ Singleton {
         adapter.barHidden = h
     }
 
-    // The whole layout at once, since a move between sections changes two
-    // of them. A fresh object, not a mutation: the adapter only notices --
-    // and writes, and the bar only repositions -- on reassignment.
-    // Under the Taskbar layout it's the taskbar's own arrangement that's
-    // written.
+    // The whole layout at once, as a fresh object (the adapter writes only on
+    // reassignment); the taskbar's own under the Taskbar layout.
     function setWidgetLayout(layout) {
         var l = {
             left:   (layout.left   || []).slice(),
@@ -598,11 +553,8 @@ Singleton {
         else adapter.barLayout = l
     }
 
-    // The centre module pinned to the exact middle of the bar. The other
-    // centre modules stack outward from it -- those before it in the order to
-    // its left, those after to its right -- so a media title appearing never
-    // nudges the clock. "" (or a module that isn't in the centre, or is
-    // hidden) centres the whole group instead.
+    // the centre module pinned to the bar's middle; the others stack outward
+    // from it. "" centres the whole group.
     readonly property alias centreAnchor: adapter.centreAnchor
     function setCentreAnchor(key) { adapter.centreAnchor = key }
 
@@ -613,10 +565,8 @@ Singleton {
         adapter.centreAnchor = "clock"
     }
 
-    // Reads both properties on every evaluation, with no early return. A
-    // binding only re-runs when something it *read last time* changes: an
-    // early `return false` on a hidden widget skipped reading the order, so
-    // resetting the order afterwards never re-ran this and it stuck at false.
+    // reads both properties every time, with no early return, so the binding
+    // re-runs when either changes
     readonly property bool widgetsDefault: {
         var noneHidden = (adapter.barHidden || []).length === 0
             && adapter.centreAnchor === "clock"
@@ -626,9 +576,7 @@ Singleton {
         return noneHidden && ordersMatch
     }
 
-    // The bounds the Appearance page clamps to. Kept here next to the
-    // values rather than in the menu, so a hand-edited JSON file that is
-    // out of range is corrected by the same numbers the UI enforces.
+    // the bounds set() clamps to, hand edits included
     readonly property var limits: ({
         radius:    { min: 0,  max: 14 },
         spacing:   { min: 50, max: 160 },
@@ -680,9 +628,7 @@ Singleton {
         return d
     }
 
-    // Each style keeps its own saved default (userDefaults, by style name).
-    // A style's stock default is stock with the style itself picked: its
-    // Finish switches and window opacity over the fallback look's values.
+    // each style's stock default: the fallback look with the style picked
     function styleStock(st) {
         var d = {}
         for (var k in stockDefaults) d[k] = stockDefaults[k]
@@ -699,11 +645,8 @@ Singleton {
     // the current style's saved default, {} when it has none
     readonly property var styleDefault: (adapter.userDefaults || {})[adapter.style] || {}
 
-    // What Reset returns to: the current style's stock, overlaid with
-    // whatever was last saved for it with "Save as default". Only keys stock
-    // knows are taken from the saved set, so a hand-edited or outdated file
-    // can't smuggle in anything else, and a key added to stock later still
-    // has a value.
+    // What Reset returns to: the style's stock overlaid with its saved
+    // default (stock's keys only).
     readonly property var defaults: {
         var d = styleStock(adapter.style), u = styleDefault
         for (var k in d)
@@ -713,9 +656,7 @@ Singleton {
 
     readonly property bool hasUserDefault: Object.keys(styleDefault).length > 0
 
-    // The current appearance becomes the current style's default; the other
-    // styles' stay as they were. A fresh object, so the adapter notices and
-    // writes it.
+    // the current appearance becomes the current style's default
     function saveAsDefault() {
         var snap = {}
         for (var k in stockDefaults) if (k !== "style") snap[k] = adapter[k]
@@ -733,9 +674,8 @@ Singleton {
         reset()
     }
 
-    // Everything the look carries, written at once. See-through is only
-    // taken in grayscale mode: in wallpaper mode it keeps the lower wallpaper
-    // default (see seeThroughDefaults), which a look's value would undo.
+    // Everything the look carries. See-through only in grayscale mode
+    // (wallpaper mode keeps seeThroughDefaults).
     function applyLook(name) {
         var l = Looks.looks[name]
         if (!l) return
@@ -747,9 +687,8 @@ Singleton {
         }
     }
 
-    // A look's own module layout (Looks.js `layout`) replaces Bar Widgets'.
-    // The user's arrangement is set aside on the way in and put back on the
-    // way out to a look without one.
+    // a look's own module layout replaces Bar Widgets', which is set aside
+    // and put back on leaving
     function applyLayout(from, to) {
         var a = Looks.looks[from], b = Looks.looks[to]
         var lay = b && b.layout
@@ -773,9 +712,8 @@ Singleton {
         adapter.centreAnchor = lay.anchor !== undefined ? lay.anchor : "clock"
     }
 
-    // What changes are counted from: the current style's saved default when
-    // it was saved with the look in use, so saving clears the list; the look
-    // as designed otherwise.
+    // changes are counted from the style's saved default when it was saved
+    // with this look, else from the look as designed
     readonly property bool baselineIsDefault: styleDefault.look === adapter.look
     readonly property var lookBaseline: {
         var l = Looks.looks[adapter.look]
@@ -868,13 +806,8 @@ Singleton {
             ? lookBaseline.edgeGap : Looks.edgeGaps[v]
     }
 
-    // See-through defaults lower on the wallpaper palette, so the wallpaper
-    // shows through a bar tinted to match it. Switching palette always moves
-    // to the new palette's value: a see-through bar kept after switching to
-    // grayscale still shows the wallpaper's colours through it, which reads
-    // as the switch not having happened. Here rather than in an on-changed
-    // handler, which would also fire on a reload of the file. Grayscale's
-    // default is the look's own.
+    // See-through's default per palette: lower on the wallpaper palette, so
+    // it shows through. Switching palette moves to the new one's value.
     readonly property var seeThroughDefaults: ({
         grayscale: (Looks.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.seeThrough,
         wallpaper: 85,
@@ -902,25 +835,13 @@ Singleton {
     readonly property bool isDefault:
         Object.keys(defaults).filter(key => adapter[key] !== defaults[key]).length === 0
 
-    // No mkdir for the state directory: FileView's writes (writeAdapter and
-    // setText, atomic or not) create any missing parent directories
-    // themselves -- checked against Quickshell on 2026-09-18.
 
-    // Writes are held until the first read has landed. Without this the
-    // adapter's declared defaults count as an update the moment it is
-    // constructed, so the very first thing the shell does on startup is
-    // save 32/top/2/6 over whatever the user had -- the settings appear to
-    // work until you restart, then silently reset. blockLoading makes that
-    // first read synchronous, so by the time this component is complete the
-    // adapter already holds the file's values and writing is safe.
+    // Writes wait for the first read: the adapter's declared defaults would
+    // otherwise be saved over the file at startup.
     property bool ready: false
 
-    // Writes are coalesced: a burst of changes (a reset assigns several
-    // properties back to back) becomes one write a moment after the last.
-    // Writing per change raced with watchChanges -- the first write's
-    // change notification made the file reload *between* the writes, which
-    // read the half-finished state back over the newer in-memory values. The
-    // file ended up right while the running shell kept the stale one.
+    // writes are coalesced: a burst (reset) becomes one write, which also
+    // keeps watchChanges from reloading a half-written state
     Timer {
         id: saveTimer
         interval: 150
@@ -930,26 +851,16 @@ Singleton {
     FileView {
         id: view
         path: root.stateDir + "/appearance.json"
-        // preload, or nothing ever reads the file: a FileView is lazy and
-        // only loads when someone asks for text()/data(), which nothing
-        // here does -- the adapter is the only consumer. Without it the
-        // saved values sit on disk and the shell silently runs on the
-        // adapter's declared defaults.
+        // preload: a FileView only loads when text() is read, which nothing does
         preload: true
-        // ...and blocking, so the values are in the adapter before Theme
-        // binds to them, rather than the bar rendering at the defaults and
-        // jumping a frame later.
+        // blocking, so Theme binds to the saved values from the first frame
         blockLoading: true
         watchChanges: true
         // Expected on a fresh install: there is no file until the first
         // edit, and the defaults on the adapter are the right answer.
         printErrors: false
 
-        // The gate opens once the first read has resolved one way or the
-        // other -- loaded with the file's values, or failed because there
-        // is no file yet and the declared defaults are already correct.
-        // (Neither this object nor the singleton root has a Component
-        // attached object to hook instead.)
+        // open the gate once the first read resolves, loaded or no file yet
         onLoaded: root.ready = true
         onLoadFailed: root.ready = true
 
