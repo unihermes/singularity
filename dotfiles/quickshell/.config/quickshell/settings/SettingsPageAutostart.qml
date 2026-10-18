@@ -1,37 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAutostart.qml
 //
-// Which OS the PC starts, on a machine with more than one, then what runs
-// when you log in: the entries in ~/.config/autostart, the ones packages
-// left in /etc/xdg/autostart, and a way to add an installed application to
-// either.
-//
-// The OS is systemd-boot's default entry. Its menu is hidden, so the
-// default is what boots. Both reading the entries and setting the default
-// need root, so they go through install.sh's singularity-boot helper and
-// pkexec (no password for the active session). The choice only shows
-// when the helper is there and systemd-boot lists a second OS. Beside it,
-// a restart into another OS or the BIOS just this once, which logind does
-// without the helper.
-//
-// Signing in at boot is ly's autologin: off, the greeter asks for the
-// password; on, ly starts Hyprland as you once when it starts, so a logout
-// still lands at the greeter. The state is read straight from ly's
-// config.ini (world-readable); changing it goes through install.sh's
-// singularity-autologin helper and pkexec, which asks for the password --
-// it is the one thing standing between the power button and the desktop.
-//
-// Hyprland runs no XDG autostart of its own -- the entries only mean anything
-// because ~/.config/singularity/autostart.sh runs them from autostart.lua, and
-// that script's header is where the rules live. The one worth repeating here,
-// since it is a surprise otherwise, is that a package's own entry is off
-// until it is turned on: the spec says those run by default, but none of them
-// has ever run on this machine, and quietly starting four programs the first
-// time someone opened this page is not a reasonable way to find that out.
-//
-// Services are not this page. A program that should come back after a crash,
-// or start before the session, is a systemd user unit -- what's in
-// dotfiles/systemd -- and the failed ones show up in System > Health.
+// Which OS boots (systemd-boot's default, via install.sh's singularity-boot
+// helper and pkexec; shown only with a second OS), a one-off restart into
+// another OS or the BIOS, ly's autologin (singularity-autologin, asks for
+// the password), and what runs at login: ~/.config/autostart and the opt-in
+// /etc/xdg/autostart entries (autostart.sh has the rules). Services are
+// systemd user units, not this page.
 
 import Quickshell
 import Quickshell.Io
@@ -199,10 +174,8 @@ SettingsPage {
         hint: entry.scope === "system" && page.unitFor(entry) !== "" ? "Already run by " + page.unitFor(entry)
             : (entry.runnable ? "" : "Unavailable here · ") + (entry.comment !== "" ? entry.comment : entry.exec)
 
-        // No verticalCenter on anything in here: the field's control slot
-        // takes its height from childrenRect, so a child that centres itself
-        // in the slot is a binding loop. Centring inside the Row is fine: its
-        // height is its tallest child's, whatever their positions.
+        // no verticalCenter here: the control slot takes its height from
+        // childrenRect (a binding loop); centring inside the Row is fine
         Row {
             anchors.right: parent.right
             spacing: Theme.spaceM
@@ -408,9 +381,7 @@ SettingsPage {
 
     // --- from packages ---------------------------------------------------------
 
-    // Only what could run here: an entry for another desktop (GNOME's
-    // keyring and accessibility bus) never runs in this session, so it isn't
-    // offered at all.
+    // only entries that can run in this session
     readonly property var packageEntries: Autostart.systemEntries.filter(e => e.runnable)
 
     Item { width: 1; height: Theme.spaceM }

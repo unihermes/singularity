@@ -1,29 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPage.qml
 //
-// The frame every Settings page shares: a heading with its rule running
-// out beside it, one line saying what the page changes and where it lands,
-// and a scrolling column for the page's own rows. What a change did comes
-// back as a toast over the bottom of the page: a success fades on its own,
-// an error stays until clicked or replaced.
-//
-// Pages are created by the window's Loader when shown and destroyed when
-// left, so a page reads its backing store fresh in Component.onCompleted and
-// never has to reconcile with state from an earlier visit.
-//
-// `highlight` is set by the window when a search result lands here: the page
-// scrolls the field with that label into view and rings it for a moment.
-//
-// A long page can be split into `tabs`: a row of them under the
-// description, and the page's content in Columns marked isSettingsTab, each
-// showing while `tab` is its own. The window remembers each page's tab
-// while it's open, and a search result in a hidden tab switches to it.
-//
-// `sectioned` is the redesigned layout, page by page (DESIGN.md): with
-// channel frames each group of rows sits in a channel of its own, the tabs
-// are one segmented strip in place of the heading, and hints keep to one
-// line. `pinned` shows above the scrolling rows while `pinnedVisible`, and
-// `banner` above the tabs.
+// The frame every Settings page shares: heading, a one-line description,
+// a scrolling column, and toasts (success fades, errors stay). Pages are
+// built fresh each visit. `highlight` scrolls to and rings a searched field;
+// `tabs` splits the page into isSettingsTab Columns (remembered while the
+// window is open); `sectioned` frames each group of rows (DESIGN.md);
+// `pinned` sits above the rows while `pinnedVisible`, `banner` above the tabs.
 
 import QtQuick
 import "../services"
@@ -95,9 +78,7 @@ Item {
         toast.show()
     }
 
-    // The field isn't there yet on the frame the page loads -- Repeaters and
-    // the pages' own parsing fill the column later -- so the scroll is tried
-    // again a few times before giving up.
+    // retried a few times: the field may not be laid out yet
     onHighlightChanged: if (highlight !== "") {
         findTries = 0
         find.restart()
@@ -116,12 +97,8 @@ Item {
         }
     }
 
-    // Keeps `item` at the same place on screen through a change that
-    // re-lays out the page above it: Font Size and Density rescale every
-    // row, so the control you just clicked moved out from under the pointer
-    // and the next click missed it. Called before the change; the page
-    // then scrolls by however far the item moved. Text re-measures over a
-    // frame or two, so it's corrected a few times rather than once.
+    // keeps `item` at the same place on screen through a re-layout (Font
+    // Size, Density), corrected over a few frames as text re-measures
     property Item holdItem: null
     property real holdY: 0
     property int holdTries: 0
@@ -158,10 +135,8 @@ Item {
         onTriggered: root.highlight = ""
     }
 
-    // Depth-first, because a field can sit inside a page's own Column (the
-    // per-monitor blocks on Display) rather than directly in the scroller.
-    // A field in a folded section unfolds it, and is scrolled to on the
-    // next try, once it has been laid out again.
+    // depth-first (fields can sit in a page's own Column); a field in a
+    // folded section unfolds it and is scrolled to on the next try
     function scrollTo(item, label) {
         for (var i = 0; i < item.children.length; i++) {
             var c = item.children[i]

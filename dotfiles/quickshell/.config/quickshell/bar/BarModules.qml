@@ -6,11 +6,9 @@
 // own: WorkspacesModule, WindowsModule and TrayModule, each handed this
 // item as `host`.
 //
-// Non-visual on purpose: shell.qml's PanelWindow reparents every module
-// here into its left/centre/right slot the moment this component
-// finishes constructing (see its Component.onCompleted), so where these
-// are declared doesn't matter -- only that they exist and keep the ids
-// widgetItems below points at.
+//
+// Bar.qml reparents every module into its section's slot on completion, so
+// declaration order doesn't matter, only the ids widgetItems names.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -27,9 +25,7 @@ Item {
     required property var screenScope
     // for specialShown, which follows Hyprland's events once for all bars
     required property var shellRoot
-    // the tray icon's right-click opens this flyout, which lives outside
-    // the bar entirely (it's a sibling flyout in the screen's Scope). It's
-    // the flyout's LazyFlyout loader: ensure() builds it if needed.
+    // the tray menu's LazyFlyout (ensure() builds it); same for windowMenu
     required property var trayMenu
     // same, for the open-windows strip's right-click menu
     required property var windowMenu
@@ -74,9 +70,7 @@ Item {
         screenScope: barModules.screenScope
     }
 
-    // Temperatures and fans, desktops only (services/Cooling.qml). A plain
-    // icon like Bluetooth's; it only turns the alert colour when the CPU or
-    // GPU runs hot.
+    // temperatures and fans, desktops only; alert colour when CPU or GPU runs hot
     BarModule {
         id: coolingBtn
         visible: Cooling.available
@@ -99,10 +93,7 @@ Item {
     BarModule {
         id: netBtn
         visible: Settings.widgetVisible("network")
-        // the filled strength glyph, not the outlined md-wifi
-        // arcs: its neighbours (volume, battery, power) are all
-        // solid, and the thin one read as a different weight.
-        // A cable that's up wins: it's the route out when both are.
+        // filled glyphs to match the solid neighbours; a cable that's up wins
         icon: Network.wired ? "󰛳" : Network.ssid !== "" ? "󰤨" : "󰤮"
         active: screenScope.openFlyout === "network"
         dimmed: !Network.wired && Network.ssid === ""
@@ -118,9 +109,7 @@ Item {
         id: volBtn
         visible: Settings.widgetVisible("volume")
         fixedWidth: Theme.moduleWidth
-        // the bar carries the level now, so the icon only has
-        // to say muted or not -- and those two glyphs are the
-        // same width, so the chip no longer resizes as you scroll
+        // the bar shows the level; the icon only says muted or not
         icon: Audio.muted ? "󰖁" : "󰕾"
         fillValue: Audio.muted ? 0 : Audio.percent / 100
         active: screenScope.openFlyout === "volume"
@@ -130,9 +119,7 @@ Item {
         onWheeled: d => Audio.setVolume(Audio.percent + d * 5)
     }
 
-    // The monitor under this bar, over DDC/CI when it answers
-    // (DdcBrightness), else the backlight (Brightness) -- a laptop's panel,
-    // or every screen on a machine with no DDC monitor.
+    // the monitor under this bar over DDC/CI, else the backlight
     BarModule {
         id: brightBtn
         readonly property string output: screenScope.modelData.name
@@ -171,12 +158,8 @@ Item {
     }
 
     // ---- contextual modules ---------------------------------
-    // Everything below except weather and the tray appears only
-    // while it has something to say: media while a player is
-    // open, the visualizer while sound is playing, and the
-    // alert-style ones (privacy, failed units, updates, unread
-    // notifications) only when there's something to act on.
-    // Bar Widgets can still turn any of them off entirely.
+    // all but weather and the tray show only while they have something to
+    // say; Bar Widgets can still turn any off
 
     TrayModule {
         id: trayFrame
@@ -196,13 +179,8 @@ Item {
         onMiddleClicked: if (player && player.canTogglePlaying) player.togglePlaying()
     }
 
-    // audio spectrum, in the meter colour, drawn as Theme.vizStyle: thin
-    // pills growing from the middle (the workspace indicator's shape
-    // language), bars rising from the bottom, stacked dots, or one line.
-    // No easing between cava's frames: a tween as long as a frame never
-    // stops, so the bar redrew at every monitor's refresh rate the whole
-    // time sound played, where now it redraws only on each of cava's 20
-    // frames a second (cava's own noise_reduction already smooths them).
+    // audio spectrum in the meter colour, per Theme.vizStyle; no easing, so
+    // it redraws only on cava's 20 frames a second
     ModuleFrame {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
@@ -347,9 +325,8 @@ Item {
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
     }
 
-    // Claude, editing the desktop itself (services/ClaudeShell.qml). The
-    // label says it's working, then how many files are waiting for review;
-    // the icon takes the accent while there's a reply or a diff not yet seen.
+    // Claude editing the desktop (ClaudeShell): working, then files waiting
+    // for review; accent while a reply or diff is unseen
     BarModule {
         id: claudeBtn
         visible: ClaudeShell.available && Settings.widgetVisible("claude")
@@ -371,13 +348,9 @@ Item {
         }
     }
 
-    // Show desktop, as on Windows: a slim button at the end of its group,
-    // set off by a hairline, whose rounded end is the group's own corner.
-    // Without groups it's a slim chip of the style's own, with a short bar
-    // in it. A click hides every window on every workspace and screen, at
-    // once with no animation (singularityShowDesktop() in windows.lua, also
-    // SUPER+D); it lights with the accent while they're hidden, and a
-    // second click brings them back.
+    // Show desktop: a slim button ending its group (or a slim chip without
+    // groups); hides every window at once (singularityShowDesktop()), lit
+    // while they're hidden
     Item {
         id: desktopBtn
         visible: Settings.widgetVisible("desktop")

@@ -1,25 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/TrayModule.qml
 //
-// system tray: one frame around every app's icon, like the
-// open-windows strip. Left raises the app's window (or activates
-// the app if it has none open), right opens the app's menu in a
-// flyout, middle is the app's secondary action, and a double-click
-// brings the app's window up whatever the app does with clicks
-// (showApp below). Each icon lights on
-// its own, as the strip's do: a hover fill under it, outlined while its
-// menu is open.
-//
-// Dragging an icon sideways moves it; the order is saved by app id
-// (Settings.trayOrder), so it survives restarts and an app that quits
-// gets its old place back when it returns. Apps never placed go after
-// the placed ones, in the order they registered. The neighbours slide
-// aside while the icon is dragged, and the order is written once it's
-// dropped: writing it mid-drag would rebuild the delegates, the dragged
-// one included, and drop the pointer's grab.
-//
-// With the tray drawer on, only the pinned icons show until the chevron
-// opens the drawer.
+// The system tray, one frame around every app's icon. Left raises the app's
+// window (else activate()), right opens its menu in a flyout, middle is its
+// secondary action, double-click forces its window up (showApp). Drag to
+// reorder, saved by app id (Settings.trayOrder) once dropped (mid-drag would
+// rebuild the delegates and drop the grab). With the drawer on, only pinned
+// icons show until the chevron opens it.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -70,9 +57,8 @@ ModuleFrame {
     property int dragTo: -1
     property real dragDx: 0
 
-    // moves the dragged icon among the showing ones, leaves the hidden
-    // ones where they are, and saves the result into the stored order
-    // without disturbing the places of apps that aren't running
+    // moves the dragged icon among the showing ones and saves the order
+    // without moving apps that aren't running
     function drop() {
         var from = dragFrom, to = dragTo
         dragFrom = -1; dragTo = -1; dragDx = 0
@@ -94,16 +80,9 @@ ModuleFrame {
         Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
     }
 
-    // Double-click: bring the app's window up, whatever the app makes of
-    // a click. The double-click's first click has already raised the
-    // window or called activate(), but plenty of apps ignore activate()
-    // (Ayatana ones, like Spotify and Steam, don't have it at all) or
-    // answer it by toggling the window, so once that's had a moment to
-    // show a window the double-click goes further: the menu's own
-    // "Show ..."/"Restore"/"Open" entry, and failing that the app's
-    // desktop entry run again, which a running app takes as "show your
-    // window" (and a closed one as "start"). Then the window is raised
-    // as soon as it's mapped, wherever it opened.
+    // Double-click: after a moment, the menu's Show/Restore/Open entry, else
+    // the desktop entry run again (many apps ignore or toggle on activate()),
+    // then the window is raised once mapped.
     property var showItem: null
     property int showTries: 0
     property int showWaits: 0
@@ -151,9 +130,7 @@ ModuleFrame {
             if (!item) return
             var win = host.bar.trayItemWindow(item)
             var active = Hyprland.activeToplevel
-            // done once the window has focus; a window only just mapped
-            // can let a focus request go by, so it's asked again until
-            // one takes
+            // asked again until a just-mapped window takes focus
             if (win && active && active.address === win.address) {
                 trayFrame.showItem = null
                 return
@@ -309,10 +286,7 @@ ModuleFrame {
                         menu.stack = []
                         host.screenScope.toggleFlyout("traymenu", trayIcon)
                     } else {
-                        // raise the app's own window when it has one
-                        // open (on any workspace); only fall back to the
-                        // app's activate() -- usually "show/hide main
-                        // window" -- when there's nothing to raise
+                        // the app's own window if open, else activate()
                         var win = host.bar.trayItemWindow(item)
                         if (win) trayFrame.raise(win)
                         else item.activate()
