@@ -1,7 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/BarTab.qml
 //
-// The Appearance page's Bar tab.
+// The Appearance page's Bar tab: BAR (where it sits, its shape and size,
+// then the layout of its modules), then MODULES, a subhead per module.
 
 import Quickshell
 import QtQuick
@@ -13,37 +14,6 @@ import ".."
 SettingsTab {
     tabId: "bar"
 
-    FlyoutHeading { text: "LAYOUT" }
-
-    BarZones {}
-
-    // The centre module pinned to the bar's exact middle, the rest of the
-    // centre stacking outward from it; none centres the whole group
-    SettingsField {
-        label: "Centre anchor"
-        hint: "The module that stays dead centre"
-        SettingsDropdown {
-            anchors.right: parent.right
-            model: [""].concat(Settings.widgetOrder("centre").filter(k => Settings.widgetVisible(k)))
-            current: Settings.centreAnchor
-            labelFor: v => v === "" ? "None" : (Settings.widgetMeta[v] || { label: v }).label
-            onPicked: v => Settings.setCentreAnchor(v)
-        }
-    }
-
-    SettingsField {
-        label: "Bar widgets"
-        hint: Settings.widgetsDefault ? "As it comes" : "Put every module back where it started"
-        FlyoutChip {
-            anchors.right: parent.right
-            text: "Reset layout"
-            confirmText: "Reset?"
-            enabled: !Settings.widgetsDefault
-            onClicked: Settings.resetWidgets()
-        }
-    }
-
-    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "BAR" }
 
     SettingsField {
@@ -79,8 +49,40 @@ SettingsTab {
         Choice { key: "barSeparator" }
     }
 
+    SettingsSubhead { caption: "LAYOUT" }
+
+    BarZones {}
+
+    // The centre module pinned to the bar's exact middle, the rest of the
+    // centre stacking outward from it; none centres the whole group
+    SettingsField {
+        label: "Centre anchor"
+        hint: "The module that stays dead centre"
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: [""].concat(Settings.widgetOrder("centre").filter(k => Settings.widgetVisible(k)))
+            current: Settings.centreAnchor
+            labelFor: v => v === "" ? "None" : (Settings.widgetMeta[v] || { label: v }).label
+            onPicked: v => Settings.setCentreAnchor(v)
+        }
+    }
+
+    SettingsField {
+        label: "Bar widgets"
+        hint: Settings.widgetsDefault ? "As it comes" : "Put every module back where it started"
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Reset layout"
+            confirmText: "Reset?"
+            enabled: !Settings.widgetsDefault
+            onClicked: Settings.resetWidgets()
+        }
+    }
+
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "WORKSPACES" }
+    FlyoutHeading { text: "MODULES" }
+
+    SettingsSubhead { caption: "WORKSPACES" }
 
     Tiles { key: "workspaceStyle"; label: "Workspaces"; hint: "How the workspace indicator marks each one"; art: wsArt }
 
@@ -107,8 +109,7 @@ SettingsTab {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "OPEN WINDOWS" }
+    SettingsSubhead { caption: "OPEN WINDOWS" }
 
     Tiles { key: "windowStyle"; label: "Open windows"; hint: "How open windows are drawn"; art: winArt; columns: 5 }
 
@@ -135,8 +136,7 @@ SettingsTab {
         Choices { key: "iconTint" }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "CLOCK" }
+    SettingsSubhead { caption: "CLOCK" }
 
     Tiles { key: "clockStyle"; label: "Clock"; hint: "What the clock chip shows"; art: clockArt }
 
@@ -177,13 +177,11 @@ SettingsTab {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "CONTROL CENTRE" }
+    SettingsSubhead { caption: "CONTROL CENTRE" }
 
     Tiles { key: "controlIcon"; label: "Control Centre icon"; hint: "The button at the bar's start"; art: iconArt; columns: 6; tileHeight: Theme.fs(58) }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "VISUALIZER AND TRAY" }
+    SettingsSubhead { caption: "VISUALIZER AND TRAY" }
 
     Tiles { key: "vizStyle"; label: "Visualizer"; hint: "The audio spectrum while sound plays"; art: vizArt }
 
