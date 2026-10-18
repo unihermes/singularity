@@ -199,8 +199,7 @@ var entries = [
     { page: "notifications", section: "How long popups stay", label: "Critical", keywords: "timeout duration urgent" },
 
     // --- Audio -------------------------------------------------------------
-    { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute speakers" },
-    { page: "audio", section: "Output", label: "Mute",      keywords: "silence speakers microphone mic off" },
+    { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute silence speakers microphone mic off" },
     { page: "audio", section: "Output", label: "Output",    keywords: "default sink speakers headphones hdmi displayport device" },
     { page: "audio", section: "Input",  label: "Input",     keywords: "default source microphone mic device" },
     // the mixer's rows have no fixed label; these name their heading

@@ -3,7 +3,8 @@
 //
 // A bare glyph button, framed only on hover, for small actions in rows and
 // headers. `confirm` makes it two clicks (armed for 3s; or the caller sets
-// `armed`); `lit` shows it in the accent; `spinning` turns it.
+// `armed`); `lit` shows it in the accent, `warn` in the alert colour (a
+// mute that's on); `spinning` turns it.
 
 import QtQuick
 import "../services"
@@ -16,6 +17,7 @@ Rectangle {
     property bool confirm: false
     property bool armed: confirm && disarm.running
     property bool lit: false
+    property bool warn: false
     property bool spinning: false
 
     signal clicked()
@@ -42,7 +44,7 @@ Rectangle {
         id: glyph
         anchors.centerIn: parent
         text: root.armed ? "󰄬" : root.icon
-        color: root.armed ? Theme.base : root.lit ? Theme.accent
+        color: root.armed ? Theme.base : root.warn ? Theme.alert : root.lit ? Theme.accent
             : mouse.containsMouse ? Theme.textStrong : Theme.subtext
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontIconSize
