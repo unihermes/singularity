@@ -281,7 +281,7 @@ FlyoutPanel {
     Column {
         visible: controlCentre.page === "widgets"
         width: parent.width
-        spacing: Theme.spaceM
+        spacing: Theme.flyoutSpacing
 
         // Flat's Taskbar layout keeps an arrangement of its own
         FlyoutRow {
@@ -312,7 +312,7 @@ FlyoutPanel {
     Column {
         visible: controlCentre.page === "quick"
         width: parent.width
-        spacing: Theme.spaceM
+        spacing: Theme.flyoutSpacing
 
         FlyoutAction {
             icon: controlCentre.airplane ? "󰀝" : "󰀞"
@@ -417,7 +417,7 @@ FlyoutPanel {
         id: appearancePage
         visible: controlCentre.page === "appearance"
         width: parent.width
-        spacing: Theme.spaceM
+        spacing: Theme.flyoutSpacing
         // its headings and rows get sections as if they sat in the panel
         readonly property bool isSectionGroup: true
         readonly property bool sectioned: true

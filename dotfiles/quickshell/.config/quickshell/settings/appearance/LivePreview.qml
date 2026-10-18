@@ -140,8 +140,8 @@ ClippingRectangle {
         PanelFrame {
             id: flyout
             visible: lp.kind === "flyout"
-            readonly property int padX: Theme.channelWidth * 2 + 3 + Theme.spaceL
-            readonly property int padY: Theme.channelWidth * 2 + 3 + Theme.spaceS
+            readonly property int padX: Theme.channelWidth * 2 + 2 + Theme.spaceM
+            readonly property int padY: Theme.channelWidth * 2 + 2 + Theme.spaceXs
             anchors.right: parent.right
             y: lp.atBottom ? 0 : Theme.barHeight + Theme.spaceS
             width: Theme.fit(260 * Settings.flyoutWidth / 100) + padX * 2
@@ -149,20 +149,22 @@ ClippingRectangle {
             ground: Theme.surface
 
             SectionRuns {
-                x: Theme.channelWidth + 3
+                x: Theme.channelWidth + 2
                 width: flyout.width - x * 2
                 height: flyout.height
                 column: flyCol
                 columnY: flyCol.y
+                padY: Theme.spaceXs
             }
 
             Column {
                 id: flyCol
+                readonly property bool isFlyoutPage: true
                 readonly property bool sectioned: true
                 x: flyout.padX
                 y: flyout.padY
                 width: flyout.width - flyout.padX * 2
-                spacing: Theme.spaceM
+                spacing: Theme.flyoutSpacing
 
                 FlyoutHeading { text: "VOLUME  45%" }
                 Slider { width: parent.width; value: 45 }

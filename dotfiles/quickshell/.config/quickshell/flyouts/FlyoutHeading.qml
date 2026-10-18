@@ -63,7 +63,13 @@ Item {
 
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
-    readonly property int sectionRoom: parent && parent.sectioned === true ? Theme.spaceM : 0
+    readonly property int sectionRoom: !parent || parent.sectioned !== true ? 0
+        : inFlyout ? Theme.flyoutSpacing : Theme.spaceM
+    readonly property bool inFlyout: {
+        for (var p = parent; p; p = p.parent)
+            if (p.isFlyoutPage === true) return true
+        return false
+    }
     property bool firstInColumn: !!parent && parent.children[0] === root && (parent.isSectionGroup !== true || parent.opensPage === true)
     readonly property real lift: firstInColumn ? -sectionRoom / 2 : 0
 

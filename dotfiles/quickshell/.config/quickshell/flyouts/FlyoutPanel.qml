@@ -115,10 +115,14 @@ OverlayWindow {
     // Sectioned: each run of rows between headings and dividers sits in a
     // frame of its own, drawn in the style's frame (SectionRuns), and the
     // content is padded to clear both frames.
-    readonly property int sectionGap: 3
-    readonly property int sectionPadY: Theme.spaceS
-    readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceL
+    readonly property int sectionGap: 2
+    readonly property int sectionPadY: Theme.spaceXs
+    readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceM
     readonly property int padY: Theme.channelWidth * 2 + sectionGap + sectionPadY
+    // Grown, the edge against the bar has no outline of its own (the group's
+    // runs straight on into the box's), so it leaves out a channel's room.
+    readonly property int padNear: grown ? padY - Theme.channelWidth : padY
+    readonly property int padTop: atBottom ? padY : padNear
 
     visible: open || reveal > 0
     // One mode for as long as the surface is up, fading out included: a
@@ -219,7 +223,7 @@ OverlayWindow {
             width: root.grown && root.section !== "centre"
                     && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
                 ? root.group.x1 - root.group.x0 : ownWidth
-            height: contentColumn.implicitHeight + root.padY * 2
+            height: contentColumn.implicitHeight + root.padY + root.padNear
 
             readonly property bool atBottom: Theme.barPosition === "bottom"
             opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
@@ -250,9 +254,9 @@ OverlayWindow {
             Column {
                 id: contentColumn
                 x: root.padX
-                y: root.padY
+                y: root.padTop
                 width: parent.width - root.padX * 2
-                spacing: Theme.spaceM
+                spacing: Theme.flyoutSpacing
                 // FlyoutHeading and FlyoutDivider make room for the sections
                 readonly property bool sectioned: true
 

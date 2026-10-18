@@ -496,6 +496,8 @@ Singleton {
     // gap below it again.
     readonly property real flyoutOffset: barHeight + barMargin - borderWidth
         + (flyoutAttach === "floating" ? spaceM + borderWidth : 0)
+    // between a flyout's rows, and round its headings
+    readonly property int flyoutSpacing: spaceS
 
     readonly property real barOpacity: panelOpacity
     // Derived from the bar rather than fixed, so a taller bar gets taller
