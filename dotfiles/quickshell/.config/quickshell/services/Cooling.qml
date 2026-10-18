@@ -5,7 +5,7 @@
 // hottest drive, every fan with a tacho. Desktops only (install.sh's record,
 // else no battery). hwmon nodes probed once, then re-read by FileView;
 // NVIDIA via one looping nvidia-smi. Fan names from fan-names.json in the
-// state directory ({"fan1": "CPU"}); headers that never turned are hidden.
+// state directory (fan1 to CPU, say); headers that never turned are hidden.
 
 pragma Singleton
 
