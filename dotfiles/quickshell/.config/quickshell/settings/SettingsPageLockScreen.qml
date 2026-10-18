@@ -1,21 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageLockScreen.qml
 //
-// The lock screen, and what the lid does. Three files, all this machine's
-// own, none of them in the repo:
-//
-//   hyprlock.conf   the background block (path, blur_passes, brightness) and
-//                   the clock label's text. Colours and font come from the
-//                   look through AppearanceSync, not from here.
-//   hypridle.conf   the grace period, as --grace on the idle lock's command.
-//                   Only that listener gets it: a lock before sleep or by
-//                   hand always asks for the password.
-//   lid.conf        close_action, close_delay, lock_on_close and hibernate,
-//                   in the state directory; lid.sh reads them over its own
-//                   defaults.
-//
-// hyprlock reads its config at each lock and lid.sh at each lid event, so
-// only hypridle needs a restart.
+// The lock screen and the lid, in three of this machine's files:
+//   hyprlock.conf   background (path, blur, brightness) and the clock text;
+//                   colours and font come from the look
+//   hypridle.conf   the grace period, on the idle lock only
+//   lid.conf        close_action, close_delay, lock_on_close, hibernate
+//                   (lid.sh reads it)
+// Only hypridle needs a restart.
 
 import Quickshell
 import Quickshell.Io

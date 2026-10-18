@@ -1,9 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/Switch.qml
 //
-// The one on/off control: Quick Actions' toggles and every boolean on the
-// Settings pages. A choice between two values that reads as a state (on,
-// off) is this; a choice between named options is a FlyoutSegmented.
+// The one on/off control (named choices are FlyoutSegmented).
 //
 // Each style draws its own (Theme.style):
 //   channel    no knob: a dark well, filled with the accent inside its

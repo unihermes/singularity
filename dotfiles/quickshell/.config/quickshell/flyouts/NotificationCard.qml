@@ -1,22 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NotificationCard.qml
 //
-// One history entry (services/Notifications.qml): app icon and name, how long
-// ago, summary, body, an attached image, and the sender's actions as chips
-// while it still holds the notification. Clicking the card runs the
-// "default" action, if there is one. Shared by the popups, where the close
-// glyph and any action only take the popup down, and the history flyout
-// (`inHistory`), where the close glyph clears the entry for good and new
-// entries are marked.
-//
-// A popup is drawn as Theme.notifStyle says (the history always shows
-// everything), with an urgency stripe down its edge (accent for normal,
-// grey for low, the alert hue for critical) that shortens with `life`, and
-// stands for `count` popups when the popups are grouped by app.
-//
-// `standalone` is for an entry that isn't in the history (the reload
-// toast): closing it only emits dismissed(), and a critical one always
-// shows in full.
+// One notification: icon, app, age, summary, body, image, and actions while
+// the sender holds it; a click runs "default". In a popup, close and actions
+// only dismiss the popup; in the history (`inHistory`) close clears the
+// entry and new ones are marked. Popups follow Theme.notifStyle, with an
+// urgency stripe shortening with `life`, and stand for `count` when grouped.
+// `standalone` (the reload toast): close only emits dismissed(), critical
+// always in full.
 
 import Quickshell
 import Quickshell.Services.Notifications

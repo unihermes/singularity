@@ -1,12 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Audio.qml
 //
-// The default output sink's volume and mute, bound live so anything
-// watching `percent` / `muted` (the OSD, the bar chip) catches a change
-// from anywhere -- hardware keys, a slider, scroll-on-chip -- without each
-// call site having to announce it. Below that, the device and stream lists
-// and their names, which the volume flyout and the Audio page share; those
-// track the nodes themselves (PwObjectTracker) while they're open.
+// The default sink's volume and mute, bound live so the OSD and bar catch
+// any change; plus the device and stream lists and names the volume flyout
+// and Audio page share (tracked while those are open).
 
 pragma Singleton
 
@@ -38,10 +35,7 @@ Singleton {
     readonly property var sinks: devices.filter(n => n.isSink)
     readonly property var sources: devices.filter(n => !n.isSink)
     readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
-    // Streams split by Pipewire's own media.class rather than by isSink:
-    // for a stream that flag reads as the direction of the node it feeds,
-    // which is the opposite of how it reads on a device and easy to get
-    // backwards. media.class says exactly which it is.
+    // split by media.class (isSink reads backwards on streams)
     readonly property var playing: streams.filter(n => mediaClass(n) === "Stream/Output/Audio")
     readonly property var recording: streams.filter(n => mediaClass(n) === "Stream/Input/Audio")
 
@@ -74,10 +68,8 @@ Singleton {
         return n ? (n.description || n.nickname || n.name) : ""
     }
 
-    // A device's name without the words it shares with the card's other
-    // devices: "Speaker", not "Alder Lake Smart Sound Technology Audio
-    // Controller Speaker". A card with one device, a USB headset say, keeps
-    // its whole name, which is the only thing telling it apart.
+    // a device's name minus the words it shares with its card's others
+    // ("Speaker"); a single-device card keeps its whole name
     function shortName(n) {
         var name = nodeName(n)
         var card = n ? (n.properties || {})["device.id"] : undefined

@@ -1,15 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/ClaudeShell.qml
 //
-// Claude Code, driven from the bar (bar module "claude", ClaudeFlyout.qml).
-// Ask for a change to the desktop and Claude makes it in a staging copy of
-// this repo; the flyout shows the diff, and nothing is live until it's
-// applied. The staging, diffing and applying are scripts/claude-shell.sh --
-// see its header for why Claude never touches the live files directly.
-//
-// One conversation at a time. Follow-ups resume the same Claude session and
-// keep building on the same staging copy, so the diff is always everything
-// asked for since the last apply or discard.
+// Claude Code from the bar: changes are made in a staging copy of this repo
+// (scripts/claude-shell.sh) and only go live when the diff is applied. One
+// conversation at a time; follow-ups resume it and build on the same copy.
 
 pragma Singleton
 
@@ -61,11 +55,8 @@ Singleton {
         runProc.signal(15)
     }
 
-    // Detached: applying rewrites files Quickshell is watching, and the
-    // reload that follows would take a child process down with it. The
-    // script reports the outcome itself, with a notification. If the shell
-    // didn't reload (only Hyprland files changed), re-reading the diff shows
-    // whether it went through -- a failed apply leaves the staging copy be.
+    // detached, since the reload after applying would kill a child; the
+    // script notifies, and re-reading the diff shows if it went through
     function apply() {
         if (running || !hasChanges) return
         Quickshell.execDetached({ command: [script, "apply"], environment: env })
