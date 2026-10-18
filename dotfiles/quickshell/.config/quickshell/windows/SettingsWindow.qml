@@ -298,10 +298,11 @@ FloatingWindow {
                     }
                 }
 
+                // packed so all the pages fit without scrolling
                 Column {
                     id: navCol
                     width: nav.width
-                    spacing: Theme.spaceL
+                    spacing: Theme.spaceS
 
                     Repeater {
                         id: navGroupRep
@@ -312,7 +313,7 @@ FloatingWindow {
                             required property var modelData
                             property Item rowRepeater: navRows
                             width: navCol.width
-                            spacing: Theme.spaceXs
+                            spacing: 0
 
                             FlyoutHeading { width: parent.width; text: navGroup.modelData.heading.toUpperCase() }
 
