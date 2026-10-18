@@ -297,7 +297,9 @@ Settings') are laid out the same way.
   a line; Colour with Accent and Status, Good and Alert as two swatches on
   one row, a click opening that one's hex; Text with Headings, the mark and
   its colour on one row, Case, rule and size two to a line), Bar
-  (layout zones, the bar's size, a section per module with drawn tiles),
+  (two sections, picked 2026-10-18: BAR with its position, shape and size,
+  then the layout zones, Centre anchor and Reset layout under a LAYOUT
+  subhead; MODULES with a subhead per module, its drawn tiles open),
   Panels (flyouts, launcher, notifications, overlays), Desktop (wallpaper,
   windows in Gaps · Borders · Corners · Opacity · Dim and blur · Shadow and
   tabs, motion) and Apps. While anything differs from the baseline, the changes
