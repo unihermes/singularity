@@ -1,8 +1,7 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/hyprland.lua
 --
--- Lua config; Hyprland loads this in preference to the deprecated
--- hyprland.conf. It only runs the modules beside it, in order:
+-- The Lua config. It only runs the modules beside it, in order:
 --
 --   shared     the Settings state files and constants the others share
 --   displays   monitor rules, docked mode, workspaces across displays
@@ -12,10 +11,10 @@
 --   input      keyboard, mouse, touchpad, gestures
 --   overrides  this machine's hyprland.json, then Game Mode
 --   binds      every keybind; the Keybinds window rewrites this one
---   windows    window rules, monocle, scratchpad, tabs, the window keys
+--   windows    monocle, popouts, scratchpad, tabs (with window-rules and
+--              window-keys)
 --
--- Each is a plain require(): ~/.config/hypr is first on package.path, and
--- every reload starts a fresh Lua state, so each module runs once per load.
+-- Every reload starts a fresh Lua state, so each module runs once per load.
 
 require("shared")
 require("displays")
@@ -25,19 +24,10 @@ require("looks")
 require("input")
 require("overrides")
 
--- A bind that starts an app focuses it instead when one of its windows is
--- open already: the one used last, or with one of them focused, the one used
--- longest ago, so pressing again goes through them all. The classes an app's
--- windows have come from shared.appClasses (binds.lua), keyed by the bind's
--- command; a command that's just a program name and isn't listed there is
--- taken as its own class.
---
--- A command that does run marks a launch first, so the window it opens gets
--- its app's window rule even with another of the app's windows open (see
--- markLaunch in windows.lua).
---
--- Wrapped here rather than per bind so that binds keep the plain
--- hl.dsp.exec_cmd("...") form the Keybinds window reads and writes.
+-- An app bind focuses the app when it's open (cycling through its windows,
+-- least recently used next), classes from shared.appClasses; otherwise it
+-- marks a launch (markLaunch) and runs. Wrapped here so binds keep the plain
+-- hl.dsp.exec_cmd("...") form the Keybinds window edits.
 do
     local shared = require("shared")
 
@@ -92,11 +82,8 @@ end
 require("binds")
 require("windows")
 
--- Escape hatch for anything the GUI doesn't cover: ~/.local/state/singularity/
--- custom.lua is run last, so whatever it sets wins over everything above, and
--- it stays on this machine. A missing file is fine; one that fails to load or
--- errors partway says so in a notification, keeping whatever ran before the
--- error.
+-- ~/.local/state/singularity/custom.lua runs last, so it wins; a failure
+-- shows a notification.
 do
     local path = os.getenv("HOME") .. "/.local/state/singularity/custom.lua"
     local ok, err = pcall(dofile, path)

@@ -1,30 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageWindowRules.qml
 //
-// How each app's windows open, and its popups.
-//
-// Apps: every app with a rule or a size windows.lua remembers, one row each.
-// An app opens As left -- the way it was last left (filled, fullscreen or
-// its size; ~/.local/state/singularity/window-sizes.json), starting at its
-// own size or filled the first time ("own" on its rule) -- or always Float,
-// Fullscreen or On top. Popups and dialogs: the switches windows.lua reads
-// from popups.json, and the rules that match windows by title.
-//
-// Saved to ~/.local/state/singularity/window-rules.json. Until the first
-// change that file doesn't exist and the page shows the defaults the repo
-// ships (volume control, Thunar, file dialogs, picture-in-picture...) from
-// ~/.config/singularity/window-rules.defaults.json; the first change copies
-// them into the state file with it, and from then on they are rules like any
-// other. windows.lua reads the same file, with the same fallback, on every
-// load and turns each entry into hl.window_rule() calls placed after its own
-// rules; every change here writes the file and reloads Hyprland. Rules apply to windows as they
-// open -- ones already open keep what they had until they are reopened.
-// New rules go on top of the file, and where two rules disagree the higher
-// one wins.
-//
-// Rules added here match one class, literally. The shipped popout entries
-// match on title patterns instead ("regex": true), which this page shows and
-// keeps but doesn't edit -- that's the one thing still done in the file.
+// How each app's windows open, and its popups. Apps: every app with a rule
+// or a remembered size (window-sizes.json): As left, Float, Fullscreen or
+// On top. Popups and dialogs: popups.json's switches and title rules.
+// Saved to window-rules.json (until then the shipped defaults show, and the
+// first change copies them in); every change reloads Hyprland and applies
+// to windows as they open. The higher rule wins. Title-regex popout entries
+// are shown but only editable in the file.
 
 import Quickshell
 import Quickshell.Io
@@ -49,8 +32,7 @@ SettingsPage {
     // [{ label, class, title, regex, float, size, workspace (0 = any), fullscreen, pin }]
     property var rules: []
     // [{ class, title }] of the windows open right now
-    // Event-driven: shell.qml refreshes the toplevels on every window
-    // open/close, so this follows windows coming and going without polling.
+    // follows window open/close (shell.qml refreshes the toplevels)
     readonly property var openWindows: Hyprland.toplevels.values.map(tl => ({
         class: (tl.lastIpcObject && tl.lastIpcObject.class) || "",
         title: tl.title || ""
@@ -89,9 +71,8 @@ SettingsPage {
     property int customFor: -1
     property bool adding: false
 
-    // What windows.lua remembers, by class (popups' entries are keyed
-    // "popout:…" and aren't listed). Only windows.lua writes the file;
-    // Forget goes through it, since it holds the sizes in memory.
+    // remembered sizes by class (popouts' "popout:…" keys aren't listed);
+    // only windows.lua writes the file, so Forget goes through it
     readonly property string sizesPath: Settings.stateDir + "/window-sizes.json"
     property var remembered: ({})
     function memOf(cls) {
@@ -147,9 +128,7 @@ SettingsPage {
         })
     }
 
-    // Workspaces pinned to one layout whatever SUPER+M says, as
-    // { "1": "monocle", "3": "dwindle" }. windows.lua reads the file on
-    // load; a workspace not listed follows SUPER+M.
+    // workspaces pinned to a layout, { "1": "monocle", "3": "dwindle" }
     readonly property string layoutsPath: Settings.stateDir + "/workspace-layouts.json"
     property var layouts: ({})
 
@@ -191,9 +170,8 @@ SettingsPage {
         })
     }
 
-    // Test one field the way Hyprland does: the whole string has to match,
-    // "negative:" inverts, and an inline (?i) -- which JS regexes don't
-    // take -- becomes the i flag.
+    // one field as Hyprland matches it: whole string, "negative:" inverts,
+    // inline (?i) becomes the i flag
     function fieldMatches(pattern, regex, value) {
         if (!pattern) return true
         if (!regex) return value === pattern
@@ -291,9 +269,7 @@ SettingsPage {
         return out
     }
 
-    // The file as the page would write it: every rule normalised, so a
-    // file hand-edited into a different but equivalent shape still compares
-    // equal. null for a file that won't parse.
+    // the rules normalised, so equivalent files compare equal; null if unparseable
     function parseRules(text) {
         if (text.trim() === "") return []
         try {
@@ -304,13 +280,8 @@ SettingsPage {
         }
     }
 
-    // Each change is made against the rules the page is showing, so it only
-    // goes to disk if the file still holds exactly those. After a rule added
-    // by hand, or a `git pull`, while the page was open, the next click is
-    // refused rather than overwriting it, and the page reloads to show
-    // what's really there. Changes queue behind each other in
-    // AtomicFileWrite, and each one's `base` is the previous one's result,
-    // so a quick run of clicks still lands in order.
+    // A change goes to disk only if the file still holds the rules shown
+    // (else the page reloads); queued changes chain their `base`.
     function save(next, message) {
         var base = JSON.stringify(rules)
         // in parseRules' shape, key order included, so the next save's
@@ -567,9 +538,8 @@ SettingsPage {
         }
     }
 
-    // One app or title rule: its row, and its settings under it when open.
-    // An app with no rule yet (only a remembered size) gets one the moment
-    // anything but Forget is changed.
+    // one app or title rule; an app with only a remembered size gets a rule
+    // on any change but Forget
     Component {
         id: entryDelegate
 

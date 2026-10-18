@@ -3,8 +3,8 @@
 //
 // The bar's modules and the widgetItems registry Bar Widgets keys off. The
 // big ones have files of their own (WorkspacesModule, WindowsModule,
-// TrayModule), each handed this item as `host`. Bar.qml reparents every module into its section's slot on completion, so
-// declaration order doesn't matter, only the ids widgetItems names.
+// TrayModule), each handed this item as `host`. Bar.qml reparents every
+// module into its section's slot, so only the ids widgetItems names matter.
 
 import Quickshell
 import Quickshell.Hyprland

@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Session.qml
 //
-// Lock, suspend, log out and the rest, for the Control Centre's Power page
-// and the SUPER+SHIFT+E power menu, plus the one-off reboots into another
-// OS or the firmware setup that only the Control Centre and Settings offer.
-// Also `resumed()`, for services that keep
-// time: Qt's timers run on the monotonic clock, which stops while the machine
-// sleeps, so anything due during a suspend or hibernate would otherwise fire
-// late by however long the machine was out.
+// Lock, suspend, log out and the rest, for the Control Centre and power
+// menu, plus one-off reboots into another OS or the firmware. `resumed()`
+// for services that keep time (Qt's timers stop during sleep).
 
 pragma Singleton
 
@@ -18,9 +14,7 @@ import QtQuick
 Singleton {
     id: root
 
-    // Hibernate is only offered once logind says it can: that needs a
-    // swapfile, the resume hook and resume= on the cmdline (install.sh's
-    // hibernation step), none of which link.sh alone sets up.
+    // offered once logind says it can (install.sh's hibernation step)
     property bool canHibernate: false
 
     function refresh() {
@@ -29,9 +23,7 @@ Singleton {
     }
     Component.onCompleted: refresh()
 
-    // A fresh process: the Control Centre's Restart shell, and the only way
-    // Qt rereads fonts (Fonts.qml). Detached, so it outlives this one; the
-    // log goes where autostart.lua sends it.
+    // a fresh detached process (Restart shell, and how Qt rereads fonts)
     function restartShell() {
         Quickshell.execDetached(["sh", "-c",
             "qs kill; sleep 0.5; setsid quickshell > \"$HOME/.cache/quickshell.log\" 2>&1 < /dev/null &"])
@@ -46,12 +38,8 @@ Singleton {
         }
     }
 
-    // [{ act, label, icon }]: reboots that go somewhere else this once --
-    // Windows or macOS beside this one, then the firmware setup -- for
-    // rebootInto(). logind sets systemd-boot's one-shot entry or the
-    // firmware's boot-to-setup flag, which the active session may do with
-    // no password, so it needs no helper of its own. The entries come from
-    // logind too: systemd-boot hands it their ids at boot.
+    // [{ act, label, icon }]: one-off reboots (another OS, firmware setup)
+    // via logind, no helper or password; entries from systemd-boot via logind
     property var rebootTargets: []
 
     Process {
@@ -100,31 +88,17 @@ Singleton {
         // through hypridle's lock_cmd, like SUPER+L
         if (act === "lock") Quickshell.execDetached(["loginctl", "lock-session"])
         else if (act === "suspend") Quickshell.execDetached(["systemctl", "suspend"])
-        // Writing the image takes a minute or so, and the compositor is
-        // frozen for all of it: left lit, the panel holds whatever frame
-        // was up -- usually hyprlock half faded in over the desktop -- and
-        // looks hung. Blank it first, the way a closed lid does. The marker
-        // tells lid.sh sleep that the panel is off on purpose, so the resume
-        // lights it instead of treating it as a stray wake to keep dark.
+        // the panel is blanked first (the compositor freezes while the image
+        // is written); the marker tells lid.sh the resume should light it
         else if (act === "hibernate") Quickshell.execDetached(["sh", "-c", `
             m="$XDG_RUNTIME_DIR/singularity-hibernating"
             dpms() { hyprctl eval "hl.dispatch(hl.dsp.dpms({ action = \\"$1\\" }))" >/dev/null; }
             touch "$m"
             dpms off
             systemctl hibernate || { rm -f "$m"; dpms on; }`])
-        // hl.dsp.exit() only kills the compositor -- start-hyprland (the
-        // hyprland package's own session wrapper, PID 1 of the logind
-        // session scope) treats that as a crash and immediately relaunches
-        // it, so nothing ever visibly closes. Killing the whole logind
-        // session scope instead ends everything in it and drops back to
-        // the ly login screen. Before that, the session's systemd units
-        // (portals, polkit agent, hypridle; see hyprland-session.target)
-        // are stopped while the compositor is still up -- the systemd user
-        // manager outlives the logout, and left running they crash on the
-        // closed socket and respawn until they hit their start limit. The
-        // timeout keeps a unit that won't stop from holding up the logout.
-        // Hyprland unsets the Wayland variables it gave systemd when it
-        // exits, but terminate-session may not let it get that far.
+        // Logout ends the logind session scope (hl.dsp.exit() would just be
+        // relaunched by start-hyprland), after stopping the session's units
+        // while the compositor is still up, with a timeout.
         else if (act === "logout") Quickshell.execDetached(["sh", "-c",
             "timeout 10 systemctl --user stop hyprland-session.target;"
             + " systemctl --user unset-environment WAYLAND_DISPLAY DISPLAY HYPRLAND_INSTANCE_SIGNATURE;"
