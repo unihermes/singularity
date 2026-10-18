@@ -1,23 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/DropdownMenu.qml
 //
-// The open list of a dropdown, shared by LookStepper (in a flyout) and
-// SettingsDropdown (on a Settings page): every choice as a row, the current
-// one ticked, scrolling past `maxRows`.
-//
-// It is drawn in an overlay filling `overlayHost` rather than inside the
-// dropdown, above a catcher that closes it on a click anywhere else.
-// Raising the dropdown's own ancestors instead cannot work: z orders
-// siblings, so lifting an ancestor lifts that whole subtree, and the rest
-// of the page comes with it and swallows the click. The overlay also
-// escapes a page's Flickable, which clips.
-//
-// It closes like a flyout: a press anywhere off the list, with any button,
-// or its window losing focus to a click elsewhere.
-//
-// The dropdown places it (menuX, menuY, in overlayHost's coordinates) once,
-// when it opens. While it's open the catcher swallows the wheel, so the page
-// behind can't scroll out from under a list that doesn't follow it.
+// A dropdown's open list (LookStepper, SettingsDropdown): every choice, the
+// current one ticked, scrolling past `maxRows`. Drawn in an overlay over
+// `overlayHost` (escaping z-order and Flickable clipping), placed once at
+// menuX/menuY. A press elsewhere or focus loss closes it; the catcher
+// swallows the wheel.
 
 import QtQuick
 import "../services"
@@ -180,11 +168,8 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        // picked() first: closing collapses list.model right
-                        // away, tearing down this delegate, after which
-                        // `root` and `item` no longer resolve. A pick that
-                        // rebuilds the page does the same, so the menu is
-                        // held in a local first.
+                        // the menu is held in a local first: closing (or a
+                        // page rebuild) tears down this delegate
                         var menu = root
                         if (!item.isCurrent) menu.picked(item.modelData)
                         menu.dismissed()

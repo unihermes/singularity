@@ -1,29 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAppearance.qml
 //
-// Appearance, in tabs, one per part of the screen:
-//   Theme      the style, its shape and finish, the colours, spacing, the
-//              shell's font and headings -- what restyles everything at once
-//   Bar        its arrangement, shape and size, then each module
-//   Panels     flyouts, the launcher, notifications and the overlays
-//   Desktop    the wallpaper, how Hyprland draws windows, and motion
-//   Apps       the fonts, icons and cursor of other apps
-// Every tab opens on a preview of what it changes, under a strip counting
-// the changes from the baseline (ChangesBar), with Save as default and
-// Reset beside it.
-//
-// The look (Looks.js) is the starting point: everything it carries can be
-// adjusted one by one. A field holding such a setting is marked while it
-// differs from the baseline, and the mark puts it back.
-//
-// Two stores behind it. The shell's own look is Settings.qml, the same
-// values the Control Centre edits, so the two always agree and a change
-// here applies the moment it's made. The Windows tab is the `general` and
-// `decoration` tables in looks.lua; its changes go to the state
-// directory's hyprland.json, as the Input page's do, then a reload.
-//
-// Each tab is its own file in appearance/, as are the pieces they share;
-// this file keeps what they all reach through `page`.
+// Appearance, one tab per part of the screen: Theme, Bar, Panels, Desktop,
+// Apps. Each opens on a preview under ChangesBar (changes from the
+// baseline, Save as default, Reset); a changed field is marked and its mark
+// resets it. Shell settings are Settings.qml (shared with the Control
+// Centre); window settings go to hyprland.json, then a reload. Tabs live in
+// appearance/; this keeps what they reach through `page`.
 
 import Quickshell
 import Quickshell.Io

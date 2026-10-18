@@ -5,18 +5,14 @@
 // Keybinds window. Plain functions over the source text, no QML, so the
 // parsing can be exercised outside the shell.
 //
-// This is not a Lua interpreter. It tokenizes (so strings and comments can't
-// fool it), tracks block nesting, resolves top-level `local x = "literal"`
-// strings, and expands numeric for-loops so loop-generated binds still show
-// up. Only a bind in its simplest shapes is offered for editing:
+// Not a Lua interpreter: it tokenizes, tracks nesting, resolves top-level
+// `local x = "literal"` strings and expands numeric for-loops. Editable are
+// only one-line, top-level binds of these shapes:
 //
 //   hl.bind("KEYS" | ident .. " + KEYS", hl.dsp.exec_cmd("cmd" | ident) [, { opts }])
 //   hl.bind("KEYS" | ident .. " + KEYS", <a Lua action, any expression> [, { opts }])
 //
-// on lines of its own, outside any block. A Lua action is only ever kept as
-// written or replaced whole, never rewritten in part. Everything else is
-// listed read-only with the reason, because rewriting an expression it only
-// half understands is how a config gets broken.
+// A Lua action is kept or replaced whole; anything else is read-only.
 //
 // Categories come from marker comments, `-- --- Window Management ---`; a
 // section banner (`---- WINDOW RULES ----`) ends the current one.
@@ -566,9 +562,7 @@ function callSource(keysSrc, cmdSrc, optsSrc) {
     return "hl.bind(" + [keysSrc, cmdSrc].concat(optsSrc ? [optsSrc] : []).join(", ") + ")"
 }
 
-// A section the config doesn't have yet gets one, rather than the bind
-// landing under whatever section happens to be last: presets come with the
-// section they belong in, and "Groups" or "Session" may be new here.
+// a missing section is created rather than the bind landing in the last one
 function insertCall(model, category, text) {
     var cat = null
     for (var i = 0; i < model.categories.length; i++)
@@ -586,9 +580,8 @@ function insertCall(model, category, text) {
     return src.slice(0, at) + head + indent + text + "\n" + src.slice(at)
 }
 
-// The second argument to hl.bind(): a command wrapped in exec_cmd, or a
-// dispatcher expression written out as given (presets, and the editor's Lua
-// mode). Never guessed at -- whatever it is, luac sees it before the file does.
+// hl.bind's second argument: exec_cmd(command), or a Lua expression as given
+// (luac checks it before the file changes)
 function actionSource(fields) {
     if (fields.kind === "lua") return oneLine(fields.src)
     return "hl.dsp.exec_cmd(" + luaString(fields.command) + ")"
@@ -604,9 +597,8 @@ function optsSource(flags) {
     return parts.length ? "{ " + parts.join(", ") + " }" : ""
 }
 
-// The reverse, for prefilling the editor: { simple, flags }. simple is false
-// for an options table holding anything but `name = true`, which the editor
-// then leaves alone rather than rewriting into something shorter.
+// options for the editor: { simple, flags }; simple false when the table
+// holds anything but `name = true`
 function readOpts(optsSrc) {
     var s = String(optsSrc || "").trim()
     if (s === "") return { simple: true, flags: {} }
@@ -657,10 +649,8 @@ function editBind(model, row, fields) {
     var desc = oneLine(fields.desc)
     var kind = fields.kind === "lua" ? "lua" : "exec"
     var keysChanged = keys !== row.keys
-    // for a command, compare the command rather than the source: unchanged
-    // text keeps `exec_cmd(terminal)` as the ident it was written as
-    // a Lua action spread over lines reads the same on one: only a real
-    // change rewrites it
+    // a command compares by command (an ident stays an ident); a Lua action
+    // compares on one line
     var cmdChanged = kind === "lua" ? oneLine(fields.src) !== oneLine(row.cmdSrc)
         : !row.isExec || fields.command !== row.command
     var newKeys = keysChanged ? keysSource(keys, row.keysIdent || model.prefixIdent, model.locals) : row.keysSrc
