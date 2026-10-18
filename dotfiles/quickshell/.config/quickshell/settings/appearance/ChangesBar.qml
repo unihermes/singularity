@@ -1,11 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/ChangesBar.qml
 //
-// The strip above the Appearance tabs: how many settings differ from the
-// baseline (the style's saved default when it was saved with this look, the look as
-// designed otherwise), with Save as default and Reset beside it. Review
-// opens the list of changes under it, each with a way to its field and a
-// way back, and Factory reset at its end.
+// The bar at the foot of the Appearance page while anything differs: how
+// many settings differ from the baseline (the style's saved default when it
+// was saved with this look, the look as designed otherwise), with Save as
+// default and Reset beside it. Review opens the list of changes above it,
+// each with a way to its field and a way back, and Factory reset at its end.
 
 import Quickshell
 import QtQuick
@@ -28,77 +28,6 @@ Column {
     width: parent ? parent.width : 0
     spacing: Theme.spaceS
 
-    Rectangle {
-        id: strip
-        width: parent.width
-        height: Theme.rowHeightTall + Theme.spaceS
-        radius: Theme.radiusInner
-        color: Theme.controlFill("transparent")
-        border.width: Theme.controlBorder(Theme.stroke)
-        border.color: Theme.controlStroke(Theme.stroke)
-
-        ControlEdge { sunken: true; radius: strip.radius }
-
-        Row {
-            anchors.left: parent.left
-            anchors.leftMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceM
-
-            Rectangle {
-                visible: !Settings.lookPristine
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fs(8)
-                height: width
-                radius: Theme.pill(width)
-                color: Theme.accent
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Settings.lookPristine
-                    ? (Settings.baselineIsDefault ? "As you saved " + cb.styleName + "'s default" : page.label(Settings.look) + " as designed")
-                    : Settings.lookDiffs.length + " changed from " + cb.baseName
-                color: Settings.lookPristine ? Theme.subtext : Theme.textStrong
-                font.family: Theme.fontText
-                font.pixelSize: Theme.fontSmall
-                font.weight: Theme.weightBody
-            }
-        }
-
-        Row {
-            anchors.right: parent.right
-            anchors.rightMargin: Theme.spaceS
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceS
-
-            FlyoutChip {
-                text: cb.open ? "Review  󰅃" : "Review  󰅀"
-                selected: cb.open
-                onClicked: cb.open = !cb.open
-            }
-            // two clicks: overwriting the style's old default can't be undone
-            FlyoutChip {
-                text: "Save as default"
-                confirmText: "Replace default?"
-                enabled: !Settings.isDefault
-                onClicked: {
-                    Settings.saveAsDefault()
-                    page.say("Current appearance saved as " + cb.styleName + "'s default", false)
-                }
-            }
-            FlyoutChip {
-                text: "Reset"
-                confirmText: "Reset?"
-                enabled: !Settings.isDefault
-                onClicked: {
-                    Settings.reset()
-                    page.say("Appearance reset to " + cb.styleName + "'s default", false)
-                }
-            }
-        }
-    }
-
     // the changes, scrolling on their own past a handful
     Rectangle {
         id: list
@@ -106,11 +35,9 @@ Column {
         width: parent.width
         height: Math.min(changes.implicitHeight, Theme.fit(230)) + Theme.spaceS * 2
         radius: Theme.radiusInner
-        color: Theme.controlFill("transparent")
-        border.width: Theme.controlBorder(Theme.stroke)
-        border.color: Theme.controlStroke(Theme.stroke)
-
-        ControlEdge { sunken: true; radius: list.radius }
+        color: Theme.surface
+        border.width: Theme.borderWidth
+        border.color: Theme.strokeHover
 
         Flickable {
             id: flick
@@ -133,7 +60,7 @@ Column {
                     topPadding: Theme.spaceS
                     bottomPadding: Theme.spaceS
                     wrapMode: Text.WordWrap
-                    text: "Nothing changed. Anything you change on the tabs below shows up here."
+                    text: "Nothing changed. Anything you change on the tabs shows up here."
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
@@ -196,6 +123,75 @@ Column {
                             cb.page.say(cb.styleName + "'s saved default cleared, back to stock", false)
                         }
                     }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: strip
+        width: parent.width
+        height: Theme.rowHeightTall + Theme.spaceL
+        radius: Theme.radiusInner
+        color: Theme.surface
+        border.width: Theme.borderWidth
+        border.color: Theme.accent
+
+        Row {
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceM
+
+            Rectangle {
+                visible: !Settings.lookPristine
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fs(8)
+                height: width
+                radius: Theme.pill(width)
+                color: Theme.accent
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Settings.lookPristine
+                    ? (Settings.baselineIsDefault ? "As you saved " + cb.styleName + "'s default" : page.label(Settings.look) + " as designed")
+                    : Settings.lookDiffs.length + " changed from " + cb.baseName
+                color: Settings.lookPristine ? Theme.subtext : Theme.textStrong
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontSmall
+                font.weight: Theme.weightBody
+            }
+        }
+
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceS
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceS
+
+            FlyoutChip {
+                text: cb.open ? "Review  󰅀" : "Review  󰅃"
+                selected: cb.open
+                onClicked: cb.open = !cb.open
+            }
+            // two clicks: overwriting the style's old default can't be undone
+            FlyoutChip {
+                text: "Save as default"
+                confirmText: "Replace default?"
+                enabled: !Settings.isDefault
+                onClicked: {
+                    Settings.saveAsDefault()
+                    page.say("Current appearance saved as " + cb.styleName + "'s default", false)
+                }
+            }
+            FlyoutChip {
+                text: "Reset"
+                confirmText: "Reset?"
+                enabled: !Settings.isDefault
+                onClicked: {
+                    Settings.reset()
+                    page.say("Appearance reset to " + cb.styleName + "'s default", false)
                 }
             }
         }

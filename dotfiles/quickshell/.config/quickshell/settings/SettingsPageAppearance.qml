@@ -2,9 +2,9 @@
 // ~/.config/quickshell/settings/SettingsPageAppearance.qml
 //
 // Appearance, one tab per part of the screen: Theme, Bar, Panels, Desktop,
-// Apps. Each opens on a preview under ChangesBar (changes from the
-// baseline, Save as default, Reset); a changed field is marked and its mark
-// resets it. Shell settings are Settings.qml (shared with the Control
+// Apps. Each opens on a preview; while anything differs from the baseline,
+// ChangesBar floats at the page's foot (Review, Save as default, Reset); a
+// changed field is marked and its mark resets it. Shell settings are Settings.qml (shared with the Control
 // Centre); window settings go to hyprland.json, then a reload. Tabs live in
 // appearance/; this keeps what they reach through `page`.
 
@@ -21,9 +21,10 @@ SettingsPage {
     id: page
 
     sectioned: true
+    footer: ChangesBar {}
+    footerVisible: !Settings.lookPristine || !Settings.isDefault
     // a small bar and flyout, drawn by the shell's own pieces, above the
     // tabs whose settings change how they look
-    banner: ChangesBar {}
     pinned: LivePreview { kind: ({ bar: "bar", panels: "launcher", desktop: "windows" })[page.tab] || "flyout" }
 
     title: "Appearance"

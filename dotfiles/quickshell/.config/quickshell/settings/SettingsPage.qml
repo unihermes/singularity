@@ -6,8 +6,8 @@
 // built fresh each visit. `highlight` scrolls to and rings a searched field;
 // `tabs` splits the page into isSettingsTab Columns (remembered while the
 // window is open); `sectioned` frames each group of rows (DESIGN.md);
-// `pinned` sits above the rows while `pinnedVisible`, `banner` above the tabs,
-// `footer` floats over the foot of the rows while `footerVisible`.
+// `pinned` sits above the rows while `pinnedVisible`; `footer` floats over
+// the foot of the rows while `footerVisible`.
 
 import QtQuick
 import "../services"
@@ -35,7 +35,6 @@ Item {
     property bool sectioned: false
     property Component pinned: null
     property bool pinnedVisible: true
-    property Component banner: null
     property Component footer: null
     property bool footerVisible: true
     readonly property real footerHeight: footerLoader.visible ? footerLoader.height + Theme.spaceL : 0
@@ -194,13 +193,6 @@ Item {
             font.family: Theme.fontText
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
-        }
-
-        Loader {
-            width: parent.width
-            active: root.banner !== null
-            visible: active
-            sourceComponent: root.banner
         }
 
         // the tabs: icon and name, the one showing lit and underlined

@@ -296,9 +296,10 @@ Settings') are laid out the same way.
   (layout zones, the bar's size, a section per module with drawn tiles),
   Panels (flyouts, launcher, notifications, overlays), Desktop (wallpaper,
   windows in Gaps · Borders · Corners · Opacity · Dim and blur · Shadow and
-  tabs, motion) and Apps. Above the tabs, the changes strip (`ChangesBar`):
-  "N changed from …", Review (the list in place, with Undo all and Factory
-  reset), Save as default, Reset. A changed field's ● names the value it
+  tabs, motion) and Apps. While anything differs from the baseline, the changes
+  bar (`ChangesBar`, picked 2026-10-18) floats at the page's foot
+  (`SettingsPage.footer`): "N changed from …", Review (the list opening
+  above it, with Undo all and Factory reset), Save as default, Reset. A changed field's ● names the value it
   puts back when hovered.
 - **Live preview (Appearance):** pinned above the rows on every tab, showing
   what that tab changes (`LivePreview.kind`): the bar and a flyout (Theme,
