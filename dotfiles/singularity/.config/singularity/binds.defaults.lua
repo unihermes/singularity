@@ -1,22 +1,16 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/binds.lua
 --
--- Every keybind. The Keybinds window (Settings > Keybinds, SUPER+K) reads
--- and rewrites this file and no other. It's this machine's own: link.sh
--- copies the repo's default (~/.config/singularity/binds.defaults.lua) only
--- where there's none yet, so edits never show up in the repo.
--- Sections are marker comments, `-- --- Name ---`: the window groups binds
--- by them and adds new ones to the end of the chosen section. It edits a
--- bind on a line of its own in the plain forms -- see HyprBinds.js -- and
--- lists the rest read-only.
+-- Every keybind. The Keybinds window (SUPER+K) reads and rewrites this file
+-- only; link.sh copies the repo's default where there's none yet. Sections
+-- are `-- --- Name ---` markers; plain one-line binds are editable (see
+-- HyprBinds.js), the rest listed read-only.
 
 local shared = require("shared")
 local altTabKey = require("alttab")
 
--- Workspaces 1..MAX_WORKSPACES get SUPER+n binds, and are the only ones a
--- window-rules.json entry may send a window to (windows.lua reads it from
--- shared). Quickshell's copy is Settings.workspaceCount
--- (services/Settings.qml); keep the two equal.
+-- Workspaces 1..MAX_WORKSPACES get SUPER+n binds and are the only ones a
+-- Window Rules entry may target; keep equal to Settings.workspaceCount.
 local MAX_WORKSPACES = 5
 shared.maxWorkspaces = MAX_WORKSPACES
 
@@ -27,10 +21,8 @@ local fileManager = "thunar"
 local editor      = "codium"
 local zen         = "zen-browser"
 local floorp      = "floorp"
--- The window classes each of those opens: its bind focuses a window of the
--- app already open rather than starting another (hyprland.lua). A command
--- that's just a program name and isn't listed is taken as its own class.
--- The terminal is either of the two Settings > Terminal offers.
+-- the window classes each app bind opens, so the bind focuses an open one
+-- (hyprland.lua); an unlisted plain program name is its own class
 shared.appClasses = {
     [terminal]    = { "Alacritty", "com.mitchellh.ghostty" },
     [fileManager] = "thunar",
@@ -38,10 +30,8 @@ shared.appClasses = {
     [zen]         = "zen",
     [floorp]      = "floorp",
 }
--- The Quickshell launcher (flyouts/Launcher.qml); wofi only if the shell
--- isn't running. pkill first so a second press dismisses wofi rather than
--- stacking another. Its stylesheet is Quickshell's copy with the bar's corner
--- radius applied (AppearanceSync.qml), else the repo's own.
+-- the Quickshell launcher; wofi (with the shell's stylesheet) only when the
+-- shell isn't running, pkill first so a second press dismisses it
 local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\" --term ~/.config/singularity/terminal.sh; }"
 
 local mod = "SUPER"
@@ -57,15 +47,9 @@ hl.bind(mod .. " + F",       hl.dsp.exec_cmd(floorp))  -- Open Floorp
 -- --- Window Management ---
 -- fullscreen sits on CTRL and float on SHIFT, since plain F and V launch apps
 hl.bind(mod .. " + Q",         hl.dsp.window.close())  -- Close window
--- Two different things, deliberately on separate binds:
---   maximize  fills the usable area, stopping below the Quickshell bar
---   fullscreen covers the entire output, bar included
---
--- Maximize goes through toggleMaximize() (windows.lua) so that shrinking a
--- window on purpose sticks: it records the choice, and the focus hook that
--- re-maximizes in monocle leaves such windows alone. Wrapped in closures,
--- like every function bind here, because windows.lua defines them after
--- this file runs.
+-- Maximize fills the usable area (below the bar); fullscreen covers the
+-- whole output. Function binds are closures, as windows.lua defines them
+-- after this file runs.
 hl.bind(mod .. " + X", function() toggleMaximize() end)  -- Maximize or restore window
 hl.bind(mod .. " + CTRL + F",  hl.dsp.window.fullscreen())  -- Fullscreen window, covering the bar
 hl.bind(mod .. " + equal",     function() stepWindowSize(1) end)  -- Grow window a size step
@@ -77,22 +61,17 @@ hl.bind(mod .. " + J",         hl.dsp.layout("togglesplit"))  -- Split side by s
 hl.bind(mod .. " + M",         function() toggleLayout() end)  -- Switch between tiled and one-window layout
 
 -- --- Scratchpad ---
--- A terminal on its own special workspace, floating over whichever workspace
--- you're on. The first press starts it; after that the key shows and hides it.
--- SHIFT stashes the focused window there as well, to be shown with it, and
--- on a window already in the scratchpad puts it back on the workspace below.
+-- A terminal on its own special workspace (first press starts it). SHIFT
+-- stashes the focused window there, or puts a stashed one back.
 hl.bind(mod .. " + grave", function() toggleScratchpad(terminal) end)  -- Show or hide the scratchpad
 hl.bind(mod .. " + SHIFT + grave", function() toggleStashed() end)  -- Move window into or out of the scratchpad
 
 -- --- Show desktop ---
--- Hides every window on the workspace as SUPER+C does, so they stay on it
--- and in the bar's window strip; the next press brings them back. See
--- singularityShowDesktop() in windows.lua.
+-- hides every window as SUPER+C does; again brings them back
 hl.bind(mod .. " + D", function() singularityShowDesktop() end)  -- Show the desktop, or bring its windows back
 
 -- --- Notes ---
--- Quickshell's sticky notes (windows/NotesWindow.qml), pinned in the
--- top-right corner over every workspace; see the "notes" rule in windows.lua
+-- Quickshell's sticky notes, pinned top-right (window-rules.lua)
 hl.bind(mod .. " + N", hl.dsp.exec_cmd("qs ipc call notes toggle"))  -- Show or hide sticky notes
 
 -- --- Focus ---
@@ -102,8 +81,7 @@ hl.bind(mod .. " + up",    hl.dsp.focus({ direction = "up" }))  -- Focus window 
 hl.bind(mod .. " + down",  hl.dsp.focus({ direction = "down" }))  -- Focus window below
 
 -- --- Move & resize ---
--- moveWindowDir() and friends, in windows.lua: tiled windows move, swap and resize
--- in the layout, floating ones are nudged 40px at a time.
+-- tiled windows move, swap and resize in the layout; floaters nudge 40px
 hl.bind(mod .. " + SHIFT + left",  function() moveWindowDir("left") end,  { repeating = true })  -- Move window left
 hl.bind(mod .. " + SHIFT + right", function() moveWindowDir("right") end, { repeating = true })  -- Move window right
 hl.bind(mod .. " + SHIFT + up",    function() moveWindowDir("up") end,    { repeating = true })  -- Move window up
@@ -118,10 +96,8 @@ hl.bind(mod .. " + CTRL + up",    function() resizeWindowDir("up") end,    { rep
 hl.bind(mod .. " + CTRL + down",  function() resizeWindowDir("down") end,  { repeating = true })  -- Resize window: move its edge down
 hl.bind(mod .. " + O", function() sendToNextMonitor() end)  -- Send window to the next monitor
 
--- Windows-style alt-tab, with the switcher drawn by Quickshell
--- (AltTabSwitcher.qml): hold ALT and tap Tab to move the highlight, release
--- ALT to focus what you landed on. altTabKey and why every Tab needs a bind
--- are in alttab.lua.
+-- Windows-style ALT+Tab drawn by Quickshell: hold ALT, tap Tab, release to
+-- focus. Why every Tab needs a bind: alttab.lua.
 hl.bind("ALT + Tab",         altTabKey("~/.config/hypr/alttab-ipc.sh tab"),  { repeating = true })  -- Switch windows
 hl.bind("ALT + SHIFT + Tab", altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
 hl.bind("ALT + grave",       altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { repeating = true })  -- Switch windows, backwards
@@ -130,18 +106,15 @@ hl.bind("ALT + grave",       altTabKey("~/.config/hypr/alttab-ipc.sh prev"), { r
 -- Hyprland treats ALT everywhere, including the drag/resize mod.
 
 -- --- Tabs ---
--- For the apps opened as tabs (TABBED_CLASSES in windows.lua), and only
--- while one has focus: the TABS hooks there turn these off for anything
--- else, so other apps keep the keys (a browser's own CTRL+Tab).
+-- for the apps opened as tabs (TABBED_CLASSES in windows.lua), live only
+-- while one has focus
 local tabNextBind  = hl.bind("CTRL + Tab",         hl.dsp.group.next())  -- Next tab
 local tabPrevBind  = hl.bind("CTRL + SHIFT + Tab", hl.dsp.group.prev())  -- Previous tab
 local tabCloseBind = hl.bind(mod .. " + SHIFT + Q", function() closeAllTabs() end)  -- Close all tabs
 shared.tabBinds = { tabNextBind, tabPrevBind, tabCloseBind }
 
 -- --- Workspaces ---
--- Workspace grid: every workspace and its windows at once. Click a cell to
--- jump, click a window to focus it, drag a window between cells to move it.
--- Drawn by Quickshell (WorkspaceOverlay.qml), so this only pokes the shell.
+-- the workspace grid (WorkspaceOverlay.qml)
 hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call overlay toggle"))  -- Show all workspaces
 for i = 1, MAX_WORKSPACES do
     hl.bind(mod .. " + " .. i,         hl.dsp.focus({ workspace = i }))
@@ -156,8 +129,7 @@ hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- Res
 hl.bind(mod .. " + H", hl.dsp.exec_cmd("qs ipc call launcher toggle clipboard"))  -- Clipboard history
 
 -- --- Calculator and file search ---
--- Two more launcher modes (flyouts/Launcher.qml). Tab cycles between all
--- four, so either key reaches the others; these are just the direct ways in.
+-- two more launcher modes; Tab cycles through all four
 hl.bind(mod .. " + slash", hl.dsp.exec_cmd("qs ipc call launcher toggle calc"))   -- Calculator
 hl.bind(mod .. " + S",     hl.dsp.exec_cmd("qs ipc call launcher toggle files"))  -- Search files
 
@@ -172,8 +144,7 @@ hl.bind(mod .. " + Escape", hl.dsp.exec_cmd("qs ipc call system open ''"))    --
 hl.bind(mod .. " + K",      hl.dsp.exec_cmd("qs ipc call keybinds open"))     -- Open Keybinds
 
 -- --- Session ---
--- Through logind so hypridle's lock_cmd runs it: one hyprlock at a time, and
--- the refocus on unlock
+-- through logind, so hypridle's lock_cmd runs it
 hl.bind(mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))  -- Lock the screen
 -- lock, suspend, log out, reboot, shut down; flyouts/PowerMenu.qml
 hl.bind(mod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call power menu"))  -- Open the power menu
@@ -187,16 +158,9 @@ hl.bind("ALT + Print",   hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh text"))  
 hl.bind(mod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh text"))  -- Copy the text in an area
 
 -- --- Lid ---
--- Close turns the screen off and, after the delay set in Settings > Lock
--- Screen, suspends if it's still shut; open turns it back on and cancels
--- that. logind's own lid handling is
--- inhibited in autostart.lua so this is the only thing acting on the lid. All of
--- it -- the debounce for this laptop's bouncing lid switch, the suspend
--- timer, re-suspending after a wake with the lid shut, docked mode -- lives
--- in lid.sh. misc:key_press_enables_dpms and mouse_move_enables_dpms are the
--- backstop: any key or mouse movement wakes a wrongly-blanked screen. lid.sh
--- turns both off while the lid is shut, or the keyboard and touchpad the
--- closing lid presses on would wake the panel it just blanked.
+-- Close blanks the screen and suspends after Settings > Lock Screen's delay;
+-- open undoes it. logind's lid handling is inhibited (autostart.lua);
+-- everything else is in lid.sh.
 hl.bind("switch:on:Lid Switch",  hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid closed: screen off, suspend later if still shut
 hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("~/.config/hypr/lid.sh event"), { locked = true })  -- Lid opened: screen on
 
@@ -217,8 +181,7 @@ hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("qs ipc call media next"),     { locke
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("qs ipc call media previous"), { locked = true })  -- Previous track
 
 -- --- Lock Keys ---
--- Pass-through: the key still toggles its lock as usual, and the shell shows
--- the new state in a toast (shell.qml's "locks" handler). On press: a release
--- bind on these keys never fires.
+-- pass-through: the lock toggles as usual and the shell toasts it (on press,
+-- as a release bind never fires on these keys)
 hl.bind("Caps_Lock", hl.dsp.exec_cmd("qs ipc call locks changed caps"), { non_consuming = true })  -- Show Caps Lock state
 hl.bind("Num_Lock",  hl.dsp.exec_cmd("qs ipc call locks changed num"),  { non_consuming = true })  -- Show Num Lock state

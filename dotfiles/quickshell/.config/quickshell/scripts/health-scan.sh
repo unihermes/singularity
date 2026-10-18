@@ -1,22 +1,12 @@
 #!/usr/bin/env bash
-# One pass over the machine, for the System window's Health page
-# (services/Health.qml). Reads only -- nothing here changes anything, so it is
-# always safe to run by hand, and safe to paste the output of.
-#
-# diagnose.sh answers the same question for a human in a terminal and stays
-# the thing to run when the shell itself is down. This one answers it for the
-# GUI: one record per line, and every finding that has an obvious fix names
-# the repair the page should offer as a button. The page never invents a
-# repair of its own -- if a check can't be fixed in one command, it says so by
-# leaving those fields empty.
+# One read-only pass over the machine for the System window's Health page
+# (services/Health.qml); diagnose.sh is the terminal equivalent. One record
+# per line, healthy rows included:
 #
 #   status \t id \t label \t detail \t repairId \t repairLabel [\t repairId \t repairLabel]...
 #
-# status is ok | warn | bad. Healthy rows are emitted too: a page that only
-# listed problems would say nothing at all on a working machine, which is
-# indistinguishable from a page that failed to run.
-#
-# repairId is parsed by Health.qml:
+# status is ok | warn | bad. A finding with a one-command fix names it;
+# repairId, parsed by Health.qml:
 #   restart:<scope>:<unit>   systemctl [--user] restart
 #   disable:<scope>:<unit>   systemctl [--user] disable
 #   install:<tools>          yay -S, in a terminal
@@ -36,9 +26,7 @@ emit() {
 }
 
 # --- enabled units that aren't running ---------------------------------------
-# Enabled is the promise, active is whether it kept it. Oneshots are skipped:
-# a succeeded oneshot is inactive by design, and listing those would bury the
-# real answer under systemd-tmpfiles and friends on every scan.
+# oneshots skipped: a finished one is inactive by design
 for scope in system user; do
 	if [[ $scope == user ]]; then sc=(systemctl --user); else sc=(systemctl); fi
 
@@ -70,9 +58,8 @@ for scope in system user; do
 done
 
 # --- units in the failed state -----------------------------------------------
-# Not the same set as above: a unit started by a dependency, a socket or a
-# D-Bus activation is never "enabled", and is exactly the kind that fails
-# unnoticed. Health.qml folds a duplicate into whichever row came second.
+# includes units started by dependencies, sockets or D-Bus (never "enabled");
+# Health.qml folds duplicates
 for scope in system user; do
 	if [[ $scope == user ]]; then sc=(systemctl --user); else sc=(systemctl); fi
 	while read -r unit; do
@@ -82,8 +69,6 @@ for scope in system user; do
 done
 
 # --- the tools the shell shells out to ---------------------------------------
-# A missing one is usually the whole explanation for a single feature being
-# dead while everything around it is fine.
 missing=()
 for tool in hyprctl quickshell grim slurp wl-copy iwctl wpctl brightnessctl \
 	notify-send stow cava iw matugen fd; do
@@ -96,8 +81,6 @@ else
 fi
 
 # --- disk --------------------------------------------------------------------
-# A nearly-full root is the quiet cause of a surprising number of "it just
-# stopped working" reports, and the repair is a script this repo already ships.
 while read -r target pct; do
 	n=${pct%\%}
 	[[ $n =~ ^[0-9]+$ ]] || continue
@@ -119,9 +102,7 @@ if command -v pacman &>/dev/null; then
 	fi
 fi
 
-# A package upgrade that finds a config edited by hand writes the new one
-# beside it as .pacnew; removing a package keeps an edited config as
-# .pacsave. Found with find, not pacman's database, which misses .pacsave.
+# .pacnew/.pacsave files, found with find (pacman's database misses .pacsave)
 if command -v pacdiff &>/dev/null; then
 	mapfile -t pending < <(pacdiff -o -f 2>/dev/null)
 	if (( ${#pending[@]} )); then
@@ -134,19 +115,10 @@ if command -v pacdiff &>/dev/null; then
 fi
 
 # --- firmware ----------------------------------------------------------------
-# From fwupd's cached metadata, so this doesn't go to the network; the
-# repair refreshes it first. Exit 2 is fwupd's "nothing to do".
-#
-# A device fwupd won't update yet says why in its Problems: a laptop's
-# system firmware wants mains power, for one. Then there's nothing a click
-# can do, so the row says what will (plug in) rather than offering an
-# Update that fwupdmgr refuses. A UEFI capsule is also staged on the EFI
-# system partition first, and a small ESP full of kernels fails that write
-# at the last step; that's checked here against the release's size.
-#
-# Asking starts fwupd if it isn't running, which takes seconds, so while it
-# isn't, its last answer is reused for up to six hours. The firmware repair
-# deletes that copy.
+# From fwupd's cached metadata (exit 2: nothing to do). A device fwupd won't
+# update says why (e.g. wants mains power), and the row says that instead of
+# offering Update; a capsule too big for the ESP is caught too. fwupd's last
+# answer is reused for six hours while it isn't running (starting it is slow).
 fwcache=${XDG_CACHE_HOME:-$HOME/.cache}/singularity/fwupd-updates
 if command -v fwupdmgr &>/dev/null; then
 	if ! systemctl -q is-active fwupd && [[ -n $(find "$fwcache" -mmin -360 2>/dev/null) ]]; then
@@ -217,10 +189,8 @@ else
 fi
 
 # --- reclaimable space -------------------------------------------------------
-# What clean.sh would free, by the same rules, so the row can say how much a
-# click is worth. Always carries the button: cleaning up is worth offering on
-# a healthy machine too. Tool caches clean.sh purges through the tool itself
-# (docker, flatpak, npm, ...) aren't counted, so this is a lower bound.
+# what clean.sh would free (a lower bound: tool caches aren't counted); the
+# button is always offered
 reclaim=()   # "KiB<TAB>what"
 add() { [[ $1 =~ ^[0-9]+$ ]] && (( $1 > 0 )) && reclaim+=("$1"$'\t'"$2"); }
 sizeof() { du -skc "$@" 2>/dev/null | awk 'END {print $1}'; }
@@ -292,14 +262,8 @@ else
 fi
 
 # --- dotfile links -----------------------------------------------------------
-# A broken symlink pointing into the repo means the clone moved, or a package
-# was added to dotfiles/ without relinking. The app doesn't complain: it just
-# falls back to its own defaults, which is why this is worth a check.
-#
-# Only links into a dotfiles/ path are counted. Electron and Thunderbird both
-# keep deliberately dangling symlinks (SingletonLock, lock) naming a host and
-# pid that no longer exist, and reporting those as breakage would make this
-# check cry wolf on every machine that has ever run Obsidian.
+# broken links into dotfiles/ only (Electron and Thunderbird keep dangling
+# lock links on purpose)
 broken=$(find "$HOME/.config" "$HOME/.icons" -maxdepth 4 -xtype l -lname '*/dotfiles/*' 2>/dev/null | wc -l)
 if (( broken > 0 )); then
 	emit bad links "Broken config links" \
@@ -309,9 +273,6 @@ else
 fi
 
 # --- units enabled from a file that is gone ----------------------------------
-# systemctl enable leaves a symlink in a .wants directory; removing the
-# package it came from leaves that symlink pointing at nothing. systemd logs a
-# warning about it on every daemon-reload and nobody ever reads that.
 while read -r link; do
 	[[ -n $link ]] || continue
 	emit warn "stale-unit:${link##*/}" "${link##*/}" \
@@ -319,9 +280,7 @@ while read -r link; do
 done < <(find "$HOME/.config/systemd" -xtype l 2>/dev/null)
 
 # --- the shell's own log -----------------------------------------------------
-# Where a QML error lands, and a QML error is why a flyout is missing often
-# enough to be worth surfacing next to the rest. Counted by
-# shell-log-issues.sh: since the last reload, without other programs' noise.
+# QML errors since the last reload, counted by shell-log-issues.sh
 log=$HOME/.cache/quickshell.log
 if [[ -r $log ]]; then
 	errs=$("$(dirname "$0")/shell-log-issues.sh" "$log" | wc -l)
