@@ -1,14 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/PagePower.qml
 //
-// The battery as the pack itself reports it, not as UPower rounds it: the
-// charge, the draw in watts, and -- the number that actually matters on a
-// three-year-old laptop -- how much of its design capacity is left.
-//
-// Every figure comes from one file, the battery's uevent, so the page costs
-// a single read every three seconds. Packs report either charge (amp-hours)
-// or energy (watt-hours); SystemStats converts both to watt-hours, so
-// nothing here has to care which kind this one is.
+// The battery as the pack reports it: charge, draw in watts, and health
+// against design capacity, all from its uevent (SystemStats, in Wh).
 
 import Quickshell
 import QtQuick

@@ -1,11 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/WindowHome.qml
 //
-// The page a standalone window (Settings, System) opens on: every page as a
-// full-width tile (HomeRow), grouped under headings, each group one framed
-// block, in a centred column so lines don't stretch across a wide window.
-// `header` is anything that goes above the groups (System's headline
-// figures); it keeps its own frames.
+// A window's Home: every page as a full-width tile (HomeRow) in framed
+// groups under headings, in a centred column; `header` goes above.
 //
 // groups: [{ heading, items: [{ id, icon, label, blurb, status,
 //            statusColor, history, historyCeiling }] }]

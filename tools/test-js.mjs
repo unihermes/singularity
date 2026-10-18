@@ -2,10 +2,8 @@
 // time windows, number formats, style resolution, the channel outline, and
 // the readers/writers of the Hyprland config's tables and binds.
 //
-// The modules are QML JavaScript: `.pragma library` at the top, and
-// `.import "X.js" as X` for another module. load() strips the pragma, loads
-// imports first, and runs each file in its own context, the way the QML
-// engine would. `Qt` is stubbed with only what a module reaches for.
+// load() runs each QML JS module as the engine would: pragma stripped,
+// imports first, own context, a minimal `Qt` stub.
 //
 // Run: node --test tools/test-js.mjs   (the pre-commit hook does, when a
 // services/*.js file is staged)
