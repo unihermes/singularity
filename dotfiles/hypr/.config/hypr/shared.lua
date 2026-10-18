@@ -1,18 +1,12 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/shared.lua
 --
--- What more than one of hyprland.lua's modules needs: the state files the
--- shell's Settings write, read once per load, and a few constants. Every
--- module gets the same table from require("shared"); binds.lua adds
--- maxWorkspaces and tabBinds to it for windows.lua, and appClasses for
--- hyprland.lua.
+-- What several modules need: the Settings state files, read once per load,
+-- and constants. binds.lua adds maxWorkspaces, tabBinds and appClasses.
 
 local S = {}
 
--- A state file in ~/.local/state/singularity, first line only. Quickshell
--- writes one and runs `hyprctl reload config-only`, which re-runs the config
--- -- so a setting survives a restart without the repo's config being
--- rewritten.
+-- a state file's first line (Quickshell writes it, then reloads config-only)
 function S.state(name, default)
     local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/" .. name)
     if not f then return default end
@@ -28,30 +22,23 @@ do
     S.decodeJson = ok and decoder or function() return nil end
 end
 
--- Animation time from the bar's Appearance page, "<all> <windows>
--- <workspaces>": percentages of each speed in looks.lua (speed is a
--- duration, so 50 is twice as quick). All scales everything and 0 turns
--- animations off entirely; the other two scale their own leaves on top.
+-- Animation time, "<all> <windows> <workspaces>" percentages of looks.lua's
+-- speeds; all scales everything (0: off), the others their own leaves.
 do
     local all, win, ws = S.state("animations", ""):match("^(%d+)%s+(%d+)%s+(%d+)$")
     S.animFactor       = math.min(100, tonumber(all) or 100) / 100
     S.windowsFactor    = math.min(200, tonumber(win) or 100) / 100
     S.workspacesFactor = math.min(200, tonumber(ws) or 100) / 100
 end
--- Game Mode, the Control Centre's switch: "on" in its state file strips the
--- desktop's effects -- animations here, and blur, shadows, gaps and rounding
--- in overrides.lua, after the local settings, so it outranks them without
--- touching them and turning it off brings every one back as it was.
+-- Game Mode strips animations here, and blur, shadows, gaps and rounding in
+-- overrides.lua, without touching the saved settings.
 S.gameMode = S.state("game-mode", "") == "on"
 S.animOff  = S.animFactor == 0 or S.gameMode
--- This machine's own fixes for particular displays, keyed on the model name
--- in their EDID; nothing in the repo names a monitor. A Lua file returning
+-- This machine's display fixes by EDID model, a Lua file returning
 --   { pcTimings  = { ["DELL P2418HZm"] = "modeline 138.50 ..." },
 --     toneCurves = { ["DELL P2418HZm"] = 0.7 } }
--- pcTimings: a display whose native 1080p60 is a TV timing gets this mode
--- instead (displays.lua). toneCurves: display-curve lifts its shadows,
--- out = in^value, lower lifting more (autostart.lua). Missing or broken,
--- there are none.
+-- pcTimings for TV-timed 1080p60 panels (displays.lua); toneCurves lift
+-- shadows, out = in^value (autostart.lua). Missing or broken: none.
 do
     local ok, t = pcall(dofile, os.getenv("HOME") .. "/.local/state/singularity/display-fixes.lua")
     S.displayFixes = ok and type(t) == "table" and t or {}
@@ -62,9 +49,8 @@ end
 S.windowSpeed = 2
 S.fadeSpeed   = 1.5
 
--- How windows open, close, minimize and restore, picked on the Appearance
--- page. "fade" is popin at full size, so the window only fades, and "none"
--- shows and hides them at once. SUPER+C follows the same choice by hand.
+-- window open/close/minimize style from Appearance ("fade" is popin at full
+-- size, "none" instant); SUPER+C follows it
 local windowStyles = {
     popin = "popin 92%", zoom = "popin 70%", fade = "popin 100%", fold = "gnomed",
     slide = "slide", rise = "slide bottom", drop = "slide top", none = "popin 100%",
@@ -73,9 +59,8 @@ S.windowAnim = S.state("window-anim", "popin")
 if not windowStyles[S.windowAnim] then S.windowAnim = "popin" end
 S.windowStyle    = windowStyles[S.windowAnim]
 S.windowsAnimate = S.windowAnim ~= "none"
--- SUPER+C's version: the styles that move the window off-screen (up for
--- drop, down for the others), and the size the rest shrink to as they fade,
--- as fractions of width and height (fold collapses to a line, as gnomed does)
+-- SUPER+C: the styles that slide off-screen, and the shrink factor the rest
+-- fade to
 S.windowSlides = S.windowAnim == "slide" or S.windowAnim == "rise" or S.windowAnim == "drop"
 S.windowShrink = ({ popin = { 0.92, 0.92 }, zoom = { 0.7, 0.7 }, fold = { 1, 0.05 } })[S.windowAnim]
 
@@ -85,9 +70,7 @@ local cursorTheme, cursorSize = S.state("cursor", ""):match("^(%S+)%s+(%d+)$")
 S.cursorTheme = cursorTheme or "Bibata-Modern-Classic"
 S.cursorSize  = cursorSize or "20"
 
--- The tab bar over grouped windows. A floating group draws it above the
--- windows, flush against them, so windows.lua's fillArea() leaves this much
--- room for it.
+-- the grouped windows' tab bar height, which fillArea() leaves room for
 S.GROUPBAR_HEIGHT = 26
 
 return S

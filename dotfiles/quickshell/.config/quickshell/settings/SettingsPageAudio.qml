@@ -1,16 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAudio.qml
 //
-// Output and input devices: which one is the default, its volume, mute -- and
-// the per-application mixer for whatever is playing or recording right now,
-// each app able to play on an output of its own.
-//
-// Straight onto Pipewire through Quickshell's service, the same one the bar's
-// volume module reads, so the two always agree. Nothing to persist:
-// wireplumber remembers the chosen default, each device's volume, and each
-// application's volume and output itself. pactl fills in the two things the
-// service doesn't say: which outputs have nothing plugged in, and which
-// output each app is playing on (and moves it).
+// Output and input devices (default, volume, mute) and the per-app mixer,
+// each app able to play on its own output. Straight on Pipewire, as the bar
+// is; wireplumber remembers everything. pactl adds unplugged outputs and
+// moves streams.
 
 import Quickshell
 import Quickshell.Io
@@ -27,9 +21,7 @@ SettingsPage {
     title: "Audio"
     description: "Where sound goes, how loud, and each app's share."
 
-    // The lists below are ScriptModels: these arrays are made afresh when any
-    // node comes or goes (a notification's sound), and a bare array would
-    // rebuild every row, cutting off a volume drag or an open dropdown.
+    // ScriptModels, so a node coming or going doesn't rebuild every row
     readonly property var devices: Audio.devices
     readonly property var sinks: Audio.sinks
     readonly property var sources: Audio.sources
@@ -37,19 +29,12 @@ SettingsPage {
     readonly property var playing: Audio.playing
     readonly property var recording: Audio.recording
 
-    // audio.volume / audio.muted stay invalid until a node is tracked, and
-    // that goes for the streams too -- without them here every app row would
-    // sit at 0% and refuse to move.
+    // tracked, or volume/mute stay invalid
     PwObjectTracker {
         objects: page.devices.concat(page.streams)
     }
 
-    // What it's playing, when that's something other than the app's own name:
-    // a track title, a file, a tab. Shown as the row's hint.
-    //
-    // A player handed a file often reports the whole path, which is several
-    // wrapped lines of a row that only needs to say which file -- so a value
-    // that looks like a path is cut down to its last segment.
+    // what an app is playing, as the row's hint; a path cut to its last segment
     function streamDetail(n) {
         if (!n) return ""
         var p = n.properties || {}
@@ -297,17 +282,12 @@ SettingsPage {
     }
 
     // --- per-application mixer -------------------------------------------
-    //
-    // Rows come and go with the streams themselves: an app appears when it
-    // starts playing and is gone when it stops, which is why there is nothing
-    // to persist here and no empty-but-remembered entries. Wireplumber keeps
-    // each app's volume against its name for next time.
+    // rows come and go with the streams
 
     property var openStream: null
 
-    // An app: its icon, name and what it's playing, its level, and where it
-    // plays when that isn't the default; it opens to its level, mute and
-    // (for playback) Plays on.
+    // an app: icon, name, what's playing, level, output; opens to level, mute
+    // and Plays on
     component AppBlock: Column {
         id: app
         required property var modelData

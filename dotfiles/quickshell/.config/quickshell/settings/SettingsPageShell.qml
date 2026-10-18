@@ -1,23 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageShell.qml
 //
-// Which terminal opens (Alacritty or Ghostty), its look with a preview of
-// it, and the aliases in ~/.bash_aliases (which ~/.bashrc sources). The
-// files are this machine's own copies, seeded by link.sh, so nothing written
-// here shows up in the repo.
-//
-// Font size and cursor are written to both terminals' configs, so switching
-// keeps them alike; the page shows the picked one's.
-//
-// Two different kinds of instant, and the page says which is which.
-// Alacritty watches its own config and Ghostty is told to reload, so a change
-// there shows in every open terminal the moment it's written. The aliases
-// are only read when a shell starts, so alias edits apply to new terminals
-// -- the ones already open keep what they had until `source ~/.bashrc`.
-//
-// All are line edits, like the other pages: a TOML key's value inside its
-// [table], a Ghostty `key = value` line, or one `alias name='...'` line.
-// Everything else in each file is left as it was.
+// The terminal (Alacritty or Ghostty), its look with a preview, and
+// ~/.bash_aliases; this machine's own copies (link.sh). Font size and cursor
+// go to both terminals' configs. Terminal changes show at once (Alacritty
+// watches, Ghostty is told to reload); aliases apply to new shells. All are
+// line edits; the rest of each file is untouched.
 
 import Quickshell
 import Quickshell.Io
@@ -48,9 +36,8 @@ SettingsPage {
     // "table.key" -> raw TOML value text
     property var toml: ({})
 
-    // Line-based: tracks the current [table] header and reads `key = value`
-    // lines under it. Inline tables and arrays aren't looked into -- nothing
-    // this page sets lives in one.
+    // line-based: `key = value` under the current [table]; inline tables
+    // and arrays aren't read
     function parseToml(text) {
         var out = {}, table = ""
         text.split("\n").forEach(line => {
@@ -77,10 +64,8 @@ SettingsPage {
         return JSON.stringify(v)
     }
 
-    // Set key in [table], replacing its line, or adding it under the table
-    // header (and the header at the end of the file if there isn't one).
-    // Applied to the file as it is when the write runs, so steps queue
-    // rather than each being built on a read the one before replaces.
+    // sets key in [table], adding the line (and header) if missing; run on
+    // the file as it is when the write runs
     function tomlSet(text, table, key, value) {
         var lines = text.split("\n")
         var cur = "", headerAt = -1, lastInTable = -1
@@ -133,9 +118,7 @@ SettingsPage {
 
     // --- both ----------------------------------------------------------------
 
-    // One change to each terminal's config, through transforms of the file as
-    // it is when the write runs. A config that doesn't exist yet is left
-    // alone rather than started without the colours it imports.
+    // one change to each terminal's config; a missing config is left alone
     function writeBoth(alacritty, ghostty, message) {
         var left = 2, failed = false
         var finish = status => {
@@ -277,10 +260,7 @@ SettingsPage {
 
     // --- shared --------------------------------------------------------------
 
-    // Alias edits are checked with `bash -n` first. The callers build the
-    // whole file from a read made just before, so a second write can't be
-    // queued behind the first -- it would be built on the text the first one
-    // is about to replace.
+    // alias files are `bash -n` checked; built from a fresh read, so not queued
     function writeFile(path, text, message, checkBash) {
         if (AtomicFileWrite.busy) { say("Still writing the last change", true); return }
         AtomicFileWrite.write({
@@ -349,9 +329,7 @@ SettingsPage {
 
     FlyoutHeading { text: page.appName.toUpperCase() }
 
-    // A terminal as it will look: the wallpaper through the background at
-    // the opacity, the prompt in the look's colours at the font size, and
-    // the cursor's shape and blink.
+    // the terminal as it will look: background opacity, prompt, font, cursor
     ClippingRectangle {
         id: term
         width: parent.width

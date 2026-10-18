@@ -1,17 +1,7 @@
 #!/usr/bin/env bash
-# What state is this desktop actually in? Reads only -- nothing here changes
-# anything, so it is always safe to run and safe to paste the output of.
-#
-# The Settings window's System page shows most of this with better manners,
-# and while the shell is up that is the nicer way to look. This exists for
-# when it isn't: the bar never appeared, quickshell is crash-looping, the
-# session dropped to a tty. That is exactly when a GUI diagnostic is no use,
-# and it's the case this covers -- so it depends on nothing but coreutils and
-# whatever it is reporting on, and it degrades to "not installed" instead of
-# failing when a tool is missing.
-#
-# Run it as `diagnose` (aliased in .bashrc). Add -v for the long form, which
-# adds the last shell log lines and the full failed-unit list.
+# What state is this desktop in? Read-only, for when the shell is down (the
+# System window's Health page covers it otherwise); needs only coreutils.
+# Run as `diagnose`; -v adds the shell log and every failed unit.
 set -uo pipefail
 
 verbose=0
@@ -27,9 +17,7 @@ bad()   { printf '  %-18s %s%s%s\n' "$1" "$red" "$2" "$off"; }
 warn()  { printf '  %-18s %s%s%s\n' "$1" "$yellow" "$2" "$off"; }
 have()  { command -v "$1" &>/dev/null; }
 
-# Version strings are wildly inconsistent between tools, so each one is asked
-# in its own way and trimmed to the first line. A missing tool is a finding in
-# itself, not an error.
+# each tool's version, asked its own way, first line; missing is a finding
 ver() {
   local tool=$1; shift
   have "$tool" || { printf '%snot installed%s' "$red" "$off"; return; }
@@ -40,8 +28,6 @@ printf '%sSingularity diagnostics%s  %s%s%s\n' \
   "$bold" "$off" "$dim" "$(date '+%Y-%m-%d %H:%M:%S')" "$off"
 
 # --- session -----------------------------------------------------------------
-# The first question when something is wrong is almost always "which session
-# am I even in" -- a tty login, a second Hyprland instance, or the real one.
 sect "Session"
 row  "User"        "$(id -un)@${HOSTNAME:-$(uname -n)}"
 row  "Session type" "${XDG_SESSION_TYPE:-$dim unset$off}"
@@ -80,9 +66,7 @@ row "Monitors" "$(have hyprctl && hyprctl monitors -j 2>/dev/null \
   | grep -c '"name"' || echo "$dim n/a$off")"
 
 # --- audio -------------------------------------------------------------------
-# Pipewire being up is not the same as wireplumber being up: the session
-# manager is what actually routes anything, and the symptom of it being dead
-# is silence with a perfectly healthy-looking pipewire.
+# wireplumber routes everything; pipewire alone up means silence
 sect "Audio"
 for svc in pipewire pipewire-pulse wireplumber; do
   if systemctl --user is-active "$svc" &>/dev/null; then
@@ -142,9 +126,6 @@ have pacman && {
 have checkupdates && row "Updates" "$(checkupdates 2>/dev/null | wc -l) pending"
 
 # --- services ----------------------------------------------------------------
-# Failed units are the single highest-signal thing here: a dead
-# bt-agent/hypridle/wireplumber explains a whole class of "feature X stopped
-# working" without any further digging.
 sect "Failed units"
 sys_failed=$(systemctl --failed --plain --no-legend 2>/dev/null | awk '{print $1}')
 usr_failed=$(systemctl --user --failed --plain --no-legend 2>/dev/null | awk '{print $1}')
@@ -157,8 +138,6 @@ else
 fi
 
 # --- tools -------------------------------------------------------------------
-# Everything the shell shells out to. A missing one here is usually the whole
-# explanation for a single feature being dead while the rest is fine.
 sect "Required tools"
 missing=()
 for t in hyprctl quickshell grim slurp wl-copy iwctl wpctl brightnessctl \
@@ -172,8 +151,6 @@ else
 fi
 
 # --- logs --------------------------------------------------------------------
-# The shell's own log is where a QML error lands, and a QML error is why the
-# bar is missing often enough to be worth surfacing without -v.
 log=$HOME/.cache/quickshell.log
 sect "Shell log"
 if [[ -r $log ]]; then
@@ -192,10 +169,7 @@ fi
 if (( verbose )); then
   sect "Recent session journal"
   printf '%s' "$dim"
-  # A single coredump entry carries a whole stack trace -- forty lines of hex
-  # that bury everything else in the window. The frames and ELF notes are
-  # dropped (that something dumped core still shows, in the systemd-coredump
-  # line introducing them) and the rest is cut to a width that won't wrap.
+  # coredump frames dropped and lines cut to width
   journalctl --user -p warning -n 60 --no-pager 2>/dev/null \
     | grep -vE '^\s+#[0-9]+ +0x|ELF object binary architecture|Stack trace of|^\s*$' \
     | tail -n 30 | cut -c1-150 | sed 's/^/    /'

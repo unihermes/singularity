@@ -1,16 +1,10 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/looks.lua
 --
--- How windows look and move: gaps, borders, rounding, shadows, blur, the tab
--- bar over grouped windows, and the animations. Most values come from state
--- files the Appearance page writes; Settings > Appearance reads the plain
--- fields under general and decoration here, and writes its own changes to
--- hyprland.json (see overrides.lua).
---
--- grayscale ramp, shared with every other config in this repo:
---   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
---   #303030 border #4d4d4d muted  #7a7a7a subtext  #d0e2fa text
---   #ebebeb bright
+-- How windows look and move: gaps, borders, rounding, shadows, blur, the
+-- grouped windows' tab bar, animations. Values mostly come from state files
+-- Appearance writes; its own field changes go to hyprland.json
+-- (overrides.lua).
 
 local S = require("shared")
 
@@ -18,15 +12,10 @@ local S = require("shared")
 -- only slide or fade, so the styles that don't slide show it as a fade.
 local scratchStyle = S.windowSlides and "slidevert" or "fade"
 
--- "<active> <inactive>" border colours, written by the Appearance page when
--- borders follow the shell's accent; otherwise absent, and the colours
--- under general below apply.
+-- "<active> <inactive>" border colours when borders follow the accent
 local borderActive, borderInactive = S.state("borders", ""):match("^(%S+)%s+(%S+)$")
 
--- "<active tab> <inactive tab> <active text> <inactive text> <accent>" for
--- the tab bar over grouped windows (see TABS in windows.lua), written by the
--- Appearance page from the current look; absent, the colours under group
--- below apply.
+-- the tab bar's colours from the look; absent, the group defaults below
 local tabActive, tabInactive, tabText, tabTextInactive, tabAccent =
     S.state("groupbar", ""):match("^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$")
 
@@ -51,10 +40,8 @@ windowBorder = tonumber(windowBorder) or 1
 windowShadow = windowShadow or "soft"
 local shadowRange = ({ small = 8, soft = 18, large = 34 })[windowShadow] or 18
 
--- The open tab's fill, with a line of the accent along its top edge. The
--- groupbar has no colour of its own for that line (its indicator shares the
--- fill's colour), so it's the last stops of a vertical gradient: the last
--- two of twenty are the accent, a line about 2px thick on a 26px bar.
+-- the open tab's fill with an accent line along its top, as the last stops
+-- of a vertical gradient (the groupbar has no colour for it)
 local function tabFill(fill, accent)
     local colors = {}
     for i = 1, 18 do colors[i] = fill end
@@ -165,9 +152,7 @@ hl.config({
         mouse_move_enables_dpms = true,
     },
 
-    -- A fullscreen game's frames go straight to the display, skipping
-    -- compositing; 2 limits it to windows tagged as games, where 1 (every
-    -- fullscreen window) can flicker on some apps.
+    -- direct scanout for windows tagged as games only (1 can flicker)
     render = {
         direct_scanout = 2,
     },
@@ -191,16 +176,11 @@ animation({ leaf = "workspaces", enabled = true, speed = 2, factor = ws, bezier 
 animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, factor = ws, bezier = "singularity",
             style = scratchStyle })
 
--- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which
--- they'd otherwise inherit, since a launcher should appear at once. fade
--- rather than popin, since the bar is a layer too.
+-- layers (wofi, flyouts) faster than global, fading
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
--- The shell's surfaces (the bar is "quickshell", the rest "singularity-*")
--- blur what's behind their see-through grounds, which the Glass style and a
--- See-through below 100% rely on. ignore_alpha leaves the transparent rest
--- of a full-screen flyout surface, and the faint edge of a soft shadow,
--- unblurred.
+-- the shell's surfaces blur what's behind (Glass, See-through);
+-- ignore_alpha leaves fully transparent parts unblurred
 hl.layer_rule({
     name  = "shell-blur",
     match = { namespace = "^(quickshell|singularity-.*)$" },
