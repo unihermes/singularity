@@ -1,162 +1,32 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Looks.js
 //
-// The shell's looks: complete, named sets of the values Theme.qml hands out.
-// Components never read this file -- they ask Theme for a role (Theme.panel,
-// Theme.hoverFill, Theme.rowHeight) and Theme answers from whichever look is
-// active, so switching look restyles everything at once.
-//
-// Switch looks from the Appearance page, the Control Centre, or a keybind:
-//   qs ipc call look cycle        qs ipc call look set singularity
+// The shell's looks: named sets of the values Theme hands out. Components
+// never read this file; they ask Theme for a role. Switch with the
+// Appearance page, the Control Centre or `qs ipc call look set <name>`.
 //
 // A look has two halves:
-//
-//   settings  -- the values the Appearance page can also change. Picking a
-//                look writes these into Settings; after that they're the
-//                user's to adjust, and the look only comes back on a
-//                re-pick. Every look states a `style` (Styles.js), which
-//                draws all of its chrome; the Finish switches a look leaves
-//                out come from its style.
+//   settings  -- values Appearance can also change, written into Settings
+//                when the look is picked. Every look states a `style`
+//                (Styles.js); Finish switches it leaves out come from it.
 //   the rest  -- fixed per look:
-//     palette        the ten-role ramp (see below)
-//     accent         the one hue for marks: selection ticks, focus, current
-//                    items. null = the ramp's bright, a colourless look
-//     good, alert    status hues
-//     scrim          how dark full-screen overlays dim the desktop
-//     motion         a factor on every animation; 0 for a look that should
-//                    never move (e-ink)
-//     layout         optional: the bar's arrangement, as Bar Widgets stores
-//                    it -- { left, centre, right: [module keys], hidden:
-//                    [keys], anchor: the pinned centre module or "" }.
-//                    Picking the look replaces Bar Widgets' arrangement;
-//                    leaving it for a look without one restores the user's.
-//                    Keys a section omits go back to their default section.
+//     palette      the ten-role ramp (below)
+//     accent       the one hue for marks; null = the ramp's bright
+//     good, alert  status hues
+//     scrim        how dark full-screen overlays dim
+//     motion       a factor on every animation (0: never moves)
+//     layout       optional bar arrangement as Bar Widgets stores it
+//                  ({ left, centre, right, hidden, anchor }); replaces the
+//                  user's while the look is on
 //
-// The shape keys in `settings`:
-//     style        one of Styles.order
-//     radius       Roundness: chips, panels, the bar and Hyprland's windows
-//     barStyle     "full" edge to edge, "floating" inset and rounded, or
-//                  "islands", each group of modules on its own ground
-//     spacing      every gap and padding, in percent (Theme.sp)
-//     rowScale     row heights, in percent (Theme.row); text never clips
-//     barHeight    the bar's height in px; its chips grow with it
-//     barIconSize  the bar's glyphs, in px at the base font size
-//     modulePad    px either side of each bar module, before spacing
-//                  (Settings.densities names the usual sets of the first
-//                  three)
-//     edgeGap      px between the screen's edges and the windows, and a
-//                  floating bar or its islands; unstated, edgeGaps[barStyle]
-//     seeThrough   the bar's and panels' opacity, in percent
-//     focusedOpacity, unfocusedOpacity   Hyprland's windows' opacity when
-//                  focused and not, in percent; unstated, the style's
-//     terminalOpacity the terminal's background opacity, in percent;
-//                  unstated, the style's
-//     shadows, gradient, heavyLines, headingUpper, headingRule, headingMark,
-//     barSeparator, levelColour, clockIsland   the Finish switches
-//                  (Settings.qml)
-//     styleOptions the style's own options that are on, comma-joined ids
-//                  (Styles.js `options`); unstated, the style's
+// `settings` keys are Settings.qml's, with values from Settings.choices and
+// units as in Settings.limits; settingsBase below fills in any a look omits.
 //
-//     paletteBase … paletteBright   one ramp role each, "" for the
-//                  look's own (grayscale only)
-//     colourGood, colourAlert       the status hues, "" for the look's own
-//     accentText   text on accent fills: "auto", "white" or "dark"
-//
-// The content keys in `settings`:
-//     barPosition  "top" or "bottom"
-//     windowBorderWidth   Hyprland's border: "style" (as thick as the
-//                  strokes) or "0".."3" px
-//     windowBorderFocused  "accent", "text" or "custom" (…FocusedHex)
-//     windowBorderUnfocused "border", "none" or "custom" (…UnfocusedHex)
-//     windowRounding  "shell" (the panels' corners) or "own" (windowRadius)
-//     windowShadow "style" (the style's, with Shadows), "off", "small", "large"
-//     tabBar       grouped windows' tab bar: "shell" colours or "accent"
-//     flyoutWidth  bar flyouts' width, in percent of their own
-//     launcherRows results the launcher shows before it scrolls (four
-//                  more when it's full screen)
-//     notifWidth   notification popups' width, in px at the base font size
-//     workspaceStyle "pills"  the current workspace a long pill, others stubs
-//                  "dots"     one dot each, the current one lit
-//                  "lines"    one short rule each, the current one lit
-//                  "numbers"  1 2 3, the current one lit
-//                  "blocks"   squares: filled when occupied, lit when current
-//                  "roman"    I II III, the current one lit
-//                  "names"    the names in Settings.workspaceNames, numbers
-//                             for the rest
-//                  "apps"     the icon of an app open on each, a dot when empty
-//     controlIcon  the Control Centre button's glyph: "arch" by default, or
-//                  any of Settings.choices.controlIcon
-//     clockStyle   "stamp"    23:50:02 | 09/18/26
-//                  "time"     23:50
-//                  "seconds"  23:50:02
-//                  "day"      Fri 19 Sep  23:50
-//                  "long"     Friday, September 19 · 23:50
-//                  "iso"      2026-09-19  23:50
-//                  "custom"   Settings.clockFormat, a Qt date format
-//     windowStyle  "icons"    the open windows' icons, a short rule under each,
-//                             a long accent one under the focused window
-//                  "titled"   the same, with the focused window's title
-//                  "glide"    the icons over one rail, an accent slider
-//                             travelling to the focused one
-//                  "lift"     no marks: the focused icon large and in
-//                             colour, the rest small and grey
-//                  "inset"    the focused icon in a recessed well
-//                  "segmented" segments of one control, the focused one
-//                             on a soft accent ground
-//                  "spotlight" the focused window a capsule with its
-//                             title, the rest small icons
-//                  "tabs"     icon and title for every window, the focused
-//                             one on a lit ground -- a classic taskbar
-//                  "index"    a number and the app's name for each, the
-//                             focused one on an accent ground
-//                  "dots"     a dot per window, no icons
-//     windowScope  "workspace" the focused workspace's windows
-//                  "all"      every workspace's, grouped, a rule between
-//     iconTint     "colour"   app icons as they are
-//                  "mono"     greyed, so they sit in a colourless look
-//                  "accent"   tinted the accent's hue
-//     vizStyle     the bar's audio visualizer, in the meter colour:
-//                  "mirror"   pills growing out from the middle
-//                  "rise"     bars rising from the bottom
-//                  "dots"     a stack of up to four dots per band
-//                  "line"     one line through every band's level
-//     launcherLayout "list" rows of results, "grid" a grid of large app
-//                  icons (apps only; the other modes stay a list), "line"
-//                  one compact row under the field, dmenu-like
-//     launcherPosition "centre" of the screen, "top" just under the bar,
-//                  "full" centred over a dimmed screen, with more rows
-//     launcherDetails true: each result's second line (what the app is,
-//                  where the file is) and the key hints; false: names only
-//     notifStyle   notification popups: "full" every part of them,
-//                  "compact" the body, picture and actions only while
-//                  hovered, "banner" one line of summary and body
-//     barSeparator between the bar's modules: "none", a thin "line", two
-//                  ("double"), a "dot", three stacked ("dots"), or a line
-//                  with a dot at each end ("capped")
-//     altTabStyle  the ALT+Tab switcher's cards: "icons", "titled" an icon
-//                  over each window's title, "previews" a still of each
-//                  window with its app's icon in the corner
-//     altTabScope  which windows ALT+Tab offers: "workspace" the focused
-//                  workspace's, "all" every workspace's
-//     overviewLayout SUPER+W's workspaces: a "grid" three across, or a
-//                  "strip" of every workspace in one row
-//     overviewBackdrop behind the overview: the desktop "dim"med by the
-//                  overlay dimming, "clear", or hidden behind a "solid" ground
-//     powerStyle   the power menu: a "row" of tiles, a "list" of rows, or
-//                  "full" screen -- large tiles over a darkened desktop
-//     levelStyle   the volume/brightness popup when the clock island is
-//                  off: a level "pill" under the bar, a vertical bar at the
-//                  screen's right "edge", or the "number" itself
-//     gradient     true: the bar's ground and the panels shade from a
-//                  little lighter at the top to a little darker at the
-//                  bottom; false: flat grounds
-//
-// The palette's roles are semantic, not literal lightness: base is the most
-// recessed ground (meter tracks), panel the flyouts' ground, overlay a hover
-// fill, border a stroke, text/bright the foreground. A light look simply
-// makes the grounds light and the foreground dark -- text on `panel` must
-// read, `border` must show on `panel`, `bright` must stand out from `text`. Colour mode "wallpaper" swaps these
-// ten for tones from the image (Wallpaper.qml) and keeps the rest.
+// The palette's roles are semantic: base the most recessed ground (meter
+// tracks), panel the flyouts' ground, overlay a hover fill, border a
+// stroke, text/bright the foreground. A light look makes the grounds light
+// and the foreground dark. Wallpaper colour mode swaps these ten for the
+// image's tones (Wallpaper.qml).
 
 .pragma library
 
@@ -187,10 +57,9 @@ var looks = {
             style: "double", radius: 6, fontFamily: "UbuntuMono Nerd Font",
         },
     },
-    // The rest are ports of well-known editor themes: each one's own
-    // backgrounds and foregrounds laid along the ramp, its signature hue as
-    // the accent. Their accents are light, so accent fills say white text
-    // outright rather than leaving it to "auto".
+    // Ports of well-known editor themes: their grounds and foregrounds laid
+    // along the ramp, their signature hue as the accent (light, so accent
+    // text is white outright).
     arch: {
         name: "Arch",
         description: "Blue-black greys and the Arch logo's blue, outlined chips",
@@ -286,9 +155,7 @@ var looks = {
 }
 var order = Object.keys(looks)
 
-// The settings a look doesn't state. Filled in rather than left out so
-// picking any look sets all of them -- otherwise leaving a bottom-bar look
-// for one that doesn't say would keep the bar at the bottom.
+// the settings a look doesn't state, so picking any look sets all of them
 var settingsBase = {
     // the ramp's roles one by one, "" for the look's own (grayscale only)
     paletteBase: "", paletteBar: "", palettePanel: "", paletteSurface: "", paletteOverlay: "",
@@ -299,9 +166,7 @@ var settingsBase = {
     // text on an accent fill: "auto" picks white or dark by the accent's
     // brightness
     accentText: "auto",
-    // the headings' mark's colour ("accent", "text", "muted") and their
-    // size against body text ("smaller", "same", "larger"); the mark
-    // itself (headingMark) comes with the style
+    // the heading mark's colour and the headings' size against body text
     headingMarkColour: "accent",
     headingSize: "smaller",
     spacing: 100,
@@ -350,9 +215,8 @@ var settingsBase = {
 // edges and the windows meet it, a floating one leaves room all round.
 var edgeGaps = { full: 0, floating: 10, islands: 10 }
 
-// The parts of the fixed half the Appearance page can also adjust, copied
-// into `settings` in the units Settings stores ("" for no accent, scrim in
-// percent), so picking the look sets them like the rest.
+// the fixed half's adjustable parts, in Settings' units ("" for no accent,
+// scrim in percent)
 function adjustable(look) {
     return {
         accent: look.accent || "",
@@ -392,11 +256,9 @@ var accents = [
 // their colours are this ramp, and AppearanceSync maps each one to the current role.
 var reference = "singularity"
 
-// Fonts the Appearance page offers: monospace faces only, each as its plain
-// "Nerd Font" family. Not the "Nerd Font Mono" variant, which squashes every
-// icon into one text cell (see Theme.fontText), and not "Propo", which isn't
-// monospace. The first is the fallback (Fonts.resolve). Each is a package in
-// packages/pacman.txt; the page only lists the installed ones.
+// Fonts Appearance offers: monospace Nerd Font families (not "Mono", which
+// squashes icons; not "Propo"). The first is the fallback; the page lists
+// only the installed ones.
 var fonts = [
     "UbuntuMono Nerd Font", "JetBrainsMono Nerd Font", "FiraCode Nerd Font", "Hack Nerd Font",
     "CaskaydiaCove Nerd Font", "SauceCodePro Nerd Font", "BlexMono Nerd Font", "VictorMono Nerd Font",
@@ -419,19 +281,15 @@ var fontLabels = {
 // regular: Ubuntu Mono has no medium, and its regular reads thin.
 var fontWeights = { "UbuntuMono Nerd Font": "bold" }
 
-// The system font: what GTK and Qt apps draw everywhere outside the shell
-// itself (AppearanceSync.renderGtk/renderQt) -- independent of `fonts` above,
-// which is the shell's own monospace-only face. Proportional, general-purpose
-// faces only, each one a package pacman.txt already installs, so every entry
-// here is always selectable. The first is the fallback.
+// GTK and Qt apps' font (AppearanceSync), proportional faces pacman.txt
+// installs; the first is the fallback
 var systemFonts = ["Ubuntu Nerd Font", "Noto Sans"]
 var systemFontLabels = {
     "Ubuntu Nerd Font": "Ubuntu", "Noto Sans": "Noto Sans",
 }
 
-// Density's presets: Spacing, Row height and Bar height at once. Rows
-// move half as far as the gaps, so compact rows tighten a little while the
-// space between them tightens more.
+// Density's presets: Spacing, Row height and Bar height at once (rows move
+// half as far as the gaps)
 var densities = {
     compact: { spacing: 75, rowScale: 88, barHeight: 28 },
     normal:  { spacing: 100, rowScale: 100, barHeight: 32 },
