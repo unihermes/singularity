@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ClaudeFlyout.qml
 //
-// The Claude module's flyout: the conversation, what it has changed so far,
-// and the box to ask in. Changes pile up in a staging copy until Apply
-// (services/ClaudeShell.qml), so the diff here is the whole review -- there
-// is no other step between it and the live desktop.
-//
-// Takes the keyboard the moment it opens, like the launcher: the point is
-// to press SUPER+I and start typing.
+// The Claude flyout: the conversation, the staged diff (the whole review
+// before Apply, ClaudeShell.qml) and the ask box, which takes the keyboard
+// on open.
 
 import QtQuick
 import "../services"

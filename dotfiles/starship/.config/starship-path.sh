@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
-# Emits $PWD for starship's custom.path module: the parent folders on a grey
-# capsule and the current folder as an accent pill on its end, the way the
-# bar marks the active workspace. Starship's own `directory` module has one
-# style for the whole path, so it can't draw the two parts differently.
-#
-# Colours and capsule shape come from term-colors.sh, which Quickshell
-# (AppearanceSync.qml) writes for the current look: round caps when the look
-# has a radius, square blocks at 0. Defaults are Singularity's.
+# $PWD for starship's custom.path: parent folders on a grey capsule, the
+# current folder as an accent pill (starship's `directory` has one style).
+# Colours and shape from term-colors.sh (AppearanceSync); defaults are
+# Singularity's.
 N_OVERLAY='36;36;36' N_SUBTEXT='122;122;122'
 N_ACCENT='85;85;200' N_ON_ACCENT='235;235;235' T_ROUND=1
 . "$HOME/.local/state/singularity/term-colors.sh" 2>/dev/null

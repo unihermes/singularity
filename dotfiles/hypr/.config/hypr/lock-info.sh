@@ -2,10 +2,8 @@
 # Singularity - lock screen info line
 # ~/.config/hypr/lock-info.sh
 #
-# The line under hyprlock's clock: the date when asked for, then whatever
-# the shell keeps in ~/.local/state/singularity/lock-info (the track that's
-# playing, unread notifications -- see quickshell's AppearanceSync). Parts
-# are joined with a middle dot; nothing at all prints an empty line.
+# The line under hyprlock's clock: the date if asked, then the shell's
+# lock-info state (track, unread count), joined by middle dots.
 #
 #   lock-info.sh [date]
 

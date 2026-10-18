@@ -2,11 +2,8 @@
 // ~/.config/quickshell/services/DesktopThemes.qml
 //
 // The cursor and icon themes installed, for the Appearance page's pickers.
-// Both live in the same XDG icon directories: a cursor theme is one with a
-// cursors/ folder, an icon theme one whose index.theme lists Directories.
-// Bibata's index.theme only inherits, so it counts as a cursor theme alone,
-// while Adwaita is both. `default` (an alias for another theme) and
-// `hicolor` (the fallback every icon theme inherits) are never offered.
+// A cursor theme has a cursors/ folder, an icon theme Directories in its
+// index.theme; `default` and `hicolor` are never offered.
 
 pragma Singleton
 

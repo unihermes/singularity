@@ -2,10 +2,8 @@
 # Singularity - brightness
 # ~/.config/hypr/brightness.sh
 #
-# The brightness keys, in steps of 5% that always land on a multiple of 5.
-# Below 5% the steps are finer: 5 -> 1 -> 0 and back up. A plain `brightnessctl set 5%-` steps from wherever the level
-# is, so one odd value (from the slider, or a raw write) kept every later
-# step off the grid.
+# The brightness keys, in 5% steps snapped to the grid (finer below 5%:
+# 5 -> 1 -> 0).
 #
 #   brightness.sh up | down
 

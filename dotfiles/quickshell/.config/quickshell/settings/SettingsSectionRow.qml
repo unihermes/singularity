@@ -4,9 +4,8 @@
 // One of Settings' search hits: the setting's name over the page and
 // heading it lives on (`blurb`), with that page's icon.
 //
-// `current` is where the arrow keys are while the search field has focus
-// (a fill, a tick and a grey chevron). A hovered row shows the fill and
-// the grey chevron too, as a way in.
+// `current` marks the arrow keys' row (fill, tick, chevron); hover shows
+// the fill and chevron.
 
 import QtQuick
 import "../services"

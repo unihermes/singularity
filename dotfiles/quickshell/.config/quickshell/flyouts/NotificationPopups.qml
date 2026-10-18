@@ -1,12 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NotificationPopups.qml
 //
-// Notifications as they arrive, stacked from the corner or edge Settings >
-// Notifications picks, newest nearest the edge, on the focused screen only.
-// Each leaves after its timeout (Notifications.timeoutFor), its urgency
-// stripe running down as the time goes, held while the pointer is on it; it stays in the history until cleared there. With
-// Settings.notifGroup, one app's popups share a card: the newest, with a
-// count, which takes the rest down with it.
+// Notifications as they arrive, stacked from Settings' chosen corner on the
+// focused screen. Each leaves after its timeout (stripe running down, held
+// while hovered) and stays in the history. Grouped (notifGroup), an app's
+// popups share one card with a count.
 
 import Quickshell
 import Quickshell.Hyprland

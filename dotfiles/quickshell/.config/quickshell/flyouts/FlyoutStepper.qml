@@ -1,13 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutStepper.qml
 //
-// An integer setting in a flyout: a label, a minus, the value, a plus.
-//
-// A stepper rather than Slider.qml, which the volume and brightness panels
-// use. Those are 0-100 and approximate -- you drag until it looks right.
-// These are small exact integers where the whole range is a dozen steps and
-// every one is visible, so a 200px track would make single-pixel changes a
-// game of aim. The row still shows the range so the ends aren't a surprise.
+// An integer setting: label, minus, value, plus, for small exact ranges
+// where a slider would be fiddly; the range is shown.
 
 import QtQuick
 import "../services"
