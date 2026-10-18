@@ -1,14 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/HomeRow.qml
 //
-// One tile on a window's Home (WindowHome.qml): the page's icon in the
-// accent, its name with a line under it saying what's there, and on the
-// right what it's set to or reading now (`status`), an optional minute of
-// history (`history`), then a chevron. Rows in a group sit in one framed
-// block, split by a hairline over every row but the first.
-//
-// `current` is where the arrow keys are while the search has focus; it
-// lights the row the same way hovering does.
+// A Home tile: accent icon, name and blurb, `status` and optional `history`
+// on the right, a chevron; `current` lights it for the arrow keys.
 
 import QtQuick
 import "../services"

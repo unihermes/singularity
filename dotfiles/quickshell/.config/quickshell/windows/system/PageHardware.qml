@@ -5,9 +5,8 @@
 // displays and the input devices attached to it, and every temperature and
 // fan the kernel exposes.
 //
-// The device names under INPUT are Hyprland's own, which is the reason to
-// print them: a device rule in input.lua has to match one of these
-// strings exactly, and guessing it is the usual way that goes wrong.
+// INPUT shows Hyprland's device names, which input.lua's device rules must
+// match exactly.
 
 import Quickshell
 import QtQuick

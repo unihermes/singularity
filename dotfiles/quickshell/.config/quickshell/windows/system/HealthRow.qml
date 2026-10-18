@@ -1,14 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/HealthRow.qml
 //
-// One check on the Health page: a status dot, what was checked, what was
-// found under it, and -- when there are any -- the buttons that fix it.
-//
-// The dot carries the status on its own rather than colouring the label:
-// every other row in this window uses label colour for emphasis, and a red
-// label here would read as "this row is important" instead of "this is the
-// broken one". A grayscale palette has no red to lean on anyway, so the dot
-// is filled for a problem and hollow for a pass, which survives both.
+// A Health check: a status dot (filled for a problem, hollow for a pass, so
+// it reads in grayscale), the check, the finding, and its fix buttons.
 
 import QtQuick
 import "../../services"

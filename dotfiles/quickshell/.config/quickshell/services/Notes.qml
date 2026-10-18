@@ -1,13 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Notes.qml
 //
-// The sticky notes behind windows/NotesWindow.qml: a list of tabs, each a title and
-// its text, and which one was open last. Kept in
-// ~/.local/state/singularity/notes.json with the rest of the shell's state.
-//
-// Every edit lands in memory at once and reaches the disk a moment after the
-// last keystroke, so typing never waits on a write. flush() writes straight
-// away, for the window closing.
+// The sticky notes' tabs (title, text) and the last open one, in
+// notes.json; edits save a moment after typing, flush() at once.
 
 pragma Singleton
 

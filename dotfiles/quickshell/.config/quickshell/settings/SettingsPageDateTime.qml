@@ -1,14 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageDateTime.qml
 //
-// The system's time zone and network time, through timedatectl (a change
-// asks the polkit agent for the password), and the shell's own clock
-// preferences: 12- or 24-hour, and the calendar's first weekday. Those two
-// live in Settings.qml and reach the bar clock and the calendar flyout
-// straight away.
-//
-// A running Qt program keeps the zone it started with until told otherwise,
-// so a zone change made here calls Date.timeZoneUpdated() for the shell.
+// Time zone and network time via timedatectl (polkit asks), and the shell's
+// 12/24-hour and first-weekday preferences. A zone change calls
+// Date.timeZoneUpdated() so the shell follows.
 
 import Quickshell
 import Quickshell.Io

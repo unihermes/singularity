@@ -1,9 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/Slider.qml
 //
-// Hand-rolled rather than QtQuick.Controls' Slider: Controls pulls in a
-// style plugin and its own theming, which would fight the grayscale ramp
-// for the sake of one widget. A track drawn the style's way, and a drag:
+// Hand-rolled (Controls' Slider brings its own style), drawn per style:
 //   channel    a level chip, the fill in a dark groove, a bright marker
 //   double     a stroked well with the fill inside
 //   solid      a thick bar

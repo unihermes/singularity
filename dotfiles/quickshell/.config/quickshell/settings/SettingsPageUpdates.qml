@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageUpdates.qml
 //
-// Software updates: how often Updates.qml checks, whether the AUR is part of
-// it, and packages to leave alone -- all kept in Settings.qml, so the bar's
-// Updates module and flyout follow at once. What's pending and the upgrade
-// itself are Updates.qml's, as the flyout uses them, and so is the
-// Singularity clone's status and update.sh; the upkeep rows are
-// Health's package checks, with the same repair buttons as System's Health
-// page.
+// Software updates: check interval, AUR, ignored packages (Settings.qml);
+// pending updates, the upgrade and the Singularity clone from Updates.qml;
+// upkeep rows from Health's package checks.
 
 import Quickshell
 import Quickshell.Io

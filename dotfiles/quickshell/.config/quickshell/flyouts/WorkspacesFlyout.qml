@@ -1,14 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspacesFlyout.qml
 //
-// The window-overview flyout: every window on every workspace, grouped
-// under a header per workspace. Needs bar.allWindows() for its list.
-//
-// Drawn in the bar's workspace/window-strip language: each header carries
-// a pip that's a long accent pill on the current workspace and a muted stub
-// elsewhere, and each window row carries the same pip under its icon --
-// accent for the focused window, with the others' icons dimmed until
-// hovered. Left click focuses (header: switches workspace), middle closes.
+// Every window on every workspace under a header per workspace, with the
+// strip's pips. Left click focuses (a header switches), middle closes.
 
 import "../services"
 import Quickshell.Hyprland
