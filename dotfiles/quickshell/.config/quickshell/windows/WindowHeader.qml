@@ -1,16 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/WindowHeader.qml
 //
-// The title bar the standalone windows (Settings, System, Keybinds) share,
-// one line high: an accent bar, the window's name with a quieter subtitle
-// after it, then `slot` -- the rest of the line, where Settings puts its
-// search -- and a Close button. Dragging it moves the window.
-//
-// Inside a page (`page` set) it reads as a path instead: a back button in
-// place of the bar, the window's name quieter and clickable, then the
-// page's name; both go back to the window's Home (`back`).
-//
-// Sits over a WindowChrome, which draws the ground and takes Escape.
+// The standalone windows' one-line title bar: accent bar, name and subtitle,
+// `slot` (Settings' search), Close; drags the window. With `page` set it
+// reads as a path with a back button; both go `back` to Home.
 
 import QtQuick
 import "../services"

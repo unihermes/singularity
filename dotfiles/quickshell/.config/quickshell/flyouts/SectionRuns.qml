@@ -1,16 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/SectionRuns.qml
 //
-// The sectioned treatment: a frame behind each run of a column's children,
-// a run ending at a heading, a divider or a page's bare spacer Item. The
-// frame is the style's own (Theme.frameStyle):
-//   channel  the channel's three bands
-//   double   an outer stroke and an inner one inset
-//   single   one stroke
-//   none     the ground alone
-// and nothing at all under Flat (Theme.sectionFramed).
-// Put it beside the column, under it, and say where the column's top sits
-// in this item.
+// A frame behind each run of a column's children (ending at a heading,
+// divider or bare spacer), in Theme.frameStyle; none under Flat. Put it
+// beside the column, under it, with the column's top as columnY.
 
 import QtQuick
 import "../services"

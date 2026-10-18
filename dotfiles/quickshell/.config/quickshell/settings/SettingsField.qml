@@ -33,11 +33,8 @@ Item {
     // Appearance page's list of changes), so a search lands on the field
     property bool searchable: true
 
-    // The page a search result landed on rings the field it named. Found by
-    // walking up rather than passed in, so no page has to thread it through.
-    // named for what it is rather than `page`, which every Settings page
-    // already uses as its own id -- a property here would shadow it inside
-    // any field the page declares
+    // the page, found by walking up, to ring a searched field (not named
+    // `page`, which would shadow every page's own id)
     readonly property var hostPage: {
         var p = parent
         while (p) {

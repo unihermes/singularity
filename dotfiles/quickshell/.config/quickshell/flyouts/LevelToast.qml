@@ -1,16 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/LevelToast.qml
 //
-// Volume/brightness OSD: a thin level bar flush under the bar, naming
-// whichever one last changed and fading out on its own -- same shape as
-// ModeToast, but two triggers instead of one and a fill bar instead of a
-// label. Not gated to the focused screen like ModeToast/WorkspaceOverlay:
-// volume and brightness are both system-wide, not per-monitor state, so a
-// hardware key press should show the OSD wherever it's looked at, not only
-// on whichever screen last had focus.
-//
-// Drawn as Theme.levelStyle says: the level bar under the bar, a vertical
-// bar at the screen's right edge, or the number itself under the bar.
+// Volume/brightness OSD on every screen (both are system-wide), fading on
+// its own, per Theme.levelStyle: a bar under the bar, a vertical bar at the
+// right edge, or the number.
 
 import Quickshell
 import QtQuick

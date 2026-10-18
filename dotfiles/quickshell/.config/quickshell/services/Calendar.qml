@@ -1,15 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Calendar.qml
 //
-// Events from the iCalendar feeds in ~/.local/state/singularity/calendars.conf
-// ("Name = URL" per line), for the calendar flyout. scripts/calendar-events.py
-// downloads and expands them into a cache file this watches, so events show
-// straight away at login and stay up while offline.
-//
-// Refreshed every hour, every 2 minutes while a download is failing, and a few
-// seconds after waking from sleep, once the network is back. Every run is
-// capped by `timeout`, whose clock keeps counting through a suspend, so a
-// download cut off by sleep can't leave the service stuck on a dead process.
+// Events from calendars.conf's feeds ("Name = URL"), expanded by
+// calendar-events.py into a watched cache (so they show offline). Refreshed
+// hourly, every 2 minutes while failing, and after waking; runs capped by
+// `timeout`.
 
 pragma Singleton
 

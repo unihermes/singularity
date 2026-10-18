@@ -1,15 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/PanelFrame.qml
 //
-// The panel ground every flyout and standalone window shares. How the frame
-// itself is drawn is Theme.frameStyle:
-//   double  the #141414 fill, an outer stroke, and a second stroke inset 3px
-//           inside it -- Singularity's own look
-//   single  the outer stroke alone
-//   none    no stroke -- the ground alone marks the edge
-//   channel an outer line, a dark groove and an inner line (Channel.qml),
-//           with rounder corners to clear them
-// ModuleFrame is the bar chip's tighter version of the same look.
+// The panel ground every flyout and window shares, framed per
+// Theme.frameStyle (double, single, none, or channel via Channel.qml).
+// ModuleFrame is the bar chip's version.
 
 import QtQuick
 import "../services"
