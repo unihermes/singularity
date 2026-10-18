@@ -359,15 +359,19 @@ Settings') are laid out the same way.
   network… last. SAVED rows carry everything: where it is, security and
   when it last joined as the hint, the Auto-join switch, and Forget as a
   bin on hover (two clicks).
-- **Bluetooth:** the adapter is a card the same way (its name, hci id, how
-  many paired and connected, the power switch). Device rows carry the type
-  icon on the left, and on the right the battery and Connected / Not
-  connected (nearby ones say what they are). A paired device opens in place
-  (`SettingsIndent`): Connect, battery as level chips (one per bud and the
-  case), Reconnect by itself, rename, type, address, Remove. Scan sits on
-  the IN RANGE heading, its icon turning while it runs (`FlyoutChip.icon`
-  and `spinning`), and the unnamed devices are a last "Show N unnamed" row.
-  Discoverable's hint counts down to BlueZ's timeout.
+- **Bluetooth** (picked 2026-10-18, 1B 2B 3B 4B 5A): the adapter is a card
+  the same way (its name, hci id, how many paired and connected), with
+  Discoverable and Pairable as toggle chips beside the power switch;
+  Discoverable's chip counts down to BlueZ's timeout (Visible 2:59).
+  Paired devices are two-line rows (`BtPairedRow`): type icon, the name
+  over its type and state, the battery as level chips (`BatteryChips`: one,
+  or L / R / Case for earbuds) on the right, Connect / Disconnect in their
+  place on hover. Opened (`SettingsIndent`): Connect · Rename · Remove as
+  one line of chips, Battery, Reconnect by itself, then a line of fine
+  print (type, the address, which copies, and the advertised name). Scan
+  sits on the IN RANGE heading, its icon turning while it runs
+  (`FlyoutChip.icon` and `spinning`), and the unnamed devices are a last
+  "Show N unnamed" row.
 - **Display:** the arrangement picture is always there: every connected
   display to scale, one that's off drawn dashed to the left (Off · lid
   shut). Dragging arranges, a click opens that display, and the open one

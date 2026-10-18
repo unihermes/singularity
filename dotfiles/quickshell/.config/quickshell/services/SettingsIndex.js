@@ -27,7 +27,9 @@ var entries = [
     { page: "bluetooth", section: "Adapter",  label: "Adapter",      keywords: "bt radio bluez power on off rfkill name hci interface" },
     { page: "bluetooth", section: "Adapter",  label: "Discoverable", keywords: "visible advertise findable timeout" },
     { page: "bluetooth", section: "Adapter",  label: "Pairable",     keywords: "accept pairing requests" },
-    { page: "bluetooth", section: "Paired",   label: "Paired",       keywords: "devices connect disconnect rename remove forget battery trusted reconnect" },
+    { page: "bluetooth", section: "Paired",   label: "Paired",       keywords: "devices connect disconnect rename remove forget trusted address" },
+    { page: "bluetooth", section: "Paired",   label: "Battery",      keywords: "level charge earbuds case left right percent" },
+    { page: "bluetooth", section: "Paired",   label: "Reconnect by itself", keywords: "trusted auto connect automatic" },
     { page: "bluetooth", section: "In range", label: "In range",     keywords: "scan discover pair headphones mouse keyboard nearby unnamed" },
 
     // --- Power & Idle ------------------------------------------------------
