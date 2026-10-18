@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/BarModules.qml
 //
-// The bar's 20 modules (and the widgetItems registry shell.qml's Bar
-// Widgets reordering keys off of). The three big ones have files of their
-// own: WorkspacesModule, WindowsModule and TrayModule, each handed this
-// item as `host`.
-//
-//
-// Bar.qml reparents every module into its section's slot on completion, so
+// The bar's modules and the widgetItems registry Bar Widgets keys off. The
+// big ones have files of their own (WorkspacesModule, WindowsModule,
+// TrayModule), each handed this item as `host`. Bar.qml reparents every module into its section's slot on completion, so
 // declaration order doesn't matter, only the ids widgetItems names.
 
 import Quickshell
