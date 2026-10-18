@@ -1,30 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Theme.qml
 //
-// The one stylesheet. Colour, type, shape, spacing and motion for every bar
-// module, flyout, window and settings page come from here, so they agree
-// without any file carrying its own copy of a value -- and so swapping the
-// look (Looks.js) restyles all of it at once.
-//
-// A Quickshell Singleton rather than properties on the bar: the flyout
-// components are separate files and have no way to reach into the bar's
-// scope, and passing a palette down through every instantiation is worse
-// than one import-free global.
-//
-// Three layers, most specific wins:
-//   Looks.js     the active look's palette and fixed style
-//   Settings     what the Appearance page edits -- the style (Styles.js),
-//                roundness, bar shape, density, font, accent, colour mode --
-//                seeded by the look
-//   this file    semantic roles derived from both. Components ask for
-//                Theme.hoverFill, not Theme.overlay, so a look can remap
-//                what "hovered" means without touching any component.
-//
-// Rules for components:
-//   - no hex colours, font families or pixel sizes of their own
-//   - colours by semantic role where one exists, raw ramp role otherwise
-//   - text sizes from the type scale, row heights through row(), gaps and
-//     padding through sp() or the named steps, durations through dur()
+// The one stylesheet: colour, type, shape, spacing and motion for the whole
+// shell. Layers, most specific wins: the look (Looks.js), what Appearance
+// sets (Settings, the style in Styles.js), and the semantic roles here.
+// Components use roles (hoverFill, not overlay), the type scale, row(),
+// sp()/named steps and dur(); never their own hex, font or pixel sizes.
 
 pragma Singleton
 
@@ -41,22 +22,18 @@ Singleton {
     readonly property string lookName: Looks.looks[Settings.look] ? Settings.look : Looks.fallback
     readonly property var look: Looks.looks[lookName]
 
-    // Everything the style and the dials beside it decide (Styles.resolve)
+    // what the style and its dials decide (Styles.resolve)
     readonly property var resolved: Styles.resolve({
         style: Settings.style, styleOptions: Settings.styleOptions, radius: Settings.radius, barStyle: Settings.barStyle,
         barHeight: Settings.barHeight, spacing: Settings.spacing, seeThrough: Settings.seeThrough, shadows: Settings.shadows,
         heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim })
-    // the style in force: what every component that draws its own way
-    // per style switches on
+    // the style in force
     readonly property string style: resolved.styleName
-    // one of the style's own options (Styles.js `options`), on or off
+    // one of the style's own options, on or off
     function opt(id) { return Styles.has(Settings.styleOptions, id) }
 
-    // The look's own ramp. In wallpaper colour mode each role is swapped for
-    // the matching tone from the wallpaper's palette (see Wallpaper.qml);
-    // until one exists, or in grayscale mode, it's these.
-    // Grayscale takes the roles set one by one on the Appearance page
-    // (Settings.paletteBase …) over the look's.
+    // The look's ramp, with Appearance's per-role overrides in grayscale,
+    // or the wallpaper's palette in wallpaper mode.
     readonly property var gray: {
         var p = look.palette, out = {}
         for (var r in p) {
@@ -82,27 +59,20 @@ Singleton {
     readonly property color text:    roles.text
     readonly property color bright:  roles.bright
 
-    // Whether the ramp reads as a light theme overall -- some looks (and the
-    // wallpaper palette, on a pale image) run light rather than dark. Base is
-    // the deepest ground in a dark look and the palest in a light one, so its
-    // own lightness is the one signal that always tells the two apart.
+    // a light theme overall, told by base's lightness
     readonly property bool isLight: base.hslLightness > 0.5
 
-    // The only hues that don't follow the wallpaper, and deliberately so:
-    // charging and critical are states you want to catch without reading
-    // anything, and a red or green wallpaper would otherwise camouflage them.
+    // status hues never follow the wallpaper, so they always read
     readonly property color good:    Settings.colourGood || look.good
     readonly property color alert:   Settings.colourAlert || look.alert
 
-    // The look's one hue, for marks rather than text: selection ticks, focus
-    // strokes, the current item, and meters in looks that ask for it. In
-    // wallpaper mode it's the wallpaper's primary tone (the ramp's bright).
+    // the look's one hue, for marks (ticks, focus, current item); the
+    // wallpaper's bright in wallpaper mode
     readonly property bool hasAccent: Settings.accent !== "" && Settings.colourMode !== "wallpaper"
     readonly property color accent: hasAccent ? Settings.accent : bright
 
     // --- semantic colours -----------------------------------------------------
-    // What each state looks like, named for the state. Components use these
-    // in preference to the ramp roles above.
+    // named for the state; components prefer these over the ramp
 
     // emphasised text: values, titles, hovered labels
     readonly property color textStrong:    bright
@@ -112,11 +82,9 @@ Singleton {
     readonly property color hoverFillSoft: surface
     readonly property color selectedFill:  overlay
     readonly property color selectedStroke: hasAccent ? accent : muted
-    // Text on an accent fill: white, unless the accent is so bright that
-    // white wouldn't read (by perceived brightness; HSL lightness calls a
-    // mid blue like #5555c8 light). Not named onAccent: QML reads an
-    // on<Name> property as a signal handler, and it always came back black.
-    // Accent text on the Appearance page can also pin it either way.
+    // text on an accent fill: white unless the accent is too bright (by
+    // perceived brightness), or as Appearance pins it. Not named onAccent:
+    // QML reads on<Name> as a signal handler.
     readonly property color textOnAccent: Settings.accentText === "white" ? "#ffffff"
         : Settings.accentText === "dark" ? "#111111"
         : 0.299 * accent.r + 0.587 * accent.g + 0.114 * accent.b > 0.65 ? "#111111" : "#ffffff"
@@ -131,10 +99,9 @@ Singleton {
     readonly property color strokeHover:   muted
     readonly property color strokeFocus:   hasAccent ? accent : subtext
     readonly property color textDisabled:  muted
-    // Meters: gauges, sliders, progress and level bars
     readonly property color meterTrack:    base
     readonly property color meterStroke:   surface
-    // Level colour: meters, sliders and the bar's level chips
+    // level colour: meters, sliders and the bar's level chips
     readonly property color meterFill:     Settings.levelColour === "good" ? good
         : Settings.levelColour === "text" ? text : accent
     readonly property color gaugeFill:     meterFill
@@ -142,9 +109,7 @@ Singleton {
     readonly property color textOnMeter: 0.299 * meterFill.r + 0.587 * meterFill.g + 0.114 * meterFill.b > 0.65 ? "#111111" : "#ffffff"
     // the dimming behind full-screen overlays
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
-    // Flyouts', windows' and cards' ground, and the bar's: See-through, and
-    // further under Glass. The desktop shows through only where Hyprland
-    // blurs or nothing's behind.
+    // the ground of flyouts, windows, cards and the bar (See-through)
     readonly property real panelOpacity:   resolved.opacity / 100
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
@@ -154,29 +119,21 @@ Singleton {
 
     // --- type ------------------------------------------------------------------
 
-    // One font for text and icons alike, so no icon is drawn by fallback at
-    // another font's metrics. Always a NON-Mono Nerd Font variant: "Nerd
-    // Font Mono" forces every icon into one terminal cell -- at 18px it draws
-    // all of them 9px wide, squeezing a 17px glyph by half while leaving a
-    // 9px one alone, which is what makes a row of icons look mismatched.
+    // One font for text and icons, always a non-Mono Nerd Font: "Mono"
+    // squeezes every icon into one cell, so mixed icons look mismatched.
     readonly property string fontText: Fonts.resolve(Settings.fontFamily)
     readonly property string fontIcon: fontText
 
-    // Font Size, as a factor of the 16px base. Every font size and every
-    // text-bearing row height in the shell goes through fs(), so text and the
-    // rows holding it grow together instead of larger text clipping in
-    // fixed-height rows. AppearanceSync carries the same factor to wofi.
+    // Font Size as a factor of 16px; every font size and text row goes
+    // through fs(), so rows grow with their text.
     readonly property real fontScale: Settings.fontSize / Settings.fontSizeBase
 
     function fs(n) { return Math.round(n * fontScale) }
 
-    // The bar's labels, glyphs and icons, which follow Font size too
+    // the bar's labels and icons, which follow Font size too
     function barFs(n) { return fs(n) }
 
-    // The type scale. Everything with text uses one of these rather than a
-    // size of its own, so a label reads the same size in every flyout and
-    // window. Pixel sizes, not point: points scale with the screen's DPI
-    // while the rows and chips around them are laid out in pixels.
+    // The type scale, in pixels (rows are laid out in pixels too).
     readonly property int fontEyebrow:  fs(11)   // the spaced-out line over a window's title
     readonly property int fontCaption:  fs(12)   // a row's second line, key hints
     readonly property int fontSmall:    fs(14)   // headings, captions, secondary lines
@@ -186,8 +143,8 @@ Singleton {
     readonly property int fontDisplay:  fs(26)   // placeholder art glyphs
     readonly property int fontHero:     fs(34)   // the one big glyph a flyout leads with
 
-    // Section headings (FlyoutHeading and its kin). Headings are written in
-    // caps in the source; title-case looks lower them with heading().
+    // Section headings (FlyoutHeading), written in caps; title-case looks
+    // lower them with heading().
     readonly property bool headingBold:    true
     readonly property bool headingUpper:   Settings.headingUpper
     readonly property real headingSpacing: headingUpper ? 1 : 0
@@ -220,49 +177,38 @@ Singleton {
     // flyouts, windows, cards and wofi; and a floating bar or islands
     readonly property int panelRadius: resolved.panelRadius
     readonly property int barRadius:   resolved.barRadius
-    // One step in from the outer stroke. Floored at 0 because the radius is
-    // user-settable down to square, and a negative radius draws nothing.
+    // one step in from the outer stroke, floored at 0
     readonly property int radiusInner: Math.max(0, radius - 2)
     // small controls inside a row: stepper buttons, drag handles
     readonly property int radiusSmall: Math.max(0, radius - 3)
-    // a pill, dot or capsule `size` px across its short side: fully round
-    // only as far as Roundness goes, so square at 0
+    // a pill, dot or capsule `size` px across: round only as far as Roundness
     function pill(size) { return Math.min(size / 2, radius) }
-    // "double" draws a second stroke inset inside panels and bar modules.
-    // "single" is the outer stroke alone. "none" draws no stroke at all
-    // -- the ground colour alone marks the edge.
+    // "double": a second stroke inset; "single": the outer one; "none": no
+    // stroke, the ground marks the edge
     readonly property string frameStyle: resolved.frameStyle
     readonly property bool frameDouble: frameStyle === "double"
     readonly property bool frameNone:   frameStyle === "none"
-    // "channel": an outer line, a dark groove, an inner line; lit states
-    // light the groove in the accent (Channel.qml)
+    // "channel": outer line, dark groove, inner line (Channel.qml)
     readonly property bool frameChannel: frameStyle === "channel"
     // every style but None draws the plain outer stroke
     readonly property bool frameStroked: !frameNone
-    // the runs of rows inside a panel (SectionRuns): framed in every style
-    // but Flat, whose panels hold their rows bare
+    // rows inside a panel are framed (SectionRuns) in every style but Flat
     readonly property bool sectionFramed: style !== "flat"
 
-    // The channel's three bands, outside in: the outer line, the groove,
-    // the inner line. channelWidth is all of them, the first clear pixel.
+    // the channel's bands, outside in; channelWidth is all of them
     readonly property color channelOuter: muted
     readonly property color channelGroove: base
     readonly property color channelInner: border
     readonly property int channelGrooveWidth: 2
     readonly property int channelWidth: borderWidth * 2 + channelGrooveWidth
-    // where a channel's width changes (a flyout grown out of its bar
-    // group), the inside corner is rounded by this
+    // the inside corner where a channel's width changes (grown flyouts)
     readonly property int channelFillet: 7
-    // a channel-framed panel's corners: the panel radius out past the bands,
-    // or square when Roundness is 0 (Hyprland's windows follow this)
+    // a channel-framed panel's corners, square at Roundness 0
     readonly property int channelPanelRadius: panelRadius > 0 ? panelRadius + frameInset + channelWidth : 0
-    // a panel's outer corners in the current frame style, which Hyprland's
-    // window rounding follows (AppearanceSync)
+    // a panel's outer corners in the current frame (Hyprland's rounding)
     readonly property int panelFrameRadius: frameChannel ? channelPanelRadius : panelRadius
-    // Hyprland's windows, as AppearanceSync hands them over: rounded like
-    // the panels, bordered as thick as the strokes, the focused one in the
-    // accent
-    // accent, unless the Desktop tab sets them their own way
+    // Hyprland's windows: rounded like the panels, bordered like the strokes,
+    // unless Appearance's Desktop tab sets them its own way
     readonly property int windowRadius: Settings.windowRounding === "own" ? Settings.windowRadius : panelFrameRadius
     readonly property int windowBorderWidth: Settings.windowBorderWidth === "style" ? borderWidth
         : Number(Settings.windowBorderWidth)
@@ -275,9 +221,8 @@ Singleton {
     // their shadow: the style's (with Shadows on), none, or a set size
     readonly property string windowShadow: Settings.windowShadow === "style" ? shadow
         : Settings.windowShadow === "off" ? "none" : Settings.windowShadow
-    // A control's own stroke inside a panel (chips, fields, steppers,
-    // cards), given the colour its state asks for: kept for the stroked
-    // styles, and under None kept only where a lit or focused state shows.
+    // A control's stroke in a panel (chips, fields, steppers, cards): under
+    // None only where a lit or focused state shows.
     function controlBorder(c) {
         if (frameStroked) return borderWidth
         return Qt.colorEqual(c, stroke) || Qt.colorEqual(c, "transparent") ? 0 : borderWidth
@@ -287,16 +232,14 @@ Singleton {
         if (frameChannel && Qt.colorEqual(c, strokeHover)) return subtext
         return c
     }
-    // Under None a control with no ground of its own would vanish, so it
-    // gets the field's.
+    // under None a control with no ground gets the field's
     function controlFill(c) {
         return frameNone && Qt.colorEqual(c, "transparent") ? fieldFill : c
     }
     readonly property int borderWidth: resolved.borderWidth
     // how far the inner stroke sits inside a panel's outer one
     readonly property int frameInset:  3
-    // How a list marks its current row (FlyoutRow): "tick" on the left
-    // edge, or "tint" an accent-tinted ground
+    // how a list marks its current row: "tick" or "tint"
     readonly property string rowMark: style === "solid" ? "tint" : "tick"
     // the left-edge bar marking the current row in a list
     readonly property int indicatorWidth: 2
@@ -304,17 +247,13 @@ Singleton {
 
     // --- spacing ---------------------------------------------------------------
 
-    // Space's dials: Spacing on every gap and padding, Row height on rows
+    // Spacing on every gap and padding, Row height on rows
     readonly property real density: Settings.spacing / 100
     function sp(n) { return Math.round(n * density) }
-    // A text-bearing row: scaled with the font, and with Row height, so
-    // compact rows tighten without clipping their text.
+    // a text-bearing row: scaled with the font and Row height
     readonly property real densityHalf: Settings.rowScale / 100
     function row(n) { return Math.round(fs(n) * densityHalf) }
-    // A box that holds text -- a flyout's or a window's size, a label
-    // column. Grows with roomy, whose padding would otherwise eat into it,
-    // but never shrinks with compact: the text inside doesn't get smaller,
-    // so a narrower box would only elide it.
+    // a box that holds text: grows with roomy rows, never shrinks
     function fit(n) { return Math.round(fs(n) * Math.max(1, densityHalf)) }
 
     // the steps every gap and padding is picked from
@@ -329,18 +268,12 @@ Singleton {
     readonly property int windowPad: sp(16)
     // kept free beside a scrolling page for its ScrollBar
     readonly property int scrollGutter: sp(10)
-    // The size Settings and System open at: the Normal-density layout with
-    // a 600px body, scaled by Font Size only. A window sized by its
-    // content was centred for its first frame and hung off-centre once a
-    // list loaded in, and one sized by density changed size under you.
-    // Density re-lays out the inside instead. Each is rebuilt on every open
-    // (LazyWindow.qml), so a size you drag one to lasts until it closes.
+    // the size Settings and System open at: fixed, scaled by Font Size only
     readonly property size windowSize: Qt.size(fs(1044), fs(755))
     // between a flyout and the screen edge it's clamped against
     readonly property int edgeMargin: 6
 
-    // Control heights. Every text-bearing control is one of these, so a chip
-    // beside a stepper beside a row all line up.
+    // control heights, so controls side by side line up
     readonly property int rowHeight:      row(24)   // list rows, steppers
     readonly property int rowHeightDense: row(22)   // packed lists: packages, gauges, calendar days
     readonly property int rowHeightTall:  row(26)   // action rows, inputs
@@ -353,48 +286,34 @@ Singleton {
     readonly property int headingHeight: Math.max(fs(16), fontHeadingSize + 2)
     // the faint surface a window's framed panels sit on (WindowPanel.qml)
     readonly property color panelTint: Qt.rgba(surface.r, surface.g, surface.b, 0.35)
-    // the scrim a caption bar sits on over an image, so its text reads
-    // whatever's behind it (the Appearance wallpaper preview)
+    // the scrim under a caption over an image
     readonly property color captionScrim: Qt.rgba(base.r, base.g, base.b, 0.75)
     // the column an icon sits in at the start of a row
     readonly property int iconCell:      fs(20)
 
     // --- motion ----------------------------------------------------------------
 
-    // Animation time. Every duration goes through dur(); at 0 they're all
-    // zero, which Qt treats as an instant jump. A look can also opt out of
-    // motion entirely (its `motion` factor).
+    // Every duration goes through dur(); 0 makes them instant. A look can
+    // opt out (its `motion` factor).
     readonly property real animFactor: look.motion * Settings.animTime / 100 * Settings.animShell / 100
     function dur(ms) { return Math.round(ms * animFactor) }
     // named steps: colour and hover changes / things appearing / meters filling
     readonly property int durFast:   dur(110)
     readonly property int durMedium: dur(150)
     readonly property int durSlow:   dur(250)
-    // The pulse on something busy, one half-cycle. Not scaled: it's a status
-    // signal rather than motion, and at 0 an infinite loop would just spin.
+    // the busy pulse's half-cycle; not scaled, it's a status signal
     readonly property int durPulse:  600
 
     readonly property int ease: Easing.OutCubic
 
     // --- the bar ---------------------------------------------------------------
 
-    // One source of truth for the bar's geometry: the flyouts anchor to
-    // barHeight to sit flush under it, and the icons size off it, so
-    // changing the bar's height moves everything together.
-    //
-    // The values the Appearance page can change come from Settings, which
-    // persists them. They stay readonly here because nothing should write
-    // them through Theme -- Settings.set() is the one way in, and it clamps.
+    // Bar geometry. Settings.set() is the one way to change these; flyouts
+    // anchor to barHeight and icons size off it.
     readonly property string barPosition: Settings.barPosition
     readonly property int barHeight:  resolved.barHeight
-    // A floating bar sits inset from the screen edges on its own rounded,
-    // stroked ground; barMargin is that inset, the same gap the windows keep
-    // from the screen's edges (Settings.edgeGap). barExtent is how far from the
-    // screen edge anything anchored to the bar (flyouts, toasts) starts --
-    // with a floating bar, the same gap again below it.
-    //
-    // Islands are inset the same way, each group of modules on its own
-    // floating ground instead of one bar.
+    // Floating and Islands sit barMargin in from the screen edges (the
+    // windows' edge gap); barExtent is where things anchored to the bar start.
     readonly property bool barFloating: Settings.barStyle === "floating"
     readonly property bool barIslands:  Settings.barStyle === "islands"
     readonly property bool barFull:     !barFloating && !barIslands
@@ -408,9 +327,8 @@ Singleton {
     // what the Names style calls each workspace, "" where it has none
     readonly property var workspaceNames: Settings.workspaceNames.split(",").map(s => s.trim())
     readonly property string clockStyle: Settings.clockStyle
-    // One format per clock style (Looks.js). Thin spaces around the
-    // divider: in a monospace font an ordinary space is a full character
-    // wide, which left the time and date far apart.
+    // one format per clock style; thin spaces around the divider (a mono
+    // space is too wide)
     readonly property var clockFormats: ({
         stamp: "HH:mm:ss\u2009|\u2009MM/dd/yy",
         time:  "HH:mm",
@@ -430,8 +348,7 @@ Singleton {
     readonly property string controlGlyph: controlGlyphs[Settings.controlIcon] || "󰣇"
     // the open-windows strip and app icons in the bar -- see Looks.js
     readonly property string windowStyle: Settings.windowStyle
-    // ALT+Tab reaching every workspace takes the bar's strip with it, so
-    // the bar shows every window the switcher can reach
+    // ALT+Tab reaching every workspace widens the bar's strip too
     readonly property string windowScope: Settings.altTabScope === "all" ? "all" : Settings.windowScope
     readonly property string windowMark: resolved.windowMark
     readonly property string iconTint: Settings.iconTint
@@ -470,19 +387,16 @@ Singleton {
     readonly property string flyoutAttach: resolved.flyoutAttach
     // how flyouts open and where they sit -- see Looks.js and FlyoutPanel
     readonly property string flyoutAnim: resolved.flyoutAnim
-    // A Qt date format with its 24-hour fields turned 12-hour when Date &
-    // Time asks for that; every clock in the shell formats through this.
+    // a Qt date format, 12-hour when Date & Time asks; every clock uses it
     function hours(fmt) {
         return Settings.clock24 ? fmt : fmt.replace(/HH:mm(:ss)?/g, "h:mm$1 AP")
     }
     readonly property string timeFormat: hours("HH:mm")
     // how the bar's chips are drawn -- see Looks.js
     readonly property string moduleStyle: resolved.moduleStyle
-    // "grouped": each section of the bar is one channel (shell.qml), and
-    // its modules are bare chips inside it, sized to the channel's interior
+    // "grouped": each bar section is one channel holding bare chips
     readonly property bool moduleGrouped: moduleStyle === "grouped"
-    // "taskbar": bare slots the bar's full height, an accent rule on the
-    // screen edge's side of the open one
+    // "taskbar": bare full-height slots, an accent rule on the open one
     readonly property bool moduleTaskbar: moduleStyle === "taskbar"
     // the styles whose open chip fills with the accent
     readonly property bool moduleOpenFill: moduleStyle === "filled"
@@ -490,31 +404,22 @@ Singleton {
     readonly property int groupRadius: radius > 0 ? radius + channelWidth : 0
     // "grown": a flyout hangs off its module's group, one outline round both
     readonly property bool flyoutGrown: flyoutAttach === "grown" && moduleGrouped && frameChannel
-    // Distance from the bar's screen edge to a flyout's near edge: flush lays
-    // the box's stroke over the bar's own edge line, floating leaves a gap.
-    // Measured to the bar itself, not barExtent, which adds a floating bar's
-    // gap below it again.
+    // from the bar's screen edge to a flyout's near edge: flush lays the
+    // box's stroke over the bar's edge line, floating leaves a gap
     readonly property real flyoutOffset: barHeight + barMargin - borderWidth
         + (flyoutAttach === "floating" ? spaceM + borderWidth : 0)
     // between a flyout's rows, and round its headings
     readonly property int flyoutSpacing: spaceS
 
     readonly property real barOpacity: panelOpacity
-    // Derived from the bar rather than fixed, so a taller bar gets taller
-    // chips instead of a 28px chip swimming in it. The -6 reproduces the
-    // original 28 at the default 34, and the floor keeps the double border
-    // from eating the whole chip at the smallest bar height.
+    // chips follow the bar's height, floored so the frame doesn't eat them
     readonly property int moduleHeight: moduleTaskbar ? barHeight : Math.max(18, barHeight - 6)
     readonly property int modulePadH:   sp(Settings.modulePad + (moduleTaskbar ? 4 : 0))
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
-    // Shared width for the gauge modules only, so their fill bars are
-    // directly comparable. The icon-only chips hug their content instead --
-    // padding them out to match would just add dead space.
+    // the gauge modules' shared width, so their fills compare
     readonly property int moduleWidth:  54
-    // The double frame eats 8px of the chip (outer stroke + a 2px-inset inner
-    // one), so the icon is sized to the space left inside it. Capped to the
-    // chip, so a large Font Size can't push icons out of it.
+    // the space inside the chip's frame, capped to it
     readonly property int iconSize:     Math.min(moduleHeight - 8, barFs(Settings.barIconSize))
     // one size for every bar label (clock, media, counts), capped the same way
     readonly property int barLabelSize: Math.min(moduleHeight - 8, barFs(15))
