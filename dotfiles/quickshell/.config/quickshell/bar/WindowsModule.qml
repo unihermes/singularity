@@ -1,33 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/WindowsModule.qml
 //
-// The open windows, trailing the workspaces: the focused workspace's,
-// or every workspace's (Theme.windowScope), in one frame -- they're a
-// single group, and a chip each would read as six separate modules.
-// Theme.windowStyle draws each one:
-//   icons      the icon over a pip in the workspace indicator's
-//              language: a long accent pill under the focused window,
-//              muted stubs under the rest, whose icons dim to match
-//   titled     the same, with the focused window's title beside its icon
-//   glide      the icons over one faint rail, with a single accent
-//              slider that travels to the focused window
-//   lift       no marks: the focused icon large and in colour, the
-//              rest small and grey
-//   inset      the focused icon in a recessed, double-stroked well
-//   segmented  segments of one control with hairlines between, the
-//              focused one on a soft accent ground
-//   spotlight  the focused window opens into a capsule with its title,
-//              the rest shrink to small icons
-//   tabs       icon and title for every window, the focused one's tab lit
-//   index      no icons: a number and the app's name for each, the
-//              focused one on an accent ground
-//   dots       a dot per window, the focused one a short accent pill
-// An app with more than one window says so in each: a pip per window
-// under the icon (icons, titled, inset, segmented), a notch per window
-// in glide's rail and tabs' underline, the window count on the icon's
-// corner (lift, spotlight's small icons; "2/3" after the capsule's
-// title), the edges of more slots above it (index), a ring round the
-// dot (dots).
+// The open windows after the workspaces, in one frame: the focused
+// workspace's or every workspace's (Theme.windowScope), drawn per
+// Theme.windowStyle (icons, titled, glide, lift, inset, segmented,
+// spotlight, tabs, index, dots). An app with several windows shows it in
+// each style: pips, notches, a count, stacked slot edges or a ringed dot.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -193,10 +171,8 @@ ModuleFrame {
                         color: Theme.stroke
                     }
 
-                    // the hover fill under just this window, for the
-                    // styles without a ground of their own, sized as a
-                    // whole module's hover is; on Flat's taskbar the
-                    // focused window's slot has it too
+                    // the hover fill under this window, for styles with no
+                    // ground of their own (and Flat's focused taskbar slot)
                     Rectangle {
                         readonly property bool grouped: Theme.moduleStyle === "grouped"
                         visible: (winIcon.hovered || winIcon.slotLit) && !winIcon.tabs && !winIcon.seg && !winIcon.spot
@@ -270,9 +246,8 @@ ModuleFrame {
                         }
                     }
 
-                    // segmented, spotlight and index: the whole slot's
-                    // ground, a soft accent (solid for index) under the
-                    // focused window and a hover fill under the rest
+                    // segmented, spotlight, index: the slot's ground (accent
+                    // under the focused window, hover fill under the rest)
                     Rectangle {
                         visible: winIcon.seg || winIcon.spot || winIcon.indexed
                         x: winIcon.lead
@@ -332,9 +307,7 @@ ModuleFrame {
                         visible: !winIcon.dots && !winIcon.indexed
                         x: winIcon.lead + winIcon.padX + Math.round((winIcon.slotW - width) / 2)
                         anchors.verticalCenter: parent.verticalCenter
-                        // lifted a single pixel: just enough to clear the
-                        // pip, so the icon still sits level with the
-                        // chips around it
+                        // lifted a pixel to clear the pip
                         anchors.verticalCenterOffset: winIcon.morePips ? (winIcon.inset ? -2 : -1)
                             : (winIcon.underMark && !winIcon.slotted) || winIcon.glide ? -1 : 0
                         width: winIcon.iconPx
@@ -456,13 +429,10 @@ ModuleFrame {
                         font.pixelSize: Theme.barLabelSize
                     }
 
-                    // tucked a pixel under the icon rather than pinned to
-                    // the chip's edge, so it needn't push the icon up
-                    // (Flat's taskbar slots have it on the screen edge). An
-                    // app with more than one window gets a segment per
-                    // window (up to four), popouts' shorter, the focused
-                    // window's in the accent and the rest grey. Inset,
-                    // segmented and the "ground" mark show these only then.
+                    // A pip just under the icon; a segment per window (up to
+                    // four, popouts shorter, the focused one in the accent)
+                    // for an app with several. Inset, segmented and the
+                    // "ground" mark show it only then.
                     Row {
                         id: pip
                         readonly property var segs: winIcon.modelData.windows.slice(0, 4)
@@ -558,9 +528,8 @@ ModuleFrame {
                             var target = winIcon.shown.address
                             var addr = "address:0x" + target
                             var bar = host.bar
-                            // an app with two or more windows lists them in a
-                            // flyout to pick from; a different app's icon while
-                            // it's open retargets it rather than closing it
+                            // several windows: a flyout to pick from (another
+                            // app's icon retargets it)
                             if (mouse.button === Qt.LeftButton && winIcon.modelData.windows.length > 1) {
                                 if (host.screenScope.openFlyout === "appwindows"
                                         && host.bar.appWindowsKey !== winIcon.modelData.key) {

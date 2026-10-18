@@ -1,34 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/SystemStats.qml
 //
-// Everything live the System window shows, sampled: CPU (overall, per core
-// and per-core clocks), memory in detail, swap, every mounted filesystem,
-// disk throughput, temperatures and fans, network per interface, the battery
-// and the heaviest processes.
-//
-// A singleton rather than an object the window owns: the System window is
-// now a sidebar of pages, each its own file loaded on demand, and threading
-// one `stats` object down through a Loader into a page means every page
-// guarding against it being null for the frame before it arrives. The
-// static half lives next door in SystemSpecs.qml.
-//
-// Nearly everything is read straight from procfs/sysfs with FileView rather
-// than by running tools: /proc/stat for CPU and each core, /proc/meminfo for
-// RAM and swap, /proc/loadavg for load and process counts, /proc/diskstats
-// for disk throughput, hwmon for temperature, the interface byte counters
-// for network speed, and the battery's uevent -- one file that carries every
-// field the Power page shows. Re-reading a file each second costs next to
-// nothing; spawning `sensors` or `free` each second would mean several
-// processes a second for as long as the window is up.
-//
-// What does shell out, none of it per-second: `top` for the process list
-// (every 3s), `ip` for addresses (3s), a hwmon sweep for the full sensor
-// list (5s), `df` for the filesystems (30s), and one-off probes for the
-// temperature node and the battery's path.
-//
-// Everything runs only while `active` is true -- the window binds it to its
-// own visibility -- so with the window shut nothing is sampled at all. The
-// graphs start empty on each open and fill over the next minute.
+// Everything live the System window shows: CPU (overall, per core, clocks),
+// memory, swap, filesystems, disk throughput, sensors, network, battery and
+// the heaviest processes. Read from procfs/sysfs with FileView where it can
+// (cheap each second); top (3s), ip (3s), a hwmon sweep (5s) and df (30s)
+// shell out. A singleton so the lazily loaded pages need no null guards;
+// the static half is SystemSpecs.qml. Samples only while `active` (the
+// window's visibility), and the graphs start empty each open.
 
 pragma Singleton
 
@@ -257,10 +236,7 @@ Singleton {
         corePrev = nextPrev
     }
 
-    // Per-core clocks from /proc/cpuinfo, not the cpufreq sysfs nodes: one
-    // read covers every core, where sysfs would need a FileView per thread.
-    // Off the 3s timer -- a clock that lags a second reads fine, and this
-    // file is far bigger than /proc/stat.
+    // per-core clocks from /proc/cpuinfo (one read for all cores), on the 3s timer
     function sampleFreq() {
         cpuinfoFile.reload()
         var mhz = []
@@ -292,9 +268,7 @@ Singleton {
         slabKb = kv.Slab || 0
         dirtyKb = kv.Dirty || 0
         writebackKb = kv.Writeback || 0
-        // MemAvailable, not MemFree: free memory excludes the page cache the
-        // kernel will hand back the moment anything asks, so "used" computed
-        // from it reads 80% on a machine that is mostly idle
+        // MemAvailable: MemFree leaves out reclaimable cache
         memUsedKb = memTotalKb - memAvailKb
         mem = memTotalKb > 0 ? memUsedKb / memTotalKb : 0
         memHistory = pushHistory(memHistory, mem)
@@ -427,9 +401,7 @@ Singleton {
 
     // --- battery, derived ------------------------------------------------
 
-    // Batteries report either charge (ampere-hours) or energy (watt-hours);
-    // this laptop's reports charge, so both shapes are converted to watt-
-    // hours here and every reader can just ask for watt-hours.
+    // batteries report charge (Ah) or energy (Wh); both read as watt-hours
     function wh(key) {
         var v = Number(bat["energy_" + key])
         if (!isNaN(v) && v > 0) return v / 1e6
@@ -507,10 +479,7 @@ Singleton {
         onTriggered: if (!dfProc.running) dfProc.running = true
     }
 
-    // Cleared on close, so the next open starts fresh: rates from new
-    // baselines rather than one averaged over the time it was shut, empty
-    // graphs, and no list from the last visit flashing up before the first
-    // refresh.
+    // cleared on close, so the next open starts from fresh baselines
     onActiveChanged: if (!active) {
         procs = []
         killPid = -1
@@ -571,13 +540,8 @@ Singleton {
 
     // --- periodic processes ----------------------------------------------
 
-    // Every readable hwmon temperature and fan, not just the CPU package:
-    // on this laptop that's the package, the SSD, the wifi card and the
-    // ACPI zone, and knowing which one is hot is the whole point of a
-    // sensor list. A sweep rather than a FileView each, because the set of
-    // nodes isn't known until it's walked.
-    // hwmon's names in words: a chip by what it's on, a label the driver
-    // left as temp2 / fan1 as Sensor 2 / Fan 1
+    // every readable hwmon temperature and fan, swept since the set isn't
+    // known in advance; chips and unlabelled sensors named in words
     function chipName(c) {
         if (c === "coretemp" || c === "k10temp" || c === "zenpower") return "CPU"
         if (c === "nvme") return "SSD"
@@ -640,10 +604,7 @@ Singleton {
         }
     }
 
-    // Every real filesystem, not just root: /home on its own partition, a
-    // mounted phone, an external disk. The pseudo-filesystems are excluded
-    // by type rather than by name -- there are a dozen of them and their
-    // mount points move.
+    // every real filesystem; pseudo-filesystems excluded by type
     Process {
         id: dfProc
         command: ["sh", "-c",
@@ -665,9 +626,7 @@ Singleton {
         }
     }
 
-    // Addresses, the default gateway and the resolvers, plus the wifi link's
-    // signal. Every 3s rather than every second: none of it changes at the
-    // rate a throughput number does.
+    // addresses, gateway, resolvers and Wi-Fi signal, every 3s
     function refreshNetInfo() {
         if (netInfoProc.running) return
         netInfoProc.command = ["sh", "-c",
@@ -747,11 +706,8 @@ Singleton {
         procProc.running = true
     }
 
-    // Heaviest processes. top, not ps: ps's %CPU is each process's average
-    // over its whole lifetime, so a browser that spiked an hour ago outranks
-    // whatever is pinning a core right now. top's *second* frame (-n 2) is a
-    // real 1-second sample -- its first frame has the same lifetime-average
-    // problem. -e k keeps RES in plain KiB instead of "1.2g".
+    // Heaviest processes: top's second frame (a real 1s sample; ps and top's
+    // first frame give lifetime averages). -e k keeps RES in KiB.
     Process {
         id: procProc
         command: ["sh", "-c",
@@ -764,9 +720,7 @@ Singleton {
                 // held while the pointer is over the list, so a row can't
                 // reshuffle out from under a click on its kill button
                 if (root.holdProcs) return
-                // A run takes a second, so one started just before the sort
-                // was switched can land after it and paint the old order
-                // over the new heading. Drop it; the next run is the right one.
+                // a run started before a sort change paints the old order: redo it
                 if (root.procRunSort !== root.procSort) { root.refreshProcs(); return }
                 var out = []
                 var lines = text.trim().split("\n")
@@ -793,10 +747,8 @@ Singleton {
     // than wait up to 3s with a short list on screen
     onProcLimitChanged: if (active) refreshProcs()
 
-    // Two-step kill. The first click arms the button for that *pid* (not
-    // that row), the second sends SIGTERM. Arming expires after 3s, and the
-    // list freezes while hovered, so a refresh can't move a different
-    // process under the confirming click.
+    // Two-step kill: the first click arms that pid for 3s, the second sends
+    // SIGTERM; the list freezes while hovered.
     property int killPid: -1
 
     Timer {
