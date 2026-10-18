@@ -1,17 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/CommandProbe.qml
 //
-// Whether a command is on PATH, for the services that only work when an
-// optional tool is installed (cava, claude, checkupdates).
-//
-// Checked once at startup, then again after each pacman transaction for as
-// long as it's missing -- these tools tend to be installed while the bar is
-// already up, and a one-off check would leave their feature dead until the
-// next login. What used to do that was a `command -v` every 10s, forever, on
-// any machine without the tool. This instead follows pacman's log with tail,
-// which blocks on inotify: no wakeups until something is installed, and no
-// process at all once the command is found. A tool installed some other way
-// (npm, a copy into ~/.local/bin) shows up on the next shell reload.
+// Whether a command is on PATH (cava, claude, checkupdates): checked at
+// startup, then after each pacman transaction (tailing pacman's log) while
+// missing. Installed another way: seen on the next reload.
 
 import Quickshell
 import Quickshell.Io

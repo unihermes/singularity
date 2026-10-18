@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 # Nerd Font glyphs as inline SVG, for HTML mockups of the shell.
 #
-# Icon glyphs sit in the font's private-use area, so a page that shows them
-# as text needs the font itself, and a browser that won't load it (blocked
-# data: fonts, fingerprinting protection hiding local fonts) shows empty
-# boxes. Outlines drawn as SVG paths show everywhere.
+# Outlines as SVG paths show where a browser won't load the font.
 #
 #   glyph-svg.py F057E F00AF ...      one <svg> per codepoint, as JSON
 #   glyph-svg.py --font PATH ...      another font (default: the shell's)

@@ -8,10 +8,8 @@
 //              phase starting the next on its own
 //   stopwatch  counts up until stopped
 //
-// Kept as wall-clock times (when it ends, when it started) in a state file,
-// never as a count of ticks: a suspend, a hibernate or a shell reload can't
-// lose or stretch it, and one that ran out while the machine slept goes off
-// on waking.
+// Kept as wall-clock times in a state file, so sleep or a reload can't
+// stretch it; one due while asleep goes off on waking.
 
 pragma Singleton
 

@@ -1,17 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutChip.qml
 //
-// A small bordered button for inline actions inside a flyout row -- the
-// Log / Restart / Clear on a failed unit, the media transport controls --
-// where a full-width FlyoutRow per action would bury the list under them.
-//
-// Each style draws its own: a stroked chip (with Double's inner stroke),
-// a filled block (Solid), frosted glass, or a flat block that takes a heavy
-// outline under the pointer (Flat).
-//
-// `confirmText` makes it two clicks, for what can't be undone: the first
-// arms it -- alert-red, reading confirmText -- and the second emits
-// clicked(). It disarms itself after 3s.
+// A small button for inline actions in a row, drawn per style.
+// `confirmText` makes it two clicks (armed for 3s, alert-red).
 
 import QtQuick
 import "../services"

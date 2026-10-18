@@ -9,9 +9,8 @@
 #   wallpaper.sh list       every image in wallpapers/, one per line
 #   wallpaper.sh current    the image swaybg is showing
 #
-# The choice is saved by Quickshell's Appearance page (Wallpaper.qml) to
-# ~/.local/state/singularity/wallpaper.state as key=value lines rather than JSON,
-# so this can read it without jq.
+# The choice is in wallpaper.state (key=value, no jq needed), written by
+# Wallpaper.qml.
 set -euo pipefail
 
 # relative to this script's real location, so the repo can live anywhere

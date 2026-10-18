@@ -1,17 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Visualizer.qml
 //
-// Audio spectrum bars from cava, for a bar module that only appears while
-// sound is actually playing.
-//
-// cava runs in raw mode, printing one line per frame of semicolon-separated
-// bar heights (0-100). It's only started while the module is on the bar and
-// some app has an audio output stream open -- no stream, no sound to draw --
-// and the module hides after two seconds of silence, since plenty of apps
-// (browsers especially) hold a stream open while playing nothing.
-//
-// The config is written to a temp file at launch rather than shipped in
-// ~/.config/cava, so an interactive cava keeps its own settings.
+// Spectrum bars from cava (raw mode, 0-100 per bar), run only while the
+// module is on and an audio stream is open; hidden after two seconds of
+// silence. Config in a temp file, leaving cava's own alone.
 
 pragma Singleton
 

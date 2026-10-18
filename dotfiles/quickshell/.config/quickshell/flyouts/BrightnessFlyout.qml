@@ -1,10 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BrightnessFlyout.qml
 //
-// One slider per display it can set (see `controls`), then Night Light.
-// Needs root's Night Light state --
-// see the toggle in ControlCentre's Quick Actions for the same fields.
-// Night Light's schedule is set here and run by shell.qml.
+// A slider per display it can set, then Night Light (root's state; its
+// schedule runs in shell.qml).
 
 import "../services"
 import "../services/TimeWindow.js" as TimeWindow
@@ -17,12 +15,8 @@ FlyoutPanel {
 
     required property var shellRoot
 
-    // Every display it can set: the backlight, and each monitor that
-    // answers DDC/CI, the one under this bar first. One is a bare slider
-    // as before; more get a labelled slider each. Built from who has
-    // answered, not from the levels: the levels change on every read and
-    // drag, and each change would rebuild the sliders -- twice over, a
-    // moment after opening, when the refresh below comes back.
+    // the backlight and each DDC monitor (this bar's first), built from who
+    // has answered so reads and drags don't rebuild the sliders
     readonly property string output: scope.modelData.name
     readonly property var controls: {
         var out = []

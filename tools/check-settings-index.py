@@ -4,14 +4,9 @@
 #   - an index entry whose label is nowhere on its page (the result opens the
 #     page but highlights nothing, since scrollTo matches the label exactly)
 #
-# The index stays hand-written -- its keywords are the point of it -- so this
-# is what keeps it honest. Run by the pre-commit hook (tools/pre-commit)
-# whenever a Settings page or the index is staged; exits 1 on drift.
-#
-# Labels built at runtime ("Workspace " + key, the mixer's app names) can't be
-# seen from here and are skipped. An entry may name a section instead of a
-# field, as long as the page has that heading. Anything else that is fine as
-# it is goes in ALLOW, with the reason.
+# Run by the pre-commit hook when a page or the index is staged; exits 1 on
+# drift. Runtime-built labels are skipped; an entry may name a heading.
+# Intended exceptions go in ALLOW, with the reason.
 import os, re, sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),

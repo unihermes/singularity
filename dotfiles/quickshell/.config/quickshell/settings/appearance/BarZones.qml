@@ -1,17 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/BarZones.qml
 //
-// The bar's arrangement on the Bar tab: Left, Centre and Right as three
-// zones of module chips, and the hidden modules in a fourth under them.
-// Drag a chip to another place in a zone, into another zone, or into
-// Hidden to take it off the bar; drag one out of Hidden to put it back.
-//
-// A dragged chip is drawn by a ghost that follows the pointer, so the
-// zones keep their layout until the drop; a marker shows where it lands.
-// The drop is written as a whole layout (Settings.setWidgetLayout) and a
-// visibility (setWidgetVisible), the same as the Control Centre's Bar
-// Widgets list. Control Centre and Show Desktop are pinned to the bar's
-// ends and don't move; Control Centre can't be hidden either.
+// The Bar tab's arrangement: Left, Centre and Right zones of module chips
+// and Hidden under them. A dragged chip is a ghost with a landing marker;
+// the drop writes the whole layout and visibility. Control Centre and Show
+// Desktop stay pinned (Control Centre can't be hidden).
 
 import Quickshell
 import QtQuick

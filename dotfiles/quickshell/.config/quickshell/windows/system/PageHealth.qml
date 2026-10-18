@@ -1,17 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/PageHealth.qml
 //
-// Everything that is wrong with this machine, worst first, with the fix next
-// to it. The checks and their repairs are services/Health.qml.
-//
-// Problems sort to the top and passes fall to the bottom rather than the
-// list being grouped under headings: the whole point is that the first row
-// is the answer, and a heading above an empty group is one more line to read
-// before finding out there is nothing under it.
-//
-// Scanning is tied to this page being open. SystemPage instances are created
-// by the window's Loader on arrival and destroyed on the way out, so the two
-// handlers below are the whole of the lifecycle.
+// What's wrong with this machine, worst first, each with its fix
+// (services/Health.qml); passes sink to the bottom. Scans while the page
+// is open.
 
 import QtQuick
 import "../../services"
