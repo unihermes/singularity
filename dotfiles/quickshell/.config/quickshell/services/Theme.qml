@@ -179,6 +179,9 @@ Singleton {
     readonly property int barRadius:   resolved.barRadius
     // one step in from the outer stroke, floored at 0
     readonly property int radiusInner: Math.max(0, radius - 2)
+    // a page's blocks in Settings and System: section frames, the tab strip,
+    // previews and the bars at a page's foot
+    readonly property int sectionRadius: radius > 0 ? radius + 3 : 0
     // small controls inside a row: stepper buttons, drag handles
     readonly property int radiusSmall: Math.max(0, radius - 3)
     // a pill, dot or capsule `size` px across: round only as far as Roundness

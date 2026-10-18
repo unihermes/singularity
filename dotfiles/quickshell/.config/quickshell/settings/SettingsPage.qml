@@ -202,9 +202,9 @@ Item {
             visible: root.tabs.length > 0 && root.sectioned
             width: parent.width
             height: Theme.rowHeightTall + Theme.spaceS
-            // the Roundness setting itself, the lit tab one step in, so
-            // their corners nest
-            radius: Theme.radius
+            // as round as the sections, the lit tab one step in, so their
+            // corners nest
+            radius: Theme.sectionRadius
             color: Theme.controlFill("transparent")
             border.width: Theme.controlBorder(Theme.stroke)
             border.color: Theme.controlStroke(Theme.stroke)
@@ -231,7 +231,7 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 1
-                            radius: Theme.radiusInner
+                            radius: Math.max(0, Theme.sectionRadius - 3)
                             color: seg.current ? Theme.accent
                                 : segMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
                             border.width: seg.current && Theme.frameChannel ? Theme.channelGrooveWidth : 0
@@ -353,6 +353,8 @@ Item {
         Flickable {
             id: flick
             anchors.fill: parent
+            // the rows end above the footer rather than under it
+            anchors.bottomMargin: root.footerHeight
             anchors.rightMargin: root.scrolls ? Theme.scrollGutter : 0
             contentHeight: col.implicitHeight
             interactive: root.scrolls && contentHeight > height
@@ -376,16 +378,14 @@ Item {
                 width: flick.width - x * 2
                 spacing: Theme.spaceM
                 topPadding: root.sectioned ? Theme.channelWidth + Theme.spaceS : 0
-                // clear of the panel's rounded bottom border, as on System,
-                // and of the footer
-                bottomPadding: Theme.spaceXl + root.footerHeight
+                // clear of the panel's rounded bottom border, as on System
+                bottomPadding: Theme.spaceXl
             }
         }
 
         Loader {
             id: footerLoader
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: Theme.spaceL
             x: Theme.spaceS
             width: flick.width - Theme.spaceS * 2
             active: root.footer !== null && root.footerVisible

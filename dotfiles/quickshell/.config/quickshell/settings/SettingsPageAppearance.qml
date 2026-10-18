@@ -22,7 +22,7 @@ SettingsPage {
 
     sectioned: true
     footer: ChangesBar {}
-    footerVisible: !Settings.lookPristine || !Settings.isDefault
+    footerVisible: !Settings.lookPristine
     // a small bar and flyout, drawn by the shell's own pieces, above the
     // tabs whose settings change how they look
     pinned: LivePreview { kind: ({ bar: "bar", panels: "launcher", desktop: "windows" })[page.tab] || "flyout" }

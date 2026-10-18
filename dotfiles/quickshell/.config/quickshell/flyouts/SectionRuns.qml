@@ -16,7 +16,7 @@ Item {
     property real columnY: 0
     // the gap kept between a run's first and last child and its channel
     property int padY: Theme.spaceS
-    property real radius: Theme.radius > 0 ? Theme.radius + 3 : 0
+    property real radius: Theme.sectionRadius
     property color fill: Theme.panelFill
 
     // [{ y0, y1 }] in the column's coordinates. A child marked

@@ -34,7 +34,7 @@ Column {
         visible: cb.open
         width: parent.width
         height: Math.min(changes.implicitHeight, Theme.fit(230)) + Theme.spaceS * 2
-        radius: Theme.radiusInner
+        radius: Theme.sectionRadius
         color: Theme.surface
         border.width: Theme.borderWidth
         border.color: Theme.strokeHover
@@ -132,7 +132,7 @@ Column {
         id: strip
         width: parent.width
         height: Theme.rowHeightTall + Theme.spaceL
-        radius: Theme.radiusInner
+        radius: Theme.sectionRadius
         color: Theme.surface
         border.width: Theme.borderWidth
         border.color: Theme.accent

@@ -385,7 +385,7 @@ SettingsPage {
     footer: Rectangle {
         width: parent ? parent.width : 0
         height: trialRow.height + Theme.spaceS * 2
-        radius: Theme.radiusInner
+        radius: Theme.sectionRadius
         color: Theme.surface
         border.width: Theme.borderWidth
         border.color: Theme.accent

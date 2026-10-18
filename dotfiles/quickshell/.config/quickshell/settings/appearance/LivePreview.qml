@@ -29,7 +29,7 @@ ClippingRectangle {
         : kind === "windows" ? desk : null
     width: parent ? parent.width : 0
     height: Math.round(stage.height * sc) + Theme.spaceL * 2
-    radius: Theme.radiusInner
+    radius: Theme.sectionRadius
     color: Theme.base
 
     Image {
