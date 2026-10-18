@@ -4,7 +4,6 @@
 // The Bar Widgets page's list: every bar module with a drag handle and a
 // show/hide switch, grouped under LEFT / CENTRE / RIGHT headers.
 //
-//
 // One list, with the section headers as fixed rows, so dragging past a
 // header moves a module to that section. A ListModel copy of the layout
 // (move() keeps the dragged delegate alive); each move is written straight

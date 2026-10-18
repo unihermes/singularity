@@ -11,7 +11,6 @@
 //   taskbar  a bare slot the bar's height -- Flat: a fill on hover and
 //            while open, an accent rule on the screen edge's side when open
 //
-//
 // The one definition of the chip: BarModule and the open-window icons use it.
 
 import QtQuick
