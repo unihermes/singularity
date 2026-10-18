@@ -1,10 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/LazyWindow.qml
 //
-// Builds a window (Settings, System) the first time it's opened
-// instead of at login, then keeps it: closing only hides it, as before.
-// Callers use open() on this rather than on the window, which may not exist
-// yet.
+// Builds a window on first open; callers use open() on this.
 //
 //   LazyWindow { id: system; System {} }
 //   system.open()
@@ -21,11 +18,8 @@ LazyLoader {
     function open(arg) {
         used = true
         var w = item
-        // Torn down on close, so the next open builds a fresh window at its
-        // set size. Kept alive, Hyprland would remap it at whatever size it
-        // was dragged to. Hooked here rather than with Connections, since the
-        // loader's item isn't a property Connections sees change. Deferred:
-        // the window is still inside its own handler.
+        // torn down on close, so the next open is at its set size (hooked
+        // here, deferred, as Connections can't see the loader's item change)
         if (hooked !== w) {
             hooked = w
             w.visibleChanged.connect(() => {

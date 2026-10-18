@@ -1,20 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/CalendarFlyout.qml
 //
-// The clock module's calendar flyout, split out of shell.qml. Needs only
-// Theme and Settings -- no bar or root state.
-//
-// A month view: the arrows or the scroll wheel page back and forth, today is
-// highlighted, and the days either side of the month fill the grid dimmed
-// (clicking one pages to its month). The footer names today's date and,
-// while paged away, takes you back to it. Weeks start on the day
-// Settings -> Date & Time picks (Settings.weekStart).
-//
-// Three tabs, one shown at a time: Month, the picked day's events (Today),
-// and the timer the clock island shows (services/Timers.qml). With feeds in
-// calendars.conf (services/Calendar.qml), days with events carry a dot, and
-// picking one in the month opens its events; without feeds there's no
-// events tab.
+// The clock's calendar: Month (arrows or wheel page; neighbour days dimmed
+// and clickable; footer back to today; weeks start on Settings.weekStart),
+// the picked day's events (only with feeds in calendars.conf; days with
+// events get a dot), and the clock island's timer (Timers.qml).
 
 import Quickshell
 import QtQuick
