@@ -248,14 +248,6 @@ ShellRoot {
         function toggle(mode: string): void { root.launcherToggled(mode) }
     }
 
-    // Claude: `qs ipc call claude toggle` (SUPER+I)
-    signal claudeToggled()
-
-    IpcHandler {
-        target: "claude"
-        function toggle(): void { root.claudeToggled() }
-    }
-
     // Notifications: the history flyout, Do Not Disturb, Clear all
     IpcHandler {
         target: "notifications"
@@ -480,22 +472,6 @@ ShellRoot {
                 }
             }
 
-            // SUPER+I: Claude under its module, centred when hidden
-            Connections {
-                target: root
-                function onClaudeToggled() {
-                    if (!screenScope.isFocusedScreen()) return
-                    const it = screenScope.barWindow.widgetItem("claude")
-                    if (it && it.visible) {
-                        screenScope.toggleFlyout("claude", it)
-                        return
-                    }
-                    screenScope.flyoutAnchorX = screenScope.modelData.width / 2
-                    screenScope.flyoutSection = ""
-                    screenScope.openFlyout = screenScope.openFlyout === "claude" ? "" : "claude"
-                }
-            }
-
             // the gesture the open switcher belongs to; -1 when none
             property int altTabOpenGen: -1
 
@@ -683,9 +659,6 @@ ShellRoot {
 
         // notification history
         LazyFlyout { name: "notifications"; scope: screenScope; NotificationsFlyout { scope: screenScope } }
-
-        // Claude: SUPER+I or the bar module
-        LazyFlyout { name: "claude"; scope: screenScope; ClaudeFlyout { scope: screenScope } }
 
         // control centre
         LazyFlyout {

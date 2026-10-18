@@ -612,7 +612,7 @@ back. Always the Nerd glyphs (`Theme.fontIcon`), never a typed `>`.
 | Tab on show | accent fill, no chevron | Settings tabs, `FlyoutSegmented` |
 | Goes deeper in the same flyout or window | 󰅂 | submenus, tray submenus, other System pages, Open Health |
 | Leaves for another window | 󰁔 | More in Settings, System's "Settings" |
-| Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more", Claude's diff |
+| Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more" |
 | Dropdown | 󰅀 → 󰅃 | `DropdownMenu`, `SettingsDropdown` |
 | Back | breadcrumb heading (`crumb`), no Back row | Control Centre, tray menu, window menu |
 | Breadcrumb separator | 󰅂 | `FlyoutHeading` |

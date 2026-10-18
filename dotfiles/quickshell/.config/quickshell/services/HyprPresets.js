@@ -193,8 +193,6 @@ var PACKS = [
               cmd: "qs ipc call launcher toggle clipboard" },
             { keys: "SUPER + W", desc: "Show all workspaces", section: "Window Management",
               cmd: "qs ipc call overlay toggle" },
-            { keys: "SUPER + I", desc: "Ask Claude to change the desktop", section: "Claude",
-              cmd: "qs ipc call claude toggle" },
             { keys: "SUPER + K", desc: "Open the keybinds window", section: "Shell",
               cmd: "qs ipc call keybinds open" },
             { keys: "SUPER + CTRL + S", desc: "Open settings", section: "Shell",

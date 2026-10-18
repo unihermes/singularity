@@ -33,7 +33,7 @@ Item {
         battery: battBtn, tray: trayFrame, media: mediaBtn,
         visualizer: vizFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn,
-        failed: failedBtn, updates: updatesBtn, claude: claudeBtn,
+        failed: failedBtn, updates: updatesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
@@ -319,29 +319,6 @@ Item {
         badge: Updates.repoBehind
         active: screenScope.openFlyout === "updates"
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
-    }
-
-    // Claude editing the desktop (ClaudeShell): working, then files waiting
-    // for review; accent while a reply or diff is unseen
-    BarModule {
-        id: claudeBtn
-        visible: ClaudeShell.available && Settings.widgetVisible("claude")
-        icon: "󰚩"
-        label: ClaudeShell.running ? spinner.frames[spinner.frame]
-            : ClaudeShell.hasChanges ? String(ClaudeShell.files.length) : ""
-        iconColor: ClaudeShell.unseen || ClaudeShell.hasChanges ? Theme.accent : "transparent"
-        active: screenScope.openFlyout === "claude"
-        onActivated: screenScope.toggleFlyout("claude", claudeBtn)
-
-        Timer {
-            id: spinner
-            readonly property var frames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-            property int frame: 0
-            interval: 90
-            repeat: true
-            running: ClaudeShell.running && claudeBtn.visible
-            onTriggered: frame = (frame + 1) % frames.length
-        }
     }
 
     // Show desktop: a slim button ending its group (or a slim chip without

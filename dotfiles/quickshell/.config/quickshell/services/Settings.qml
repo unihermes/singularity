@@ -412,7 +412,7 @@ Singleton {
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "media", "clock", "weather"],
-        right:  ["privacy", "failed", "updates", "claude", "notifications", "tray",
+        right:  ["privacy", "failed", "updates", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
@@ -436,7 +436,6 @@ Singleton {
         privacy:       { label: "Privacy",        icon: "󰍬" },
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },
-        claude:        { label: "Claude",         icon: "󰚩" },
         cooling:       { label: "Cooling",        icon: "󰈐" },
         desktop:       { label: "Show Desktop",   icon: "󰇄" },
     })

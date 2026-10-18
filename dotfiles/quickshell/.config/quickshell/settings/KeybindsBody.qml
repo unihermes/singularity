@@ -156,7 +156,7 @@ Column {
     readonly property var displayGroups: [
         { name: "Apps",       sections: ["Launchers"] },
         { name: "Shell",      sections: ["Shell windows", "Clipboard", "Calculator and file search",
-                                         "Notes", "Claude"] },
+                                         "Notes"] },
         { name: "Windows",    sections: ["Window Management", "Mouse", "Scratchpad"] },
         { name: "Focus",      sections: ["Focus"] },
         { name: "Workspaces", sections: ["Workspaces"] },
