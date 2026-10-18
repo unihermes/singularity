@@ -5,7 +5,9 @@
 // hyprland.json through HyprLuaWrite and applied by a reload (`hyprctl
 // keyword` refuses under Lua). Values are read from the file; an unset key
 // shows Hyprland's default. Layouts, variants and XKB options by name from
-// evdev.lst; kb_layout and kb_variant are written together.
+// evdev.lst; kb_layout and kb_variant are written together. Other XKB
+// options sit behind an Advanced row; the touchpad's clicking switches are
+// two to a line.
 
 import Quickshell
 import Quickshell.Io
@@ -211,6 +213,12 @@ SettingsPage {
             enabled: page.field(tg.sub, tg.key).editable
             onToggled: page.set(tg.sub, tg.key, !tg.on, tg.label + (tg.on ? " off" : " on"))
         }
+    }
+
+    // a Toggle in the touchpad's two columns
+    component HalfToggle: Toggle {
+        width: (clicking.width - clicking.columnSpacing) / 2
+        labelWidth: width - Theme.switchWidth - Theme.spaceL
     }
 
     // A level over a range in steps, written when the drag ends. `readout`
@@ -463,37 +471,6 @@ SettingsPage {
         }
     }
 
-    // anything else in kb_options, as typed; the hint shows the whole string
-    SettingsField {
-        label: "Other XKB options"
-        hint: page.optionString(page.options) !== "" ? "Written as " + page.optionString(page.options)
-            : "Comma-separated, as XKB writes them"
-
-        FlyoutInput {
-            id: otherOpts
-            anchors.right: parent.right
-            width: Theme.fit(220)
-            echoPassword: false
-            placeholder: "none"
-            enabled: page.field("", "kb_options").editable
-            text: page.options.other.join(",")
-            onAccepted: {
-                var o = Object.assign({}, page.options)
-                o.other = text.split(",").map(s => s.trim()).filter(s => s !== "")
-                if (o.other.join(",") !== page.options.other.join(","))
-                    page.set("", "kb_options", page.optionString(o), "XKB options set")
-            }
-            onEscapePressed: text = page.options.other.join(",")
-
-            // typing breaks the binding; put the file's value back after
-            // every re-read, which follows every write
-            Connections {
-                target: page
-                function onConfChanged() { otherOpts.text = page.options.other.join(",") }
-            }
-        }
-    }
-
     SettingsSubhead { caption: "KEY REPEAT" }
 
     Level {
@@ -539,6 +516,53 @@ SettingsPage {
     Toggle {
         key: "numlock_by_default"
         label: "Num Lock on at login"
+    }
+
+    // the rarely touched, folded away; a search for them opens it
+    property bool advancedOpen: false
+    onHighlightChanged: if (highlight === "Other XKB options") advancedOpen = true
+
+    FlyoutRow {
+        label: "Advanced…"
+        trailing: page.advancedOpen ? "󰅀" : "󰅂"
+        highlighted: page.advancedOpen
+        onActivated: page.advancedOpen = !page.advancedOpen
+    }
+
+    SettingsIndent {
+        visible: page.advancedOpen
+
+        // anything else in kb_options, as typed; the hint shows the whole
+        // string
+        SettingsField {
+            label: "Other XKB options"
+            hint: page.optionString(page.options) !== "" ? "Written as " + page.optionString(page.options)
+                : "Comma-separated, as XKB writes them"
+
+            FlyoutInput {
+                id: otherOpts
+                anchors.right: parent.right
+                width: Theme.fit(220)
+                echoPassword: false
+                placeholder: "none"
+                enabled: page.field("", "kb_options").editable
+                text: page.options.other.join(",")
+                onAccepted: {
+                    var o = Object.assign({}, page.options)
+                    o.other = text.split(",").map(s => s.trim()).filter(s => s !== "")
+                    if (o.other.join(",") !== page.options.other.join(","))
+                        page.set("", "kb_options", page.optionString(o), "XKB options set")
+                }
+                onEscapePressed: text = page.options.other.join(",")
+
+                // typing breaks the binding; put the file's value back after
+                // every re-read, which follows every write
+                Connections {
+                    target: page
+                    function onConfChanged() { otherOpts.text = page.options.other.join(",") }
+                }
+            }
+        }
     }
 
     Item { width: 1; height: Theme.spaceM }
@@ -661,25 +685,33 @@ SettingsPage {
 
     SettingsSubhead { caption: "CLICKING" }
 
-    Toggle {
-        sub: "touchpad"; key: "tap_to_click"
-        label: "Tap to click"
-        hint: on ? "A light tap clicks" : "Press the pad down to click"
-    }
-    Toggle {
-        sub: "touchpad"; key: "clickfinger_behavior"
-        label: "Click by finger count"
-        hint: on ? "Two fingers right-click, three middle" : "Where you press decides the button"
-    }
-    Toggle {
-        sub: "touchpad"; key: "drag_lock"
-        label: "Drag lock"
-        hint: "Lifting mid-drag doesn't drop it"
-    }
-    Toggle {
-        sub: "touchpad"; key: "middle_button_emulation"
-        label: "Middle-click emulation"
-        hint: "Left and right pressed together"
+    // two to a line
+    Grid {
+        id: clicking
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        HalfToggle {
+            sub: "touchpad"; key: "tap_to_click"
+            label: "Tap to click"
+            hint: on ? "A light tap clicks" : "Press the pad down to click"
+        }
+        HalfToggle {
+            sub: "touchpad"; key: "clickfinger_behavior"
+            label: "Click by finger count"
+            hint: on ? "Two fingers right-click, three middle" : "Where you press decides the button"
+        }
+        HalfToggle {
+            sub: "touchpad"; key: "drag_lock"
+            label: "Drag lock"
+            hint: "Lifting mid-drag doesn't drop it"
+        }
+        HalfToggle {
+            sub: "touchpad"; key: "middle_button_emulation"
+            label: "Middle-click emulation"
+            hint: "Left and right pressed together"
+        }
     }
 
     SettingsSubhead { caption: "SCROLLING AND TYPING" }

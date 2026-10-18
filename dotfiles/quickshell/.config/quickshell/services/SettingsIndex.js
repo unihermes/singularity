@@ -260,6 +260,7 @@ var entries = [
     { page: "input", section: "Keyboard", label: "Repeat rate",       keywords: "key held repeat" },
     { page: "input", section: "Keyboard", label: "Try it",            keywords: "key repeat test" },
     { page: "input", section: "Keyboard", label: "Num Lock on at login", keywords: "numlock numpad" },
+    { page: "input", section: "Keyboard", label: "Advanced…",         keywords: "xkb options more" },
     { page: "input", section: "Mouse", label: "Pointer speed",        keywords: "sensitivity mouse speed" },
     { page: "input", section: "Mouse", label: "Acceleration",         keywords: "accel flat adaptive pointer" },
     { page: "input", section: "Mouse", label: "Focus follows mouse",  keywords: "sloppy focus hover click" },

@@ -461,21 +461,23 @@ Settings') are laid out the same way.
   ignoring on hover; Ignore a package… is the last row and opens a search
   of installed packages. Upkeep holds Orphaned packages and Reclaimable
   space, whose Clean up asks with the size first.
-- **Input:** each keyboard layout is a row (its name in words, the
+- **Input** (picked 2026-10-18, 1A 2A 3A 4B 5B): each keyboard layout is a row (its name in words, the
   variant or code as the note, Main on the first of two or more) that
   opens to its Variant as a dropdown in words, Make it the main one and
   Remove; Add a layout… searches evdev.lst by name or code. kb_layout and
   kb_variant are always written together. The common XKB options are
   named: Caps Lock key and Compose key dropdowns, and Switch layouts with
   (segments) once there are two layouts; the rest of kb_options is Other
-  XKB options, whose hint shows the whole string. Repeat delay and rate,
+  XKB options, whose hint shows the whole string, folded behind an
+  Advanced… row at the end of the keyboard section (a search for it opens
+  the row). Repeat delay and rate,
   Pointer speed (a tick at the device's own speed) and Scroll speed are
   levels written when the drag ends, with a Try it field for the repeat.
   Focus follows mouse is four tiles drawing two windows, the keyboard's in
   accent and the wheel's dashed: Click, Always, Hover scrolls, Apart. The
   touchpad's rows are grouped by `SettingsSubhead` (Clicking, Scrolling
-  and typing) inside the one section, and every hint says what the
-  current setting does.
+  and typing) inside the one section, the four clicking switches two to a
+  line, and every hint says what the current setting does.
 - **Keybinds:** one page, no tabs: your binds, then SUGGESTED (the
   presets you don't have yet, by pack; Show added brings the rest). Each
   bind is one line (keycaps, the description, the command quieter in the
