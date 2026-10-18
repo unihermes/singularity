@@ -1,33 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutHeading.qml
 //
-// Section label for a flyout: small caps, then a rule that runs out to the
-// right edge -- the same "label cut into a border" motif the rest of the
-// repo uses (see the fastfetch box headers).
-//
-// `hints` puts key hints at the rule's far end ("Enter open", "Esc close"),
-// for the centred overlays that are driven from the keyboard.
-//
-// A heading that shares its column with another one heads a section: the
-// siblings after it, up to the next heading or FlyoutDivider. Clicking it
-// folds that section shut, and a chevron at the rule's end shows which way
-// it is. Folded rows are moved into a hidden holder rather than hidden one
-// by one, so their own `visible` bindings survive, and moved back in their
-// old order. The empty spacer Item a page puts before the next heading
-// stays, so folded sections keep their gaps.
-//
-// `control` puts a control at the rule's far end, on the heading's line: a
-// flyout's radio switch, a scan button. A heading with one doesn't fold.
-//
-// `crumb` names the page above this one ("CONTROL CENTRE › APPEARANCE"):
-// it's drawn quieter before the text, and a click on it is the way back
-// (crumbClicked), so a submenu needs no Back row.
-//
-// Folding lasts while the window is open. The Settings and System windows
-// keep a `foldedSections` list (by page title and heading) on an item
-// above their pages, so a page left and come back to is as it was; the
-// windows are torn down on close, and the list with them. A flyout is only
-// hidden when it closes, so its sections unfold as it goes.
+// A section heading: the label, then a rule to the right edge. `hints`
+// puts key hints at the rule's end; `control` a control (such a heading
+// doesn't fold); `crumb` the page above, quieter, clickable as the way
+// back (crumbClicked). A heading sharing its column with another folds its
+// section (up to the next heading or FlyoutDivider) on click, by moving the
+// rows into a hidden holder. Settings and System keep folds in a
+// `foldedSections` list while open; flyouts unfold as they close.
 
 import QtQuick
 import "../services"
@@ -84,9 +64,7 @@ Item {
         return n
     }
 
-    // the page (or window) this sits on, so the same heading on two pages
-    // is two sections. Counts and prices are left out, so "BATTERY  80%"
-    // stays the same section as the charge changes.
+    // the section's key: the page plus the text without counts or prices
     function key() {
         var name = text.replace(/[\d$%.,·:-]+/g, "").replace(/\s+/g, " ").trim()
         for (var p = parent; p; p = p.parent)
@@ -124,9 +102,8 @@ Item {
         var moving = []
         for (var i = 0; i < holder.children.length; i++) moving.push(holder.children[i])
         if (moving.length === 0) return
-        // A Column lays out in child order and a new child goes last, so
-        // everything after the heading is taken out and put back behind the
-        // unfolded rows.
+        // everything after the heading is re-added behind the unfolded rows
+        // (a Column lays out in child order)
         var kids = col.children
         var at = 0
         while (at < kids.length && kids[at] !== root) at++

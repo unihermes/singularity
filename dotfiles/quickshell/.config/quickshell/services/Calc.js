@@ -1,23 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Calc.js
 //
-// The launcher's calculator mode: a small expression evaluator, used as
-// `Calc.evaluate("2 + 2 * 3")`.
-//
-// Hand-written tokeniser and recursive-descent parser rather than a call to
-// JavaScript's eval(). eval would run anything the box is given -- including
-// property writes and function calls reachable from this scope -- and the
-// launcher is a global hotkey away at all times. This understands numbers
-// and the operators below, and nothing else: anything it doesn't recognise
-// comes back as an error instead of running.
-//
-// Supported: + - * / and ^, parentheses, unary minus, `mod`, a trailing %
-// (which is just /100), the constants pi/e/tau, and the functions listed in
-// FUNCS. Numbers may be decimal, hex (0x1f) or binary (0b1011), and may use
-// _ as a digit separator.
-//
-// `mod` is a word rather than the usual % because % is already the percent
-// suffix; "10 % 3" is ambiguous in a box where "20% of" is the common case.
+// The launcher's calculator: Calc.evaluate("2 + 2 * 3"). A hand-written
+// parser, never eval() (the launcher is a hotkey away). Supports + - * / ^,
+// parentheses, unary minus, `mod` (% is the percent suffix, /100), pi/e/tau,
+// FUNCS, and decimal, hex (0x1f) or binary (0b1011) numbers with _ separators.
 
 .pragma library
 
@@ -183,10 +170,8 @@ function evaluate(src) {
     }
 }
 
-// What the mode can do, listed in the launcher under the result so the
-// syntax is discoverable without leaving the box. `insert` is what typing
-// Enter on the row appends to the expression -- a function gets its opening
-// bracket, an operator gets spaces around it.
+// the syntax listed under the result; `insert` is what Enter appends (a
+// function's bracket, an operator's spaces)
 var REFERENCE = [
     { name: "+  -  *  /", desc: "add, subtract, multiply, divide", insert: " + " },
     { name: "^", desc: "power, right associative: 2^3^2 = 512", insert: "^" },
@@ -212,9 +197,7 @@ var REFERENCE = [
     { name: "1_000_000", desc: "_ as a digit separator", insert: "_" },
 ]
 
-// The reference rows to show under the result. With something typed, only
-// the ones matching the word being typed -- "sq" narrows to sqrt -- so the
-// list doubles as completion; with nothing typed, all of them.
+// the reference rows matching the word being typed (completion), else all
 function reference(src) {
     var s = String(src || "").trim().toLowerCase()
     // only a part-typed name narrows the list; a trailing number would
@@ -222,9 +205,7 @@ function reference(src) {
     var word = /[a-z][a-z0-9]*$/.exec(s)
     if (s === "" || !word) return REFERENCE
     var w = word[0]
-    // name matches are what completion is for; descriptions are only
-    // searched when the name turns nothing up, or typing "ne" would offer
-    // round(x) for the "nearest" in its description
+    // descriptions are searched only when no name matches
     var byName = REFERENCE.filter(function (r) {
         return r.name.toLowerCase().indexOf(w) !== -1
     })

@@ -1,32 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/SettingsWindow.qml
 //
-// Settings: a one-line title bar holding the search, and under it one
-// framed panel showing Home (every page as a tile, WindowHome.qml), the
-// open page, or what the search matched. Inside a page the title bar reads
-// Settings › Page, with a back button to Home. Changes apply as they're
-// made -- there is no Save -- and each page
-// writes straight to the thing it controls (mimeapps.list, binds.lua,
-// hypridle.conf, pipewire) rather than to a store of its own -- except
-// Appearance and Notifications, whose settings are Settings.qml's, shared
-// with the Control Centre and the notification flyout.
-//
-// The ground and Escape come from WindowChrome.qml.
-//
-// Search: `/` (or a click) puts the cursor in the bar. Empty, on Home, the
-// arrow keys walk the tiles and Enter opens one; typed into, the panel
-// lists what matches from SettingsIndex.js -- whole pages and single
-// settings -- and picking a setting opens its page and asks the page to
-// scroll to it and ring it. Escape clears the query, then leaves the bar,
-// then closes the window.
-//
-// No memory: every open starts on Home (or the page open() is asked for),
-// and the page is a Loader that only exists while the window is visible,
-// so nothing a page read or ran survives a close -- and nothing runs at all
-// while Settings is shut.
-//
-// Floating and centring come from the "quickshell-windows" rule in
-// windows.lua, as for System.
+// Settings: a title bar with the search, over one panel showing Home (a tile
+// per page, WindowHome.qml), the open page (Settings › Page, back to Home)
+// or search results (SettingsIndex.js; a hit opens its page and rings the
+// setting). Changes apply at once, written straight to what they control.
+// `/` focuses the search; Escape clears, leaves the bar, then closes. Every
+// open starts fresh on Home; the page Loader exists only while visible.
 
 import Quickshell
 import Quickshell.Io
@@ -197,9 +177,8 @@ FloatingWindow {
         chrome.keySink.forceActiveFocus()
     }
 
-    // Open the result's page and let it know which setting was asked for.
-    // Setting highlight first means the Loader's onLoaded has it ready; when
-    // the page is already open there is no reload, so it is handed over here.
+    // opens the result's page and hands it the setting (highlight first, so
+    // a fresh page has it on load)
     function reveal(entry) {
         highlight = entry.label
         if (currentPage === entry.page) {
@@ -279,9 +258,7 @@ FloatingWindow {
         anchors.topMargin: Theme.spaceXl
         x: Theme.windowPad
         width: root.width - Theme.windowPad * 2
-        // the window's real size, not the one asked for: the two differ
-        // after a density or Font Size change while the window is open, which
-        // leaves the window as it was and re-lays out what's inside
+        // the window's real size (a Font Size change leaves the window as is)
         height: root.height - y - Theme.windowPad
 
         WindowHome {
