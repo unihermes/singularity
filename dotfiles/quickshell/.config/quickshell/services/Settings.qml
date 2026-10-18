@@ -109,9 +109,6 @@ Singleton {
     readonly property alias cursorTheme: adapter.cursorTheme
     readonly property alias cursorSize:  adapter.cursorSize
     readonly property alias iconTheme:   adapter.iconTheme
-    // whether GTK and Qt apps take the style's corners, density and frames
-    // (AppStyle.js), or keep their theme's own
-    readonly property alias appsFollowStyle: adapter.appsFollowStyle
     // how Hyprland's windows open, close and minimize (AppearanceSync); kept
     // by Reset
     readonly property alias windowAnim:  adapter.windowAnim
@@ -909,7 +906,6 @@ Singleton {
             property string cursorTheme: "Bibata-Modern-Classic"
             property int cursorSize: 20
             property string iconTheme: "kora"
-            property bool appsFollowStyle: true
             property string windowAnim: "popin"
             property string barStyle: "full"
             property int edgeGap: 0

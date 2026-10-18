@@ -79,15 +79,5 @@ SettingsTab {
 
     Stepper { label: "Cursor size"; key: "cursorSize"; step: 4; suffix: "px" }
 
-    SettingsField {
-        label: "Follow the style"
-        hint: Settings.appsFollowStyle ? "Corners, density and frames, as the shell" : "Apps keep their theme's own shapes"
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.appsFollowStyle
-            onToggled: Settings.set("appsFollowStyle", !Settings.appsFollowStyle)
-        }
-    }
-
     Stepper { label: "Terminal opacity"; hint: "Also on the Terminal page"; key: "terminalOpacity"; step: 5; suffix: "%" }
 }
