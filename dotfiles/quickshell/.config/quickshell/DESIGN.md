@@ -299,8 +299,8 @@ Settings') are laid out the same way.
   tabs, motion) and Apps. While anything differs from the baseline, the changes
   bar (`ChangesBar`, picked 2026-10-18) floats at the page's foot
   (`SettingsPage.footer`): "N changed from …", Review (the list opening
-  above it, with Undo all and Factory reset), Save as default, Reset. A changed field's ● names the value it
-  puts back when hovered.
+  above it, with Undo all and Factory reset), Save as default, Reset. A
+  changed field's ● names the value it puts back when hovered.
 - **Live preview (Appearance):** pinned above the rows on every tab, showing
   what that tab changes (`LivePreview.kind`): the bar and a flyout (Theme,
   Apps), the whole bar a little larger (Bar), the launcher in its layout

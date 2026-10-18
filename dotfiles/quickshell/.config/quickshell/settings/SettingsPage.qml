@@ -202,7 +202,9 @@ Item {
             visible: root.tabs.length > 0 && root.sectioned
             width: parent.width
             height: Theme.rowHeightTall + Theme.spaceS
-            radius: Theme.radiusInner
+            // the Roundness setting itself, the lit tab one step in, so
+            // their corners nest
+            radius: Theme.radius
             color: Theme.controlFill("transparent")
             border.width: Theme.controlBorder(Theme.stroke)
             border.color: Theme.controlStroke(Theme.stroke)
@@ -229,7 +231,7 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 1
-                            radius: Theme.radiusSmall
+                            radius: Theme.radiusInner
                             color: seg.current ? Theme.accent
                                 : segMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
                             border.width: seg.current && Theme.frameChannel ? Theme.channelGrooveWidth : 0
