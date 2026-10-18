@@ -1,25 +1,9 @@
 #!/usr/bin/env bash
-# XDG autostart, for a session that has none.
-#
-# A desktop environment is what normally runs ~/.config/autostart at login;
-# Hyprland doesn't, so an .desktop file dropped there by an application -- or
-# by Settings > Startup -- did nothing at all on this machine. This is the
-# piece that makes those entries mean something. autostart.lua runs `run` once
-# per session; Settings reads `list` and writes the files.
-#
-# It deliberately differs from the XDG spec in one way. The spec says an entry
-# in /etc/xdg/autostart runs unless the user hides it, which would mean
-# installing this script silently started four programs that had never run on
-# this machine before -- two of them (gnome-keyring's pkcs11 and secrets
-# entries) duplicating what a systemd user unit already starts. So a system
-# entry here is opt-in: it runs only once Settings has copied it into
-# ~/.config/autostart. User entries follow the spec exactly -- they run unless
-# Hidden=true.
-#
-# Everything is launched with setsid so nothing is in the compositor's process
-# group: a crashing autostart entry then takes itself down rather than being
-# killed along with, or holding up, the session.
-#
+# XDG autostart, which Hyprland doesn't run: autostart.lua calls `run` once
+# per session, Settings > Startup reads `list` and writes the files. Unlike
+# the spec, a system entry (/etc/xdg/autostart) is opt-in: it runs only once
+# Settings copies it into ~/.config/autostart. User entries run unless
+# Hidden=true. Launched with setsid, out of the compositor's process group.
 #   autostart.sh run     launch every enabled entry (called at login)
 #   autostart.sh list    one TSV record per entry, for Settings
 set -uo pipefail
@@ -29,9 +13,7 @@ system_dir=/etc/xdg/autostart
 log=${XDG_CACHE_HOME:-$HOME/.cache}/autostart.log
 desktop=${XDG_CURRENT_DESKTOP:-Hyprland}
 
-# Read one key out of a .desktop file's [Desktop Entry] group. Later groups
-# ([Desktop Action ...]) are ignored: they hold their own Name and Exec, and
-# taking the first match in the file would sometimes return an action's.
+# one key from the [Desktop Entry] group only (actions have their own)
 field() {
 	awk -F= -v key="$2" '
 		/^\[/ { group = ($0 == "[Desktop Entry]") ; next }
@@ -68,9 +50,7 @@ enabled() {
 	return 0
 }
 
-# Field codes are for a file manager passing arguments to an application;
-# nothing is being passed here, and left in place they arrive as a literal
-# "%u" argument that some programs then try to open. %% is a literal %.
+# strips field codes (they'd arrive as a literal "%u"); %% is a literal %
 exec_line() {
 	field "$1" Exec | sed -E 's/%%/\x01/g; s/%[fFuUdDnNickvm]//g; s/\x01/%/g; s/[[:space:]]+$//'
 }
@@ -85,16 +65,9 @@ sid() {
 	printf '%s' "$sid"
 }
 
-# Start entries in the tray. Not every app can be asked to: Steam (-silent),
-# Discord (--start-minimized) and CoolerControl (its own setting) can, but
-# Spotify's --minimized is Windows-only and it always opens its window. So an
-# entry's window is closed for it -- only once the app has its tray icon up,
-# because closing the window of an app with no tray quits it, and because the
-# splash and updater windows some apps show first (Discord, Steam) come before
-# the icon and closing one of those aborts the start. An app that has had its
-# icon up for 5 s without opening a window started hidden by itself, and is
-# dropped from the watch, so a window the user then opens from the tray is
-# theirs. Nothing is watched past 60 s.
+# Starts an entry in the tray by closing its window once its tray icon is up
+# (closing earlier would quit it or abort a splash). An app with its icon up
+# 5 s and no window started hidden itself; nothing is watched past 60 s.
 to_tray() {
 	local -A watching=() iconed=()
 	local s item bus pid addr t
@@ -133,12 +106,8 @@ run)
 	mkdir -p "$(dirname "$log")"
 	printf '=== %s ===\n' "$(date '+%Y-%m-%d %H:%M:%S')" >>"$log"
 
-	# Hold the entries until the bar's tray is up. Quickshell starts in the
-	# same breath as this script and takes a moment to claim the
-	# StatusNotifierWatcher name, and an app that looks for a tray before
-	# then doesn't always look again: Qt and Electron apps (CoolerControl,
-	# Discord) settle on having no tray icon at all. 20 s at most, so a
-	# session without the bar still gets its autostart.
+	# wait (20 s at most) for the bar's tray: Qt and Electron apps that find
+	# no StatusNotifierWatcher don't look again
 	for (( i = 0; i < 100; i++ )); do
 		busctl --user status org.kde.StatusNotifierWatcher &>/dev/null && break
 		sleep 0.2
@@ -165,11 +134,7 @@ run)
 
 list)
 	# scope \t file \t name \t exec \t enabled \t runnable \t comment \t icon \t OnlyShowIn
-	#
-	# System entries are listed after the user's, and one that has been
-	# copied into ~/.config/autostart is left out of the system list -- the
-	# user's copy is the one that decides, and showing both would be two
-	# rows for one program disagreeing about whether it starts.
+	# System entries after the user's, minus those the user has copied.
 	shopt -s nullglob
 	for file in "$user_dir"/*.desktop; do
 		name=${file##*/}

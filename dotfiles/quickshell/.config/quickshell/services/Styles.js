@@ -1,46 +1,24 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Styles.js
 //
-// The Styles: each one a complete way of drawing the shell's chrome, so no
-// mix of settings can put one style's chips beside another's flyouts.
-// Settings.style names one; resolve() turns it and the few dials beside it
-// (roundness, bar shape, density, see-through, the Finish switches) into
-// every value Theme hands out. Theme and the Appearance page's look cards
-// both go through resolve(), so a card draws exactly what picking it gives.
-//
-// Each style:
-//   frame      how panels and chips are stroked (Theme.frame*): "channel",
-//              "double", "single" or "none"
-//   modules    the bar chips (ModuleFrame): "grouped", "outline", "filled"
-//              or "taskbar" (bare slots the bar's full height, packed with
-//              no gaps)
-//   mark       how the open-windows strip marks the focused window:
-//              "pill" or "ground"
-//   shadow     the kind the Shadows switch turns on: "none" or "soft"
-//   lines      whether it has strokes, i.e. whether Heavy lines does anything
-//   attach     where flyouts sit: "grown" from the bar group, "floating",
-//              or "auto": flush on a full-width bar, floating on the others
-//   anim       how flyouts open when Flyouts open is left to the style
-//   glass      grounds a further 30% see-through, with a light hairline
-//   square     every corner square, whatever Roundness says
-//   finish     what picking the style sets the Finish switches to
-//   options    the style's own switches, shown on the Style tab under its
-//              name. Each is { id, label, hint, on }: `on` is its state
-//              when the style is picked. An option with a `key` is one of
-//              the shared Finish settings (shadows, gradient, heavyLines,
-//              headingUpper, or barSeparator or barPosition with `value`,
-//              and `off` for the value it takes when off, "none" if
-//              unstated); the rest are ids in Settings.styleOptions, read
-//              with Theme.opt(id).
-//   windows    optional: window opacity, in percent, as { focusedOpacity,
-//              unfocusedOpacity, terminalOpacity } -- Hyprland's focused
-//              and unfocused windows, and the terminal's background; left out,
-//              windowDefaults'. Picking the style sets them, and they stay
-//              adjustable on the Windows tab
-//
-// Every style also draws its own controls -- switch, slider, segments and
-// buttons -- keyed by its name (Switch.qml, Slider.qml, FlyoutSegmented.qml,
-// FlyoutChip.qml).
+// The Styles: each a complete way of drawing the chrome. resolve() turns
+// Settings.style and its dials into everything Theme hands out (the look
+// cards use it too). Each style:
+//   frame    panel and chip strokes: "channel", "double", "single", "none"
+//   modules  bar chips: "grouped", "outline", "filled", "taskbar"
+//   mark     the strip's focused window: "pill" or "ground"
+//   shadow   what Shadows turns on: "none" or "soft"
+//   lines    whether it has strokes (Heavy lines)
+//   attach   flyouts "grown", "floating", or "auto" (flush on a full bar)
+//   anim     how flyouts open when left to the style
+//   glass    grounds 30% more see-through, light hairline
+//   square   every corner square
+//   finish   the Finish switches picking it sets
+//   options  its own switches { id, label, hint, on }; one with `key` stands
+//            for a shared Finish setting (with `value`/`off`), the rest are
+//            Settings.styleOptions ids read with Theme.opt(id)
+//   windows  optional { focusedOpacity, unfocusedOpacity, terminalOpacity }
+// Controls draw per style too (Switch, Slider, FlyoutSegmented, FlyoutChip).
 
 .pragma library
 
@@ -118,9 +96,7 @@ function windows(name) {
     return out
 }
 
-// What picking the style sets: its Finish switches, the shared ones its
-// options stand for, and styleOptions -- the ids of its own options that
-// start on, comma-joined.
+// what picking the style sets: Finish switches and styleOptions (ids on)
 function finish(name) {
     var st = get(name), out = {}
     for (var k in st.finish) out[k] = st.finish[k]

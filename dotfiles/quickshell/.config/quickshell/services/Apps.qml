@@ -29,10 +29,8 @@ Singleton {
         }
     }
 
-    // Desktop entry ids kept out of the list: system tools that
-    // arrived as dependencies of something else and aren't ever
-    // launched by hand. Ids rather than names, so a translation or a
-    // package renaming its Name= line doesn't let one back in.
+    // desktop entry ids kept out of the list (dependency-installed system
+    // tools), by id so a renamed Name= can't bring one back
     readonly property var hidden: [
         "avahi-discover", "bssh", "bvnc",   // avahi
         "lstopo",                           // hwloc
@@ -45,13 +43,9 @@ Singleton {
         "thunar-bulk-rename",
     ]
 
-    // Every launchable desktop entry, most launched first, ties A-Z, or
-    // purely A-Z with `alphabetical`. Case-insensitive, or lowercase names ("htop", "nvim") would all
-    // sort after Z.
-    //
-    // With a query, names that *start* with it come first, then any
-    // other match, each group in the same order. genericName is searched
-    // too, so "browser" finds Zen and Floorp.
+    // Every launchable entry, most launched first then A-Z (or A-Z with
+    // `alphabetical`), case-insensitive. With a query, prefix matches first;
+    // genericName is searched too.
     function list(query, alphabetical) {
         var all = DesktopEntries.applications.values
         var q = (query || "").trim().toLowerCase()
@@ -84,9 +78,7 @@ Singleton {
         // app's windows open (windows.lua's markLaunch).
         Quickshell.execDetached(["hyprctl", "eval", "markLaunch()"])
 
-        // execute() runs the Exec line as-is, which for a terminal
-        // app (htop, nvim) means a process with no terminal to draw
-        // in -- it starts and dies unseen. Those get wrapped.
+        // a terminal app is wrapped, or it starts with nothing to draw in
         if (entry.runInTerminal) {
             // command is a Qt list, not a JS array: concat() would
             // push it as one nested element instead of spreading it
@@ -97,14 +89,9 @@ Singleton {
             entry.execute()
     }
 
-    // The icon for an open window's class, for everything that lists
-    // windows: the bar's window strip, ALT+Tab, the workspace overlay.
-    //
-    // heuristicLookup() goes through the desktop entries, which leave out
-    // NoDisplay=true ones, so the class is also tried as an icon name of its
-    // own, then its bare last segment lowercased, for apps whose class is
-    // reverse-DNS but whose icon isn't. The shell's own windows get no icon
-    // here: they all share org.quickshell's, and draw their glyph instead.
+    // The icon for a window class: via desktop entries (heuristicLookup),
+    // then the class as an icon name, then its last segment lowercased. The
+    // shell's own windows get none; they draw a glyph.
     function iconForClass(cls) {
         if (!cls || String(cls) === "org.quickshell") return ""
         var c = byClass(cls)
@@ -117,11 +104,8 @@ Singleton {
         return c.icon
     }
 
-    // What a window class resolves to, looked up once: every window list
-    // asks again for each window whenever the window list changes, and
-    // heuristicLookup() walks every desktop entry. { entry, icon }, icon
-    // filled in on first ask. Cleared when the entries or the icon theme
-    // change, which also re-runs the bindings that read it.
+    // class -> { entry, icon }, cached (heuristicLookup walks every entry);
+    // cleared when the entries or icon theme change
     property var classCache: ({})
     function byClass(cls) {
         var cache = classCache
@@ -137,21 +121,14 @@ Singleton {
         function onIconThemeChanged() { root.classCache = {} }
     }
 
-    // The shell's own windows (Settings, System, Keybinds, Notes), which all
-    // share one class. They show up in the window strip and in ALT+Tab like
-    // anything else you have open -- real toplevels you can focus and work
-    // in. What they stay out of is the shell's own bookkeeping: the
-    // workspace flyout and overlay, counting towards whether a workspace has
-    // anything on it, and tray-icon matching.
+    // The shell's own windows (one shared class): listed in the strip and
+    // ALT+Tab, but left out of the workspace views, occupancy and tray matching.
     function isShellWindow(tl) {
         return !!(tl.lastIpcObject && tl.lastIpcObject.class === "org.quickshell")
     }
 
-    // When no icon file can be found, something still has to be drawn: an
-    // IconImage with an empty source is a hole in the row. The shell's own
-    // windows always take this path, with a glyph for what the window
-    // actually is, so Settings, System, Keybinds and Notes are told apart at a
-    // glance. Anything else falls back to a plain window outline.
+    // glyphs for the shell's own windows, and a window outline for any
+    // other window with no icon
     readonly property var shellGlyphs: ({
         keybinds: "󰌌", notes: "󰎚", settings: "󰒓", system: "󰨇",
     })
@@ -162,10 +139,8 @@ Singleton {
         return "󰖯"
     }
 
-    // windows.lua's TABS keep each tab of a group a window of its own.
-    // Everything that lists windows shows a group once, as the tab focused
-    // most recently (the one on top), so this is true for the tabs behind it.
-    // `ipc` and each of `ipcs` are shaped like hyprctl clients -j entries.
+    // a tab behind the most recently focused one in its group (windows.lua's
+    // TABS), so lists show each group once; `ipc`/`ipcs` as hyprctl clients -j
     function isBackTab(ipc, ipcs) {
         if (!ipc || !ipc.grouped || ipc.grouped.length < 2) return false
         for (const o of ipcs) {
@@ -182,9 +157,8 @@ Singleton {
         return isBackTab(ipc, Hyprland.toplevels.values.map(t => t.lastIpcObject))
     }
 
-    // A short name for an open window's app: its desktop entry's name, else
-    // the class's bare last segment. The shell's own windows go by their
-    // title (Settings, System…), since they all share one class.
+    // a short app name: the desktop entry's, else the class's last segment;
+    // the shell's windows go by title
     function nameForWindow(cls, title) {
         if (String(cls) === "org.quickshell") return String(title || "Singularity")
         var entry = cls ? byClass(cls).entry : null
