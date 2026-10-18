@@ -1,21 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/SettingsIndex.js
 //
-// What the Settings window's search box (/) looks through: one entry per
-// setting, naming the page it lives on and the heading it sits under.
-//
-// A written list rather than something read off the pages: only the open
-// page exists at any moment -- the others are a Loader away and several run
-// commands or read config the instant they load -- so there is nothing to
-// walk. The cost is that this has to be kept in step by hand: a new
-// SettingsField wants a line here, and `label` must match the field's own
-// label exactly, since that string is what the page highlights and scrolls
-// to when a result is picked.
-//
-// `keywords` is for the words someone would type that the label doesn't
-// contain (the old name for a thing, the tool behind it, the unit).
-// Entries without a matching field -- a whole section, a page's list --
-// still work: the result opens the page and nothing is highlighted.
+// What Settings' search looks through: one entry per setting with its page
+// and heading. Kept by hand (pages load lazily, so there's nothing to walk):
+// a new SettingsField wants a line, `label` matching the field's exactly.
+// `keywords` holds words the label lacks. An entry with no matching field
+// just opens the page.
 
 .pragma library
 
@@ -209,9 +199,7 @@ var entries = [
     { page: "audio", section: "Output", label: "Mute",      keywords: "silence speakers microphone mic off" },
     { page: "audio", section: "Output", label: "Output",    keywords: "default sink speakers headphones hdmi displayport device" },
     { page: "audio", section: "Input",  label: "Input",     keywords: "default source microphone mic device" },
-    // The mixer's rows are named after whatever happens to be running, so
-    // there is no fixed field label to point at. These name their heading
-    // instead: the result opens the page, and highlights nothing.
+    // the mixer's rows have no fixed label; these name their heading
     { page: "audio", section: "", label: "Playing",   keywords: "mixer per app volume application stream" },
     { page: "audio", section: "", label: "Recording", keywords: "mixer capture app stream microphone" },
 
@@ -285,10 +273,8 @@ var entries = [
     { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },
 ]
 
-// Every entry, with its page's name folded in, so a result row
-// has everything it needs and search can match the page name too -- plus
-// one entry per page, so a search can land on a whole section. `pages` is
-// the Settings window's own list.
+// every entry with its page's name folded in, plus one per page; `pages` is
+// the Settings window's own list
 function build(pages) {
     var byId = {}
     var out = []
@@ -321,9 +307,7 @@ function build(pages) {
     return out
 }
 
-// Every word of the query has to appear somewhere in the entry; the rank is
-// the best any of them scores against the label, so "font size" puts the
-// setting called Font size above the ones that merely mention fonts.
+// every query word must appear; ranked by the best score against the label
 function score(entry, words) {
     var label = entry.label.toLowerCase()
     var best = 0

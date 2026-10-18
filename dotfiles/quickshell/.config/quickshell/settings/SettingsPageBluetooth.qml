@@ -1,19 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageBluetooth.qml
 //
-// The adapter, what's paired to it, and what's in range.
-//
-// Straight onto Quickshell's Bluetooth service (BlueZ), the same objects the
-// bar module and its flyout read, so a device connected here is connected
-// everywhere at once. Nothing to persist: BlueZ keeps the bonds.
-//
-// Rows are flyouts/BtDeviceRow.qml in its `detailed` form, which keeps the
-// pair / trust / connect dance in one place. A paired device opens in place
-// to connect, rename, stop it reconnecting by itself, or remove it.
-//
-// What this page has that the flyout doesn't: the adapter's own identity,
-// discoverable and pairable, each device's settings, the nearby list
-// uncapped, and a way to see the unnamed devices the flyout only counts.
+// The adapter, paired devices and what's in range, straight on Quickshell's
+// Bluetooth service (BlueZ keeps the bonds). Rows are BtDeviceRow in its
+// `detailed` form; a paired device opens to connect, rename, auto-connect
+// or remove. Beyond the flyout: the adapter's identity, discoverable,
+// pairable, the full nearby list and unnamed devices.
 
 import Quickshell
 import Quickshell.Bluetooth
@@ -32,13 +24,8 @@ SettingsPage {
 
     readonly property var adapter: Bluetooth.defaultAdapter
 
-    // Repeated from the bar's helpers rather than shared: they need the
-    // BluetoothAdapterState enum, which only a QML file importing
-    // Quickshell.Bluetooth can see.
-    //
-    // adapter.enabled mirrors BlueZ's "Powered", but Quickshell writes it
-    // optimistically and never reverts a failed write. adapter.state is fed
-    // only by BlueZ's own PropertiesChanged, so it is the true one.
+    // repeated from the bar (they need the BluetoothAdapterState enum);
+    // adapter.state, not `enabled`, which Quickshell sets optimistically
     readonly property bool poweredOn: !!adapter && adapter.state === BluetoothAdapterState.Enabled
     readonly property bool blocked: !!adapter && adapter.state === BluetoothAdapterState.Blocked
 
@@ -47,9 +34,7 @@ SettingsPage {
         adapter.enabled = on
     }
 
-    // Show the unnamed advertisements too. Not persisted: BlueZ reports every
-    // BLE privacy beacon in range as a nameless rotating address, dozens of
-    // rows that can't be paired with.
+    // show nameless advertisements (mostly BLE privacy beacons); not saved
     property bool showUnnamed: false
     // the paired device opened for its settings, and the one being renamed
     property string openAddr: ""
@@ -57,9 +42,7 @@ SettingsPage {
 
     readonly property var allDevices: (adapter && adapter.devices) ? adapter.devices.values : []
 
-    // Nameless hardware BlueZ could still classify -- a headset that hasn't
-    // answered a name request yet still reports a device class, where a
-    // privacy beacon reports nothing at all.
+    // nameless hardware BlueZ could still classify (a device class)
     function named(d) {
         return d.deviceName !== "" || d.icon !== ""
     }

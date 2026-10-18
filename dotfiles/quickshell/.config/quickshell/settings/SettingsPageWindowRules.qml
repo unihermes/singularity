@@ -39,7 +39,7 @@ SettingsPage {
     }))
 
     // a floating window's size: natural, presets in pixels, and shares of
-    // the screen ("60% 60%", which windows.lua turns into monitor_w*0.6)
+    // the screen ("60% 60%", which window-rules.lua turns into monitor_w*0.6)
     readonly property var sizes: ["", "640 400", "800 500", "960 540", "1240 690", "1440 900", "1600 900",
         "50% 50%", "60% 60%", "80% 80%"]
     function validSize(v) { return /^\d+%? \d+%?$/.test(v || "") }
@@ -187,7 +187,7 @@ SettingsPage {
     }
 
     // A rule naming no class never reaches Quickshell's own windows --
-    // windows.lua adds that exclusion -- so it isn't counted here either.
+    // window-rules.lua adds that exclusion -- so it isn't counted here either.
     function openCount(rule) {
         return openWindows.filter(w => (rule.class || w.class !== "org.quickshell")
             && fieldMatches(rule.class, rule.regex, w.class)

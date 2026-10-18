@@ -1,26 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/System.qml
 //
-// System: what this machine is and what it is doing. Home answers "is
-// anything wrong" at a glance -- four headline figures with their last
-// minute, then every page as a tile carrying its own live figure; the pages
-// behind it go as deep as the kernel will let us on the CPU, memory,
-// storage, network, processes, hardware, power and -- since every answer
-// here ends in "where do I change that" -- the config files themselves.
-//
-// The numbers come from services/SystemStats.qml (live, sampled only while
-// this window is visible) and services/SystemSpecs.qml (static, gathered
-// once per session). Appearance settings are deliberately not duplicated
-// here -- they live in Settings.
-//
-// Laid out like Settings: the shared one-line WindowHeader (System › Page
-// inside a page, with a back button to Home), then one framed panel
-// showing Home (WindowHome.qml) or the open page. The ground and Escape
-// are a bare WindowChrome.qml, and the window opens at Theme.windowSize,
-// the same size as Settings.
-//
-// Floating and centring come from the "quickshell-windows" rule in
-// windows.lua, as for Settings.
+// System: what this machine is and is doing. Home: four headline figures
+// with their last minute, then a tile per page with a live figure; pages go
+// deep on CPU, memory, storage, network, processes, hardware, power and
+// the config files. Numbers from SystemStats (live, while visible) and
+// SystemSpecs (once per session). Laid out like Settings; floats by the
+// "quickshell-windows" rule in window-rules.lua.
 
 import Quickshell
 import QtQuick
@@ -58,9 +44,7 @@ FloatingWindow {
     onClosed: visible = false
     onVisibleChanged: if (visible) chrome.keySink.forceActiveFocus()
 
-    // Sampling follows the window, not the page: switching pages shouldn't
-    // reset the 60-second graphs, and a page that isn't on screen costs
-    // nothing beyond the numbers Home needed anyway.
+    // sampling follows the window, so switching pages keeps the graphs
     Binding { target: SystemStats; property: "active"; value: root.visible }
     Binding { target: SystemSpecs; property: "active"; value: root.visible }
     // The Processes page wants a full table; everywhere else five rows is
@@ -178,9 +162,7 @@ FloatingWindow {
         anchors.topMargin: Theme.spaceXl
         x: Theme.windowPad
         width: root.width - Theme.windowPad * 2
-        // the window's real size, not the one asked for: the two differ
-        // after a density or Font Size change while the window is open, which
-        // leaves the window as it was and re-lays out what's inside
+        // the window's real size (a Font Size change leaves the window as is)
         height: root.height - y - Theme.windowPad
 
         WindowHome {
