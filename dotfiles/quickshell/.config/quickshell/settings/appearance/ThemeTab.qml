@@ -2,8 +2,9 @@
 // ~/.config/quickshell/settings/appearance/ThemeTab.qml
 //
 // The Appearance page's Theme tab: what restyles all of the chrome at
-// once -- the style and its shape, the colours, spacing, text and the
-// finishing touches.
+// once, in four sections: Look (the look, the style and space), Colour
+// (palette, accent and status), Shape (with the finish) and Text (with the
+// headings). Switches and short rows go two to a line.
 
 import Quickshell
 import QtQuick
@@ -24,10 +25,36 @@ SettingsTab {
         hint: Looks.looks[Settings.look] ? Looks.looks[Settings.look].description : ""
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "STYLE" }
+    SettingsSubhead { caption: "STYLE" }
 
     Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 5 }
+
+    SettingsSubhead { caption: "SPACE" }
+
+    // a preset for the three dials: Spacing and Row height here, Height on
+    // the Bar tab; the dials only show on Custom (or once one leaves every
+    // preset)
+    property bool customSpace: Settings.density === "custom"
+
+    SettingsField {
+        label: "Density"
+        hint: styleTab.customSpace ? "Your own: set by the dials"
+            : ({ compact: "Tighter gaps and shorter rows", normal: "The shell as designed",
+                 roomy: "Wider gaps and taller rows" })[Settings.density] || ""
+        Choices {
+            id: densityChoices
+            key: "density"
+            value: styleTab.customSpace ? "custom" : Settings.density
+        }
+        Connections {
+            target: densityChoices
+            function onPicked(v) { styleTab.customSpace = v === "custom" }
+        }
+    }
+
+    Stepper { visible: styleTab.customSpace || page.highlight === "Spacing"; label: "Spacing"; hint: "Every gap and padding"; key: "spacing"; step: 5; suffix: "%" }
+
+    Stepper { visible: styleTab.customSpace || page.highlight === "Row height"; label: "Row height"; hint: "Lists, fields and chips; text never clips"; key: "rowScale"; step: 5; suffix: "%" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SHAPE" }
@@ -41,37 +68,47 @@ SettingsTab {
 
     Stepper { label: "See-through"; hint: Theme.glass ? "The bar and panels; Glass adds more" : "The bar and every panel"; key: "seeThrough"; step: 5; suffix: "%" }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "FINISH" }
+    SettingsSubhead { caption: "FINISH" }
 
-    // the style's own three options first
-    Repeater {
-        model: Styles.get(Settings.style).options
-        StyleOption { required property var modelData; option: modelData }
-    }
-
-    // then the shared switches its options don't already stand for
+    // the shared switches its options don't already stand for
     readonly property var optionKeys: Styles.get(Settings.style).options.map(o => o.key || "")
+    // a row in a two-column grid, and its label's share
+    readonly property real half: (width - Theme.spaceXl * 2) / 2
+    readonly property real halfLabel: half - Theme.switchWidth - Theme.spaceL
 
-    FinishSwitch {
-        visible: styleTab.optionKeys.indexOf("shadows") === -1
-        label: "Shadows"; key: "shadows"
-        live: Styles.get(Settings.style).shadow !== "none"
-        hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
+    // the style's own options first, then the shared switches, two to a line
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        // the style's own three options first
+        Repeater {
+            model: Styles.get(Settings.style).options
+            StyleOption { required property var modelData; option: modelData; width: styleTab.half; labelWidth: styleTab.halfLabel }
+        }
+
+        FinishSwitch {
+            width: styleTab.half; labelWidth: styleTab.halfLabel
+            visible: styleTab.optionKeys.indexOf("shadows") === -1
+            label: "Shadows"; key: "shadows"
+            live: Styles.get(Settings.style).shadow !== "none"
+            hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
+        }
+
+        FinishSwitch { width: styleTab.half; labelWidth: styleTab.halfLabel; visible: styleTab.optionKeys.indexOf("gradient") === -1; label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
+
+        FinishSwitch {
+            width: styleTab.half; labelWidth: styleTab.halfLabel
+            visible: styleTab.optionKeys.indexOf("heavyLines") === -1
+            label: "Heavy lines"; key: "heavyLines"
+            live: Styles.get(Settings.style).lines
+            hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
+        }
     }
-
-    FinishSwitch { visible: styleTab.optionKeys.indexOf("gradient") === -1; label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
-
-    FinishSwitch {
-        visible: styleTab.optionKeys.indexOf("heavyLines") === -1
-        label: "Heavy lines"; key: "heavyLines"
-        live: Styles.get(Settings.style).lines
-        hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
-    }
-
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PALETTE" }
+    FlyoutHeading { text: "COLOUR" }
 
     SettingsField {
         label: "Palette"
@@ -181,8 +218,7 @@ SettingsTab {
         hint: styleTab.roleHints[styleTab.paletteRole]
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "ACCENT" }
+    SettingsSubhead { caption: "ACCENT" }
 
     // The look's own accent, the presets and None, with a gap after the
     // look's own; a custom accent in use joins the end. Wraps rather than
@@ -325,30 +361,65 @@ SettingsTab {
         Choices { key: "levelColour" }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "STATUS" }
+    SettingsSubhead { caption: "STATUS" }
 
-    HexColour { label: "Good"; key: "colourGood"; fallback: Theme.look.good; grayscaleOnly: false; hint: "Charging, connected, done; Enter to apply" }
+    // Good and Alert as two swatches on one row; a click opens that one's
+    // hex field under it (as does a search for it)
+    property string openStatus: ""
 
-    HexColour { label: "Alert"; key: "colourAlert"; fallback: Theme.look.alert; grayscaleOnly: false; hint: "Critical battery, errors, armed buttons" }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "SPACE" }
-
-    // a preset for the three dials: Spacing and Row height here, Height on
-    // the Bar tab; Custom shows once a dial leaves every preset
     SettingsField {
-        label: "Density"
-        hint: Settings.density === "custom" ? "Your own: set by the dials" : "Presets for Spacing, Row height, bar height"
-        Choices {
-            key: "density"
-            model: Settings.density === "custom" ? Settings.choices.density : Settings.choices.density.slice(0, 3)
+        label: "Status"
+        hint: "Good, then Alert; click one to set it"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceM
+
+            Repeater {
+                model: [{ key: "colourGood", name: "Good", colour: Settings.colourGood || Theme.look.good },
+                        { key: "colourAlert", name: "Alert", colour: Settings.colourAlert || Theme.look.alert }]
+
+                Row {
+                    required property var modelData
+                    spacing: Theme.spaceS
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.name
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontSmall
+                    }
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.fs(22)
+                        height: width
+                        radius: Theme.radiusSmall
+                        color: modelData.colour
+                        border.width: styleTab.openStatus === modelData.key ? Theme.borderWidth * 2 : Theme.borderWidth
+                        border.color: styleTab.openStatus === modelData.key ? Theme.textStrong : Theme.stroke
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: styleTab.openStatus = styleTab.openStatus === modelData.key ? "" : modelData.key
+                        }
+                    }
+                }
+            }
         }
     }
 
-    Stepper { label: "Spacing"; hint: "Every gap and padding"; key: "spacing"; step: 5; suffix: "%" }
+    HexColour {
+        visible: styleTab.openStatus === "colourGood" || page.highlight === "Good"
+        label: "Good"; key: "colourGood"; fallback: Theme.look.good; grayscaleOnly: false; hint: "Charging, connected, done; Enter to apply"
+    }
 
-    Stepper { label: "Row height"; hint: "Lists, fields and chips; text never clips"; key: "rowScale"; step: 5; suffix: "%" }
+    HexColour {
+        visible: styleTab.openStatus === "colourAlert" || page.highlight === "Alert"
+        label: "Alert"; key: "colourAlert"; fallback: Theme.look.alert; grayscaleOnly: false; hint: "Critical battery, errors, armed buttons"
+    }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "TEXT" }
@@ -388,8 +459,7 @@ SettingsTab {
 
     Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "HEADINGS" }
+    SettingsSubhead { caption: "HEADINGS" }
 
     // The mark before every heading: a preset, none, or up to four
     // characters of your own
@@ -399,17 +469,24 @@ SettingsTab {
     SettingsField {
         label: "Mark"
         lookKey: "headingMark"
-        hint: "Drawn before every heading"
-        FlyoutSegmented {
+        hint: "Drawn before every heading, in its colour"
+
+        Row {
             anchors.right: parent.right
-            fill: false
-            model: [{ value: "//", text: "//" }, { value: "▸", text: "▸" }, { value: "•", text: "•" },
-                    { value: "", text: "None" }, { value: "custom", text: "Custom" }]
-            current: styleTab.customMark ? "custom" : Settings.headingMark
-            onPicked: v => {
-                styleTab.customMark = v === "custom"
-                if (v !== "custom") Settings.set("headingMark", v)
+            spacing: Theme.spaceM
+
+            FlyoutSegmented {
+                fill: false
+                model: [{ value: "//", text: "//" }, { value: "▸", text: "▸" }, { value: "•", text: "•" },
+                        { value: "", text: "None" }, { value: "custom", text: "Custom" }]
+                current: styleTab.customMark ? "custom" : Settings.headingMark
+                onPicked: v => {
+                    styleTab.customMark = v === "custom"
+                    if (v !== "custom") Settings.set("headingMark", v)
+                }
             }
+            // the mark's colour
+            Choices { key: "headingMarkColour"; anchors.right: undefined }
         }
     }
 
@@ -430,31 +507,35 @@ SettingsTab {
         }
     }
 
-    SettingsField {
-        label: "Mark colour"
-        hint: "The accent, lightened, or a grey"
-        Choices { key: "headingMarkColour" }
-    }
+    // Case, the rule and the size, two to a line
 
-    SettingsField {
-        label: "Case"
-        lookKey: "headingUpper"
-        hint: "Capitals, or as a title"
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: [{ value: true, text: "VOLUME" }, { value: false, text: "Volume" }]
-            current: Settings.headingUpper
-            onPicked: v => Settings.set("headingUpper", v)
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        SettingsField {
+            width: styleTab.half; labelWidth: styleTab.half / 2
+            label: "Case"
+            lookKey: "headingUpper"
+            hint: "Capitals, or not"
+            FlyoutSegmented {
+                anchors.right: parent.right
+                fill: false
+                model: [{ value: true, text: "VOLUME" }, { value: false, text: "Volume" }]
+                current: Settings.headingUpper
+                onPicked: v => Settings.set("headingUpper", v)
+            }
         }
-    }
 
-    FinishSwitch { label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
+        FinishSwitch { width: styleTab.half; labelWidth: styleTab.halfLabel; label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
 
-    SettingsField {
-        label: "Heading size"
-        hint: "Against body text"
-        Choices { key: "headingSize" }
+        SettingsField {
+            width: styleTab.half; labelWidth: styleTab.half / 2
+            label: "Heading size"
+            hint: "Against body text"
+            Choices { key: "headingSize" }
+        }
     }
 
     // A look in its own colours: the bar along the top, a line of text and

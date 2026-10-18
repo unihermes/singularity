@@ -291,8 +291,12 @@ Settings') are laid out the same way.
 - **Hints:** one line, eliding if needed. Write them short, at most about 42
   characters ("Frames, chips and dividers"), with no lists of every choice.
   The label column is wider (`fit(320)`).
-- **Appearance's tabs** (settled 2026-10-16, picks 1B…20A): Theme (style,
-  shape, finish, palette, accent, status, space, text, headings), Bar
+- **Appearance's tabs** (settled 2026-10-16, picks 1B…20A): Theme (four
+  sections, picked 2026-10-18: Look with Style and Space under subheads,
+  Space's two dials only on Custom; Shape with Finish, its switches two to
+  a line; Colour with Accent and Status, Good and Alert as two swatches on
+  one row, a click opening that one's hex; Text with Headings, the mark and
+  its colour on one row, Case, rule and size two to a line), Bar
   (layout zones, the bar's size, a section per module with drawn tiles),
   Panels (flyouts, launcher, notifications, overlays), Desktop (wallpaper,
   windows in Gaps · Borders · Corners · Opacity · Dim and blur · Shadow and
