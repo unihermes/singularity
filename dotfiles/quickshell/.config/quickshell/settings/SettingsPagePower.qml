@@ -1,28 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPagePower.qml
 //
-// Power profile, how the battery charges, and the idle ladder in
-// hypridle.conf.
-//
-// The profile goes through PpdProfile.qml, as the battery flyout's does,
-// and needs no saving -- PPD remembers it.
-//
-// Charging is the BIOS's charge mode and, in Custom, where charging stops
-// and resumes. They're read from the battery's sysfs files and written by
-// install.sh's singularity-charge helper through pkexec (no password for
-// the active session). The firmware keeps them, so nothing else saves
-// them. The stop and resume steppers write once they've been still for a
-// moment, since every write is a firmware write. The battery card sits
-// over a level chip of the charge now; in Custom it carries the resume-to-
-// stop band, whose ends are dragged to set them.
-//
-// The ladder is hypridle.conf's listener blocks, each shown by what it does
-// (dim, lock, screens off, suspend) and edited in place: the number on its
-// `timeout = N` line changes, and a step turned off has its block's lines
-// commented out with a `#~ ` mark (taken off again when it's turned back
-// on). The rest of the file is left byte for byte. hypridle reads its
-// config once at start, so every write restarts it -- debounced, so
-// stepping through ten values restarts it once.
+// Power profile (PpdProfile, remembered by PPD), battery charging and the
+// idle ladder. Charging is the BIOS's charge mode and Custom stop/resume,
+// read from sysfs and written by singularity-charge via pkexec once a drag
+// or stepper settles (each is a firmware write). The ladder is
+// hypridle.conf's listener blocks, edited in place: the `timeout = N`
+// number, or a step turned off commented out with `#~ `; the rest of the
+// file is untouched, and hypridle restarts once per burst.
 
 import Quickshell
 import Quickshell.Io
@@ -126,9 +111,7 @@ SettingsPage {
         chargeWriter.running = true
     }
 
-    // Steps of 5, kept 5 apart. Dell takes a stop of 55-100 and a start of
-    // 50-95; pushing one into the other moves both. Written once the drag
-    // lets go.
+    // steps of 5, kept 5 apart (Dell: stop 55-100, start 50-95); written on release
     function chargeSet(which, pct) {
         pct = Math.round(pct / 5) * 5
         if (which === "stop") {
@@ -199,9 +182,8 @@ SettingsPage {
 
     // --- idle ladder ---------------------------------------------------------
 
-    // [{ timeout, action, label, line, open, close, on }] -- line is the
-    // index of the `timeout = N` line, open and close the block's braces,
-    // and on false for a block commented out with `#~ `
+    // [{ timeout, action, label, line, open, close, on }]: line is the
+    // `timeout = N` line's index, open/close the braces, on false when `#~ `'d
     property var listeners: []
     property bool idleRunning: false
     // the listeners' indices, soonest first: taken once when the page opens,
@@ -218,9 +200,7 @@ SettingsPage {
         return cmd
     }
 
-    // Blocks are found line by line: `listener {` opens one, `}` closes it,
-    // and `#` comments are skipped -- hyprlang has no strings to hide a brace
-    // in, so nothing more is needed.
+    // blocks are found line by line (hyprlang has no strings to hide a brace in)
     // what a step does, in words; a command it doesn't recognise shows as is
     readonly property var stepHints: ({
         "Dim the screen": "Lowers the backlight",
@@ -267,10 +247,8 @@ SettingsPage {
         idleDebounce.restart()
     }
 
-    // Applied to the file as it is when the write runs. Only the timeout
-    // values and the `#~ ` marks change, by listener position, so a file
-    // whose listeners were added or removed since the page read it is left
-    // alone.
+    // applied to the file as it is then, by listener position; left alone if
+    // listeners were added or removed since
     function writeIdle() {
         var want = listeners.map(l => ({ timeout: l.timeout, on: l.on }))
         AtomicFileWrite.write({

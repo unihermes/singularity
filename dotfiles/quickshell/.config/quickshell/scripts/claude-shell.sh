@@ -4,20 +4,11 @@
 #
 # The plumbing behind the bar's Claude module (services/ClaudeShell.qml).
 #
-# Claude never edits the live repo. Everything in ~/.config is a stow symlink
-# into it, and Quickshell and Hyprland hot-reload on write -- an edit to a QML
-# file mid-run would reload the shell and kill the very process doing the
-# editing. So each session works on a staging copy, and nothing reaches the
-# real files until the diff has been looked at and applied.
-#
-# The copy is snapshotted with its own throwaway git dir and index rather
-# than the repo's: the repo's working tree is usually dirty and has untracked
-# files, and the diff has to be against exactly what was copied, not HEAD.
-#
-# The shell's own settings (appearance.json, outside the repo) ride along
-# under .live/ so "make the bar thinner" can be answered too. They're merged
-# back key by key on apply, not copied over, so a setting changed from the UI
-# while Claude worked isn't reverted.
+# Claude never edits the live repo (a QML write would hot-reload the shell
+# mid-run): each session works on a staging copy snapshotted with its own
+# throwaway git dir, and nothing lands until the diff is applied.
+# appearance.json rides along under .live/ and is merged back per key, so a
+# setting changed meanwhile isn't reverted.
 #
 #   claude-shell.sh start              fresh staging copy
 #   claude-shell.sh run PROMPT [ID]    stream-json on stdout; ID resumes
@@ -60,9 +51,8 @@ start() {
     snapshot > "$state/base"
 }
 
-# Settings are merged per key, not patched: the file is small enough that a
-# line patch's context almost always overlaps a setting changed from the UI
-# in the meantime. Only the keys Claude touched are carried over.
+# merged per key (a line patch would clash with UI changes); only the keys
+# Claude touched
 merge_settings() {
     python3 - "$@" <<'EOF'
 import json, sys

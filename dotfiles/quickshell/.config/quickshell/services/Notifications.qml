@@ -1,23 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Notifications.qml
 //
-// The session's notification daemon (org.freedesktop.Notifications), for the
-// popups (flyouts/NotificationPopups.qml), the history flyout
-// (flyouts/NotificationsFlyout.qml), the bar module and Settings.
-//
-// The history is the shell's own record of what arrived this session, kept
-// in $XDG_RUNTIME_DIR/singularity-notifications.json, which goes at logout.
-// An entry stays until it's cleared from the history by hand -- not when its
-// popup goes, the sender withdraws it, or the shell restarts. Transient
-// notifications are the exception: by the spec they aren't kept, so they go
-// with their popup.
-// While the sender still holds a notification its entry carries it as
-// `live`, which is what its actions and attached image need.
-//
-// Anything that arrived since the history was last opened is unread, which
-// is the number the bar module shows. Do Not Disturb holds the popups back;
-// notifications still land in the history, unread. An app silenced in
-// Settings is held the same way, on its own.
+// The notification daemon, for the popups, the history flyout, the bar
+// module and Settings. The history ($XDG_RUNTIME_DIR, gone at logout) keeps
+// each entry until cleared by hand, except transient ones; `live` holds the
+// sender's object while it exists (actions, image). New since the history
+// was opened is unread. DND and silenced apps hold back popups only.
 
 pragma Singleton
 
@@ -30,10 +18,9 @@ import "TimeWindow.js" as TimeWindow
 Singleton {
     id: root
 
-    // Newest first:
+    // newest first, replaced (never changed in place) so bindings update:
     // [{ key, id, appName, summary, body, icon, picture, urgency,
     //    expireTimeout, transient, time, live }]
-    // Entries are replaced, never changed in place, so bindings see the change.
     property var history: []
     readonly property int count: history.length
     readonly property bool dnd: Settings.notifDnd
@@ -138,10 +125,8 @@ Singleton {
         return entry.live && entry.live.tracked ? pictureFor(entry.live) : entry.picture
     }
 
-    // The app's icon as a source for an Image: a path or URL as given, a
-    // theme icon name looked up, "" when there's nothing to show. An
-    // image-path hint that names a theme icon (notify-send -i sends one)
-    // counts as the icon.
+    // the app's icon for an Image: a path or URL, a theme icon (an
+    // image-path hint naming one counts), or ""
     function iconFor(n) {
         var i = n.appIcon || n.desktopEntry
         if (!i && n.image.startsWith("image://icon/") && !n.image.startsWith("image://icon//"))
@@ -331,9 +316,8 @@ Singleton {
     }
 
     // --- quiet hours ----------------------------------------------------------
-    // DND on a daily window. Acts only as the window opens or closes, and the
-    // close only undoes DND the window itself turned on. Checked by the wall
-    // clock and on waking, so a window that passed during sleep still ends.
+    // acts only as the window opens or closes (the close undoes only its own
+    // DND); checked by the wall clock and on waking
 
     property var quietState: undefined
 
