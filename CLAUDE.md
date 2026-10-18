@@ -11,7 +11,8 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
 - `qs/services/Theme.qml`: every size/colour token (`spaceXs..Xl`, `sp()`, `flyoutOffset`,
   `channelWidth`). `Settings.qml`: persisted settings (`~/.local/state/singularity/appearance.json`).
   `Looks.js` / `Styles.js`: looks and styles.
-- `qs/bar/`: `Bar.qml` (window, `widgetItem(key)`), `BarModules.qml` (every module).
+- `qs/bar/`: `Bar.qml` (window, `widgetItem(key)`), `BarModules.qml` (every module; the big ones in
+  `WorkspacesModule`, `WindowsModule`, `TrayModule`).
 - `qs/flyouts/`: `FlyoutPanel.qml` (shared flyout shell: padding, position, grown mode),
   `PanelFrame.qml`, `SectionRuns.qml` (section frames), shared rows/controls
   (`FlyoutRow`, `FlyoutHeading`, `FlyoutSegmented`, ...), one `*Flyout.qml` per module,
