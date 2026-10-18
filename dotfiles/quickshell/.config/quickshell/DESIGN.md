@@ -300,7 +300,9 @@ Settings') are laid out the same way.
   (two sections, picked 2026-10-18: BAR with its position, shape and size,
   then the layout zones, Centre anchor and Reset layout under a LAYOUT
   subhead; MODULES with a subhead per module, its drawn tiles open),
-  Panels (flyouts, launcher, notifications, overlays), Desktop (wallpaper,
+  Panels (three sections, picked 2026-10-18: POPUPS with flyouts, then
+  notifications and the level popup under subheads; LAUNCHER; OVERLAYS;
+  neighbouring steppers and switches two to a line), Desktop (wallpaper,
   windows in Gaps · Borders · Corners · Opacity · Dim and blur · Shadow and
   tabs, motion) and Apps. While anything differs from the baseline, the changes
   bar (`ChangesBar`, picked 2026-10-18) floats at the page's foot
