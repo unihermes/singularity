@@ -1,18 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutAction.qml
 //
-// One Quick Actions row: an icon, a label, an optional status line under it,
-// and -- for toggles -- a switch on the right.
-//
-// Toggles and momentary buttons share this one component rather than the
-// buttons being plain FlyoutRows: FlyoutRow has no icon column, so the
-// screenshot and picker rows would sit a glyph-width left of the toggles
-// above them and the whole page would read as two lists glued together.
-//
-// The switch mirrors state, it doesn't own it. `checked` is bound to the
-// real thing (iwd's Powered, the adapter, the sink), and a click only emits
-// activated() -- so a toggle that fails, or that something else flips,
-// shows the truth instead of what was last clicked.
+// A Quick Actions row: icon, label, optional status, and for toggles a
+// switch. Buttons use it too, so every row shares the icon column. The
+// switch mirrors `checked` (the real state); a click only emits activated().
 
 import QtQuick
 import "../services"

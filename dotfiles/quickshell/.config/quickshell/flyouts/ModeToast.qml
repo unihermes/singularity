@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ModeToast.qml
 //
-// A small toast at the top centre of the screen naming the mode a key just
-// switched: "MONOCLE" / "DWINDLE" for SUPER+M, "CAPS LOCK ON" and the like
-// for the lock keys. Self-dismissing rather than a flyout -- there's nothing
-// to interact with, so it fades out on its own instead of waiting for a click
-// or Escape. scope.modeToastSeq (bumped in shell.qml on every such key on
-// this monitor) is what restarts the timer, since scope.modeToastText alone
-// wouldn't change on two quick toggles that land on the same mode.
+// A self-dismissing toast at the top centre naming a mode just switched
+// (SUPER+M, lock keys, lid). scope.modeToastSeq restarts it, even when the
+// text repeats.
 
 import Quickshell
 import QtQuick
@@ -16,10 +12,8 @@ import "../services"
 OverlayWindow {
     id: root
 
-    // Re-armed by the timer below. The surface is mapped only while the
-    // toast shows or fades: an opacity fade needs it for its whole duration,
-    // but left up between toasts it's a full-screen transparent layer the
-    // compositor blends into every frame.
+    // mapped only while showing or fading (an idle full-screen layer would
+    // be blended every frame)
     property bool active: false
 
     visible: active || box.opacity > 0

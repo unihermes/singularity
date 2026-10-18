@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-# Finds what the shell declares and nothing reads: QML files no other file
-# names, and functions, properties and signals whose name appears only where
-# they're declared. A leftover of a removed feature usually shows up as one
-# of these.
-#
-# qmllint can't do this here: it can't resolve the services/ singletons
-# (no qmldir), so its unused-import and missing-property reports are mostly
-# noise. This is a plain text search instead -- a name counts as used if it
-# appears anywhere else in the shell's QML or JS, comments aside -- so it
-# misses a name reused for something else, but it never cries wolf.
-#
-# Run by the pre-commit hook when shell files are staged; exits 1 on a find.
-# Anything that's fine as it is (called from outside, over IPC) goes in
-# ALLOW, with the reason.
+# Finds what the shell declares and nothing reads: QML files nothing names,
+# and functions, properties and signals named only where declared. A plain
+# text search (qmllint can't resolve the singletons). Run by the pre-commit
+# hook; exits 1 on a find. Intended exceptions go in ALLOW, with the reason.
 import collections, os, re, subprocess, sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),

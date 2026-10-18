@@ -1,12 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/BarModule.qml
 //
-// One clickable module in the bar: an icon, an optional readout next to it
-// (volume/brightness percentages, battery level, the clock), and the click
-// that opens its flyout. The chip itself is ModuleFrame.
-//
-// The frame is wrapped in a full-height Item rather than being the root, so
-// the click area covers the bar's whole height, not just the chip.
+// A clickable bar module: icon, optional readout, and the click that opens
+// its flyout, in a full-height Item so the whole bar height clicks.
 
 import QtQuick
 import "../services"
@@ -116,11 +112,8 @@ Item {
         Text {
             id: labelText
             anchors.verticalCenter: parent.verticalCenter
-            // Centring a Text centres its *line box*, which carries the
-            // font's full ascent and descent -- so digits, which use neither,
-            // sit visibly high. Measured at 1.5-2px here, and it scales with
-            // the font size, so it's derived rather than hardcoded: shift
-            // down by the gap between the line box's centre and the ink's.
+            // shifted down by the gap between line box and ink centres, so
+            // digits don't sit high
             anchors.verticalCenterOffset: root.inkNudge(labelInk)
             visible: root.label !== ""
             text: root.label

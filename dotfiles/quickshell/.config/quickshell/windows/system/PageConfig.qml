@@ -1,18 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/PageConfig.qml
 //
-// Every file this desktop is actually configured by, in one list, each one
-// a click away from an editor. The old window had two of these links; the
-// point of the page is that "where do I change that" is the question every
-// other page ends on, and the answer should not be a filesystem hunt.
-//
-// Paths are checked once when the page opens, in a single process, and a
-// file that isn't there is greyed rather than hidden -- seeing that a file
-// you expected is missing is half of what this page is for.
-//
-// The repository root is resolved rather than assumed: ~/.config/quickshell
-// is a symlink into the dotfiles repo (see install.sh), so following it and
-// walking up gives the checkout wherever it was cloned.
+// Every file this desktop is configured by, each a click from an editor;
+// missing ones greyed, checked once in one process. The repo root is found
+// by following ~/.config/quickshell's link.
 
 import Quickshell
 import Quickshell.Io

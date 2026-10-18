@@ -26,13 +26,8 @@ Shape {
     function band(d) {
         if (!rects || rects.length === 0 || rects.some(r => !r)) return ""
         var p = ChannelPath.outline(rects, Theme.channelFillet, d)
-        // The hole is the fill band's own outline round the group, and the
-        // CurveRenderer drops a hole whose edges lie exactly on the path
-        // (a square group with its flyout flush to one side). A hair
-        // narrower, it cuts cleanly; the quarter pixel doesn't show. Only
-        // the fill band's hole, and only at the sides: anywhere else the
-        // quarter pixel lands on the group's first row of pixels, which then
-        // looks a pixel shorter with the flyout open.
+        // the fill band's hole is inset a hair at the sides only: the
+        // CurveRenderer drops a hole lying exactly on the path
         var inset = d === Theme.channelWidth ? holeInset : 0
         if (hole) p += " " + ChannelPath.roundRect(hole.x0 + inset, hole.y0,
                                                    hole.x1 - inset, hole.y1,
