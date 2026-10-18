@@ -8,10 +8,8 @@
 
 local S = require("shared")
 
-
--- Deliberately NOT suppressing maximize events (Hyprland's example config
--- does): that's what double-clicking a titlebar sends. On a floating window
--- the window.fullscreen hook turns it into a fill; see fillFloating().
+-- Maximize events aren't suppressed: a titlebar double-click sends one, and
+-- on a floater windows.lua turns it into a fill (fillFloating).
 
 hl.window_rule({
     -- Fixes dragging issues with XWayland
@@ -27,20 +25,15 @@ hl.window_rule({
     no_focus = true,
 })
 
--- A link opened from another app lands in a new Floorp tab, which Floorp
--- selects and then asks to be activated. Hyprland ignores activation
--- requests by default (misc:focus_on_activate); this honours Floorp's, so
--- its window comes to the front showing that tab.
+-- a link from another app opens a Floorp tab and activates its window
 hl.window_rule({
     name  = "floorp-focus-on-activate",
     match = { class = "^(floorp)$" },
     focus_on_activate = true,
 })
 
--- The other way round: a download opened from the browser goes to its app,
--- which asks to be activated, and Hyprland only marks it urgent. While a
--- browser has focus, honour that request too, so an app that was already
--- open comes to the front with the file.
+-- and the other way: while a browser has focus, an app asking to be
+-- activated (a download opened in it) comes to the front
 local BROWSER_CLASSES = { ["zen"] = true, ["zen-browser"] = true, ["floorp"] = true, ["firefox"] = true }
 hl.on("window.urgent", function(win)
     local active = hl.get_active_window()
@@ -49,18 +42,10 @@ hl.on("window.urgent", function(win)
     hl.dispatch(hl.dsp.focus({ window = "address:" .. win.address }))
 end)
 
--- Monocle. Hyprland ships dwindle and master only, with no monocle layout,
--- so this emulates one: dwindle stays the underlying layout, but every
--- window that would tile is floated and sized to fill the usable area
--- instead of maximized.
---
--- Floating rather than maximized: Hyprland allows one maximized window per
--- workspace, so only the focused one could be full and switching would
--- resize. Floaters each keep their own geometry, so switching is a raise.
---
--- The "+monocle" tag (taken off again by "-monocle" on the rules below)
--- tells the window.open hook which windows it owns, without repeating
--- those rules' matches here.
+-- Monocle, emulated: every window that would tile is floated and sized to
+-- fill the usable area (floaters keep their own geometry, so switching is
+-- just a raise). The "+monocle" tag marks the windows windows.lua places;
+-- later rules take it off with "-monocle".
 local monocleRule = hl.window_rule({
     name  = "monocle",
     match = { float = false },
@@ -69,20 +54,15 @@ local monocleRule = hl.window_rule({
     tag = "+monocle",
 })
 
--- The gap general.gaps_out leaves at the screen's edges, which monocle
--- windows keep clear of like tiled ones: { top, right, bottom, left }.
+-- general.gaps_out at the screen's edges: { top, right, bottom, left }
 local function edgeGaps()
     local g = hl.get_config("general.gaps_out")
     if type(g) ~= "table" then return { top = 0, right = 0, bottom = 0, left = 0 } end
     return { top = g.top or 0, right = g.right or 0, bottom = g.bottom or 0, left = g.left or 0 }
 end
 
--- A window that fills the screen stays square whatever the rounding
--- setting: rounded corners there would only show slivers of wallpaper
--- behind it. A fullscreen window always does; a filled floater, a maximized
--- window and a tiled one alone on its workspace only when there's no edge
--- gap -- with one, they sit inside it like any other window and keep their
--- corners.
+-- A window filling the screen is square; with an edge gap only fullscreen
+-- ones are.
 local function hasEdgeGap()
     local g = edgeGaps()
     return g.top > 0 or g.right > 0 or g.bottom > 0 or g.left > 0
@@ -94,23 +74,14 @@ if not hasEdgeGap() then
 end
 hl.window_rule({ name = "fullscreen-square", match = { fullscreen_state_internal = 2 }, rounding = 0 })
 
--- Only a window smaller than the usable area has a border; one filling it
--- has nothing to set it apart from. A floater's border is drawn outside its
--- rect, so on a filled one it would also run a pixel past the screen's edge
--- -- onto the next display along, where two sit side by side. Floaters are
--- tagged "filled" by syncFillBorder() below; a tiled window alone on its
--- workspace, or maximized, fills the area too.
+-- A window filling the usable area has no border (a floater's border would
+-- also spill onto the next display). syncFillBorder() tags filled floaters.
 hl.window_rule({ name = "filled-borderless", match = { tag = "filled" }, border_size = 0 })
 hl.window_rule({ name = "lone-tiled-borderless", match = { float = false, workspace = "w[tv1]" }, border_size = 0 })
 hl.window_rule({ name = "maximized-borderless", match = { fullscreen_state_internal = 1 }, border_size = 0 })
 
--- The bar's standalone windows (System, Keybinds, Settings): Quickshell
--- FloatingWindows, class org.quickshell, which size themselves in QML. They
--- float centred at that size -- no size here.
---
--- maximize = false and coming *after* the monocle rule are both
--- load-bearing: at map time these aren't floating yet, so monocle matches
--- them too, and the later rule wins.
+-- The shell's own windows size themselves in QML: float centred, no size.
+-- Must come after the monocle rule, which also matches them at map time.
 hl.window_rule({
     name     = "quickshell-windows",
     tag      = "-monocle",
@@ -118,16 +89,11 @@ hl.window_rule({
     float    = true,
     center   = true,
     maximize = false,
-    -- Intentionally no size constraint — QML code defines window dimensions
 })
 
--- The sticky notes (SUPER+N): one of the shell's windows too, but pinned so
--- it stays up across workspace switches, and opened in the top-right corner
--- instead of centred. Placed by the rule rather than moved from a
--- window.open hook: moving a pinned window as it maps crashes Hyprland.
--- A rule's position ignores the bar's reserved space, so clearing a top bar
--- takes its extent from the bar-top state file, which Quickshell rewrites
--- (and reloads this config) whenever the bar moves or changes size.
+-- Notes (SUPER+N): pinned, top-right. Placed by the rule, since moving a
+-- pinned window as it maps crashes Hyprland; the rule ignores reserved
+-- space, so the bar's extent comes from the bar-top state file.
 local NOTES_MARGIN = 8
 local function notesTop()
     return (tonumber(S.state("bar-top", "32")) or 32) + NOTES_MARGIN
@@ -142,10 +108,8 @@ hl.window_rule({
     move     = "monitor_w-window_w-" .. NOTES_MARGIN .. " " .. notesTop(),
 })
 
--- The scratchpad terminal (SUPER+grave): opens straight onto the special
--- workspace, floating and centred. Out of monocle for the same reason as the
--- shell's windows above -- its open hook would stretch it to fill the screen.
--- A dot in it: Ghostty only takes a GTK application id as its class.
+-- The scratchpad terminal (SUPER+grave): floating on its special workspace.
+-- Ghostty only takes a GTK app id (with a dot) as its class.
 local SCRATCH_CLASS = "singularity.scratch"
 hl.window_rule({
     name      = "scratchpad-terminal",
@@ -159,9 +123,7 @@ hl.window_rule({
 })
 hl.window_rule({ name = "scratchpad-terminal-exempt", match = { class = "^(" .. SCRATCH_CLASS .. ")$" }, tag = "+monocle-exempt" })
 
--- Starts the terminal if it isn't running (the rule above shows it), and
--- otherwise toggles the workspace it lives on. The SUPER+grave bind hands
--- over binds.lua's terminal.
+-- Starts the scratchpad terminal, or toggles its workspace.
 function toggleScratchpad(terminal)
     if #hl.get_windows({ class = SCRATCH_CLASS }) == 0 then
         hl.dispatch(hl.dsp.exec_cmd(terminal .. " --class " .. SCRATCH_CLASS))
@@ -170,9 +132,8 @@ function toggleScratchpad(terminal)
     end
 end
 
--- Out of the scratchpad, it lands on the workspace the scratchpad was shown
--- over, which is then uncovered so the window can be seen there. Into it,
--- silently: the window just goes, rather than the scratchpad opening on it.
+-- Moves the focused window out of the scratchpad (onto the workspace it was
+-- shown over) or into it, silently.
 function toggleStashed()
     local win = hl.get_active_window()
     if not win or not win.workspace then return end
@@ -191,15 +152,12 @@ function toggleStashed()
     end
 end
 
--- Prompts that come from a process of their own rather than the app asking:
--- the polkit and keyring password prompts, pinentry, the screen-share
--- picker, the file chooser portal. holdPopup below can't tell them from an
--- app's first window (nothing else shares their process), so in monocle
--- they'd fill the screen. They float centred at the size they ask for; the
--- file chooser's size comes from window-rules.json, which wins over this.
+-- Prompts with a process of their own (polkit, keyring, pinentry, share
+-- picker, file chooser portal): holdPopup can't tell them from an app's
+-- first window, so they float centred at their own size.
 local PROMPTS = { "hyprpolkitagent", "gcr-prompter", "hyprland-share-picker",
     "xdg-desktop-portal-gtk", "xdg-desktop-portal-hyprland" }
--- pinentry's every flavour: pinentry-gtk, org.gnupg.pinentry-qt, ...
+-- every pinentry flavour
 local PROMPT_CLASSES = "^(" .. table.concat(PROMPTS, "|"):gsub("%.", "\\.")
     .. "|(org\\.gnupg\\.)?pinentry-.*)$"
 local function isPrompt(class)
@@ -209,18 +167,14 @@ local function isPrompt(class)
     end
     return class:match("^pinentry%-") ~= nil or class:match("^org%.gnupg%.pinentry%-") ~= nil
 end
--- And any window that says it's modal (xdg-dialog-v1, or X11's
--- _NET_WM_STATE_MODAL): a dialog by its own account, whatever its title.
--- Hyprland already dims its parent and keeps clicks off it
--- (general:modal_parent_blocking, decoration:dim_modal).
+-- and any window that says it's modal
 for name, match in pairs({ ["system-prompts"] = { class = PROMPT_CLASSES }, ["modal-dialogs"] = { modal = true } }) do
     hl.window_rule({ name = name, tag = "-monocle", match = match, float = true, center = true, maximize = false })
     hl.window_rule({ name = name .. "-exempt", match = match, tag = "+monocle-exempt" })
     hl.window_rule({ name = name .. "-popout", match = match, tag = "+popout" })
 end
 
--- A rule's size: "W H" in pixels, or either as a share of the screen
--- ("60%"), which Hyprland takes as monitor_w*0.6 / monitor_h*0.6.
+-- A rule's size: "W H" in pixels, or a share of the screen ("60%").
 local function ruleSize(size)
     if type(size) ~= "string" then return nil end
     local w, h = size:match("^(%d+%%?) (%d+%%?)$")
@@ -232,57 +186,29 @@ local function ruleSize(size)
     return part(w, "monitor_w") .. " " .. part(h, "monitor_h")
 end
 
--- Per-app and popout exceptions live in
--- ~/.local/state/singularity/window-rules.json, edited from Settings > Window
--- Rules; until that page first writes it, the defaults the repo ships in
--- ~/.config/singularity/window-rules.defaults.json are used instead. This
--- file keeps only the machinery the shell depends on.
---
--- Read on every load, after every rule above so an entry overrides this
--- file's defaults (the later rule wins); within the file, the entry nearer
--- the top wins.
---
--- Entries match by class, title or both, literally and whole unless
--- "regex": true, which the popout entries need. Hyprland's regex has no
--- lookaheads -- one silently never matches -- so "negative:" says "anything
--- but this". Popouts are matched by title, since dialogs inherit their
--- app's class.
---
--- JSON comes from S.decodeJson: missing or broken, the
--- rules are treated as empty rather than breaking the config.
+-- Per-app entries from window-rules.json (Settings > Window Rules), else
+-- the shipped window-rules.defaults.json. Applied after the rules above so
+-- they win; nearer the top of the file wins. Entries match class, title or
+-- both, literally unless "regex": true ("negative:" for "anything but",
+-- since Hyprland's regex has no lookaheads). Broken JSON reads as empty.
 
--- Classes are matched whole and literally: "org.pwmt.zathura" must not also
--- match "orgXpwmtYzathura", so every regex metacharacter is escaped.
+-- classes match whole and literally
 local function literalRegex(text)
     return (text:gsub("[%.%^%$%*%+%?%(%)%[%]%{%}%|\\]", "\\%0"))
 end
 
--- The "fullscreen" entries' rules, which follow the layout like monocleRule:
--- { rule, app } with app the entry's appRules record, if it has one.
+-- the "fullscreen" entries' rules, switched with the layout: { rule, app }
 local fullscreenRules = {}
 
--- An entry that names a class and no title is an app rule: it's meant for
--- the window you open, not for the sign-in popups and dialogs the app opens
--- from it, which share its class. So it only applies while none of the app's
--- windows is open -- launching it, or opening a file in it from Thunar --
--- or for a moment after a bind or the launcher runs something (markLaunch),
--- which covers a second Thunar window. Each record is { tag, rules, held,
--- on }: every window of the app carries the tag, so the open ones can be
--- counted.
---
--- While an app rule is off, its "held" rules are on instead: the popup
--- stays out of monocle, floating at the size it asked for, centred -- in
--- dwindle it tiles as usual.
---
--- Switching a rule on re-applies its tags to every window it matches, so
--- the open hook below tags each window "app-held" or "app-opened" for which
--- side it opened on, and each side's rules don't match the other's windows.
--- Its "monocle-exempt" is set there as a plain tag, since a held rule's
--- goes when the rule is switched off.
+-- An entry naming a class and no title is an app rule: for the window you
+-- open, not its popups. So it's on only while none of the app's windows is
+-- open, or just after a launch (markLaunch). While off, its "held" rules
+-- float the popups centred instead. Records are { tag, rules, held, on };
+-- windows.lua tags each window "app-held" or "app-opened" by the side it
+-- opened on.
 local appRules = {}
 
--- A short tag name for an app rule's class, the same on every load: tags
--- outlive a reload, and the entry's position in the file can change.
+-- a short stable tag for an app rule's class (tags outlive a reload)
 local function classTag(class)
     local h = 5381
     for c in class:gmatch(".") do
@@ -300,13 +226,9 @@ do
     userRules = type(rules) == "table" and rules or {}
 end
 
--- In monocle only the apps listed in Window Rules as opening "As left",
--- filled the first time (an entry naming a class and no title that doesn't
--- float, pin, go fullscreen or start at its own size, "own") are filled to
--- the screen: browsers and editors. Every other window opens
--- naturally -- floating, centred, at the size it asks for. Matched by
--- Hyprland's regex, since a class can be one; SUPER+M's sweep asks the
--- "rule-fill" tag the entries' rules below put on these apps' windows.
+-- In monocle only the "As left" apps of Window Rules (class only, not
+-- float, pin, fullscreen or "own") fill the screen; every other window
+-- opens naturally, floating centred at its own size.
 local fillMatch = {}
 for _, r in ipairs(userRules) do
     if type(r) == "table" and type(r.class) == "string" and r.class ~= ""
@@ -320,9 +242,8 @@ for _, r in ipairs(userRules) do
     end
 end
 
--- After monocleRule and the shell's own rules, ahead of window-rules.json's
--- entries so a float or size entry still wins. The shell's windows and the
--- scratchpad are left out: they place themselves.
+-- after the shell's rules, before the entries (so a float or size entry
+-- still wins); the shell's windows and the scratchpad place themselves
 local NOT_NATURAL = { "(^org\\.quickshell$)", "(^" .. SCRATCH_CLASS .. "$)" }
 for _, m in ipairs(fillMatch) do table.insert(NOT_NATURAL, m) end
 local naturalMatch = { float = false, class = "negative:" .. table.concat(NOT_NATURAL, "|") }
@@ -333,9 +254,7 @@ local naturalRule = hl.window_rule({
 
 do
     local rules = userRules
-    -- Bottom of the file first: when two rules set the same property the
-    -- one applied last wins, and the page lists newest first, so this makes
-    -- "higher in the list wins" -- a rule you just added beats the defaults.
+    -- from the bottom, so the entry higher in the list is applied last and wins
     for n = #rules, 1, -1 do
         local r = rules[n]
         local match = {}
@@ -347,9 +266,7 @@ do
             end
         end
         if next(match) then
-            -- A rule that doesn't name a class never reaches Quickshell's own
-            -- windows, which size themselves in QML (the Settings window's
-            -- title would otherwise match the dialog entry).
+            -- an entry with no class never matches the shell's windows
             match.class = match.class or "negative:^(org\\.quickshell)$"
             local name = "settings-rule-" .. n
             local rule = { name = name, match = match }
@@ -360,15 +277,12 @@ do
                 appMatch = { class = match.class, tag = "negative:app-held" }
                 rule.match = appMatch
             end
-            -- Floating, pinned and fullscreen windows all leave monocle: its
-            -- open hook would otherwise resize them to fill the screen a
-            -- moment after this rule put them where they belong.
+            -- floating, pinned and fullscreen entries leave monocle
             if exempt then
                 rule.tag      = "-monocle"
                 rule.maximize = false
             end
-            -- Pinning only applies to floating windows in Hyprland. A pinned
-            -- window (picture-in-picture) keeps the spot its app chose.
+            -- a pinned window (picture-in-picture) keeps its app's spot
             if r.float or r.pin then
                 rule.float  = true
                 rule.center = not r.pin
@@ -386,22 +300,15 @@ do
             if match.title then
                 hl.window_rule({ name = name .. "-popout", match = match, tag = "+popout" })
             end
-            -- Its own rule so applyLayoutRules can switch it off in dwindle,
-            -- where every window opens tiled (see keepNewWindowTiled).
+            -- its own rule, switched off in dwindle (applyLayoutRules)
             if r.fullscreen then
                 table.insert(fullscreenRules, { app = app,
                     rule = hl.window_rule({ name = name .. "-fullscreen", match = appMatch, fullscreen = true }) })
             end
-            -- A second rule, because one rule carries one tag: this marks the
-            -- window as exempt for SUPER+M's sweep (toggleLayout), which has
-            -- to decide about windows that were already open without being
-            -- able to ask which rules matched them.
+            -- exempt from SUPER+M's sweep (one rule carries one tag)
             local exemptRule = exempt
                 and hl.window_rule({ name = name .. "-exempt", match = appMatch, tag = "+monocle-exempt" })
-            -- And what the entry makes of a window, for that sweep to put it
-            -- the way it would open in the layout it's switching to. Always
-            -- on, unlike the app rules above, which are off while the app is
-            -- open: the sweep tells an app's popups from it by "app-held".
+            -- what the entry makes of a window, for the sweep; always on
             local intent = (r.float or r.pin) and "rule-float" or r.fullscreen and "rule-full"
                 or not match.title and not r.own and "rule-fill"
             if intent then hl.window_rule({ name = name .. "-intent", match = match, tag = "+" .. intent }) end

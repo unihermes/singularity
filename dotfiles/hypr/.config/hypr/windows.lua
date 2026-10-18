@@ -15,10 +15,8 @@ local R = require("window-rules")
 local monocleRule, edgeGaps, SCRATCH_CLASS, isPrompt, fullscreenRules, appRules, naturalRule
     = R.monocleRule, R.edgeGaps, R.SCRATCH_CLASS, R.isPrompt, R.fullscreenRules, R.appRules, R.naturalRule
 
--- Popouts: see holdPopup() below. Registered here, ahead of monocle's
--- hooks, which would fill the window; window.active comes ahead of
--- window.open for a window that takes focus. Windows open before this load
--- (a reload) are known already and left alone.
+-- Popouts (holdPopup below), hooked ahead of monocle's hooks, which would
+-- fill the window. Windows already open at load (a reload) are left alone.
 local holdPopup
 local launchWaiting = false
 local knownWindows = {}
@@ -27,15 +25,8 @@ hl.on("window.active", function() holdPopup(hl.get_active_window()) end)
 hl.on("window.open", function(win) holdPopup(win) end)
 hl.on("window.close", function(win) if win then knownWindows[win.address] = nil end end)
 
--- The global layout mode, toggled by SUPER+M. Kept in a runtime file so a
--- reload (which the Appearance page does for most of its settings) doesn't
--- drop a tiled session back into monocle with its windows still tiled --
--- they'd sit under every monocle floater and ALT+Tab couldn't raise them.
--- Back to monocle at login.
---
--- The rest of monocle is hooks, run in-process on Hyprland's event thread so
--- no other event can land mid-way: window.open sizes each new window,
--- window.active (maximizeFocused) keeps whatever you land on full and on top.
+-- SUPER+M's global layout mode, kept in a runtime file so a reload keeps
+-- it; monocle again at login. The rest of monocle is event hooks.
 local LAYOUT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-layout"
 local monocleEnabled = true
 do
@@ -46,11 +37,8 @@ do
     end
 end
 
--- Workspaces pinned to one layout whatever SUPER+M says, from
--- ~/.local/state/singularity/workspace-layouts.json -- { "1": "monocle",
--- "3": "dwindle" } -- which the Settings window's Window Rules page writes.
--- Anything not listed follows monocleEnabled. Read on every load, like
--- window-rules.json.
+-- Workspaces pinned to a layout, from workspace-layouts.json (written by
+-- Settings > Window Rules): { "1": "monocle", "3": "dwindle" }.
 local workspaceLayouts = {}
 do
     local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/workspace-layouts.json")
@@ -70,24 +58,17 @@ local function monocleOn(ws)
     return monocleEnabled
 end
 
--- Per-window state this config keeps on top of Hyprland's own, by address:
---   shape     -- a monocle window's size and place; see shapeRect() below
+-- Per-window state by address, on top of Hyprland's own:
+--   shape     -- a monocle window's size and place (shapeRect)
 --   placedOn  -- the monitor placeMonocle() last fitted it to
---   lastShape -- the shape SUPER+equal brings a filled monocle window back to
---   parked    -- moved below the screen while covered; see PARKING below
---   settling  -- coming back from SUPER+C, still animating into place
---   small     -- a tiled window unmaximized on purpose (SUPER+equal), so
---                refocusing it does not immediately undo the choice; see
---                toggleMaximize() below
---   minimized -- the {x, y, w, h} SUPER+C hid it from, and whether it was
---                tiled (and fullscreen) before being floated to hide it;
---                see toggleMinimize() below
---   hideGen   -- bumped by every hide and restore, so a hide's delayed
---                second step skips a window brought back in the meantime
---   restore   -- the {x, y, w, h} a non-monocle floater had before it was
---                filled; see fillFloating() below
--- Cleared by a window.close hook further down: Hyprland reuses addresses,
--- so leftovers would land on some later window.
+--   lastShape -- the shape SUPER+equal brings a filled window back to
+--   parked    -- moved off-screen while covered (PARKING)
+--   settling  -- coming back from SUPER+C, still animating
+--   small     -- a tiled window unmaximized on purpose (toggleMaximize)
+--   minimized -- where SUPER+C hid it from, and whether it was tiled/fullscreen
+--   hideGen   -- bumped by every hide and restore, so stale steps skip
+--   restore   -- a non-monocle floater's rect before it was filled
+-- Cleared on close: Hyprland reuses addresses.
 local windowState = {}
 local function stateOf(addr)
     local st = windowState[addr]
@@ -98,10 +79,7 @@ local function stateOf(addr)
     return st
 end
 
--- SUPER+C also writes what it saved to a tag on the window, since
--- windowState doesn't survive a config reload and the Appearance page
--- reloads for most of its settings. A window hidden across one would
--- otherwise never come back. Tags set by dispatch outlive a reload.
+-- SUPER+C's saved rect, also kept as a tag so it survives a config reload.
 local function minimizedTag(m)
     return string.format("minimized_%d_%d_%d_%d_%d_%d",
         m.x, m.y, m.w, m.h, m.tiled and 1 or 0, m.fullscreen)
@@ -116,9 +94,8 @@ local function tagsOf(w)
     return type(w.tags) == "table" and w.tags or { w.tags }
 end
 
--- Tells the shell to re-read the windows, whose tags it shows (the window
--- strip, the show-desktop button) but isn't told of. Once per tick, since
--- one event can change several windows and each call starts a `qs`.
+-- Tells the shell to re-read window tags (strip, show-desktop button), at
+-- most once per tick.
 local notifyPending = false
 local function notifyShell()
     if notifyPending then return end
@@ -129,10 +106,8 @@ local function notifyShell()
     end, { timeout = 1, type = "oneshot" })
 end
 
--- Sizes and places a floater at r = {x, y, w, h}: animated with the
--- windows curve, or in one jump. Hyprland reads no_anim when it next draws,
--- not when the move is dispatched, so the jump holds it for a moment before
--- clearing it and calling andThen, which may animate again.
+-- Sizes and places a floater at r = {x, y, w, h}. jumpTo does it without
+-- animation: no_anim is read on the next draw, so it's held briefly.
 local function moveTo(addr, r)
     hl.dispatch(hl.dsp.window.resize({ x = r.w, y = r.h, window = addr }))
     hl.dispatch(hl.dsp.window.move({ x = r.x, y = r.y, window = addr }))
@@ -155,18 +130,14 @@ local function afterAnimation(speed, fn)
     end
 end
 
--- r at the window style's starting size (windowShrink), around the same
--- centre.
+-- r at the style's starting size (windowShrink), same centre
 local function shrunk(r)
     local w, h = math.floor(r.w * windowShrink[1]), math.floor(r.h * windowShrink[2])
     return { x = r.x + (r.w - w) // 2, y = r.y + (r.h - h) // 2, w = w, h = h }
 end
 
--- Puts a SUPER+C-hidden window back where it was and forgets it was
--- hidden: slid back, or faded in where it was (growing from windowShrink
--- for the styles that have one), and tiled again if it was tiled. With
--- `instant` it's put straight back with no animation, whatever the style;
--- the caller holds no_anim on it (see singularityShowDesktop).
+-- Puts a SUPER+C-hidden window back, animated per the window style, and
+-- re-tiles it if it was tiled. `instant`: no animation (show desktop).
 local function restoreMinimized(win, instant)
     local st = stateOf(win.address)
     local saved = st.minimized
@@ -188,9 +159,8 @@ local function restoreMinimized(win, instant)
     local function current()
         return windowState[win.address] == st and st.hideGen == gen
     end
-    -- Tiled again only once it has arrived: a maximized window hides the
-    -- rest of the workspace, which would otherwise vanish while it's still
-    -- fading in.
+    -- re-tiled only once it has arrived, or a maximized window would hide
+    -- the rest while it fades in
     local function retile()
         if not current() then return end
         hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
@@ -223,10 +193,7 @@ local function restoreMinimized(win, instant)
     end
 end
 
--- The monitor's usable rect (its resolution minus what the bar and other
--- layer surfaces reserve), in the logical pixels of win.size/win.at. x/y
--- are absolute layout coordinates -- the monitor's origin plus its reserved
--- edge -- since window.move places windows in the whole layout.
+-- The monitor's usable rect (minus reserved edges), in layout coordinates.
 local function usableArea(mon)
     local reserved = mon.reserved or { left = 0, top = 0, right = 0, bottom = 0 }
     return {
@@ -238,8 +205,7 @@ local function usableArea(mon)
 end
 
 -- The rect a monocle window fills: the usable area inside the edge gaps,
--- less a strip along the top for the tab bar when the window is one of a
--- group's tabs.
+-- less the tab bar for a grouped window.
 local function fillArea(win, mon)
     local area = usableArea(mon)
     local g = edgeGaps()
@@ -255,8 +221,7 @@ local function fillArea(win, mon)
     return area
 end
 
--- Whether a floater fills the monitor it is on: position as well as size,
--- unlike isAlreadyFull(), since the right size on the wrong screen isn't.
+-- Fills the monitor: position as well as size (unlike isAlreadyFull).
 local function isFitted(win, area)
     return math.abs(win.size.x - area.w) <= 4 and math.abs(win.size.y - area.h) <= 4
         and math.abs(win.at.x - area.x) <= 4 and math.abs(win.at.y - area.y) <= 4
@@ -268,9 +233,7 @@ local function isAlreadyFull(win, mon)
     return math.abs(w - area.w) <= 4 and math.abs(h - area.h) <= 4
 end
 
--- True if `win` carries the Hyprland tag `name`. A tag set by a window rule
--- comes back with a trailing "*" (dynamic) and one set by dispatch without;
--- both count.
+-- Has the tag `name` (a rule's tag comes back with a trailing "*").
 local function hasTag(win, name)
     if not win.tags then return false end
     if type(win.tags) == "table" then
@@ -282,19 +245,14 @@ local function hasTag(win, name)
     return win.tags == name or win.tags == name .. "*"
 end
 
--- Windows SUPER+M's sweep (toggleLayout) must leave floating when monocle
--- comes back on. It can't rely on the "monocle" tag -- windows open since
--- dwindle mode never got one -- so it asks the "monocle-exempt" tag the
--- window-rules.json entries add, plus Quickshell's own windows, whose rule
--- is part of this file's machinery rather than that list.
+-- Windows SUPER+M's sweep must leave floating: the "monocle-exempt" tag
+-- from Window Rules entries, and Quickshell's own windows.
 local function isMonocleExempt(win)
     return win.class == "org.quickshell" or (hasTag(win, "monocle-exempt") and not hasTag(win, "promoted"))
 end
 
--- Tags a floater "filled" while it fills its monitor and takes the tag off
--- once it doesn't, so the filled-borderless rule above drops its border.
--- Run after every resize this file makes; one resized by the mouse is
--- caught when focus next changes.
+-- Tags a floater "filled" while it fills its monitor, which drops its
+-- border. Run after every resize made here.
 local function syncFillBorder(addr)
     local win = hl.get_window("address:" .. addr)
     if not win then return end
@@ -304,8 +262,7 @@ local function syncFillBorder(addr)
     end
 end
 
--- Fills `win` to the monitor's usable rect without touching its floating
--- state -- callers decide whether it needs floating first.
+-- Fills the usable rect without touching floating state.
 local function sizeToFullFloat(win, mon)
     mon = mon or win.monitor or hl.get_active_monitor()
     if not mon then return end
@@ -316,10 +273,8 @@ local function sizeToFullFloat(win, mon)
     syncFillBorder(win.address)
 end
 
--- A monocle window's shape (windowState.shape): nil fills the area, a
--- {fx, fy, fw, fh} table is a rect in fractions of fillArea(), so it keeps
--- its size and place relative to whichever monitor it is on. A shape within
--- SNAP_FILL of the whole area counts as filling it.
+-- A monocle window's shape: nil fills the area, else {fx, fy, fw, fh} in
+-- fractions of fillArea(). Within SNAP_FILL of the whole counts as filled.
 local SNAP_FILL = 0.94
 
 local function shapeRect(win, mon, shape)
@@ -335,8 +290,7 @@ local function centredShape(share)
     return { fx = (1 - share) / 2, fy = (1 - share) / 2, fw = share, fh = share }
 end
 
--- Also kept on the window as a "shape_…" tag (per mille), since
--- windowState doesn't survive a config reload.
+-- also kept as a "shape_…" tag (per mille) to survive a reload
 local function shapeTag(shape)
     return string.format("shape_%d_%d_%d_%d", math.floor(shape.fx * 1000 + 0.5),
         math.floor(shape.fy * 1000 + 0.5), math.floor(shape.fw * 1000 + 0.5), math.floor(shape.fh * 1000 + 0.5))
@@ -350,10 +304,8 @@ local function setShape(win, shape)
     if shape then hl.dispatch(hl.dsp.window.tag({ tag = "+" .. shapeTag(shape), window = addr })) end
 end
 
--- Sizes a monocle window to its shape on `mon`, if it isn't already. A
--- hidden (SUPER+C) window is left where it is. placedOn records the
--- monitor, so captureShape() can tell a window moved to another monitor,
--- which is re-placed, from one resized by hand.
+-- Sizes a monocle window to its shape on `mon`. Hidden windows are left
+-- alone. placedOn lets captureShape() tell a monitor move from a resize.
 local function placeMonocle(win, mon)
     mon = mon or win.monitor or hl.get_active_monitor()
     local st = stateOf(win.address)
@@ -367,8 +319,8 @@ local function placeMonocle(win, mon)
     syncFillBorder(win.address)
 end
 
--- The shape a floater's geometry makes on `mon`: nil within SNAP_FILL of
--- filling it. With `keep`, keeps that shape's size, just where it now is.
+-- The shape a floater's geometry makes on `mon` (nil: fills it). With
+-- `keep`, keeps that shape's size where it now is.
 local function shapeOf(win, mon, keep)
     local area = fillArea(win, mon)
     local fw = keep and keep.fw or math.min(win.size.x / area.w, 1)
@@ -381,10 +333,8 @@ local function shapeOf(win, mon, keep)
     }
 end
 
--- Takes a monocle window's shape from where it actually is, so one moved or
--- resized by the mouse or the arrow keys stays that way. One that has
--- changed monitor since it was placed keeps its share of the screen, where
--- it was dropped; a filled one is just filled again there.
+-- Takes a monocle window's shape from where it is, so a hand move or
+-- resize sticks. Moved to another monitor: keeps its share of the screen.
 local function captureShape(win)
     win = win and hl.get_window("address:" .. win.address)
     if not (win and win.floating and hasTag(win, "monocle") and win.fullscreen == 0) then return end
@@ -398,15 +348,10 @@ local function captureShape(win)
     placeMonocle(win, mon)
 end
 
--- REMEMBERED SIZES. Each app's main window opens the way it was last left,
--- per kind of screen (wide, normal, tall): fullscreen, filled, or at its
--- shape. A window only counts as filled when it actually fills the area
--- (a Fills app, SUPER+X, the size ladder), not one that just opened big.
--- Kept in ~/.local/state/singularity/window-sizes.json as
--- { class = { normal = { fullscreen = true } | { fill = true }
---   | { fx, fy, fw, fh }, t = time } },
--- the 100 most recently used. Only monocle and natural windows count --
--- not popouts, prompts, rule entries, pinned windows or the shell's own.
+-- REMEMBERED SIZES. An app's main window reopens as last left, per kind of
+-- screen (wide, normal, tall): fullscreen, filled, or at its shape. Kept in
+-- window-sizes.json, the 100 most recent apps; monocle and natural windows
+-- only (not popouts, prompts, rule entries, pinned or shell windows).
 local SIZES_FILE = os.getenv("HOME") .. "/.local/state/singularity/window-sizes.json"
 local SIZES_MAX = 100
 local sizes = {}
@@ -468,8 +413,7 @@ local function writeSizes()
     os.rename(tmp, SIZES_FILE)
 end
 
--- Written a moment after the last change, so dragging focus around
--- doesn't write the file for every window it passes.
+-- written 2s after the last change
 local sizesDirty = false
 local function saveSizes()
     if sizesDirty then return end
@@ -480,8 +424,7 @@ local function saveSizes()
     end, { timeout = 2000, type = "oneshot" })
 end
 
--- Records how `win` is now: fullscreen, a monocle window by its shape, a
--- natural one by where it actually is.
+-- Records how `win` is now: fullscreen, filled, or its shape.
 local function rememberWindow(win)
     if not rememberable(win) or not win.monitor then return end
     local st = stateOf(win.address)
@@ -521,9 +464,8 @@ function forgetSize(class)
     writeSizes()
 end
 
--- The remembered shape for `win` on `mon`: "fullscreen", false for filled,
--- nil for none. Another kind of screen's entry stands in when this kind
--- has none.
+-- The remembered shape on `mon`: "fullscreen", false for filled, nil for
+-- none; another screen kind's entry stands in.
 local function recallShape(win, mon)
     local entry = sizes[win.class]
     if type(entry) ~= "table" then return nil end
@@ -540,15 +482,10 @@ local function recallShape(win, mon)
     }
 end
 
--- A floating window is maximized by filling the usable area, never with
--- Hyprland's maximized flag: a floater carrying that flag ignores
--- bring_to_top and window.move, so ALT+Tab left it covered and SUPER+C
--- couldn't hide it. The flag is taken off wherever it turns up (the
--- window.fullscreen hook, and on focus as a backstop) -- SUPER+X, a titlebar
--- double-click, an app asking for it -- and the window filled instead.
--- Filling remembers the geometry it had, which toggleMaximize() puts back.
---
--- Returns the window re-read, since its geometry has changed.
+-- A floater is maximized by filling the usable area, never by Hyprland's
+-- maximized flag (a flagged floater ignores bring_to_top and move). The
+-- flag is taken off wherever it turns up. Filling saves the old rect for
+-- toggleMaximize(). Returns the window re-read.
 local function fillFloating(win)
     local addr = "address:" .. win.address
     local st = stateOf(win.address)
@@ -577,23 +514,14 @@ local function unflagFloating(win)
 end
 hl.on("window.fullscreen", function(win) unflagFloating(win) end)
 
--- Moves one window into or out of monocle -- SUPER+M's sweep, and any
--- window that lands on a workspace whose layout isn't the one the rules
--- were set for when it mapped (see applyLayoutRules below) -- leaving it as
--- it would have opened there, whatever it went through since. That's
--- worked out from what Window Rules says of it (the "rule-*" tags), not
--- from the tags it picked up as it mapped: an app rule is off while the
--- app is open, and the tags it set go with it, so they can't be trusted
--- once more than one app is open.
---
--- In monocle a fullscreen entry's window is fullscreen, a Fills app's
--- fills the screen and any other floats where it is, centred. In dwindle
--- they tile. A float or pin entry's window floats in both, and so do an
--- app's dialogs and popups. A fullscreen the app asked for itself -- a
--- game, a video -- is left alone.
+-- Moves a window into or out of monocle (SUPER+M's sweep, or a window
+-- landing on a workspace of the other layout), going by its Window Rules
+-- "rule-*" tags rather than tags picked up at map time. Monocle: a
+-- fullscreen entry goes fullscreen, a Fills app fills, others float
+-- centred. Dwindle: they tile. Float/pin entries and popups float in
+-- both; an app's own fullscreen is left alone.
 local function setWindowMonocle(w, on, mon)
-    -- class "" is a window that hasn't said what it is yet; leave it, and
-    -- the shell's windows and the scratchpad, which place themselves
+    -- skip windows with no class yet, the shell's and the scratchpad
     if not w.class or w.class == "" or w.class == "org.quickshell" or w.class == SCRATCH_CLASS then return end
     if w.pinned or hasTag(w, "rule-float") then return end
     local addr = "address:" .. w.address
@@ -624,8 +552,7 @@ local function setWindowMonocle(w, on, mon)
     if full and w.fullscreen ~= 0 then
         hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "unset", window = addr }))
     end
-    -- a Fills app's window by its rule too: one that opened while another
-    -- of the app's was up, say, can have lost its monocle tag
+    -- a Fills app's window by its rule too: it may have lost its monocle tag
     if w.floating and (full or hasTag(w, "monocle") or hasTag(w, "natural")
             or (hasTag(w, "rule-fill") and not popup)) then
         hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
@@ -639,37 +566,24 @@ local function setWindowMonocle(w, on, mon)
     stateOf(w.address).small = nil
 end
 
--- In monocle right now: floated by the monocle machinery. The tag alone
--- isn't enough -- monocleRule's tag is re-applied whenever Hyprland
--- re-evaluates a window's rules, so a tiled window on a workspace pinned to
--- dwindle can pick it up while monocle is the active workspace's layout.
--- Floating isn't re-applied that way; it's set once, at map time.
+-- In monocle right now: floating as well as tagged, since the rule's tag
+-- can be re-applied to a tiled window on a dwindle-pinned workspace.
 local function isMonocleWin(w)
     return w.floating and hasTag(w, "monocle")
 end
 
--- Laid out for monocle by setWindowMonocle or the rules: filled, floated
--- naturally, or a fullscreen entry's window floated under its fullscreen.
+-- laid out for monocle: filled, floated naturally, or under a fullscreen
 local function inMonocleState(w)
     return w.floating and (hasTag(w, "monocle") or hasTag(w, "natural") or hasTag(w, "rule-full"))
 end
 
--- Sizes every window the monocle rule just floated, once, as it maps, so
--- switching to it later is just a raise. Uses the window window.open hands
--- over, not hl.get_active_window(), which can still be the previous window
--- when a second one opens.
--- POPOUTS. A window an app opens by itself -- a sign-in popup, a dialog,
--- a second window -- is one from a process that already has a window up,
--- unless a bind or the launcher has just run something (markLaunch). Any
--- monocle or natural app, rule or not; decided once, as it first shows up.
--- It floats over the window it came from, centred on it, at the size it
--- was last left (per app and title), else the size it asks for. One asking
--- for nearly the whole screen -- Firefox-based browsers ask 1280x1040 for
--- every popup -- gets POPOUT_SHARE of it instead.
+-- POPOUTS. A window from an app that already has one up, unless a bind or
+-- the launcher just launched something (markLaunch). It floats centred over
+-- its owner at its remembered size (per app and title), else its own; one
+-- asking for nearly the whole screen gets POPOUT_SHARE instead.
 local POPOUT_SHARE = { 0.5, 0.6 }
 
--- Settings > Window Rules' popup switches, in popups.json: { block, over,
--- remember }, each on unless set false.
+-- Window Rules' popup switches (popups.json), each on unless false
 local popupOpts = { block = true, over = true, remember = true }
 do
     local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/popups.json")
@@ -683,21 +597,18 @@ do
 end
 local CASCADE = 32
 
--- The key a popout's size is remembered under: its app and the title it
--- opened with, unless that title looks like a document's, which changes.
+-- the key a popout's size is remembered under: app and opening title,
+-- unless the title looks like a document's
 local function popoutKey(win)
     local title = win.initial_title or win.title or ""
     if title == "" or #title > 40 or title:find(" [-—–|] ") then return nil end
     return "popout:" .. win.class .. ":" .. title
 end
 
--- A dialog-sized popout blocks the window it came from until it's closed
--- or promoted, the way a modal dialog does: the owner takes no clicks or
--- focus (no_focus), and focusing it by any route -- ALT+Tab, the bar --
--- brings up the popout instead. Popouts asking for nearly the whole
--- screen (a browser's new window) don't block. Kept on tags as well --
--- "owner_<address>" on the popout, "blocked" on the owner -- since the
--- no_focus prop outlives a reload and this table doesn't.
+-- A dialog-sized popout blocks its owner like a modal dialog: the owner
+-- takes no focus (no_focus), and focusing it brings up the popout. Kept on
+-- tags too ("owner_<addr>", "blocked"), since no_focus survives a reload
+-- and this table doesn't.
 local popoutOwner = {}
 
 local function setBlocked(ownerAddr, on)
@@ -767,9 +678,8 @@ hl.on("window.close", function(win)
     end
 end)
 
--- Whether a window is on the workspace in front of you -- the focused
--- monitor's, or the scratchpad when it's shown over it -- where a new
--- window maps. Focusing one that isn't would switch to it.
+-- on the workspace in front of you (or the shown scratchpad), where a new
+-- window maps
 local function onActiveWorkspace(win)
     local mon = hl.get_active_monitor()
     local active = mon and (mon.active_special_workspace or mon.active_workspace)
@@ -792,12 +702,9 @@ local function popoutOwnerOf(win)
     return owner, ownerMain
 end
 
--- A window an app opens by itself goes to the workspace of the window it
--- came from, not the one you're on: a dialog from an app on another
--- workspace waits there with it, silently, instead of covering what you're
--- doing. Not one a bind or the launcher just asked for (markLaunch), a
--- pinned one, or one a Window Rules entry sends to a workspace of its own.
--- Returns the window as it is after the move.
+-- A window an app opens by itself goes to its owner's workspace, not the
+-- one you're on, unless just launched, pinned, or sent by a Window Rules
+-- entry. Returns the window after the move.
 local function followOwner(win)
     if launchWaiting or win.pinned or hasTag(win, "rule-ws") or not onActiveWorkspace(win) then return win end
     local owner = popoutOwnerOf(win)
@@ -815,8 +722,7 @@ holdPopup = function(win)
     if not win.class or win.class == "" or win.class == "org.quickshell" or win.class == SCRATCH_CLASS then return end
     win = followOwner(win)
     if not win.floating or win.pinned or not monocleOn(win.workspace) then return end
-    -- A Window Rules entry's window places itself; one the entry marks as a
-    -- popout (a file or settings dialog) still blocks its owner.
+    -- a Window Rules entry's window places itself; a popout entry still blocks
     if hasTag(win, "rule-full") then return end
     local ruled = hasTag(win, "rule-float")
     if ruled and not hasTag(win, "popout") then return end
@@ -905,15 +811,12 @@ local function rememberPopout(win)
     if not (type(old) == "table" and num(old.fw) == num(fw) and num(old.fh) == num(fh)) then saveSizes() end
 end
 
--- Makes a popout one of the app's main windows: filled and in the monocle
--- stack for a Fills app, a natural window otherwise. Filling one does this
--- (see fillFloating), as does the window strip's row action.
+-- Makes a popout a main window: filled for a Fills app, natural otherwise.
 local function promotePopout(win)
     if not (hasTag(win, "popout") or hasTag(win, "app-held")) then return win end
     releasePopout(win.address)
     local addr = "address:" .. win.address
-    -- The held app rule's copy of monocle-exempt stays while the rule is on,
-    -- so "promoted" tells isMonocleExempt() to look past it.
+    -- "promoted" makes isMonocleExempt() look past the held rule's tag
     for _, t in ipairs({ "popout", "app-held", "monocle-exempt" }) do
         hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = addr }))
     end
@@ -953,8 +856,8 @@ function promoteWindow(address)
     end
 end
 
--- A window that isn't filled and would open right on top of another of
--- the same app's steps down and to the right of it, like a deck of cards.
+-- a window opening right on top of another of the same app's steps down
+-- and right of it
 local function cascade(win)
     win = hl.get_window("address:" .. win.address) or win
     local mon = win.monitor
@@ -987,14 +890,9 @@ end
 
 local function onMonocleOpen(win)
     if not win then return end
-    -- The rules follow the *active* workspace's layout, so a window that
-    -- mapped somewhere else (a window-rules.json workspace entry, an app
-    -- restoring its own session) can come up in the wrong one.
-    --
-    -- Only then: on the active workspace the rules were right, and a
-    -- window's state isn't settled yet (Quickshell's windows map before
-    -- their class and float land, and looked like tiled apps).
-    -- Fetched again: followOwner may have just moved it.
+    -- The rules follow the active workspace's layout, so a window mapped
+    -- elsewhere can come up in the wrong one; only then is it converted.
+    -- Re-read, as followOwner may have moved it.
     local fresh = hl.get_window("address:" .. win.address) or win
     local on = monocleOn(fresh.workspace)
     local active = hl.get_active_workspace()
@@ -1004,16 +902,12 @@ local function onMonocleOpen(win)
         if not on then return end
         fresh = hl.get_window("address:" .. win.address) or fresh
     end
-    -- One the natural rule floated, marked so SUPER+M tiles it again (the
-    -- rule's own tags go when it's switched off): floating, outside the
-    -- monocle stack, and not one of the shell's, a prompt or a popup.
+    -- tagged natural so SUPER+M tiles it again
     if on and fresh.floating and not hasTag(fresh, "monocle") and not isMonocleExempt(fresh)
             and not fresh.pinned and not hasTag(fresh, "popout") then
         hl.dispatch(hl.dsp.window.tag({ tag = "+natural", window = "address:" .. win.address }))
     end
-    -- The windows monocleRule floated are placed, and a natural one is put
-    -- where it was last left. Exempt ones -- Quickshell's own windows,
-    -- window-rules.json entries -- keep the size they open at.
+    -- placed per its remembered shape; exempt windows keep their size
     if not on then return end
     fresh = hl.get_window("address:" .. win.address) or fresh
     local mon = fresh.monitor
@@ -1038,11 +932,8 @@ local function onMonocleOpen(win)
 end
 hl.on("window.open", onMonocleOpen)
 
--- In dwindle every window opens tiled, including one that asks to open
--- maximized or fullscreen (an app restoring how it was last closed). Apps
--- ask as they map or a moment after, so for its first second and a half a
--- tiled window's maximize or fullscreen is undone. Taking it out of the
--- tiling afterwards is left to SUPER+X, SUPER+CTRL+F and SUPER+SHIFT+V.
+-- In dwindle every window opens tiled: a maximize or fullscreen asked for
+-- in its first 1.5s is undone.
 local justOpened = {}
 local function keepNewWindowTiled(win)
     if not (win and justOpened[win.address]) then return end
@@ -1060,10 +951,7 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.fullscreen", keepNewWindowTiled)
 
--- SUPER+SHIFT+n and dragging between workspaces: the window takes on the
--- destination's layout. This fires before workspace.active does, so the
--- rules may still be set for the workspace it left -- which is fine, since
--- the conversion below is done by dispatch rather than by the rules.
+-- A window moved to another workspace takes on its layout.
 hl.on("window.move_to_workspace", function(win, ws)
     if not win or not ws or ws.special then return end
     local on = monocleOn(ws)
@@ -1073,11 +961,8 @@ end)
 local function maximizeFocused()
     local win = hl.get_active_window()
 
-    -- A hidden window focused by any route (ALT+Tab, the overlay, the bar)
-    -- is being asked for, so bring it back. Ahead of the monocle check since
-    -- SUPER+C works in dwindle mode too.
-    -- Restoring puts it back as it was, so there's nothing left to do here
-    -- but raise it -- a re-fit now would cut the restore animation short.
+    -- a hidden window focused by any route is being asked for: bring it
+    -- back and raise it (a re-fit would cut the restore short)
     if win and stateOf(win.address).minimized then
         restoreMinimized(win)
         hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
@@ -1091,28 +976,22 @@ local function maximizeFocused()
     if not monocleOn(win.workspace) then return end
 
     if win.floating then
-        -- Hyprland doesn't raise a floater just because it got focus, so a
-        -- monocle window is raised here. Other floaters (dialogs, Quickshell)
-        -- aren't part of the monocle stack and are left alone.
+        -- monocle windows are raised on focus (Hyprland doesn't raise floaters)
         if hasTag(win, "monocle") then
-            -- Re-fit a window left sized for a monitor it's no longer on
-            -- (moved across, docked, undocked); backs up the monitor hooks
-            -- below for when the layout hadn't settled as they fired.
+            -- re-fit one left sized for another monitor
             if win.monitor then placeMonocle(win, win.monitor) end
             hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
         end
         return
     end
-    -- By class too: a Quickshell window can be focused before its rule's
-    -- float lands, and must never be maximized (it sizes itself in QML).
+    -- by class too: a Quickshell window can be focused before its float lands
     if win.class == "org.quickshell" then return end
     if stateOf(win.address).small then return end
 
     local mon = hl.get_active_monitor()
     if not mon then return end
 
-    -- A window alone on its workspace fills the area with fullscreen=0, so
-    -- compare geometry too rather than re-maximize it on every focus.
+    -- a lone window already fills the area with fullscreen=0
     if isAlreadyFull(win, mon) then return end
 
     hl.dispatch(hl.dsp.window.fullscreen({mode="maximized"}))
@@ -1133,17 +1012,10 @@ hl.on("window.active", function()
 end)
 hl.on("window.active", maximizeFocused)
 
--- Focusing another window over a fullscreen one (ALT+Tab, the window strip,
--- the overlay) takes it out of fullscreen, as Windows does with a
--- fullscreen game. Left fullscreen it keeps the workspace's input: the
--- window you picked is raised and focused but every click lands on the
--- fullscreen one under it, and moving the pointer hands it the keyboard
--- back. Only Hyprland's side of it is dropped: the app is still told it's
--- fullscreen (fullscreen_state's client half), so a browser keeps its video
--- filling the window instead of leaving the page's fullscreen, and focusing
--- it again puts it straight back -- unless the app has left fullscreen of
--- its own accord meanwhile. Only true fullscreen (2): a maximized window
--- (1) is how dwindle mode fills, and maximizeFocused handles those.
+-- Focusing another window over a fullscreen one drops the fullscreen on
+-- Hyprland's side only (it would keep the workspace's input), so the app
+-- stays fullscreen in its own eyes and refocusing restores it. Only true
+-- fullscreen (2); maximized (1) is dwindle's fill.
 local function yieldFullscreen()
     local win = hl.get_active_window()
     if not win or not win.workspace then return end
@@ -1175,11 +1047,9 @@ hl.on("window.active", function()
     if win then syncFillBorder(win.address) end
 end)
 
--- Re-checked on close too, rather than relying on how Hyprland sequences
--- the focus change around it.
+-- re-checked on close too
 hl.on("window.close", maximizeFocused)
 
--- window.close hands the closing window over, same as window.open does.
 hl.on("window.close", function(win)
     if not win then return end
     captureShape(win)
@@ -1189,22 +1059,10 @@ hl.on("window.close", function(win)
     windowState[win.address] = nil
 end)
 
--- Dialogs stay over the window they came from. Every monocle window is a
--- floater, and maximizeFocused raises whichever one you focus, so a click
--- off a file chooser or a sign-in popup onto the app behind it -- or
--- ALT+Tab back to the app -- would bury the dialog under it. As on Windows
--- and macOS, an app's dialogs come up with it instead: whenever a window is
--- focused, its dialogs are raised over it, nested ones over theirs. Focus
--- stays where you clicked.
---
--- Hyprland keeps an X11 dialog over its parent itself but not a Wayland
--- one, and Lua isn't told a window's parent, so the owner is worked out as
--- the dialog opens: the window focused just before it. That's only taken
--- as its owner when they share a process (a browser's sign-in popup, an
--- app's Preferences) or the dialog is one of the prompts above (the file
--- chooser portal, polkit), and the dialog floats outside the monocle
--- stack. A second window an app opens from a bind or the launcher is
--- monocle or an app rule's opened side, and owns nothing.
+-- Dialogs stay over the window they came from: focusing a window raises
+-- its dialogs over it. Lua isn't told a Wayland dialog's parent, so the
+-- owner is the window focused just before it opened, if they share a
+-- process or the dialog is a prompt (file chooser, polkit).
 local dialogOwner = {}   -- dialog address -> owner address
 local focusedNow, focusedBefore = nil, nil
 
@@ -1242,12 +1100,11 @@ hl.on("window.active", function()
     local win = hl.get_active_window()
     if not win then return end
     if win.address ~= focusedNow then focusedBefore, focusedNow = focusedNow, win.address end
-    -- On the next tick: the focus change raises the window itself once the
-    -- hooks have run, which would put it back over its dialogs.
+    -- next tick: the focus change raises the window itself after the hooks
     local addr = win.address
     hl.timer(function() raiseDialogs(addr, 0) end, { timeout = 1, type = "oneshot" })
 end)
--- A moment after it opens, once the rules' and holdPopup's tags are on it.
+-- after the rules' and holdPopup's tags are on
 hl.on("window.open", function(win)
     if not win then return end
     local addr = win.address
@@ -1261,10 +1118,8 @@ hl.on("window.close", function(win)
     end
 end)
 
--- Docking, undocking, or changing a display's resolution or arrangement
--- moves the monitors under every open window, and floaters aren't re-laid
--- out. This re-fits every monocle window at once when that happens (the
--- focus hook only catches one at a time). Each keeps its shape.
+-- Re-fits every monocle window when the monitors change (dock, undock,
+-- resolution, arrangement), keeping their shapes.
 local function refitMonocle()
     for _, w in ipairs(hl.get_windows()) do
         if w.floating and hasTag(w, "monocle") and monocleOn(w.workspace) and w.monitor then
@@ -1273,8 +1128,6 @@ local function refitMonocle()
     end
 end
 
--- All three: added/removed for a display appearing or going,
--- layout_changed for a rearrangement (it fires last when docking).
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
@@ -1288,16 +1141,13 @@ hl.timer(function()
     for _, w in ipairs(hl.get_windows()) do syncFillBorder(w.address) end
 end, { timeout = 300, type = "oneshot" })
 
--- TABS. Apps with no tabs of their own open each file in a window of its
--- own; these open theirs as tabs of one Hyprland group instead, joining the
--- first window of the same class on the same workspace. The group draws its
--- tab bar; clicking a tab switches, middle-clicking closes it.
+-- TABS. These apps open each file as a tab of one Hyprland group, joining
+-- the first window of the same class on the workspace.
 local TABBED_CLASSES = {
     ["org.pwmt.zathura"] = true,
 }
 
--- A monocle group is refitted as its tab bar comes and goes: the group
--- moves as one, so fitting any member fits them all.
+-- a monocle group is refitted as its tab bar comes and goes
 local function refitGroup(win)
     if isMonocleWin(win) and monocleOn(win.workspace) then placeMonocle(win) end
 end
@@ -1340,9 +1190,7 @@ syncTabBinds()
 hl.on("window.active", syncTabBinds)
 hl.on("window.close", syncTabBinds)
 
--- A group down to its last tab is dissolved, so a lone window has no tab
--- bar. After the close has settled, since the group still counts the
--- closing window while window.close runs.
+-- A group down to its last tab is dissolved, once the close has settled.
 hl.on("window.close", function()
     hl.timer(function()
         for _, w in ipairs(hl.get_windows()) do
@@ -1354,14 +1202,9 @@ hl.on("window.close", function()
     end, { timeout = 50, type = "oneshot" })
 end)
 
--- SUPER+X. Deliberately no hook forcing a window back to maximized when it
--- leaves that state (the window.fullscreen hook only takes the flag *off*
--- floaters): that would make shrinking a window impossible. Instead this
--- records deliberate shrinks in windowState and maximizeFocused() leaves
--- them alone.
---
--- A tiled window uses Hyprland's own maximize toggle. A monocle floater
--- switches between filling and the shape it had last (70% centred at first).
+-- SUPER+X. A tiled window uses Hyprland's maximize toggle (deliberate
+-- shrinks are recorded so maximizeFocused() leaves them). A monocle floater
+-- switches between filled and its last shape (70% centred at first).
 local function toggleMaximizeWin(win)
     if win.floating and hasTag(win, "monocle") then
         captureShape(win)
@@ -1376,9 +1219,8 @@ local function toggleMaximizeWin(win)
         return
     end
 
-    -- Any other floater: fill it, or put back what filling it replaced.
-    -- One opened already full (nothing to put back) shrinks to 70% centred,
-    -- the same as a monocle window.
+    -- any other floater: fill it, or put back what filling replaced (70%
+    -- centred if it opened full)
     if win.floating then
         win = unflagFloating(win)
         local st = stateOf(win.address)
@@ -1405,10 +1247,7 @@ local function toggleMaximizeWin(win)
 
     hl.dispatch(hl.dsp.window.fullscreen({mode="maximized"}))
 
-    -- Hyprland decides where the toggle actually lands (window rules and
-    -- monocle's own maximize=true can override it), so read the state back
-    -- rather than assume it went the way this predicted.
-    -- by selector: hl.get_window() returns nil for a bare address
+    -- read the state back: rules can override where the toggle lands
     local after = hl.get_window("address:" .. win.address)
     if after and after.fullscreen ~= 0 then
         stateOf(win.address).small = nil
@@ -1424,9 +1263,8 @@ function toggleMaximize()
     syncFillBorder(win.address)
 end
 
--- SUPER+equal and SUPER+minus: a floater steps up or down the ladder of
--- sizes, as a share of the usable area -- 55%, 70%, 85%, filled -- about
--- its own centre. A tiled window just maximizes or restores.
+-- SUPER+equal/minus: a floater steps through 55%, 70%, 85%, filled, about
+-- its centre. A tiled window maximizes or restores.
 local LADDER = { 0.55, 0.7, 0.85 }
 function stepWindowSize(dir)
     local win = hl.get_active_window()
@@ -1479,17 +1317,11 @@ function stepWindowSize(dir)
     syncFillBorder(win.address)
 end
 
--- Hides a window below the screen, or restores it, the way windows open
--- and close (windowAnim): slid off the screen (up for drop, down otherwise),
--- faded out where it is (shrinking to windowShrink for the styles that have
--- one) and only then moved away, or moved away at once. It stays transparent
--- while hidden, so the fade back in starts from nothing. A tiled window is
--- floated where it is first, since only floaters can be moved off-screen.
--- Refocusing a hidden window any other way restores it too -- see
--- maximizeFocused() above.
+-- SUPER+C: hides a window below the screen, animated per windowAnim (slide,
+-- or fade then move), and transparent while hidden. A tiled window is
+-- floated first. Focusing it any way restores it (maximizeFocused).
 local function hiddenRect(r, mon)
-    -- mon.height is in pixels; the layout is in logical ones, so a scaled
-    -- monitor (0.75 makes 1080 rows 1440 tall) would leave it half on screen
+    -- mon.height is in pixels, the layout in logical ones
     local y = windowAnim == "drop" and mon.y - r.h - 100 or mon.y + math.ceil(mon.height / mon.scale) + 100
     return { x = r.x, y = y, w = r.w, h = r.h }
 end
@@ -1527,11 +1359,8 @@ local function minimizeWindow(win, instant)
         return windowState[win.address] == st and st.hideGen == gen
     end
 
-    -- Moving it off-screen doesn't move focus, so hand focus to the most
-    -- recently used window left on this workspace -- never another hidden
-    -- one, since focusing that would bring it back. Only once it's gone:
-    -- a monocle window is raised as it takes focus, and would cover the
-    -- animation.
+    -- focus the most recently used window left on the workspace (not a
+    -- hidden one), once this one is gone
     local function focusNext()
         local next
         for _, w in ipairs(hl.get_windows()) do
@@ -1576,18 +1405,12 @@ local function minimizeWindow(win, instant)
     end
 end
 
--- PARKING. In monocle the windows on a workspace are floaters stacked
--- over each other, and Hyprland keeps drawing -- and sending frames to --
--- the ones a filled window covers completely, so a video or an animated
--- page behind it runs at full rate. Those are parked below the screen like
--- a hidden window, where Hyprland throttles them as it does windows on
--- hidden workspaces. Down each visible monocle workspace's stack from the
--- top (hl.get_windows() lists windows bottom to top), everything stays
--- down to the first window that covers the screen, plus the one
--- under it, which shows as soon as the top one closes or hides. Focusing a
--- parked window by any route brings it straight back. Popouts, pinned
--- windows, tab groups and the shell's own are never parked. A
--- "parked_x_y_w_h" tag carries where it was over a reload.
+-- PARKING. Hyprland keeps sending frames to monocle windows a filled one
+-- covers completely, so they're parked below the screen, where they're
+-- throttled. Each visible monocle stack keeps everything down to the first
+-- covering window plus the one under it. Focusing a parked window brings it
+-- back. Popouts, pinned, grouped and shell windows never park. The
+-- "parked_x_y_w_h" tag survives a reload.
 local function parkable(w)
     return w.mapped and w.floating and not w.pinned and not w.group and w.class ~= ""
         and w.class ~= "org.quickshell" and w.class ~= SCRATCH_CLASS
@@ -1617,8 +1440,7 @@ local function parkWin(w)
     jumpTo(addr, hiddenRect(r, mon))
 end
 
--- Back where it was: a monocle window where its shape puts it on its
--- workspace's monitor now, any other where it was parked from.
+-- back where it was: a monocle window at its shape on its monitor now
 local function unparkWin(w)
     local st = stateOf(w.address)
     local r = st.parked
@@ -1666,8 +1488,7 @@ local function syncParking()
     end
 end
 
--- Once per burst of events, on the next tick, when focus and the stack
--- have settled.
+-- once per burst of events, on the next tick
 local parkPending = false
 local function scheduleParking()
     if parkPending then return end
@@ -1678,9 +1499,8 @@ local function scheduleParking()
     end, { timeout = 1, type = "oneshot" })
 end
 
--- The window focused comes back at once, ahead of the next frame, and
--- goes on top of the stack -- a natural window too, which nothing else
--- raises -- or the next sync would park it again.
+-- the focused window comes back at once and goes on top, or the next sync
+-- would park it again
 hl.on("window.active", function()
     local win = hl.get_active_window()
     if win and stateOf(win.address).parked then
@@ -1711,17 +1531,9 @@ function toggleMinimize()
     if stateOf(win.address).minimized then restoreMinimized(win) else minimizeWindow(win) end
 end
 
--- SUPER+D and the bar's show-desktop button. With any window showing on
--- any workspace of any monitor, hides them all as SUPER+C does, tagged
--- "showdesktop"; with none, brings back the ones it tagged and focuses the
--- one used last on the active workspace. Always instant, whatever the
--- animation settings: every window it touches holds no_anim until the
--- moves have been drawn, so neither the hidden windows nor the tiles
--- reflowing around them animate. The scratchpad and other special
--- workspaces are left alone. Bringing one back any other way (the window
--- strip, ALT+Tab) drops its tag. The bar reads the tag to light its
--- button, so it's told to look again. A global so the button can run it
--- through `hyprctl eval`.
+-- SUPER+D and the bar's show-desktop button: hides every showing window on
+-- every non-special workspace (tagged "showdesktop"), or brings those back
+-- and focuses the last used one. Always instant (no_anim held until drawn).
 function singularityShowDesktop()
     local showing, hidden = {}, {}
     for _, w in ipairs(hl.get_windows()) do
@@ -1762,10 +1574,8 @@ function singularityShowDesktop()
     notifyShell()
 end
 
--- After a reload, windows SUPER+C hid get their windowState back from the
--- tag it left. One a reload caught mid-fade, before the timer above moved
--- it away, is moved away now. Monocle windows get their shape back, as
--- placed on the monitor they're on.
+-- After a reload: SUPER+C state and monocle shapes come back from the tags;
+-- a window caught mid-fade is moved away now.
 for _, w in ipairs(hl.get_windows()) do
     if w.monitor and isMonocleWin(w) then stateOf(w.address).placedOn = w.monitor.id end
     for _, t in ipairs(tagsOf(w)) do
@@ -1790,12 +1600,9 @@ require("window-keys")({
     placeMonocle = placeMonocle, captureShape = captureShape,
 })
 
--- monocleRule and the fullscreen entries' rules act on windows as they map,
--- nearly always on the active workspace, so they're switched to match it on
--- every workspace change and on SUPER+M. That's what gives a pinned
--- workspace its layout at map time, with no float-then-tile flicker. The
--- bar's layout toast hears of a workspace change only when the layout
--- changes; SUPER+M always announces.
+-- The monocle, natural and fullscreen rules act at map time, so they're
+-- switched to the active workspace's layout on every workspace change and
+-- on SUPER+M. The toast announces only a change (SUPER+M always).
 local rulesMonocle = nil
 local function applyLayoutRules(announce)
     local ws = hl.get_active_workspace()
@@ -1810,13 +1617,11 @@ local function applyLayoutRules(announce)
     rulesMonocle = on
 end
 applyLayoutRules()
--- wrapped: the event handler is called with the workspace, and anything
--- truthy in that first argument would toast on every workspace change
+-- wrapped: the handler's workspace argument would toast every change
 hl.on("workspace.active", function() applyLayoutRules() end)
 
--- The app rules' switch (see appRules): on while none of the app's windows
--- is open, or while a launch is pending. `closing` is a window that's on its
--- way out but still listed.
+-- The app rules' switch: on while none of the app's windows is open or a
+-- launch is pending. `closing` is a window still listed on its way out.
 local launchPending = {}
 local function syncAppRules(closing)
     if #appRules == 0 then return end
@@ -1837,10 +1642,9 @@ local function syncAppRules(closing)
 end
 syncAppRules()
 
--- A bind or the launcher just ran something: every app rule is on for the
--- next few seconds, or until that app's window opens, and the next window
--- to open isn't taken for a popup (holdPopup). Global so Quickshell's
--- launcher can call it through `hyprctl eval`.
+-- A bind or the launcher just ran something: app rules are on for 4s or
+-- until that app opens, and the next window isn't a popout. Called by the
+-- launcher through `hyprctl eval`.
 local launchGen = 0
 function markLaunch()
     launchGen = launchGen + 1
@@ -1870,10 +1674,8 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.close", function(win) syncAppRules(win and win.address) end)
 
--- SUPER+M: monocle or dwindle everywhere that isn't pinned. The rules only
--- act at map time, so the windows already open are converted here too. On
--- a pinned workspace nothing moves and the toast says so. Global so the
--- SUPER+M bind can reach it.
+-- SUPER+M: monocle or dwindle everywhere not pinned, converting the open
+-- windows. A pinned workspace stays and the toast says so.
 function toggleLayout()
     monocleEnabled = not monocleEnabled
     local f = io.open(LAYOUT_FILE, "w")
@@ -1894,8 +1696,7 @@ function toggleLayout()
 
     applyLayoutRules(true)
 
-    -- every workspace that follows SUPER+M, not just this one; hidden
-    -- windows (SUPER+C) keep their state, or one would tile back in unseen
+    -- every following workspace; hidden windows keep their state
     for _, w in ipairs(hl.get_windows()) do
         if w.workspace and not w.workspace.special and not workspaceLayouts[tostring(w.workspace.id)]
                 and not stateOf(w.address).minimized then
