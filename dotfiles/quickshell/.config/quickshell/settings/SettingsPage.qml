@@ -45,6 +45,10 @@ Item {
     // the column whose headings pin to the top as it scrolls: a tabbed
     // page points it at the tab showing
     property Item stickyColumn: col
+    // where stickyColumn sits in col: a tab, or a tab inside a Loader
+    readonly property point stickyAt: stickyColumn === col ? Qt.point(0, 0)
+        : stickyColumn.parent === col ? Qt.point(stickyColumn.x, stickyColumn.y)
+        : Qt.point(stickyColumn.x + stickyColumn.parent.x, stickyColumn.y + stickyColumn.parent.y)
 
     function tabMemory() {
         for (var p = parent; p; p = p.parent)
@@ -366,7 +370,7 @@ Item {
                 x: Theme.spaceS
                 width: flick.width - Theme.spaceS * 2
                 column: root.stickyColumn
-                columnY: col.y + (root.stickyColumn === col ? 0 : root.stickyColumn.y)
+                columnY: col.y + root.stickyAt.y
             }
 
             Column {
@@ -398,8 +402,8 @@ Item {
             width: flick.width
             flickable: flick
             column: root.stickyColumn
-            columnX: col.x + (root.stickyColumn === col ? 0 : root.stickyColumn.x)
-            columnY: root.stickyColumn === col ? 0 : root.stickyColumn.y
+            columnX: col.x + root.stickyAt.x
+            columnY: root.stickyAt.y
         }
 
         ScrollBar {

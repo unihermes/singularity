@@ -37,8 +37,8 @@ SettingsPage {
         { id: "desktop", label: "Desktop", icon: "󰖲" },
         { id: "apps",    label: "Apps",    icon: "󰀻" },
     ]
-    stickyColumn: ({ theme: tab_theme, bar: tab_bar, panels: tab_panels,
-                     desktop: tab_desktop, apps: tab_apps })[tab] || tab_theme
+    stickyColumn: (({ theme: tab_theme, bar: tab_bar, panels: tab_panels,
+                      desktop: tab_desktop, apps: tab_apps })[tab] || tab_theme).item || tab_theme
 
     function label(v, key) { return Settings.choiceLabel(v, key) }
 
@@ -93,15 +93,37 @@ SettingsPage {
         return page.label(v, k)
     }
 
-    ThemeTab { id: tab_theme; page: page }
+    // The tab showing is built with the page; the rest follow in the
+    // background a moment later, and a tab clicked before its turn is
+    // finished on the spot. A search or "Show" builds them all at once, so
+    // its field can be found.
+    property bool buildAll: false
+    onHighlightChanged: if (highlight !== "") buildAll = true
+    property bool warm: false
+    Timer { interval: 400; running: true; onTriggered: page.warm = true }
 
-    BarTab { id: tab_bar; page: page }
+    component LazyTab: Loader {
+        required property string tabId
+        required property url file
+        readonly property bool showing: page.tab === tabId
+        readonly property bool wanted: showing || page.buildAll || page.warm
+        function build() { if (wanted && source.toString() === "") setSource(file, { page: page }) }
+        onWantedChanged: build()
+        asynchronous: !showing && !page.buildAll
+        Component.onCompleted: build()
+        width: parent ? parent.width : 0
+        visible: showing
+    }
 
-    PanelsTab { id: tab_panels; page: page }
+    LazyTab { id: tab_theme; tabId: "theme"; file: "appearance/ThemeTab.qml" }
 
-    DesktopTab { id: tab_desktop; page: page }
+    LazyTab { id: tab_bar; tabId: "bar"; file: "appearance/BarTab.qml" }
 
-    AppsTab { id: tab_apps; page: page }
+    LazyTab { id: tab_panels; tabId: "panels"; file: "appearance/PanelsTab.qml" }
+
+    LazyTab { id: tab_desktop; tabId: "desktop"; file: "appearance/DesktopTab.qml" }
+
+    LazyTab { id: tab_apps; tabId: "apps"; file: "appearance/AppsTab.qml" }
 
     // --- windows: looks.lua, and hyprland.json over it ------------------------
 
