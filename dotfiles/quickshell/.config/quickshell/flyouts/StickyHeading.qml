@@ -51,8 +51,8 @@ Item {
 
         FlyoutHeading {
             id: copy
-            x: root.columnX
-            width: root.column.width
+            x: root.columnX - outdent
+            width: root.column.width + outdent
             text: root.current ? root.current.text : ""
             asWritten: root.current ? root.current.asWritten : ""
             mirrorOf: root.current

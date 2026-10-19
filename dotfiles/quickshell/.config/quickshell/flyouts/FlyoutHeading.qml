@@ -38,13 +38,18 @@ Item {
     // set while a section starts folded, before its rows have moved
     property bool folding: false
 
-    width: parent ? parent.width : 0
+    // in a sectioned column, out to the sections' frames' left edge
+    x: -outdent
+    width: parent ? parent.width + outdent : 0
     implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
 
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
     readonly property int sectionRoom: !parent || parent.sectioned !== true ? 0
         : inFlyout ? Theme.flyoutSpacing : Theme.spaceM
+    readonly property int outdent: mirrorOf ? mirrorOf.outdent
+        : !parent || parent.sectioned !== true ? 0
+        : Theme.channelWidth + (inFlyout ? Theme.spaceM : Theme.spaceL)
     readonly property bool inFlyout: {
         for (var p = parent; p; p = p.parent)
             if (p.isFlyoutPage === true) return true
