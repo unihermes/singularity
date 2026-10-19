@@ -575,10 +575,11 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Head cards:** a System page that has one answer opens on it in a
   `HeadCard` (glyph, the answer large, a line or two, the page's actions
   at its end), under a NOW or STATUS heading.
-- **CPU:** the card (how busy, average and peak clock, temperature and
-  profile) over the minute's graph; threads as levels two across; Load
-  with its per-thread figure; Power profile a row into Settings; the
-  silicon facts two across; heaviest processes as a share of the machine
+- **CPU** (picked 2026-10-18): the card (how busy, average and peak
+  clock, temperature and profile) with the minute's graph at its right;
+  threads as levels two across; DETAILS two to a line (load and its
+  per-thread figure, the governor, Power profile a row into Settings, then
+  the silicon facts); heaviest processes as a share of the machine
   with All processes under them.
 - **Memory:** the card (in use, of what, available, swap) over the
   minute; the stacked strip with its parts two across under it; swap and
