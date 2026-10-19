@@ -243,33 +243,6 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    // The lock screen as set now, pinned over the rows, with Lock now on
-    // its corner to try it.
-    pinned: Item {
-        width: parent ? parent.width : 0
-        height: preview.height + Theme.spaceL
-
-        LockPreview {
-            id: preview
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.spaceXs
-            width: Math.min(parent.width, Theme.fit(380))
-            kind: page.backgroundKind
-            blur: page.blurPasses
-            dim: page.dim
-            clock: page.clockKind
-
-            FlyoutChip {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Theme.spaceS
-                icon: "󰌾"
-                text: "Lock now"
-                onClicked: Quickshell.execDetached(["sh", "-c", "pidof hyprlock || hyprlock"])
-            }
-        }
-    }
-
     // the line under the clock as it will read: the date, the track
     // playing and the unread count, each when it's chosen
     readonly property string underSample: {
@@ -285,58 +258,97 @@ SettingsPage {
 
     FlyoutHeading { text: "BACKGROUND" }
 
-    SettingsField {
-        label: "Background"
-        hint: "Wallpaper follows the desktop's"
+    // the lock screen as set now, with Lock now on its corner to try it,
+    // beside the rows that set its background
+    Row {
+        width: parent.width
+        spacing: Theme.spaceXl
 
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: [{ value: "wallpaper", text: "Wallpaper" }, { value: "screenshot", text: "Screenshot" },
-                { value: "plain", text: "Plain" }]
-            current: page.backgroundKind
-            onPicked: v => page.writeLock("background",
-                { path: v === "plain" ? null : v === "screenshot" ? "screenshot" : page.wallpaperLink },
-                "Lock background: " + v)
-        }
-    }
+        LockPreview {
+            id: preview
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fit(220)
+            kind: page.backgroundKind
+            blur: page.blurPasses
+            dim: page.dim
+            clock: page.clockKind
 
-    SettingsField {
-        label: "Blur"
-        hint: page.backgroundKind === "plain" ? "Only for a wallpaper or screenshot" : "Passes over the background"
-
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            enabled: page.backgroundKind !== "plain"
-            value: page.blurPasses
-            minimum: 0
-            maximum: 4
-            valueWidth: 64
-            displayValue: value === 0 ? "off" : String(value)
-            onStepped: delta => {
-                var n = Math.max(0, Math.min(4, page.blurPasses + delta))
-                page.writeLock("background", { blur_passes: n }, n === 0 ? "Blur off" : "Blur: " + n)
+            FlyoutChip {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Theme.spaceS
+                icon: "󰌾"
+                text: "Lock now"
+                onClicked: Quickshell.execDetached(["sh", "-c", "pidof hyprlock || hyprlock"])
             }
         }
-    }
 
-    SettingsField {
-        label: "Dim"
-        hint: page.backgroundKind === "plain" ? "Only for a wallpaper or screenshot" : "Darkens the background"
+        Column {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - preview.width - parent.spacing
+            spacing: Theme.spaceM
 
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            enabled: page.backgroundKind !== "plain"
-            value: Math.round(page.dim / 10)
-            minimum: 0
-            maximum: 8
-            valueWidth: 64
-            displayValue: page.dim + "%"
-            onStepped: delta => {
-                var d = Math.max(0, Math.min(80, Math.round(page.dim / 10) * 10 + delta * 10))
-                page.writeLock("background", { brightness: ((100 - d) / 100).toFixed(2) }, "Dim: " + d + "%")
+            SettingsField {
+                width: parent.width
+                labelWidth: width - bgChoice.width - Theme.spaceL
+                label: "Background"
+                hint: "Follows the desktop's"
+
+                FlyoutSegmented {
+                    id: bgChoice
+                    anchors.right: parent.right
+                    fill: false
+                    model: [{ value: "wallpaper", text: "Wallpaper" }, { value: "screenshot", text: "Screenshot" },
+                        { value: "plain", text: "Plain" }]
+                    current: page.backgroundKind
+                    onPicked: v => page.writeLock("background",
+                        { path: v === "plain" ? null : v === "screenshot" ? "screenshot" : page.wallpaperLink },
+                        "Lock background: " + v)
+                }
+            }
+
+            SettingsField {
+                width: parent.width
+                labelWidth: width - Theme.fit(170) - Theme.spaceL
+                label: "Blur"
+                hint: page.backgroundKind === "plain" ? "Only for an image" : "Passes over it"
+
+                FlyoutStepper {
+                    anchors.right: parent.right
+                    width: Theme.fit(170)
+                    enabled: page.backgroundKind !== "plain"
+                    value: page.blurPasses
+                    minimum: 0
+                    maximum: 4
+                    valueWidth: 64
+                    displayValue: value === 0 ? "off" : String(value)
+                    onStepped: delta => {
+                        var n = Math.max(0, Math.min(4, page.blurPasses + delta))
+                        page.writeLock("background", { blur_passes: n }, n === 0 ? "Blur off" : "Blur: " + n)
+                    }
+                }
+            }
+
+            SettingsField {
+                width: parent.width
+                labelWidth: width - Theme.fit(170) - Theme.spaceL
+                label: "Dim"
+                hint: page.backgroundKind === "plain" ? "Only for an image" : "Darkens it"
+
+                FlyoutStepper {
+                    anchors.right: parent.right
+                    width: Theme.fit(170)
+                    enabled: page.backgroundKind !== "plain"
+                    value: Math.round(page.dim / 10)
+                    minimum: 0
+                    maximum: 8
+                    valueWidth: 64
+                    displayValue: page.dim + "%"
+                    onStepped: delta => {
+                        var d = Math.max(0, Math.min(80, Math.round(page.dim / 10) * 10 + delta * 10))
+                        page.writeLock("background", { brightness: ((100 - d) / 100).toFixed(2) }, "Dim: " + d + "%")
+                    }
+                }
             }
         }
     }
@@ -358,30 +370,43 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Clock size"
+    Grid {
+        id: clockPair
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+        readonly property real half: (width - columnSpacing) / 2
 
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: Settings.choices.lockClockSize
-            labelFor: v => Settings.choiceLabel(v, "lockClockSize")
-            current: Settings.lockClockSize
-            onPicked: v => Settings.set("lockClockSize", v)
+        SettingsField {
+            width: clockPair.half
+            labelWidth: width - sizeChoice.width - Theme.spaceL
+            label: "Clock size"
+
+            FlyoutSegmented {
+                id: sizeChoice
+                anchors.right: parent.right
+                fill: false
+                model: Settings.choices.lockClockSize
+                labelFor: v => Settings.choiceLabel(v, "lockClockSize")
+                current: Settings.lockClockSize
+                onPicked: v => Settings.set("lockClockSize", v)
+            }
         }
-    }
 
-    SettingsField {
-        label: "Clock place"
-        hint: "Where the clock sits"
+        SettingsField {
+            width: clockPair.half
+            labelWidth: width - placeChoice.width - Theme.spaceL
+            label: "Clock place"
 
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: Settings.choices.lockClockPlace
-            labelFor: v => Settings.choiceLabel(v, "lockClockPlace")
-            current: Settings.lockClockPlace
-            onPicked: v => Settings.set("lockClockPlace", v)
+            FlyoutSegmented {
+                id: placeChoice
+                anchors.right: parent.right
+                fill: false
+                model: Settings.choices.lockClockPlace
+                labelFor: v => Settings.choiceLabel(v, "lockClockPlace")
+                current: Settings.lockClockPlace
+                onPicked: v => Settings.set("lockClockPlace", v)
+            }
         }
     }
 
@@ -401,7 +426,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PASSWORD" }
+    FlyoutHeading { text: "LOCKING" }
 
     SettingsField {
         label: "Grace period"
@@ -420,8 +445,7 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "LID" }
+    SettingsSubhead { caption: "LID" }
 
     // what closing it does, and for Suspend how long after
     SettingsField {
@@ -469,32 +493,44 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Lock right away"
-        hint: page.lockOnClose ? "Locks the moment the lid shuts" : "Locks only when it goes to sleep"
+    Grid {
+        id: lidPair
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+        readonly property real half: (width - columnSpacing) / 2
 
-        Switch {
-            anchors.right: parent.right
-            checked: page.lockOnClose
-            onToggled: page.setLid("lock_on_close", page.lockOnClose ? 0 : 1,
-                page.lockOnClose ? "Locks when it goes to sleep" : "Locks as soon as the lid closes")
+        SettingsField {
+            width: lidPair.half
+            labelWidth: width - Theme.switchWidth - Theme.spaceL
+            label: "Lock right away"
+            hint: page.lockOnClose ? "The moment it shuts" : "Only when it sleeps"
+
+            Switch {
+                anchors.right: parent.right
+                checked: page.lockOnClose
+                onToggled: page.setLid("lock_on_close", page.lockOnClose ? 0 : 1,
+                    page.lockOnClose ? "Locks when it goes to sleep" : "Locks as soon as the lid closes")
+            }
         }
-    }
 
-    // lid.sh's suspend-then-hibernate; the power menu's Hibernate stays
-    SettingsField {
-        label: "Hibernate"
-        hint: !Session.canHibernate ? "Needs hibernation set up (install.sh)"
-            : page.closeAction !== "suspend" ? "Only when the lid suspends"
-            : page.hibernate ? "Saved to disk after an hour shut"
-            : "Stays asleep while the lid is shut"
+        // lid.sh's suspend-then-hibernate; the power menu's Hibernate stays
+        SettingsField {
+            width: lidPair.half
+            labelWidth: width - Theme.switchWidth - Theme.spaceL
+            label: "Hibernate"
+            hint: !Session.canHibernate ? "Needs hibernation (install.sh)"
+                : page.closeAction !== "suspend" ? "Only when the lid suspends"
+                : page.hibernate ? "After an hour shut"
+                : "Stays asleep"
 
-        Switch {
-            anchors.right: parent.right
-            checked: page.hibernate && Session.canHibernate
-            enabled: Session.canHibernate && page.closeAction === "suspend"
-            onToggled: page.setLid("hibernate", page.hibernate ? 0 : 1,
-                page.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
+            Switch {
+                anchors.right: parent.right
+                checked: page.hibernate && Session.canHibernate
+                enabled: Session.canHibernate && page.closeAction === "suspend"
+                onToggled: page.setLid("hibernate", page.hibernate ? 0 : 1,
+                    page.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
+            }
         }
     }
 }

@@ -327,10 +327,13 @@ Settings') are laid out the same way.
   zones of module chips and a Hidden zone under them; a dragged chip is a
   ghost following the pointer, an accent marker shows where it lands, and
   the drop writes the layout and visibility like Bar Widgets.
-- **Lock Screen:** a live preview of the lock screen is pinned over the
-  rows (`pinned`), with a Lock now chip on its corner, so Background and
-  Clock place are plain segments. Under the clock's hint is the line as it
-  will read. The lid is one row: [Suspend | Screen off] after [N min].
+- **Lock Screen:** three sections (picked 2026-10-18). BACKGROUND has a
+  live preview of the lock screen, with a Lock now chip on its corner,
+  beside Background, Blur and Dim, so Background and Clock place are plain
+  segments. CLOCK puts Clock size beside Clock place; under the clock's
+  hint is the line as it will read, its parts as chips. LOCKING holds the
+  grace period, then the lid under a LID subhead: one row [Suspend |
+  Screen off] after [N min], and Lock right away beside Hibernate.
 - **Visual pickers:** a choice judged by eye (Style, Workspaces, Open
   windows, Clock, Control Centre icon, Visualizer, Launcher layout, Power
   menu, Window animation; `ModuleArt` draws the pictures) is a grid of tiles

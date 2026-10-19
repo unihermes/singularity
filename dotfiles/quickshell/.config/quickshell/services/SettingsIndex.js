@@ -51,11 +51,11 @@ var entries = [
     { page: "lockscreen", section: "Clock",    label: "Clock size",   keywords: "hyprlock clock big small huge font" },
     { page: "lockscreen", section: "Clock",    label: "Clock place",  keywords: "hyprlock clock position centre top corner" },
     { page: "lockscreen", section: "Clock",    label: "Under the clock", keywords: "hyprlock date media music notifications info line" },
-    { page: "lockscreen", section: "Clock",    label: "Lock now",     keywords: "hyprlock preview test" },
-    { page: "lockscreen", section: "Password", label: "Grace period", keywords: "hyprlock grace delay password unlock idle" },
-    { page: "lockscreen", section: "Lid",      label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh delay after minutes" },
-    { page: "lockscreen", section: "Lid",      label: "Lock right away", keywords: "lid close lock immediately" },
-    { page: "lockscreen", section: "Lid",      label: "Hibernate", keywords: "lid hibernate hibernation suspend-then-hibernate disk power off battery" },
+    { page: "lockscreen", section: "Background", label: "Lock now",     keywords: "hyprlock preview test" },
+    { page: "lockscreen", section: "Locking", label: "Grace period", keywords: "hyprlock grace delay password unlock idle" },
+    { page: "lockscreen", section: "Locking",  label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh delay after minutes" },
+    { page: "lockscreen", section: "Locking",  label: "Lock right away", keywords: "lid close lock immediately" },
+    { page: "lockscreen", section: "Locking",  label: "Hibernate", keywords: "lid hibernate hibernation suspend-then-hibernate disk power off battery" },
 
     // --- Appearance --------------------------------------------------------
     { page: "notifications", section: "Popups", label: "Group by app",          keywords: "stack collapse same app count" },
