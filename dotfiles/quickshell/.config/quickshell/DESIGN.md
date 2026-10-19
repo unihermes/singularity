@@ -473,20 +473,22 @@ Settings') are laid out the same way.
   reads the time as it will look, and a strip of weekday letters in First
   day of the week's hint line (`SettingsField.hintExtras`) shows where the
   calendar's week starts.
-- **Software Update:** a status card heads the page (the update icon,
+- **Software Update** (three sections, picked 2026-10-18: STATUS,
+  PACKAGES, UPKEEP): a status card heads STATUS (the update icon,
   accent while there are some and a green tick when up to date, the count
   large, when it last checked, the last upgrade and how many packages it
-  changed, then Check now and Update now). Singularity follows: Repository
+  changed, then Check now and Update now). Singularity's Repository row follows in it
   says how far the clone is behind its upstream (and local commits, which
   disable Update since update.sh only fast-forwards), then a row naming
   packages the pull would install, then the incoming commits, newest first
   with their time, ten then Show all N. Check for updates' hint says
   when the next check runs, and Include the AUR how many AUR packages there
-  are. Each pending package is one row (package icon, name, the version
+  are. PACKAGES has a PENDING subhead only while updates wait (the card
+  says when there are none); each pending package is one row (package icon, name, the version
   change as its note with the moving part brighter, repo or AUR at the
   end); Ignore takes the end on hover (`FlyoutRow.actionText`, a chip that
   acts on one click, for what's easily undone). Ten, then Show all N.
-  Ignored packages are rows saying what each holds back, with Stop
+  Under an IGNORED subhead, ignored packages are rows saying what each holds back, with Stop
   ignoring on hover; Ignore a package… is the last row and opens a search
   of installed packages. Upkeep holds Orphaned packages and Reclaimable
   space, whose Clean up asks with the size first.
