@@ -345,17 +345,20 @@ Settings') are laid out the same way.
   drawing the thing where it is (`PopupSpot`).
 - **Which pages are tabbed:** only Appearance. Every other page is one
   page with sections; prefer that over tabs.
-- **Window Rules:** one Apps list holds every app with a rule or a
-  remembered size (one-line rows: name, a pattern mark, how it opens, in
-  words: Filled, Fullscreen, 21% × 43%, Float 960×540). A row opens in
-  place: what it matches, Name with the pencil, Opens (As left · Float ·
-  Fullscreen · On top), for As left a First time choice (Own size ·
-  Filled, which is what the old Fills list was) and Last left with Forget,
-  Size for Float and On top, Workspace, and Remove. An app with only a
+- **Window Rules** (picked 2026-10-18, 1B 2B 3B 4B 5A): the Apps list
+  holds every app with a rule or a remembered size, under three subheads
+  by how it opens: FILLS, FLOATS, OWN SIZE. Its rows carry the app's icon,
+  a good-coloured dot while it has a window open, and how it opens in
+  words (Filled, Fullscreen, 21% × 43%, Float 960×540). A row opens in
+  place: Name (what it matches as the hint, the pencil, Remove rule),
+  Opens (As left · Float · Full · On top) beside Workspace, for As left
+  First time (Own size · Filled) beside Last left with Forget, a note on
+  what the choice does, and Size for Float and On top. An app with only a
   remembered size gets its rule on its first change. Add a rule… is the
   last row, as Other network… is. Popups and dialogs is its own section:
-  three switches (block, open over their window, remember sizes), then the
-  rules matched by title. Workspace layouts are segments per workspace.
+  three switches on one line (Block their window, Open over it, Remember
+  sizes), then the rules matched by title. Workspace layouts are segments
+  per workspace.
   No reordering: new rules go on top of the file.
   The tab showing has white text on its accent fill, never dark. Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.

@@ -2,8 +2,8 @@
 // ~/.config/quickshell/settings/SettingsPageWindowRules.qml
 //
 // How each app's windows open, and its popups. Apps: every app with a rule
-// or a remembered size (window-sizes.json): As left, Float, Fullscreen or
-// On top. Popups and dialogs: popups.json's switches and title rules.
+// or a remembered size (window-sizes.json), grouped by whether it fills,
+// floats or keeps a size of its own: As left, Float, Fullscreen or On top. Popups and dialogs: popups.json's switches and title rules.
 // Saved to window-rules.json (until then the shipped defaults show, and the
 // first change copies them in); every change reloads Hyprland and applies
 // to windows as they open. The higher rule wins. Title-regex popout entries
@@ -103,6 +103,20 @@ SettingsPage {
         })
         return out
     }
+    // which group an app sits in: it fills (as left and filled, or
+    // fullscreen), floats (float or on top), or keeps a size of its own
+    // (remembered, or its own size before there's one)
+    function entryKind(e) {
+        var r = e.index >= 0 ? rules[e.index] : null
+        if (r && (r.float || r.pin)) return "float"
+        if (r && r.fullscreen) return "fill"
+        var m = memOf(e.cls)
+        if (m) return m.fill || m.fullscreen ? "fill" : "own"
+        return r && !r.own ? "fill" : "own"
+    }
+    readonly property var appGroups: [
+        { kind: "fill", caption: "FILLS" }, { kind: "float", caption: "FLOATS" }, { kind: "own", caption: "OWN SIZE" }]
+
     readonly property var titleEntries: rules.map((r, i) => ({ index: i, cls: r.class || "" })).filter(e => !!rules[e.index].title)
 
     // The popup switches, as { block, over, remember }, each on unless false.
@@ -410,8 +424,22 @@ SettingsPage {
         }
 
         Repeater {
-            model: page.appEntries
-            delegate: entryDelegate
+            model: page.appGroups
+
+            Column {
+                id: group
+                required property var modelData
+                readonly property var entries: page.appEntries.filter(e => page.entryKind(e) === modelData.kind)
+                width: parent.width
+                visible: entries.length > 0
+
+                SettingsSubhead { caption: group.modelData.caption + "  " + group.entries.length }
+
+                Repeater {
+                    model: group.entries
+                    delegate: entryDelegate
+                }
+            }
         }
 
         // a rule for one more app: by its class, or picked from the open ones
@@ -496,35 +524,29 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "POPUPS AND DIALOGS" }
 
-    SettingsField {
-        label: "Block the window they came from"
-        hint: "Until the popup is closed or made a window"
+    Grid {
+        id: popupSwitches
+        width: parent.width
+        columns: 3
+        columnSpacing: Theme.spaceXl
+        readonly property real third: (width - columnSpacing * 2) / 3
 
-        Switch {
-            anchors.right: parent.right
-            checked: page.popupOpts.block
-            onToggled: page.setPopupOpt("block", !page.popupOpts.block)
-        }
-    }
-    SettingsField {
-        label: "Open over their window"
-        hint: "Centred on it, not the screen"
+        component PopupSwitch: SettingsField {
+            id: popupSwitch
+            property string key: ""
+            width: popupSwitches.third
+            labelWidth: width - Theme.switchWidth - Theme.spaceL
 
-        Switch {
-            anchors.right: parent.right
-            checked: page.popupOpts.over
-            onToggled: page.setPopupOpt("over", !page.popupOpts.over)
+            Switch {
+                anchors.right: parent.right
+                checked: page.popupOpts[popupSwitch.key]
+                onToggled: page.setPopupOpt(popupSwitch.key, !page.popupOpts[popupSwitch.key])
+            }
         }
-    }
-    SettingsField {
-        label: "Remember their sizes"
-        hint: "Per app and title, like the apps' own"
 
-        Switch {
-            anchors.right: parent.right
-            checked: page.popupOpts.remember
-            onToggled: page.setPopupOpt("remember", !page.popupOpts.remember)
-        }
+        PopupSwitch { key: "block"; label: "Block their window" }
+        PopupSwitch { key: "over"; label: "Open over it" }
+        PopupSwitch { key: "remember"; label: "Remember sizes" }
     }
 
     SettingsSubhead { visible: page.titleEntries.length > 0; caption: "Matched by title" }
@@ -555,13 +577,21 @@ SettingsPage {
             readonly property string opensAs: rule && rule.pin ? "pin" : rule && rule.fullscreen ? "full"
                 : rule && rule.float ? "float" : byTitle ? "tiled" : "left"
             readonly property string first: rule && !rule.own ? "fill" : "own"
+            // a field's width two to a line in the indented settings
+            readonly property real half: (width - Theme.spaceS - Theme.indicatorWidth - Theme.spaceL - Theme.spaceXl * 2) / 2
 
             width: parent.width
 
+            // the app's icon, and a dot while it has a window open
             FlyoutRow {
+                readonly property string icon: entry.byTitle || (entry.rule && entry.rule.regex) ? "" : Apps.iconForClass(entry.e.cls)
+                leadingImage: icon
+                leadingIcon: icon === "" && !entry.byTitle ? "󰖯" : ""
                 label: entry.rule ? page.describe(entry.rule) : Apps.nameForWindow(entry.e.cls, "")
+                note: entry.open > 0 ? "<font color=\"" + Theme.good + "\">●</font>" : ""
+                noteStyled: true
                 highlighted: entry.expanded
-                trailing: (entry.open > 0 ? entry.open + " open  ·  " : "")
+                trailing: (entry.byTitle && entry.open > 0 ? entry.open + " open  ·  " : "")
                     + (entry.rule && entry.rule.regex ? page.glyphs.pattern + "  " : "")
                     + (entry.rule ? page.summary(entry.rule) : page.memWords(entry.mem))
                     + "  " + (entry.expanded ? "󰅀" : "󰅂")
@@ -574,46 +604,52 @@ SettingsPage {
             SettingsIndent {
                 visible: entry.expanded
 
-                Text {
-                    width: parent.width
-                    text: {
+                // what it matches, its name (renamed in place; empty goes back
+                // to the class) and Remove rule
+                SettingsField {
+                    visible: page.renaming !== entry.e.index
+                    label: "Name"
+                    hint: {
                         var r = entry.rule || { class: entry.e.cls }, parts = []
                         if (r.class) parts.push("class " + (r.regex ? "~ " : "= ") + r.class)
                         if (r.title) parts.push("title " + (r.regex ? "~ " : "= ") + r.title)
                         return parts.join("   ") + (r.regex ? "  (a pattern; edited in window-rules.json)" : "")
                     }
-                    wrapMode: Text.WrapAnywhere
-                    color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
-                }
-
-                // the list's name for it, renamed in place; empty goes back to the class
-                SettingsField {
-                    visible: !!entry.rule && page.renaming !== entry.e.index
-                    label: "Name"
-                    hint: "What the list calls it"
+                    labelWidth: width - nameRow.width - Theme.spaceL
 
                     Row {
+                        id: nameRow
                         anchors.right: parent.right
                         spacing: Theme.spaceS
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: entry.rule ? page.describe(entry.rule) : ""
+                            text: entry.rule ? page.describe(entry.rule) : Apps.nameForWindow(entry.e.cls, "")
                             color: Theme.textStrong
                             font.family: Theme.fontText
                             font.weight: Theme.weightBody
                             font.pixelSize: Theme.fontBody
                         }
                         IconButton {
+                            visible: !!entry.rule
                             anchors.verticalCenter: parent.verticalCenter
                             icon: page.glyphs.rename
                             onClicked: {
                                 page.renaming = entry.e.index
                                 nameInput.text = entry.rule.label || ""
                                 Qt.callLater(nameInput.forceFocus)
+                            }
+                        }
+                        Item { width: Theme.spaceM; height: 1 }
+                        FlyoutChip {
+                            visible: !!entry.rule
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "󰆴 Remove rule"
+                            confirmText: entry.rule ? "Remove " + page.describe(entry.rule) + "?" : ""
+                            enabled: !AtomicFileWrite.busy
+                            onClicked: {
+                                page.openKey = ""
+                                page.removeRule(entry.e.index)
                             }
                         }
                     }
@@ -657,62 +693,87 @@ SettingsPage {
                     }
                 }
 
-                SettingsField {
-                    label: "Opens"
-                    hint: page.opensHints[entry.opensAs]
+                // Opens beside Workspace, and for As left the first time
+                // beside how it was last left
+                Grid {
+                    width: parent.width
+                    columns: 2
+                    columnSpacing: Theme.spaceXl * 2
 
-                    FlyoutSegmented {
-                        anchors.right: parent.right
-                        fill: false
-                        enabled: !AtomicFileWrite.busy
-                        model: [{ value: entry.byTitle ? "tiled" : "left", text: entry.byTitle ? "Fills" : "As left" },
-                            { value: "float", text: "Float" }, { value: "full", text: "Fullscreen" }, { value: "pin", text: "On top" }]
-                        current: entry.opensAs
-                        onPicked: v => page.setEntry(entry.e, "opens", v)
-                    }
-                }
+                    SettingsField {
+                        width: entry.half
+                        labelWidth: width - opensChoice.width - Theme.spaceL
+                        label: "Opens"
 
-                SettingsField {
-                    visible: entry.opensAs === "left"
-                    label: "First time"
-                    hint: "Before there's anything to remember"
-
-                    FlyoutSegmented {
-                        anchors.right: parent.right
-                        fill: false
-                        enabled: !AtomicFileWrite.busy
-                        model: [{ value: "own", text: "Own size" }, { value: "fill", text: "Filled" }]
-                        current: entry.first
-                        onPicked: v => page.setEntry(entry.e, "own", v === "own" ? true : "")
-                    }
-                }
-
-                SettingsField {
-                    visible: entry.opensAs === "left"
-                    label: "Last left"
-                    hint: entry.mem ? "Opens like this next time" : "Nothing yet; how it's left is remembered"
-
-                    Row {
-                        anchors.right: parent.right
-                        spacing: Theme.spaceM
-                        visible: !!entry.mem
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: page.memWords(entry.mem)
-                            color: Theme.textStrong
-                            font.family: Theme.fontText
-                            font.weight: Theme.weightBody
-                            font.pixelSize: Theme.fontBody
+                        FlyoutSegmented {
+                            id: opensChoice
+                            anchors.right: parent.right
+                            fill: false
+                            enabled: !AtomicFileWrite.busy
+                            model: [{ value: entry.byTitle ? "tiled" : "left", text: entry.byTitle ? "Fills" : "As left" },
+                                { value: "float", text: "Float" }, { value: "full", text: "Full" }, { value: "pin", text: "On top" }]
+                            current: entry.opensAs
+                            onPicked: v => page.setEntry(entry.e, "opens", v)
                         }
+                    }
+
+                    SettingsField {
+                        width: entry.half
+                        labelWidth: width - Theme.fit(160) - Theme.spaceL
+                        label: "Workspace"
+
+                        SettingsDropdown {
+                            anchors.right: parent.right
+                            width: Theme.fit(160)
+                            // Any, then every workspace the bar shows
+                            model: [0].concat(Array.from({ length: Settings.workspaceCount }, (_, i) => i + 1))
+                            current: entry.rule ? entry.rule.workspace || 0 : 0
+                            labelFor: v => v === 0 ? "Any" : "Workspace " + v
+                            onPicked: v => page.setEntry(entry.e, "workspace", v)
+                        }
+                    }
+                }
+
+                Grid {
+                    visible: entry.opensAs === "left"
+                    width: parent.width
+                    columns: 2
+                    columnSpacing: Theme.spaceXl * 2
+
+                    SettingsField {
+                        width: entry.half
+                        labelWidth: width - firstChoice.width - Theme.spaceL
+                        label: "First time"
+
+                        FlyoutSegmented {
+                            id: firstChoice
+                            anchors.right: parent.right
+                            fill: false
+                            enabled: !AtomicFileWrite.busy
+                            model: [{ value: "own", text: "Own size" }, { value: "fill", text: "Filled" }]
+                            current: entry.first
+                            onPicked: v => page.setEntry(entry.e, "own", v === "own" ? true : "")
+                        }
+                    }
+
+                    SettingsField {
+                        width: entry.half
+                        labelWidth: width - forgetChip.width - Theme.spaceL
+                        label: "Last left"
+                        hint: entry.mem ? page.memWords(entry.mem) + ", next time too" : "Nothing remembered yet"
+
                         FlyoutChip {
-                            anchors.verticalCenter: parent.verticalCenter
+                            id: forgetChip
+                            visible: !!entry.mem
+                            anchors.right: parent.right
                             text: "Forget"
                             confirmText: "Forget?"
                             onClicked: page.forget(entry.e.cls, entry.rule ? page.describe(entry.rule) : Apps.nameForWindow(entry.e.cls, ""))
                         }
                     }
                 }
+
+                SettingsNote { text: page.opensHints[entry.opensAs] }
 
                 SettingsField {
                     visible: entry.opensAs === "float" || entry.opensAs === "pin"
@@ -800,31 +861,7 @@ SettingsPage {
                     text: "Pixels, or a percentage of the screen: 1000 × 70%"
                 }
 
-                SettingsField {
-                    label: "Workspace"
-                    hint: "Where it opens; Any is wherever you are"
 
-                    SettingsDropdown {
-                        anchors.right: parent.right
-                        width: Theme.fit(160)
-                        // Any, then every workspace the bar shows
-                        model: [0].concat(Array.from({ length: Settings.workspaceCount }, (_, i) => i + 1))
-                        current: entry.rule ? entry.rule.workspace || 0 : 0
-                        labelFor: v => v === 0 ? "Any" : "Workspace " + v
-                        onPicked: v => page.setEntry(entry.e, "workspace", v)
-                    }
-                }
-
-                FlyoutChip {
-                    visible: !!entry.rule
-                    text: "󰆴 Remove rule"
-                    confirmText: entry.rule ? "Remove " + page.describe(entry.rule) + "?" : ""
-                    enabled: !AtomicFileWrite.busy
-                    onClicked: {
-                        page.openKey = ""
-                        page.removeRule(entry.e.index)
-                    }
-                }
             }
         }
     }

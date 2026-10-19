@@ -168,9 +168,9 @@ var entries = [
     { page: "windowrules", section: "Apps", label: "Last left",         keywords: "remembered size forget memory restore" },
     { page: "windowrules", section: "Apps", label: "Size",              keywords: "natural window dimensions custom percent pixels" },
     { page: "windowrules", section: "Apps", label: "Workspace",         keywords: "where it opens" },
-    { page: "windowrules", section: "Popups and dialogs", label: "Block the window they came from", keywords: "popup dialog modal block lock parent" },
-    { page: "windowrules", section: "Popups and dialogs", label: "Open over their window", keywords: "popup dialog centre center parent owner" },
-    { page: "windowrules", section: "Popups and dialogs", label: "Remember their sizes", keywords: "popup dialog size memory" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Block their window", keywords: "came from popup dialog modal block lock parent" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Open over it", keywords: "their window popup dialog centre center parent owner" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Remember sizes", keywords: "their popup dialog size memory" },
     { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
 
     // --- Display -----------------------------------------------------------
