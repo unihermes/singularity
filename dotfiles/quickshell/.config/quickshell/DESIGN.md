@@ -308,7 +308,10 @@ Settings') are laid out the same way.
   line; WINDOWS with gaps, borders, corners, shadow and tab bar; EFFECTS
   with opacity, dim and blur; MOTION with the three per-part speeds folded
   behind a "Per-part speeds…" row and the animation tiles four across;
-  neighbours two to a line) and Apps. While anything differs from the baseline, the changes
+  neighbours two to a line) and Apps (one section, picked 2026-10-18:
+  System font; Icons with a few of the theme's icons on the label's line
+  (`SettingsField.labelExtras`); Cursor with its size stepper beside the
+  dropdown; terminal opacity lives on the Terminal page only). While anything differs from the baseline, the changes
   bar (`ChangesBar`, picked 2026-10-18) floats at the page's foot
   (`SettingsPage.footer`): "N changed from …", Review (the list opening
   above it, with Undo all and Factory reset), Save as default, Reset. A

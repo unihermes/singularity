@@ -47,6 +47,8 @@ Item {
         && hostPage.highlight === root.label
 
     default property alias control: slot.data
+    // small items on the label's line, after it (an icon theme's samples)
+    property alias labelExtras: extras.data
 
     width: parent ? parent.width : 0
     implicitHeight: Math.max(Theme.fieldHeight, labels.implicitHeight + Theme.spaceM, slot.childrenRect.height + Theme.spaceM)
@@ -86,10 +88,11 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 
-        // the label, and the mark of a change from the look
+        // the label, the mark of a change from the look, and anything shown
+        // after them (`labelExtras`)
         Item {
             width: parent.width
-            height: labelText.implicitHeight
+            height: Math.max(labelText.implicitHeight, extras.height)
 
             Text {
                 id: labelText
@@ -139,6 +142,14 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Settings.resetLookKey(root.lookKey)
                 }
+            }
+
+            Row {
+                id: extras
+                anchors.left: resetMark.visible ? resetMark.right : labelText.right
+                anchors.leftMargin: Theme.spaceL
+                anchors.verticalCenter: labelText.verticalCenter
+                spacing: Theme.spaceS
             }
         }
 

@@ -157,9 +157,7 @@ var entries = [
     { page: "appearance", section: "Desktop", label: "Window animation", keywords: "hyprland open close popin slide fade" },
     { page: "appearance", section: "Apps", label: "System font", keywords: "typeface family gtk qt apps interface ui" },
     { page: "appearance", section: "Apps", label: "Icons", keywords: "icon theme kora apps gtk qt" },
-    { page: "appearance", section: "Apps", label: "Cursor", keywords: "pointer mouse theme bibata" },
-    { page: "appearance", section: "Apps", label: "Cursor size", keywords: "pointer mouse px big" },
-    { page: "appearance", section: "Apps", label: "Terminal opacity", keywords: "alacritty ghostty transparency background" },
+    { page: "appearance", section: "Apps", label: "Cursor", keywords: "pointer mouse theme bibata size px big" },
 
     // --- Window Rules ------------------------------------------------------
     { page: "windowrules", section: "Apps", label: "Apps",              keywords: "app class rules remembered sizes list" },
