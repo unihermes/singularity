@@ -600,9 +600,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   addresses; tools two to a line.
 - **Power:** the card (charge and state, draw and time left, capacity
   against new, Settings on it) over the charge as a full-width level;
-  right now and the pack two across, the pack's wear as its own level;
-  the profile segments with their one-line point; Idle and lid into
-  Settings, Suspend asking first.
+  BATTERY two across, then the pack under a subhead with its wear as its
+  own level; the profile segments with their one-line point; SESSION with
+  Idle and lid into Settings, Suspend asking first and the history, two
+  to a line.
 - **Hardware:** the card (the machine's name, CPU and RAM, GPU, Copy specs
   on it) over the identity two across; displays and the audio output as
   rows into their Settings pages; the ten hottest sensors as levels two
