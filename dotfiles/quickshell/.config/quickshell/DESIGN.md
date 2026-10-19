@@ -465,12 +465,14 @@ Settings') are laid out the same way.
   Save, and Remove alias in two clicks; Add an alias… is the last row.
 - **Date & Time:** a clock card heads the page (the time large and
   ticking, then the date, the place with its abbreviation and offset, and
-  whether it's synchronised). Time zone is a row (the city and offset as
+  whether it's synchronised, with the Network time switch; picked
+  2026-10-18). Time zone is a row (the city and offset as
   its note) that opens to a search by city, country or abbreviation; each
   place shows its time now and offset, and a click sets it. A zone set by
   an old alias (US/Eastern) offers its current name. Hour format's hint
-  reads the time as it will look, and a strip of weekday letters shows
-  where the calendar's week starts.
+  reads the time as it will look, and a strip of weekday letters in First
+  day of the week's hint line (`SettingsField.hintExtras`) shows where the
+  calendar's week starts.
 - **Software Update:** a status card heads the page (the update icon,
   accent while there are some and a green tick when up to date, the count
   large, when it last checked, the last upgrade and how many packages it

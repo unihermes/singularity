@@ -232,8 +232,7 @@ var entries = [
     { page: "shell", section: "Bash aliases", label: "Add an alias…", keywords: "bashrc bash_aliases new shortcut command" },
 
     // --- Date & Time -------------------------------------------------------
-    { page: "datetime", section: "Time zone", label: "Time zone",    keywords: "timezone tz city country region location clock current time utc offset timedatectl" },
-    { page: "datetime", section: "Time zone", label: "Network time", keywords: "ntp set time automatically sync timesyncd" },
+    { page: "datetime", section: "Time zone", label: "Time zone",    keywords: "timezone tz city country region location clock current time utc offset timedatectl network time ntp set automatically sync timesyncd" },
     { page: "datetime", section: "Clock and calendar", label: "Hour format", keywords: "12 24 hour am pm clock" },
     { page: "datetime", section: "Clock and calendar", label: "First day of the week", keywords: "calendar monday sunday saturday week start" },
 

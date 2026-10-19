@@ -49,6 +49,8 @@ Item {
     default property alias control: slot.data
     // small items on the label's line, after it (an icon theme's samples)
     property alias labelExtras: extras.data
+    // small items in the hint's place, under the label (a week's days)
+    property alias hintExtras: hintRow.data
 
     width: parent ? parent.width : 0
     implicitHeight: Math.max(Theme.fieldHeight, labels.implicitHeight + Theme.spaceM, slot.childrenRect.height + Theme.spaceM)
@@ -163,6 +165,13 @@ Item {
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
             font.weight: Theme.weightBody
+        }
+
+        Row {
+            id: hintRow
+            visible: children.length > 0
+            topPadding: Theme.spaceXs
+            spacing: Theme.spaceXs
         }
     }
 
