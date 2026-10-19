@@ -612,8 +612,8 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   matches them); tools two to a line.
 - **Config:** the repository as the card (its name and branch, what's
   uncommitted, the last commit; git status, Terminal and Editor on it);
-  the files under a search that matches name, purpose or path, grouped
-  as before with the folders last; logs as rows.
+  FILES: a search that matches name, purpose or path, then the files in
+  one section, a subhead per group, the folders last; logs two to a line.
 
 ## Headings
 
