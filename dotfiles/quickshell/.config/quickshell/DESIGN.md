@@ -588,10 +588,11 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   machine's CPU, memory and load), then the full table with CPU as a share
   of the machine and its level, and the terminal tools two to a line,
   each saying what it shows.
-- **Storage:** the card (free on /, how full, reading and writing) over
-  the minute; filesystems as levels with free and percent; disks as
-  rows; Upkeep as on Software Update (Health's orphans and reclaimable
-  space, Clean up asking with the size); tools as rows.
+- **Storage:** the card (free on /, how full, reading and writing) with
+  the minute at its right; filesystems as levels with free and percent,
+  the disks as rows under a subhead; Upkeep as on Software Update (Health's
+  orphans and reclaimable space two to a line, Clean up asking with the
+  size); tools two to a line.
 - **Network:** the card (the network's name, rates, signal in words and
   dBm, traffic since the link came up, Settings on it) over the minute;
   the connection two across; each interface a row (In use badge, its

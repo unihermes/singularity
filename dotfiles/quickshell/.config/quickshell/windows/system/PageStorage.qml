@@ -31,7 +31,7 @@ SystemPage {
 
     FlyoutHeading { text: "NOW" }
 
-    // room on / first, then what the disks are doing
+    // room on / first, then what the disks are doing, its minute at the right
     HeadCard {
         glyph: "󰋊"
         glyphColor: page.root_ && page.root_.used / page.root_.size >= 0.9 ? Theme.alert : Theme.textStrong
@@ -40,25 +40,27 @@ SystemPage {
             page.root_ ? Format.pct(page.root_.used / page.root_.size) + " of " + Format.bytes(page.root_.size) + " used" : "",
             "Reading " + Format.rate(Math.max(0, SystemStats.diskRead)) + " · writing " + Format.rate(Math.max(0, SystemStats.diskWrite)),
         ]
-    }
 
-    Spark {
-        // reads bright and filled, writes dimmer on top -- the same
-        // convention the network graph uses for down and up
-        readonly property real peak: Math.max(1048576,
-            Math.max.apply(null, SystemStats.diskReadHistory.concat(SystemStats.diskWriteHistory, [0])))
-        series: [
-            { values: SystemStats.diskReadHistory, color: Theme.accent, fill: true },
-            { values: SystemStats.diskWriteHistory, color: Theme.subtext, fill: false },
-        ]
-        ceiling: peak * 1.15
-        caption: "60s · read · write · peak " + Format.rate(peak)
+        Spark {
+            width: Theme.fit(260)
+            height: Theme.fit(56)
+            // reads bright and filled, writes dimmer on top -- the same
+            // convention the network graph uses for down and up
+            readonly property real peak: Math.max(1048576,
+                Math.max.apply(null, SystemStats.diskReadHistory.concat(SystemStats.diskWriteHistory, [0])))
+            series: [
+                { values: SystemStats.diskReadHistory, color: Theme.accent, fill: true },
+                { values: SystemStats.diskWriteHistory, color: Theme.subtext, fill: false },
+            ]
+            ceiling: peak * 1.15
+            caption: "60s · peak " + Format.rate(peak)
+        }
     }
 
     // --- filesystems --------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "FILESYSTEMS" }
+    FlyoutHeading { text: "FILESYSTEMS AND DISKS" }
 
     Repeater {
         model: SystemStats.filesystems
@@ -83,10 +85,8 @@ SystemPage {
         label: "No filesystems reported yet"
     }
 
-    // --- disks --------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "DISKS" }
+    // the disks under them, in the same section
+    SettingsSubhead { caption: "DISKS" }
 
     Repeater {
         model: SystemSpecs.storage
@@ -114,47 +114,58 @@ SystemPage {
         label: Health.scanning ? "Looking…" : "pacman isn't available"
     }
 
-    SettingsField {
-        visible: page.orphans !== null
-        labelWidth: Theme.fit(440)
-        label: "Orphaned packages"
-        hint: !page.orphans ? "" : page.orphans.status === "ok" ? "None: every dependency is still used" : page.orphans.detail
+    // two to a line
+    Grid {
+        id: upkeep
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
 
-        FlyoutChip {
-            anchors.right: parent.right
-            visible: !!page.orphans && page.orphans.status !== "ok" && !!page.orphans.repairId
-            text: page.orphans ? page.orphans.repairLabel || "Remove" : ""
-            confirmText: "Remove them?"
-            enabled: Health.busyRepair === ""
-            onClicked: Health.repair(page.orphans)
-        }
-    }
+        SettingsField {
+            visible: page.orphans !== null
+            width: upkeep.cell
+            labelWidth: width - Theme.fit(130) - Theme.spaceL
+            label: "Orphaned packages"
+            hint: !page.orphans ? "" : page.orphans.status === "ok" ? "None, all still used" : page.orphans.detail
 
-    // "About 380 MB: AUR builds 337 MB, old packages 37 MB" -> "380 MB in AUR builds, old packages"
-    SettingsField {
-        id: reclaimField
-        readonly property string size: {
-            var m = page.reclaim ? /^About ([\d.]+ [KMGT]?B)/.exec(page.reclaim.detail) : null
-            return m ? m[1] : ""
-        }
-        visible: page.reclaim !== null
-        labelWidth: Theme.fit(440)
-        label: "Reclaimable space"
-        hint: {
-            if (Health.busyRepair === "reclaim") return "Cleaning…"
-            if (!page.reclaim) return ""
-            var m = /^About ([^:]+): (.*)$/.exec(page.reclaim.detail)
-            return m ? m[1] + " in " + m[2].split(", ").map(s => s.replace(/ [\d.]+ [KMGT]?B$/, "")).join(", ")
-                : page.reclaim.detail
+            FlyoutChip {
+                anchors.right: parent.right
+                visible: !!page.orphans && page.orphans.status !== "ok" && !!page.orphans.repairId
+                text: page.orphans ? page.orphans.repairLabel || "Remove" : ""
+                confirmText: "Remove them?"
+                enabled: Health.busyRepair === ""
+                onClicked: Health.repair(page.orphans)
+            }
         }
 
-        FlyoutChip {
-            anchors.right: parent.right
-            text: "Clean up"
-            icon: "󰃢"
-            confirmText: reclaimField.size !== "" ? "Clean up " + reclaimField.size + "?" : "Clean up?"
-            enabled: Health.busyRepair === "" && reclaimField.size !== ""
-            onClicked: Health.repair(page.reclaim)
+        // "About 380 MB: AUR builds 337 MB, old packages 37 MB" -> "380 MB in AUR builds, old packages"
+        SettingsField {
+            id: reclaimField
+            readonly property string size: {
+                var m = page.reclaim ? /^About ([\d.]+ [KMGT]?B)/.exec(page.reclaim.detail) : null
+                return m ? m[1] : ""
+            }
+            visible: page.reclaim !== null
+            width: upkeep.cell
+            labelWidth: width - Theme.fit(130) - Theme.spaceL
+            label: "Reclaimable space"
+            hint: {
+                if (Health.busyRepair === "reclaim") return "Cleaning…"
+                if (!page.reclaim) return ""
+                var m = /^About ([^:]+): (.*)$/.exec(page.reclaim.detail)
+                return m ? m[1] + " in " + m[2].split(", ").map(s => s.replace(/ [\d.]+ [KMGT]?B$/, "")).join(", ")
+                    : page.reclaim.detail
+            }
+
+            FlyoutChip {
+                anchors.right: parent.right
+                text: "Clean up"
+                icon: "󰃢"
+                confirmText: reclaimField.size !== "" ? "Clean up " + reclaimField.size + "?" : "Clean up?"
+                enabled: Health.busyRepair === "" && reclaimField.size !== ""
+                onClicked: Health.repair(page.reclaim)
+            }
         }
     }
 
@@ -163,26 +174,38 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "TOOLS" }
 
-    FlyoutRow {
-        leadingIcon: "󰆍"
-        label: "Disk usage"
-        note: "ncdu over /, to find what's taking the room"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "command -v ncdu >/dev/null && ncdu / || { echo 'ncdu is not installed'; read -r _; }"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰋊"
-        label: "Block devices"
-        note: "lsblk: every partition, its filesystem and where it's mounted"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "lsblk -o NAME,SIZE,FSTYPE,FSUSE%,MOUNTPOINTS,MODEL; read -r _"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰩹"
-        label: "Trash"
-        note: "Opens it in the file manager"
-        onActivated: Quickshell.execDetached([Quickshell.env("HOME")
-            + "/.config/quickshell/scripts/open-file.sh",
-            Quickshell.env("HOME") + "/.local/share/Trash/files"])
+    // each opens in a terminal or the file manager; two to a line
+    Grid {
+        id: tools
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰆍"
+            label: "Disk usage"
+            note: "ncdu over /"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "command -v ncdu >/dev/null && ncdu / || { echo 'ncdu is not installed'; read -r _; }"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰋊"
+            label: "Block devices"
+            note: "lsblk, every partition"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "lsblk -o NAME,SIZE,FSTYPE,FSUSE%,MOUNTPOINTS,MODEL; read -r _"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰩹"
+            label: "Trash"
+            note: "In the file manager"
+            onActivated: Quickshell.execDetached([Quickshell.env("HOME")
+                + "/.config/quickshell/scripts/open-file.sh",
+                Quickshell.env("HOME") + "/.local/share/Trash/files"])
+        }
     }
 }
