@@ -1,8 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/DesktopTab.qml
 //
-// The Appearance page's Desktop tab: the wallpaper, how Hyprland draws
-// windows, and motion.
+// The Appearance page's Desktop tab: WALLPAPER, WINDOWS (gaps, borders,
+// corners, shadow, tab bar), EFFECTS (opacity, dim, blur) and MOTION, with
+// neighbouring steppers, switches and segments two to a line and the three
+// per-part speeds folded away.
 
 import Quickshell
 import Quickshell.Widgets
@@ -12,22 +14,67 @@ import "../../flyouts"
 import ".."
 
 SettingsTab {
+    id: desktopTab
     tabId: "desktop"
+
+    // a row in a two-column grid, and its label's share beside a stepper
+    readonly property real half: (width - Theme.spaceXl * 2) / 2
+    readonly property real halfLabel: half - Theme.fit(160) - Theme.spaceL
+    readonly property real switchLabel: half - Theme.switchWidth - Theme.spaceL
+
+    // the per-part speeds, folded away; a search for one opens them
+    property bool speedsOpen: false
+    readonly property var speedLabels: ["Window speed", "Workspace speed", "Shell speed"]
+    Connections {
+        target: desktopTab.page
+        function onHighlightChanged() {
+            if (desktopTab.speedLabels.indexOf(desktopTab.page.highlight) !== -1) desktopTab.speedsOpen = true
+        }
+    }
 
     FlyoutHeading { text: "WALLPAPER" }
 
-    SettingsField {
-        label: "Current"
-        hint: Wallpaper.title !== "" ? Wallpaper.title : "No wallpaper"
+    // the current image beside its name and the arrows
+    Item {
+        width: parent.width
+        height: Math.max(currentThumb.height, currentField.implicitHeight)
 
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceS
+        ClippingRectangle {
+            id: currentThumb
+            visible: Wallpaper.current !== ""
+            anchors.verticalCenter: parent.verticalCenter
+            width: visible ? Math.round(height * 16 / 9) : 0
+            height: Theme.fs(48)
+            radius: Theme.radiusInner
+            color: Theme.base
+            border.width: 2
+            border.color: Theme.accent
 
-            FlyoutChip { glyph: true; text: "󰒮"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.step(-1) }
+            Image {
+                anchors.fill: parent
+                source: Wallpaper.current !== "" ? "file://" + Wallpaper.current : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                sourceSize.width: 240
+            }
+        }
 
-            FlyoutChip { glyph: true; text: "󰒝"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.shuffle() }
-            FlyoutChip { glyph: true; text: "󰒭"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.step(1) }
+        SettingsField {
+            id: currentField
+            anchors.verticalCenter: parent.verticalCenter
+            x: currentThumb.visible ? currentThumb.width + Theme.spaceL : 0
+            width: parent.width - x
+            label: "Current"
+            hint: Wallpaper.title !== "" ? Wallpaper.title : "No wallpaper"
+
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceS
+
+                FlyoutChip { glyph: true; text: "󰒮"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.step(-1) }
+                FlyoutChip { glyph: true; text: "󰒝"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.shuffle() }
+                FlyoutChip { glyph: true; text: "󰒭"; enabled: Wallpaper.images.length > 1; onClicked: Wallpaper.step(1) }
+            }
         }
     }
 
@@ -62,13 +109,13 @@ SettingsTab {
         Choices { key: "wallpaperFill" }
     }
 
-    // Every image, four to a row; click one to show it.
+    // every image, six to a row; click one to show it
     Flow {
         id: grid
         width: parent.width
-        spacing: Theme.spaceL
+        spacing: Theme.spaceM
 
-        readonly property int columns: 3
+        readonly property int columns: 6
         readonly property real cellWidth: (width - spacing * (columns - 1)) / columns
 
         Repeater {
@@ -93,7 +140,7 @@ SettingsTab {
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     // decoded at thumbnail size, not the image's own 4K
-                    sourceSize.width: 360
+                    sourceSize.width: 240
                 }
 
                 MouseArea {
@@ -116,34 +163,49 @@ SettingsTab {
         font.pixelSize: Theme.fontBody
     }
 
-    SettingsField {
-        label: "Folder"
-        hint: Wallpaper.images.length + " images in the repo's wallpapers/"
-        FlyoutChip {
-            anchors.right: parent.right
-            text: "Open folder"
-            onClicked: Quickshell.execDetached(["xdg-open", Wallpaper.folder])
-        }
-    }
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
 
-    SettingsField {
-        label: "Colours from it"
-        hint: Settings.colourMode === "wallpaper" ? "The palette follows the wallpaper" : "Switch the palette to this wallpaper's tones"
-        FlyoutChip {
-            anchors.right: parent.right
-            text: Settings.colourMode === "wallpaper" ? "Back to grayscale" : "Use its colours"
-            onClicked: Settings.set("colourMode", Settings.colourMode === "wallpaper" ? "grayscale" : "wallpaper")
+        SettingsField {
+            width: desktopTab.half
+            labelWidth: desktopTab.half - folderChip.width - Theme.spaceL
+            label: "Folder"
+            hint: Wallpaper.images.length + " images in wallpapers/"
+            FlyoutChip {
+                id: folderChip
+                anchors.right: parent.right
+                text: "Open folder"
+                onClicked: Quickshell.execDetached(["xdg-open", Wallpaper.folder])
+            }
+        }
+
+        SettingsField {
+            width: desktopTab.half
+            labelWidth: desktopTab.half - coloursChip.width - Theme.spaceL
+            label: "Colours from it"
+            hint: Settings.colourMode === "wallpaper" ? "The palette follows it" : "A palette from its tones"
+            FlyoutChip {
+                id: coloursChip
+                anchors.right: parent.right
+                text: Settings.colourMode === "wallpaper" ? "Back to grayscale" : "Use its colours"
+                onClicked: Settings.set("colourMode", Settings.colourMode === "wallpaper" ? "grayscale" : "wallpaper")
+            }
         }
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "GAPS" }
+    FlyoutHeading { text: "WINDOWS" }
 
-    HyprInt { label: "Gaps between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
-    Stepper { label: "Gaps at screen edges"; hint: Theme.barFull ? "" : "The bar floats this far in too"; key: "edgeGap"; suffix: "px" }
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "BORDERS" }
+        HyprInt { width: desktopTab.half; labelWidth: desktopTab.halfLabel; label: "Window gaps"; note: "Between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
+        Stepper { width: desktopTab.half; labelWidth: desktopTab.halfLabel; label: "Edge gaps"; hint: Theme.barFull ? "At the screen edges" : "The bar floats in too"; key: "edgeGap"; suffix: "px" }
+    }
 
     SettingsField {
         label: "Border width"
@@ -151,10 +213,26 @@ SettingsTab {
         Choices { key: "windowBorderWidth" }
     }
 
-    SettingsField {
-        label: "Focused border"
-        hint: "The window with focus"
-        Choices { key: "windowBorderFocused" }
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        SettingsField {
+            width: desktopTab.half
+            labelWidth: desktopTab.half - focusedChoices.width - Theme.spaceL
+            label: "Focused border"
+            hint: "The one with focus"
+            Choices { id: focusedChoices; key: "windowBorderFocused" }
+        }
+
+        SettingsField {
+            width: desktopTab.half
+            labelWidth: desktopTab.half - unfocusedChoices.width - Theme.spaceL
+            label: "Unfocused border"
+            hint: "Every other window"
+            Choices { id: unfocusedChoices; key: "windowBorderUnfocused" }
+        }
     }
 
     HexColour {
@@ -165,12 +243,6 @@ SettingsTab {
         grayscaleOnly: false
     }
 
-    SettingsField {
-        label: "Unfocused border"
-        hint: "Every other window"
-        Choices { key: "windowBorderUnfocused" }
-    }
-
     HexColour {
         visible: Settings.windowBorderUnfocused === "custom"
         label: "Unfocused colour"
@@ -179,9 +251,6 @@ SettingsTab {
         grayscaleOnly: false
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "CORNERS" }
-
     SettingsField {
         label: "Window corners"
         hint: Settings.windowRounding === "shell" ? "Rounded like the shell's panels" : "A rounding of their own"
@@ -189,24 +258,6 @@ SettingsTab {
     }
 
     Stepper { visible: Settings.windowRounding === "own"; label: "Window rounding"; hint: "Corner radius"; key: "windowRadius"; suffix: "px" }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "OPACITY" }
-
-    Stepper { label: "Focused opacity"; key: "focusedOpacity"; step: 5; suffix: "%" }
-    Stepper { label: "Unfocused opacity"; key: "unfocusedOpacity"; step: 5; suffix: "%" }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "DIM AND BLUR" }
-
-    HyprToggle { label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
-    HyprPercent { label: "Dim strength"; visible: page.hyprField(["decoration"], "dim_inactive").value === true; path: ["decoration"]; key: "dim_strength"; min: 0 }
-    HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
-    HyprInt { label: "Blur size"; visible: page.blurOn; note: "How far each pass spreads"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
-    HyprInt { label: "Blur passes"; visible: page.blurOn; note: "More is smoother and costs more"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "SHADOW AND TABS" }
 
     SettingsField {
         label: "Window shadow"
@@ -219,6 +270,32 @@ SettingsTab {
         label: "Tab bar"
         hint: "Over grouped windows: the open tab's fill"
         Choices { key: "tabBar" }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "EFFECTS" }
+
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        Stepper { width: desktopTab.half; labelWidth: desktopTab.halfLabel; label: "Focused opacity"; key: "focusedOpacity"; step: 5; suffix: "%" }
+        Stepper { width: desktopTab.half; labelWidth: desktopTab.halfLabel; label: "Unfocused opacity"; key: "unfocusedOpacity"; step: 5; suffix: "%" }
+        HyprToggle { width: desktopTab.half; labelWidth: desktopTab.switchLabel; label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
+        HyprPercent { width: desktopTab.half; labelWidth: desktopTab.halfLabel; label: "Dim strength"; visible: page.hyprField(["decoration"], "dim_inactive").value === true; path: ["decoration"]; key: "dim_strength"; min: 0 }
+    }
+
+    HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
+
+    Grid {
+        visible: page.blurOn
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        HyprInt { width: desktopTab.half; labelWidth: desktopTab.halfLabel; label: "Blur size"; note: "Each pass's spread"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
+        HyprInt { width: desktopTab.half; labelWidth: desktopTab.halfLabel; label: "Blur passes"; note: "More is smoother"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
     }
 
     Item { width: 1; height: Theme.spaceM }
@@ -240,11 +317,23 @@ SettingsTab {
         }
     }
 
-    Stepper { label: "Window speed"; hint: "Open, close, move; lower is quicker"; key: "animWindows"; step: 25; suffix: "%" }
+    FlyoutRow {
+        label: "Per-part speeds…"
+        note: Settings.animWindows === Settings.animWorkspaces && Settings.animWindows === Settings.animShell
+            ? "windows, workspaces, shell · all " + Settings.animWindows + "%"
+            : "windows " + Settings.animWindows + "% · workspaces " + Settings.animWorkspaces + "% · shell " + Settings.animShell + "%"
+        trailing: desktopTab.speedsOpen ? "󰅀" : "󰅂"
+        highlighted: desktopTab.speedsOpen
+        onActivated: desktopTab.speedsOpen = !desktopTab.speedsOpen
+    }
 
-    Stepper { label: "Workspace speed"; hint: "Switching, and the scratchpad"; key: "animWorkspaces"; step: 25; suffix: "%" }
+    SettingsIndent {
+        visible: desktopTab.speedsOpen
 
-    Stepper { label: "Shell speed"; hint: "Flyouts, hovers and meters"; key: "animShell"; step: 25; suffix: "%" }
+        Stepper { label: "Window speed"; hint: "Open, close, move; lower is quicker"; key: "animWindows"; step: 25; suffix: "%" }
+        Stepper { label: "Workspace speed"; hint: "Switching, and the scratchpad"; key: "animWorkspaces"; step: 25; suffix: "%" }
+        Stepper { label: "Shell speed"; hint: "Flyouts, hovers and meters"; key: "animShell"; step: 25; suffix: "%" }
+    }
 
     // each tile plays its animation while the pointer is on it
     Tiles { key: "windowAnim"; label: "Window animation"; hint: "Open, close, minimize, scratchpad"; art: animArt; columns: 4; tileHeight: Theme.fs(64) }

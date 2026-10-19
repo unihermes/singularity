@@ -55,7 +55,7 @@ SettingsPage {
     // What each setting a look carries is called on this page, for the list
     // of changes; the same as its field's label, so "Show" can find it
     readonly property var keyLabels: ({
-        style: "Style", radius: "Roundness", barStyle: "Bar shape", edgeGap: "Gaps at screen edges",
+        style: "Style", radius: "Roundness", barStyle: "Bar shape", edgeGap: "Edge gaps",
         focusedOpacity: "Focused opacity", unfocusedOpacity: "Unfocused opacity",
         terminalOpacity: "Terminal opacity", spacing: "Spacing", rowScale: "Row height",
         barHeight: "Height", barIconSize: "Icon size", modulePad: "Module padding",

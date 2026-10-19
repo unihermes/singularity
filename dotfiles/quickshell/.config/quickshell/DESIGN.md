@@ -302,9 +302,13 @@ Settings') are laid out the same way.
   subhead; MODULES with a subhead per module, its drawn tiles open),
   Panels (three sections, picked 2026-10-18: POPUPS with flyouts, then
   notifications and the level popup under subheads; LAUNCHER; OVERLAYS;
-  neighbouring steppers and switches two to a line), Desktop (wallpaper,
-  windows in Gaps · Borders · Corners · Opacity · Dim and blur · Shadow and
-  tabs, motion) and Apps. While anything differs from the baseline, the changes
+  neighbouring steppers and switches two to a line), Desktop (four
+  sections, picked 2026-10-18: WALLPAPER with the current image's thumbnail
+  beside its name, the six in one row, Folder and Colours from it two to a
+  line; WINDOWS with gaps, borders, corners, shadow and tab bar; EFFECTS
+  with opacity, dim and blur; MOTION with the three per-part speeds folded
+  behind a "Per-part speeds…" row and the animation tiles four across;
+  neighbours two to a line) and Apps. While anything differs from the baseline, the changes
   bar (`ChangesBar`, picked 2026-10-18) floats at the page's foot
   (`SettingsPage.footer`): "N changed from …", Review (the list opening
   above it, with Undo all and Factory reset), Save as default, Reset. A
