@@ -441,7 +441,8 @@ Settings') are laid out the same way.
   one. A FROM PACKAGES subhead lists only the entries that can run here
   and that no user service already runs (unless one is on), its note
   counting the ones left out; ones for other desktops aren't shown at all.
-- **File Types:** each common kind is a field whose hint says what it
+- **File Types** (picked 2026-10-18): the common kinds sit under four
+  subheads (WEB AND MAIL, FILES, MEDIA, DOCUMENTS); each is a field whose hint says what it
   covers (Links and web pages), or which of its types have no default,
   with a dropdown of apps and their icons (`SettingsDropdown.iconFor`).
   The dropdown offers the apps that declare the kind's main type; the

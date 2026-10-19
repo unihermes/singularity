@@ -1,8 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageFileTypes.qml
 //
-// Which app opens what: common kinds grouped (browser, images, ...), every
-// other shared-mime-info type searchable (the full list behind a button).
+// Which app opens what: common kinds (browser, images, ...) under four
+// subheads, every other shared-mime-info type searchable (the full list
+// behind a button).
 // Candidates come from .desktop MimeType= lines, counting inherited types
 // (json is text/plain, so editors qualify). The default is mimeapps.list's
 // first, else mimeinfo.cache's, as xdg-open resolves. Writes via
@@ -23,33 +24,37 @@ SettingsPage {
     title: "File Types"
     description: "The app each kind of file opens with."
 
+    // the subheads the kinds sit under, in order
+    readonly property var parts: [{ id: "web", caption: "WEB AND MAIL" }, { id: "files", caption: "FILES" },
+        { id: "media", caption: "MEDIA" }, { id: "docs", caption: "DOCUMENTS" }]
+
     // a kind's first type is its main one; apps declaring it come first
     readonly property var groups: [
-        { label: "Web browser",  covers: "Links and web pages",
+        { part: "web", label: "Web browser",  covers: "Links and web pages",
           types: ["x-scheme-handler/https", "x-scheme-handler/http", "text/html", "application/xhtml+xml"] },
-        { label: "File manager", covers: "Folders", types: ["inode/directory"] },
-        { label: "Text",         covers: "Plain text, Markdown, JSON, scripts",
+        { part: "files", label: "File manager", covers: "Folders", types: ["inode/directory"] },
+        { part: "docs", label: "Text",         covers: "Plain text, Markdown, JSON, scripts",
           types: ["text/plain", "text/markdown", "application/json", "text/x-shellscript"] },
-        { label: "PDF",          covers: "PDF documents", types: ["application/pdf"] },
-        { label: "Images",       covers: "PNG, JPEG, GIF, WebP, SVG, BMP",
+        { part: "docs", label: "PDF",          covers: "PDF documents", types: ["application/pdf"] },
+        { part: "media", label: "Images",       covers: "PNG, JPEG, GIF, WebP, SVG, BMP",
           types: ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/bmp"] },
-        { label: "Video",        covers: "MP4, MKV, WebM, MOV",
+        { part: "media", label: "Video",        covers: "MP4, MKV, WebM, MOV",
           types: ["video/mp4", "video/x-matroska", "video/webm", "video/quicktime"] },
-        { label: "Audio",        covers: "MP3, FLAC, Ogg, WAV",
+        { part: "media", label: "Audio",        covers: "MP3, FLAC, Ogg, WAV",
           types: ["audio/mpeg", "audio/flac", "audio/ogg", "audio/x-wav"] },
-        { label: "Archives",     covers: "Zip, tar, gzip, 7z",
+        { part: "files", label: "Archives",     covers: "Zip, tar, gzip, 7z",
           types: ["application/zip", "application/x-tar", "application/gzip", "application/x-7z-compressed"] },
-        { label: "Email links",  covers: "mailto: links", types: ["x-scheme-handler/mailto"] },
-        { label: "Documents",    covers: "Word and OpenDocument text",
+        { part: "web", label: "Email links",  covers: "mailto: links", types: ["x-scheme-handler/mailto"] },
+        { part: "docs", label: "Documents",    covers: "Word and OpenDocument text",
           types: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword",
                   "application/vnd.oasis.opendocument.text"] },
-        { label: "Spreadsheets", covers: "Excel, OpenDocument, CSV",
+        { part: "docs", label: "Spreadsheets", covers: "Excel, OpenDocument, CSV",
           types: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel",
                   "application/vnd.oasis.opendocument.spreadsheet", "text/csv"] },
-        { label: "Presentations", covers: "PowerPoint and OpenDocument",
+        { part: "docs", label: "Presentations", covers: "PowerPoint and OpenDocument",
           types: ["application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.ms-powerpoint",
                   "application/vnd.oasis.opendocument.presentation"] },
-        { label: "Calendar invites", covers: ".ics invitations", types: ["text/calendar"] },
+        { part: "web", label: "Calendar invites", covers: ".ics invitations", types: ["text/calendar"] },
     ]
 
     // desktop id -> { id, name, types: [mime] }, apps declaring any type
@@ -424,12 +429,25 @@ SettingsPage {
     FlyoutHeading { text: "COMMON" }
 
     Repeater {
-        model: page.groups
-        HandlerRow {
+        model: page.parts
+
+        Column {
+            id: part
             required property var modelData
-            label: modelData.label
-            covers: modelData.covers
-            types: modelData.types
+            width: parent.width
+            spacing: Theme.spaceM
+
+            SettingsSubhead { caption: part.modelData.caption }
+
+            Repeater {
+                model: page.groups.filter(g => g.part === part.modelData.id)
+                HandlerRow {
+                    required property var modelData
+                    label: modelData.label
+                    covers: modelData.covers
+                    types: modelData.types
+                }
+            }
         }
     }
 
