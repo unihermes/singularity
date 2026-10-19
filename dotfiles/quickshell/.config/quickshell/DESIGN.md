@@ -452,16 +452,17 @@ Settings') are laid out the same way.
   Show all N types row; each type is a row named in words (Markdown
   document, its type small) with its app, opening to the apps that can
   take it, the current one ticked.
-- **Terminal:** the terminal app comes first, Alacritty or Ghostty as
-  segments. Under a heading named for it, a preview of it: the wallpaper
-  through the background at the opacity, the prompt (the path pill, then
-  ❯) in the look's colours at the font size, and the cursor's shape and
-  blink. Opacity is a level from 30% to solid, written when the drag ends.
-  The cursor's shape is three tiles, each drawing it between two letters,
-  with Blinking a switch; font size and cursor are written to both
-  terminals. Each alias is a row (name, its command as the
-  note) that opens to the name and command with Save, and Remove alias in
-  two clicks; Add an alias… is the last row.
+- **Terminal** (two sections, picked 2026-10-18): TERMINAL has the app
+  first, Alacritty or Ghostty as segments, then a preview of it on the
+  left (the wallpaper through the background at the opacity, the prompt
+  with the path pill then ❯ in the look's colours at the font size, the
+  cursor's shape and blink) with Font size, Opacity and Cursor beside it.
+  Opacity is a level from 30% to solid, written when the drag ends; Cursor
+  is Block · Beam · Underline with the blink switch beside it. Font size
+  and cursor are written to both terminals. BASH ALIASES: each alias is a
+  row, its command lined up in a column after the name
+  (`FlyoutRow.labelColumn`), that opens to the name and command with
+  Save, and Remove alias in two clicks; Add an alias… is the last row.
 - **Date & Time:** a clock card heads the page (the time large and
   ticking, then the date, the place with its abbreviation and offset, and
   whether it's synchronised). Time zone is a row (the city and offset as

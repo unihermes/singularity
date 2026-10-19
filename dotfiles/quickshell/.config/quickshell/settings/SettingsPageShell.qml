@@ -311,7 +311,7 @@ SettingsPage {
     readonly property real opacityShown: opacityDragged >= 0 ? opacityDragged : opacityNow
     readonly property bool blinking: cursorBlinking === "On" || cursorBlinking === "Always"
 
-    FlyoutHeading { text: "TERMINAL APP" }
+    FlyoutHeading { text: "TERMINAL" }
 
     SettingsField {
         label: "Terminal"
@@ -327,12 +327,16 @@ SettingsPage {
         }
     }
 
-    FlyoutHeading { text: page.appName.toUpperCase() }
+    // the terminal as it will look (background opacity, prompt, font,
+    // cursor) beside the rows that set it
+    Row {
+        width: parent.width
+        spacing: Theme.spaceXl
 
-    // the terminal as it will look: background opacity, prompt, font, cursor
     ClippingRectangle {
         id: term
-        width: parent.width
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.fit(260)
         height: Theme.fit(150)
         radius: Theme.radiusInner
         color: "transparent"
@@ -412,7 +416,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: Theme.spaceM
-            text: page.appName + ", as it will look"
+            text: page.appName
             color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody
@@ -420,110 +424,95 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Font size"
-        hint: "In points"
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            readonly property real current: page.fontSize
-            value: Math.round(current * 2)
-            minimum: 12
-            maximum: 64
-            valueWidth: 56
-            displayValue: current.toFixed(1)
-            onStepped: delta => page.setFontSize((value + delta) / 2)
-        }
-    }
+    Column {
+        id: lookRows
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width - term.width - parent.spacing
+        spacing: Theme.spaceM
 
-    // 30% to solid, in steps of 5
-    SettingsField {
-        label: "Opacity"
-        lookKey: "terminalOpacity"
-        hint: page.opacityShown >= 1 ? "Solid" : "The wallpaper shows through the background"
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.sp(10)
-
-            Slider {
-                width: Theme.fit(220)
-                anchors.verticalCenter: parent.verticalCenter
-                value: (page.opacityShown - 0.3) / 0.7 * 100
-                onMoved: v => page.opacityDragged = Math.round((0.3 + v / 100 * 0.7) * 20) / 20
-                onReleased: {
-                    var v = page.opacityDragged
-                    if (v >= 0 && Math.abs(v - page.opacityNow) > 0.001)
-                        Settings.set("terminalOpacity", v * 100)
-                    page.opacityDragged = -1
-                }
-            }
-            Text {
-                width: Theme.fs(52)
-                anchors.verticalCenter: parent.verticalCenter
-                horizontalAlignment: Text.AlignRight
-                text: Math.round(page.opacityShown * 100) + "%"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
+        SettingsField {
+            width: lookRows.width
+            labelWidth: width - Theme.fit(170) - Theme.spaceL
+            label: "Font size"
+            hint: "In points"
+            FlyoutStepper {
+                anchors.right: parent.right
+                width: Theme.fit(170)
+                readonly property real current: page.fontSize
+                value: Math.round(current * 2)
+                minimum: 12
+                maximum: 64
+                valueWidth: 56
+                displayValue: current.toFixed(1)
+                onStepped: delta => page.setFontSize((value + delta) / 2)
             }
         }
-    }
 
-    SettingsField {
-        label: "Cursor"
-        hint: page.blinking ? "Blinks while the terminal has focus" : "Steady"
-    }
+        // 30% to solid, in steps of 5
+        SettingsField {
+            width: lookRows.width
+            labelWidth: width - opacityRow.width - Theme.spaceL
+            label: "Opacity"
+            lookKey: "terminalOpacity"
+            hint: page.opacityShown >= 1 ? "Solid" : "Wallpaper shows through"
 
-    // each tile draws its cursor between two letters
-    SettingsTiles {
-        columns: 3
-        tileHeight: Theme.fs(64)
-        model: ["Block", "Beam", "Underline"].map(v => ({ value: v, text: v }))
-        current: page.cursorShape
-        onPicked: v => page.setCursor(v, page.cursorBlinking)
-        art: Component {
             Row {
-                id: art
-                readonly property string shape: parent ? parent.value : ""
-                spacing: 1
-                Text {
-                    id: letterA
-                    text: "a"
-                    color: Theme.text
-                    font.family: "UbuntuMono Nerd Font Mono"
-                    font.pixelSize: Theme.fs(20)
-                }
-                Item {
-                    width: art.shape === "Beam" ? 2 : letterA.implicitWidth
-                    height: letterA.implicitHeight
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: art.shape === "Underline" ? letterA.implicitHeight * 0.12 : letterA.implicitHeight * 0.08
-                        width: parent.width
-                        height: art.shape === "Underline" ? 2 : letterA.implicitHeight * 0.84
-                        color: Theme.textStrong
+                id: opacityRow
+                anchors.right: parent.right
+                spacing: Theme.sp(10)
+
+                Slider {
+                    width: Theme.fit(140)
+                    anchors.verticalCenter: parent.verticalCenter
+                    value: (page.opacityShown - 0.3) / 0.7 * 100
+                    onMoved: v => page.opacityDragged = Math.round((0.3 + v / 100 * 0.7) * 20) / 20
+                    onReleased: {
+                        var v = page.opacityDragged
+                        if (v >= 0 && Math.abs(v - page.opacityNow) > 0.001)
+                            Settings.set("terminalOpacity", v * 100)
+                        page.opacityDragged = -1
                     }
                 }
                 Text {
-                    text: "b"
-                    color: Theme.text
-                    font.family: "UbuntuMono Nerd Font Mono"
-                    font.pixelSize: Theme.fs(20)
+                    width: Theme.fs(52)
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    text: Math.round(page.opacityShown * 100) + "%"
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+            }
+        }
+
+        // the shape and whether it blinks; the preview shows both
+        SettingsField {
+            width: lookRows.width
+            labelWidth: width - cursorRow.width - Theme.spaceL
+            label: "Cursor"
+            hint: page.blinking ? "Blinks" : "Steady"
+
+            Row {
+                id: cursorRow
+                anchors.right: parent.right
+                spacing: Theme.spaceM
+
+                FlyoutSegmented {
+                    anchors.verticalCenter: parent.verticalCenter
+                    fill: false
+                    model: ["Block", "Beam", "Underline"].map(v => ({ value: v, text: v }))
+                    current: page.cursorShape
+                    onPicked: v => page.setCursor(v, page.cursorBlinking)
+                }
+                Switch {
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: page.blinking
+                    onToggled: page.setCursor(page.cursorShape, page.blinking ? "Off" : "On")
                 }
             }
         }
     }
-
-    SettingsField {
-        label: "Blinking"
-
-        Switch {
-            anchors.right: parent.right
-            checked: page.blinking
-            onToggled: page.setCursor(page.cursorShape, page.blinking ? "Off" : "On")
-        }
     }
 
     // --- aliases ---------------------------------------------------------------
@@ -597,8 +586,6 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "BASH ALIASES" + (page.aliases.length > 0 ? "  " + page.aliases.length : "") }
 
-    SettingsNote { text: "New terminals pick them up; open ones need source ~/.bashrc" }
-
     Repeater {
         model: page.aliases
 
@@ -613,6 +600,7 @@ SettingsPage {
             FlyoutRow {
                 label: al.modelData.name
                 note: al.modelData.value
+                labelColumn: Theme.fit(150)
                 highlighted: al.isOpen
                 trailing: al.isOpen ? "󰅀" : "󰅂"
                 onActivated: {

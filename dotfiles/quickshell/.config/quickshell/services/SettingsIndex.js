@@ -224,11 +224,10 @@ var entries = [
     { page: "filetypes", section: "Common", label: "Email links",  keywords: "default mailto mimeapps" },
 
     // --- Terminal ----------------------------------------------------------
-    { page: "shell", section: "Terminal app", label: "Terminal", keywords: "alacritty ghostty default emulator app" },
-    { page: "shell", section: "Look", label: "Font size",  keywords: "terminal alacritty ghostty points" },
-    { page: "shell", section: "Look", label: "Opacity",    keywords: "terminal alacritty ghostty transparency background" },
-    { page: "shell", section: "Look", label: "Cursor",     keywords: "terminal alacritty ghostty block beam underline shape" },
-    { page: "shell", section: "Look", label: "Blinking", keywords: "terminal cursor blink" },
+    { page: "shell", section: "Terminal", label: "Terminal", keywords: "alacritty ghostty default emulator app" },
+    { page: "shell", section: "Terminal", label: "Font size",  keywords: "terminal alacritty ghostty points" },
+    { page: "shell", section: "Terminal", label: "Opacity",    keywords: "terminal alacritty ghostty transparency background" },
+    { page: "shell", section: "Terminal", label: "Cursor",     keywords: "terminal alacritty ghostty block beam underline shape blink blinking" },
     { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc bash_aliases shortcut command" },
     { page: "shell", section: "Bash aliases", label: "Add an alias…", keywords: "bashrc bash_aliases new shortcut command" },
 

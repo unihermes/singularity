@@ -37,6 +37,9 @@ Item {
     property string note: ""
     // the note is styled text, for a part drawn brighter (a version's change)
     property bool noteStyled: false
+    // the label's fixed width before the note, so notes line up down a
+    // list (an alias's command); 0 sizes it to the label
+    property real labelColumn: 0
     // a word in an accent tag before the trailing text (Primary)
     property string badge: ""
     // something is in flight (connecting, pairing, a rescan): the row's
@@ -136,7 +139,8 @@ Item {
         anchors.leftMargin: leadText.visible ? Theme.spaceM : root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
         // up to whatever sits at the right; the note takes what's left
-        width: Math.max(0, Math.min(root.note === "" ? Infinity : labelMetrics.advanceWidth + 1,
+        width: Math.max(0, Math.min(root.note === "" ? Infinity
+            : root.labelColumn > 0 ? root.labelColumn : labelMetrics.advanceWidth + 1,
             root.labelEnd - Theme.spaceL - x))
         text: root.armed ? root.confirmText
             : root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
