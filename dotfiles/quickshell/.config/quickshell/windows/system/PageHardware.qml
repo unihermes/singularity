@@ -81,7 +81,7 @@ SystemPage {
     // --- graphics -----------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "GRAPHICS" }
+    FlyoutHeading { text: "GRAPHICS AND AUDIO" }
 
     InfoRow { label: "GPU"; value: SystemSpecs.gpuModel || "--" }
     Grid {
@@ -115,6 +115,18 @@ SystemPage {
         }
     }
     FlyoutRow { visible: SystemSpecs.monitors.length === 0; enabled: false; label: "No displays reported" }
+
+    // --- audio, in the graphics section --------------------------------------
+
+    SettingsSubhead { caption: "AUDIO" }
+
+    FlyoutRow {
+        leadingIcon: Audio.ready && Audio.muted ? "󰝟" : "󰕾"
+        label: Audio.ready ? Audio.sink.nickname || Audio.sink.description || "No output" : "No output"
+        note: Audio.ready ? Audio.percent + "%" + (Audio.muted ? " · muted" : "") : ""
+        trailing: "Settings  󰁔"
+        onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "audio"])
+    }
 
     // --- sensors ------------------------------------------------------------
 
@@ -178,19 +190,6 @@ SystemPage {
         }
     }
 
-    // --- audio --------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "AUDIO" }
-
-    FlyoutRow {
-        leadingIcon: Audio.ready && Audio.muted ? "󰝟" : "󰕾"
-        label: Audio.ready ? Audio.sink.nickname || Audio.sink.description || "No output" : "No output"
-        note: Audio.ready ? Audio.percent + "%" + (Audio.muted ? " · muted" : "") : ""
-        trailing: "Settings  󰁔"
-        onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "audio"])
-    }
-
     // --- input --------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
@@ -198,15 +197,24 @@ SystemPage {
 
     SettingsNote { text: "Named as Hyprland matches them, for device rules" }
 
-    Repeater {
-        model: SystemSpecs.inputs
+    // two to a line
+    Grid {
+        id: inputGrid
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
 
-        FlyoutRow {
-            required property var modelData
-            enabled: false
-            leadingIcon: ({ Keyboard: "󰌌", Pointer: "󰍽", Touch: "󰆽", Tablet: "󰓷" })[modelData.kind] || "󰌌"
-            label: modelData.name
-            note: modelData.kind.toLowerCase() + (modelData.detail ? " · " + modelData.detail : "")
+        Repeater {
+            model: SystemSpecs.inputs
+
+            FlyoutRow {
+                required property var modelData
+                width: page.grid2(inputGrid.width, inputGrid.columnSpacing)
+                enabled: false
+                leadingIcon: ({ Keyboard: "󰌌", Pointer: "󰍽", Touch: "󰆽", Tablet: "󰓷" })[modelData.kind] || "󰌌"
+                label: modelData.name
+                note: modelData.kind.toLowerCase() + (modelData.detail ? " · " + modelData.detail : "")
+            }
         }
     }
     FlyoutRow { visible: SystemSpecs.inputs.length === 0; enabled: false; label: "No input devices reported" }
@@ -216,34 +224,48 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "TOOLS" }
 
-    FlyoutRow {
-        leadingIcon: "󰘚"
-        label: "PCI devices"
-        note: "lspci -k: each card and the driver it uses"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lspci -k; read -r _"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰗮"
-        label: "USB devices"
-        note: "What's plugged in, as a tree"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lsusb -t; lsusb; read -r _"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰏗"
-        label: "Loaded modules"
-        note: "lsmod: the kernel's drivers in use"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lsmod | less"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰈙"
-        label: "Kernel messages"
-        note: "This boot's kernel log"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "journalctl -k -b -e"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰌌"
-        label: "Hyprland devices"
-        note: "hyprctl devices, with every name in full"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "hyprctl devices; read -r _"])
+    // each opens in a terminal; two to a line
+    Grid {
+        id: tools
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰘚"
+            label: "PCI devices"
+            note: "lspci -k"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lspci -k; read -r _"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰗮"
+            label: "USB devices"
+            note: "lsusb, as a tree"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lsusb -t; lsusb; read -r _"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰏗"
+            label: "Loaded modules"
+            note: "lsmod"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "lsmod | less"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰈙"
+            label: "Kernel messages"
+            note: "journalctl -k"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "journalctl -k -b -e"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰌌"
+            label: "Hyprland devices"
+            note: "hyprctl devices"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c", "hyprctl devices; read -r _"])
+        }
     }
 }

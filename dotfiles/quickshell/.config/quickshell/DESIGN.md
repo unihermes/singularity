@@ -605,10 +605,11 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   Idle and lid into Settings, Suspend asking first and the history, two
   to a line.
 - **Hardware:** the card (the machine's name, CPU and RAM, GPU, Copy specs
-  on it) over the identity two across; displays and the audio output as
-  rows into their Settings pages; the ten hottest sensors as levels two
-  across, then Show all N; fans and input devices as rows (inputs named as
-  Hyprland matches them); tools as rows.
+  on it) over the identity two across; GRAPHICS AND AUDIO: the GPU, the
+  displays and (under a subhead) the audio output as rows into their
+  Settings pages; the ten hottest sensors as levels two across, then Show
+  all N, fans as rows; input devices two to a line (named as Hyprland
+  matches them); tools two to a line.
 - **Config:** the repository as the card (its name and branch, what's
   uncommitted, the last commit; git status, Terminal and Editor on it);
   the files under a search that matches name, purpose or path, grouped
