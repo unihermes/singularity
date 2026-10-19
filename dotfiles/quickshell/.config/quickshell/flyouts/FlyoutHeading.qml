@@ -38,7 +38,7 @@ Item {
     // set while a section starts folded, before its rows have moved
     property bool folding: false
 
-    // in a sectioned column, out to the sections' frames' left edge
+    // in a sectioned column, out to just inside the sections' frames' outline
     x: -outdent
     width: parent ? parent.width + outdent : 0
     implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
@@ -49,7 +49,7 @@ Item {
         : inFlyout ? Theme.flyoutSpacing : Theme.spaceM
     readonly property int outdent: mirrorOf ? mirrorOf.outdent
         : !parent || parent.sectioned !== true ? 0
-        : Theme.channelWidth + (inFlyout ? Theme.spaceM : Theme.spaceL)
+        : inFlyout ? Theme.spaceM : Theme.spaceL
     readonly property bool inFlyout: {
         for (var p = parent; p; p = p.parent)
             if (p.isFlyoutPage === true) return true
