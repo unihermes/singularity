@@ -461,9 +461,15 @@ SettingsTab {
 
     SettingsSubhead { caption: "HEADINGS" }
 
-    // The mark before every heading: a preset, none, or up to four
-    // characters of your own
-    readonly property var markPresets: ["//", "▸", "•", ""]
+    // The mark before every heading: a preset, a shape, none, or up to
+    // four characters of your own
+    readonly property var markNames: ({
+        "//": "//  Slashes", "::": "::  Colons", "»": "»  Guillemet", "❯": "❯  Prompt",
+        ">_": ">_  Terminal", "├─": "├─  Branch", "▸": "▸  Arrow", "•": "•  Dot",
+        "shape-bar": "Accent bar", "shape-brackets": "[ Brackets ]", "shape-tab": "Rule tab",
+        "shape-tag": "Filled tag", "": "None", "custom": "Custom…"
+    })
+    readonly property var markPresets: Object.keys(markNames).filter(k => k !== "custom")
     property bool customMark: markPresets.indexOf(Settings.headingMark) === -1
 
     SettingsField {
@@ -475,10 +481,11 @@ SettingsTab {
             anchors.right: parent.right
             spacing: Theme.spaceM
 
-            FlyoutSegmented {
-                fill: false
-                model: [{ value: "//", text: "//" }, { value: "▸", text: "▸" }, { value: "•", text: "•" },
-                        { value: "", text: "None" }, { value: "custom", text: "Custom" }]
+            SettingsDropdown {
+                width: Theme.fit(160)
+                model: Object.keys(styleTab.markNames)
+                maxRows: model.length
+                labelFor: v => styleTab.markNames[v]
                 current: styleTab.customMark ? "custom" : Settings.headingMark
                 onPicked: v => {
                     styleTab.customMark = v === "custom"

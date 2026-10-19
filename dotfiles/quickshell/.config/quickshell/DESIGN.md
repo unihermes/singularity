@@ -618,8 +618,11 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 ## Headings
 
 - Bold spaced caps, value in white (`VOLUME  45%`).
-- An accent `//` before each one, drawn a little lighter than the accent. It
-  comes from the look's `heading.prefix`.
+- An accent `//` before each one, drawn a little lighter than the accent
+  (`Settings.headingMark`). Appearance › Theme › Mark offers `//`, `::`, `»`,
+  `❯`, `>_`, `├─`, `▸`, `•`, none or your own, and four shapes in place of a
+  mark (`shape-*`, `Theme.headingShape`): an accent bar, the label in
+  brackets, the label in a notch of the rule, the label on an accent pill.
 - A line from the end of the heading to the right edge (`headingRule`).
 - A heading that folds its section shows its chevron only while the
   pointer is on it, or while the section is folded (picked 2026-10-11).

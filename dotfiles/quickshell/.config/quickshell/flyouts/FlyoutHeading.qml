@@ -151,22 +151,64 @@ Item {
         width: root.width
     }
 
-    // the look's mark before every heading (Theme.headingPrefix)
-    Text {
-        id: prefix
-        visible: text !== ""
+    readonly property string shape: Theme.headingShape
+
+    // what comes before the label: the look's mark (Theme.headingPrefix),
+    // or the opening piece of its shape (Theme.headingShape)
+    Item {
+        id: lead
+        readonly property bool shown: width > 0
         anchors.left: parent.left
         anchors.verticalCenter: label.verticalCenter
-        text: Theme.headingPrefix
-        color: Theme.headingMarkColor
-        font: label.font
+        width: prefix.visible ? prefix.implicitWidth
+            : bar.visible ? bar.width
+            : notch.visible ? notch.x + notch.width : 0
+        height: label.height
+
+        Text {
+            id: prefix
+            visible: text !== ""
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.shape === "brackets" ? "[" : Theme.headingPrefix
+            color: Theme.headingMarkColor
+            font: label.font
+        }
+
+        Rectangle {
+            id: bar
+            visible: root.shape === "bar"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth * 3
+            height: label.font.pixelSize
+            radius: width / 2
+            color: Theme.headingMarkColor
+        }
+
+        // the rule's start, and the notch's left side
+        Rectangle {
+            id: leadLine
+            visible: root.shape === "tab"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.spaceL
+            height: Theme.borderWidth
+            color: Theme.stroke
+        }
+        Rectangle {
+            id: notch
+            visible: root.shape === "tab"
+            x: leadLine.width
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth
+            height: label.font.pixelSize
+            color: Theme.muted
+        }
     }
 
     Row {
         id: crumbRow
         visible: root.crumb !== ""
-        anchors.left: prefix.visible ? prefix.right : parent.left
-        anchors.leftMargin: prefix.visible ? Theme.spaceS : 0
+        anchors.left: lead.shown ? lead.right : parent.left
+        anchors.leftMargin: lead.shown ? Theme.spaceS : 0
         anchors.verticalCenter: label.verticalCenter
         spacing: Theme.spaceXs
 
@@ -198,14 +240,27 @@ Item {
         }
     }
 
+    // the tag shape's pill behind the label
+    Rectangle {
+        visible: root.shape === "tag"
+        anchors.fill: label
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
+        anchors.topMargin: -Theme.spaceXs
+        anchors.bottomMargin: -Theme.spaceXs
+        radius: Theme.radiusInner
+        color: Theme.accent
+    }
+
     Text {
         id: label
-        anchors.left: crumbRow.visible ? crumbRow.right : prefix.visible ? prefix.right : parent.left
-        anchors.leftMargin: crumbRow.visible ? Theme.spaceXs : prefix.visible ? Theme.spaceM : 0
+        anchors.left: crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
+        anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
+            + (root.shape === "tag" ? Theme.spaceS : 0)
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: root.lift
         text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "")
-        color: Theme.headingColor
+        color: root.shape === "tag" ? Theme.textOnAccent : Theme.headingColor
         font.family: Theme.fontHeading
         font.pixelSize: Theme.fontHeadingSize
         font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
@@ -213,10 +268,39 @@ Item {
         font.letterSpacing: root.crumb !== "" ? Theme.headingSpacing / 2 : Theme.headingSpacing
     }
 
-    Rectangle {
-        visible: Theme.headingRule
+    // the shape's closing piece after the label: a bracket, or the
+    // notch's right side
+    Item {
+        id: tail
         anchors.left: label.right
-        anchors.leftMargin: Theme.spaceL
+        anchors.leftMargin: width > 0 ? Theme.spaceM : 0
+        anchors.verticalCenter: label.verticalCenter
+        width: closer.visible ? closer.implicitWidth : notchEnd.visible ? notchEnd.width : 0
+        height: label.height
+
+        Text {
+            id: closer
+            visible: root.shape === "brackets"
+            anchors.verticalCenter: parent.verticalCenter
+            text: "]"
+            color: Theme.headingMarkColor
+            font: label.font
+        }
+        Rectangle {
+            id: notchEnd
+            visible: root.shape === "tab"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth
+            height: label.font.pixelSize
+            color: Theme.muted
+        }
+    }
+
+    // the tab shape is drawn on the rule, so keeps it
+    Rectangle {
+        visible: Theme.headingRule || root.shape === "tab"
+        anchors.left: tail.right
+        anchors.leftMargin: root.shape === "tab" ? 0 : root.shape === "tag" ? Theme.spaceL + Theme.spaceS : Theme.spaceL
         anchors.right: controlBox.active ? controlBox.left : chevron.visible ? chevron.left : hintRow.left
         anchors.rightMargin: root.hints.length > 0 || chevron.visible || controlBox.active ? Theme.spaceL : 0
         anchors.verticalCenter: label.verticalCenter

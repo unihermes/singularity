@@ -72,7 +72,7 @@ var entries = [
     { page: "appearance", section: "Theme", label: "Heavy lines", keywords: "stroke width border thickness outline finish" },
     { page: "appearance", section: "Theme", label: "Case", keywords: "headings titles caps capital uppercase title case" },
     { page: "appearance", section: "Theme", label: "Heading rule", keywords: "titles line divider" },
-    { page: "appearance", section: "Theme", label: "Mark", keywords: "heading prefix slash // arrow bullet symbol colour color accent grey" },
+    { page: "appearance", section: "Theme", label: "Mark", keywords: "heading prefix slash // colons guillemet prompt terminal branch arrow bullet symbol accent bar brackets rule tab filled tag pill colour color accent grey" },
     { page: "appearance", section: "Theme", label: "Your mark", keywords: "heading prefix custom symbol characters" },
     { page: "appearance", section: "Theme", label: "Heading size", keywords: "headings titles larger smaller font" },
     { page: "appearance", section: "Theme", label: "Palette", keywords: "colour color grayscale wallpaper ramp roles base surface border text custom hex" },

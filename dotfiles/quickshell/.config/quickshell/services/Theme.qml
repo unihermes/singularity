@@ -150,8 +150,13 @@ Singleton {
     readonly property real headingSpacing: headingUpper ? 1 : 0
     readonly property bool headingRule:    Settings.headingRule
     readonly property color headingColor:  bright
-    // drawn before every heading, "" for none, in its own colour
-    readonly property string headingPrefix: Settings.headingMark
+    // drawn before every heading, "" for none, in its own colour; a
+    // "shape-" mark draws a shape instead of text: "bar" an accent stroke,
+    // "brackets" the label in brackets, "tab" the label in a notch of the
+    // rule, "tag" the label on an accent pill ("text" otherwise)
+    readonly property string headingShape: Settings.headingMark.indexOf("shape-") === 0
+        ? Settings.headingMark.slice(6) : "text"
+    readonly property string headingPrefix: headingShape === "text" ? Settings.headingMark : ""
     readonly property color headingMarkColor: Settings.headingMarkColour === "text" ? text
         : Settings.headingMarkColour === "muted" ? muted
         : hasAccent ? Qt.lighter(accent, 1.4) : subtext

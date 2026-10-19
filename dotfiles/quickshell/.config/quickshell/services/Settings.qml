@@ -184,6 +184,9 @@ Singleton {
     // the mark drawn before every heading ("" for none), its colour, and
     // the headings' size against body text
     readonly property alias headingMark:  adapter.headingMark
+    // the marks that draw a shape (Theme.headingShape); longer than a
+    // typed mark can be, so the two never meet
+    readonly property var headingShapes: ["shape-bar", "shape-brackets", "shape-tab", "shape-tag"]
     readonly property alias headingMarkColour: adapter.headingMarkColour
     readonly property alias headingSize:  adapter.headingSize
 
@@ -766,7 +769,7 @@ Singleton {
         else if (key === "accent" || hexKeys.indexOf(key) !== -1) adapter[key] = /^#[0-9a-fA-F]{6}$/.test(v) ? v : ""
         else if (key === "style") setStyle(v)
         else if (key === "density") setDensity(v)
-        else if (key === "headingMark") adapter.headingMark = String(v).trim().slice(0, 4)
+        else if (key === "headingMark") adapter.headingMark = headingShapes.indexOf(v) !== -1 ? v : String(v).trim().slice(0, 4)
         else if (key === "barStyle") setBarStyle(v)
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
