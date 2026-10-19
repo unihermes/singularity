@@ -594,9 +594,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
   orphans and reclaimable space two to a line, Clean up asking with the
   size); tools two to a line.
 - **Network:** the card (the network's name, rates, signal in words and
-  dBm, traffic since the link came up, Settings on it) over the minute;
-  the connection two across; each interface a row (In use badge, its
-  address as the note) opening to its addresses; tools as rows.
+  dBm, traffic since the link came up, the minute and Settings at its
+  right); the connection two across, then each interface a row under a
+  subhead (In use badge, its address as the note) opening to its
+  addresses; tools two to a line.
 - **Power:** the card (charge and state, draw and time left, capacity
   against new, Settings on it) over the charge as a full-width level;
   right now and the pack two across, the pack's wear as its own level;
