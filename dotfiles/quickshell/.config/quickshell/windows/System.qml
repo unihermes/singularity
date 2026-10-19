@@ -2,8 +2,9 @@
 // ~/.config/quickshell/windows/System.qml
 //
 // System: what this machine is and is doing. Home: four headline figures
-// with their last minute, then a tile per page with a live figure; pages go
-// deep on CPU, memory, storage, network, processes, hardware, power and
+// with their last minute, then a tile per page with a live figure; a page
+// opens beside the pages (each with its live figure), and the name or
+// Escape goes back. Pages go deep on CPU, memory, storage, network, processes, hardware, power and
 // the config files. Numbers from SystemStats (live, while visible) and
 // SystemSpecs (once per session). Laid out like Settings; floats by the
 // "quickshell-windows" rule in window-rules.lua.
@@ -126,6 +127,13 @@ FloatingWindow {
         }
         return { status: "" }
     }
+    // the sidebar beside a page: the same figures, or what's inside
+    readonly property var navGroups: homeGroups.map(g => ({
+        heading: g.heading,
+        items: g.items.map(t => ({ id: t.id, icon: t.icon, label: t.label,
+            line: t.status || t.blurb, lineColor: t.status && t.statusColor ? t.statusColor : Theme.subtext }))
+    }))
+
     readonly property var homeGroups: groups.map(g => ({
         heading: g.heading,
         items: g.ids.map(id => {
@@ -144,6 +152,12 @@ FloatingWindow {
     WindowChrome {
         id: chrome
         window: root
+        // from a page, back to Home first
+        goBack: () => {
+            if (root.currentPage === "") return false
+            root.select("")
+            return true
+        }
     }
 
     WindowHeader {
@@ -151,7 +165,7 @@ FloatingWindow {
         window: root
         title: "System"
         subtitle: (SystemSpecs.hostname || "--") + " · " + (SystemSpecs.distro || "Linux")
-        page: root.openPage ? root.openPage.label : ""
+        linked: root.openPage !== null
         onBack: root.select("")
     }
 
@@ -177,20 +191,57 @@ FloatingWindow {
             onActivated: id => root.select(id)
         }
 
-        Loader {
-            id: pane
-            // sections folded on this window's pages (FlyoutHeading),
-            // kept across page switches and dropped with the window
-            property var foldedSections: []
+        // a page: the pages on the left, a hairline, the page under its name
+        WindowSidebar {
+            id: side
+            visible: root.openPage !== null
             x: Theme.panelPad
             y: Theme.panelPad
-            width: parent.width - Theme.panelPad * 2
+            width: Theme.fit(260)
             height: parent.height - Theme.panelPad * 2
-            active: root.visible && root.openPage !== null
-            // built off the render loop, so the window maps at once and
-            // the page lands a moment later instead of holding up both
-            asynchronous: true
-            source: root.openPage ? root.openPage.source : ""
+            groups: root.navGroups
+            current: root.currentPage
+            onSelected: id => root.select(id)
+        }
+
+        Rectangle {
+            id: split
+            visible: side.visible
+            x: side.x + side.width + Theme.panelPad
+            y: Theme.panelPad
+            width: Theme.borderWidth
+            height: parent.height - Theme.panelPad * 2
+            color: Theme.stroke
+        }
+
+        Item {
+            visible: side.visible
+            x: split.x + split.width + Theme.panelPad + Theme.spaceS
+            y: Theme.panelPad
+            width: parent.width - x - Theme.panelPad
+            height: parent.height - Theme.panelPad * 2
+
+            WindowPageTitle {
+                id: pageTitle
+                icon: root.openPage ? root.openPage.icon : ""
+                label: root.openPage ? root.openPage.label : ""
+            }
+
+            Loader {
+                id: pane
+                // sections folded on this window's pages (FlyoutHeading),
+                // kept across page switches and dropped with the window
+                property var foldedSections: []
+                anchors.top: pageTitle.bottom
+                anchors.topMargin: Theme.spaceXs
+                anchors.bottom: parent.bottom
+                width: parent.width
+                active: root.visible && root.openPage !== null
+                // built off the render loop, so the window maps at once and
+                // the page lands a moment later instead of holding up both
+                asynchronous: true
+                source: root.openPage ? root.openPage.source : ""
+            }
         }
     }
 }

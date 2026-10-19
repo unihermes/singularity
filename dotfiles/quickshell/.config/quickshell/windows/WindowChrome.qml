@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/WindowChrome.qml
 //
-// The ground of a standalone window (Settings, System) and Escape to close
-// it. Declared first in the window so the content draws over it; the title
+// The ground of a standalone window (Settings, System) and Escape to go
+// back or close it. Declared first in the window so the content draws over it; the title
 // row is WindowHeader.qml.
 
 import QtQuick
@@ -15,6 +15,8 @@ Item {
     required property var window
     // takes Escape; focus it after anything else in the window had focus
     readonly property alias keySink: keySink
+    // asked first on Escape (back to Home from a page); true if it took it
+    property var goBack: null
 
     anchors.fill: parent
 
@@ -28,6 +30,6 @@ Item {
         id: keySink
         anchors.fill: parent
         focus: true
-        Keys.onEscapePressed: root.window.close()
+        Keys.onEscapePressed: if (!root.goBack || !root.goBack()) root.window.close()
     }
 }

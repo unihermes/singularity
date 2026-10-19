@@ -34,9 +34,6 @@ ShellRoot {
     // Keep Awake, from Quick Actions. On the root so every screen agrees;
     // session-only so idle is never left inhibited overnight.
     property bool keepAwake: false
-    // the Settings page last open, kept while its window is torn down
-    property string settingsPage: ""
-
     // Night Light, from Quick Actions: on while hyprsunset runs (stopping it
     // restores normal gamma). Session-only, like Keep Awake.
     property bool nightLight: false
@@ -102,10 +99,7 @@ ShellRoot {
     LazyWindow { id: system; System {} }
     LazyWindow {
         id: settingsWindow
-        SettingsWindow {
-            lastPage: root.settingsPage
-            onLastPageChanged: root.settingsPage = lastPage
-        }
+        SettingsWindow {}
     }
     LazyWindow { id: notesWindow; NotesWindow {} }
     LazyWindow { id: keybindsWindow; KeybindsWindow {} }

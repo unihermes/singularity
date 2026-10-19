@@ -1,15 +1,15 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/SettingsWindow.qml
 //
-// Settings: a title bar with the search, over one panel split by a
-// hairline: the pages on the left (each with what it's set to now) and the
-// open page on the right under its name. Typed into, the search lists its
-// hits (SettingsIndex.js) in place of the pages; a hit opens its page and
-// rings the setting. Changes apply at once, written straight to what they
-// control. `/` focuses the search, where the arrow keys walk the pages;
-// Escape clears, leaves the bar, then closes. It opens on the page it was
-// left on (`lastPage`, kept by shell.qml); the page Loader exists only
-// while visible.
+// Settings: a title bar with the search, over one panel. It opens on Home,
+// every page as a tile; a page opens beside the pages (each with what it's
+// set to now), split by a hairline, and the name or Escape goes back.
+// Typed into, the search lists its hits (SettingsIndex.js) in Home's column
+// or in place of the pages; a hit opens its page and rings the setting.
+// Changes apply at once, written straight to what they control. `/`
+// focuses the search, where the arrow keys walk the tiles or the pages;
+// Escape clears, leaves the bar, goes Home, then closes. The page Loader
+// exists only while visible.
 
 import Quickshell
 import Quickshell.Io
@@ -26,10 +26,8 @@ import "../services/Styles.js" as Styles
 FloatingWindow {
     id: root
 
-    // the open page, and the one the window was last left on
-    property string currentPage: pages[0].id
-    property string lastPage: ""
-    onCurrentPageChanged: lastPage = currentPage
+    // the open page, or "" for Home
+    property string currentPage: ""
     // the setting a search result picked, for the page to scroll to and ring
     property string highlight: ""
 
@@ -40,14 +38,15 @@ FloatingWindow {
     implicitWidth: Theme.windowSize.width
     implicitHeight: Theme.windowSize.height
 
-    // an unknown or empty page opens the last one
+    // an unknown or empty page opens Home
     function open(page) {
-        var known = id => pages.some(p => p.id === id)
-        currentPage = known(page) ? page : known(lastPage) ? lastPage : pages[0].id
+        currentPage = pages.some(p => p.id === page) ? page : ""
         highlight = ""
+        homeCursor = ""
         searchBar.text = ""
         visible = true
-        Qt.callLater(() => nav.reveal(currentPage))
+        if (currentPage === "") home.toTop()
+        else Qt.callLater(() => nav.reveal(currentPage))
     }
     function close() { visible = false }
 
@@ -133,6 +132,20 @@ FloatingWindow {
     // output's name, only arrive while something tracks them
     PwObjectTracker { objects: root.visible ? Audio.devices : [] }
 
+    // Home's tiles: what's inside, and what it's set to now at the right
+    readonly property var homeGroups: groups.map(g => ({
+        heading: g.heading,
+        items: g.ids.map(id => {
+            var p = pages.find(p => p.id === id), st = status(id)
+            return { id: id, icon: p.icon, label: p.label, blurb: p.blurb, status: st.text, statusColor: st.color }
+        })
+    }))
+    // with a query, Home's column lists the hits instead
+    readonly property var homeResults: [{
+        heading: rows.length === 1 ? "1 result" : rows.length + " results",
+        items: rows.map((r, i) => ({ id: String(i), icon: r.icon, label: r.label, blurb: r.blurb || "" }))
+    }]
+
     readonly property var navGroups: groups.map(g => ({
         heading: g.heading,
         items: g.ids.map(id => {
@@ -167,9 +180,20 @@ FloatingWindow {
 
     function focusSearch() { searchBar.forceFocus() }
 
-    // with no query the arrows open the next page at once
+    // the Home tile the arrow keys are on, with no query
+    property string homeCursor: ""
+
+    // with no query the arrows walk Home's tiles, or open the next page at
+    // once beside the sidebar
     function moveCursor(delta) {
         if (rows.length === 0) return
+        if (query === "" && currentPage === "") {
+            var order = groups.reduce((a, g) => a.concat(g.ids), [])
+            var at = order.indexOf(homeCursor)
+            homeCursor = order[at < 0 ? (delta > 0 ? 0 : order.length - 1) : (at + delta + order.length) % order.length]
+            home.reveal(homeCursor)
+            return
+        }
         if (query === "") {
             var i = pages.findIndex(p => p.id === currentPage)
             highlight = ""
@@ -178,7 +202,8 @@ FloatingWindow {
             return
         }
         cursor = (cursor + delta + rows.length) % rows.length
-        list.reveal(cursor)
+        if (currentPage === "") home.reveal(String(cursor))
+        else list.reveal(cursor)
     }
 
     function activate(row) {
@@ -211,6 +236,12 @@ FloatingWindow {
     WindowChrome {
         id: chrome
         window: root
+        // from a page, back to Home first
+        goBack: () => {
+            if (root.currentPage === "") return false
+            root.select("")
+            return true
+        }
 
         // `/` anywhere in the window, as long as no page field is typing:
         // the sink only sees keys nothing more local wanted, same as Escape
@@ -229,6 +260,8 @@ FloatingWindow {
         window: root
         title: "Settings"
         subtitle: hostFile.text().trim()
+        linked: root.currentPage !== ""
+        onBack: root.select("")
     }
 
     FlyoutInput {
@@ -245,8 +278,10 @@ FloatingWindow {
         onUpPressed: root.moveCursor(-1)
         onTabPressed: root.moveCursor(1)
         onBackTabPressed: root.moveCursor(-1)
-        onAccepted: if (root.rows.length > 0 && root.query !== "")
-            root.activate(root.rows[root.cursor])
+        onAccepted: {
+            if (root.rows.length > 0 && root.query !== "") root.activate(root.rows[root.cursor])
+            else if (root.query === "" && root.currentPage === "" && root.homeCursor !== "") root.select(root.homeCursor)
+        }
         // first clear the query, then leave the bar; the window's own
         // Escape closes it after that
         onEscapePressed: {
@@ -266,83 +301,37 @@ FloatingWindow {
         // the window's real size (a Font Size change leaves the window as is)
         height: root.height - y - Theme.windowPad
 
+        WindowHome {
+            id: home
+            x: Theme.panelPad
+            y: Theme.panelPad
+            width: parent.width - Theme.panelPad * 2
+            height: parent.height - Theme.panelPad * 2
+            visible: root.currentPage === ""
+            groups: root.query === "" ? root.homeGroups : root.homeResults
+            cursorId: root.query === "" ? root.homeCursor : root.searchFocused ? String(root.cursor) : ""
+            onActivated: id => {
+                if (root.query === "") root.select(id)
+                else root.activate(root.rows[Number(id)])
+            }
+            onHovered: id => { if (root.query !== "" && root.searchFocused) root.cursor = Number(id) }
+        }
+
         Item {
             id: side
+            visible: root.currentPage !== ""
             x: Theme.panelPad
             y: Theme.panelPad
             width: Theme.fit(260)
             height: parent.height - Theme.panelPad * 2
 
-            Flickable {
+            WindowSidebar {
                 id: nav
                 visible: root.query === ""
                 anchors.fill: parent
-                anchors.rightMargin: Theme.scrollGutter
-                contentHeight: navCol.implicitHeight
-                interactive: contentHeight > height
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-
-                // keep the open page's row on screen, for the arrow keys
-                function reveal(id) {
-                    for (var g = 0; g < navGroupRep.count; g++) {
-                        var rows = navGroupRep.itemAt(g).rowRepeater
-                        for (var r = 0; r < rows.count; r++) {
-                            var row = rows.itemAt(r)
-                            if (row.pageId !== id) continue
-                            var y = row.mapToItem(navCol, 0, 0).y
-                            if (y < contentY) contentY = y
-                            else if (y + row.height > contentY + height) contentY = y + row.height - height
-                            return
-                        }
-                    }
-                }
-
-                // packed so all the pages fit without scrolling
-                Column {
-                    id: navCol
-                    width: nav.width
-                    spacing: Theme.spaceS
-
-                    Repeater {
-                        id: navGroupRep
-                        model: root.navGroups
-
-                        Column {
-                            id: navGroup
-                            required property var modelData
-                            property Item rowRepeater: navRows
-                            width: navCol.width
-                            spacing: 0
-
-                            FlyoutHeading { width: parent.width; text: navGroup.modelData.heading.toUpperCase() }
-
-                            Repeater {
-                                id: navRows
-                                model: navGroup.modelData.items
-
-                                SettingsSectionRow {
-                                    required property var modelData
-                                    readonly property string pageId: modelData.id
-                                    icon: modelData.icon
-                                    label: modelData.label
-                                    blurb: modelData.line
-                                    blurbColor: modelData.lineColor
-                                    current: root.currentPage === modelData.id
-                                    onClicked: root.select(modelData.id)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            ScrollBar {
-                anchors.right: parent.right
-                anchors.top: nav.top
-                height: nav.height
-                visible: nav.visible && nav.interactive
-                flickable: nav
+                groups: root.navGroups
+                current: root.currentPage
+                onSelected: id => root.select(id)
             }
 
             // what the search matched, under a count
@@ -423,6 +412,7 @@ FloatingWindow {
         // the hairline between the pages and the page
         Rectangle {
             id: split
+            visible: side.visible
             x: side.x + side.width + Theme.panelPad
             y: Theme.panelPad
             width: Theme.borderWidth
@@ -432,36 +422,17 @@ FloatingWindow {
 
         Item {
             id: pageArea
+            visible: side.visible
             x: split.x + split.width + Theme.panelPad + Theme.spaceS
             y: Theme.panelPad
             width: parent.width - x - Theme.panelPad
             height: parent.height - Theme.panelPad * 2
 
             // the page's icon and name, large, over its own description
-            Row {
+            WindowPageTitle {
                 id: pageTitle
-                x: Theme.spaceS
-                spacing: Theme.spaceL
-                height: Math.max(pageIcon.implicitHeight, pageName.implicitHeight) + Theme.spaceS
-
-                Text {
-                    id: pageIcon
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.openPage ? root.openPage.icon : ""
-                    color: Theme.hasAccent ? Qt.lighter(Theme.accent, 1.4) : Theme.textStrong
-                    font.family: Theme.fontIcon
-                    font.pixelSize: Theme.fontTitle
-                }
-
-                Text {
-                    id: pageName
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.openPage ? root.openPage.label : ""
-                    color: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontTitle
-                    font.weight: Theme.weightStrong
-                }
+                icon: root.openPage ? root.openPage.icon : ""
+                label: root.openPage ? root.openPage.label : ""
             }
 
             // the open page; built fresh on each switch
