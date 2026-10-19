@@ -408,14 +408,15 @@ Settings') are laid out the same way.
   Keep this?, Revert / Keep, and an accent line draining as the 15 s run
   out. Every change writes a rule for that display alone, so nothing on
   the page names hl.monitor() rules.
-- **Notifications:** a status card (the bell large, Notifications on or
-  Do Not Disturb, why and until when, the history's count, the switch),
-  with a History row under it (Open, and Clear all in two clicks). Then
-  Popups (the spot picker, Group by app, and Send a test on the heading),
-  How long popups stay as segments (4 s · 8 s · 16 s · 30 s · Never),
-  Quiet hours (the switch; on, a midnight-to-midnight strip with the
-  window filled and a marker at now, then Starts and Ends), and Apps:
-  each app in the history is a row that opens a Popups switch, and a
+- **Notifications** (three sections, picked 2026-10-18): STATUS is a
+  status card (the bell large, Notifications on or Do Not Disturb, why and
+  until when, the history's count, the switch), a History row (Open, and
+  Clear all in two clicks), then Quiet hours (the switch; on, a
+  midnight-to-midnight strip with the window filled and a marker at now,
+  then Starts beside Ends). POPUPS has the spot picker on the left with
+  Position (and Send a test) and Group by app beside it, then a HOW LONG
+  THEY STAY subhead: Normal, Low and Critical as three dropdowns on one
+  line. APPS: each app in the history is a row with its Popups switch; a
   silent app's notifications go straight to the history (critical ones
   still pop up).
 - **Audio** (picked 2026-10-18, 1B 2B 3B 4A 5A): OUTPUT and INPUT each
