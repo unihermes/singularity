@@ -584,9 +584,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Memory:** the card (in use, of what, available, swap) with the
   minute at its right; BREAKDOWN: the stacked strip with its parts two
   across under it, then swap and writeback two across under a subhead; the largest processes sorted by memory.
-- **Processes:** the full table with CPU as a share of the machine and its
-  level, totals two across, and the terminal tools as rows saying what
-  each shows.
+- **Processes:** a NOW card (threads, runnable, who it runs as, the
+  machine's CPU, memory and load), then the full table with CPU as a share
+  of the machine and its level, and the terminal tools two to a line,
+  each saying what it shows.
 - **Storage:** the card (free on /, how full, reading and writing) over
   the minute; filesystems as levels with free and percent; disks as
   rows; Upkeep as on Software Update (Health's orphans and reclaimable
