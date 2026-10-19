@@ -91,9 +91,9 @@ Column {
     property string conflictAck: ""
     property string editError: ""
 
-    // presets
-    property string packFilter: ""
+    // presets, and the packs opened to their binds (by name)
     property bool hideBound: true
+    property var openPacks: ({})
     // id -> preset, for the ones ticked
     property var selection: ({})
     property int selectionCount: 0
@@ -217,8 +217,6 @@ Column {
 
     // --- grouping: the catalogue -----------------------------------------
 
-    readonly property var packNames: HyprPresets.PACKS.map(p => p.name)
-
     // Every preset, wrapped with what the config says about it and whether
     // the tools it needs are installed.
     readonly property var presetGroups: {
@@ -229,11 +227,11 @@ Column {
         var packs = HyprPresets.PACKS
         for (var i = 0; i < packs.length; i++) {
             var pack = packs[i]
-            if (packFilter !== "" && pack.name !== packFilter) continue
-            var items = []
+            var items = [], bound = 0
             for (var j = 0; j < pack.binds.length; j++) {
                 var b = pack.binds[j]
                 var st = HyprPresets.status(model, b)
+                if (st.state === "bound") bound++
                 if (hideBound && st.state === "bound") continue
                 if (f !== "" && HyprBinds.normalizeKeys(b.keys) !== f) continue
                 var action = b.lua ? b.lua : b.cmd
@@ -247,7 +245,7 @@ Column {
                     state: st.state, other: st.row, missing: missing,
                 })
             }
-            if (items.length) out.push({ name: pack.name, note: pack.note, items: items })
+            if (items.length) out.push({ name: pack.name, note: pack.note, items: items, total: pack.binds.length, bound: bound })
         }
         return out
     }
@@ -638,8 +636,7 @@ Column {
     // the keycaps column, in both lists
     readonly property int keysWidth: Theme.fit(150)
 
-    // A pack heading: the name, the rule, what the pack is for, and the one
-    // chip that ticks or unticks the lot.
+    // The presets' heading: the name, the rule, a note, and one chip.
     component PackHeading: Item {
         id: head
         property string text: ""
@@ -1237,8 +1234,8 @@ Column {
                                 readonly property bool open: root.editSlot === slot
                                 width: group.width
 
-                                // keycaps, the description, then the command in
-                                // what's left of the line
+                                // keycaps and the description; the command shows
+                                // once it's opened
                                 Item {
                                     width: parent.width
                                     height: Theme.rowHeight + Theme.spaceXs
@@ -1283,19 +1280,9 @@ Column {
                                         anchors.left: keysCell.right
                                         anchors.leftMargin: Theme.spaceL
                                         anchors.verticalCenter: parent.verticalCenter
-                                        width: Math.min(implicitWidth, (endCell.x - x) * 0.6)
+                                        width: Math.min(implicitWidth, endCell.x - Theme.spaceM - x)
                                         text: row.modelData.desc
                                         color: row.open || rowMouse.containsMouse ? Theme.textStrong : Theme.text
-                                    }
-                                    Label {
-                                        anchors.left: descText.right
-                                        anchors.leftMargin: Theme.spaceM
-                                        anchors.right: endCell.left
-                                        anchors.rightMargin: Theme.spaceM
-                                        anchors.baseline: descText.baseline
-                                        text: row.modelData.command
-                                        color: Theme.subtext
-                                        font.pixelSize: Theme.fontCaption
                                     }
 
                                     // a lock on the ones that can't be edited
@@ -1375,49 +1362,48 @@ Column {
                     text: "Binds worth having: tick the ones you want, or 󰏫 to change one first"
                 }
 
-                // which pack to show, or all of them
-                Flow {
-                    width: parent.width
-                    spacing: Theme.spaceS
-                    topPadding: Theme.spaceS
-                    bottomPadding: Theme.spaceS
-
-                    FlyoutChip {
-                        text: "All"
-                        selected: root.packFilter === ""
-                        onClicked: root.packFilter = ""
-                    }
-                    Repeater {
-                        model: root.packNames
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData
-                            selected: root.packFilter === modelData
-                            onClicked: root.packFilter = root.packFilter === modelData ? "" : modelData
-                        }
-                    }
-                }
-
                 Repeater {
                     model: root.presetGroups
 
+                    // a pack: one row (what it's for, how many are left to
+                    // add) that opens to its binds; a search opens them all
                     Column {
                         id: pack
                         required property var modelData
+                        readonly property bool open: root.openPacks[modelData.name] === true
+                            || root.query.trim() !== "" || root.findKeys !== ""
                         width: listCol.width
                         spacing: Theme.spaceXs
 
-                        Item { width: 1; height: Theme.spaceS }
-
-                        PackHeading {
-                            text: pack.modelData.name.toUpperCase()
+                        FlyoutRow {
+                            label: pack.modelData.name
                             note: pack.modelData.note
-                            allText: root.packFullySelected(pack.modelData) ? "None" : "All"
-                            onAllClicked: root.selectPack(pack.modelData, !root.packFullySelected(pack.modelData))
+                            highlighted: pack.open
+                            trailing: (pack.modelData.bound === pack.modelData.total ? "all " + pack.modelData.total + " added"
+                                : (pack.modelData.total - pack.modelData.bound) + " of " + pack.modelData.total + " to add")
+                                + "  " + (pack.open ? "󰅀" : "󰅂")
+                            onActivated: {
+                                var o = Object.assign({}, root.openPacks)
+                                o[pack.modelData.name] = !pack.open
+                                root.openPacks = o
+                            }
+                        }
+
+                        Item {
+                            visible: pack.open
+                            width: parent.width
+                            height: packAll.height
+
+                            FlyoutChip {
+                                id: packAll
+                                anchors.right: parent.right
+                                text: root.packFullySelected(pack.modelData) ? "Untick all" : "Tick all"
+                                onClicked: root.selectPack(pack.modelData, !root.packFullySelected(pack.modelData))
+                            }
                         }
 
                         Repeater {
-                            model: pack.modelData.items
+                            model: pack.open ? pack.modelData.items : []
 
                             Column {
                                 id: pItem

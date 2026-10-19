@@ -506,9 +506,9 @@ Settings') are laid out the same way.
   and typing) inside the one section, the four clicking switches two to a
   line, and every hint says what the current setting does.
 - **Keybinds:** one page, no tabs: your binds, then SUGGESTED (the
-  presets you don't have yet, by pack; Show added brings the rest). Each
-  bind is one line (keycaps, the description, the command quieter in the
-  rest of the line, a lock on the few that can't be edited) and opens in
+  presets you don't have yet; Show added brings the rest). Each
+  bind is one line (keycaps, the description, a lock on the few that
+  can't be edited; the command shows once it's opened) and opens in
   place: the editor (Keys with Record, Does as Command or Lua, Description,
   Options, Section, Delete asking first), or for a locked one what it runs,
   why, and Open at line N. Lua actions are editable; one over several
@@ -516,6 +516,9 @@ Settings') are laid out the same way.
   chosen. Press keys beside the search looks a combo up by pressing it,
   showing the bind on it or offering Add a bind on it. The search and the
   lookup filter both lists; the ticked-presets bar sits under the list.
+  SUGGESTED is one row per pack (picked 2026-10-18: what it's for, how
+  many of its binds are left to add) that opens to its tick boxes with
+  Tick all; a search or lookup opens them all.
 - **Power & Idle** (picked 2026-10-18, 1B 2A 3B 4B 5B): one POWER section:
   the battery card (charge large, then state, time left, the Custom band
   and health) over a full-fill level chip of the charge (in Custom the
