@@ -169,8 +169,10 @@ Connect or Disconnect chip. Removing a device is the Settings page's.
 
 Picked 2026-10-11: each opens on where things stand. Updates is a
 `HeadCard` (the count, Up to date with a green tick, or Not checked; the
-AUR share; when it last checked) with the one action that fits on it:
-Check now, or Update now while there are some. Notifications empty is a
+AUR share; when it last checked) with Check now on it always, a small ↻
+beside Update now while there are some (picked 2026-10-18). Under the
+packages, Reclaimable: the size, what it's in, and Clean up in two clicks
+(Health's reclaim check). Notifications empty is a
 card (All caught up); with history, Clear all is a chip on the heading,
 two clicks. Actions that can't do anything aren't shown.
 
