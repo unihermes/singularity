@@ -14,7 +14,8 @@ import "../system"
 SystemPage {
     id: page
 
-    subtitle: Health.scanning && Health.lastScan === "" ? "checking…"
+    // the card's answer; no subtitle, the card says it
+    readonly property string summary: Health.scanning && Health.lastScan === "" ? "checking…"
         : Health.problems > 0
             ? Health.problems + (Health.problems === 1 ? " problem" : " problems")
               + (Health.warnings > 0 ? ", " + Health.warnings + " to look at" : "")
@@ -56,7 +57,7 @@ SystemPage {
             : Health.problems > 0 ? Theme.alert
             : Health.warnings > 0 ? Theme.textStrong : Theme.good
         title: Health.lastScan === "" ? (Health.scanning ? "Checking…" : "Not checked yet")
-            : page.problems.length === 0 ? "All clear" : page.subtitle.charAt(0).toUpperCase() + page.subtitle.slice(1)
+            : page.problems.length === 0 ? "All clear" : page.summary.charAt(0).toUpperCase() + page.summary.slice(1)
         lines: [Health.lastScan === "" ? "Services, packages, disks, config links and the shell's log"
             : "Checked at " + Health.lastScan + " · " + page.passing.length + " of " + Health.checks.length + " passing"]
 
@@ -105,24 +106,32 @@ SystemPage {
         text: "PASSING  " + page.passing.length
     }
 
-    Repeater {
-        model: page.passing
+    // two to a line
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
 
-        HealthRow {
-            required property var modelData
+        Repeater {
+            model: page.passing
 
-            status: modelData.status
-            // a disk check is named by its mount point alone
-            label: modelData.label.charAt(0) === "/" ? "Disk " + modelData.label : modelData.label
-            detail: modelData.detail
-            // a pass can still offer something (Clean up, Refresh)
-            repairLabel: modelData.repairLabel
-            more: page.moreFor(modelData)
-            confirmText: page.confirmFor(modelData)
-            busy: Health.busyRepair === modelData.id
-            repairEnabled: Health.busyRepair === ""
-                && (modelData.repairId !== "relink" || Health.repoPath !== "")
-            onRepaired: id => Health.repair(modelData, id)
+            HealthRow {
+                required property var modelData
+                width: (page.contentWidth - Theme.spaceXl * 2) / 2
+
+                status: modelData.status
+                // a disk check is named by its mount point alone
+                label: modelData.label.charAt(0) === "/" ? "Disk " + modelData.label : modelData.label
+                detail: modelData.detail
+                // a pass can still offer something (Clean up, Refresh)
+                repairLabel: modelData.repairLabel
+                more: page.moreFor(modelData)
+                confirmText: page.confirmFor(modelData)
+                busy: Health.busyRepair === modelData.id
+                repairEnabled: Health.busyRepair === ""
+                    && (modelData.repairId !== "relink" || Health.repoPath !== "")
+                onRepaired: id => Health.repair(modelData, id)
+            }
         }
     }
 

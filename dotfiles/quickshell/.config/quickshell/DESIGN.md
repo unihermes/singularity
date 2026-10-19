@@ -564,10 +564,10 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Processes in a page's summary:** process CPU is a share of the whole
   machine with a small level (`ProcessTable.machineShare`); ending one
   asks End <name>? in the row.
-- **Health:** a status card heads it (the count or All clear, when the
-  checks ran, Check again), then TO
-  LOOK AT (problems, worst first, each with its fix) and PASSING, each
-  heading carrying its count and left out when empty. A fix that deletes
+- **Health** (picked 2026-10-18): a status card heads it (the count or
+  All clear, when the checks ran, Check again; no subtitle over it), then
+  TO LOOK AT (problems, worst first, each with its fix) and PASSING (two to
+  a line), each heading carrying its count and left out when empty. A fix that deletes
   or switches something off (clean, disable) asks first. A row can carry
   more than one fix: Shell log offers View, Dismiss (hides the lines there
   are now until new ones appear) and Fix with Claude (Claude Code in the
