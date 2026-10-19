@@ -210,7 +210,7 @@ var entries = [
     { page: "autostart", section: "When the PC starts", label: "Sign in at boot", keywords: "autologin auto login password greeter ly boot skip sign in" },
     { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
     { page: "autostart", section: "At login", label: "Add an app…",  keywords: "autostart add app application start login" },
-    { page: "autostart", section: "Packages", label: "From packages", keywords: "xdg autostart system installed entry keyring" },
+    { page: "autostart", section: "At login", label: "From packages", keywords: "xdg autostart system installed entry keyring" },
 
     // --- File Types --------------------------------------------------------
     { page: "filetypes", section: "Common", label: "Web browser",  keywords: "default http https url link mimeapps" },

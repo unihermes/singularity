@@ -432,13 +432,15 @@ Settings') are laid out the same way.
   RECORDING are a mixer: each app's icon (`Audio.appIcon`), name over what it's playing,
   and on the right the output it plays on (a dropdown, moved with pactl)
   and its level; nothing opens.
-- **Startup:** your entries are fields with the app's icon
+- **Startup** (two sections, picked 2026-10-18): WHEN THE PC STARTS, then
+  AT LOGIN. Your entries are fields with the app's icon
   (`SettingsField.image`), the command or comment as the hint, the switch
   and Remove (asking Remove Spotify?). Add an app… is the list's last row
-  and opens a search with the matching apps under it, with their icons; a
-  click adds one. From packages lists only the entries that can run here,
-  saying when a user service already does the job; ones for other
-  desktops aren't shown at all.
+  ("nothing of yours yet" after it while the list is empty) and opens a
+  search with the matching apps under it, with their icons; a click adds
+  one. A FROM PACKAGES subhead lists only the entries that can run here
+  and that no user service already runs (unless one is on), its note
+  counting the ones left out; ones for other desktops aren't shown at all.
 - **File Types:** each common kind is a field whose hint says what it
   covers (Links and web pages), or which of its types have no default,
   with a dropdown of apps and their icons (`SettingsDropdown.iconFor`).

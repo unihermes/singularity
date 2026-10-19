@@ -285,12 +285,6 @@ SettingsPage {
 
     FlyoutHeading { text: "AT LOGIN" + (Autostart.userEntries.length > 0 ? "  " + Autostart.userEntries.length : "") }
 
-    FlyoutRow {
-        visible: Autostart.loaded && Autostart.userEntries.length === 0
-        enabled: false
-        label: "Nothing of yours starts at login yet"
-    }
-
     Repeater {
         model: Autostart.userEntries
         Entry {
@@ -311,6 +305,7 @@ SettingsPage {
 
     FlyoutRow {
         label: "Add an app…"
+        note: Autostart.loaded && Autostart.userEntries.length === 0 ? "nothing of yours yet" : ""
         trailing: "󰐕"
         highlighted: page.adding
         onActivated: {
@@ -381,13 +376,18 @@ SettingsPage {
 
     // --- from packages ---------------------------------------------------------
 
-    // only entries that can run in this session
-    readonly property var packageEntries: Autostart.systemEntries.filter(e => e.runnable)
+    // only entries that can run in this session, and not ones a systemd
+    // unit already runs unless they're on
+    readonly property var runnableEntries: Autostart.systemEntries.filter(e => e.runnable)
+    readonly property var packageEntries: runnableEntries.filter(e => e.enabled || unitFor(e) === "")
+    readonly property int leftOut: runnableEntries.length - packageEntries.length
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "FROM PACKAGES" }
+    SettingsSubhead { caption: "FROM PACKAGES" }
 
-    SettingsNote { text: "Off until you turn one on" }
+    SettingsNote {
+        text: "Off until you turn one on" + (page.leftOut > 0
+            ? "  ·  " + page.leftOut + " left out, already run by a service" : "")
+    }
 
     Repeater {
         model: page.packageEntries
