@@ -1,13 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageLockScreen.qml
 //
-// The lock screen and the lid, in three of this machine's files:
+// The lock screen and the lid, in three of this machine's files and fprintd:
 //   hyprlock.conf   background (path, blur, brightness), the clock text and
 //                   auth's fingerprint:enabled; colours and font come from
 //                   the look
 //   hypridle.conf   the grace period, on the idle lock only
 //   lid.conf        close_action, close_delay, lock_on_close, hibernate
 //                   (lid.sh reads it)
+//   fprintd         the enrolled fingers (fprintd-list, -enroll, -delete)
 // Only hypridle needs a restart.
 
 import Quickshell
@@ -22,7 +23,7 @@ SettingsPage {
     sectioned: true
 
     title: "Lock Screen"
-    description: "Look, password grace and the lid. Colours follow Appearance."
+    description: "Look, fingerprint, password grace and the lid. Colours follow Appearance."
 
 
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
@@ -125,44 +126,114 @@ SettingsPage {
         })
     }
 
-    // the fingers fprintd has for this user; "" with no reader
-    property string fingers: ""
-    property bool reader: false
+    // --- fingers, through fprintd -------------------------------------------
 
+    // fprintd's names for this user's fingers (right-index-finger, left-thumb)
+    property var fingers: []
+    property bool reader: false
+    property int stages: 0
+    // the finger being enrolled, the touches it has taken and what to do next
+    property string enrolling: ""
+    property int stage: 0
+    property string enrollSay: ""
+    property string enrollFail: ""
+    property bool enrollDone: false
+    property string armedFinger: ""
+
+    function fingerName(f) {
+        var m = /^(left|right)-(\w+?)(-finger)?$/.exec(f)
+        return m ? (m[1] === "left" ? "Left " : "Right ") + m[2] : f
+    }
+
+    function rereadFingers() { fingerList.running = true }
+
+    // a dark finger enrolls, a lit one arms and then removes
+    function pickFinger(f) {
+        if (enrolling !== "") return
+        if (armedFinger === f) {
+            armedFinger = ""
+            disarm.stop()
+            fingerDelete.finger = f
+            fingerDelete.running = true
+        } else if (fingers.indexOf(f) >= 0) {
+            armedFinger = f
+            disarm.restart()
+        } else {
+            armedFinger = ""
+            enrolling = f
+            stage = 0
+            enrollSay = "Waiting for the reader"
+            enrollFail = ""
+            enrollDone = false
+            fingerEnroll.running = true
+        }
+    }
+
+    // fprintd-enroll's `Enroll result:` lines
+    function enrollLine(line) {
+        if (/^Enrolling /.test(line)) { enrollSay = "Touch the sensor"; return }
+        var m = /^Enroll result: (\S+)/.exec(line)
+        if (!m) return
+        var r = m[1]
+        if (r === "enroll-stage-passed") { stage++; enrollSay = "Lift and touch again" }
+        else if (r === "enroll-completed") { stage = stages; enrollDone = true }
+        else if (r === "enroll-retry-scan" || r === "enroll-swipe-too-short") enrollSay = "Didn't take; touch again"
+        else if (r === "enroll-finger-not-centered") enrollSay = "Off centre; touch again"
+        else if (r === "enroll-remove-and-retry") enrollSay = "Lift, then touch again"
+        else enrollFail = r === "enroll-duplicate" ? "that finger is already enrolled"
+            : r === "enroll-data-full" ? "the reader is full" : "the reader gave up"
+    }
+
+    function enrollEnded(err) {
+        var name = fingerName(enrolling)
+        if (enrollDone) say(name + " added", false)
+        else if (enrollFail === "" && /PermissionDenied|Not ?Authori[sz]ed/i.test(err)) say(name + " not added: not allowed", true)
+        else if (enrollFail !== "" || err.trim() !== "") say(name + " not added: " + (enrollFail || err.trim().split("\n").pop()), true)
+        enrolling = ""
+        rereadFingers()
+    }
+
+    Timer { id: disarm; interval: 3000; onTriggered: page.armedFinger = "" }
+
+    // the list, then the touches a finger takes from the device's property
     Process {
+        id: fingerList
         running: true
-        command: ["sh", "-c", "fprintd-list \"$USER\""]
+        command: ["sh", "-c", "out=$(fprintd-list \"$USER\" 2>&1); echo \"$out\"; "
+            + "dev=$(echo \"$out\" | sed -n 's/^Device at //p' | head -n1); "
+            + "[ -n \"$dev\" ] && gdbus call --system --dest net.reactivated.Fprint --object-path \"$dev\" "
+            + "--method org.freedesktop.DBus.Properties.Get net.reactivated.Fprint.Device num-enroll-stages"]
         stdout: StdioCollector {
             onStreamFinished: {
                 page.reader = /found [1-9]\d* devices?/i.test(text)
-                var names = []
-                text.split("\n").forEach(l => {
-                    var m = /^\s*- #\d+: ([\w-]+)/.exec(l)
-                    if (m) names.push(m[1].replace(/-finger$/, "").replace(/-/g, " "))
-                })
-                page.fingers = names.join(", ")
+                var names = [], m
+                text.split("\n").forEach(l => { if ((m = /^\s*- #\d+: ([\w-]+)/.exec(l))) names.push(m[1]) })
+                page.fingers = names
+                page.stages = (m = /<(\d+)>/.exec(text)) ? Number(m[1]) : 0
             }
         }
     }
 
-    function writeLock(block, values, message) {
-        // shown at once, so a second step before the write lands builds on
-        // this one; the re-read after it puts the file's values back
-        if (block === "background") {
-            var next = Object.assign({}, background)
-            for (var k in values) next[k] = values[k] === null ? undefined : String(values[k])
-            background = next
+    // stdbuf, or fprintd-enroll's lines only come at the end
+    Process {
+        id: fingerEnroll
+        command: ["stdbuf", "-oL", "fprintd-enroll", "-f", page.enrolling]
+        stdout: SplitParser { onRead: line => page.enrollLine(line) }
+        stderr: StdioCollector { id: enrollErr }
+        onExited: page.enrollEnded(enrollErr.text)
+    }
+
+    Process {
+        id: fingerDelete
+        property string finger: ""
+        command: ["sh", "-c", "fprintd-delete \"$USER\" -f \"$1\"", "sh", finger]
+        stdout: StdioCollector { id: deleteOut }
+        onExited: code => {
+            var name = page.fingerName(finger)
+            if (code === 0) page.say(name + " removed", false)
+            else page.say(name + " not removed: " + (deleteOut.text.trim().split("\n").pop() || "fprintd said no"), true)
+            page.rereadFingers()
         }
-        AtomicFileWrite.write({
-            path: lockPath,
-            transform: text => text === "" ? null : setInBlock(text, block, values),
-            refusal: "hyprlock.conf has no " + block + " block; nothing written",
-            done: (status, detail) => {
-                if (status === "ok" || status === "unchanged") page.say(message, false)
-                else page.say(status === "refused" ? detail : "Couldn't write hyprlock.conf", true)
-                page.rereadLock()
-            }
-        })
     }
 
     // --- grace, in hypridle.conf ---------------------------------------------
@@ -465,6 +536,57 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "FINGERPRINT" }
+
+    SettingsField {
+        labelWidth: width - Theme.switchWidth - Theme.spaceL
+        label: "Unlock with a fingerprint"
+        hint: !page.reader ? "No fingerprint reader"
+            : page.fingers.length === 0 ? "Add a finger below first"
+            : page.fingerprint ? "Unlocks with " + page.fingers.map(f => page.fingerName(f).toLowerCase()).join(", ")
+                + ", or the password"
+            : "Only the password unlocks"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.fingerprint
+            enabled: page.reader
+            onToggled: page.setFingerprint(!page.fingerprint)
+        }
+    }
+
+    SettingsField {
+        visible: page.reader
+        labelWidth: width - (cancelEnroll.visible ? cancelEnroll.width + Theme.spaceL : 0)
+        label: "Fingers"
+        hint: page.enrolling !== "" ? page.fingerName(page.enrolling) + ": " + page.enrollSay
+                + " · " + page.stage + (page.stages > 0 ? " of " + page.stages : "")
+            : page.armedFinger !== "" ? "Click " + page.fingerName(page.armedFinger) + " again to remove it"
+            : page.fingers.length === 0 ? "None yet; click a finger to add it"
+            : page.fingers.length + " enrolled · click one to add it, a lit one to remove it"
+
+        Row {
+            anchors.right: parent.right
+            FlyoutChip {
+                id: cancelEnroll
+                visible: page.enrolling !== ""
+                text: "Cancel"
+                onClicked: fingerEnroll.signal(2)
+            }
+        }
+    }
+
+    FingerHands {
+        visible: page.reader
+        anchors.horizontalCenter: parent.horizontalCenter
+        enrolled: page.fingers
+        enrolling: page.enrolling
+        progress: page.stages > 0 ? page.stage / page.stages : 0
+        armed: page.armedFinger
+        onPicked: f => page.pickFinger(f)
+    }
+
+    Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "LOCKING" }
 
     SettingsField {
@@ -481,22 +603,6 @@ SettingsPage {
             labelFor: v => page.graceLabel(v)
             current: page.grace
             onPicked: v => page.setGrace(v)
-        }
-    }
-
-    SettingsField {
-        labelWidth: width - Theme.switchWidth - Theme.spaceL
-        label: "Fingerprint"
-        hint: !page.reader ? "No fingerprint reader"
-            : page.fingers === "" ? "No finger enrolled (fprintd-enroll)"
-            : page.fingerprint ? "Unlocks with " + page.fingers + ", or the password"
-            : "Only the password unlocks"
-
-        Switch {
-            anchors.right: parent.right
-            checked: page.fingerprint
-            enabled: page.reader
-            onToggled: page.setFingerprint(!page.fingerprint)
         }
     }
 

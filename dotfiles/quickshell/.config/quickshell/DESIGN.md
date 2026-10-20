@@ -331,11 +331,15 @@ Settings') are laid out the same way.
   zones of module chips and a Hidden zone under them; a dragged chip is a
   ghost following the pointer, an accent marker shows where it lands, and
   the drop writes the layout and visibility like Bar Widgets.
-- **Lock Screen:** three sections (picked 2026-10-18). BACKGROUND has a
+- **Lock Screen:** four sections (picked 2026-10-18). BACKGROUND has a
   live preview of the lock screen, with a Lock now chip on its corner,
   beside Background, Blur and Dim, so Background and Clock place are plain
   segments. CLOCK puts Clock size beside Clock place; under the clock's
-  hint is the line as it will read, its parts as chips. LOCKING holds the
+  hint is the line as it will read, its parts as chips. FINGERPRINT (picked
+  2026-10-20) has the unlock switch, then two drawn hands (`FingerHands`)
+  whose fingers are the buttons: lit when enrolled, a dark one enrolls and
+  fills from the palm as the touches pass (the Fingers hint counts them,
+  Cancel beside it), a lit one removes in two clicks. LOCKING holds the
   grace period, then the lid under a LID subhead: one row [Suspend |
   Screen off] after [N min], and Lock right away beside Hibernate.
 - **Visual pickers:** a choice judged by eye (Style, Workspaces, Open
