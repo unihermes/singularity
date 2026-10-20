@@ -2,8 +2,9 @@
 // ~/.config/quickshell/settings/SettingsPageLockScreen.qml
 //
 // The lock screen and the lid, in three of this machine's files:
-//   hyprlock.conf   background (path, blur, brightness) and the clock text;
-//                   colours and font come from the look
+//   hyprlock.conf   background (path, blur, brightness), the clock text and
+//                   auth's fingerprint:enabled; colours and font come from
+//                   the look
 //   hypridle.conf   the grace period, on the idle lock only
 //   lid.conf        close_action, close_delay, lock_on_close, hibernate
 //                   (lid.sh reads it)
@@ -47,7 +48,7 @@ SettingsPage {
         var lines = text.split("\n"), r = blockRange(lines, name), out = {}
         if (!r) return out
         for (var i = r[0] + 1; i < r[1]; i++) {
-            var m = /^\s*([\w-]+)\s*=\s*(.*?)\s*$/.exec(lines[i])
+            var m = /^\s*([\w:-]+)\s*=\s*(.*?)\s*$/.exec(lines[i])
             if (m) out[m[1]] = m[2]
         }
         return out
@@ -76,6 +77,7 @@ SettingsPage {
 
     property var background: ({})
     property string clockText: ""
+    property bool fingerprint: false
 
     readonly property string backgroundKind: {
         var p = background.path || ""
@@ -104,6 +106,43 @@ SettingsPage {
         if (text === "") { say("Couldn't read " + lockPath, true); return }
         background = blockValues(text, "background")
         clockText = blockValues(text, "label").text || ""
+        fingerprint = /^(true|yes|on|1)$/.test(blockValues(text, "auth")["fingerprint:enabled"] || "")
+    }
+
+    // adds the auth block when the file has none
+    function setFingerprint(on) {
+        AtomicFileWrite.write({
+            path: lockPath,
+            transform: text => text === "" ? null
+                : setInBlock(text, "auth", { "fingerprint:enabled": on })
+                    || text.replace(/\n*$/, "\n\nauth {\n    fingerprint:enabled = " + on + "\n}\n"),
+            done: (status, detail) => {
+                if (status === "ok" || status === "unchanged")
+                    page.say(on ? "A fingerprint unlocks the lock screen" : "Only the password unlocks", false)
+                else page.say("Couldn't write hyprlock.conf", true)
+                page.rereadLock()
+            }
+        })
+    }
+
+    // the fingers fprintd has for this user; "" with no reader
+    property string fingers: ""
+    property bool reader: false
+
+    Process {
+        running: true
+        command: ["sh", "-c", "fprintd-list \"$USER\""]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                page.reader = /found [1-9]\d* devices?/i.test(text)
+                var names = []
+                text.split("\n").forEach(l => {
+                    var m = /^\s*- #\d+: ([\w-]+)/.exec(l)
+                    if (m) names.push(m[1].replace(/-finger$/, "").replace(/-/g, " "))
+                })
+                page.fingers = names.join(", ")
+            }
+        }
     }
 
     function writeLock(block, values, message) {
@@ -442,6 +481,22 @@ SettingsPage {
             labelFor: v => page.graceLabel(v)
             current: page.grace
             onPicked: v => page.setGrace(v)
+        }
+    }
+
+    SettingsField {
+        labelWidth: width - Theme.switchWidth - Theme.spaceL
+        label: "Fingerprint"
+        hint: !page.reader ? "No fingerprint reader"
+            : page.fingers === "" ? "No finger enrolled (fprintd-enroll)"
+            : page.fingerprint ? "Unlocks with " + page.fingers + ", or the password"
+            : "Only the password unlocks"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.fingerprint
+            enabled: page.reader
+            onToggled: page.setFingerprint(!page.fingerprint)
         }
     }
 
