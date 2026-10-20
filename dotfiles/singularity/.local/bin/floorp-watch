@@ -1,0 +1,374 @@
+#!/usr/bin/env python3
+"""Logs Floorp hitches in the background, and reports on them.
+
+  floorp-watch            run the monitor (floorp-watch.service runs it)
+  floorp-watch report [H] summarise the last H hours (default 24)
+
+While Floorp runs, every 100 ms it reads the scheduler stats of each Floorp
+process's main thread and the parent's Renderer and Compositor threads. A
+thread that is running or waiting to run for most of each tick, for longer
+than a few frames, is a hitch: "busy" when it was on the CPU, "starved" when
+it mostly sat in the run queue (something else had the CPU). A main thread
+stuck in uninterruptible sleep (disk, swap) is "blocked", and the monitor
+itself waking late means the whole system stalled ("system-stall").
+
+Each hitch is a JSON line in ~/.local/state/singularity/floorp-watch.jsonl
+with the focused window, memory/CPU/IO pressure, Floorp's major faults and
+the busiest other processes over the hitch. Every 5 minutes a "stats" line
+records Floorp's CPU and memory per process kind.
+"""
+
+import json
+import os
+import subprocess
+import sys
+import time
+from collections import defaultdict
+
+TICK = 0.1
+BUSY_FRAC = 0.8          # running + runnable share of a tick that counts as busy
+MIN_TICKS = 2            # busy ticks in a row that make a hitch
+STARVED_FRAC = 0.3       # run-queue share of a hitch that makes it "starved"
+STALL = 0.15             # how late a tick may wake before it is a system stall
+SUSPEND = 5.0            # a gap this long is a suspend, not a stall
+SCAN_EVERY = 2.0
+THREADS_EVERY = 30.0
+STATS_EVERY = 300.0
+LOG_MAX = 5 * 1024 * 1024
+
+EXE = "/usr/lib/floorp/floorp"
+STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state"), "singularity")
+LOG = os.path.join(STATE, "floorp-watch.jsonl")
+CLK = os.sysconf("SC_CLK_TCK")
+PAGE_KB = os.sysconf("SC_PAGE_SIZE") // 1024
+
+KINDS = {
+    "floorp": "parent", "Isolated Web Co": "tab", "Web Content": "tab",
+    "Privileged Cont": "privileged", "WebExtensions": "extensions",
+    "Isolated Servic": "service-worker", "RDD Process": "media",
+    "Socket Process": "socket", "Utility Process": "utility", "GPU Process": "gpu",
+    "forkserver": None,
+}
+UI_THREADS = ("Renderer", "Compositor")
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+# Files read every tick stay open and are re-read in place; reading from a
+# process that has exited fails, so a reused pid never reads stale data.
+fds = {}
+
+
+def reread(path):
+    try:
+        if path not in fds:
+            fds[path] = os.open(path, os.O_RDONLY)
+        return os.pread(fds[path], 512, 0).decode()
+    except OSError:
+        if path in fds:
+            os.close(fds.pop(path))
+        return None
+
+
+def close_gone(procs):
+    for path in [p for p in fds if int(p.split("/")[2]) not in procs]:
+        os.close(fds.pop(path))
+
+
+def proc_stat(pid):
+    """(state, majflt, cpu ticks, rss kB) of a process, or None."""
+    s = reread(f"/proc/{pid}/stat")
+    if not s:
+        return None
+    f = s[s.rindex(")") + 2:].split()
+    return f[0], int(f[9]), int(f[11]) + int(f[12]), int(f[21]) * PAGE_KB
+
+
+def schedstat(pid, tid):
+    s = reread(f"/proc/{pid}/task/{tid}/schedstat")
+    if not s:
+        return None
+    on, wait, _ = s.split()
+    return int(on), int(wait)
+
+
+def majflt(procs):
+    return sum((proc_stat(p) or (0, 0))[1] for p in procs)
+
+
+def pressure():
+    out = {}
+    for res in ("cpu", "memory", "io"):
+        s = read(f"/proc/pressure/{res}")
+        if s:
+            out[res] = float(s.split()[1].split("=")[1])
+    return out
+
+
+def all_cpu():
+    """Cumulative CPU ticks of every process, by pid: (comm, ticks)."""
+    out = {}
+    for pid in os.listdir("/proc"):
+        if pid.isdigit():
+            s = read(f"/proc/{pid}/stat")
+            if s:
+                f = s[s.rindex(")") + 2:].split()
+                out[pid] = (s[s.index("(") + 1:s.rindex(")")], int(f[11]) + int(f[12]))
+    return out
+
+
+def top_others(before, after, floorp, secs, n=3):
+    rows = []
+    for pid, (comm, t) in after.items():
+        if pid in before and int(pid) not in floorp and t > before[pid][1]:
+            rows.append((t - before[pid][1], comm))
+    rows.sort(reverse=True)
+    return [{"comm": c, "cpu": round(100 * t / CLK / secs)} for t, c in rows[:n]]
+
+
+def focused():
+    try:
+        w = json.loads(subprocess.run(["hyprctl", "activewindow", "-j"], capture_output=True,
+                                      text=True, timeout=1).stdout or "{}")
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None, None
+    return "floorp" in (w.get("class") or "").lower(), w.get("title")
+
+
+def find_processes():
+    """Floorp's processes: pid -> kind."""
+    out = {}
+    for pid in os.listdir("/proc"):
+        if not pid.isdigit():
+            continue
+        try:
+            if os.readlink(f"/proc/{pid}/exe") != EXE:
+                continue
+        except OSError:
+            continue
+        comm = (read(f"/proc/{pid}/comm") or "").strip()
+        kind = KINDS.get(comm, comm)
+        if kind:
+            out[int(pid)] = kind
+    return out
+
+
+def find_threads(procs):
+    """The watched threads: (pid, tid) -> (kind, thread name)."""
+    out = {}
+    for pid, kind in procs.items():
+        out[(pid, pid)] = (kind, "main")
+        if kind in ("parent", "gpu"):
+            try:
+                tids = os.listdir(f"/proc/{pid}/task")
+            except OSError:
+                continue
+            for tid in tids:
+                name = (read(f"/proc/{pid}/task/{tid}/comm") or "").strip()
+                if name in UI_THREADS:
+                    out[(pid, int(tid))] = (kind, name)
+    return out
+
+
+class Log:
+    def write(self, rec):
+        os.makedirs(STATE, exist_ok=True)
+        try:
+            if os.path.getsize(LOG) > LOG_MAX:
+                os.replace(LOG, LOG + ".1")
+        except OSError:
+            pass
+        with open(LOG, "a") as f:
+            f.write(json.dumps(rec, separators=(",", ":")) + "\n")
+
+
+class Run:
+    """A thread's current stretch of busy ticks."""
+
+    def __init__(self, now, majflt, snap):
+        self.start, self.on, self.wait, self.secs, self.ticks = now, 0, 0, 0.0, 0
+        self.majflt, self.snap = majflt, snap
+
+
+def monitor():
+    log = Log()
+    procs, threads = {}, {}
+    last_sched, runs, blocked = {}, {}, {}
+    snap, snap_at = None, 0.0
+    next_scan = next_threads = next_stats = 0.0
+    stats_cpu, stats_t = {}, time.monotonic()
+    prev = time.monotonic()
+
+    def context(rec, majflt_from, run_snap, secs):
+        is_focused, title = focused()
+        rec.update(focused=is_focused, title=title, psi=pressure())
+        if majflt_from is not None:
+            rec["majflt"] = majflt(procs) - majflt_from
+        if run_snap:
+            rec["others"] = top_others(run_snap, all_cpu(), procs, max(secs, TICK))
+        log.write(rec)
+
+    while True:
+        now = time.monotonic()
+        elapsed, prev = now - prev, now
+        late = elapsed - TICK
+
+        if now >= next_scan:
+            found = find_processes()
+            if found != procs or now >= next_threads:
+                procs, threads = found, find_threads(found)
+                close_gone(procs)
+                for d in (last_sched, runs):
+                    for key in [k for k in d if k not in threads]:
+                        del d[key]
+                for pid in [p for p in blocked if p not in procs]:
+                    del blocked[pid]
+                next_threads = now + THREADS_EVERY
+            next_scan = now + (SCAN_EVERY if procs else SCAN_EVERY * 2)
+        if not procs:
+            last_sched.clear(); runs.clear(); blocked.clear()
+            time.sleep(SCAN_EVERY)
+            prev = time.monotonic()
+            continue
+
+        if STALL < late < SUSPEND:
+            context({"t": time.time(), "type": "system-stall", "ms": round(late * 1000)}, None, None, late)
+            last_sched.clear(); runs.clear()
+
+        majflt_now = None
+        for key, (kind, name) in threads.items():
+            pid, tid = key
+            cur = schedstat(pid, tid)
+            if cur is None:
+                continue
+            was = last_sched.get(key)
+            last_sched[key] = cur
+            if was is None or late >= SUSPEND:
+                continue
+            on, wait = cur[0] - was[0], cur[1] - was[1]
+            run = runs.get(key)
+            if (on + wait) >= BUSY_FRAC * elapsed * 1e9:
+                if run is None:
+                    if majflt_now is None:
+                        majflt_now = majflt(procs)
+                    if snap is None or now - snap_at > 1.0:
+                        snap, snap_at = all_cpu(), now
+                    run = runs[key] = Run(now - elapsed, majflt_now, snap)
+                run.on += on; run.wait += wait; run.secs += elapsed; run.ticks += 1
+                continue
+            if run is None:
+                continue
+            del runs[key]
+            if run.ticks < MIN_TICKS:
+                continue
+            secs = run.secs
+            st = proc_stat(pid)
+            context({
+                "t": time.time() - (now - run.start), "type": "starved" if run.wait > STARVED_FRAC * (run.on + run.wait) else "busy",
+                "kind": kind, "thread": name, "pid": pid, "ms": round(secs * 1000),
+                "cpu_ms": round(run.on / 1e6), "wait_ms": round(run.wait / 1e6),
+                "rss_mb": round(st[3] / 1024) if st else None,
+            }, run.majflt, run.snap, secs)
+
+        for pid, kind in procs.items():
+            st = proc_stat(pid)
+            if st and st[0] == "D":
+                if pid not in blocked:
+                    blocked[pid] = (now, majflt(procs))
+            elif pid in blocked:
+                since, flt = blocked.pop(pid)
+                if now - since >= MIN_TICKS * TICK * 0.9:
+                    context({"t": time.time() - (now - since), "type": "blocked", "kind": kind, "pid": pid,
+                             "ms": round((now - since) * 1000), "rss_mb": round(st[3] / 1024) if st else None},
+                            flt, None, now - since)
+
+        if now >= next_stats:
+            cpu, rss, count = defaultdict(int), defaultdict(int), defaultdict(int)
+            for pid, kind in procs.items():
+                st = proc_stat(pid)
+                if st:
+                    cpu[kind] += st[2] - stats_cpu.get(pid, st[2])
+                    stats_cpu[pid] = st[2]
+                    rss[kind] += st[3]
+                    count[kind] += 1
+            secs = now - stats_t
+            if next_stats:
+                log.write({"t": time.time(), "type": "stats", "secs": round(secs),
+                           "cpu": {k: round(100 * v / CLK / secs, 1) for k, v in cpu.items()},
+                           "rss_mb": {k: round(v / 1024) for k, v in rss.items()},
+                           "procs": dict(count), "psi": pressure()})
+            stats_t, next_stats = now, now + STATS_EVERY
+            stats_cpu = {p: c for p, c in stats_cpu.items() if p in procs}
+
+        time.sleep(max(0.0, TICK - (time.monotonic() - now)))
+
+
+def report(hours):
+    since = time.time() - hours * 3600
+    recs = []
+    for path in (LOG + ".1", LOG):
+        for line in (read(path) or "").splitlines():
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if r.get("t", 0) >= since:
+                recs.append(r)
+    hitches = [r for r in recs if r["type"] != "stats"]
+    stats = [r for r in recs if r["type"] == "stats"]
+    print(f"Last {hours:g} h: {len(hitches)} hitches, "
+          f"{sum(1 for r in hitches if r.get('focused'))} while Floorp was focused")
+    if not recs:
+        return
+
+    groups = defaultdict(list)
+    for r in hitches:
+        groups[(r["type"], r.get("kind", "-"), r.get("thread", "-"))].append(r["ms"])
+    if groups:
+        print(f"\n  {'type':<13}{'process':<15}{'thread':<11}{'count':>6}{'total s':>9}{'worst ms':>9}")
+        for (t, k, th), ms in sorted(groups.items(), key=lambda g: -sum(g[1])):
+            print(f"  {t:<13}{k:<15}{th:<11}{len(ms):>6}{sum(ms) / 1000:>9.1f}{max(ms):>9}")
+
+    worst = sorted(hitches, key=lambda r: -r["ms"])[:10]
+    if worst:
+        print("\nWorst:")
+    for r in worst:
+        when = time.strftime("%a %H:%M:%S", time.localtime(r["t"]))
+        what = f"{r['type']} {r.get('kind', '')} {r.get('thread', '')}".strip()
+        psi = " ".join(f"{k}={v:g}" for k, v in (r.get("psi") or {}).items() if v)
+        others = ", ".join(f"{o['comm']} {o['cpu']}%" for o in r.get("others") or [])
+        print(f"  {when}  {r['ms']:>5} ms  {what}"
+              + (f"  cpu {r['cpu_ms']} / queued {r['wait_ms']} ms" if "cpu_ms" in r else "")
+              + (f"  majflt {r['majflt']}" if r.get("majflt") else ""))
+        print(f"      {'focused' if r.get('focused') else 'unfocused'}: {(r.get('title') or '')[:70]}")
+        if psi or others:
+            print(f"      {('pressure ' + psi) if psi else ''}{'  ' if psi and others else ''}"
+                  f"{('others ' + others) if others else ''}")
+
+    if stats:
+        kinds = sorted({k for s in stats for k in s["cpu"]})
+        print(f"\nFloorp over {len(stats)} five-minute samples (avg / peak):")
+        for k in kinds:
+            cpu = [s["cpu"].get(k, 0) for s in stats]
+            rss = [s["rss_mb"].get(k, 0) for s in stats]
+            print(f"  {k:<15} cpu {sum(cpu) / len(cpu):5.1f}% / {max(cpu):5.1f}%"
+                  f"   rss {sum(rss) / len(rss):6.0f} / {max(rss):6.0f} MB")
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] == ["report"]:
+        report(float(sys.argv[2]) if len(sys.argv) > 2 else 24)
+    elif len(sys.argv) == 1:
+        try:
+            monitor()
+        except KeyboardInterrupt:
+            pass
+    else:
+        print(__doc__.split("\n\n")[1])
+        sys.exit(2)
