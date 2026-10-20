@@ -7,8 +7,6 @@
 export EDITOR=nvim
 export VISUAL=nvim
 export SUDO_EDITOR=nvim
-# scripts from dotfiles/singularity/.local/bin (floorp-watch)
-[[ :$PATH: == *:$HOME/.local/bin:* ]] || export PATH=$HOME/.local/bin:$PATH
 
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
