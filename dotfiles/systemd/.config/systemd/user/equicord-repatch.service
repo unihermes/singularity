@@ -1,0 +1,14 @@
+# Singularity - patch Equicord into the Discord folder in use (started by
+# equicord-repatch.path)
+#
+# Discord writes to its folder in bursts as it starts, each a trigger: the
+# pause lets a burst land as one run, and runs are never rate-limited, since
+# hitting the limit would fail the path unit and stop the watch.
+[Unit]
+Description=Patch Equicord into an updated Discord
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 3
+ExecStart=%h/.config/singularity/equicord-repatch.sh

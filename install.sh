@@ -846,6 +846,13 @@ log "enabling Bluetooth power state restore"
 systemctl --user enable --now bt-power-restore.service ||
   warn "could not enable Bluetooth power state restore"
 
+# puts Equicord back after Discord updates itself (see the script)
+if command -v equicord &>/dev/null; then
+  log "enabling the Equicord re-patch watcher"
+  systemctl --user enable --now equicord-repatch.path ||
+    warn "could not enable the Equicord re-patch watcher"
+fi
+
 
 # iwd as Type=exec, so the greeter doesn't wait out its module stall
 if have_unit iwd.service; then

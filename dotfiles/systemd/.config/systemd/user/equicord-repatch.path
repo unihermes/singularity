@@ -1,0 +1,13 @@
+# Singularity - re-patch Equicord when Discord updates itself
+#
+# An update adds an app-<version> folder and repoints the Discord link in
+# ~/.config/discord, both changes to the folder itself; see
+# ~/.config/singularity/equicord-repatch.sh.
+[Unit]
+Description=Watch Discord for self-updates that drop Equicord
+
+[Path]
+PathChanged=%h/.config/discord
+
+[Install]
+WantedBy=default.target
