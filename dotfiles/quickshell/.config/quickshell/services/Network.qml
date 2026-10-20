@@ -188,7 +188,15 @@ Singleton {
     // networks in iwd's own order with signal strength. A failure at either
     // step lands in listError for the flyout to show, instead of an empty
     // list that looks like there's simply nothing in range.
+    //
+    // A radio that's off has no station object, and that's no failure: the
+    // list is just empty, and the flyout and Settings say the radio is off.
+    // The station can also go between the two calls -- at login the saved
+    // "off" is put back (restorePower) while the first list is being read --
+    // and then GetOrderedNetworks fails with nothing on stdout. So an empty
+    // answer reads the objects once more, which settles which case it was.
     property var objects: ({})
+    property bool orderRetried: false
 
     function listFailed(why) {
         console.warn("network list: " + why)
@@ -223,7 +231,12 @@ Singleton {
                 }
                 known.sort((a, b) => a.last < b.last ? 1 : a.last > b.last ? -1 : 0)
                 root.knownNetworks = known
-                if (station === "") { root.listFailed("no station object for " + root.device); return }
+                if (station === "") {
+                    root.orderRetried = false
+                    root.listError = ""
+                    root.networks = []
+                    return
+                }
                 root.objects = objs
                 orderProc.command = ["busctl", "--json=short", "call", "net.connman.iwd", station,
                     "net.connman.iwd.Station", "GetOrderedNetworks"]
@@ -236,6 +249,12 @@ Singleton {
         id: orderProc
         stdout: StdioCollector {
             onStreamFinished: {
+                if (text.trim() === "" && !root.orderRetried) {
+                    root.orderRetried = true
+                    listProc.running = true
+                    return
+                }
+                root.orderRetried = false
                 var ordered
                 try { ordered = JSON.parse(text).data[0] }
                 catch (e) { root.listFailed("GetOrderedNetworks gave no JSON"); return }
