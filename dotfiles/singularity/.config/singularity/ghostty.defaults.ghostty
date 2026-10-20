@@ -30,6 +30,12 @@ shell-integration-features = no-cursor
 
 keybind = shift+enter=text:\x1b\r
 
+# Tabs on ctrl+t and ctrl+w, without shift; the shift versions are unbound.
+keybind = ctrl+t=new_tab
+keybind = ctrl+w=close_tab:this
+keybind = ctrl+shift+t=unbind
+keybind = ctrl+shift+w=unbind
+
 # --- colours and opacity --------------------------------------------------
 # Written by the shell (quickshell/services/AppearanceSync.qml) from the
 # active look: the same ANSI ramp and Settings.terminalOpacity Alacritty
