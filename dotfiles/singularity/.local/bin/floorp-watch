@@ -13,8 +13,9 @@ stuck in uninterruptible sleep (disk, swap) is "blocked", and the monitor
 itself waking late means the whole system stalled ("system-stall").
 
 Each hitch is a JSON line in ~/.local/state/singularity/floorp-watch.jsonl
-with the focused window, memory/CPU/IO pressure, Floorp's major faults and
-the busiest other processes over the hitch. Every 5 minutes a "stats" line
+with the focused window, how long since the last input, memory/CPU/IO
+pressure, Floorp's major faults and the busiest other processes over the
+hitch. Every 5 minutes a "stats" line
 records Floorp's CPU and memory per process kind.
 """
 
@@ -126,10 +127,22 @@ def all_cpu():
 def top_others(before, after, floorp, secs, n=3):
     rows = []
     for pid, (comm, t) in after.items():
-        if pid in before and int(pid) not in floorp and t > before[pid][1]:
+        if pid in before and int(pid) not in floorp and int(pid) != os.getpid() and t > before[pid][1]:
             rows.append((t - before[pid][1], comm))
     rows.sort(reverse=True)
     return [{"comm": c, "cpu": round(100 * t / CLK / secs)} for t, c in rows[:n]]
+
+
+def idle_secs():
+    """Seconds since the last keyboard/mouse input, from hypridle's marks
+    (singularity-idle is touched 2 s after input stops), or None."""
+    run = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+    try:
+        idle = os.stat(f"{run}/singularity-idle").st_mtime
+        active = os.stat(f"{run}/singularity-input").st_mtime
+    except OSError:
+        return None
+    return round(time.time() - idle + 2) if idle > active else 0
 
 
 def focused():
@@ -207,7 +220,7 @@ def monitor():
 
     def context(rec, majflt_from, run_snap, secs):
         is_focused, title = focused()
-        rec.update(focused=is_focused, title=title, psi=pressure())
+        rec.update(focused=is_focused, title=title, idle_s=idle_secs(), psi=pressure())
         if majflt_from is not None:
             rec["majflt"] = majflt(procs) - majflt_from
         if run_snap:
@@ -346,7 +359,8 @@ def report(hours):
         print(f"  {when}  {r['ms']:>5} ms  {what}"
               + (f"  cpu {r['cpu_ms']} / queued {r['wait_ms']} ms" if "cpu_ms" in r else "")
               + (f"  majflt {r['majflt']}" if r.get("majflt") else ""))
-        print(f"      {'focused' if r.get('focused') else 'unfocused'}: {(r.get('title') or '')[:70]}")
+        idle = f", idle {r['idle_s']} s" if r.get("idle_s") else ""
+        print(f"      {'focused' if r.get('focused') else 'unfocused'}{idle}: {(r.get('title') or '')[:70]}")
         if psi or others:
             print(f"      {('pressure ' + psi) if psi else ''}{'  ' if psi and others else ''}"
                   f"{('others ' + others) if others else ''}")
