@@ -33,3 +33,7 @@ user_pref("browser.newtabpage.activity-stream.feeds.telemetry", false);
 user_pref("browser.newtabpage.activity-stream.telemetry", false);
 user_pref("browser.ping-centre.telemetry", false);
 user_pref("floorp.experiments.participationPolicy", "never");
+
+// No idle memory reclaim: after 60 s without input it has every process
+// free memory, which froze the browser for about 2 s each time
+user_pref("floorp.memory.idleReclaim", "{\"enabled\":false,\"idleThresholdSec\":60,\"minIntervalSec\":300,\"minResidentMB\":400}");
