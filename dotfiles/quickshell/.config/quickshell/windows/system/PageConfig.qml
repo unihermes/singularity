@@ -1,31 +1,22 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/PageConfig.qml
 //
-// Every file this desktop is actually configured by, in one list, each one
-// a click away from an editor. The old window had two of these links; the
-// point of the page is that "where do I change that" is the question every
-// other page ends on, and the answer should not be a filesystem hunt.
-//
-// Paths are checked once when the page opens, in a single process, and a
-// file that isn't there is greyed rather than hidden -- seeing that a file
-// you expected is missing is half of what this page is for.
-//
-// The repository root is resolved rather than assumed: ~/.config/quickshell
-// is a symlink into the dotfiles repo (see install.sh), so following it and
-// walking up gives the checkout wherever it was cloned.
+// Every file this desktop is configured by, each a click from an editor;
+// missing ones greyed, checked once in one process. The repo root is found
+// by following ~/.config/quickshell's link.
 
 import Quickshell
 import Quickshell.Io
 import QtQuick
 import "../../services"
 import "../../flyouts"
+import "../../settings"
 // the page's own building blocks next door; QML needs the directory named
 import "../system"
 
 SystemPage {
     id: page
 
-    title: "Config"
     subtitle: "Click a file to edit it; the folder button shows it in the file manager"
 
     readonly property string home: Quickshell.env("HOME")
@@ -47,8 +38,8 @@ SystemPage {
                   note: "Every setting's default and where it is persisted" },
                 { label: "Theme.qml", path: home + "/.config/quickshell/services/Theme.qml",
                   note: "Colours, type scale, spacing, radii — the design tokens" },
-                { label: "looks.json", path: home + "/.config/quickshell/services/looks.json",
-                  note: "The palettes and frame styles the Appearance page offers" },
+                { label: "Looks.js", path: home + "/.config/quickshell/services/Looks.js",
+                  note: "The look's palette and the Appearance page's presets" },
                 { label: "BarModules.qml", path: home + "/.config/quickshell/bar/BarModules.qml",
                   note: "What each bar module is and what clicking it does" },
                 { label: "ControlCentre.qml", path: home + "/.config/quickshell/flyouts/ControlCentre.qml",
@@ -285,16 +276,13 @@ SystemPage {
     Repeater {
         model: page.shownGroups
 
+        // each group under a subhead, all in the FILES section
         Column {
             required property var modelData
             width: parent.width
             spacing: Theme.spaceXs
-            bottomPadding: Theme.spaceL
-            // sectioned as if its rows sat in the page
-            readonly property bool isSectionGroup: true
-            readonly property bool sectioned: true
 
-            FlyoutHeading { text: modelData.heading }
+            SettingsSubhead { caption: modelData.heading }
 
             Repeater {
                 model: modelData.items
@@ -321,32 +309,45 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "LOGS" }
 
-    FlyoutRow {
-        leadingIcon: "󰈙"
-        label: "Shell log"
-        note: "Quickshell's own messages since it started"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "less", "-R", "+G",
-            Quickshell.env("HOME") + "/.cache/quickshell.log"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰈙"
-        label: "Hyprland log"
-        note: "The compositor's log, following as it grows"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "tail -n 200 -f \"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log\""])
-    }
-    FlyoutRow {
-        leadingIcon: "󰏗"
-        label: "Pacman log"
-        note: "Every install, upgrade and removal"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "tail -n 400 /var/log/pacman.log | less +G"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰀦"
-        label: "Boot errors"
-        note: "Errors the system logged since it started"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "journalctl -b -p err -e"])
+    // each opens in a terminal; two to a line
+    Grid {
+        id: tools
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰈙"
+            label: "Shell log"
+            note: "Quickshell, since it started"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "less", "-R", "+G",
+                Quickshell.env("HOME") + "/.cache/quickshell.log"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰈙"
+            label: "Hyprland log"
+            note: "Following as it grows"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "tail -n 200 -f \"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/hyprland.log\""])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰏗"
+            label: "Pacman log"
+            note: "Installs and upgrades"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "tail -n 400 /var/log/pacman.log | less +G"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰀦"
+            label: "Boot errors"
+            note: "journalctl -b -p err"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "journalctl -b -p err -e"])
+        }
     }
 }

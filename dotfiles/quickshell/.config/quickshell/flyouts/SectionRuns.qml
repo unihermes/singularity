@@ -1,17 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/SectionRuns.qml
 //
-// The sectioned treatment: a frame behind each run of a column's children,
-// a run ending at a heading, a divider or a page's bare spacer Item. The
-// frame is the style's own (Theme.frameStyle):
-//   channel  the channel's three bands
-//   double   an outer stroke and an inner one inset
-//   single   one stroke
-//   bevel    a sunken chisel, a well in the raised panel
-//   corners  short marks at the corners
-//   none     the ground alone
-// Put it beside the column, under it, and say where the column's top sits
-// in this item.
+// A frame behind each run of a column's children (ending at a heading,
+// divider or bare spacer), in Theme.frameStyle; none under Flat. Put it
+// beside the column, under it, with the column's top as columnY.
 
 import QtQuick
 import "../services"
@@ -24,7 +16,7 @@ Item {
     property real columnY: 0
     // the gap kept between a run's first and last child and its channel
     property int padY: Theme.spaceS
-    property real radius: Theme.radius > 0 ? Theme.radius + 3 : 0
+    property real radius: Theme.sectionRadius
     property color fill: Theme.panelFill
 
     // [{ y0, y1 }] in the column's coordinates. A child marked
@@ -63,6 +55,7 @@ Item {
             width: root.width
             y: root.columnY + modelData.y0 - out
             height: modelData.y1 - modelData.y0 + out * 2
+            visible: Theme.sectionFramed
 
             Channel {
                 visible: Theme.frameChannel
@@ -79,8 +72,6 @@ Item {
                 border.width: Theme.frameStroked ? Theme.borderWidth : 0
                 border.color: Theme.stroke
 
-                CornerMarks { visible: Theme.frameCorners }
-
                 Rectangle {
                     visible: Theme.frameDouble
                     anchors.fill: parent
@@ -89,15 +80,6 @@ Item {
                     color: "transparent"
                     border.width: Theme.borderWidth
                     border.color: Theme.frameStroke
-                }
-
-                Bevel {
-                    visible: Theme.frameBevel
-                    anchors.fill: parent
-                    raised: false
-                    light: Theme.bevelLight
-                    dark: Theme.bevelDark
-                    thickness: Theme.borderWidth
                 }
             }
         }

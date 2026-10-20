@@ -1,12 +1,9 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/json.lua
 --
--- JSON decoder for the Hyprland config, loaded by shared.lua: windows.lua
--- reads window-rules.json with it, overrides.lua hyprland.json.
--- Hyprland's Lua has no JSON library, hence this. It covers the whole of
--- JSON except null inside arrays, which the Window Rules page never writes.
--- Returns nil for text that doesn't parse rather than raising, so a bad file
--- can never take the rest of the config down with it.
+-- JSON decoder (Hyprland's Lua has none), loaded by shared.lua for
+-- window-rules.json and hyprland.json. All of JSON but null in arrays;
+-- returns nil on bad input instead of raising.
 --
 -- Its own file so it can be run outside Hyprland:
 --   lua -e 'print(dofile("json.lua")(io.read("a"))[1].class)' < window-rules.json

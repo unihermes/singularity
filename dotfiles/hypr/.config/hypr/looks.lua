@@ -1,16 +1,10 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/looks.lua
 --
--- How windows look and move: gaps, borders, rounding, shadows, blur, the tab
--- bar over grouped windows, and the animations. Most values come from state
--- files the Appearance page writes; Settings > Appearance reads the plain
--- fields under general and decoration here, and writes its own changes to
--- hyprland.json (see overrides.lua).
---
--- grayscale ramp, shared with every other config in this repo:
---   #0b0b0b base   #121212 bar    #1a1a1a surface  #242424 overlay
---   #303030 border #4d4d4d muted  #7a7a7a subtext  #d0e2fa text
---   #ebebeb bright
+-- How windows look and move: gaps, borders, rounding, shadows, blur, the
+-- grouped windows' tab bar, animations. Values mostly come from state files
+-- Appearance writes; its own field changes go to hyprland.json
+-- (overrides.lua).
 
 local S = require("shared")
 
@@ -18,15 +12,10 @@ local S = require("shared")
 -- only slide or fade, so the styles that don't slide show it as a fade.
 local scratchStyle = S.windowSlides and "slidevert" or "fade"
 
--- "<active> <inactive>" border colours, written by the Appearance page when
--- borders follow the shell's accent; otherwise absent, and the colours
--- under general below apply.
+-- "<active> <inactive>" border colours when borders follow the accent
 local borderActive, borderInactive = S.state("borders", ""):match("^(%S+)%s+(%S+)$")
 
--- "<active tab> <inactive tab> <active text> <inactive text> <accent>" for
--- the tab bar over grouped windows (see TABS in windows.lua), written by the
--- Appearance page from the current look; absent, the colours under group
--- below apply.
+-- the tab bar's colours from the look; absent, the group defaults below
 local tabActive, tabInactive, tabText, tabTextInactive, tabAccent =
     S.state("groupbar", ""):match("^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$")
 
@@ -44,17 +33,15 @@ local activeOpacity, inactiveOpacity = S.state("window-opacity", ""):match("^(%S
 activeOpacity   = tonumber(activeOpacity) or 1
 inactiveOpacity = tonumber(inactiveOpacity) or 1
 
--- "<border width> <shadow>" from the Appearance page's style: the border
--- as thick as the shell's strokes, and its shadow ("none", "soft", "hard")
+-- "<border width> <shadow>" from the Appearance page: the border's width,
+-- and the shadow ("none", "small", "soft" -- the style's -- or "large")
 local windowBorder, windowShadow = S.state("window-frame", ""):match("^(%d+)%s+(%a+)$")
 windowBorder = tonumber(windowBorder) or 1
 windowShadow = windowShadow or "soft"
-local hardShadow = windowShadow == "hard"
+local shadowRange = ({ small = 8, soft = 18, large = 34 })[windowShadow] or 18
 
--- The open tab's fill, with a line of the accent along its top edge. The
--- groupbar has no colour of its own for that line (its indicator shares the
--- fill's colour), so it's the last stops of a vertical gradient: the last
--- two of twenty are the accent, a line about 2px thick on a 26px bar.
+-- the open tab's fill with an accent line along its top, as the last stops
+-- of a vertical gradient (the groupbar has no colour for it)
 local function tabFill(fill, accent)
     local colors = {}
     for i = 1, 18 do colors[i] = fill end
@@ -62,8 +49,10 @@ local function tabFill(fill, accent)
     return { colors = colors, angle = 270 }
 end
 
+-- `factor` is the Appearance page's own speed for the leaf's kind
 local function animation(t)
-    t.speed   = t.speed * S.animFactor
+    t.speed   = t.speed * S.animFactor * (t.factor or 1)
+    t.factor  = nil
     t.enabled = t.enabled and not S.animOff
     hl.animation(t)
 end
@@ -92,13 +81,13 @@ hl.config({
         dim_inactive = true,
         dim_strength = 0.4,
 
-        -- soft: black at 40 percent, blurred; hard: a solid offset copy
+        -- black at 40 percent, blurred as far as the size says
         shadow = {
             enabled      = windowShadow ~= "none",
-            range        = hardShadow and 2 or 18,
-            render_power = hardShadow and 1 or 3,
-            offset       = hardShadow and "4 4" or "0 0",
-            color        = hardShadow and "rgba(000000ff)" or "rgba(00000066)",
+            range        = shadowRange,
+            render_power = 3,
+            offset       = "0 0",
+            color        = "rgba(00000066)",
         },
 
         blur = {
@@ -163,9 +152,7 @@ hl.config({
         mouse_move_enables_dpms = true,
     },
 
-    -- A fullscreen game's frames go straight to the display, skipping
-    -- compositing; 2 limits it to windows tagged as games, where 1 (every
-    -- fullscreen window) can flicker on some apps.
+    -- direct scanout for windows tagged as games only (1 can flicker)
     render = {
         direct_scanout = 2,
     },
@@ -178,26 +165,22 @@ local windowSpeed, fadeSpeed = S.windowSpeed, S.fadeSpeed
 local windowStyle, windowsAnimate = S.windowStyle, S.windowsAnimate
 animation({ leaf = "global",     enabled = true, speed = 3, bezier = "singularity" })
 animation({ leaf = "border",     enabled = true, speed = 3, bezier = "singularity" })
-animation({ leaf = "windows",    enabled = true, speed = windowSpeed, bezier = "singularity", style = windowStyle })
-animation({ leaf = "windowsIn",  enabled = windowsAnimate, speed = windowSpeed, bezier = "singularity", style = windowStyle })
-animation({ leaf = "windowsOut", enabled = windowsAnimate, speed = 1.5, bezier = "singularity", style = windowStyle })
-animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, bezier = "singularity" })
-animation({ leaf = "fadeIn",     enabled = windowsAnimate, speed = fadeSpeed, bezier = "singularity" })
-animation({ leaf = "fadeOut",    enabled = windowsAnimate, speed = fadeSpeed, bezier = "singularity" })
-animation({ leaf = "workspaces", enabled = true, speed = 2, bezier = "singularity", style = "slidefade 12%" })
-animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, bezier = "singularity",
+local win, ws = S.windowsFactor, S.workspacesFactor
+animation({ leaf = "windows",    enabled = true, speed = windowSpeed, factor = win, bezier = "singularity", style = windowStyle })
+animation({ leaf = "windowsIn",  enabled = windowsAnimate, speed = windowSpeed, factor = win, bezier = "singularity", style = windowStyle })
+animation({ leaf = "windowsOut", enabled = windowsAnimate, speed = 1.5, factor = win, bezier = "singularity", style = windowStyle })
+animation({ leaf = "fade",       enabled = true, speed = fadeSpeed, factor = win, bezier = "singularity" })
+animation({ leaf = "fadeIn",     enabled = windowsAnimate, speed = fadeSpeed, factor = win, bezier = "singularity" })
+animation({ leaf = "fadeOut",    enabled = windowsAnimate, speed = fadeSpeed, factor = win, bezier = "singularity" })
+animation({ leaf = "workspaces", enabled = true, speed = 2, factor = ws, bezier = "singularity", style = "slidefade 12%" })
+animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, factor = ws, bezier = "singularity",
             style = scratchStyle })
 
--- Layer surfaces: wofi and the bar's flyouts. Faster than `global`, which
--- they'd otherwise inherit, since a launcher should appear at once. fade
--- rather than popin, since the bar is a layer too.
+-- layers (wofi, flyouts) faster than global, fading
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
--- The shell's surfaces (the bar is "quickshell", the rest "singularity-*")
--- blur what's behind their see-through grounds, which the Glass style and a
--- See-through below 100% rely on. ignore_alpha leaves the transparent rest
--- of a full-screen flyout surface, and the faint edge of a soft shadow,
--- unblurred.
+-- the shell's surfaces blur what's behind (Glass, See-through);
+-- ignore_alpha leaves fully transparent parts unblurred
 hl.layer_rule({
     name  = "shell-blur",
     match = { namespace = "^(quickshell|singularity-.*)$" },

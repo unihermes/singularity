@@ -1,25 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/Launcher.qml
 //
-// The search-first launcher that replaces wofi, drawn with the bar's own
-// theme. Four modes, cycled with Tab (Shift+Tab goes back):
+// The search-first launcher. Four modes, cycled with Tab (Shift+Tab back):
 //   apps       CTRL+SPACE   -- desktop entries (services/Apps.qml)
 //   files      SUPER+S      -- names under $HOME via fd (services/Files.qml)
 //   clipboard  SUPER+H      -- cliphist history (services/Clipboard.qml)
 //   calc       SUPER+slash  -- arithmetic (services/Calc.js), Enter copies
-// All four arrive as `qs ipc call launcher toggle <mode>` (shell.qml), which
-// sets scope.launcherMode and opens "launcher" in the shared openFlyout.
-//
-// calc's list is its result followed by the syntax it understands, filtered
-// to whatever is being typed ("sq" narrows it to sqrt). Enter on the result
-// copies it; Enter on a syntax row inserts it into the expression. So the
-// box is the same shape in every mode and Enter always acts on the current
-// row.
-//
-// Laid out as Theme.launcherLayout says: rows, a grid of app icons (apps
-// mode only), or one compact line under the field; placed as
-// Theme.launcherPosition says; and with or without each row's second line
-// and the key hints (Theme.launcherDetails).
+// Opened via `qs ipc call launcher toggle <mode>`. calc lists its result then
+// the syntax, filtered as you type; Enter acts on the current row. Laid out
+// per Theme.launcherLayout, launcherPosition and launcherDetails.
 
 import Quickshell
 import Quickshell.Wayland
@@ -87,13 +76,12 @@ OverlayWindow {
     readonly property bool line: Theme.launcherLayout === "line"
     readonly property bool gridOn: Theme.launcherLayout === "grid" && mode === "apps"
     readonly property bool details: Theme.launcherDetails && !line
-    readonly property int visibleRows: full ? 12 : 8
+    readonly property int visibleRows: Settings.launcherRows + (full ? 4 : 0)
     // whichever view is showing: the keys and the clicks drive this one
     readonly property var view: gridOn ? grid : list
 
-    // Rows scroll under a still pointer when the arrow keys move the list,
-    // and that counts as hovering a new row. Only real pointer movement
-    // may move the selection, or it snaps back to wherever the mouse sits.
+    // only real pointer movement moves the selection (keys scroll rows under
+    // a still pointer)
     property point lastPointer: Qt.point(-1, -1)
     function pointerMoved(item, x, y) {
         var p = item.mapToGlobal(x, y)
@@ -174,9 +162,7 @@ OverlayWindow {
     // a press on the other monitor too
     DismissGrab { panel: root }
 
-    // Every row is the height of two lines, whether or not it has a second,
-    // so the fill and stroke of the current row always clear its text and
-    // the box stays one size from mode to mode.
+    // every row two lines tall, so the box keeps one size across modes
     FontMetrics { id: bodyMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontBody }
     FontMetrics { id: captionMetrics; font.family: Theme.fontText; font.pixelSize: Theme.fontCaption }
     readonly property int rowHeight: Math.max(Theme.fieldHeight,
@@ -194,21 +180,12 @@ OverlayWindow {
         id: box
         width: Theme.fit(root.full ? 960 : 760)
         height: body.implicitHeight + Theme.panelPad * 4
-        // Centred on the screen, or hung off the bar where the flyouts sit,
-        // at a fixed size: the list area is always visibleRows tall, however
-        // many results there are, so the box doesn't shrink and re-centre on
-        // every keystroke. Grown has no group to grow from, so it sits flush.
+        // centred, or under the bar (flush when grown), at a fixed size so it
+        // doesn't re-centre per keystroke
         x: Math.round((parent.width - width) / 2)
         y: !root.underBar ? Math.round((parent.height - height) / 2)
             : root.atBottom ? parent.height - Theme.flyoutOffset - height
             : Theme.flyoutOffset
-
-        // a tab's corners at the bar are square, as the flyouts' are
-        readonly property int barCorner: root.underBar && Theme.flyoutAttach === "tab" ? 0 : radius
-        topLeftRadius: root.atBottom ? radius : barCorner
-        topRightRadius: root.atBottom ? radius : barCorner
-        bottomLeftRadius: root.atBottom ? barCorner : radius
-        bottomRightRadius: root.atBottom ? barCorner : radius
 
 
         Absorber {}
@@ -315,9 +292,7 @@ OverlayWindow {
                             : list.width
                         height: root.rowHeight
 
-                        // the row the keys are on, lit as Settings lights
-                        // its search hits: a fill and a quiet stroke, a tick
-                        // on the left edge and a grey chevron
+                        // the current row, lit as Settings' search hits
                         Rectangle {
                             anchors.fill: parent
                             radius: Theme.radiusInner
@@ -331,7 +306,7 @@ OverlayWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             width: Theme.indicatorWidth
                             height: parent.height - 6
-                            radius: width / 2
+                            radius: Theme.pill(width)
                             color: Theme.accent
                         }
 
@@ -373,10 +348,8 @@ OverlayWindow {
                             Text {
                                 id: nameText
                                 width: parent.width
-                                // `|| ""` throughout: switching mode swaps
-                                // the model out from under the delegates,
-                                // and for an instant a row of the old shape
-                                // is asked for the new mode's field
+                                // `|| ""`: switching mode can briefly hand
+                                // a row the other mode's data
                                 text: (root.clipMode
                                         ? (row.modelData.isImage ? "Image" : row.modelData.preview)
                                     : root.calcMode ? row.modelData.text
@@ -393,9 +366,8 @@ OverlayWindow {
                                 font.weight: row.isResult ? Theme.weightStrong : Theme.weightBody
                             }
 
-                            // what the app is, where the file is (so two of
-                            // the same name are told apart without opening
-                            // either), or what the syntax does
+                            // the second line: what the app is, where the
+                            // file is, or what the syntax does
                             Text {
                                 visible: text !== "" && root.details
                                 width: parent.width

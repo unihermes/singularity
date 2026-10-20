@@ -1,14 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Weather.qml
 //
-// Current conditions and a 3-day forecast from wttr.in, for the bar's
-// weather module and its flyout.
-//
-// wttr.in because it needs no API key and no configured location: with no
-// place in the URL it geolocates the request's IP, which is right for a
-// laptop that moves around. Refreshed every 30 minutes -- weather doesn't
-// change faster than that, and wttr.in rate-limits clients that poll hard.
-// On failure the last good reading is kept rather than blanked.
+// Conditions and a 3-day forecast from wttr.in (no key, IP-located), every
+// 30 minutes; a failure keeps the last reading.
 
 pragma Singleton
 
@@ -137,10 +131,7 @@ Singleton {
         onTriggered: root.refresh()
     }
 
-    // After a failed fetch, try again every 3 minutes instead of waiting out
-    // the full half hour -- one dropped request (waking from suspend before
-    // Wi-Fi is back, say) otherwise left the module stale that long. Stops by
-    // itself once a fetch succeeds and clears `failed`.
+    // retries every 3 minutes after a failure, until one succeeds
     Timer {
         interval: 180000
         repeat: true

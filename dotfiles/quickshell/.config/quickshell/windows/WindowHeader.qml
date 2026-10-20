@@ -1,12 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/WindowHeader.qml
 //
-// The title bar the standalone windows (Settings, System, Keybinds) share,
-// one line high: an accent bar, the window's name with a quieter subtitle
-// after it, then `slot` -- the rest of the line, where Settings puts its
-// search -- and a Close button. Dragging it moves the window.
-//
-// Sits over a WindowChrome, which draws the ground and takes Escape.
+// The standalone windows' one-line title bar: accent bar, name and subtitle,
+// `slot` (Settings' search), Close; drags the window. While `linked` (a page
+// is open), the name is a link `back` to Home.
 
 import QtQuick
 import "../services"
@@ -18,8 +15,11 @@ Item {
     required property var window
     property string title: ""
     property string subtitle: ""
+    property bool linked: false
     // the space between the title and Close, for a search field
     readonly property alias slot: slot
+
+    signal back()
 
     x: Theme.windowPad
     y: Theme.windowPad
@@ -36,7 +36,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.max(3, Theme.borderWidth * 3)
         height: titleText.implicitHeight
-        radius: width / 2
+        radius: Theme.pill(width)
         color: Theme.accent
     }
 
@@ -46,10 +46,19 @@ Item {
         anchors.leftMargin: Theme.spaceL
         anchors.verticalCenter: parent.verticalCenter
         text: root.title
-        color: Theme.textStrong
+        color: titleMouse.containsMouse ? Theme.accent : Theme.textStrong
         font.family: Theme.fontText
         font.pixelSize: Theme.fontTitle
         font.weight: Theme.weightStrong
+
+        MouseArea {
+            id: titleMouse
+            anchors.fill: parent
+            enabled: root.linked
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.back()
+        }
     }
 
     Text {

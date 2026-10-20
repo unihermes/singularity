@@ -2,11 +2,8 @@
 // ~/.config/quickshell/services/DesktopThemes.qml
 //
 // The cursor and icon themes installed, for the Appearance page's pickers.
-// Both live in the same XDG icon directories: a cursor theme is one with a
-// cursors/ folder, an icon theme one whose index.theme lists Directories.
-// Bibata's index.theme only inherits, so it counts as a cursor theme alone,
-// while Adwaita is both. `default` (an alias for another theme) and
-// `hicolor` (the fallback every icon theme inherits) are never offered.
+// A cursor theme has a cursors/ folder, an icon theme Directories in its
+// index.theme; `default` and `hicolor` are never offered.
 
 pragma Singleton
 
@@ -27,6 +24,36 @@ Singleton {
     function label(t) { return names[t] || t.replace(/-/g, " ") }
 
     function refresh() { if (!scan.running) scan.running = true }
+
+    // A few apps' icons from the icon theme in use, for the Appearance
+    // page's preview: an SVG where the theme has one, else its largest PNG,
+    // from the first of the theme's folders that has the icon (a local
+    // folder can override a few of a system theme's).
+    property var preview: []
+    readonly property var previewNames: ["firefox", "org.gnome.Nautilus", "utilities-terminal", "accessories-text-editor",
+                                         "org.gnome.Settings", "multimedia-video-player", "accessories-calculator"]
+    function refreshPreview() {
+        peek.command = ["sh", "-c",
+            "t=\"$1\"; shift; for n in \"$@\"; do " +
+            "  for d in \"$HOME/.local/share/icons/$t\" \"$HOME/.icons/$t\" \"/usr/share/icons/$t\"; do " +
+            "    [ -d \"$d\" ] || continue; " +
+            "    f=$(find -L \"$d\" -name \"$n.svg\" 2>/dev/null | head -n 1); " +
+            "    [ -n \"$f\" ] || f=$(find -L \"$d\" -name \"$n.png\" 2>/dev/null | sort -V | tail -n 1); " +
+            "    [ -n \"$f\" ] && { echo \"$f\"; break; }; done; done; true", "sh", Settings.iconTheme].concat(previewNames)
+        peek.running = true
+    }
+
+    Process {
+        id: peek
+        stdout: StdioCollector {
+            onStreamFinished: root.preview = text.split("\n").filter(l => l !== "")
+        }
+    }
+
+    Connections {
+        target: Settings
+        function onIconThemeChanged() { root.refreshPreview() }
+    }
 
     Process {
         id: scan

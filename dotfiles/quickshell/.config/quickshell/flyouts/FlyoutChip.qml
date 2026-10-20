@@ -1,17 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutChip.qml
 //
-// A small bordered button for inline actions inside a flyout row -- the
-// Log / Restart / Clear on a failed unit, the media transport controls --
-// where a full-width FlyoutRow per action would bury the list under them.
-//
-// Each style draws its own: a stroked chip (with Double's inner stroke or
-// Bevel's raised edge), a filled block (Solid), a pill (Capsule), frosted
-// glass, or corner marks round spaced capitals (Corners).
-//
-// `confirmText` makes it two clicks, for what can't be undone: the first
-// arms it -- alert-red, reading confirmText -- and the second emits
-// clicked(). It disarms itself after 3s.
+// A small button for inline actions in a row, drawn per style.
+// `confirmText` makes it two clicks (armed for 3s, alert-red).
 
 import QtQuick
 import "../services"
@@ -39,7 +30,6 @@ Item {
     readonly property bool hot: root.enabled && mouse.containsMouse
 
     implicitWidth: content.implicitWidth + Theme.spaceM * 2 + (glyph && !armed ? 2 : 0)
-        + (kind === "corners" ? Theme.spaceS : 0)
     implicitHeight: Theme.chipHeight
 
     Rectangle {
@@ -49,27 +39,23 @@ Item {
             : root.hot ? Theme.strokeHover : Theme.stroke
         readonly property color frost: Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
         anchors.fill: parent
-        radius: root.kind === "capsule" ? height / 2 : Theme.radiusInner
+        radius: Theme.radiusInner
         color: root.armed ? Theme.alert
             : root.selected ? Theme.accent
             : root.kind === "solid" ? (root.hot ? Theme.overlay : Theme.surface)
-            : root.kind === "capsule" ? (root.hot ? Theme.surface : Theme.overlay)
             : root.kind === "glass" ? (root.hot ? Theme.stroke : frost)
-            : root.kind === "corners" ? (root.hot ? Theme.overlay : "transparent")
+            : root.kind === "flat" ? Theme.overlay
             : Theme.controlFill(root.hot ? Theme.hoverFillSoft : "transparent")
-        border.width: root.kind === "solid" || root.kind === "capsule" || root.kind === "corners" ? 0
+        border.width: root.kind === "solid" ? 0
             : root.kind === "glass" ? Theme.borderWidth
+            : root.kind === "flat" ? (root.hot && !root.armed && !root.selected ? Math.max(2, Theme.borderWidth * 2) : 0)
             : Theme.controlBorder(edge)
-        border.color: root.kind === "glass" ? Theme.stroke : Theme.controlStroke(edge)
-
-        CornerMarks {
-            visible: root.kind === "corners"
-            color: root.selected || root.armed ? Theme.accent : root.hot ? Theme.textStrong : Theme.muted
-        }
+        border.color: root.kind === "glass" ? Theme.stroke
+            : root.kind === "flat" ? Theme.subtext : Theme.controlStroke(edge)
 
         // a lit chip is a pressed button
         ControlEdge {
-            visible: ["channel", "double", "bevel", "tabbed"].indexOf(root.kind) !== -1
+            visible: root.kind === "channel" || root.kind === "double"
             stroke: box.edge; sunken: root.selected; radius: box.radius
             lit: false
         }
@@ -102,9 +88,7 @@ Item {
         Text {
             id: label
             anchors.verticalCenter: parent.verticalCenter
-            text: root.armed ? root.confirmText
-                : root.kind === "corners" && !root.glyph ? root.text.toUpperCase() : root.text
-            font.letterSpacing: root.kind === "corners" && !root.glyph ? 1 : 0
+            text: root.armed ? root.confirmText : root.text
             color: !root.enabled ? Theme.textDisabled
                 : root.armed ? Theme.base
                 : root.selected ? Theme.textOnAccent

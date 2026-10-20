@@ -1,22 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Wallpaper.qml
 //
-// The wallpaper, and the colours taken from it.
-//
-// hypr/wallpaper.sh does the actual work of showing an image (swaybg has no
-// IPC, so each change is a new swaybg) and is what restores the choice at
-// login. This keeps the list, the current image, and the saved choice the
-// script reads back.
-//
-// In wallpaper colour mode, matugen turns the image into a Material palette,
-// which is mapped onto the grayscale ramp's roles -- dark surface tones for
-// the grounds, outlines for the strokes, the primary tone for "bright" -- so
-// every component keeps asking Theme for the same names. Material's surface
-// and outline tones are close to neutral grey whatever the image, so each
-// role is then recoloured towards the wallpaper (see tint()). The result is
-// cached with the image and scheme it came from: matugen takes about half a
-// second, and without the cache every shell start would draw one grey frame
-// before the colours arrived.
+// The wallpaper and its colours. hypr/wallpaper.sh shows it (a new swaybg
+// each change) and restores it at login; this keeps the list and the saved
+// choice. In wallpaper colour mode matugen's palette is mapped onto the
+// ramp's roles and tinted towards the image (tint()), cached per image and
+// scheme so startup doesn't flash grey.
 
 pragma Singleton
 
@@ -28,6 +17,8 @@ Singleton {
     id: root
 
     readonly property string script: Quickshell.env("HOME") + "/.config/hypr/wallpaper.sh"
+    // where the images are: the repo's wallpapers/, beside the script's link
+    readonly property string folder: images.length > 0 ? images[0].substring(0, images[0].lastIndexOf("/")) : ""
     readonly property string stateDir: Settings.stateDir
 
     property var images: []
@@ -53,9 +44,8 @@ Singleton {
     function set(path) {
         if (!path || path === current) return
         current = path
-        Quickshell.execDetached([script, "set", path])
+        Quickshell.execDetached([script, "set", path, Settings.wallpaperFill])
         saveState()
-        if (Settings.wallpaperPerLook) Settings.setLookWallpaper(Settings.look, path)
     }
 
     function step(d) {
@@ -73,7 +63,8 @@ Singleton {
 
     function saveState() {
         if (current === "") return
-        stateFile.setText("shuffle=" + (Settings.wallpaperShuffle ? 1 : 0) + "\nwallpaper=" + current + "\n")
+        stateFile.setText("shuffle=" + (Settings.wallpaperShuffle ? 1 : 0) + "\nwallpaper=" + current
+            + "\nmode=" + Settings.wallpaperFill + "\n")
     }
 
     // Bumped whenever the mapping below changes, so a palette cached by an
@@ -83,9 +74,7 @@ Singleton {
         return c.version === mappingVersion && c.scheme === scheme && c.variant === variant && !!c.colors
     }
 
-    // How much of the wallpaper's colour each Intensity lets into the
-    // grounds, strokes and text, as a fraction of the source colour's own
-    // saturation.
+    // how much of the source's saturation each Intensity lets in
     readonly property var tintStrength: ({
         "scheme-neutral": 0.3,
         "scheme-tonal-spot": 0.55,
@@ -93,9 +82,8 @@ Singleton {
         "scheme-expressive": 0.8,
     })
 
-    // Each role keeps its lightness -- the ramp's contrast is what makes
-    // text readable against its ground -- and takes the source's hue, with
-    // `amount` of its saturation (never less than the role already had).
+    // a role keeps its lightness and takes the source's hue at `amount` of
+    // its saturation (never less than it had)
     function tint(hex, source, amount) {
         var c = Qt.color(hex), src = Qt.color(source)
         var sat = Math.min(1, Math.max(c.hslSaturation, src.hslSaturation * amount))
@@ -130,22 +118,15 @@ Singleton {
     Connections {
         target: Settings
         function onWallpaperShuffleChanged() { root.saveState() }
-        // a look's own wallpaper, when it has one and the image still exists
-        function onLookChanged() {
-            if (!Settings.wallpaperPerLook) return
-            var p = Settings.lookWallpapers[Settings.look]
-            if (p && root.images.indexOf(p) !== -1) root.set(p)
-        }
-        // turning it on starts with the current pairing
-        function onWallpaperPerLookChanged() {
-            if (Settings.wallpaperPerLook && root.current !== "")
-                Settings.setLookWallpaper(Settings.look, root.current)
+        // the same image again, fitted the new way
+        function onWallpaperFillChanged() {
+            root.saveState()
+            if (root.current !== "") Quickshell.execDetached([root.script, "set", root.current, Settings.wallpaperFill])
         }
     }
 
-    // A fresh random wallpaper every Settings.wallpaperInterval minutes.
-    // Any change of wallpaper starts the wait over (onCurrentChanged), so
-    // one picked by hand isn't replaced moments after being chosen.
+    // a random wallpaper every Settings.wallpaperInterval minutes; any change
+    // restarts the wait
     Timer {
         id: rotate
         interval: Math.max(1, Settings.wallpaperInterval) * 60000
@@ -180,19 +161,12 @@ Singleton {
                 if (!c) return
                 var v = root.variant
                 function pick(k) { return c[k][v].color }
-                // The grounds take their colour from primary_container, the
-                // most saturated dark tone matugen gives; strokes and text
-                // from primary, a little less of it so text stays near-white.
-                // The neutral scheme greys those out too, so there the
-                // wallpaper's own seed colour stands in for both.
+                // grounds tinted from primary_container, strokes and text from
+                // primary; the neutral scheme uses the seed colour
                 var ground = pick("primary_container"), accent = pick("primary")
                 if (Qt.color(ground).hslSaturation < 0.15) ground = accent = pick("source_color")
                 var k = root.tintStrength[root.scheme] || 0.55
-                // Dark: the grounds climb matugen's surface containers from
-                // the lowest, and the foreground its outline and on-surface
-                // tones. Light runs the other way, the way the light looks'
-                // ramps do: the panel palest, the base a step darker than the
-                // bar, strokes and text dark.
+                // dark climbs the surface containers; light runs the other way
                 var colors = v === "light" ? {
                     base:    root.tint(pick("surface_dim"),               ground, k),
                     bar:     root.tint(pick("surface_container_low"),     ground, k),

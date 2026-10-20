@@ -3,7 +3,8 @@
 //
 // Sound in three tabs: Output (which device plays, its level and mute),
 // Input (the microphone's), and Apps (each app playing right now, with a
-// level of its own). Outputs with nothing plugged in are left out. The
+// level of its own; an app with several streams, like a browser's tabs,
+// gets one level for them all). Outputs with nothing plugged in are left out. The
 // Audio page in Settings has the rest: those outputs, recording apps, and
 // moving an app to another output.
 
@@ -38,7 +39,7 @@ FlyoutPanel {
         model: [
             { value: "output", text: "Output" },
             { value: "input", text: "Input" },
-            { value: "apps", text: Audio.playing.length > 0 ? "Apps " + Audio.playing.length : "Apps" },
+            { value: "apps", text: Audio.playingApps.length > 0 ? "Apps " + Audio.playingApps.length : "Apps" },
         ]
         current: volumeFlyout.tab
         onPicked: v => volumeFlyout.tab = v
@@ -132,38 +133,43 @@ FlyoutPanel {
     // --- apps -----------------------------------------------------------------
 
     Repeater {
-        model: ScriptModel { values: volumeFlyout.tab === "apps" ? Audio.playing : [] }
+        model: ScriptModel { values: volumeFlyout.tab === "apps" ? Audio.playingApps : [] }
 
         Column {
             id: app
             required property var modelData
-            readonly property var n: modelData
-            readonly property bool ready: n.ready && !!n.audio
-            readonly property bool muted: ready && n.audio.muted
-            readonly property string iconName: n.properties ? n.properties["application.icon-name"] || "" : ""
+            readonly property var nodes: modelData.nodes.filter(n => n.ready && !!n.audio)
+            readonly property bool ready: nodes.length > 0
+            readonly property bool muted: ready && nodes.every(n => n.audio.muted)
+            // the loudest stream's level stands for the app
+            readonly property int percent: ready ? Math.round(Math.max(...nodes.map(n => n.audio.volume)) * 100) : 0
+            readonly property string icon: Audio.appIcon(modelData.nodes[0])
             width: parent ? parent.width : 0
 
-            // the app's name; a click mutes it
+            // the app's name; a click mutes all its streams
             FlyoutRow {
-                leadingImage: app.iconName !== "" ? Quickshell.iconPath(app.iconName, true) : ""
-                leadingIcon: app.iconName === "" ? "󰓃" : ""
-                label: Audio.appName(app.n)
-                trailing: !app.ready ? "" : app.muted ? "Muted" : Math.round(app.n.audio.volume * 100) + "%"
+                leadingImage: app.icon
+                leadingIcon: app.icon === "" ? "󰓃" : ""
+                label: app.modelData.name
+                trailing: !app.ready ? "" : app.muted ? "Muted" : app.percent + "%"
                 trailingIsValue: true
-                onActivated: if (app.ready) app.n.audio.muted = !app.muted
+                onActivated: {
+                    var mute = !app.muted
+                    app.nodes.forEach(n => n.audio.muted = mute)
+                }
             }
 
             Slider {
                 width: parent.width
-                value: app.ready ? Math.round(app.n.audio.volume * 100) : 0
+                value: app.percent
                 opacity: app.muted ? 0.5 : 1
-                onMoved: v => { if (app.ready) app.n.audio.volume = v / 100 }
+                onMoved: v => app.nodes.forEach(n => n.audio.volume = v / 100)
             }
         }
     }
 
     FlyoutRow {
-        visible: volumeFlyout.tab === "apps" && Audio.playing.length === 0
+        visible: volumeFlyout.tab === "apps" && Audio.playingApps.length === 0
         enabled: false
         label: "Nothing is playing"
     }

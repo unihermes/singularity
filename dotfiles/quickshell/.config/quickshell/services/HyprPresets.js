@@ -1,23 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/HyprPresets.js
 //
-// The catalogue behind the Keybinds window's Presets tab: binds worth having
-// that a fresh config usually doesn't, written the way this config writes
-// them, so adding one is the same edit a person would make by hand.
-//
-// A preset is data, not a patch. It names the combo, what it should do (a
-// shell command, or a Lua dispatcher expression), the hl.bind options it
-// needs, and which `-- --- Section ---` it belongs under. HyprBinds.js turns
-// that into source text; this file never touches the config.
-//
-// Every entry is grounded in something real: a dispatcher from Hyprland's own
-// Lua stubs (/usr/share/hypr/stubs/hl.meta.lua), a call already in this
-// config, or a command whose tool is checked for before the preset is
-// offered (`needs`).
-//
-// status() is what the UI colours rows by: a preset can already be in the
-// config exactly as written, be in there on other keys, or want a combo
-// something else has taken.
+// The Keybinds window's suggested binds, as data: combo, action (a shell
+// command or a Lua dispatcher), hl.bind options and section. HyprBinds.js
+// writes them; every one is grounded in Hyprland's Lua stubs, this config,
+// or a tool checked for (`needs`). status() says how each compares with
+// the config.
 
 .import "HyprBinds.js" as HyprBinds
 
@@ -205,8 +193,6 @@ var PACKS = [
               cmd: "qs ipc call launcher toggle clipboard" },
             { keys: "SUPER + W", desc: "Show all workspaces", section: "Window Management",
               cmd: "qs ipc call overlay toggle" },
-            { keys: "SUPER + I", desc: "Ask Claude to change the desktop", section: "Claude",
-              cmd: "qs ipc call claude toggle" },
             { keys: "SUPER + K", desc: "Open the keybinds window", section: "Shell",
               cmd: "qs ipc call keybinds open" },
             { keys: "SUPER + CTRL + S", desc: "Open settings", section: "Shell",

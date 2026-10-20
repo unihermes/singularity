@@ -1,20 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutInput.qml
 //
-// A single-line text field sized like a FlyoutRow: a Wi-Fi passphrase, a
-// prompt, and every text setting on the Settings pages.
-//
-// `bleed` runs the frame out past the field's own edges, as a FlyoutRow's
-// hover fill does, so the typed text lines up with the row labels above it
-// in a flyout. On a Settings page it stays within its bounds, so its edges
-// line up with the chips and switches beside it.
-//
-// A search box is the same field with a `glyph` in front, lit while it has
-// focus, and key `hints` at its far end: the launcher's and Settings'.
-//
-// The panel it sits in must hold keyboard focus -- a layer-shell surface gets
-// no key events at all otherwise, and the field would look focused while
-// silently dropping every keystroke. A FlyoutPanel holds it while open.
+// A single-line text field sized like a FlyoutRow. `bleed` runs the frame
+// past its edges so text lines up with row labels in a flyout; `glyph` and
+// `hints` make it a search box. Its panel must hold keyboard focus, or a
+// layer surface gets no keys.
 
 import QtQuick
 import "../services"

@@ -24,6 +24,11 @@ Item {
     // that's empty: marks that have to line up down a list (a network's lock
     // and strength). "" leaves its cell blank.
     property var trailingIcons: []
+    // a quiet word before the last of those glyphs, in a fixed column (a
+    // network's strength in words beside its bars)
+    property string iconsNote: ""
+    // a quiet outlined word before everything at the right (Saved)
+    property string tag: ""
     // a glyph in a fixed cell before the label (a device's type)
     property string leadingIcon: ""
     // an image in the same cell, for an app's own icon
@@ -32,6 +37,9 @@ Item {
     property string note: ""
     // the note is styled text, for a part drawn brighter (a version's change)
     property bool noteStyled: false
+    // the label's fixed width before the note, so notes line up down a
+    // list (an alias's command); 0 sizes it to the label
+    property real labelColumn: 0
     // a word in an accent tag before the trailing text (Primary)
     property string badge: ""
     // something is in flight (connecting, pairing, a rescan): the row's
@@ -73,25 +81,16 @@ Item {
     implicitHeight: Theme.rowHeight
 
     // How the active entry is marked is the style's (Theme.rowMark): a
-    // tick on the left edge, an accent-tinted ground, the whole row filled
-    // with the accent, or corner marks
+    // tick on the left edge, or an accent-tinted ground
     readonly property string mark: Theme.rowMark
-    readonly property bool filled: root.highlighted && mark === "fill"
 
     Rectangle {
         anchors.fill: parent
         anchors.leftMargin: -Theme.spaceS
         anchors.rightMargin: -Theme.spaceS
-        radius: mark === "corners" ? 0 : Theme.radiusInner
-        color: root.filled ? Theme.accent
-            : root.highlighted && mark === "tint" ? Qt.tint(Theme.panel, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.24))
-            : root.highlighted && mark === "corners" ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.12)
+        radius: Theme.radiusInner
+        color: root.highlighted && mark === "tint" ? Qt.tint(Theme.panel, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.24))
             : mouse.containsMouse ? Theme.hoverFill : "transparent"
-
-        CornerMarks {
-            visible: root.highlighted && root.mark === "corners"
-            color: Theme.accent
-        }
     }
 
     // left edge tick on the active entry, instead of a fill: a filled row
@@ -102,7 +101,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.indicatorWidth
         height: parent.height - 6
-        radius: width / 2
+        radius: Theme.pill(width)
         color: Theme.accent
 
         visible: root.highlighted && root.mark === "tick"
@@ -140,7 +139,8 @@ Item {
         anchors.leftMargin: leadText.visible ? Theme.spaceM : root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
         // up to whatever sits at the right; the note takes what's left
-        width: Math.max(0, Math.min(root.note === "" ? Infinity : labelMetrics.advanceWidth + 1,
+        width: Math.max(0, Math.min(root.note === "" ? Infinity
+            : root.labelColumn > 0 ? root.labelColumn : labelMetrics.advanceWidth + 1,
             root.labelEnd - Theme.spaceL - x))
         text: root.armed ? root.confirmText
             : root.showAction && root.actionArmed && root.actionHint !== "" ? root.actionHint : root.label
@@ -148,7 +148,6 @@ Item {
         color: {
             if (root.alert || root.armed) return Theme.alert
             if (!root.enabled || root.dimmed) return Theme.subtext
-            if (root.filled) return Theme.textOnAccent
             if (root.highlighted || mouse.containsMouse) return Theme.textStrong
             return Theme.text
         }
@@ -169,6 +168,7 @@ Item {
     // where the label's room ends: the first thing at the right
     readonly property real labelEnd: showAction ? (extraIcon !== "" ? extraBtn.x : actionText !== "" ? actionChip.x : actionBtn.x)
         : badgeTag.visible ? badgeTag.x
+        : quietTag.visible ? quietTag.x
         : iconCells.visible ? iconCells.x : trailingText.x
 
     Text {
@@ -199,18 +199,59 @@ Item {
         opacity: root.pulse
 
         Repeater {
+            id: iconRep
             model: root.trailingIcons
 
-            Text {
+            Row {
                 required property string modelData
-                width: Theme.iconCell
-                horizontalAlignment: Text.AlignHCenter
-                text: modelData
-                color: trailingText.color
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontBody
-                font.weight: Theme.weightBody
+                required property int index
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.iconsNote !== "" && index === iconRep.count - 1
+                    width: Theme.fit(52)
+                    horizontalAlignment: Text.AlignRight
+                    rightPadding: Theme.spaceS
+                    text: root.iconsNote
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontSmall
+                    font.weight: Theme.weightBody
+                }
+                Text {
+                    width: Theme.iconCell
+                    horizontalAlignment: Text.AlignHCenter
+                    text: modelData
+                    color: trailingText.color
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontBody
+                    font.weight: Theme.weightBody
+                }
             }
+        }
+    }
+
+    Rectangle {
+        id: quietTag
+        visible: root.tag !== "" && !root.showAction
+        anchors.right: iconCells.visible ? iconCells.left : trailingText.left
+        anchors.rightMargin: Theme.spaceL
+        anchors.verticalCenter: parent.verticalCenter
+        width: tagText.implicitWidth + Theme.spaceM * 2
+        height: tagText.implicitHeight + Theme.spaceXs
+        radius: Theme.radiusSmall
+        color: "transparent"
+        border.width: Theme.borderWidth
+        border.color: Theme.stroke
+
+        Text {
+            id: tagText
+            anchors.centerIn: parent
+            text: root.tag
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontCaption
+            font.weight: Theme.weightBody
         }
     }
 
@@ -246,8 +287,7 @@ Item {
         // the information itself, so it reads strong. On a clickable row
         // it's decoration -- a chevron, a check -- and stays quiet; a state
         // in flight (connecting) sits between the two.
-        color: root.filled ? Theme.textOnAccent
-            : root.trailingIsValue ? Theme.textStrong
+        color: root.trailingIsValue ? Theme.textStrong
             : root.busy ? Theme.text
             : root.enabled ? Theme.muted : Theme.textDisabled
         // icon glyphs turn up here (the check/ban marks on toggle rows),

@@ -30,7 +30,7 @@ ClippingRectangle {
     readonly property int clockPx: ({ small: 40, large: 64, huge: 110 })[size] || 64
 
     implicitHeight: width * 10 / 16
-    radius: Theme.radiusInner
+    radius: Theme.sectionRadius
     color: Theme.base
 
     // the background: the wallpaper, or a desktop standing in for the

@@ -1,17 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/LinkRow.qml
 //
-// One entry on the Config page: a name, the path it stands for, a click
-// that opens it, and a hover button that reveals the containing folder.
-//
-// Opening goes through scripts/open-file.sh rather than xdg-open, for the
-// reasons that script's own header sets out -- half of what is listed here
-// is a .lua, a .conf or a shell script, and xdg-open silently does nothing
-// with most of those on this machine.
-//
-// A row whose file doesn't exist is shown greyed and refuses the click,
-// rather than hidden: half the value of this page is seeing that the
-// file you expected isn't there.
+// A Config page entry: name, path, a click that opens it (open-file.sh), a
+// hover button revealing its folder. A missing file is greyed and inert.
 
 import Quickshell
 import QtQuick

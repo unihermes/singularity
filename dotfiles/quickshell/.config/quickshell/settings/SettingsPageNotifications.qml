@@ -1,9 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageNotifications.qml
 //
-// The shell's own notifications (services/Notifications.qml): whether
-// popups show, the history, where popups appear and how long they stay,
-// quiet hours, and the apps silenced one by one.
+// The shell's own notifications (services/Notifications.qml): STATUS
+// (whether popups show, the history, quiet hours), POPUPS (where, grouping,
+// how long they stay) and APPS, each with its own popups switch.
 
 import Quickshell
 import Quickshell.Io
@@ -54,8 +54,6 @@ SettingsPage {
         Settings.notifSilent.forEach(a => { if (!by[a]) list.push({ app: a, count: 0, icon: "" }) })
         return list
     }
-    // the app open for its settings, null for none ("" is a nameless app)
-    property var openApp: null
 
     // A sample popup, where and as they'll appear. Transient, so it isn't
     // kept in the history.
@@ -109,108 +107,6 @@ SettingsPage {
             }
         }
     }
-
-    // --- popups --------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceM }
-
-    // the heading shares its line with Send a test
-    Item {
-        readonly property bool isSectionBreak: true
-        readonly property bool sectioned: true
-        width: parent.width
-        height: Math.max(Theme.controlSize, popupsHeading.implicitHeight)
-
-        FlyoutHeading {
-            id: popupsHeading
-            firstInColumn: false
-            anchors.left: parent.left
-            anchors.right: testChip.left
-            anchors.rightMargin: Theme.spaceL
-            anchors.verticalCenter: parent.verticalCenter
-            text: "POPUPS"
-        }
-
-        FlyoutChip {
-            id: testChip
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: popupsHeading.lift
-            text: "Send a test"
-            onClicked: {
-                testProc.running = true
-                if (Notifications.dnd) page.say("Do Not Disturb is on, so the test is held", false)
-            }
-        }
-    }
-
-    SettingsField {
-        label: "Position"
-        hint: ({ top: "Top", bottom: "Bottom" })[Settings.notifPositionY] + " "
-            + ({ left: "left", center: "centre", right: "right" })[Settings.notifPositionX] + " · click a spot"
-
-        PopupSpot {
-            anchors.right: parent.right
-            onPicked: (x, y) => Settings.setNotifPosition(x, y)
-        }
-    }
-
-    SettingsField {
-        label: "Group by app"
-        hint: Settings.notifGroup ? "One app's popups stack, with a count"
-            : "Each notification gets its own popup"
-
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.notifGroup
-            onToggled: Settings.set("notifGroup", !Settings.notifGroup)
-        }
-    }
-
-    // --- how long --------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "HOW LONG POPUPS STAY" }
-
-    // 4 s · 8 s · 16 s · 30 s · Never, and a value set by hand as its own
-    component Seconds: SettingsField {
-        id: sec
-        property string key: ""
-        readonly property int current: Settings[key]
-
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: {
-                var v = [4, 8, 16, 30]
-                if (sec.current > 0 && v.indexOf(sec.current) < 0) v = v.concat([sec.current]).sort((a, b) => a - b)
-                return v.map(s => ({ value: s, text: s + " s" })).concat([{ value: 0, text: "Never" }])
-            }
-            current: sec.current
-            onPicked: v => Settings.setNotifTimeout(sec.key, v)
-        }
-    }
-
-    Seconds {
-        key: "notifTimeout"
-        label: "Normal"
-        hint: "Unless the app asks for its own"
-    }
-    Seconds {
-        key: "notifTimeoutLow"
-        label: "Low priority"
-        hint: current === 0 ? "Stays until you dismiss it" : ""
-    }
-    Seconds {
-        key: "notifTimeoutCritical"
-        label: "Critical"
-        hint: current === 0 ? "Stays until you dismiss it" : "Critical ones are worth a longer look"
-    }
-
-    // --- quiet hours -------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "QUIET HOURS" }
 
     SettingsField {
         label: "Quiet hours"
@@ -317,15 +213,121 @@ SettingsPage {
         }
     }
 
-    QuietTime {
-        key: "notifQuietFrom"
-        label: "Starts"
-        hint: page.inQuiet ? "In quiet hours now" : ""
+    // a row of two, and each one's half
+    Grid {
+        id: quietTimes
+        visible: Settings.notifQuiet
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+        readonly property real half: (width - columnSpacing) / 2
+
+        QuietTime {
+            width: quietTimes.half
+            labelWidth: width - Theme.fit(190) - Theme.spaceL
+            key: "notifQuietFrom"
+            label: "Starts"
+            hint: page.inQuiet ? "In quiet hours now" : ""
+        }
+        QuietTime {
+            width: quietTimes.half
+            labelWidth: width - Theme.fit(190) - Theme.spaceL
+            key: "notifQuietTo"
+            label: "Ends"
+        }
     }
-    QuietTime {
-        key: "notifQuietTo"
-        label: "Ends"
-        hint: "DND turned off early stays off"
+
+    // --- popups --------------------------------------------------------------
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "POPUPS" }
+
+    // the spot picker beside where it is, grouping and a test
+    Row {
+        width: parent.width
+        spacing: Theme.spaceXl
+
+        PopupSpot {
+            id: spot
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fit(180)
+            height: Math.round(width * 10 / 16)
+            onPicked: (x, y) => Settings.setNotifPosition(x, y)
+        }
+
+        Column {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - spot.width - parent.spacing
+            spacing: Theme.spaceM
+
+            SettingsField {
+                width: parent.width
+                labelWidth: width - testChip.width - Theme.spaceL
+                label: "Position"
+                hint: ({ top: "Top", bottom: "Bottom" })[Settings.notifPositionY] + " "
+                    + ({ left: "left", center: "centre", right: "right" })[Settings.notifPositionX] + " · click a spot"
+
+                FlyoutChip {
+                    id: testChip
+                    anchors.right: parent.right
+                    text: "Send a test"
+                    onClicked: {
+                        testProc.running = true
+                        if (Notifications.dnd) page.say("Do Not Disturb is on, so the test is held", false)
+                    }
+                }
+            }
+
+            SettingsField {
+                width: parent.width
+                labelWidth: width - Theme.switchWidth - Theme.spaceL
+                label: "Group by app"
+                hint: Settings.notifGroup ? "Stacks, with a count" : "A popup each"
+
+                Switch {
+                    anchors.right: parent.right
+                    checked: Settings.notifGroup
+                    onToggled: Settings.set("notifGroup", !Settings.notifGroup)
+                }
+            }
+        }
+    }
+
+    SettingsSubhead { caption: "HOW LONG THEY STAY" }
+
+    // 4 s · 8 s · 16 s · 30 s · Never, and a value set by hand as its own
+    component Seconds: SettingsField {
+        id: sec
+        property string key: ""
+        readonly property int current: Settings[key]
+        width: durations.third
+        labelWidth: width - secPick.width - Theme.spaceL
+
+        SettingsDropdown {
+            id: secPick
+            anchors.right: parent.right
+            width: Theme.fit(110)
+            model: {
+                var v = [4, 8, 16, 30]
+                if (sec.current > 0 && v.indexOf(sec.current) < 0) v = v.concat([sec.current]).sort((a, b) => a - b)
+                return v.concat([0])
+            }
+            labelFor: v => v === 0 ? "Never" : v + " s"
+            current: sec.current
+            onPicked: v => Settings.setNotifTimeout(sec.key, v)
+        }
+    }
+
+    Grid {
+        id: durations
+        width: parent.width
+        columns: 3
+        columnSpacing: Theme.spaceXl
+        readonly property real third: (width - columnSpacing * 2) / 3
+
+        Seconds { key: "notifTimeout"; label: "Normal" }
+        Seconds { key: "notifTimeoutLow"; label: "Low" }
+        Seconds { key: "notifTimeoutCritical"; label: "Critical" }
     }
 
     // --- apps ------------------------------------------------------------------
@@ -335,45 +337,28 @@ SettingsPage {
 
     SettingsNote { text: "Every app in the history; silent ones skip the popup" }
 
-    component AppBlock: Column {
-        id: blk
-        required property var modelData
-        readonly property string app: modelData.app
-        readonly property bool silent: Settings.notifSilent.indexOf(app) >= 0
-        readonly property bool isOpen: page.openApp === app
-
-        width: parent ? parent.width : 0
-
-        FlyoutRow {
-            leadingImage: blk.modelData.icon
-            leadingIcon: blk.modelData.icon === "" ? "󰂚" : ""
-            label: blk.app !== "" ? blk.app : "Unknown"
-            highlighted: blk.isOpen
-            trailing: (blk.silent ? "Silent    " : "")
-                + (blk.modelData.count > 0 ? blk.modelData.count + " in the history" : "none in the history")
-                + "  " + (blk.isOpen ? "󰅀" : "󰅂")
-            onActivated: page.openApp = blk.isOpen ? null : blk.app
-        }
-
-        SettingsIndent {
-            visible: blk.isOpen
-
-            SettingsField {
-                label: "Popups"
-                hint: blk.silent ? "Silent: straight to the history" : "Pops up as it arrives"
-
-                Switch {
-                    anchors.right: parent.right
-                    checked: !blk.silent
-                    onToggled: Settings.setNotifSilent(blk.app, !blk.silent)
-                }
-            }
-        }
-    }
-
+    // each app with its popups switch
     Repeater {
         model: page.apps
-        AppBlock {}
+
+        SettingsField {
+            id: appRow
+            required property var modelData
+            readonly property string app: modelData.app
+            readonly property bool silent: Settings.notifSilent.indexOf(app) >= 0
+
+            image: modelData.icon
+            mark: modelData.icon === "" ? "󰂚" : ""
+            label: app !== "" ? app : "Unknown"
+            hint: silent ? "Silent: straight to the history"
+                : modelData.count > 0 ? modelData.count + " in the history" : "None in the history"
+
+            Switch {
+                anchors.right: parent.right
+                checked: !appRow.silent
+                onToggled: Settings.setNotifSilent(appRow.app, !appRow.silent)
+            }
+        }
     }
 
     FlyoutRow {

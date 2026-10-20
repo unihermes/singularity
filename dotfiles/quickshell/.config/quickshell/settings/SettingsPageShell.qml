@@ -1,23 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageShell.qml
 //
-// Which terminal opens (Alacritty or Ghostty), its look with a preview of
-// it, and the aliases in ~/.bash_aliases (which ~/.bashrc sources). The
-// files are this machine's own copies, seeded by link.sh, so nothing written
-// here shows up in the repo.
-//
-// Font size and cursor are written to both terminals' configs, so switching
-// keeps them alike; the page shows the picked one's.
-//
-// Two different kinds of instant, and the page says which is which.
-// Alacritty watches its own config and Ghostty is told to reload, so a change
-// there shows in every open terminal the moment it's written. The aliases
-// are only read when a shell starts, so alias edits apply to new terminals
-// -- the ones already open keep what they had until `source ~/.bashrc`.
-//
-// All are line edits, like the other pages: a TOML key's value inside its
-// [table], a Ghostty `key = value` line, or one `alias name='...'` line.
-// Everything else in each file is left as it was.
+// The terminal (Alacritty or Ghostty), its look with a preview, and
+// ~/.bash_aliases; this machine's own copies (link.sh). Font size and cursor
+// go to both terminals' configs. Terminal changes show at once (Alacritty
+// watches, Ghostty is told to reload); aliases apply to new shells. All are
+// line edits; the rest of each file is untouched.
 
 import Quickshell
 import Quickshell.Io
@@ -48,9 +36,8 @@ SettingsPage {
     // "table.key" -> raw TOML value text
     property var toml: ({})
 
-    // Line-based: tracks the current [table] header and reads `key = value`
-    // lines under it. Inline tables and arrays aren't looked into -- nothing
-    // this page sets lives in one.
+    // line-based: `key = value` under the current [table]; inline tables
+    // and arrays aren't read
     function parseToml(text) {
         var out = {}, table = ""
         text.split("\n").forEach(line => {
@@ -77,10 +64,8 @@ SettingsPage {
         return JSON.stringify(v)
     }
 
-    // Set key in [table], replacing its line, or adding it under the table
-    // header (and the header at the end of the file if there isn't one).
-    // Applied to the file as it is when the write runs, so steps queue
-    // rather than each being built on a read the one before replaces.
+    // sets key in [table], adding the line (and header) if missing; run on
+    // the file as it is when the write runs
     function tomlSet(text, table, key, value) {
         var lines = text.split("\n")
         var cur = "", headerAt = -1, lastInTable = -1
@@ -133,9 +118,7 @@ SettingsPage {
 
     // --- both ----------------------------------------------------------------
 
-    // One change to each terminal's config, through transforms of the file as
-    // it is when the write runs. A config that doesn't exist yet is left
-    // alone rather than started without the colours it imports.
+    // one change to each terminal's config; a missing config is left alone
     function writeBoth(alacritty, ghostty, message) {
         var left = 2, failed = false
         var finish = status => {
@@ -277,10 +260,7 @@ SettingsPage {
 
     // --- shared --------------------------------------------------------------
 
-    // Alias edits are checked with `bash -n` first. The callers build the
-    // whole file from a read made just before, so a second write can't be
-    // queued behind the first -- it would be built on the text the first one
-    // is about to replace.
+    // alias files are `bash -n` checked; built from a fresh read, so not queued
     function writeFile(path, text, message, checkBash) {
         if (AtomicFileWrite.busy) { say("Still writing the last change", true); return }
         AtomicFileWrite.write({
@@ -331,7 +311,7 @@ SettingsPage {
     readonly property real opacityShown: opacityDragged >= 0 ? opacityDragged : opacityNow
     readonly property bool blinking: cursorBlinking === "On" || cursorBlinking === "Always"
 
-    FlyoutHeading { text: "TERMINAL APP" }
+    FlyoutHeading { text: "TERMINAL" }
 
     SettingsField {
         label: "Terminal"
@@ -347,14 +327,16 @@ SettingsPage {
         }
     }
 
-    FlyoutHeading { text: page.appName.toUpperCase() }
+    // the terminal as it will look (background opacity, prompt, font,
+    // cursor) beside the rows that set it
+    Row {
+        width: parent.width
+        spacing: Theme.spaceXl
 
-    // A terminal as it will look: the wallpaper through the background at
-    // the opacity, the prompt in the look's colours at the font size, and
-    // the cursor's shape and blink.
     ClippingRectangle {
         id: term
-        width: parent.width
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.fit(260)
         height: Theme.fit(150)
         radius: Theme.radiusInner
         color: "transparent"
@@ -434,7 +416,7 @@ SettingsPage {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: Theme.spaceM
-            text: page.appName + ", as it will look"
+            text: page.appName
             color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody
@@ -442,110 +424,95 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Font size"
-        hint: "In points"
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            readonly property real current: page.fontSize
-            value: Math.round(current * 2)
-            minimum: 12
-            maximum: 64
-            valueWidth: 56
-            displayValue: current.toFixed(1)
-            onStepped: delta => page.setFontSize((value + delta) / 2)
-        }
-    }
+    Column {
+        id: lookRows
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width - term.width - parent.spacing
+        spacing: Theme.spaceM
 
-    // 30% to solid, in steps of 5
-    SettingsField {
-        label: "Opacity"
-        lookKey: "terminalOpacity"
-        hint: page.opacityShown >= 1 ? "Solid" : "The wallpaper shows through the background"
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.sp(10)
-
-            Slider {
-                width: Theme.fit(220)
-                anchors.verticalCenter: parent.verticalCenter
-                value: (page.opacityShown - 0.3) / 0.7 * 100
-                onMoved: v => page.opacityDragged = Math.round((0.3 + v / 100 * 0.7) * 20) / 20
-                onReleased: {
-                    var v = page.opacityDragged
-                    if (v >= 0 && Math.abs(v - page.opacityNow) > 0.001)
-                        Settings.set("terminalOpacity", v * 100)
-                    page.opacityDragged = -1
-                }
-            }
-            Text {
-                width: Theme.fs(52)
-                anchors.verticalCenter: parent.verticalCenter
-                horizontalAlignment: Text.AlignRight
-                text: Math.round(page.opacityShown * 100) + "%"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
+        SettingsField {
+            width: lookRows.width
+            labelWidth: width - Theme.fit(170) - Theme.spaceL
+            label: "Font size"
+            hint: "In points"
+            FlyoutStepper {
+                anchors.right: parent.right
+                width: Theme.fit(170)
+                readonly property real current: page.fontSize
+                value: Math.round(current * 2)
+                minimum: 12
+                maximum: 64
+                valueWidth: 56
+                displayValue: current.toFixed(1)
+                onStepped: delta => page.setFontSize((value + delta) / 2)
             }
         }
-    }
 
-    SettingsField {
-        label: "Cursor"
-        hint: page.blinking ? "Blinks while the terminal has focus" : "Steady"
-    }
+        // 30% to solid, in steps of 5
+        SettingsField {
+            width: lookRows.width
+            labelWidth: width - opacityRow.width - Theme.spaceL
+            label: "Opacity"
+            lookKey: "terminalOpacity"
+            hint: page.opacityShown >= 1 ? "Solid" : "Wallpaper shows through"
 
-    // each tile draws its cursor between two letters
-    SettingsTiles {
-        columns: 3
-        tileHeight: Theme.fs(64)
-        model: ["Block", "Beam", "Underline"].map(v => ({ value: v, text: v }))
-        current: page.cursorShape
-        onPicked: v => page.setCursor(v, page.cursorBlinking)
-        art: Component {
             Row {
-                id: art
-                readonly property string shape: parent ? parent.value : ""
-                spacing: 1
-                Text {
-                    id: letterA
-                    text: "a"
-                    color: Theme.text
-                    font.family: "UbuntuMono Nerd Font Mono"
-                    font.pixelSize: Theme.fs(20)
-                }
-                Item {
-                    width: art.shape === "Beam" ? 2 : letterA.implicitWidth
-                    height: letterA.implicitHeight
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: art.shape === "Underline" ? letterA.implicitHeight * 0.12 : letterA.implicitHeight * 0.08
-                        width: parent.width
-                        height: art.shape === "Underline" ? 2 : letterA.implicitHeight * 0.84
-                        color: Theme.textStrong
+                id: opacityRow
+                anchors.right: parent.right
+                spacing: Theme.sp(10)
+
+                Slider {
+                    width: Theme.fit(140)
+                    anchors.verticalCenter: parent.verticalCenter
+                    value: (page.opacityShown - 0.3) / 0.7 * 100
+                    onMoved: v => page.opacityDragged = Math.round((0.3 + v / 100 * 0.7) * 20) / 20
+                    onReleased: {
+                        var v = page.opacityDragged
+                        if (v >= 0 && Math.abs(v - page.opacityNow) > 0.001)
+                            Settings.set("terminalOpacity", v * 100)
+                        page.opacityDragged = -1
                     }
                 }
                 Text {
-                    text: "b"
-                    color: Theme.text
-                    font.family: "UbuntuMono Nerd Font Mono"
-                    font.pixelSize: Theme.fs(20)
+                    width: Theme.fs(52)
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignRight
+                    text: Math.round(page.opacityShown * 100) + "%"
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+            }
+        }
+
+        // the shape and whether it blinks; the preview shows both
+        SettingsField {
+            width: lookRows.width
+            labelWidth: width - cursorRow.width - Theme.spaceL
+            label: "Cursor"
+            hint: page.blinking ? "Blinks" : "Steady"
+
+            Row {
+                id: cursorRow
+                anchors.right: parent.right
+                spacing: Theme.spaceM
+
+                FlyoutSegmented {
+                    anchors.verticalCenter: parent.verticalCenter
+                    fill: false
+                    model: ["Block", "Beam", "Underline"].map(v => ({ value: v, text: v }))
+                    current: page.cursorShape
+                    onPicked: v => page.setCursor(v, page.cursorBlinking)
+                }
+                Switch {
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: page.blinking
+                    onToggled: page.setCursor(page.cursorShape, page.blinking ? "Off" : "On")
                 }
             }
         }
     }
-
-    SettingsField {
-        label: "Blinking"
-
-        Switch {
-            anchors.right: parent.right
-            checked: page.blinking
-            onToggled: page.setCursor(page.cursorShape, page.blinking ? "Off" : "On")
-        }
     }
 
     // --- aliases ---------------------------------------------------------------
@@ -619,8 +586,6 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "BASH ALIASES" + (page.aliases.length > 0 ? "  " + page.aliases.length : "") }
 
-    SettingsNote { text: "New terminals pick them up; open ones need source ~/.bashrc" }
-
     Repeater {
         model: page.aliases
 
@@ -635,6 +600,7 @@ SettingsPage {
             FlyoutRow {
                 label: al.modelData.name
                 note: al.modelData.value
+                labelColumn: Theme.fit(150)
                 highlighted: al.isOpen
                 trailing: al.isOpen ? "󰅀" : "󰅂"
                 onActivated: {

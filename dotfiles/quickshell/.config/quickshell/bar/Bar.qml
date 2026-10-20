@@ -25,10 +25,8 @@ PanelWindow {
     required property var windowMenu
     screen: bar.screenScope.modelData
 
-    // Both edges are listed and one is switched off, rather than
-    // anchoring to a single computed edge: a PanelWindow with left
-    // and right but neither top nor bottom is not a valid strut, so
-    // the pair has to stay mutually exclusive.
+    // both edges listed, one switched off: left+right with neither top nor
+    // bottom isn't a valid strut
     anchors {
         top: Theme.barPosition === "top"
         bottom: Theme.barPosition === "bottom"
@@ -38,17 +36,10 @@ PanelWindow {
     // a floating bar's window also holds the gap between it and the
     // screen edge, so windows tile clear of the whole thing
     implicitHeight: Theme.barHeight + Theme.barMargin
-    // Transparent, with the ground drawn by the Rectangle below. A
-    // Wayland surface decides whether it has an alpha channel when
-    // it's created, so a window that starts opaque stays opaque --
-    // assigning a translucent colour to it later does nothing. A
-    // window that starts transparent can show any opacity after.
+    // transparent at creation, or the surface can never show opacity
     color: "transparent"
 
-    // An open flyout leaves the bar out of its input (FlyoutPanel), so a
-    // press here that no module takes -- the bar's ground, the gap round a
-    // floating one, a button a module doesn't answer -- is the click off
-    // that closes it. Under everything else in the bar.
+    // a press no module takes is the click off that closes an open flyout
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
@@ -58,9 +49,7 @@ PanelWindow {
         }
     }
 
-    // Where the bar is drawn: the whole window when full width, inset
-    // from the screen edge and sides when floating. The modules lay
-    // out inside this, not the window.
+    // where the bar is drawn: the whole window, or inset when floating
     Item {
         id: barBody
         x: Theme.barMargin
@@ -69,17 +58,11 @@ PanelWindow {
         height: Theme.barHeight
     }
 
-    // Bar Opacity. Only the ground fades -- by its colour's alpha,
-    // so a floating bar's stroke stays solid -- and the chips and
-    // their text stay solid so the bar is still readable over a busy
-    // wallpaper.
-    // Theme.gradient: every ground below shaded top to bottom
-    // Glass's accent-tinted option mixes a little of the accent in
+    // See-through fades the ground only (chips stay solid); shaded under
+    // Theme.gradient, tinted under Glass's tint option
     readonly property color barTone: Theme.glass && Theme.opt("tint")
         ? Qt.tint(Theme.bar, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25)) : Theme.bar
     readonly property color barGround: Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b, Theme.barOpacity)
-    // a floating bar's or island's edge: Corners' is only a faint hairline
-    readonly property color barEdge: Theme.frameCorners ? Theme.cornerHairline : Theme.stroke
     property Gradient barShading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }
         GradientStop { position: 1; color: Theme.shadeBottom(bar.barGround) }
@@ -92,13 +75,10 @@ PanelWindow {
         gradient: Theme.gradient ? bar.barShading : null
         radius: Theme.barFloating ? Theme.barRadius : 0
         border.width: Theme.barFloating ? Theme.borderWidth : 0
-        border.color: bar.barEdge
+        border.color: Theme.stroke
     }
 
-    // Islands: the same ground, but one per group of modules, each
-    // hugging its group with the gap between them left open. The
-    // left and right ones reach the bar's edge; the centre one
-    // follows its modules as they appear and hide.
+    // Islands: a ground per module group; the centre one follows its modules
     Repeater {
         model: Theme.barIslands ? Settings.widgetSections : []
 
@@ -115,7 +95,7 @@ PanelWindow {
             color: bar.barGround
             gradient: Theme.gradient ? bar.barShading : null
             border.width: Theme.borderWidth
-            border.color: bar.barEdge
+            border.color: Theme.stroke
         }
     }
 
@@ -172,12 +152,8 @@ PanelWindow {
         return hi < lo ? { x: 0, w: 0 } : { x: centreSlots.x + lo, w: hi - lo }
     }
 
-    // adapter.enabled mirrors BlueZ's "Powered" property, but
-    // Quickshell writes it optimistically and never reverts it if
-    // the D-Bus Set call errors or is a no-op -- if that ever
-    // desyncs, "enabled" is stuck wrong with no way to notice.
-    // adapter.state ("PowerState") is populated only from BlueZ's
-    // own PropertiesChanged signals, so it's the true state.
+    // adapter.state (BlueZ's PowerState signals), not `enabled`, which
+    // Quickshell sets optimistically and never reverts
     function btAdapterOn(a) {
         return !!a && a.state === BluetoothAdapterState.Enabled
     }
@@ -189,14 +165,9 @@ PanelWindow {
         a.enabled = on
     }
 
-    // One icon per app on the focused workspace -- or with
-    // Theme.windowScope "all" on each workspace, in workspace order, each
-    // workspace's first marked so the strip can rule it off from the one
-    // before -- as on the Windows taskbar. Its windows, the app's dialogs
-    // and popups among them, are listed in `windows`: with one the icon
-    // stands for it, with more a click lists them (AppWindowsFlyout). The
-    // icon's own address and toplevel are the app's main window: its
-    // first that isn't a popout, else its first.
+    // One icon per app on the focused workspace (or per workspace, ruled
+    // off, under windowScope "all"), each listing its windows, popouts
+    // included; the icon's own window is the first that isn't a popout.
     function focusedWorkspaceIcons() {
         // read this so the binding re-evaluates once the desktop
         // entry scan (async at startup) finishes populating it
@@ -280,20 +251,13 @@ PanelWindow {
         return ""
     }
 
-    // A window windows.lua marks as a popout -- a dialog, a sign-in or
-    // settings popup, a password prompt -- or one an app opened while it
-    // already had a window up (an app rule's "held" side).
+    // a popout per windows.lua's tags, or an app rule's held side
     function isPopout(tags) {
         return tags.indexOf("popout") >= 0 || tags.indexOf("app-held") >= 0
     }
 
-    // The open window belonging to a tray item, if any, so clicking
-    // the tray icon can raise that window instead of asking the app
-    // to (which many ignore, or answer by toggling it hidden). Tray
-    // ids and titles are loose -- "spotify-client", "Discord",
-    // "chrome_status_icon_1" -- so both sides are reduced to bare
-    // lowercase letters and digits and matched on either one
-    // containing the other.
+    // the open window of a tray item, so its click raises it; ids and
+    // titles are reduced to lowercase letters and digits and matched either way
     function trayItemWindow(item) {
         function norm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]/g, "") }
         var keys = [norm(item.id), norm(item.title)].filter(function(k) { return k.length >= 3 })
@@ -320,9 +284,8 @@ PanelWindow {
         return null
     }
 
-    // an app open on workspace `id` for the workspace indicator's
-    // apps style -- the first that isn't one of the shell's windows
-    // -- as { source, glyph }, or null when there's none
+    // the workspace indicator's apps style: an app on workspace `id` as
+    // { source, glyph }, or null
     function workspaceApp(id) {
         var entryCount = DesktopEntries.applications.values.length
         var wss = Hyprland.workspaces.values
@@ -373,12 +336,8 @@ PanelWindow {
     }
 
     // --- module slots ----------------------------------------
-    // The left and right groups are laid out by hand rather than by
-    // a Row, because a Row can only place children in the order they
-    // are declared, and Bar Widgets lets that order be changed. Each
-    // module takes its x from the saved order: the sum of the widths
-    // of the visible modules before it. A hidden module takes no
-    // space, so the rest close up around it.
+    // laid out by hand, not a Row, so the saved order applies: each module's
+    // x is the width of the visible ones before it
 
     // The bar's 19 modules, in BarModules.qml -- split out since
     // each module's own logic buried the layout plumbing below.
@@ -393,9 +352,7 @@ PanelWindow {
 
     function widgetItem(key) { return barModules.widgetItems[key] }
 
-    // Every module lives in the slot container of its saved section,
-    // at the x its saved order gives it. Bound here once rather than
-    // on each module, so a module only declares what it shows.
+    // every module in its saved section's slot container, at its order's x
     Component.onCompleted: {
         const items = barModules.widgetItems
         const defaults = [].concat(...Settings.widgetSections.map(s => Settings.widgetDefaults[s]))
@@ -429,10 +386,8 @@ PanelWindow {
         return x
     }
 
-    // Centre positions. With a pinned module visible in the centre,
-    // it sits dead centre and the rest are measured outward from its
-    // edges; otherwise the visible modules are centred as one group.
-    // Rounded, since a half-pixel x blurs the chip borders.
+    // Centre positions: the pinned module dead centre and the rest outward
+    // from it, else the group centred. Rounded, or borders blur.
     function centreX(key) {
         var o = centreSlots.order
         var gap = Theme.moduleSpacing
@@ -516,11 +471,7 @@ PanelWindow {
     }
 
     // --- centre -----------------------------------------------
-    // Centred on the bar as a group, so whatever is moved in here
-    // stays balanced around the middle of the screen.
-    // Spans the whole bar, so positions inside it are bar positions
-    // and "the middle" is simply half its width. It holds no input
-    // handlers of its own, so it doesn't block clicks on either side.
+    // spans the bar, so its middle is half its width; takes no input
     Item {
         id: centreSlots
         anchors.fill: barBody
@@ -532,12 +483,6 @@ PanelWindow {
     }
 
     // --- right: system modules --------------------------------
-    // All icons come from the Material Design set rather than a mix
-    // of icon families: Font Awesome's bluetooth glyph in particular
-    // is far narrower and taller than its speaker/wifi/battery, so a
-    // mixed row never looks evenly weighted.
-    // Tight gaps: the chips' own borders already separate them, so
-    // a wide gap on top of that just scatters the row.
     Item {
         id: rightSlots
         anchors.right: barBody.right
@@ -553,10 +498,8 @@ PanelWindow {
         ModuleSeparators { slots: rightSlots }
     }
 
-    // The pinned modules' hitboxes run on to the screen's edges (full width
-    // only; a floating bar has a gap there that isn't the bar), so the
-    // corners click: a strip from the edge to the module's own, forwarding
-    // the click to it.
+    // the pinned modules' hitboxes run on to the screen edges (full width
+    // only), so the corners click
     Repeater {
         model: Theme.barFull ? [
             { key: "controlcentre", side: "left" },
@@ -580,11 +523,8 @@ PanelWindow {
         }
     }
 
-    // Keep Awake. The Wayland idle-inhibit protocol, rather than
-    // `systemd-inhibit`: idle daemons (hypridle and friends) watch
-    // this protocol, and it needs no process kept alive. It only
-    // holds while its window is mapped, which is why it hangs off the
-    // bar -- the one surface that is always up.
+    // Keep Awake, via the idle-inhibit protocol; it holds only while its
+    // window is mapped, hence the bar
     IdleInhibitor {
         window: bar
         enabled: bar.shellRoot.keepAwake

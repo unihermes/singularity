@@ -12,6 +12,9 @@ hl.config({
         sensitivity   = 0.1,
         accel_profile = "adaptive",
         left_handed = false,
+        -- hovering between a floating and a tiled window only moves focus
+        -- when follow_mouse says so; monocle windows float
+        float_switch_override_focus = 0,
 
         touchpad = {
             natural_scroll       = false,

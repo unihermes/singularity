@@ -19,20 +19,13 @@ hl.env("XCURSOR_THEME", S.cursorTheme)
 hl.env("XCURSOR_SIZE", S.cursorSize)
 hl.env("HYPRCURSOR_THEME", S.cursorTheme)
 hl.env("HYPRCURSOR_SIZE", S.cursorSize)
--- Icon theme for Quickshell's window icons and Applications list. GTK and
--- wofi get it from gsettings, but Quickshell is Qt and Qt has no theme
--- configured here, so without this it falls back to each app's stock
--- hicolor icon (Thunar's hammer instead of kora's folder). It has to be in
--- the environment at launch: Quickshell reads it before its own
--- `//@ pragma Env` lines are applied, so setting it from shell.qml is ignored.
+-- Quickshell's icon theme (Qt has none configured); must be in the env at
+-- launch, as `//@ pragma Env` is applied too late for it
 hl.env("QS_ICON_THEME", S.state("icons", "kora"))
 
--- An NVIDIA card running its own driver (the desktop): VA-API and GLX go to
--- NVIDIA's libraries, and Hyprland renders on it rather than on the CPU's
--- integrated GPU, whose outputs nothing is plugged into -- left on the iGPU,
--- every frame would be drawn there and copied across. The iGPU stays listed
--- after it so its outputs still work. Read from sysfs so it holds for any
--- machine, and skipped while the screen is still on the firmware framebuffer.
+-- An NVIDIA card on its own driver: VA-API, GLX and Hyprland's rendering go
+-- to it, the iGPU listed after. From sysfs; skipped while still on the
+-- firmware framebuffer.
 local function drmCards()
     local nvidia, rest = {}, {}
     for i = 0, 15 do

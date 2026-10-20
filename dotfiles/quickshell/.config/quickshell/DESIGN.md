@@ -11,16 +11,19 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 ## Styles
 
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
-Channel, Double, Solid, Capsule, Glass, Bevel, Tabbed and Corners (settled
-2026-10-08 from two rounds of mockups). A style sets the frame,
-bar modules, hover, level chips, focused window mark, flyout titles, heading
-prefix and where flyouts sit, all at once. Beside it are only dials that move
-everything together (Roundness, Bar shape, Density, See-through) and Finish
-switches that are safe with any style (separators, shadows, shaded grounds,
-heavy lines, heading caps and rule).
+Channel, Double, Solid, Glass (settled 2026-10-08 from two rounds of
+mockups) and Flat (2026-10-16). A style sets the frame,
+bar modules, hover, level chips, focused window mark and where flyouts sit,
+all at once, and starts the Finish switches and the heading mark off its
+own way. Beside it are dials that move everything together (Roundness, Bar
+shape, Density's Spacing and Row height, See-through), Finish switches that
+are safe with any style (separators, shadows, shaded grounds, heavy lines),
+and sizes and colours that don't touch a frame: the palette's roles, the
+status colours, the headings, the bar's height, icons and padding, and the
+windows' borders, corners and shadow.
 
 **Each style has three options of its own** (`options` in Styles.js), shown
-first under Finish on the Style tab. An option either stands for one of the
+first under Finish on the Theme tab. An option either stands for one of the
 shared Finish settings (`key`), or is an id in `Settings.styleOptions`, read
 with `Theme.opt(id)`. Picking a style sets them all (`Styles.finish`); a look
 can state its own `styleOptions`.
@@ -32,27 +35,34 @@ can state its own `styleOptions`.
 | Channel | no knob; accent fill in the groove | level chip with a marker | channel strip | outer line + groove | tick |
 | Double | stroked box, square knob turns accent | stroked well, fill inside | stroked strip, chosen ringed in accent | double-stroked chip | tick |
 | Solid | fat pill, white knob | thick bar | sunken track, raised accent pill | filled block | accent-tinted ground |
-| Capsule | pill (On / Off with `labels`) | tall pill | separate pills | pill | accent-tinted ground |
 | Glass | frosted track, knob glows | thin line, glowing round thumb | frosted strip | glass chip | tick |
-| Bevel | sunken checkbox, tick | groove + raised block thumb | radio buttons | raised button | whole row in the accent |
-| Tabbed | two-way Off \| On | ten notches | folder tabs | outlined chip | tick |
-| Corners | bracketed square knob | dashes + diamond | bracketed cells | corner marks, spaced caps | accent corners |
+| Flat | pill outlined in the text colour; on, accent with a white knob | thin line, upright rounded thumb | separate flat blocks, 2px apart | flat block, heavy outline on hover | tick |
 
 - **Bar chips:** Double outlines every module with an inner stroke 2px in,
-  faint at rest (lit with `lit`); Solid, Capsule and Glass fill the open
-  chip with the accent, and their open level chips keep the level and take
-  an accent ring instead; Corners draws only corner marks (`CornerMarks.qml`).
-- **Panels:** Corners is accent corner marks over a faint hairline, glowing
-  with `glow`.
-- Capsule's `one` joins islands into one floating pill; Glass's `blur` and
-  `tint` change its frost; Bevel's `title` turns its title bars off and on.
+  faint at rest (lit with `lit`); Solid and Glass fill the open chip with
+  the accent, and their open level chips keep the level and take an accent
+  ring instead.
+- **Flat** is the Windows 10 take, in the look's own colours: square, one
+  hairline round panels, no frames round the runs of rows inside them
+  (`Theme.sectionFramed`), sentence-case headings with no rule. Its bar
+  modules are `taskbar` slots: bare, the bar's full height, packed with no
+  gap, a fill on hover and while open, a 2px accent rule along the screen
+  edge's side of the open one; level chips fill the whole slot at 70%. The
+  open-windows strip gives each icon a wide slot, the focused one lit, its
+  pip on the screen edge and the slot's full width.
+- Flat's `taskbar` option rearranges the bar (`Settings.widgetLayout`):
+  nothing in the centre, the clock at the right end before Show Desktop,
+  the other centre modules ahead of the right's. Rearranging it in Bar
+  Widgets writes `taskbarLayout`, kept apart from `barLayout`, so turning
+  the option off (or leaving Flat) brings the usual arrangement back. Its
+  `barPosition` option puts the bar at the bottom (an option's `off` is
+  the value it takes when off).
+- Glass's `blur` and `tint` change its frost.
 
 Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.textOnAccent`) unless its row in the table says otherwise.
-Tabbed draws the open module as a real tab: its sides and top are stroked
-down into the flyout, whose edge is left open under it (`FlyoutPanel`'s tab).
-Bevel and Corners keep every corner square whatever Roundness says (the
-style's `square`). The shell's layers blur what's behind them (a Hyprland layer rule), so
+Flat keeps every corner square whatever Roundness says (the style's
+`square`). The shell's layers blur what's behind them (a Hyprland layer rule), so
 Glass and see-through grounds stay readable. Level chips fill the whole chip
 in every style.
 
@@ -118,8 +128,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
   (13px).
 - **Sectioned:** each run of rows between headings and dividers sits in its
   own frame (panel ground, radius + 3), in place of divider lines. The frame
-  is the style's: a channel, a double or single stroke, a sunken bevel, or
-  the ground alone (`SectionRuns`). Settings pages and the System window
+  is the style's: a channel, a double or single stroke, or the ground
+  alone (`SectionRuns`). Settings pages and the System window
   are sectioned the same way under every style.
   `FlyoutPanel` works out the runs from the column's children. To start a new
   section, put a `FlyoutDivider` (or an item with `isSectionBreak: true`)
@@ -159,8 +169,10 @@ Connect or Disconnect chip. Removing a device is the Settings page's.
 
 Picked 2026-10-11: each opens on where things stand. Updates is a
 `HeadCard` (the count, Up to date with a green tick, or Not checked; the
-AUR share; when it last checked) with the one action that fits on it:
-Check now, or Update now while there are some. Notifications empty is a
+AUR share; when it last checked) with Check now on it always, a small ↻
+beside Update now while there are some (picked 2026-10-18). Under the
+packages, Reclaimable: the size, what it's in, and Clean up in two clicks
+(Health's reclaim check). Notifications empty is a
 card (All caught up); with history, Clear all is a chip on the heading,
 two clicks. Actions that can't do anything aren't shown.
 
@@ -241,13 +253,34 @@ Settings') are laid out the same way.
 - **Window frame** (Settings, System, Keybinds; picked 2026-10-11): one
   title bar line (`WindowHeader`): the accent bar, the name with the
   hostname quieter after it, Settings' search in the rest of the line, and
-  Close. No eyebrow, no separate search row.
-- **Sidebar:** a page is its icon, name and a second line of what's there
-  (no numbers, no SECTIONS heading), groups set apart by a gap. Search hits
-  use the same row, with the page and heading as the second line, under a
-  RESULTS count.
-  The page on show has the accent tick, not a fill; the row
-  the arrow keys are on (while searching) has the hover fill.
+  Close. No eyebrow, no separate search row. While a page is open the
+  name is a link back to Home (`linked`).
+- **Home** (Settings and System; picked 2026-10-18): both windows open on
+  Home, one pane with no sidebar: every page as a full-width tile
+  (`WindowHome`, `HomeRow`) in a centred column (`fit(760)`), under group
+  headings, each group one framed block with hairlines between tiles. A
+  tile: the icon in the accent, the name over what's inside, what it's set
+  to or reading now on the right (System's CPU, Memory and Network add
+  their minute as a small graph; only on Home), a chevron. System's Home
+  has its four headline cards over the tiles. `open(page)` and More in
+  Settings rows go straight to a page.
+- **A page** (Settings and System; picked 2026-10-18): one framed panel
+  split by a hairline: the pages on the left (`WindowSidebar`, `fit(260)`),
+  the open page on the right. The sidebar groups the pages under `//`
+  headings; a row is the page's icon and name over what it's set to or
+  reading now (Home's status, in its colour), or what's inside where
+  there's nothing (`SettingsSectionRow`). The page on show has the hover
+  fill and the accent tick. The page opens under its icon (lightened
+  accent) and name at `fontTitle` (`WindowPageTitle`), then its own
+  one-line description. The window's name or Escape goes back to Home;
+  Escape on Home closes.
+- **Search** (Settings): in the title bar. Typed into on Home, Home's
+  column lists the hits under a RESULTS count; on a page, the sidebar lists
+  them in place of the pages (the page beside it stays). With the bar
+  focused and nothing typed, the arrow keys walk Home's tiles (Enter opens
+  one) or, on a page, the pages, opening each at once; with a query they
+  walk the hits. The tile or hit the arrow keys are on has the hover fill
+  and tick.
 - A Repeater's Column that holds its own heading and rows sets
   `isSectionGroup: true` and `sectioned`, so its rows get sections as if
   they sat in the page.
@@ -262,16 +295,56 @@ Settings') are laid out the same way.
 - **Hints:** one line, eliding if needed. Write them short, at most about 42
   characters ("Frames, chips and dividers"), with no lists of every choice.
   The label column is wider (`fit(320)`).
-- **Live preview (Appearance):** pinned above the rows on the Colours, Style,
-  Text, Bar and Panels tabs. It shows a scaled-down bar and flyout built
-  from the real components (`ModuleFrame`, `PanelFrame`, `FlyoutHeading`,
-  `Slider`, …) over the wallpaper, so it follows every setting and can't
-  drift from the shell. It's only built while one of those tabs shows.
-- **Lock Screen:** a live preview of the lock screen is pinned over the
-  rows (`pinned`), with a Lock now chip on its corner, so Background and
-  Clock place are plain segments. Under the clock's hint is the line as it
-  will read. The lid is one row: [Suspend | Screen off] after [N min].
-- **Visual pickers:** a choice judged by eye (Style, Density) is a grid of tiles
+- **Appearance's tabs** (settled 2026-10-16, picks 1B…20A): Theme (four
+  sections, picked 2026-10-18: Look with Style and Space under subheads,
+  Space's two dials only on Custom; Shape with Finish, its switches two to
+  a line; Colour with Accent and Status, Good and Alert as two swatches on
+  one row, a click opening that one's hex; Text with Headings, the mark and
+  its colour on one row, Case, rule and size two to a line), Bar
+  (two sections, picked 2026-10-18: BAR with its position, shape and size,
+  then the layout zones, Centre anchor and Reset layout under a LAYOUT
+  subhead; MODULES with a subhead per module, its drawn tiles open),
+  Panels (three sections, picked 2026-10-18: POPUPS with flyouts, then
+  notifications and the level popup under subheads; LAUNCHER; OVERLAYS;
+  neighbouring steppers and switches two to a line), Desktop (four
+  sections, picked 2026-10-18: WALLPAPER with the current image's thumbnail
+  beside its name, the six in one row, Folder and Colours from it two to a
+  line; WINDOWS with gaps, borders, corners, shadow and tab bar; EFFECTS
+  with opacity, dim and blur; MOTION with the three per-part speeds folded
+  behind a "Per-part speeds…" row and the animation tiles four across;
+  neighbours two to a line) and Apps (one section, picked 2026-10-18:
+  System font; Icons with a few of the theme's icons on the label's line
+  (`SettingsField.labelExtras`); Cursor with its size stepper beside the
+  dropdown; terminal opacity lives on the Terminal page only). While anything differs from the baseline, the changes
+  bar (`ChangesBar`, picked 2026-10-18) floats at the page's foot
+  (`SettingsPage.footer`): "N changed from …", Review (the list opening
+  above it, with Undo all and Factory reset), Save as default, Reset. A
+  changed field's ● names the value it puts back when hovered.
+- **Live preview (Appearance):** pinned above the rows on every tab, showing
+  what that tab changes (`LivePreview.kind`): the bar and a flyout (Theme,
+  Apps), the whole bar a little larger (Bar), the launcher in its layout
+  (Panels), two windows with their borders, corners, opacity and dimming
+  (Desktop). Built from the real components (`ModuleFrame`, `PanelFrame`,
+  `FlyoutHeading`, `Slider`, …) over the wallpaper, so it follows every
+  setting and can't drift from the shell.
+- **Bar layout on the Bar tab** (`BarZones`): Left, Centre and Right as
+  zones of module chips and a Hidden zone under them; a dragged chip is a
+  ghost following the pointer, an accent marker shows where it lands, and
+  the drop writes the layout and visibility like Bar Widgets.
+- **Lock Screen:** four sections (picked 2026-10-18). BACKGROUND has a
+  live preview of the lock screen, with a Lock now chip on its corner,
+  beside Background, Blur and Dim, so Background and Clock place are plain
+  segments. CLOCK puts Clock size beside Clock place; under the clock's
+  hint is the line as it will read, its parts as chips. FINGERPRINT (picked
+  2026-10-20) has the unlock switch, then two drawn hands (`FingerHands`)
+  whose fingers are the buttons: lit when enrolled, a dark one enrolls and
+  fills from the palm as the touches pass (the Fingers hint counts them,
+  Cancel beside it), a lit one removes in two clicks. LOCKING holds the
+  grace period, then the lid under a LID subhead: one row [Suspend |
+  Screen off] after [N min], and Lock right away beside Hibernate.
+- **Visual pickers:** a choice judged by eye (Style, Workspaces, Open
+  windows, Clock, Control Centre icon, Visualizer, Launcher layout, Power
+  menu, Window animation; `ModuleArt` draws the pictures) is a grid of tiles
   (`SettingsTiles`), four across, or three when each tile is a small
   screen. Each tile draws what its value does; the current one has the lit
   groove. Numbers stay steppers, and on/off stays a switch.
@@ -280,22 +353,25 @@ Settings') are laid out the same way.
   drawing the thing where it is (`PopupSpot`).
 - **Which pages are tabbed:** only Appearance. Every other page is one
   page with sections; prefer that over tabs.
-- **Window Rules:** one Apps list holds every app with a rule or a
-  remembered size (one-line rows: name, a pattern mark, how it opens, in
-  words: Filled, Fullscreen, 21% × 43%, Float 960×540). A row opens in
-  place: what it matches, Name with the pencil, Opens (As left · Float ·
-  Fullscreen · On top), for As left a First time choice (Own size ·
-  Filled, which is what the old Fills list was) and Last left with Forget,
-  Size for Float and On top, Workspace, and Remove. An app with only a
+- **Window Rules** (picked 2026-10-18, 1B 2B 3B 4B 5A): the Apps list
+  holds every app with a rule or a remembered size, under three subheads
+  by how it opens: FILLS, FLOATS, OWN SIZE. Its rows carry the app's icon,
+  a good-coloured dot while it has a window open, and how it opens in
+  words (Filled, Fullscreen, 21% × 43%, Float 960×540). A row opens in
+  place: Name (what it matches as the hint, the pencil, Remove rule),
+  Opens (As left · Float · Full · On top) beside Workspace, for As left
+  First time (Own size · Filled) beside Last left with Forget, a note on
+  what the choice does, and Size for Float and On top. An app with only a
   remembered size gets its rule on its first change. Add a rule… is the
   last row, as Other network… is. Popups and dialogs is its own section:
-  three switches (block, open over their window, remember sizes), then the
-  rules matched by title. Workspace layouts are segments per workspace.
+  three switches on one line (Block their window, Open over it, Remember
+  sizes), then the rules matched by title. Workspace layouts are segments
+  per workspace.
   No reordering: new rules go on top of the file.
   The tab showing has white text on its accent fill, never dark. Two tabs at least, each with more than one row; a page
   whose sections are short stays one page. Tab content is `SettingsTab`.
 - **Rows that open in place:** a row whose action needs more input (a
-  network's passphrase, a hidden network, a saved network's settings)
+  network's passphrase, a hidden network)
   opens a block under itself, set in by a rule down its left side, and
   takes the accent tick while open. Not a prompt elsewhere on the page.
 - **Marks that line up:** icons at a row's end that repeat down a list (a
@@ -304,57 +380,77 @@ Settings') are laid out the same way.
 - **Copyable values:** an address worth pasting elsewhere is a
   `SettingsValue` with `copyable`: hover fills it, a click copies it, and it
   reads Copied in the good colour for a moment.
-- **Long lists:** the ten most useful rows, then a "Show all N" row. Network
-  puts the joined network in a card at the top (name large, strength icon,
-  security, band, the radio switch) and leaves it out of the lists below.
-- **Bluetooth:** the adapter is a card the same way (its name, hci id, how
-  many paired and connected, the power switch). Device rows carry the type
-  icon on the left, and on the right the battery and Connected / Not
-  connected (nearby ones say what they are). A paired device opens in place
-  (`SettingsIndent`): Connect, battery as level chips (one per bud and the
-  case), Reconnect by itself, rename, type, address, Remove. Scan sits on
-  the IN RANGE heading, its icon turning while it runs (`FlyoutChip.icon`
-  and `spinning`), and the unnamed devices are a last "Show N unnamed" row.
-  Discoverable's hint counts down to BlueZ's timeout.
-- **Display:** the arrangement picture is always there: every connected
-  display to scale, one that's off drawn dashed to the left (Off · lid
-  shut). Dragging arranges, a click opens that display, and the open one
-  has the lit groove. Extend / Duplicate, Primary (segments by display
-  name) and Reset workspaces only show with two displays on; while the
-  saved primary is off, a note says which one stands in. Each display is
-  a row (type icon, name, the connector as its `note`, a Primary `badge`,
-  what it's running) that opens in place: Resolution (a dropdown, native
-  marked), Refresh rate (segments, or a readout when there's one), Scale
-  (100–200% segments, the hint saying what it looks like) and Rotation.
-  An off display opens to one Status line. Every change writes a rule for
-  that display alone, so nothing on the page names hl.monitor() rules.
-- **Notifications:** a status card (the bell large, Notifications on or
-  Do Not Disturb, why and until when, the history's count, the switch),
-  with a History row under it (Open, and Clear all in two clicks). Then
-  Popups (the spot picker, Group by app, and Send a test on the heading),
-  How long popups stay as segments (4 s · 8 s · 16 s · 30 s · Never),
-  Quiet hours (the switch; on, a midnight-to-midnight strip with the
-  window filled and a marker at now, then Starts and Ends), and Apps:
-  each app in the history is a row that opens a Popups switch, and a
+- **Long lists:** the ten most useful rows, then a "Show all N" row.
+- **Network** (picked 2026-10-18, 1C 2A 3B 4B 5B 6A): the joined network
+  in a card (name large, strength icon, security, band, the radio switch)
+  with the link's details two to a line under it in the same block. Then
+  one IN RANGE list with Rescan on its heading: saved networks first,
+  tagged Saved, each row's strength as a word beside the bars, Other
+  network… last. SAVED rows carry everything: where it is, security and
+  when it last joined as the hint, the Auto-join switch, and Forget as a
+  bin on hover (two clicks).
+- **Bluetooth** (picked 2026-10-18, 1B 2B 3B 4B 5A): the adapter is a card
+  the same way (its name, hci id, how many paired and connected, the power
+  switch), with Discoverable and Pairable as toggle chips right after the
+  name (`HeadCard.besideTitle`);
+  Discoverable's chip counts down to BlueZ's timeout (Visible 2:59).
+  Paired devices are two-line rows (`BtPairedRow`): type icon, the name
+  over its type and state, the battery as level chips (`BatteryChips`: one,
+  or L / R / Case for earbuds) on the right, Connect / Disconnect in their
+  place on hover. Opened (`SettingsIndent`): Connect · Rename · Remove as
+  one line of chips, Battery, Reconnect by itself, then a line of fine
+  print (type, the address, which copies, and the advertised name). Scan
+  sits on the IN RANGE heading, its icon turning while it runs
+  (`FlyoutChip.icon` and `spinning`), and the unnamed devices are a last
+  "Show N unnamed" row.
+- **Display** (picked 2026-10-18, 1B 2B 3B 4B 5A): with one display, THIS
+  DISPLAY is a card (type icon, name, connector, what it's running) with
+  its settings straight under it, nothing to open: Resolution (a dropdown,
+  native marked), Refresh rate (segments, or a readout when there's one),
+  Scale (100–200% segments, the hint saying what it looks like) and
+  Rotation; an off display shows one Status line. With several, the
+  ARRANGEMENT picture comes first (every display to scale, one that's off
+  dashed to the left; dragging arranges, a click picks whose settings
+  show, the picked one has the lit groove), with Extend / Duplicate,
+  Primary and Reset workspaces; the section under it is named after the
+  picked display, a segmented strip of names over its settings. Then
+  EVERY DISPLAY: Vibrance and Variable refresh. A mode, scale or rotation
+  change waits in a bar floating at the page's foot (`SettingsPage.footer`):
+  Keep this?, Revert / Keep, and an accent line draining as the 15 s run
+  out. Every change writes a rule for that display alone, so nothing on
+  the page names hl.monitor() rules.
+- **Notifications** (three sections, picked 2026-10-18): STATUS is a
+  status card (the bell large, Notifications on or Do Not Disturb, why and
+  until when, the history's count, the switch), a History row (Open, and
+  Clear all in two clicks), then Quiet hours (the switch; on, a
+  midnight-to-midnight strip with the window filled and a marker at now,
+  then Starts beside Ends). POPUPS has the spot picker on the left with
+  Position (and Send a test) and Group by app beside it, then a HOW LONG
+  THEY STAY subhead: Normal, Low and Critical as three dropdowns on one
+  line. APPS: each app in the history is a row with its Popups switch; a
   silent app's notifications go straight to the history (critical ones
   still pop up).
-- **Audio:** each device is a row (type icon, a plain name such as
-  Speaker or Dell S2417DG, where it is as the `note`, its level or Muted);
-  the default has the Default badge and the tick, and a click on another
-  makes it the default. Outputs with nothing plugged in (pactl's port
-  availability) fold into a Show N row. Under the rows sit the default's
-  Volume (grey and reading Muted while muted) and a Mute switch. Each app
-  playing or recording is a row (its icon, name, what it's playing, its
-  level, and "on <output>" when that isn't the default) that opens to
-  Volume, Mute and Plays on, which moves it with pactl.
-- **Startup:** your entries are fields with the app's icon
+- **Audio** (picked 2026-10-18, 1B 2B 3B 4A 5A): OUTPUT and INPUT each
+  open on the default device as a card (its icon, plain name, where it is,
+  Default) with its Volume under it; the other devices follow as rows
+  (type icon, name, where it is as the `note`, its level or Muted), a
+  click making one the default. Outputs with nothing plugged in aren't
+  listed. Every level is a mute button (red while muted, `IconButton
+  .warn`), the slider (grey while muted) and the percent. PLAYING and
+  RECORDING are a mixer: each app's icon (`Audio.appIcon`), name over what it's playing,
+  and on the right the output it plays on (a dropdown, moved with pactl)
+  and its level; nothing opens.
+- **Startup** (two sections, picked 2026-10-18): WHEN THE PC STARTS, then
+  AT LOGIN. Your entries are fields with the app's icon
   (`SettingsField.image`), the command or comment as the hint, the switch
   and Remove (asking Remove Spotify?). Add an app… is the list's last row
-  and opens a search with the matching apps under it, with their icons; a
-  click adds one. From packages lists only the entries that can run here,
-  saying when a user service already does the job; ones for other
-  desktops aren't shown at all.
-- **File Types:** each common kind is a field whose hint says what it
+  ("nothing of yours yet" after it while the list is empty) and opens a
+  search with the matching apps under it, with their icons; a click adds
+  one. A FROM PACKAGES subhead lists only the entries that can run here
+  and that no user service already runs (unless one is on), its note
+  counting the ones left out; ones for other desktops aren't shown at all.
+- **File Types** (picked 2026-10-18): the common kinds sit under four
+  subheads (WEB AND MAIL, FILES, MEDIA, DOCUMENTS); each is a field whose hint says what it
   covers (Links and web pages), or which of its types have no default,
   with a dropdown of apps and their icons (`SettingsDropdown.iconFor`).
   The dropdown offers the apps that declare the kind's main type; the
@@ -364,60 +460,67 @@ Settings') are laid out the same way.
   Show all N types row; each type is a row named in words (Markdown
   document, its type small) with its app, opening to the apps that can
   take it, the current one ticked.
-- **Terminal:** the terminal app comes first, Alacritty or Ghostty as
-  segments. Under a heading named for it, a preview of it: the wallpaper
-  through the background at the opacity, the prompt (the path pill, then
-  ❯) in the look's colours at the font size, and the cursor's shape and
-  blink. Opacity is a level from 30% to solid, written when the drag ends.
-  The cursor's shape is three tiles, each drawing it between two letters,
-  with Blinking a switch; font size and cursor are written to both
-  terminals. Each alias is a row (name, its command as the
-  note) that opens to the name and command with Save, and Remove alias in
-  two clicks; Add an alias… is the last row.
+- **Terminal** (two sections, picked 2026-10-18): TERMINAL has the app
+  first, Alacritty or Ghostty as segments, then a preview of it on the
+  left (the wallpaper through the background at the opacity, the prompt
+  with the path pill then ❯ in the look's colours at the font size, the
+  cursor's shape and blink) with Font size, Opacity and Cursor beside it.
+  Opacity is a level from 30% to solid, written when the drag ends; Cursor
+  is Block · Beam · Underline with the blink switch beside it. Font size
+  and cursor are written to both terminals. BASH ALIASES: each alias is a
+  row, its command lined up in a column after the name
+  (`FlyoutRow.labelColumn`), that opens to the name and command with
+  Save, and Remove alias in two clicks; Add an alias… is the last row.
 - **Date & Time:** a clock card heads the page (the time large and
   ticking, then the date, the place with its abbreviation and offset, and
-  whether it's synchronised). Time zone is a row (the city and offset as
+  whether it's synchronised, with the Network time switch; picked
+  2026-10-18). Time zone is a row (the city and offset as
   its note) that opens to a search by city, country or abbreviation; each
   place shows its time now and offset, and a click sets it. A zone set by
   an old alias (US/Eastern) offers its current name. Hour format's hint
-  reads the time as it will look, and a strip of weekday letters shows
-  where the calendar's week starts.
-- **Software Update:** a status card heads the page (the update icon,
+  reads the time as it will look, and a strip of weekday letters in First
+  day of the week's hint line (`SettingsField.hintExtras`) shows where the
+  calendar's week starts.
+- **Software Update** (three sections, picked 2026-10-18: STATUS,
+  PACKAGES, UPKEEP): a status card heads STATUS (the update icon,
   accent while there are some and a green tick when up to date, the count
   large, when it last checked, the last upgrade and how many packages it
-  changed, then Check now and Update now). Singularity follows: Repository
+  changed, then Check now and Update now). Singularity's Repository row follows in it
   says how far the clone is behind its upstream (and local commits, which
   disable Update since update.sh only fast-forwards), then a row naming
   packages the pull would install, then the incoming commits, newest first
   with their time, ten then Show all N. Check for updates' hint says
   when the next check runs, and Include the AUR how many AUR packages there
-  are. Each pending package is one row (package icon, name, the version
+  are. PACKAGES has a PENDING subhead only while updates wait (the card
+  says when there are none); each pending package is one row (package icon, name, the version
   change as its note with the moving part brighter, repo or AUR at the
   end); Ignore takes the end on hover (`FlyoutRow.actionText`, a chip that
   acts on one click, for what's easily undone). Ten, then Show all N.
-  Ignored packages are rows saying what each holds back, with Stop
+  Under an IGNORED subhead, ignored packages are rows saying what each holds back, with Stop
   ignoring on hover; Ignore a package… is the last row and opens a search
   of installed packages. Upkeep holds Orphaned packages and Reclaimable
   space, whose Clean up asks with the size first.
-- **Input:** each keyboard layout is a row (its name in words, the
+- **Input** (picked 2026-10-18, 1A 2A 3A 4B 5B): each keyboard layout is a row (its name in words, the
   variant or code as the note, Main on the first of two or more) that
   opens to its Variant as a dropdown in words, Make it the main one and
   Remove; Add a layout… searches evdev.lst by name or code. kb_layout and
   kb_variant are always written together. The common XKB options are
   named: Caps Lock key and Compose key dropdowns, and Switch layouts with
   (segments) once there are two layouts; the rest of kb_options is Other
-  XKB options, whose hint shows the whole string. Repeat delay and rate,
+  XKB options, whose hint shows the whole string, folded behind an
+  Advanced… row at the end of the keyboard section (a search for it opens
+  the row). Repeat delay and rate,
   Pointer speed (a tick at the device's own speed) and Scroll speed are
   levels written when the drag ends, with a Try it field for the repeat.
   Focus follows mouse is four tiles drawing two windows, the keyboard's in
   accent and the wheel's dashed: Click, Always, Hover scrolls, Apart. The
   touchpad's rows are grouped by `SettingsSubhead` (Clicking, Scrolling
-  and typing) inside the one section, and every hint says what the
-  current setting does.
+  and typing) inside the one section, the four clicking switches two to a
+  line, and every hint says what the current setting does.
 - **Keybinds:** one page, no tabs: your binds, then SUGGESTED (the
-  presets you don't have yet, by pack; Show added brings the rest). Each
-  bind is one line (keycaps, the description, the command quieter in the
-  rest of the line, a lock on the few that can't be edited) and opens in
+  presets you don't have yet; Show added brings the rest). Each
+  bind is one line (keycaps, the description, a lock on the few that
+  can't be edited; the command shows once it's opened) and opens in
   place: the editor (Keys with Record, Does as Command or Lua, Description,
   Options, Section, Delete asking first), or for a locked one what it runs,
   why, and Open at line N. Lua actions are editable; one over several
@@ -425,40 +528,50 @@ Settings') are laid out the same way.
   chosen. Press keys beside the search looks a combo up by pressing it,
   showing the bind on it or offering Add a bind on it. The search and the
   lookup filter both lists; the ticked-presets bar sits under the list.
-- **Power & Idle:** the profile segments carry their icons and the hint
-  says what the chosen one does. The battery is a card (charge large, then
-  state, time left, the Custom band and health) over a full-fill level chip
-  of the charge; in Custom the resume-to-stop band sits on the chip and its
-  ends are dragged, in steps of 5, in place of steppers. The idle steps
-  have a timeline above them (each step's icon at its time, muted when
-  off), and each step a switch: off comments its block out of
-  hypridle.conf with `#~ `. Steps that differ only by power source carry a
-  battery or plug mark (`SettingsField.mark`).
-- **No look summary card:** the Look tab's Changes list alone shows
-  what's changed.
-- **Changes are counted from the saved default** when one was saved with
-  the look in use (`Settings.lookBaseline`), so Set as default empties the
-  list. Otherwise they're counted from the look as designed. Undo, Undo
+  SUGGESTED is one row per pack (picked 2026-10-18: what it's for, how
+  many of its binds are left to add) that opens to its tick boxes with
+  Tick all; a search or lookup opens them all.
+- **Power & Idle** (picked 2026-10-18, 1B 2A 3B 4B 5B): one POWER section:
+  the battery card (charge large, then state, time left, the Custom band
+  and health) over a full-fill level chip of the charge (in Custom the
+  resume-to-stop band sits on it and its ends drag, in steps of 5), then
+  Profile (segments with their icons, the hint saying what it does) and
+  Charging. WHEN IDLE: a timeline of the steps (each step's icon at its
+  time, muted when off) whose dots drag to set the time, snapping to the
+  times on offer; then a row per step with its time as a dropdown (1 min
+  to 1 h, then Never, which comments its block out of hypridle.conf with
+  `#~ `). Suspend on battery and plugged in share one Suspend row, a
+  battery and a plug mark before their two dropdowns.
+- **Look tiles** open the Theme tab: each look drawn in its own colours
+  (panel, bar, text, hint and accent pill), its description as the hint.
+  The changes strip alone shows what's changed.
+- **Each style keeps its own saved default** (`userDefaults`, by style):
+  Save as default and Reset act on the style in use only, and a style
+  never saved resets to its stock (the fallback look with the style's own
+  Finish switches).
+- **Changes are counted from the style's saved default** when one was
+  saved with the look in use (`Settings.lookBaseline`), so Save as default
+  empties the list. Otherwise they're counted from the look as designed. Undo, Undo
   all and the fields' ● marks go back to the same baseline.
 
 ## System window
 
 Laid out like the sectioned Settings pages (`SystemPage`).
 
-- **Overview:** four cards (CPU, Memory, Temp, Battery), each with its
-  last minute as a line over its level (`StatCard.history`; temperature
-  drawn from 30 °C), then the network's minute as one slim strip with its
-  live rates. SystemStats samples only while the window is open, so the
-  graphs start empty and fill over the first minute. Health is a card (the count or All
-  clear, when the checks ran, Run checks and Open Health) with rows only
-  for what needs a look, each opening where it's fixed, and one quiet line
-  for what's fine. Process CPU is a share of the whole machine with a
-  small level (`ProcessTable.machineShare`); ending one asks End <name>?
-  in the row. At a glance is two columns. Quick actions are rows with an
-  icon and a note saying what each does; Restart audio asks first.
-- **Health:** the same status card heads it (Check again on it), then TO
-  LOOK AT (problems, worst first, each with its fix) and PASSING, each
-  heading carrying its count and left out when empty. A fix that deletes
+- **Home:** four cards (CPU, Memory, Temp, Battery; `HomeFigures`), each
+  with its last minute as a line over its level (`StatCard.history`;
+  temperature drawn from 30 °C), then the tiles in four groups: Status
+  (Health), Running, Devices, This machine. SystemStats samples only while
+  the window is open, so the graphs start empty and fill over the first
+  minute. Only the Health tile says something needs a look (its count,
+  red for a problem); there's no banner. No Overview page.
+- **Processes in a page's summary:** process CPU is a share of the whole
+  machine with a small level (`ProcessTable.machineShare`); ending one
+  asks End <name>? in the row.
+- **Health** (picked 2026-10-18): a status card heads it (the count or
+  All clear, when the checks ran, Check again; no subtitle over it), then
+  TO LOOK AT (problems, worst first, each with its fix) and PASSING (two to
+  a line), each heading carrying its count and left out when empty. A fix that deletes
   or switches something off (clean, disable) asks first. A row can carry
   more than one fix: Shell log offers View, Dismiss (hides the lines there
   are now until new ones appear) and Fix with Claude (Claude Code in the
@@ -466,45 +579,54 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 - **Head cards:** a System page that has one answer opens on it in a
   `HeadCard` (glyph, the answer large, a line or two, the page's actions
   at its end), under a NOW or STATUS heading.
-- **CPU:** the card (how busy, average and peak clock, temperature and
-  profile) over the minute's graph; threads as levels two across; Load
-  with its per-thread figure; Power profile a row into Settings; the
-  silicon facts two across; heaviest processes as a share of the machine
+- **CPU** (picked 2026-10-18): the card (how busy, average and peak
+  clock, temperature and profile) with the minute's graph at its right;
+  threads as levels two across; DETAILS two to a line (load and its
+  per-thread figure, the governor, Power profile a row into Settings, then
+  the silicon facts); heaviest processes as a share of the machine
   with All processes under them.
-- **Memory:** the card (in use, of what, available, swap) over the
-  minute; the stacked strip with its parts two across under it; swap and
-  writeback two across; the largest processes sorted by memory.
-- **Processes:** the full table with CPU as a share of the machine and its
-  level, totals two across, and the terminal tools as rows saying what
-  each shows.
-- **Storage:** the card (free on /, how full, reading and writing) over
-  the minute; filesystems as levels with free and percent; disks as
-  rows; Upkeep as on Software Update (Health's orphans and reclaimable
-  space, Clean up asking with the size); tools as rows.
+- **Memory:** the card (in use, of what, available, swap) with the
+  minute at its right; BREAKDOWN: the stacked strip with its parts two
+  across under it, then swap and writeback two across under a subhead; the largest processes sorted by memory.
+- **Processes:** a NOW card (threads, runnable, who it runs as, the
+  machine's CPU, memory and load), then the full table with CPU as a share
+  of the machine and its level, and the terminal tools two to a line,
+  each saying what it shows.
+- **Storage:** the card (free on /, how full, reading and writing) with
+  the minute at its right; filesystems as levels with free and percent,
+  the disks as rows under a subhead; Upkeep as on Software Update (Health's
+  orphans and reclaimable space two to a line, Clean up asking with the
+  size); tools two to a line.
 - **Network:** the card (the network's name, rates, signal in words and
-  dBm, traffic since the link came up, Settings on it) over the minute;
-  the connection two across; each interface a row (In use badge, its
-  address as the note) opening to its addresses; tools as rows.
+  dBm, traffic since the link came up, the minute and Settings at its
+  right); the connection two across, then each interface a row under a
+  subhead (In use badge, its address as the note) opening to its
+  addresses; tools two to a line.
 - **Power:** the card (charge and state, draw and time left, capacity
   against new, Settings on it) over the charge as a full-width level;
-  right now and the pack two across, the pack's wear as its own level;
-  the profile segments with their one-line point; Idle and lid into
-  Settings, Suspend asking first.
+  BATTERY two across, then the pack under a subhead with its wear as its
+  own level; the profile segments with their one-line point; SESSION with
+  Idle and lid into Settings, Suspend asking first and the history, two
+  to a line.
 - **Hardware:** the card (the machine's name, CPU and RAM, GPU, Copy specs
-  on it) over the identity two across; displays and the audio output as
-  rows into their Settings pages; the ten hottest sensors as levels two
-  across, then Show all N; fans and input devices as rows (inputs named as
-  Hyprland matches them); tools as rows.
+  on it) over the identity two across; GRAPHICS AND AUDIO: the GPU, the
+  displays and (under a subhead) the audio output as rows into their
+  Settings pages; the ten hottest sensors as levels two across, then Show
+  all N, fans as rows; input devices two to a line (named as Hyprland
+  matches them); tools two to a line.
 - **Config:** the repository as the card (its name and branch, what's
   uncommitted, the last commit; git status, Terminal and Editor on it);
-  the files under a search that matches name, purpose or path, grouped
-  as before with the folders last; logs as rows.
+  FILES: a search that matches name, purpose or path, then the files in
+  one section, a subhead per group, the folders last; logs two to a line.
 
 ## Headings
 
 - Bold spaced caps, value in white (`VOLUME  45%`).
-- An accent `//` before each one, drawn a little lighter than the accent. It
-  comes from the look's `heading.prefix`.
+- An accent `//` before each one, drawn a little lighter than the accent
+  (`Settings.headingMark`). Appearance › Theme › Mark offers `//`, `::`, `»`,
+  `❯`, `>_`, `├─`, `▸`, `•`, none or your own, and four shapes in place of a
+  mark (`shape-*`, `Theme.headingShape`): an accent bar, the label in
+  brackets, the label in a notch of the rule, the label on an accent pill.
 - A line from the end of the heading to the right edge (`headingRule`).
 - A heading that folds its section shows its chevron only while the
   pointer is on it, or while the section is folded (picked 2026-10-11).
@@ -526,12 +648,13 @@ back. Always the Nerd glyphs (`Theme.fontIcon`), never a typed `>`.
 
 | Meaning | Glyph | Where |
 |---|---|---|
-| Page on show in a sidebar | tick + accent 󰅂 | `SettingsSectionRow`; hovered rows show a grey 󰅂 |
+| A page from a window's Home | 󰅂, muted until hovered | `HomeRow` |
+| Page on show in a window's sidebar | fill + tick + grey 󰅂 | `WindowSidebar` |
 | Row the arrow keys are on | fill + tick + grey 󰅂 | Launcher, Settings search hits |
 | Tab on show | accent fill, no chevron | Settings tabs, `FlyoutSegmented` |
 | Goes deeper in the same flyout or window | 󰅂 | submenus, tray submenus, other System pages, Open Health |
 | Leaves for another window | 󰁔 | More in Settings, System's "Settings" |
-| Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more", Claude's diff |
+| Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more" |
 | Dropdown | 󰅀 → 󰅃 | `DropdownMenu`, `SettingsDropdown` |
 | Back | breadcrumb heading (`crumb`), no Back row | Control Centre, tray menu, window menu |
 | Breadcrumb separator | 󰅂 | `FlyoutHeading` |

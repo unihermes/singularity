@@ -1,21 +1,15 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageLockScreen.qml
 //
-// The lock screen, and what the lid does. Three files, all this machine's
-// own, none of them in the repo:
-//
-//   hyprlock.conf   the background block (path, blur_passes, brightness) and
-//                   the clock label's text. Colours and font come from the
-//                   look through AppearanceSync, not from here.
-//   hypridle.conf   the grace period, as --grace on the idle lock's command.
-//                   Only that listener gets it: a lock before sleep or by
-//                   hand always asks for the password.
-//   lid.conf        close_action, close_delay, lock_on_close and hibernate,
-//                   in the state directory; lid.sh reads them over its own
-//                   defaults.
-//
-// hyprlock reads its config at each lock and lid.sh at each lid event, so
-// only hypridle needs a restart.
+// The lock screen and the lid, in three of this machine's files and fprintd:
+//   hyprlock.conf   background (path, blur, brightness), the clock text and
+//                   auth's fingerprint:enabled; colours and font come from
+//                   the look
+//   hypridle.conf   the grace period, on the idle lock only
+//   lid.conf        close_action, close_delay, lock_on_close, hibernate
+//                   (lid.sh reads it)
+//   fprintd         the enrolled fingers (fprintd-list, -enroll, -delete)
+// Only hypridle needs a restart.
 
 import Quickshell
 import Quickshell.Io
@@ -29,7 +23,7 @@ SettingsPage {
     sectioned: true
 
     title: "Lock Screen"
-    description: "Look, password grace and the lid. Colours follow Appearance."
+    description: "Look, fingerprint, password grace and the lid. Colours follow Appearance."
 
 
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
@@ -55,7 +49,7 @@ SettingsPage {
         var lines = text.split("\n"), r = blockRange(lines, name), out = {}
         if (!r) return out
         for (var i = r[0] + 1; i < r[1]; i++) {
-            var m = /^\s*([\w-]+)\s*=\s*(.*?)\s*$/.exec(lines[i])
+            var m = /^\s*([\w:-]+)\s*=\s*(.*?)\s*$/.exec(lines[i])
             if (m) out[m[1]] = m[2]
         }
         return out
@@ -84,6 +78,7 @@ SettingsPage {
 
     property var background: ({})
     property string clockText: ""
+    property bool fingerprint: false
 
     readonly property string backgroundKind: {
         var p = background.path || ""
@@ -112,26 +107,133 @@ SettingsPage {
         if (text === "") { say("Couldn't read " + lockPath, true); return }
         background = blockValues(text, "background")
         clockText = blockValues(text, "label").text || ""
+        fingerprint = /^(true|yes|on|1)$/.test(blockValues(text, "auth")["fingerprint:enabled"] || "")
     }
 
-    function writeLock(block, values, message) {
-        // shown at once, so a second step before the write lands builds on
-        // this one; the re-read after it puts the file's values back
-        if (block === "background") {
-            var next = Object.assign({}, background)
-            for (var k in values) next[k] = values[k] === null ? undefined : String(values[k])
-            background = next
-        }
+    // adds the auth block when the file has none
+    function setFingerprint(on) {
         AtomicFileWrite.write({
             path: lockPath,
-            transform: text => text === "" ? null : setInBlock(text, block, values),
-            refusal: "hyprlock.conf has no " + block + " block; nothing written",
+            transform: text => text === "" ? null
+                : setInBlock(text, "auth", { "fingerprint:enabled": on })
+                    || text.replace(/\n*$/, "\n\nauth {\n    fingerprint:enabled = " + on + "\n}\n"),
             done: (status, detail) => {
-                if (status === "ok" || status === "unchanged") page.say(message, false)
-                else page.say(status === "refused" ? detail : "Couldn't write hyprlock.conf", true)
+                if (status === "ok" || status === "unchanged")
+                    page.say(on ? "A fingerprint unlocks the lock screen" : "Only the password unlocks", false)
+                else page.say("Couldn't write hyprlock.conf", true)
                 page.rereadLock()
             }
         })
+    }
+
+    // --- fingers, through fprintd -------------------------------------------
+
+    // fprintd's names for this user's fingers (right-index-finger, left-thumb)
+    property var fingers: []
+    property bool reader: false
+    property int stages: 0
+    // the finger being enrolled, the touches it has taken and what to do next
+    property string enrolling: ""
+    property int stage: 0
+    property string enrollSay: ""
+    property string enrollFail: ""
+    property bool enrollDone: false
+    property string armedFinger: ""
+
+    function fingerName(f) {
+        var m = /^(left|right)-(\w+?)(-finger)?$/.exec(f)
+        return m ? (m[1] === "left" ? "Left " : "Right ") + m[2] : f
+    }
+
+    function rereadFingers() { fingerList.running = true }
+
+    // a dark finger enrolls, a lit one arms and then removes
+    function pickFinger(f) {
+        if (enrolling !== "") return
+        if (armedFinger === f) {
+            armedFinger = ""
+            disarm.stop()
+            fingerDelete.finger = f
+            fingerDelete.running = true
+        } else if (fingers.indexOf(f) >= 0) {
+            armedFinger = f
+            disarm.restart()
+        } else {
+            armedFinger = ""
+            enrolling = f
+            stage = 0
+            enrollSay = "Waiting for the reader"
+            enrollFail = ""
+            enrollDone = false
+            fingerEnroll.running = true
+        }
+    }
+
+    // fprintd-enroll's `Enroll result:` lines
+    function enrollLine(line) {
+        if (/^Enrolling /.test(line)) { enrollSay = "Touch the sensor"; return }
+        var m = /^Enroll result: (\S+)/.exec(line)
+        if (!m) return
+        var r = m[1]
+        if (r === "enroll-stage-passed") { stage++; enrollSay = "Lift and touch again" }
+        else if (r === "enroll-completed") { stage = stages; enrollDone = true }
+        else if (r === "enroll-retry-scan" || r === "enroll-swipe-too-short") enrollSay = "Didn't take; touch again"
+        else if (r === "enroll-finger-not-centered") enrollSay = "Off centre; touch again"
+        else if (r === "enroll-remove-and-retry") enrollSay = "Lift, then touch again"
+        else enrollFail = r === "enroll-duplicate" ? "that finger is already enrolled"
+            : r === "enroll-data-full" ? "the reader is full" : "the reader gave up"
+    }
+
+    function enrollEnded(err) {
+        var name = fingerName(enrolling)
+        if (enrollDone) say(name + " added", false)
+        else if (enrollFail === "" && /PermissionDenied|Not ?Authori[sz]ed/i.test(err)) say(name + " not added: not allowed", true)
+        else if (enrollFail !== "" || err.trim() !== "") say(name + " not added: " + (enrollFail || err.trim().split("\n").pop()), true)
+        enrolling = ""
+        rereadFingers()
+    }
+
+    Timer { id: disarm; interval: 3000; onTriggered: page.armedFinger = "" }
+
+    // the list, then the touches a finger takes from the device's property
+    Process {
+        id: fingerList
+        running: true
+        command: ["sh", "-c", "out=$(fprintd-list \"$USER\" 2>&1); echo \"$out\"; "
+            + "dev=$(echo \"$out\" | sed -n 's/^Device at //p' | head -n1); "
+            + "[ -n \"$dev\" ] && gdbus call --system --dest net.reactivated.Fprint --object-path \"$dev\" "
+            + "--method org.freedesktop.DBus.Properties.Get net.reactivated.Fprint.Device num-enroll-stages"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                page.reader = /found [1-9]\d* devices?/i.test(text)
+                var names = [], m
+                text.split("\n").forEach(l => { if ((m = /^\s*- #\d+: ([\w-]+)/.exec(l))) names.push(m[1]) })
+                page.fingers = names
+                page.stages = (m = /<(\d+)>/.exec(text)) ? Number(m[1]) : 0
+            }
+        }
+    }
+
+    // stdbuf, or fprintd-enroll's lines only come at the end
+    Process {
+        id: fingerEnroll
+        command: ["stdbuf", "-oL", "fprintd-enroll", "-f", page.enrolling]
+        stdout: SplitParser { onRead: line => page.enrollLine(line) }
+        stderr: StdioCollector { id: enrollErr }
+        onExited: page.enrollEnded(enrollErr.text)
+    }
+
+    Process {
+        id: fingerDelete
+        property string finger: ""
+        command: ["sh", "-c", "fprintd-delete \"$USER\" -f \"$1\"", "sh", finger]
+        stdout: StdioCollector { id: deleteOut }
+        onExited: code => {
+            var name = page.fingerName(finger)
+            if (code === 0) page.say(name + " removed", false)
+            else page.say(name + " not removed: " + (deleteOut.text.trim().split("\n").pop() || "fprintd said no"), true)
+            page.rereadFingers()
+        }
     }
 
     // --- grace, in hypridle.conf ---------------------------------------------
@@ -251,33 +353,6 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    // The lock screen as set now, pinned over the rows, with Lock now on
-    // its corner to try it.
-    pinned: Item {
-        width: parent ? parent.width : 0
-        height: preview.height + Theme.spaceL
-
-        LockPreview {
-            id: preview
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.spaceXs
-            width: Math.min(parent.width, Theme.fit(380))
-            kind: page.backgroundKind
-            blur: page.blurPasses
-            dim: page.dim
-            clock: page.clockKind
-
-            FlyoutChip {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Theme.spaceS
-                icon: "󰌾"
-                text: "Lock now"
-                onClicked: Quickshell.execDetached(["sh", "-c", "pidof hyprlock || hyprlock"])
-            }
-        }
-    }
-
     // the line under the clock as it will read: the date, the track
     // playing and the unread count, each when it's chosen
     readonly property string underSample: {
@@ -293,58 +368,97 @@ SettingsPage {
 
     FlyoutHeading { text: "BACKGROUND" }
 
-    SettingsField {
-        label: "Background"
-        hint: "Wallpaper follows the desktop's"
+    // the lock screen as set now, with Lock now on its corner to try it,
+    // beside the rows that set its background
+    Row {
+        width: parent.width
+        spacing: Theme.spaceXl
 
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: [{ value: "wallpaper", text: "Wallpaper" }, { value: "screenshot", text: "Screenshot" },
-                { value: "plain", text: "Plain" }]
-            current: page.backgroundKind
-            onPicked: v => page.writeLock("background",
-                { path: v === "plain" ? null : v === "screenshot" ? "screenshot" : page.wallpaperLink },
-                "Lock background: " + v)
-        }
-    }
+        LockPreview {
+            id: preview
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fit(220)
+            kind: page.backgroundKind
+            blur: page.blurPasses
+            dim: page.dim
+            clock: page.clockKind
 
-    SettingsField {
-        label: "Blur"
-        hint: page.backgroundKind === "plain" ? "Only for a wallpaper or screenshot" : "Passes over the background"
-
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            enabled: page.backgroundKind !== "plain"
-            value: page.blurPasses
-            minimum: 0
-            maximum: 4
-            valueWidth: 64
-            displayValue: value === 0 ? "off" : String(value)
-            onStepped: delta => {
-                var n = Math.max(0, Math.min(4, page.blurPasses + delta))
-                page.writeLock("background", { blur_passes: n }, n === 0 ? "Blur off" : "Blur: " + n)
+            FlyoutChip {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Theme.spaceS
+                icon: "󰌾"
+                text: "Lock now"
+                onClicked: Quickshell.execDetached(["sh", "-c", "pidof hyprlock || hyprlock"])
             }
         }
-    }
 
-    SettingsField {
-        label: "Dim"
-        hint: page.backgroundKind === "plain" ? "Only for a wallpaper or screenshot" : "Darkens the background"
+        Column {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - preview.width - parent.spacing
+            spacing: Theme.spaceM
 
-        FlyoutStepper {
-            anchors.right: parent.right
-            width: Theme.fit(170)
-            enabled: page.backgroundKind !== "plain"
-            value: Math.round(page.dim / 10)
-            minimum: 0
-            maximum: 8
-            valueWidth: 64
-            displayValue: page.dim + "%"
-            onStepped: delta => {
-                var d = Math.max(0, Math.min(80, Math.round(page.dim / 10) * 10 + delta * 10))
-                page.writeLock("background", { brightness: ((100 - d) / 100).toFixed(2) }, "Dim: " + d + "%")
+            SettingsField {
+                width: parent.width
+                labelWidth: width - bgChoice.width - Theme.spaceL
+                label: "Background"
+                hint: "Follows the desktop's"
+
+                FlyoutSegmented {
+                    id: bgChoice
+                    anchors.right: parent.right
+                    fill: false
+                    model: [{ value: "wallpaper", text: "Wallpaper" }, { value: "screenshot", text: "Screenshot" },
+                        { value: "plain", text: "Plain" }]
+                    current: page.backgroundKind
+                    onPicked: v => page.writeLock("background",
+                        { path: v === "plain" ? null : v === "screenshot" ? "screenshot" : page.wallpaperLink },
+                        "Lock background: " + v)
+                }
+            }
+
+            SettingsField {
+                width: parent.width
+                labelWidth: width - Theme.fit(170) - Theme.spaceL
+                label: "Blur"
+                hint: page.backgroundKind === "plain" ? "Only for an image" : "Passes over it"
+
+                FlyoutStepper {
+                    anchors.right: parent.right
+                    width: Theme.fit(170)
+                    enabled: page.backgroundKind !== "plain"
+                    value: page.blurPasses
+                    minimum: 0
+                    maximum: 4
+                    valueWidth: 64
+                    displayValue: value === 0 ? "off" : String(value)
+                    onStepped: delta => {
+                        var n = Math.max(0, Math.min(4, page.blurPasses + delta))
+                        page.writeLock("background", { blur_passes: n }, n === 0 ? "Blur off" : "Blur: " + n)
+                    }
+                }
+            }
+
+            SettingsField {
+                width: parent.width
+                labelWidth: width - Theme.fit(170) - Theme.spaceL
+                label: "Dim"
+                hint: page.backgroundKind === "plain" ? "Only for an image" : "Darkens it"
+
+                FlyoutStepper {
+                    anchors.right: parent.right
+                    width: Theme.fit(170)
+                    enabled: page.backgroundKind !== "plain"
+                    value: Math.round(page.dim / 10)
+                    minimum: 0
+                    maximum: 8
+                    valueWidth: 64
+                    displayValue: page.dim + "%"
+                    onStepped: delta => {
+                        var d = Math.max(0, Math.min(80, Math.round(page.dim / 10) * 10 + delta * 10))
+                        page.writeLock("background", { brightness: ((100 - d) / 100).toFixed(2) }, "Dim: " + d + "%")
+                    }
+                }
             }
         }
     }
@@ -366,30 +480,43 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Clock size"
+    Grid {
+        id: clockPair
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+        readonly property real half: (width - columnSpacing) / 2
 
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: Settings.choices.lockClockSize
-            labelFor: v => Settings.choiceLabel(v, "lockClockSize")
-            current: Settings.lockClockSize
-            onPicked: v => Settings.set("lockClockSize", v)
+        SettingsField {
+            width: clockPair.half
+            labelWidth: width - sizeChoice.width - Theme.spaceL
+            label: "Clock size"
+
+            FlyoutSegmented {
+                id: sizeChoice
+                anchors.right: parent.right
+                fill: false
+                model: Settings.choices.lockClockSize
+                labelFor: v => Settings.choiceLabel(v, "lockClockSize")
+                current: Settings.lockClockSize
+                onPicked: v => Settings.set("lockClockSize", v)
+            }
         }
-    }
 
-    SettingsField {
-        label: "Clock place"
-        hint: "Where the clock sits"
+        SettingsField {
+            width: clockPair.half
+            labelWidth: width - placeChoice.width - Theme.spaceL
+            label: "Clock place"
 
-        FlyoutSegmented {
-            anchors.right: parent.right
-            fill: false
-            model: Settings.choices.lockClockPlace
-            labelFor: v => Settings.choiceLabel(v, "lockClockPlace")
-            current: Settings.lockClockPlace
-            onPicked: v => Settings.set("lockClockPlace", v)
+            FlyoutSegmented {
+                id: placeChoice
+                anchors.right: parent.right
+                fill: false
+                model: Settings.choices.lockClockPlace
+                labelFor: v => Settings.choiceLabel(v, "lockClockPlace")
+                current: Settings.lockClockPlace
+                onPicked: v => Settings.set("lockClockPlace", v)
+            }
         }
     }
 
@@ -409,7 +536,58 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PASSWORD" }
+    FlyoutHeading { text: "FINGERPRINT" }
+
+    SettingsField {
+        labelWidth: width - Theme.switchWidth - Theme.spaceL
+        label: "Unlock with a fingerprint"
+        hint: !page.reader ? "No fingerprint reader"
+            : page.fingers.length === 0 ? "Add a finger below first"
+            : page.fingerprint ? "Unlocks with " + page.fingers.map(f => page.fingerName(f).toLowerCase()).join(", ")
+                + ", or the password"
+            : "Only the password unlocks"
+
+        Switch {
+            anchors.right: parent.right
+            checked: page.fingerprint
+            enabled: page.reader
+            onToggled: page.setFingerprint(!page.fingerprint)
+        }
+    }
+
+    SettingsField {
+        visible: page.reader
+        labelWidth: width - (cancelEnroll.visible ? cancelEnroll.width + Theme.spaceL : 0)
+        label: "Fingers"
+        hint: page.enrolling !== "" ? page.fingerName(page.enrolling) + ": " + page.enrollSay
+                + " · " + page.stage + (page.stages > 0 ? " of " + page.stages : "")
+            : page.armedFinger !== "" ? "Click " + page.fingerName(page.armedFinger) + " again to remove it"
+            : page.fingers.length === 0 ? "None yet; click a finger to add it"
+            : page.fingers.length + " enrolled · click one to add it, a lit one to remove it"
+
+        Row {
+            anchors.right: parent.right
+            FlyoutChip {
+                id: cancelEnroll
+                visible: page.enrolling !== ""
+                text: "Cancel"
+                onClicked: fingerEnroll.signal(2)
+            }
+        }
+    }
+
+    FingerHands {
+        visible: page.reader
+        anchors.horizontalCenter: parent.horizontalCenter
+        enrolled: page.fingers
+        enrolling: page.enrolling
+        progress: page.stages > 0 ? page.stage / page.stages : 0
+        armed: page.armedFinger
+        onPicked: f => page.pickFinger(f)
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "LOCKING" }
 
     SettingsField {
         label: "Grace period"
@@ -428,8 +606,7 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "LID" }
+    SettingsSubhead { caption: "LID" }
 
     // what closing it does, and for Suspend how long after
     SettingsField {
@@ -477,32 +654,44 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Lock right away"
-        hint: page.lockOnClose ? "Locks the moment the lid shuts" : "Locks only when it goes to sleep"
+    Grid {
+        id: lidPair
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+        readonly property real half: (width - columnSpacing) / 2
 
-        Switch {
-            anchors.right: parent.right
-            checked: page.lockOnClose
-            onToggled: page.setLid("lock_on_close", page.lockOnClose ? 0 : 1,
-                page.lockOnClose ? "Locks when it goes to sleep" : "Locks as soon as the lid closes")
+        SettingsField {
+            width: lidPair.half
+            labelWidth: width - Theme.switchWidth - Theme.spaceL
+            label: "Lock right away"
+            hint: page.lockOnClose ? "The moment it shuts" : "Only when it sleeps"
+
+            Switch {
+                anchors.right: parent.right
+                checked: page.lockOnClose
+                onToggled: page.setLid("lock_on_close", page.lockOnClose ? 0 : 1,
+                    page.lockOnClose ? "Locks when it goes to sleep" : "Locks as soon as the lid closes")
+            }
         }
-    }
 
-    // lid.sh's suspend-then-hibernate; the power menu's Hibernate stays
-    SettingsField {
-        label: "Hibernate"
-        hint: !Session.canHibernate ? "Needs hibernation set up (install.sh)"
-            : page.closeAction !== "suspend" ? "Only when the lid suspends"
-            : page.hibernate ? "Saved to disk after an hour shut"
-            : "Stays asleep while the lid is shut"
+        // lid.sh's suspend-then-hibernate; the power menu's Hibernate stays
+        SettingsField {
+            width: lidPair.half
+            labelWidth: width - Theme.switchWidth - Theme.spaceL
+            label: "Hibernate"
+            hint: !Session.canHibernate ? "Needs hibernation (install.sh)"
+                : page.closeAction !== "suspend" ? "Only when the lid suspends"
+                : page.hibernate ? "After an hour shut"
+                : "Stays asleep"
 
-        Switch {
-            anchors.right: parent.right
-            checked: page.hibernate && Session.canHibernate
-            enabled: Session.canHibernate && page.closeAction === "suspend"
-            onToggled: page.setLid("hibernate", page.hibernate ? 0 : 1,
-                page.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
+            Switch {
+                anchors.right: parent.right
+                checked: page.hibernate && Session.canHibernate
+                enabled: Session.canHibernate && page.closeAction === "suspend"
+                onToggled: page.setLid("hibernate", page.hibernate ? 0 : 1,
+                    page.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
+            }
         }
     }
 }

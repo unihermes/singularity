@@ -1,14 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ReloadToast.qml
 //
-// Stands in for Quickshell's own reload popup: a notification card at the
-// bar's left end, clear of the notification popups on the right. A
-// good reload fades on its own; a failed one shows the error and stays
-// until clicked or its longer timer runs out. Either can be closed.
-//
-// inhibitReloadPopup() only takes effect when called from inside the
-// reloadCompleted/reloadFailed handlers. A failed reload leaves the old
-// shell running, so its handlers are the ones that catch reloadFailed.
+// Replaces Quickshell's reload popup with a card at the bar's left end: a
+// good reload fades, a failure stays longer with the error. The inhibit
+// only works from inside the reload handlers (the old shell's, on failure).
 
 import Quickshell
 import Quickshell.Services.Notifications

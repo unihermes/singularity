@@ -43,9 +43,10 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - **A shell of its own.** Bar, flyouts, Control Centre, launcher, notification
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
-- **Looks and Styles.** Eleven looks (Classic, Kanagawa, Catppuccin, Nord,
-  Signal, Sonar, …) on top of eight Styles that draw all of the chrome,
-  controls included, at once, so no combination of settings can clash.
+- **Looks and Styles.** Eight looks (Singularity, Arch, Nord, Dracula, Tokyo
+  Night, Catppuccin Mocha, One Dark, Kanagawa) on top of five Styles that draw
+  all of the chrome, controls included, at once, so no combination of
+  settings can clash.
 - **Settings for everything.** Displays, input, power and idle, the lock
   screen, window rules, keybinds, notifications, audio, Bluetooth, Wi-Fi,
   startup apps, file types, updates. Every page writes the real config file
@@ -166,8 +167,8 @@ animations, blur, shadows, gaps and rounding until you switch it back
 ## Looks and Styles
 
 A **look** is a palette and accent plus a starting point for every
-appearance setting. The default, **Singularity**, is one grayscale ramp with
-pale blue text and a single indigo accent (`#5555c8`):
+appearance setting. The default, **Singularity**, is a grayscale ramp with pale
+blue text and a single indigo accent (`#5555c8`), drawn in the Double style:
 
 | | | | |
 |---|---|---|---|
@@ -175,34 +176,37 @@ pale blue text and a single indigo accent (`#5555c8`):
 | `#242424` overlay | `#303030` border | `#4d4d4d` muted | `#7a7a7a` subtext |
 | `#d0e2fa` text | `#ebebeb` bright | | |
 
-It also ships with **Classic** (Singularity as it first was, double-stroked),
-Kanagawa, Everforest, Catppuccin Mocha, Tokyo Night, Breeze Dark, Nord,
-Platinum (Mac OS 8 after dark), **Signal** (black ink on white, like a
-printed form) and **Sonar** (a teal heads-up display). Each one also picks
-its own bar arrangement, density, font, workspaces, window strip and
-notification popups.
+The other seven are ports of well-known editor themes, each with its own
+Style, Roundness and font: **Arch** (the logo's blue, Double), **Nord**
+(Solid), **Dracula** (Glass), **Tokyo Night** (Channel), **Catppuccin
+Mocha** (Solid on a floating bar), **One Dark** (Double) and **Kanagawa**
+(Channel). Pick one at the top of Appearance › Theme, or step through them from the
+Control Centre's Look card.
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
 meters, section frames, the heading mark, where flyouts sit, and its own
-switches, sliders, segmented controls and buttons. There are eight:
-Channel, Double, Solid, Capsule, Glass, Bevel, Tabbed and Corners. Each has
-three options of its own (Glass's heavy blur, Capsule's one-pill bar,
-Corners' glow, …). Beside it are only dials that
+switches, sliders, segmented controls and buttons. There are five:
+Channel, Double, Solid, Glass and Flat. Each has three options of its own
+(Glass's heavy blur, Flat's taskbar layout, …). Beside it are only dials that
 move everything together (Roundness, Bar shape, Density, See-through) and a
 few finishing switches.
 
-<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance's Style tab: a live preview and the Styles" width="720"></p>
+<p align="center"><img src=".github/assets/settings.jpg" alt="Settings, on Appearance: a live preview and the Styles" width="720"></p>
 
-Pick a look from **Settings → Appearance → Look**, the Control Centre, or a
-keybind (`qs ipc call look cycle`, `qs ipc call look set <name>`). The other
-tabs adjust it; a dot marks every setting that differs from the look, and the
-Look tab lists those changes with a way back for each. **Set as default**
-saves your setup as the point Reset returns to.
+**Settings → Appearance** adjusts everything in five tabs (Theme, Bar,
+Panels, Desktop, Apps), each under a preview of what it changes: the
+palette role by role, any accent, the headings, Density's dials, the bar's
+arrangement (drag modules between Left, Centre, Right and Hidden) and size,
+the windows' borders, corners and shadow, the wallpaper's fit, and separate
+animation speeds. A dot marks every setting that differs from the
+baseline, and the strip above the tabs counts and lists those changes with
+a way back for each. **Save as default** saves your setup as the current
+Style's default, the point Reset returns to while that Style is in use;
+each Style keeps its own.
 
-Looks live in `quickshell/services/looks.json` (copy an entry to make your
-own; removing one from its card only hides it on that machine, in
-`~/.local/state/singularity/looks-removed.json`); Styles are in `services/Styles.js`; `DESIGN.md` in the shell's folder
-is the design reference for every element.
+The look lives in `quickshell/services/Looks.js`, Styles in
+`services/Styles.js`; `DESIGN.md` in the shell's folder is the design
+reference for every element.
 
 ## The shell
 
@@ -276,7 +280,7 @@ ever shows up in `git status`, so `update.sh` always pulls cleanly and your
 changes survive it.
 
 - **Everything the shell saves** (settings, display rules, input and window
-  settings, the lid, removed looks, the wallpaper, the generated colour
+  settings, the lid, the wallpaper, the generated colour
   files) lives in `~/.local/state/singularity/`. Deleting it resets the
   shell to its defaults.
 - **Config files Settings or the app itself rewrites** are this machine's

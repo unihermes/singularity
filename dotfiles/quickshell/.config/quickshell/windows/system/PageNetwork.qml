@@ -18,7 +18,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Network"
     subtitle: SystemStats.iface === "" ? "No default route — offline"
         : SystemStats.connType + " via " + SystemStats.iface
           + (Network.ssid !== "" && SystemStats.connType === "Wi-Fi" ? "  ·  " + Network.ssid : "")
@@ -35,19 +34,32 @@ SystemPage {
     FlyoutHeading { text: "NOW" }
 
     // the link in use: its name, how fast it's moving, how good the signal
-    // is, and the way to change it
+    // is, its minute, and the way to change it
     HeadCard {
         glyph: SystemStats.iface === "" ? "󰖪" : page.wifi ? "󰖩" : "󰈀"
         glyphColor: SystemStats.iface === "" ? Theme.muted : Theme.textStrong
         title: SystemStats.iface === "" ? "Offline"
             : page.wifi && Network.ssid !== "" ? Network.ssid : SystemStats.connType + " · " + SystemStats.iface
         lines: SystemStats.iface === "" ? ["No default route"] : [
-            "↓ " + Format.rate(Math.max(0, SystemStats.rxRate)) + "   ↑ " + Format.rate(Math.max(0, SystemStats.txRate))
-                + (page.wifi && SystemStats.signalDbm < 1000
-                    ? "  ·  signal " + page.signalWord(SystemStats.signalDbm) + " (" + SystemStats.signalDbm + " dBm)" : ""),
-            SystemStats.rxTotal > 0 ? "Since the link came up ↓ " + Format.bytes(SystemStats.rxTotal)
+            "↓ " + Format.rate(Math.max(0, SystemStats.rxRate)) + "   ↑ " + Format.rate(Math.max(0, SystemStats.txRate)),
+            page.wifi && SystemStats.signalDbm < 1000
+                ? "Signal " + page.signalWord(SystemStats.signalDbm) + " (" + SystemStats.signalDbm + " dBm)" : "",
+            SystemStats.rxTotal > 0 ? "Since it came up ↓ " + Format.bytes(SystemStats.rxTotal)
                 + "  ↑ " + Format.bytes(SystemStats.txTotal) : "",
         ]
+
+        Spark {
+            width: Theme.fit(200)
+            height: Theme.fit(56)
+            readonly property real peak: Math.max(65536,
+                Math.max.apply(null, SystemStats.rxHistory.concat(SystemStats.txHistory, [0])))
+            series: [
+                { values: SystemStats.rxHistory, color: Theme.accent, fill: true },
+                { values: SystemStats.txHistory, color: Theme.subtext, fill: false },
+            ]
+            ceiling: peak * 1.15
+            caption: "60s · peak " + Format.rate(peak)
+        }
 
         FlyoutChip {
             text: "Settings  󰁔"
@@ -55,21 +67,10 @@ SystemPage {
         }
     }
 
-    Spark {
-        readonly property real peak: Math.max(65536,
-            Math.max.apply(null, SystemStats.rxHistory.concat(SystemStats.txHistory, [0])))
-        series: [
-            { values: SystemStats.rxHistory, color: Theme.accent, fill: true },
-            { values: SystemStats.txHistory, color: Theme.subtext, fill: false },
-        ]
-        ceiling: peak * 1.15
-        caption: "60s · ↓ ↑ · peak " + Format.rate(peak)
-    }
-
     // --- the connection -----------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "CONNECTION" }
+    FlyoutHeading { text: "CONNECTION AND INTERFACES" }
 
     Grid {
         id: conn
@@ -99,10 +100,8 @@ SystemPage {
         }
     }
 
-    // --- every interface ----------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "INTERFACES" }
+    // every interface, in the same section
+    SettingsSubhead { caption: "INTERFACES" }
 
     // one row each, the one carrying traffic ticked; a row opens to its
     // addresses
@@ -152,32 +151,45 @@ SystemPage {
     Item { width: 1; height: Theme.spaceS }
     FlyoutHeading { text: "TOOLS" }
 
-    FlyoutRow {
-        leadingIcon: "󰓅"
-        label: "Ping test"
-        note: "Ten pings to 1.1.1.1: is the internet there, and how far"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "ping -c 10 1.1.1.1; read -r _"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰑪"
-        label: "Trace route"
-        note: "Each hop on the way to 1.1.1.1"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "command -v tracepath >/dev/null && tracepath 1.1.1.1 || ip route get 1.1.1.1; read -r _"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰒍"
-        label: "Listening ports"
-        note: "What on this machine accepts connections"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "ss -tulpn; read -r _"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰛳"
-        label: "Routing table"
-        note: "Where each kind of traffic goes"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "ip route; echo; ip -6 route; read -r _"])
+    // each opens in a terminal; two to a line
+    Grid {
+        id: tools
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰓅"
+            label: "Ping test"
+            note: "Ten pings to 1.1.1.1"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "ping -c 10 1.1.1.1; read -r _"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰑪"
+            label: "Trace route"
+            note: "Hops to 1.1.1.1"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "command -v tracepath >/dev/null && tracepath 1.1.1.1 || ip route get 1.1.1.1; read -r _"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰒍"
+            label: "Listening ports"
+            note: "ss -tulpn"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "ss -tulpn; read -r _"])
+        }
+        FlyoutRow {
+            width: tools.cell
+            leadingIcon: "󰛳"
+            label: "Routing table"
+            note: "ip route"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "ip route; echo; ip -6 route; read -r _"])
+        }
     }
 }

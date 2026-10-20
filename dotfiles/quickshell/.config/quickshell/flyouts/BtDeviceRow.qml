@@ -1,15 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BtDeviceRow.qml
 //
-// One Bluetooth device in the flyout. Extends FlyoutRow rather than wrapping
-// one so it still behaves like a plain row inside the flyout's Column --
-// a wrapper would have to forward width and height by hand.
-//
-// Every row carries the device's type icon and its state in words, with the
-// battery once it's connected. In the flyout, pointing at a paired device
-// offers Connect or Disconnect, and a click does the same; a new one pairs.
-// The Settings page sets `detailed`: a paired device opens in place
-// (opened()) rather than connecting.
+// A Bluetooth device row (extends FlyoutRow): type icon, state in words,
+// battery when connected. In the flyout a paired device offers and does
+// Connect/Disconnect, a new one pairs; `detailed` (Settings) opens it in
+// place instead.
 
 import Quickshell.Bluetooth
 import QtQuick

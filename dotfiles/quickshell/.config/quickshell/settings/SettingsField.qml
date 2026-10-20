@@ -33,11 +33,8 @@ Item {
     // Appearance page's list of changes), so a search lands on the field
     property bool searchable: true
 
-    // The page a search result landed on rings the field it named. Found by
-    // walking up rather than passed in, so no page has to thread it through.
-    // named for what it is rather than `page`, which every Settings page
-    // already uses as its own id -- a property here would shadow it inside
-    // any field the page declares
+    // the page, found by walking up, to ring a searched field (not named
+    // `page`, which would shadow every page's own id)
     readonly property var hostPage: {
         var p = parent
         while (p) {
@@ -50,6 +47,10 @@ Item {
         && hostPage.highlight === root.label
 
     default property alias control: slot.data
+    // small items on the label's line, after it (an icon theme's samples)
+    property alias labelExtras: extras.data
+    // small items in the hint's place, under the label (a week's days)
+    property alias hintExtras: hintRow.data
 
     width: parent ? parent.width : 0
     implicitHeight: Math.max(Theme.fieldHeight, labels.implicitHeight + Theme.spaceM, slot.childrenRect.height + Theme.spaceM)
@@ -89,14 +90,17 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 
-        // the label, and the mark of a change from the look
+        // the label, the mark of a change from the look, and anything shown
+        // after them (`labelExtras`)
         Item {
             width: parent.width
-            height: labelText.implicitHeight
+            height: Math.max(labelText.implicitHeight, extras.height)
 
             Text {
                 id: labelText
-                width: Math.min(implicitWidth, parent.width - (resetMark.visible ? resetMark.width + Theme.spaceS : 0))
+                // room for the dot only: the mark's wider hover text runs
+                // on over the hint rather than eliding the label
+                width: Math.min(implicitWidth, parent.width - (resetMark.visible ? Theme.fs(14) + Theme.spaceS : 0))
                 text: (root.mark !== "" ? root.mark + "  " : "") + root.label
                 elide: Text.ElideRight
                 color: root.dimmed ? Theme.subtext : Theme.text
@@ -111,11 +115,26 @@ Item {
                 anchors.left: labelText.right
                 anchors.leftMargin: Theme.spaceS
                 anchors.verticalCenter: labelText.verticalCenter
+                // under the pointer, what clicking puts back
                 text: !resetMouse.containsMouse ? "●"
-                    : Settings.baselineIsDefault ? "󰑓 default" : "󰑓 " + Settings.choiceLabel(Settings.look) + "'s"
-                color: Theme.accent
+                    : "󰑓 " + (Settings.baselineIsDefault ? Settings.choiceLabel(Settings.style, "style") + " default" : Settings.choiceLabel(Settings.look))
+                      + (root.hostPage && root.hostPage.valueText
+                         ? ": " + root.hostPage.valueText(root.lookKey, Settings.lookBaseline[root.lookKey]) : "")
+                color: resetMouse.containsMouse ? Theme.textStrong : Theme.accent
                 font.family: Theme.fontIcon
                 font.pixelSize: resetMouse.containsMouse ? Theme.fontSmall : Theme.fontCaption
+                z: 1
+
+                Rectangle {
+                    visible: resetMouse.containsMouse
+                    anchors.fill: parent
+                    anchors.margins: -Theme.spaceXs
+                    z: -1
+                    radius: Theme.radiusSmall
+                    color: Theme.surface
+                    border.width: Theme.borderWidth
+                    border.color: Theme.accent
+                }
 
                 MouseArea {
                     id: resetMouse
@@ -125,6 +144,14 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Settings.resetLookKey(root.lookKey)
                 }
+            }
+
+            Row {
+                id: extras
+                anchors.left: resetMark.visible ? resetMark.right : labelText.right
+                anchors.leftMargin: Theme.spaceL
+                anchors.verticalCenter: labelText.verticalCenter
+                spacing: Theme.spaceS
             }
         }
 
@@ -138,6 +165,13 @@ Item {
             font.family: Theme.fontText
             font.pixelSize: Theme.fontSmall
             font.weight: Theme.weightBody
+        }
+
+        Row {
+            id: hintRow
+            visible: children.length > 0
+            topPadding: Theme.spaceXs
+            spacing: Theme.spaceXs
         }
     }
 

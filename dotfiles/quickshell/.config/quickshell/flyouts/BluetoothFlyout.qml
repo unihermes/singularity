@@ -50,11 +50,8 @@ FlyoutPanel {
         label: !btFlyout.adapter ? "No adapter" : "Blocked by rfkill"
     }
 
-    // BlueZ hands back everything the radio hears -- here ~27
-    // devices, of which only 5 have a name. The rest are BLE privacy
-    // advertisements (phones, watches, tags) broadcasting a rotating
-    // random address and nothing else. They can't be paired with and
-    // they bury the device you're looking for.
+    // drops nameless BLE privacy advertisements (most of what BlueZ hears;
+    // unpairable)
     function btKeep(d) {
         if (d.paired || d.connected) return true
         if (d.deviceName !== "") return true

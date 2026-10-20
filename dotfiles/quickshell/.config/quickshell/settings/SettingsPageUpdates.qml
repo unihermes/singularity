@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageUpdates.qml
 //
-// Software updates: how often Updates.qml checks, whether the AUR is part of
-// it, and packages to leave alone -- all kept in Settings.qml, so the bar's
-// Updates module and flyout follow at once. What's pending and the upgrade
-// itself are Updates.qml's, as the flyout uses them, and so is the
-// Singularity clone's status and update.sh; the upkeep rows are
-// Health's package checks, with the same repair buttons as System's Health
-// page.
+// Software updates: check interval, AUR, ignored packages (Settings.qml);
+// pending updates, the upgrade and the Singularity clone from Updates.qml;
+// upkeep rows from Health's package checks.
 
 import Quickshell
 import Quickshell.Io
@@ -215,9 +211,6 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: Updates.repoBehind > 0 ? "SINGULARITY  " + Updates.repoBehind : "SINGULARITY" }
-
     // pulls, relinks and installs new packages; a fast-forward only, so not
     // while local commits are in the way
     SettingsField {
@@ -262,9 +255,6 @@ SettingsPage {
         onActivated: page.showAllCommits = !page.showAllCommits
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "CHECKING" }
-
     SettingsField {
         label: "Check for updates"
         hint: Settings.updateInterval === 0 ? "Only when you press Check now"
@@ -302,17 +292,13 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: Updates.count > 0 ? "PENDING  " + Updates.count : "PENDING" }
+    FlyoutHeading { text: "PACKAGES" }
+
+    // what's waiting, only while there's some; the card says when there's none
+    SettingsSubhead { visible: Updates.count > 0; caption: "PENDING  " + Updates.count }
 
     property bool showAllPending: false
     readonly property int shortList: 10
-
-    FlyoutRow {
-        visible: Updates.count === 0
-        enabled: false
-        label: Updates.checking ? "Checking…"
-            : Updates.lastChecked === null ? "Not checked yet" : "Everything is up to date"
-    }
 
     Repeater {
         model: page.showAllPending ? Updates.packages : Updates.packages.slice(0, page.shortList)
@@ -336,8 +322,7 @@ SettingsPage {
         onActivated: page.showAllPending = !page.showAllPending
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "IGNORED" }
+    SettingsSubhead { caption: "IGNORED" }
 
     FlyoutRow {
         visible: Settings.updateIgnore.length === 0

@@ -1,17 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/SystemSpecs.qml
 //
-// The System window's static facts: the distribution and kernel, the CPU,
-// GPU, board and firmware, displays, disks, input devices, the package
-// database, the boot breakdown and the shell's own versions -- plus the
-// copy-to-clipboard summary of them.
-//
-// Gathered when the window opens, not sampled: none of it changes while the
-// machine is up, so each probe runs once per session and the reopen after
-// that is free. The live half is SystemStats.qml.
-//
-// A singleton for the same reason SystemStats is one: the pages are loaded
-// on demand and would otherwise each need the object handed down to them.
+// The System window's static facts (OS, hardware, displays, disks, input
+// devices, packages, boot time, versions) and the copy summary. Probed once
+// per session; a singleton like SystemStats.
 
 pragma Singleton
 
@@ -62,9 +54,7 @@ Singleton {
 
     // --- devices ----------------------------------------------------------
 
-    // [{ name, size, model, tran, rota }], real disks only -- lsblk lists
-    // the two read-only "loop-like" card-reader placeholders on this laptop
-    // as 0B disks, which is noise rather than storage
+    // [{ name, size, model, tran, rota }], real disks only
     property var storage: []
     // [{ name, width, height, hz, scale, make, model }]
     property var monitors: []
@@ -103,10 +93,7 @@ Singleton {
         if (bootLine === "") bootProc.running = true
     }
 
-    // One shell script, one round trip, for everything that lives in a file
-    // or falls out of a single tool. `column -t` isn't used -- fixed-width
-    // awk fields would fall over on a model name with spaces, so each record
-    // is pipe-separated or section-separated and split in onStreamFinished.
+    // one script, one round trip; pipe- or section-separated records
     Process {
         id: specsProc
         command: ["sh", "-c",
@@ -119,9 +106,7 @@ Singleton {
             + "cat /sys/devices/system/cpu/cpu0/cpufreq/$f 2>/dev/null || echo; done\n"
             + "echo ---\n"
             // 2: gpu model and the kernel driver bound to it
-            // the driver line is not always the next one -- Subsystem: and
-            // DeviceName: can come between -- so read on until the device's
-            // block ends rather than assuming it sits directly underneath
+            // read to the end of the device's block for the driver line
             + "lspci -k | awk '/VGA compatible|3D controller/{sub(/^[0-9a-f:.]+ /,\"\"); "
             + "sub(/^(VGA compatible controller|3D controller): /,\"\"); print; d=\"\"; "
             + "while ((getline line) > 0) { if (line !~ /^\\t/) break; "
@@ -188,17 +173,13 @@ Singleton {
                 var dl = lines(5)
                 for (var i = 0; i < dl.length; i++) {
                     if (dl[i] === "") continue
-                    // NAME, SIZE, TYPE, TRAN and ROTA never contain spaces,
-                    // so they're safe to shift off either end; MODEL is
-                    // whatever's left in the middle, and is the one field
-                    // that can contain spaces ("Micron 1024GB NVMe")
+                    // MODEL (may hold spaces) is what's left between the
+                    // space-free fields at either end
                     var f = dl[i].split(/\s+/)
                     if (f.length < 5) continue
                     var rota = f.pop(), tran = f.pop(), type = f.pop()
                     var name = f.shift(), size = f.shift()
-                    // real disks with a real bus only: card-reader slots
-                    // report a 0B "disk" with no media in them, and zram is
-                    // compressed RAM masquerading as a block device (tran "")
+                    // real disks with a bus only (not 0B card slots or zram)
                     if (type !== "disk" || size === "0B" || tran === "") continue
                     disks.push({ name: name, size: size, model: f.join(" ") || "--",
                                  tran: tran, rota: rota === "1" })
@@ -233,10 +214,7 @@ Singleton {
         return names[n] || ""
     }
 
-    // Refresh rate isn't in Quickshell's own Screen type, only in Hyprland's
-    // IPC -- and unlike Quickshell.screens, that's already keyed by name in
-    // an order matching nothing in particular, so match by name below rather
-    // than assuming the two lists line up.
+    // refresh rates from Hyprland's IPC, matched by name
     Process {
         id: monitorsProc
         command: ["hyprctl", "monitors", "-j"]
@@ -254,9 +232,7 @@ Singleton {
         }
     }
 
-    // Keyboards, mice and touchpads as Hyprland sees them -- the names here
-    // are the ones a device rule in input.lua has to match, which is the
-    // reason to show them at all.
+    // input devices by the names input.lua's device rules match
     Process {
         id: inputsProc
         command: ["hyprctl", "devices", "-j"]
@@ -285,9 +261,7 @@ Singleton {
         id: bootProc
         command: ["sh", "-c", "systemd-analyze 2>/dev/null | head -1"]
         stdout: StdioCollector {
-            // "Startup finished in 6.430s (firmware) + ... = 13.010s" becomes
-            // "13.0s · firmware 6.4s · ...": the total first, so a narrow row
-            // cuts the breakdown rather than the answer
+            // "13.0s · firmware 6.4s · ...": the total first
             onStreamFinished: {
                 var t = text.trim().replace(/^Startup finished in\s*/, "")
                 var short = x => x.replace(/(\d+\.\d+)s/g, (m, n) => Number(n).toFixed(1) + "s")

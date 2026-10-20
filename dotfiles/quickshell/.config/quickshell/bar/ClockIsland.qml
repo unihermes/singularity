@@ -1,22 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/ClockIsland.qml
 //
-// The clock chip, which doubles as a Dynamic Island: for a moment after
-// something changes it shows that instead of the time, then eases back.
-//
-//   volume / brightness  a level meter
-//   layout, lock keys    the mode just switched to (SUPER+M, Caps/Num Lock),
-//   the lid              or the lid just closed or opened
-//
-// While a timer runs (services/Timers.qml) it shows that and the clock in
-// place of the time, sized to them, with the timer's progress as the fill.
-//
-// The chip keeps its width through an event, eliding what doesn't fit, so
-// nothing on the bar moves when an event comes and goes.
-//
-// Settings.clockIsland turns it off, and LevelToast/ModeToast step aside
-// only while it's on and the clock is actually on the bar
-// (Settings.islandActive), so there's always exactly one place these show.
+// The clock chip as a Dynamic Island: briefly shows a level (volume,
+// brightness), a mode (SUPER+M, lock keys) or the lid instead of the time,
+// keeping its width. A running timer (Timers.qml) shows with the clock,
+// its progress as the fill. With Settings.clockIsland off, or the clock off
+// the bar (Settings.islandActive), LevelToast/ModeToast show instead.
 
 import Quickshell
 import QtQuick
@@ -41,18 +30,7 @@ BarModule {
         precision: (root.formats[Theme.clockStyle] || root.formats.stamp).indexOf("ss") >= 0 ? SystemClock.Seconds : SystemClock.Minutes
         enabled: root.visible
     }
-    // Thin spaces around the divider: in a monospace font an ordinary space
-    // is a full character wide, which left the time and date far apart.
-    // One format per clock style (Looks.js).
-    readonly property var formats: ({
-        stamp: "HH:mm:ss\u2009|\u2009MM/dd/yy",
-        time:  "HH:mm",
-        day:   "ddd d MMM\u2002HH:mm",
-        long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
-        seconds: "HH:mm:ss",
-        iso:   "yyyy-MM-dd\u2002HH:mm",
-        custom: Settings.clockFormat || "HH:mm",
-    })
+    readonly property var formats: Theme.clockFormats
     readonly property string timeText: Qt.formatDateTime(clockSource.date,
         Theme.hours(formats[Theme.clockStyle] || formats.stamp))
 
@@ -66,10 +44,8 @@ BarModule {
     }
     readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.chrome
 
-    // the running timer and the clock after it; the chip hugs these for as
-    // long as the timer runs, rather than keeping the time's width
-    // a Text, not TextMetrics: the label is a Text, and its implicit width
-    // runs a pixel or two past TextMetrics' advance, which would elide it
+    // the running timer and the clock; a Text, since TextMetrics' advance
+    // runs a pixel short and would elide the label
     Text {
         id: timerMetrics
         visible: false
@@ -102,9 +78,7 @@ BarModule {
     onMiddleClicked: Timers.togglePause()
 
     function show(kind, icon, text, fill, ms) {
-        // the startup guard is for levels only: a mode is always a real key
-        // or lid event, and the lid's can land on a bar that has only just
-        // opened, with a display that came or went
+        // the startup guard is for levels only; modes are always real events
         if ((!ready && kind !== "mode") || !Settings.clockIsland || !root.visible) return
         root.kind = kind
         root.evIcon = icon

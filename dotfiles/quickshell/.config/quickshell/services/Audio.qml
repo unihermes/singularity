@@ -1,12 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Audio.qml
 //
-// The default output sink's volume and mute, bound live so anything
-// watching `percent` / `muted` (the OSD, the bar chip) catches a change
-// from anywhere -- hardware keys, a slider, scroll-on-chip -- without each
-// call site having to announce it. Below that, the device and stream lists
-// and their names, which the volume flyout and the Audio page share; those
-// track the nodes themselves (PwObjectTracker) while they're open.
+// The default sink's volume and mute, bound live so the OSD and bar catch
+// any change; plus the device and stream lists and names the volume flyout
+// and Audio page share (tracked while those are open).
 
 pragma Singleton
 
@@ -38,12 +35,21 @@ Singleton {
     readonly property var sinks: devices.filter(n => n.isSink)
     readonly property var sources: devices.filter(n => !n.isSink)
     readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
-    // Streams split by Pipewire's own media.class rather than by isSink:
-    // for a stream that flag reads as the direction of the node it feeds,
-    // which is the opposite of how it reads on a device and easy to get
-    // backwards. media.class says exactly which it is.
+    // split by media.class (isSink reads backwards on streams)
     readonly property var playing: streams.filter(n => mediaClass(n) === "Stream/Output/Audio")
     readonly property var recording: streams.filter(n => mediaClass(n) === "Stream/Input/Audio")
+    // playing streams grouped by app, so a browser's tabs share one row:
+    // [{ name, nodes }] in the order each app first appears
+    readonly property var playingApps: {
+        var apps = []
+        playing.forEach(n => {
+            var name = appName(n)
+            var app = apps.find(a => a.name === name)
+            if (app) app.nodes.push(n)
+            else apps.push({ name: name, nodes: [n] })
+        })
+        return apps
+    }
 
     // node ids of outputs whose every port is "not available": an HDMI or
     // DisplayPort output with no screen on it. Asked of pactl, which knows
@@ -74,10 +80,8 @@ Singleton {
         return n ? (n.description || n.nickname || n.name) : ""
     }
 
-    // A device's name without the words it shares with the card's other
-    // devices: "Speaker", not "Alder Lake Smart Sound Technology Audio
-    // Controller Speaker". A card with one device, a USB headset say, keeps
-    // its whole name, which is the only thing telling it apart.
+    // a device's name minus the words it shares with its card's others
+    // ("Speaker"); a single-device card keeps its whole name
     function shortName(n) {
         var name = nodeName(n)
         var card = n ? (n.properties || {})["device.id"] : undefined
@@ -115,6 +119,14 @@ Singleton {
         if (!n) return ""
         var p = n.properties || {}
         return p["application.name"] || n.description || n.nickname || n.name
+    }
+
+    // an app stream's icon path: its own icon name, else the app's found
+    // by its binary (Floorp names none); "" for neither
+    function appIcon(n) {
+        var p = (n && n.properties) || {}
+        return p["application.icon-name"] ? Quickshell.iconPath(p["application.icon-name"], true)
+            : Apps.iconForClass(p["application.process.binary"] || p["application.name"] || "")
     }
 
     // Pipewire nodes are unbound by default: audio.volume / audio.muted stay

@@ -1,12 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ControlCentre.qml
 //
-// The control centre flyout, split out of shell.qml: every page, menu
-// entry, and submenu it drills into. Needs the bar and root's state
-// (network/bluetooth/volume readouts, Keep Awake, Night Light) and the
-// shell's standalone windows, so those come in as required properties
-// rather than being looked up by id -- this file can't see ids declared
-// in shell.qml.
+// The control centre flyout: its root list and every submenu. Root's state
+// and the standalone windows come in as required properties.
 
 import Quickshell
 import Quickshell.Widgets
@@ -14,6 +10,7 @@ import Quickshell.Io
 import QtQuick
 import "../services"
 import "../bar"
+import "../services/Looks.js" as Looks
 import "../services/Styles.js" as Styles
 
 FlyoutPanel {
@@ -28,10 +25,7 @@ FlyoutPanel {
     required property var systemWin
     required property var keybindsWin
 
-    // Drill-down rather than nested pop-out panels: "" is the root
-    // list and anything else is a submenu drawn in the same box. A
-    // second floating panel would have to track the first one's
-    // geometry and its own click-off, for a menu this size.
+    // "" is the root list, anything else a submenu drawn in the same box
     property string page: ""
     // always reopen at the top level
     onOpenChanged: if (!open) page = ""
@@ -59,9 +53,8 @@ FlyoutPanel {
         "widgets": "BAR WIDGETS"
     })
 
-    // Airplane mode is an rfkill soft block on every radio. Read on open
-    // and after each toggle rather than watched: nothing else here
-    // changes it often enough to be worth a poll.
+    // airplane mode: an rfkill soft block on every radio, read on open and
+    // after each toggle
     property bool airplane: false
 
     // A Process that is still running ignores a new command, so a toggle
@@ -109,10 +102,7 @@ FlyoutPanel {
         if (act === "settings") settingsWin.open()
         else if (act === "system") systemWin.open()
         else if (act === "keybinds") keybindsWin.open()
-        // The pause lets the flyout's surface unmap first. slurp and
-        // hyprpicker both draw on the overlay layer too, and without
-        // it the menu is still on screen for their first frame --
-        // in the picker's case, close enough to pick its own pixels.
+        // the pause lets the flyout unmap before slurp/hyprpicker draw
         else if (act === "screenshot")
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/screenshot.sh"])
         else if (act === "copytext")
@@ -131,12 +121,9 @@ FlyoutPanel {
         onCrumbClicked: controlCentre.page = ""
     }
 
-    // root: Power on its own at the top, then everyday things, then
-    // customising the shell, then the standalone windows. `sub` opens a
-    // submenu, `act` runs straight away.
-    // One flat list, dividers included, so each row and divider is a child
-    // of the panel's own column (a sectioned flyout frames the runs between
-    // dividers).
+    // Root: Power, everyday things, customising, the standalone windows.
+    // `sub` opens a submenu, `act` runs. One flat list, so the sectioned
+    // frame sees the dividers.
     Repeater {
         model: controlCentre.page === "" ? [
             { label: "Power",         sub: "power" },
@@ -174,9 +161,7 @@ FlyoutPanel {
     }
 
     // --- Applications -----------------------------------------
-    // A list rather than rows in the column: at ~30 apps the panel
-    // would run most of the way down the screen, so it scrolls
-    // inside a fixed-height window instead.
+    // a scrolling list, as ~30 apps would run down the screen
 
     FlyoutInput {
         id: appSearch
@@ -260,10 +245,9 @@ FlyoutPanel {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                // one highlight shared by mouse and keys: hovering
-                // moves the selection rather than drawing a second one
-                // position, not containsMouse: arrow keys scroll rows under a
-                // still pointer, which would otherwise pull the selection back
+                // one highlight shared by mouse and keys; on position, not
+                // containsMouse, so keys scrolling rows under a still
+                // pointer don't pull the selection back
                 onPositionChanged: mouse => {
                     var p = appMouse.mapToGlobal(mouse.x, mouse.y)
                     if (p.x === controlCentre.lastPointer.x && p.y === controlCentre.lastPointer.y) return
@@ -280,7 +264,14 @@ FlyoutPanel {
     Column {
         visible: controlCentre.page === "widgets"
         width: parent.width
-        spacing: Theme.spaceM
+        spacing: Theme.flyoutSpacing
+
+        // Flat's Taskbar layout keeps an arrangement of its own
+        FlyoutRow {
+            visible: Settings.taskbarLayoutOn
+            label: "Taskbar layout, kept apart from yours"
+            enabled: false
+        }
 
         BarWidgetList {
             meta: Settings.widgetMeta
@@ -297,14 +288,12 @@ FlyoutPanel {
     }
 
     // --- Quick Actions ----------------------------------------
-    // Toggles stay open after a click, so you can flip several in a
-    // row and watch each switch settle. The two momentary actions
-    // close the menu, since both need the screen clear.
+    // toggles stay open; the two momentary actions close the menu
 
     Column {
         visible: controlCentre.page === "quick"
         width: parent.width
-        spacing: Theme.spaceM
+        spacing: Theme.flyoutSpacing
 
         FlyoutAction {
             icon: controlCentre.airplane ? "󰀝" : "󰀞"
@@ -395,21 +384,14 @@ FlyoutPanel {
     }
 
     // --- Appearance -------------------------------------------
-    // Quick changes only -- the few things worth flipping without opening
-    // a window: the look and its style, the wallpaper and the colours it
-    // feeds, where the bar sits and how solid it is, text size and motion.
-    // Everything else is on Settings > Appearance, a chip away at the end.
-    //
-    // The look steps with ‹ › (LookStepper) and the style the same way,
-    // the wallpapers are all on show as a strip, and the colours are two
-    // tiles showing the palette each gives. One setting per line where it
-    // fits.
+    // quick changes only (look, style, wallpaper, colours, bar, text size,
+    // motion); the rest is a chip away in Settings > Appearance
 
     Column {
         id: appearancePage
         visible: controlCentre.page === "appearance"
         width: parent.width
-        spacing: Theme.spaceM
+        spacing: Theme.flyoutSpacing
         // its headings and rows get sections as if they sat in the panel
         readonly property bool isSectionGroup: true
         readonly property bool sectioned: true
@@ -423,7 +405,7 @@ FlyoutPanel {
         // the colours each mode gives, dark to light then the accent; the
         // wallpaper's only once matugen has made them for this image
         readonly property var ownColours: {
-            var l = LookStore.looks[Settings.look]
+            var l = Looks.looks[Settings.look]
             if (!l) return []
             var p = l.palette
             return [p.base, p.border, p.subtext, p.text].concat(l.accent ? [l.accent] : [])
@@ -763,10 +745,8 @@ FlyoutPanel {
     }
 
     // --- Power ----------------------------------------------
-    // with the power menu's glyphs, so the two read as the same actions.
-    // Reboot's chevron drops the one-off reboots in under it (into Windows,
-    // into the BIOS); the row itself still just reboots. The power menu
-    // leaves them out.
+    // the power menu's glyphs; Reboot's chevron adds one-off reboots (Windows,
+    // BIOS), which the power menu leaves out
     property bool rebootOpen: false
 
     Repeater {

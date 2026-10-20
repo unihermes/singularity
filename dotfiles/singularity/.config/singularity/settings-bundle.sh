@@ -4,24 +4,18 @@
 #   settings-bundle export [FILE] [--calendars]
 #   settings-bundle import FILE [--no-apply]
 #
-# The bundle holds what ~/.local/state/singularity keeps per user rather than
-# per machine: appearance.json (every file generated from it is rebuilt when
-# the shell starts), app usage, sticky notes, window rules, workspace layout
-# pins and the wallpaper, with the image itself when it isn't one of the
-# repo's own, and the looks removed from the Appearance page. Monitor layout,
-# the primary display, the lid and Bluetooth state are left behind, as are
-# the copies link.sh makes of the repo's defaults (keybinds, hypridle,
-# hyprlock, alacritty, ghostty, aliases): copy those by hand if you want them.
-#
-# calendars.conf holds secret feed addresses, so it only goes in with
-# --calendars. Import backs up every file it replaces, then restarts the
-# shell and reapplies the wallpaper unless --no-apply is given.
+# The bundle: the per-user state (appearance.json, app usage, notes, window
+# rules, workspace pins, wallpaper and its image if not the repo's, removed
+# looks), not the per-machine (displays, lid, Bluetooth, link.sh's copies).
+# calendars.conf (secret feeds) only with --calendars. Import backs up what
+# it replaces, then restarts the shell and reapplies the wallpaper unless
+# --no-apply.
 set -euo pipefail
 
 state="$HOME/.local/state/singularity"
 # relative to this script's real location, so the repo can live anywhere
 repo="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../..")"
-files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state looks-removed.json)
+files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

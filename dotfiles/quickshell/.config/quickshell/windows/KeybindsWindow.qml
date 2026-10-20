@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/KeybindsWindow.qml
 //
-// Keybinds on its own (SUPER+K, the Control Centre's Keybinds row): the
-// window header over one framed panel holding the same page Settings shows
-// under Keybinds -- SettingsPageKeybinds, and through it KeybindsBody and
-// the page's toast -- so the two are one editor in two places.
-//
-// The ground and Escape come from WindowChrome.qml; floating and centring
-// from the "quickshell-windows" rule in windows.lua, as for Settings.
+// Keybinds in its own window (SUPER+K): the header over the same
+// SettingsPageKeybinds Settings shows; floats by window-rules.lua's
+// "quickshell-windows" rule.
 
 import Quickshell
 import QtQuick

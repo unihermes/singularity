@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-# Free disk space: package and build caches, orphaned packages, old journals,
-# core dumps, leftover kernel modules, unused containers and stale user
-# caches. Everything removed here is regenerated on demand -- nothing is a
-# config or a document. Orphaned packages and the trash go too. The System
-# window's Health page runs it from its "Reclaimable space" row. After the sudo
-# prompt at the start it runs to the end without asking anything.
+# Frees disk space: caches, orphaned packages, old journals, core dumps,
+# leftover kernel modules, unused containers, stale user caches, the trash;
+# only what's regenerated on demand. Runs unattended after the sudo prompt
+# (Health's "Reclaimable space").
 set -uo pipefail
 
 log()  { printf '\033[1;34m::\033[0m %s\n' "$*"; }
@@ -105,13 +103,8 @@ have podman  && { log "Pruning podman"; podman system prune -f; }
 log "Clearing thumbnails"
 rm -rf "$HOME/.cache/thumbnails"
 
-# Anything in ~/.cache nobody has read in a month. Covers Spotify, shader and
-# similar caches without wiping what running apps are actively using.
-#
-# Browsers are handled separately. Cookies, logins, extensions and site storage
-# live in the profile (~/.config/zen, ~/.mozilla, ...), which this never goes
-# near, but the ~/.cache side still holds safebrowsing lists and remote
-# settings. Of that, only the HTTP cache (cache2) is swept.
+# ~/.cache entries unread for a month; for browsers only the HTTP cache
+# (cache2), never the profile
 browsers=(zen floorp mozilla firefox librewolf chromium google-chrome BraveSoftware vivaldi)
 skip=()
 # -not -path rather than -prune: -delete implies -depth, which disables -prune.

@@ -1,26 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Health.qml
 //
-// What is wrong with this desktop right now, and -- where there is one -- the
-// single command that fixes it.
-//
-// The checks themselves are scripts/health-scan.sh, which reads the machine
-// and prints one TSV record per finding; see its header for the list and for
-// what each repair id means. Keeping them in a script rather than here is
-// what makes them runnable (and testable) while the shell is down, which is
-// when a desktop is most likely to be broken.
-//
-// This half does two things the script can't: it runs the repair a record
-// names, and it decides how. systemctl runs directly -- a system unit prompts
-// through the polkit agent, which is already running. Everything else opens a
-// terminal, because those repairs either ask questions (pacman) or print a
-// wall of output (the log), and a visible terminal is also the honest way to
-// show what is about to run as root.
-//
-// Scanning only happens while the Health page is open, and again after any
-// repair. Nothing polls: FailedUnits already watches the one signal urgent
-// enough to interrupt someone, and a scan forks a couple of dozen processes,
-// which is not a thing to do every thirty seconds for a page nobody has open.
+// What's wrong with this desktop and the command that fixes it. The checks
+// are scripts/health-scan.sh (runnable while the shell is down); this runs
+// the repairs: systemctl directly (polkit prompts), anything else in a
+// terminal. Scans only while the Health page is open and after a repair.
 
 pragma Singleton
 
@@ -31,11 +15,8 @@ import QtQuick
 Singleton {
     id: root
 
-    // [{ status, id, label, detail, repairId, repairLabel, more }], in the
-    // order the script emitted them; more is any further [{ id, label }]
-    // repairs after the first. "ok" rows are kept: a page listing only
-    // problems says nothing on a healthy machine, which looks the same as a
-    // page that failed to run.
+    // [{ status, id, label, detail, repairId, repairLabel, more }] in the
+    // script's order, "ok" rows kept; `more`: further [{ id, label }] repairs
     property var checks: []
     property bool scanning: false
     // "" until the first scan finishes
@@ -61,12 +42,8 @@ Singleton {
 
     // --- repairs -----------------------------------------------------------
 
-    // The clone this desktop is stowed from, found by following a link we
-    // know is one of its own: every dotfile lands as a symlink into
-    // <repo>/dotfiles/<package>/..., so what precedes /dotfiles/ is the repo,
-    // wherever it was cloned. Empty when the config is a real file rather
-    // than a link, which is exactly the case where relinking is the wrong
-    // thing to offer.
+    // the clone this desktop is stowed from (what precedes /dotfiles/ in a
+    // dotfile link); empty when the config isn't a link, so no relink offered
     property string repoPath: ""
 
     // runs the check's first repair, or the one named by id
@@ -120,9 +97,7 @@ Singleton {
         var issues = home + "/.config/quickshell/scripts/shell-log-issues.sh"
         var path = "'" + parts.slice(1).join(":") + "'"
         if (kind === "log") {
-            // the lines the row counted, not the whole log of reloads around
-            // them; paged from the end when they don't fit, where +G on a
-            // short text scrolls it off the screen; -R draws the colours
+            // only the lines counted, paged from the end; -R for colours
             terminal(check.id, "out=$(" + issues + " " + path + "); "
                 + "if [ $(printf '%s\\n' \"$out\" | wc -l) -lt $(tput lines) ]; then printf '%s\\n' \"$out\"; "
                 + "else printf '%s\\n' \"$out\" | less -R +G; fi")
@@ -144,9 +119,7 @@ Singleton {
         }
     }
 
-    // A terminal held open after the command finishes: half of these print
-    // their answer and exit, and a window that closes on the last line shows
-    // nothing. The scan follows it closing, by which time the repair has run.
+    // a terminal held open after the command; the scan follows its closing
     function terminal(id, script) {
         busyRepair = id
         term.command = [Settings.terminal, "--class", "singularity.repair", "-e", "sh", "-c",
@@ -196,9 +169,8 @@ Singleton {
                     }
                     for (var j = 6; j + 1 < f.length; j += 2)
                         row.more.push({ id: f[j], label: f[j + 1] })
-                    // A unit can be both enabled-but-inactive and failed. The
-                    // failed record is the one worth showing and is emitted
-                    // second, so it replaces its twin rather than doubling it.
+                    // a failed unit's record (second) replaces its
+                    // enabled-but-inactive twin
                     var key = row.id.replace(/^(unit|failed):/, "")
                     if (seen[key] !== undefined) out[seen[key]] = row
                     else {

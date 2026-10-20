@@ -1,21 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/SettingsIndex.js
 //
-// What the Settings window's search box (/) looks through: one entry per
-// setting, naming the page it lives on and the heading it sits under.
-//
-// A written list rather than something read off the pages: only the open
-// page exists at any moment -- the others are a Loader away and several run
-// commands or read config the instant they load -- so there is nothing to
-// walk. The cost is that this has to be kept in step by hand: a new
-// SettingsField wants a line here, and `label` must match the field's own
-// label exactly, since that string is what the page highlights and scrolls
-// to when a result is picked.
-//
-// `keywords` is for the words someone would type that the label doesn't
-// contain (the old name for a thing, the tool behind it, the unit).
-// Entries without a matching field -- a whole section, a page's list --
-// still work: the result opens the page and nothing is highlighted.
+// What Settings' search looks through: one entry per setting with its page
+// and heading. Kept by hand (pages load lazily, so there's nothing to walk):
+// a new SettingsField wants a line, `label` matching the field's exactly.
+// `keywords` holds words the label lacks. An entry with no matching field
+// just opens the page.
 
 .pragma library
 
@@ -28,8 +18,8 @@ var entries = [
     { page: "network", section: "Status", label: "MAC",        keywords: "hardware address ethernet copy" },
     { page: "network", section: "Status", label: "Speed",      keywords: "bitrate link rate mbit" },
     { page: "network", section: "Status", label: "Signal",     keywords: "strength dbm rssi band ghz" },
-    { page: "network", section: "Saved nearby", label: "Saved nearby", keywords: "wifi scan rescan ssid connect join passphrase" },
-    { page: "network", section: "Other networks", label: "Other network…", keywords: "hidden ssid connect join passphrase wifi" },
+    { page: "network", section: "In range", label: "In range", keywords: "wifi scan rescan ssid connect join passphrase saved nearby other networks strength" },
+    { page: "network", section: "In range", label: "Other network…", keywords: "hidden ssid connect join passphrase wifi" },
     { page: "network", section: "Saved", label: "Saved",       keywords: "known networks forget remove passphrase" },
     { page: "network", section: "Saved", label: "Auto-join",   keywords: "autoconnect automatic connect known network" },
 
@@ -37,19 +27,20 @@ var entries = [
     { page: "bluetooth", section: "Adapter",  label: "Adapter",      keywords: "bt radio bluez power on off rfkill name hci interface" },
     { page: "bluetooth", section: "Adapter",  label: "Discoverable", keywords: "visible advertise findable timeout" },
     { page: "bluetooth", section: "Adapter",  label: "Pairable",     keywords: "accept pairing requests" },
-    { page: "bluetooth", section: "Paired",   label: "Paired",       keywords: "devices connect disconnect rename remove forget battery trusted reconnect" },
+    { page: "bluetooth", section: "Paired",   label: "Paired",       keywords: "devices connect disconnect rename remove forget trusted address" },
+    { page: "bluetooth", section: "Paired",   label: "Battery",      keywords: "level charge earbuds case left right percent" },
+    { page: "bluetooth", section: "Paired",   label: "Reconnect by itself", keywords: "trusted auto connect automatic" },
     { page: "bluetooth", section: "In range", label: "In range",     keywords: "scan discover pair headphones mouse keyboard nearby unnamed" },
 
     // --- Power & Idle ------------------------------------------------------
-    { page: "power", section: "Power profile", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
-    { page: "power", section: "Battery", label: "Battery",             keywords: "battery level percent charging health time left stop at resume below limit band" },
-    { page: "power", section: "Battery", label: "Charging",            keywords: "battery charge mode limit cap bios standard adaptive express custom threshold 80 percent" },
+    { page: "power", section: "Power", label: "Profile",       keywords: "performance balanced power saver battery ppd" },
+    { page: "power", section: "Power", label: "Power",               keywords: "battery level percent charging health time left stop at resume below limit band" },
+    { page: "power", section: "Power", label: "Charging",            keywords: "battery charge mode limit cap bios standard adaptive express custom threshold 80 percent" },
     { page: "power", section: "When idle", label: "Dim the screen",    keywords: "idle brightness timeout hypridle" },
     { page: "power", section: "When idle", label: "Lock",              keywords: "idle hyprlock timeout screen lock" },
     { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },
-    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout" },
+    { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout on battery plugged in charger unplugged ac" },
     { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger unplugged" },
-    { page: "power", section: "When idle", label: "Suspend plugged in", keywords: "idle sleep timeout charger ac" },
     { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
     // --- Lock Screen -------------------------------------------------------
@@ -60,82 +51,115 @@ var entries = [
     { page: "lockscreen", section: "Clock",    label: "Clock size",   keywords: "hyprlock clock big small huge font" },
     { page: "lockscreen", section: "Clock",    label: "Clock place",  keywords: "hyprlock clock position centre top corner" },
     { page: "lockscreen", section: "Clock",    label: "Under the clock", keywords: "hyprlock date media music notifications info line" },
-    { page: "lockscreen", section: "Clock",    label: "Lock now",     keywords: "hyprlock preview test" },
-    { page: "lockscreen", section: "Password", label: "Grace period", keywords: "hyprlock grace delay password unlock idle" },
-    { page: "lockscreen", section: "Lid",      label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh delay after minutes" },
-    { page: "lockscreen", section: "Lid",      label: "Lock right away", keywords: "lid close lock immediately" },
-    { page: "lockscreen", section: "Lid",      label: "Hibernate", keywords: "lid hibernate hibernation suspend-then-hibernate disk power off battery" },
+    { page: "lockscreen", section: "Background", label: "Lock now",     keywords: "hyprlock preview test" },
+    { page: "lockscreen", section: "Locking", label: "Grace period", keywords: "hyprlock grace delay password unlock idle" },
+    { page: "lockscreen", section: "Fingerprint", label: "Unlock with a fingerprint", keywords: "hyprlock fprintd finger reader sensor biometric" },
+    { page: "lockscreen", section: "Fingerprint", label: "Fingers", keywords: "fprintd enroll add remove delete finger thumb index hand" },
+    { page: "lockscreen", section: "Locking",  label: "When the lid closes", keywords: "lid laptop close suspend sleep screen off lid.sh delay after minutes" },
+    { page: "lockscreen", section: "Locking",  label: "Lock right away", keywords: "lid close lock immediately" },
+    { page: "lockscreen", section: "Locking",  label: "Hibernate", keywords: "lid hibernate hibernation suspend-then-hibernate disk power off battery" },
 
     // --- Appearance --------------------------------------------------------
-    { page: "appearance", section: "Look",          label: "Look",                 keywords: "theme preset style" },
-    { page: "appearance", section: "Look",          label: "Changes",              keywords: "changed modified customised customized differences undo revert" },
-    { page: "appearance", section: "Look",          label: "Reset look",           keywords: "revert default" },
-    { page: "appearance", section: "Look",          label: "Current",              keywords: "wallpaper background image" },
-    { page: "appearance", section: "Look",          label: "One per look",         keywords: "wallpaper look theme remember pair background" },
-    { page: "appearance", section: "Look",          label: "New wallpaper",        keywords: "wallpaper shuffle random login rotate slideshow interval timer" },
-    { page: "appearance", section: "Colours",       label: "Palette",              keywords: "colour color grayscale wallpaper" },
-    { page: "appearance", section: "Colours",       label: "Intensity",            keywords: "colour color saturation" },
-    { page: "appearance", section: "Colours",       label: "Shade",                keywords: "light dark mode theme variant" },
-    { page: "appearance", section: "Colours",       label: "Accent",               keywords: "colour color highlight hue" },
-    { page: "appearance", section: "Colours",       label: "Custom accent",        keywords: "colour color hex rgb highlight" },
-    { page: "appearance", section: "Colours",       label: "Level colour",         keywords: "meters levels volume brightness battery fill green second accent" },
-    { page: "appearance", section: "Style",         label: "Style",                keywords: "theme frames channel lined flat retro minimal basic capsule glass tabbed terminal modules" },
-    { page: "appearance", section: "Style",         label: "Roundness",            keywords: "rounding corners radius panels windows hyprland bar chips" },
-    { page: "appearance", section: "Style",         label: "Bar shape",            keywords: "bar layout full width floating islands" },
-    { page: "appearance", section: "Style",         label: "See-through",          keywords: "opacity transparency translucent glass bar panels" },
-    { page: "appearance", section: "Style",         label: "Shaded grounds",       keywords: "gradient shading bar panels finish" },
-    { page: "appearance", section: "Style",         label: "Heavy lines",          keywords: "stroke width border thickness outline finish" },
-    { page: "appearance", section: "Style",         label: "Capital headings",     keywords: "titles caps uppercase case" },
-    { page: "appearance", section: "Style",         label: "Heading rule",         keywords: "titles line divider" },
-    { page: "appearance", section: "Style",         label: "Density",              keywords: "spacing padding compact" },
-    { page: "appearance", section: "Style",         label: "Overlay dimming",      keywords: "scrim dark backdrop" },
-    { page: "appearance", section: "Style", label: "Font",                keywords: "typeface family monospace shell bar" },
-    { page: "appearance", section: "Style", label: "Font size",            keywords: "text scale px" },
-    { page: "appearance", section: "System", label: "Animations",           keywords: "motion transitions speed" },
-    { page: "appearance", section: "Bar",           label: "Position",             keywords: "bar top bottom edge" },
-    { page: "appearance", section: "Bar",           label: "Workspaces",           keywords: "indicator dots" },
-    { page: "appearance", section: "Bar",           label: "Clock",                keywords: "time date" },
-    { page: "appearance", section: "Style",         label: "Shadows",              keywords: "drop shadow depth hard soft finish windows" },
-    { page: "appearance", section: "Panels",        label: "Level popup",          keywords: "osd volume brightness popup toast edge number" },
-    { page: "appearance", section: "Panels",        label: "Power menu",           keywords: "power menu shutdown reboot logout tiles list fullscreen" },
-    { page: "appearance", section: "Panels",        label: "Overview backdrop",    keywords: "super w overview background dim solid clear" },
-    { page: "appearance", section: "Panels",        label: "Workspace overview",   keywords: "super w overview grid row strip expose" },
-    { page: "appearance", section: "Panels",        label: "Window switcher",      keywords: "alt tab switcher previews thumbnails icons titles" },
-    { page: "appearance", section: "Panels",        label: "Switcher windows",     keywords: "alt tab switcher all workspaces every workspace current scope" },
-    { page: "appearance", section: "Bar",           label: "Clock format",         keywords: "custom time date format pattern qt" },
-    { page: "appearance", section: "Bar",           label: "Tray drawer",          keywords: "system tray hide collapse chevron pin icons" },
-    { page: "appearance", section: "Bar",           label: "Workspace names",      keywords: "label rename workspaces web code chat" },
-    { page: "appearance", section: "Style",         label: "Separators",           keywords: "divider between modules dots lines double stacked capped" },
     { page: "notifications", section: "Popups", label: "Group by app",          keywords: "stack collapse same app count" },
-    { page: "appearance", section: "Panels",        label: "Notification popups",  keywords: "notifications cards compact banner style" },
-    { page: "appearance", section: "Panels",        label: "Launcher details",     keywords: "launcher description comment hints keys" },
-    { page: "appearance", section: "Panels",        label: "Launcher position",    keywords: "launcher centre top fullscreen dim" },
-    { page: "appearance", section: "Panels",        label: "Launcher layout",      keywords: "launcher apps grid list dmenu spotlight" },
-    { page: "appearance", section: "System",        label: "Flyouts open",         keywords: "animation drop fade scale menu popup" },
-    { page: "appearance", section: "Bar",           label: "Control Centre icon",  keywords: "button logo glyph arch menu home star cog dashboard" },
-    { page: "appearance", section: "Bar",           label: "Visualizer",           keywords: "audio spectrum music bars cava" },
-    { page: "appearance", section: "Bar",           label: "Open windows",         keywords: "taskbar tasks apps icons titles tabs glide lift inset segmented spotlight index dots" },
-    { page: "appearance", section: "Bar",           label: "Windows shown",        keywords: "taskbar workspace all scope" },
-    { page: "appearance", section: "Bar",           label: "App icons",            keywords: "tint monochrome grey gray colour color accent tray" },
-    { page: "appearance", section: "Bar",           label: "Clock island",         keywords: "notch toast" },
-    { page: "appearance", section: "System",        label: "System font",          keywords: "typeface family gtk qt apps interface ui" },
-    { page: "appearance", section: "System",        label: "Icons",                keywords: "icon theme kora apps gtk qt" },
-    { page: "appearance", section: "System",        label: "Cursor",               keywords: "pointer mouse theme bibata" },
-    { page: "appearance", section: "System",        label: "Cursor size",          keywords: "pointer mouse px big" },
-    { page: "appearance", section: "Windows",       label: "Gaps between windows", keywords: "gaps_in hyprland tiling" },
-    { page: "appearance", section: "Windows",       label: "Gaps at screen edges", keywords: "gaps_out hyprland bar floating islands margin inset" },
-    { page: "appearance", section: "Windows",       label: "Focused opacity",      keywords: "active_opacity transparency" },
-    { page: "appearance", section: "Windows",       label: "Unfocused opacity",    keywords: "inactive_opacity transparency" },
-    { page: "appearance", section: "Windows",       label: "Terminal opacity",     keywords: "alacritty ghostty transparency background" },
-    { page: "appearance", section: "Windows",       label: "Dim unfocused",        keywords: "dim_inactive" },
-    { page: "appearance", section: "Windows",       label: "Blur",                 keywords: "hyprland decoration" },
-    { page: "appearance", section: "Windows",       label: "Dim strength",         keywords: "dim_strength unfocused darken" },
-    { page: "appearance", section: "Windows",       label: "Blur size",            keywords: "hyprland blur radius" },
-    { page: "appearance", section: "Windows",       label: "Blur passes",          keywords: "hyprland blur quality" },
-    { page: "appearance", section: "System",       label: "Window animation",     keywords: "hyprland open close popin slide fade" },
-    { page: "appearance", section: "Look",       label: "Set as default",       keywords: "save baseline" },
-    { page: "appearance", section: "Look",       label: "Reset to default",     keywords: "revert" },
-    { page: "appearance", section: "Look",       label: "Factory reset",        keywords: "stock wipe" },
+    { page: "appearance", section: "Changes", label: "Save as default", keywords: "save baseline set default" },
+    { page: "appearance", section: "Changes", label: "Reset", keywords: "revert reset to default" },
+    { page: "appearance", section: "Changes", label: "Undo all", keywords: "changed modified customised customized differences undo revert" },
+    { page: "appearance", section: "Changes", label: "Factory reset", keywords: "stock wipe" },
+    { page: "appearance", section: "Theme", label: "Look", keywords: "theme colours colors palette preset arch nord dracula tokyo night catppuccin mocha one dark kanagawa singularity" },
+    { page: "appearance", section: "Theme", label: "Style", keywords: "theme frames channel double solid glass flat lined modules windows 10 square taskbar" },
+    { page: "appearance", section: "Theme", label: "Roundness", keywords: "rounding corners radius panels windows hyprland bar chips" },
+    { page: "appearance", section: "Theme", label: "See-through", keywords: "opacity transparency translucent glass bar panels" },
+    { page: "appearance", section: "Theme", label: "Shadows", keywords: "drop shadow depth hard soft finish windows" },
+    { page: "appearance", section: "Theme", label: "Shaded grounds", keywords: "gradient shading bar panels finish" },
+    { page: "appearance", section: "Theme", label: "Heavy lines", keywords: "stroke width border thickness outline finish" },
+    { page: "appearance", section: "Theme", label: "Case", keywords: "headings titles caps capital uppercase title case" },
+    { page: "appearance", section: "Theme", label: "Heading rule", keywords: "titles line divider" },
+    { page: "appearance", section: "Theme", label: "Mark", keywords: "heading prefix slash // colons guillemet prompt terminal branch arrow bullet symbol accent bar brackets rule tab filled tag pill colour color accent grey" },
+    { page: "appearance", section: "Theme", label: "Your mark", keywords: "heading prefix custom symbol characters" },
+    { page: "appearance", section: "Theme", label: "Heading size", keywords: "headings titles larger smaller font" },
+    { page: "appearance", section: "Theme", label: "Palette", keywords: "colour color grayscale wallpaper ramp roles base surface border text custom hex" },
+    { page: "appearance", section: "Theme", label: "Intensity", keywords: "colour color saturation" },
+    { page: "appearance", section: "Theme", label: "Shade", keywords: "light dark mode theme variant" },
+    { page: "appearance", section: "Theme", label: "Accent", keywords: "colour color highlight hue" },
+    { page: "appearance", section: "Theme", label: "Custom accent", keywords: "colour color hex rgb highlight" },
+    { page: "appearance", section: "Theme", label: "Hue", keywords: "accent colour color picker wheel" },
+    { page: "appearance", section: "Theme", label: "Lightness", keywords: "accent colour color picker light dark" },
+    { page: "appearance", section: "Theme", label: "Text on the accent", keywords: "white dark contrast tab label foreground" },
+    { page: "appearance", section: "Theme", label: "Level colour", keywords: "meters levels volume brightness battery fill green second accent" },
+    { page: "appearance", section: "Theme", label: "Status", keywords: "good alert status colours colors" },
+    { page: "appearance", section: "Theme", label: "Good", keywords: "status green charging success colour color" },
+    { page: "appearance", section: "Theme", label: "Alert", keywords: "status red critical error warning colour color" },
+    { page: "appearance", section: "Theme", label: "Density", keywords: "spacing padding compact roomy normal custom preset" },
+    { page: "appearance", section: "Theme", label: "Spacing", keywords: "density gaps padding compact roomy percent" },
+    { page: "appearance", section: "Theme", label: "Row height", keywords: "density rows lists fields compact roomy" },
+    { page: "appearance", section: "Theme", label: "Font", keywords: "typeface family monospace shell bar" },
+    { page: "appearance", section: "Theme", label: "Font size", keywords: "text scale px" },
+    { page: "appearance", section: "Bar", label: "Position", keywords: "bar top bottom edge" },
+    { page: "appearance", section: "Bar", label: "Centre anchor", keywords: "pin middle centre clock bar widgets" },
+    { page: "appearance", section: "Bar", label: "Bar widgets", keywords: "arrange layout modules reset order hide show drag left centre right" },
+    { page: "appearance", section: "Bar", label: "Bar shape", keywords: "bar layout full width floating islands" },
+    { page: "appearance", section: "Bar", label: "Height", keywords: "bar height size tall thin px" },
+    { page: "appearance", section: "Bar", label: "Icon size", keywords: "bar glyphs icons size px" },
+    { page: "appearance", section: "Bar", label: "Module padding", keywords: "bar chips modules padding room px" },
+    { page: "appearance", section: "Bar", label: "Separators", keywords: "divider between modules dots lines double stacked capped" },
+    { page: "appearance", section: "Bar", label: "Control Centre icon", keywords: "button logo glyph arch menu home star cog dashboard" },
+    { page: "appearance", section: "Bar", label: "Visualizer", keywords: "audio spectrum music bars cava" },
+    { page: "appearance", section: "Bar", label: "Tray drawer", keywords: "system tray hide collapse chevron pin icons" },
+    { page: "appearance", section: "Bar", label: "Workspaces", keywords: "indicator dots" },
+    { page: "appearance", section: "Bar", label: "Workspace names", keywords: "label rename workspaces web code chat" },
+    { page: "appearance", section: "Bar", label: "Open windows", keywords: "taskbar tasks apps icons titles tabs glide lift inset segmented spotlight index dots" },
+    { page: "appearance", section: "Bar", label: "Windows shown", keywords: "taskbar workspace all scope" },
+    { page: "appearance", section: "Bar", label: "App icons", keywords: "tint monochrome grey gray colour color accent tray" },
+    { page: "appearance", section: "Bar", label: "Clock", keywords: "time date" },
+    { page: "appearance", section: "Bar", label: "Clock format", keywords: "custom time date format pattern qt" },
+    { page: "appearance", section: "Bar", label: "Clock island", keywords: "notch toast" },
+    { page: "appearance", section: "Panels", label: "Flyouts open", keywords: "animation drop fade scale menu popup" },
+    { page: "appearance", section: "Panels", label: "Flyout width", keywords: "flyouts menus wider narrower width percent" },
+    { page: "appearance", section: "Panels", label: "Overlay dimming", keywords: "scrim dark backdrop" },
+    { page: "appearance", section: "Panels", label: "Launcher layout", keywords: "launcher apps grid list dmenu spotlight" },
+    { page: "appearance", section: "Panels", label: "Launcher position", keywords: "launcher centre top fullscreen dim" },
+    { page: "appearance", section: "Panels", label: "Launcher details", keywords: "launcher description comment hints keys" },
+    { page: "appearance", section: "Panels", label: "Rows shown", keywords: "launcher results rows count height" },
+    { page: "appearance", section: "Panels", label: "Notification popups", keywords: "notifications cards compact banner style" },
+    { page: "appearance", section: "Panels", label: "Popup width", keywords: "notifications popups wider narrower width px" },
+    { page: "appearance", section: "Panels", label: "Window switcher", keywords: "alt tab switcher previews thumbnails icons titles" },
+    { page: "appearance", section: "Panels", label: "Switcher windows", keywords: "alt tab switcher all workspaces every workspace current scope" },
+    { page: "appearance", section: "Panels", label: "Workspace overview", keywords: "super w overview grid row strip expose" },
+    { page: "appearance", section: "Panels", label: "Overview backdrop", keywords: "super w overview background dim solid clear" },
+    { page: "appearance", section: "Panels", label: "Power menu", keywords: "power menu shutdown reboot logout tiles list fullscreen" },
+    { page: "appearance", section: "Panels", label: "Level popup", keywords: "osd volume brightness popup toast edge number" },
+    { page: "appearance", section: "Desktop", label: "Current", keywords: "wallpaper background image" },
+    { page: "appearance", section: "Desktop", label: "New wallpaper", keywords: "wallpaper shuffle random login rotate slideshow interval timer" },
+    { page: "appearance", section: "Desktop", label: "Fit", keywords: "wallpaper fill fit centre center tile scale swaybg" },
+    { page: "appearance", section: "Desktop", label: "Folder", keywords: "wallpaper folder directory images open add" },
+    { page: "appearance", section: "Desktop", label: "Colours from it", keywords: "wallpaper palette matugen colours colors use" },
+    { page: "appearance", section: "Desktop", label: "Window gaps", keywords: "gaps_in between windows hyprland tiling" },
+    { page: "appearance", section: "Desktop", label: "Edge gaps", keywords: "screen edges gaps_out hyprland bar floating islands margin inset" },
+    { page: "appearance", section: "Desktop", label: "Border width", keywords: "window border thickness hyprland px" },
+    { page: "appearance", section: "Desktop", label: "Focused border", keywords: "window active border colour color accent" },
+    { page: "appearance", section: "Desktop", label: "Focused colour", keywords: "window active border custom hex" },
+    { page: "appearance", section: "Desktop", label: "Unfocused border", keywords: "window inactive border colour color none" },
+    { page: "appearance", section: "Desktop", label: "Unfocused colour", keywords: "window inactive border custom hex" },
+    { page: "appearance", section: "Desktop", label: "Window corners", keywords: "rounding radius windows hyprland match" },
+    { page: "appearance", section: "Desktop", label: "Window rounding", keywords: "radius corners px own" },
+    { page: "appearance", section: "Desktop", label: "Focused opacity", keywords: "active_opacity transparency" },
+    { page: "appearance", section: "Desktop", label: "Unfocused opacity", keywords: "inactive_opacity transparency" },
+    { page: "appearance", section: "Desktop", label: "Dim unfocused", keywords: "dim_inactive" },
+    { page: "appearance", section: "Desktop", label: "Dim strength", keywords: "dim_strength unfocused darken" },
+    { page: "appearance", section: "Desktop", label: "Blur", keywords: "hyprland decoration" },
+    { page: "appearance", section: "Desktop", label: "Blur size", keywords: "hyprland blur radius" },
+    { page: "appearance", section: "Desktop", label: "Blur passes", keywords: "hyprland blur quality" },
+    { page: "appearance", section: "Desktop", label: "Window shadow", keywords: "drop shadow windows hyprland size small large" },
+    { page: "appearance", section: "Desktop", label: "Tab bar", keywords: "grouped windows tabs groupbar accent" },
+    { page: "appearance", section: "Desktop", label: "Animations", keywords: "motion transitions speed" },
+    { page: "appearance", section: "Desktop", label: "Per-part speeds…", keywords: "animation speed windows workspaces shell" },
+    { page: "appearance", section: "Desktop", label: "Window speed", keywords: "animation speed windows open close hyprland" },
+    { page: "appearance", section: "Desktop", label: "Workspace speed", keywords: "animation speed workspaces switch scratchpad" },
+    { page: "appearance", section: "Desktop", label: "Shell speed", keywords: "animation speed flyouts shell hover" },
+    { page: "appearance", section: "Desktop", label: "Window animation", keywords: "hyprland open close popin slide fade" },
+    { page: "appearance", section: "Apps", label: "System font", keywords: "typeface family gtk qt apps interface ui" },
+    { page: "appearance", section: "Apps", label: "Icons", keywords: "icon theme kora apps gtk qt" },
+    { page: "appearance", section: "Apps", label: "Cursor", keywords: "pointer mouse theme bibata size px big" },
 
     // --- Window Rules ------------------------------------------------------
     { page: "windowrules", section: "Apps", label: "Apps",              keywords: "app class rules remembered sizes list" },
@@ -146,9 +170,9 @@ var entries = [
     { page: "windowrules", section: "Apps", label: "Last left",         keywords: "remembered size forget memory restore" },
     { page: "windowrules", section: "Apps", label: "Size",              keywords: "natural window dimensions custom percent pixels" },
     { page: "windowrules", section: "Apps", label: "Workspace",         keywords: "where it opens" },
-    { page: "windowrules", section: "Popups and dialogs", label: "Block the window they came from", keywords: "popup dialog modal block lock parent" },
-    { page: "windowrules", section: "Popups and dialogs", label: "Open over their window", keywords: "popup dialog centre center parent owner" },
-    { page: "windowrules", section: "Popups and dialogs", label: "Remember their sizes", keywords: "popup dialog size memory" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Block their window", keywords: "came from popup dialog modal block lock parent" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Open over it", keywords: "their window popup dialog centre center parent owner" },
+    { page: "windowrules", section: "Popups and dialogs", label: "Remember sizes", keywords: "their popup dialog size memory" },
     { page: "windowrules", section: "Workspace layouts", label: "Workspace layouts", keywords: "dwindle monocle tiling pinned" },
 
     // --- Display -----------------------------------------------------------
@@ -157,28 +181,28 @@ var entries = [
     { page: "display", section: "",  label: "Workspaces",   keywords: "monitor reset external workspace 1 2 dock" },
     { page: "display", section: "",  label: "Vibrance",     keywords: "digital vibrance saturation colour color vivid nvidia greyscale grayscale shader" },
     { page: "display", section: "",  label: "Variable refresh", keywords: "vrr gsync g-sync freesync adaptive sync tearing stutter games fullscreen" },
-    { page: "display", section: "",  label: "Displays",     keywords: "monitor resolution refresh rate hz scale hidpi fractional rotation rotate transform portrait mode" },
+    { page: "display", section: "",  label: "Resolution",   keywords: "monitor native mode pixels" },
+    { page: "display", section: "",  label: "Refresh rate", keywords: "monitor hz mode" },
+    { page: "display", section: "",  label: "Scale",        keywords: "monitor hidpi fractional zoom size" },
+    { page: "display", section: "",  label: "Rotation",     keywords: "monitor rotate transform portrait" },
 
     // --- Notifications -----------------------------------------------------
     { page: "notifications", section: "", label: "Status",                      keywords: "dnd do not disturb silence mute" },
     { page: "notifications", section: "Status", label: "History",               keywords: "clear all dismiss open panel centre center list" },
     { page: "notifications", section: "", label: "Apps",                        keywords: "per-app silent silence mute app popups" },
-    { page: "notifications", section: "Quiet hours", label: "Quiet hours",     keywords: "schedule dnd do not disturb night automatic time" },
-    { page: "notifications", section: "Quiet hours", label: "Starts",          keywords: "quiet hours schedule dnd from begin time" },
-    { page: "notifications", section: "Quiet hours", label: "Ends",            keywords: "quiet hours schedule dnd until finish time" },
+    { page: "notifications", section: "Status", label: "Quiet hours",     keywords: "schedule dnd do not disturb night automatic time" },
+    { page: "notifications", section: "Status", label: "Starts",          keywords: "quiet hours schedule dnd from begin time" },
+    { page: "notifications", section: "Status", label: "Ends",            keywords: "quiet hours schedule dnd until finish time" },
     { page: "notifications", section: "Popups", label: "Position",              keywords: "corner where popups appear" },
-    { page: "notifications", section: "How long popups stay", label: "Normal",  keywords: "timeout duration" },
-    { page: "notifications", section: "How long popups stay", label: "Low priority", keywords: "timeout duration" },
-    { page: "notifications", section: "How long popups stay", label: "Critical", keywords: "timeout duration urgent" },
+    { page: "notifications", section: "Popups", label: "Normal",  keywords: "how long timeout duration" },
+    { page: "notifications", section: "Popups", label: "Low", keywords: "low priority how long timeout duration" },
+    { page: "notifications", section: "Popups", label: "Critical", keywords: "how long timeout duration urgent" },
 
     // --- Audio -------------------------------------------------------------
-    { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute speakers" },
-    { page: "audio", section: "Output", label: "Mute",      keywords: "silence speakers microphone mic off" },
+    { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute silence speakers microphone mic off" },
     { page: "audio", section: "Output", label: "Output",    keywords: "default sink speakers headphones hdmi displayport device" },
     { page: "audio", section: "Input",  label: "Input",     keywords: "default source microphone mic device" },
-    // The mixer's rows are named after whatever happens to be running, so
-    // there is no fixed field label to point at. These name their heading
-    // instead: the result opens the page, and highlights nothing.
+    // the mixer's rows have no fixed label; these name their heading
     { page: "audio", section: "", label: "Playing",   keywords: "mixer per app volume application stream" },
     { page: "audio", section: "", label: "Recording", keywords: "mixer capture app stream microphone" },
 
@@ -188,7 +212,7 @@ var entries = [
     { page: "autostart", section: "When the PC starts", label: "Sign in at boot", keywords: "autologin auto login password greeter ly boot skip sign in" },
     { page: "autostart", section: "At login", label: "At login",     keywords: "autostart startup login run launch desktop entry" },
     { page: "autostart", section: "At login", label: "Add an app…",  keywords: "autostart add app application start login" },
-    { page: "autostart", section: "Packages", label: "From packages", keywords: "xdg autostart system installed entry keyring" },
+    { page: "autostart", section: "At login", label: "From packages", keywords: "xdg autostart system installed entry keyring" },
 
     // --- File Types --------------------------------------------------------
     { page: "filetypes", section: "Common", label: "Web browser",  keywords: "default http https url link mimeapps" },
@@ -202,27 +226,25 @@ var entries = [
     { page: "filetypes", section: "Common", label: "Email links",  keywords: "default mailto mimeapps" },
 
     // --- Terminal ----------------------------------------------------------
-    { page: "shell", section: "Terminal app", label: "Terminal", keywords: "alacritty ghostty default emulator app" },
-    { page: "shell", section: "Look", label: "Font size",  keywords: "terminal alacritty ghostty points" },
-    { page: "shell", section: "Look", label: "Opacity",    keywords: "terminal alacritty ghostty transparency background" },
-    { page: "shell", section: "Look", label: "Cursor",     keywords: "terminal alacritty ghostty block beam underline shape" },
-    { page: "shell", section: "Look", label: "Blinking", keywords: "terminal cursor blink" },
+    { page: "shell", section: "Terminal", label: "Terminal", keywords: "alacritty ghostty default emulator app" },
+    { page: "shell", section: "Terminal", label: "Font size",  keywords: "terminal alacritty ghostty points" },
+    { page: "shell", section: "Terminal", label: "Opacity",    keywords: "terminal alacritty ghostty transparency background" },
+    { page: "shell", section: "Terminal", label: "Cursor",     keywords: "terminal alacritty ghostty block beam underline shape blink blinking" },
     { page: "shell", section: "Bash aliases", label: "Bash aliases", keywords: "bashrc bash_aliases shortcut command" },
     { page: "shell", section: "Bash aliases", label: "Add an alias…", keywords: "bashrc bash_aliases new shortcut command" },
 
     // --- Date & Time -------------------------------------------------------
-    { page: "datetime", section: "Time zone", label: "Time zone",    keywords: "timezone tz city country region location clock current time utc offset timedatectl" },
-    { page: "datetime", section: "Time zone", label: "Network time", keywords: "ntp set time automatically sync timesyncd" },
+    { page: "datetime", section: "Time zone", label: "Time zone",    keywords: "timezone tz city country region location clock current time utc offset timedatectl network time ntp set automatically sync timesyncd" },
     { page: "datetime", section: "Clock and calendar", label: "Hour format", keywords: "12 24 hour am pm clock" },
     { page: "datetime", section: "Clock and calendar", label: "First day of the week", keywords: "calendar monday sunday saturday week start" },
 
     // --- Software Update ---------------------------------------------------
     { page: "updates", section: "Status",   label: "Status",            keywords: "update now check now last checked last upgrade pacman log syu upgraded" },
-    { page: "updates", section: "Singularity", label: "Repository",     keywords: "singularity git pull commits behind dotfiles clone self update update.sh link.sh new packages" },
-    { page: "updates", section: "Checking", label: "Check for updates", keywords: "update interval how often pacman checkupdates schedule next check" },
-    { page: "updates", section: "Checking", label: "Include the AUR",   keywords: "aur yay packages" },
-    { page: "updates", section: "Pending",  label: "Pending",           keywords: "updates available upgrade now yay versions" },
-    { page: "updates", section: "Ignored",  label: "Ignored",           keywords: "ignorepkg hold skip held back ignore a package" },
+    { page: "updates", section: "Status", label: "Repository",     keywords: "singularity git pull commits behind dotfiles clone self update update.sh link.sh new packages" },
+    { page: "updates", section: "Status", label: "Check for updates", keywords: "update interval how often pacman checkupdates schedule next check" },
+    { page: "updates", section: "Status", label: "Include the AUR",   keywords: "aur yay packages" },
+    { page: "updates", section: "Packages", label: "Packages",          keywords: "pending updates available upgrade now yay versions" },
+    { page: "updates", section: "Packages", label: "Ignored",           keywords: "ignorepkg hold skip held back ignore a package" },
     { page: "updates", section: "Upkeep",   label: "Orphaned packages", keywords: "orphans unused dependencies pacman maintenance" },
     { page: "updates", section: "Upkeep",   label: "Reclaimable space", keywords: "cache clean up disk space paccache maintenance" },
 
@@ -236,6 +258,7 @@ var entries = [
     { page: "input", section: "Keyboard", label: "Repeat rate",       keywords: "key held repeat" },
     { page: "input", section: "Keyboard", label: "Try it",            keywords: "key repeat test" },
     { page: "input", section: "Keyboard", label: "Num Lock on at login", keywords: "numlock numpad" },
+    { page: "input", section: "Keyboard", label: "Advanced…",         keywords: "xkb options more" },
     { page: "input", section: "Mouse", label: "Pointer speed",        keywords: "sensitivity mouse speed" },
     { page: "input", section: "Mouse", label: "Acceleration",         keywords: "accel flat adaptive pointer" },
     { page: "input", section: "Mouse", label: "Focus follows mouse",  keywords: "sloppy focus hover click" },
@@ -252,10 +275,8 @@ var entries = [
     { page: "keybinds", section: "", label: "Keybinds", keywords: "shortcuts keys bindings super hotkey presets" },
 ]
 
-// Every entry, with its page's name folded in, so a result row
-// has everything it needs and search can match the page name too -- plus
-// one entry per page, so a search can land on a whole section. `pages` is
-// the Settings window's own list.
+// every entry with its page's name folded in, plus one per page; `pages` is
+// the Settings window's own list
 function build(pages) {
     var byId = {}
     var out = []
@@ -288,9 +309,7 @@ function build(pages) {
     return out
 }
 
-// Every word of the query has to appear somewhere in the entry; the rank is
-// the best any of them scores against the label, so "font size" puts the
-// setting called Font size above the ones that merely mention fonts.
+// every query word must appear; ranked by the best score against the label
 function score(entry, words) {
     var label = entry.label.toLowerCase()
     var best = 0

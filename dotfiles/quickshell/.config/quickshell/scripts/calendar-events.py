@@ -11,13 +11,9 @@
 #     { generated, feeds: [{ name, ok, fetched }],
 #       events: [{ cal, title, location, start, end, allDay }] }
 #
-# A feed that can't be fetched (offline, just woken from sleep) falls back to
-# its last good download, so a failure never blanks the calendar. --offline
-# skips the downloads and only re-expands what's cached. Exits 2 when any
-# feed failed to download, so the shell knows to try again soon.
-#
-# The feed URLs are secret addresses: they're never printed, and the cache
-# is private to the user.
+# A failed feed falls back to its last good download; --offline only
+# re-expands the cache. Exits 2 when a feed failed. Feed URLs are secret:
+# never printed, cache private.
 
 import datetime as dt
 import hashlib

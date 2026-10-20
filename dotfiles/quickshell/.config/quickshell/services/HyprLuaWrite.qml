@@ -1,32 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/HyprLuaWrite.qml
 //
-// The one write path into binds.lua, used by the Keybinds editor, and into
-// the per-machine files the Hyprland config loads from the state directory:
-// monitors.lua, the Display page's hl.monitor() rules, and hyprland.json,
-// the hl.config tables the Input and Appearance pages change. All of them
-// stay out of the repo: binds.lua is this machine's copy of the repo's
-// binds.defaults.lua, made by link.sh.
-//
-// A singleton, so there is exactly one of it however many of those are open:
-// as a per-page instance, each kept its own queue, and the standalone Keybinds
-// window and Settings > Input could both read the file, and whichever wrote
-// last threw away the other's change. It sits on AtomicFileWrite, whose queue
-// is shared with every other config write in the shell.
-//
-// A write never goes straight at the config. The new text is syntax-checked
-// with luac first, the current file is copied to a backup, and only then
-// replaced -- followed by `hyprctl reload config-only` and a read of
-// `hyprctl configerrors`, so a value Hyprland rejects is reported rather than
-// silently doing nothing. Undo puts the backup back.
-//
-// write() takes a whole new binds.lua and leaves the staleness check to
-// the caller (Keybinds, whose edits are offsets into the text it parsed).
-// setLocal() sets fields by name in hyprland.json as it is on disk when the
-// write runs, then reloads the same way.
-//
-// Each reports through a callback rather than a signal: with one shared
-// instance, a signal would hand every open page every other page's result.
+// The write path into binds.lua (Keybinds) and the state directory's
+// monitors.lua and hyprland.json (Display, Input, Appearance), on
+// AtomicFileWrite's shared queue. A singleton so pages can't overwrite
+// each other. Each write: luac check, backup, replace, `hyprctl reload
+// config-only`, then `hyprctl configerrors` reported; Undo restores the
+// backup. write() takes a whole binds.lua (the caller checks staleness);
+// setLocal() sets hyprland.json fields on the file as it is. Results come
+// by callback, so pages only see their own.
 
 pragma Singleton
 
@@ -137,9 +119,8 @@ Singleton {
         }
     }
 
-    // done(status, detail): status "ok" | "syntax" | "write". detail: luac's
-    // complaint for syntax, the first error for write, `hyprctl configerrors`
-    // for ok.
+    // done(status, detail): "ok" (configerrors), "syntax" (luac's complaint)
+    // or "write" (the first error)
     function write(newText, done) {
         enqueue(() => newText, true, (status, detail) => done(status === "unchanged" ? "ok" : status, detail))
     }

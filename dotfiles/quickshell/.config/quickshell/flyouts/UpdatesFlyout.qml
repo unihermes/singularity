@@ -1,9 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/UpdatesFlyout.qml
 //
-// A card saying where things stand, with the one action that fits (Check
-// now, or Update now while there are some), then the packages, then
-// Singularity's own commits waiting upstream while there are any.
+// A card saying where things stand, with Check now always (beside Update
+// now while there are some), then the packages, the space a clean-up would
+// free, then Singularity's own commits waiting upstream while there are any.
 
 import QtQuick
 import "../services"
@@ -11,6 +11,15 @@ import "../services"
 FlyoutPanel {
     flyout: "updates"
     menuWidth: 320
+
+    // the reclaimable space comes from Health's package checks
+    readonly property var reclaim: Health.checks.find(c => c.id === "reclaim") || null
+    // "About 1.5 GB: AUR builds 1.2 GB, old packages 300 MB": the size, then
+    // what it's in
+    readonly property var reclaimParts: reclaim ? /^About ([\d.]+ [KMGT]?B): (.*)$/.exec(reclaim.detail) : null
+    function scanHealth() { if (Health.lastScan === "" && !Health.scanning) Health.scan() }
+    onOpenChanged: if (open) scanHealth()
+    Component.onCompleted: if (open) scanHealth()
 
     FlyoutHeading { text: "UPDATES" }
 
@@ -39,8 +48,8 @@ FlyoutPanel {
             }
         }
         FlyoutChip {
-            visible: !card.some
-            text: "Check now"
+            text: card.some ? "󰑓" : "Check now"
+            glyph: card.some
             enabled: !Updates.checking && !Updates.repoChecking
             onClicked: Updates.refresh()
         }
@@ -87,6 +96,54 @@ FlyoutPanel {
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
+        }
+    }
+
+    // what cleaning the package caches and AUR builds would free
+    FlyoutDivider { visible: reclaimRow.visible }
+
+    Item {
+        id: reclaimRow
+        visible: !!reclaimParts
+        width: parent.width
+        height: Math.max(reclaimText.implicitHeight, cleanChip.height) + Theme.spaceXs
+
+        Column {
+            id: reclaimText
+            anchors.left: parent.left
+            anchors.right: cleanChip.left
+            anchors.rightMargin: Theme.spaceM
+            anchors.verticalCenter: parent.verticalCenter
+
+            Text {
+                width: parent.width
+                text: "Reclaimable" + (reclaimParts ? ": " + reclaimParts[1] : "")
+                elide: Text.ElideRight
+                color: Theme.text
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontBody
+            }
+            Text {
+                width: parent.width
+                text: Health.busyRepair === "reclaim" ? "Cleaning…" : !reclaimParts ? ""
+                    : reclaimParts[2].split(", ").map(t => t.replace(/ [\d.]+ [KMGT]?B$/, "")).join(", ")
+                elide: Text.ElideRight
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+        }
+
+        FlyoutChip {
+            id: cleanChip
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: "Clean up"
+            confirmText: reclaimParts ? "Clean up " + reclaimParts[1] + "?" : "Clean up?"
+            enabled: Health.busyRepair === ""
+            onClicked: Health.repair(reclaim)
         }
     }
 

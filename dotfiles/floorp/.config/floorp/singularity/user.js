@@ -11,11 +11,8 @@ user_pref("media.webrtc.camera.allow-pipewire", true);
 user_pref("xpinstall.signatures.required", false);
 user_pref("extensions.autoDisableScopes", 14);
 
-// Draw at a fractionally scaled display's own scale, so pages are sharp and
-// the same size on every monitor (the 1080p one at 0.75 on the desktop
-// matches the 1440p one at 1). Off, the compositor shrinks or stretches
-// Floorp and it blurs. Needs layout.css.devPixelsPerPx left at its default
-// (-1): a fixed value pins Floorp to that size on every display.
+// fractional scaling at each display's own scale (sharp, same size); needs
+// layout.css.devPixelsPerPx left at -1
 user_pref("widget.wayland.fractional-scale.enabled", true);
 
 // No telemetry, data reporting or studies, and no Floorp experiments
@@ -36,3 +33,7 @@ user_pref("browser.newtabpage.activity-stream.feeds.telemetry", false);
 user_pref("browser.newtabpage.activity-stream.telemetry", false);
 user_pref("browser.ping-centre.telemetry", false);
 user_pref("floorp.experiments.participationPolicy", "never");
+
+// No idle memory reclaim: after 60 s without input it has every process
+// free memory, which froze the browser for about 2 s each time
+user_pref("floorp.memory.idleReclaim", "{\"enabled\":false,\"idleThresholdSec\":60,\"minIntervalSec\":300,\"minResidentMB\":400}");

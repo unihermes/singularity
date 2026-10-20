@@ -1,14 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageDateTime.qml
 //
-// The system's time zone and network time, through timedatectl (a change
-// asks the polkit agent for the password), and the shell's own clock
-// preferences: 12- or 24-hour, and the calendar's first weekday. Those two
-// live in Settings.qml and reach the bar clock and the calendar flyout
-// straight away.
-//
-// A running Qt program keeps the zone it started with until told otherwise,
-// so a zone change made here calls Date.timeZoneUpdated() for the shell.
+// Time zone and network time via timedatectl (polkit asks), and the shell's
+// 12/24-hour and first-weekday preferences. A zone change calls
+// Date.timeZoneUpdated() so the shell follows.
 
 import Quickshell
 import Quickshell.Io
@@ -176,9 +171,17 @@ SettingsPage {
         lines: [[Qt.formatDate(clock.date, "ddd d MMM yyyy"),
                  page.zone === "" ? "" : page.cityOf(page.canonical) + ", " + page.zoneAbbrev.replace(/, UTC.*/, "")
                      + (page.current ? " (" + page.offText(page.current.offset) + ")" : ""),
-                 !page.ntp ? "set by hand" : page.synced ? "synchronised over the network" : "waiting for a time server"
+                 !page.canNtp ? "no network time service" : !page.ntp ? "set by hand" : page.synced ? "synchronised over the network" : "waiting for a time server"
                 ].filter(t => t !== "").join("  ·  ")]
         rule: true
+
+        // network time: the line above says whether it's synchronised
+        Switch {
+            checked: page.ntp
+            enabled: page.canNtp && !change.running
+            onToggled: page.run(["set-ntp", page.ntp ? "false" : "true"],
+                page.ntp ? "Network time off" : "Network time on")
+        }
     }
 
     // the zone; it opens to a search of every place
@@ -256,21 +259,6 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        label: "Network time"
-        hint: !page.canNtp ? "No network time service installed"
-            : page.ntp ? (page.synced ? "Synchronised over the network" : "Waiting for a time server")
-            : "The clock runs on its own"
-
-        Switch {
-            anchors.right: parent.right
-            checked: page.ntp
-            enabled: page.canNtp && !change.running
-            onToggled: page.run(["set-ntp", page.ntp ? "false" : "true"],
-                page.ntp ? "Network time off" : "Network time on")
-        }
-    }
-
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "CLOCK AND CALENDAR" }
 
@@ -292,7 +280,29 @@ SettingsPage {
 
     SettingsField {
         label: "First day of the week"
-        hint: "Where the calendar's weeks start"
+
+        // the calendar's week as it will run, its first day marked
+        hintExtras: Repeater {
+            model: 7
+            Rectangle {
+                required property int index
+                readonly property int day: (Settings.weekStart + index) % 7
+                width: Theme.fs(26)
+                height: Theme.fs(20)
+                radius: Theme.radiusSmall
+                color: "transparent"
+                border.width: Theme.borderWidth
+                border.color: index === 0 ? Theme.accent : Theme.stroke
+                Text {
+                    anchors.centerIn: parent
+                    text: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][parent.day]
+                    color: index === 0 ? Theme.textStrong : parent.day === 0 || parent.day === 6 ? Theme.muted : Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontCaption
+                }
+            }
+        }
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -302,40 +312,6 @@ SettingsPage {
             onPicked: v => {
                 Settings.setWeekStart(v)
                 page.say("Weeks start on " + ["Sunday", "Monday", "", "", "", "", "Saturday"][v], false)
-            }
-        }
-    }
-
-    // the calendar's week as it will run, its first day marked
-    SettingsField {
-        label: ""
-        hint: "The calendar's week"
-        searchable: false
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceXs
-
-            Repeater {
-                model: 7
-                Rectangle {
-                    required property int index
-                    readonly property int day: (Settings.weekStart + index) % 7
-                    width: Theme.fs(28)
-                    height: Theme.fs(22)
-                    radius: Theme.radiusSmall
-                    color: "transparent"
-                    border.width: Theme.borderWidth
-                    border.color: index === 0 ? Theme.accent : Theme.stroke
-                    Text {
-                        anchors.centerIn: parent
-                        text: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][parent.day]
-                        color: index === 0 ? Theme.textStrong : parent.day === 0 || parent.day === 6 ? Theme.muted : Theme.subtext
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontCaption
-                    }
-                }
             }
         }
     }

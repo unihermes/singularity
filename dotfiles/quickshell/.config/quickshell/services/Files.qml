@@ -1,32 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Files.qml
 //
-// The launcher's file-search mode: names under $HOME, from fd.
-//
-// fd rather than a QML directory walk: the walk would have to run on the UI
-// thread and would stall the launcher on the first deep directory. fd is
-// already in packages/pacman.txt; with it missing the process simply fails
-// and the list stays empty.
-//
-// Queries are passed as a fixed string (--fixed-strings), not a regex: what
-// people type into a search box is a name, and a stray ( or [ would
-// otherwise be a syntax error instead of a search.
-//
-// --hidden is on, because half of what's worth finding on this machine is
-// under ~/.config, but that also opens up the application data dumps --
-// .steam alone answers "calendar" six times before anything of yours does.
-// Hence EXCLUDES, and hence fetching far more matches than are shown and
-// ranking them here: fd walks in directory order and stops at
-// --max-results, so a low cap fills the list with whatever sorts first
-// alphabetically rather than whatever is most likely meant.
-//
-// Results are capped and the search is debounced, so holding a key down
-// doesn't queue a process per keystroke.
-//
-// With nothing typed the list shows recent files instead of nothing. That
-// comes from ~/.local/share/recently-used.xbel, the XDG recent-files list
-// every GTK app (Thunar included) already writes -- no new log of our own to
-// keep, and it matches what those apps' own "Recent" lists show.
+// The launcher's file search: names under $HOME from fd (fixed strings,
+// --hidden, debounced), with EXCLUDES for app data dumps and more matches
+// fetched than shown, then ranked here. With nothing typed, recent files
+// from recently-used.xbel.
 
 pragma Singleton
 
@@ -53,9 +31,8 @@ Singleton {
     readonly property int maxResults: 60
     readonly property int fetchLimit: 400
 
-    // Directories that are never what a name search meant: caches, version
-    // control internals, language package stores and the application data
-    // dumps that would otherwise answer every common word first.
+    // never what a name search meant: caches, VCS internals, package stores,
+    // app data
     readonly property var excludes: [
         ".git", "node_modules", "__pycache__", ".venv", ".cache",
         ".local/share/Trash", ".steam", ".local/share/Steam", ".vscode-oss",
@@ -89,11 +66,8 @@ Singleton {
         return path.indexOf(root.home) === 0 ? "~" + path.slice(root.home.length) : path
     }
 
-    // Not xdg-open directly: half of what a file search turns up here has
-    // either no handler at all (text/markdown, shell scripts) or one that
-    // needs a terminal (text/plain -> nvim), and in both cases xdg-open
-    // exits 0 having done nothing -- Enter looked broken. The script sorts
-    // that out; see its own comment.
+    // open-file.sh, not xdg-open, which silently does nothing for files with
+    // no handler or a terminal one
     readonly property string opener:
         Quickshell.env("HOME") + "/.config/quickshell/scripts/open-file.sh"
 
@@ -119,9 +93,7 @@ Singleton {
         }
     }
 
-    // The .xbel is XML, but only two attributes of each bookmark matter and
-    // QML has no XML parser worth pulling in for that, so it's read with a
-    // regex over the bookmark tags.
+    // the .xbel read with a regex (two attributes matter)
     FileView {
         id: recentFile
         path: root.home + "/.local/share/recently-used.xbel"
@@ -152,9 +124,7 @@ Singleton {
         }
     }
 
-    // Whether each is still there, newest first, until there are enough.
-    // Also when the launcher opens on files, for a deletion since the .xbel
-    // last changed.
+    // which recent files still exist, newest first, until there are enough
     function refreshRecent() {
         existing.running = false
         existing.command = ["sh", "-c",
@@ -205,11 +175,8 @@ Singleton {
                     if (isDir) p = p.slice(0, -1)
                     out.push(root.entry(p, isDir))
                 }
-                // Rank rather than take fd's order: a name that starts with
-                // what was typed first, then anything not buried in a dot
-                // directory, then the shallowest path. ~/Documents/report.md
-                // beats ~/.claude/.../generate_report.py, which is the whole
-                // point of fetching more than are shown.
+                // ranked: prefix matches, then outside dot directories, then
+                // shallowest
                 var q = root.query.trim().toLowerCase()
                 function score(f) {
                     var n = f.name.toLowerCase()

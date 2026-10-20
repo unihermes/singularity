@@ -25,6 +25,7 @@ Column {
     property string hint: ""
     property Component art: null
     property int columns: 4
+    property int tileHeight: Theme.fs(70)
     width: parent ? parent.width : 0
     spacing: Theme.spaceXs
 
@@ -36,6 +37,7 @@ Column {
 
     SettingsTiles {
         columns: tl.columns
+        tileHeight: tl.tileHeight
         model: (Settings.choices[tl.key] || []).map(v => ({ value: v, text: page.label(v, tl.key) }))
         current: Settings[tl.key]
         art: tl.art

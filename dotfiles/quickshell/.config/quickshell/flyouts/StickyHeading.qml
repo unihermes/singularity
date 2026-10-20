@@ -1,19 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/StickyHeading.qml
 //
-// Keeps the heading of the section being read pinned to the top of a
-// scrolling page: once a FlyoutHeading in `column` has scrolled up past the
-// top of `flickable`, a copy of it stays there, on the panel's colour at full
-// strength so rows pass under it rather than showing through a translucent
-// panel. The next heading pushes it up and out as it arrives, then takes
-// its place.
-//
-// Only the column's own headings count, not ones nested deeper (a card's
-// title inside a row). The copy folds and unfolds the section it stands for,
-// and scrolls back to that heading, so a section folded from here doesn't
-// leave the page scrolled past its end.
-//
-// Place it over the flickable, at its top-left, the same width.
+// Pins the current section's heading to the top of a scrolling page: a
+// copy, on the panel's colour at full strength, pushed out by the next
+// heading. Only `column`'s own headings count. The copy folds its section
+// and scrolls back to it. Place it over the flickable's top-left, same width.
 
 import QtQuick
 import "../services"
@@ -60,8 +51,8 @@ Item {
 
         FlyoutHeading {
             id: copy
-            x: root.columnX
-            width: root.column.width
+            x: root.columnX - outdent
+            width: root.column.width + outdent
             text: root.current ? root.current.text : ""
             asWritten: root.current ? root.current.asWritten : ""
             mirrorOf: root.current

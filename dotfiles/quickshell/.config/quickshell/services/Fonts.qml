@@ -1,16 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Fonts.qml
 //
-// Which of Looks.fonts the shell can actually draw. Qt reads the system's
-// fonts once, when the process starts, and never notices one installed after
-// -- asking it for a family it doesn't know silently draws some fallback
-// face instead. So `available` is what Qt itself knows, not what fc-list
-// says is on disk; a font installed since startup shows up in `pending`
-// until the shell is restarted (Session.restartShell()).
-//
-// A look or saved setting naming a font that isn't available (or isn't on
-// the list at all -- only monospace faces are) resolves to the first one.
-// packages/pacman.txt installs the whole list.
+// Which of Looks.fonts Qt can draw: Qt reads fonts once at startup, so
+// `available` is what it knows and newly installed ones are `pending` until
+// a restart. Anything unavailable resolves to the first.
 
 pragma Singleton
 

@@ -1,16 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/DisplayLayout.qml
 //
-// The Display page's arrangement picture: every connected display drawn to
-// scale where Hyprland has it, dragged into place with the mouse. A drop
-// snaps against the nearest edge of another display -- touching it, never
-// overlapping -- and to its start, centre or end when close, and the
-// outline shows where it will land while dragging. `moved` hands the page
-// the dropped display's new layout position; the page writes the rules.
-//
-// A display that's off is drawn dashed where the page puts it, and can't be
-// dragged. A click on any display, without dragging, is `picked`: the page
-// opens that display, and the one open has the lit groove.
+// The Display page's arrangement picture: displays to scale, dragged into
+// place, snapping edge to edge (and to start, centre or end); `moved` hands
+// the page the new position. An off display is dashed and fixed. A click is
+// `picked`; the open display has the lit groove.
 
 import QtQuick
 import QtQuick.Shapes

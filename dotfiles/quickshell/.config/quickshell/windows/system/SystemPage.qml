@@ -1,18 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/SystemPage.qml
 //
-// The frame every System page shares: a heading, one line saying what the
-// page is about, and a scrolling column for the page's own content. The
-// same shape as SettingsPage.qml, without the status line -- these pages
-// read rather than write, so there is nothing to report back.
-//
-// Pages are created by the window's Loader when shown and destroyed when
-// left, so anything a page probes for itself runs on arrival and stops on
-// the way out. Nothing here keeps state between visits.
-//
-// Laid out as a sectioned Settings page is (DESIGN.md): with channel
-// frames each run of rows between headings sits in a channel of its own,
-// and the subtitle keeps to one line.
+// The frame every System page shares: a one-line subtitle and a scrolling
+// column, sectioned like a Settings page. Built fresh each visit; no status
+// line, as these pages only read.
 
 import QtQuick
 import "../../services"
@@ -21,7 +12,6 @@ import "../../flyouts"
 Item {
     id: root
 
-    property string title: ""
     property string subtitle: ""
 
     default property alias content: col.data
@@ -32,8 +22,6 @@ Item {
         id: header
         width: parent.width
         spacing: Theme.spaceS
-
-        FlyoutHeading { text: root.title.toUpperCase() }
 
         Text {
             width: parent.width

@@ -1,25 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Cooling.qml
 //
-// Temperatures and fans for the bar's Cooling module and its flyout: the CPU
-// package, the GPU, the hottest drive, and every fan header with a tacho.
-//
-// A desktop's module. A laptop's fans are the firmware's business and its
-// temperatures are already on the System window, so the module only runs on
-// a machine install.sh recorded as a desktop -- or, with no record, one
-// without a battery.
-//
-// Read like SystemStats: the hwmon nodes are found once by a probe, then
-// each is a FileView re-read every few seconds, with no process per sample.
-// The one exception is an NVIDIA card, whose driver has no hwmon node:
-// nvidia-smi runs once with its own loop (-l) and prints a line per sample.
-//
-// Fans are named from ~/.local/state/singularity/fan-names.json when it
-// exists, an object of header to name ("fan1": "CPU"): which header drives
-// which fan is particular to one machine's wiring, so it never lives in the
-// repo.
-// A header that has never turned since the shell started is left out --
-// motherboards list every header, wired or not.
+// Temperatures and fans for the desktop's Cooling module: CPU package, GPU,
+// hottest drive, every fan with a tacho. Desktops only (install.sh's record,
+// else no battery). hwmon nodes probed once, then re-read by FileView;
+// NVIDIA via one looping nvidia-smi. Fan names from fan-names.json in the
+// state directory (fan1 to CPU, say); headers that never turned are hidden.
 
 pragma Singleton
 
@@ -156,9 +142,8 @@ Singleton {
     FileView { id: cpuFile; blockLoading: true; printErrors: false }
     FileView { id: gpuFile; blockLoading: true; printErrors: false }
 
-    // The CPU package by driver, as SystemStats finds it; amdgpu's edge
-    // sensor for the GPU; every NVMe drive's composite; and every fan input
-    // beside the PWM that drives it, when there is one.
+    // the CPU package, amdgpu's edge sensor, each NVMe composite, and each
+    // fan input with its PWM
     Process {
         id: probe
         command: ["sh", "-c",

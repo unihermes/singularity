@@ -1,19 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageBluetooth.qml
 //
-// The adapter, what's paired to it, and what's in range.
-//
-// Straight onto Quickshell's Bluetooth service (BlueZ), the same objects the
-// bar module and its flyout read, so a device connected here is connected
-// everywhere at once. Nothing to persist: BlueZ keeps the bonds.
-//
-// Rows are flyouts/BtDeviceRow.qml in its `detailed` form, which keeps the
-// pair / trust / connect dance in one place. A paired device opens in place
-// to connect, rename, stop it reconnecting by itself, or remove it.
-//
-// What this page has that the flyout doesn't: the adapter's own identity,
-// discoverable and pairable, each device's settings, the nearby list
-// uncapped, and a way to see the unnamed devices the flyout only counts.
+// The adapter, paired devices and what's in range, straight on Quickshell's
+// Bluetooth service (BlueZ keeps the bonds). The adapter card carries the
+// power switch and Discoverable / Pairable chips. A paired device
+// (BtPairedRow) connects from its row on hover, and opens to Connect,
+// Rename and Remove, its battery and Reconnect by itself. Devices in range
+// are BtDeviceRow in its `detailed` form, with unnamed ones behind a row.
 
 import Quickshell
 import Quickshell.Bluetooth
@@ -32,13 +25,8 @@ SettingsPage {
 
     readonly property var adapter: Bluetooth.defaultAdapter
 
-    // Repeated from the bar's helpers rather than shared: they need the
-    // BluetoothAdapterState enum, which only a QML file importing
-    // Quickshell.Bluetooth can see.
-    //
-    // adapter.enabled mirrors BlueZ's "Powered", but Quickshell writes it
-    // optimistically and never reverts a failed write. adapter.state is fed
-    // only by BlueZ's own PropertiesChanged, so it is the true one.
+    // repeated from the bar (they need the BluetoothAdapterState enum);
+    // adapter.state, not `enabled`, which Quickshell sets optimistically
     readonly property bool poweredOn: !!adapter && adapter.state === BluetoothAdapterState.Enabled
     readonly property bool blocked: !!adapter && adapter.state === BluetoothAdapterState.Blocked
 
@@ -47,9 +35,7 @@ SettingsPage {
         adapter.enabled = on
     }
 
-    // Show the unnamed advertisements too. Not persisted: BlueZ reports every
-    // BLE privacy beacon in range as a nameless rotating address, dozens of
-    // rows that can't be paired with.
+    // show nameless advertisements (mostly BLE privacy beacons); not saved
     property bool showUnnamed: false
     // the paired device opened for its settings, and the one being renamed
     property string openAddr: ""
@@ -57,9 +43,7 @@ SettingsPage {
 
     readonly property var allDevices: (adapter && adapter.devices) ? adapter.devices.values : []
 
-    // Nameless hardware BlueZ could still classify -- a headset that hasn't
-    // answered a name request yet still reports a device class, where a
-    // privacy beacon reports nothing at all.
+    // nameless hardware BlueZ could still classify (a device class)
     function named(d) {
         return d.deviceName !== "" || d.icon !== ""
     }
@@ -100,9 +84,6 @@ SettingsPage {
         sec = Math.max(0, Math.round(sec))
         return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0")
     }
-    function span(sec) {
-        return sec % 60 === 0 ? (sec / 60) + " min" : sec + " s"
-    }
 
     // A scan left running keeps the radio busy and churns the list, so it is
     // stopped on the way out -- the flyout does the same when it closes.
@@ -128,7 +109,22 @@ SettingsPage {
                page.paired.length + " paired",
                page.connectedCount > 0 ? page.connectedCount + " connected" : "nothing connected"
               ].join("  ·  ")]
-        rule: page.poweredOn
+        besideTitle: [
+            FlyoutChip {
+                visible: page.poweredOn
+                text: !page.discoverable ? "Discoverable"
+                    : page.discTimeout > 0 ? "Visible " + page.clock((page.discUntil - page.now) / 1000)
+                    : "Visible"
+                selected: page.discoverable
+                onClicked: page.adapter.discoverable = !page.discoverable
+            },
+            FlyoutChip {
+                visible: page.poweredOn
+                text: "Pairable"
+                selected: !!page.adapter && page.adapter.pairable
+                onClicked: page.adapter.pairable = !page.adapter.pairable
+            }
+        ]
 
         Switch {
             checked: page.poweredOn
@@ -137,66 +133,10 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        visible: page.poweredOn
-        label: "Discoverable"
-        hint: page.discoverable
-            ? (page.discTimeout > 0
-                ? "Visible as " + page.adapter.name + " for " + page.clock((page.discUntil - page.now) / 1000)
-                : "Visible as " + page.adapter.name)
-            : page.discTimeout > 0 ? "Turns itself off after " + page.span(page.discTimeout)
-            : "Lets other devices find this one"
-
-        Switch {
-            anchors.right: parent.right
-            checked: page.discoverable
-            onToggled: page.adapter.discoverable = !page.discoverable
-        }
-    }
-
-    SettingsField {
-        visible: page.poweredOn
-        label: "Pairable"
-        hint: "Accept pairing started by other devices"
-
-        Switch {
-            anchors.right: parent.right
-            checked: !!page.adapter && page.adapter.pairable
-            onToggled: page.adapter.pairable = !page.adapter.pairable
-        }
-    }
-
     // --- paired ----------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "PAIRED" + (page.poweredOn ? "  " + page.paired.length : "") }
-
-    // A battery part (or the whole battery) as a level chip.
-    component BatteryField: SettingsField {
-        id: battery
-        property int level: 0
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceM
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: battery.level + "%"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            Slider {
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(140)
-                value: battery.level
-                interactive: false
-                fillColor: Theme.good
-            }
-        }
-    }
 
     // A paired device and the settings it opens under itself.
     component PairedDevice: Column {
@@ -206,16 +146,12 @@ SettingsPage {
         readonly property bool isOpen: page.openAddr === d.address
         readonly property bool settling: d.state === BluetoothDeviceState.Connecting
             || d.state === BluetoothDeviceState.Disconnecting
-        // [left, right, case] for earbuds, or null
-        readonly property var parts: d.connected && !d.batteryAvailable ? (BtBattery.parts[d.address] || null) : null
-        readonly property int level: BtBattery.level(d)
 
         width: parent ? parent.width : 0
 
-        BtDeviceRow {
+        BtPairedRow {
             id: row
             device: dev.d
-            detailed: true
             open: dev.isOpen
             onOpened: {
                 page.openAddr = dev.isOpen ? "" : dev.d.address
@@ -226,72 +162,38 @@ SettingsPage {
         SettingsIndent {
             visible: dev.isOpen
 
-            FlyoutChip {
-                text: dev.d.state === BluetoothDeviceState.Connecting ? "Connecting…"
-                    : dev.d.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…"
-                    : dev.d.connected ? "Disconnect" : "Connect"
-                selected: !dev.d.connected && !dev.settling
-                enabled: !dev.settling
-                onClicked: dev.d.connected ? dev.d.disconnect() : dev.d.connect()
-            }
+            // what it does, on one line
+            Row {
+                spacing: Theme.spaceS
 
-            Repeater {
-                model: dev.parts ? ["Left", "Right", "Case"] : []
-                BatteryField {
-                    required property string modelData
-                    required property int index
-                    visible: dev.parts[index] >= 0
-                    label: modelData
-                    level: Math.max(0, dev.parts[index])
+                FlyoutChip {
+                    text: dev.d.state === BluetoothDeviceState.Connecting ? "Connecting…"
+                        : dev.d.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…"
+                        : dev.d.connected ? "Disconnect" : "Connect"
+                    selected: !dev.d.connected && !dev.settling
+                    enabled: !dev.settling
+                    onClicked: dev.d.connected ? dev.d.disconnect() : dev.d.connect()
                 }
-            }
-            BatteryField {
-                visible: !dev.parts && dev.level >= 0
-                label: "Battery"
-                level: Math.max(0, dev.level)
-            }
-            SettingsValue {
-                visible: !dev.d.connected
-                label: "Battery"
-                hint: "Shows while connected"
-                value: "—"
-            }
-
-            SettingsField {
-                label: "Reconnect by itself"
-                hint: "When it's turned on nearby"
-                Switch {
-                    anchors.right: parent.right
-                    checked: dev.d.trusted
-                    onToggled: dev.d.trusted = !dev.d.trusted
-                }
-            }
-
-            SettingsField {
-                visible: page.renaming !== dev.d.address
-                label: "Name"
-                hint: "What this computer calls it"
-
-                Row {
-                    anchors.right: parent.right
-                    spacing: Theme.spaceS
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: row.label
-                        color: Theme.textStrong
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontBody
+                FlyoutChip {
+                    icon: BtKind.rename
+                    text: "Rename"
+                    selected: page.renaming === dev.d.address
+                    onClicked: {
+                        if (page.renaming === dev.d.address) { page.renaming = ""; return }
+                        page.renaming = dev.d.address
+                        newName.text = row.label
+                        Qt.callLater(newName.forceFocus)
                     }
-                    IconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        icon: BtKind.rename
-                        onClicked: {
-                            page.renaming = dev.d.address
-                            newName.text = row.label
-                            Qt.callLater(newName.forceFocus)
-                        }
+                }
+                // Unpair and drop it from BlueZ entirely, so it moves back
+                // to nearby (or vanishes, if it's off) and has to be paired
+                // again.
+                FlyoutChip {
+                    text: "󰆴 Remove"
+                    confirmText: "Remove " + row.label + "?"
+                    onClicked: {
+                        page.openAddr = ""
+                        dev.d.forget()
                     }
                 }
             }
@@ -334,17 +236,74 @@ SettingsPage {
                 }
             }
 
-            SettingsValue { label: "Type"; value: BtKind.word(dev.d.icon) }
-            SettingsValue { label: "Address"; value: dev.d.address; copyable: true }
+            SettingsField {
+                label: "Battery"
+                hint: dev.d.connected ? "" : "Shows while connected"
 
-            // Unpair and drop it from BlueZ entirely, so it moves back to
-            // nearby (or vanishes, if it's off) and has to be paired again.
-            FlyoutChip {
-                text: "󰆴 Remove device"
-                confirmText: "Remove " + row.label + "?"
-                onClicked: {
-                    page.openAddr = ""
-                    dev.d.forget()
+                BatteryChips {
+                    id: chips
+                    anchors.right: parent.right
+                    device: dev.d
+                }
+                Text {
+                    anchors.right: parent.right
+                    visible: chips.chips.length === 0
+                    text: "—"
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+            }
+
+            SettingsField {
+                label: "Reconnect by itself"
+                hint: "When it's turned on nearby"
+                Switch {
+                    anchors.right: parent.right
+                    checked: dev.d.trusted
+                    onToggled: dev.d.trusted = !dev.d.trusted
+                }
+            }
+
+            // the fine print; the address copies on a click
+            Row {
+                spacing: Theme.spaceM
+
+                Text {
+                    text: BtKind.word(dev.d.icon) + "  ·"
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+                Text {
+                    text: addrMouse.copied ? "Copied" : dev.d.address
+                    color: addrMouse.copied ? Theme.good : addrMouse.containsMouse ? Theme.textStrong : Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+
+                    MouseArea {
+                        id: addrMouse
+                        property bool copied: copiedTimer.running
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            Quickshell.execDetached(["wl-copy", "--", dev.d.address])
+                            copiedTimer.restart()
+                        }
+                        Timer { id: copiedTimer; interval: 1200 }
+                    }
+                }
+                Text {
+                    visible: dev.d.deviceName !== "" && dev.d.deviceName !== row.label
+                    text: "·  advertises as " + dev.d.deviceName
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
                 }
             }
         }

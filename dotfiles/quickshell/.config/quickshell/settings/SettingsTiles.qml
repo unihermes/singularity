@@ -52,6 +52,8 @@ Grid {
 
             Loader {
                 property var value: tile.modelData.value
+                // for art that moves while its tile is under the pointer
+                property bool hovered: tileMouse.containsMouse
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: Theme.spaceL
                 sourceComponent: root.art

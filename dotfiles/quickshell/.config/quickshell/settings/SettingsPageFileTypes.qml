@@ -1,29 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageFileTypes.qml
 //
-// Which app opens what. The common kinds of file are grouped (a browser is
-// http, https and html at once; images are a handful of types), and every
-// other type the system knows is searchable below them.
-//
-// The full type list is the shared-mime-info database, not just what apps
-// declare, and it stays behind a button: a thousand rows is a scroll, not a
-// list, so the search is what the section leads with.
-//
-// Candidates come from the MimeType= lines of the installed .desktop files --
-// Quickshell's DesktopEntries doesn't expose them, so they're read directly.
-// An app also counts for a type it doesn't name but inherits: shared-mime-info
-// records that application/json is ultimately a kind of text/plain, so an
-// editor declaring text/plain can be picked for it. Without that nearly every
-// application/* text format has no candidate but a browser, which is how
-// JSON ends up opening in Zen.
-// The current default is the first entry mimeapps.list gives, falling back
-// to mimeinfo.cache's pick, the same order xdg-open resolves in.
-//
-// Writes go through `xdg-mime default`, which edits ~/.config/mimeapps.list.
-// A group is only pointed at the types its chosen app actually declares, so
-// picking an image viewer without SVG support leaves SVGs where they were.
-// The pickers offer the apps that declare a type first, then every other
-// installed app behind "More apps", for an app whose MimeType= is missing.
+// Which app opens what: common kinds (browser, images, ...) under four
+// subheads, every other shared-mime-info type searchable (the full list
+// behind a button).
+// Candidates come from .desktop MimeType= lines, counting inherited types
+// (json is text/plain, so editors qualify). The default is mimeapps.list's
+// first, else mimeinfo.cache's, as xdg-open resolves. Writes via
+// `xdg-mime default`, a group only for the types its app declares; other
+// apps are under "More apps".
 
 import Quickshell
 import Quickshell.Io
@@ -39,35 +24,37 @@ SettingsPage {
     title: "File Types"
     description: "The app each kind of file opens with."
 
-    // A kind's first type is its main one: the apps offered first are the
-    // ones that declare it outright (a browser declares https links; Neovim
-    // only gets to HTML because HTML is a kind of text).
+    // the subheads the kinds sit under, in order
+    readonly property var parts: [{ id: "web", caption: "WEB AND MAIL" }, { id: "files", caption: "FILES" },
+        { id: "media", caption: "MEDIA" }, { id: "docs", caption: "DOCUMENTS" }]
+
+    // a kind's first type is its main one; apps declaring it come first
     readonly property var groups: [
-        { label: "Web browser",  covers: "Links and web pages",
+        { part: "web", label: "Web browser",  covers: "Links and web pages",
           types: ["x-scheme-handler/https", "x-scheme-handler/http", "text/html", "application/xhtml+xml"] },
-        { label: "File manager", covers: "Folders", types: ["inode/directory"] },
-        { label: "Text",         covers: "Plain text, Markdown, JSON, scripts",
+        { part: "files", label: "File manager", covers: "Folders", types: ["inode/directory"] },
+        { part: "docs", label: "Text",         covers: "Plain text, Markdown, JSON, scripts",
           types: ["text/plain", "text/markdown", "application/json", "text/x-shellscript"] },
-        { label: "PDF",          covers: "PDF documents", types: ["application/pdf"] },
-        { label: "Images",       covers: "PNG, JPEG, GIF, WebP, SVG, BMP",
+        { part: "docs", label: "PDF",          covers: "PDF documents", types: ["application/pdf"] },
+        { part: "media", label: "Images",       covers: "PNG, JPEG, GIF, WebP, SVG, BMP",
           types: ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/bmp"] },
-        { label: "Video",        covers: "MP4, MKV, WebM, MOV",
+        { part: "media", label: "Video",        covers: "MP4, MKV, WebM, MOV",
           types: ["video/mp4", "video/x-matroska", "video/webm", "video/quicktime"] },
-        { label: "Audio",        covers: "MP3, FLAC, Ogg, WAV",
+        { part: "media", label: "Audio",        covers: "MP3, FLAC, Ogg, WAV",
           types: ["audio/mpeg", "audio/flac", "audio/ogg", "audio/x-wav"] },
-        { label: "Archives",     covers: "Zip, tar, gzip, 7z",
+        { part: "files", label: "Archives",     covers: "Zip, tar, gzip, 7z",
           types: ["application/zip", "application/x-tar", "application/gzip", "application/x-7z-compressed"] },
-        { label: "Email links",  covers: "mailto: links", types: ["x-scheme-handler/mailto"] },
-        { label: "Documents",    covers: "Word and OpenDocument text",
+        { part: "web", label: "Email links",  covers: "mailto: links", types: ["x-scheme-handler/mailto"] },
+        { part: "docs", label: "Documents",    covers: "Word and OpenDocument text",
           types: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword",
                   "application/vnd.oasis.opendocument.text"] },
-        { label: "Spreadsheets", covers: "Excel, OpenDocument, CSV",
+        { part: "docs", label: "Spreadsheets", covers: "Excel, OpenDocument, CSV",
           types: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel",
                   "application/vnd.oasis.opendocument.spreadsheet", "text/csv"] },
-        { label: "Presentations", covers: "PowerPoint and OpenDocument",
+        { part: "docs", label: "Presentations", covers: "PowerPoint and OpenDocument",
           types: ["application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.ms-powerpoint",
                   "application/vnd.oasis.opendocument.presentation"] },
-        { label: "Calendar invites", covers: ".ics invitations", types: ["text/calendar"] },
+        { part: "web", label: "Calendar invites", covers: ".ics invitations", types: ["text/calendar"] },
     ]
 
     // desktop id -> { id, name, types: [mime] }, apps declaring any type
@@ -116,9 +103,8 @@ SettingsPage {
         return d !== undefined ? d : (cached[mime] || "")
     }
 
-    // A type and everything it inherits from. The two implicit rules the
-    // subclasses file leaves out are in the spec: every text/* is a text/plain,
-    // and every */*+xml is an application/xml.
+    // a type and its ancestors, with the spec's implicit text/* -> text/plain
+    // and */*+xml -> application/xml
     property var ancestorCache: ({})
     onParentsChanged: ancestorCache = ({})
 
@@ -223,9 +209,7 @@ SettingsPage {
         return Object.keys(set).sort()
     }
 
-    // What the search matches, before the page limit. A bare type search is
-    // a substring; anything else also matches the apps that handle the type,
-    // which is the slow half and so is only tried when the name can't match.
+    // search matches: type substring, else (slower) the apps handling it
     readonly property var matches: {
         var q = query.trim().toLowerCase()
         if (q === "") return showAll ? everyType : []
@@ -242,9 +226,8 @@ SettingsPage {
         mimeProc.running = true
     }
 
-    // One record per .desktop file, user copies shadowing system ones:
-    // id <TAB> Name <TAB> MimeType. Only the [Desktop Entry] group counts --
-    // Actions carry Name= lines too. Hidden=true entries are deletions.
+    // one record per .desktop (user shadows system): id \t Name \t MimeType,
+    // [Desktop Entry] only; Hidden=true is a deletion
     Process {
         id: scanProc
         command: ["sh", "-c", `
@@ -374,9 +357,7 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    // A common kind: what it covers (or what in it has no default yet) and a
-    // dropdown of apps with their icons. The apps made for its main type come
-    // first; the rest that could open it are behind the list's last entry.
+    // a common kind: what it covers and a dropdown of apps (main type's first)
     component HandlerRow: SettingsField {
         id: hr
         property var types: []
@@ -391,9 +372,7 @@ SettingsPage {
         readonly property var offered: wide ? made.concat(others, rest) : base
         readonly property int hidden: page.everyApp.length - base.length
         readonly property string chosen: page.groupCurrent(types)
-        // the default as one of the offered apps: a default naming another
-        // entry of the same app (zathura.desktop against zathura-pdf-mupdf,
-        // which is the one declaring PDFs) counts as that app
+    // a default naming another entry of the same app counts as that app
         readonly property string shown: {
             if (offered.some(a => a.id === chosen)) return chosen
             var same = offered.find(a => page.names[chosen] !== undefined && a.name === page.names[chosen])
@@ -450,12 +429,25 @@ SettingsPage {
     FlyoutHeading { text: "COMMON" }
 
     Repeater {
-        model: page.groups
-        HandlerRow {
+        model: page.parts
+
+        Column {
+            id: part
             required property var modelData
-            label: modelData.label
-            covers: modelData.covers
-            types: modelData.types
+            width: parent.width
+            spacing: Theme.spaceM
+
+            SettingsSubhead { caption: part.modelData.caption }
+
+            Repeater {
+                model: page.groups.filter(g => g.part === part.modelData.id)
+                HandlerRow {
+                    required property var modelData
+                    label: modelData.label
+                    covers: modelData.covers
+                    types: modelData.types
+                }
+            }
         }
     }
 
@@ -477,9 +469,7 @@ SettingsPage {
         label: "Reading the mime database…"
     }
 
-    // Browsing the lot is a deliberate act -- searching is the fast path, and
-    // a thousand rows takes a moment to build -- so it's a row of its own,
-    // and it steps aside once there's a search to answer.
+    // browse every type: its own row, hidden once there's a search
     FlyoutRow {
         visible: page.loaded && page.query.trim() === ""
         label: page.showAll ? "Hide the full list" : "Show all " + page.everyType.length + " types"

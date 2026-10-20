@@ -4,20 +4,10 @@
 #                             ramp and accent as swatches at the right
 #   . row.sh --head NAME      a section name over a rule that fades out
 #
-# No outline: sections are set apart by their headings and a blank line
-# (config.jsonc's "break" modules). Memory and Disk show a meter.
-#
-# Sourced, not run: fastfetch finds the terminal by walking up the process
-# tree, and a shell of its own between the two fastfetch processes makes the
-# Terminal row report "fastfetch".
-#
-# With no VALUE, LABEL is also the fastfetch module to ask. The nested call
-# runs with `-c none` so it doesn't load config.jsonc again and recurse.
-#
-# Colours, capsule shape and heading case come from term-colors.sh, which
-# Quickshell (AppearanceSync.qml) writes for the current look. The block is
-# The block is W columns: with the 64-column logo and its 3-column gap the
-# whole thing is 115, which fits a half-screen terminal (about 116).
+# Sourced, not run (a shell in between makes the Terminal row say
+# "fastfetch"). With no VALUE, LABEL is the module to ask (`-c none`, so no
+# recursion). Colours and shape from term-colors.sh (AppearanceSync). The
+# block is W columns; with the logo it's 115, half a screen's terminal.
 N_SURFACE='26;26;26' N_OVERLAY='36;36;36' N_BORDER='48;48;48'
 N_MUTED='77;77;77' N_SUBTEXT='122;122;122' N_TEXT='208;226;250'
 N_BRIGHT='235;235;235' N_ACCENT='85;85;200' N_ON_ACCENT='235;235;235'

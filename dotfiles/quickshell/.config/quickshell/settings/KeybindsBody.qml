@@ -1,27 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/KeybindsBody.qml
 //
-// The Keybinds editor, one list:
-//
-//   every hl.bind() in binds.lua, grouped by the config's
-//   `-- --- Section ---` markers, one line each; a bind opens in place to
-//   edit it (or, for the few too tangled to rewrite, to what it runs and
-//   why), and each group ends with Add a bind…
-//
-//   then SUGGESTED: a catalogue of binds worth having (HyprPresets.js),
-//   each shown against what the config already has; tick the ones you want
-//   and they're written in one go, or open one first to change its combo
-//
-// One search covers both, and Press keys looks a combo up by pressing it.
-//
-// Parsing and rewriting live in HyprBinds.js, the safe write in
-// HyprLuaWrite.qml, the catalogue in HyprPresets.js. Nothing here builds Lua
-// by hand. Hosted by SettingsPageKeybinds.qml, whose toast carries the
-// results.
-//
-// The file is re-read right before writing: if it changed on disk since it
-// was parsed (an nvim session, git), nothing is written, since the edit's
-// offsets point into text that no longer exists.
+// The Keybinds editor: every hl.bind() in binds.lua, grouped by its
+// `-- --- Section ---` markers, each opening in place to edit, with Add a
+// bind… per group; then SUGGESTED, presets from HyprPresets.js to tick and
+// write at once. One search covers both; Press keys finds a combo.
+// Parsing/rewriting is HyprBinds.js, the safe write HyprLuaWrite.qml.
+// Nothing is written if the file changed on disk since it was parsed.
 
 import Quickshell
 import Quickshell.Io
@@ -57,10 +42,7 @@ Column {
     // the line the path link opens at: the bind open in the list, if any
     readonly property int linkLine: editRow ? editRow.line : openRow ? openRow.line : 0
 
-    // The config itself, straight from here. With a line it goes to the
-    // editor at that line; without one it goes through open-file.sh, which
-    // honours whatever this machine actually opens .lua with (LinkRow.qml
-    // and the launcher's file search use the same script).
+    // opens the config, at `line` in the editor, else via open-file.sh
     function openConf(line) {
         if (line > 0) Quickshell.execDetached([Settings.terminal, "-e", "nvim", "+" + line, confPath])
         else Quickshell.execDetached([home + "/.config/quickshell/scripts/open-file.sh", confPath])
@@ -109,9 +91,9 @@ Column {
     property string conflictAck: ""
     property string editError: ""
 
-    // presets
-    property string packFilter: ""
+    // presets, and the packs opened to their binds (by name)
     property bool hideBound: true
+    property var openPacks: ({})
     // id -> preset, for the ones ticked
     property var selection: ({})
     property int selectionCount: 0
@@ -144,9 +126,7 @@ Column {
         }
     }
 
-    // Which of the tools the presets call for exist. One sweep, not one
-    // process per preset, and the answer only greys rows out -- a preset is
-    // never hidden for it.
+    // which tools the presets need exist (one sweep; missing ones only grey out)
     Process {
         id: haveProc
         running: false
@@ -171,16 +151,12 @@ Column {
 
     // --- grouping: the config's own binds --------------------------------
 
-    // The file's `-- --- Name ---` sections, gathered into the groups the
-    // list shows, in the order you'd look for them: opening things, the
-    // shell's own tools, handling windows, getting around, the session, and
-    // the hardware keys last. A section not named here (one added by hand)
-    // keeps its own heading, after these, in file order. The editor's
-    // Category still means the file's section; this only changes the list.
+    // The file's sections gathered into the list's groups, in this order;
+    // a section not named here keeps its own heading after them.
     readonly property var displayGroups: [
         { name: "Apps",       sections: ["Launchers"] },
         { name: "Shell",      sections: ["Shell windows", "Clipboard", "Calculator and file search",
-                                         "Notes", "Claude"] },
+                                         "Notes"] },
         { name: "Windows",    sections: ["Window Management", "Mouse", "Scratchpad"] },
         { name: "Focus",      sections: ["Focus"] },
         { name: "Workspaces", sections: ["Workspaces"] },
@@ -241,8 +217,6 @@ Column {
 
     // --- grouping: the catalogue -----------------------------------------
 
-    readonly property var packNames: HyprPresets.PACKS.map(p => p.name)
-
     // Every preset, wrapped with what the config says about it and whether
     // the tools it needs are installed.
     readonly property var presetGroups: {
@@ -253,11 +227,11 @@ Column {
         var packs = HyprPresets.PACKS
         for (var i = 0; i < packs.length; i++) {
             var pack = packs[i]
-            if (packFilter !== "" && pack.name !== packFilter) continue
-            var items = []
+            var items = [], bound = 0
             for (var j = 0; j < pack.binds.length; j++) {
                 var b = pack.binds[j]
                 var st = HyprPresets.status(model, b)
+                if (st.state === "bound") bound++
                 if (hideBound && st.state === "bound") continue
                 if (f !== "" && HyprBinds.normalizeKeys(b.keys) !== f) continue
                 var action = b.lua ? b.lua : b.cmd
@@ -271,7 +245,7 @@ Column {
                     state: st.state, other: st.row, missing: missing,
                 })
             }
-            if (items.length) out.push({ name: pack.name, note: pack.note, items: items })
+            if (items.length) out.push({ name: pack.name, note: pack.note, items: items, total: pack.binds.length, bound: bound })
         }
         return out
     }
@@ -571,10 +545,8 @@ Column {
 
     // --- key capture -----------------------------------------------------
 
-    // While keys are being recorded or looked up, Hyprland sits in an empty
-    // submap, so a combo reaches this page instead of running its bind.
-    // Escape always gets out: the submap's one bind is non-consuming, so the
-    // page sees it too, and it works even if the shell has gone away.
+    // While recording or finding keys Hyprland sits in an empty submap, so
+    // combos reach this page; Escape (non-consuming) always gets out.
     readonly property bool holdingKeys: capturing || finding
     readonly property string holdKeys: 'if not singularityCapture then '
         + 'hl.define_submap("singularity-capture", function() '
@@ -611,9 +583,7 @@ Column {
         return out.join(" + ")
     }
 
-    // Qt key -> xkb keysym name, the spelling Hyprland takes. Shifted
-    // symbols map back to their unshifted key, since SHIFT is already one of
-    // the modifiers: SHIFT + 1 arrives as Key_Exclam.
+    // Qt key -> xkb keysym name; shifted symbols map to their unshifted key
     readonly property var keyNames: ({
         [Qt.Key_Return]: "Return", [Qt.Key_Enter]: "Return", [Qt.Key_Space]: "space",
         [Qt.Key_Tab]: "Tab", [Qt.Key_Backtab]: "Tab", [Qt.Key_Escape]: "Escape",
@@ -666,8 +636,7 @@ Column {
     // the keycaps column, in both lists
     readonly property int keysWidth: Theme.fit(150)
 
-    // A pack heading: the name, the rule, what the pack is for, and the one
-    // chip that ticks or unticks the lot.
+    // The presets' heading: the name, the rule, a note, and one chip.
     component PackHeading: Item {
         id: head
         property string text: ""
@@ -719,9 +688,8 @@ Column {
         }
     }
 
-    // The editor, built in the slot of whatever opened it. Its fields hold
-    // root's edit* values, so it can be rebuilt (a re-sorted list) without
-    // losing what was typed.
+    // The editor, in the slot of whatever opened it; its fields hold root's
+    // edit* values, so a rebuild keeps what was typed.
     component BindEditor: SettingsIndent {
         id: ed
 
@@ -1266,8 +1234,8 @@ Column {
                                 readonly property bool open: root.editSlot === slot
                                 width: group.width
 
-                                // keycaps, the description, then the command in
-                                // what's left of the line
+                                // keycaps and the description; the command shows
+                                // once it's opened
                                 Item {
                                     width: parent.width
                                     height: Theme.rowHeight + Theme.spaceXs
@@ -1287,7 +1255,7 @@ Column {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: Theme.indicatorWidth
                                         height: parent.height - 6
-                                        radius: width / 2
+                                        radius: Theme.pill(width)
                                         color: Theme.accent
                                     }
 
@@ -1312,19 +1280,9 @@ Column {
                                         anchors.left: keysCell.right
                                         anchors.leftMargin: Theme.spaceL
                                         anchors.verticalCenter: parent.verticalCenter
-                                        width: Math.min(implicitWidth, (endCell.x - x) * 0.6)
+                                        width: Math.min(implicitWidth, endCell.x - Theme.spaceM - x)
                                         text: row.modelData.desc
                                         color: row.open || rowMouse.containsMouse ? Theme.textStrong : Theme.text
-                                    }
-                                    Label {
-                                        anchors.left: descText.right
-                                        anchors.leftMargin: Theme.spaceM
-                                        anchors.right: endCell.left
-                                        anchors.rightMargin: Theme.spaceM
-                                        anchors.baseline: descText.baseline
-                                        text: row.modelData.command
-                                        color: Theme.subtext
-                                        font.pixelSize: Theme.fontCaption
                                     }
 
                                     // a lock on the ones that can't be edited
@@ -1404,49 +1362,48 @@ Column {
                     text: "Binds worth having: tick the ones you want, or 󰏫 to change one first"
                 }
 
-                // which pack to show, or all of them
-                Flow {
-                    width: parent.width
-                    spacing: Theme.spaceS
-                    topPadding: Theme.spaceS
-                    bottomPadding: Theme.spaceS
-
-                    FlyoutChip {
-                        text: "All"
-                        selected: root.packFilter === ""
-                        onClicked: root.packFilter = ""
-                    }
-                    Repeater {
-                        model: root.packNames
-                        FlyoutChip {
-                            required property var modelData
-                            text: modelData
-                            selected: root.packFilter === modelData
-                            onClicked: root.packFilter = root.packFilter === modelData ? "" : modelData
-                        }
-                    }
-                }
-
                 Repeater {
                     model: root.presetGroups
 
+                    // a pack: one row (what it's for, how many are left to
+                    // add) that opens to its binds; a search opens them all
                     Column {
                         id: pack
                         required property var modelData
+                        readonly property bool open: root.openPacks[modelData.name] === true
+                            || root.query.trim() !== "" || root.findKeys !== ""
                         width: listCol.width
                         spacing: Theme.spaceXs
 
-                        Item { width: 1; height: Theme.spaceS }
-
-                        PackHeading {
-                            text: pack.modelData.name.toUpperCase()
+                        FlyoutRow {
+                            label: pack.modelData.name
                             note: pack.modelData.note
-                            allText: root.packFullySelected(pack.modelData) ? "None" : "All"
-                            onAllClicked: root.selectPack(pack.modelData, !root.packFullySelected(pack.modelData))
+                            highlighted: pack.open
+                            trailing: (pack.modelData.bound === pack.modelData.total ? "all " + pack.modelData.total + " added"
+                                : (pack.modelData.total - pack.modelData.bound) + " of " + pack.modelData.total + " to add")
+                                + "  " + (pack.open ? "󰅀" : "󰅂")
+                            onActivated: {
+                                var o = Object.assign({}, root.openPacks)
+                                o[pack.modelData.name] = !pack.open
+                                root.openPacks = o
+                            }
+                        }
+
+                        Item {
+                            visible: pack.open
+                            width: parent.width
+                            height: packAll.height
+
+                            FlyoutChip {
+                                id: packAll
+                                anchors.right: parent.right
+                                text: root.packFullySelected(pack.modelData) ? "Untick all" : "Tick all"
+                                onClicked: root.selectPack(pack.modelData, !root.packFullySelected(pack.modelData))
+                            }
                         }
 
                         Repeater {
-                            model: pack.modelData.items
+                            model: pack.open ? pack.modelData.items : []
 
                             Column {
                                 id: pItem

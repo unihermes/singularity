@@ -2,10 +2,8 @@
 // time windows, number formats, style resolution, the channel outline, and
 // the readers/writers of the Hyprland config's tables and binds.
 //
-// The modules are QML JavaScript: `.pragma library` at the top, and
-// `.import "X.js" as X` for another module. load() strips the pragma, loads
-// imports first, and runs each file in its own context, the way the QML
-// engine would. `Qt` is stubbed with only what a module reaches for.
+// load() runs each QML JS module as the engine would: pragma stripped,
+// imports first, own context, a minimal `Qt` stub.
 //
 // Run: node --test tools/test-js.mjs   (the pre-commit hook does, when a
 // services/*.js file is staged)
@@ -87,15 +85,15 @@ test("Format picks units from the number", () => {
     assert.equal(F.pct(0.456), "46%")
 })
 
-test("Styles resolve every style, and Bevel is square", () => {
+test("Styles resolve every style, and Flat is square", () => {
     const S = load("Styles.js")
-    const base = { radius: 6, barStyle: "full", density: "normal", seeThrough: 100, shadows: true, heavyLines: false }
+    const base = { radius: 6, barStyle: "full", barHeight: 32, spacing: 100, seeThrough: 100, shadows: true, heavyLines: false }
     for (const name of S.order) {
         const r = S.resolve(Object.assign({ style: name }, base))
         assert.ok(r.frameStyle && r.moduleStyle, name)
         assert.equal(r.barHeight, 32, name)
     }
-    assert.equal(S.resolve(Object.assign({ style: "bevel" }, base)).radius, 0)
+    assert.equal(S.resolve(Object.assign({ style: "flat" }, base)).radius, 0)
     assert.equal(S.resolve(Object.assign({ style: "channel" }, base)).radius, 6)
     assert.equal(S.resolve(Object.assign({ style: "double" }, base)).flyoutAttach, "flush")
     assert.equal(S.resolve(Object.assign({ style: "double" }, base, { barStyle: "floating" })).flyoutAttach, "floating")

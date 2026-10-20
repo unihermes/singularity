@@ -19,7 +19,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Memory"
     subtitle: SystemStats.memTotalKb > 0
         ? Format.kib(SystemStats.memTotalKb) + " installed"
         + (SystemStats.swapTotalKb > 0 ? "  ·  " + Format.kib(SystemStats.swapTotalKb) + " swap"
@@ -38,7 +37,8 @@ SystemPage {
 
     FlyoutHeading { text: "NOW" }
 
-    // in use against what's installed, and what the kernel could hand out
+    // in use against what's installed, and what the kernel could hand out;
+    // its minute at the right
     HeadCard {
         glyph: "󰘚"
         glyphColor: SystemStats.mem >= 0.9 ? Theme.alert : Theme.textStrong
@@ -51,12 +51,14 @@ SystemPage {
                   + Format.kib(SystemStats.swapTotalKb) + " used"
                 : "No swap",
         ]
-    }
 
-    Spark {
-        series: [{ values: SystemStats.memHistory, color: Theme.accent, fill: true }]
-        ceiling: 1
-        caption: "60s · RAM in use"
+        Spark {
+            width: Theme.fit(260)
+            height: Theme.fit(56)
+            series: [{ values: SystemStats.memHistory, color: Theme.accent, fill: true }]
+            ceiling: 1
+            caption: "60s · RAM in use"
+        }
     }
 
     // --- breakdown ----------------------------------------------------------
@@ -136,10 +138,8 @@ SystemPage {
         InfoRow { width: parts.cell; label: "Truly free"; value: Format.kib(SystemStats.memFreeKb) }
     }
 
-    // --- swap and writeback ---------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "SWAP AND WRITEBACK" }
+    // swap and writeback, in the same section
+    SettingsSubhead { caption: "SWAP AND WRITEBACK" }
 
     Grid {
         id: more

@@ -1,10 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/BarTab.qml
 //
-// The Appearance page's Bar tab.
+// The Appearance page's Bar tab: BAR (where it sits, its shape and size,
+// then the layout of its modules), then MODULES, a subhead per module.
 
 import Quickshell
 import QtQuick
+import "../../services/Styles.js" as Styles
 import "../../services"
 import "../../flyouts"
 import ".."
@@ -12,7 +14,7 @@ import ".."
 SettingsTab {
     tabId: "bar"
 
-    FlyoutHeading { text: "LAYOUT" }
+    FlyoutHeading { text: "BAR" }
 
     SettingsField {
         label: "Position"
@@ -28,41 +30,61 @@ SettingsTab {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "MODULES" }
-
     SettingsField {
-        label: "Control Centre icon"
-        hint: "The button at the bar's start"
-        Choice { key: "controlIcon"; glyphs: Theme.controlGlyphs }
+        label: "Bar shape"
+        hint: "Where flyouts sit and the gaps at screen edges follow it"
+        Choices { key: "barStyle" }
     }
 
+    Stepper { label: "Height"; hint: "The bar; its chips grow with it"; key: "barHeight"; step: 2; suffix: "px" }
+
+    Stepper { label: "Icon size"; hint: "The bar's glyphs, at the base font size"; key: "barIconSize"; suffix: "px" }
+
+    Stepper { label: "Module padding"; hint: "Room either side of each module"; key: "modulePad"; suffix: "px" }
+
     SettingsField {
-        label: "Visualizer"
-        hint: "The audio spectrum while sound plays"
-        Choices { key: "vizStyle" }
+        visible: Styles.get(Settings.style).options.every(o => o.key !== "barSeparator")
+        label: "Separators"
+        hint: "Between the bar's modules"
+        Choice { key: "barSeparator" }
     }
 
-    SettingsField {
-        label: "Tray drawer"
-        hint: Settings.trayDrawer ? "Icons fold behind a chevron"
-            : "Every tray icon shows"
+    SettingsSubhead { caption: "LAYOUT" }
 
-        Switch {
+    BarZones {}
+
+    // The centre module pinned to the bar's exact middle, the rest of the
+    // centre stacking outward from it; none centres the whole group
+    SettingsField {
+        label: "Centre anchor"
+        hint: "The module that stays dead centre"
+        SettingsDropdown {
             anchors.right: parent.right
-            checked: Settings.trayDrawer
-            onToggled: Settings.set("trayDrawer", !Settings.trayDrawer)
+            model: [""].concat(Settings.widgetOrder("centre").filter(k => Settings.widgetVisible(k)))
+            current: Settings.centreAnchor
+            labelFor: v => v === "" ? "None" : (Settings.widgetMeta[v] || { label: v }).label
+            onPicked: v => Settings.setCentreAnchor(v)
+        }
+    }
+
+    SettingsField {
+        label: "Bar widgets"
+        hint: Settings.widgetsDefault ? "As it comes" : "Put every module back where it started"
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Reset layout"
+            confirmText: "Reset?"
+            enabled: !Settings.widgetsDefault
+            onClicked: Settings.resetWidgets()
         }
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "WORKSPACES" }
+    FlyoutHeading { text: "MODULES" }
 
-    SettingsField {
-        label: "Workspaces"
-        hint: "How the workspace indicator marks each one"
-        Choice { key: "workspaceStyle" }
-    }
+    SettingsSubhead { caption: "WORKSPACES" }
+
+    Tiles { key: "workspaceStyle"; label: "Workspaces"; hint: "How the workspace indicator marks each one"; art: wsArt }
 
     // the names the Names workspace style shows, comma-separated in
     // workspace order; a blank one falls back to the number
@@ -87,14 +109,9 @@ SettingsTab {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "OPEN WINDOWS" }
+    SettingsSubhead { caption: "OPEN WINDOWS" }
 
-    SettingsField {
-        label: "Open windows"
-        hint: "How open windows are drawn"
-        Choice { key: "windowStyle" }
-    }
+    Tiles { key: "windowStyle"; label: "Open windows"; hint: "How open windows are drawn"; art: winArt; columns: 5 }
 
     SettingsField {
         id: windowsShown
@@ -119,14 +136,9 @@ SettingsTab {
         Choices { key: "iconTint" }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "CLOCK" }
+    SettingsSubhead { caption: "CLOCK" }
 
-    SettingsField {
-        label: "Clock"
-        hint: "What the clock chip shows"
-        Choice { key: "clockStyle" }
-    }
+    Tiles { key: "clockStyle"; label: "Clock"; hint: "What the clock chip shows"; art: clockArt }
 
     // the Custom clock style's pattern, in Qt's date format
     SettingsField {
@@ -153,6 +165,7 @@ SettingsTab {
 
     SettingsField {
         label: "Clock island"
+        lookKey: "clockIsland"
         hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar"
             : Settings.clockIsland ? "Volume and layout show in the clock"
             : "Separate toasts under the bar"
@@ -164,4 +177,29 @@ SettingsTab {
         }
     }
 
+    SettingsSubhead { caption: "CONTROL CENTRE" }
+
+    Tiles { key: "controlIcon"; label: "Control Centre icon"; hint: "The button at the bar's start"; art: iconArt; columns: 6; tileHeight: Theme.fs(58) }
+
+    SettingsSubhead { caption: "VISUALIZER AND TRAY" }
+
+    Tiles { key: "vizStyle"; label: "Visualizer"; hint: "The audio spectrum while sound plays"; art: vizArt }
+
+    SettingsField {
+        label: "Tray drawer"
+        hint: Settings.trayDrawer ? "Icons fold behind a chevron"
+            : "Every tray icon shows"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.trayDrawer
+            onToggled: Settings.set("trayDrawer", !Settings.trayDrawer)
+        }
+    }
+
+    Component { id: wsArt; ModuleArt { kind: "workspaceStyle" } }
+    Component { id: winArt; ModuleArt { kind: "windowStyle" } }
+    Component { id: clockArt; ModuleArt { kind: "clockStyle" } }
+    Component { id: iconArt; ModuleArt { kind: "controlIcon" } }
+    Component { id: vizArt; ModuleArt { kind: "vizStyle" } }
 }

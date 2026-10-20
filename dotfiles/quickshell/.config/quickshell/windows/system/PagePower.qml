@@ -1,20 +1,15 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/PagePower.qml
 //
-// The battery as the pack itself reports it, not as UPower rounds it: the
-// charge, the draw in watts, and -- the number that actually matters on a
-// three-year-old laptop -- how much of its design capacity is left.
-//
-// Every figure comes from one file, the battery's uevent, so the page costs
-// a single read every three seconds. Packs report either charge (amp-hours)
-// or energy (watt-hours); SystemStats converts both to watt-hours, so
-// nothing here has to care which kind this one is.
+// The battery as the pack reports it: charge, draw in watts, and health
+// against design capacity, all from its uevent (SystemStats, in Wh).
 
 import Quickshell
 import QtQuick
 import "../../services"
 import "../../services/Format.js" as Format
 import "../../flyouts"
+import "../../settings"
 // the page's own building blocks next door; QML needs the directory named
 import "../system"
 
@@ -24,7 +19,6 @@ SystemPage {
     readonly property bool present: SystemStats.bat.status !== undefined
     readonly property int percent: Number(SystemStats.bat.capacity) || 0
 
-    title: "Power"
     subtitle: !present ? "No battery — this machine runs on mains only"
         : (SystemStats.batCharging ? "Charging" : SystemStats.acOnline ? "On mains" : "On battery")
           + (SystemStats.batHours > 0
@@ -62,10 +56,10 @@ SystemPage {
         fillColor: !SystemStats.batCharging && page.percent <= 15 ? Theme.alert : Theme.meterFill
     }
 
-    // --- right now ----------------------------------------------------------
+    // --- the battery --------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "RIGHT NOW" }
+    FlyoutHeading { text: "BATTERY" }
 
     Grid {
         id: nowGrid
@@ -110,10 +104,8 @@ SystemPage {
         }
     }
 
-    // --- the pack -----------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "THE PACK" }
+    // the pack, in the same section
+    SettingsSubhead { caption: "THE PACK" }
 
     // Wear is the headline of the pack, so it gets a level of its own: a
     // pack at 58% of design is a pack that will surprise you
@@ -226,26 +218,37 @@ SystemPage {
     // systemd-analyze's line is too long for half the width
     InfoRow { label: "Boot took"; value: SystemSpecs.bootLine || "--" }
 
-    FlyoutRow {
-        leadingIcon: "󰒲"
-        label: "Idle and lid"
-        note: "When the screen dims, locks and the machine sleeps"
-        trailing: "Settings  󰁔"
-        onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
-    }
-    // sleeping cuts whatever's running off, so it asks first
-    FlyoutRow {
-        leadingIcon: "󰤄"
-        label: "Suspend"
-        confirmText: "Suspend now?"
-        note: "Sleep until a key or the lid wakes it"
-        onActivated: Quickshell.execDetached(["systemctl", "suspend"])
-    }
-    FlyoutRow {
-        leadingIcon: "󰄧"
-        label: "Power history"
-        note: "upower's record of charge and draw"
-        onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
-            "command -v upower >/dev/null && upower -d || cat /sys/class/power_supply/BAT*/uevent; read -r _"])
+    // into Settings, to sleep, and the record; two to a line
+    Grid {
+        id: actions
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl
+        readonly property real cell: (width - columnSpacing) / 2
+
+        FlyoutRow {
+            width: actions.cell
+            leadingIcon: "󰒲"
+            label: "Idle and lid"
+            trailing: "Settings  󰁔"
+            onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
+        }
+        // sleeping cuts whatever's running off, so it asks first
+        FlyoutRow {
+            width: actions.cell
+            leadingIcon: "󰤄"
+            label: "Suspend"
+            confirmText: "Suspend now?"
+            note: "Until a key or the lid"
+            onActivated: Quickshell.execDetached(["systemctl", "suspend"])
+        }
+        FlyoutRow {
+            width: actions.cell
+            leadingIcon: "󰄧"
+            label: "Power history"
+            note: "upower -d"
+            onActivated: Quickshell.execDetached([Settings.terminal, "-e", "sh", "-c",
+                "command -v upower >/dev/null && upower -d || cat /sys/class/power_supply/BAT*/uevent; read -r _"])
+        }
     }
 }

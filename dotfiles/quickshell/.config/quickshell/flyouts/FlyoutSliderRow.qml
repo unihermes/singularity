@@ -1,19 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutSliderRow.qml
 //
-// A number setting as a slider: the label and the value with its unit on
-// one line, the slider under it. Drags straight to any value where a
-// stepper takes a click per unit -- for the ranges with twenty-odd steps
-// (bar height, opacity, font size) that's the difference.
-//
-// `step` snaps the value (opacity moves in fives); the slider itself is
-// Slider.qml's 0..100, mapped onto minimum..maximum here.
-//
-// `live: false` holds the value back until the drag lets go, with the
-// fill and readout following the pointer meanwhile. For Font Size: every
-// step rescales the whole panel, which moved the slider out from under the
-// pointer mid-drag, so each step landed somewhere other than where you
-// were aiming.
+// A number setting as a slider, label and value over it. `step` snaps;
+// Slider's 0..100 maps onto minimum..maximum. `live: false` commits on
+// release (Font Size, which rescales the panel mid-drag).
 
 import QtQuick
 import "../services"

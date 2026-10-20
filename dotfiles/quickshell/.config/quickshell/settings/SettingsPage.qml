@@ -1,28 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPage.qml
 //
-// The frame every Settings page shares: a heading with its rule running
-// out beside it, one line saying what the page changes and where it lands,
-// and a scrolling column for the page's own rows. What a change did comes
-// back as a toast over the bottom of the page: a success fades on its own,
-// an error stays until clicked or replaced.
-//
-// Pages are created by the window's Loader when shown and destroyed when
-// left, so a page reads its backing store fresh in Component.onCompleted and
-// never has to reconcile with state from an earlier visit.
-//
-// `highlight` is set by the window when a search result lands here: the page
-// scrolls the field with that label into view and rings it for a moment.
-//
-// A long page can be split into `tabs`: a row of them under the
-// description, and the page's content in Columns marked isSettingsTab, each
-// showing while `tab` is its own. The window remembers each page's tab
-// while it's open, and a search result in a hidden tab switches to it.
-//
-// `sectioned` is the redesigned layout, page by page (DESIGN.md): with
-// channel frames each group of rows sits in a channel of its own, the tabs
-// are one segmented strip in place of the heading, and hints keep to one
-// line. `pinned` shows above the scrolling rows while `pinnedVisible`.
+// The frame every Settings page shares: heading, a one-line description,
+// a scrolling column, and toasts (success fades, errors stay). Pages are
+// built fresh each visit. `highlight` scrolls to and rings a searched field;
+// `tabs` splits the page into isSettingsTab Columns (remembered while the
+// window is open); `sectioned` frames each group of rows (DESIGN.md);
+// `pinned` sits above the rows while `pinnedVisible`; `footer` floats over
+// the foot of the rows while `footerVisible`.
 
 import QtQuick
 import "../services"
@@ -40,6 +25,9 @@ Item {
     property bool scrolls: true
     // off where a window header already names the page (the Keybinds window)
     property bool headed: true
+    // the page's name as its first heading; off where the window's title
+    // bar already names it (Settings › Page)
+    property bool titled: true
     // the label of the field a search result picked, "" for none; fields
     // find it by walking up to here, so they need this marker to stop on
     property string highlight: ""
@@ -47,6 +35,9 @@ Item {
     property bool sectioned: false
     property Component pinned: null
     property bool pinnedVisible: true
+    property Component footer: null
+    property bool footerVisible: true
+    readonly property real footerHeight: footerLoader.visible ? footerLoader.height + Theme.spaceL : 0
 
     // [{ id, label, icon }] and the one showing; [] for an untabbed page
     property var tabs: []
@@ -54,6 +45,10 @@ Item {
     // the column whose headings pin to the top as it scrolls: a tabbed
     // page points it at the tab showing
     property Item stickyColumn: col
+    // where stickyColumn sits in col: a tab, or a tab inside a Loader
+    readonly property point stickyAt: stickyColumn === col ? Qt.point(0, 0)
+        : stickyColumn.parent === col ? Qt.point(stickyColumn.x, stickyColumn.y)
+        : Qt.point(stickyColumn.x + stickyColumn.parent.x, stickyColumn.y + stickyColumn.parent.y)
 
     function tabMemory() {
         for (var p = parent; p; p = p.parent)
@@ -90,9 +85,7 @@ Item {
         toast.show()
     }
 
-    // The field isn't there yet on the frame the page loads -- Repeaters and
-    // the pages' own parsing fill the column later -- so the scroll is tried
-    // again a few times before giving up.
+    // retried a few times: the field may not be laid out yet
     onHighlightChanged: if (highlight !== "") {
         findTries = 0
         find.restart()
@@ -111,12 +104,8 @@ Item {
         }
     }
 
-    // Keeps `item` at the same place on screen through a change that
-    // re-lays out the page above it: Font Size and Density rescale every
-    // row, so the control you just clicked moved out from under the pointer
-    // and the next click missed it. Called before the change; the page
-    // then scrolls by however far the item moved. Text re-measures over a
-    // frame or two, so it's corrected a few times rather than once.
+    // keeps `item` at the same place on screen through a re-layout (Font
+    // Size, Density), corrected over a few frames as text re-measures
     property Item holdItem: null
     property real holdY: 0
     property int holdTries: 0
@@ -153,10 +142,8 @@ Item {
         onTriggered: root.highlight = ""
     }
 
-    // Depth-first, because a field can sit inside a page's own Column (the
-    // per-monitor blocks on Display) rather than directly in the scroller.
-    // A field in a folded section unfolds it, and is scrolled to on the
-    // next try, once it has been laid out again.
+    // depth-first (fields can sit in a page's own Column); a field in a
+    // folded section unfolds it and is scrolled to on the next try
     function scrollTo(item, label) {
         for (var i = 0; i < item.children.length; i++) {
             var c = item.children[i]
@@ -196,7 +183,7 @@ Item {
         spacing: Theme.spaceS
 
         FlyoutHeading {
-            visible: !(root.sectioned && root.tabs.length > 0)
+            visible: root.titled && !(root.sectioned && root.tabs.length > 0)
             text: root.title.toUpperCase()
         }
 
@@ -219,7 +206,9 @@ Item {
             visible: root.tabs.length > 0 && root.sectioned
             width: parent.width
             height: Theme.rowHeightTall + Theme.spaceS
-            radius: Theme.radiusInner
+            // as round as the sections, the lit tab one step in, so their
+            // corners nest
+            radius: Theme.sectionRadius
             color: Theme.controlFill("transparent")
             border.width: Theme.controlBorder(Theme.stroke)
             border.color: Theme.controlStroke(Theme.stroke)
@@ -246,7 +235,7 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: 1
-                            radius: Theme.radiusSmall
+                            radius: Math.max(0, Theme.sectionRadius - 3)
                             color: seg.current ? Theme.accent
                                 : segMouse.containsMouse ? Theme.hoverFillSoft : "transparent"
                             border.width: seg.current && Theme.frameChannel ? Theme.channelGrooveWidth : 0
@@ -368,6 +357,8 @@ Item {
         Flickable {
             id: flick
             anchors.fill: parent
+            // the rows end above the footer rather than under it
+            anchors.bottomMargin: root.footerHeight
             anchors.rightMargin: root.scrolls ? Theme.scrollGutter : 0
             contentHeight: col.implicitHeight
             interactive: root.scrolls && contentHeight > height
@@ -379,7 +370,7 @@ Item {
                 x: Theme.spaceS
                 width: flick.width - Theme.spaceS * 2
                 column: root.stickyColumn
-                columnY: col.y + (root.stickyColumn === col ? 0 : root.stickyColumn.y)
+                columnY: col.y + root.stickyAt.y
             }
 
             Column {
@@ -396,13 +387,23 @@ Item {
             }
         }
 
+        Loader {
+            id: footerLoader
+            anchors.bottom: parent.bottom
+            x: Theme.spaceS
+            width: flick.width - Theme.spaceS * 2
+            active: root.footer !== null && root.footerVisible
+            visible: active
+            sourceComponent: root.footer
+        }
+
         // scroll indicator, as in the Keybinds list
         StickyHeading {
             width: flick.width
             flickable: flick
             column: root.stickyColumn
-            columnX: col.x + (root.stickyColumn === col ? 0 : root.stickyColumn.x)
-            columnY: root.stickyColumn === col ? 0 : root.stickyColumn.y
+            columnX: col.x + root.stickyAt.x
+            columnY: root.stickyAt.y
         }
 
         ScrollBar {
@@ -426,7 +427,7 @@ Item {
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: shown ? Theme.spaceL : 0
+        anchors.bottomMargin: (shown ? Theme.spaceL : 0) + root.footerHeight
         width: Math.min(toastRow.implicitWidth + Theme.spaceXl * 2, parent.width - Theme.spaceXl * 2)
         height: toastRow.implicitHeight + Theme.spaceL * 2
         radius: Theme.radiusInner

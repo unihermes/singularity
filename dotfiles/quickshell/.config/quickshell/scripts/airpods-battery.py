@@ -2,10 +2,8 @@
 # Singularity - Quickshell
 # ~/.config/quickshell/scripts/airpods-battery.py <MAC>
 #
-# Battery levels of connected AirPods, for services/BtBattery.qml. AirPods
-# don't implement BlueZ's Battery1 over A2DP; they report through Apple's
-# accessory protocol (AAP) on L2CAP PSM 0x1001 instead. This opens that
-# channel, asks for notifications and prints one line per battery update:
+# AirPods battery levels for services/BtBattery.qml, over Apple's AAP on
+# L2CAP PSM 0x1001 (no Battery1 over A2DP). One line per update:
 #
 #   left \t right \t case     (0..100, or -1 when that part isn't reporting)
 #

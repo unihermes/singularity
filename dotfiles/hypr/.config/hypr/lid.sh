@@ -2,100 +2,39 @@
 # Singularity - lid
 # ~/.config/hypr/lid.sh
 #
-# Everything the lid does. Closing it turns the screen off, and close_delay
-# later suspends if it's still shut (unless close_action is screen-off); an
-# hour after it shut, the machine hibernates. Opening it turns the screen
-# back on and calls all of that off; left untouched, the screen goes off
-# again open_hold later.
+# Everything the lid does: closing turns the screen off and suspends after
+# close_delay (unless close_action is screen-off), hibernating an hour after
+# it shut; opening turns the screen on and cancels that, then off again
+# after open_hold if untouched.
 #
-#   lid.sh event    from binds.lua's lid-switch binds, on open and close
-#   lid.sh sleep    from hypridle's before_sleep_cmd, before every suspend
-#   lid.sh resume   from hypridle's after_sleep_cmd, after every wake-up
-#   lid.sh fire     from the suspend timer this script arms
-#   lid.sh displays from displays.lua, whenever a display comes or goes
+#   lid.sh event    binds.lua's lid-switch binds
+#   lid.sh sleep    hypridle's before_sleep_cmd
+#   lid.sh resume   hypridle's after_sleep_cmd
+#   lid.sh fire     the suspend timer this script arms
+#   lid.sh displays displays.lua, when a display comes or goes
 #
-# logind would suspend the moment the lid shuts, so autostart.lua holds its
-# lid-switch inhibitor and this handles the lid instead.
+# autostart.lua holds logind's lid inhibitor so this handles the lid.
 #
-# Why each piece is shaped the way it is:
-#
-# - Debounce. This laptop's firmware bounces open/closed a few times within a
-#   couple of seconds of a real change ("Unexpected lid state reported by
-#   firmware" in dmesg). Each event stamps a token and waits; only the last
-#   one to survive a quiet period acts, and it acts on what the lid reads
-#   *then*, not on the event that woke it.
-# - The suspend is a systemd user timer, not a `sleep 300` here. It survives
-#   Hyprland reloading, is cancelled by name when the lid opens, and
-#   `systemctl --user list-timers` shows it. Its clock doesn't run while
-#   the machine is asleep.
-# - The timer ignores idle inhibitors. The idle ladder in hypridle.conf
-#   yields to a playing video or Keep Awake; a closed lid shouldn't.
-# - Waking with the lid still shut (a charger plugged in, a USB wake, the
-#   lid bouncing -- this machine only has s2idle, which wakes easily) leaves
-#   the screen off and suspends again after a minute instead of staying
-#   awake in the bag.
-# - Hibernating is systemd's suspend-then-hibernate, not a timer here: the
-#   user timer's clock stops while asleep, but suspend-then-hibernate sets an
-#   RTC alarm that wakes the machine and hibernates it. Its delay is fixed in
-#   /etc/systemd/sleep.conf.d/singularity.conf (install.sh writes it) as
-#   hibernate_after less the default close_delay, so the usual close ->
-#   suspend -> hibernate lands at an hour; a longer close_delay set in
-#   Settings moves it out by the difference. The close time is stamped in wall-clock time, which
-#   does run during sleep, so a stray wake an hour or more after the lid
-#   shut hibernates straight away instead of restarting that delay.
-#   Without hibernation set up (link.sh only), or with hibernate=0, it's
-#   plain suspend.
-# - Blanking the panel means holding misc:key_press_enables_dpms and
-#   mouse_move_enables_dpms off for as long as the lid is shut. They are on
-#   in looks.lua so that any key or mouse movement wakes a wrongly-blanked
-#   screen -- but the act of closing the lid presses the keyboard and the
-#   touchpad against it, and those events land after the debounce and turn
-#   the panel straight back on, so a first close often didn't stay dark.
-#   While the lid is shut nothing but opening it should wake the panel
-#   anyway. Both go back on when the lid opens; a Hyprland restart also
-#   restores them, since they're read from the config.
-# - Coming back is a loop too, for the opposite reason: Hyprland restores
-#   the DPMS state it had before sleeping, and that restore can land after
-#   the dpms on this script issues on resume. See unblank().
-# - A stray wake from the idle suspend stays dark. With the lid open,
-#   hypridle's 10/20 min suspend often wakes again within seconds (the
-#   touchpad's GPIO interrupt fires in s2idle, and it has to stay a wake
-#   source so a touch can wake the machine). Resume used to light the panel
-#   every time, so an idle laptop blinked on every 10 minutes. Now, if the
-#   panel was already off going to sleep with the lid open, resume holds it
-#   off for a few seconds unless the pointer really moves; after that any key
-#   or touchpad movement turns it on as usual, and hypridle suspends it again.
-#   "Really" matters: the same GPIO interrupt that caused the stray wake
-#   usually delivers a pixel or two of pointer motion with it, so any movement
-#   at all as the test let the screen light straight back up -- the bug this
-#   whole branch exists to stop. A resting finger or a knock is a few pixels;
-#   a hand actually reaching for the touchpad is tens. cursor_moved wants
-#   move_slop px away from where the pointer sat at wake-up.
-# - With an external monitor connected the laptop is docked: closing the lid
-#   switches the built-in panel off altogether, so its workspaces move to
-#   the other displays and the cursor can't wander onto it, and nothing
-#   suspends. The panel's name goes in $docked_file and displays.lua, on the
-#   reload that follows, disables it; opening the lid removes the file and
-#   reloads again, and the panel comes back with its own rule. A display
-#   plugged in or pulled out with the lid shut is handled the same way
-#   (lid.sh displays): pulling the last one brings the panel back and the
-#   lid-shut suspend takes over, as if it had been closed undocked.
-# - Opening the lid holds the panel on for open_hold, then turns it off if
-#   nobody has touched anything. Left alone, an opened lid used to blink on
-#   and off: Hyprland's DPMS restore after a resume, a step of the idle
-#   ladder that fell due while the lid was shut, and stray touchpad wakes
-#   each turned it off or on in turn. For the hold's length only the hold
-#   decides; any input ends it early and the idle ladder takes over as
-#   usual. Input is seen through hypridle.conf's first listener, which
-#   touches $input_seen whenever input follows a couple of idle seconds and
-#   $idle_seen after a couple without -- the panel is on throughout, so
-#   key_press_enables_dpms can't tell. Both are needed: the key or touch
-#   that wakes the machine lands just before the hold starts, so someone
-#   who carries straight on typing their password never goes quiet long
-#   enough for a newer $input_seen; they show up as input that hasn't
-#   stopped since ($input_seen newer than $idle_seen).
-# Both the lid and the monitors are read from sysfs rather than hyprctl, so
-# the timer's check works without Hyprland's environment.
+# - Debounced: the firmware bounces; only the last event after a quiet
+#   period acts, on what the lid reads then.
+# - The suspend is a systemd user timer (survives reloads, cancelled by
+#   name), and ignores idle inhibitors.
+# - Waking with the lid shut stays dark and suspends again after a minute.
+# - Hibernation is systemd's suspend-then-hibernate (an RTC alarm), delay
+#   in sleep.conf.d (install.sh); the close time is wall-clock, so a wake
+#   past the hour hibernates at once. Plain suspend without hibernation.
+# - While shut, key/mouse DPMS wake is off (the lid presses on them); back
+#   on at open.
+# - blank()/unblank() assert DPMS for a couple of seconds, since Hyprland's
+#   own post-resume restore can land after them.
+# - A stray wake from idle suspend stays dark unless the pointer moves more
+#   than move_slop px (the waking interrupt brings a pixel or two).
+# - Docked (an external display), closing switches the panel off via
+#   $docked_file and displays.lua, and nothing suspends.
+# - Opening holds the panel on for open_hold, then off unless there was
+#   input, seen through hypridle.conf's first listener ($input_seen,
+#   $idle_seen).
+# The lid and monitors are read from sysfs, so the timer needs no Hyprland.
 set -u
 
 unit=singularity-lid-suspend
@@ -117,9 +56,7 @@ hold_marker="${XDG_RUNTIME_DIR:-/tmp}/singularity-lid-hold"
 input_seen="${XDG_RUNTIME_DIR:-/tmp}/singularity-input"
 idle_seen="${XDG_RUNTIME_DIR:-/tmp}/singularity-idle"
 
-# What Settings -> Lock Screen chose, kept on this machine in the state
-# directory rather than in this file: name=value lines, and only those four
-# names are taken.
+# Settings > Lock Screen's choices, name=value lines (only those four names)
 lid_conf="${XDG_STATE_HOME:-$HOME/.local/state}/singularity/lid.conf"
 if [[ -r $lid_conf ]]; then
     while IFS='=' read -r key value; do
@@ -172,10 +109,8 @@ dpms() {  # dpms on|off [monitor]
     hyprctl eval "hl.dispatch(hl.dsp.dpms({ $arg }))" >/dev/null 2>&1
 }
 
-# whether input is allowed to wake a blanked screen. hl.config, not
-# `hyprctl keyword`: keyword only works with the legacy parser and refuses
-# outright under the Lua config ("keyword can't work with non-legacy
-# parsers. Use eval.").
+# whether input may wake a blanked screen (hl.config: `hyprctl keyword`
+# refuses under the Lua config)
 input_wakes() {  # input_wakes true|false
     hyprctl eval "hl.config({ misc = { key_press_enables_dpms = $1,
         mouse_move_enables_dpms = $1 } })" >/dev/null 2>&1
@@ -190,10 +125,8 @@ panel_on() {  # anything eDP-1 reports off
     return 1
 }
 
-# Blank the panel and keep it blank: a key or touchpad event from the lid
-# shutting on them can still be in flight after input_wakes false, and the
-# one that lands first wins. Re-checking for a couple of seconds costs
-# nothing and is what makes a first close reliable.
+# blanks the panel and re-checks for a couple of seconds, as input from the
+# lid shutting can still land
 blank() {
     local i
     unhold
@@ -206,15 +139,8 @@ blank() {
     log "panel would not stay blanked"
 }
 
-# The mirror of blank(), for the way back. On a resume Hyprland re-applies
-# the DPMS state it held before sleeping -- which is the "off" blank() set
-# when the lid shut -- and that restore can land *after* this dpms on.
-# hypridle's after_sleep_cmd fires within a tenth of a second of the kernel
-# restarting tasks, so it usually does: the panel lights up, goes dark again
-# and stays dark until a key or the touchpad wakes it. Asserting dpms on for
-# a couple of seconds, rather than once, is what wins that race. The loop
-# runs to the end instead of stopping at the first "it's on" -- the restore
-# that undoes it has not necessarily happened yet.
+# The mirror of blank(): Hyprland's restore of the pre-sleep "off" can land
+# after this, so dpms on is asserted for a couple of seconds, to the end.
 unblank() {
     local i
     input_wakes true
@@ -226,14 +152,10 @@ unblank() {
     panel_on || log "panel would not come back on"
 }
 
-# The lid just opened: the panel on for open_hold, whatever else turns it
-# off meanwhile, then off unless there was input. The hold's marker is also
-# its start time -- input counts once $input_seen is newer, or while input
-# that began before it hasn't paused (see present) -- and its token:
-# a later hold replaces this one, and closing the lid (blank) or a stray
-# wake (stay_dark) removes it, so this one returns without touching the
-# panel. The first three seconds hold regardless of input, for the same
-# restore unblank() waits out.
+# The lid just opened: the panel on for open_hold, then off unless there was
+# input ($input_seen newer than the marker, or input that hasn't paused). The
+# marker is the hold's start and token: a later hold, blank or stay_dark
+# removes it. The first three seconds hold regardless.
 hold() {
     local token="$$-$RANDOM" i
     echo "$token" > "$hold_marker"
@@ -267,8 +189,7 @@ opened() {
 }
 
 # has the pointer moved more than move_slop px from "$1" ("x, y")? An
-# unreadable position (hyprctl not answering yet, right after a resume)
-# counts as no movement rather than as a person.
+# unreadable position counts as no movement.
 cursor_moved() {
     local from=$1 now dx dy
     now=$(hyprctl cursorpos 2>/dev/null)
@@ -280,15 +201,9 @@ cursor_moved() {
     (( dx + dy > move_slop ))
 }
 
-# After a wake into a panel that was already off: keep it off -- hypridle's
-# own on-resume turns it on at the same moment -- unless someone is actually
-# there. Two ways to say so, because input_wakes stays true throughout and
-# the loop would otherwise fight a real person for its full three seconds:
-# the pointer travelling (cursor_moved), or the panel coming back on under
-# us, which is key_press_enables_dpms answering a keystroke. The second test
-# only counts from the second onwards -- hypridle's on-resume dpms on lands
-# within a tenth of a second of the resume and is exactly what this function
-# exists to undo, so before then "the panel is on" says nothing.
+# After a wake into a panel already off: keep it off unless someone is there
+# (the pointer travelling, or the panel turned on by a keystroke, which
+# counts only after the first second, when hypridle's own dpms on lands).
 stay_dark() {
     local i start
     unhold
@@ -324,9 +239,7 @@ stale_layers() {
         END { exit !bad }'
 }
 
-# Displays with no layer surface at all -- not even the wallpaper, which
-# covers every display it's told about. A mirror draws none of its own, so
-# it doesn't count.
+# displays with no layer surface (not even the wallpaper); mirrors don't count
 bare_displays() {
     { hyprctl monitors; echo "--layers"; hyprctl layers; } 2>/dev/null | awk '
         /^--layers/ { layers = 1; next }
@@ -337,9 +250,7 @@ bare_displays() {
         END { for (n in seen) if (!seen[n]) print n }'
 }
 
-# Switch the panel off (or back on) through displays.lua; a no-op when it
-# already is, which is what keeps the displays hook the reload sets off from
-# going round again.
+# switches the panel off or on through displays.lua; a no-op when it already is
 panel_off() {
     unhold
     [[ -e $docked_file ]] && return
@@ -426,11 +337,8 @@ displays)
         panel_back
         closed_undocked
     fi
-    # When a display comes or goes Hyprland slides the others into new
-    # places, but leaves layer surfaces -- the bar, the wallpaper -- where
-    # the displays used to be: the bar floats mid-screen or off it. See
-    # singularityNudgeDisplays() in displays.lua. The displays can still be
-    # settling (the panel coming back takes a moment), so check and go again.
+    # Hyprland leaves layer surfaces where displays used to be
+    # (singularityNudgeDisplays); retried while they settle
     for _ in 1 2 3; do
         hyprctl eval 'singularityNudgeDisplays()' >/dev/null
         hyprctl reload config-only >/dev/null
@@ -438,10 +346,7 @@ displays)
         stale_layers || break
     done
     stale_layers && log "bar or wallpaper still out of place after nudging the displays"
-    # Hyprland can bring a display up without ever announcing it to
-    # clients: it shows in hyprctl monitors, but no bar or wallpaper can
-    # open on it. Switching it off and back on announces it. The second
-    # look gives the wallpaper time to open at login.
+    # a display Hyprland never announced to clients gets toggled off and on
     if [[ -n $(bare_displays) ]]; then
         sleep 2
         for m in $(bare_displays); do

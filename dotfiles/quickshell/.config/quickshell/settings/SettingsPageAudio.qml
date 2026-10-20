@@ -1,16 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAudio.qml
 //
-// Output and input devices: which one is the default, its volume, mute -- and
-// the per-application mixer for whatever is playing or recording right now,
-// each app able to play on an output of its own.
-//
-// Straight onto Pipewire through Quickshell's service, the same one the bar's
-// volume module reads, so the two always agree. Nothing to persist:
-// wireplumber remembers the chosen default, each device's volume, and each
-// application's volume and output itself. pactl fills in the two things the
-// service doesn't say: which outputs have nothing plugged in, and which
-// output each app is playing on (and moves it).
+// Output and input: the default device as a card with its level, the
+// others under it (a click makes one the default; outputs with nothing
+// plugged in are left out). Then the per-app mixer, a level on every app's
+// row and the output it plays on beside it. Mute is the button before each
+// level. Straight on Pipewire, as the bar is; wireplumber remembers
+// everything. pactl finds unplugged outputs and moves streams.
 
 import Quickshell
 import Quickshell.Io
@@ -27,9 +23,7 @@ SettingsPage {
     title: "Audio"
     description: "Where sound goes, how loud, and each app's share."
 
-    // The lists below are ScriptModels: these arrays are made afresh when any
-    // node comes or goes (a notification's sound), and a bare array would
-    // rebuild every row, cutting off a volume drag or an open dropdown.
+    // ScriptModels, so a node coming or going doesn't rebuild every row
     readonly property var devices: Audio.devices
     readonly property var sinks: Audio.sinks
     readonly property var sources: Audio.sources
@@ -37,19 +31,12 @@ SettingsPage {
     readonly property var playing: Audio.playing
     readonly property var recording: Audio.recording
 
-    // audio.volume / audio.muted stay invalid until a node is tracked, and
-    // that goes for the streams too -- without them here every app row would
-    // sit at 0% and refuse to move.
+    // tracked, or volume/mute stay invalid
     PwObjectTracker {
         objects: page.devices.concat(page.streams)
     }
 
-    // What it's playing, when that's something other than the app's own name:
-    // a track title, a file, a tab. Shown as the row's hint.
-    //
-    // A player handed a file often reports the whole path, which is several
-    // wrapped lines of a row that only needs to say which file -- so a value
-    // that looks like a path is cut down to its last segment.
+    // what an app is playing, as the row's hint; a path cut to its last segment
     function streamDetail(n) {
         if (!n) return ""
         var p = n.properties || {}
@@ -127,7 +114,7 @@ SettingsPage {
         var m = Audio.shortName(n).match(/DisplayPort (\d+)[^\[]*\[/)
         if (m) return "DisplayPort " + m[1]
         var bus = (n && n.properties) ? n.properties["device.bus"] || "" : ""
-        return bus === "bluetooth" ? "Bluetooth" : bus === "usb" ? "USB" : bus === "pci" ? "built in" : ""
+        return bus === "bluetooth" ? "Bluetooth" : bus === "usb" ? "USB" : bus === "pci" ? "Built in" : ""
     }
     function levelText(n) {
         if (!n || !n.ready || !n.audio) return "--"
@@ -136,54 +123,56 @@ SettingsPage {
 
     // --- shared rows -------------------------------------------------------------
 
-    // The level of one node: the slider, grey while muted, and its readout.
-    component Level: SettingsField {
+    // The level of one node: a mute button, the slider (grey while muted)
+    // and its readout.
+    component LevelControl: Row {
         id: lvl
         property var node: null
+        property int sliderWidth: Theme.fit(220)
         readonly property bool ready: node !== null && node.ready && node.audio !== null
         readonly property bool muted: ready && node.audio.muted
 
-        label: "Volume"
+        spacing: Theme.sp(10)
 
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.sp(10)
-
-            Slider {
-                width: Theme.fit(220)
-                anchors.verticalCenter: parent.verticalCenter
-                value: lvl.ready ? lvl.node.audio.volume * 100 : 0
-                fillColor: lvl.muted ? Theme.muted : Theme.meterFill
-                onMoved: v => { if (lvl.ready) lvl.node.audio.volume = v / 100 }
-            }
-            Text {
-                width: Theme.fs(52)
-                anchors.verticalCenter: parent.verticalCenter
-                horizontalAlignment: Text.AlignRight
-                text: page.levelText(lvl.node)
-                color: lvl.muted ? Theme.subtext : Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
+        IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            enabled: lvl.ready
+            icon: lvl.muted ? "󰝟" : "󰕾"
+            warn: lvl.muted
+            onClicked: lvl.node.audio.muted = !lvl.node.audio.muted
+        }
+        Slider {
+            width: lvl.sliderWidth
+            anchors.verticalCenter: parent.verticalCenter
+            value: lvl.ready ? lvl.node.audio.volume * 100 : 0
+            fillColor: lvl.muted ? Theme.muted : Theme.meterFill
+            onMoved: v => { if (lvl.ready) lvl.node.audio.volume = v / 100 }
+        }
+        Text {
+            width: Theme.fs(52)
+            anchors.verticalCenter: parent.verticalCenter
+            horizontalAlignment: Text.AlignRight
+            text: page.levelText(lvl.node)
+            color: lvl.muted ? Theme.subtext : Theme.textStrong
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontBody
         }
     }
 
-    component Mute: SettingsField {
-        id: mute
+    component Level: SettingsField {
+        property alias node: control.node
+        label: "Volume"
+        LevelControl { id: control; anchors.right: parent.right }
+    }
+
+    // The default device: its icon and name large, where it is.
+    component DefaultCard: HeadCard {
         property var node: null
-        property string mutedHint: "Silent; the level is kept"
-        readonly property bool ready: node !== null && node.ready && node.audio !== null
-
-        label: "Mute"
-        hint: ready && node.audio.muted ? mutedHint : ""
-
-        Switch {
-            anchors.right: parent.right
-            enabled: mute.ready
-            checked: mute.ready && mute.node.audio.muted
-            onToggled: mute.node.audio.muted = !mute.node.audio.muted
-        }
+        glyph: node ? Audio.glyph(node) : ""
+        title: node ? Audio.plainName(node) : ""
+        lines: [[page.where(node), "Default"].filter(t => t).join("  ·  ")]
+        rule: true
     }
 
     // A device: its icon, plain name and where it is, its level, and the
@@ -204,26 +193,17 @@ SettingsPage {
         onActivated: if (!isDefault) chosen(modelData)
     }
 
-    // keeps a list of devices apart from the default's level under it
-    component Rule: Item {
-        width: parent ? parent.width : 0
-        height: Theme.spaceM * 2 + Theme.borderWidth
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width
-            height: Theme.borderWidth
-            color: Theme.stroke
-        }
-    }
-
     // --- output ------------------------------------------------------------------
 
-    property bool showUnplugged: false
-    readonly property var sinksShown: sinks.filter(n => showUnplugged || unplugged.indexOf(n.id) < 0
-        || n === Pipewire.defaultAudioSink)
-    readonly property int sinksHidden: sinks.length - sinksShown.length
+    // the others: the default is the card, and outputs with nothing
+    // plugged in are left out
+    readonly property var sinksShown: sinks.filter(n => n !== Pipewire.defaultAudioSink
+        && unplugged.indexOf(n.id) < 0)
 
     FlyoutHeading { text: "OUTPUT" }
+
+    DefaultCard { visible: !!Pipewire.defaultAudioSink; node: Pipewire.defaultAudioSink }
+    Level { visible: !!Pipewire.defaultAudioSink; node: Pipewire.defaultAudioSink }
 
     Repeater {
         model: ScriptModel { values: page.sinksShown }
@@ -237,38 +217,22 @@ SettingsPage {
     }
 
     FlyoutRow {
-        visible: page.sinksHidden > 0 || (page.showUnplugged && page.unplugged.length > 0)
-        label: page.sinksHidden > 0 ? "Show " + page.sinksHidden + " with nothing plugged in"
-            : "Hide the ones with nothing plugged in"
-        // opens in place, like every Show N row
-        trailing: page.sinksHidden > 0 ? "󰅂" : "󰅀"
-        onActivated: page.showUnplugged = !page.showUnplugged
-    }
-
-    FlyoutRow {
         visible: page.sinks.length === 0
         enabled: false
         label: "No outputs found"
     }
 
-    Rule { visible: !!Pipewire.defaultAudioSink }
-    Level {
-        visible: !!Pipewire.defaultAudioSink
-        node: Pipewire.defaultAudioSink
-        hint: Audio.plainName(Pipewire.defaultAudioSink)
-    }
-    Mute {
-        visible: !!Pipewire.defaultAudioSink
-        node: Pipewire.defaultAudioSink
-    }
 
     // --- input -------------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "INPUT" }
 
+    DefaultCard { visible: !!Pipewire.defaultAudioSource; node: Pipewire.defaultAudioSource }
+    Level { visible: !!Pipewire.defaultAudioSource; node: Pipewire.defaultAudioSource }
+
     Repeater {
-        model: ScriptModel { values: page.sources }
+        model: ScriptModel { values: page.sources.filter(n => n !== Pipewire.defaultAudioSource) }
         DeviceRow {
             current: Pipewire.defaultAudioSource
             onChosen: node => {
@@ -284,76 +248,93 @@ SettingsPage {
         label: "No inputs found"
     }
 
-    Rule { visible: !!Pipewire.defaultAudioSource }
-    Level {
-        visible: !!Pipewire.defaultAudioSource
-        node: Pipewire.defaultAudioSource
-        hint: Audio.plainName(Pipewire.defaultAudioSource)
-    }
-    Mute {
-        visible: !!Pipewire.defaultAudioSource
-        node: Pipewire.defaultAudioSource
-        mutedHint: "Nothing reaches the apps"
-    }
 
     // --- per-application mixer -------------------------------------------
-    //
-    // Rows come and go with the streams themselves: an app appears when it
-    // starts playing and is gone when it stops, which is why there is nothing
-    // to persist here and no empty-but-remembered entries. Wireplumber keeps
-    // each app's volume against its name for next time.
+    // rows come and go with the streams
 
-    property var openStream: null
-
-    // An app: its icon, name and what it's playing, its level, and where it
-    // plays when that isn't the default; it opens to its level, mute and
-    // (for playback) Plays on.
-    component AppBlock: Column {
+    // an app: icon, name over what's playing; on the right the output it
+    // plays on, then its level
+    component AppRow: Item {
         id: app
         required property var modelData
         property bool playback: true
         readonly property var n: modelData
-        readonly property bool isOpen: page.openStream === n
         readonly property var target: page.playsOn[n.id] || null
         readonly property var sink: target ? page.sinks.find(s => s.id === target.sink) || null : null
-        readonly property string iconName: n.properties ? n.properties["application.icon-name"] || "" : ""
+        readonly property string icon: Audio.appIcon(n)
 
         width: parent ? parent.width : 0
+        implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceM, right.height + Theme.spaceS)
 
-        FlyoutRow {
-            leadingImage: app.iconName !== "" ? Quickshell.iconPath(app.iconName, true) : ""
-            leadingIcon: app.iconName === "" ? (app.playback ? "󰓃" : "󰍬") : ""
-            label: Audio.appName(app.n)
-            note: page.streamDetail(app.n)
-            highlighted: app.isOpen
-            trailing: (app.playback && app.sink && app.sink !== Pipewire.defaultAudioSink
-                    ? "on " + Audio.plainName(app.sink) + "    " : "")
-                + page.levelText(app.n) + "  " + (app.isOpen ? "󰅀" : "󰅂")
-            onActivated: page.openStream = app.isOpen ? null : app.n
+        Image {
+            id: appImage
+            visible: app.icon !== ""
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.iconCell
+            height: width
+            sourceSize: Qt.size(width * 2, height * 2)
+            source: app.icon
+        }
+        Text {
+            visible: app.icon === ""
+            anchors.centerIn: appImage
+            text: app.playback ? "󰓃" : "󰍬"
+            color: Theme.text
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontIconSize
         }
 
-        SettingsIndent {
-            visible: app.isOpen
+        Column {
+            id: texts
+            anchors.left: appImage.right
+            anchors.leftMargin: Theme.spaceM
+            anchors.right: right.left
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 1
 
-            Level { node: app.n }
-            Mute { node: app.n }
+            Text {
+                width: parent.width
+                text: Audio.appName(app.n)
+                elide: Text.ElideRight
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontBody
+            }
+            Text {
+                width: parent.width
+                visible: text !== ""
+                text: page.streamDetail(app.n)
+                elide: Text.ElideRight
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontCaption
+            }
+        }
 
-            SettingsField {
+        Row {
+            id: right
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceL
+
+            SettingsDropdown {
                 visible: app.playback
-                label: "Plays on"
-                hint: !app.sink ? "" : app.sink === Pipewire.defaultAudioSink ? "The default output"
-                    : "Not the default output"
-
-                SettingsDropdown {
-                    anchors.right: parent.right
-                    width: Theme.fit(240)
-                    model: page.sinks.filter(s => page.unplugged.indexOf(s.id) < 0)
-                    current: app.sink
-                    enabled: app.target !== null
-                    placeholder: "…"
-                    labelFor: s => Audio.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
-                    onPicked: s => { if (s !== app.sink) page.moveTo(app.n, s) }
-                }
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fit(150)
+                model: page.sinks.filter(s => page.unplugged.indexOf(s.id) < 0)
+                current: app.sink
+                enabled: app.target !== null
+                placeholder: "…"
+                labelFor: s => Audio.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
+                onPicked: s => { if (s !== app.sink) page.moveTo(app.n, s) }
+            }
+            LevelControl {
+                anchors.verticalCenter: parent.verticalCenter
+                node: app.n
+                sliderWidth: Theme.fit(150)
             }
         }
     }
@@ -363,7 +344,7 @@ SettingsPage {
 
     Repeater {
         model: ScriptModel { values: page.playing }
-        AppBlock {}
+        AppRow {}
     }
 
     FlyoutRow {
@@ -380,6 +361,6 @@ SettingsPage {
 
     Repeater {
         model: ScriptModel { values: page.recording }
-        AppBlock { playback: false }
+        AppRow { playback: false }
     }
 }

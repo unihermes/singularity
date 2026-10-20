@@ -6,12 +6,9 @@
 
 local S = require("shared")
 
--- Local settings: what Settings > Input and Appearance > Windows change is
--- kept in ~/.local/state/singularity/hyprland.json, hl.config tables applied
--- over input.lua's and looks.lua's, so those changes stay on this machine.
--- Missing or broken, nothing is applied. Each value is applied on its own,
--- so one Hyprland rejects skips only itself (and still shows in
--- `hyprctl configerrors`).
+-- Local settings (Settings > Input, Appearance > Windows) from hyprland.json,
+-- applied over input.lua and looks.lua one value at a time, so a rejected
+-- one only skips itself. Missing or broken: nothing.
 do
     local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/hyprland.json")
     local t = f and S.decodeJson(f:read("a"))

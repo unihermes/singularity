@@ -1,18 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/HyprTables.js
 //
-// Reads plain `key = value` fields in the Hyprland config's table constructors, for
-// the Settings window: the tables inside hl.config (`input` and its
-// `touchpad`, `general`, `decoration`), whose changes go to hyprland.json
-// (see HyprLuaWrite), and reads and rewrites the table each hl.monitor()
-// call takes, in monitors.lua. Plain functions over source text, like
-// HyprBinds.js, whose tokenizer this uses so strings and comments can't
-// fool it.
-//
-// Only a field whose value is one literal token (a number, a string, true or
-// false) is read or rewritten. Anything computed is reported as not
-// editable, rather than replaced with a literal that silently drops whatever
-// the expression meant.
+// Reads plain `key = value` fields in Hyprland config tables for Settings:
+// hl.config's tables (changes go to hyprland.json) and hl.monitor()'s, in
+// monitors.lua, which it also rewrites. Uses HyprBinds.js's tokenizer. Only
+// single-literal values are editable; anything computed is reported as not.
 
 .import "HyprBinds.js" as HyprBinds
 
@@ -114,9 +106,7 @@ function setIn(src, toks, open, key, value) {
     }
     var line = key + " = " + toLua(value) + ","
     var named = ents.list.filter(function(x) { return x.key !== null })
-    // Line up with the table's last plain field and go straight after it:
-    // after its separator, adding one if it had none. Sub-tables come after
-    // plain fields in this config, so a new plain field goes above them.
+    // after the last plain field (adding its separator); sub-tables follow
     var anchor = named.filter(function(x) { return toks[x.first].v !== "{" }).pop() || named.pop()
     if (anchor) {
         var indent = indentAt(src, anchor.keyStart)
@@ -134,9 +124,8 @@ function setIn(src, toks, open, key, value) {
 
 // --- hl.config tables ----------------------------------------------------
 
-// The table at `path` in the first hl.config({ }) call that has one:
-// ["input"], ["general"], ["decoration", "blur"]. The config is split over
-// several hl.config calls by section, so each is tried in turn.
+// the table at `path` (["decoration", "blur"]) in the first hl.config({ })
+// call that has it
 function configTable(toks, path) {
     for (var i = 0; i + 3 < toks.length; i++) {
         if (toks[i].v === "hl" && toks[i + 1].v === "." && toks[i + 2].v === "config"
@@ -225,9 +214,7 @@ function addMonitor(src, fields) {
     return src.slice(0, at) + "\n\nhl.monitor({\n" + body + "\n})" + src.slice(at)
 }
 
-// The hl.monitor() calls in src that name a literal output, on their own as
-// a monitors.lua would hold them: the start of one copied from displays.lua's
-// default rule.
+// src's hl.monitor() calls naming a literal output, to start a monitors.lua
 function copyMonitors(src) {
     var out = ""
     readMonitors(src).forEach(function(rule) {

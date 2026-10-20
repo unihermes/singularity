@@ -1,13 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutDivider.qml
 //
-// A plain rule between groups of rows, for menus that split into sections
-// without wanting a label on each one. FlyoutHeading is the labelled
-// version of the same idea.
-//
-// The negative margins match FlyoutRow's: rows bleed 4px past the content
-// column on both sides so their hover highlight reaches the panel's inner
-// padding, and a divider that stopped short of that would look inset.
+// A plain rule between groups of rows (FlyoutHeading is the labelled one),
+// bleeding past the column as FlyoutRow's hover does; in a sectioned
+// column it splits the frames instead.
 
 import QtQuick
 import "../services"

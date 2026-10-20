@@ -1,19 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ControlEdge.qml
 //
-// The frame style carried inside panels: what a control's edge gets on top
-// of its own stroke. The control (a Rectangle) keeps drawing its stroke,
-// through Theme.controlBorder()/controlStroke(), and puts one of these over
-// itself for the rest:
-//   double   an inner stroke, inset, as on bar modules
-//   bevel    a raised chisel on buttons, a sunken well on fields
-//   channel  a groove inside the stroke: dark at rest, the accent and
-//            twice as wide when the control is lit (focused, selected)
-// Single and none are the stroke alone (or none), so this draws nothing
-// for them.
-//
-// `sunken` marks a field (an input, a dropdown's box, a switch's track) or
-// a pressed button (a lit chip).
+// The frame style inside a control's own stroke: double adds an inset inner
+// stroke; channel a groove (accent and wider when lit); single and none
+// nothing. `sunken` marks a field or a pressed button.
 
 import QtQuick
 import "../services"
@@ -50,14 +40,5 @@ Item {
         // fainter at rest, so the pair reads as one edge; lit with the state
         border.color: Qt.colorEqual(root.stroke, Theme.stroke)
             ? Qt.rgba(Theme.frameStroke.r, Theme.frameStroke.g, Theme.frameStroke.b, 0.45) : Theme.frameStroke
-    }
-
-    Bevel {
-        visible: Theme.frameChiselled
-        anchors.fill: parent
-        raised: !root.sunken
-        light: Theme.bevelLight
-        dark: Theme.bevelDark
-        thickness: Theme.borderWidth
     }
 }

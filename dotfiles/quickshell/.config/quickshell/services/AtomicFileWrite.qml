@@ -1,26 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/AtomicFileWrite.qml
 //
-// The one way the shell writes a config file. Every settings page and
-// HyprLuaWrite go through it, so they all get the same guarantees:
-//
-//  - Writes queue and run one at a time, across every page and window. A
-//    second change made while the first is still writing waits its turn
-//    instead of being dropped.
-//  - The file is read fresh when the write actually runs, and the caller's
-//    transform is applied to that text -- not to whatever the page read when
-//    it opened. A transform can refuse (return null) when the file changed in
-//    a way it can't build on, which is how a hand-edit or a `git pull` made
-//    while the page was open survives the next click.
-//  - The new text is optionally syntax-checked (bash -n, luac -p) before
-//    anything on disk changes.
-//  - It's written beside the target and renamed over it, so a crash or a
-//    full disk leaves the old file rather than half of the new one. The
-//    target is resolved with readlink first: most of these files are stow
-//    symlinks into the repo, and renaming over the link itself would replace
-//    it with a plain file, quietly cutting it off from the copy git tracks.
-//  - An optional backup copy is taken first, and an optional shell command
-//    (a reload, usually) runs after a successful write.
+// The one way the shell writes a config file. Writes queue one at a time;
+// the transform runs on the file as it is when the write runs (and may
+// refuse with null, so hand edits survive); optional syntax check (bash -n,
+// luac -p); written beside the readlink-resolved target and renamed over it
+// (stow links stay links); optional backup first and command after.
 //
 // write(job) takes:
 //   path       the file
@@ -75,9 +60,7 @@ Singleton {
             reader.reload()
             reader.waitForJob()
             var src = reader.text()
-            // A transform that throws is a refusal too: the exception would
-            // otherwise skip report(), and a caller counting its writes
-            // (HyprLuaWrite.pending) would stay busy for good.
+            // a transform that throws is a refusal, so report() still runs
             var out
             try { out = job.transform(src) }
             catch (e) {
@@ -102,9 +85,8 @@ Singleton {
         printErrors: false
     }
 
-    // Output's first line is a status word and the rest is detail. Everything
-    // goes to stdout so one collector sees it all in order. chmod --reference
-    // keeps the file's mode, which a fresh temp file would otherwise reset.
+    // first output line is a status word, the rest detail, all on stdout;
+    // chmod --reference keeps the mode
     readonly property string script: `
         exec 2>&1
         t=$(readlink -m -- "$1") && mkdir -p -- "\${t%/*}" && cat > "$t.new" || { echo write; exit; }

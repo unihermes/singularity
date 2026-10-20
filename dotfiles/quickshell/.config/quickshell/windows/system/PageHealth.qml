@@ -1,17 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/PageHealth.qml
 //
-// Everything that is wrong with this machine, worst first, with the fix next
-// to it. The checks and their repairs are services/Health.qml.
-//
-// Problems sort to the top and passes fall to the bottom rather than the
-// list being grouped under headings: the whole point is that the first row
-// is the answer, and a heading above an empty group is one more line to read
-// before finding out there is nothing under it.
-//
-// Scanning is tied to this page being open. SystemPage instances are created
-// by the window's Loader on arrival and destroyed on the way out, so the two
-// handlers below are the whole of the lifecycle.
+// What's wrong with this machine, worst first, each with its fix
+// (services/Health.qml); passes sink to the bottom. Scans while the page
+// is open.
 
 import QtQuick
 import "../../services"
@@ -22,8 +14,8 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "Health"
-    subtitle: Health.scanning && Health.lastScan === "" ? "checking…"
+    // the card's answer; no subtitle, the card says it
+    readonly property string summary: Health.scanning && Health.lastScan === "" ? "checking…"
         : Health.problems > 0
             ? Health.problems + (Health.problems === 1 ? " problem" : " problems")
               + (Health.warnings > 0 ? ", " + Health.warnings + " to look at" : "")
@@ -65,7 +57,7 @@ SystemPage {
             : Health.problems > 0 ? Theme.alert
             : Health.warnings > 0 ? Theme.textStrong : Theme.good
         title: Health.lastScan === "" ? (Health.scanning ? "Checking…" : "Not checked yet")
-            : page.problems.length === 0 ? "All clear" : page.subtitle.charAt(0).toUpperCase() + page.subtitle.slice(1)
+            : page.problems.length === 0 ? "All clear" : page.summary.charAt(0).toUpperCase() + page.summary.slice(1)
         lines: [Health.lastScan === "" ? "Services, packages, disks, config links and the shell's log"
             : "Checked at " + Health.lastScan + " · " + page.passing.length + " of " + Health.checks.length + " passing"]
 
@@ -114,24 +106,32 @@ SystemPage {
         text: "PASSING  " + page.passing.length
     }
 
-    Repeater {
-        model: page.passing
+    // two to a line
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
 
-        HealthRow {
-            required property var modelData
+        Repeater {
+            model: page.passing
 
-            status: modelData.status
-            // a disk check is named by its mount point alone
-            label: modelData.label.charAt(0) === "/" ? "Disk " + modelData.label : modelData.label
-            detail: modelData.detail
-            // a pass can still offer something (Clean up, Refresh)
-            repairLabel: modelData.repairLabel
-            more: page.moreFor(modelData)
-            confirmText: page.confirmFor(modelData)
-            busy: Health.busyRepair === modelData.id
-            repairEnabled: Health.busyRepair === ""
-                && (modelData.repairId !== "relink" || Health.repoPath !== "")
-            onRepaired: id => Health.repair(modelData, id)
+            HealthRow {
+                required property var modelData
+                width: (page.contentWidth - Theme.spaceXl * 2) / 2
+
+                status: modelData.status
+                // a disk check is named by its mount point alone
+                label: modelData.label.charAt(0) === "/" ? "Disk " + modelData.label : modelData.label
+                detail: modelData.detail
+                // a pass can still offer something (Clean up, Refresh)
+                repairLabel: modelData.repairLabel
+                more: page.moreFor(modelData)
+                confirmText: page.confirmFor(modelData)
+                busy: Health.busyRepair === modelData.id
+                repairEnabled: Health.busyRepair === ""
+                    && (modelData.repairId !== "relink" || Health.repoPath !== "")
+                onRepaired: id => Health.repair(modelData, id)
+            }
         }
     }
 

@@ -1,20 +1,16 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/Switch.qml
 //
-// The one on/off control: Quick Actions' toggles and every boolean on the
-// Settings pages. A choice between two values that reads as a state (on,
-// off) is this; a choice between named options is a FlyoutSegmented.
+// The one on/off control (named choices are FlyoutSegmented).
 //
 // Each style draws its own (Theme.style):
 //   channel    no knob: a dark well, filled with the accent inside its
 //              groove when on
 //   double     a stroked box with a square knob that turns accent
 //   solid      a fat pill with a white knob
-//   capsule    a pill; with the style's labels option it says On or Off
 //   glass      a frosted track, the knob glowing when on
-//   bevel      a sunken checkbox with a tick
-//   tabbed     a two-way Off | On
-//   corners    a bracketed square knob
+//   flat       a pill outlined in the text colour, round knob; on, the
+//              accent with a white knob
 //
 // `interactive: false` for a switch inside a row that takes the click
 // itself (FlyoutAction), so the whole row is the target.
@@ -37,17 +33,14 @@ Item {
     // the fill a lit switch takes
     readonly property color onFill: Theme.meterFill
 
-    implicitWidth: kind === "bevel" ? h
-        : kind === "tabbed" ? twoWay.implicitWidth
-        : kind === "capsule" && Theme.opt("labels") ? Theme.row(46)
-        : kind === "solid" ? Theme.row(34)
+    implicitWidth: kind === "solid" ? Theme.row(34)
+        : kind === "flat" ? Theme.row(32)
         : Theme.switchWidth
     implicitHeight: kind === "solid" ? Theme.row(20) : h
     opacity: enabled ? 1 : 0.5
 
-    // --- tracks with a knob: double, solid, capsule, glass, corners
-    readonly property bool knobbed: ["double", "solid", "capsule", "glass", "corners"].indexOf(kind) !== -1
-        && !(kind === "capsule" && Theme.opt("labels"))
+    // --- tracks with a knob: every style but channel
+    readonly property bool knobbed: kind !== "channel"
 
     Rectangle {
         id: track
@@ -55,19 +48,20 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         height: parent.height
-        radius: root.kind === "double" ? Math.min(height / 2, Theme.radiusInner)
-            : root.kind === "corners" ? 0 : height / 2
+        radius: root.kind === "double" ? Math.min(height / 2, Theme.radiusInner) : Theme.pill(height)
         color: {
             switch (root.kind) {
             case "double": return "transparent"
-            case "corners": return root.checked ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18) : "transparent"
             case "glass": return root.checked ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.6)
                 : Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
+            case "flat": return root.checked ? root.onFill : "transparent"
             default: return root.checked ? root.onFill : Theme.overlay
             }
         }
-        border.width: root.kind === "double" || root.kind === "glass" ? Theme.borderWidth : 0
+        border.width: root.kind === "double" || root.kind === "glass" ? Theme.borderWidth
+            : root.kind === "flat" && !root.checked ? root.flatLine : 0
         border.color: root.kind === "glass" ? Theme.stroke
+            : root.kind === "flat" ? (root.hovered ? Theme.textStrong : Theme.text)
             : root.checked ? Theme.accent : root.hovered ? Theme.strokeHover : Theme.stroke
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
 
@@ -79,27 +73,26 @@ Item {
             blur: Theme.sp(10)
             color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.6)
         }
-
-        CornerMarks {
-            visible: root.kind === "corners"
-            color: root.checked ? Theme.accent : root.hovered ? Theme.textStrong : Theme.muted
-        }
     }
+
+    // Flat's outline, the knob's gap inside it
+    readonly property int flatLine: Math.max(2, Theme.borderWidth * 2)
 
     Rectangle {
         id: knob
         visible: root.knobbed
-        readonly property int inset: root.kind === "solid" ? 2 : Math.max(2, Math.round(root.h / 5))
+        readonly property int inset: root.kind === "solid" ? 2
+            : root.kind === "flat" ? root.flatLine + 2 : Math.max(2, Math.round(root.h / 5))
         width: root.height - inset * 2
         height: width
-        radius: root.kind === "double" ? Math.min(width / 2, Theme.radiusSmall)
-            : root.kind === "corners" ? 0 : width / 2
+        radius: root.kind === "double" ? Math.min(width / 2, Theme.radiusSmall) : Theme.pill(width)
         anchors.verticalCenter: parent.verticalCenter
         x: root.checked ? root.width - width - inset : inset
         color: {
             switch (root.kind) {
-            case "double": case "corners": return root.checked ? Theme.accent : Theme.muted
+            case "double": return root.checked ? Theme.accent : Theme.muted
             case "solid": return "#ffffff"
+            case "flat": return root.checked ? "#ffffff" : root.hovered ? Theme.textStrong : Theme.text
             default: return root.checked ? "#ffffff" : Theme.muted
             }
         }
@@ -134,94 +127,6 @@ Item {
             color: "transparent"
             border.width: root.checked ? Theme.channelGrooveWidth : Theme.borderWidth
             border.color: root.checked ? Theme.channelGroove : Theme.channelInner
-        }
-    }
-
-    // --- capsule with labels: a pill that says what it is
-    Rectangle {
-        visible: root.kind === "capsule" && Theme.opt("labels")
-        anchors.fill: parent
-        radius: height / 2
-        color: root.checked ? root.onFill : Theme.overlay
-        Behavior on color { ColorAnimation { duration: Theme.durFast } }
-
-        Row {
-            anchors.centerIn: parent
-            spacing: Theme.spaceS
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.round(root.h * 0.4); height: width; radius: width / 2
-                color: root.checked ? Theme.textOnMeter : Theme.muted
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.checked ? "On" : "Off"
-                color: root.checked ? Theme.textOnMeter : Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontCaption
-            }
-        }
-    }
-
-    // --- bevel: a sunken checkbox
-    Item {
-        visible: root.kind === "bevel"
-        anchors.fill: parent
-
-        Rectangle { anchors.fill: parent; color: Theme.base }
-        Bevel {
-            anchors.fill: parent
-            raised: false
-            light: Theme.bevelLight
-            dark: Theme.bevelDark
-            thickness: Theme.borderWidth
-        }
-        Text {
-            visible: root.checked
-            anchors.centerIn: parent
-            text: "󰄬"
-            color: Theme.textStrong
-            font.family: Theme.fontIcon
-            font.pixelSize: Math.round(root.h * 0.85)
-        }
-    }
-
-    // --- tabbed: Off | On, the state's half lit
-    Rectangle {
-        id: twoWay
-        visible: root.kind === "tabbed"
-        anchors.fill: parent
-        implicitWidth: halves.implicitWidth + Theme.borderWidth * 2
-        radius: Theme.radiusSmall
-        color: "transparent"
-        border.width: Theme.borderWidth
-        border.color: root.hovered ? Theme.strokeHover : Theme.stroke
-        clip: true
-
-        Row {
-            id: halves
-            anchors.fill: parent
-            anchors.margins: Theme.borderWidth
-            Repeater {
-                model: [false, true]
-                Rectangle {
-                    required property bool modelData
-                    readonly property bool lit: modelData === root.checked
-                    width: halfText.implicitWidth + Theme.spaceM * 2
-                    height: parent.height
-                    color: lit ? (modelData ? root.onFill : Theme.overlay) : "transparent"
-                    Text {
-                        id: halfText
-                        anchors.centerIn: parent
-                        text: parent.modelData ? "On" : "Off"
-                        color: parent.lit ? (parent.modelData ? Theme.textOnMeter : Theme.textStrong) : Theme.subtext
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontCaption
-                    }
-                }
-            }
         }
     }
 

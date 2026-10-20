@@ -1,32 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/shell.qml
 //
-// Status bar: workspaces + window icons on the left, clock in the middle,
-// system modules on the right. Same grayscale ramp as the rest of the repo
-// -- nothing here is coloured, only lighter or darker.
+// The shell's entry point: session-wide state (Keep Awake, Night Light,
+// lock keys), the IPC targets binds and scripts call, and one Scope per
+// screen holding its bar and flyouts. Only one flyout is open at a time:
+// `openFlyout` holds its name.
 //
-// Most modules open a flyout (see FlyoutPanel.qml). Only one is ever open:
-// `openFlyout` holds its name rather than each module keeping a bool, which
-// makes "opening one closes the others" fall out for free and gives the
-// backdrop a single thing to clear.
-//
-// System state comes from Quickshell's own service modules (Pipewire,
-// UPower, Bluetooth) rather than by polling wpctl/upower/bluetoothctl: they
-// are DBus-backed and push changes, so the bar updates the moment something
-// changes instead of up to a poll interval later.
-//
-// Two exceptions, both because no service exists to use:
-//   - brightness shells out to brightnessctl (services/Brightness.qml;
-//     there is no backlight service)
-//   - network shells out to iwctl and busctl (services/Network.qml).
-//     Quickshell.Networking's only backend is NetworkManager, and this
-//     machine runs iwd instead -- with NM absent the module loads but
-//     reports "could not find an available backend", so nothing would ever
-//     populate.
-//
-// Quickshell's QML API moves quickly. If the bar does not appear, run
-// `quickshell` from a terminal inside the session: QML errors go to stderr
-// with a file and line number, and they are usually a renamed import.
+// System state comes from Quickshell's DBus-backed services; brightness
+// (brightnessctl) and network (iwd, which Quickshell.Networking can't use)
+// shell out instead. QML errors: run `quickshell` from a terminal.
 
 import "services"
 import "flyouts"
@@ -43,38 +25,27 @@ import QtQuick
 ShellRoot {
     id: root
 
-    // Wallpaper runs the rotation timer and each look's own wallpaper, so it
-    // has to exist from startup -- a singleton is only built when something
-    // first reads it, which in grayscale mode is the Appearance page
+    // read here so Wallpaper (a lazily built singleton) runs from startup
     readonly property string wallpaper: Wallpaper.current
+    // and BtBattery, so the AirPods' battery channel opens as they connect:
+    // opening it later (the Bluetooth flyout or page) plays their chime
+    Component.onCompleted: BtBattery.parts
 
-    // Keep Awake, from Quick Actions. Held here rather than on a bar because
-    // every screen gets its own bar, and a per-screen flag would let one
-    // monitor's menu say "on" while another's says "off". Session-only on
-    // purpose: waking up tomorrow with idle still inhibited is the failure
-    // mode worth avoiding.
+    // Keep Awake, from Quick Actions. On the root so every screen agrees;
+    // session-only so idle is never left inhibited overnight.
     property bool keepAwake: false
-
-    // Night Light, from Quick Actions. hyprsunset holds the warm gamma ramp
-    // for as long as it runs, and the compositor restores normal gamma the
-    // moment its client disconnects -- so stopping the process *is* turning
-    // it off, no second "reset" command needed. Session-only, like Keep
-    // Awake, and on the root for the same one-state-for-all-screens reason.
+    // Night Light, from Quick Actions: on while hyprsunset runs (stopping it
+    // restores normal gamma). Session-only, like Keep Awake.
     property bool nightLight: false
     readonly property int nightLightKelvin: Settings.nightLightKelvin
-    // Retune a running hyprsunset in place. Restarting it instead would
-    // drop the gamma ramp for a frame and flash the screen cold on every
-    // step of the stepper.
+    // retuned in place: a restart would flash the screen cold
     onNightLightKelvinChanged: if (nightLightProc.running)
         Quickshell.execDetached(["hyprctl", "hyprsunset", "temperature", String(nightLightKelvin)])
-    // false until the probe below finds the binary; the toggle says so
-    // instead of flipping on and silently doing nothing
+    // false until the probe below finds the binary
     property bool hasHyprsunset: false
 
-    // Night Light's schedule (Settings.nightLightSchedule). It acts only when
-    // the window opens or closes, so a hand toggle in between holds until
-    // the next edge. Checked by the wall clock, and again on waking, since
-    // a timer alone would run late by however long the machine slept.
+    // Night Light's schedule. Acts only when the window opens or closes, so a
+    // hand toggle holds until the next edge; rechecked on waking.
     readonly property var nightWindow: Settings.nightLightSchedule === "sun"
         ? [Weather.sunsetMin >= 0 ? Weather.sunsetMin : 1140, Weather.sunriseMin >= 0 ? Weather.sunriseMin : 420]
         : [Settings.nightLightFrom, Settings.nightLightTo]
@@ -109,10 +80,7 @@ ShellRoot {
         onTriggered: root.checkNightSchedule()
     }
 
-    // Also clears out any hyprsunset left behind by a previous shell. It is
-    // a child process but outlives Quickshell being killed or crashing, and
-    // an orphan keeps the screen warm while this fresh instance's toggle
-    // insists Night Light is off -- with nothing in the UI able to stop it.
+    // also kills a hyprsunset left behind by an earlier shell
     Process {
         running: true
         command: ["sh", "-c", "pkill -x hyprsunset; command -v hyprsunset"]
@@ -123,38 +91,32 @@ ShellRoot {
         id: nightLightProc
         command: ["hyprsunset", "-t", String(root.nightLightKelvin)]
         running: root.nightLight && root.hasHyprsunset
-        // An exit while the toggle still says on is a crash or a refused
-        // gamma handle, not a user action -- drop the toggle back so it
-        // doesn't claim a warm screen that isn't there.
+        // exited on its own (crash, refused gamma): the toggle follows
         onExited: if (root.nightLight) root.nightLight = false
     }
 
-    // Standalone windows opened from the Control Centre. One each for the
-    // whole session, not per screen: they're ordinary toplevels, and
-    // Hyprland maps them on whichever monitor has focus.
-    // built on first open, see LazyWindow.qml
+    // Standalone windows, one each per session, built on first open
     LazyWindow { id: system; System {} }
-    LazyWindow { id: settingsWindow; SettingsWindow {} }
+    LazyWindow {
+        id: settingsWindow
+        SettingsWindow {}
+    }
     LazyWindow { id: notesWindow; NotesWindow {} }
     LazyWindow { id: keybindsWindow; KeybindsWindow {} }
 
-    // `qs ipc call settings open appearance`, for a keybind or a script;
-    // an unknown or empty page opens the default one
+    // `qs ipc call settings open <page>`
     IpcHandler {
         target: "settings"
         function open(page: string): void { settingsWindow.open(page) }
     }
 
-    // windows.lua's singularityShowDesktop(), after it tags or untags
-    // windows: tags aren't announced, and the bar's button reads them
+    // from windows.lua's singularityShowDesktop(): tags aren't announced
     IpcHandler {
         target: "desktop"
         function changed(): void { Hyprland.refreshToplevels() }
     }
 
-    // `qs ipc call system open`, likewise.
-    // System takes a page the way Settings does -- `... open network` -- so a
-    // keybind can go straight to the one page it is about.
+    // `qs ipc call system open <page>`
     IpcHandler {
         target: "system"
         function open(page: string): void { system.open(page) }
@@ -174,8 +136,7 @@ ShellRoot {
         function open(): void { keybindsWindow.open() }
     }
 
-    // `qs ipc call gamemode toggle`, for a keybind; the Control Centre's
-    // Quick Actions has the switch
+    // `qs ipc call gamemode toggle`
     IpcHandler {
         target: "gamemode"
         function toggle(): void { GameMode.toggle() }
@@ -183,8 +144,7 @@ ShellRoot {
         function get(): bool { return GameMode.active }
     }
 
-    // `qs ipc call look cycle` / `qs ipc call look set soft` -- for a keybind
-    // that steps through the looks without opening anything
+    // `qs ipc call look cycle` / `... set <name>`
     IpcHandler {
         target: "look"
         function cycle(): void { Settings.cycle("look") }
@@ -194,17 +154,12 @@ ShellRoot {
         function saveDefault(): void { Settings.saveAsDefault() }
         function resetToDefault(): void { Settings.reset() }
         function isDefault(): bool { return Settings.isDefault }
-        // hides the look on this machine; the fallback look can't be removed
-        function remove(name: string): void { Settings.removeLook(name) }
-
     }
 
     AppearanceSync {}
 
-    // SUPER+W, arriving from binds.lua via `qs ipc call overlay toggle`.
-    // A signal rather than a direct call because the overlays live inside
-    // Variants (one per screen) and aren't addressable from out here; each
-    // screen's scope listens and only the focused monitor's acts.
+    // SUPER+W (`qs ipc call overlay toggle`). A signal, because the overlays
+    // live per screen inside Variants; only the focused screen's acts.
     signal workspaceOverlayToggled()
 
     IpcHandler {
@@ -212,9 +167,8 @@ ShellRoot {
         function toggle(): void { root.workspaceOverlayToggled() }
     }
 
-    // SUPER+M, arriving from windows.lua via `qs ipc call layout <mode>`
-    // right after it flips monocleEnabled. Same per-screen signal relay as
-    // the overlay above: only the focused monitor shows the toast.
+    // SUPER+M, from windows.lua: `qs ipc call layout <mode>`. Toasted on
+    // the focused screen.
     signal layoutModeChanged(string mode)
 
     IpcHandler {
@@ -222,15 +176,10 @@ ShellRoot {
         function set(mode: string): void { root.layoutModeChanged(mode) }
     }
 
-    // Caps Lock / Num Lock, from binds.lua's pass-through binds on the two
-    // keys: `qs ipc call locks changed caps|num`. Each call flips the shell's
-    // own copy of the state and toasts it straight away, rather than reading
-    // it: the bind fires on press, and xkb only turns a lock off when the key
-    // comes up, so the keyboard still reads on at that point. Flipping also
-    // lets toggles quicker than a round trip to Hyprland each show. The main
-    // keyboard's real state is read back at startup and shortly after the
-    // last toggle; if the copy has drifted (a missed call, another keyboard)
-    // it's corrected, and the toast with it.
+    // Caps/Num Lock, from binds.lua: `qs ipc call locks changed caps|num`.
+    // The bind fires on press, before xkb updates, so the shell flips its
+    // own copy and toasts it; the real state is read back at startup and
+    // a second after the last toggle, correcting any drift.
     signal lockKeyChanged(string key, bool on)
 
     property var lockState: ({ caps: false, num: false })
@@ -247,8 +196,7 @@ ShellRoot {
 
     Timer {
         id: lockResync
-        // long enough that the key is up again, or a lock being switched
-        // off would still read as on
+        // long enough for the key to be up again
         interval: 1000
         onTriggered: lockProbe.running = true
     }
@@ -275,8 +223,7 @@ ShellRoot {
         }
     }
 
-    // The lid, from lid.sh once a close or open has survived its debounce:
-    // `qs ipc call lid changed closed|open`. Toasted like the lock keys.
+    // The lid, from lid.sh after its debounce: `qs ipc call lid changed closed|open`
     signal lidChanged(bool closed)
 
     IpcHandler {
@@ -287,23 +234,12 @@ ShellRoot {
         }
     }
 
-    // The launcher (flyouts/Launcher.qml): `qs ipc call launcher toggle apps`
-    // from CTRL+SPACE, `... toggle clipboard` from SUPER+H. Same per-screen
-    // signal relay as the overlay above.
+    // The launcher: `qs ipc call launcher toggle apps|clipboard`
     signal launcherToggled(string mode)
 
     IpcHandler {
         target: "launcher"
         function toggle(mode: string): void { root.launcherToggled(mode) }
-    }
-
-    // Claude (flyouts/ClaudeFlyout.qml): `qs ipc call claude toggle` from
-    // SUPER+I. Same per-screen signal relay as the overlay above.
-    signal claudeToggled()
-
-    IpcHandler {
-        target: "claude"
-        function toggle(): void { root.claudeToggled() }
     }
 
     // Notifications: the history flyout, Do Not Disturb, Clear all
@@ -314,8 +250,7 @@ ShellRoot {
         function clear(): void { Notifications.clearAll() }
     }
 
-    // The power menu (flyouts/PowerMenu.qml), from SUPER+SHIFT+E. Same
-    // per-screen signal relay as the overlay above.
+    // The power menu (SUPER+SHIFT+E)
     signal powerMenuToggled()
 
     IpcHandler {
@@ -334,16 +269,10 @@ ShellRoot {
         function previous(): void { Media.previous() }
     }
 
-    // The ALT+Tab switcher. The bind wins over the switcher's keyboard grab,
-    // so every Tab of a held ALT+Tab re-runs alttab-ipc.sh: tab() opens the
-    // switcher on the first and steps it on the rest. commit() when ALT comes
-    // up. Same per-screen signal relay as the overlay above.
-    //
-    // `gen` is the gesture id minted by the bind (alttab.lua's
-    // altTabWatchGen): each command carries its Tab's id, and the ALT release
-    // the id of the gesture's last Tab, so a release that arrives before its
-    // switcher exists is applied to that switcher and no other. tab()'s id
-    // rides inside the JSON, since a call carries one argument.
+    // ALT+Tab. Every Tab of a held ALT re-runs alttab-ipc.sh: tab() opens the
+    // switcher or steps it, commit() on ALT's release. `gen` is the gesture
+    // id from alttab.lua, so a release that beats its switcher applies to
+    // that gesture only.
     signal altTabTab(string clientsJson)
     signal altTabStep(int delta, string gen)
     signal altTabCommit(string gen)
@@ -351,37 +280,26 @@ ShellRoot {
 
     IpcHandler {
         target: "alttab"
-        // `clientsJson`: the gesture id and the raw client list (what
-        // `hyprctl clients -j` prints), from alttab-relay; see
-        // AltTabSwitcher.begin(). One call that always carries the list,
-        // rather than an "is it open yet" probe first: the first Tab is the
-        // one racing a fast ALT release, and can't afford two round trips.
+        // the gesture id and `hyprctl clients -j`, in one call (see
+        // AltTabSwitcher.begin())
         function tab(clientsJson: string): void { root.altTabTab(clientsJson) }
         function prev(gen: string): void { root.altTabStep(-1, gen) }
         function commit(gen: string): void { root.altTabCommit(gen) }
         function cancel(): void { root.altTabCancel() }
-        // alttab-relay's startup self-test: the one call here with a reply,
-        // so the relay can tell its hand-built wire format still matches
-        // this Quickshell's (see alttab-relay.cpp)
+        // alttab-relay's startup self-test of the wire format
         function ping(): string { return "singularity-relay-pong" }
     }
 
-    // A client list asked for just before a window closed can arrive after
-    // its closewindow and bring the window back into Hyprland.toplevels, a
-    // dead icon in the strip until the next refresh. One more refresh once
-    // the close has settled clears it.
+    // A client list fetched just before a close can bring the closed window
+    // back; one more refresh after the close settles clears it.
     Timer {
         id: closedSweep
         interval: 300
         onTriggered: Hyprland.refreshToplevels()
     }
 
-    // A new/closed/moved window's class (and so its icon) doesn't show up
-    // in Hyprland.toplevels until something re-requests the full client
-    // list -- it isn't pushed with the openwindow event itself. Force that
-    // refetch right when it happens rather than waiting for the next
-    // incidental one (e.g. a workspace switch), so a new app's icon shows
-    // at once.
+    // A window's class only reaches Hyprland.toplevels on a full refetch,
+    // so refetch on every window event.
     Connections {
         target: Hyprland
         function onRawEvent(event) {
@@ -391,18 +309,13 @@ ShellRoot {
                 Hyprland.refreshToplevels()
                 if (n === "closewindow") closedSweep.restart()
             } else if (n === "activewindowv2") {
-                // Focus moves far more often than windows come and go, and a
-                // refresh re-evaluates everything bound to lastIpcObject on
-                // every screen. Only a group needs it: which tab was focused
-                // last (focusHistoryID) decides the one the window lists show.
-                // ALT+Tab reads its own fresh client list from the relay.
+                // only a group needs a refresh on focus (which tab shows)
                 const tl = Hyprland.toplevels.values.find(t => t.address === event.data)
                 const ipc = tl ? tl.lastIpcObject : null
                 if (ipc && ipc.grouped && ipc.grouped.length > 1) Hyprland.refreshToplevels()
             }
-            // "special:name,MONITOR", or ",MONITOR" once it's hidden. Read
-            // from the event: refreshing the monitors here still gets the
-            // state from before the toggle.
+            // "special:name,MONITOR", or ",MONITOR" once hidden; read from the
+            // event, since a refresh here still has the old state
             if (event.name === "activespecial") {
                 const cut = event.data.lastIndexOf(",")
                 const shown = Object.assign({}, root.specialShown)
@@ -416,9 +329,7 @@ ShellRoot {
     // activespecial events; a monitor with no event yet isn't listed
     property var specialShown: ({})
 
-    // One flyout open across every screen, as on one: opening one closes
-    // whatever another screen had up. `except` is the scope that keeps its
-    // own, null to close them all (a press on a bar's ground).
+    // Closes every screen's flyout but `except`'s (null: all of them).
     function closeFlyouts(except) {
         for (const s of screens.instances)
             if (s !== except) s.openFlyout = ""
@@ -436,31 +347,21 @@ ShellRoot {
             property string openFlyout: ""
             onOpenFlyoutChanged: if (openFlyout !== "") root.closeFlyouts(screenScope)
 
-            // every screen's bar: a press on any of them doesn't count as a
-            // click off an open flyout (DismissGrab)
+            // every bar; a press on any isn't a click off a flyout (DismissGrab)
             readonly property var allBars: screens.instances.map(s => s.barWindow)
 
-            // The bar, for the lazily built flyouts. `bar: bar` inside a
-            // LazyFlyout would bind the flyout's own `bar` property to
-            // itself: in a nested component the object's own properties are
-            // looked up before the outer file's ids.
+            // The bar, for the lazy flyouts (`bar: bar` there would bind to
+            // itself).
             readonly property var barWindow: bar
 
             // screen-local x the open flyout centres itself under
             property real flyoutAnchorX: 0
-            // the width of the module it opened from, which a tab-style
-            // flyout draws its tab round; 0 when it has none
-            property real flyoutAnchorW: 0
             // the bar section ("left", "centre", "right") of the module it
             // opened from, "" when none; a grown flyout hangs off its group
             property string flyoutSection: ""
 
-            // `item` is the module that was clicked; mapToItem(null, ...)
-            // gives its position in its own window's coordinates, and the
-            // bar and the flyouts all span the full screen width, so that
-            // x is directly usable as the flyout's anchor.
-            // Whether this screen is the one with keyboard focus. Anything
-            // opened from a global keybind uses it so only one screen reacts.
+            // whether this screen has keyboard focus; keybind-opened things
+            // show only there
             function isFocusedScreen() {
                 return !!Hyprland.focusedMonitor
                     && Hyprland.focusedMonitor.name === screenScope.modelData.name
@@ -478,14 +379,11 @@ ShellRoot {
                     return
                 }
                 screenScope.flyoutAnchorX = item.mapToItem(null, item.width / 2, 0).x
-                screenScope.flyoutAnchorW = item.width
                 screenScope.flyoutSection = screenScope.barWindow.sectionOf(item)
                 screenScope.openFlyout = name
             }
 
-            // SUPER+W toggles the workspace grid on the focused monitor only.
-            // It has no bar module to anchor to (it centres itself), so unlike
-            // toggleFlyout there's no anchor to set here.
+            // SUPER+W: the workspace grid on the focused monitor
             Connections {
                 target: root
                 function onWorkspaceOverlayToggled() {
@@ -505,13 +403,9 @@ ShellRoot {
                 }
             }
 
-            // SUPER+M, the lock keys and the lid: the mode toast. Not routed through
-            // openFlyout like the rest -- it isn't a flyout (no backdrop,
-            // self-dismissing, and it shouldn't close whatever flyout is
-            // already open) -- so it gets its own bit of state: what to show,
-            // and a counter ModeToast watches to know a *new* toggle happened
-            // even when the text repeats (e.g. two quick SUPER+M's landing
-            // back on "monocle" should restart the timer, not no-op).
+            // The mode toast (SUPER+M, lock keys, lid). Not a flyout, so it
+            // doesn't touch openFlyout; the seq counter restarts it even
+            // when the text repeats.
             property string modeToastIcon: ""
             property string modeToastText: ""
             property int modeToastSeq: 0
@@ -539,8 +433,8 @@ ShellRoot {
                 }
             }
 
-            // The launcher, on the focused monitor. The same key again closes
-            // it; the other mode's key switches it over in place.
+            // The launcher on the focused monitor. Its key again closes it;
+            // the other mode's key switches mode.
             property string launcherMode: "apps"
 
             Connections {
@@ -556,8 +450,7 @@ ShellRoot {
                 }
             }
 
-            // The notification history under its bar module, as a click
-            // would; with the module hidden, centred instead
+            // the notification history under its module, centred when hidden
             Connections {
                 target: Notifications
                 function onPanelToggled() {
@@ -568,74 +461,41 @@ ShellRoot {
                         return
                     }
                     screenScope.flyoutAnchorX = screenScope.modelData.width / 2
-                    screenScope.flyoutAnchorW = 0
                     screenScope.flyoutSection = ""
                     screenScope.openFlyout = screenScope.openFlyout === "notifications" ? "" : "notifications"
                 }
             }
 
-            // SUPER+I opens Claude under its bar module, as a click would;
-            // with the module hidden, centred instead
-            Connections {
-                target: root
-                function onClaudeToggled() {
-                    if (!screenScope.isFocusedScreen()) return
-                    const it = screenScope.barWindow.widgetItem("claude")
-                    if (it && it.visible) {
-                        screenScope.toggleFlyout("claude", it)
-                        return
-                    }
-                    screenScope.flyoutAnchorX = screenScope.modelData.width / 2
-                    screenScope.flyoutAnchorW = 0
-                    screenScope.flyoutSection = ""
-                    screenScope.openFlyout = screenScope.openFlyout === "claude" ? "" : "claude"
-                }
-            }
-
-            // The gesture the open switcher belongs to; -1 when none is up.
+            // the gesture the open switcher belongs to; -1 when none
             property int altTabOpenGen: -1
 
-            // A gesture whose ALT release arrived before its switcher -- the
-            // Tab that opens it still on its way through the relay.
-            // onAltTabTab then never opens a switcher for it. By id, so it
-            // needs no deadline and can't swallow the next gesture (whose id
-            // is higher). -1 for none.
+            // a gesture whose ALT release arrived before its switcher opened;
+            // no switcher opens for it. -1 for none.
             property int altTabPendingCommitGen: -1
 
-            // The last gesture committed. Every route to the ALT release fires
-            // on every gesture, so the later ones arrive with the switcher
-            // closed, like an early release would -- the id tells them apart.
+            // the last gesture committed, to drop duplicate releases
             property int altTabCommittedGen: -1
 
-            // -1 for anything unparseable, e.g. a hand-run `qs ipc call`
-            // with no id: such a call gets the plain, unmatched behaviour.
+            // -1 when unparseable (a hand-run `qs ipc call`)
             function altTabGen(raw) {
                 const n = parseInt(raw)
                 return isNaN(n) ? -1 : n
             }
 
-            // A Hyprland config reload restarts gesture ids at 1 while this
-            // shell remembers higher ones. An id below the last committed one
-            // can only mean that, so forget the old numbering.
+            // a Hyprland reload restarts ids at 1: forget the old numbering
             function altTabCheckEpoch(gen) {
                 if (gen < 0 || gen >= altTabCommittedGen) return
                 altTabCommittedGen = -1
                 altTabPendingCommitGen = -1
             }
 
-            // ALT+Tab, on the focused monitor only: the first Tab of a gesture
-            // opens the switcher, every later one steps it. Decided here,
-            // against openFlyout, since the bind keeps no state.
+            // ALT+Tab on the focused monitor: the first Tab opens the switcher,
+            // later ones step it.
             Connections {
                 target: root
 
-                // The focus test is inside each handler rather than on the
-                // Connections' `enabled`: that binding is evaluated when the
-                // signal arrives, and re-evaluating it mid-dispatch made the
-                // whole block miss signals. Same shape as the Settings
-                // Connections below. (A Connections can only hold signal
-                // handlers, so this is a function on the scope, not a
-                // property here.)
+                // the focus test is in each handler: an `enabled` binding
+                // re-evaluated mid-dispatch missed signals
                 function onAltTabTab(clientsJson) {
                     if (!screenScope.isFocusedScreen()) return
                     if (screenScope.openFlyout === "alttab") {
@@ -643,17 +503,13 @@ ShellRoot {
                         return
                     }
                     altTab.begin(clientsJson)
-                    // Nothing to switch between: nothing to show.
                     if (altTab.windows.length <= 1) return
 
                     screenScope.altTabCheckEpoch(altTab.gen)
                     screenScope.altTabOpenGen = altTab.gen
 
-                    // This gesture's release already arrived, so the gesture
-                    // is over: commit to the previous window (a fast tap's
-                    // swap) instead of opening a switcher nobody is holding
-                    // ALT for. `>=`: the release carries the gesture's *last*
-                    // Tab id, so an earlier Tab arriving late is just as done.
+                    // its release already came: commit (a fast tap's swap)
+                    // instead of opening. `>=`: the release carries the last Tab's id.
                     if (altTab.gen >= 0 && screenScope.altTabPendingCommitGen >= altTab.gen) {
                         screenScope.altTabPendingCommitGen = -1
                         altTab.commit()
@@ -669,16 +525,14 @@ ShellRoot {
                     const g = screenScope.altTabGen(gen)
                     if (screenScope.openFlyout !== "alttab") {
                         screenScope.altTabCheckEpoch(g)
-                        // Remembered for the case above, unless the gesture is
-                        // already committed (a duplicate). Focused screen only,
-                        // so a stray one can't wait on another screen.
+                        // remembered for the case above (focused screen,
+                        // gestures not yet committed)
                         if (screenScope.isFocusedScreen() && g > screenScope.altTabCommittedGen)
                             screenScope.altTabPendingCommitGen = Math.max(
                                 screenScope.altTabPendingCommitGen, g)
                         return
                     }
-                    // Any release closes an open switcher, whatever its id:
-                    // the ids only decide whether to *open* one.
+                    // any release closes an open switcher
                     screenScope.altTabPendingCommitGen = -1
                     altTab.commit()
                 }
@@ -698,18 +552,10 @@ ShellRoot {
         }
 
         // --- flyouts --------------------------------------------------
-        // Each is its own layer-shell surface rather than something drawn
-        // inside the bar: a panel clips to its own surface, so a dropdown
-        // drawn in the bar would be cut off at the bar's bottom edge.
-        //
-        // Wrapped in LazyFlyout, which builds each one the first time it
-        // opens rather than at login. The toasts and the alt-tab switcher
-        // are the exceptions: the toasts react to events while nothing is
-        // open, and alt-tab has to be ready for a fast tap.
+        // Each is its own layer surface. LazyFlyout builds one on first open;
+        // the toasts and ALT+Tab are always built, as they must react at once.
 
-        // SUPER+W: the workspace grid. Not anchored to the bar like the
-        // flyouts, but it shares openFlyout so opening it closes them (and
-        // vice versa) without any extra bookkeeping.
+        // SUPER+W: the workspace grid
         LazyFlyout {
             name: "workspaceoverlay"; scope: screenScope
             WorkspaceOverlay { scope: screenScope }
@@ -720,19 +566,12 @@ ShellRoot {
             PowerMenu { scope: screenScope }
         }
 
-        // SUPER+M: brief top-of-screen toast naming the layout just switched
-        // to. Listens for root.layoutModeChanged itself rather than going
-        // through openFlyout -- it isn't a flyout (no backdrop, not closable,
-        // self-dismissing) and shouldn't close whatever flyout is already open.
+        // SUPER+M, lock keys, lid: the mode toast
         ModeToast {
             scope: screenScope
         }
 
-        // Volume/brightness OSD. Watches the Audio and Brightness services
-        // directly rather than through an IPC relay like the two toasts
-        // above -- both already push live updates (Pipewire for volume, a
-        // watched sysfs file for brightness), so hardware keys, the flyout
-        // sliders and scroll-on-chip all surface here for free.
+        // volume/brightness OSD, from the Audio and Brightness services
         LevelToast {
             scope: screenScope
         }
@@ -747,8 +586,7 @@ ShellRoot {
             scope: screenScope
         }
 
-        // ALT+Tab. Shares openFlyout like everything else, so opening it
-        // closes whatever was up.
+        // ALT+Tab
         AltTabSwitcher {
             id: altTab
             scope: screenScope
@@ -781,9 +619,7 @@ ShellRoot {
         // CTRL+SPACE / SUPER+H: the launcher, centred like the workspace grid
         LazyFlyout { name: "launcher"; scope: screenScope; Launcher { scope: screenScope } }
 
-        // tray menu: the app's own menu, drawn as flyout rows so it matches
-        // everything else rather than popping a native Qt menu. Submenus
-        // drill down in place, like the control centre.
+        // tray menu: the app's own menu as flyout rows
         LazyFlyout {
             id: trayMenu
             name: "traymenu"; scope: screenScope
@@ -817,9 +653,6 @@ ShellRoot {
 
         // notification history
         LazyFlyout { name: "notifications"; scope: screenScope; NotificationsFlyout { scope: screenScope } }
-
-        // Claude: SUPER+I or the bar module
-        LazyFlyout { name: "claude"; scope: screenScope; ClaudeFlyout { scope: screenScope } }
 
         // control centre
         LazyFlyout {

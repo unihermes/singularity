@@ -1,25 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/DdcBrightness.qml
 //
-// Brightness of external monitors over DDC/CI, one level per display: the
-// desktop's monitors have no backlight node for Brightness.qml to read,
-// but most take VCP feature 0x10 (brightness) over their I2C line.
-//
-// ddcutil does the talking. Displays are found with `ddcutil detect`, at
-// startup and again whenever a screen comes or goes, and keyed on their
-// DRM connector (DP-2), which is the name Quickshell gives the screen --
-// so each bar's module drives the monitor it sits on.
-//
-// A DDC write takes a quarter of a second, and monitors drop commands that
-// arrive while one is still being handled, so each display has one ddcutil
-// in flight at a time: set() records the level at once (the slider and the
-// bar follow the pointer) and the display's writer sends only the latest
-// value once the one before it has finished. Levels are read at detection
-// and each time the flyout opens (refresh()), which catches changes made
-// with the monitor's own buttons; nothing is polled.
-//
-// Needs the i2c-dev module and access to /dev/i2c-*, both of which the
-// ddcutil package sets up (modules-load.d and a uaccess udev rule).
+// External monitors' brightness over DDC/CI (VCP 0x10) via ddcutil, keyed on
+// DRM connector, so each bar drives its own monitor. Detected at startup
+// and when screens change. One write in flight per display (monitors drop
+// overlapping ones): set() records the level at once and the latest value
+// goes when the last write finishes. Levels are read on detection and when
+// the flyout opens. Needs i2c-dev (set up by the ddcutil package).
 
 pragma Singleton
 
@@ -34,9 +21,8 @@ Singleton {
     property var displays: []
     // output -> level 0..100
     property var levels: ({})
-    // outputs that have given a level at least once. Changes only when one
-    // first answers, so a list built from it isn't rebuilt by every read or
-    // write the way one built from `levels` would be.
+    // outputs that have answered once; changes only then, so lists built on
+    // it aren't rebuilt by every read
     property var answered: []
 
     readonly property bool available: displays.length > 0

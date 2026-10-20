@@ -1,23 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageNetwork.qml
 //
-// The wired link's state, then Wi-Fi: the radio, what it's joined to, the
-// networks in range, and every network iwd has saved.
-//
-// The state and the iwctl calls live in services/Network.qml, shared with the
-// bar module, its flyout and the Control Centre's toggle -- so a connection
-// made here shows up in all three without this page telling them.
-//
-// What this page has that the flyout doesn't: the radio switch, the link's
-// own details, the full list rather than the ten strongest, hidden networks,
-// and the saved networks gathered in one place, in range or not, to stop
-// auto-joining or forget. The flyout stays the quick path; this is the one
-// to open when something needs explaining.
-//
-// The details come from `ip` and `iw` rather than the service: nothing else
-// wants them, and a page is built when it's opened and destroyed when it's
-// left, so the read happens while someone is looking at it and stops when
-// they leave.
+// The wired link, then Wi-Fi: the radio, the joined network with its link
+// details in a grid (from `ip` and `iw`, read while the page is open), one
+// list of what's in range (saved first), hidden networks, and every saved
+// network with Auto-join and Forget on its row; on Network.qml shared with
+// the bar.
 
 import Quickshell
 import Quickshell.Io
@@ -38,8 +26,6 @@ SettingsPage {
     // the Other network… form
     property bool hiddenOpen: false
     property bool hiddenSecured: true
-    // the saved network opened for its settings, or ""
-    property string openSaved: ""
     // past the strongest ten in Other networks
     property bool showAll: false
     readonly property int shortList: 10
@@ -100,9 +86,7 @@ SettingsPage {
         pendingSsid = ""
     }
 
-    // A network's own row action: join it, or open its passphrase row. A
-    // known or open network needs neither -- iwd has the key already, or
-    // there is none. Clicking the open row again closes it.
+    // join a known or open network, else toggle its passphrase row
     function joinOrPrompt(net) {
         if (net.connected || Network.connecting === net.ssid) return
         if (net.known || net.security === "open") {
@@ -161,41 +145,57 @@ SettingsPage {
         }
     }
 
-    component Detail: SettingsValue { hideEmpty: true; copyable: true }
+    // the link's details, two to a line
+    component Detail: SettingsValue {
+        width: (detailGrid.width - detailGrid.columnSpacing) / 2
+        labelWidth: Theme.fit(120)
+        hideEmpty: true
+        copyable: true
+    }
 
-    Detail { label: "Interface"; value: page.online ? Network.device : ""; copyable: false }
-    Detail { label: "IP address"; value: page.online ? page.ipAddr : "" }
-    Detail { label: "Gateway";    value: page.online ? page.gateway : "" }
-    Detail { label: "MAC";        value: page.online ? page.macAddr : "" }
-    Detail { label: "Speed";      value: page.online ? page.linkRate : ""; copyable: false }
+    Grid {
+        id: detailGrid
+        width: parent.width
+        visible: page.online
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
 
-    SettingsField {
-        label: "Signal"
-        visible: page.online && page.linkDbm < 0
+        Detail { label: "Interface"; value: page.online ? Network.device : ""; copyable: false }
+        Detail { label: "IP address"; value: page.online ? page.ipAddr : "" }
+        Detail { label: "Gateway";    value: page.online ? page.gateway : "" }
+        Detail { label: "MAC";        value: page.online ? page.macAddr : "" }
+        Detail { label: "Speed";      value: page.online ? page.linkRate : ""; copyable: false }
 
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceM
+        SettingsField {
+            label: "Signal"
+            width: (detailGrid.width - detailGrid.columnSpacing) / 2
+            labelWidth: Theme.fit(120)
+            visible: page.online && page.linkDbm < 0
 
-            Text {
-                text: Network.strengthGlyphs[page.barsOf(page.linkDbm) - 1]
-                color: Theme.textStrong
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                text: Math.round(page.linkDbm) + " dBm"
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                text: "·  " + page.strengthWord(page.barsOf(page.linkDbm))
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceM
+
+                Text {
+                    text: Network.strengthGlyphs[page.barsOf(page.linkDbm) - 1]
+                    color: Theme.textStrong
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    text: Math.round(page.linkDbm) + " dBm"
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    text: "·  " + page.strengthWord(page.barsOf(page.linkDbm))
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
             }
         }
     }
@@ -218,7 +218,7 @@ SettingsPage {
             anchors.right: rescan.left
             anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            text: "SAVED NEARBY"
+            text: "IN RANGE  " + (page.savedNear.length + page.others.length)
         }
 
         FlyoutChip {
@@ -250,6 +250,8 @@ SettingsPage {
             highlighted: netRow.prompting
             trailing: netRow.connecting ? "connecting"
                 : Network.failedSsid === netRow.modelData.ssid ? "failed" : ""
+            tag: netRow.modelData.known ? "Saved" : ""
+            iconsNote: page.strengthWord(Math.max(1, netRow.modelData.bars))
             trailingIcons: [
                 !netRow.modelData.known && netRow.modelData.security !== "open" ? "󰌾" : "",
                 Network.strengthGlyphs[Math.max(1, netRow.modelData.bars) - 1]
@@ -298,27 +300,12 @@ SettingsPage {
         }
     }
 
-    // Matched by SSID: each list refresh brings new objects, and rebuilding
-    // the rows would drop a passphrase being typed into one
+    // One list, saved networks first, each strongest first. Matched by
+    // SSID: each list refresh brings new objects, and rebuilding the rows
+    // would drop a passphrase being typed into one
     Repeater {
         model: ScriptModel { values: page.listening ? page.savedNear : []; objectProp: "ssid" }
         NetworkRow {}
-    }
-
-    FlyoutRow {
-        visible: page.savedNear.length === 0 || !page.listening
-        enabled: false
-        label: Network.device === "" ? "No wireless device"
-            : !Network.powered ? "The radio is off"
-            : Network.listError !== "" ? Network.listError
-            : "No saved networks in range"
-    }
-
-    Item { width: 1; height: Theme.spaceM; visible: page.listening }
-
-    FlyoutHeading {
-        visible: page.listening
-        text: "OTHER NETWORKS  " + page.others.length
     }
 
     Repeater {
@@ -332,9 +319,12 @@ SettingsPage {
     }
 
     FlyoutRow {
-        visible: page.listening && page.others.length === 0
+        visible: !page.listening || page.savedNear.length + page.others.length === 0
         enabled: false
-        label: Network.scanning ? "Scanning…" : "Nothing else in range"
+        label: Network.device === "" ? "No wireless device"
+            : !Network.powered ? "The radio is off"
+            : Network.listError !== "" ? Network.listError
+            : Network.scanning ? "Scanning…" : "Nothing in range"
     }
 
     FlyoutRow {
@@ -424,54 +414,51 @@ SettingsPage {
 
     FlyoutHeading { text: "SAVED" + "  " + Network.knownNetworks.length }
 
+    // each on one row: where it is and when it last joined, Auto-join, and
+    // Forget on hover
     Repeater {
         model: Network.knownNetworks
 
-        Column {
+        SettingsField {
             id: saved
             required property var modelData
-            readonly property bool isOpen: page.openSaved === modelData.ssid
             readonly property string where: Network.ssid === modelData.ssid ? "Joined"
                 : Network.networks.some(n => n.ssid === modelData.ssid) ? "In range"
                 : "Not nearby"
 
-            width: parent.width
+            label: modelData.ssid
+            hint: [where, page.securityWord(modelData.security), modelData.hidden ? "Hidden" : "",
+                   where === "Joined" ? "" : "last " + page.lastJoined(modelData.last)].filter(t => t).join("  ·  ")
 
-            FlyoutRow {
-                label: saved.modelData.ssid
-                highlighted: saved.isOpen
-                trailing: saved.where + "  " + (saved.isOpen ? "󰅀" : "󰅂")
-                onActivated: page.openSaved = saved.isOpen ? "" : saved.modelData.ssid
-            }
+            HoverHandler { id: savedHover }
 
-            SettingsIndent {
-                visible: saved.isOpen
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceL
 
-                SettingsField {
-                    label: "Auto-join"
-                    hint: "Joins by itself when in range"
-                    Switch {
-                        anchors.right: parent.right
-                        checked: saved.modelData.auto
-                        onToggled: Network.setAutoConnect(saved.modelData.ssid, !saved.modelData.auto)
-                    }
-                }
-                SettingsValue {
-                    label: "Security"
-                    value: page.securityWord(saved.modelData.security) + (saved.modelData.hidden ? "  ·  Hidden" : "")
-                }
-                SettingsValue {
-                    label: "Last joined"
-                    value: saved.where === "Joined" ? "Joined now" : page.lastJoined(saved.modelData.last)
-                }
-                FlyoutChip {
-                    text: "󰆴 Forget network"
-                    confirmText: "Forget " + saved.modelData.ssid + "?"
+                IconButton {
+                    id: forget
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: savedHover.hovered || armed
+                    icon: "󰆴"
+                    confirm: true
                     onClicked: {
                         Network.forget(saved.modelData.ssid)
                         page.say("Forgot " + saved.modelData.ssid, false)
-                        page.openSaved = ""
                     }
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: forget.armed ? "Click again to forget" : "Auto-join"
+                    color: forget.armed ? Theme.alert : Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+                Switch {
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: saved.modelData.auto
+                    onToggled: Network.setAutoConnect(saved.modelData.ssid, !saved.modelData.auto)
                 }
             }
         }
@@ -483,9 +470,7 @@ SettingsPage {
         label: "No saved networks"
     }
 
-    // Read together with the list, and again a moment after a connect
-    // settles: an address arrives from DHCP a little after iwd says it has
-    // joined, so reading once on connect would show the old one.
+    // re-read a moment after a connect, once DHCP has given an address
     Timer {
         id: details
         interval: 1200

@@ -1,11 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/NotesWindow.qml
 //
-// Sticky notes: a small window of tabbed notes, toggled with SUPER+N. It
-// floats pinned over every workspace in the top-right corner of the screen,
-// placed there by windows.lua's "notes" rule and open hook rather than
-// centred like Settings and System. The notes themselves are
-// services/Notes.qml, saved as you type.
+// Sticky notes (SUPER+N): tabbed, pinned top-right over every workspace by
+// window-rules.lua's "notes" rule; saved as you type (services/Notes.qml).
 //
 //   click a tab           switch to it
 //   double-click a tab    rename it (Enter keeps, Escape drops)

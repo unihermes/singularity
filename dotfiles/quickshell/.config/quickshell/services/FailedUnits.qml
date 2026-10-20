@@ -1,13 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/FailedUnits.qml
 //
-// systemd units in the failed state, system and user, for a bar module that
-// only appears when there are any. It exists because a failed unit is
-// otherwise invisible: on 2026-09-12 the polkit agent sat failed for over an
-// hour after a compositor crash, and nothing on screen said so.
-//
-// Polled every 30s. systemctl answers in milliseconds, and failures are
-// rare enough that half a minute's delay in noticing one doesn't matter.
+// Failed systemd units, system and user, for a bar module shown only when
+// there are any. Polled every 30s.
 
 pragma Singleton
 
@@ -24,10 +19,8 @@ Singleton {
 
     function refresh() { if (!probe.running) probe.running = true }
 
-    // Status and recent log in a terminal, held open until a key is pressed.
-    // The unit goes in as an argument, not into the script: escaped names
-    // (systemd-fsck@dev-disk-by\x2duuid-….service) lose their backslashes
-    // to the shell otherwise.
+    // status and log in a terminal; the unit as an argument so escaped names
+    // keep their backslashes
     function showLog(u) {
         var scope = u.user ? "--user " : ""
         Quickshell.execDetached([Settings.terminal, "--class", "singularity.unit-log", "-e", "bash", "-c",
@@ -40,10 +33,7 @@ Singleton {
     function restart(u) { act(u, "restart") }
     function clear(u)   { act(u, "reset-failed") }
 
-    // Queued, one at a time: assigning a new command to a Process that is
-    // still running does nothing, so a second click before the first action
-    // finished (a polkit prompt can hold one open for a while) would be
-    // dropped without a word.
+    // actions queued, one at a time (a running Process ignores a new command)
     property var pending: []
 
     function act(u, verb) {
@@ -69,10 +59,8 @@ Singleton {
         }
     }
 
-    // A bar glyph alone is easy to miss -- screen off, a fullscreen app, away
-    // from the desk -- so a unit that wasn't failed on the last poll also gets
-    // a notification. Includes the first poll after the shell starts, since a
-    // compositor crash (which restarts the shell) is what took polkit down.
+    // a unit newly failed also notifies, including on the first poll (a
+    // compositor crash restarts the shell too)
     function notifyNew(out) {
         var seen = {}
         for (var i = 0; i < units.length; i++) seen[(units[i].user ? "u:" : "s:") + units[i].name] = true

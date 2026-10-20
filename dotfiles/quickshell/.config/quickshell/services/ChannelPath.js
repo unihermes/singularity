@@ -25,12 +25,9 @@ function arc(r, x, y, sweep) {
     return " A" + r + " " + r + " 0 0 " + sweep + " " + x + " " + y
 }
 
-// The closed outline, clockwise from the top-left corner, shrunk by d so a
-// band drawn inside it runs parallel: sides and ends move in by d, convex
-// corners tighten by d, fillets widen by d, and each step's horizontal edge
-// moves into whichever rect it belongs to (down into a wider rect below,
-// up into a wider rect above). A step narrower than its fillet and corner
-// together scales both down to fit, so it reads as a short jog.
+// The closed outline, clockwise from top-left, shrunk by d so inner bands
+// run parallel (convex corners tighten, fillets widen, step edges move into
+// the wider rect). A step narrower than fillet plus corner scales both down.
 function outline(R, fillet, d) {
     d = d || 0
     var n = R.length

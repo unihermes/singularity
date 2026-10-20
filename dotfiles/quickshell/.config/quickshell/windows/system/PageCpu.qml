@@ -17,7 +17,6 @@ import "../system"
 SystemPage {
     id: page
 
-    title: "CPU"
     subtitle: SystemSpecs.cpuModel || "--"
 
     // the window, for the rows that open another page
@@ -30,7 +29,8 @@ SystemPage {
 
     FlyoutHeading { text: "NOW" }
 
-    // the total large, the clocks and the heat beside it, and its minute
+    // the total large, the clocks and the heat beside it, and its minute at
+    // the card's right
     HeadCard {
         glyph: "󰻠"
         glyphColor: SystemStats.cpu >= 0.9 ? Theme.alert : Theme.textStrong
@@ -41,13 +41,15 @@ SystemPage {
             (SystemStats.tempC >= 0 ? Math.round(SystemStats.tempC) + "°C" : "")
                 + (PpdProfile.profile !== "" ? (SystemStats.tempC >= 0 ? " · " : "") + PpdProfile.profile + " profile" : ""),
         ]
-    }
 
-    Spark {
-        series: [{ values: SystemStats.cpuHistory, color: Theme.accent, fill: true }]
-        ceiling: 1
-        caption: "60s · peak " + (SystemStats.cpuHistory.length > 0
-            ? Format.pct(Math.max.apply(null, SystemStats.cpuHistory)) : "--")
+        Spark {
+            width: Theme.fit(260)
+            height: Theme.fit(56)
+            series: [{ values: SystemStats.cpuHistory, color: Theme.accent, fill: true }]
+            ceiling: 1
+            caption: "60s · peak " + (SystemStats.cpuHistory.length > 0
+                ? Format.pct(Math.max.apply(null, SystemStats.cpuHistory)) : "--")
+        }
     }
 
     // --- per core ----------------------------------------------------------
@@ -128,70 +130,71 @@ SystemPage {
         }
     }
 
-    // --- scheduling ---------------------------------------------------------
+    // --- details ------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "SCHEDULING" }
+    FlyoutHeading { text: "DETAILS" }
 
-    InfoRow {
-        label: "Load (1, 5, 15 min)"
-        // and what that is per thread, which is the figure that means
-        // something: past 1.00, work is queueing
-        value: SystemStats.load1.toFixed(2) + "  ·  " + SystemStats.load5.toFixed(2)
-            + "  ·  " + SystemStats.load15.toFixed(2)
-            + (SystemStats.cores.length > 0 ? ",  " + (SystemStats.load1 / SystemStats.cores.length).toFixed(2) + " a thread" : "")
-        valueColor: SystemStats.cores.length > 0 && SystemStats.load1 > SystemStats.cores.length
-            ? Theme.alert : undefined
-    }
-    InfoRow {
-        label: "Runnable"
-        value: SystemStats.procRunning + " of " + SystemStats.threadTotal + " threads"
-    }
-    InfoRow { label: "Governor"; value: SystemStats.governor || "--" }
-    InfoRow {
-        visible: SystemStats.epp !== ""
-        label: "Energy preference"
-        value: SystemStats.epp
-    }
-    // the one thing here that can be changed, where it's changed
-    FlyoutRow {
-        label: "Power profile"
-        note: PpdProfile.profile !== "" ? PpdProfile.profile : "not available"
-        trailing: "Settings  󰁔"
-        onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
-    }
-    InfoRow { label: "Scaling driver"; value: SystemSpecs.cpuDriver || "--" }
-
-    // --- silicon ------------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceS }
-    FlyoutHeading { text: "SILICON" }
-
-    // two columns, as the Overview's facts; the model is the page's
-    // subtitle, and the clocks and heat are in the card
+    // how it's scheduled, then the silicon, two to a line; the model is the
+    // page's subtitle, and the clocks and heat are in the card
     Grid {
-        id: silicon
+        id: details
         width: parent.width
         columns: 2
         columnSpacing: Theme.spaceXl
         readonly property real cell: (width - columnSpacing) / 2
 
-        InfoRow { width: silicon.cell; label: "Vendor"; value: SystemSpecs.cpuVendor || "--" }
         InfoRow {
-            width: silicon.cell
+            width: details.cell
+            label: "Load (1, 5, 15 min)"
+            // and what that is per thread, which is the figure that means
+            // something: past 1.00, work is queueing
+            value: SystemStats.load1.toFixed(2) + " · " + SystemStats.load5.toFixed(2)
+                + " · " + SystemStats.load15.toFixed(2)
+            valueColor: SystemStats.cores.length > 0 && SystemStats.load1 > SystemStats.cores.length
+                ? Theme.alert : undefined
+        }
+        InfoRow {
+            width: details.cell
+            label: "Load a thread"
+            value: SystemStats.cores.length > 0 ? (SystemStats.load1 / SystemStats.cores.length).toFixed(2) : "--"
+        }
+        InfoRow {
+            width: details.cell
+            label: "Runnable"
+            value: SystemStats.procRunning + " of " + SystemStats.threadTotal + " threads"
+        }
+        InfoRow { width: details.cell; label: "Governor"; value: SystemStats.governor || "--" }
+        InfoRow {
+            width: details.cell
+            label: "Energy preference"
+            value: SystemStats.epp || "--"
+        }
+        // the one thing here that can be changed, where it's changed
+        FlyoutRow {
+            width: details.cell
+            label: "Power profile"
+            note: PpdProfile.profile !== "" ? PpdProfile.profile : "not available"
+            trailing: "Settings  󰁔"
+            onActivated: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", "power"])
+        }
+        InfoRow { width: details.cell; label: "Scaling driver"; value: SystemSpecs.cpuDriver || "--" }
+        InfoRow { width: details.cell; label: "Vendor"; value: SystemSpecs.cpuVendor || "--" }
+        InfoRow {
+            width: details.cell
             label: "Topology"
             value: SystemSpecs.cpuCores > 0
                 ? SystemSpecs.cpuCores + " cores · " + SystemSpecs.cpuThreads + " threads"
                 : SystemStats.cores.length + " threads"
         }
         InfoRow {
-            width: silicon.cell
+            width: details.cell
             label: "Clock range"
             value: SystemSpecs.cpuMaxMhz > 0
                 ? (SystemSpecs.cpuMinMhz / 1000).toFixed(2) + " – "
                   + (SystemSpecs.cpuMaxMhz / 1000).toFixed(2) + " GHz" : "--"
         }
-        InfoRow { width: silicon.cell; label: "Cache"; value: SystemSpecs.cpuCache || "--" }
+        InfoRow { width: details.cell; label: "Cache"; value: SystemSpecs.cpuCache || "--" }
     }
 
     // --- heaviest -----------------------------------------------------------

@@ -1,14 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspacesFlyout.qml
 //
-// The window-overview flyout: every window on every workspace, grouped
-// under a header per workspace. Needs bar.allWindows() for its list.
-//
-// Drawn in the bar's workspace/window-strip language: each header carries
-// a pip that's a long accent pill on the current workspace and a muted stub
-// elsewhere, and each window row carries the same pip under its icon --
-// accent for the focused window, with the others' icons dimmed until
-// hovered. Left click focuses (header: switches workspace), middle closes.
+// Every window on every workspace under a header per workspace, with the
+// strip's pips. Left click focuses (a header switches), middle closes.
 
 import "../services"
 import Quickshell.Hyprland
@@ -81,7 +75,7 @@ FlyoutPanel {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 7
                     width: group.current ? 22 : 11
-                    radius: height / 2
+                    radius: Theme.pill(height)
                     color: group.current ? Theme.accent
                         : headMouse.containsMouse ? Theme.text : Theme.subtext
                     Behavior on width { NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease } }
@@ -179,7 +173,7 @@ FlyoutPanel {
                         anchors.topMargin: 1
                         anchors.horizontalCenter: glyphBox.horizontalCenter
                         height: Theme.indicatorWidth
-                        radius: height / 2
+                        radius: Theme.pill(height)
                         width: row.focused ? glyphBox.width - 2 : Theme.fs(6)
                         color: row.focused ? Theme.accent
                             : rowMouse.containsMouse ? Theme.subtext : Theme.muted

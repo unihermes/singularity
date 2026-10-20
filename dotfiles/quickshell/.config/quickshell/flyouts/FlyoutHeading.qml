@@ -1,37 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutHeading.qml
 //
-// Section label for a flyout: small caps, then a rule that runs out to the
-// right edge -- the same "label cut into a border" motif the rest of the
-// repo uses (see the fastfetch box headers).
-//
-// `hints` puts key hints at the rule's far end ("Enter open", "Esc close"),
-// for the centred overlays that are driven from the keyboard.
-//
-// A heading that shares its column with another one heads a section: the
-// siblings after it, up to the next heading or FlyoutDivider. Clicking it
-// folds that section shut, and a chevron at the rule's end shows which way
-// it is. Folded rows are moved into a hidden holder rather than hidden one
-// by one, so their own `visible` bindings survive, and moved back in their
-// old order. The empty spacer Item a page puts before the next heading
-// stays, so folded sections keep their gaps.
-//
-// `control` puts a control at the rule's far end, on the heading's line: a
-// flyout's radio switch, a scan button. A heading with one doesn't fold.
-//
-// `crumb` names the page above this one ("CONTROL CENTRE › APPEARANCE"):
-// it's drawn quieter before the text, and a click on it is the way back
-// (crumbClicked), so a submenu needs no Back row.
-//
-// The first heading of a bar flyout can be drawn as its title instead
-// (Theme.flyoutTitle): on a strip of ground across the panel's top, or as a
-// title bar in the accent with a close box.
-//
-// Folding lasts while the window is open. The Settings and System windows
-// keep a `foldedSections` list (by page title and heading) on an item
-// above their pages, so a page left and come back to is as it was; the
-// windows are torn down on close, and the list with them. A flyout is only
-// hidden when it closes, so its sections unfold as it goes.
+// A section heading: the label, then a rule to the right edge. `hints`
+// puts key hints at the rule's end; `control` a control (such a heading
+// doesn't fold); `crumb` the page above, quieter, clickable as the way
+// back (crumbClicked). A heading sharing its column with another folds its
+// section (up to the next heading or FlyoutDivider) on click, by moving the
+// rows into a hidden holder. Settings and System keep folds in a
+// `foldedSections` list while open; flyouts unfold as they close.
 
 import QtQuick
 import "../services"
@@ -62,31 +38,25 @@ Item {
     // set while a section starts folded, before its rows have moved
     property bool folding: false
 
-    width: parent ? parent.width : 0
-    implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + (asTitle ? Theme.spaceS : 0) + sectionRoom * (firstInColumn ? 1 : 2)
+    // in a sectioned column, out to just inside the sections' frames' outline
+    x: -outdent
+    width: parent ? parent.width + outdent : 0
+    implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
 
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
-    readonly property int sectionRoom: parent && parent.sectioned === true && !asTitle ? Theme.spaceM : 0
+    readonly property int sectionRoom: !parent || parent.sectioned !== true ? 0
+        : inFlyout ? Theme.flyoutSpacing : Theme.spaceM
+    readonly property int outdent: mirrorOf ? mirrorOf.outdent
+        : !parent || parent.sectioned !== true ? 0
+        : inFlyout ? Theme.spaceM : Theme.spaceL
+    readonly property bool inFlyout: {
+        for (var p = parent; p; p = p.parent)
+            if (p.isFlyoutPage === true) return true
+        return false
+    }
     property bool firstInColumn: !!parent && parent.children[0] === root && (parent.isSectionGroup !== true || parent.opensPage === true)
     readonly property real lift: firstInColumn ? -sectionRoom / 2 : 0
-
-    // the first row of a bar flyout's column, drawn as its title
-    readonly property bool asTitle: Theme.flyoutTitle !== "none" && !mirrorOf
-        && !!parent && parent.isFlyoutPage === true && parent.children[0] === root
-    readonly property bool titleBar: asTitle && Theme.flyoutTitle === "titlebar"
-    // the panel around the column, for its corners
-    readonly property Item panel: parent ? parent.parent : null
-    // from the panel's edge in to the first clear pixel inside its frame
-    readonly property int frameIn: Theme.frameDouble || Theme.frameChiselled ? Theme.frameInset + Theme.borderWidth
-        : Theme.frameStroked ? Theme.borderWidth : 0
-    readonly property color titleInk: !titleBar ? Theme.headingColor
-        : Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
-
-    function closePanel() {
-        for (var p = parent; p; p = p.parent)
-            if (typeof p.requestClose === "function") { p.requestClose(); return }
-    }
 
     // other headings showing in the same column; while this one is hidden
     // (a flyout that's shut) there's no telling, so all of them count
@@ -99,9 +69,7 @@ Item {
         return n
     }
 
-    // the page (or window) this sits on, so the same heading on two pages
-    // is two sections. Counts and prices are left out, so "BATTERY  80%"
-    // stays the same section as the charge changes.
+    // the section's key: the page plus the text without counts or prices
     function key() {
         var name = text.replace(/[\d$%.,·:-]+/g, "").replace(/\s+/g, " ").trim()
         for (var p = parent; p; p = p.parent)
@@ -139,9 +107,8 @@ Item {
         var moving = []
         for (var i = 0; i < holder.children.length; i++) moving.push(holder.children[i])
         if (moving.length === 0) return
-        // A Column lays out in child order and a new child goes last, so
-        // everything after the heading is taken out and put back behind the
-        // unfolded rows.
+        // everything after the heading is re-added behind the unfolded rows
+        // (a Column lays out in child order)
         var kids = col.children
         var at = 0
         while (at < kids.length && kids[at] !== root) at++
@@ -189,43 +156,64 @@ Item {
         width: root.width
     }
 
-    // the title's ground, out to the panel's frame on three sides
-    Rectangle {
-        id: band
-        visible: root.asTitle
-        x: -Theme.panelPad + root.frameIn
-        y: -Theme.panelPad + root.frameIn
-        width: root.width + (Theme.panelPad - root.frameIn) * 2
-        height: root.height - y
-        topLeftRadius: root.panel ? Math.max(0, root.panel.topLeftRadius - root.frameIn) : 0
-        topRightRadius: root.panel ? Math.max(0, root.panel.topRightRadius - root.frameIn) : 0
-        color: root.titleBar ? (Theme.hasAccent ? Theme.accent : Theme.overlay) : Theme.surface
+    readonly property string shape: Theme.headingShape
+
+    // what comes before the label: the look's mark (Theme.headingPrefix),
+    // or the opening piece of its shape (Theme.headingShape)
+    Item {
+        id: lead
+        readonly property bool shown: width > 0
+        anchors.left: parent.left
+        anchors.verticalCenter: label.verticalCenter
+        width: prefix.visible ? prefix.implicitWidth
+            : bar.visible ? bar.width
+            : notch.visible ? notch.x + notch.width : 0
+        height: label.height
+
+        Text {
+            id: prefix
+            visible: text !== ""
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.shape === "brackets" ? "[" : Theme.headingPrefix
+            color: Theme.headingMarkColor
+            font: label.font
+        }
 
         Rectangle {
-            visible: !root.titleBar
-            anchors.bottom: parent.bottom
-            width: parent.width
+            id: bar
+            visible: root.shape === "bar"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth * 3
+            height: label.font.pixelSize
+            radius: width / 2
+            color: Theme.headingMarkColor
+        }
+
+        // the rule's start, and the notch's left side
+        Rectangle {
+            id: leadLine
+            visible: root.shape === "tab"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.spaceL
             height: Theme.borderWidth
             color: Theme.stroke
         }
-    }
-
-    // the look's mark before every heading (Theme.headingPrefix)
-    Text {
-        id: prefix
-        visible: text !== ""
-        anchors.left: parent.left
-        anchors.verticalCenter: label.verticalCenter
-        text: root.titleBar ? "" : Theme.headingPrefix
-        color: Theme.hasAccent ? Qt.lighter(Theme.accent, 1.4) : Theme.subtext
-        font: label.font
+        Rectangle {
+            id: notch
+            visible: root.shape === "tab"
+            x: leadLine.width
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth
+            height: label.font.pixelSize
+            color: Theme.muted
+        }
     }
 
     Row {
         id: crumbRow
         visible: root.crumb !== ""
-        anchors.left: prefix.visible ? prefix.right : parent.left
-        anchors.leftMargin: prefix.visible ? Theme.spaceS : 0
+        anchors.left: lead.shown ? lead.right : parent.left
+        anchors.leftMargin: lead.shown ? Theme.spaceS : 0
         anchors.verticalCenter: label.verticalCenter
         spacing: Theme.spaceXs
 
@@ -233,7 +221,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             // smaller and unspaced, so both names fit a narrow flyout
             text: Theme.heading(root.crumb)
-            color: crumbMouse.containsMouse ? root.titleInk : Theme.subtext
+            color: crumbMouse.containsMouse ? Theme.headingColor : Theme.subtext
             font.family: Theme.fontHeading
             font.pixelSize: Theme.fontCaption
             font.weight: label.font.weight
@@ -257,49 +245,78 @@ Item {
         }
     }
 
+    // the tag shape's pill behind the label
+    Rectangle {
+        visible: root.shape === "tag"
+        anchors.fill: label
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
+        anchors.topMargin: -Theme.spaceXs
+        anchors.bottomMargin: -Theme.spaceXs
+        radius: Theme.radiusInner
+        color: Theme.accent
+    }
+
     Text {
         id: label
-        anchors.left: crumbRow.visible ? crumbRow.right : prefix.visible ? prefix.right : parent.left
-        anchors.leftMargin: crumbRow.visible ? Theme.spaceXs : prefix.visible ? Theme.spaceM : 0
-        anchors.verticalCenter: root.asTitle ? band.verticalCenter : parent.verticalCenter
-        anchors.verticalCenterOffset: root.asTitle ? 0 : root.lift
+        anchors.left: crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
+        anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
+            + (root.shape === "tag" ? Theme.spaceS : 0)
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: root.lift
         text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "")
-        color: root.titleInk
+        color: root.shape === "tag" ? Theme.textOnAccent : Theme.headingColor
         font.family: Theme.fontHeading
-        font.pixelSize: Theme.fontSmall
+        font.pixelSize: Theme.fontHeadingSize
         font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
         // tighter beside a crumb, which shares the line
         font.letterSpacing: root.crumb !== "" ? Theme.headingSpacing / 2 : Theme.headingSpacing
     }
 
-    Rectangle {
-        visible: Theme.headingRule && !root.asTitle
+    // the shape's closing piece after the label: a bracket, or the
+    // notch's right side
+    Item {
+        id: tail
         anchors.left: label.right
-        anchors.leftMargin: Theme.spaceL
+        anchors.leftMargin: width > 0 ? Theme.spaceM : 0
+        anchors.verticalCenter: label.verticalCenter
+        width: closer.visible ? closer.implicitWidth : notchEnd.visible ? notchEnd.width : 0
+        height: label.height
+
+        Text {
+            id: closer
+            visible: root.shape === "brackets"
+            anchors.verticalCenter: parent.verticalCenter
+            text: "]"
+            color: Theme.headingMarkColor
+            font: label.font
+        }
+        Rectangle {
+            id: notchEnd
+            visible: root.shape === "tab"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth
+            height: label.font.pixelSize
+            color: Theme.muted
+        }
+    }
+
+    // the tab shape is drawn on the rule, so keeps it
+    Rectangle {
+        visible: Theme.headingRule || root.shape === "tab"
+        anchors.left: tail.right
+        anchors.leftMargin: root.shape === "tab" ? 0 : root.shape === "tag" ? Theme.spaceL + Theme.spaceS : Theme.spaceL
         anchors.right: controlBox.active ? controlBox.left : chevron.visible ? chevron.left : hintRow.left
         anchors.rightMargin: root.hints.length > 0 || chevron.visible || controlBox.active ? Theme.spaceL : 0
         anchors.verticalCenter: label.verticalCenter
         height: Theme.borderWidth
-        // Corners' dashed option draws it as dashes instead
-        readonly property bool dashed: Theme.frameCorners && Theme.opt("dash")
-        color: dashed ? "transparent" : Theme.stroke
-        clip: true
-
-        Row {
-            visible: parent.dashed
-            spacing: 3
-            Repeater {
-                model: parent.visible ? Math.ceil(parent.parent.width / 6) : 0
-                Rectangle { width: 3; height: Theme.borderWidth; color: Theme.stroke }
-            }
-        }
+        color: Theme.stroke
     }
 
     Text {
         id: chevron
         visible: root.collapsible
-        anchors.right: closeBox.visible ? closeBox.left : parent.right
-        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
+        anchors.right: parent.right
         anchors.verticalCenter: label.verticalCenter
         text: root.collapsed ? "󰅂" : "󰅀"
         // only while the pointer is on the heading, or the section is
@@ -312,8 +329,7 @@ Item {
 
     Row {
         id: hintRow
-        anchors.right: closeBox.visible ? closeBox.left : parent.right
-        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
+        anchors.right: parent.right
         anchors.verticalCenter: label.verticalCenter
         spacing: Theme.spaceXl
 
@@ -352,38 +368,7 @@ Item {
         id: controlBox
         active: root.control !== null
         sourceComponent: root.control
-        anchors.right: closeBox.visible ? closeBox.left : parent.right
-        anchors.rightMargin: closeBox.visible ? Theme.spaceM : 0
-        anchors.verticalCenter: label.verticalCenter
-    }
-
-    // the title bar's close box
-    Rectangle {
-        id: closeBox
-        visible: root.titleBar
         anchors.right: parent.right
-        anchors.verticalCenter: band.verticalCenter
-        width: Theme.fontBody + Theme.spaceXs
-        height: width
-        radius: Math.min(Theme.radiusSmall, 3)
-        color: closeMouse.containsMouse ? Qt.rgba(root.titleInk.r, root.titleInk.g, root.titleInk.b, 0.18) : "transparent"
-        border.width: Theme.borderWidth
-        border.color: root.titleInk
-
-        Text {
-            anchors.centerIn: parent
-            text: "󰅖"
-            color: root.titleInk
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontSmall
-        }
-
-        MouseArea {
-            id: closeMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.closePanel()
-        }
+        anchors.verticalCenter: label.verticalCenter
     }
 }

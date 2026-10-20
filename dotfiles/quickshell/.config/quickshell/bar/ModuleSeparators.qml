@@ -69,7 +69,7 @@ Repeater {
                 anchors.centerIn: parent
                 width: mark.dot
                 height: width
-                radius: width / 2
+                radius: Theme.pill(width)
                 color: Theme.muted
             }
 
@@ -79,7 +79,7 @@ Repeater {
                 spacing: 3
                 Repeater {
                     model: 3
-                    Rectangle { width: mark.width; height: width; radius: width / 2; color: Theme.muted }
+                    Rectangle { width: mark.width; height: width; radius: Theme.pill(width); color: Theme.muted }
                 }
             }
 
@@ -88,14 +88,14 @@ Repeater {
                 visible: mark.kind === "capped"
                 anchors.centerIn: parent
                 spacing: 2
-                Rectangle { width: mark.width; height: width; radius: width / 2; color: Theme.muted }
+                Rectangle { width: mark.width; height: width; radius: Theme.pill(width); color: Theme.muted }
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: mark.bw
                     height: Math.round(mark.ruleHeight * 0.75)
                     color: Theme.stroke
                 }
-                Rectangle { width: mark.width; height: width; radius: width / 2; color: Theme.muted }
+                Rectangle { width: mark.width; height: width; radius: Theme.pill(width); color: Theme.muted }
             }
         }
     }

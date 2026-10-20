@@ -1,24 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/AltTabSwitcher.qml
 //
-// The ALT+Tab switcher: a row of the open windows, most-recently-used first,
-// with one highlighted. Hold ALT and tap Tab to step the highlight along,
-// release ALT to focus what you landed on.
-//
-// The selection lives here, not in Hyprland: cycle_next focuses (and
-// raises) each window as it walks. Here nothing is focused until ALT comes
-// up, and SHIFT+Tab is just -1.
-//
-// Keys arrive by two routes. Hyprland's binds win over any client, so
-// ALT+Tab, SHIFT+Tab and grave never reach this window -- they run
-// alttab-ipc.sh, which steps it over IPC. But Hyprland won't deliver a
-// modifier release to a bind, so this window takes the keyboard to catch
-// the ALT release in Keys.onReleased. Escape is handled here too.
-//
-// The cards are drawn as Theme.altTabStyle says: the app's icon alone, the
-// icon over the window's title, or a still of the window (one screencopy
-// frame as the switcher opens) with the icon in its corner. The last two
-// also name the highlighted window under the cards.
+// The ALT+Tab switcher: the open windows, most recently used first. The
+// selection lives here, so nothing is focused until ALT comes up. Tab and
+// SHIFT+Tab arrive over IPC (Hyprland's binds win); the ALT release and
+// Escape through this window's keyboard grab. Cards per
+// Theme.altTabStyle: icon, icon and title, or a still of the window.
 
 import Quickshell
 import Quickshell.Wayland
@@ -32,31 +19,20 @@ OverlayWindow {
 
     readonly property bool open: scope.openFlyout === "alttab"
 
-    // The window list is captured once, by begin(), rather than tracked live.
-    // Focus history reorders itself the moment anything is focused, so a live
-    // binding would reshuffle the row under the highlight mid-cycle; and the
-    // list must survive `open` going true, which happens after begin().
+    // captured once by begin(): live focus history would reshuffle the row
+    // mid-cycle
     property var windows: []
 
     property int selected: 0
 
-    // The gesture this switcher belongs to, from the Tab press that opened
-    // it (alttab.lua's altTabWatchGen, carried through the relay). -1 when
-    // the caller sent none. shell.qml matches the ALT release against it --
-    // see the altTabPendingCommitGen comment there.
+    // the gesture this switcher belongs to (alttab.lua's altTabWatchGen),
+    // -1 when none was sent; see shell.qml
     property int gen: -1
 
-    // MRU order: focusHistoryID 0 is the focused window, 1 the one before.
-    // Start on 1, so a single tap-and-release swaps back and forth.
-    //
-    // `clientsJson` is `{"gen": N, "clients": <what hyprctl clients -j
-    // prints>}`, from alttab-relay (or alttab-ipc.sh without it) -- an
-    // object, because `qs ipc call` splits a top-level array into several
-    // arguments.
-    //
-    // Read fresh from Hyprland for each gesture rather than from
-    // Hyprland.toplevels: Quickshell's cached lastIpcObject only refreshes
-    // on request, asynchronously, so its focusHistoryID is stale.
+    // MRU order, starting on 1 so a tap swaps back and forth. `clientsJson`
+    // is {"gen": N, "clients": <hyprctl clients -j>} (an object: `qs ipc call`
+    // splits a top-level array), read fresh each gesture since Quickshell's
+    // cached focusHistoryID is stale.
     function begin(clientsJson) {
         let clients
         let parsed
@@ -64,18 +40,11 @@ OverlayWindow {
         clients = parsed.clients
         gen = parsed.gen === undefined ? -1 : parsed.gen
 
-        // the shell's own windows (Settings, System, Keybinds) are in here
-        // like any other toplevel: they can be focused and worked in, so
-        // ALT+Tab reaches them
+        // the shell's own windows count like any other
         const cs = (clients || []).filter(c => c.class)
 
-        // Offer the windows on the workspace you're actually looking at, or
-        // with Theme.altTabScope "all" every regular workspace's too (not
-        // special ones, as in the bar) -- focusing one on another workspace
-        // takes you there. "Looking at" is the focused window's workspace
-        // (focusHistoryID 0) rather than some separately-queried "current
-        // workspace", so it's exactly the workspace this same read of
-        // hyprctl agrees you're on.
+        // the focused window's workspace, or with altTabScope "all" every
+        // regular workspace
         const current = cs.find(c => c.focusHistoryID === 0)
         const all = Theme.altTabScope === "all"
         const onWs = current
@@ -104,19 +73,13 @@ OverlayWindow {
         selected = ((selected + delta) % n + n) % n
     }
 
-    // Focus the highlighted window. Close first, focus second: releasing
-    // this window's keyboard grab hands focus back to whoever had it before,
-    // which would undo a focus made while still open.
-    //
-    // That release also bounces focus back on Hyprland's own timing, which
-    // can land after the focus below; retryTimer repeats the focus once,
-    // shortly after, to correct it. Maximizing is windows.lua's focus hook.
+    // Focuses the highlighted window: close first (releasing the grab hands
+    // focus back), then focus, repeated once shortly after (retryTimer) as
+    // the bounce can land late.
     function commit() {
         const win = windows[selected]
         scope.openFlyout = ""
-        // Both routes to the ALT release fire on every gesture; this marks
-        // the gesture done, so shell.qml can tell the second from a release
-        // that beat the switcher onto the screen.
+        // marks the gesture done, so shell.qml drops the other release route
         scope.altTabCommittedGen = Math.max(scope.altTabCommittedGen, scope.altTabOpenGen)
         scope.altTabOpenGen = -1
         if (win) {
@@ -151,17 +114,12 @@ OverlayWindow {
     }
 
     visible: open && windows.length > 0
-    // Exclusive, because a focused client is the only thing that sees a
-    // modifier release. A release before this window has the keyboard is
-    // caught by alttab.lua's key-state poll instead; this grab is the fast
-    // path, and whichever notices first wins. (Not a GlobalShortcut on bare
-    // ALT: that changes how Hyprland treats ALT everywhere.)
+    // Exclusive: only a focused client sees a modifier release.
+    // alttab.lua's key-state poll catches a release before the grab.
     focusMode: WlrKeyboardFocus.Exclusive
     layerNamespace: "singularity-alttab"
 
-    // Focus has to land on the item for Keys handlers to see anything, and
-    // only once the window is actually up -- grabbing before that silently
-    // does nothing.
+    // focus the item once the window is up, or the grab does nothing
     onVisibleChanged: if (visible) keyHandler.forceActiveFocus()
 
     Item {
@@ -193,10 +151,8 @@ OverlayWindow {
         color: Theme.scrim
     }
 
-    // Cards wrap onto more rows once a row would be wider than the screen;
-    // a short list is still one centred row. The cards are icons only; the
-    // highlighted window's app and title are the caption under the grid,
-    // where they have the frame's whole width instead of a card's.
+    // cards wrap once a row would be wider than the screen; the highlighted
+    // window's app and title are the caption under them
     readonly property bool previews: Theme.altTabStyle === "previews"
     readonly property bool titled: Theme.altTabStyle === "titled"
     readonly property bool iconsOnly: Theme.altTabStyle === "icons"
@@ -237,9 +193,7 @@ OverlayWindow {
         anchors.centerIn: parent
         width: body.width + root.pad * 2
         height: Math.min(root.height - root.pad * 4, body.height + root.pad * 2)
-        // only matters past what even a wrapped grid can show (several
-        // dozen windows): the rows that don't fit are cut off inside the
-        // frame instead of spilling out of it
+        // cuts off rows past what even a wrapped grid shows
         clip: true
 
         Column {
@@ -347,9 +301,8 @@ OverlayWindow {
                 }
             }
 
-            // Each line is held to its font's own line height: a title with
-            // an emoji or symbol from a fallback font would otherwise make
-            // its line, and the frame, taller for that one window.
+            // each line held to its font's line height, so a fallback glyph
+            // can't make it taller
             Column {
                 visible: !root.iconsOnly
                 width: parent.width

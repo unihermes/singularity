@@ -20,10 +20,8 @@ usage: ./install.sh laptop|desktop
 EOF
 }
 
-# What kind of machine this is. Everything marked `if (( laptop ))` below
-# is skipped on a desktop, and packages/laptop.txt or packages/desktop.txt
-# is installed on top of pacman.txt. Recorded so update.sh installs the same
-# package lists.
+# Laptop or desktop: picks packages/laptop.txt or desktop.txt and the
+# `if (( laptop ))` steps. Recorded for update.sh.
 case ${1:-} in
   laptop)  laptop=1 ;;
   desktop) laptop=0 ;;
@@ -55,9 +53,8 @@ if ! command -v yay &>/dev/null; then
 fi
 yay --version >/dev/null || die "yay bootstrap failed"
 
-# Read a package list into an array. NOT `| xargs`: xargs points its child's
-# stdin at /dev/null, so any package manager that stops to ask a question
-# reads EOF and aborts instead. That silently killed the whole AUR step.
+# Reads a package list into an array. Not `| xargs`, which gives the child
+# /dev/null as stdin, so any prompt aborts.
 read_list() {
   local -n _out=$1
   mapfile -t _out < <(list "$2")
@@ -74,10 +71,8 @@ if (( ${#pacman_pkgs[@]} > 0 )); then
   sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
 fi
 
-# Arch's makepkg.conf turns on debug, so every AUR build also produced a
-# <name>-debug package that yay then installed. The user config is read after
-# /etc/makepkg.conf and the last debug/!debug in OPTIONS wins. Appended only
-# if the file says nothing about debug, so your own choice stands.
+# No <name>-debug packages from AUR builds, unless makepkg.conf already
+# says something about debug.
 makepkg_conf=${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf
 if ! grep -qs 'debug' "$makepkg_conf"; then
   log "turning off -debug packages for AUR builds"
@@ -86,10 +81,8 @@ if ! grep -qs 'debug' "$makepkg_conf"; then
 fi
 
 log "installing AUR packages"
-# Not --noconfirm: you want to see the PKGBUILD diffs before anything builds.
-# --answerclean None only skips the "rebuild from scratch?" prompt; diffs and
-# the install confirmation still stop for you. --sudoloop keeps sudo from
-# timing out and asking again partway through a long build.
+# Not --noconfirm, so PKGBUILD diffs are shown; --sudoloop keeps sudo alive
+# through long builds.
 aur_failed=0
 read_list aur_pkgs packages/aur.txt
 if [[ -f packages/aur-$machine.txt ]]; then
@@ -109,18 +102,9 @@ log "linking dotfiles"
 ./link.sh
 
 log "building alttab-relay"
-# The ALT+Tab switcher's fast path (see alttab.lua and
-# dotfiles/hypr/.config/hypr/alttab-relay.cpp for why it exists) talks to
-# Quickshell over a private, unversioned wire format, and needs
-# -mno-direct-extern-access to work around a protected-symbol linking issue
-# between this machine's GCC and its Qt6 build (see the flag in this same
-# command -- without it, linking fails with a "copy relocation against
-# non-copyable protected symbol" error). Both of those are exactly the kind
-# of thing that can stop working on some future toolchain or Quickshell
-# update, so a failure here is a warning, not a fatal error: alttab-ipc.sh
-# falls back to the slower `qs ipc call` path on their own
-# whenever this binary or its socket isn't there, so ALT+Tab still works
-# (just without the extra latency cut) if this step fails.
+# alttab-relay: ALT+Tab's fast path to Quickshell (alttab-relay.cpp). It
+# depends on an unversioned wire format and -mno-direct-extern-access, so a
+# failure only warns: alttab-ipc.sh falls back to `qs ipc call`.
 alttab_dir="dotfiles/hypr/.config/hypr"
 if g++ -std=c++20 -O2 -mno-direct-extern-access \
     "$alttab_dir/alttab-relay.cpp" -o "$alttab_dir/alttab-relay" \
@@ -131,10 +115,8 @@ else
 fi
 
 log "building display-curve"
-# Holds a lifted tone curve on displays that show shadows too dark, the ones
-# this machine's display-fixes.lua lists (see
-# dotfiles/hypr/.config/hypr/display-curve.c). Only a missing lift if it
-# fails, so a warning.
+# display-curve: a lifted tone curve for the displays display-fixes.lua lists;
+# a failure only warns.
 curve_dir="dotfiles/hypr/.config/hypr"
 curve_gen=$(mktemp -d)
 if wayland-scanner client-header "$curve_dir/wlr-gamma-control-unstable-v1.xml" \
@@ -156,15 +138,8 @@ xdg-mime default thunar.desktop inode/directory
 xdg-mime default org.pwmt.zathura.desktop application/pdf
 xdg-settings set default-url-scheme-handler file thunar.desktop || true
 
-# Images and media have to be claimed by name, not left to whoever asks
-# first: zathura's mupdf plugin lists the common image types in its own
-# .desktop, so without this a screenshot opens in the PDF viewer.
-#
-# The entry is only written once the .desktop is actually on disk. xdg-mime
-# will happily record a handler that doesn't exist, and that reads as a
-# working default right up until something tries to open the file, so a
-# renamed or missing desktop file should be a warning here rather than a
-# mystery later.
+# Image and media types are claimed by name (zathura's plugin lists images
+# too). A handler is only recorded once its .desktop exists.
 set_default() {
   local desktop=$1; shift
   if ! [[ -f /usr/share/applications/$desktop || -f $HOME/.local/share/applications/$desktop ]]; then
@@ -180,32 +155,20 @@ set_default imv.desktop image/png image/jpeg image/gif image/webp image/bmp \
 set_default mpv.desktop video/mp4 video/x-matroska video/webm video/quicktime \
   video/x-msvideo audio/mpeg audio/flac audio/ogg audio/x-wav audio/mp4
 
-# Structured text is only *inherited* from text/plain, so an editor's
-# MimeType=text/plain doesn't register it for these and the browser -- which
-# does name application/json outright -- wins the mimeinfo.cache fallback.
-# Naming them keeps JSON and friends in the editor.
+# structured text inherits from text/plain only, so it's named outright
 set_default codium.desktop application/json application/xml application/x-yaml
 
-# The theme, dark or light, icons, cursor and fonts are the shell's to set:
-# Quickshell's AppearanceSync writes them to gsettings from the Appearance
-# page at every start. This is the one key it doesn't manage -- no close,
-# minimise or maximise buttons in GTK headerbars. GTK4 and libadwaita apps take
-# it from the portal, which reads gsettings, and ignore gtk-decoration-layout
-# in settings.ini, so without it they keep drawing an X. With no session bus,
-# gsettings silently writes to a throwaway in-memory backend, so read it back
-# to catch that.
+# The shell sets theme, icons, cursor and fonts via gsettings; this is the
+# one key it doesn't: no headerbar buttons (GTK4 reads it from the portal).
+# Read back, since with no session bus gsettings writes nowhere.
 gsettings set org.gnome.desktop.wm.preferences button-layout ':'
 if [[ $(gsettings get org.gnome.desktop.wm.preferences button-layout 2>/dev/null) != "':'" ]]; then
   warn "gsettings did not stick (no session bus?). Rerun ./install.sh from a"
   warn "logged-in session or GTK4 apps will keep their headerbar buttons."
 fi
 
-# Claude Code: the shell writes ~/.claude/themes/singularity.json from the
-# look (AppearanceSync), and this selects it. settings.json is Claude Code's
-# own file, so it's edited in place rather than stowed, and a theme picked
-# with /theme since is left alone -- only unset or built-in dark is replaced.
-# The fullscreen renderer is set the same way (unless /tui picked one): it is
-# the one where highlighting text in Claude copies it.
+# Claude Code: selects the Singularity theme the shell writes (unless one
+# was picked with /theme) and the fullscreen renderer (unless /tui picked one).
 python3 - <<'PY' || warn "could not set up Claude Code -- pick Singularity under /theme, then /tui fullscreen"
 import json, os
 path = os.path.expanduser("~/.claude/settings.json")
@@ -226,12 +189,8 @@ if settings != before:
     os.replace(path + ".new", path)
 PY
 
-# LibreOffice set up to feel like Word: the ribbon (Tabbed) in every app,
-# .docx/.xlsx/.pptx as the save formats, a Normal.ott default template with
-# Word's styles in Carlito (Calibri's metric twin), and Zotero's add-in.
-# Everything lands in the user profile, so any of it can be changed back in
-# LibreOffice afterwards. Done once: a profile that already has the template
-# is left alone.
+# LibreOffice set up like Word: the ribbon, Office save formats, a Normal.ott
+# with Word's styles in Carlito, Zotero's add-in. Once per profile.
 setup_libreoffice() {
   local user="$HOME/.config/libreoffice/4/user" work oxt
   command -v soffice &>/dev/null || return 0
@@ -243,9 +202,8 @@ setup_libreoffice() {
   log "setting LibreOffice up like Word"
   work=$(mktemp -d)
 
-  # The template, written flat and converted. Word's Normal: 11 pt, 1.08 line
-  # spacing, 8 pt after; headings in its blue, each followed by Normal; Letter
-  # with 1 in margins and tab stops every half inch.
+  # Word's Normal: 11 pt, 1.08 spacing, 8 pt after, blue headings, Letter
+  # with 1 in margins
   cat > "$work/Normal.fodt" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -378,15 +336,9 @@ EOF
 setup_libreoffice
 
 # --- kernel command line -------------------------------------------------
-# Where it lives depends on the boot loader: a unified kernel image bakes in
-# /etc/kernel/cmdline, systemd-boot reads the options line of each loader
-# entry, and GRUB builds grub.cfg from GRUB_CMDLINE_LINUX_DEFAULT. Every
-# change below goes through edit_cmdline, and the image or grub.cfg is
-# rebuilt once, at the end of the boot section.
-#
-# Every file touched is backed up first. A malformed options line -- a lost
-# root= UUID above all -- is an unbootable machine, and the boot loader will
-# not tell you why.
+# Per boot loader: a UKI's /etc/kernel/cmdline, systemd-boot's options lines,
+# or GRUB_CMDLINE_LINUX_DEFAULT. Changes go through edit_cmdline, files are
+# backed up first, and the image or grub.cfg is rebuilt once at the end.
 cmdline_mode="" cmdline_files=()
 if [[ -f /etc/kernel/cmdline ]]; then
   cmdline_mode=plain cmdline_files=(/etc/kernel/cmdline)
@@ -401,13 +353,8 @@ fi
 cmdline_changed=0
 rebuild_initramfs=0
 
-# Puts the rewritten cmdline in $1 over $2, and only when it holds different
-# options: a rerun that changes nothing then rebuilds nothing. Compared as a
-# sorted set of words, since edit_cmdline always re-appends at the end and the
-# tokens would otherwise trade places on every run. Never an empty or
-# truncated one either -- that is an unbootable machine. GRUB's defaults have
-# no root= (grub-mkconfig adds it), so that check is for the other two, and
-# its quoted variable is unwrapped so the first token compares like the rest.
+# Puts $1 over $2 only when the options differ as a set of words, and never
+# an empty one or one without root= (GRUB's has none: grub-mkconfig adds it).
 words() { sed -E 's/^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"$/\1/' "$1" | tr -s ' \t' '\n\n' | sort; }
 install_cmdline() {
   local tmp=$1 f=$2
@@ -426,12 +373,9 @@ install_cmdline() {
   return 1
 }
 
-# edit_cmdline KEY TOKENS -- drop every KEY= token, or with an empty KEY every
-# verbosity knob, and append TOKENS, leaving every other token untouched.
-# Filtered token by token rather than substituting patterns out: adjacent
-# options share the space between them, so a global s/// can only ever
-# delete every other one (`quiet loglevel=3 splash` loses quiet and splash
-# and keeps loglevel).
+# edit_cmdline KEY TOKENS -- drop every KEY= token (with an empty KEY every
+# verbosity knob) and append TOKENS. Token by token, since a global s///
+# loses every other adjacent option.
 edit_cmdline() {
   local key=$1 add=$2 f tmp
   for f in "${cmdline_files[@]}"; do
@@ -468,11 +412,8 @@ edit_cmdline() {
 }
 
 # --- boot verbosity ------------------------------------------------------
-# Quiet by default: no kernel or unit output on startup or shutdown. Set
-# BOOT_VERBOSE=1 to get systemd's [ OK ] lines back, which is worth doing when
-# a boot hangs and you need to see which unit it hung on:
-#
-#   BOOT_VERBOSE=1 ./install.sh laptop
+# Quiet by default; BOOT_VERBOSE=1 ./install.sh brings systemd's [ OK ] lines
+# back for debugging a hang.
 BOOT_VERBOSE=${BOOT_VERBOSE:-0}
 if (( BOOT_VERBOSE )); then
   log "making the boot verbose"
@@ -483,9 +424,7 @@ else
 fi
 
 # --- boot splash and menu ------------------------------------------------
-# archinstall bakes Arch's logo into the unified kernel image (--splash in
-# the mkinitcpio preset), and systemd-stub paints it over the firmware's own
-# logo. Without it the firmware logo stays up until the greeter.
+# the UKI's Arch logo (--splash) stays up over the firmware's
 for preset in /etc/mkinitcpio.d/*.preset; do
   grep -Eqs '^[^#]*--splash' "$preset" || continue
   log "removing the Arch splash from ${preset##*/}"
@@ -494,10 +433,8 @@ for preset in /etc/mkinitcpio.d/*.preset; do
   rebuild_initramfs=1
 done
 
-# systemd-boot's menu stays hidden and the default entry boots straight away;
-# hold Space (or any key) as the firmware hands over to bring the menu up.
-# A timeout set with `bootctl set-timeout` lives in an EFI variable and beats
-# loader.conf, so that goes too.
+# systemd-boot's menu hidden (hold Space to show it); an EFI-variable timeout
+# would beat loader.conf, so it's cleared
 esp=$(sudo bootctl -p 2>/dev/null || true)
 loaderconf=$esp/loader/loader.conf
 if [[ -n $esp ]] && sudo test -f "$loaderconf" && ! sudo grep -Eqx 'timeout[[:space:]]+0' "$loaderconf"; then
@@ -510,16 +447,9 @@ if [[ -e /sys/firmware/efi/efivars/LoaderConfigTimeout-4a67b082-0a4c-41cf-b6c7-4
   sudo bootctl set-timeout "" || true
 fi
 
-# Which OS starts: the helper Settings → Startup uses to list systemd-boot's
-# entries and pick the default one. With the menu hidden that default is
-# what boots, so on a machine with Windows beside Arch this is the switch.
-# The pick goes in the LoaderEntryDefault EFI variable (`bootctl
-# set-default`), which beats loader.conf's `default` line and leaves the
-# file alone. Both need root -- the ESP is 0700 and EFI variables are
-# root-written -- so the page runs the helper through pkexec, and the
-# polkit action lets the active local session do that without a password.
-# The helper only sets an id systemd-boot itself lists. Root-owned in
-# /usr/local/bin for the same reason as singularity-charge below.
+# singularity-boot: lists systemd-boot's entries and sets the default
+# (LoaderEntryDefault) for Settings > Startup, through pkexec with a polkit
+# action for the local session. Root-owned in /usr/local/bin.
 if [[ -n $esp ]]; then
   log "installing the boot entry helper"
   sudo tee /usr/local/bin/singularity-boot >/dev/null <<'BOOT'
@@ -561,46 +491,17 @@ BOOT
 POLICY
 fi
 
-# The IPU6 webcam's sensor never satisfies its firmware dependency (missing
-# fwnode graph endpoint), so the kernel spends its default ~10s deferred-probe
-# window waiting on it every boot before giving up. Telling it to give up in
-# 1s instead shrinks whatever else queues up behind that wait.
-#
-# Separately, and the bigger one in practice: the Intel Sensor Hub
-# (intel_ish_ipc, PCI 00:12.0) does a firmware handshake on every boot that
-# takes a genuinely variable few seconds, and the kernel probes devices on a
-# single serialized thread by default -- so everything else waiting its turn
-# in ACPI enumeration order, including the touchpad's entire i2c controller,
-# sits frozen behind it too. That's the actual cursor-freeze-at-startup
-# cause: udevadm monitor traced across a boot shows total silence in the
-# device tree for ~8s, then the touchpad's i2c bus, the touchscreen, and the
-# sensor hub's own clients all burst in together the instant it clears --
-# and the freeze length tracks how long that handshake happened to take,
-# which is why it varied between boots (5s, 10s, 20s+). Marking just that
-# driver for async probing lets the kernel move on to unrelated devices
-# while it waits, instead of blocking the whole queue on it.
-# (Async probing only hides a slow probe while no other module is loading:
-# every module's init ends in async_synchronize_full(), which waits on all
-# outstanding async probes system-wide. It doesn't help the webcam controller
-# below, which is why that one is blacklisted instead.)
-# Both are harmless on hardware without these devices.
+# Shorter deferred-probe timeout (the IPU6 sensor never resolves), and async
+# probing for intel_ish_ipc, whose variable firmware handshake otherwise
+# froze everything behind it, the touchpad included. Harmless elsewhere.
 if (( laptop )); then
   edit_cmdline deferred_probe_timeout "deferred_probe_timeout=1"
   edit_cmdline driver_async_probe "driver_async_probe=intel_ish_ipc"
 fi
 
 # --- boot speed ----------------------------------------------------------
-# /boot (the ESP) is vfat, and vfat is a module. With the webcam enabled, the
-# IPU6 camera stack stalls kernel module loading for ~10s at boot, until the
-# kernel gives up waiting on the ov01a10 sensor. Mounting /boot has to load
-# vfat, so it sits in that stall, and sysinit.target, ly and everything after
-# it wait on the mount. Loading vfat from the initramfs means the mount needs
-# no module load.
-#
-# mac_hid, mousedev and joydev are autoloaded for every pointer device and hit
-# the same module-loading queue, so preloading them from the initramfs saves
-# a little of that same stall. (The cursor freeze itself turned out to be a
-# separate logind race -- see the deferred-probe fix above.)
+# vfat (for /boot) and the pointer helpers from the initramfs, so mounting
+# the ESP doesn't wait in the camera's module-loading stall.
 mkconf=/etc/mkinitcpio.conf
 # early_modules MODULE... -- adds whichever aren't there yet to MODULES=().
 early_modules() {
@@ -624,20 +525,8 @@ if (( laptop )); then
 fi
 
 # --- nvidia (desktop) ----------------------------------------------------
-# The desktop's display hangs off its RTX 4070. nvidia-drm sets modeset and
-# fbdev itself these days, so all it needs is loading early: from the
-# initramfs it takes the screen over from the firmware framebuffer before the
-# greeter starts, instead of the greeter coming up on simpledrm (1024x768,
-# no vsync) and Hyprland finding a display it then can't drive properly.
-# nvidia-utils already blacklists nouveau, and modconf carries that into the
-# initramfs.
-#
-# With nvidia named in MODULES the kms hook has nothing left to do but pull
-# in the CPU's integrated GPU (amdgpu on the Ryzen) and its firmware. The
-# initramfs then waits on that probe before mounting root -- about 2s, with
-# no screen on the iGPU to show for it -- and the kernel image grows by the
-# firmware the boot loader has to read and hash. Without the hook, amdgpu
-# loads after the switch to the real root, alongside everything else.
+# nvidia loaded from the initramfs, so it takes over before the greeter; the
+# kms hook is dropped, as it only added a 2s amdgpu wait.
 if (( ! laptop )) && pacman -Q nvidia-open &>/dev/null; then
   early_modules nvidia nvidia_modeset nvidia_uvm nvidia_drm
   if grep -Eq '^HOOKS=\(.*\<kms\>' "$mkconf"; then
@@ -649,22 +538,15 @@ if (( ! laptop )) && pacman -Q nvidia-open &>/dev/null; then
 fi
 
 # --- SATA probing (desktop) ----------------------------------------------
-# The B650 chipset's AHCI controller sets the staggered spin-up flag, so the
-# kernel brings its SATA ports up one after another, ~0.3s per empty port,
-# and holds off starting /init until every one has answered. Ignoring the
-# flag probes them in parallel. Staggering exists to spread spinning disks'
-# power-on draw; SSDs don't care, and desktop PSUs have the headroom.
+# The B650's AHCI asks for staggered spin-up (~0.3s per empty port);
+# probing in parallel is fine for SSDs.
 if (( ! laptop )); then
   edit_cmdline libahci.ignore_sss "libahci.ignore_sss=1"
 fi
 
 # --- fans (desktop) ------------------------------------------------------
-# The B650I AORUS ULTRA's fan headers sit on an ITE IT8689E, driven by
-# it87-dkms-git (aur-desktop.txt) since the in-tree it87 can't set its fan
-# speeds. Gigabyte's ACPI tables also claim the chip's I/O ports, so either
-# driver refuses to load ("ACPI: OSL: Resource conflict") unless told to
-# ignore that. Without it CoolerControl only sees the GPU fans. Loaded from
-# modules-load.d at boot, not the initramfs: nothing needs it that early.
+# it87 for the B650I's fan headers needs ACPI's port claim ignored, or
+# CoolerControl sees only the GPU fans. Loaded at boot, not in the initramfs.
 fanconf=/etc/modprobe.d/singularity-it87.conf
 fanload=/etc/modules-load.d/singularity-it87.conf
 if (( ! laptop )) && ! grep -qs 'ignore_resource_conflict=1' "$fanconf"; then
@@ -675,11 +557,8 @@ if (( ! laptop )) && ! grep -qs 'ignore_resource_conflict=1' "$fanconf"; then
 fi
 
 # --- panel self refresh --------------------------------------------------
-# With PSR on, this Alder Lake eDP panel stops taking new frames after a
-# resume: the machine is awake and hyprlock takes the password, but the
-# screen stays black. A modprobe.d option rather than i915.enable_psr=0 on
-# the cmdline, so the boot-verbosity rewrite above can never drop it. The
-# modconf hook copies it into the initramfs, where i915 loads (kms hook).
+# PSR off: this Alder Lake panel stays black after a resume. A modprobe.d
+# option, so cmdline rewrites can't drop it.
 psrconf=/etc/modprobe.d/singularity-i915.conf
 if (( laptop )) && ! grep -qs 'enable_psr=0' "$psrconf"; then
   log "disabling i915 panel self refresh"
@@ -688,11 +567,8 @@ if (( laptop )) && ! grep -qs 'enable_psr=0' "$psrconf"; then
 fi
 
 # --- webcam (off) --------------------------------------------------------
-# The IPU6 webcam is switched off until it gets another look. Its stack costs
-# ~10s of stalled module loading at boot, and after a hibernation resume the
-# Visual Sensing Controller re-enumerates under the v4l2 subdevs WirePlumber
-# holds open, so closing them later oopses the kernel in subdev_close and
-# hangs shutdown. Blacklisting the whole chain means none of it loads.
+# The IPU6 webcam stack is blacklisted: ~10s of stalled module loading at
+# boot, and a kernel oops at shutdown after hibernation.
 vscconf=/etc/modprobe.d/singularity-vsc.conf
 vscmods=(mei_vsc ivsc_csi ivsc_ace intel_ipu6 ov01a10)
 if (( laptop )) && [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
@@ -702,20 +578,10 @@ if (( laptop )) && [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s
 fi
 
 # --- hibernation ---------------------------------------------------------
-# The only swap here is zram, which lives in RAM and can't hold a hibernation
-# image. So hibernation gets a swapfile on / sized to RAM (the image is
-# compressed, but a busy machine can still need most of it). zram keeps its
-# priority of 100, so the swapfile only takes pages once zram is full, and in
-# practice is only written when hibernating.
-#
-# Resuming needs two things before root is mounted: the initramfs `resume`
-# hook, and resume=/resume_offset= on the cmdline to say where the image is. A
-# swapfile is found by its filesystem's UUID plus the physical offset of its
-# first block, so the offset is re-read every run -- recreating the file
-# moves it, and a stale offset means a normal boot instead of a resume.
-#
-# Any step failing (no room on the disk, a snapshotted btrfs subvolume, ...)
-# only costs hibernation, so it warns and the install carries on.
+# --- hibernation ---------------------------------------------------------
+# A swapfile on / sized to RAM (zram can't hold an image; it keeps priority),
+# the initramfs resume hook, and resume=/resume_offset= re-read every run.
+# A failure only costs hibernation.
 setup_hibernation() {
   local swapfile=/swapfile fstype ram_gib uuid offset
   fstype=$(findmnt -no FSTYPE -T /)
@@ -779,9 +645,8 @@ if (( rebuild_initramfs )); then
   sudo mkinitcpio -P
 fi
 
-# How long a closed lid's suspend lasts before it hibernates. lid.sh suspends
-# 5 min after the lid shuts and wants hibernation at 1 h, so 55 min here;
-# change both together (close_delay and hibernate_after in lid.sh).
+# Suspend lasts 55 min before hibernating (lid.sh suspends after 5 min and
+# wants 1 h in all; change both together).
 sleepconf=/etc/systemd/sleep.conf.d/singularity.conf
 if (( laptop )) && ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
   log "hibernating after 55 min of lid-closed suspend"
@@ -789,23 +654,8 @@ if (( laptop )) && ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
   printf '[Sleep]\nHibernateDelaySec=55min\n' | sudo tee "$sleepconf" >/dev/null
 fi
 
-# How much of RAM the hibernation image is allowed to hold. The kernel
-# defaults to 2/5 of RAM -- 13G here -- and cheerfully fills it, mostly with
-# page cache nobody needs back. Everything in the image is compressed going
-# down and decompressed coming up with LZO, single-threaded, before the
-# desktop appears; observed images ran 4-13G and the big ones roughly doubled
-# the resume. Capping the image makes the kernel drop cache and swap out
-# anonymous pages before it snapshots, so those pages fault back in lazily
-# from the NVMe once you are already logged in -- on demand and in parallel,
-# instead of serialized in front of you.
-#
-# 4G, not a fraction of RAM: what matters is the live working set, and this
-# machine's sits well under that even with a browser and an editor up. Raise
-# it if hibernating ever starts taking noticeably longer (the kernel is then
-# working to free memory it would rather keep).
-#
-# LZ4 would decompress about twice as fast, but Arch's kernel is built with
-# CONFIG_HIBERNATION_COMP_LZ4 unset, so hibernate.compressor= only takes lzo.
+# The hibernation image capped at 4G, so the kernel drops cache before the
+# snapshot and resume (single-threaded LZO; Arch has no LZ4) stays quick.
 imageconf=/etc/tmpfiles.d/singularity-hibernate.conf
 image_size=4294967296
 if (( laptop )) && ! grep -qs "image_size .* $image_size\$" "$imageconf"; then
@@ -815,15 +665,8 @@ if (( laptop )) && ! grep -qs "image_size .* $image_size\$" "$imageconf"; then
   sudo systemd-tmpfiles --create "$imageconf"
 fi
 
-# Keep the touchpad from waking the machine. This laptop only has s2idle and
-# the I2C touchpad's GPIO interrupt stays live in it, so every idle suspend
-# bounced straight back out within seconds -- the machine never actually
-# stayed asleep on battery, and hypridle's ladder restarted from zero on each
-# wake, dimming and blanking again every ten minutes forever. The keyboard,
-# the lid and the power button are still wake sources; only tapping the
-# touchpad no longer wakes it. Matched on the driver rather than this
-# machine's VEN_0488:00 so it holds for any I2C-HID touchpad.
-# lid.sh's stay_dark() is the in-session net for the strays this stops here.
+# The touchpad can't wake the machine: its GPIO interrupt kept bouncing
+# s2idle back out. lid.sh's stay_dark() catches the strays.
 touchpadrule=/etc/udev/rules.d/90-singularity-touchpad-wake.rules
 if (( laptop )) && ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
   log "disarming the touchpad as a wake source"
@@ -835,18 +678,9 @@ if (( laptop )) && ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
   sudo udevadm trigger --subsystem-match=i2c --action=change
 fi
 
-# Battery charging: the helper Settings → Power & Idle uses to pick the
-# battery's charge mode and, in Custom, where charging stops and resumes. On
-# this Dell those are the BIOS's own "Primary Battery Charge Configuration"
-# -- dell_laptop writes them to the firmware through SMBIOS -- so a change
-# holds across reboots and in every OS with nothing running at boot.
-#
-# Writing them needs root, so the page runs the helper through pkexec, and
-# the polkit action lets the active local session do that without a
-# password. The helper takes nothing but a mode name and two numbers, and
-# the driver refuses any value the firmware doesn't take. Root-owned in
-# /usr/local/bin rather than linked from the dotfiles, so the user can't
-# change what runs as root.
+# singularity-charge: the Dell BIOS's charge mode and Custom limits, via
+# dell_laptop, for Settings > Power & Idle through pkexec. Takes only a mode
+# and two numbers; root-owned in /usr/local/bin.
 if (( laptop )) && compgen -G '/sys/class/power_supply/BAT*/charge_types' >/dev/null; then
   log "installing the battery charge helper"
   sudo tee /usr/local/bin/singularity-charge >/dev/null <<'CHARGE'
@@ -908,29 +742,14 @@ fi
 
 log "enabling services"
 
-# Without seatd running, libseat falls back to talking to logind directly,
-# and logind's own device enumeration for a fresh session is not guaranteed
-# to be done by the time Hyprland asks for the touchpad/touchscreen: it can
-# answer "No such device" for a device that exists but that logind hasn't
-# cataloged yet, and Hyprland does not retry -- the cursor stays dead until
-# something else happens to re-announce the device, which on this laptop is
-# whatever else is still settling ten-plus seconds into boot. seatd hands
-# devices over directly with no such race, and Hyprland/aquamarine prefer it
-# over logind automatically whenever its socket exists.
+# seatd: through logind, Hyprland could ask for the touchpad before logind
+# had it, and never retried.
 sudo systemctl enable --now seatd.service
 sudo usermod -aG seat "$USER"
 
-# Network: iwd for Wi-Fi, systemd-networkd for addresses, systemd-resolved for
-# DNS. iwd's own DHCP stays off (its default), so it and networkd never fight
-# over the interface. networkd does nothing without a .network file and a
-# Minimal install may not have one, so DHCP configs are added only when
-# /etc/systemd/network has none. Existing configs are left alone.
-#
-# Both links count towards "online", and wait-online (below) is satisfied by
-# either one. Marking the wired port RequiredForOnline=no instead left Wi-Fi
-# as the only link that counted, so a machine on Ethernet with Wi-Fi idle
-# reported itself offline, and systemd-timesyncd, which waits for networkd to
-# say online, never set the clock.
+# Network: iwd (Wi-Fi), systemd-networkd (addresses, DHCP config only when
+# none exists), systemd-resolved (DNS). Both links count towards online, so
+# timesyncd works on either.
 wired_network='[Match]
 Type=ether
 
@@ -961,12 +780,8 @@ printf '[Service]\nExecStart=\nExecStart=/usr/lib/systemd/systemd-networkd-wait-
   sudo tee /etc/systemd/system/systemd-networkd-wait-online.service.d/singularity.conf >/dev/null
 sudo systemctl daemon-reload
 
-# archinstall's network options can leave NetworkManager (and the
-# wpa_supplicant it drives) enabled. It then runs DHCP on the same ports as
-# networkd, so each one gets two addresses, and fights iwd over Wi-Fi. It is
-# disabled, not removed, and keeps running until the next boot so this run
-# does not drop the connection; Wi-Fi networks it knew have to be joined
-# again from the bar, since iwd keeps its own list.
+# NetworkManager and wpa_supplicant disabled (not stopped, so this run keeps
+# its connection): they'd fight networkd and iwd.
 for unit in NetworkManager.service NetworkManager-wait-online.service wpa_supplicant.service; do
   if systemctl is-enabled -q "$unit" 2>/dev/null; then
     log "disabling $unit (iwd and systemd-networkd manage the network)"
@@ -982,9 +797,7 @@ sudo mkdir -p /etc/systemd/resolved.conf.d
 printf '[Resolve]\nLLMNR=no\n' | sudo tee /etc/systemd/resolved.conf.d/singularity.conf >/dev/null
 sudo systemctl enable --now iwd systemd-networkd systemd-resolved
 sudo systemctl try-reload-or-restart systemd-resolved
-# resolved only answers apps that ask it, so resolv.conf has to point at its
-# stub. Done after resolved is running so DNS is never pointed at nothing. A
-# resolv.conf that is already a symlink is left alone.
+# resolv.conf onto resolved's stub, once it's running (a symlink is left)
 if [[ ! -L /etc/resolv.conf ]]; then
   [[ -f /etc/resolv.conf ]] && sudo cp /etc/resolv.conf /etc/resolv.conf.singularity.bak
   sudo ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
@@ -1001,19 +814,14 @@ sudo systemctl enable --now paccache.timer
 # Nothing enables BlueZ on a Minimal install, and the bar's Bluetooth module
 # and the pairing agent below both need its daemon.
 sudo systemctl enable --now bluetooth.service
-# `systemctl cat` exits non-zero on a missing unit; `list-unit-files` does not,
-# so it is the wrong test for "is this installed". The file check is a fallback
-# for template units, which some systemd versions will not `cat`.
+# a unit is installed if `systemctl cat` finds it, or its file exists
+# (templates)
 have_unit() {
   systemctl cat "$1" &>/dev/null     || [[ -f /usr/lib/systemd/system/$1 || -f /etc/systemd/system/$1 ]]
 }
 
-# power-profiles-daemon. Nothing was managing the ACPI platform_profile, which
-# meant it sat wherever the firmware left it (this laptop boots into "quiet",
-# capping performance on AC for no saving worth having). PPD drives that and
-# intel_pstate's EPP together, which are the two levers this chip responds to.
-# Not TLP: the two fight over the same knobs, and TLP has nothing the bar can
-# switch on demand.
+# power-profiles-daemon drives platform_profile and EPP together (this laptop
+# booted into "quiet"); not TLP, which the bar can't switch
 if have_unit power-profiles-daemon.service; then
   log "enabling power-profiles-daemon"
   sudo systemctl enable --now power-profiles-daemon.service
@@ -1026,29 +834,20 @@ if (( ! laptop )) && have_unit coolercontrold.service; then
   sudo systemctl enable --now coolercontrold.service
 fi
 
-# Pairing agent. Without one BlueZ cannot complete a pairing at all -- see the
-# unit's own comment. It is a user service because it is per-session, and it
-# ships in dotfiles/systemd rather than being written here so `systemctl --user
-# cat` shows the reasoning next to the unit.
+# the BlueZ pairing agent, a user service (see its unit)
 if command -v bt-agent &>/dev/null; then
   log "enabling the bluetooth pairing agent"
   systemctl --user enable --now bt-agent.service ||
     warn "could not enable the bluetooth pairing agent"
 fi
 
-# See the unit's own comment: rfkill, volume and brightness already survive a
-# reboot on their own (systemd-rfkill, wireplumber, systemd-backlight); this
-# is the missing piece for Bluetooth's own adapter power.
+# restores the Bluetooth adapter's power state (see the unit)
 log "enabling Bluetooth power state restore"
 systemctl --user enable --now bt-power-restore.service ||
   warn "could not enable Bluetooth power state restore"
 
 
-# iwd is Type=dbus, so systemd waits for it to claim its bus name before
-# reaching network.target, and ly waits on network.target via
-# systemd-user-sessions. iwd needs crypto modules first, and those sit in the
-# same camera module-loading stall as vfat, which held the greeter back ~9s.
-# Type=exec counts iwd as started once it launches. Wi-Fi comes up the same.
+# iwd as Type=exec, so the greeter doesn't wait out its module stall
 if have_unit iwd.service; then
   log "stopping ly from waiting on iwd"
   sudo mkdir -p /etc/systemd/system/iwd.service.d
@@ -1056,23 +855,16 @@ if have_unit iwd.service; then
   sudo systemctl daemon-reload
 fi
 
-# systemd's TPM SRK setup costs ~2s every boot and nothing here uses it: no
-# TPM-unlocked LUKS, secure boot off. Masking only stops the setup running; it
-# does not touch what is stored in the TPM, so Windows and BitLocker are
-# unaffected. Left alone if crypttab asks for a TPM unlock. The setup also
-# allocates the NvPCRs, so systemd-pcrproduct and systemd-pcrlogin@ (one per
-# login), which measure into them, fail every boot without it and are masked too.
+# TPM SRK setup masked (~2s a boot, unused), with the pcr units that need it,
+# unless crypttab asks for a TPM unlock. The TPM's contents are untouched.
 if ! grep -qs 'tpm2-device' /etc/crypttab; then
   log "masking systemd TPM setup"
   sudo systemctl mask systemd-tpm2-setup-early.service systemd-tpm2-setup.service \
     systemd-pcrproduct.service systemd-pcrlogin@.service
 fi
 
-# Display manager. Deliberately NOT --now: ly takes over a VT, and starting it
-# here would pull the terminal out from under this script mid-run. It comes up
-# on the next boot instead.
-# ly 1.x ships a templated unit that has to be bound to a VT (ly@tty2.service);
-# 0.x shipped a plain ly.service. Detect rather than guess.
+# Display manager, enabled for next boot (not --now, which would take the
+# VT). ly 1.x's unit is a template (ly@tty2), 0.x's plain.
 dm_unit=""
 if have_unit ly@.service; then
   dm_unit="ly@tty2.service"
@@ -1087,21 +879,15 @@ if [[ -n $dm_unit ]]; then
   if [[ $dm_unit == ly@* ]]; then
     sudo systemctl disable getty@tty2.service &>/dev/null || true
   fi
-  # Enabling a greeter is not enough on its own. archinstall's Minimal profile
-  # leaves the default target at multi-user.target, which never pulls in
-  # display-manager.service, so ly stays enabled and never actually starts.
+  # Minimal leaves the default target at multi-user, where ly never starts
   if [[ $(systemctl get-default) != graphical.target ]]; then
     log "switching default boot target to graphical.target"
     sudo systemctl set-default graphical.target
   fi
 
-  # Theme the greeter as Singularity. ly draws on a Linux VT, and the VT has no
-  # true colour: a 24-bit escape is squashed onto the nearest of its 16 palette
-  # slots, so full_color with the ramp's hexes would come out as plain black
-  # and white. Instead the palette itself becomes the ramp -- the same slots
-  # the terminals use, except red and green, which carry the shell's alert and
-  # good tints so a failed login still reads as one -- and ly picks slots by
-  # index. The palette is per-VT and only on the greeter's.
+  # The greeter in Singularity: the VT has no true colour, so its 16-slot
+  # palette becomes the ramp (red and green as alert and good) and ly picks
+  # slots by index.
   if [[ -f /etc/ly/config.ini ]]; then
     log "theming ly"
     sudo tee /etc/ly/singularity.sh >/dev/null <<'LY'
@@ -1121,13 +907,9 @@ done
 clear
 LY
     sudo chmod 755 /etc/ly/singularity.sh
-    # The console is one framebuffer mirrored on every monitor and the kernel
-    # sizes it to the smallest of them, so a 1080p second screen shrinks the
-    # greeter on a 1440p main one. A monitor named video=<connector>:d on the
-    # kernel command line never joins it, but that holds it off for the
-    # session too: outputs.sh hands it back at login (through sudo, the
-    # session runs as the user) and takes it away again at logout. If it is
-    # the only monitor plugged in, it is never held off.
+    # A monitor named video=<connector>:d on the cmdline is held off the
+    # console (which sizes to its smallest screen); outputs.sh hands it to
+    # the session at login and back at logout.
     sudo tee /etc/ly/outputs.sh >/dev/null <<'LY'
 #!/bin/sh
 # Written by singularity's install.sh. `outputs.sh [off|on]` holds the monitors
@@ -1167,10 +949,7 @@ LY
       warn "sudoers rule for /etc/ly/outputs.sh did not validate, held-off monitors stay off after login"
     fi
     rm -f "$tmp"
-    # The status lines in the greeter's bottom-right corner, one [lbl:*] entry
-    # each. ly runs these as root before anyone logs in, so they only read
-    # sysfs and root-readable tools.
-    # A desktop has no battery, so it shows only the last three.
+    # the greeter's status lines (root, before login; a desktop has no battery)
     if (( laptop )); then
       ly_lines="battery power wifi kernel last"
     else
@@ -1273,11 +1052,8 @@ done
 printf '%-*s' "$width" "$(line "$1")"
 LY
     sudo chmod 755 /etc/ly/info.sh
-    # Edit keys in place rather than shipping a whole config.ini: pacman keeps
-    # a modified config and drops upstream's as .pacnew, so a full copy would
-    # quietly stop picking up new options. 8-colour ids are 1-based (0x0001
-    # black .. 0x0008 white); a 0x01 top byte is bold, which the VT draws from
-    # the bright half of the palette, so bold black is slot 8, the border grey.
+    # Keys edited in place, so pacman keeps taking upstream's new options.
+    # Colour ids are 1-based; a 0x01 top byte is bold (the bright half).
     set_ly() {
       local key=$1 value=$2 esc
       # the clock format has a | in it, the sed delimiter
@@ -1299,9 +1075,7 @@ LY
     set_ly border_fg 0x01000001     # slot 8, border #303030
     set_ly error_bg 0x00000001
     set_ly error_fg 0x00000002      # slot 1, alert  #a87676
-    # Sections run to the end of the file, so set_ly appending a key after one
-    # would file it under that section: drop ours before setting keys and add
-    # it back last.
+    # our section goes last: set_ly would file new keys under it
     sudo sed -i '/^# singularity status lines/,$d' /etc/ly/config.ini
     set_ly clock '%a %-d %b  %H:%M'
     set_ly hide_version_string true
@@ -1319,15 +1093,8 @@ LY
       done
     } | sudo tee -a /etc/ly/config.ini >/dev/null
 
-    # Signing in at boot: the helper Settings → Startup uses to turn ly's
-    # autologin on or off. ly logs auto_login_user straight into
-    # auto_login_session once, when it starts -- so at boot, never after a
-    # logout -- through the ly-autologin PAM service, which is pam_permit.
-    # The user is whoever ran it through pkexec (PKEXEC_UID), never an
-    # argument, so the page can't hand someone else's account a passwordless
-    # boot. Off is ly's stock setting and install.sh never sets it, so a rerun
-    # keeps what Settings picked. config.ini is world-readable, so the page
-    # reads the state itself.
+    # singularity-autologin: ly's autologin on/off for Settings > Startup,
+    # for the pkexec caller only (PKEXEC_UID), never an argument.
     sudo tee /usr/local/bin/singularity-autologin >/dev/null <<'AUTOLOGIN'
 #!/bin/sh
 # singularity-autologin on    boot straight into Hyprland as the pkexec caller

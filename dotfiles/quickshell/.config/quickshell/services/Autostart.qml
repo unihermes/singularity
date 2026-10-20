@@ -1,25 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Autostart.qml
 //
-// What starts when you log in, from ~/.config/autostart.
-//
-// Hyprland runs no XDG autostart of its own, so before this existed a
-// .desktop file in that directory -- dropped there by an application's own
-// "run at login" checkbox as much as by hand -- did precisely nothing. The
-// piece that runs them at login is ~/.config/singularity/autostart.sh, called
-// from autostart.lua; this service is the same script's `list` output plus the
-// writes that turn an entry on and off. Its header documents the one place
-// the behaviour deliberately differs from the spec: a /etc/xdg/autostart
-// entry is opt-in here rather than on by default.
-//
-// Reading is the script's job, so that what Settings shows and what actually
-// runs can never drift: both answer "is this enabled" with the same code.
-//
-// Writing is done here rather than in the script, through AtomicFileWrite, so
-// these files get the same treatment as every other config the shell edits --
-// queued behind other writes, applied to the file as it is on disk at that
-// moment, and renamed into place rather than truncated. Deleting is the one
-// exception: there is nothing to transform, so it is a plain rm.
+// What starts at login, from ~/.config/autostart. Reading is autostart.sh's
+// `list` (the same code that runs them, so the two can't drift); writing goes
+// through AtomicFileWrite, deleting is a plain rm. System entries are opt-in
+// (see autostart.sh).
 
 pragma Singleton
 
@@ -30,9 +15,8 @@ import QtQuick
 Singleton {
     id: root
 
-    // [{ scope, file, name, exec, enabled, runnable, comment, icon, only }]
-    // scope is "user" (in ~/.config/autostart) or "system" (available in
-    // /etc/xdg/autostart and not copied across yet)
+    // [{ scope, file, name, exec, enabled, runnable, comment, icon, only }];
+    // scope "user", or "system" for one not copied across yet
     property var entries: []
     property bool loaded: false
 
@@ -95,9 +79,7 @@ Singleton {
 
     // --- writing -----------------------------------------------------------
 
-    // Set a key in the [Desktop Entry] group, replacing the existing line if
-    // there is one. A key set in a later group ([Desktop Action open]) is
-    // left alone: it belongs to that action, not to the entry.
+    // sets a key in the [Desktop Entry] group (not in action groups)
     function withKey(text, key, value) {
         var lines = text.split("\n")
         var inEntry = false
@@ -121,10 +103,8 @@ Singleton {
         return lines.join("\n")
     }
 
-    // Turn a user entry on or off. Hidden=true is the spec's way of saying
-    // "installed but don't run it", and is what an application's own settings
-    // will read back, so it is used rather than deleting the file: deleting
-    // would lose an entry the user may have written by hand.
+    // a user entry on or off, as Hidden=true (what apps read back), never
+    // deleting a hand-written file
     function setEnabled(entry, on) {
         if (entry.scope === "system") {
             if (on) adopt(entry)
@@ -139,10 +119,8 @@ Singleton {
         })
     }
 
-    // Copying a system entry into ~/.config/autostart is what opts into it.
-    // The copy is the whole file rather than a stub pointing at the original:
-    // a user file replaces the system one outright, so anything left out of
-    // it -- TryExec, OnlyShowIn -- would be lost rather than inherited.
+    // opts into a system entry by copying the whole file (a user file
+    // replaces the system one outright)
     function adopt(entry) {
         source.path = systemDir + "/" + entry.file
         source.reload()
@@ -166,21 +144,15 @@ Singleton {
         })
     }
 
-    // One argument of an Exec line, quoted the way the desktop entry spec
-    // and autostart.sh's `sh -c` both read it: a literal % doubled, and an
-    // argument with a space or a shell character in double quotes, with
-    // " ` $ and \ escaped inside them.
+    // one Exec argument, quoted as the spec and `sh -c` read it
     function execArg(a) {
         a = String(a).replace(/%/g, "%%")
         if (a !== "" && !/[\s"'\\><~|&;$*?#()`]/.test(a)) return a
         return '"' + a.replace(/(["`$\\])/g, "\\$1") + '"'
     }
 
-    // A desktop entry picked in Settings, written as a new autostart file.
-    // Exec is rebuilt from the parsed command rather than copied from the
-    // application's own Exec line, which is where the field codes (%U, %f)
-    // live -- nothing is being passed to these, and some programs treat a
-    // literal %U as a file to open.
+    // a desktop entry picked in Settings as a new autostart file, Exec
+    // rebuilt from the parsed command (no field codes)
     function add(app) {
         if (!app) return
         var cmd = []
@@ -209,10 +181,7 @@ Singleton {
         })
     }
 
-    // Only ever a file in ~/.config/autostart. Removing one that came from
-    // /etc/xdg/autostart drops back to the system entry, which is off.
-    // Queued, so a second removal clicked while the first is running isn't
-    // dropped by the busy Process.
+    // removes a user file (a system one falls back to off), queued
     function remove(entry) {
         if (entry.scope !== "user") return
         rm.pending.push({ file: userDir + "/" + entry.file, message: entry.name + " removed from startup" })

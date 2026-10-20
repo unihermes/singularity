@@ -1,21 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Updates.qml
 //
-// Pending package updates, repo and AUR, for a bar module that only appears
-// when there are some.
-//
-// checkupdates (pacman-contrib) rather than `pacman -Qu`: it syncs a
-// throwaway copy of the database in /tmp, so it sees what's new without
-// root and without touching the real sync db -- a `pacman -Sy` here would
-// set up a partial upgrade. `yay -Qua` asks the AUR's RPC for the rest.
-//
-// First check one minute after startup, then every Settings.updateInterval
-// minutes (Settings -> Software Update). Packages in Settings.updateIgnore
-// are left out of the count and the upgrade, and the AUR only counts while
-// Settings.updateAur is on.
-//
-// The same checks also fetch the Singularity clone the shell is stowed from
-// and count the commits waiting upstream; updateRepo() runs its update.sh.
+// Pending updates, repo (checkupdates: a throwaway db copy, no partial
+// upgrade) and AUR (yay -Qua), for the bar module. First check a minute
+// after startup, then every Settings.updateInterval minutes, minus
+// Settings.updateIgnore. Also fetches the Singularity clone and counts
+// commits upstream; updateRepo() runs its update.sh.
 
 pragma Singleton
 
@@ -98,20 +88,10 @@ Singleton {
         checkProc.running = true
     }
 
-    // yay does repo and AUR in one pass:
-    //   --sudoloop       keeps sudo's timestamp fresh, so a long AUR build
-    //                    doesn't ask again when pacman installs at the end
-    //   --answerclean None, --answeredit None
-    //                    skip yay's clean-build and PKGBUILD-edit menus
-    //   --removemake     drops build-only deps without asking
-    //   --noconfirm, --answerdiff None
-    //                    no install prompt or PKGBUILD diffs, so after the
-    //                    sudo prompt it runs unattended, AUR included
-    // On success the terminal closes itself with a notification; on failure
-    // it stays open so the error can be read. Either way the list is
-    // re-checked once it closes.
-    // --ignore takes Settings.updateIgnore, which Settings has already
-    // limited to names.
+    // yay, repo and AUR in one unattended pass after the sudo prompt
+    // (--sudoloop, no menus, diffs or confirm, --removemake), ignoring
+    // Settings.updateIgnore. The terminal closes on success and stays on
+    // failure; the list is re-checked after.
     function update() {
         if (updateProc.running) return
         var flags = " --noconfirm --answerdiff None" + (Settings.updateAur ? "" : " --repo")
@@ -127,14 +107,8 @@ Singleton {
 
     Process {
         id: checkProc
-        // checkupdates exits 1 on failure (db sync lock contention, network
-        // hiccup, ...) and 2 when there's simply nothing to update -- both
-        // print nothing, so the exit code is the only way to tell "checked,
-        // found none" from "check failed". yay -Qua exits 1 for both, like
-        // pacman -Qu, so there a silent exit 1 means none and an exit 1 with
-        // an error on stderr means failed; it's mapped to 2 / left at 1.
-        // Report it per source and, on failure, keep that source's previous
-        // results instead of silently wiping them to zero.
+        // checkupdates: 2 none, 1 failed. yay -Qua: 1 for both, so stderr
+        // tells failure. A failed source keeps its previous results.
         command: ["sh", "-c",
             "out=$(checkupdates 2>/dev/null); rc=$?; "
             + "printf '%s\\n' \"$out\" | sed '/^$/d;s/^/repo /'; "
@@ -194,7 +168,7 @@ Singleton {
         }
     }
 
-    // Fetches, then reports, one line each:
+    // fetches, then one line each:
     //   PATH <clone>  STATE <state>  UPSTREAM origin/main  COUNT <ahead> <behind>
     //   COMMIT <hash> <unix time> <subject>  NEW <package>
     Process {

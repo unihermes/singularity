@@ -1,34 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAppearance.qml
 //
-// Appearance, in tabs, from the broadest choice to the finest:
-//   Look       every look as a card; the wallpaper and how often a new one
-//              comes; what's been changed from the look in use, each with
-//              its way back; the saved default
-//   Colours    the palette and the accents
-//   Style      the style, its shape dials, the shell's font and size, and
-//              the Finish switches
-//   Bar        its layout, then its modules, workspaces, windows and clock
-//   Panels     flyouts, the launcher, notifications and the overlays
-//   Windows    how Hyprland draws windows
-//   System     motion, and the fonts, icons and cursor of other apps
-// Colours, Style, Bar and Panels open on a preview of the setup as it is.
-//
-// A look (LookStore) is a starting point: picking one sets everything it
-// carries, which can then be adjusted one by one. A field holding such a
-// setting is marked while it differs from the look, and the mark puts it
-// back; the Look tab lists every such change. Every look but the fallback
-// can be removed from its card, which hides it on this machine
-// (LookStore's looks-removed.json); looks.json itself is left alone.
-//
-// Two stores behind it. The shell's own look is Settings.qml, the same
-// values the Control Centre edits, so the two always agree and a change
-// here applies the moment it's made. The Windows tab is the `general` and
-// `decoration` tables in looks.lua; its changes go to the state
-// directory's hyprland.json, as the Input page's do, then a reload.
-//
-// Each tab is its own file in appearance/, as are the pieces they share;
-// this file keeps what they all reach through `page`.
+// Appearance, one tab per part of the screen: Theme, Bar, Panels, Desktop,
+// Apps. Each opens on a preview; while anything differs from the baseline,
+// ChangesBar floats at the page's foot (Review, Save as default, Reset); a
+// changed field is marked and its mark resets it. Shell settings are Settings.qml (shared with the Control
+// Centre); window settings go to hyprland.json, then a reload. Tabs live in
+// appearance/; this keeps what they reach through `page`.
 
 import Quickshell
 import Quickshell.Io
@@ -43,26 +21,24 @@ SettingsPage {
     id: page
 
     sectioned: true
+    footer: ChangesBar {}
+    footerVisible: !Settings.lookPristine
     // a small bar and flyout, drawn by the shell's own pieces, above the
     // tabs whose settings change how they look
-    pinned: LivePreview {}
-    pinnedVisible: ["colours", "style", "bar", "panels"].indexOf(tab) !== -1
+    pinned: LivePreview { kind: ({ bar: "bar", panels: "launcher", desktop: "windows" })[page.tab] || "flyout" }
 
     title: "Appearance"
-    description: "Pick a look, then change anything about it. Changes apply as you make them; a dot marks a setting that differs from the look."
+    description: "Changes apply as you make them; a dot marks a setting that differs from the baseline."
 
     tabs: [
-        { id: "look",      label: "Look",      icon: "󰏘" },
-        { id: "colours",   label: "Colours",   icon: "󰌁" },
-        { id: "style",     label: "Style",     icon: "󰆧" },
-        { id: "bar",       label: "Bar",       icon: "󰕰" },
-        { id: "panels",    label: "Panels",    icon: "󰕮" },
-        { id: "windows",   label: "Windows",   icon: "󰖲" },
-        { id: "system",    label: "System",    icon: "󰒓" },
+        { id: "theme",   label: "Theme",   icon: "󰏘" },
+        { id: "bar",     label: "Bar",     icon: "󰕰" },
+        { id: "panels",  label: "Panels",  icon: "󰕮" },
+        { id: "desktop", label: "Desktop", icon: "󰖲" },
+        { id: "apps",    label: "Apps",    icon: "󰀻" },
     ]
-    stickyColumn: ({ look: tab_look, colours: tab_colours, style: tab_style,
-                     bar: tab_bar, panels: tab_panels, windows: tab_windows,
-                     system: tab_system })[tab] || tab_look
+    stickyColumn: (({ theme: tab_theme, bar: tab_bar, panels: tab_panels,
+                      desktop: tab_desktop, apps: tab_apps })[tab] || tab_theme).item || tab_theme
 
     function label(v, key) { return Settings.choiceLabel(v, key) }
 
@@ -74,53 +50,80 @@ SettingsPage {
             f.lookKey = key
     }
 
-    // on the page rather than the card: the reload after the write destroys
-    // the removed look's card before the result comes back
-    function removeLook(name) { Settings.removeLook(name, (ok, msg) => say(msg, !ok)) }
-
-    // --- the Look tab's changes ----------------------------------------------
+    // --- the list of changes (ChangesBar) -------------------------------------
 
     // What each setting a look carries is called on this page, for the list
     // of changes; the same as its field's label, so "Show" can find it
     readonly property var keyLabels: ({
-        style: "Style", radius: "Roundness", barStyle: "Bar shape", edgeGap: "Gaps at screen edges",
+        style: "Style", radius: "Roundness", barStyle: "Bar shape", edgeGap: "Edge gaps",
         focusedOpacity: "Focused opacity", unfocusedOpacity: "Unfocused opacity",
-        terminalOpacity: "Terminal opacity", density: "Density",
+        terminalOpacity: "Terminal opacity", spacing: "Spacing", rowScale: "Row height",
+        barHeight: "Height", barIconSize: "Icon size", modulePad: "Module padding",
+        windowBorderWidth: "Border width", windowBorderFocused: "Focused border",
+        windowBorderFocusedHex: "Focused colour", windowBorderUnfocused: "Unfocused border",
+        windowBorderUnfocusedHex: "Unfocused colour", windowRounding: "Window corners",
+        windowRadius: "Window rounding", windowShadow: "Window shadow", tabBar: "Tab bar",
+        flyoutWidth: "Flyout width", launcherRows: "Rows shown", notifWidth: "Popup width",
         seeThrough: "See-through", scrim: "Overlay dimming", barSeparator: "Separators",
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
-        headingUpper: "Capital headings", headingRule: "Heading rule",
+        headingUpper: "Case", headingRule: "Heading rule", headingMark: "Mark",
+        headingMarkColour: "Mark colour", headingSize: "Heading size",
         fontFamily: "Font", barPosition: "Position", workspaceStyle: "Workspaces",
-        controlIcon: "Control Centre icon", clockStyle: "Clock", windowStyle: "Open windows", windowScope: "Windows shown",
+        controlIcon: "Control Centre icon", clockStyle: "Clock", clockIsland: "Clock island", windowStyle: "Open windows", windowScope: "Windows shown",
         iconTint: "App icons", vizStyle: "Visualizer", flyoutAnim: "Flyouts open",
         launcherLayout: "Launcher layout", launcherPosition: "Launcher position",
         launcherDetails: "Launcher details", notifStyle: "Notification popups",
         altTabStyle: "Window switcher", altTabScope: "Switcher windows",
         overviewLayout: "Workspace overview",
         overviewBackdrop: "Overview backdrop", powerStyle: "Power menu", levelStyle: "Level popup",
-        accent: "Accent", levelColour: "Level colour",
+        accent: "Accent", levelColour: "Level colour", accentText: "Text on the accent",
+        colourGood: "Good", colourAlert: "Alert",
+        paletteBase: "Base", paletteBar: "Bar", palettePanel: "Panel", paletteSurface: "Surface",
+        paletteOverlay: "Overlay", paletteBorder: "Border", paletteMuted: "Muted",
+        paletteSubtext: "Subtext", paletteText: "Text", paletteBright: "Bright",
     })
-    readonly property var keyUnits: ({ radius: "px", edgeGap: "px", seeThrough: "%", scrim: "%",
+    readonly property var keyUnits: ({ radius: "px", edgeGap: "px", spacing: "%", rowScale: "%",
+                                         barHeight: "px", barIconSize: "px", modulePad: "px",
+                                         flyoutWidth: "%", notifWidth: "px", windowRadius: "px", seeThrough: "%", scrim: "%",
                                          focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%" })
     function valueText(k, v) {
         if (typeof v === "boolean") return v ? "on" : "off"
         if (typeof v === "number") return v + (keyUnits[k] || "")
-        if (v === "") return "none"
+        if (v === "") return Settings.hexKeys.indexOf(k) !== -1 ? page.label(Settings.look) + "'s own" : "none"
         return page.label(v, k)
     }
 
-    LookTab { id: tab_look; page: page }
+    // The tab showing is built with the page; the rest follow in the
+    // background a moment later, and a tab clicked before its turn is
+    // finished on the spot. A search or "Show" builds them all at once, so
+    // its field can be found.
+    property bool buildAll: false
+    onHighlightChanged: if (highlight !== "") buildAll = true
+    property bool warm: false
+    Timer { interval: 400; running: true; onTriggered: page.warm = true }
 
-    ColoursTab { id: tab_colours; page: page }
+    component LazyTab: Loader {
+        required property string tabId
+        required property url file
+        readonly property bool showing: page.tab === tabId
+        readonly property bool wanted: showing || page.buildAll || page.warm
+        function build() { if (wanted && source.toString() === "") setSource(file, { page: page }) }
+        onWantedChanged: build()
+        asynchronous: !showing && !page.buildAll
+        Component.onCompleted: build()
+        width: parent ? parent.width : 0
+        visible: showing
+    }
 
-    StyleTab { id: tab_style; page: page }
+    LazyTab { id: tab_theme; tabId: "theme"; file: "appearance/ThemeTab.qml" }
 
-    BarTab { id: tab_bar; page: page }
+    LazyTab { id: tab_bar; tabId: "bar"; file: "appearance/BarTab.qml" }
 
-    PanelsTab { id: tab_panels; page: page }
+    LazyTab { id: tab_panels; tabId: "panels"; file: "appearance/PanelsTab.qml" }
 
-    WindowsTab { id: tab_windows; page: page }
+    LazyTab { id: tab_desktop; tabId: "desktop"; file: "appearance/DesktopTab.qml" }
 
-    SystemTab { id: tab_system; page: page }
+    LazyTab { id: tab_apps; tabId: "apps"; file: "appearance/AppsTab.qml" }
 
     // --- windows: looks.lua, and hyprland.json over it ------------------------
 

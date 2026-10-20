@@ -2,22 +2,10 @@
 # Singularity - Quickshell
 # ~/.config/quickshell/scripts/shell-log-issues.sh [--dismiss] [log]
 #
-# The warnings and errors in the shell's log that are worth reading, one a
-# line, colours kept. The Health scan counts these and the Shell log row's
-# View pages through them.
-#
-# Only since the configuration last (re)loaded: the log runs from login,
-# and an error from a reload that was since fixed and reloaded again isn't
-# a problem any more. Lines from outside the shell's code are left out too:
-#   - the desktop portal refusing a second app ID (Qt, every launch)
-#   - a media player's property failing to update as the player goes away
-#     (quickshell's MPRIS polling racing the player's exit)
-#   - Qt's Wayland text input disabling a surface after focus has moved on
-#     ("Trying to disable ... but ... is focused", on any field losing focus)
-#
-# --dismiss marks every line there is now as read: later runs skip them
-# until the shell starts a new log (each run has its own id, in the
-# "Saving logs to" line).
+# The shell log's warnings and errors worth reading, one a line, colours
+# kept, for the Health scan. Only since the last config load, minus noise
+# from outside the shell (portal app ID, MPRIS races, Qt text input).
+# --dismiss marks the current lines read until the next log (per-run id).
 dismiss=0
 [[ ${1-} == --dismiss ]] && { dismiss=1; shift; }
 log=${1:-$HOME/.cache/quickshell.log}

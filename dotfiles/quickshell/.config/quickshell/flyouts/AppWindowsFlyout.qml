@@ -1,13 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/AppWindowsFlyout.qml
 //
-// An app's icon in the bar's open-windows strip, when the app has more
-// than one window: every one of them, a row each, as the Windows taskbar
-// lists a grouped app's. Each popout sits indented under the window it came
-// from; a window a popout is blocking is dimmed, with a lock. A row brings
-// that window up; its close action closes it, and a popout's square makes
-// it one of the app's own windows. Which windows are popouts, and whose, is
-// windows.lua's call (Bar.isPopout).
+// An app's windows from the strip, a row each; popouts indented under their
+// owner, a blocked owner dimmed with a lock. A row raises the window; close
+// closes it; a popout's square promotes it. Popouts per windows.lua's tags
+// (Bar.isPopout).
 
 import Quickshell
 import Quickshell.Hyprland

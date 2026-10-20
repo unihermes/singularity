@@ -4,13 +4,13 @@
 #
 #   wallpaper.sh            at login: the saved wallpaper, or a random one when
 #                           shuffle is on or nothing is saved yet
-#   wallpaper.sh set PATH   show PATH now
+#   wallpaper.sh set PATH [MODE]  show PATH now, fitted by MODE (swaybg's
+#                           fill, fit, center or tile; the saved one if left out)
 #   wallpaper.sh list       every image in wallpapers/, one per line
 #   wallpaper.sh current    the image swaybg is showing
 #
-# The choice is saved by Quickshell's Appearance page (Wallpaper.qml) to
-# ~/.local/state/singularity/wallpaper.state as key=value lines rather than JSON,
-# so this can read it without jq.
+# The choice is in wallpaper.state (key=value, no jq needed), written by
+# Wallpaper.qml.
 set -euo pipefail
 
 # relative to this script's real location, so the repo can live anywhere
@@ -24,15 +24,25 @@ list() {
     \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | sort
 }
 
+# the saved fit, "fill" until one is saved
+saved_mode() {
+  local m=fill k v
+  if [[ -r $state ]]; then
+    while IFS='=' read -r k v; do [[ $k == mode ]] && m=$v; done < "$state"
+  fi
+  echo "$m"
+}
+
 # swaybg has no IPC, so changing the image means a new instance. The new one
 # is started before the old one is killed: the other way round shows a frame
 # of bare background between them.
 show() {
-  local old
+  local old mode=${2:-$(saved_mode)}
+  case $mode in fill|fit|center|tile) ;; *) mode=fill ;; esac
   mkdir -p "${current_link%/*}"
   ln -sfn "$1" "$current_link"
   old=$(pgrep -x swaybg || true)
-  swaybg -i "$1" -m fill &>/dev/null &
+  swaybg -i "$1" -m "$mode" &>/dev/null &
   disown
   if [[ -n $old ]]; then
     sleep 0.4
@@ -48,7 +58,7 @@ case "${1:-login}" in
     ;;
   set)
     [[ -f ${2:-} ]] || { echo "no such image: ${2:-}" >&2; exit 1; }
-    show "$2"
+    show "$2" "${3:-}"
     ;;
   login)
     shuffle=1 saved=""
@@ -68,5 +78,5 @@ case "${1:-login}" in
       show "${images[RANDOM % ${#images[@]}]}"
     fi
     ;;
-  *) echo "usage: wallpaper.sh [login | set PATH | list | current]" >&2; exit 2 ;;
+  *) echo "usage: wallpaper.sh [login | set PATH [MODE] | list | current]" >&2; exit 2 ;;
 esac

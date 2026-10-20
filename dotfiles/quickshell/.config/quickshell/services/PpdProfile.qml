@@ -4,12 +4,8 @@
 // power-profiles-daemon's active profile, for the battery flyout and the
 // Settings window's Power page.
 //
-// Over PPD's DBus interface via busctl. Deliberately not powerprofilesctl:
-// that is a python script that imports gi.repository, so it needs
-// python-gobject pulled in just to read one string, and it is not a
-// dependency of the daemon. busctl ships with systemd. PPD is
-// DBus-activatable, so the first read starts it even if the unit was never
-// enabled.
+// Via busctl on PPD's DBus (powerprofilesctl needs python-gobject); the
+// first read activates the daemon.
 
 pragma Singleton
 

@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
 # Sends one call to the "alttab" IPC target: `alttab-ipc.sh <function> [arg]`.
 #
-# Prefers alttab-relay (alttab-relay.cpp, started alongside quickshell in
-# autostart.lua) over `qs ipc call` -- see that file for why: `qs` is ~45ms of
-# process-spawn overhead on its own, which alone can be longer than a fast
-# ALT+Tab tap-and-release takes start to finish. Falls back to `qs` when the
-# relay isn't reachable, so alt-tab still works (just slower) if the relay
-# failed to build during install, hasn't started yet this session, or ever
-# stops working -- e.g. a Quickshell update changes the private wire format
-# the relay speaks. Every caller goes through this one fallback rather than
-# each re-implementing it.
+# Prefers alttab-relay (`qs` costs ~45ms, longer than a fast tap); falls
+# back to `qs ipc call` when the relay isn't reachable.
 set -euo pipefail
 
 function=$1
@@ -24,11 +17,8 @@ if [[ -S $relay_sock ]] && echo "$message" | socat - "UNIX-CONNECT:$relay_sock" 
     exit 0
 fi
 
-# No relay, so no window list: `tab <gen>` from the bind gets it here, from
-# hyprctl, in the form the relay would have built. Wrapped in an object
-# rather than handed over as the bare array hyprctl prints, because `qs ipc
-# call` splits a top-level JSON array argument into one argument per element
-# and `tab` takes exactly one.
+# Without the relay, `tab` gets the window list from hyprctl here, wrapped in
+# an object (`qs ipc call` splits a top-level array).
 if [[ $function == tab && $arg != "{"* ]]; then
     clients=$(hyprctl clients -j 2>/dev/null) || exit 0
     arg="{\"gen\":${arg:--1},\"clients\":$clients}"

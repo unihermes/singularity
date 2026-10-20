@@ -7,11 +7,8 @@
 
 local S = require("shared")
 
--- The built-in panel switched off while the lid is shut on a docked laptop,
--- so every workspace moves to the other displays as if the panel weren't
--- there. lid.sh decides when: it writes the panel's name to this file and
--- reloads, and removes it and reloads when the lid opens (the reload
--- restores the panel's own rule). Called after the rules, so it wins.
+-- The built-in panel off while the lid is shut on a docked laptop: lid.sh
+-- writes its name here and reloads. After the rules, so it wins.
 local function panelOffWhileLidShut()
     local f = io.open((os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-lid-docked")
     if not f then return end
@@ -20,14 +17,10 @@ local function panelOffWhileLidShut()
     if panel and panel ~= "" then hl.monitor({ output = panel, disabled = true }) end
 end
 
--- Displays whose native mode is a TV timing (CTA VIC 16, 1080p60) but whose
--- EDID can't say they take full-range RGB: they assume the TV range, while
--- the GPU sends the PC one, so dark greys are crushed to black and light
--- ones clipped to white. The same resolution at PC timings (CVT reduced
--- blanking, 59.94 Hz) is read as full range. Keyed on the EDID's model name,
--- read from sysfs since a mirrored display isn't in hl.get_monitors() and
--- nothing is there yet at launch. Which displays, and the modeline for each,
--- is this machine's display-fixes.lua (see shared.lua).
+-- Displays whose native mode is a TV timing (CTA VIC 16) without full-range
+-- RGB in their EDID crush blacks and clip whites; the same resolution at PC
+-- timings (CVT-RB, 59.94 Hz) reads full range. Keyed on the EDID model name
+-- from sysfs; the list is this machine's display-fixes.lua.
 local pcTimings = type(S.displayFixes.pcTimings) == "table" and S.displayFixes.pcTimings or {}
 
 local function readAll(cmd)
@@ -59,19 +52,10 @@ local function withPcTimings(rule)
     return out
 end
 
--- The Display page's rules for this machine's displays, in the state
--- directory since they differ per machine. Until it has saved any, one rule
--- for every display: empty output matches them all, which suits a laptop
--- that gets docked. The page copies this rule to start the file.
--- scale 1 is native resolution: everything as small as the panel can draw it.
--- "auto" picks a HiDPI factor on a dense laptop panel, which makes the whole
--- desktop look oversized. Nudge to 1.25 or 1.5 if 1 is too small. Below 1
--- (0.75 sizes a 1080p display like a 1440p one beside it) Wayland apps with
--- fractional scaling stay sharp, but XWayland ones blur unless custom.lua
--- sets xwayland force_zero_scaling, which draws them 1:1.
---
--- Every rule goes through withPcTimings, and a display that needs PC timings
--- but has no rule of its own gets a copy of the catch-all with them.
+-- The Display page's rules for this machine, in the state directory; until
+-- it saves any, one catch-all rule (empty output). Scale 1 is native; below
+-- 1, XWayland apps blur unless custom.lua sets force_zero_scaling. Every
+-- rule goes through withPcTimings.
 local monitorRule, named, catchAll = hl.monitor, {}, nil
 hl.monitor = function(rule)
     named[rule.output] = true
@@ -100,29 +84,19 @@ end
 
 panelOffWhileLidShut()
 
--- Primary display, picked on the Settings window's Display page and handed
--- over the way the Appearance page's settings are: a state file read here, then a
--- config-only reload. Workspace 1 lives on it, the cursor starts on it, and
--- duplicate mode copies it. Empty (the default) leaves all of that to
--- Hyprland, which uses the first display it finds.
---
--- The workspace rule only decides where workspace 1 is *created*, so a
--- workspace that already exists stays put. The Settings page moves it itself
--- when the choice changes, and singularityResetWorkspaces() below does on
--- docking.
+-- The primary display (state file from the Display page): workspace 1 and
+-- the cursor start there, duplicate copies it; empty leaves it to Hyprland.
+-- The rule only places workspace 1 when it's created, so the page and
+-- singularityResetWorkspaces() move it.
 local primaryDisplay = S.state("primary-display", "")
 if primaryDisplay ~= "" then
     hl.config({ cursor = { default_monitor = primaryDisplay } })
     hl.workspace_rule({ workspace = "1", monitor = primaryDisplay, default = true })
 end
 
--- Digital vibrance, the Display page's slider: 0 (greyscale) to 100, 50
--- leaving colours as they are. Anything else is vibrance.frag with the
--- value filled in, as a screen shader on every display. The copy is named
--- after the value, so a new one is a new path and Hyprland compiles it
--- afresh, and it lives in the runtime directory, so the copies go at logout.
--- A shader runs after everything else is drawn, so screenshots and
--- recordings show it too.
+-- Digital vibrance (0..100, 50 = unchanged): vibrance.frag with the value
+-- filled in, as a screen shader, copied to the runtime dir under a name per
+-- value so Hyprland recompiles it.
 do
     local vibrance = math.max(0, math.min(100, tonumber(S.state("vibrance", "50")) or 50))
     local shader = ""
@@ -142,10 +116,9 @@ do
     hl.config({ decoration = { screen_shader = shader } })
 end
 
--- One workspace per display, numbered from the primary: 1 on the primary,
--- 2 on the next display along (left to right, then top to bottom), and so
--- on. Every other workspace is gathered onto the primary. A global so the
--- Display page's "Reset workspaces" can run it through `hyprctl eval`.
+-- One workspace per display numbered from the primary (left to right, top
+-- to bottom), the rest gathered on the primary. For the Display page's
+-- "Reset workspaces", via `hyprctl eval`.
 function singularityResetWorkspaces()
     local mons = hl.get_monitors()
     if #mons == 0 then return end
@@ -178,12 +151,9 @@ function singularityResetWorkspaces()
     end
 end
 
--- Layer surfaces -- the bar, the wallpaper -- are only placed again when a
--- monitor rule moves a display, not when Hyprland slides one over because
--- another came or went, so the bar is left mid-screen or off it. A rule
--- moving each display one pixel, at its current mode and scale so nothing
--- modesets, followed by a reload back to the real rules, puts them right.
--- lid.sh runs both after every change of displays.
+-- Layer surfaces aren't re-placed when Hyprland slides a display over, so a
+-- one-pixel monitor-rule nudge and a reload put them right; lid.sh runs it
+-- after display changes.
 function singularityNudgeDisplays()
     for _, m in ipairs(hl.get_monitors()) do
         if not m.is_mirror then
@@ -198,13 +168,9 @@ function singularityNudgeDisplays()
     end
 end
 
--- A display plugged in (or the panel back on as the lid opens) lays the
--- workspaces out afresh. Plugging or unplugging one with the lid shut is
--- lid.sh's to handle: it switches the panel off or back on to match.
---
--- Run from a timer rather than inside the event: a display is added before
--- its workspace exists, and focusing it then crashes Hyprland. At launch
--- that is every display, so hyprland.start queues it the same way.
+-- A display plugged in (or the panel back) lays the workspaces out afresh
+-- (with the lid shut, lid.sh handles it). From a timer: focusing a display
+-- before its workspace exists crashes Hyprland.
 local function resetWorkspacesSoon()
     hl.timer(function() singularityResetWorkspaces() end, { timeout = 500, type = "oneshot" })
 end

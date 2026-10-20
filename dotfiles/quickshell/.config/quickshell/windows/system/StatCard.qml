@@ -1,14 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/system/StatCard.qml
 //
-// One headline figure on the Overview: a caption, a big number, a meter
-// under it and a quiet line of detail. Four of them across the top answer
-// "is anything wrong" before any of the lists below are read.
-//
-// The meter is optional -- a temperature has no natural full scale until
-// one is chosen (see PageOverview), and a tile with `fraction` left at -1
-// drops the bar and closes up. With `history`, the last minute is drawn as
-// a line over the meter, so now and just now read together.
+// A headline figure on System's Home: caption, big number, optional meter
+// (`fraction` -1 drops it), a line of detail, and with `history` the last
+// minute over the meter.
 
 import QtQuick
 import "../../services"

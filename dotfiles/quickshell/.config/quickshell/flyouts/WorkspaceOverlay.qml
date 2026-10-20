@@ -1,20 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspaceOverlay.qml
 //
-// SUPER+W: every workspace at once, as a card each listing its windows by
-// app icon and name. Click a card to jump to that workspace, click a window
-// to focus just that window, or drag a window onto another card to move it
-// there. A special workspace with windows on it (the scratchpad) gets a card
-// of its own; the empty workspaces fold into one card of their numbers, each
-// still a place to jump or drop.
-//
-// Not a FlyoutPanel: those hang off the bar under the module that opened them
-// and lay their content out in a Column. This is centred on the screen and
-// grid-shaped, so it only borrows the pattern (full-screen transparent layer
-// with a backdrop that closes on click), not the component.
-//
-// Three across or one row (Theme.overviewLayout), over the desktop dimmed,
-// clear, or hidden behind the look's ground (Theme.overviewBackdrop).
+// SUPER+W: a card per workspace listing its windows. Click a card to jump,
+// a window to focus it, drag a window onto a card to move it. Specials with
+// windows get cards; the empty numbers share one. Centred, not a
+// FlyoutPanel; Theme.overviewLayout and overviewBackdrop style it.
 
 import Quickshell
 import Quickshell.Wayland
@@ -30,9 +20,7 @@ OverlayWindow {
 
     function requestClose() { scope.openFlyout = "" }
 
-    // Hyprland reports workspace ids, but the cards should show the fixed
-    // workspaces the binds use whether or not they currently exist -- an empty
-    // workspace has no id to enumerate, and jumping to one is still valid.
+    // the fixed workspaces the binds use, existing or not
     readonly property int workspaceCount: Settings.workspaceCount
 
     function windowsOf(ws) {
@@ -40,10 +28,8 @@ OverlayWindow {
         return ws.toplevels.values.filter(tl => !Apps.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
     }
 
-    // The cards, in order: each numbered workspace with windows, then each
-    // special one with windows, then one card for the empty numbers.
-    // `target` is what a drop moves a window to: a number, or a special
-    // workspace's name ("special:scratchpad").
+    // the cards: numbered workspaces with windows, specials with windows,
+    // one for the empty numbers. `target`: a number or "special:name"
     readonly property var cards: {
         const wss = Hyprland.workspaces.values
         const out = [], empty = []
@@ -92,9 +78,7 @@ OverlayWindow {
     // a press on the other monitor too
     DismissGrab { panel: root }
 
-    // Keys attaches to Items, not to the window itself -- putting these
-    // directly on the PanelWindow silently does nothing ("Could not attach
-    // Keys property ... is not an Item"), so they live on a focused Item.
+    // Keys only attach to Items, so they live on a focused Item
     FocusScope {
         anchors.fill: parent
         focus: true
@@ -342,16 +326,8 @@ OverlayWindow {
                                         font.pixelSize: Theme.fontCaption
                                     }
 
-                                    // Click focuses this window; dragging it onto
-                                    // another card moves it there instead.
-                                    //
-                                    // Hand-rolled rather than Qt's Drag/DropArea to
-                                    // match BarWidgetList's reorder grip, the only
-                                    // other drag in the shell: press, track the
-                                    // pointer against the cards, act on release.
-                                    // Nothing here needs a drag proxy item or mime
-                                    // data, so the native API would only add moving
-                                    // parts.
+                                    // click focuses; drag onto a card moves
+                                    // (hand-rolled, like BarWidgetList's grip)
                                     MouseArea {
                                         id: winDrag
                                         anchors.fill: parent
