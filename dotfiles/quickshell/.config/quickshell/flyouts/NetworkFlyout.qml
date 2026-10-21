@@ -3,8 +3,8 @@
 //
 // The connection first, as a card: the cable when it's up, else the joined
 // network. Under it what's moving now, down and up, and the last minute of
-// it; then the Wi-Fi switch, the five strongest other networks under
-// NEARBY with Rescan on that heading, and the passphrase prompt. The state
+// it; then the five strongest other networks under WI-FI, with Rescan and
+// the radio switch on that heading, and the passphrase prompt. The state
 // and the iwctl calls live in services/Network.qml, the rates in
 // SystemStats (sampled while this is open).
 
@@ -147,31 +147,30 @@ FlyoutPanel {
         ceiling: peak * 1.15
     }
 
-    FlyoutDivider { visible: netFlyout.browsing && Network.device !== "" }
-
-    // the radio, as a switch like the Settings page's
-    FlyoutAction {
-        visible: netFlyout.browsing && Network.device !== ""
-        icon: Network.powered ? "󰤨" : "󰤭"
-        label: "Wi-Fi"
-        status: Network.wired && Network.ssid !== "" ? Network.ssid : ""
-        checked: Network.powered
-        onActivated: Network.setPowered(!Network.powered)
-    }
-
     // --- the others ---
     FlyoutHeading {
-        visible: netFlyout.browsing && Network.powered && Network.device !== ""
-        text: "NEARBY" + (netFlyout.others.length > 0 ? "  " + netFlyout.others.length : "")
-        control: scanButton
+        visible: netFlyout.browsing && Network.device !== ""
+        text: "WI-FI" + (Network.powered && netFlyout.others.length > 0 ? "  " + netFlyout.others.length : "")
+        control: headingControls
     }
 
+    // Rescan, while the radio is on, then the radio switch
     Component {
-        id: scanButton
-        IconButton {
-            icon: "󰑐"
-            spinning: Network.scanning
-            onClicked: Network.scan()
+        id: headingControls
+        Row {
+            spacing: Theme.spaceM
+            IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: Network.powered
+                icon: "󰑐"
+                spinning: Network.scanning
+                onClicked: Network.scan()
+            }
+            Switch {
+                anchors.verticalCenter: parent.verticalCenter
+                checked: Network.powered
+                onToggled: Network.setPowered(!Network.powered)
+            }
         }
     }
 
