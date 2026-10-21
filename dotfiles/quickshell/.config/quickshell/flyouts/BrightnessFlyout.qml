@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BrightnessFlyout.qml
 //
-// A slider per display it can set, then Night Light (root's state; its
-// schedule runs in shell.qml).
+// A labelled slider per display it can set, this bar's own first, then
+// Night Light (root's state; its schedule runs in shell.qml).
 
 import "../services"
 import "../services/TimeWindow.js" as TimeWindow
@@ -11,7 +11,7 @@ import QtQuick
 FlyoutPanel {
     id: brightnessFlyout
     flyout: "brightness"
-    menuWidth: 220
+    menuWidth: Theme.fit(280)
 
     required property var shellRoot
 
@@ -24,7 +24,8 @@ FlyoutPanel {
             .filter(d => DdcBrightness.answered.indexOf(d.output) >= 0)
             .sort((a, b) => (b.output === output) - (a.output === output))
         for (var i = 0; i < ds.length; i++)
-            out.push({ output: ds[i].output, label: ds[i].model || ds[i].output })
+            out.push({ output: ds[i].output, label: (ds[i].model || ds[i].output)
+                + (ds[i].output === output && ds.length + (Brightness.available ? 1 : 0) > 1 ? "  · this screen" : "") })
         if (Brightness.available) out.push({ output: "", label: "Built-in display" })
         return out
     }
@@ -48,15 +49,8 @@ FlyoutPanel {
             ? brightnessFlyout.levelOf(brightnessFlyout.controls[0].output) + "%" : "—")
     }
 
-    Slider {
-        visible: brightnessFlyout.controls.length === 1
-        width: parent.width
-        value: visible ? brightnessFlyout.levelOf(brightnessFlyout.controls[0].output) : 0
-        onMoved: v => brightnessFlyout.setOf(brightnessFlyout.controls[0].output, v)
-    }
-
     Repeater {
-        model: brightnessFlyout.controls.length > 1 ? brightnessFlyout.controls : []
+        model: brightnessFlyout.controls
 
         FlyoutSliderRow {
             required property var modelData

@@ -6,8 +6,9 @@
 // the heaviest processes. Read from procfs/sysfs with FileView where it can
 // (cheap each second); top (3s), ip (3s), a hwmon sweep (5s) and df (30s)
 // shell out. A singleton so the lazily loaded pages need no null guards;
-// the static half is SystemSpecs.qml. Samples only while `active` (the
-// window's visibility), and the graphs start empty each open.
+// the static half is SystemSpecs.qml. Samples only while `sampling`: the
+// window is showing (`active`) or a flyout that reads it is open
+// (`flyoutActive`); the graphs start empty each open.
 
 pragma Singleton
 
@@ -19,6 +20,8 @@ Singleton {
     id: root
 
     property bool active: false
+    property bool flyoutActive: false
+    readonly property bool sampling: active || flyoutActive
     // set while the pointer is over a process list: a refresh landing then
     // is dropped, so a row can't move out from under a click
     property bool holdProcs: false
@@ -445,7 +448,7 @@ Singleton {
     Timer {
         interval: 1000
         repeat: true
-        running: root.active
+        running: root.sampling
         triggeredOnStart: true
         onTriggered: root.sampleAll()
     }
@@ -453,7 +456,7 @@ Singleton {
     Timer {
         interval: 3000
         repeat: true
-        running: root.active
+        running: root.sampling
         triggeredOnStart: true
         onTriggered: {
             root.refreshProcs()
@@ -466,7 +469,7 @@ Singleton {
     Timer {
         interval: 5000
         repeat: true
-        running: root.active
+        running: root.sampling
         triggeredOnStart: true
         onTriggered: if (!sensorProc.running) sensorProc.running = true
     }
@@ -474,13 +477,13 @@ Singleton {
     Timer {
         interval: 30000
         repeat: true
-        running: root.active
+        running: root.sampling
         triggeredOnStart: true
         onTriggered: if (!dfProc.running) dfProc.running = true
     }
 
     // cleared on close, so the next open starts from fresh baselines
-    onActiveChanged: if (!active) {
+    onSamplingChanged: if (!sampling) {
         procs = []
         killPid = -1
         cpuPrev = null; corePrev = []; netPrev = null; diskPrev = null
@@ -739,13 +742,13 @@ Singleton {
         }
     }
 
-    onProcSortChanged: if (active) {
+    onProcSortChanged: if (sampling) {
         procs = []
         refreshProcs()
     }
     // a page asking for more rows than the last one showed: refetch rather
     // than wait up to 3s with a short list on screen
-    onProcLimitChanged: if (active) refreshProcs()
+    onProcLimitChanged: if (sampling) refreshProcs()
 
     // Two-step kill: the first click arms that pid for 3s, the second sends
     // SIGTERM; the list freezes while hovered.

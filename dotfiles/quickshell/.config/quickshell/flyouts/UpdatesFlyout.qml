@@ -1,16 +1,18 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/UpdatesFlyout.qml
 //
-// A card saying where things stand, with Check now always (beside Update
-// now while there are some), then the packages, the space a clean-up would
-// free, then Singularity's own commits waiting upstream while there are any.
+// Where things stand on one line with Check and Update at its end, then
+// the packages under Repositories and AUR (each folds), the space a
+// clean-up would free, then Singularity's own commits waiting upstream
+// while there are any.
 
 import QtQuick
 import "../services"
 
 FlyoutPanel {
+    id: root
     flyout: "updates"
-    menuWidth: 320
+    menuWidth: Theme.fit(320)
 
     // the reclaimable space comes from Health's package checks
     readonly property var reclaim: Health.checks.find(c => c.id === "reclaim") || null
@@ -21,83 +23,86 @@ FlyoutPanel {
     onOpenChanged: if (open) scanHealth()
     Component.onCompleted: if (open) scanHealth()
 
-    FlyoutHeading { text: "UPDATES" }
-
-    HeadCard {
-        id: card
+    // where things stand on one line, the actions at its end
+    Item {
+        id: head
         readonly property bool some: Updates.count > 0
-        glyph: some || Updates.lastChecked === null ? "󰚰" : "󰄬"
-        glyphColor: some ? Theme.accent : Updates.lastChecked === null ? Theme.muted : Theme.good
-        title: Updates.checking && Updates.lastChecked === null ? "Checking…"
-            : Updates.lastChecked === null ? "Not checked"
-            : !some ? "Up to date"
-            : Updates.count + (Updates.count === 1 ? " update" : " updates")
-        lines: [
-            some && Updates.aurCount > 0 ? Updates.aurCount + " from the AUR" : "",
-            Updates.checking || Updates.repoChecking ? "Checking now…"
-                : Updates.lastChecked ? "Checked " + Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
-        ]
-
-        FlyoutChip {
-            visible: card.some
-            text: Updates.repoBehind > 0 ? "Update packages" : "Update now"
-            selected: true
-            onClicked: {
-                Updates.update()
-                scope.openFlyout = ""
-            }
-        }
-        FlyoutChip {
-            text: card.some ? "󰑓" : "Check now"
-            glyph: card.some
-            enabled: !Updates.checking && !Updates.repoChecking
-            onClicked: Updates.refresh()
-        }
-    }
-
-    ListView {
-        id: updList
-        visible: count > 0
         width: parent.width
-        height: Math.min(contentHeight, 12 * Theme.rowHeightDense)
-        clip: true
-        interactive: contentHeight > height
-        boundsBehavior: Flickable.StopAtBounds
-        model: Updates.packages
+        implicitHeight: Math.max(headText.implicitHeight, Theme.chipHeight)
 
-        delegate: Item {
-            required property var modelData
-            width: updList.width
-            height: Theme.rowHeightDense
+        Column {
+            id: headText
+            anchors.left: parent.left
+            anchors.right: headActions.left
+            anchors.rightMargin: Theme.spaceM
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 1
 
             Text {
-                anchors.left: parent.left
-                anchors.right: ver.left
-                anchors.rightMargin: Theme.spaceL
-                anchors.verticalCenter: parent.verticalCenter
-                text: modelData.name + (modelData.aur ? "  ·aur" : "")
+                width: parent.width
                 elide: Text.ElideRight
-                color: Theme.text
+                text: Updates.checking && Updates.lastChecked === null ? "Checking…"
+                    : Updates.lastChecked === null ? "Not checked"
+                    : !head.some ? "Up to date  󰄬"
+                    : Updates.count + (Updates.count === 1 ? " update" : " updates")
+                color: !head.some && Updates.lastChecked !== null && !Updates.checking ? Theme.good : Theme.textStrong
                 font.family: Theme.fontText
-                font.weight: Theme.weightBody
+                font.weight: Theme.weightStrong
                 font.pixelSize: Theme.fontBody
             }
             Text {
-                id: ver
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, Theme.fs(150))
-
-                horizontalAlignment: Text.AlignRight
-                text: modelData.to
-                elide: Text.ElideLeft
+                width: parent.width
+                elide: Text.ElideRight
+                text: Updates.checking || Updates.repoChecking ? "Checking now…"
+                    : Updates.lastChecked ? "Checked " + Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
+                visible: text !== ""
                 color: Theme.subtext
                 font.family: Theme.fontText
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontSmall
             }
         }
+
+        Row {
+            id: headActions
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceS
+            IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                icon: "󰑓"
+                spinning: Updates.checking || Updates.repoChecking
+                enabled: !Updates.checking && !Updates.repoChecking
+                onClicked: Updates.refresh()
+            }
+            FlyoutChip {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: head.some
+                text: Updates.repoBehind > 0 ? "Update packages" : "Update"
+                selected: true
+                onClicked: {
+                    Updates.update()
+                    scope.openFlyout = ""
+                }
+            }
+        }
     }
+
+    // the packages by where they come from, each group folding on its heading
+    readonly property var repoPackages: Updates.packages.filter(p => !p.aur)
+    readonly property var aurPackages: Updates.packages.filter(p => p.aur)
+
+    FlyoutHeading {
+        visible: repoPackages.length > 0
+        text: "REPOSITORIES  " + repoPackages.length
+    }
+    PackageList { packages: repoPackages }
+
+    FlyoutHeading {
+        visible: aurPackages.length > 0
+        text: "AUR  " + aurPackages.length
+    }
+    PackageList { packages: aurPackages }
 
     // what cleaning the package caches and AUR builds would free
     FlyoutDivider { visible: reclaimRow.visible }

@@ -1,14 +1,16 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FailedFlyout.qml
 //
-// Split out of shell.qml. Self-contained: only needs the FailedUnits singleton.
+// A line per failed unit with its log, restart and clear as icons, then
+// the count and Clear all. Self-contained: only needs FailedUnits.
 
 import QtQuick
 import "../services"
 
 FlyoutPanel {
+    id: root
     flyout: "failed"
-    menuWidth: 300
+    menuWidth: Theme.fit(300)
 
     FlyoutHeading { text: "FAILED SERVICES" }
 
@@ -24,15 +26,14 @@ FlyoutPanel {
         Item {
             required property var modelData
             width: parent ? parent.width : 0
-            height: Theme.row(46)
+            implicitHeight: Theme.rowHeight
 
             Text {
-                id: unitName
                 anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: Theme.spaceXs
-                text: modelData.name
+                anchors.right: buttons.left
+                anchors.rightMargin: Theme.spaceS
+                anchors.verticalCenter: parent.verticalCenter
+                text: modelData.name + (modelData.user ? "  user" : "")
                 elide: Text.ElideMiddle
                 color: Theme.textStrong
                 font.family: Theme.fontText
@@ -40,26 +41,39 @@ FlyoutPanel {
                 font.pixelSize: Theme.fontBody
             }
 
-            Text {
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: Theme.spaceS
-                text: modelData.user ? "user" : "system"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-
             Row {
+                id: buttons
                 anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 1
-                spacing: Theme.spaceS
-                FlyoutChip { text: "Log";     onClicked: { FailedUnits.showLog(modelData); scope.openFlyout = "" } }
-                FlyoutChip { text: "Restart"; onClicked: FailedUnits.restart(modelData) }
-                FlyoutChip { text: "Clear";   onClicked: FailedUnits.clear(modelData) }
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spaceXs
+                IconButton { icon: "󰦨"; onClicked: { FailedUnits.showLog(modelData); scope.openFlyout = "" } }
+                IconButton { icon: "󰑐"; onClicked: FailedUnits.restart(modelData) }
+                IconButton { icon: "󰅖"; onClicked: FailedUnits.clear(modelData) }
             }
+        }
+    }
+
+    FlyoutDivider { visible: FailedUnits.count > 0 }
+
+    Item {
+        visible: FailedUnits.count > 0
+        width: parent.width
+        implicitHeight: Theme.chipHeight
+
+        Text {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: FailedUnits.count + " failed"
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontSmall
+        }
+        FlyoutChip {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: "Clear all"
+            onClicked: FailedUnits.units.slice().forEach(u => FailedUnits.clear(u))
         }
     }
 }

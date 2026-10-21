@@ -1,18 +1,23 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NetworkFlyout.qml
 //
-// The radio switch on the heading, the joined network as a card (as on the
-// Settings page), the five strongest others under NEARBY with Rescan on
-// that heading, and the passphrase prompt. The state and the iwctl calls
-// live in services/Network.qml.
+// The connection first, as a card: the cable when it's up, else the joined
+// network. Under it what's moving now, down and up, and the last minute of
+// it; then the Wi-Fi switch, the five strongest other networks under
+// NEARBY with Rescan on that heading, and the passphrase prompt. The state
+// and the iwctl calls live in services/Network.qml, the rates in
+// SystemStats (sampled while this is open).
 
 import QtQuick
 import "../services"
+import "../services/Format.js" as Format
 
 FlyoutPanel {
     id: netFlyout
     flyout: "network"
-    menuWidth: 280
+    menuWidth: Theme.fit(300)
+
+    Binding { when: netFlyout.open; target: SystemStats; property: "flyoutActive"; value: true }
 
     required property var bar
 
@@ -33,17 +38,8 @@ FlyoutPanel {
     }
 
     FlyoutHeading {
-        text: netFlyout.browsing ? "NETWORK" : "PASSPHRASE"
-        // the radio, as a switch like the Settings page's
-        control: netFlyout.browsing && Network.device !== "" ? radioSwitch : null
-    }
-
-    Component {
-        id: radioSwitch
-        Switch {
-            checked: Network.powered
-            onToggled: Network.setPowered(!Network.powered)
-        }
+        visible: !netFlyout.browsing
+        text: "PASSPHRASE"
     }
 
     // --- passphrase prompt ---
@@ -75,21 +71,10 @@ FlyoutPanel {
         onActivated: { netFlyout.pendingSsid = ""; pass.text = "" }
     }
 
-    // --- the link ---
-    // the cable, on a machine that has a port; nothing to switch, so a click
-    // goes to its details in Settings
-    FlyoutAction {
-        visible: netFlyout.browsing && Network.wiredDevice !== ""
-        icon: "󰛳"
-        label: "Ethernet"
-        status: (Network.wired ? "Connected"
-            : Network.wiredState === "no-carrier" || Network.wiredState === "off" ? "Unplugged"
-            : "No address yet") + "  ·  " + Network.wiredDevice
-        checkable: false
-        onActivated: scope.openSettings("network")
-    }
-
-    // the joined network, or why there isn't one; Disconnect while pointed at
+    // --- the connection ---
+    // the cable while it's up (nothing to switch: a click there goes to its
+    // details in Settings), else the joined network or why there isn't one,
+    // Disconnect while pointed at
     Item {
         visible: netFlyout.browsing
         width: parent ? parent.width : 0
@@ -97,30 +82,84 @@ FlyoutPanel {
 
         HeadCard {
             id: card
-            glyph: Network.ssid !== "" && netFlyout.joined ? Network.strengthGlyphs[Math.max(1, netFlyout.joined.bars) - 1]
+            readonly property bool cable: Network.wired
+            glyph: cable ? "󰛳"
+                : Network.ssid !== "" && netFlyout.joined ? Network.strengthGlyphs[Math.max(1, netFlyout.joined.bars) - 1]
                 : Network.powered ? "󰤮" : "󰤭"
-            glyphColor: Network.ssid !== "" ? Theme.textStrong : Theme.muted
-            title: Network.device === "" ? "No wireless device"
+            glyphColor: cable || Network.ssid !== "" ? Theme.textStrong : Theme.muted
+            title: cable ? "Wired"
+                : Network.device === "" ? (Network.wiredDevice !== "" ? "Cable unplugged" : "No network device")
                 : !Network.powered ? "Wi-Fi is off"
                 : Network.ssid !== "" ? Network.ssid
                 : "Not connected"
             lines: {
+                var ip = SystemStats.ipAddr !== "" ? SystemStats.ipAddr : ""
+                if (cable) return [Network.wiredDevice, ip]
                 if (Network.device === "" || !Network.powered) return []
                 if (Network.ssid === "") return ["Pick a network below"]
                 var j = netFlyout.joined
-                if (!j) return []
+                if (!j) return [ip]
                 return [(j.security === "open" ? "Open" : j.security === "8021x" ? "Enterprise" : "Secured")
-                    + "  ·  " + ["", "Weak", "Fair", "Good", "Strong"][Math.max(1, j.bars)]]
+                    + "  ·  " + ["", "Weak", "Fair", "Good", "Strong"][Math.max(1, j.bars)], ip]
             }
 
             FlyoutChip {
-                visible: Network.ssid !== "" && cardHover.hovered
+                visible: !card.cable && Network.ssid !== "" && cardHover.hovered
                 text: "Disconnect"
                 onClicked: Network.disconnect()
+            }
+            FlyoutChip {
+                visible: card.cable && cardHover.hovered
+                text: "Details  󰁔"
+                onClicked: scope.openSettings("network")
             }
         }
 
         HoverHandler { id: cardHover }
+    }
+
+    // what's moving now, and the last minute of it
+    TileGrid {
+        visible: netFlyout.browsing && (Network.wired || Network.ssid !== "")
+        columns: 2
+        FlyoutTile {
+            width: parent.cell
+            glyph: "󰇚"
+            title: Format.rate(SystemStats.rxRate)
+            big: true
+            caption: "Down"
+        }
+        FlyoutTile {
+            width: parent.cell
+            glyph: "󰕒"
+            title: Format.rate(SystemStats.txRate)
+            big: true
+            caption: "Up"
+        }
+    }
+
+    Spark {
+        visible: netFlyout.browsing && SystemStats.rxHistory.length > 1
+        height: Theme.row(40)
+        readonly property real peak: Math.max(65536,
+            Math.max.apply(null, SystemStats.rxHistory.concat(SystemStats.txHistory, [0])))
+        series: [
+            { values: SystemStats.rxHistory, color: Theme.accent, fill: true },
+            { values: SystemStats.txHistory, color: Theme.subtext, fill: false },
+        ]
+        ceiling: peak * 1.15
+    }
+
+    FlyoutDivider { visible: netFlyout.browsing && Network.device !== "" }
+
+    // the radio, as a switch like the Settings page's
+    FlyoutAction {
+        visible: netFlyout.browsing && Network.device !== ""
+        icon: Network.powered ? "󰤨" : "󰤭"
+        label: "Wi-Fi"
+        status: Network.wired && Network.ssid !== "" ? Network.ssid : ""
+        checked: Network.powered
+        onActivated: Network.setPowered(!Network.powered)
     }
 
     // --- the others ---

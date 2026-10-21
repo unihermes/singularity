@@ -1,19 +1,21 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BluetoothFlyout.qml
 //
-// The radio switch on the heading, then DEVICES -- what you've paired, then
-// anything new the scan turned up -- with Scan on that heading. Needs bar's
+// The radio switch on the heading, then each connected device as a card
+// (its kind, battery and Disconnect), the other paired ones as rows, then
+// anything new the scan turned up, and Scan as the last row. Needs bar's
 // adapter-state helpers.
 
 import Quickshell
 import Quickshell.Bluetooth
 import QtQuick
 import "../services"
+import "../services/BtKind.js" as BtKind
 
 FlyoutPanel {
     id: btFlyout
     flyout: "bluetooth"
-    menuWidth: 280
+    menuWidth: Theme.fit(300)
 
     required property var bar
 
@@ -83,27 +85,42 @@ FlyoutPanel {
         return !d.paired && !d.connected && btFlyout.btKeep(d)
     }))
 
-    FlyoutHeading {
-        visible: btFlyout.radioOn
-        text: "DEVICES" + (btFlyout.saved.length > 0 ? "  " + btFlyout.saved.length : "")
-        control: scanButton
+    readonly property var connected: saved.filter(d => d.connected)
+    readonly property var paired: saved.filter(d => !d.connected)
+
+    // each connected device as a card: what it is, its battery, Disconnect
+    Repeater {
+        model: ScriptModel { values: btFlyout.radioOn ? btFlyout.connected : [] }
+
+        HeadCard {
+            id: card
+            required property var modelData
+            readonly property int battery: BtBattery.level(modelData)
+            readonly property bool aliasIsMac: modelData.name === modelData.address.replace(/:/g, "-")
+            glyph: BtKind.glyph(modelData.icon)
+            glyphColor: Theme.accent
+            title: modelData.name !== "" && !aliasIsMac ? modelData.name
+                : modelData.deviceName !== "" ? modelData.deviceName : modelData.address
+            lines: [
+                "Connected" + (BtKind.word(modelData.icon) !== "" ? " · " + BtKind.word(modelData.icon) : ""),
+                battery >= 0 ? BtKind.battery(battery) + " " + battery + "% battery" : "",
+            ]
+            FlyoutChip {
+                text: modelData.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…" : "Disconnect"
+                onClicked: card.modelData.disconnect()
+            }
+        }
     }
 
-    // Discovery is meaningless with the radio off, and bluez errors rather
-    // than ignoring the request, so the button only shows with it on.
-    Component {
-        id: scanButton
-        IconButton {
-            icon: "󰑐"
-            spinning: btFlyout.adapter && btFlyout.adapter.discovering
-            onClicked: btFlyout.adapter.discovering = !btFlyout.adapter.discovering
-        }
+    FlyoutHeading {
+        visible: btFlyout.radioOn && btFlyout.paired.length > 0
+        text: "PAIRED  " + btFlyout.paired.length
     }
 
     // ScriptModels, not the bare arrays: each change during a scan makes a
     // fresh array, which would rebuild every row
     Repeater {
-        model: ScriptModel { values: btFlyout.radioOn ? btFlyout.saved : [] }
+        model: ScriptModel { values: btFlyout.radioOn ? btFlyout.paired : [] }
         BtDeviceRow { required property var modelData; device: modelData }
     }
 
@@ -114,9 +131,20 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        label: btFlyout.adapter && btFlyout.adapter.discovering ? "Looking for devices…" : "No devices yet; scan to look"
+        label: "No devices yet; scan to look"
         enabled: false
         visible: btFlyout.radioOn && btFlyout.saved.length === 0 && btFlyout.nearby.length === 0
+            && !(btFlyout.adapter && btFlyout.adapter.discovering)
+    }
+
+    // Discovery is meaningless with the radio off, and bluez errors rather
+    // than ignoring the request, so the row only shows with it on.
+    FlyoutRow {
+        visible: btFlyout.radioOn
+        leadingIcon: "󰑐"
+        label: btFlyout.adapter && btFlyout.adapter.discovering ? "Looking for devices… (stop)" : "Scan for new devices"
+        busy: btFlyout.adapter && btFlyout.adapter.discovering
+        onActivated: btFlyout.adapter.discovering = !btFlyout.adapter.discovering
     }
 
     FlyoutDivider {}

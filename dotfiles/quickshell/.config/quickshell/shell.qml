@@ -615,7 +615,7 @@ ShellRoot {
         }
 
         // workspaces / windows
-        LazyFlyout { name: "workspaces"; scope: screenScope; WorkspacesFlyout { scope: screenScope; bar: screenScope.barWindow } }
+        LazyFlyout { name: "workspaces"; scope: screenScope; WorkspacesFlyout { scope: screenScope; bar: screenScope.barWindow; shellRoot: root } }
 
         // calendar
         LazyFlyout { name: "calendar"; scope: screenScope; CalendarFlyout { scope: screenScope } }

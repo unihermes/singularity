@@ -5,7 +5,7 @@
 // everything else rather than popping a native Qt menu. Submenus drill down
 // in place, like the control centre. Split out of shell.qml; `item` and
 // `stack` are set from outside by BarModules.qml when a tray icon is
-// right-clicked.
+// right-clicked. The app's separators split the menu into sections.
 
 import Quickshell
 import QtQuick
@@ -14,7 +14,7 @@ import "../services"
 FlyoutPanel {
     id: trayMenu
     flyout: "traymenu"
-    menuWidth: 240
+    menuWidth: Theme.fit(260)
 
     property var item: null
     // submenu handles, innermost last
@@ -58,6 +58,8 @@ FlyoutPanel {
         Item {
             id: entryRow
             required property var modelData
+            // the app's separators split the menu into sections
+            readonly property bool isSectionBreak: modelData.isSeparator
             width: parent ? parent.width : 0
             implicitHeight: modelData.isSeparator ? divider.implicitHeight : row.implicitHeight
             height: implicitHeight

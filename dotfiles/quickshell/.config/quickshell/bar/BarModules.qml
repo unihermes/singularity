@@ -80,7 +80,10 @@ Item {
         id: btBtn
         visible: Settings.widgetVisible("bluetooth")
         readonly property var adapter: Bluetooth.defaultAdapter
-        icon: barModules.bar.btAdapterOn(adapter) ? "󰂯" : "󰂲"
+        // the connected glyph while a device is on
+        readonly property bool linked: !!adapter && !!adapter.devices
+            && adapter.devices.values.some(d => d.connected)
+        icon: !barModules.bar.btAdapterOn(adapter) ? "󰂲" : linked ? "󰂱" : "󰂯"
         active: screenScope.openFlyout === "bluetooth"
         dimmed: !barModules.bar.btAdapterOn(adapter)
         onActivated: screenScope.toggleFlyout("bluetooth", btBtn)
@@ -176,7 +179,8 @@ Item {
     }
 
     // audio spectrum in the meter colour, per Theme.vizStyle; no easing, so
-    // it redraws only on cava's 20 frames a second
+    // it redraws only on cava's 20 frames a second. With the Media module
+    // off it stands in for it: the note leads it, and a click opens Media.
     ModuleFrame {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
@@ -186,6 +190,18 @@ Item {
         readonly property string style: Theme.vizStyle
         readonly property int bandW: Theme.barFs(3)
         readonly property int bandH: Theme.moduleHeight - 10
+        readonly property bool forMedia: !Settings.widgetVisible("media") && Media.player !== null
+        active: forMedia && screenScope.openFlyout === "media"
+
+        Text {
+            visible: vizFrame.forMedia
+            anchors.verticalCenter: parent.verticalCenter
+            rightPadding: Theme.spaceXs
+            text: "󰝚"
+            color: Theme.text
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.iconSize
+        }
 
         Repeater {
             model: vizFrame.style === "line" ? 0 : Visualizer.barCount
@@ -261,6 +277,14 @@ Item {
         }
     }
 
+    MouseArea {
+        parent: vizFrame
+        anchors.fill: parent
+        enabled: vizFrame.forMedia
+        cursorShape: Qt.PointingHandCursor
+        onClicked: screenScope.toggleFlyout("media", vizFrame)
+    }
+
     BarModule {
         id: weatherBtn
         visible: Weather.ready && Settings.widgetVisible("weather")
@@ -314,15 +338,14 @@ Item {
         id: updatesBtn
         visible: (Updates.count > 0 || Updates.repoBehind > 0) && Settings.widgetVisible("updates")
         icon: "󰚰"
-        // packages in the label, Singularity's commits to pull in the badge
-        label: Updates.count > 0 ? String(Updates.count) : ""
-        badge: Updates.repoBehind
+        // what's waiting as a badge: packages, else Singularity's commits
+        badge: Updates.count > 0 ? Updates.count : Updates.repoBehind
         active: screenScope.openFlyout === "updates"
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
     }
 
-    // Show desktop: a slim button ending its group (or a slim chip without
-    // groups); hides every window at once (singularityShowDesktop()), lit
+    // Show desktop: a slim slot past a hairline ending its group, whatever
+    // the chips; hides every window at once (singularityShowDesktop()), lit
     // while they're hidden
     Item {
         id: desktopBtn
@@ -341,27 +364,10 @@ Item {
         // fades, whatever the animation settings
         property bool slideX: false
 
-        implicitWidth: grouped ? Theme.sp(8) : chip.implicitWidth
+        implicitWidth: Theme.sp(8)
         implicitHeight: Theme.barHeight
 
-        ModuleFrame {
-            id: chip
-            visible: !desktopBtn.grouped
-            anchors.centerIn: parent
-            padH: Theme.modulePadH / 2
-
-            Rectangle {
-                width: Theme.sp(3)
-                height: Theme.iconSize - 2
-                radius: Theme.pill(width)
-                color: desktopBtn.shown ? Theme.accent
-                    : desktopMouse.containsMouse ? Theme.text : Theme.muted
-            }
-        }
-
         Rectangle {
-            id: cap
-            visible: desktopBtn.grouped
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: desktopBtn.grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight

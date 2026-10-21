@@ -43,6 +43,13 @@ SettingsTab {
     Stepper { label: "Module padding"; hint: "Room either side of each module"; key: "modulePad"; suffix: "px" }
 
     SettingsField {
+        label: "Chips"
+        hint: Settings.barChips === "auto" ? "Framed as the style draws them"
+            : "Bare, outlined or one strip per group, whatever the style"
+        Choice { key: "barChips" }
+    }
+
+    SettingsField {
         visible: Styles.get(Settings.style).options.every(o => o.key !== "barSeparator")
         label: "Separators"
         hint: "Between the bar's modules"
@@ -128,6 +135,12 @@ SettingsTab {
             value: windowsShown.forced ? "all" : Settings.windowScope
             opacity: live ? 1 : 0.4
         }
+    }
+
+    SettingsField {
+        label: "Window list"
+        hint: "What an app's icon opens when it has several windows"
+        Choice { key: "appWindowsStyle" }
     }
 
     SettingsField {

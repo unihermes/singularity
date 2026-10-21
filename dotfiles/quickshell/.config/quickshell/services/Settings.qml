@@ -135,6 +135,8 @@ Singleton {
     readonly property alias clockStyle:  adapter.clockStyle
     readonly property alias windowStyle: adapter.windowStyle
     readonly property alias windowScope: adapter.windowScope
+    // how an app's windows list when its strip icon is clicked
+    readonly property alias appWindowsStyle: adapter.appWindowsStyle
     readonly property alias iconTint:    adapter.iconTint
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gradient:    adapter.gradient
@@ -153,6 +155,9 @@ Singleton {
     readonly property alias trayDrawer:  adapter.trayDrawer
     readonly property alias workspaceNames: adapter.workspaceNames
     readonly property alias barSeparator: adapter.barSeparator
+    // how the bar's chips are framed: "auto" the style's own, or bare,
+    // outlined, or one strip per group, under any style (Styles.resolve)
+    readonly property alias barChips: adapter.barChips
     readonly property alias notifGroup:  adapter.notifGroup
     readonly property alias notifStyle:  adapter.notifStyle
     readonly property alias launcherDetails: adapter.launcherDetails
@@ -235,6 +240,7 @@ Singleton {
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
         windowStyle:  ["icons", "titled", "glide", "lift", "inset", "segmented", "spotlight", "tabs", "index", "dots"],
         windowScope:  ["workspace", "all"],
+        appWindowsStyle: ["list", "actions", "cards", "compact"],
         iconTint:     ["colour", "mono", "accent"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         levelColour:  ["accent", "good", "text"],
@@ -247,6 +253,7 @@ Singleton {
         lockClockPlace: ["centre", "top", "corner"],
         lockClockSize: ["small", "large", "huge"],
         barSeparator: ["none", "line", "double", "dot", "dots", "capped"],
+        barChips:     ["auto", "bare", "outline", "grouped"],
         notifStyle:   ["full", "compact", "banner"],
         launcherPosition: ["centre", "top", "full"],
         launcherLayout: ["list", "grid", "line"],
@@ -281,6 +288,8 @@ Singleton {
     readonly property var keyedLabels: ({
         barStyle: { "full": "Full width" },
         windowStyle: { "titled": "Focused title" },
+        appWindowsStyle: { "actions": "With actions", "cards": "Cards" },
+        barChips: { "bare": "Bare", "outline": "Outlined", "grouped": "Strip" },
         vizStyle: { "rise": "Rising", "line": "One line" },
         barSeparator: { "line": "Lines", "double": "Double lines", "dot": "Dots",
                         "dots": "Stacked dots", "capped": "Capped lines" },
@@ -920,6 +929,7 @@ Singleton {
             property string clockStyle: "stamp"
             property string windowStyle: "icons"
             property string windowScope: "workspace"
+            property string appWindowsStyle: "list"
             property string iconTint: "colour"
             property string vizStyle: "mirror"
             property bool gradient: false
@@ -940,6 +950,7 @@ Singleton {
             property var trayOrder: []
             property string workspaceNames: ""
             property string barSeparator: "none"
+            property string barChips: "auto"
             property bool notifGroup: false
             property string notifStyle: "full"
             property bool launcherDetails: true

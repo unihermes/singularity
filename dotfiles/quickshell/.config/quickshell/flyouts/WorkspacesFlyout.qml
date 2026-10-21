@@ -1,20 +1,22 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspacesFlyout.qml
 //
-// Every window on every workspace under a header per workspace, with the
-// strip's pips. Left click focuses (a header switches), middle closes.
+// Every window on every workspace, under a heading per workspace with its
+// count: the app's icon and name, the title quieter after, the focused one
+// ticked. A click focuses, close on hover; then the workspace grid.
 
 import "../services"
 import Quickshell.Hyprland
-import Quickshell.Widgets
 import QtQuick
 
 FlyoutPanel {
     id: panel
     flyout: "workspaces"
-    menuWidth: 300
+    menuWidth: Theme.fit(320)
 
     required property var bar
+    // for the workspace grid (SUPER+W)
+    required property var shellRoot
 
     // allWindows() is sorted by workspace, so a group is a run of one id
     readonly property var groups: {
@@ -41,177 +43,55 @@ FlyoutPanel {
         return String(id)
     }
 
-    FlyoutHeading { text: "WINDOWS" }
+    // an app's name for a window: its desktop entry's, else the class
+    function appName(w) {
+        var e = w.cls !== "" ? Apps.byClass(w.cls).entry : null
+        return e && e.name ? e.name : (w.cls || "Window")
+    }
 
+    // a heading per workspace (a click there folds it), then its windows:
+    // the app and, quieter, the title; a click focuses, close on hover
     Repeater {
         model: panel.groups
 
         Column {
             id: group
             required property var modelData
-            required property int index
             readonly property bool current: Hyprland.focusedWorkspace !== null
                 && Hyprland.focusedWorkspace.id === modelData.ws
+            readonly property int n: modelData.windows.length
             width: parent ? parent.width : 0
-            // air between groups, not above the first
-            topPadding: index > 0 ? Theme.spaceXs : 0
 
-            // ---- workspace header ----
-            Item {
+            FlyoutHeading {
                 width: parent.width
-                implicitHeight: Theme.rowHeight
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.leftMargin: -Theme.spaceS
-                    anchors.rightMargin: -Theme.spaceS
-                    radius: Theme.radiusInner
-                    color: headMouse.containsMouse ? Theme.hoverFill : "transparent"
-                }
-
-                Rectangle {
-                    id: headPip
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 7
-                    width: group.current ? 22 : 11
-                    radius: Theme.pill(height)
-                    color: group.current ? Theme.accent
-                        : headMouse.containsMouse ? Theme.text : Theme.subtext
-                    Behavior on width { NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease } }
-                    Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
-                }
-
-                Text {
-                    anchors.left: headPip.right
-                    anchors.leftMargin: Theme.spaceM
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Workspace " + panel.wsName(group.modelData.ws)
-                    color: group.current || headMouse.containsMouse ? Theme.textStrong : Theme.subtext
-                    font.family: Theme.fontText
-                    font.pixelSize: Theme.fontSmall
-                    font.weight: group.current ? Theme.weightStrong : Theme.weightBody
-                }
-
-                Text {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: group.modelData.windows.length
-                    color: Theme.muted
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
-                }
-
-                MouseArea {
-                    id: headMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        panel.requestClose()
-                        Hyprland.dispatch("hl.dsp.focus({workspace=" + group.modelData.ws + "})")
-                    }
-                }
+                text: "WORKSPACE " + panel.wsName(group.modelData.ws).toUpperCase()
+                hints: [group.n + (group.n === 1 ? " window" : " windows")]
             }
 
-            // ---- its windows ----
             Repeater {
                 model: group.modelData.windows
 
-                Item {
+                FlyoutRow {
                     id: row
                     required property var modelData
-                    readonly property bool focused: Hyprland.activeToplevel !== null
-                        && Hyprland.activeToplevel.address === modelData.address
-                    readonly property bool lit: focused || rowMouse.containsMouse
                     readonly property string iconPath: Apps.iconForClass(modelData.cls)
                     width: parent.width
-                    implicitHeight: Theme.rowHeight
-
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.leftMargin: -Theme.spaceS
-                        anchors.rightMargin: -Theme.spaceS
-                        radius: Theme.radiusInner
-                        color: rowMouse.containsMouse ? Theme.hoverFill : "transparent"
-                    }
-
-                    // indented to sit under the header's label, so the
-                    // header pip reads as the group's spine
-                    Item {
-                        id: glyphBox
-                        x: Theme.spaceM + 22 - width
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: -(pip.height + 1) / 2
-                        width: Theme.fontIconSize
-                        height: Theme.fontIconSize
-                        opacity: row.lit ? 1 : 0.55
-                        Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
-
-                        IconImage {
-                            anchors.fill: parent
-                            visible: row.iconPath !== ""
-                            source: row.iconPath
-                        }
-
-                        // the shell's own windows, and anything else with
-                        // no themed icon
-                        Text {
-                            anchors.centerIn: parent
-                            visible: row.iconPath === ""
-                            text: Apps.glyphForWindow(row.modelData.cls, row.modelData.title)
-                            color: row.focused ? Theme.textStrong : Theme.text
-                            font.family: Theme.fontIcon
-                            font.pixelSize: Theme.fontIconSize
-                        }
-                    }
-
-                    Rectangle {
-                        id: pip
-                        anchors.top: glyphBox.bottom
-                        anchors.topMargin: 1
-                        anchors.horizontalCenter: glyphBox.horizontalCenter
-                        height: Theme.indicatorWidth
-                        radius: Theme.pill(height)
-                        width: row.focused ? glyphBox.width - 2 : Theme.fs(6)
-                        color: row.focused ? Theme.accent
-                            : rowMouse.containsMouse ? Theme.subtext : Theme.muted
-                        Behavior on width { NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease } }
-                        Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
-                    }
-
-                    Text {
-                        anchors.left: glyphBox.right
-                        anchors.leftMargin: Theme.spaceM
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: row.modelData.title
-                        elide: Text.ElideRight
-                        color: row.lit ? Theme.textStrong : Theme.text
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontBody
-                    }
-
-                    MouseArea {
-                        id: rowMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            var addr = "address:0x" + row.modelData.address
-                            if (mouse.button === Qt.MiddleButton) {
-                                Hyprland.dispatch("hl.dsp.window.close({window=\"" + addr + "\"})")
-                                return
-                            }
-                            panel.requestClose()
-                            // bring to top as well, as the bar's strip does, so
-                            // a floating window buried under others surfaces
-                            Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-                            Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
-                        }
+                    leadingImage: iconPath
+                    leadingIcon: iconPath === "" ? Apps.glyphForWindow(modelData.cls, modelData.title) : ""
+                    label: panel.appName(modelData)
+                    note: modelData.title !== label ? modelData.title : ""
+                    highlighted: Hyprland.activeToplevel !== null
+                        && Hyprland.activeToplevel.address === modelData.address
+                    actionIcon: "󰅖"
+                    actionHint: "Close"
+                    onAction: Hyprland.dispatch("hl.dsp.window.close({window=\"address:0x" + modelData.address + "\"})")
+                    onActivated: {
+                        var addr = "address:0x" + modelData.address
+                        panel.requestClose()
+                        // bring to top as well, as the bar's strip does, so
+                        // a floating window buried under others surfaces
+                        Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
+                        Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
                     }
                 }
             }
@@ -222,5 +102,17 @@ FlyoutPanel {
         label: "No windows open"
         enabled: false
         visible: panel.groups.length === 0
+    }
+
+    FlyoutDivider {}
+
+    FlyoutRow {
+        leadingIcon: "󰕰"
+        label: "All workspaces"
+        trailing: "SUPER W"
+        onActivated: {
+            panel.requestClose()
+            panel.shellRoot.workspaceOverlayToggled()
+        }
     }
 }

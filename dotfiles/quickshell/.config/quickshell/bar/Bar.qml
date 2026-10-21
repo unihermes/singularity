@@ -106,8 +106,9 @@ PanelWindow {
         }
     }
 
-    // Grouped modules: one channel round each section's visible
-    // modules, which sit flush inside its inner line.
+    // Grouped modules: one frame round each section's visible modules,
+    // which sit flush inside it: a channel, or the style's own strokes
+    // round a surface ground (Chips set to Strip under another style).
     Repeater {
         model: Theme.moduleGrouped ? Settings.widgetSections : []
 
@@ -120,7 +121,27 @@ PanelWindow {
             width: rect ? rect.w : 0
             height: rect ? rect.h : 0
 
-            Channel { radius: Theme.groupRadius }
+            Channel { visible: Theme.frameChannel; radius: Theme.groupRadius }
+
+            Rectangle {
+                visible: !Theme.frameChannel
+                anchors.fill: parent
+                radius: Theme.groupRadius
+                color: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)) : Theme.surface
+                border.width: Theme.frameStroked ? Theme.borderWidth : 0
+                border.color: Theme.stroke
+
+                // the inner stroke of a double frame, faint unless lit
+                Rectangle {
+                    visible: Theme.frameDouble
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    radius: Math.max(0, parent.radius - 2)
+                    color: "transparent"
+                    border.width: Theme.borderWidth
+                    border.color: Theme.opt("lit") ? Theme.frameStroke : Theme.surface
+                }
+            }
         }
     }
 

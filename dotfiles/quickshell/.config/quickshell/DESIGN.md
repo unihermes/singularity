@@ -67,7 +67,12 @@ Glass and see-through grounds stay readable. Level chips fill the whole chip
 in every style.
 
 Don't add a setting that changes one piece's frame on its own: that's what
-made combinations clash. A new look of a piece belongs in a style. Theme reads
+made combinations clash. A new look of a piece belongs in a style. The one
+exception is **Chips** (Appearance > Bar, `Settings.barChips`, picked
+2026-10-20): Style's own, or the bar's chips Bare (nothing until hover or
+open), Outlined, or one Strip per group, under any style. Whichever it is,
+hover, open and level chips still draw the style's way, and a Strip's frame
+is the style's (a channel, double or single strokes). Theme reads
 the derived values through `Styles.resolve()`; the sections below describe
 Channel.
 
@@ -110,7 +115,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
 - **Level chips** (volume, brightness, battery) fill the **whole chip** from the
   left, in the level colour (accent2, green for battery). The icon is centred
   on top. Never show a level as an underline or thin rule.
-- **Show desktop** ends the right group: a slim slot past a hairline, whose
+- **Show desktop** ends the right group under every Chips setting: a slim
+  slot past a hairline (picked 2026-10-20), whose
   rounded end is the group's own corner. Hover is the overlay fill; while
   the desktop shows it fills with the accent. It hides every window on
   every workspace and screen, and it never animates, neither the windows
@@ -153,36 +159,70 @@ Style: `channel` (frame `channel` in `Styles.js`).
   workspace grid) close the same way. A panel's box takes every press its
   rows don't (`Absorber`).
 
-### Volume flyout
+### Flyout layouts (picked 2026-10-20)
 
-Output, Input and Apps tabs (a `FlyoutSegmented`), from the looks mockups
-(2026-10-08). Output and Input list their devices when there's more than one
-(outputs with nothing plugged in left out), then the default's level and
-mute; Apps is each playing app with its own level, a click on its name
-muting it. The name helpers are `Audio`'s, shared with the Audio page.
+From the redesign mockups, one pick a module; the picks are about content,
+and every frame, control and chip still follows the style. Shared pieces:
+`FlyoutTile` in a `TileGrid` (a glyph, a value, a caption, lit when on),
+`HeadCard`, and a value set large at `fontHero` where a flyout leads with
+one figure.
 
-### Network and Bluetooth flyouts
-
-Picked 2026-10-11. The radio's switch sits on the flyout's heading
-(`FlyoutHeading.control`). Network: the joined network is a `HeadCard`
-(strength glyph, name as written, Secured · Strong), with Disconnect on it
-while pointed at; NEARBY (count, Rescan as a turning `IconButton` on the
-heading) lists the five strongest others, then Show all N into Settings.
-Bluetooth: DEVICES (count, Scan on the heading) lists paired devices, then
-up to five new ones; each row has its type icon, the battery once
-connected, and Connected / Not connected, which pointing turns into a
-Connect or Disconnect chip. Removing a device is the Settings page's.
-
-### Updates and Notifications flyouts
-
-Picked 2026-10-11: each opens on where things stand. Updates is a
-`HeadCard` (the count, Up to date with a green tick, or Not checked; the
-AUR share; when it last checked) with Check now on it always, a small ↻
-beside Update now while there are some (picked 2026-10-18). Under the
-packages, Reclaimable: the size, what it's in, and Clean up in two clicks
-(Health's reclaim check). Notifications empty is a
-card (All caught up); with history, Clear all is a chip on the heading,
-two clicks. Actions that can't do anything aren't shown.
+- **Control Centre:** the four everyday toggles as 2×2 tiles (Do Not
+  Disturb, Night Light with its warmth, Keep Awake, Game Mode), then the
+  submenus (Power, Applications, Quick Actions, Appearance, Bar Widgets),
+  the screen tools as three chips (Shot, Colour, Text), then Settings,
+  System, Keybinds. No look stepper on the root page.
+- **Workspaces:** a heading per workspace with its window count, each
+  window its app's icon and name with the title quieter after, the focused
+  one ticked, close on hover; then All workspaces (SUPER W).
+- **Windows** (an app with several): Window list in Appearance > Bar picks
+  List (as it was), With actions (New window, Bring all here, Close all
+  under it), Cards (the app large, a tile per window, the actions as
+  chips) or Compact (the list, the actions as icons).
+- **Visualizer:** mirrored bars. With the Media module off it leads with
+  the note and a click opens Media.
+- **Media:** NOW PLAYING: the art, the title, artist · album, the player;
+  the progress and the transport; then every player, each with play/pause
+  on hover.
+- **Weather:** the sky and temperature large with the condition, feels
+  like and the place beside; the next six 3-hour slots; humidity, wind and
+  today's rain as tiles; then a week of days (Open-Meteo for the place
+  wttr.in found, wttr.in's three days when that fails), units and Refresh.
+- **Clock:** the time large with the seconds quieter and the whole date,
+  over the Month / Today / Timer tabs.
+- **Updates:** where things stand on one line with ↻ and Update at its
+  end; the packages under Repositories and AUR, each folding; Reclaimable
+  with Clean up; Singularity's commits. The bar module's count is a badge.
+- **Failed services:** a line per unit with log, restart and clear as
+  icons; the count and Clear all under them.
+- **Privacy:** Mic, Camera and Screen as three tiles, lit while in use
+  with the apps using them, then Mute microphone.
+- **Tray menus:** the app's own separators split the menu into sections;
+  submenus drill down behind a breadcrumb heading.
+- **Cooling:** CPU and GPU as two tiles, the reading large over a level;
+  the last three minutes as a graph with the drive under it; the fans
+  folded into one line that opens in place.
+- **Bluetooth:** the radio's switch on the heading; each connected device
+  as a card (its kind, battery, Disconnect); PAIRED rows (Connect on
+  hover); what a scan found; Scan for new devices as the last row. The bar
+  icon turns to the connected glyph while a device is on.
+- **Network:** the connection as a card (the cable while it's up, else the
+  joined network, with the address); Down and Up as tiles over the last
+  minute's graph (SystemStats samples while it's open); the Wi-Fi switch;
+  NEARBY with Rescan; Show all N.
+- **Volume:** one panel: the level large with the output beside it (a
+  click opens the outputs in place to switch), its slider with mute, the
+  microphone's level, then APPS, each app a level of its own (a click on
+  its name mutes it).
+- **Brightness:** a labelled slider per display, this screen's first,
+  then Night Light.
+- **Battery:** the level large with state, time left and draw beside it;
+  the charge since the shell started (a sample every five minutes, a day
+  kept) as a graph; the power profile as one strip; Health.
+- **Notifications:** a line per notification (the app's icon, the
+  summary, its age, close on hover); a click opens the whole card in
+  place. Do Not Disturb and Clear all share the last line; empty, All
+  caught up with a green tick.
 
 ### Power menu and workspace grid
 
@@ -198,28 +238,26 @@ still a jump and a drop target.
 
 Each bar's brightness module is the monitor under it: over DDC/CI when the
 monitor answers (`DdcBrightness`), else the backlight. The flyout's
-heading is that monitor's level. With one display it's a bare slider;
-with more, a labelled slider each (the model name, this bar's monitor
-first, the built-in panel last), then Night Light.
+heading is that monitor's level, then a labelled slider each (the model
+name, this bar's monitor first and marked, the built-in panel last), then
+Night Light.
 
 ### Cooling
 
 Desktops only (`services/Cooling.qml`). The bar module is a plain fan icon,
 as slim as Bluetooth's, with no level fill (settled 2026-10-09); it turns
-the alert colour only when the CPU or GPU reaches 85 °C. The flyout: the
-hottest reading in the heading, the last three minutes of CPU and GPU as
-one graph, CPU, GPU (load and draw as its note) and Drive as readouts, then
-FANS: each header that has turned, its PWM duty as the note and its rpm,
-then the card's own fans. Fan names come from the machine's
-`fan-names.json` in the state directory, never the repo.
+the alert colour only when the CPU or GPU reaches 85 °C. The flyout is as
+picked above; a fan's PWM duty is its note and its rpm the value. Fan
+names come from the machine's `fan-names.json` in the state directory,
+never the repo.
 
 ### Clock flyout
 
+- The time large (`fontHero`, the seconds quieter) and the whole date sit
+  in their own section at the top.
 - **Tabs**, one shown at a time, picked from a segmented strip in its own
-  section at the top: **Month**, **Today** (it reads **Day** once another day
+  section under it: **Month**, **Today** (it reads **Day** once another day
   is picked) and **Timer** (it reads **Timer ●** while one runs).
-- It opens on Today, or on Month when no calendar feeds are set up (then
-  there's no Today tab).
 - Picking a day in the month switches to that day's events.
 - The Refresh row sits under the events, in its own section.
 - Timer tab: the time large (`fontHero`) with what it is underneath, then the
@@ -227,6 +265,7 @@ then the card's own fans. Fan names come from the machine's
 
 ### Control Centre
 
+- **The root page** is as picked above: tiles, submenus, tools, windows.
 - **Submenus** have no Back row: the heading reads
   `CONTROL CENTRE › APPEARANCE`, the first part smaller and quieter, and
   clicking it goes back (`FlyoutHeading.crumb`).

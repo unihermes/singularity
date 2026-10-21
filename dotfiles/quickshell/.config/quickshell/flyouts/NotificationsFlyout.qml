@@ -1,9 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/NotificationsFlyout.qml
 //
-// The notification history, newest first, with Clear all on the heading
-// while there's any, and Do Not Disturb. Empty, it says so in a card. Opening it marks everything read; what was new stays marked while
-// it's open.
+// The notification history, newest first, a line each: the app's icon, the
+// summary and its age, a close on hover. A click opens the whole card in
+// place (body, picture, actions). Do Not Disturb and Clear all share the
+// last line. Empty, it says so in a card. Opening it marks everything
+// read; what was new stays marked while it's open.
 
 import QtQuick
 import "../services"
@@ -11,29 +13,22 @@ import "../services"
 FlyoutPanel {
     id: root
     flyout: "notifications"
-    menuWidth: 380
+    menuWidth: Theme.fit(360)
     // the bell sits near the bar's right end, so run into the corner
     edgeMargin: 0
 
-    onOpenChanged: Notifications.setViewing(open)
+    // the key of the entry opened in place, "" for none
+    property string expanded: ""
 
-    FlyoutHeading {
-        text: "NOTIFICATIONS" + (Notifications.count > 0 ? "  " + Notifications.count : "")
-        control: Notifications.count > 0 ? clearChip : null
-    }
-
-    Component {
-        id: clearChip
-        FlyoutChip {
-            text: "Clear all"
-            confirmText: "Clear " + Notifications.count + "?"
-            onClicked: Notifications.clearAll()
-        }
+    onOpenChanged: {
+        Notifications.setViewing(open)
+        expanded = ""
     }
 
     HeadCard {
         visible: Notifications.count === 0
-        glyph: "󰂚"
+        glyph: "󰄬"
+        glyphColor: Theme.good
         title: "All caught up"
         lines: ["The history is empty"]
     }
@@ -46,23 +41,33 @@ FlyoutPanel {
         ListView {
             id: list
             width: parent.width - (scroll.visible ? scroll.width + Theme.spaceM : 0)
-            height: Math.min(contentHeight, Theme.fs(560))
+            height: Math.min(contentHeight, Theme.fs(520))
             clip: true
             interactive: contentHeight > height
             boundsBehavior: Flickable.StopAtBounds
-            spacing: Theme.spaceM
             model: Notifications.history
 
             delegate: Column {
                 id: entry
                 required property var modelData
-                required property int index
+                readonly property bool open: root.expanded === modelData.key
                 width: list.width
-                spacing: Theme.spaceM
 
-                FlyoutDivider { visible: entry.index > 0 }
+                FlyoutRow {
+                    width: parent.width
+                    leadingImage: entry.modelData.icon || ""
+                    leadingIcon: entry.modelData.icon ? "" : "󰂚"
+                    label: entry.modelData.summary || entry.modelData.appName || "Notification"
+                    trailing: (Notifications.isNew(entry.modelData) ? "new · " : "") + Notifications.ago(entry.modelData)
+                    highlighted: entry.open
+                    actionIcon: "󰅖"
+                    actionHint: "Clear"
+                    onAction: Notifications.remove(entry.modelData)
+                    onActivated: root.expanded = entry.open ? "" : entry.modelData.key
+                }
 
                 NotificationCard {
+                    visible: entry.open
                     entry: entry.modelData
                     framed: false
                     inHistory: true
@@ -80,17 +85,36 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    FlyoutAction {
-        icon: Notifications.dnd ? "󰂛" : "󰂚"
-        label: "Do Not Disturb"
-        status: Notifications.dnd ? "Popups are held" : ""
-        checked: Notifications.dnd
-        onActivated: Notifications.toggleDnd()
-    }
+    Item {
+        width: parent.width
+        implicitHeight: Theme.chipHeight
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("notifications")
+        Row {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceM
+            Switch {
+                anchors.verticalCenter: parent.verticalCenter
+                checked: Notifications.dnd
+                onToggled: Notifications.toggleDnd()
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: Notifications.dnd ? "Do Not Disturb · popups held" : "Do Not Disturb"
+                color: Theme.text
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+        }
+
+        FlyoutChip {
+            visible: Notifications.count > 0
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: "Clear all"
+            confirmText: "Clear " + Notifications.count + "?"
+            onClicked: Notifications.clearAll()
+        }
     }
 }

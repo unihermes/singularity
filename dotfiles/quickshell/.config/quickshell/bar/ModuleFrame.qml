@@ -8,6 +8,7 @@
 //   filled   a solid ground, no stroke
 //   grouped  bare inside its section's channel (shell.qml): a fill on hover,
 //            an accent ring while open, a gauge filling the whole chip
+//   bare     the same with no channel round it (Settings.barChips)
 //   taskbar  a bare slot the bar's height -- Flat: a fill on hover and
 //            while open, an accent rule on the screen edge's side when open
 //
@@ -66,13 +67,15 @@ Item {
         readonly property string style: Theme.moduleStyle
         readonly property bool solid: style === "filled"
         readonly property bool grouped: style === "grouped"
+        // no frame of its own: grouped, or bare
+        readonly property bool flush: grouped || style === "bare"
         readonly property bool taskbar: style === "taskbar"
         // the gauge draws in the chip's interior
         readonly property bool track: root.gauge
         // filled with the accent while open (Solid, Glass);
         // a level chip keeps its fill and takes an accent ring instead
         readonly property bool openFill: Theme.moduleOpenFill && root.active && !root.gauge
-        readonly property bool openRing: root.active && (grouped || (Theme.moduleOpenFill && root.gauge))
+        readonly property bool openRing: root.active && (flush || (Theme.moduleOpenFill && root.gauge))
         // a solid chip's own ground: Glass's is a faint frost, and Solid's
         // tint option mixes in the accent
         readonly property color restFill: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06))
@@ -81,7 +84,7 @@ Item {
 
         height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
         radius: Theme.radius
-        color: grouped ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+        color: flush ? (root.active || hover.hovered ? Theme.overlay : "transparent")
             : openFill ? (Theme.glass ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Theme.accent)
             : root.hovered ? (Theme.glass ? Theme.stroke : Theme.overlay)
             : root.active ? Theme.selectedFill
@@ -120,7 +123,7 @@ Item {
         }
 
         // flush inside the double border (3 is the first clear pixel)
-        readonly property int barInset: grouped || taskbar ? 0 : 3
+        readonly property int barInset: flush || taskbar ? 0 : 3
 
         // The bar is the whole interior now, with the icon sitting on top of
         // it rather than beside it.
@@ -130,8 +133,8 @@ Item {
             anchors.fill: parent
             anchors.margins: frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
-            radius: frame.grouped ? frame.radius : Theme.radiusSmall
-            color: frame.grouped || frame.taskbar ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+            radius: frame.flush ? frame.radius : Theme.radiusSmall
+            color: frame.flush || frame.taskbar ? (root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
 
 
@@ -182,7 +185,7 @@ Item {
         Row {
             id: contentRow
             anchors.verticalCenter: parent.verticalCenter
-            x: frame.track && !frame.grouped && !frame.taskbar ? root.padH : Math.round((parent.width - width) / 2)
+            x: frame.track && !frame.flush && !frame.taskbar ? root.padH : Math.round((parent.width - width) / 2)
             spacing: root.spacing
         }
     }

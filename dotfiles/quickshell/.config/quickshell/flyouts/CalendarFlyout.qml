@@ -1,7 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/CalendarFlyout.qml
 //
-// The clock's calendar: Month (arrows or wheel page; neighbour days dimmed
+// The clock's calendar, under the time large with the whole date: Month
+// (arrows or wheel page; neighbour days dimmed
 // and clickable; footer back to today; weeks start on Settings.weekStart),
 // the picked day's events (only with feeds in calendars.conf; days with
 // events get a dot), and the clock island's timer (Timers.qml).
@@ -13,7 +14,7 @@ import "../services"
 FlyoutPanel {
     id: calendarFlyout
     flyout: "calendar"
-    menuWidth: Calendar.configured ? 280 : 240
+    menuWidth: Theme.fit(280)
 
     // offset in months from the current one, so the flyout can page
     // back and forth without tracking a whole date
@@ -46,6 +47,47 @@ FlyoutPanel {
     // wheel anywhere over the box pages; one step per notch, and touchpads
     // accumulate so a flick doesn't fly through a year
     property real wheelAccum: 0
+
+    // the time large, seconds quieter, and the whole date under it
+    SystemClock {
+        id: secClock
+        precision: SystemClock.Seconds
+        enabled: calendarFlyout.open
+    }
+    Column {
+        width: parent.width
+        spacing: Theme.spaceXs
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            Text {
+                id: bigTime
+                text: Qt.formatTime(secClock.date, Theme.hours("HH:mm"))
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fontHero
+            }
+            Text {
+                anchors.baseline: bigTime.baseline
+                text: Qt.formatTime(secClock.date, ":ss")
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontTitle
+            }
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: Qt.formatDate(secClock.date, "dddd d MMMM yyyy")
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontSmall
+        }
+    }
+
+    FlyoutDivider {}
+
     FlyoutSegmented {
         model: (Calendar.configured ? [
             { value: "month", text: "Month" },

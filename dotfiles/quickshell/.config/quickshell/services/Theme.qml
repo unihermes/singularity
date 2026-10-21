@@ -26,7 +26,7 @@ Singleton {
     readonly property var resolved: Styles.resolve({
         style: Settings.style, styleOptions: Settings.styleOptions, radius: Settings.radius, barStyle: Settings.barStyle,
         barHeight: Settings.barHeight, spacing: Settings.spacing, seeThrough: Settings.seeThrough, shadows: Settings.shadows,
-        heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim })
+        heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim, barChips: Settings.barChips })
     // the style in force
     readonly property string style: resolved.styleName
     // one of the style's own options, on or off

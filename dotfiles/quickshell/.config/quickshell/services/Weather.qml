@@ -1,8 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Weather.qml
 //
-// Conditions and a 3-day forecast from wttr.in (no key, IP-located), every
-// 30 minutes; a failure keeps the last reading.
+// Conditions, the next hours and a 3-day forecast from wttr.in (no key,
+// IP-located), every 30 minutes, then a week of days from Open-Meteo for
+// the place wttr.in found (its 3 days stand in when that fails); a failure
+// keeps the last reading.
 
 pragma Singleton
 
@@ -25,7 +27,6 @@ Singleton {
     property real windMph: 0
     property real windKmph: 0
     property string windDir: ""
-    readonly property string wind: ready ? (metric ? windKmph + " km/h " : windMph + " mph ") + windDir : ""
     // today's sunrise and sunset, minutes after midnight; -1 until known
     property int sunriseMin: -1
     property int sunsetMin: -1
@@ -39,8 +40,15 @@ Singleton {
         id: clock
         precision: SystemClock.Minutes
     }
-    // [{ date, hiF, loF, hiC, loC, code, condition }]
+    // [{ date, hiF, loF, hiC, loC, code, rain }]: a week from Open-Meteo,
+    // else wttr.in's 3 days
     property var forecast: []
+    // the next six 3-hour slots: [{ at (Date), tempF, tempC, code, rain }]
+    property var hourly: []
+    // today's highest chance of rain, %
+    property int rainChance: 0
+    property real latitude: NaN
+    property real longitude: NaN
     property var updated: null
     property bool failed: false
     readonly property bool fetching: fetch.running
@@ -62,6 +70,32 @@ Singleton {
         if ([179, 182, 185, 281, 284, 311, 314, 317, 350, 362, 365, 374, 377].indexOf(c) !== -1) return "󰙿"
         if ([299, 302, 305, 308, 356, 359].indexOf(c) !== -1) return "󰖖"
         return "󰖗"   // the light/patchy rain codes, and anything unlisted
+    }
+
+    // WMO codes (what Open-Meteo returns) to the nearest WWO code, for iconFor
+    function wwoOf(w) {
+        if (w === 0) return 113
+        if (w === 1 || w === 2) return 116
+        if (w === 3) return 119
+        if (w === 45 || w === 48) return 248
+        if (w >= 51 && w <= 57) return 266
+        if (w === 61 || w === 80) return 302
+        if (w >= 63 && w <= 67 || w === 81 || w === 82) return 308
+        if (w >= 71 && w <= 77 || w === 85 || w === 86) return 332
+        if (w >= 95) return 389
+        return 296
+    }
+
+    // Open-Meteo's week into `forecast`, both units
+    function parseWeek(text) {
+        var d = JSON.parse(text).daily
+        var f = []
+        for (var i = 0; i < d.time.length; i++) {
+            var hi = d.temperature_2m_max[i], lo = d.temperature_2m_min[i]
+            f.push({ date: d.time[i], hiC: hi, loC: lo, hiF: hi * 9 / 5 + 32, loF: lo * 9 / 5 + 32,
+                     code: wwoOf(d.weather_code[i]), rain: d.precipitation_probability_max[i] || 0 })
+        }
+        if (f.length > 0) root.forecast = f
     }
 
     // "06:59 AM" -> minutes after midnight
@@ -91,16 +125,34 @@ Singleton {
         root.sunriseMin = root.minutesOf(astro.sunrise)
         root.sunsetMin = root.minutesOf(astro.sunset)
 
-        var f = []
+        var f = [], h = []
         for (var i = 0; i < d.weather.length; i++) {
             var w = d.weather[i]
             // midday (the 12:00 slot) stands in for the day
             var noon = w.hourly[Math.min(4, w.hourly.length - 1)]
             f.push({ date: w.date, hiF: Number(w.maxtempF), loF: Number(w.mintempF),
                      hiC: Number(w.maxtempC), loC: Number(w.mintempC),
-                     code: Number(noon.weatherCode), condition: noon.weatherDesc[0].value.trim() })
+                     code: Number(noon.weatherCode),
+                     rain: Math.max.apply(null, w.hourly.map(s => Number(s.chanceofrain))) })
+            for (var j = 0; j < w.hourly.length; j++) {
+                var slot = w.hourly[j]
+                var t = new Date(w.date + "T00:00:00")
+                t.setHours(Number(slot.time) / 100)
+                // the slot still running counts: it's the next 3 hours
+                if (t.getTime() + 3 * 3600000 > at.getTime())
+                    h.push({ at: t, tempF: Number(slot.tempF), tempC: Number(slot.tempC),
+                             code: Number(slot.weatherCode), rain: Number(slot.chanceofrain) })
+            }
         }
-        root.forecast = f
+        root.hourly = h.slice(0, 6)
+        root.rainChance = f.length > 0 ? f[0].rain : 0
+        // kept while the week's fetch is out, or when it fails
+        if (root.forecast.length <= f.length) root.forecast = f
+        if (a && a.latitude) {
+            root.latitude = Number(a.latitude)
+            root.longitude = Number(a.longitude)
+            if (!week.running) week.running = true
+        }
         root.updated = at
         root.ready = true
         root.failed = false
@@ -121,6 +173,17 @@ Singleton {
             }
         }
         onExited: code => { if (code !== 0) root.failed = true }
+    }
+
+    Process {
+        id: week
+        command: ["curl", "-sf", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude="
+            + root.latitude + "&longitude=" + root.longitude
+            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+            + "&timezone=auto&forecast_days=7"]
+        stdout: StdioCollector {
+            onStreamFinished: { try { root.parseWeek(text) } catch (e) {} }
+        }
     }
 
     Timer {

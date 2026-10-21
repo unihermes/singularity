@@ -1,12 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/VolumeFlyout.qml
 //
-// Sound in three tabs: Output (which device plays, its level and mute),
-// Input (the microphone's), and Apps (each app playing right now, with a
-// level of its own; an app with several streams, like a browser's tabs,
-// gets one level for them all). Outputs with nothing plugged in are left out. The
-// Audio page in Settings has the rest: those outputs, recording apps, and
-// moving an app to another output.
+// Sound on one panel, the level first: the output's level large with the
+// device beside it (a click there opens the outputs in place to switch),
+// its slider, the microphone's level, then each app playing right now with
+// a level of its own (an app with several streams, like a browser's tabs,
+// gets one level for them all). Outputs with nothing plugged in are left
+// out. The Audio page in Settings has the rest: those outputs, recording
+// apps, and moving an app to another output.
 
 import "../services"
 import Quickshell
@@ -16,9 +17,14 @@ import QtQuick
 FlyoutPanel {
     id: volumeFlyout
     flyout: "volume"
-    menuWidth: Theme.fit(260)
+    menuWidth: Theme.fit(280)
 
-    property string tab: "output"
+    // the outputs list, opened from the device under the level
+    property bool picking: false
+    onOpenChanged: {
+        picking = false
+        if (open) Audio.refreshPorts()
+    }
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
@@ -28,114 +34,166 @@ FlyoutPanel {
 
     // outputs with nothing plugged in stay out of the list, unless chosen
     readonly property var sinksShown: Audio.sinks.filter(n => Audio.unplugged.indexOf(n.id) < 0 || n === sink)
-    onOpenChanged: if (open) Audio.refreshPorts()
 
     // audio.volume / audio.muted stay invalid until a node is tracked
     PwObjectTracker {
         objects: volumeFlyout.open ? Audio.devices.concat(Audio.streams) : []
     }
 
-    FlyoutSegmented {
-        model: [
-            { value: "output", text: "Output" },
-            { value: "input", text: "Input" },
-            { value: "apps", text: Audio.playingApps.length > 0 ? "Apps " + Audio.playingApps.length : "Apps" },
-        ]
-        current: volumeFlyout.tab
-        onPicked: v => volumeFlyout.tab = v
-    }
+    // --- output: the level large, the device beside it --------------------------
 
-    // --- output ---------------------------------------------------------------
+    Item {
+        width: parent.width
+        implicitHeight: Math.max(level.implicitHeight, device.implicitHeight)
 
-    FlyoutHeading {
-        visible: volumeFlyout.tab === "output" && volumeFlyout.sinksShown.length > 1
-        text: "DEVICE"
+        Row {
+            id: level
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceXs
+            Text {
+                id: levelText
+                text: Audio.percent
+                color: Audio.muted ? Theme.subtext : Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fontHero
+            }
+            Text {
+                anchors.baseline: levelText.baseline
+                text: Audio.muted ? "% muted" : "%"
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontBody
+            }
+        }
+
+        // the output; a click opens the others in place
+        Item {
+            id: device
+            anchors.right: parent.right
+            anchors.left: level.right
+            anchors.leftMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            implicitHeight: deviceText.implicitHeight
+            height: implicitHeight
+
+            Column {
+                id: deviceText
+                width: parent.width
+                spacing: 1
+
+                Text {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideRight
+                    text: volumeFlyout.sink ? Audio.plainName(volumeFlyout.sink) : "No output"
+                    color: deviceMouse.containsMouse ? Theme.textStrong : Theme.text
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    visible: volumeFlyout.sinksShown.length > 1
+                    width: parent.width
+                    horizontalAlignment: Text.AlignRight
+                    text: "Output " + (volumeFlyout.picking ? "󰅃" : "󰅀")
+                    color: deviceMouse.containsMouse ? Theme.text : Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+            }
+
+            MouseArea {
+                id: deviceMouse
+                anchors.fill: parent
+                enabled: volumeFlyout.sinksShown.length > 1
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: volumeFlyout.picking = !volumeFlyout.picking
+            }
+        }
     }
 
     Repeater {
-        model: ScriptModel { values: volumeFlyout.tab === "output" && volumeFlyout.sinksShown.length > 1 ? volumeFlyout.sinksShown : [] }
+        model: ScriptModel { values: volumeFlyout.picking ? volumeFlyout.sinksShown : [] }
         FlyoutRow {
             required property var modelData
             leadingIcon: Audio.glyph(modelData)
             label: Audio.plainName(modelData)
             highlighted: modelData === volumeFlyout.sink
-            onActivated: Pipewire.preferredDefaultAudioSink = modelData
+            onActivated: {
+                Pipewire.preferredDefaultAudioSink = modelData
+                volumeFlyout.picking = false
+            }
         }
-    }
-
-    FlyoutHeading {
-        visible: volumeFlyout.tab === "output"
-        text: "VOLUME  " + (Audio.muted ? "MUTED" : Audio.percent + "%")
     }
 
     // muted keeps the level on show, dimmed, as the volume toast does
-    Slider {
-        visible: volumeFlyout.tab === "output"
+    Row {
         width: parent.width
-        value: Audio.percent
-        opacity: Audio.muted ? 0.5 : 1
-        onMoved: v => Audio.setVolume(v)
-    }
-
-    FlyoutAction {
-        visible: volumeFlyout.tab === "output"
-        icon: Audio.muted ? "󰖁" : "󰕾"
-        label: "Mute"
-        checked: Audio.muted
-        onActivated: Audio.toggleMute()
-    }
-
-    // --- input ----------------------------------------------------------------
-
-    FlyoutHeading {
-        visible: volumeFlyout.tab === "input" && Audio.sources.length > 1
-        text: "DEVICE"
-    }
-
-    Repeater {
-        model: ScriptModel { values: volumeFlyout.tab === "input" && Audio.sources.length > 1 ? Audio.sources : [] }
-        FlyoutRow {
-            required property var modelData
-            leadingIcon: Audio.glyph(modelData)
-            label: Audio.plainName(modelData)
-            highlighted: modelData === volumeFlyout.source
-            onActivated: Pipewire.preferredDefaultAudioSource = modelData
+        spacing: Theme.spaceS
+        IconButton {
+            id: muteBtn
+            anchors.verticalCenter: parent.verticalCenter
+            icon: Audio.muted ? "󰖁" : "󰕾"
+            warn: Audio.muted
+            onClicked: Audio.toggleMute()
+        }
+        Slider {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - muteBtn.width - parent.spacing
+            value: Audio.percent
+            opacity: Audio.muted ? 0.5 : 1
+            onMoved: v => Audio.setVolume(v)
         }
     }
 
-    FlyoutHeading {
-        visible: volumeFlyout.tab === "input" && volumeFlyout.sourceReady
-        text: "LEVEL  " + (volumeFlyout.micMuted ? "MUTED" : volumeFlyout.micPercent + "%")
-    }
+    // --- the microphone ----------------------------------------------------------
 
-    Slider {
-        visible: volumeFlyout.tab === "input" && volumeFlyout.sourceReady
+    Row {
+        visible: volumeFlyout.sourceReady
         width: parent.width
-        value: volumeFlyout.micPercent
-        opacity: volumeFlyout.micMuted ? 0.5 : 1
-        onMoved: v => volumeFlyout.source.audio.volume = v / 100
+        spacing: Theme.spaceS
+        IconButton {
+            id: micBtn
+            anchors.verticalCenter: parent.verticalCenter
+            icon: volumeFlyout.micMuted ? "󰍭" : "󰍬"
+            warn: volumeFlyout.micMuted
+            onClicked: volumeFlyout.source.audio.muted = !volumeFlyout.micMuted
+        }
+        Slider {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - micBtn.width - micText.width - parent.spacing * 2
+            value: volumeFlyout.micPercent
+            opacity: volumeFlyout.micMuted ? 0.5 : 1
+            onMoved: v => volumeFlyout.source.audio.volume = v / 100
+        }
+        Text {
+            id: micText
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fit(40)
+            horizontalAlignment: Text.AlignRight
+            text: volumeFlyout.micMuted ? "Off" : volumeFlyout.micPercent + "%"
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontSmall
+        }
     }
 
-    FlyoutAction {
-        visible: volumeFlyout.tab === "input" && volumeFlyout.sourceReady
-        icon: volumeFlyout.micMuted ? "󰍭" : "󰍬"
-        label: "Mute microphone"
-        checked: volumeFlyout.micMuted
-        onActivated: volumeFlyout.source.audio.muted = !volumeFlyout.micMuted
-    }
+    // --- apps ----------------------------------------------------------------------
 
-    FlyoutRow {
-        visible: volumeFlyout.tab === "input" && Audio.sources.length === 0
-        enabled: false
-        label: "No microphone found"
+    FlyoutHeading {
+        text: "APPS" + (Audio.playingApps.length > 0 ? "  " + Audio.playingApps.length : "")
     }
-
-    // --- apps -----------------------------------------------------------------
 
     Repeater {
-        model: ScriptModel { values: volumeFlyout.tab === "apps" ? Audio.playingApps : [] }
+        model: ScriptModel { values: Audio.playingApps }
 
-        Column {
+        Item {
             id: app
             required property var modelData
             readonly property var nodes: modelData.nodes.filter(n => n.ready && !!n.audio)
@@ -145,22 +203,61 @@ FlyoutPanel {
             readonly property int percent: ready ? Math.round(Math.max(...nodes.map(n => n.audio.volume)) * 100) : 0
             readonly property string icon: Audio.appIcon(modelData.nodes[0])
             width: parent ? parent.width : 0
+            implicitHeight: Theme.rowHeight
 
-            // the app's name; a click mutes all its streams
-            FlyoutRow {
-                leadingImage: app.icon
-                leadingIcon: app.icon === "" ? "󰓃" : ""
-                label: app.modelData.name
-                trailing: !app.ready ? "" : app.muted ? "Muted" : app.percent + "%"
-                trailingIsValue: true
-                onActivated: {
-                    var mute = !app.muted
-                    app.nodes.forEach(n => n.audio.muted = mute)
+            // the app's icon and name; a click mutes all its streams
+            Item {
+                id: appName
+                width: Theme.fit(110)
+                height: parent.height
+                Image {
+                    id: appImg
+                    visible: app.icon !== ""
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.fontBody
+                    height: width
+                    sourceSize: Qt.size(width * 2, height * 2)
+                    source: app.icon
+                    opacity: app.muted ? 0.45 : 1
+                }
+                Text {
+                    visible: app.icon === ""
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.fontBody
+                    text: "󰓃"
+                    color: Theme.subtext
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.fontBody + Theme.spaceM
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                    text: app.muted ? app.modelData.name + " 󰖁" : app.modelData.name
+                    color: app.muted ? Theme.subtext : nameMouse.containsMouse ? Theme.textStrong : Theme.text
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+                MouseArea {
+                    id: nameMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        var mute = !app.muted
+                        app.nodes.forEach(n => n.audio.muted = mute)
+                    }
                 }
             }
 
             Slider {
-                width: parent.width
+                anchors.left: appName.right
+                anchors.leftMargin: Theme.spaceS
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
                 value: app.percent
                 opacity: app.muted ? 0.5 : 1
                 onMoved: v => app.nodes.forEach(n => n.audio.volume = v / 100)
@@ -169,7 +266,7 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        visible: volumeFlyout.tab === "apps" && Audio.playingApps.length === 0
+        visible: Audio.playingApps.length === 0
         enabled: false
         label: "Nothing is playing"
     }

@@ -2,7 +2,8 @@
 // ~/.config/quickshell/services/Battery.qml
 //
 // The machine's battery, shared by the bar, its flyout and the System
-// window so they all agree on which device that is.
+// window so they all agree on which device that is; and its level through
+// the day, for the flyout.
 
 pragma Singleton
 
@@ -72,5 +73,19 @@ Singleton {
     Process {
         id: criticalAlert
         stdout: StdioCollector { onStreamFinished: root.picked(text) }
+    }
+
+    // --- the charge over the day -------------------------------------------
+
+    // the level every five minutes since the shell started, the last day of
+    // it, 0..1, for the flyout's graph
+    readonly property int historyLength: 288
+    property var history: []
+    Timer {
+        interval: 300000
+        repeat: true
+        running: root.present
+        triggeredOnStart: true
+        onTriggered: root.history = root.history.concat([root.percent / 100]).slice(-root.historyLength)
     }
 }

@@ -1,7 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/MediaFlyout.qml
 //
-// Split out of shell.qml. Self-contained: only needs the Media singleton.
+// Now playing: the art, the track, artist and album, and the player; the
+// progress (click to seek) and the transport; then every player open, each
+// with its own play/pause. Self-contained: only needs the Media singleton.
 
 import Quickshell.Widgets
 import QtQuick
@@ -24,7 +26,7 @@ FlyoutPanel {
     }
 
     FlyoutHeading {
-        text: mediaFlyout.player ? mediaFlyout.player.identity.toUpperCase() : "MEDIA"
+        text: "NOW PLAYING"
     }
 
     Item {
@@ -80,13 +82,14 @@ FlyoutPanel {
                 elide: Text.ElideRight
                 color: Theme.textStrong
                 font.family: Theme.fontText
+                font.weight: Theme.weightStrong
                 font.pixelSize: Theme.fontBody
-                font.bold: true
             }
             Text {
                 width: parent.width
                 visible: text !== ""
-                text: mediaFlyout.player ? mediaFlyout.player.trackArtist : ""
+                text: mediaFlyout.player ? [mediaFlyout.player.trackArtist, mediaFlyout.player.trackAlbum]
+                    .filter(t => !!t).join(" · ") : ""
                 elide: Text.ElideRight
                 color: Theme.text
                 font.family: Theme.fontText
@@ -96,7 +99,7 @@ FlyoutPanel {
             Text {
                 width: parent.width
                 visible: text !== ""
-                text: mediaFlyout.player ? mediaFlyout.player.trackAlbum : ""
+                text: mediaFlyout.player ? mediaFlyout.player.identity : ""
                 elide: Text.ElideRight
                 color: Theme.subtext
                 font.family: Theme.fontText
@@ -162,30 +165,32 @@ FlyoutPanel {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.spaceL
 
-        FlyoutChip {
-            glyph: true
-            text: "󰒮"
+        IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            icon: "󰒮"
             enabled: mediaFlyout.player && mediaFlyout.player.canGoPrevious
             onClicked: mediaFlyout.player.previous()
         }
         FlyoutChip {
             glyph: true
+            anchors.verticalCenter: parent.verticalCenter
             text: mediaFlyout.player && mediaFlyout.player.isPlaying ? "󰏤" : "󰐊"
             enabled: mediaFlyout.player && mediaFlyout.player.canTogglePlaying
             onClicked: mediaFlyout.player.togglePlaying()
         }
-        FlyoutChip {
-            glyph: true
-            text: "󰒭"
+        IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            icon: "󰒭"
             enabled: mediaFlyout.player && mediaFlyout.player.canGoNext
             onClicked: mediaFlyout.player.next()
         }
     }
 
-    // more than one player: pick which the module follows
+    // more than one player: pick which the module follows, or play and
+    // pause one where it is
     FlyoutHeading {
         visible: Media.players.length > 1
-        text: "PLAYERS"
+        text: "PLAYERS  " + Media.players.length
     }
 
     Repeater {
@@ -196,6 +201,9 @@ FlyoutPanel {
             label: modelData.identity + (modelData.trackTitle ? "  ·  " + modelData.trackTitle : "")
             highlighted: modelData === Media.player
             trailing: modelData.isPlaying ? "󰐊" : ""
+            actionIcon: modelData.isPlaying ? "󰏤" : "󰐊"
+            actionHint: modelData.isPlaying ? "Pause" : "Play"
+            onAction: if (modelData.canTogglePlaying) modelData.togglePlaying()
             onActivated: Media.pick(modelData)
         }
     }

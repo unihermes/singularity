@@ -1,8 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ControlCentre.qml
 //
-// The control centre flyout: its root list and every submenu. Root's state
-// and the standalone windows come in as required properties.
+// The control centre flyout: its root page (the everyday toggles as tiles,
+// the submenus, the screen tools, the windows) and every submenu. Root's
+// state and the standalone windows come in as required properties.
 
 import Quickshell
 import Quickshell.Widgets
@@ -16,7 +17,7 @@ import "../services/Styles.js" as Styles
 FlyoutPanel {
     id: controlCentre
     flyout: "controlcentre"
-    menuWidth: 250
+    menuWidth: Theme.fit(300)
     // first module in the bar -- run it into the left corner
     edgeMargin: 0
 
@@ -121,22 +122,62 @@ FlyoutPanel {
         onCrumbClicked: controlCentre.page = ""
     }
 
-    // Root: Power, everyday things, customising, the standalone windows.
-    // `sub` opens a submenu, `act` runs. One flat list, so the sectioned
-    // frame sees the dividers.
+    // Root: the everyday toggles as tiles, then the submenus, the screen
+    // tools, and the standalone windows. `sub` opens a submenu, `act` runs.
+    // Flat lists, so the sectioned frame sees the dividers.
+    TileGrid {
+        visible: controlCentre.page === ""
+        columns: 2
+
+        FlyoutTile {
+            width: parent.cell
+            clickable: true
+            glyph: Notifications.dnd ? "󰂛" : "󰂚"
+            title: "Do Not Disturb"
+            caption: Notifications.dnd ? "On · popups held" : "Off"
+            lit: Notifications.dnd
+            onClicked: Notifications.toggleDnd()
+        }
+        FlyoutTile {
+            width: parent.cell
+            clickable: shellRoot.hasHyprsunset
+            glyph: shellRoot.nightLight ? "󰖔" : "󰖙"
+            title: "Night Light"
+            caption: !shellRoot.hasHyprsunset ? "Not installed"
+                : shellRoot.nightLight ? "On · " + Settings.nightLightKelvin + " K" : "Off"
+            lit: shellRoot.nightLight
+            dimmed: !shellRoot.hasHyprsunset
+            onClicked: shellRoot.nightLight = !shellRoot.nightLight
+        }
+        FlyoutTile {
+            width: parent.cell
+            clickable: true
+            glyph: shellRoot.keepAwake ? "󰅶" : "󰾪"
+            title: "Keep Awake"
+            caption: shellRoot.keepAwake ? "On" : "Off"
+            lit: shellRoot.keepAwake
+            onClicked: shellRoot.keepAwake = !shellRoot.keepAwake
+        }
+        FlyoutTile {
+            width: parent.cell
+            clickable: true
+            glyph: "󰊴"
+            title: "Game Mode"
+            caption: GameMode.active ? "Effects and gaps off" : "Off"
+            lit: GameMode.active
+            onClicked: GameMode.toggle()
+        }
+    }
+
     Repeater {
         model: controlCentre.page === "" ? [
-            { label: "Power",         sub: "power" },
             { divider: true },
+            { label: "Power",         sub: "power" },
             { label: "Applications",  sub: "apps" },
             { label: "Quick Actions", sub: "quick" },
-            { divider: true },
             { label: "Appearance",    sub: "appearance" },
             { label: "Bar Widgets",   sub: "widgets" },
             { divider: true },
-            { label: "Settings",      act: "settings" },
-            { label: "System",        act: "system" },
-            { label: "Keybinds",      act: "keybinds" },
         ] : []
 
         Loader {
@@ -151,12 +192,38 @@ FlyoutPanel {
                 id: row
                 FlyoutRow {
                     label: entry.modelData.label
-                    trailing: entry.modelData.sub ? "󰅂" : ""
-                    onActivated: entry.modelData.sub
-                        ? controlCentre.page = entry.modelData.sub
-                        : controlCentre.run(entry.modelData.act)
+                    trailing: "󰅂"
+                    onActivated: controlCentre.page = entry.modelData.sub
                 }
             }
+        }
+    }
+
+    // the screen tools, side by side
+    Row {
+        visible: controlCentre.page === ""
+        width: parent.width
+        spacing: Theme.spaceS
+        readonly property real cell: (width - spacing * 2) / 3
+        FlyoutChip { width: parent.cell; icon: "󰹑"; text: "Shot"; onClicked: controlCentre.run("screenshot") }
+        FlyoutChip { width: parent.cell; icon: "󰈊"; text: "Colour"; onClicked: controlCentre.run("colourpick") }
+        FlyoutChip { width: parent.cell; icon: "󰊄"; text: "Text"; onClicked: controlCentre.run("copytext") }
+    }
+
+    FlyoutDivider { visible: controlCentre.page === "" }
+
+    Repeater {
+        model: controlCentre.page === "" ? [
+            { label: "Settings", act: "settings" },
+            { label: "System",   act: "system" },
+            { label: "Keybinds", act: "keybinds" },
+        ] : []
+
+        FlyoutRow {
+            required property var modelData
+            label: modelData.label
+            trailing: "󰁔"
+            onActivated: controlCentre.run(modelData.act)
         }
     }
 

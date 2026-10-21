@@ -5,7 +5,8 @@
 // Settings.style and its dials into everything Theme hands out (the look
 // cards use it too). Each style:
 //   frame    panel and chip strokes: "channel", "double", "single", "none"
-//   modules  bar chips: "grouped", "outline", "filled", "taskbar"
+//   modules  bar chips: "grouped", "outline", "filled", "taskbar" ("bare" only
+//            from Settings.barChips)
 //   mark     the strip's focused window: "pill" or "ground"
 //   shadow   what Shadows turns on: "none" or "soft"
 //   lines    whether it has strokes (Heavy lines)
@@ -115,16 +116,18 @@ function offValue(o) { return o.off !== undefined ? o.off : "none" }
 
 function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 
-// s: { style, styleOptions, radius, barStyle, barHeight, spacing, seeThrough, shadows, heavyLines, flyoutAnim }
+// s: { style, styleOptions, radius, barStyle, barHeight, spacing, seeThrough, shadows, heavyLines, flyoutAnim,
+//      barChips }; barChips other than "auto" frames the bar's chips its own way under any style
 function resolve(s) {
     var st = styles[s.style]
+    var modules = s.barChips && s.barChips !== "auto" ? s.barChips : st.modules
     var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
         styleName: s.style,
         frameStyle: st.frame,
-        moduleStyle: st.modules,
+        moduleStyle: modules,
         windowMark: st.mark,
         shadow: s.shadows ? st.shadow : "none",
         borderWidth: s.heavyLines && st.lines ? 2 : 1,
@@ -135,7 +138,7 @@ function resolve(s) {
         flyoutAnim: !s.flyoutAnim || s.flyoutAnim === "auto" ? st.anim : s.flyoutAnim,
         barHeight: s.barHeight,
         // the gap between bar modules follows Spacing, never closing up
-        moduleGap: st.modules === "taskbar" ? 0 : Math.max(1, Math.round(2 * s.spacing / 100)),
+        moduleGap: modules === "taskbar" ? 0 : Math.max(1, Math.round(2 * s.spacing / 100)),
         opacity: Math.round(s.seeThrough * see),
         glass: !!st.glass,
     }
