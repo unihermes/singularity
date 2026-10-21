@@ -126,7 +126,8 @@ Item {
         readonly property int level: ddc ? DdcBrightness.level(output) : Brightness.level
         visible: (ddc ? level >= 0 : Brightness.available) && Settings.widgetVisible("brightness")
         fixedWidth: Theme.moduleWidth
-        icon: "󰃠"
+        // the moon while Night Light is on
+        icon: shellRoot.nightLight ? "󰖔" : "󰃠"
         fillValue: level / 100
         active: screenScope.openFlyout === "brightness"
         acceptWheel: true

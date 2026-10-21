@@ -278,8 +278,9 @@ Every bar flyout keeps to these (settled 2026-10-20):
   its own (a click on its name mutes it). Settings as a chip.
   On the bar the level fills the chip and the icon says where sound
   goes: headphones (Bluetooth or a headset) or speakers.
-- **Brightness:** a labelled slider per display, this screen's first,
-  then Night Light.
+- **Brightness** (picked again 2026-10-21): a labelled slider per
+  display, this screen's first, then Night Light, then Settings as a
+  chip. The bar's sun turns to the moon while Night Light is on.
 - **Battery:** the level large with state, time left and draw beside it;
   the charge since the shell started (a sample every five minutes, a day
   kept) as a graph; the power profile as one strip; Health.

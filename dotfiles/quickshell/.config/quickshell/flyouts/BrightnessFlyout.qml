@@ -120,9 +120,8 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("display")
+    FlyoutChipLine {
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("display")
     }
 }
