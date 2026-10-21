@@ -9,6 +9,7 @@
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Bluetooth
+import Quickshell.Widgets
 import Quickshell.Services.UPower
 import QtQuick
 import QtQuick.Shapes
@@ -176,33 +177,60 @@ Item {
         onMiddleClicked: if (player && player.canTogglePlaying) player.togglePlaying()
     }
 
-    // audio spectrum in the meter colour, per Theme.vizStyle; no easing, so
-    // it redraws only on cava's 20 frames a second. With the Media module
-    // off it stands in for it: the note leads it, and a click opens Media.
+    // the music chip: the player's icon, then the audio spectrum in the
+    // meter colour per Theme.vizStyle, a flat line while nothing sounds; no
+    // easing, so it redraws only on cava's 20 frames a second. Shown while
+    // sound plays, and while a player is open unless vizHideSilent. A click
+    // opens the Visualizer flyout, a middle click plays or pauses.
     ModuleFrame {
         id: vizFrame
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceXs
-        visible: Visualizer.playing && Settings.widgetVisible("visualizer")
+        visible: Settings.widgetVisible("visualizer")
+            && (Visualizer.playing || (!Settings.vizHideSilent && Media.player !== null))
 
-        readonly property string style: Theme.vizStyle
+        readonly property string style: Visualizer.playing ? Theme.vizStyle : "flat"
         readonly property int bandW: Theme.barFs(3)
         readonly property int bandH: Theme.moduleHeight - 10
-        readonly property bool forMedia: !Settings.widgetVisible("media") && Media.player !== null
-        active: forMedia && screenScope.openFlyout === "media"
+        readonly property var player: Media.player
+        readonly property string playerIcon: player
+            ? Apps.iconForClass(player.desktopEntry || String(player.identity).toLowerCase()) : ""
+        active: screenScope.openFlyout === "visualizer"
 
-        Text {
-            visible: vizFrame.forMedia
+        Item {
+            visible: vizFrame.player !== null
             anchors.verticalCenter: parent.verticalCenter
-            rightPadding: Theme.spaceXs
-            text: "󰝚"
-            color: Theme.text
-            font.family: Theme.fontIcon
-            font.pixelSize: Theme.iconSize
+            implicitWidth: Theme.iconSize + Theme.spaceXs
+            implicitHeight: Theme.iconSize
+
+            IconImage {
+                visible: vizFrame.playerIcon !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                implicitSize: Theme.iconSize
+                source: vizFrame.playerIcon
+            }
+            Text {
+                visible: vizFrame.playerIcon === ""
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰝚"
+                color: Theme.text
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.iconSize
+            }
+        }
+
+        // nothing sounding: one flat rule the spectrum's width
+        Rectangle {
+            visible: vizFrame.style === "flat"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Visualizer.barCount * (vizFrame.bandW + vizFrame.spacing) - vizFrame.spacing
+            height: Math.max(2, Theme.borderWidth * 2)
+            radius: Theme.pill(height)
+            color: Theme.muted
         }
 
         Repeater {
-            model: vizFrame.style === "line" ? 0 : Visualizer.barCount
+            model: vizFrame.style === "line" || vizFrame.style === "flat" ? 0 : Visualizer.barCount
 
             Item {
                 id: band
@@ -278,9 +306,12 @@ Item {
     MouseArea {
         parent: vizFrame
         anchors.fill: parent
-        enabled: vizFrame.forMedia
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         cursorShape: Qt.PointingHandCursor
-        onClicked: screenScope.toggleFlyout("media", vizFrame)
+        onClicked: mouse => {
+            if (mouse.button === Qt.MiddleButton) Media.toggle()
+            else screenScope.toggleFlyout("visualizer", vizFrame)
+        }
     }
 
     BarModule {

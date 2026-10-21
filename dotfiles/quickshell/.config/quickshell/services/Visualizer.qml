@@ -1,9 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Visualizer.qml
 //
-// Spectrum bars from cava (raw mode, 0-100 per bar), run only while the
-// module is on and an audio stream is open; hidden after two seconds of
-// silence. Config in a temp file, leaving cava's own alone.
+// Spectrum bars from cava (raw mode, 0-100 per bar, Settings.vizBars of
+// them), run only while the module is on and an audio stream is open;
+// `playing` drops after two seconds of silence. Config in a temp file,
+// leaving cava's own alone.
 
 pragma Singleton
 
@@ -15,7 +16,13 @@ import QtQuick
 Singleton {
     id: root
 
-    readonly property int barCount: 10
+    readonly property int barCount: Settings.vizBars
+    // a new count needs cava started again with it
+    property bool restarting: false
+    onBarCountChanged: {
+        restarting = true
+        Qt.callLater(() => restarting = false)
+    }
     // 20, not 30: at a 20px-tall bar the difference isn't visible, and cava's
     // CPU use scales with it (about 4% of a core at 30)
     readonly property int fps: 20
@@ -35,7 +42,7 @@ Singleton {
 
     Process {
         id: cava
-        running: root.hasCava && root.streamOpen && Settings.widgetVisible("visualizer")
+        running: root.hasCava && root.streamOpen && Settings.widgetVisible("visualizer") && !root.restarting
         command: ["sh", "-c",
             "cfg=$(mktemp /tmp/singularity-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
             + "printf '[general]\\nbars = " + root.barCount + "\\nframerate = " + root.fps + "\\n"

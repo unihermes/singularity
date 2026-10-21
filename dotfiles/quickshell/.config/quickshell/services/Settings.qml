@@ -138,6 +138,10 @@ Singleton {
     // how an app's windows list when its strip icon is clicked
     readonly property alias iconTint:    adapter.iconTint
     readonly property alias vizStyle:    adapter.vizStyle
+    // how many bands the spectrum has, and whether the music chip hides
+    // once nothing sounds (else it stays, flat, while a player is there)
+    readonly property alias vizBars:     adapter.vizBars
+    readonly property alias vizHideSilent: adapter.vizHideSilent
     readonly property alias gradient:    adapter.gradient
     readonly property alias levelStyle:  adapter.levelStyle
     readonly property alias powerStyle:  adapter.powerStyle
@@ -589,6 +593,7 @@ Singleton {
         barHeight: { min: 22, max: 52 },
         barIconSize: { min: 10, max: 28 },
         modulePad: { min: 0, max: 16 },
+        vizBars:   { min: 6, max: 24 },
         flyoutWidth: { min: 80, max: 150 },
         windowRadius: { min: 0, max: 30 },
         launcherRows: { min: 3, max: 16 },
@@ -932,6 +937,8 @@ Singleton {
             property string windowScope: "workspace"
             property string iconTint: "colour"
             property string vizStyle: "mirror"
+            property int vizBars: 10
+            property bool vizHideSilent: false
             property bool gradient: false
             property string levelStyle: "pill"
             property string powerStyle: "row"

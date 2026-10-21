@@ -659,6 +659,9 @@ ShellRoot {
         // media
         LazyFlyout { name: "media"; scope: screenScope; MediaFlyout { scope: screenScope } }
 
+        // the music chip's: the spectrum large, the visualizer's look
+        LazyFlyout { name: "visualizer"; scope: screenScope; VisualizerFlyout { scope: screenScope } }
+
         // weather
         LazyFlyout { name: "weather"; scope: screenScope; WeatherFlyout { scope: screenScope } }
 

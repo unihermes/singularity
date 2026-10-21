@@ -203,8 +203,12 @@ Every bar flyout keeps to these (settled 2026-10-20):
   popout's Promote, MOVE to a workspace's number, Close and Kill (two
   clicks). There's no separate window menu: a right-click on any icon
   opens the same flyout with that window's actions open.
-- **Visualizer:** mirrored bars. With the Media module off it leads with
-  the note and a click opens Media.
+- **Visualizer** (picked 2026-10-21): the music chip, the player's icon
+  then the spectrum (per Visualizer style), a flat rule while nothing
+  sounds; shown while sound plays, and while a player is open unless Hide
+  when silent. A click opens its flyout: the spectrum large, what's
+  playing with its transport, then Style, Bars and Hide when silent, then
+  Open Media and Settings. A middle click plays or pauses.
 - **Media:** NOW PLAYING: the art, the title, artist · album, the player;
   the progress and the transport; then every player, each with play/pause
   on hover.

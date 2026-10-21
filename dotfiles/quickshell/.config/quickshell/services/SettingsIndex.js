@@ -105,6 +105,8 @@ var entries = [
     { page: "appearance", section: "Bar", label: "Separators", keywords: "divider between modules dots lines double stacked capped" },
     { page: "appearance", section: "Bar", label: "Control Centre icon", keywords: "button logo glyph arch menu home star cog dashboard" },
     { page: "appearance", section: "Bar", label: "Visualizer", keywords: "audio spectrum music bars cava" },
+    { page: "appearance", section: "Bar", label: "Visualizer bars", keywords: "audio spectrum bands count cava" },
+    { page: "appearance", section: "Bar", label: "Hide when silent", keywords: "visualizer music chip paused player" },
     { page: "appearance", section: "Bar", label: "Tray drawer", keywords: "system tray hide collapse chevron pin icons" },
     { page: "appearance", section: "Bar", label: "Workspaces", keywords: "indicator dots" },
     { page: "appearance", section: "Bar", label: "Workspace names", keywords: "label rename workspaces web code chat" },

@@ -192,6 +192,20 @@ SettingsTab {
 
     Tiles { key: "vizStyle"; label: "Visualizer"; hint: "The audio spectrum while sound plays"; art: vizArt }
 
+    Stepper { label: "Visualizer bars"; hint: "How many bands the spectrum has"; key: "vizBars" }
+
+    SettingsField {
+        label: "Hide when silent"
+        hint: Settings.vizHideSilent ? "The music chip shows only while sound plays"
+            : "The music chip stays, flat, while a player is open"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.vizHideSilent
+            onToggled: Settings.set("vizHideSilent", !Settings.vizHideSilent)
+        }
+    }
+
     SettingsField {
         label: "Tray drawer"
         hint: Settings.trayDrawer ? "Icons fold behind a chevron"
