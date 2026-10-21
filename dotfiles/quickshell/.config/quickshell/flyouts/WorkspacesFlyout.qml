@@ -12,7 +12,7 @@ import QtQuick
 FlyoutPanel {
     id: panel
     flyout: "workspaces"
-    menuWidth: Theme.fit(320)
+    menuWidth: Theme.flyoutMenuWidth
 
     required property var bar
     // for the workspace grid (SUPER+W)

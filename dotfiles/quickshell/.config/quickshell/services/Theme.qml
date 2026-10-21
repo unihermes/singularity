@@ -415,6 +415,9 @@ Singleton {
     // from the bar's screen edge to a flyout's near edge: flush lays the
     // box's stroke over the bar's edge line, floating leaves a gap
     readonly property real flyoutOffset: barHeight + barMargin - borderWidth
+    // every bar flyout's width, before FlyoutPanel scales it by the font
+    // and Flyout width
+    readonly property int flyoutMenuWidth: 300
         + (flyoutAttach === "floating" ? spaceM + borderWidth : 0)
     // between a flyout's rows, and round its headings
     readonly property int flyoutSpacing: spaceS

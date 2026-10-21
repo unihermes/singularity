@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/UpdatesFlyout.qml
 //
-// Where things stand on one line with Check and Update at its end, then
+// A card saying where things stand with Check and Update at its end, then
 // the packages under Repositories and AUR (each folds), the space a
 // clean-up would free, then Singularity's own commits waiting upstream
 // while there are any.
@@ -12,7 +12,7 @@ import "../services"
 FlyoutPanel {
     id: root
     flyout: "updates"
-    menuWidth: Theme.fit(320)
+    menuWidth: Theme.flyoutMenuWidth
 
     // the reclaimable space comes from Health's package checks
     readonly property var reclaim: Health.checks.find(c => c.id === "reclaim") || null
@@ -23,67 +23,38 @@ FlyoutPanel {
     onOpenChanged: if (open) scanHealth()
     Component.onCompleted: if (open) scanHealth()
 
-    // where things stand on one line, the actions at its end
-    Item {
-        id: head
+    FlyoutHeading { text: "UPDATES" }
+
+    // where things stand, with Check (and Update while there are some)
+    HeadCard {
+        id: card
         readonly property bool some: Updates.count > 0
-        width: parent.width
-        implicitHeight: Math.max(headText.implicitHeight, Theme.chipHeight)
+        glyph: some || Updates.lastChecked === null ? "󰚰" : "󰄬"
+        glyphColor: some ? Theme.accent : Updates.lastChecked === null ? Theme.muted : Theme.good
+        title: Updates.checking && Updates.lastChecked === null ? "Checking…"
+            : Updates.lastChecked === null ? "Not checked"
+            : !some ? "Up to date"
+            : Updates.count + (Updates.count === 1 ? " update" : " updates")
+        lines: [
+            Updates.checking || Updates.repoChecking ? "Checking now…"
+                : Updates.lastChecked ? "Checked " + Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
+        ]
 
-        Column {
-            id: headText
-            anchors.left: parent.left
-            anchors.right: headActions.left
-            anchors.rightMargin: Theme.spaceM
+        IconButton {
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Updates.checking && Updates.lastChecked === null ? "Checking…"
-                    : Updates.lastChecked === null ? "Not checked"
-                    : !head.some ? "Up to date  󰄬"
-                    : Updates.count + (Updates.count === 1 ? " update" : " updates")
-                color: !head.some && Updates.lastChecked !== null && !Updates.checking ? Theme.good : Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                width: parent.width
-                elide: Text.ElideRight
-                text: Updates.checking || Updates.repoChecking ? "Checking now…"
-                    : Updates.lastChecked ? "Checked " + Qt.formatTime(Updates.lastChecked, Theme.timeFormat) : ""
-                visible: text !== ""
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
+            icon: "󰑓"
+            spinning: Updates.checking || Updates.repoChecking
+            enabled: !Updates.checking && !Updates.repoChecking
+            onClicked: Updates.refresh()
         }
-
-        Row {
-            id: headActions
-            anchors.right: parent.right
+        FlyoutChip {
             anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceS
-            IconButton {
-                anchors.verticalCenter: parent.verticalCenter
-                icon: "󰑓"
-                spinning: Updates.checking || Updates.repoChecking
-                enabled: !Updates.checking && !Updates.repoChecking
-                onClicked: Updates.refresh()
-            }
-            FlyoutChip {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: head.some
-                text: Updates.repoBehind > 0 ? "Update packages" : "Update"
-                selected: true
-                onClicked: {
-                    Updates.update()
-                    scope.openFlyout = ""
-                }
+            visible: card.some
+            text: Updates.repoBehind > 0 ? "Update packages" : "Update"
+            selected: true
+            onClicked: {
+                Updates.update()
+                scope.openFlyout = ""
             }
         }
     }

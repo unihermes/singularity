@@ -10,7 +10,7 @@ import "../services"
 FlyoutPanel {
     id: root
     flyout: "failed"
-    menuWidth: Theme.fit(300)
+    menuWidth: Theme.flyoutMenuWidth
 
     FlyoutHeading { text: "FAILED SERVICES" }
 
@@ -73,6 +73,7 @@ FlyoutPanel {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             text: "Clear all"
+            confirmText: "Clear " + FailedUnits.count + "?"
             onClicked: FailedUnits.units.slice().forEach(u => FailedUnits.clear(u))
         }
     }

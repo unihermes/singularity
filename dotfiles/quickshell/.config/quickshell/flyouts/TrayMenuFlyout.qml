@@ -14,7 +14,7 @@ import "../services"
 FlyoutPanel {
     id: trayMenu
     flyout: "traymenu"
-    menuWidth: Theme.fit(260)
+    menuWidth: Theme.flyoutMenuWidth
 
     property var item: null
     // submenu handles, innermost last

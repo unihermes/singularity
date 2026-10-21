@@ -15,7 +15,7 @@ import "../services/Format.js" as Format
 FlyoutPanel {
     id: netFlyout
     flyout: "network"
-    menuWidth: Theme.fit(300)
+    menuWidth: Theme.flyoutMenuWidth
 
     Binding { when: netFlyout.open; target: SystemStats; property: "flyoutActive"; value: true }
 
@@ -37,10 +37,7 @@ FlyoutPanel {
         // stays open so the row can show it connecting
     }
 
-    FlyoutHeading {
-        visible: !netFlyout.browsing
-        text: "PASSPHRASE"
-    }
+    FlyoutHeading { text: netFlyout.browsing ? "NETWORK" : "PASSPHRASE" }
 
     // --- passphrase prompt ---
     FlyoutRow {

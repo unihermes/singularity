@@ -164,8 +164,23 @@ Style: `channel` (frame `channel` in `Styles.js`).
 From the redesign mockups, one pick a module; the picks are about content,
 and every frame, control and chip still follows the style. Shared pieces:
 `FlyoutTile` in a `TileGrid` (a glyph, a value, a caption, lit when on),
-`HeadCard`, and a value set large at `fontHero` where a flyout leads with
-one figure.
+and `HeadCard`.
+
+Every bar flyout keeps to these (settled 2026-10-20):
+
+- **A heading first**, always; a count or reading can ride on it.
+- **One width:** `Theme.flyoutMenuWidth` (Flyout width scales it).
+- **One size for the leading figure:** a flyout that leads with a number
+  (volume, temperature, the time, the battery) sets it at `fontHero`;
+  cards' titles and tiles' values are `fontTitle`.
+- **Where things stand is a `HeadCard`** (Updates, a connection, a
+  connected device), its actions at its end.
+- **On/off is a switch row** (`FlyoutAction`): mutes, Do Not Disturb,
+  radios that aren't on the heading.
+- **Scan and Rescan sit on their list's heading** as a turning
+  `IconButton`.
+- **Clear all takes two clicks** wherever it is.
+- **More in Settings** ends every flyout that has a Settings page.
 
 - **Control Centre:** the four everyday toggles as 2×2 tiles (Do Not
   Disturb, Night Light with its warmth, Keep Awake, Game Mode), then the
@@ -190,11 +205,11 @@ one figure.
   wttr.in found, wttr.in's three days when that fails), units and Refresh.
 - **Clock:** the time large with the seconds quieter and the whole date,
   over the Month / Today / Timer tabs.
-- **Updates:** where things stand on one line with ↻ and Update at its
+- **Updates:** where things stand as a card with ↻ and Update at its
   end; the packages under Repositories and AUR, each folding; Reclaimable
   with Clean up; Singularity's commits. The bar module's count is a badge.
 - **Failed services:** a line per unit with log, restart and clear as
-  icons; the count and Clear all under them.
+  icons; the count and Clear all (two clicks) under them.
 - **Privacy:** Mic, Camera and Screen as three tiles, lit while in use
   with the apps using them, then Mute microphone.
 - **Tray menus:** the app's own separators split the menu into sections;
@@ -203,17 +218,18 @@ one figure.
   the last three minutes as a graph with the drive under it; the fans
   folded into one line that opens in place.
 - **Bluetooth:** the radio's switch on the heading; each connected device
-  as a card (its kind, battery, Disconnect); PAIRED rows (Connect on
-  hover); what a scan found; Scan for new devices as the last row. The bar
+  under DEVICES (Scan on that heading) as a card (its kind, battery,
+  Disconnect); the other paired ones as rows (Connect on hover); what a
+  scan found. The bar
   icon turns to the connected glyph while a device is on.
 - **Network:** the connection as a card (the cable while it's up, else the
   joined network, with the address); Down and Up as tiles over the last
   minute's graph (SystemStats samples while it's open); the Wi-Fi switch;
   NEARBY with Rescan; Show all N.
 - **Volume:** one panel: the level large with the output beside it (a
-  click opens the outputs in place to switch), its slider with mute, the
-  microphone's level, then APPS, each app a level of its own (a click on
-  its name mutes it).
+  click opens the outputs in place to switch), its slider and Mute, the
+  microphone's level and Mute microphone, then APPS, each app a level of
+  its own (a click on its name mutes it).
 - **Brightness:** a labelled slider per display, this screen's first,
   then Night Light.
 - **Battery:** the level large with state, time left and draw beside it;
@@ -221,8 +237,8 @@ one figure.
   kept) as a graph; the power profile as one strip; Health.
 - **Notifications:** a line per notification (the app's icon, the
   summary, its age, close on hover); a click opens the whole card in
-  place. Do Not Disturb and Clear all share the last line; empty, All
-  caught up with a green tick.
+  place. Clear all on the heading, Do Not Disturb under the list; empty,
+  All caught up with a green tick.
 
 ### Power menu and workspace grid
 

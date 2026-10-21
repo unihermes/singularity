@@ -12,7 +12,7 @@ import "../services"
 FlyoutPanel {
     id: coolingFlyout
     flyout: "cooling"
-    menuWidth: Theme.fit(280)
+    menuWidth: Theme.flyoutMenuWidth
 
     // the System window, for More in System
     required property var systemWin
@@ -23,6 +23,8 @@ FlyoutPanel {
     function degrees(c) { return c < 0 ? "—" : Math.round(c) + "°C" }
     // 30 °C empty, 100 °C full
     function level(c) { return c < 0 ? 0 : Math.max(0, Math.min(1, (c - 30) / 70)) }
+
+    FlyoutHeading { text: "COOLING  " + coolingFlyout.degrees(Cooling.hottest) }
 
     TileGrid {
         visible: Cooling.cpuC >= 0 || Cooling.gpuC >= 0

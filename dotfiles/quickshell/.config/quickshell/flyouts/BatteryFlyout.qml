@@ -13,7 +13,7 @@ import "../services/Format.js" as Format
 FlyoutPanel {
     id: batteryFlyout
     flyout: "battery"
-    menuWidth: Theme.fit(280)
+    menuWidth: Theme.flyoutMenuWidth
     // last module in the bar -- run it into the right corner
     edgeMargin: 0
 
@@ -33,6 +33,8 @@ FlyoutPanel {
         return ""
     }
 
+    FlyoutHeading { text: "BATTERY" }
+
     Item {
         width: parent.width
         implicitHeight: Math.max(level.implicitHeight, side.implicitHeight)
@@ -45,7 +47,7 @@ FlyoutPanel {
             color: Theme.textStrong
             font.family: Theme.fontText
             font.weight: Theme.weightStrong
-            font.pixelSize: Theme.fontTitle
+            font.pixelSize: Theme.fontHero
         }
         Column {
             id: side

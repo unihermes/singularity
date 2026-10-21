@@ -11,7 +11,7 @@ import QtQuick
 FlyoutPanel {
     id: brightnessFlyout
     flyout: "brightness"
-    menuWidth: Theme.fit(280)
+    menuWidth: Theme.flyoutMenuWidth
 
     required property var shellRoot
 
@@ -116,5 +116,13 @@ FlyoutPanel {
             displayValue: brightnessFlyout.time(value)
             onStepped: d => Settings.setScheduleTime(modelData.key, value + d * 30)
         }
+    }
+
+    FlyoutDivider {}
+
+    FlyoutRow {
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("display")
     }
 }

@@ -19,7 +19,7 @@ import "../services"
 FlyoutPanel {
     id: root
     flyout: "appwindows"
-    menuWidth: Theme.fit(style === "cards" ? 340 : 300)
+    menuWidth: Theme.flyoutMenuWidth
 
     readonly property string style: Settings.appWindowsStyle
 

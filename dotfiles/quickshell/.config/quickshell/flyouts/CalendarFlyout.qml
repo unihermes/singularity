@@ -14,7 +14,7 @@ import "../services"
 FlyoutPanel {
     id: calendarFlyout
     flyout: "calendar"
-    menuWidth: Theme.fit(280)
+    menuWidth: Theme.flyoutMenuWidth
 
     // offset in months from the current one, so the flyout can page
     // back and forth without tracking a whole date
@@ -47,6 +47,8 @@ FlyoutPanel {
     // wheel anywhere over the box pages; one step per notch, and touchpads
     // accumulate so a flick doesn't fly through a year
     property real wheelAccum: 0
+
+    FlyoutHeading { text: "CLOCK" }
 
     // the time large, seconds quieter, and the whole date under it
     SystemClock {
@@ -463,5 +465,13 @@ FlyoutPanel {
         FlyoutChip { visible: Timers.mode === "countdown"; text: "+1 min"; onClicked: Timers.addMinutes(1) }
         FlyoutChip { visible: Timers.mode === "pomodoro"; text: "Skip"; onClicked: Timers.skip() }
         FlyoutChip { text: "Stop"; confirmText: "Stop?"; onClicked: Timers.stop() }
+    }
+
+    FlyoutDivider {}
+
+    FlyoutRow {
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("datetime")
     }
 }

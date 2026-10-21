@@ -1,10 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BluetoothFlyout.qml
 //
-// The radio switch on the heading, then each connected device as a card
-// (its kind, battery and Disconnect), the other paired ones as rows, then
-// anything new the scan turned up, and Scan as the last row. Needs bar's
-// adapter-state helpers.
+// The radio switch on the heading, then DEVICES with Scan on its heading:
+// each connected device as a card (its kind, battery and Disconnect), the
+// other paired ones as rows, then anything new the scan turned up. Needs
+// bar's adapter-state helpers.
 
 import Quickshell
 import Quickshell.Bluetooth
@@ -15,7 +15,7 @@ import "../services/BtKind.js" as BtKind
 FlyoutPanel {
     id: btFlyout
     flyout: "bluetooth"
-    menuWidth: Theme.fit(300)
+    menuWidth: Theme.flyoutMenuWidth
 
     required property var bar
 
@@ -88,6 +88,23 @@ FlyoutPanel {
     readonly property var connected: saved.filter(d => d.connected)
     readonly property var paired: saved.filter(d => !d.connected)
 
+    FlyoutHeading {
+        visible: btFlyout.radioOn
+        text: "DEVICES" + (btFlyout.saved.length > 0 ? "  " + btFlyout.saved.length : "")
+        control: scanButton
+    }
+
+    // Discovery is meaningless with the radio off, and bluez errors rather
+    // than ignoring the request, so the button only shows with it on.
+    Component {
+        id: scanButton
+        IconButton {
+            icon: "󰑐"
+            spinning: btFlyout.adapter && btFlyout.adapter.discovering
+            onClicked: btFlyout.adapter.discovering = !btFlyout.adapter.discovering
+        }
+    }
+
     // each connected device as a card: what it is, its battery, Disconnect
     Repeater {
         model: ScriptModel { values: btFlyout.radioOn ? btFlyout.connected : [] }
@@ -112,11 +129,6 @@ FlyoutPanel {
         }
     }
 
-    FlyoutHeading {
-        visible: btFlyout.radioOn && btFlyout.paired.length > 0
-        text: "PAIRED  " + btFlyout.paired.length
-    }
-
     // ScriptModels, not the bare arrays: each change during a scan makes a
     // fresh array, which would rebuild every row
     Repeater {
@@ -131,20 +143,9 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        label: "No devices yet; scan to look"
+        label: btFlyout.adapter && btFlyout.adapter.discovering ? "Looking for devices…" : "No devices yet; scan to look"
         enabled: false
         visible: btFlyout.radioOn && btFlyout.saved.length === 0 && btFlyout.nearby.length === 0
-            && !(btFlyout.adapter && btFlyout.adapter.discovering)
-    }
-
-    // Discovery is meaningless with the radio off, and bluez errors rather
-    // than ignoring the request, so the row only shows with it on.
-    FlyoutRow {
-        visible: btFlyout.radioOn
-        leadingIcon: "󰑐"
-        label: btFlyout.adapter && btFlyout.adapter.discovering ? "Looking for devices… (stop)" : "Scan for new devices"
-        busy: btFlyout.adapter && btFlyout.adapter.discovering
-        onActivated: btFlyout.adapter.discovering = !btFlyout.adapter.discovering
     }
 
     FlyoutDivider {}

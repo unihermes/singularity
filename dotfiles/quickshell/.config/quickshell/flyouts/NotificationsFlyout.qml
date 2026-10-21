@@ -3,8 +3,8 @@
 //
 // The notification history, newest first, a line each: the app's icon, the
 // summary and its age, a close on hover. A click opens the whole card in
-// place (body, picture, actions). Do Not Disturb and Clear all share the
-// last line. Empty, it says so in a card. Opening it marks everything
+// place (body, picture, actions). Clear all on the heading while there's
+// any, Do Not Disturb under the list. Empty, it says so in a card. Opening it marks everything
 // read; what was new stays marked while it's open.
 
 import QtQuick
@@ -13,7 +13,7 @@ import "../services"
 FlyoutPanel {
     id: root
     flyout: "notifications"
-    menuWidth: Theme.fit(360)
+    menuWidth: Theme.flyoutMenuWidth
     // the bell sits near the bar's right end, so run into the corner
     edgeMargin: 0
 
@@ -23,6 +23,20 @@ FlyoutPanel {
     onOpenChanged: {
         Notifications.setViewing(open)
         expanded = ""
+    }
+
+    FlyoutHeading {
+        text: "NOTIFICATIONS" + (Notifications.count > 0 ? "  " + Notifications.count : "")
+        control: Notifications.count > 0 ? clearChip : null
+    }
+
+    Component {
+        id: clearChip
+        FlyoutChip {
+            text: "Clear all"
+            confirmText: "Clear " + Notifications.count + "?"
+            onClicked: Notifications.clearAll()
+        }
     }
 
     HeadCard {
@@ -85,36 +99,17 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    Item {
-        width: parent.width
-        implicitHeight: Theme.chipHeight
+    FlyoutAction {
+        icon: Notifications.dnd ? "󰂛" : "󰂚"
+        label: "Do Not Disturb"
+        status: Notifications.dnd ? "Popups are held" : ""
+        checked: Notifications.dnd
+        onActivated: Notifications.toggleDnd()
+    }
 
-        Row {
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.spaceM
-            Switch {
-                anchors.verticalCenter: parent.verticalCenter
-                checked: Notifications.dnd
-                onToggled: Notifications.toggleDnd()
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Notifications.dnd ? "Do Not Disturb · popups held" : "Do Not Disturb"
-                color: Theme.text
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
-
-        FlyoutChip {
-            visible: Notifications.count > 0
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            text: "Clear all"
-            confirmText: "Clear " + Notifications.count + "?"
-            onClicked: Notifications.clearAll()
-        }
+    FlyoutRow {
+        label: "More in Settings"
+        trailing: "󰁔"
+        onActivated: scope.openSettings("notifications")
     }
 }

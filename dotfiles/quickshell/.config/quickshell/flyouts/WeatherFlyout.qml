@@ -11,7 +11,9 @@ import "../services"
 FlyoutPanel {
     id: weatherFlyout
     flyout: "weather"
-    menuWidth: Theme.fit(300)
+    menuWidth: Theme.flyoutMenuWidth
+
+    FlyoutHeading { text: "WEATHER" }
 
     // now, large: the sky, the temperature, and what it's like
     Item {

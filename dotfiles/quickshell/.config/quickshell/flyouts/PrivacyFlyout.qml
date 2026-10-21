@@ -11,7 +11,7 @@ import QtQuick
 FlyoutPanel {
     id: privacyFlyout
     flyout: "privacy"
-    menuWidth: Theme.fit(280)
+    menuWidth: Theme.flyoutMenuWidth
 
     // unique names: a browser opens one stream per tab
     function names(apps) { return apps.filter((a, i, all) => all.indexOf(a) === i).join(", ") }

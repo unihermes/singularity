@@ -17,7 +17,7 @@ import "../services/Styles.js" as Styles
 FlyoutPanel {
     id: controlCentre
     flyout: "controlcentre"
-    menuWidth: Theme.fit(300)
+    menuWidth: Theme.flyoutMenuWidth
     // first module in the bar -- run it into the left corner
     edgeMargin: 0
 

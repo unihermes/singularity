@@ -12,7 +12,7 @@ import "../services"
 FlyoutPanel {
     id: mediaFlyout
     flyout: "media"
-    menuWidth: 280
+    menuWidth: Theme.flyoutMenuWidth
 
     readonly property var player: Media.player
 

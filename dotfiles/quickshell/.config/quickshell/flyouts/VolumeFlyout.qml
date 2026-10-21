@@ -17,7 +17,7 @@ import QtQuick
 FlyoutPanel {
     id: volumeFlyout
     flyout: "volume"
-    menuWidth: Theme.fit(280)
+    menuWidth: Theme.flyoutMenuWidth
 
     // the outputs list, opened from the device under the level
     property bool picking: false
@@ -41,6 +41,8 @@ FlyoutPanel {
     }
 
     // --- output: the level large, the device beside it --------------------------
+
+    FlyoutHeading { text: "VOLUME" }
 
     Item {
         width: parent.width
@@ -132,41 +134,34 @@ FlyoutPanel {
     }
 
     // muted keeps the level on show, dimmed, as the volume toast does
-    Row {
+    Slider {
         width: parent.width
-        spacing: Theme.spaceS
-        IconButton {
-            id: muteBtn
-            anchors.verticalCenter: parent.verticalCenter
-            icon: Audio.muted ? "󰖁" : "󰕾"
-            warn: Audio.muted
-            onClicked: Audio.toggleMute()
-        }
-        Slider {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - muteBtn.width - parent.spacing
-            value: Audio.percent
-            opacity: Audio.muted ? 0.5 : 1
-            onMoved: v => Audio.setVolume(v)
-        }
+        value: Audio.percent
+        opacity: Audio.muted ? 0.5 : 1
+        onMoved: v => Audio.setVolume(v)
+    }
+
+    FlyoutAction {
+        icon: Audio.muted ? "󰖁" : "󰕾"
+        label: "Mute"
+        checked: Audio.muted
+        onActivated: Audio.toggleMute()
     }
 
     // --- the microphone ----------------------------------------------------------
+
+    FlyoutHeading {
+        visible: volumeFlyout.sourceReady
+        text: "MICROPHONE"
+    }
 
     Row {
         visible: volumeFlyout.sourceReady
         width: parent.width
         spacing: Theme.spaceS
-        IconButton {
-            id: micBtn
-            anchors.verticalCenter: parent.verticalCenter
-            icon: volumeFlyout.micMuted ? "󰍭" : "󰍬"
-            warn: volumeFlyout.micMuted
-            onClicked: volumeFlyout.source.audio.muted = !volumeFlyout.micMuted
-        }
         Slider {
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - micBtn.width - micText.width - parent.spacing * 2
+            width: parent.width - micText.width - parent.spacing
             value: volumeFlyout.micPercent
             opacity: volumeFlyout.micMuted ? 0.5 : 1
             onMoved: v => volumeFlyout.source.audio.volume = v / 100
@@ -182,6 +177,14 @@ FlyoutPanel {
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
         }
+    }
+
+    FlyoutAction {
+        visible: volumeFlyout.sourceReady
+        icon: volumeFlyout.micMuted ? "󰍭" : "󰍬"
+        label: "Mute microphone"
+        checked: volumeFlyout.micMuted
+        onActivated: volumeFlyout.source.audio.muted = !volumeFlyout.micMuted
     }
 
     // --- apps ----------------------------------------------------------------------
