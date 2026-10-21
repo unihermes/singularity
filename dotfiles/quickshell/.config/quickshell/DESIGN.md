@@ -245,8 +245,11 @@ Every bar flyout keeps to these (settled 2026-10-20):
   flyout: a row per unit (system or user); a click opens it in place with
   its last three log lines and Full log, Restart and Clear; Clear all
   (two clicks) after them.
-- **Privacy:** Mic, Camera and Screen as three tiles, lit while in use
-  with the apps using them, then Mute microphone.
+- **Privacy** (bar picked 2026-10-21): only while something captures, a
+  chip filled with the alert colour carrying a recording dot and a glyph
+  per kind (mic, camera, screen) in the ground colour. The flyout: Mic,
+  Camera and Screen as three tiles, lit while in use with the apps using
+  them, then Mute microphone.
 - **Tray menus:** the app's own separators split the menu into sections;
   submenus drill down behind a breadcrumb heading.
 - **Cooling:** CPU and GPU as two tiles, the reading large over a level;

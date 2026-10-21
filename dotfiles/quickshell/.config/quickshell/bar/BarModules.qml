@@ -355,12 +355,14 @@ Item {
     BarModule {
         id: privacyBtn
         visible: Privacy.active && Settings.widgetVisible("privacy")
-        // one glyph per kind of capture in progress
-        icon: [Privacy.mic ? "󰍬" : "", Privacy.camera ? "󰄀" : "", Privacy.screen ? "󰍹" : ""]
+        // a recording dot, then one glyph per kind of capture in progress
+        icon: ["󰑊", Privacy.mic ? "󰍬" : "", Privacy.camera ? "󰄀" : "", Privacy.screen ? "󰍹" : ""]
             .filter(g => g !== "").join(" ")
-        // the palette's alert hue, on purpose: this is the one
-        // module that exists to be noticed
-        iconColor: Theme.alert
+        // filled with the palette's alert hue, on purpose: this is the
+        // one module that exists to be noticed
+        fillValue: 1
+        fillColor: Theme.alert
+        iconColor: Theme.base
         active: screenScope.openFlyout === "privacy"
         onActivated: screenScope.toggleFlyout("privacy", privacyBtn)
     }
