@@ -1,10 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/CoolingFlyout.qml
 //
-// Temperatures and fans, from the Cooling singleton: CPU and GPU as two
-// tiles with their reading large, the last three minutes of both as one
-// graph, the drive under it, then the fans folded into one line that
-// opens in place.
+// Temperatures and fans, from the Cooling singleton: the last three
+// minutes of CPU and GPU as one graph on a °C scale under a key with
+// their readings (and the drive's), the fans as tiles with their speed,
+// then CoolerControl's modes while it has any, then CoolerControl and
+// System as chips.
 
 import QtQuick
 import "../services"
@@ -14,63 +15,73 @@ FlyoutPanel {
     flyout: "cooling"
     menuWidth: Theme.flyoutMenuWidth
 
-    // the System window, for More in System
+    // the System window, for its Hardware page
     required property var systemWin
 
-    property bool fansOpen: false
-    onOpenChanged: fansOpen = false
+    onOpenChanged: if (open) Cooling.refreshModes()
 
     function degrees(c) { return c < 0 ? "—" : Math.round(c) + "°C" }
-    // 30 °C empty, 100 °C full
-    function level(c) { return c < 0 ? 0 : Math.max(0, Math.min(1, (c - 30) / 70)) }
 
     FlyoutHeading { text: "COOLING  " + coolingFlyout.degrees(Cooling.hottest) }
 
-    TileGrid {
-        visible: Cooling.cpuC >= 0 || Cooling.gpuC >= 0
-        columns: 2
+    Item {
+        width: parent.width
+        implicitHeight: keys.implicitHeight
 
-        FlyoutTile {
-            width: parent.cell
-            title: coolingFlyout.degrees(Cooling.cpuC)
-            big: true
-            caption: "CPU"
-            Meter {
-                width: parent.width
-                fraction: coolingFlyout.level(Cooling.cpuC)
-                fillColor: Cooling.cpuC >= Cooling.hotC ? Theme.alert : Theme.meterFill
+        // the key: each line's colour, name and reading
+        Row {
+            id: keys
+            spacing: Theme.spaceXl
+
+            Repeater {
+                model: [{ colour: Theme.accent, name: "CPU", reading: Cooling.cpuC },
+                        { colour: Theme.text, name: "GPU", reading: Cooling.gpuC }].filter(k => k.reading >= 0)
+
+                Row {
+                    required property var modelData
+                    spacing: Theme.spaceS
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.fs(8); height: width; radius: width / 2
+                        color: modelData.colour
+                    }
+                    Text {
+                        text: modelData.name + "  " + coolingFlyout.degrees(modelData.reading)
+                        color: modelData.reading >= Cooling.hotC ? Theme.alert : Theme.textStrong
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontBody
+                    }
+                }
             }
         }
-        FlyoutTile {
-            width: parent.cell
-            title: coolingFlyout.degrees(Cooling.gpuC)
-            big: true
-            caption: ["GPU", Cooling.gpuLoad >= 0 ? Cooling.gpuLoad + "%" : "",
-                      Cooling.gpuWatts >= 0 ? Math.round(Cooling.gpuWatts) + " W" : ""]
-                .filter(s => s !== "").join(" · ")
-            Meter {
-                width: parent.width
-                fraction: coolingFlyout.level(Cooling.gpuC)
-                fillColor: Cooling.gpuC >= Cooling.hotC ? Theme.alert : Theme.meterFill
-            }
+        Text {
+            anchors.right: parent.right
+            anchors.verticalCenter: keys.verticalCenter
+            visible: Cooling.driveC >= 0
+            text: "Drive " + coolingFlyout.degrees(Cooling.driveC)
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontSmall
         }
     }
 
     Spark {
-        visible: Cooling.cpuHistory.length > 1
-        height: Theme.row(56)
+        height: Theme.row(70)
         floor: 30
         ceiling: 100
+        gridLines: [40, 60, 80]
+        gridSuffix: "°"
         historyLength: Cooling.historyLength
         series: [
-            { values: Cooling.gpuHistory, color: Theme.subtext, fill: false },
-            { values: Cooling.cpuHistory, color: Theme.text, fill: true },
+            { values: Cooling.gpuHistory, color: Theme.text, fill: false },
+            { values: Cooling.cpuHistory, color: Theme.accent, fill: true },
         ]
     }
 
-    // the graph's time axis, with the drive in the middle
+    // the time axis, with the GPU's load and draw in the middle
     Item {
-        visible: Cooling.cpuHistory.length > 1
         width: parent.width
         implicitHeight: axisLeft.implicitHeight
         Text {
@@ -84,9 +95,11 @@ FlyoutPanel {
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: Cooling.driveC >= 0
-            text: "Drive " + coolingFlyout.degrees(Cooling.driveC)
-            color: Theme.text
+            text: ["GPU", Cooling.gpuLoad >= 0 ? Cooling.gpuLoad + "%" : "",
+                   Cooling.gpuWatts >= 0 ? Math.round(Cooling.gpuWatts) + " W" : ""]
+                .filter(s => s !== "").join(" · ")
+            visible: Cooling.gpuLoad >= 0 || Cooling.gpuWatts >= 0
+            color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
@@ -101,59 +114,58 @@ FlyoutPanel {
         }
     }
 
-    FlyoutDivider {}
+    FlyoutDivider { visible: tiles.count > 0 }
 
-    // the fans as one line; a click opens them in place
-    readonly property var spinning: Cooling.fans.filter(f => f.rpm > 0)
-    FlyoutRow {
-        label: "Fans"
-        enabled: Cooling.fans.length > 0 || Cooling.gpuFan >= 0
-        trailing: Cooling.fans.length === 0 && Cooling.gpuFan < 0 ? "None reporting"
-            : (spinning.length > 0 ? spinning.length + " spinning" : "All stopped")
-              + "  " + (coolingFlyout.fansOpen ? "󰅀" : "󰅂")
-        onActivated: coolingFlyout.fansOpen = !coolingFlyout.fansOpen
-    }
+    // every fan as a tile: its speed, its name, its duty as a level; the
+    // card's own fans last, which stop below about 60 °C
+    TileGrid {
+        visible: tiles.count > 0
+        columns: 3
 
-    Repeater {
-        model: coolingFlyout.fansOpen ? Cooling.fans : []
+        Repeater {
+            id: tiles
+            model: Cooling.fans.concat(Cooling.gpuFan >= 0 ? [{ name: "GPU", rpm: -1, duty: Cooling.gpuFan }] : [])
 
-        FlyoutRow {
-            required property var modelData
-            label: modelData.name
-            note: modelData.duty >= 0 ? modelData.duty + "%" : ""
-            trailing: modelData.rpm > 0 ? modelData.rpm + " rpm" : "Stopped"
-            trailingIsValue: true
-            enabled: false
+            FlyoutTile {
+                required property var modelData
+                width: parent.cell
+                glyph: "󰈐"
+                title: modelData.rpm > 0 ? modelData.rpm + " rpm"
+                    : modelData.rpm < 0 && modelData.duty > 0 ? modelData.duty + "%" : "Stopped"
+                caption: modelData.name
+                dimmed: modelData.rpm === 0 || (modelData.rpm < 0 && modelData.duty <= 0)
+                Meter {
+                    visible: modelData.duty >= 0
+                    width: parent.width
+                    fraction: modelData.duty / 100
+                }
+            }
         }
     }
 
-    // the card's own fans, which stop below about 60 °C
-    FlyoutRow {
-        visible: coolingFlyout.fansOpen && Cooling.gpuFan >= 0
-        label: "GPU fans"
-        trailing: Cooling.gpuFan > 0 ? Cooling.gpuFan + "%" : "Stopped"
-        trailingIsValue: true
-        enabled: false
+    // CoolerControl's modes, while it has any
+    FlyoutHeading {
+        visible: Cooling.modes.length > 0
+        text: "PROFILE"
+        hints: ["CoolerControl"]
+    }
+
+    FlyoutSegmented {
+        visible: Cooling.modes.length > 0
+        model: Cooling.modes.map(m => ({ value: m.uid, text: m.name }))
+        current: Cooling.activeMode
+        onPicked: v => Cooling.setMode(v)
     }
 
     FlyoutDivider {}
 
-    FlyoutRow {
-        visible: Cooling.coolerControl
-        label: "Fan curves in CoolerControl"
-        trailing: "󰁔"
-        onActivated: {
+    FlyoutChipLine {
+        chips: (Cooling.coolerControl ? [{ icon: "󰒓", text: "CoolerControl", act: "cc" }] : [])
+            .concat([{ icon: "󰍛", text: "System", act: "system" }])
+        onPicked: act => {
             scope.openFlyout = ""
-            Cooling.openCoolerControl()
-        }
-    }
-
-    FlyoutRow {
-        label: "More in System"
-        trailing: "󰁔"
-        onActivated: {
-            scope.openFlyout = ""
-            coolingFlyout.systemWin.open("hardware")
+            if (act === "cc") Cooling.openCoolerControl()
+            else coolingFlyout.systemWin.open("hardware")
         }
     }
 }

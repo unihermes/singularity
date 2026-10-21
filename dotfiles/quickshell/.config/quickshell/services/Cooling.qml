@@ -64,6 +64,44 @@ Singleton {
         Quickshell.execDetached(["coolercontrol"])
     }
 
+    // CoolerControl's modes ([{ uid, name }]) and the active one's uid, over
+    // its daemon's API with the GUI's own access token; empty when there's
+    // no daemon, no token or no modes
+    property var modes: []
+    property string activeMode: ""
+    readonly property string ccApi: "conf=\"$HOME/.config/org.coolercontrol.CoolerControl/CoolerControl.conf\"; "
+        + "t=$(sed -n '/^\\[daemonAccessTokens\\]/,/^\\[/s/^[^=]*=@ByteArray(\\(.*\\))$/\\1/p' \"$conf\" | head -n1); "
+        + "cc() { curl -sk --max-time 4 -H \"Authorization: Bearer $t\" \"$@\"; }; "
+    function refreshModes() {
+        if (coolerControl && !modesProc.running) modesProc.running = true
+    }
+    function setMode(uid) {
+        activeMode = uid
+        modeSet.command = ["sh", "-c", ccApi + "cc -X POST \"https://127.0.0.1:11987/modes-active/$1\" >/dev/null", "sh", uid]
+        modeSet.running = true
+    }
+
+    Process {
+        id: modesProc
+        command: ["sh", "-c", root.ccApi + "cc https://127.0.0.1:11987/modes; echo; cc https://127.0.0.1:11987/modes-active"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var lines = text.trim().split("\n")
+                try {
+                    root.modes = (JSON.parse(lines[0]).modes || []).map(m => ({ uid: m.uid, name: m.name }))
+                    root.activeMode = JSON.parse(lines[1]).current_mode_uid || ""
+                } catch (e) {
+                    root.modes = []
+                }
+            }
+        }
+    }
+
+    Process {
+        id: modeSet
+        onExited: root.refreshModes()
+    }
+
     function push(hist, v) {
         var h = hist.concat([v])
         return h.length > historyLength ? h.slice(h.length - historyLength) : h

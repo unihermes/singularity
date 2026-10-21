@@ -22,6 +22,9 @@ Item {
     property string caption: ""
     // samples the full width stands for; one per second in the System window
     property int historyLength: 60
+    // values drawn as faint rules across, labelled at the right ("60°")
+    property var gridLines: []
+    property string gridSuffix: ""
 
     width: parent ? parent.width : 0
     height: Theme.row(44)
@@ -49,13 +52,22 @@ Item {
             ctx.reset()
             var w = width, h = height
             var step = w / (sp.historyLength - 1)
+            ctx.strokeStyle = String(Theme.stroke)
+            ctx.lineWidth = 1
+            for (var g = 0; g < sp.gridLines.length; g++) {
+                var gy = Math.round(sp.yOf(sp.gridLines[g], h)) + 0.5
+                ctx.beginPath()
+                ctx.moveTo(0, gy)
+                ctx.lineTo(w, gy)
+                ctx.stroke()
+            }
             for (var s = 0; s < sp.series.length; s++) {
                 var vals = sp.series[s].values
                 if (!vals || vals.length < 2) continue
                 var x0 = w - (vals.length - 1) * step
                 ctx.beginPath()
                 for (var i = 0; i < vals.length; i++) {
-                    var y = h - Math.max(0, Math.min(1, (vals[i] - sp.floor) / (sp.ceiling - sp.floor))) * h
+                    var y = sp.yOf(vals[i], h)
                     if (i === 0) ctx.moveTo(x0, y)
                     else ctx.lineTo(x0 + i * step, y)
                 }
@@ -73,6 +85,23 @@ Item {
                     ctx.globalAlpha = 1
                 }
             }
+        }
+    }
+
+    function yOf(v, h) { return h - Math.max(0, Math.min(1, (v - floor) / (ceiling - floor))) * h }
+
+    Repeater {
+        model: sp.gridLines
+        Text {
+            required property real modelData
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceXs
+            y: canvas.y + sp.yOf(modelData, canvas.height) - height - 1
+            text: modelData + sp.gridSuffix
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontCaption
         }
     }
 

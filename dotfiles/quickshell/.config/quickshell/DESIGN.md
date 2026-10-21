@@ -255,9 +255,13 @@ Every bar flyout keeps to these (settled 2026-10-20):
   breadcrumb heading. At the top level its Show/Open and Quit entries come
   out as Show window and Quit chips at the end (Show window raises its
   window, else the tray's showApp).
-- **Cooling:** CPU and GPU as two tiles, the reading large over a level;
-  the last three minutes as a graph with the drive under it; the fans
-  folded into one line that opens in place.
+- **Cooling** (flyout picked 2026-10-21): the last three minutes of CPU
+  and GPU as one graph on a °C scale (rules at 40, 60, 80), under a key
+  with their readings and the drive's; the GPU's load and draw on the
+  time axis; every fan as a tile (its speed, name, duty as a level; the
+  card's own last); CoolerControl's modes as a segmented strip while it
+  has any (its daemon's API, with the GUI's token); CoolerControl and
+  System as chips.
 - **Bluetooth:** the radio's switch on the heading; each connected device
   under DEVICES (Scan on that heading) as a card (its kind, battery,
   Disconnect); the other paired ones as rows (Connect on hover); what a
@@ -305,9 +309,8 @@ Night Light.
 Desktops only (`services/Cooling.qml`). The bar module is a plain fan icon,
 as slim as Bluetooth's, with no level fill (settled 2026-10-09); it turns
 the alert colour only when the CPU or GPU reaches 85 °C. The flyout is as
-picked above; a fan's PWM duty is its note and its rpm the value. Fan
-names come from the machine's `fan-names.json` in the state directory,
-never the repo.
+picked above. Fan names come from the machine's `fan-names.json` in the
+state directory, never the repo.
 
 ### Clock flyout
 
