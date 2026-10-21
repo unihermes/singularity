@@ -23,10 +23,10 @@ Singleton {
     }
     Component.onCompleted: refresh()
 
-    // a fresh detached process (Restart shell, and how Qt rereads fonts)
+    // a fresh process (Restart shell, and how Qt rereads fonts); Hyprland
+    // runs the script, so the new shell gets its environment, not this one's
     function restartShell() {
-        Quickshell.execDetached(["sh", "-c",
-            "qs kill; sleep 0.5; setsid quickshell > \"$HOME/.cache/quickshell.log\" 2>&1 < /dev/null &"])
+        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.exec_cmd(\"~/.config/singularity/restart-shell.sh\")"])
     }
 
     Process {
