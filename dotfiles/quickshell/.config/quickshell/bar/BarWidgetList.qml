@@ -94,7 +94,8 @@ Column {
     ListView {
         id: list
         width: parent.width
-        height: widgetModel.count * root.rowHeight
+        // a row each, and one more for the Music module's Visualizer
+        height: (widgetModel.count + 1) * root.rowHeight
         interactive: false
         model: widgetModel
 
@@ -112,9 +113,11 @@ Column {
             readonly property bool locked: Settings.lockedWidgets.indexOf(key) !== -1
             readonly property bool dragging: grip.pressed
             readonly property bool pinned: Settings.pinnedWidgets.indexOf(key) !== -1
+            // the Music module carries its Visualizer switch under it
+            readonly property bool music: !header && key === "visualizer"
 
             width: list.width
-            height: root.rowHeight
+            height: root.rowHeight * (music ? 2 : 1)
             z: dragging ? 1 : 0
 
             // --- section header ---
@@ -147,7 +150,8 @@ Column {
             // --- module row ---
             Item {
                 visible: !row.header
-                anchors.fill: parent
+                width: parent.width
+                height: root.rowHeight
 
                 // lifted look while held, so it's clear which row is moving
                 Rectangle {
@@ -187,8 +191,8 @@ Column {
                         onPositionChanged: mouse => {
                             if (!pressed) return
                             var p = mapToItem(list, mouse.x, mouse.y)
-                            var to = Math.max(0, Math.min(widgetModel.count - 1,
-                                Math.floor(p.y / root.rowHeight)))
+                            var at = list.indexAt(list.width / 2, p.y)
+                            var to = at >= 0 ? at : p.y < 0 ? 0 : widgetModel.count - 1
                             root.moveRow(row.index, to)
                         }
                     }
@@ -245,6 +249,20 @@ Column {
                     onActivated: if (!row.locked)
                         Settings.setWidgetVisible(row.key, !Settings.widgetVisible(row.key))
                 }
+            }
+
+            // the Music module's Visualizer, indented under it
+            FlyoutAction {
+                visible: row.music
+                y: root.rowHeight
+                x: Theme.fs(14) + Theme.spaceS + Theme.iconCell
+                width: parent.width - x
+                height: root.rowHeight
+                icon: "󰺢"
+                label: "Visualizer"
+                enabled: Settings.widgetVisible("visualizer")
+                checked: Settings.vizShown
+                onActivated: Settings.set("vizShown", !Settings.vizShown)
             }
         }
     }

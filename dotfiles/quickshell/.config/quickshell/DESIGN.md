@@ -203,15 +203,19 @@ Every bar flyout keeps to these (settled 2026-10-20):
   popout's Promote, MOVE to a workspace's number, Close and Kill (two
   clicks). There's no separate window menu: a right-click on any icon
   opens the same flyout with that window's actions open.
-- **Visualizer** (picked 2026-10-21): the music chip, the player's icon
-  then the spectrum (per Visualizer style), a flat rule while nothing
-  sounds; shown while sound plays, and while a player is open unless Hide
-  when silent. A click opens its flyout: the spectrum large, what's
-  playing with its transport, then Style, Bars and Hide when silent, then
-  Open Media and Settings. A middle click plays or pauses.
-- **Media:** NOW PLAYING: the art, the title, artist · album, the player;
-  the progress and the transport; then every player, each with play/pause
-  on hover.
+- **Music** (picked 2026-10-21; Media and the Visualizer as one module,
+  under the visualizer's key): the player's icon, then the spectrum (a
+  flat rule while nothing sounds) and the track's title, each with its
+  own switch (Music visualizer, Music title); with neither, a play/pause
+  mark. Shown while a player is open, or only while it sounds with Hide
+  when silent. Bar Widgets lists Music with its Visualizer switch
+  indented under it. A click opens the flyout, a middle click plays or
+  pauses. The flyout: the art large with the title, artist and player
+  over its foot and the spectrum over it while the visualizer is on; the
+  progress (click to seek) and the transport; every player as a chip (a
+  click picks which the module follows); the Visualizer and Title on the
+  bar switches; Visualizer look, a page of its own (Style, Bars, Hide
+  when silent); Settings.
 - **Weather:** the sky and temperature large with the condition, feels
   like and the place beside; the next six 3-hour slots; humidity, wind and
   today's rain as tiles; then a week of days (Open-Meteo for the place

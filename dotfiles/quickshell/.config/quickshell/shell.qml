@@ -656,11 +656,8 @@ ShellRoot {
         // an app's icon in the open-windows strip, when it has several windows
         LazyFlyout { name: "appwindows"; scope: screenScope; AppWindowsFlyout { scope: screenScope; bar: screenScope.barWindow } }
 
-        // media
+        // the Music module's
         LazyFlyout { name: "media"; scope: screenScope; MediaFlyout { scope: screenScope } }
-
-        // the music chip's: the spectrum large, the visualizer's look
-        LazyFlyout { name: "visualizer"; scope: screenScope; VisualizerFlyout { scope: screenScope } }
 
         // weather
         LazyFlyout { name: "weather"; scope: screenScope; WeatherFlyout { scope: screenScope } }

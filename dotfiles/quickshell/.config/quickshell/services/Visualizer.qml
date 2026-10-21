@@ -2,7 +2,8 @@
 // ~/.config/quickshell/services/Visualizer.qml
 //
 // Spectrum bars from cava (raw mode, 0-100 per bar, Settings.vizBars of
-// them), run only while the module is on and an audio stream is open;
+// them), run only while the Music module and its visualizer are on and
+// an audio stream is open;
 // `playing` drops after two seconds of silence. Config in a temp file,
 // leaving cava's own alone.
 
@@ -42,7 +43,7 @@ Singleton {
 
     Process {
         id: cava
-        running: root.hasCava && root.streamOpen && Settings.widgetVisible("visualizer") && !root.restarting
+        running: root.hasCava && root.streamOpen && Settings.widgetVisible("visualizer") && Settings.vizShown && !root.restarting
         command: ["sh", "-c",
             "cfg=$(mktemp /tmp/singularity-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
             + "printf '[general]\\nbars = " + root.barCount + "\\nframerate = " + root.fps + "\\n"

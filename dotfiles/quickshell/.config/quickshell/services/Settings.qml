@@ -138,8 +138,11 @@ Singleton {
     // how an app's windows list when its strip icon is clicked
     readonly property alias iconTint:    adapter.iconTint
     readonly property alias vizStyle:    adapter.vizStyle
-    // how many bands the spectrum has, and whether the music chip hides
-    // once nothing sounds (else it stays, flat, while a player is there)
+    // the Music module: whether it shows the spectrum and the track's
+    // title, how many bands the spectrum has, and whether it hides once
+    // nothing sounds (else it stays while a player is open)
+    readonly property alias vizShown:    adapter.vizShown
+    readonly property alias musicTitle:  adapter.musicTitle
     readonly property alias vizBars:     adapter.vizBars
     readonly property alias vizHideSilent: adapter.vizHideSilent
     readonly property alias gradient:    adapter.gradient
@@ -417,6 +420,21 @@ Singleton {
         if (["top", "bottom"].indexOf(y) >= 0) adapter.notifPositionY = y
     }
 
+    // Media and the visualizer are one Music module now, under the
+    // visualizer's key: a saved layout that still lists media drops it, and
+    // the module stays shown if either of the two was.
+    function foldMedia() {
+        var lay = adapter.barLayout || {}
+        var has = ["left", "centre", "right"].some(sec => (lay[sec] || []).indexOf("media") !== -1)
+        if (!has) return
+        var hidden = adapter.barHidden || []
+        var shown = hidden.indexOf("media") === -1 || hidden.indexOf("visualizer") === -1
+        adapter.barHidden = hidden.filter(k => k !== "media" && (k !== "visualizer" || !shown))
+        var out = {}
+        for (var sec in lay) out[sec] = (lay[sec] || []).filter(k => k !== "media")
+        adapter.barLayout = out
+    }
+
     // --- Bar Widgets ---------------------------------------------------
     // Order and visibility of the bar's modules, stored as what the user
     // changed and read through widgetOrder()/widgetVisible(), which merge in
@@ -424,7 +442,7 @@ Singleton {
 
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "windows"],
-        centre: ["visualizer", "media", "clock", "weather"],
+        centre: ["visualizer", "clock", "weather"],
         right:  ["privacy", "failed", "updates", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
@@ -442,8 +460,9 @@ Singleton {
         brightness:    { label: "Brightness",     icon: "󰃠" },
         battery:       { label: "Battery",        icon: "󰁹" },
         tray:          { label: "System Tray",    icon: "󰀻" },
-        media:         { label: "Media Player",   icon: "󰝚" },
-        visualizer:    { label: "Audio Visualizer", icon: "󰺢" },
+        // the Music module; the key is the old visualizer's, so saved
+        // layouts keep it where it was
+        visualizer:    { label: "Music",          icon: "󰝚" },
         weather:       { label: "Weather",        icon: "󰖐" },
         notifications: { label: "Notifications",  icon: "󰂚" },
         privacy:       { label: "Privacy",        icon: "󰍬" },
@@ -875,6 +894,7 @@ Singleton {
         onLoaded: {
             root.ready = true
             if (!Looks.looks[adapter.look]) adapter.look = Looks.fallback
+            root.foldMedia()
         }
         onLoadFailed: root.ready = true
 
@@ -938,6 +958,8 @@ Singleton {
             property string iconTint: "colour"
             property string vizStyle: "mirror"
             property int vizBars: 10
+            property bool vizShown: true
+            property bool musicTitle: false
             property bool vizHideSilent: false
             property bool gradient: false
             property string levelStyle: "pill"

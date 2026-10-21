@@ -29,8 +29,8 @@ Item {
         controlcentre: ccBtn, workspaces: wsFrame,
         windows: windowIcons, clock: clock, bluetooth: btBtn,
         network: netBtn, volume: volBtn, brightness: brightBtn,
-        battery: battBtn, tray: trayFrame, media: mediaBtn,
-        visualizer: vizFrame, weather: weatherBtn,
+        battery: battBtn, tray: trayFrame,
+        visualizer: musicFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn,
         failed: failedBtn, updates: updatesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
@@ -164,53 +164,43 @@ Item {
         host: barModules
     }
 
-    BarModule {
-        id: mediaBtn
-        readonly property var player: Media.player
-        visible: player !== null && Settings.widgetVisible("media")
-        icon: player && player.isPlaying ? "󰏤" : "󰐊"
-        label: !player ? ""
-            : (player.trackArtist ? player.trackArtist + " – " : "") + (player.trackTitle || player.identity)
-        labelMaxWidth: Theme.fit(220)
-        active: screenScope.openFlyout === "media"
-        onActivated: screenScope.toggleFlyout("media", mediaBtn)
-        onMiddleClicked: if (player && player.canTogglePlaying) player.togglePlaying()
-    }
-
-    // the music chip: the player's icon, then the audio spectrum in the
-    // meter colour per Theme.vizStyle, a flat line while nothing sounds; no
-    // easing, so it redraws only on cava's 20 frames a second. Shown while
-    // sound plays, and while a player is open unless vizHideSilent. A click
-    // opens the Visualizer flyout, a middle click plays or pauses.
+    // the Music module (under the old visualizer's key): the player's icon,
+    // then the audio spectrum in the meter colour per Theme.vizStyle (a flat
+    // rule while nothing sounds) and the track's title, each as Settings
+    // says; with neither, a play/pause mark. No easing on the spectrum, so
+    // it redraws only on cava's 20 frames a second. Shown while a player is
+    // open, or only while it sounds with vizHideSilent. A click opens the
+    // Media flyout, a middle click plays or pauses.
     ModuleFrame {
-        id: vizFrame
+        id: musicFrame
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceXs
-        visible: Settings.widgetVisible("visualizer")
-            && (Visualizer.playing || (!Settings.vizHideSilent && Media.player !== null))
+        readonly property var player: Media.player
+        readonly property bool sounding: Settings.vizShown ? Visualizer.playing : !!player && player.isPlaying
+        visible: Settings.widgetVisible("visualizer") && (player !== null || Visualizer.playing)
+            && (sounding || !Settings.vizHideSilent)
 
         readonly property string style: Visualizer.playing ? Theme.vizStyle : "flat"
         readonly property int bandW: Theme.barFs(3)
         readonly property int bandH: Theme.moduleHeight - 10
-        readonly property var player: Media.player
         readonly property string playerIcon: player
             ? Apps.iconForClass(player.desktopEntry || String(player.identity).toLowerCase()) : ""
-        active: screenScope.openFlyout === "visualizer"
+        active: screenScope.openFlyout === "media"
 
         Item {
-            visible: vizFrame.player !== null
+            visible: musicFrame.player !== null
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: Theme.iconSize + Theme.spaceXs
             implicitHeight: Theme.iconSize
 
             IconImage {
-                visible: vizFrame.playerIcon !== ""
+                visible: musicFrame.playerIcon !== ""
                 anchors.verticalCenter: parent.verticalCenter
                 implicitSize: Theme.iconSize
-                source: vizFrame.playerIcon
+                source: musicFrame.playerIcon
             }
             Text {
-                visible: vizFrame.playerIcon === ""
+                visible: musicFrame.playerIcon === ""
                 anchors.verticalCenter: parent.verticalCenter
                 text: "󰝚"
                 color: Theme.text
@@ -219,50 +209,60 @@ Item {
             }
         }
 
+        // neither the spectrum nor the title: whether it's playing
+        Text {
+            visible: !Settings.vizShown && !Settings.musicTitle
+            anchors.verticalCenter: parent.verticalCenter
+            text: musicFrame.player && musicFrame.player.isPlaying ? "󰏤" : "󰐊"
+            color: Theme.text
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.iconSize
+        }
+
         // nothing sounding: one flat rule the spectrum's width
         Rectangle {
-            visible: vizFrame.style === "flat"
+            visible: Settings.vizShown && musicFrame.style === "flat"
             anchors.verticalCenter: parent.verticalCenter
-            width: Visualizer.barCount * (vizFrame.bandW + vizFrame.spacing) - vizFrame.spacing
+            width: Visualizer.barCount * (musicFrame.bandW + musicFrame.spacing) - musicFrame.spacing
             height: Math.max(2, Theme.borderWidth * 2)
             radius: Theme.pill(height)
             color: Theme.muted
         }
 
         Repeater {
-            model: vizFrame.style === "line" || vizFrame.style === "flat" ? 0 : Visualizer.barCount
+            model: !Settings.vizShown || musicFrame.style === "line" || musicFrame.style === "flat" ? 0 : Visualizer.barCount
 
             Item {
                 id: band
                 required property int index
                 readonly property real v: Math.max(0, Math.min(1, (Visualizer.bars[index] || 0) / 100))
                 anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: vizFrame.bandW
-                implicitHeight: vizFrame.bandH
+                implicitWidth: musicFrame.bandW
+                implicitHeight: musicFrame.bandH
 
                 Rectangle {
-                    visible: vizFrame.style !== "dots"
+                    visible: musicFrame.style !== "dots"
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: vizFrame.style === "mirror" ? parent.verticalCenter : undefined
-                    anchors.bottom: vizFrame.style === "rise" ? parent.bottom : undefined
-                    width: vizFrame.bandW
-                    radius: vizFrame.style === "rise" ? Math.min(1, Theme.radiusSmall) : Theme.pill(vizFrame.bandW)
+                    anchors.verticalCenter: musicFrame.style === "mirror" ? parent.verticalCenter : undefined
+                    anchors.bottom: musicFrame.style === "rise" ? parent.bottom : undefined
+                    width: musicFrame.bandW
+                    radius: musicFrame.style === "rise" ? Math.min(1, Theme.radiusSmall) : Theme.pill(musicFrame.bandW)
                     height: Math.max(3, parent.height * band.v)
                     color: Theme.meterFill
                 }
 
                 // four dots from the bottom, lit up to the band's level
                 Column {
-                    visible: vizFrame.style === "dots"
+                    visible: musicFrame.style === "dots"
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: Math.max(1, (vizFrame.bandH - vizFrame.bandW * 4) / 3)
+                    spacing: Math.max(1, (musicFrame.bandH - musicFrame.bandW * 4) / 3)
                     Repeater {
                         model: 4
                         Rectangle {
                             required property int index
-                            width: vizFrame.bandW
-                            height: vizFrame.bandW
+                            width: musicFrame.bandW
+                            height: musicFrame.bandW
                             radius: Theme.pill(width)
                             color: Theme.meterFill
                             // index 0 is the top dot; the bottom one is always lit
@@ -275,10 +275,10 @@ Item {
 
         // the line style: one stroke through every band's level
         Shape {
-            visible: vizFrame.style === "line"
+            visible: Settings.vizShown && musicFrame.style === "line"
             anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: Visualizer.barCount * (vizFrame.bandW + vizFrame.spacing) - vizFrame.spacing
-            implicitHeight: vizFrame.bandH
+            implicitWidth: Visualizer.barCount * (musicFrame.bandW + musicFrame.spacing) - musicFrame.spacing
+            implicitHeight: musicFrame.bandH
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
@@ -290,8 +290,8 @@ Item {
                 PathPolyline {
                     path: {
                         var pts = [], n = Visualizer.barCount
-                        var w = vizFrame.style === "line" ? n * (vizFrame.bandW + vizFrame.spacing) - vizFrame.spacing : 0
-                        var h = vizFrame.bandH
+                        var w = musicFrame.style === "line" ? n * (musicFrame.bandW + musicFrame.spacing) - musicFrame.spacing : 0
+                        var h = musicFrame.bandH
                         for (var i = 0; i < n; i++) {
                             var v = Math.max(0, Math.min(1, (Visualizer.bars[i] || 0) / 100))
                             pts.push(Qt.point(n > 1 ? i * w / (n - 1) : 0, h - 1 - v * (h - 2)))
@@ -301,16 +301,31 @@ Item {
                 }
             }
         }
+
+        Text {
+            visible: Settings.musicTitle && musicFrame.player !== null
+            anchors.verticalCenter: parent.verticalCenter
+            leftPadding: Theme.spaceXs
+            width: Math.min(implicitWidth, Theme.fit(220))
+            elide: Text.ElideRight
+            text: !musicFrame.player ? ""
+                : (musicFrame.player.trackArtist ? musicFrame.player.trackArtist + " – " : "")
+                    + (musicFrame.player.trackTitle || musicFrame.player.identity)
+            color: Theme.text
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.barLabelSize
+        }
     }
 
     MouseArea {
-        parent: vizFrame
+        parent: musicFrame
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.MiddleButton) Media.toggle()
-            else screenScope.toggleFlyout("visualizer", vizFrame)
+            else screenScope.toggleFlyout("media", musicFrame)
         }
     }
 

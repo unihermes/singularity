@@ -188,7 +188,31 @@ SettingsTab {
 
     Tiles { key: "controlIcon"; label: "Control Centre icon"; hint: "The button at the bar's start"; art: iconArt; columns: 6; tileHeight: Theme.fs(58) }
 
-    SettingsSubhead { caption: "VISUALIZER AND TRAY" }
+    SettingsSubhead { caption: "MUSIC AND TRAY" }
+
+    SettingsField {
+        label: "Music visualizer"
+        hint: Settings.vizShown ? "The spectrum beside the player's icon"
+            : "Off: no spectrum, and cava doesn't run"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.vizShown
+            onToggled: Settings.set("vizShown", !Settings.vizShown)
+        }
+    }
+
+    SettingsField {
+        label: "Music title"
+        hint: Settings.musicTitle ? "Artist and title after the icon"
+            : "The icon alone, or with the spectrum"
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.musicTitle
+            onToggled: Settings.set("musicTitle", !Settings.musicTitle)
+        }
+    }
 
     Tiles { key: "vizStyle"; label: "Visualizer"; hint: "The audio spectrum while sound plays"; art: vizArt }
 
@@ -196,8 +220,8 @@ SettingsTab {
 
     SettingsField {
         label: "Hide when silent"
-        hint: Settings.vizHideSilent ? "The music chip shows only while sound plays"
-            : "The music chip stays, flat, while a player is open"
+        hint: Settings.vizHideSilent ? "The Music module shows only while sound plays"
+            : "The Music module stays while a player is open"
 
         Switch {
             anchors.right: parent.right
