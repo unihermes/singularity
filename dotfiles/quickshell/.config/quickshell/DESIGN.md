@@ -180,7 +180,8 @@ Every bar flyout keeps to these (settled 2026-10-20):
 - **Scan and Rescan sit on their list's heading** as a turning
   `IconButton`.
 - **Clear all takes two clicks** wherever it is.
-- **More in Settings** ends every flyout that has a Settings page.
+- **Settings ends every flyout** that has a Settings page, as a chip
+  (`FlyoutChipLine`) with any other way-out actions beside it.
 
 - **Control Centre:** card + rows (picked 2026-10-21): see Control Centre
   below.
@@ -225,8 +226,12 @@ Every bar flyout keeps to these (settled 2026-10-20):
   when that fails) and Week (each day's low and high as a range on the
   week's one scale, rain shown from 20%). Refresh and the other unit as
   chips.
-- **Clock:** the time large with the seconds quieter and the whole date,
-  over the Month / Today / Timer tabs.
+- **Clock** (picked 2026-10-21): the clock stays on the bar while a timer
+  runs, a line along its foot running down with the time left (all of it
+  for the stopwatch, quiet while paused); pointed at, the time left takes
+  the date's place. The flyout as before: the time large with the
+  seconds quieter and the whole date, over the Month / Today / Timer
+  tabs, then Settings as a chip.
 - **Updates:** where things stand as a card with ↻ and Update at its
   end; the packages under Repositories and AUR, each folding; Reclaimable
   with Clean up; Singularity's commits. The bar module's count is a badge.
@@ -804,7 +809,7 @@ These are carried over from the 2026-09-27 consistency sweep:
 - **Destructive actions** take two clicks (`confirm`, `confirmText`).
 - **Booleans** are switches.
 - Every flyout has an **empty state**.
-- Device flyouts end with "More in Settings".
+- Device flyouts end with a Settings chip.
 
 ## Adding UI
 

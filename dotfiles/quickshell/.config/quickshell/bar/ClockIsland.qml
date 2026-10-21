@@ -3,8 +3,9 @@
 //
 // The clock chip as a Dynamic Island: briefly shows a level (volume,
 // brightness), a mode (SUPER+M, lock keys) or the lid instead of the time,
-// keeping its width. A running timer (Timers.qml) shows with the clock,
-// its progress as the fill. With Settings.clockIsland off, or the clock off
+// keeping its width. A running timer (Timers.qml) leaves the clock be: a
+// line under it runs down with the time left, and pointing at it puts the
+// time left in place of the date. With Settings.clockIsland off, or the clock off
 // the bar (Settings.islandActive), LevelToast/ModeToast show instead.
 
 import Quickshell
@@ -44,34 +45,42 @@ BarModule {
     }
     readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.chrome
 
-    // the running timer and the clock; a Text, since TextMetrics' advance
-    // runs a pixel short and would elide the label
+    // pointed at while a timer runs: the time, then what's left of it; a
+    // Text, since TextMetrics' advance runs a pixel short and would elide it
+    HoverHandler { id: hover }
+    readonly property bool timerShown: Timers.active && hover.hovered && !showing
     Text {
         id: timerMetrics
         visible: false
         font.family: Theme.fontText
         font.pixelSize: Theme.barLabelSize
         font.weight: Theme.weightBody
-        text: Timers.text + "\u2002·\u2002" + Qt.formatDateTime(clockSource.date, Theme.timeFormat)
+        text: Qt.formatDateTime(clockSource.date, Theme.timeFormat) + "\u2002·\u2002" + Timers.text
+            + (Timers.mode === "stopwatch" ? "" : Timers.paused ? " paused" : " left")
     }
-    readonly property int chipWidth: Timers.active ? Math.ceil(timerMetrics.implicitWidth + timerChrome) : idleWidth
-    // the chip's room round the timer's text, icon included; held through
-    // an event, whose own icon would otherwise resize the chip
-    property real timerChrome: 0
-    Binding {
-        target: root
-        property: "timerChrome"
-        value: root.labelChrome
-        when: Timers.active && !root.showing
-        restoreMode: Binding.RestoreNone
-    }
+    // wide enough for either while a timer runs, so pointing doesn't jog the bar
+    readonly property int chipWidth: Timers.active
+        ? Math.max(idleWidth, Math.ceil(timerMetrics.implicitWidth + root.chrome)) : idleWidth
 
-    icon: showing ? evIcon : Timers.active ? Timers.icon : ""
-    label: showing ? evText : Timers.active ? timerMetrics.text : timeText
-    fillValue: showing ? evFill : Timers.active ? Timers.progress : -1
+    icon: showing ? evIcon : ""
+    label: showing ? evText : timerShown ? timerMetrics.text : timeText
+    fillValue: showing ? evFill : -1
     fillColor: Theme.muted
     fixedWidth: chipWidth
     labelMaxWidth: showing || Timers.active ? Math.max(1, Math.ceil(chipWidth - labelChrome)) : 0
+
+    // the timer's line along the chip's foot: what's left of a countdown,
+    // all of it for the stopwatch, quiet while paused
+    Rectangle {
+        visible: Timers.active && !root.showing
+        readonly property real track: root.width - Theme.modulePadH * 2
+        x: Theme.modulePadH
+        y: (root.height + Theme.moduleHeight) / 2 - height - 3
+        width: Math.max(height, track * (Timers.progress < 0 ? 1 : 1 - Timers.progress))
+        height: Math.max(2, Theme.indicatorWidth)
+        radius: Theme.pill(height)
+        color: Timers.paused ? Theme.muted : Theme.accent
+    }
     active: screenScope.openFlyout === "calendar"
     onActivated: screenScope.toggleFlyout("calendar", root)
     // middle click pauses or resumes a running timer

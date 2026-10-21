@@ -469,9 +469,8 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("datetime")
+    FlyoutChipLine {
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("datetime")
     }
 }
