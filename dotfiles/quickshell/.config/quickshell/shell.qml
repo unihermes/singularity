@@ -250,6 +250,14 @@ ShellRoot {
         function clear(): void { Notifications.clearAll() }
     }
 
+    // Edit mode on the focused screen's bar: `qs ipc call bar edit`
+    signal barEditRequested()
+
+    IpcHandler {
+        target: "bar"
+        function edit(): void { root.barEditRequested() }
+    }
+
     // The power menu (SUPER+SHIFT+E)
     signal powerMenuToggled()
 
@@ -381,6 +389,20 @@ ShellRoot {
                 screenScope.flyoutAnchorX = item.mapToItem(null, item.width / 2, 0).x
                 screenScope.flyoutSection = screenScope.barWindow.sectionOf(item)
                 screenScope.openFlyout = name
+            }
+
+            // the bar's edit mode: its shelf, centred under the bar
+            function editBar() {
+                screenScope.flyoutAnchorX = screenScope.modelData.width / 2
+                screenScope.flyoutSection = ""
+                screenScope.openFlyout = "baredit"
+            }
+
+            Connections {
+                target: root
+                function onBarEditRequested() {
+                    if (screenScope.isFocusedScreen()) screenScope.editBar()
+                }
             }
 
             // SUPER+W: the workspace grid on the focused monitor
@@ -632,6 +654,12 @@ ShellRoot {
             name: "windowmenu"; scope: screenScope
             WindowMenuFlyout { scope: screenScope }
         }
+
+        // right-click menu for the bar's empty space
+        LazyFlyout { name: "barmenu"; scope: screenScope; BarMenuFlyout { scope: screenScope } }
+
+        // the bar's edit mode: hidden modules, Reset, Done
+        LazyFlyout { name: "baredit"; scope: screenScope; BarEditFlyout { scope: screenScope } }
 
         // an app's icon in the open-windows strip, when it has several windows
         LazyFlyout { name: "appwindows"; scope: screenScope; AppWindowsFlyout { scope: screenScope; bar: screenScope.barWindow } }

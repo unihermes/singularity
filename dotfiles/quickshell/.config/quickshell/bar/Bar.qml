@@ -39,13 +39,20 @@ PanelWindow {
     // transparent at creation, or the surface can never show opacity
     color: "transparent"
 
-    // a press no module takes is the click off that closes an open flyout
+    // a press no module takes is the click off that closes an open flyout;
+    // a right-click opens the bar's own menu there
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
         onPressed: mouse => {
             mouse.accepted = false
-            bar.shellRoot.closeFlyouts(null)
+            if (mouse.button !== Qt.RightButton) {
+                bar.shellRoot.closeFlyouts(null)
+                return
+            }
+            bar.screenScope.flyoutAnchorX = mouse.x
+            bar.screenScope.flyoutSection = ""
+            bar.screenScope.openFlyout = "barmenu"
         }
     }
 
@@ -144,7 +151,7 @@ PanelWindow {
         var lo = Infinity, hi = -Infinity
         var o = centreSlots.order
         for (var i = 0; i < o.length; i++) {
-            var it = widgetItem(o[i])
+            var it = slotItem(o[i])
             if (!it || !it.visible) continue
             lo = Math.min(lo, it.x)
             hi = Math.max(hi, it.x + it.width)
@@ -352,6 +359,53 @@ PanelWindow {
 
     function widgetItem(key) { return barModules.widgetItems[key] }
 
+    // --- editing on the bar ----------------------------------
+    // Edit mode is the edit shelf (BarEditFlyout) open on this screen;
+    // BarEditor takes the bar's input meanwhile.
+
+    readonly property bool editing: screenScope.openFlyout === "baredit"
+    readonly property var editor: barEditor
+    readonly property var widgetKeys: Object.keys(barModules.widgetItems)
+
+    // What holds a module's slot: the module, or while editing, a stand-in
+    // for one that's on but has nothing to show (an empty tray, no
+    // updates), so it can still be moved.
+    function slotItem(key) {
+        const it = widgetItem(key)
+        if (!editing || !it || it.visible || !Settings.widgetVisible(key)) return it
+        return standIns.objectAt(widgetKeys.indexOf(key))
+    }
+
+    // an Instantiator, not a Repeater, so each keeps its own parent binding
+    Instantiator {
+        id: standIns
+        model: bar.widgetKeys
+
+        Item {
+            id: standIn
+            required property string modelData
+            readonly property Item module: bar.widgetItem(modelData)
+            parent: bar.slotsFor(Settings.widgetSection(modelData))
+            visible: bar.editing && !!module && !module.visible && Settings.widgetVisible(modelData)
+            width: Theme.moduleHeight + Theme.modulePadH * 2
+            height: Theme.barHeight
+
+            property bool slideX: false
+            Behavior on x {
+                enabled: standIn.slideX
+                NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: (Settings.widgetMeta[standIn.modelData] || { icon: "" }).icon
+                color: Theme.textDisabled
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.iconSize
+            }
+        }
+    }
+
     // every module in its saved section's slot container, at its order's x
     Component.onCompleted: {
         const items = barModules.widgetItems
@@ -391,9 +445,12 @@ PanelWindow {
         const places = slotPlaces
         const orders = {}
         for (const key in places) {
-            const it = barModules.widgetItems[key]
-            it.slideX = slotsAnimate && placedOrders[key] !== places[key].order
-            it.x = places[key].x
+            const slide = slotsAnimate && placedOrders[key] !== places[key].order
+            for (const it of [barModules.widgetItems[key], standIns.objectAt(widgetKeys.indexOf(key))]) {
+                if (!it) continue
+                it.slideX = slide
+                it.x = places[key].x
+            }
             orders[key] = places[key].order
         }
         placedOrders = orders
@@ -422,14 +479,14 @@ PanelWindow {
         var o = centreSlots.order
         var gap = Theme.moduleSpacing
         var ai = o.indexOf(Settings.centreAnchor)
-        var anchorItem = ai >= 0 ? widgetItem(o[ai]) : null
+        var anchorItem = ai >= 0 ? slotItem(o[ai]) : null
         var ki = o.indexOf(key)
         var x = 0, i, it
 
         if (!anchorItem || !anchorItem.visible) {
             x = (centreSlots.width - slotsWidth(centreSlots)) / 2
             for (i = 0; i < ki; i++) {
-                it = widgetItem(o[i])
+                it = slotItem(o[i])
                 if (it && it.visible) x += it.width + gap
             }
             return Math.round(x)
@@ -440,7 +497,7 @@ PanelWindow {
         if (ki > ai) {
             x = ax + anchorItem.width + gap
             for (i = ai + 1; i < ki; i++) {
-                it = widgetItem(o[i])
+                it = slotItem(o[i])
                 if (it && it.visible) x += it.width + gap
             }
             return Math.round(x)
@@ -449,7 +506,7 @@ PanelWindow {
         // including this one, landing on its left edge
         x = ax
         for (i = ai - 1; i >= ki; i--) {
-            it = widgetItem(o[i])
+            it = slotItem(o[i])
             if (it && (it.visible || i === ki)) x -= it.width + gap
         }
         return Math.round(x)
@@ -495,7 +552,7 @@ PanelWindow {
         width: bar.slotsWidth(leftSlots)
 
         readonly property var order: Settings.widgetOrder("left")
-        function itemFor(k) { return bar.widgetItem(k) }
+        function itemFor(k) { return bar.slotItem(k) }
 
         ModuleSeparators { slots: leftSlots }
     }
@@ -507,7 +564,7 @@ PanelWindow {
         anchors.fill: barBody
 
         readonly property var order: Settings.widgetOrder("centre")
-        function itemFor(k) { return bar.widgetItem(k) }
+        function itemFor(k) { return bar.slotItem(k) }
 
         ModuleSeparators { slots: centreSlots }
     }
@@ -523,7 +580,7 @@ PanelWindow {
         width: bar.slotsWidth(rightSlots)
 
         readonly property var order: Settings.widgetOrder("right")
-        function itemFor(k) { return bar.widgetItem(k) }
+        function itemFor(k) { return bar.slotItem(k) }
 
         ModuleSeparators { slots: rightSlots }
     }
@@ -551,6 +608,13 @@ PanelWindow {
             cursorShape: Qt.PointingHandCursor
             onClicked: target.activated()
         }
+    }
+
+    // over the modules, so its presses come first
+    BarEditor {
+        id: barEditor
+        bar: bar
+        body: barBody
     }
 
     // Keep Awake, via the idle-inhibit protocol; it holds only while its

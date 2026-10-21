@@ -280,6 +280,12 @@ FlyoutPanel {
         FlyoutDivider {}
 
         FlyoutRow {
+            leadingIcon: "󰏫"
+            label: "Edit on the bar"
+            onActivated: controlCentre.scope.editBar()
+        }
+
+        FlyoutRow {
             label: "Reset to defaults"
 
             enabled: !Settings.widgetsDefault

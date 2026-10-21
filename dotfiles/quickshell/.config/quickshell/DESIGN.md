@@ -116,6 +116,14 @@ Style: `channel` (frame `channel` in `Styles.js`).
   every workspace and screen, and it never animates, neither the windows
   nor its own fill, whatever the animation settings.
 - Icon-only, by design; no text readouts beside icons.
+- **Edit mode** (right-click the bar's empty space > Edit bar, Bar Widgets >
+  Edit on the bar, `qs ipc call bar edit`): the edit shelf hangs under the
+  bar's middle and the bar stops taking clicks. Every movable module gets a
+  stroke outline (accent on hover); one that's on but has nothing to show
+  stands in as its dimmed icon. A dragged module leaves an outlined gap
+  filled `selectedFill` and follows the pointer as a live copy with an accent
+  ring; off the bar it's a chip over the shelf, whose hidden zone lights up.
+  The centre anchor wears an accent pin.
 
 ## Flyouts
 

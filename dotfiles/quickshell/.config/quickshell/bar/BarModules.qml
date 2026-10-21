@@ -69,7 +69,7 @@ Item {
     // temperatures and fans, desktops only; alert colour when CPU or GPU runs hot
     BarModule {
         id: coolingBtn
-        visible: Cooling.available
+        visible: Cooling.available && Settings.widgetVisible("cooling")
         icon: "󰈐"
         iconColor: Cooling.hottest >= Cooling.hotC ? Theme.alert : "transparent"
         active: screenScope.openFlyout === "cooling"
