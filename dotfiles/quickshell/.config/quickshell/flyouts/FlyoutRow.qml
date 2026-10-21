@@ -53,6 +53,14 @@ Item {
 
     signal activated()
 
+    // the row can be dragged: past a few pixels a press becomes a drag,
+    // reporting the pointer in window coordinates, and the release is a
+    // drop rather than a click ((-1, -1) when the drag was cut short)
+    property bool draggable: false
+    property bool dragging: false
+    signal dragMoved(point at)
+    signal dropped(point at)
+
     // makes the row itself two clicks, for what can't be undone: the first
     // arms it -- alert-red, reading confirmText -- and the second, within
     // three seconds, emits activated()
@@ -313,8 +321,36 @@ Item {
         anchors.fill: parent
         hoverEnabled: root.enabled && !root.busy
         enabled: root.enabled && !root.busy
-        cursorShape: Qt.PointingHandCursor
+        preventStealing: root.draggable
+        cursorShape: root.dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+
+        property point pressAt: Qt.point(0, 0)
+        // a drop's release still clicks; this keeps it from activating
+        property bool dropped: false
+
+        onPressed: mouse => {
+            pressAt = Qt.point(mouse.x, mouse.y)
+            dropped = false
+        }
+        onPositionChanged: mouse => {
+            if (!pressed || !root.draggable) return
+            // a few pixels of slop, so a shaky click stays a click
+            if (!root.dragging && Math.abs(mouse.x - pressAt.x) < 6 && Math.abs(mouse.y - pressAt.y) < 6) return
+            root.dragging = true
+            root.dragMoved(mapToItem(null, mouse.x, mouse.y))
+        }
+        onReleased: mouse => {
+            if (!root.dragging) return
+            root.dragging = false
+            dropped = true
+            root.dropped(mapToItem(null, mouse.x, mouse.y))
+        }
+        onCanceled: if (root.dragging) {
+            root.dragging = false
+            root.dropped(Qt.point(-1, -1))
+        }
         onClicked: {
+            if (dropped) return
             if (root.confirmText !== "" && !disarm.running) { disarm.restart(); return }
             disarm.stop()
             root.activated()

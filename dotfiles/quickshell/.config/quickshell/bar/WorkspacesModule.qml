@@ -30,6 +30,19 @@ ModuleFrame {
         return Array.from({ length: n }, (_, i) => i + 1).concat(extra.sort((a, b) => a - b))
     }
 
+    // the scroll wheel over the marks steps through the workspaces, a
+    // notch at a time, wrapping at the ends
+    property real wheelAccum: 0
+    function wheelStep(dy) {
+        wheelAccum += dy
+        if (Math.abs(wheelAccum) < 120) return
+        const d = wheelAccum > 0 ? -1 : 1
+        wheelAccum = 0
+        const cur = Hyprland.focusedWorkspace ? ids.indexOf(Hyprland.focusedWorkspace.id) : -1
+        const next = ids[((cur < 0 ? 0 : cur) + d + ids.length) % ids.length]
+        Hyprland.dispatch("hl.dsp.focus({workspace=" + next + "})")
+    }
+
     Repeater {
         // a ScriptModel, so a workspace appearing doesn't rebuild the
         // others mid-animation
@@ -139,6 +152,7 @@ ModuleFrame {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 onClicked: Hyprland.dispatch("hl.dsp.focus({workspace=" + parent.wsId + "})")
+                onWheel: wheel => wsFrame.wheelStep(wheel.angleDelta.y)
             }
         }
     }

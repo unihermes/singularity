@@ -184,9 +184,15 @@ Every bar flyout keeps to these (settled 2026-10-20):
 
 - **Control Centre:** card + rows (picked 2026-10-21): see Control Centre
   below.
-- **Workspaces:** a heading per workspace with its window count, each
-  window its app's icon and name with the title quieter after, the focused
-  one ticked, close on hover; then All workspaces (SUPER W).
+- **Workspaces** (picked 2026-10-21): the bar's pills (the current one
+  long, ones with windows short, empty a stub; the terminal while the
+  scratchpad has windows; the grid glyph opens the flyout), the wheel
+  stepping through them. The flyout is one frame: a heading per workspace
+  with its window count, each window its app's icon and name with the
+  title quieter after, the focused one ticked, close on hover; the
+  specials after; the empty numbers as chips. Drag a window onto another
+  workspace (its heading, its windows, or an empty number) to move it.
+  All workspaces and Settings as chips.
 - **Windows** (an app with several): Window list in Appearance > Bar picks
   List (as it was), With actions (New window, Bring all here, Close all
   under it), Cards (the app large, a tile per window, the actions as
@@ -241,11 +247,12 @@ Every bar flyout keeps to these (settled 2026-10-20):
 
 Picked 2026-10-11. The power menu's list style is large rows: the icon at
 title size, the action over a line saying what it does, the key in a
-keycap at the end. The workspace grid (SUPER+W) is a card per workspace
-with windows, each window a row with its app icon and name and the title
-quieter after; a special workspace with windows (the scratchpad) has its
-own card, and the empty workspaces fold into one card of numbers, each
-still a jump and a drop target.
+keycap at the end. The workspace grid (SUPER+W, picked 2026-10-21) is a
+miniature of every workspace: its monitor's shape over the wallpaper,
+each window drawn where it sits with its app's icon, the current one
+lit; specials with windows get one too, under them the name and the
+window count. Click a miniature to jump, a window to focus it; drag a
+window onto another miniature to move it (its icon follows the pointer).
 
 ### Brightness flyout
 

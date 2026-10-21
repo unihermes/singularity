@@ -1,10 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspaceOverlay.qml
 //
-// SUPER+W: a card per workspace listing its windows. Click a card to jump,
-// a window to focus it, drag a window onto a card to move it. Specials with
-// windows get cards; the empty numbers share one. Centred, not a
-// FlyoutPanel; Theme.overviewLayout and overviewBackdrop style it.
+// SUPER+W: a miniature of every workspace, its windows drawn where they sit
+// on its monitor with the app's icon in each. Click a miniature to jump, a
+// window to focus it, drag a window onto another miniature to move it.
+// Specials with windows get one too. Centred, not a FlyoutPanel;
+// Theme.overviewLayout and overviewBackdrop style it.
 
 import Quickshell
 import Quickshell.Wayland
@@ -28,26 +29,46 @@ OverlayWindow {
         return ws.toplevels.values.filter(tl => !Apps.isShellWindow(tl) && !Apps.isBackTabToplevel(tl))
     }
 
-    // the cards: numbered workspaces with windows, specials with windows,
-    // one for the empty numbers. `target`: a number or "special:name"
+    // the miniatures: every numbered workspace, then the specials with
+    // windows. `target`: a number or "special:name"
     readonly property var cards: {
         const wss = Hyprland.workspaces.values
-        const out = [], empty = []
+        const out = []
         for (let id = 1; id <= workspaceCount; id++) {
-            const wins = windowsOf(wss.find(w => w.id === id))
-            if (wins.length > 0) out.push({ kind: "ws", target: id, title: String(id), windows: wins })
-            else empty.push(id)
+            const ws = wss.find(w => w.id === id) || null
+            out.push({ target: id, title: String(id), ws: ws, windows: windowsOf(ws) })
         }
         for (const ws of wss) {
             if (ws.id >= 0) continue
             const wins = windowsOf(ws)
             const name = String(ws.name).replace(/^special:/, "")
             if (wins.length > 0)
-                out.push({ kind: "special", target: ws.name, title: name.charAt(0).toUpperCase() + name.slice(1), windows: wins })
+                out.push({ target: ws.name, title: name.charAt(0).toUpperCase() + name.slice(1), ws: ws, windows: wins })
         }
-        if (empty.length > 0) out.push({ kind: "empty", target: null, title: "Empty", windows: [], ids: empty })
         return out
     }
+
+    // a monitor's logical box, which window positions are in; a workspace
+    // that isn't on one (empty, or a hidden special) takes the focused one's
+    function monitorBox(ws) {
+        const m = (ws && ws.monitor) || Hyprland.focusedMonitor
+        const o = m && m.lastIpcObject
+        if (!o || !o.width) return { x: 0, y: 0, w: 16, h: 9 }
+        const turned = (o.transform || 0) % 2 === 1
+        const w = (turned ? o.height : o.width) / (o.scale || 1)
+        const h = (turned ? o.width : o.height) / (o.scale || 1)
+        return { x: o.x, y: o.y, w: w, h: h }
+    }
+
+    // fresh positions each time it opens
+    onOpenChanged: if (open) {
+        Hyprland.refreshMonitors()
+        Hyprland.refreshToplevels()
+    }
+
+    // the window being dragged, for the ghost under the pointer
+    property var dragging: null
+    property point dragPoint: Qt.point(0, 0)
 
     function jump(target) {
         if (typeof target === "number") Hyprland.dispatch("hl.dsp.focus({workspace=" + target + "})")
@@ -115,7 +136,7 @@ OverlayWindow {
             FlyoutHeading {
                 width: grid.width
                 text: "WORKSPACES"
-                hints: ["1-" + Math.min(9, root.workspaceCount) + " jump", "Drag an app to move it", "Esc close"]
+                hints: ["1-" + Math.min(9, root.workspaceCount) + " jump", "Drag a window to move it", "Esc close"]
             }
 
             Grid {
@@ -123,219 +144,107 @@ OverlayWindow {
                 columns: Theme.overviewLayout === "strip" ? root.cards.length : Math.min(3, root.cards.length)
                 spacing: Theme.spaceL
 
-                // The drop target under a point in the grid: a card's, or
-                // one of the empty card's numbers.
+                // the miniature under a point in the grid, as its target
                 function targetAt(p) {
                     const c = childAt(p.x, p.y)
-                    if (!c || c.card === undefined) return null
-                    if (c.card.kind !== "empty") return c.card.target
-                    const q = c.mapFromItem(grid, p.x, p.y)
-                    const chip = c.chipAt(q)
-                    return chip ? chip.wsId : null
+                    return c && c.card !== undefined ? c.card.target : null
                 }
 
                 Repeater {
                     model: root.cards
 
-                    Rectangle {
+                    Column {
                         id: cell
                         required property var modelData
                         readonly property var card: modelData
-                        readonly property bool isFocused: card.kind === "ws"
-                            && Hyprland.focusedWorkspace !== null && Hyprland.focusedWorkspace.id === card.target
-                        readonly property bool isDropTarget: card.kind !== "empty" && root.dropTarget === card.target
-
-                        function chipAt(q) {
-                            const c = chips.childAt(q.x - chips.x, q.y - chips.y)
-                            return c && c.wsId !== undefined ? c : null
-                        }
-
-                        // a row of every card has to fit the screen
+                        readonly property var mon: root.monitorBox(card.ws)
+                        readonly property bool isFocused: Hyprland.focusedWorkspace !== null
+                            && Hyprland.focusedWorkspace.id === (card.ws ? card.ws.id : card.target)
+                        readonly property bool isDropTarget: root.dropTarget !== null && root.dropTarget === card.target
+                        // a row of every miniature has to fit the screen
                         readonly property real shrink: Theme.overviewLayout === "strip"
-                            ? Math.min(1, (root.width * 0.9 / root.cards.length - grid.spacing) / Theme.fs(240)) : 1
-                        // the empty card as wide as its numbers in one line
-                        width: card.kind === "empty"
-                            ? Theme.spaceL * 2 + card.ids.length * (Theme.rowHeightTall + Theme.spaceS) - Theme.spaceS
-                            : Math.round(Theme.fs(240) * shrink)
-                        height: Math.max(Theme.fs(150), list.y + list.implicitHeight + Theme.spaceM)
-                        radius: Theme.radiusInner
-                        // the current workspace is lit as the power menu's
-                        // current row is; a drop target takes the accent
-                        color: isDropTarget || isFocused ? Theme.selectedFill : Theme.surface
-                        border.width: Theme.borderWidth
-                        border.color: isDropTarget ? Theme.accent
-                            : isFocused ? Theme.selectedStroke
-                            : wsMouse.containsMouse ? Theme.strokeHover
-                            : Theme.border
-                        opacity: card.kind === "empty" ? 0.75 : 1
+                            ? Math.min(1, (root.width * 0.9 / root.cards.length - grid.spacing) / Theme.fs(260)) : 1
+                        spacing: Theme.spaceS
 
-                        Behavior on border.color {
-                            ColorAnimation { duration: Theme.durFast }
-                        }
+                        ClippingRectangle {
+                            id: shot
+                            width: Math.round(Theme.fs(260) * cell.shrink)
+                            height: Math.round(width * cell.mon.h / cell.mon.w)
+                            radius: Theme.radiusInner
+                            color: Theme.base
+                            readonly property real k: width / cell.mon.w
 
-                        // Jump to this workspace. Sits behind the window rows, so a
-                        // click that lands on a row focuses that window instead.
-                        MouseArea {
-                            id: wsMouse
-                            anchors.fill: parent
-                            enabled: cell.card.kind !== "empty"
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.jump(cell.card.target)
-                        }
-
-                        Text {
-                            x: Theme.spaceL
-                            y: Theme.spaceM
-                            text: cell.card.title
-                            color: cell.isFocused ? Theme.textStrong : Theme.text
-                            font.family: Theme.fontText
-                            font.pixelSize: Theme.fontBody
-                            font.weight: cell.isFocused ? Theme.weightStrong : Theme.weightBody
-                        }
-
-                        Text {
-                            anchors.right: parent.right
-                            anchors.rightMargin: Theme.spaceL
-                            y: Theme.spaceM
-                            visible: cell.card.kind !== "empty"
-                            text: cell.card.windows.length + (cell.card.windows.length === 1 ? " window" : " windows")
-                            color: Theme.muted
-                            font.family: Theme.fontText
-                            font.weight: Theme.weightBody
-                            font.pixelSize: Theme.fontSmall
-                        }
-
-                        // the empty card: its numbers, each a jump and a drop
-                        Flow {
-                            id: chips
-                            visible: cell.card.kind === "empty"
-                            x: Theme.spaceL
-                            y: Theme.spaceM + Theme.rowHeight + Theme.spaceS
-                            width: parent.width - Theme.spaceL * 2
-                            spacing: Theme.spaceS
-
-                            Repeater {
-                                model: cell.card.ids || []
-
-                                Rectangle {
-                                    required property int modelData
-                                    readonly property int wsId: modelData
-                                    width: Theme.rowHeightTall
-                                    height: Theme.rowHeightTall
-                                    radius: Theme.radiusInner
-                                    color: root.dropTarget === wsId ? Theme.selectedFill
-                                        : chipMouse.containsMouse ? Theme.hoverFill : "transparent"
-                                    border.width: Theme.borderWidth
-                                    border.color: root.dropTarget === wsId ? Theme.accent : Theme.border
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: parent.wsId
-                                        color: Theme.textStrong
-                                        font.family: Theme.fontText
-                                        font.weight: Theme.weightStrong
-                                        font.pixelSize: Theme.fontTitle
-                                    }
-
-                                    MouseArea {
-                                        id: chipMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.jump(parent.wsId)
-                                    }
-                                }
+                            // the wallpaper, quietened, so the windows read over it
+                            Image {
+                                anchors.fill: parent
+                                source: Wallpaper.current !== "" ? "file://" + Wallpaper.current : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                sourceSize.width: 320
+                                opacity: 0.35
                             }
-                        }
 
-                        Column {
-                            id: list
-                            x: Theme.spaceM
-                            y: Theme.spaceM + Theme.rowHeight + Theme.spaceS
-                            width: parent.width - Theme.spaceM * 2
-                            spacing: Theme.spaceXs
+                            // jump here; behind the windows, so a click on
+                            // one focuses it instead
+                            MouseArea {
+                                id: wsMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.jump(cell.card.target)
+                            }
 
                             Repeater {
                                 model: cell.card.windows
 
                                 Rectangle {
-                                    id: winRow
+                                    id: win
                                     required property var modelData
-                                    readonly property string cls:
-                                        (modelData.lastIpcObject && modelData.lastIpcObject.class) || ""
-
-                                    width: parent.width
-                                    height: Theme.rowHeightTall
+                                    readonly property var ipc: modelData.lastIpcObject || {}
+                                    readonly property string cls: ipc.class || ""
+                                    readonly property string iconPath: Apps.iconForClass(cls)
+                                    readonly property var at: ipc.at || [cell.mon.x, cell.mon.y]
+                                    readonly property var size: ipc.size || [cell.mon.w, cell.mon.h]
+                                    x: Math.round((at[0] - cell.mon.x) * shot.k)
+                                    y: Math.round((at[1] - cell.mon.y) * shot.k)
+                                    width: Math.max(Theme.fs(18), Math.round(size[0] * shot.k))
+                                    height: Math.max(Theme.fs(18), Math.round(size[1] * shot.k))
+                                    z: ipc.floating ? 1 : 0
                                     radius: Theme.radiusSmall
-                                    color: winDrag.dragging ? Theme.selectedFill
-                                        : winDrag.containsMouse ? Theme.hoverFill
-                                        : Theme.panel
+                                    opacity: root.dragging === modelData ? 0.4 : 1
+                                    color: winDrag.containsMouse ? Theme.overlay : Theme.surface
+                                    border.width: Theme.borderWidth
+                                    border.color: winDrag.containsMouse ? Theme.strokeHover : Theme.stroke
 
                                     Item {
-                                        id: winIco
-                                        x: Theme.spaceM
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: Theme.fontIconSize
-                                        height: Theme.fontIconSize
-
-                                        readonly property string iconPath: Apps.iconForClass(winRow.cls)
+                                        anchors.centerIn: parent
+                                        width: Theme.fontTitle
+                                        height: Theme.fontTitle
 
                                         IconImage {
                                             anchors.fill: parent
-                                            visible: winIco.iconPath !== ""
-                                            source: winIco.iconPath
+                                            visible: win.iconPath !== ""
+                                            source: win.iconPath
                                         }
-
                                         Text {
                                             anchors.centerIn: parent
-                                            visible: winIco.iconPath === ""
-                                            text: Apps.glyphForWindow(winRow.cls, winRow.modelData.title)
+                                            visible: win.iconPath === ""
+                                            text: Apps.glyphForWindow(win.cls, win.modelData.title)
                                             color: Theme.subtext
                                             font.family: Theme.fontIcon
                                             font.pixelSize: Theme.fontIconSize
                                         }
                                     }
 
-                                    // the app's name, then the window's title quieter
-                                    Text {
-                                        id: appName
-                                        anchors.left: winIco.right
-                                        anchors.leftMargin: Theme.spaceM
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: Math.min(implicitWidth, parent.width - x - Theme.spaceM)
-                                        elide: Text.ElideRight
-                                        text: Apps.nameForWindow(winRow.cls, winRow.modelData.title)
-                                        color: winDrag.containsMouse ? Theme.textStrong : Theme.text
-                                        font.family: Theme.fontText
-                                        font.weight: Theme.weightBody
-                                        font.pixelSize: Theme.fontBody
-                                    }
-
-                                    Text {
-                                        anchors.left: appName.right
-                                        anchors.leftMargin: Theme.spaceM
-                                        anchors.right: parent.right
-                                        anchors.rightMargin: Theme.spaceM
-                                        anchors.baseline: appName.baseline
-                                        elide: Text.ElideRight
-                                        text: winRow.modelData.title !== appName.text ? winRow.modelData.title || "" : ""
-                                        color: Theme.subtext
-                                        font.family: Theme.fontText
-                                        font.weight: Theme.weightBody
-                                        font.pixelSize: Theme.fontCaption
-                                    }
-
-                                    // click focuses; drag onto a card moves
+                                    // click focuses; drag onto a miniature moves
                                     // (hand-rolled, like BarWidgetList's grip)
                                     MouseArea {
                                         id: winDrag
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         preventStealing: true
-                                        cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+                                        cursorShape: root.dragging === win.modelData ? Qt.ClosedHandCursor : Qt.PointingHandCursor
 
-                                        property bool dragging: false
                                         property real pressX: 0
                                         property real pressY: 0
 
@@ -346,27 +255,29 @@ OverlayWindow {
                                         onPressed: mouse => {
                                             pressX = mouse.x
                                             pressY = mouse.y
-                                            dragging = false
                                         }
 
                                         onPositionChanged: mouse => {
                                             if (!pressed) return
                                             // A few pixels of slop so a click with a
                                             // shaky hand stays a click.
-                                            if (!dragging
+                                            if (root.dragging === null
                                                 && Math.abs(mouse.x - pressX) < 6
                                                 && Math.abs(mouse.y - pressY) < 6) return
-                                            dragging = true
+                                            root.dragging = win.modelData
+                                            root.dragPoint = mapToItem(null, mouse.x, mouse.y)
                                             const target = targetAt(mouse)
                                             root.dropTarget = target === cell.card.target ? null : target
                                         }
 
                                         onReleased: mouse => {
-                                            const target = dragging ? targetAt(mouse) : null
-                                            const addr = "address:0x" + winRow.modelData.address
+                                            const dragged = root.dragging === win.modelData
+                                            const target = dragged ? targetAt(mouse) : null
+                                            const addr = "address:0x" + win.modelData.address
                                             root.dropTarget = null
+                                            root.dragging = null
 
-                                            if (!dragging) {
+                                            if (!dragged) {
                                                 Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
                                                 root.requestClose()
                                             } else if (target !== null && target !== cell.card.target) {
@@ -376,20 +287,63 @@ OverlayWindow {
                                                     + (typeof target === "number" ? target : "\"" + target + "\", follow=false") + "})")
                                                 Hyprland.refreshToplevels()
                                             }
-                                            dragging = false
                                         }
 
                                         onCanceled: {
-                                            dragging = false
+                                            root.dragging = null
                                             root.dropTarget = null
                                         }
                                     }
                                 }
                             }
+
+                            // the current one and a drop target light; hover outlines
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: shot.radius
+                                color: "transparent"
+                                border.width: cell.isDropTarget || cell.isFocused ? 2 : Theme.borderWidth
+                                border.color: cell.isDropTarget ? Theme.accent
+                                    : cell.isFocused ? Theme.selectedStroke
+                                    : wsMouse.containsMouse ? Theme.strokeHover : Theme.border
+                            }
+                        }
+
+                        // the name and how many windows, under it
+                        Text {
+                            width: shot.width
+                            elide: Text.ElideRight
+                            text: cell.card.title + (cell.card.windows.length > 0
+                                ? " · " + cell.card.windows.length + (cell.card.windows.length === 1 ? " window" : " windows") : "")
+                            color: cell.isFocused ? Theme.textStrong : cell.card.windows.length > 0 ? Theme.text : Theme.muted
+                            font.family: Theme.fontText
+                            font.weight: cell.isFocused ? Theme.weightStrong : Theme.weightBody
+                            font.pixelSize: Theme.fontSmall
                         }
                     }
                 }
             }
+        }
+    }
+
+    // the dragged window's icon under the pointer
+    Rectangle {
+        visible: root.dragging !== null
+        x: root.dragPoint.x - width / 2
+        y: root.dragPoint.y - height / 2
+        width: Theme.fontTitle * 2
+        height: width
+        radius: Theme.radiusInner
+        color: Theme.surface
+        border.width: Theme.borderWidth
+        border.color: Theme.accent
+        readonly property string cls: root.dragging && root.dragging.lastIpcObject ? root.dragging.lastIpcObject.class || "" : ""
+
+        IconImage {
+            anchors.centerIn: parent
+            width: Theme.fontTitle
+            height: width
+            source: Apps.iconForClass(parent.cls)
         }
     }
 }

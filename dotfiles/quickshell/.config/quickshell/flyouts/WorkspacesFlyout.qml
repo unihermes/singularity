@@ -1,9 +1,11 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/WorkspacesFlyout.qml
 //
-// Every window on every workspace, under a heading per workspace with its
-// count: the app's icon and name, the title quieter after, the focused one
-// ticked. A click focuses, close on hover; then the workspace grid.
+// Every window on every workspace in one frame, under a heading per
+// workspace with its count: the app's icon and name, the title quieter
+// after, the focused one ticked. A click focuses, close on hover, and a
+// window dragged onto another workspace's heading or windows, or onto an
+// empty one's number, moves there. Then the workspace grid and Settings.
 
 import "../services"
 import Quickshell.Hyprland
@@ -18,16 +20,52 @@ FlyoutPanel {
     // for the workspace grid (SUPER+W)
     required property var shellRoot
 
-    // allWindows() is sorted by workspace, so a group is a run of one id
+    // allWindows() is sorted by workspace, so a group is a run of one id;
+    // the numbered ones first, then the specials. `target` is what a move
+    // takes: the number, or "special:name"
     readonly property var groups: {
         var out = []
         var wins = bar.allWindows()
         for (var i = 0; i < wins.length; i++) {
-            if (out.length === 0 || out[out.length - 1].ws !== wins[i].ws)
-                out.push({ ws: wins[i].ws, windows: [] })
+            if (out.length === 0 || out[out.length - 1].ws !== wins[i].ws) {
+                var ws = Hyprland.workspaces.values.find(w => w.id === wins[i].ws)
+                out.push({ ws: wins[i].ws, target: wins[i].ws < 0 && ws ? String(ws.name) : wins[i].ws, windows: [] })
+            }
             out[out.length - 1].windows.push(wins[i])
         }
+        return out.filter(g => g.ws > 0).concat(out.filter(g => g.ws < 0))
+    }
+
+    // the numbered workspaces with nothing on them, a drop target each
+    readonly property var empty: {
+        var out = []
+        for (var id = 1; id <= Settings.workspaceCount; id++)
+            if (!groups.some(g => g.ws === id)) out.push(id)
         return out
+    }
+
+    // where a dragged window would land, null for nowhere
+    property var dropTarget: null
+
+    // the target under a point in window coordinates
+    function targetAt(p) {
+        for (var i = 0; i < groupList.count; i++) {
+            var g = groupList.itemAt(i)
+            var q = g.mapFromItem(null, p.x, p.y)
+            if (g.contains(q)) return g.modelData.target
+        }
+        for (var j = 0; j < emptyList.count; j++) {
+            var c = emptyList.itemAt(j)
+            var r = c.mapFromItem(null, p.x, p.y)
+            if (c.contains(r)) return c.modelData
+        }
+        return null
+    }
+
+    function moveWindow(address, target) {
+        Hyprland.dispatch("hl.dsp.window.move({window=\"address:0x" + address + "\", workspace="
+            + (typeof target === "number" ? target : "\"" + target + "\", follow=false") + "})")
+        Hyprland.refreshToplevels()
     }
 
     function wsName(id) {
@@ -49,22 +87,37 @@ FlyoutPanel {
         return e && e.name ? e.name : (w.cls || "Window")
     }
 
-    // a heading per workspace (a click there folds it), then its windows:
-    // the app and, quieter, the title; a click focuses, close on hover
+    // a heading per workspace, then its windows: the app and, quieter, the
+    // title; a click focuses, close on hover, drag to move
     Repeater {
+        id: groupList
         model: panel.groups
 
         Column {
             id: group
             required property var modelData
-            readonly property bool current: Hyprland.focusedWorkspace !== null
-                && Hyprland.focusedWorkspace.id === modelData.ws
             readonly property int n: modelData.windows.length
+            readonly property bool isDropTarget: panel.dropTarget !== null && panel.dropTarget === modelData.target
             width: parent ? parent.width : 0
+
+            // lit while a window is dragged over it
+            Rectangle {
+                parent: group
+                width: group.width + Theme.spaceS * 2
+                height: group.height
+                x: -Theme.spaceS
+                z: -1
+                visible: group.isDropTarget
+                radius: Theme.radiusInner
+                color: Theme.selectedFill
+                border.width: Theme.borderWidth
+                border.color: Theme.accent
+            }
 
             FlyoutHeading {
                 width: parent.width
-                text: "WORKSPACE " + panel.wsName(group.modelData.ws).toUpperCase()
+                text: group.modelData.ws < 0 ? panel.wsName(group.modelData.ws).toUpperCase()
+                    : "WORKSPACE " + panel.wsName(group.modelData.ws).toUpperCase()
                 hints: [group.n + (group.n === 1 ? " window" : " windows")]
             }
 
@@ -84,6 +137,17 @@ FlyoutPanel {
                         && Hyprland.activeToplevel.address === modelData.address
                     actionIcon: "󰅖"
                     actionHint: "Close"
+                    draggable: true
+                    opacity: dragging ? 0.5 : 1
+                    onDragMoved: at => {
+                        var t = panel.targetAt(at)
+                        panel.dropTarget = t === group.modelData.target ? null : t
+                    }
+                    onDropped: at => {
+                        var t = at.x < 0 ? null : panel.targetAt(at)
+                        panel.dropTarget = null
+                        if (t !== null && t !== group.modelData.target) panel.moveWindow(modelData.address, t)
+                    }
                     onAction: Hyprland.dispatch("hl.dsp.window.close({window=\"address:0x" + modelData.address + "\"})")
                     onActivated: {
                         var addr = "address:0x" + modelData.address
@@ -104,13 +168,49 @@ FlyoutPanel {
         visible: panel.groups.length === 0
     }
 
+    // the empty numbers: a click goes there, a window dropped on one moves
+    Row {
+        visible: panel.empty.length > 0
+        spacing: Theme.spaceS
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: "EMPTY"
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontCaption
+            font.letterSpacing: 1
+        }
+
+        Repeater {
+            id: emptyList
+            model: panel.empty
+
+            FlyoutChip {
+                required property int modelData
+                text: panel.wsName(modelData)
+                selected: panel.dropTarget === modelData
+                onClicked: {
+                    panel.requestClose()
+                    Hyprland.dispatch("hl.dsp.focus({workspace=" + modelData + "})")
+                }
+            }
+        }
+    }
+
     FlyoutDivider {}
 
-    FlyoutRow {
-        leadingIcon: "󰕰"
-        label: "All workspaces"
-        trailing: "SUPER W"
-        onActivated: {
+    FlyoutChipLine {
+        chips: [
+            { icon: "󰕰", text: "All workspaces", act: "grid" },
+            { icon: "󰒓", text: "Settings",       act: "settings" },
+        ]
+        onPicked: act => {
+            if (act === "settings") {
+                panel.scope.openSettings("appearance")
+                return
+            }
             panel.requestClose()
             panel.shellRoot.workspaceOverlayToggled()
         }
