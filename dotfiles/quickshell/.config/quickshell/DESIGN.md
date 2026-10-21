@@ -268,10 +268,10 @@ Every bar flyout keeps to these (settled 2026-10-20):
   case as tiles under it; the other paired ones as rows (Connect on
   hover); what a scan found; Settings as a chip. The bar icon turns to
   the connected glyph while a device is on.
-- **Network:** the connection as a card (the cable while it's up, else the
+- **Network** (picked again 2026-10-21): the connection as a card (the cable while it's up, else the
   joined network, with the address); Down and Up as tiles over the last
   minute's graph (SystemStats samples while it's open); the Wi-Fi switch;
-  NEARBY with Rescan; Show all N.
+  NEARBY with Rescan; Show all N; Settings as a chip.
 - **Volume:** one panel: the level large with the output beside it (a
   click opens the outputs in place to switch), its slider and Mute, the
   microphone's level and Mute microphone, then APPS, each app a level of

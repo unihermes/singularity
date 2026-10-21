@@ -224,10 +224,9 @@ FlyoutPanel {
 
     FlyoutDivider { visible: netFlyout.browsing }
 
-    FlyoutRow {
+    FlyoutChipLine {
         visible: netFlyout.browsing
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("network")
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("network")
     }
 }
