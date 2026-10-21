@@ -337,4 +337,5 @@ return {
     fullscreenRules = fullscreenRules,
     appRules = appRules,
     naturalRule = naturalRule,
+    BROWSER_CLASSES = BROWSER_CLASSES,
 }

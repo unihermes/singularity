@@ -12,8 +12,9 @@ local animOff, animFactor = S.animOff, S.animFactor * S.windowsFactor
 local windowAnim, windowSlides, windowShrink = S.windowAnim, S.windowSlides, S.windowShrink
 local windowSpeed, fadeSpeed = S.windowSpeed, S.fadeSpeed
 local R = require("window-rules")
-local monocleRule, edgeGaps, SCRATCH_CLASS, isPrompt, fullscreenRules, appRules, naturalRule
-    = R.monocleRule, R.edgeGaps, R.SCRATCH_CLASS, R.isPrompt, R.fullscreenRules, R.appRules, R.naturalRule
+local monocleRule, edgeGaps, SCRATCH_CLASS, isPrompt, fullscreenRules, appRules, naturalRule, BROWSER_CLASSES
+    = R.monocleRule, R.edgeGaps, R.SCRATCH_CLASS, R.isPrompt, R.fullscreenRules, R.appRules, R.naturalRule,
+      R.BROWSER_CLASSES
 
 -- Popouts (holdPopup below), hooked ahead of monocle's hooks, which would
 -- fill the window. Windows already open at load (a reload) are left alone.
@@ -351,7 +352,8 @@ end
 -- REMEMBERED SIZES. An app's main window reopens as last left, per kind of
 -- screen (wide, normal, tall): fullscreen, filled, or at its shape. Kept in
 -- window-sizes.json, the 100 most recent apps; monocle and natural windows
--- only (not popouts, prompts, rule entries, pinned or shell windows).
+-- only (not popouts, prompts, rule entries, pinned or shell windows). A
+-- browser left fullscreen (a video, F11) reopens filled instead.
 local SIZES_FILE = os.getenv("HOME") .. "/.local/state/singularity/window-sizes.json"
 local SIZES_MAX = 100
 local sizes = {}
@@ -440,7 +442,9 @@ local function rememberWindow(win)
     if st.openedAt and os.time() - st.openedAt < SPLASH_SECS then return end
     local area = fillArea(win, win.monitor)
     local m
-    if win.fullscreen == 2 then
+    if win.fullscreen == 2 and BROWSER_CLASSES[win.class] then
+        m = { fill = true }
+    elseif win.fullscreen == 2 then
         m = { fullscreen = true }
     else
         local shape
@@ -480,8 +484,8 @@ local function recallShape(win, mon)
     if type(entry) ~= "table" then return nil end
     local m = entry[screenKind(fillArea(win, mon))] or entry.normal or entry.wide or entry.tall
     if type(m) ~= "table" then return nil end
-    if m.fullscreen then return "fullscreen" end
-    if m.fill then return false end
+    if m.fullscreen and not BROWSER_CLASSES[win.class] then return "fullscreen" end
+    if m.fill or m.fullscreen then return false end
     local fx, fy, fw, fh = tonumber(m.fx), tonumber(m.fy), tonumber(m.fw), tonumber(m.fh)
     if not (fx and fy and fw and fh) or fw <= 0 or fh <= 0 then return nil end
     fw, fh = math.min(fw, 1), math.min(fh, 1)
