@@ -138,12 +138,6 @@ SettingsTab {
     }
 
     SettingsField {
-        label: "Window list"
-        hint: "What an app's icon opens when it has several windows"
-        Choice { key: "appWindowsStyle" }
-    }
-
-    SettingsField {
         label: "App icons"
         hint: "The open windows' and the tray's"
         Choices { key: "iconTint" }

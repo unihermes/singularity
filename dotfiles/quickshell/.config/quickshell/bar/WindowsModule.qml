@@ -62,12 +62,10 @@ ModuleFrame {
                     required property var modelData
                     required property int index
                     readonly property bool focused: strip.focusIndex === index
-                    // the icon whose window menu or window list is open
-                    // is lit as if hovered, rather than the whole strip
+                    // the icon whose window list is open is lit as if
+                    // hovered, rather than the whole strip
                     readonly property bool opened: host.screenScope.openFlyout === "appwindows"
-                        ? host.bar.appWindowsKey === modelData.key
-                        : host.screenScope.openFlyout === "windowmenu" && !!host.windowMenu.item
-                            && modelData.windows.some(w => w.address === host.windowMenu.item.address)
+                        && host.bar.appWindowsKey === modelData.key
                     readonly property bool hovered: winMouse.containsMouse || opened
                     readonly property bool lit: focused || hovered
                     readonly property string style: strip.style
@@ -528,33 +526,21 @@ ModuleFrame {
                             var target = winIcon.shown.address
                             var addr = "address:0x" + target
                             var bar = host.bar
-                            // several windows: a flyout to pick from (another
-                            // app's icon retargets it)
-                            if (mouse.button === Qt.LeftButton && winIcon.modelData.windows.length > 1) {
+                            // several windows, or a right-click: the app's
+                            // windows to pick from, a right-click opening the
+                            // clicked window's actions (another app's icon
+                            // retargets it)
+                            var right = mouse.button === Qt.RightButton
+                            if (right || (mouse.button === Qt.LeftButton && winIcon.modelData.windows.length > 1)) {
+                                bar.appWindowsOpen = right ? target : ""
                                 if (host.screenScope.openFlyout === "appwindows"
-                                        && host.bar.appWindowsKey !== winIcon.modelData.key) {
-                                    host.bar.appWindowsKey = winIcon.modelData.key
+                                        && bar.appWindowsKey !== winIcon.modelData.key) {
+                                    bar.appWindowsKey = winIcon.modelData.key
                                     host.screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
                                     return
                                 }
-                                host.bar.appWindowsKey = winIcon.modelData.key
+                                bar.appWindowsKey = winIcon.modelData.key
                                 host.screenScope.toggleFlyout("appwindows", winIcon)
-                                return
-                            }
-                            if (mouse.button === Qt.RightButton) {
-                                var menu = host.windowMenu.ensure()
-                                // a different window's icon while the menu is
-                                // open retargets it rather than closing it
-                                if (host.screenScope.openFlyout === "windowmenu"
-                                        && menu.address !== target) {
-                                    menu.address = target
-                                    menu.movePage = false
-                                    host.screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
-                                    return
-                                }
-                                menu.address = target
-                                menu.movePage = false
-                                host.screenScope.toggleFlyout("windowmenu", winIcon)
                             } else if (mouse.button === Qt.MiddleButton) {
                                 Hyprland.dispatch("hl.dsp.window.close({window=\"" + addr + "\"})")
                             } else {

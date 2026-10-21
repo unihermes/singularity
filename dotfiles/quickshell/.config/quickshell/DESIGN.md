@@ -193,10 +193,16 @@ Every bar flyout keeps to these (settled 2026-10-20):
   specials after; the empty numbers as chips. Drag a window onto another
   workspace (its heading, its windows, or an empty number) to move it.
   All workspaces and Settings as chips.
-- **Windows** (an app with several): Window list in Appearance > Bar picks
-  List (as it was), With actions (New window, Bring all here, Close all
-  under it), Cards (the app large, a tile per window, the actions as
-  chips) or Compact (the list, the actions as icons).
+- **Windows** (picked 2026-10-21): the strip as icons (pips under an app
+  with several windows; the other strip styles stay in Settings). A click
+  on an app with several windows opens its flyout: a card for the app
+  (its icon, the windows on how many workspaces, New window at its end),
+  a row a window with its workspace (popouts indented under their owner),
+  Bring all here and Close all (two clicks) as chips. A row's ⌄ opens the
+  window's actions under it: Float or Tile, Full, Pin (floating only), a
+  popout's Promote, MOVE to a workspace's number, Close and Kill (two
+  clicks). There's no separate window menu: a right-click on any icon
+  opens the same flyout with that window's actions open.
 - **Visualizer:** mirrored bars. With the Media module off it leads with
   the note and a click opens Media.
 - **Media:** NOW PLAYING: the art, the title, artist · album, the player;
@@ -729,7 +735,7 @@ back. Always the Nerd glyphs (`Theme.fontIcon`), never a typed `>`.
 | Leaves for another window | 󰁔 | More in Settings, System's "Settings" |
 | Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more" |
 | Dropdown | 󰅀 → 󰅃 | `DropdownMenu`, `SettingsDropdown` |
-| Back | breadcrumb heading (`crumb`), no Back row | Control Centre, tray menu, window menu |
+| Back | breadcrumb heading (`crumb`), no Back row | Control Centre, tray menu |
 | Breadcrumb separator | 󰅂 | `FlyoutHeading` |
 | Stepper | 󰅁 󰅂 | `LookStepper`, `FlyoutStepper` (wrap), calendar months |
 

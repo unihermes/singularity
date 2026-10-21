@@ -136,7 +136,6 @@ Singleton {
     readonly property alias windowStyle: adapter.windowStyle
     readonly property alias windowScope: adapter.windowScope
     // how an app's windows list when its strip icon is clicked
-    readonly property alias appWindowsStyle: adapter.appWindowsStyle
     readonly property alias iconTint:    adapter.iconTint
     readonly property alias vizStyle:    adapter.vizStyle
     readonly property alias gradient:    adapter.gradient
@@ -240,7 +239,6 @@ Singleton {
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
         windowStyle:  ["icons", "titled", "glide", "lift", "inset", "segmented", "spotlight", "tabs", "index", "dots"],
         windowScope:  ["workspace", "all"],
-        appWindowsStyle: ["list", "actions", "cards", "compact"],
         iconTint:     ["colour", "mono", "accent"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
         levelColour:  ["accent", "good", "text"],
@@ -288,7 +286,6 @@ Singleton {
     readonly property var keyedLabels: ({
         barStyle: { "full": "Full width" },
         windowStyle: { "titled": "Focused title" },
-        appWindowsStyle: { "actions": "With actions", "cards": "Cards" },
         barChips: { "bare": "Bare", "outline": "Outlined", "grouped": "Strip" },
         vizStyle: { "rise": "Rising", "line": "One line" },
         barSeparator: { "line": "Lines", "double": "Double lines", "dot": "Dots",
@@ -933,7 +930,6 @@ Singleton {
             property string clockStyle: "stamp"
             property string windowStyle: "icons"
             property string windowScope: "workspace"
-            property string appWindowsStyle: "list"
             property string iconTint: "colour"
             property string vizStyle: "mirror"
             property bool gradient: false

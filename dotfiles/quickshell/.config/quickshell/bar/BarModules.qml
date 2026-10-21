@@ -21,10 +21,8 @@ Item {
     required property var screenScope
     // for specialShown, which follows Hyprland's events once for all bars
     required property var shellRoot
-    // the tray menu's LazyFlyout (ensure() builds it); same for windowMenu
+    // the tray menu's LazyFlyout (ensure() builds it)
     required property var trayMenu
-    // same, for the open-windows strip's right-click menu
-    required property var windowMenu
 
     readonly property var widgetItems: ({
         controlcentre: ccBtn, workspaces: wsFrame,

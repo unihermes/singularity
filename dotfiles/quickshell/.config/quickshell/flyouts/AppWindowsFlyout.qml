@@ -1,18 +1,17 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/AppWindowsFlyout.qml
 //
-// An app's windows from the strip, drawn as Settings.appWindowsStyle says:
-//   list     a row each; popouts indented under their owner, a blocked
-//            owner dimmed with a lock
-//   actions  the list, then New window, Bring here and Close all
-//   cards    the app large, then a tile per window, the actions as chips
-//   compact  the list, then the actions as a line of icons
-// A row or tile raises the window; close closes it; a popout's square
-// promotes it. Popouts per windows.lua's tags (Bar.isPopout).
+// An app's windows from the strip: a card for the app (its icon, how many
+// windows on how many workspaces, New window at its end), then a row a
+// window with its workspace, popouts indented under their owner and a
+// blocked owner dimmed with a lock; Bring all here and Close all as chips.
+// A row raises its window, close on hover, and its ⌄ opens the window's
+// actions under it (float, fullscreen, pin, move, close); a right-click on
+// the bar opens the flyout with that window's actions open. Popouts per
+// windows.lua's tags (Bar.isPopout).
 
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Widgets
 import QtQuick
 import "../services"
 
@@ -20,8 +19,6 @@ FlyoutPanel {
     id: root
     flyout: "appwindows"
     menuWidth: Theme.flyoutMenuWidth
-
-    readonly property string style: Settings.appWindowsStyle
 
     required property var bar
 
@@ -36,8 +33,8 @@ FlyoutPanel {
         return null
     }
     readonly property var windows: app ? app.windows : []
-    // down to one window or none: nothing left to pick from
-    onWindowsChanged: if (open && windows.length < 2) requestClose()
+    // no windows left: nothing to show
+    onWindowsChanged: if (open && windows.length === 0) requestClose()
 
     // the app's class (its strip key is "<workspace>/<class>"), its desktop
     // entry for New window
@@ -67,70 +64,42 @@ FlyoutPanel {
         root.requestClose()
     }
 
+    // a window's workspace id, -1 when not known yet
+    function wsOf(w) {
+        var o = w.toplevel && w.toplevel.lastIpcObject
+        return o && o.workspace ? o.workspace.id : -1
+    }
+    readonly property int workspaceCount: {
+        var seen = {}
+        windows.forEach(w => seen[wsOf(w)] = true)
+        return Object.keys(seen).length
+    }
+
+    // one of a window's actions, aimed at it by address
+    function act(w, fn, extra) {
+        Hyprland.dispatch("hl.dsp.window." + fn + "({window=\"address:0x" + w.address + "\"" + (extra ? ", " + extra : "") + "})")
+        Hyprland.refreshToplevels()
+    }
+
     FlyoutHeading {
-        visible: root.style !== "cards"
         text: root.app ? root.app.name.toUpperCase() : ""
-        hints: root.style === "list" ? [] : [root.windows.length + " windows"]
     }
 
-    // cards: the app large, then a tile per window
-    Row {
-        visible: root.style === "cards"
-        spacing: Theme.spaceL
-        Item {
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fontHero
-            height: width
-            IconImage {
-                anchors.fill: parent
-                visible: !!root.app && root.app.source !== ""
-                source: root.app ? root.app.source : ""
-            }
-            Text {
-                anchors.centerIn: parent
-                visible: !!root.app && root.app.source === ""
-                text: root.app ? root.app.glyph : ""
-                color: Theme.textStrong
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontTitle
-            }
-        }
-        Column {
-            anchors.verticalCenter: parent.verticalCenter
-            Text {
-                text: root.app ? root.app.name : ""
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-            Text {
-                text: root.windows.length + " windows"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
+    HeadCard {
+        glyph: root.app ? root.app.glyph : ""
+        image: root.app ? root.app.source : ""
+        title: root.app ? root.app.name : ""
+        lines: [root.windows.length + (root.windows.length === 1 ? " window" : " windows")
+            + " · " + root.workspaceCount + (root.workspaceCount === 1 ? " workspace" : " workspaces")]
+
+        IconButton {
+            visible: !!root.entry
+            icon: "󰖯"
+            onClicked: root.newWindow()
         }
     }
 
-    TileGrid {
-        visible: root.style === "cards"
-        columns: 2
-        Repeater {
-            model: root.style === "cards" ? root.windows : []
-            FlyoutTile {
-                required property var modelData
-                width: parent.cell
-                clickable: true
-                title: modelData.toplevel ? modelData.toplevel.title || modelData.name : modelData.name
-                caption: modelData.popout ? "Popout" : modelData.blocked ? "Waiting on a popout" : "Window"
-                lit: !!Hyprland.activeToplevel && Hyprland.activeToplevel.address === modelData.address
-                dimmed: modelData.blocked
-                onClicked: root.focusWin(modelData)
-            }
-        }
-    }
+    FlyoutDivider {}
 
     // the app's own windows, each followed by the popouts it opened; any
     // popout whose window isn't known comes last, unindented
@@ -152,94 +121,153 @@ FlyoutPanel {
     }
 
     Repeater {
-        model: root.style === "cards" ? [] : root.rows
+        model: root.rows
 
-        Item {
+        Column {
             id: entry
             required property var modelData
             readonly property var win: modelData.win
+            readonly property var ipc: win.toplevel && win.toplevel.lastIpcObject ? win.toplevel.lastIpcObject : ({})
+            readonly property int ws: root.wsOf(win)
+            readonly property bool expanded: root.bar.appWindowsOpen === win.address
             readonly property int indent: modelData.child ? Theme.fit(14) : 0
             width: parent ? parent.width : 0
-            implicitHeight: row.implicitHeight
+            spacing: Theme.spaceXs
 
-            // the elbow from the window above
-            Rectangle {
-                visible: entry.modelData.child
-                x: entry.indent - Theme.fit(9)
-                y: -Theme.fit(4)
-                width: 1
-                height: entry.height / 2 + Theme.fit(4)
-                color: Theme.muted
-            }
-            Rectangle {
-                visible: entry.modelData.child
-                x: entry.indent - Theme.fit(9)
-                y: entry.height / 2
-                width: Theme.fit(6)
-                height: 1
-                color: Theme.muted
+            Item {
+                width: parent.width
+                implicitHeight: row.implicitHeight
+
+                // the elbow from the window above
+                Rectangle {
+                    visible: entry.modelData.child
+                    x: entry.indent - Theme.fit(9)
+                    y: -Theme.fit(4)
+                    width: 1
+                    height: parent.height / 2 + Theme.fit(4)
+                    color: Theme.muted
+                }
+                Rectangle {
+                    visible: entry.modelData.child
+                    x: entry.indent - Theme.fit(9)
+                    y: parent.height / 2
+                    width: Theme.fit(6)
+                    height: 1
+                    color: Theme.muted
+                }
+
+                FlyoutRow {
+                    id: row
+                    x: entry.indent
+                    width: parent.width - entry.indent
+                    leadingImage: entry.win.source
+                    leadingIcon: entry.win.source === "" ? entry.win.glyph : ""
+                    label: entry.win.toplevel ? entry.win.toplevel.title || entry.win.name : entry.win.name
+                    note: entry.win.popout && !entry.modelData.child ? "Popout" : ""
+                    dimmed: entry.win.blocked
+                    trailing: !entry.win.blocked && entry.ws > 0 ? "ws " + entry.ws : ""
+                    trailingIcons: entry.win.blocked ? ["󰌾"] : []
+                    highlighted: !!Hyprland.activeToplevel && Hyprland.activeToplevel.address === entry.win.address
+                    actionIcon: "󰅖"
+                    actionHint: "Close"
+                    extraIcon: entry.expanded ? "󰅃" : "󰅀"
+                    onActivated: root.focusWin(entry.win)
+                    onAction: root.closeWin(entry.win)
+                    onExtra: root.bar.appWindowsOpen = entry.expanded ? "" : entry.win.address
+                }
             }
 
-            FlyoutRow {
-                id: row
-                x: entry.indent
-                width: entry.width - entry.indent
-                leadingImage: entry.win.source
-                leadingIcon: entry.win.source === "" ? entry.win.glyph : ""
-                label: entry.win.toplevel ? entry.win.toplevel.title || entry.win.name : entry.win.name
-                note: entry.win.popout && !entry.modelData.child ? "Popout" : ""
-                dimmed: entry.win.blocked
-                trailingIcons: entry.win.blocked ? ["󰌾"] : []
-                highlighted: !!Hyprland.activeToplevel && Hyprland.activeToplevel.address === entry.win.address
-                actionIcon: "󰅖"
-                actionHint: "Close"
-                extraIcon: entry.win.popout ? "󰖯" : ""
-                onActivated: root.focusWin(entry.win)
-                onAction: root.closeWin(entry.win)
-                onExtra: Quickshell.execDetached(["hyprctl", "eval", "promoteWindow(\"0x" + entry.win.address + "\")"])
+            // its actions, open under it
+            Column {
+                visible: entry.expanded
+                x: entry.indent + Theme.iconCell
+                width: parent.width - x
+                spacing: Theme.spaceS
+                bottomPadding: Theme.spaceS
+
+                FlyoutChipLine {
+                    chips: [
+                        { icon: entry.ipc.floating ? "󰕰" : "󰖲", text: entry.ipc.floating ? "Tile" : "Float", act: "float" },
+                        { icon: "󰊓", text: "Full", act: "fullscreen" },
+                    ].concat(entry.ipc.floating ? [{ icon: "󰐃", text: entry.ipc.pinned ? "Unpin" : "Pin", act: "pin" }] : [])
+                     .concat(entry.win.popout ? [{ icon: "󰖯", text: "Promote", act: "promote" }] : [])
+                    onPicked: a => {
+                        if (a === "promote")
+                            Quickshell.execDetached(["hyprctl", "eval", "promoteWindow(\"0x" + entry.win.address + "\")"])
+                        else root.act(entry.win, a, a === "float" ? "action=\"toggle\"" : "")
+                    }
+                }
+
+                // the workspaces it can go to, its own lit
+                Row {
+                    spacing: Theme.spaceXs
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        rightPadding: Theme.spaceXs
+                        text: "MOVE"
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
+                        font.letterSpacing: 1
+                    }
+
+                    Repeater {
+                        model: Settings.workspaceCount
+
+                        FlyoutChip {
+                            required property int index
+                            text: index + 1
+                            selected: entry.ws === index + 1
+                            onClicked: if (!selected) root.act(entry.win, "move", "workspace=" + (index + 1))
+                        }
+                    }
+                }
+
+                Row {
+                    spacing: Theme.spaceS
+
+                    FlyoutChip {
+                        icon: "󰅖"
+                        text: "Close"
+                        onClicked: root.closeWin(entry.win)
+                    }
+                    // for a window that ignores the polite one
+                    FlyoutChip {
+                        icon: "󰚌"
+                        text: "Kill"
+                        confirmText: "Kill it?"
+                        onClicked: Hyprland.dispatch("hl.dsp.window.kill({window=\"address:0x" + entry.win.address + "\"})")
+                    }
+                }
             }
         }
     }
 
-    // --- the app's actions ------------------------------------------------------
+    // --- the app's actions, with more than one window ---------------------------
 
-    FlyoutDivider { visible: root.style !== "list" }
-
-    Repeater {
-        model: root.style === "actions" ? [
-            { icon: "󰖯", label: "New window", go: () => root.newWindow(), shown: !!root.entry },
-            { icon: "󰁌", label: "Bring all here", go: () => root.bringHere(), shown: true },
-        ] : []
-        FlyoutRow {
-            required property var modelData
-            visible: modelData.shown
-            leadingIcon: modelData.icon
-            label: modelData.label
-            onActivated: modelData.go()
-        }
-    }
-    FlyoutRow {
-        visible: root.style === "actions"
-        leadingIcon: "󰅖"
-        label: "Close all"
-        confirmText: "Close " + root.windows.length + " windows?"
-        onActivated: root.closeAll()
-    }
+    FlyoutDivider { visible: root.windows.length > 1 }
 
     Row {
-        visible: root.style === "cards"
+        id: appChips
+        visible: root.windows.length > 1
+        width: parent.width
         spacing: Theme.spaceS
-        FlyoutChip { visible: !!root.entry; text: "New window"; onClicked: root.newWindow() }
-        FlyoutChip { text: "Bring here"; onClicked: root.bringHere() }
-        FlyoutChip { text: "Close all"; confirmText: "Close all?"; onClicked: root.closeAll() }
-    }
+        readonly property real cell: (width - spacing) / 2
 
-    Row {
-        visible: root.style === "compact"
-        anchors.right: parent.right
-        spacing: Theme.spaceXs
-        IconButton { visible: !!root.entry; icon: "󰖯"; onClicked: root.newWindow() }
-        IconButton { icon: "󰁌"; onClicked: root.bringHere() }
-        IconButton { icon: "󰅖"; confirm: true; onClicked: root.closeAll() }
+        FlyoutChip {
+            width: appChips.cell
+            icon: "󰁌"
+            text: "Bring all here"
+            onClicked: root.bringHere()
+        }
+        FlyoutChip {
+            width: appChips.cell
+            icon: "󰅖"
+            text: "Close all"
+            confirmText: "Close " + root.windows.length + "?"
+            onClicked: root.closeAll()
+        }
     }
 }

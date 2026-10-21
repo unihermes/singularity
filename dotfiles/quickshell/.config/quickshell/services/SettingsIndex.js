@@ -110,7 +110,6 @@ var entries = [
     { page: "appearance", section: "Bar", label: "Workspace names", keywords: "label rename workspaces web code chat" },
     { page: "appearance", section: "Bar", label: "Open windows", keywords: "taskbar tasks apps icons titles tabs glide lift inset segmented spotlight index dots" },
     { page: "appearance", section: "Bar", label: "Windows shown", keywords: "taskbar workspace all scope" },
-    { page: "appearance", section: "Bar", label: "Window list", keywords: "app windows flyout list actions cards compact several" },
     { page: "appearance", section: "Bar", label: "App icons", keywords: "tint monochrome grey gray colour color accent tray" },
     { page: "appearance", section: "Bar", label: "Clock", keywords: "time date" },
     { page: "appearance", section: "Bar", label: "Clock format", keywords: "custom time date format pattern qt" },

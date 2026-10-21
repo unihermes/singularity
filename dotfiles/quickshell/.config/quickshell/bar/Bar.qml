@@ -18,11 +18,10 @@ PanelWindow {
     id: bar
 
     // the screen's scope in shell.qml (which flyout is open, where), the
-    // shell's root, and the two menus the bar's modules open
+    // shell's root, and the tray menu the bar's modules open
     required property var screenScope
     required property var shellRoot
     required property var trayMenu
-    required property var windowMenu
     screen: bar.screenScope.modelData
 
     // both edges listed, one switched off: left+right with neither top nor
@@ -266,6 +265,8 @@ PanelWindow {
 
     // The app icon whose windows AppWindowsFlyout lists: its key.
     property string appWindowsKey: ""
+    // the window in it whose actions are open, "" for none
+    property string appWindowsOpen: ""
 
     // windows.lua's tags on a window. Rule-set tags carry a trailing "*".
     function windowTags(ipc) {
@@ -375,7 +376,6 @@ PanelWindow {
         screenScope: bar.screenScope
         shellRoot: bar.shellRoot
         trayMenu: bar.trayMenu
-        windowMenu: bar.windowMenu
     }
 
     function widgetItem(key) { return barModules.widgetItems[key] }

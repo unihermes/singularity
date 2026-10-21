@@ -1,11 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/HeadCard.qml
 //
-// The card at the top of a System or Settings page: a glyph, the answer
+// The card at the top of a System or Settings page: a glyph (or an app's
+// icon, `image`), the answer
 // large, a line or two of what's behind it, and the page's own actions at
 // its end (the chips or a switch go in as children). `rule` draws a
 // hairline under it, to keep it apart from the rows that follow.
 
+import Quickshell.Widgets
 import QtQuick
 import "../services"
 
@@ -13,6 +15,8 @@ Item {
     id: root
 
     property string glyph: ""
+    // an icon file in the glyph's place
+    property string image: ""
     property color glyphColor: Theme.textStrong
     property string title: ""
     // quieter lines under the title; empty ones are left out
@@ -33,10 +37,17 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.fontTitle * 1.4
         horizontalAlignment: Text.AlignHCenter
-        text: root.glyph
+        text: root.image === "" ? root.glyph : ""
         color: root.glyphColor
         font.family: Theme.fontIcon
         font.pixelSize: Theme.fontTitle
+
+        IconImage {
+            visible: root.image !== ""
+            anchors.centerIn: parent
+            implicitSize: Theme.fontTitle * 1.4
+            source: root.image
+        }
     }
 
     Column {

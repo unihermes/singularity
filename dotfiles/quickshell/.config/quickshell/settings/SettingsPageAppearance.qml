@@ -69,7 +69,7 @@ SettingsPage {
         headingUpper: "Case", headingRule: "Heading rule", headingMark: "Mark",
         headingMarkColour: "Mark colour", headingSize: "Heading size",
         fontFamily: "Font", barPosition: "Position", workspaceStyle: "Workspaces",
-        controlIcon: "Control Centre icon", clockStyle: "Clock", clockIsland: "Clock island", windowStyle: "Open windows", windowScope: "Windows shown", appWindowsStyle: "Window list",
+        controlIcon: "Control Centre icon", clockStyle: "Clock", clockIsland: "Clock island", windowStyle: "Open windows", windowScope: "Windows shown",
         iconTint: "App icons", vizStyle: "Visualizer", flyoutAnim: "Flyouts open",
         launcherLayout: "Launcher layout", launcherPosition: "Launcher position",
         launcherDetails: "Launcher details", notifStyle: "Notification popups",

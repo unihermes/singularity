@@ -570,7 +570,6 @@ ShellRoot {
             screenScope: screenScope
             shellRoot: root
             trayMenu: trayMenu
-            windowMenu: windowMenu
         }
 
         // --- flyouts --------------------------------------------------
@@ -646,13 +645,6 @@ ShellRoot {
             id: trayMenu
             name: "traymenu"; scope: screenScope
             TrayMenuFlyout { scope: screenScope }
-        }
-
-        // right-click menu for a window in the bar's open-windows strip
-        LazyFlyout {
-            id: windowMenu
-            name: "windowmenu"; scope: screenScope
-            WindowMenuFlyout { scope: screenScope }
         }
 
         // right-click menu for the bar's empty space
