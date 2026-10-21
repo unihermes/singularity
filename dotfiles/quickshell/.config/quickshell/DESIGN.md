@@ -216,10 +216,15 @@ Every bar flyout keeps to these (settled 2026-10-20):
   click picks which the module follows); the Visualizer and Title on the
   bar switches; Visualizer look, a page of its own (Style, Bars, Hide
   when silent); Settings.
-- **Weather:** the sky and temperature large with the condition, feels
-  like and the place beside; the next six 3-hour slots; humidity, wind and
-  today's rain as tiles; then a week of days (Open-Meteo for the place
-  wttr.in found, wttr.in's three days when that fails), units and Refresh.
+- **Weather** (picked 2026-10-21): the bar as it was, the sky and the
+  temperature. The flyout is three tabs under the heading (Updated on
+  it): Now (the sky and the temperature large with the condition, feels
+  like and the place beside; the next six 3-hour slots; humidity, wind
+  and today's rain as tiles), Hours (the next 24 from Open-Meteo, a row
+  each with its chance of rain as a figure and a level; wttr.in's slots
+  when that fails) and Week (each day's low and high as a range on the
+  week's one scale, rain shown from 20%). Refresh and the other unit as
+  chips.
 - **Clock:** the time large with the seconds quieter and the whole date,
   over the Month / Today / Timer tabs.
 - **Updates:** where things stand as a card with ↻ and Update at its

@@ -45,6 +45,8 @@ Singleton {
     property var forecast: []
     // the next six 3-hour slots: [{ at (Date), tempF, tempC, code, rain }]
     property var hourly: []
+    // the next 24 hours from Open-Meteo, the same shape; empty until it answers
+    property var hours: []
     // today's highest chance of rain, %
     property int rainChance: 0
     property real latitude: NaN
@@ -86,9 +88,24 @@ Singleton {
         return 296
     }
 
-    // Open-Meteo's week into `forecast`, both units
+    // Open-Meteo's week into `forecast` and its next day into `hours`, both
+    // units
     function parseWeek(text) {
-        var d = JSON.parse(text).daily
+        var all = JSON.parse(text)
+        var hr = all.hourly
+        if (hr && hr.time) {
+            var hs = [], now = Date.now()
+            for (var k = 0; k < hr.time.length && hs.length < 24; k++) {
+                // local times, as timezone=auto gives them
+                var at = new Date(hr.time[k])
+                if (at.getTime() + 3600000 <= now) continue
+                var c = hr.temperature_2m[k]
+                hs.push({ at: at, tempC: c, tempF: c * 9 / 5 + 32,
+                          code: wwoOf(hr.weather_code[k]), rain: hr.precipitation_probability[k] || 0 })
+            }
+            root.hours = hs
+        }
+        var d = all.daily
         var f = []
         for (var i = 0; i < d.time.length; i++) {
             var hi = d.temperature_2m_max[i], lo = d.temperature_2m_min[i]
@@ -180,6 +197,7 @@ Singleton {
         command: ["curl", "-sf", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude="
             + root.latitude + "&longitude=" + root.longitude
             + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+            + "&hourly=temperature_2m,weather_code,precipitation_probability"
             + "&timezone=auto&forecast_days=7"]
         stdout: StdioCollector {
             onStreamFinished: { try { root.parseWeek(text) } catch (e) {} }
