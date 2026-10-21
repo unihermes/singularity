@@ -240,8 +240,11 @@ Every bar flyout keeps to these (settled 2026-10-20):
   up), each opening a page of its own (breadcrumb back) with its list and
   its action (Update N packages, Pull now, Clean up, two clicks); then
   Settings.
-- **Failed services:** a line per unit with log, restart and clear as
-  icons; the count and Clear all (two clicks) under them.
+- **Failed services** (picked 2026-10-21): the alert sign with the count
+  as an alert-coloured badge, only while something has failed. The
+  flyout: a row per unit (system or user); a click opens it in place with
+  its last three log lines and Full log, Restart and Clear; Clear all
+  (two clicks) after them.
 - **Privacy:** Mic, Camera and Screen as three tiles, lit while in use
   with the apps using them, then Mute microphone.
 - **Tray menus:** the app's own separators split the menu into sections;

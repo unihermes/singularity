@@ -38,6 +38,8 @@ Item {
     // a count in a bubble on the icon's top-right corner, drawn over the
     // chip so its width doesn't change; 0 hides it
     property int badge: 0
+    // the alert colour, for a count that's trouble (failed services)
+    property bool badgeAlert: false
     // the icon turns, for work under way (Updates installing)
     property bool spinning: false
 
@@ -103,7 +105,7 @@ Item {
                 height: Math.round(Theme.barFs(9) * 1.3)
                 width: Math.max(height, badgeText.implicitWidth + 4)
                 radius: Theme.pill(height)
-                color: Theme.accent
+                color: root.badgeAlert ? Theme.alert : Theme.accent
                 border.width: 1
                 border.color: Theme.bar
 
@@ -111,7 +113,7 @@ Item {
                     id: badgeText
                     anchors.centerIn: parent
                     text: root.badge > 99 ? "99+" : root.badge
-                    color: Theme.textOnAccent
+                    color: root.badgeAlert ? Theme.base : Theme.textOnAccent
                     font.family: Theme.fontText
                     font.pixelSize: Theme.barFs(9)
                     font.weight: Font.Bold

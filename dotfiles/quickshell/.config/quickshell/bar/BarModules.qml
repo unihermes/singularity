@@ -370,7 +370,8 @@ Item {
         visible: FailedUnits.count > 0 && Settings.widgetVisible("failed")
         icon: "󰀦"
         iconColor: Theme.alert
-        label: String(FailedUnits.count)
+        badge: FailedUnits.count
+        badgeAlert: true
         active: screenScope.openFlyout === "failed"
         onActivated: {
             FailedUnits.refresh()
