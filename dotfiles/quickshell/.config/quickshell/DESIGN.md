@@ -250,8 +250,11 @@ Every bar flyout keeps to these (settled 2026-10-20):
   per kind (mic, camera, screen) in the ground colour. The flyout: Mic,
   Camera and Screen as three tiles, lit while in use with the apps using
   them, then Mute microphone.
-- **Tray menus:** the app's own separators split the menu into sections;
-  submenus drill down behind a breadcrumb heading.
+- **Tray menus** (picked 2026-10-21): the app's own entries as rows, its
+  separators splitting them into sections; submenus drill down behind a
+  breadcrumb heading. At the top level its Show/Open and Quit entries come
+  out as Show window and Quit chips at the end (Show window raises its
+  window, else the tray's showApp).
 - **Cooling:** CPU and GPU as two tiles, the reading large over a level;
   the last three minutes as a graph with the drive under it; the fans
   folded into one line that opens in place.
