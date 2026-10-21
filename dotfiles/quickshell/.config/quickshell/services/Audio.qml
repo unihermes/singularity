@@ -96,19 +96,31 @@ Singleton {
 
     // "HDMI / DisplayPort 1 Output [Dell S2417DG] (Stereo)" -> the screen's
     // name, and "DisplayPort 1" for where it is; with no screen named, the
-    // port is the name
+    // port is the name. A name that's only its profile once shortName has
+    // taken the card's words ("Analog Stereo" on a headset whose mic is
+    // "Mono") is the card's own nickname instead, and a trailing profile
+    // goes ("P2418HZm Analog Stereo" -> "P2418HZm").
+    readonly property var profileWords: /^(?:(?:Analog|Digital|Pro) )?(?:Stereo|Mono|Surround [\d.]+|Audio)$/
     function plainName(n) {
         var name = shortName(n)
         var m = name.match(/DisplayPort (\d+)[^\[]*(?:\[([^\]]+)\])?/)
         if (m) return m[2] || "DisplayPort " + m[1]
+        if (profileWords.test(name)) name = n.nickname || (n.properties || {})["api.alsa.card.name"] || nodeName(n)
         return name.replace(/ \((Stereo|Mono|Analog Stereo|Digital Stereo)\)$/, "")
+            .replace(/ (?:Analog|Digital) (?:Stereo|Mono)$/, "")
+    }
+
+    // headphones or a headset (Bluetooth, or an output that says so)
+    function onHead(n) {
+        if (!n || !n.properties) return false
+        var p = n.properties
+        return p["device.bus"] === "bluetooth" || /^(headset|headphone|hands-free)$/.test(p["device.form-factor"] || "")
     }
 
     function glyph(n) {
         if (!n) return ""
         if (!n.isSink) return "󰍬"
-        var bus = n.properties ? n.properties["device.bus"] || "" : ""
-        if (bus === "bluetooth") return "󰋋"
+        if (onHead(n)) return "󰋋"
         return /DisplayPort|HDMI/.test(nodeName(n)) ? "󰍹" : "󰓃"
     }
 

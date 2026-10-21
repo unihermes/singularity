@@ -276,9 +276,8 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("audio")
+    FlyoutChipLine {
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("audio")
     }
 }

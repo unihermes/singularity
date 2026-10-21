@@ -107,8 +107,9 @@ Item {
         id: volBtn
         visible: Settings.widgetVisible("volume")
         fixedWidth: Theme.moduleWidth
-        // the bar shows the level; the icon only says muted or not
-        icon: Audio.muted ? "󰖁" : "󰕾"
+        // the bar shows the level; the icon says muted, else where the
+        // sound goes: headphones or speakers
+        icon: Audio.muted ? "󰖁" : Audio.onHead(Audio.sink) ? "󰋋" : "󰕾"
         fillValue: Audio.muted ? 0 : Audio.percent / 100
         active: screenScope.openFlyout === "volume"
         acceptWheel: true

@@ -272,10 +272,12 @@ Every bar flyout keeps to these (settled 2026-10-20):
   joined network, with the address); Down and Up as tiles over the last
   minute's graph (SystemStats samples while it's open); the Wi-Fi switch;
   NEARBY with Rescan; Show all N; Settings as a chip.
-- **Volume:** one panel: the level large with the output beside it (a
+- **Volume** (picked 2026-10-21): one panel: the level large with the output beside it (a
   click opens the outputs in place to switch), its slider and Mute, the
   microphone's level and Mute microphone, then APPS, each app a level of
-  its own (a click on its name mutes it).
+  its own (a click on its name mutes it). Settings as a chip.
+  On the bar the level fills the chip and the icon says where sound
+  goes: headphones (Bluetooth or a headset) or speakers.
 - **Brightness:** a labelled slider per display, this screen's first,
   then Night Light.
 - **Battery:** the level large with state, time left and draw beside it;
