@@ -868,8 +868,12 @@ Singleton {
         // edit, and the defaults on the adapter are the right answer.
         printErrors: false
 
-        // open the gate once the first read resolves, loaded or no file yet
-        onLoaded: root.ready = true
+        // open the gate once the first read resolves, loaded or no file yet;
+        // a look that's since been renamed or removed falls back
+        onLoaded: {
+            root.ready = true
+            if (!Looks.looks[adapter.look]) adapter.look = Looks.fallback
+        }
         onLoadFailed: root.ready = true
 
         onFileChanged: reload()

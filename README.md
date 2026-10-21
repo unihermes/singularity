@@ -160,7 +160,7 @@ no version numbers: git is the version.
 
 The bar is clickable throughout: the Arch logo opens the Control Centre, and
 each module opens a flyout with its controls and a "More in Settings" link.
-Its Quick Actions include **Game Mode**, which turns off Hyprland's
+Its toggles include **Game Mode**, which turns off Hyprland's
 animations, blur, shadows, gaps and rounding until you switch it back
 (`qs ipc call gamemode toggle` from a keybind).
 

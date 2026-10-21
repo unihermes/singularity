@@ -182,11 +182,8 @@ Every bar flyout keeps to these (settled 2026-10-20):
 - **Clear all takes two clicks** wherever it is.
 - **More in Settings** ends every flyout that has a Settings page.
 
-- **Control Centre:** the four everyday toggles as 2×2 tiles (Do Not
-  Disturb, Night Light with its warmth, Keep Awake, Game Mode), then the
-  submenus (Power, Applications, Quick Actions, Appearance, Bar Widgets),
-  the screen tools as three chips (Shot, Colour, Text), then Settings,
-  System, Keybinds. No look stepper on the root page.
+- **Control Centre:** card + rows (picked 2026-10-21): see Control Centre
+  below.
 - **Workspaces:** a heading per workspace with its window count, each
   window its app's icon and name with the title quieter after, the focused
   one ticked, close on hover; then All workspaces (SUPER W).
@@ -281,26 +278,32 @@ never the repo.
 
 ### Control Centre
 
-- **The root page** is as picked above: tiles, submenus, tools, windows.
+Picked 2026-10-21, page by page: a card saying where things stand, rows
+for the rest, chips for the way out.
+
+- **Root:** a `HeadCard` (the Arch glyph, user@host, how long it's been up
+  and the look; the power button at its end opens Power), and in the same
+  frame the five toggles as `FlyoutToggle`s (Quiet, Night, Awake, Game,
+  Airplane), Warmth under them while Night Light is on. Then Applications,
+  Appearance and Bar Widgets as rows; the screen tools (Shot, Colour,
+  Text) and the windows (Settings, System, Keys) as two `FlyoutChipLine`s.
 - **Submenus** have no Back row: the heading reads
   `CONTROL CENTRE › APPEARANCE`, the first part smaller and quieter, and
   clicking it goes back (`FlyoutHeading.crumb`).
-- **Appearance** is sectioned like any flyout (its Column is a section
-  group): LOOK, WALLPAPER, BAR, TEXT & MOTION, then the way out.
-  - The look is a card (`LookStepper`): the name large between ‹ and ›,
-    which step through the looks and apply each, "N of M · K changed",
-    and the palette as a band; a click on the name opens the list.
-    Style is a wrapping stepper (`FlyoutStepper.wrap`) with the style's
-    hint under it.
-  - The wallpaper picture (name in words, the transport on it) has every
-    wallpaper as a strip of thumbnails under it, the current one lit.
-    Colours are two tiles, Look's own and Wallpaper, each showing the
-    palette it gives; Intensity is a wrapping stepper once Wallpaper is on.
-  - One setting a line: See-through has its slider short beside the value
-    (`FlyoutSliderRow.inline`), Font size is a stepper, Animations is
-    Off · Fast · Normal.
-  - It ends with two chips on one line: Reset (two clicks, greyed while
-    the look is as designed) and Settings.
+- **Power:** a card with how long it's been up, since when and the windows
+  open; each action with what it does under it (Reboot's chevron opens
+  the one-off targets); Restart shell and Settings as chips.
+- **Applications:** the search, then every app as a row.
+- **Appearance:** the look as a card (`LookStepper`: the name large between
+  ‹ and ›, "N of M · K changed", the palette as a band; a click on the name
+  opens the list); the wallpaper as a card (the picture with its name and
+  transport, every wallpaper as a strip under it); then a setting a line:
+  Style, Colours (Look · Wallpaper, Intensity once it's Wallpaper), Bar,
+  See-through, Font size, Animations; Reset (two clicks) and Settings as
+  chips.
+- **Bar Widgets:** your bar in small as a card, a glyph per module in its
+  group, dim while hidden, a click hides or shows it; the list by group to
+  drag and switch; Edit, Reset (two clicks) and Settings as chips.
 
 ## Settings pages
 

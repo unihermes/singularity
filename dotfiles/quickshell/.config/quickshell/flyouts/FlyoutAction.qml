@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/FlyoutAction.qml
 //
-// A Quick Actions row: icon, label, optional status, and for toggles a
+// An action row: icon, label, optional status, and for toggles a
 // switch. Buttons use it too, so every row shares the icon column. The
 // switch mirrors `checked` (the real state); a click only emits activated().
 

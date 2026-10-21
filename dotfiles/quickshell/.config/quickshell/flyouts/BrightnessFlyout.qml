@@ -75,7 +75,7 @@ FlyoutPanel {
         onActivated: shellRoot.nightLight = !shellRoot.nightLight
     }
 
-    // Same reasoning as Quick Actions' stepper: only shown while there's an
+    // Same reasoning as the Control Centre's Warmth: only shown while there's an
     // effect to see.
     FlyoutStepper {
         visible: shellRoot.nightLight

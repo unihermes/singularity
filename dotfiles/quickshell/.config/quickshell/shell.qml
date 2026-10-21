@@ -31,10 +31,10 @@ ShellRoot {
     // opening it later (the Bluetooth flyout or page) plays their chime
     Component.onCompleted: BtBattery.parts
 
-    // Keep Awake, from Quick Actions. On the root so every screen agrees;
+    // Keep Awake, from the Control Centre. On the root so every screen agrees;
     // session-only so idle is never left inhibited overnight.
     property bool keepAwake: false
-    // Night Light, from Quick Actions: on while hyprsunset runs (stopping it
+    // Night Light, from the Control Centre: on while hyprsunset runs (stopping it
     // restores normal gamma). Session-only, like Keep Awake.
     property bool nightLight: false
     readonly property int nightLightKelvin: Settings.nightLightKelvin
