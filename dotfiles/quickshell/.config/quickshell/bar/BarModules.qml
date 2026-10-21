@@ -384,13 +384,13 @@ Item {
     }
 
     // always there: the packages waiting as a count beside the icon,
-    // Singularity's commits as a badge, a quiet tick when there's nothing,
+    // Singularity's commits as a badge, the icon dimmed when there's nothing,
     // the icon turning while an update runs
     BarModule {
         id: updatesBtn
         readonly property bool busy: Updates.updating || Updates.repoUpdating
         visible: Settings.widgetVisible("updates")
-        icon: busy ? "󰑓" : Updates.count > 0 ? "󰚰" : Updates.lastChecked !== null ? "󰄬" : "󰚰"
+        icon: busy ? "󰑓" : "󰚰"
         spinning: busy
         label: Updates.count > 0 ? String(Updates.count) : ""
         badge: Updates.repoBehind
