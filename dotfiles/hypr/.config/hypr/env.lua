@@ -19,6 +19,13 @@ hl.env("XCURSOR_THEME", S.cursorTheme)
 hl.env("XCURSOR_SIZE", S.cursorSize)
 hl.env("HYPRCURSOR_THEME", S.cursorTheme)
 hl.env("HYPRCURSOR_SIZE", S.cursorSize)
+-- GTK's settings.ini with the cursor (AppearanceSync writes it), for X11 apps
+-- that read no gsettings: GTK ones, and Chromium/Electron through GTK
+local configDirs = os.getenv("XDG_CONFIG_DIRS")
+local xdg = os.getenv("HOME") .. "/.local/state/singularity/xdg"
+if not (configDirs or ""):find(xdg, 1, true) then
+    hl.env("XDG_CONFIG_DIRS", xdg .. ":" .. ((configDirs or "") ~= "" and configDirs or "/etc/xdg"))
+end
 -- Quickshell's icon theme (Qt has none configured); must be in the env at
 -- launch, as `//@ pragma Env` is applied too late for it
 hl.env("QS_ICON_THEME", S.state("icons", "kora"))

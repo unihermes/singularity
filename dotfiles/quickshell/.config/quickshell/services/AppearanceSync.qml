@@ -17,8 +17,9 @@
 // Zen's and Floorp's profiles get a marked block in user.js (browserPrefs)
 // and Floorp its userChrome.css (browserChrome). GTK and Qt apps also get
 // dark/light, icon and cursor themes and the system font, set only here:
-// gsettings for GTK (live), qt6ct.conf for Qt (next launch), and the
-// XCursor fallback index.theme.
+// gsettings for GTK (live), qt6ct.conf for Qt (next launch), the
+// XCursor fallback index.theme, and xdg/gtk-*/settings.ini for the cursor
+// of GTK and Chromium apps on X11.
 
 import Quickshell
 import Quickshell.Io
@@ -934,6 +935,12 @@ Scope {
             path: Quickshell.env("HOME") + "/.local/share/icons/default/index.theme",
             transform: () => index,
         })
+        // GTK on X11 reads no gsettings, and Chromium/Electron there take
+        // their pointer from GTK; env.lua puts xdg/ on XDG_CONFIG_DIRS
+        var ini = "[Settings]\ngtk-cursor-theme-name=" + Settings.cursorTheme
+            + "\ngtk-cursor-theme-size=" + Settings.cursorSize + "\n"
+        for (var v of ["gtk-3.0", "gtk-4.0"])
+            AtomicFileWrite.write({ path: root.dir + "/xdg/" + v + "/settings.ini", transform: () => ini })
     }
     function writeIcons() {
         var theme = Settings.iconTheme
