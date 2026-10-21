@@ -378,12 +378,18 @@ Item {
         }
     }
 
+    // always there: the packages waiting as a count beside the icon,
+    // Singularity's commits as a badge, a quiet tick when there's nothing,
+    // the icon turning while an update runs
     BarModule {
         id: updatesBtn
-        visible: (Updates.count > 0 || Updates.repoBehind > 0) && Settings.widgetVisible("updates")
-        icon: "󰚰"
-        // what's waiting as a badge: packages, else Singularity's commits
-        badge: Updates.count > 0 ? Updates.count : Updates.repoBehind
+        readonly property bool busy: Updates.updating || Updates.repoUpdating
+        visible: Settings.widgetVisible("updates")
+        icon: busy ? "󰑓" : Updates.count > 0 ? "󰚰" : Updates.lastChecked !== null ? "󰄬" : "󰚰"
+        spinning: busy
+        label: Updates.count > 0 ? String(Updates.count) : ""
+        badge: Updates.repoBehind
+        dimmed: !busy && Updates.count === 0 && Updates.repoBehind === 0
         active: screenScope.openFlyout === "updates"
         onActivated: screenScope.toggleFlyout("updates", updatesBtn)
     }

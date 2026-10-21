@@ -232,9 +232,14 @@ Every bar flyout keeps to these (settled 2026-10-20):
   the date's place. The flyout as before: the time large with the
   seconds quieter and the whole date, over the Month / Today / Timer
   tabs, then Settings as a chip.
-- **Updates:** where things stand as a card with ↻ and Update at its
-  end; the packages under Repositories and AUR, each folding; Reclaimable
-  with Clean up; Singularity's commits. The bar module's count is a badge.
+- **Updates** (picked 2026-10-21): always on the bar: the packages
+  waiting as a count beside the icon, Singularity's commits as a badge, a
+  quiet tick when there's nothing, the icon turning while an update runs.
+  The flyout: where things stand as a card with ↻ and Update at its end;
+  a row per kind with its count (Repositories, AUR, Singularity, Clean
+  up), each opening a page of its own (breadcrumb back) with its list and
+  its action (Update N packages, Pull now, Clean up, two clicks); then
+  Settings.
 - **Failed services:** a line per unit with log, restart and clear as
   icons; the count and Clear all (two clicks) under them.
 - **Privacy:** Mic, Camera and Screen as three tiles, lit while in use

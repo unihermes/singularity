@@ -38,6 +38,8 @@ Item {
     // a count in a bubble on the icon's top-right corner, drawn over the
     // chip so its width doesn't change; 0 hides it
     property int badge: 0
+    // the icon turns, for work under way (Updates installing)
+    property bool spinning: false
 
     readonly property int badgeInset: Theme.borderWidth + 1
 
@@ -82,6 +84,14 @@ Item {
             color: root.iconColor.a > 0 ? root.iconColor : root.fg
             font.family: Theme.fontIcon
             font.pixelSize: root.iconSize
+
+            RotationAnimation on rotation {
+                running: root.spinning
+                loops: Animation.Infinite
+                from: 0; to: 360
+                duration: Theme.durPulse * 2
+                onRunningChanged: if (!running) iconText.rotation = 0
+            }
 
             Rectangle {
                 visible: root.badge > 0

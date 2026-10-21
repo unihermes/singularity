@@ -2,9 +2,8 @@
 // ~/.config/quickshell/flyouts/UpdatesFlyout.qml
 //
 // A card saying where things stand with Check and Update at its end, then
-// the packages under Repositories and AUR (each folds), the space a
-// clean-up would free, then Singularity's own commits waiting upstream
-// while there are any.
+// a row per kind (Repositories, AUR, Singularity's commits, Clean up), each
+// opening a page of its own with its list and its action, then Settings.
 
 import QtQuick
 import "../services"
@@ -20,14 +19,23 @@ FlyoutPanel {
     // what it's in
     readonly property var reclaimParts: reclaim ? /^About ([\d.]+ [KMGT]?B): (.*)$/.exec(reclaim.detail) : null
     function scanHealth() { if (Health.lastScan === "" && !Health.scanning) Health.scan() }
-    onOpenChanged: if (open) scanHealth()
+    onOpenChanged: if (open) scanHealth(); else page = ""
+
+    // "" is the overview; "repo", "aur", "singularity" or "clean" a page
+    property string page: ""
+    readonly property var pageTitles: ({ repo: "REPOSITORIES", aur: "AUR", singularity: "SINGULARITY", clean: "CLEAN UP" })
     Component.onCompleted: if (open) scanHealth()
 
-    FlyoutHeading { text: "UPDATES" }
+    FlyoutHeading {
+        crumb: root.page === "" ? "" : "UPDATES"
+        text: root.page === "" ? "UPDATES" : root.pageTitles[root.page]
+        onCrumbClicked: root.page = ""
+    }
 
     // where things stand, with Check (and Update while there are some)
     HeadCard {
         id: card
+        visible: root.page === ""
         readonly property bool some: Updates.count > 0
         glyph: some || Updates.lastChecked === null ? "󰚰" : "󰄬"
         glyphColor: some ? Theme.accent : Updates.lastChecked === null ? Theme.muted : Theme.good
@@ -59,81 +67,46 @@ FlyoutPanel {
         }
     }
 
-    // the packages by where they come from, each group folding on its heading
+    // the packages by where they come from
     readonly property var repoPackages: Updates.packages.filter(p => !p.aur)
     readonly property var aurPackages: Updates.packages.filter(p => p.aur)
 
-    FlyoutHeading {
-        visible: repoPackages.length > 0
-        text: "REPOSITORIES  " + repoPackages.length
-    }
-    PackageList { packages: repoPackages }
+    FlyoutDivider { visible: root.page === "" }
 
-    FlyoutHeading {
-        visible: aurPackages.length > 0
-        text: "AUR  " + aurPackages.length
-    }
-    PackageList { packages: aurPackages }
+    // a row per kind, its count at the end; each opens its page
+    Repeater {
+        model: root.page === "" ? [
+            { page: "repo", icon: "󰏖", label: "Repositories", value: String(root.repoPackages.length) },
+            { page: "aur", icon: "󰏗", label: "AUR", value: String(root.aurPackages.length) },
+            { page: "singularity", icon: "󰜘", label: "Singularity",
+              value: Updates.repoBehind > 0 ? Updates.repoBehind + (Updates.repoBehind === 1 ? " commit" : " commits") : "Current" },
+            { page: "clean", icon: "󰃢", label: "Clean up",
+              value: Health.busyRepair === "reclaim" ? "Cleaning…" : root.reclaimParts ? root.reclaimParts[1] : "Nothing" },
+        ] : []
 
-    // what cleaning the package caches and AUR builds would free
-    FlyoutDivider { visible: reclaimRow.visible }
-
-    Item {
-        id: reclaimRow
-        visible: !!reclaimParts
-        width: parent.width
-        height: Math.max(reclaimText.implicitHeight, cleanChip.height) + Theme.spaceXs
-
-        Column {
-            id: reclaimText
-            anchors.left: parent.left
-            anchors.right: cleanChip.left
-            anchors.rightMargin: Theme.spaceM
-            anchors.verticalCenter: parent.verticalCenter
-
-            Text {
-                width: parent.width
-                text: "Reclaimable" + (reclaimParts ? ": " + reclaimParts[1] : "")
-                elide: Text.ElideRight
-                color: Theme.text
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                width: parent.width
-                text: Health.busyRepair === "reclaim" ? "Cleaning…" : !reclaimParts ? ""
-                    : reclaimParts[2].split(", ").map(t => t.replace(/ [\d.]+ [KMGT]?B$/, "")).join(", ")
-                elide: Text.ElideRight
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-        }
-
-        FlyoutChip {
-            id: cleanChip
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            text: "Clean up"
-            confirmText: reclaimParts ? "Clean up " + reclaimParts[1] + "?" : "Clean up?"
-            enabled: Health.busyRepair === ""
-            onClicked: Health.repair(reclaim)
+        FlyoutRow {
+            required property var modelData
+            leadingIcon: modelData.icon
+            label: modelData.label
+            trailing: modelData.value + "  󰅂"
+            trailingIsValue: true
+            onActivated: root.page = modelData.page
         }
     }
+
+    // --- a page each ---
+
+    FlyoutRow {
+        visible: (root.page === "repo" && root.repoPackages.length === 0)
+            || (root.page === "aur" && root.aurPackages.length === 0)
+        enabled: false
+        label: Updates.lastChecked === null ? "Not checked yet" : "Nothing to update"
+    }
+    PackageList { packages: root.page === "repo" ? root.repoPackages : root.page === "aur" ? root.aurPackages : [] }
 
     // Singularity's clone, behind its upstream
-    FlyoutDivider { visible: Updates.repoBehind > 0 }
-
-    FlyoutHeading {
-        visible: Updates.repoBehind > 0
-        text: "SINGULARITY  " + Updates.repoBehind
-            + (Updates.repoBehind === 1 ? " commit" : " commits") + " to pull"
-    }
-
     Repeater {
-        model: Updates.repoBehind > 0 ? Updates.repoCommits.slice(0, 3) : []
+        model: root.page === "singularity" ? Updates.repoCommits.slice(0, 8) : []
 
         FlyoutRow {
             required property var modelData
@@ -144,30 +117,78 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        visible: Updates.repoCommits.length > 3
+        visible: root.page === "singularity" && Updates.repoCommits.length > 8
         enabled: false
-        label: "and " + (Updates.repoCommits.length - 3) + " more"
+        label: "and " + (Updates.repoCommits.length - 8) + " more"
+    }
+
+    FlyoutRow {
+        visible: root.page === "singularity" && Updates.repoBehind === 0
+        enabled: false
+        label: "Up to date with " + (Updates.repoUpstream || "upstream")
+    }
+
+    // what cleaning the package caches and AUR builds would free, by part
+    Repeater {
+        model: root.page === "clean" && root.reclaimParts ? root.reclaimParts[2].split(", ") : []
+
+        FlyoutRow {
+            required property var modelData
+            readonly property var m: /^(.*) ([\d.]+ [KMGT]?B)$/.exec(modelData)
+            enabled: false
+            label: m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : modelData
+            trailing: m ? m[2] : ""
+            trailingIsValue: true
+        }
+    }
+
+    FlyoutRow {
+        visible: root.page === "clean" && !root.reclaimParts
+        enabled: false
+        label: Health.scanning ? "Looking…" : "Nothing to clean up"
+    }
+
+    // every page's own action, after its list
+    FlyoutDivider { visible: root.page !== "" }
+
+    FlyoutChipLine {
+        visible: (root.page === "repo" || root.page === "aur") && Updates.count > 0
+        chips: [{ icon: "󰚰", text: Updates.count === 1 ? "Update 1 package" : "Update " + Updates.count + " packages", act: "update" }]
+        onPicked: {
+            Updates.update()
+            scope.openFlyout = ""
+        }
     }
 
     // a fast-forward only, as in Settings, so not past local commits
-    FlyoutRow {
-        visible: Updates.repoBehind > 0
-        label: Updates.repoUpdating ? "Pulling…"
+    FlyoutChip {
+        visible: root.page === "singularity" && Updates.repoBehind > 0
+        width: parent.width
+        icon: "󰇚"
+        text: Updates.repoUpdating ? "Pulling…"
             : Updates.repoAhead > 0 ? "Local commits in the way" : "Pull now"
-        trailing: "󰇚"
-        busy: Updates.repoUpdating
         enabled: Updates.repoAhead === 0 && !Updates.repoUpdating
-        onActivated: {
+        onClicked: {
             Updates.updateRepo()
             scope.openFlyout = ""
         }
     }
 
-    FlyoutDivider {}
+    FlyoutChip {
+        visible: root.page === "clean" && !!root.reclaimParts
+        width: parent.width
+        icon: "󰃢"
+        text: Health.busyRepair === "reclaim" ? "Cleaning…" : "Clean up " + (root.reclaimParts ? root.reclaimParts[1] : "")
+        confirmText: root.reclaimParts ? "Clean up " + root.reclaimParts[1] + "?" : "Clean up?"
+        enabled: Health.busyRepair === ""
+        onClicked: Health.repair(root.reclaim)
+    }
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("updates")
+    FlyoutDivider { visible: root.page === "" }
+
+    FlyoutChipLine {
+        visible: root.page === ""
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("updates")
     }
 }
