@@ -285,10 +285,11 @@ Every bar flyout keeps to these (settled 2026-10-20):
   the charge since the shell started (a sample every five minutes, a day
   kept) as a graph; the power profile as one strip; Health. Settings as
   a chip.
-- **Notifications:** a line per notification (the app's icon, the
+- **Notifications** (picked again 2026-10-21): a line per notification (the app's icon, the
   summary, its age, close on hover); a click opens the whole card in
   place. Clear all on the heading, Do Not Disturb under the list; empty,
-  All caught up with a green tick.
+  All caught up with a green tick. Settings as a chip
+  ends it.
 
 ### Power menu and workspace grid
 

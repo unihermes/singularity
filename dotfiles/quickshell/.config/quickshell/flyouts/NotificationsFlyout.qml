@@ -4,8 +4,9 @@
 // The notification history, newest first, a line each: the app's icon, the
 // summary and its age, a close on hover. A click opens the whole card in
 // place (body, picture, actions). Clear all on the heading while there's
-// any, Do Not Disturb under the list. Empty, it says so in a card. Opening it marks everything
-// read; what was new stays marked while it's open.
+// any, Do Not Disturb under the list, then Settings. Empty, it says so in a
+// card. Opening it marks everything read; what was new stays marked while
+// it's open.
 
 import QtQuick
 import "../services"
@@ -107,9 +108,10 @@ FlyoutPanel {
         onActivated: Notifications.toggleDnd()
     }
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("notifications")
+    FlyoutDivider {}
+
+    FlyoutChipLine {
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("notifications")
     }
 }
