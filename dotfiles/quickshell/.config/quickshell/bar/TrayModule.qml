@@ -159,7 +159,7 @@ ModuleFrame {
                     entry.triggered()
                 } else {
                     var app = trayFrame.desktopEntry(item)
-                    if (app) app.execute()
+                    if (app) Apps.run(app)
                     else item.activate()
                 }
                 trayFrame.showTries = 0

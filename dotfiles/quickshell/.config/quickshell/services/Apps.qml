@@ -68,6 +68,29 @@ Singleton {
         return starts.concat(rest)
     }
 
+    // The pointer for what the shell starts, as env.lua sets it for
+    // Hyprland: the shell's own environment is fixed at its launch, so a
+    // theme picked since would otherwise miss X11 apps (Electron there
+    // reads XCURSOR_* and GTK's settings.ini, which XDG_CONFIG_DIRS finds).
+    readonly property string xdgDir: Settings.stateDir + "/xdg"
+    readonly property var cursorEnv: ({
+        XCURSOR_THEME: Settings.cursorTheme,
+        XCURSOR_SIZE: String(Settings.cursorSize),
+        HYPRCURSOR_THEME: Settings.cursorTheme,
+        HYPRCURSOR_SIZE: String(Settings.cursorSize),
+        XDG_CONFIG_DIRS: [xdgDir].concat((Quickshell.env("XDG_CONFIG_DIRS") || "/etc/xdg")
+            .split(":").filter(d => d !== "" && d !== xdgDir)).join(":"),
+    })
+
+    // a desktop entry's command, in cursorEnv
+    function run(entry) {
+        Quickshell.execDetached({
+            command: entry.command,
+            workingDirectory: entry.workingDirectory,
+            environment: cursorEnv,
+        })
+    }
+
     function launch(entry) {
         var next = Object.assign({}, counts)
         next[entry.id] = (next[entry.id] || 0) + 1
@@ -84,9 +107,9 @@ Singleton {
             // push it as one nested element instead of spreading it
             var cmd = [Settings.terminal, "-e"]
             for (var i = 0; i < entry.command.length; i++) cmd.push(entry.command[i])
-            Quickshell.execDetached(cmd)
+            Quickshell.execDetached({ command: cmd, environment: cursorEnv })
         } else
-            entry.execute()
+            run(entry)
     }
 
     // The icon for a window class: via desktop entries (heuristicLookup),

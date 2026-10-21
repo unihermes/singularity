@@ -918,14 +918,18 @@ Scope {
     }
 
     // Cursor and icon themes for Hyprland's login environment (`cursor`:
-    // "<theme> <size>", `icons`); the pointer changes live via setcursor.
+    // "<theme> <size>", `icons`); the pointer changes live via setcursor, and
+    // Hyprland's environment for apps it starts from now on via hl.env.
     function writeCursor(apply) {
         var line = Settings.cursorTheme + " " + Settings.cursorSize
+        var sq = s => "'" + String(s).replace(/'/g, "'\\''") + "'"
+        var env = Object.entries(Apps.cursorEnv)
+            .map(([k, v]) => "hl.env(" + JSON.stringify(k) + ", " + JSON.stringify(v) + ")").join("; ")
         AtomicFileWrite.write({
             path: root.dir + "/cursor",
             transform: () => line + "\n",
-            after: apply ? "hyprctl setcursor '" + String(Settings.cursorTheme).replace(/'/g, "'\\''") + "' "
-                + Settings.cursorSize + " >/dev/null" : "",
+            after: apply ? "hyprctl setcursor " + sq(Settings.cursorTheme) + " " + Settings.cursorSize
+                + " >/dev/null; hyprctl eval " + sq(env) + " >/dev/null" : "",
         })
         // the XCursor fallback, for apps that read neither gsettings nor
         // XCURSOR_THEME
