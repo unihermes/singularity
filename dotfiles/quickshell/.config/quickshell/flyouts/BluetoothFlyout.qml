@@ -2,8 +2,9 @@
 // ~/.config/quickshell/flyouts/BluetoothFlyout.qml
 //
 // The radio switch on the heading, then DEVICES with Scan on its heading:
-// each connected device as a card (its kind, battery and Disconnect), the
-// other paired ones as rows, then anything new the scan turned up. Needs
+// each connected device as a card (its kind, battery and Disconnect, an
+// earbuds' left, right and case as tiles under it), the other paired ones
+// as rows, then anything new the scan turned up, then Settings. Needs
 // bar's adapter-state helpers.
 
 import Quickshell
@@ -105,26 +106,51 @@ FlyoutPanel {
         }
     }
 
-    // each connected device as a card: what it is, its battery, Disconnect
+    // each connected device as a card: what it is, its battery (earbuds'
+    // left, right and case as tiles under it), Disconnect
     Repeater {
         model: ScriptModel { values: btFlyout.radioOn ? btFlyout.connected : [] }
 
-        HeadCard {
-            id: card
+        Column {
+            id: device
             required property var modelData
-            readonly property int battery: BtBattery.level(modelData)
-            readonly property bool aliasIsMac: modelData.name === modelData.address.replace(/:/g, "-")
-            glyph: BtKind.glyph(modelData.icon)
-            glyphColor: Theme.accent
-            title: modelData.name !== "" && !aliasIsMac ? modelData.name
-                : modelData.deviceName !== "" ? modelData.deviceName : modelData.address
-            lines: [
-                "Connected" + (BtKind.word(modelData.icon) !== "" ? " · " + BtKind.word(modelData.icon) : ""),
-                battery >= 0 ? BtKind.battery(battery) + " " + battery + "% battery" : "",
-            ]
-            FlyoutChip {
-                text: modelData.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…" : "Disconnect"
-                onClicked: card.modelData.disconnect()
+            readonly property var parts: modelData.batteryAvailable ? null : BtBattery.parts[modelData.address] || null
+            width: parent ? parent.width : 0
+            spacing: Theme.spaceS
+
+            HeadCard {
+                id: card
+                readonly property var modelData: device.modelData
+                readonly property int battery: BtBattery.level(modelData)
+                readonly property bool aliasIsMac: modelData.name === modelData.address.replace(/:/g, "-")
+                glyph: BtKind.glyph(modelData.icon)
+                glyphColor: Theme.accent
+                title: modelData.name !== "" && !aliasIsMac ? modelData.name
+                    : modelData.deviceName !== "" ? modelData.deviceName : modelData.address
+                lines: [
+                    "Connected" + (BtKind.word(modelData.icon) !== "" ? " · " + BtKind.word(modelData.icon) : ""),
+                    battery >= 0 && !device.parts ? BtKind.battery(battery) + " " + battery + "% battery" : "",
+                ]
+                FlyoutChip {
+                    text: card.modelData.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…" : "Disconnect"
+                    onClicked: card.modelData.disconnect()
+                }
+            }
+
+            TileGrid {
+                visible: !!device.parts
+                columns: 3
+                Repeater {
+                    model: device.parts ? ["Left", "Right", "Case"].map((n, i) => ({ name: n, level: device.parts[i] })) : []
+                    FlyoutTile {
+                        required property var modelData
+                        width: parent.cell
+                        centred: true
+                        title: modelData.level >= 0 ? modelData.level + "%" : "—"
+                        caption: modelData.name
+                        dimmed: modelData.level < 0
+                    }
+                }
             }
         }
     }
@@ -150,9 +176,8 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("bluetooth")
+    FlyoutChipLine {
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("bluetooth")
     }
 }

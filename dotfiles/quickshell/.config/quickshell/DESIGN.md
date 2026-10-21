@@ -262,11 +262,12 @@ Every bar flyout keeps to these (settled 2026-10-20):
   card's own last); CoolerControl's modes as a segmented strip while it
   has any (its daemon's API, with the GUI's token); CoolerControl and
   System as chips.
-- **Bluetooth:** the radio's switch on the heading; each connected device
-  under DEVICES (Scan on that heading) as a card (its kind, battery,
-  Disconnect); the other paired ones as rows (Connect on hover); what a
-  scan found. The bar
-  icon turns to the connected glyph while a device is on.
+- **Bluetooth** (picked again 2026-10-21): the radio's switch on the
+  heading; each connected device under DEVICES (Scan on that heading) as
+  a card (its kind, battery, Disconnect), an earbuds' left, right and
+  case as tiles under it; the other paired ones as rows (Connect on
+  hover); what a scan found; Settings as a chip. The bar icon turns to
+  the connected glyph while a device is on.
 - **Network:** the connection as a card (the cable while it's up, else the
   joined network, with the address); Down and Up as tiles over the last
   minute's graph (SystemStats samples while it's open); the Wi-Fi switch;
