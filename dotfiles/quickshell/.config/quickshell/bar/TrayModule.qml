@@ -171,7 +171,9 @@ ModuleFrame {
 
     Repeater {
         id: trayRepeater
-        model: trayFrame.ordered
+        // a ScriptModel, so an icon coming or going doesn't rebuild the
+        // rest (which empties the tray for a frame and jolts the bar)
+        model: ScriptModel { values: trayFrame.ordered }
 
         Item {
             id: trayIcon

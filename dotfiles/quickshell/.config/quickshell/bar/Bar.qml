@@ -364,9 +364,39 @@ PanelWindow {
         for (const key in items) {
             const it = barModules.widgetItems[key]
             it.parent = Qt.binding(() => slotsFor(Settings.widgetSection(key)))
-            it.x = Qt.binding(() => slotX(it.parent, key))
-            it.slideX = Qt.binding(() => slotsAnimate)
         }
+        placeSlots()
+    }
+
+    // Every module's x, and the visible modules of its section in order. A
+    // module slides only when that order changes (Bar Widgets moving or
+    // hiding one): a neighbour changing width, like the tray gaining an
+    // icon, moves it at once, as a slide would trail the section's edge.
+    readonly property var slotPlaces: {
+        const out = {}
+        for (const key in barModules.widgetItems) {
+            const section = Settings.widgetSection(key)
+            const slots = slotsFor(section)
+            const shown = slots.order.filter(k => {
+                const it = slots.itemFor(k)
+                return it && it.visible
+            })
+            out[key] = { x: slotX(slots, key), order: section + ":" + shown.join(",") }
+        }
+        return out
+    }
+    property var placedOrders: ({})
+    onSlotPlacesChanged: placeSlots()
+    function placeSlots() {
+        const places = slotPlaces
+        const orders = {}
+        for (const key in places) {
+            const it = barModules.widgetItems[key]
+            it.slideX = slotsAnimate && placedOrders[key] !== places[key].order
+            it.x = places[key].x
+            orders[key] = places[key].order
+        }
+        placedOrders = orders
     }
 
     function slotsFor(section) {
@@ -435,8 +465,8 @@ PanelWindow {
         return w + Math.max(0, n - 1) * Theme.moduleSpacing
     }
 
-    // Slides modules when the order changes, but not at startup,
-    // where every module would sweep in from x=0 as widths settle.
+    // off at startup, where every module would sweep in from x=0 as
+    // widths settle
     property bool slotsAnimate: false
     Timer {
         interval: 800
