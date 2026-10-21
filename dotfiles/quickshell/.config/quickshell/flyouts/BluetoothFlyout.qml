@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/BluetoothFlyout.qml
 //
-// The radio switch on the heading, then DEVICES with Scan on its heading:
+// One heading with the paired count, Scan and the radio switch, then
 // each connected device as a card (its kind, battery and Disconnect, an
 // earbuds' left, right and case as tiles under it), the other paired ones
 // as rows, then anything new the scan turned up, then Settings. Needs
@@ -34,15 +34,29 @@ FlyoutPanel {
     readonly property bool radioOn: bar.btAdapterOn(adapter)
 
     FlyoutHeading {
-        text: "BLUETOOTH"
-        control: btFlyout.adapter && !bar.btAdapterBlocked(btFlyout.adapter) ? radioSwitch : null
+        text: "BLUETOOTH" + (btFlyout.radioOn && btFlyout.saved.length > 0 ? "  " + btFlyout.saved.length : "")
+        control: btFlyout.adapter && !bar.btAdapterBlocked(btFlyout.adapter) ? headingControls : null
     }
 
+    // Scan, then the radio switch. Discovery is meaningless with the radio
+    // off, and bluez errors rather than ignoring the request, so Scan only
+    // shows with it on.
     Component {
-        id: radioSwitch
-        Switch {
-            checked: btFlyout.radioOn
-            onToggled: bar.setBtPowered(btFlyout.adapter, !btFlyout.radioOn)
+        id: headingControls
+        Row {
+            spacing: Theme.spaceM
+            IconButton {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: btFlyout.radioOn
+                icon: "󰑐"
+                spinning: btFlyout.adapter && btFlyout.adapter.discovering
+                onClicked: btFlyout.adapter.discovering = !btFlyout.adapter.discovering
+            }
+            Switch {
+                anchors.verticalCenter: parent.verticalCenter
+                checked: btFlyout.radioOn
+                onToggled: bar.setBtPowered(btFlyout.adapter, !btFlyout.radioOn)
+            }
         }
     }
 
@@ -88,23 +102,6 @@ FlyoutPanel {
 
     readonly property var connected: saved.filter(d => d.connected)
     readonly property var paired: saved.filter(d => !d.connected)
-
-    FlyoutHeading {
-        visible: btFlyout.radioOn
-        text: "DEVICES" + (btFlyout.saved.length > 0 ? "  " + btFlyout.saved.length : "")
-        control: scanButton
-    }
-
-    // Discovery is meaningless with the radio off, and bluez errors rather
-    // than ignoring the request, so the button only shows with it on.
-    Component {
-        id: scanButton
-        IconButton {
-            icon: "󰑐"
-            spinning: btFlyout.adapter && btFlyout.adapter.discovering
-            onClicked: btFlyout.adapter.discovering = !btFlyout.adapter.discovering
-        }
-    }
 
     // each connected device as a card: what it is, its battery (earbuds'
     // left, right and case as tiles under it), Disconnect
