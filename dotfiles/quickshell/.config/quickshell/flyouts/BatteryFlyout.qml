@@ -3,7 +3,7 @@
 //
 // The level large with the time left and the draw beside it, the charge
 // through the day as a graph, then the power profile as one strip and the
-// battery's health.
+// battery's health, then Settings.
 
 import Quickshell.Services.UPower
 import QtQuick
@@ -106,9 +106,8 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    FlyoutRow {
-        label: "More in Settings"
-        trailing: "󰁔"
-        onActivated: scope.openSettings("power")
+    FlyoutChipLine {
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: scope.openSettings("power")
     }
 }

@@ -281,9 +281,10 @@ Every bar flyout keeps to these (settled 2026-10-20):
 - **Brightness** (picked again 2026-10-21): a labelled slider per
   display, this screen's first, then Night Light, then Settings as a
   chip. The bar's sun turns to the moon while Night Light is on.
-- **Battery:** the level large with state, time left and draw beside it;
+- **Battery** (picked again 2026-10-21): the level large with state, time left and draw beside it;
   the charge since the shell started (a sample every five minutes, a day
-  kept) as a graph; the power profile as one strip; Health.
+  kept) as a graph; the power profile as one strip; Health. Settings as
+  a chip.
 - **Notifications:** a line per notification (the app's icon, the
   summary, its age, close on hover); a click opens the whole card in
   place. Clear all on the heading, Do Not Disturb under the list; empty,
