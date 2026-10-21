@@ -107,9 +107,11 @@ run)
 	printf '=== %s ===\n' "$(date '+%Y-%m-%d %H:%M:%S')" >>"$log"
 
 	# wait (20 s at most) for the bar's tray: Qt and Electron apps that find
-	# no StatusNotifierWatcher don't look again
+	# no tray don't look again. The watcher (tray-watcher.py) is up before
+	# the bar, so it's the bar registering as its host that counts.
 	for (( i = 0; i < 100; i++ )); do
-		busctl --user status org.kde.StatusNotifierWatcher &>/dev/null && break
+		[[ $(busctl --user get-property org.kde.StatusNotifierWatcher /StatusNotifierWatcher \
+			org.kde.StatusNotifierWatcher IsStatusNotifierHostRegistered 2>/dev/null) == "b true" ]] && break
 		sleep 0.2
 	done
 	(( i == 100 )) && printf 'no tray after 20 s; starting entries anyway\n' >>"$log"

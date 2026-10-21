@@ -18,8 +18,12 @@ hl.on("hyprland.start", function()
         .. " systemctl --user start hypridle.service || hypridle")
     -- logind's lid handling inhibited until Hyprland exits (lid.sh handles it)
     hl.exec_cmd("systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' waitpid $(pidof -s Hyprland)")
+    -- the tray's watcher, apart from the shell so a shell restart keeps the
+    -- tray up; the shell waits for it (5 s at most), or it would take the name
+    hl.exec_cmd("exec ~/.config/hypr/tray-watcher.py > ~/.cache/tray-watcher.log 2>&1")
     -- QML warnings to a log; `exec` so no idle sh is left as the parent
-    hl.exec_cmd("exec quickshell > ~/.cache/quickshell.log 2>&1")
+    hl.exec_cmd("for i in $(seq 50); do busctl --user status org.kde.StatusNotifierWatcher >/dev/null 2>&1 && break;"
+        .. " sleep 0.1; done; exec quickshell > ~/.cache/quickshell.log 2>&1")
     -- ALT+Tab's IPC relay; QT_FORCE_STDERR_LOGGING keeps it in its log
     hl.exec_cmd("exec env QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
     -- lifts shadows on displays display-fixes.lua's toneCurves lists,

@@ -32,6 +32,8 @@ socat
 # the calendar flyout's events from iCalendar feeds, recurrences included
 # (quickshell/scripts/calendar-events.py)
 python
+# the tray's watcher (hypr/tray-watcher.py), on D-Bus through GLib
+python-gobject
 python-icalendar
 python-recurring-ical-events
 

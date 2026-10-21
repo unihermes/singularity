@@ -23,10 +23,12 @@ Singleton {
     }
     Component.onCompleted: refresh()
 
-    // a fresh process (Restart shell, and how Qt rereads fonts); Hyprland
-    // runs the script, so the new shell gets its environment, not this one's
+    // a fresh process (Restart shell, and how Qt rereads fonts), started by
+    // Hyprland so it gets Hyprland's environment, not this one's. The tray's
+    // watcher runs apart (tray-watcher.py), so apps don't see the tray go.
     function restartShell() {
-        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.exec_cmd(\"~/.config/singularity/restart-shell.sh\")"])
+        Quickshell.execDetached(["hyprctl", "dispatch",
+            "hl.dsp.exec_cmd(\"qs kill; sleep 0.5; exec quickshell > ~/.cache/quickshell.log 2>&1\")"])
     }
 
     Process {
