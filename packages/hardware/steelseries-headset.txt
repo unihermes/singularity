@@ -1,0 +1,5 @@
+# A SteelSeries USB headset (hardware.sh: has steelseries-headset).
+
+# Reads the ChatMix dial, which sets the Game and Chat channels against each
+# other (services/Channels.qml); its udev rule lets the user open the device.
+headsetcontrol

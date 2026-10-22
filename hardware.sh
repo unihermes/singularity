@@ -12,7 +12,8 @@
 
 # the capabilities `has` knows, one per packages/hardware/*.txt and more
 hw_caps=(battery lid backlight wifi bluetooth fingerprint nvidia intel-gpu
-  intel-panel ahci ite-superio ipu6-webcam intel-ish i2c-touchpad charge-modes)
+  intel-panel ahci ite-superio ipu6-webcam intel-ish i2c-touchpad charge-modes
+  steelseries-headset)
 
 # any PCI device whose class starts with $1 (0x03 display, 0x0106 AHCI),
 # from vendor $2 when given
@@ -93,6 +94,14 @@ has() {
     i2c-touchpad) compgen -G '/sys/bus/i2c/drivers/i2c_hid_acpi/*-*' >/dev/null ;;
     # the firmware's charge modes (Dell's dell_laptop, for singularity-charge)
     charge-modes) compgen -G '/sys/class/power_supply/BAT*/charge_types' >/dev/null ;;
+    # a SteelSeries USB headset or its dongle (an audio interface), whose
+    # ChatMix dial headsetcontrol reads
+    steelseries-headset)
+      for f in /sys/bus/usb/devices/*:*; do
+        [[ $(cat "${f%:*}/idVendor" 2>/dev/null) == 1038 ]] || continue
+        [[ $(cat "$f/bInterfaceClass" 2>/dev/null) == 01 ]] && return 0
+      done
+      return 1 ;;
     *) echo "has: no capability called '$1' (hardware.sh)" >&2; return 2 ;;
   esac
 }

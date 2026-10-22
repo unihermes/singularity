@@ -1,0 +1,91 @@
+// Singularity - Quickshell
+// ~/.config/quickshell/services/Channels.qml
+//
+// Game, Chat and Media: the outputs pipewire.conf.d/channels.conf makes,
+// each mixing into the real output. New playback lands on Game. A headset's
+// ChatMix dial (read with headsetcontrol) sets Game and Chat against each
+// other on the channels' own streams into the output, so each channel's
+// level stays the user's.
+
+pragma Singleton
+
+import Quickshell
+import Quickshell.Io
+import Quickshell.Services.Pipewire
+import QtQuick
+
+Singleton {
+    id: root
+
+    readonly property var order: ["game", "chat", "media"]
+
+    function key(n) {
+        return (n && n.properties) ? n.properties["singularity.channel"] || "" : ""
+    }
+
+    // the channels' sinks, Game first; and their streams into the output
+    readonly property var sinks: Pipewire.nodes.values.filter(n => key(n) !== "" && !n.isStream)
+        .sort((a, b) => order.indexOf(key(a)) - order.indexOf(key(b)))
+    readonly property var outs: Pipewire.nodes.values.filter(n => key(n) !== "" && n.isStream)
+
+    function isChannel(n) { return key(n) !== "" }
+
+    // --- ChatMix ---------------------------------------------------------------
+
+    // the dial, 0 (all Game) to 128 (all Chat) with 64 even; -1 with none
+    property int chatmix: -1
+    readonly property real gameMix: chatmix > 64 ? (128 - chatmix) / 64 : 1
+    readonly property real chatMix: chatmix >= 0 && chatmix < 64 ? chatmix / 64 : 1
+
+    function mix(n) {
+        var k = key(n)
+        return k === "game" ? gameMix : k === "chat" ? chatMix : 1
+    }
+    function apply() {
+        outs.forEach(n => {
+            if (n.ready && n.audio && Math.abs(n.audio.volume - mix(n)) > 0.005)
+                n.audio.volume = mix(n)
+        })
+    }
+    onGameMixChanged: apply()
+    onChatMixChanged: apply()
+
+    // audio.volume stays invalid until a node is tracked, and set once ready
+    PwObjectTracker {
+        objects: root.outs
+    }
+    Instantiator {
+        model: ScriptModel { values: root.outs }
+        Connections {
+            required property var modelData
+            target: modelData
+            function onReadyChanged() { root.apply() }
+        }
+    }
+
+    CommandProbe { id: probe; name: "headsetcontrol" }
+
+    // quick while a dial answers, slow while nothing does
+    Timer {
+        running: probe.found && root.sinks.length > 0
+        repeat: true
+        triggeredOnStart: true
+        interval: root.chatmix >= 0 ? 300 : 5000
+        onTriggered: if (!dial.running) dial.running = true
+    }
+
+    Process {
+        id: dial
+        command: ["headsetcontrol", "-m", "-o", "json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var level = -1
+                try {
+                    var found = (JSON.parse(text).devices || []).find(d => typeof d.chatmix === "number")
+                    if (found) level = found.chatmix
+                } catch (e) {}
+                root.chatmix = level
+            }
+        }
+    }
+}

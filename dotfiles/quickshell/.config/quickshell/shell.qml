@@ -28,8 +28,9 @@ ShellRoot {
     // read here so Wallpaper (a lazily built singleton) runs from startup
     readonly property string wallpaper: Wallpaper.current
     // and BtBattery, so the AirPods' battery channel opens as they connect:
-    // opening it later (the Bluetooth flyout or page) plays their chime
-    Component.onCompleted: BtBattery.parts
+    // opening it later (the Bluetooth flyout or page) plays their chime;
+    // and Channels, so the ChatMix dial is read from the start
+    Component.onCompleted: { BtBattery.parts; Channels.chatmix }
 
     // Keep Awake, from the Control Centre. On the root so every screen agrees;
     // session-only so idle is never left inhibited overnight.

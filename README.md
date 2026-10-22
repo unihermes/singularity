@@ -361,6 +361,7 @@ singularity/
     ├── hypr/               # hyprland.lua and its modules, hyprlock, lid.sh, helpers
     ├── singularity/        # the *.defaults.* files link.sh copies, autostart, clean, diagnose, settings-bundle
     ├── systemd/            # Bluetooth agent and power restore, WirePlumber drop-in
+    ├── pipewire/           # the Game, Chat and Media channels, new playback on Game
     ├── nvim/  starship/  fastfetch/  zathura/  floorp/
     ├── gtk/  fontconfig/  bash/
     └── wofi/               # fallback launcher when the shell is down

@@ -4,7 +4,7 @@
 // Output and input: the default device as a card with its level, the
 // others under it (a click makes one the default; outputs with nothing
 // plugged in are left out). Then the per-app mixer, a level on every app's
-// row and the output it plays on beside it. Mute is the button before each
+// row and the channel or output it plays on beside it. Mute is the button before each
 // level. Straight on Pipewire, as the bar is; wireplumber remembers
 // everything. pactl finds unplugged outputs and moves streams.
 
@@ -199,6 +199,8 @@ SettingsPage {
     // plugged in are left out
     readonly property var sinksShown: sinks.filter(n => n !== Pipewire.defaultAudioSink
         && unplugged.indexOf(n.id) < 0)
+    // where an app can play: the channels, then the outputs plugged in
+    readonly property var playTargets: Channels.sinks.concat(sinks.filter(n => unplugged.indexOf(n.id) < 0))
 
     FlyoutHeading { text: "OUTPUT" }
 
@@ -260,7 +262,7 @@ SettingsPage {
         property bool playback: true
         readonly property var n: modelData
         readonly property var target: page.playsOn[n.id] || null
-        readonly property var sink: target ? page.sinks.find(s => s.id === target.sink) || null : null
+        readonly property var sink: target ? page.playTargets.find(s => s.id === target.sink) || null : null
         readonly property string icon: Audio.appIcon(n)
 
         width: parent ? parent.width : 0
@@ -324,11 +326,12 @@ SettingsPage {
                 visible: app.playback
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.fit(150)
-                model: page.sinks.filter(s => page.unplugged.indexOf(s.id) < 0)
+                model: page.playTargets
                 current: app.sink
                 enabled: app.target !== null
                 placeholder: "…"
-                labelFor: s => Audio.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
+                labelFor: s => Channels.isChannel(s) ? Audio.nodeName(s)
+                    : Audio.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
                 onPicked: s => { if (s !== app.sink) page.moveTo(app.n, s) }
             }
             LevelControl {

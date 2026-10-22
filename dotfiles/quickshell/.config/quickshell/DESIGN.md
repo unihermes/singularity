@@ -279,7 +279,8 @@ Every bar flyout keeps to these (settled 2026-10-20):
   NEARBY with Rescan; Show all N; Settings as a chip.
 - **Volume** (picked 2026-10-21): one panel: the level large with the output beside it (a
   click opens the outputs in place to switch), its slider and Mute, the
-  microphone's level and Mute microphone, then APPS, each app a level of
+  microphone's level and Mute microphone, CHANNELS (Game, Chat and Media,
+  each a level shaped like an app's), then APPS, each app a level of
   its own (a click on its name mutes it). Settings as a chip.
   On the bar the level fills the chip and the icon says where sound
   goes: headphones (Bluetooth or a headset) or speakers.
@@ -563,7 +564,8 @@ Settings') are laid out the same way.
   listed. Every level is a mute button (red while muted, `IconButton
   .warn`), the slider (grey while muted) and the percent. PLAYING and
   RECORDING are a mixer: each app's icon (`Audio.appIcon`), name over what it's playing,
-  and on the right the output it plays on (a dropdown, moved with pactl)
+  and on the right the channel or output it plays on (a dropdown, the
+  channels first, moved with pactl)
   and its level; nothing opens.
 - **Startup** (two sections, picked 2026-10-18): WHEN THE PC STARTS, then
   AT LOGIN. Your entries are fields with the app's icon

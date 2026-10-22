@@ -3,7 +3,8 @@
 //
 // The default sink's volume and mute, bound live so the OSD and bar catch
 // any change; plus the device and stream lists and names the volume flyout
-// and Audio page share (tracked while those are open).
+// and Audio page share (tracked while those are open). The Game, Chat and
+// Media channels (Channels) are in neither list.
 
 pragma Singleton
 
@@ -31,10 +32,10 @@ Singleton {
 
     // --- every device and stream, for the flyout and the Settings page ------
 
-    readonly property var devices: Pipewire.nodes.values.filter(n => n.audio && !n.isStream)
+    readonly property var devices: Pipewire.nodes.values.filter(n => n.audio && !n.isStream && !Channels.isChannel(n))
     readonly property var sinks: devices.filter(n => n.isSink)
     readonly property var sources: devices.filter(n => !n.isSink)
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
+    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream && !Channels.isChannel(n))
     // split by media.class (isSink reads backwards on streams)
     readonly property var playing: streams.filter(n => mediaClass(n) === "Stream/Output/Audio")
     readonly property var recording: streams.filter(n => mediaClass(n) === "Stream/Input/Audio")

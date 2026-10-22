@@ -3,7 +3,8 @@
 //
 // Sound on one panel, the level first: the output's level large with the
 // device beside it (a click there opens the outputs in place to switch),
-// its slider, the microphone's level, then each app playing right now with
+// its slider, the microphone's level, the Game, Chat and Media channels'
+// levels (a click on a name mutes it), then each app playing right now with
 // a level of its own (an app with several streams, like a browser's tabs,
 // gets one level for them all). Outputs with nothing plugged in are left
 // out. The Audio page in Settings has the rest: those outputs, recording
@@ -37,7 +38,7 @@ FlyoutPanel {
 
     // audio.volume / audio.muted stay invalid until a node is tracked
     PwObjectTracker {
-        objects: volumeFlyout.open ? Audio.devices.concat(Audio.streams) : []
+        objects: volumeFlyout.open ? Audio.devices.concat(Audio.streams, Channels.sinks) : []
     }
 
     // --- output: the level large, the device beside it --------------------------
@@ -185,6 +186,71 @@ FlyoutPanel {
         label: "Mute microphone"
         checked: volumeFlyout.micMuted
         onActivated: volumeFlyout.source.audio.muted = !volumeFlyout.micMuted
+    }
+
+    // --- channels -----------------------------------------------------------------
+
+    FlyoutHeading {
+        visible: Channels.sinks.length > 0
+        text: "CHANNELS"
+    }
+
+    Repeater {
+        model: ScriptModel { values: Channels.sinks }
+
+        Item {
+            id: channel
+            required property var modelData
+            readonly property bool ready: modelData.ready && !!modelData.audio
+            readonly property bool muted: ready && modelData.audio.muted
+            readonly property int percent: ready ? Math.round(modelData.audio.volume * 100) : 0
+            readonly property string key: Channels.key(modelData)
+            width: parent ? parent.width : 0
+            implicitHeight: Theme.rowHeight
+
+            Item {
+                id: channelName
+                width: Theme.fit(110)
+                height: parent.height
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.fontBody
+                    text: channel.key === "game" ? "󰊴" : channel.key === "chat" ? "󰭹" : "󰝚"
+                    color: Theme.subtext
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.fontBody + Theme.spaceM
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                    text: Audio.nodeName(channel.modelData) + (channel.muted ? " 󰖁" : "")
+                    color: channel.muted ? Theme.subtext : channelMouse.containsMouse ? Theme.textStrong : Theme.text
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+                MouseArea {
+                    id: channelMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: if (channel.ready) channel.modelData.audio.muted = !channel.muted
+                }
+            }
+
+            Slider {
+                anchors.left: channelName.right
+                anchors.leftMargin: Theme.spaceS
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                value: channel.percent
+                opacity: channel.muted ? 0.5 : 1
+                onMoved: v => { if (channel.ready) channel.modelData.audio.volume = v / 100 }
+            }
+        }
     }
 
     // --- apps ----------------------------------------------------------------------
