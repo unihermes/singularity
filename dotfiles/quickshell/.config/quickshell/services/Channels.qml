@@ -20,15 +20,14 @@ Singleton {
     readonly property var order: ["game", "chat", "media"]
 
     function key(n) {
-        return (n && n.properties) ? n.properties["singularity.channel"] || "" : ""
+        var m = n ? n.name.match(/^channel\.(\w+)/) : null
+        return m ? m[1] : ""
     }
 
     // the channels' sinks, Game first; and their streams into the output
     readonly property var sinks: Pipewire.nodes.values.filter(n => key(n) !== "" && !n.isStream)
         .sort((a, b) => order.indexOf(key(a)) - order.indexOf(key(b)))
     readonly property var outs: Pipewire.nodes.values.filter(n => key(n) !== "" && n.isStream)
-
-    function isChannel(n) { return key(n) !== "" }
 
     // --- ChatMix ---------------------------------------------------------------
 
@@ -41,7 +40,9 @@ Singleton {
         var k = key(n)
         return k === "game" ? gameMix : k === "chat" ? chatMix : 1
     }
-    function apply() {
+    // later, never inside the Pipewire callback that changed a node
+    function apply() { Qt.callLater(applyNow) }
+    function applyNow() {
         outs.forEach(n => {
             if (n.ready && n.audio && Math.abs(n.audio.volume - mix(n)) > 0.005)
                 n.audio.volume = mix(n)

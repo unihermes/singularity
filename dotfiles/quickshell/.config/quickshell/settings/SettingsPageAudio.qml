@@ -330,7 +330,7 @@ SettingsPage {
                 current: app.sink
                 enabled: app.target !== null
                 placeholder: "…"
-                labelFor: s => Channels.isChannel(s) ? Audio.nodeName(s)
+                labelFor: s => Audio.isChannel(s) ? Audio.nodeName(s)
                     : Audio.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
                 onPicked: s => { if (s !== app.sink) page.moveTo(app.n, s) }
             }
