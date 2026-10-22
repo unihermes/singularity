@@ -355,24 +355,15 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
-    Row {
-        id: tail
-        width: parent.width
-        spacing: Theme.spaceS
-        readonly property real cell: (width - spacing) / 2
-
-        FlyoutChip {
-            width: tail.cell
-            icon: "󰑓"
-            spinning: Weather.fetching
-            text: Weather.fetching ? "Refreshing…" : Weather.failed ? "Try again" : "Refresh"
-            onClicked: Weather.refresh()
-        }
-        FlyoutChip {
-            width: tail.cell
-            icon: "󰔄"
-            text: Weather.metric ? "Show °F" : "Show °C"
-            onClicked: Settings.setWeatherUnits(Weather.metric ? "F" : "C")
+    FlyoutChipLine {
+        chips: [
+            { icon: "󰑓", spinning: Weather.fetching, act: "refresh",
+              text: Weather.fetching ? "Refreshing…" : Weather.failed ? "Try again" : "Refresh" },
+            { icon: "󰔄", act: "units", text: Weather.metric ? "Show °F" : "Show °C" }
+        ]
+        onPicked: act => {
+            if (act === "refresh") Weather.refresh()
+            else Settings.setWeatherUnits(Weather.metric ? "F" : "C")
         }
     }
 }

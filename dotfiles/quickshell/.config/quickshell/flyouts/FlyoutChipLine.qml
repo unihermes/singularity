@@ -2,7 +2,8 @@
 // ~/.config/quickshell/flyouts/FlyoutChipLine.qml
 //
 // Chips sharing one line in equal widths: a flyout's tools, its windows,
-// its way out. Each entry is { icon, text, act }; a click emits picked(act).
+// its way out. Each entry is { icon, text, act }, with spinning: true to
+// turn the icon (a refresh running); a click emits picked(act).
 // Alone in a section of a sectioned flyout it is a region instead: the
 // section's frame hugs it (SectionRuns) and its parts fill the frame,
 // split by the frame's line.
@@ -50,6 +51,7 @@ Item {
                 required property var modelData
                 width: (root.width - parent.spacing * (root.chips.length - 1)) / root.chips.length
                 icon: modelData.icon
+                spinning: modelData.spinning === true
                 text: modelData.text
                 onClicked: root.picked(modelData.act)
             }
@@ -102,6 +104,7 @@ Item {
                     spacing: Theme.spaceS
 
                     Text {
+                        id: partIcon
                         visible: part.modelData.icon !== ""
                         anchors.verticalCenter: parent.verticalCenter
                         text: part.modelData.icon
@@ -109,6 +112,14 @@ Item {
                         font.family: Theme.fontIcon
                         font.pixelSize: Theme.fontBody
                         font.weight: Theme.weightBody
+
+                        RotationAnimation on rotation {
+                            running: part.modelData.spinning === true
+                            loops: Animation.Infinite
+                            from: 0; to: 360
+                            duration: Theme.durPulse * 2
+                            onRunningChanged: if (!running) partIcon.rotation = 0
+                        }
                     }
                     Text {
                         id: partLabel
