@@ -4,7 +4,7 @@
 // Sound on one panel, the level first: the output's level large with the
 // device beside it (a click there opens the outputs in place to switch),
 // its slider, the microphone's level, the Game, Chat and Media channels'
-// levels (a click on a name mutes it), then each app playing right now with
+// levels (a click on a name mutes it) and the ChatMix dial, then each app playing right now with
 // a level of its own (an app with several streams, like a browser's tabs,
 // gets one level for them all). Outputs with nothing plugged in are left
 // out. The Audio page in Settings has the rest: those outputs, recording
@@ -250,6 +250,60 @@ FlyoutPanel {
                 opacity: channel.muted ? 0.5 : 1
                 onMoved: v => { if (channel.ready) channel.modelData.audio.volume = v / 100 }
             }
+        }
+    }
+
+    // the ChatMix dial, Game against Chat, while a headset reports one
+    Item {
+        visible: Channels.chatmix >= 0 && Channels.sinks.length > 0
+        width: parent.width
+        implicitHeight: Theme.rowHeight
+
+        Item {
+            id: mixName
+            width: Theme.fit(110)
+            height: parent.height
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fontBody
+                text: Channels.sideIcon
+                color: Theme.subtext
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontBody
+            }
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.fontBody + Theme.spaceM
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                elide: Text.ElideRight
+                text: "ChatMix"
+                color: Theme.text
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontBody
+            }
+        }
+
+        BalanceMeter {
+            anchors.left: mixName.right
+            anchors.leftMargin: Theme.spaceS
+            anchors.right: mixSide.left
+            anchors.rightMargin: Theme.spaceS
+            anchors.verticalCenter: parent.verticalCenter
+            balance: Channels.balance
+        }
+        Text {
+            id: mixSide
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fit(40)
+            horizontalAlignment: Text.AlignRight
+            text: Channels.sideText
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontSmall
         }
     }
 

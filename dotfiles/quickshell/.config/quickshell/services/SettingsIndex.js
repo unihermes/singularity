@@ -207,6 +207,8 @@ var entries = [
     { page: "audio", section: "Output", label: "Volume",    keywords: "level loudness mute silence speakers microphone mic off" },
     { page: "audio", section: "Output", label: "Output",    keywords: "default sink speakers headphones hdmi displayport device" },
     { page: "audio", section: "Input",  label: "Input",     keywords: "default source microphone mic device" },
+    { page: "audio", section: "Channels", label: "Channels", keywords: "game chat media virtual sinks sonar outputs mix" },
+    { page: "audio", section: "Channels", label: "ChatMix",  keywords: "dial balance game chat headset steelseries arctis sonar" },
     // the mixer's rows have no fixed label; these name their heading
     { page: "audio", section: "", label: "Playing",   keywords: "mixer per app volume application stream" },
     { page: "audio", section: "", label: "Recording", keywords: "mixer capture app stream microphone" },

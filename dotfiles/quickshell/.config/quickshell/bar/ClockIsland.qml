@@ -2,8 +2,8 @@
 // ~/.config/quickshell/bar/ClockIsland.qml
 //
 // The clock chip as a Dynamic Island: briefly shows a level (volume,
-// brightness), a mode (SUPER+M, lock keys) or the lid instead of the time,
-// keeping its width. A running timer (Timers.qml) leaves the clock be: a
+// brightness, the ChatMix dial), a mode (SUPER+M, lock keys) or the lid
+// instead of the time, keeping its width. A running timer (Timers.qml) leaves the clock be: a
 // line under it runs down with the time left, and pointing at it puts the
 // time left in place of the date. With Settings.clockIsland off, or the clock off
 // the bar (Settings.islandActive), LevelToast/ModeToast show instead.
@@ -118,6 +118,14 @@ BarModule {
         target: Audio
         function onPercentChanged() { root.showVolume() }
         function onMutedChanged() { root.showVolume() }
+    }
+
+    // the ChatMix dial: the side it leans to, filled by how far
+    Connections {
+        target: Channels
+        function onTurned() {
+            root.show("chatmix", Channels.sideIcon, Channels.sideText, Math.abs(Channels.balance), 1600)
+        }
     }
 
     Connections {

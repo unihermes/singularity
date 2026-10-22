@@ -3,10 +3,12 @@
 //
 // Output and input: the default device as a card with its level, the
 // others under it (a click makes one the default; outputs with nothing
-// plugged in are left out). Then the per-app mixer, a level on every app's
-// row and the channel or output it plays on beside it. Mute is the button before each
-// level. Straight on Pipewire, as the bar is; wireplumber remembers
-// everything. pactl finds unplugged outputs and moves streams.
+// plugged in are left out). CHANNELS: Game, Chat and Media's levels and
+// the ChatMix dial. Then the per-app mixer, one row an app however many
+// streams it plays: its level and the channel or output it plays on. Mute
+// is the button before each level. Straight on Pipewire, as the bar is;
+// wireplumber remembers everything. pactl finds unplugged outputs and
+// moves streams.
 
 import Quickshell
 import Quickshell.Io
@@ -28,12 +30,12 @@ SettingsPage {
     readonly property var sinks: Audio.sinks
     readonly property var sources: Audio.sources
     readonly property var streams: Audio.streams
-    readonly property var playing: Audio.playing
-    readonly property var recording: Audio.recording
+    readonly property var playingApps: Audio.playingApps
+    readonly property var recordingApps: Audio.recordingApps
 
     // tracked, or volume/mute stay invalid
     PwObjectTracker {
-        objects: page.devices.concat(page.streams)
+        objects: page.devices.concat(page.streams, Channels.sinks)
     }
 
     // what an app is playing, as the row's hint; a path cut to its last segment
@@ -100,12 +102,15 @@ SettingsPage {
         id: moveProc
         onExited: pactlSoon.restart()
     }
-    function moveTo(stream, sink) {
-        var on = playsOn[stream.id]
-        if (!on) return
-        moveProc.command = ["pactl", "move-sink-input", String(on.input), sink.name]
+    // every stream of an app at once
+    function moveTo(streams, sink) {
+        var inputs = streams.map(n => playsOn[n.id]).filter(on => on).map(on => String(on.input))
+        if (inputs.length === 0) return
+        moveProc.command = ["sh", "-c", 't=$1; shift; for i; do pactl move-sink-input "$i" "$t"; done',
+            "sh", sink.name].concat(inputs)
         moveProc.running = true
-        page.say(Audio.appName(stream) + " plays on " + Audio.plainName(sink), false)
+        page.say(Audio.appName(streams[0]) + " plays on "
+            + (Audio.isChannel(sink) ? Audio.nodeName(sink) : Audio.plainName(sink)), false)
     }
 
     // --- names -----------------------------------------------------------------
@@ -120,17 +125,26 @@ SettingsPage {
         if (!n || !n.ready || !n.audio) return "--"
         return n.audio.muted ? "Muted" : Math.round(n.audio.volume * 100) + "%"
     }
+    function groupLevelText(nodes) {
+        var ready = nodes.filter(n => n && n.ready && n.audio)
+        if (ready.length === 0) return "--"
+        if (ready.every(n => n.audio.muted)) return "Muted"
+        return Math.round(Math.max(...ready.map(n => n.audio.volume)) * 100) + "%"
+    }
 
     // --- shared rows -------------------------------------------------------------
 
-    // The level of one node: a mute button, the slider (grey while muted)
-    // and its readout.
+    // The level of a node, or of an app's streams together (the loudest
+    // stands for them): a mute button, the slider (grey while muted) and
+    // its readout.
     component LevelControl: Row {
         id: lvl
         property var node: null
+        property var nodes: node ? [node] : []
         property int sliderWidth: Theme.fit(220)
-        readonly property bool ready: node !== null && node.ready && node.audio !== null
-        readonly property bool muted: ready && node.audio.muted
+        readonly property var live: nodes.filter(n => n && n.ready && n.audio)
+        readonly property bool ready: live.length > 0
+        readonly property bool muted: ready && live.every(n => n.audio.muted)
 
         spacing: Theme.sp(10)
 
@@ -139,20 +153,23 @@ SettingsPage {
             enabled: lvl.ready
             icon: lvl.muted ? "󰝟" : "󰕾"
             warn: lvl.muted
-            onClicked: lvl.node.audio.muted = !lvl.node.audio.muted
+            onClicked: {
+                var mute = !lvl.muted
+                lvl.live.forEach(n => n.audio.muted = mute)
+            }
         }
         Slider {
             width: lvl.sliderWidth
             anchors.verticalCenter: parent.verticalCenter
-            value: lvl.ready ? lvl.node.audio.volume * 100 : 0
+            value: lvl.ready ? Math.max(...lvl.live.map(n => n.audio.volume)) * 100 : 0
             fillColor: lvl.muted ? Theme.muted : Theme.meterFill
-            onMoved: v => { if (lvl.ready) lvl.node.audio.volume = v / 100 }
+            onMoved: v => lvl.live.forEach(n => n.audio.volume = v / 100)
         }
         Text {
             width: Theme.fs(52)
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
-            text: page.levelText(lvl.node)
+            text: page.groupLevelText(lvl.nodes)
             color: lvl.muted ? Theme.subtext : Theme.textStrong
             font.family: Theme.fontText
             font.weight: Theme.weightBody
@@ -251,16 +268,73 @@ SettingsPage {
     }
 
 
+    // --- channels ------------------------------------------------------------------
+
+    Item { width: 1; height: Theme.spaceM; visible: Channels.sinks.length > 0 }
+    FlyoutHeading { text: "CHANNELS"; visible: Channels.sinks.length > 0 }
+
+    Repeater {
+        model: ScriptModel { values: Channels.sinks }
+        Level {
+            required property var modelData
+            node: modelData
+            label: Audio.nodeName(modelData)
+            hint: Channels.key(modelData) === "game" ? "Where apps play unless moved" : ""
+        }
+    }
+
+    // the dial: Game on the left, Chat on the right
+    SettingsField {
+        visible: Channels.chatmix >= 0
+        label: "ChatMix"
+        hint: Channels.mixText
+        Row {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.sp(10)
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰊴"
+                color: Channels.side === "game" ? Theme.textStrong : Theme.subtext
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontIconSize
+            }
+            BalanceMeter {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fit(220)
+                balance: Channels.balance
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰭹"
+                color: Channels.side === "chat" ? Theme.textStrong : Theme.subtext
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontIconSize
+            }
+            Text {
+                width: Theme.fs(52)
+                anchors.verticalCenter: parent.verticalCenter
+                horizontalAlignment: Text.AlignRight
+                text: Channels.sideText
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontBody
+            }
+        }
+    }
+
     // --- per-application mixer -------------------------------------------
     // rows come and go with the streams
 
-    // an app: icon, name over what's playing; on the right the output it
-    // plays on, then its level
+    // an app, all its streams as one: icon, name over what's playing; on
+    // the right the channel or output it plays on, then its level
     component AppRow: Item {
         id: app
         required property var modelData
         property bool playback: true
-        readonly property var n: modelData
+        readonly property var nodes: modelData.nodes
+        readonly property var n: nodes[0]
         readonly property var target: page.playsOn[n.id] || null
         readonly property var sink: target ? page.playTargets.find(s => s.id === target.sink) || null : null
         readonly property string icon: Audio.appIcon(n)
@@ -307,7 +381,7 @@ SettingsPage {
             Text {
                 width: parent.width
                 visible: text !== ""
-                text: page.streamDetail(app.n)
+                text: app.nodes.length > 1 ? app.nodes.length + " streams" : page.streamDetail(app.n)
                 elide: Text.ElideRight
                 color: Theme.subtext
                 font.family: Theme.fontText
@@ -332,38 +406,38 @@ SettingsPage {
                 placeholder: "…"
                 labelFor: s => Audio.isChannel(s) ? Audio.nodeName(s)
                     : Audio.plainName(s) + (s === Pipewire.defaultAudioSink ? "  default" : "")
-                onPicked: s => { if (s !== app.sink) page.moveTo(app.n, s) }
+                onPicked: s => { if (s !== app.sink) page.moveTo(app.nodes, s) }
             }
             LevelControl {
                 anchors.verticalCenter: parent.verticalCenter
-                node: app.n
+                nodes: app.nodes
                 sliderWidth: Theme.fit(150)
             }
         }
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PLAYING" + (page.playing.length > 0 ? "  " + page.playing.length : "") }
+    FlyoutHeading { text: "PLAYING" + (page.playingApps.length > 0 ? "  " + page.playingApps.length : "") }
 
     Repeater {
-        model: ScriptModel { values: page.playing }
+        model: ScriptModel { values: page.playingApps }
         AppRow {}
     }
 
     FlyoutRow {
-        visible: page.playing.length === 0
+        visible: page.playingApps.length === 0
         enabled: false
         label: "Nothing is playing"
     }
 
-    Item { width: 1; height: Theme.spaceM; visible: page.recording.length > 0 }
+    Item { width: 1; height: Theme.spaceM; visible: page.recordingApps.length > 0 }
     FlyoutHeading {
-        text: "RECORDING" + "  " + page.recording.length
-        visible: page.recording.length > 0
+        text: "RECORDING" + "  " + page.recordingApps.length
+        visible: page.recordingApps.length > 0
     }
 
     Repeater {
-        model: ScriptModel { values: page.recording }
+        model: ScriptModel { values: page.recordingApps }
         AppRow { playback: false }
     }
 }

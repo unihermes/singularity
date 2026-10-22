@@ -33,6 +33,16 @@ Singleton {
 
     // the dial, 0 (all Game) to 128 (all Chat) with 64 even; -1 with none
     property int chatmix: -1
+    // the dial turned, as against found or lost: what the toasts show
+    signal turned()
+    // -1 (all Game) .. 1 (all Chat)
+    readonly property real balance: chatmix < 0 ? 0 : (chatmix - 64) / 64
+    // the side it leans to, a hair either way of the middle counting as even
+    readonly property string side: Math.abs(balance) < 0.04 ? "" : balance < 0 ? "game" : "chat"
+    readonly property string sideText: side === "game" ? "Game" : side === "chat" ? "Chat" : "Even"
+    readonly property string sideIcon: side === "chat" ? "󰭹" : side === "game" ? "󰊴" : "󰓃"
+    // "Game 100 · Chat 40": each one's share of its level
+    readonly property string mixText: "Game " + Math.round(gameMix * 100) + " · Chat " + Math.round(chatMix * 100)
     readonly property real gameMix: chatmix > 64 ? (128 - chatmix) / 64 : 1
     readonly property real chatMix: chatmix >= 0 && chatmix < 64 ? chatmix / 64 : 1
 
@@ -85,7 +95,9 @@ Singleton {
                     var found = (JSON.parse(text).devices || []).find(d => typeof d.chatmix === "number")
                     if (found) level = found.chatmix
                 } catch (e) {}
+                var was = root.chatmix
                 root.chatmix = level
+                if (was >= 0 && level >= 0 && was !== level) root.turned()
             }
         }
     }

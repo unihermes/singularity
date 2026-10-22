@@ -39,11 +39,11 @@ Singleton {
     // split by media.class (isSink reads backwards on streams)
     readonly property var playing: streams.filter(n => mediaClass(n) === "Stream/Output/Audio")
     readonly property var recording: streams.filter(n => mediaClass(n) === "Stream/Input/Audio")
-    // playing streams grouped by app, so a browser's tabs share one row:
+    // streams grouped by app, so a browser's tabs share one row:
     // [{ name, nodes }] in the order each app first appears
-    readonly property var playingApps: {
+    function byApp(streams) {
         var apps = []
-        playing.forEach(n => {
+        streams.forEach(n => {
             var name = appName(n)
             var app = apps.find(a => a.name === name)
             if (app) app.nodes.push(n)
@@ -51,6 +51,8 @@ Singleton {
         })
         return apps
     }
+    readonly property var playingApps: byApp(playing)
+    readonly property var recordingApps: byApp(recording)
 
     // node ids of outputs whose every port is "not available": an HDMI or
     // DisplayPort output with no screen on it. Asked of pactl, which knows

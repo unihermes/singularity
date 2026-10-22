@@ -280,7 +280,9 @@ Every bar flyout keeps to these (settled 2026-10-20):
 - **Volume** (picked 2026-10-21): one panel: the level large with the output beside it (a
   click opens the outputs in place to switch), its slider and Mute, the
   microphone's level and Mute microphone, CHANNELS (Game, Chat and Media,
-  each a level shaped like an app's), then APPS, each app a level of
+  each a level shaped like an app's, and while a headset reports one the
+  ChatMix dial: a `BalanceMeter` filling from the middle toward Game or
+  Chat), then APPS, each app a level of
   its own (a click on its name mutes it). Settings as a chip.
   On the bar the level fills the chip and the icon says where sound
   goes: headphones (Bluetooth or a headset) or speakers.
@@ -562,8 +564,11 @@ Settings') are laid out the same way.
   (type icon, name, where it is as the `note`, its level or Muted), a
   click making one the default. Outputs with nothing plugged in aren't
   listed. Every level is a mute button (red while muted, `IconButton
-  .warn`), the slider (grey while muted) and the percent. PLAYING and
-  RECORDING are a mixer: each app's icon (`Audio.appIcon`), name over what it's playing,
+  .warn`), the slider (grey while muted) and the percent. CHANNELS:
+  Game, Chat and Media each a Volume field, then ChatMix (the dial's
+  `BalanceMeter` between Game's and Chat's icons). PLAYING and
+  RECORDING are a mixer, one row an app however many streams it plays
+  (its level the loudest's, its moves all of them): each app's icon (`Audio.appIcon`), name over what it's playing,
   and on the right the channel or output it plays on (a dropdown, the
   channels first, moved with pactl)
   and its level; nothing opens.
