@@ -1,9 +1,10 @@
 -- Singularity - Hyprland
 -- ~/.config/hypr/game-keys.lua
 --
--- While a game has focus, fullscreen or windowed, every SUPER bind and
--- CTRL+SPACE are off, so a stray key can't pull up the launcher or move
--- the game; ALT+Tab and every other bind stay live. Required before
+-- While a game has focus, fullscreen or windowed, every SUPER bind,
+-- CTRL+SPACE and the bare right-hand modifiers (media taps) are off, so a
+-- stray key can't pull up the launcher, move the game or skip the music;
+-- ALT+Tab and every other bind stay live. Required before
 -- binds.lua: it wraps hl.bind to keep each bind's handle with its keys,
 -- and returns the sync for hyprland.lua to run once they're all bound.
 -- The Tabs binds are left to windows.lua's own switch (shared.tabBinds).
@@ -16,7 +17,7 @@ local bind = hl.bind
 hl.bind = function(keys, ...)
     local handle = bind(keys, ...)
     local k = type(keys) == "string" and keys:upper():gsub("%s", "") or ""
-    if handle and (k:find("SUPER", 1, true) or k == "CTRL+SPACE") then
+    if handle and (k:find("SUPER", 1, true) or k == "CTRL+SPACE" or k:match("^%a+_R$")) then
         table.insert(held, handle)
     end
     return handle

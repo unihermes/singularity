@@ -175,6 +175,13 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("qs ipc call media pause"),    { locke
 hl.bind("XF86AudioStop",  hl.dsp.exec_cmd("qs ipc call media stop"),     { locked = true })  -- Stop media
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("qs ipc call media next"),     { locked = true })  -- Next track
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("qs ipc call media previous"), { locked = true })  -- Previous track
+-- The right-hand modifiers alone, on release: a tap plays, skips or goes
+-- back, while one held for another key (SHIFT+a) does nothing. They still
+-- reach apps as modifiers (non_consuming), and are off while a game has
+-- focus (game-keys.lua).
+hl.bind("Shift_R",   hl.dsp.exec_cmd("qs ipc call media toggle"),   { release = true, non_consuming = true })  -- Play or pause media
+hl.bind("Control_R", hl.dsp.exec_cmd("qs ipc call media next"),     { release = true, non_consuming = true })  -- Next track
+hl.bind("Alt_R",     hl.dsp.exec_cmd("qs ipc call media previous"), { release = true, non_consuming = true })  -- Previous track
 
 -- --- Lock Keys ---
 -- pass-through: the lock toggles as usual and the shell toasts it (on press,
