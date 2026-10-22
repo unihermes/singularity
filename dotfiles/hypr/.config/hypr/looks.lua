@@ -176,7 +176,7 @@ animation({ leaf = "workspaces", enabled = true, speed = 2, factor = ws, bezier 
 animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowSpeed, factor = ws, bezier = "singularity",
             style = scratchStyle })
 
--- layers (wofi, flyouts) faster than global, fading
+-- layers (flyouts) faster than global, fading
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 -- the shell's surfaces blur what's behind (Glass, See-through);

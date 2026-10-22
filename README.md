@@ -106,8 +106,7 @@ finishes and pick **Hyprland** in the greeter.
    driver)
 4. Links `dotfiles/` into `$HOME` with GNU stow (`link.sh`) and builds the
    `alttab-relay` helper
-5. Rebuilds font and icon caches, sets the default apps, and sets
-   LibreOffice up like Word (ribbon, Office formats, a Word-like template)
+5. Rebuilds font and icon caches and sets the default apps
 6. Quiets the kernel command line (systemd-boot, a unified kernel image or
    GRUB), drops the Arch splash from the kernel image, hides the
    systemd-boot menu, stops iwd blocking the greeter and masks unused TPM
@@ -274,9 +273,6 @@ the shell, into `~/.local/state/singularity/`:
   `Ctrl+P`, `Ctrl+Shift+F`, `Ctrl+B`, `F2`, `F12`) builds every highlight,
   plugins included, from the look, and open editors recolour live.
 - **Claude Code** gets a `custom:singularity` theme.
-- **Zed**'s window (panels, tabs, menus) takes the look's colours and
-  recolours live; the code keeps its own fixed colour palette. Its settings
-  put files on the left and agent chats on the right, like VS Code.
 - **ly**, the greeter, runs on a VT without true colour, so `install.sh`
   loads the Singularity ramp into the VT palette and adds a status stack
   (battery, power, Wi-Fi, kernel, last login). Settings → Startup can turn
@@ -294,7 +290,7 @@ changes survive it.
   settings, the lid, the wallpaper, the generated colour
   files) lives in `~/.local/state/singularity/`. Deleting it resets the
   shell to its defaults.
-- **Config files Settings or the app itself rewrites** are this machine's
+- **Config files Settings rewrites** are this machine's
   own copies, made by `link.sh` from the `*.defaults.*` files in
   `dotfiles/singularity/.config/singularity/`, only where there's none yet,
   and ignored by git:
@@ -307,7 +303,6 @@ changes survive it.
   | `~/.config/alacritty/alacritty.toml` | Terminal | `alacritty.defaults.toml` |
   | `~/.config/ghostty/config.ghostty` | Terminal | `ghostty.defaults.ghostty` |
   | `~/.bash_aliases` | Terminal | `bash_aliases.defaults.sh` |
-  | `~/.config/zed/settings.json` | Zed | `zed-settings.defaults.json` |
 
   To go back to stock, delete your copy and run `./link.sh`. A change to a
   default reaches a fresh install, not a machine that already has its copy.
@@ -363,8 +358,7 @@ singularity/
     ├── systemd/            # Bluetooth agent and power restore, WirePlumber drop-in
     ├── pipewire/           # the Game, Chat and Media channels, new playback on Game
     ├── nvim/  starship/  fastfetch/  zathura/  floorp/
-    ├── gtk/  fontconfig/  bash/
-    └── wofi/               # fallback launcher when the shell is down
+    └── gtk/  fontconfig/  bash/
 ```
 
 ## Development

@@ -3,11 +3,10 @@
 //
 // Carries the appearance out to the other apps. Everything lands in
 // ~/.local/state/singularity/ (never ~/.config, which links into the repo):
-//   wofi.css         wofi's stylesheet, recoloured from the reference look
 //   alacritty.toml   colours and opacity, imported (alacritty watches it)
 //   ghostty.conf     the same; open windows get SIGUSR2
 //   nvim.lua         the editor's palette (colors/singularity.lua, watched)
-//   ~/.claude/themes/singularity.json, ~/.config/zed/themes/singularity.json
+//   ~/.claude/themes/singularity.json
 //   hyprlock.conf    hyprlang variables sourced by hypr/hyprlock.conf
 //   gtk3.css, gtk4.css   libadwaita colours
 //   qt6ct-colors.conf, qt6ct.qss   QPalette colours + AppStyle.js's flat sheet
@@ -41,12 +40,6 @@ Scope {
         return "rgba(" + Math.round(c.r * 255) + ", " + Math.round(c.g * 255) + ", "
             + Math.round(c.b * 255) + ", " + a + ")"
     }
-    // Replace the value just before a `/* @tag */` comment, keeping the tag
-    // so the next render finds it again.
-    function tagged(src, tag, valuePattern, value) {
-        var re = new RegExp("(" + valuePattern + ")(\\s*)\\/\\*\\s*@" + tag + "\\s*\\*\\/", "g")
-        return src.replace(re, (m, v, sp) => value + sp + "/* @" + tag + " */")
-    }
     function px(offset) { return Math.max(0, Theme.panelRadius - offset) + "px" }
     function triple(c) {
         return Math.round(c.r * 255) + ";" + Math.round(c.g * 255) + ";" + Math.round(c.b * 255)
@@ -66,24 +59,6 @@ Scope {
         return text
             .replace(/#[0-9a-fA-F]{6}\b/g, m => byHex[m.toLowerCase()] ? hex(byHex[m.toLowerCase()]) : m)
             .replace(/\b([34]8;2;)(\d+;\d+;\d+)/g, (m, p, t) => byTriple[t] ? p + triple(byTriple[t]) : m)
-    }
-
-    function renderWofi() {
-        var tpl = wofiTemplate.text()
-        if (!tpl) return
-        var out = tpl.replace(/\d+px(\s*)\/\*\s*@radius(?:-(\d+))?\s*\*\//g,
-            (m, sp, off) => px(parseInt(off || "0")) + sp + "/* @radius" + (off ? "-" + off : "") + " */")
-        out = out.replace(/(\d+)px(\s*)\/\*\s*@font\s*\*\//g,
-            (m, n, sp) => Theme.fs(parseInt(n)) + "px" + sp + "/* @font */")
-        out = recolour(out).replace(/font-family:\s*"[^"]*"/g, 'font-family: "' + Theme.fontText + '"')
-        out = tagged(out, "frame", "#[0-9a-fA-F]{6}",
-            Theme.frameDouble ? hex(Theme.frameStroke) : hex(Theme.panel))
-        out = tagged(out, "accent", "#[0-9a-fA-F]{6}", hex(Theme.accent))
-        out = tagged(out, "focus", "#[0-9a-fA-F]{6}", hex(Theme.strokeFocus))
-        out = tagged(out, "hover", "#[0-9a-fA-F]{6}", hex(Theme.hoverFill))
-        out = tagged(out, "panel-bg", "#[0-9a-fA-F]{6}|rgba\\([^)]*\\)", rgba(Theme.panel, Theme.panelOpacity))
-        out = tagged(out, "bw", "\\d+px", Theme.borderWidth + "px")
-        wofiOut.setText(out)
     }
 
     // a + (b - a) * t per channel, as a colour; mix() as a hex
@@ -204,162 +179,6 @@ Scope {
             overrides: o }, null, 2) + "\n"
         AtomicFileWrite.write({
             path: Quickshell.env("HOME") + "/.claude/themes/singularity.json",
-            transform: () => text,
-        })
-    }
-
-    // Zed's code colours: a fixed palette in hue (One Dark's and One Light's),
-    // since code reads better in colour than in the look's greys.
-    readonly property var zedCode: ({
-        dark:  { text: "#c8ccd4", comment: "#7f848e", keyword: "#c678dd", func: "#61afef",
-                 string: "#98c379", number: "#d19a66", type: "#e5c07b", tag: "#e06c75",
-                 escape: "#56b6c2", punct: "#a0a7b4" },
-        light: { text: "#383a42", comment: "#a0a1a7", keyword: "#a626a4", func: "#4078f2",
-                 string: "#50a14f", number: "#986801", type: "#c18401", tag: "#e45649",
-                 escape: "#0184bc", punct: "#696c77" },
-    })
-
-    // A Zed theme, colours only: the window in the look, the editor a step
-    // over base with zedCode syntax, the accent for cursor, selection and
-    // focus, good/alert for git and diagnostics.
-    function renderZed() {
-        var h = c => hex(c)
-        // #rrggbbaa, the alpha as 0..1
-        var ha = (c, a) => hex(c) + ("0" + Math.round(a * 255).toString(16)).slice(-2)
-        var tint = (c, t) => mix(Theme.base, c, t)
-        var ed = Theme.isLight ? Theme.base : mixColor(Theme.surface, Theme.overlay, 0.5)
-        var lift = t => mix(ed, Theme.isLight ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1), t)
-        var code = Theme.isLight ? zedCode.light : zedCode.dark
-        var s = {
-            "background": h(Theme.bar),
-            "surface.background": h(Theme.bar),
-            "elevated_surface.background": h(Theme.panel),
-            "panel.background": h(Theme.bar),
-            "panel.focused_border": h(Theme.accent),
-            "pane.focused_border": h(Theme.border),
-            "border": h(Theme.border),
-            "border.variant": h(Theme.surface),
-            "border.focused": h(Theme.accent),
-            "border.selected": h(Theme.accent),
-            "border.transparent": "#00000000",
-            "border.disabled": h(Theme.surface),
-            "element.background": h(Theme.surface),
-            "element.hover": h(Theme.overlay),
-            "element.active": h(Theme.border),
-            "element.selected": h(Theme.overlay),
-            "element.disabled": h(Theme.surface),
-            "drop_target.background": ha(Theme.accent, 0.2),
-            "ghost_element.background": "#00000000",
-            "ghost_element.hover": h(Theme.surface),
-            "ghost_element.active": h(Theme.overlay),
-            "ghost_element.selected": h(Theme.overlay),
-            "ghost_element.disabled": "#00000000",
-            "text": h(Theme.text),
-            "text.muted": h(Theme.subtext),
-            "text.placeholder": h(Theme.muted),
-            "text.disabled": h(Theme.muted),
-            "text.accent": h(Theme.accent),
-            "icon": h(Theme.text),
-            "icon.muted": h(Theme.subtext),
-            "icon.disabled": h(Theme.muted),
-            "icon.placeholder": h(Theme.muted),
-            "icon.accent": h(Theme.accent),
-            "status_bar.background": h(Theme.bar),
-            "title_bar.background": h(Theme.bar),
-            "title_bar.inactive_background": h(Theme.bar),
-            "toolbar.background": h(ed),
-            "tab_bar.background": h(Theme.bar),
-            "tab.inactive_background": h(Theme.bar),
-            "tab.active_background": h(ed),
-            "search.match_background": ha(Theme.subtext, 0.3),
-            "search.active_match_background": ha(Theme.accent, 0.45),
-            "scrollbar.thumb.background": ha(Theme.muted, 0.5),
-            "scrollbar.thumb.hover_background": h(Theme.muted),
-            "scrollbar.thumb.border": "#00000000",
-            "scrollbar.track.background": "#00000000",
-            "scrollbar.track.border": "#00000000",
-            "editor.foreground": code.text,
-            "editor.background": h(ed),
-            "editor.gutter.background": h(ed),
-            "editor.subheader.background": h(Theme.bar),
-            "editor.active_line.background": lift(0.035),
-            "editor.highlighted_line.background": lift(0.06),
-            "editor.line_number": h(Theme.muted),
-            "editor.active_line_number": h(Theme.accent),
-            "editor.hover_line_number": h(Theme.subtext),
-            "editor.invisible": lift(0.12),
-            "editor.wrap_guide": lift(0.05),
-            "editor.active_wrap_guide": lift(0.1),
-            "editor.document_highlight.read_background": lift(0.07),
-            "editor.document_highlight.write_background": lift(0.11),
-            "terminal.background": h(Theme.base),
-            "terminal.foreground": h(Theme.text),
-            "terminal.bright_foreground": h(Theme.bright),
-            "terminal.dim_foreground": h(Theme.subtext),
-            "link_text.hover": h(Theme.accent),
-            "version_control.added": h(Theme.good),
-            "version_control.modified": h(Theme.subtext),
-            "version_control.deleted": h(Theme.alert),
-            "version_control.word_added": ha(Theme.good, 0.3),
-            "version_control.word_deleted": ha(Theme.alert, 0.3),
-            "version_control.conflict_marker.ours": ha(Theme.good, 0.15),
-            "version_control.conflict_marker.theirs": ha(Theme.subtext, 0.15),
-        }
-        // dim is a step down the ramp: border -> subtext
-        var ramp = ansiRamp()
-        for (var i = 0; i < 8; i++) {
-            s["terminal.ansi." + ansiNames[i]] = ramp.normal[i]
-            s["terminal.ansi.bright_" + ansiNames[i]] = ramp.bright[i]
-            s["terminal.ansi.dim_" + ansiNames[i]] = mix(Theme.border, Theme.subtext, i / 7)
-        }
-        // state: the hue, a faint wash of it, and a border between the two
-        var states = {
-            error: Theme.alert, deleted: Theme.alert, conflict: Theme.alert,
-            success: Theme.good, created: Theme.good,
-            warning: Theme.text, modified: Theme.subtext, renamed: Theme.subtext,
-            info: Theme.subtext, hint: Theme.muted, predictive: Theme.muted,
-            hidden: Theme.muted, ignored: Theme.muted, unreachable: Theme.muted,
-        }
-        for (var k in states) {
-            s[k] = h(states[k])
-            s[k + ".background"] = tint(states[k], 0.12)
-            s[k + ".border"] = tint(states[k], 0.4)
-        }
-        s.players = [{ cursor: h(Theme.accent), background: h(Theme.accent),
-                       selection: ha(Theme.accent, 0.3) }]
-
-        var st = (c, o) => Object.assign({ color: c, font_style: null, font_weight: null }, o || {})
-        var bold = { font_weight: 700 }, italic = { font_style: "italic" }
-        s.syntax = {
-            "comment": st(code.comment, italic), "comment.doc": st(code.comment, italic),
-            "string": st(code.string), "string.escape": st(code.escape),
-            "string.regex": st(code.escape), "string.special": st(code.escape),
-            "string.special.symbol": st(code.escape), "text.literal": st(code.string),
-            "number": st(code.number), "boolean": st(code.number), "constant": st(code.number),
-            "keyword": st(code.keyword), "function": st(code.func),
-            "constructor": st(code.type), "type": st(code.type), "enum": st(code.type),
-            "variant": st(code.number), "variable": st(code.text),
-            "variable.parameter": st(code.tag, italic), "variable.special": st(code.tag, italic),
-            "property": st(code.tag), "namespace": st(code.type), "label": st(code.func),
-            "operator": st(code.escape), "punctuation": st(code.punct),
-            "punctuation.bracket": st(code.punct), "punctuation.delimiter": st(code.punct),
-            "punctuation.list_marker": st(code.tag), "punctuation.markup": st(code.tag),
-            "punctuation.special": st(code.escape), "preproc": st(code.keyword),
-            "attribute": st(code.number, italic), "tag": st(code.tag),
-            "selector": st(code.keyword), "selector.pseudo": st(code.escape),
-            "title": st(code.tag, bold), "emphasis": st(code.text, italic),
-            "emphasis.strong": st(code.number, bold), "link_text": st(code.func),
-            "link_uri": st(code.escape, italic), "embedded": st(code.text),
-            "primary": st(code.text), "hint": st(code.comment), "predictive": st(code.comment, italic),
-            "diff.plus": st(code.string), "diff.minus": st(code.tag),
-        }
-        var text = JSON.stringify({
-            "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
-            name: "Singularity", author: "Generated by quickshell/services/AppearanceSync.qml",
-            themes: [{ name: "Singularity", appearance: Theme.isLight ? "light" : "dark", style: s }],
-        }, null, 2) + "\n"
-        AtomicFileWrite.write({
-            path: Quickshell.env("HOME") + "/.config/zed/themes/singularity.json",
             transform: () => text,
         })
     }
@@ -803,7 +622,7 @@ Scope {
         id: debounce
         interval: 200
         onTriggered: {
-            root.renderWofi(); root.renderAlacritty(); root.renderGhostty(); root.renderNvim(); root.renderClaude(); root.renderZed()
+            root.renderAlacritty(); root.renderGhostty(); root.renderNvim(); root.renderClaude()
             root.renderHyprlock(); root.renderTermColors(); root.renderZathura()
             starshipTemplate.render(); fastfetchTemplate.render()
             root.renderGtk(); root.renderGtkCss(); root.renderQtScheme(); root.renderQt()
@@ -839,17 +658,6 @@ Scope {
         onExited: if (again) { again = false; root.renderGtk() }
     }
 
-
-    // watched, so editing ~/.config/wofi/style.css regenerates the copy wofi uses
-    FileView {
-        id: wofiTemplate
-        path: Quickshell.env("HOME") + "/.config/wofi/style.css"
-        preload: true
-        watchChanges: true
-        printErrors: false
-        onFileChanged: reload()
-        onLoaded: debounce.restart()
-    }
 
     // Repo configs re-rendered in the current colours; watched, so editing
     // one regenerates its copy.
@@ -900,7 +708,6 @@ Scope {
     ProfileSource { id: floorpUserJs; path: Quickshell.env("HOME") + "/.config/floorp/singularity/user.js" }
     ProfileSource { id: floorpChrome; path: Quickshell.env("HOME") + "/.config/floorp/singularity/userChrome.css" }
 
-    FileView { id: wofiOut;   path: root.dir + "/wofi.css"; printErrors: false }
 
     // Hyprland state files, read on load: a change needs a config-only
     // reload, one per burst of writes.

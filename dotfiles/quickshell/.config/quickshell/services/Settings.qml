@@ -26,7 +26,7 @@ Singleton {
     // Roundness: chips, panels, the bar and Hyprland's windows
     readonly property alias radius:      adapter.radius
     // The base text size in px -- the size of body text, which every other
-    // size in the shell and wofi is scaled from (Theme.fontScale).
+    // size in the shell is scaled from (Theme.fontScale).
     readonly property alias fontSize:    adapter.fontSize
     readonly property int fontSizeBase: 16
     // how long animations take, as a percentage of their normal length:

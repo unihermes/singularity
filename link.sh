@@ -15,8 +15,6 @@ mkdir -p "$HOME/.config"
 # systemd won't follow a symlinked drop-in directory, so it's created and
 # stow links the .conf inside
 mkdir -p "$HOME/.config/systemd/user/wireplumber.service.d"
-# Zed's themes directory, where AppearanceSync writes the generated theme.
-mkdir -p "$HOME/.config/zed/themes"
 
 # packages listed explicitly: stow with `--` or a `*/` glob gets no packages
 mapfile -t stow_pkgs < <(find dotfiles -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
@@ -83,18 +81,7 @@ seed binds.defaults.lua          "$HOME/.config/hypr/binds.lua"
 seed hyprlock.defaults.conf      "$HOME/.config/hypr/hyprlock.conf"
 seed alacritty.defaults.toml     "$HOME/.config/alacritty/alacritty.toml"
 seed ghostty.defaults.ghostty    "$HOME/.config/ghostty/config.ghostty"
-seed zed-settings.defaults.json  "$HOME/.config/zed/settings.json"
 seed bash_aliases.defaults.sh    "$HOME/.bash_aliases"
-
-# old seeded binds.lua: the stock alacritty lines point at terminal.sh
-binds="$HOME/.config/hypr/binds.lua"
-if [[ -f $binds ]] && grep -q '^local terminal    = "alacritty"$' "$binds"; then
-  sed -i \
-    -e 's|^local terminal    = "alacritty"$|local terminal    = "~/.config/singularity/terminal.sh"|' \
-    -e 's|wofi --show drun --style \\"\$s\\"; }"$|wofi --show drun --style \\"$s\\" --term ~/.config/singularity/terminal.sh; }"|' \
-    "$binds"
-  log "binds.lua: the terminal is now Settings > Terminal's pick"
-fi
 
 # old seeded hypridle.conf: bare dpms toggles become explicit off/on
 idle="$HOME/.config/hypr/hypridle.conf"

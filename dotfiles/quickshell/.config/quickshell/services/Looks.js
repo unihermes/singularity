@@ -252,7 +252,7 @@ var accents = [
     "#12a594", "#0091ff", "#5555c8", "#8e4ec6", "#d6409f",
 ]
 
-// The look the template configs (wofi, starship, fastfetch) are written in:
+// The look the template configs (starship, fastfetch) are written in:
 // their colours are this ramp, and AppearanceSync maps each one to the current role.
 var reference = "singularity"
 

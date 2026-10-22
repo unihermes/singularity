@@ -20,14 +20,6 @@
     "workspace": 0,
     "fullscreen": false,
     "pin": false,
-    "label": "Zed",
-    "class": "dev.zed.Zed"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
     "label": "VSCodium",
     "class": "VSCodium"
   },
@@ -62,62 +54,6 @@
     "pin": false,
     "label": "Zathura",
     "class": "org.pwmt.zathura"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
-    "label": "LibreOffice Writer",
-    "class": "libreoffice-writer"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
-    "label": "LibreOffice Calc",
-    "class": "libreoffice-calc"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
-    "label": "LibreOffice Impress",
-    "class": "libreoffice-impress"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
-    "label": "LibreOffice Draw",
-    "class": "libreoffice-draw"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
-    "label": "LibreOffice Math",
-    "class": "libreoffice-math"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
-    "label": "LibreOffice Base",
-    "class": "libreoffice-base"
-  },
-  {
-    "float": false,
-    "workspace": 0,
-    "fullscreen": false,
-    "pin": false,
-    "label": "LibreOffice Start Center",
-    "class": "libreoffice-startcenter"
   },
   {
     "float": true,

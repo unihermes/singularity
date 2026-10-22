@@ -11,7 +11,7 @@
 #             singularity.scratch, not singularity-scratch.
 #   --dir     the working directory
 #   COMMAND   run instead of the shell; everything after it is its own.
-#             -e or -- before it is optional (wofi passes --).
+#             -e or -- before it is optional.
 set -u
 
 state=${XDG_STATE_HOME:-$HOME/.local/state}/singularity/appearance.json

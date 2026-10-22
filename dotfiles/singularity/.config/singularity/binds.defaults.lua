@@ -30,9 +30,8 @@ shared.appClasses = {
     [zen]         = "zen",
     [floorp]      = "floorp",
 }
--- the Quickshell launcher; wofi (with the shell's stylesheet) only when the
--- shell isn't running, pkill first so a second press dismisses it
-local menu        = "qs ipc call launcher toggle apps || pkill wofi || { s=~/.local/state/singularity/wofi.css; [ -r \"$s\" ] || s=~/.config/wofi/style.css; wofi --show drun --style \"$s\" --term ~/.config/singularity/terminal.sh; }"
+-- the Quickshell launcher
+local menu        = "qs ipc call launcher toggle apps"
 
 local mod = "SUPER"
 

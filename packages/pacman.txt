@@ -17,8 +17,6 @@ npm
 # the two terminals Settings > Terminal picks between (singularity/terminal.sh)
 alacritty
 ghostty
-# the editor with agent chats; dotfiles/zed lays it out like VS Code
-zed
 stow
 git
 openssh
@@ -101,7 +99,6 @@ gnome-keyring
 libnotify
 
 # wayland utilities
-wofi
 wl-clipboard
 # clipboard history manager: persistent history of copied text/images
 cliphist
@@ -183,14 +180,6 @@ xdg-utils
 
 # apps
 obsidian
-# office suite, set up to feel like Word by install.sh.
-# Carlito and Caladea have Calibri's and Cambria's metrics, so .docx files
-# keep their line breaks. Zotero's LibreOffice add-in runs on Java.
-libreoffice-still
-ttf-carlito
-ttf-caladea
-hunspell-en_us
-java-runtime
 
 # power and brightness (the backlight's brightnessctl is in
 # hardware/backlight.txt, BlueZ in hardware/bluetooth.txt)
