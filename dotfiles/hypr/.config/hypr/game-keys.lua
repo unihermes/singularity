@@ -17,7 +17,7 @@ local bind = hl.bind
 hl.bind = function(keys, ...)
     local handle = bind(keys, ...)
     local k = type(keys) == "string" and keys:upper():gsub("%s", "") or ""
-    if handle and (k:find("SUPER", 1, true) or k == "CTRL+SPACE" or k:match("^%a+_R$")) then
+    if handle and (k:find("SUPER", 1, true) or k == "CTRL+SPACE" or k:match("_R$")) then
         table.insert(held, handle)
     end
     return handle
