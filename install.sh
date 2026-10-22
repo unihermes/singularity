@@ -3,15 +3,18 @@ set -euo pipefail
 
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-log()  { printf '\033[1;34m::\033[0m %s\n'    "$*"; }
-warn() { printf '\033[1;33m!!\033[0m %s\n'    "$*" >&2; }
-die()  { printf '\033[1;31mxx\033[0m %s\n'    "$*" >&2; exit 1; }
-
-# put PATH MODE -- installs system/PATH (the repo's root-owned files) at PATH
-put() { sudo install -D -m "$2" "system$1" "$1"; }
-
-# has CAP, detect_machine, machine_lists, split_repo_aur, list
+# log, warn, die, list
+source ./lib.sh
+# has CAP, detect_machine, machine_lists, split_repo_aur
 source ./hardware.sh
+
+# put PATH -- installs system/PATH (the repo's root-owned files) at PATH,
+# executable where the repo's copy is
+put() {
+  local mode=644
+  [[ -x system$1 ]] && mode=755
+  sudo install -D -m "$mode" "system$1" "$1"
+}
 
 usage() {
   cat <<'EOF'
@@ -324,8 +327,8 @@ fi
 # action for the local session. Root-owned in /usr/local/bin.
 if [[ -n $esp ]]; then
   log "installing the boot entry helper"
-  put /usr/local/bin/singularity-boot 755
-  put /usr/share/polkit-1/actions/org.singularity.boot.policy 644
+  put /usr/local/bin/singularity-boot
+  put /usr/share/polkit-1/actions/org.singularity.boot.policy
 fi
 
 # Shorter deferred-probe timeout (the IPU6 sensor never resolves), and async
@@ -521,8 +524,8 @@ fi
 # and two numbers; root-owned in /usr/local/bin.
 if has charge-modes; then
   log "installing the battery charge helper"
-  put /usr/local/bin/singularity-charge 755
-  put /usr/share/polkit-1/actions/org.singularity.charge.policy 644
+  put /usr/local/bin/singularity-charge
+  put /usr/share/polkit-1/actions/org.singularity.charge.policy
 fi
 
 log "enabling services"
@@ -535,34 +538,19 @@ sudo usermod -aG seat "$USER"
 # Network: iwd (Wi-Fi), systemd-networkd (addresses, DHCP config only when
 # none exists), systemd-resolved (DNS). Both links count towards online, so
 # timesyncd works on either.
-wired_network='[Match]
-Type=ether
-
-[Network]
-DHCP=yes'
 if ! compgen -G "/etc/systemd/network/*.network" >/dev/null; then
   log "adding DHCP configs for systemd-networkd"
-  sudo mkdir -p /etc/systemd/network
-  sudo tee /etc/systemd/network/25-wireless.network >/dev/null <<'NET'
-[Match]
-Type=wlan
-
-[Network]
-DHCP=yes
-IgnoreCarrierLoss=3s
-NET
-  printf '%s\n' "$wired_network" | sudo tee /etc/systemd/network/20-wired.network >/dev/null
+  put /etc/systemd/network/25-wireless.network
+  put /etc/systemd/network/20-wired.network
 elif [[ $(cat /etc/systemd/network/20-wired.network 2>/dev/null) == $'[Match]\nType=ether\n\n[Link]\nRequiredForOnline=no\n\n[Network]\nDHCP=yes' ]]; then
   # The config an earlier install.sh wrote, unedited: bring it up to date.
   log "letting the wired link count towards being online"
-  printf '%s\n' "$wired_network" | sudo tee /etc/systemd/network/20-wired.network >/dev/null
+  put /etc/systemd/network/20-wired.network
   systemctl is-active -q systemd-networkd && sudo networkctl reload
 fi
 # --any: one link online is enough, so an unplugged port or idle Wi-Fi never
 # makes boot sit out wait-online's full timeout.
-sudo mkdir -p /etc/systemd/system/systemd-networkd-wait-online.service.d
-printf '[Service]\nExecStart=\nExecStart=/usr/lib/systemd/systemd-networkd-wait-online --any\n' |
-  sudo tee /etc/systemd/system/systemd-networkd-wait-online.service.d/singularity.conf >/dev/null
+put /etc/systemd/system/systemd-networkd-wait-online.service.d/singularity.conf
 sudo systemctl daemon-reload
 
 # NetworkManager and wpa_supplicant disabled (not stopped, so this run keeps
@@ -578,8 +566,7 @@ for unit in NetworkManager.service NetworkManager-wait-online.service wpa_suppli
 done
 # LLMNR is a Windows-era name lookup that resolved answers on every interface
 # (port 5355). Nothing here uses it; mDNS (.local names) stays on.
-sudo mkdir -p /etc/systemd/resolved.conf.d
-printf '[Resolve]\nLLMNR=no\n' | sudo tee /etc/systemd/resolved.conf.d/singularity.conf >/dev/null
+put /etc/systemd/resolved.conf.d/singularity.conf
 sudo systemctl enable --now systemd-networkd systemd-resolved
 if has wifi; then
   sudo systemctl enable --now iwd
@@ -649,8 +636,7 @@ fi
 # iwd as Type=exec, so the greeter doesn't wait out its module stall
 if have_unit iwd.service; then
   log "stopping ly from waiting on iwd"
-  sudo mkdir -p /etc/systemd/system/iwd.service.d
-  printf '[Service]\nType=exec\n' | sudo tee /etc/systemd/system/iwd.service.d/singularity.conf >/dev/null
+  put /etc/systemd/system/iwd.service.d/singularity.conf
   sudo systemctl daemon-reload
 fi
 
@@ -689,12 +675,12 @@ if [[ -n $dm_unit ]]; then
   # slots by index.
   if [[ -f /etc/ly/config.ini ]]; then
     log "theming ly"
-    put /etc/ly/singularity.sh 755
+    put /etc/ly/singularity.sh
     # A monitor named video=<connector>:d on the cmdline is held off the
     # console (which sizes to its smallest screen); outputs.sh hands it to
     # the session at login and back at logout.
-    put /etc/ly/outputs.sh 755
-    put /etc/ly/login.sh 755
+    put /etc/ly/outputs.sh
+    put /etc/ly/login.sh
     tmp=$(mktemp)
     echo '%wheel ALL=(root) NOPASSWD: /etc/ly/outputs.sh on' > "$tmp"
     if sudo visudo -cqf "$tmp"; then
@@ -709,8 +695,7 @@ if [[ -n $dm_unit ]]; then
     has wifi && ly_lines="wifi $ly_lines"
     has battery && ly_lines="battery power $ly_lines"
     ly_lines="$ly_lines last"
-    sed "s/@LINES@/$ly_lines/" system/etc/ly/info.sh | sudo tee /etc/ly/info.sh >/dev/null
-    sudo chmod 755 /etc/ly/info.sh
+    put /etc/ly/info.sh
     # Keys edited in place, so pacman keeps taking upstream's new options.
     # Colour ids are 1-based; a 0x01 top byte is bold (the bright half).
     set_ly() {
@@ -754,9 +739,8 @@ if [[ -n $dm_unit ]]; then
 
     # singularity-autologin: ly's autologin on/off for Settings > Startup,
     # for the pkexec caller only (PKEXEC_UID), never an argument.
-    put /usr/local/bin/singularity-autologin 755
-
-    put /usr/share/polkit-1/actions/org.singularity.autologin.policy 644
+    put /usr/local/bin/singularity-autologin
+    put /usr/share/polkit-1/actions/org.singularity.autologin.policy
   fi
 else
   warn "no ly unit found. Units the package ships:"

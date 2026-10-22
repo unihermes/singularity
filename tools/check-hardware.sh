@@ -5,8 +5,8 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
+source ./lib.sh
 source ./hardware.sh
-list() { sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$1"; }
 
 bad=0
 for cap in "${hw_caps[@]}"; do

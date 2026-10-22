@@ -1,6 +1,7 @@
 #!/bin/sh
 # Installed by singularity's install.sh. ly runs `info.sh <line>` for each
-# status line at the greeter's bottom-right: @LINES@.
+# status line at the greeter's bottom-right, the [lbl:<line>] sections
+# install.sh adds to /etc/ly/config.ini.
 # ly right-aligns each line by its length in bytes but draws it by
 # characters, so the lines are kept to ASCII, where the two agree, and each
 # is padded to the longest of them: the stack lines up on its left edge
@@ -87,7 +88,7 @@ esac
 
 # the longest line sets the width every line is padded to
 width=0
-for l in @LINES@; do
+for l in $(sed -n 's/^\[lbl:\(.*\)\]$/\1/p' /etc/ly/config.ini); do
   t=$(line $l)
   [ ${#t} -gt $width ] && width=${#t}
 done

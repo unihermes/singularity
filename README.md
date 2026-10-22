@@ -334,6 +334,8 @@ singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
+├── hardware.sh             # what this machine has (`has CAP`), sourced by the scripts
+├── lib.sh                  # log, warn, die, list, sourced by the scripts
 ├── packages/               # pacman.txt, aur.txt, desktop.txt and hardware/<capability>.txt
 ├── system/                 # root-owned files install.sh puts at the same path under /
 ├── wallpapers/
