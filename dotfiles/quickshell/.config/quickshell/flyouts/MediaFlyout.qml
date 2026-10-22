@@ -4,7 +4,7 @@
 // The Music module's flyout. Now playing: the art large with the title,
 // artist and player over its foot, the spectrum playing over it while the
 // visualizer is on; the progress (click to seek) and the transport; every
-// player as a chip (a click picks which the module follows). Then the
+// player as a row (a click picks which the module follows). Then the
 // module's switches (Visualizer, Title on the bar) and Visualizer look, a
 // page of its own (style, bars, hiding when silent). Self-contained: only
 // needs the Media and Visualizer singletons.
@@ -218,22 +218,16 @@ FlyoutPanel {
         }
     }
 
-    // every player as a chip: a click picks which the module follows
-    Flow {
-        visible: mediaFlyout.page === "" && Media.players.length > 1
-        width: parent.width
-        spacing: Theme.spaceS
+    // every player as a row: a click picks which the module follows
+    Repeater {
+        model: mediaFlyout.page === "" && Media.players.length > 1 ? Media.players : []
 
-        Repeater {
-            model: Media.players
-
-            FlyoutChip {
-                required property var modelData
-                icon: modelData.isPlaying ? "󰏤" : "󰝚"
-                text: modelData.identity
-                selected: modelData === Media.player
-                onClicked: Media.pick(modelData)
-            }
+        FlyoutRow {
+            required property var modelData
+            leadingIcon: modelData.isPlaying ? "󰏤" : "󰝚"
+            label: modelData.identity
+            highlighted: modelData === Media.player
+            onActivated: Media.pick(modelData)
         }
     }
 

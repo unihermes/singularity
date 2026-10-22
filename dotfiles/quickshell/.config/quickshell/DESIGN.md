@@ -213,7 +213,7 @@ Every bar flyout keeps to these (settled 2026-10-20):
   indented under it. A click opens the flyout, a middle click plays or
   pauses. The flyout: the art large with the title, artist and player
   over its foot and the spectrum over it while the visualizer is on; the
-  progress (click to seek) and the transport; every player as a chip (a
+  progress (click to seek) and the transport; every player as a row (a
   click picks which the module follows); the Visualizer and Title on the
   bar switches; Visualizer look, a page of its own (Style, Bars, Hide
   when silent); Settings.
