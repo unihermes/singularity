@@ -65,17 +65,26 @@ hl.on("window.open", function(win)
     hl.dispatch(hl.dsp.focus({ window = target }))
 end)
 
--- A window opened over a fullscreen game un-fullscreens it for good, and the
--- game, still screen-sized, floats half under the bar. Focused again, a
--- screen-sized game goes back to fullscreen.
-hl.on("window.active", function()
+-- A focused game in windowed fullscreen (a screen-sized floater) is made
+-- fullscreen, so it covers the bar instead of sliding half under it.
+-- Checked on focus, on open and a few seconds after (games size their
+-- window once loaded), and when one leaves fullscreen, as it does when
+-- another window opens over it.
+local function coverBar()
     local win = hl.get_active_window()
     local mon = win and win.monitor
     if not (mon and isGame(win) and win.floating and win.fullscreen == 0) then return end
     if win.size.x >= mon.width / mon.scale and win.size.y >= mon.height / mon.scale then
         hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "set", window = "address:" .. win.address }))
     end
+end
+local function coverBarLater(ms) hl.timer(coverBar, { timeout = ms, type = "oneshot" }) end
+hl.on("window.active", coverBar)
+hl.on("window.open", function(win)
+    if not (win and isGame(win)) then return end
+    for _, ms in ipairs({ 500, 2000, 5000 }) do coverBarLater(ms) end
 end)
+hl.on("window.fullscreen", function() coverBarLater(500) end)
 
 -- Desktop: Power Saver while any game is open, the picked profile back
 -- after the last one closes (unless it was changed meanwhile). The 7700X
