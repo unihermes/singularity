@@ -37,8 +37,9 @@ Singleton {
     property real gpuWatts: -1
     property int gpuFan: -1         // % of the card's own fans, NVIDIA only
 
-    // [{ key, name, rpm, duty }] for every header that has turned; duty is
-    // the PWM as a percent, -1 when the header has no PWM node
+    // [{ key, name, rpm, duty, auto }] for every header that has turned; duty
+    // is the PWM as a percent, -1 when the header has no PWM node; auto when
+    // the board drives it, not a manual PWM (CoolerControl's)
     property var fans: []
     property var cpuHistory: []
     property var gpuHistory: []
@@ -50,7 +51,7 @@ Singleton {
     property var names: ({})
     // keys of headers seen turning, so a stopped fan stays listed
     property var spun: ({})
-    // [{ key, input, pwm }], [paths]
+    // [{ key, input, pwm, enable }], [paths]
     property var fanNodes: []
     property var driveNodes: []
 
@@ -133,7 +134,7 @@ Singleton {
             if (!f) continue
             var s = f.read()
             if (s.rpm > 0 && !seen[s.key]) { seen[s.key] = true; grew = true }
-            if (seen[s.key]) out.push({ key: s.key, name: fanName(s.key), rpm: s.rpm, duty: s.duty })
+            if (seen[s.key]) out.push({ key: s.key, name: fanName(s.key), rpm: s.rpm, duty: s.duty, auto: s.auto })
         }
         if (grew) spun = Object.assign({}, seen)
         fans = out
@@ -194,7 +195,8 @@ Singleton {
             + "nvme) [ -r $d/temp1_input ] && echo \"D|$d/temp1_input\";; esac; "
             + "for f in $d/fan*_input; do [ -r \"$f\" ] || continue; "
             + "k=${f##*/}; k=${k%_input}; p=$d/pwm${k#fan}; [ -r \"$p\" ] || p=; "
-            + "echo \"F|$k|$f|$p\"; done; done"]
+            + "e=${p:+${p}_enable}; [ -n \"$e\" ] && [ -r \"$e\" ] || e=; "
+            + "echo \"F|$k|$f|$p|$e\"; done; done"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var fanNodes = [], drives = [], gpu = ""
@@ -204,7 +206,7 @@ Singleton {
                     if (f[0] === "C") cpuFile.path = f[1]
                     else if (f[0] === "G" && gpu === "") gpu = f[1]
                     else if (f[0] === "D") drives.push(f[1])
-                    else if (f[0] === "F" && f.length >= 4) fanNodes.push({ key: f[1], input: f[2], pwm: f[3] })
+                    else if (f[0] === "F" && f.length >= 4) fanNodes.push({ key: f[1], input: f[2], pwm: f[3], enable: f[4] || "" })
                 }
                 gpuFile.path = gpu
                 root.driveNodes = drives
@@ -229,16 +231,21 @@ Singleton {
             required property var modelData
             property FileView rpmView: FileView { path: modelData.input; blockLoading: true; printErrors: false }
             property FileView pwmView: FileView { path: modelData.pwm; blockLoading: true; printErrors: false }
+            property FileView enableView: FileView { path: modelData.enable; blockLoading: true; printErrors: false }
             function read() {
                 rpmView.reload()
                 var rpm = Number(rpmView.text().trim())
-                var duty = -1
+                var duty = -1, auto = false
+                if (modelData.enable !== "") {
+                    enableView.reload()
+                    auto = enableView.text().trim() !== "1"
+                }
                 if (modelData.pwm !== "") {
                     pwmView.reload()
                     var p = Number(pwmView.text().trim())
                     if (!isNaN(p)) duty = Math.round(p / 255 * 100)
                 }
-                return { key: modelData.key, rpm: isNaN(rpm) ? 0 : rpm, duty: duty }
+                return { key: modelData.key, rpm: isNaN(rpm) ? 0 : rpm, duty: duty, auto: auto }
             }
         }
     }

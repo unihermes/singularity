@@ -258,7 +258,8 @@ Every bar flyout keeps to these (settled 2026-10-20):
 - **Cooling** (flyout picked 2026-10-21): the last three minutes of CPU
   and GPU as one graph on a °C scale (rules at 40, 60, 80), under a key
   with their readings and the drive's; the GPU's load and draw on the
-  time axis; every fan as a tile (its speed, name, duty as a level; the
+  time axis; every fan as a row (its name, Auto when the board or card
+  drives it rather than CoolerControl, its duty as a level, its speed; the
   card's own last); CoolerControl's modes as a segmented strip while it
   has any (its daemon's API, with the GUI's token); CoolerControl and
   System as chips.
