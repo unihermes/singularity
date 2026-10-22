@@ -8,6 +8,7 @@
 -- binds.lua: it wraps hl.bind to keep each bind's handle with its keys,
 -- and returns the sync for hyprland.lua to run once they're all bound.
 -- The Tabs binds are left to windows.lua's own switch (shared.tabBinds).
+-- Vibrance is off then too, so the game can go straight to the screen.
 -- Also keeps games fullscreen and out of the scratchpad, and on the
 -- desktop holds Power Saver while one is open.
 
@@ -39,6 +40,9 @@ local function sync()
     local on = isGame(hl.get_active_window())
     if on == inGame then return end
     inGame = on
+    if (S.vibranceShader or "") ~= "" then
+        hl.config({ decoration = { screen_shader = on and "" or S.vibranceShader } })
+    end
     local tabs = {}
     for _, b in ipairs(S.tabBinds or {}) do tabs[b] = true end
     for _, b in ipairs(held) do
