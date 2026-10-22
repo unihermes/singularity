@@ -3,9 +3,10 @@
 -- Runs where wireplumber would fall back to the default output: a stream
 -- with no target of its own (not moved, not remembered on another output)
 -- plays on Game if it's a game, else on Chat, when that channel is there.
--- A game is anything under Wine/Proton or a stream that says it is one
--- (SDL3's default role). The channels' own streams (singularity.channel)
--- still go to the default, which is how they reach the real output.
+-- A game is anything under Wine/Proton, Java (Minecraft, from Modrinth or
+-- any launcher) or a stream that says it is one (SDL3's default role).
+-- The channels' own streams (singularity.channel) still go to the default,
+-- which is how they reach the real output.
 
 lutils = require ("linking-utils")
 log = Log.open_topic ("s-linking")
@@ -32,7 +33,7 @@ SimpleEventHook {
 
     local binary = si_props ["application.process.binary"] or ""
     local isGame = binary:match ("^wine") or binary:match ("^proton")
-        or si_props ["media.role"] == "Game"
+        or binary == "java" or si_props ["media.role"] == "Game"
     local name = isGame and "game" or "chat"
     local channel = om:lookup {
       type = "SiLinkable",
