@@ -149,6 +149,10 @@ Style: `channel` (frame `channel` in `Styles.js`).
   section, put a `FlyoutDivider` (or an item with `isSectionBreak: true`)
   **directly** in the flyout's column; a divider nested inside a sub-Column
   won't split the section.
+- **Button regions:** a `FlyoutChipLine` alone in its section (a flyout's
+  way out: Settings, System, Keys) isn't chips inside a frame. The frame
+  hugs it and its buttons fill the frame in equal parts, split by the
+  frame's own line, with the hover fill out to the frame's corners.
 - Content clears both frames: `padX` and `padY` in `FlyoutPanel`.
 - **Closing:** one flyout open across all screens. It closes on a press
   anywhere off it, with any button and on any monitor (`Backdrop`,

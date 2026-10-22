@@ -202,6 +202,11 @@ Singleton {
     readonly property bool frameStroked: !frameNone
     // rows inside a panel are framed (SectionRuns) in every style but Flat
     readonly property bool sectionFramed: style !== "flat"
+    // from a section frame's edge in to its ground, past its innermost line
+    readonly property int sectionDepth: frameChannel ? channelWidth
+        : frameDouble ? 2 + borderWidth : frameStroked ? borderWidth : 0
+    // that innermost line's colour
+    readonly property color sectionLine: frameChannel ? channelInner : frameDouble ? frameStroke : stroke
 
     // the channel's bands, outside in; channelWidth is all of them
     readonly property color channelOuter: muted

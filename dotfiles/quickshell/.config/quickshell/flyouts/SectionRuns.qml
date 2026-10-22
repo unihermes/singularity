@@ -19,9 +19,10 @@ Item {
     property real radius: Theme.sectionRadius
     property color fill: Theme.panelFill
 
-    // [{ y0, y1 }] in the column's coordinates. A child marked
+    // [{ y0, y1, flush }] in the column's coordinates. A child marked
     // isSectionGroup (a Repeater's Column of heading and rows) is walked
-    // as if its children sat in the column itself.
+    // as if its children sat in the column itself. A run that is one
+    // isChipRegion item (FlyoutChipLine) is flush: the frame hugs it.
     readonly property var runs: {
         if (!column) return []
         var out = [], cur = null
@@ -38,8 +39,8 @@ Item {
                     cur = null
                     continue
                 }
-                if (!cur) { cur = { y0: dy + c.y, y1: dy + c.y + c.height }; out.push(cur) }
-                else cur.y1 = dy + c.y + c.height
+                if (!cur) { cur = { y0: dy + c.y, y1: dy + c.y + c.height, flush: c.isChipRegion === true }; out.push(cur) }
+                else { cur.y1 = dy + c.y + c.height; cur.flush = false }
             }
         }
         walk(column.children, 0)
@@ -51,7 +52,7 @@ Item {
 
         Item {
             required property var modelData
-            readonly property int out: Theme.channelWidth + root.padY
+            readonly property int out: modelData.flush ? Theme.sectionDepth : Theme.channelWidth + root.padY
             width: root.width
             y: root.columnY + modelData.y0 - out
             height: modelData.y1 - modelData.y0 + out * 2
