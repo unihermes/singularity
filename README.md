@@ -66,9 +66,10 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 - An internet connection during the install
 - Your own user account; `install.sh` refuses to run as root
 
-The repo is built and tested on a Dell XPS 13 with Intel graphics. Nothing
-in the shell is specific to it, but the boot tweaks in `install.sh` are
-written for that hardware and skip themselves where they don't apply.
+The repo is built and tested on a Dell XPS 13 with Intel graphics and a
+desktop with an RTX 4070. Nothing in the shell is specific to either: the
+packages and boot fixes for particular hardware (`hardware.sh`) install only
+where that hardware is found.
 
 ## Installing
 
@@ -78,10 +79,16 @@ git clone https://github.com/unihermes/singularity.git ~/singularity
 cd ~/singularity && ./install.sh laptop    # or: ./install.sh desktop
 ```
 
-`laptop` gets everything. `desktop` leaves out what only a laptop needs:
-`packages/laptop.txt`, the boot fixes for the laptop's hardware, hibernation,
-the touchpad wake rule, the battery charge helper, the AC-power profile switch
-and the greeter's battery lines. `update.sh` remembers which one you picked.
+`laptop` adds hibernation; `desktop` adds CoolerControl and the desktop idle
+timings. With neither, `install.sh` goes by what the firmware says the machine
+is. `update.sh` remembers which one you picked.
+
+Apart from that choice, everything tied to hardware is gated on the hardware
+itself: `hardware.sh` checks sysfs for a battery, a lid, a backlight, Wi-Fi,
+Bluetooth, a fingerprint reader, an NVIDIA or Intel GPU, the fan controller,
+the webcam and so on, and installs `packages/hardware/<name>.txt` and the
+matching fixes only where `has <name>` is true. `update.sh` asks again on
+every run, so hardware added later gets its packages.
 
 Clone it somewhere you'll keep it: the configs are symlinked from this folder,
 so moving it later leaves `~/.config` pointing nowhere. Reboot when it
@@ -93,8 +100,10 @@ finishes and pick **Hyprland** in the greeter.
 1. Syncs the system and installs `base-devel git stow`
 2. Bootstraps `yay` from `yay-bin` if it isn't there
 3. Installs everything in `packages/pacman.txt` and `packages/aur.txt`, plus
-   `packages/laptop.txt` on a laptop or `packages/desktop.txt` (the NVIDIA
-   driver) and `packages/aur-desktop.txt` (CoolerControl) on the desktop
+   `packages/desktop.txt` (CoolerControl) on a desktop and each
+   `packages/hardware/<name>.txt` whose hardware is there (the NVIDIA driver,
+   Intel's video decoder, iwd, BlueZ, brightnessctl, fprintd, the it87 fan
+   driver)
 4. Links `dotfiles/` into `$HOME` with GNU stow (`link.sh`) and builds the
    `alttab-relay` helper
 5. Rebuilds font and icon caches, sets the default apps, and sets
@@ -102,16 +111,18 @@ finishes and pick **Hyprland** in the greeter.
 6. Quiets the kernel command line (systemd-boot, a unified kernel image or
    GRUB), drops the Arch splash from the kernel image, hides the
    systemd-boot menu, stops iwd blocking the greeter and masks unused TPM
-   setup. On a laptop it also sets up a hibernation swapfile and applies the
-   laptop's boot fixes: vfat in the initramfs, panel self refresh and the
-   webcam stack switched off. On the desktop it loads the NVIDIA driver from
+   setup. On a laptop it also sets up a hibernation swapfile. Where the
+   hardware is there it applies its boot fixes: vfat in the initramfs and
+   the webcam stack switched off (an IPU6 webcam), panel self refresh off
+   (an Intel panel), the touchpad wake rule and the battery charge helper.
+   On a desktop it loads the NVIDIA driver from
    the initramfs (leaving the integrated GPU out of it), probes the SATA
    ports in parallel and lets the motherboard fan driver (`it87`) load. The
    initramfs is rebuilt once, at the end
-7. Enables iwd, systemd-networkd and -resolved (and disables NetworkManager
-   if archinstall turned it on), PipeWire, Bluetooth (with its
-   pairing agent and power restore), power-profiles-daemon, the AC-power
-   profile switch (laptop only), CoolerControl's daemon (desktop only), a
+7. Enables systemd-networkd and -resolved, iwd where there's Wi-Fi (and
+   disables NetworkManager if archinstall turned it on), PipeWire, Bluetooth
+   where there's an adapter (with its pairing agent and power restore),
+   power-profiles-daemon, CoolerControl's daemon (desktop only), a
    weekly `paccache` clean (keeps three versions of each package) and the
    `ly` greeter. resolved's LLMNR is switched off, and AUR builds stop
    making `-debug` packages (`~/.config/pacman/makepkg.conf`)
@@ -328,7 +339,7 @@ singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
-├── packages/               # pacman.txt, aur.txt and the per-machine lists, one per line
+├── packages/               # pacman.txt, aur.txt, desktop.txt and hardware/<capability>.txt
 ├── wallpapers/
 ├── tools/                  # checks run by the pre-commit hook and CI
 │   ├── git-hooks/pre-commit

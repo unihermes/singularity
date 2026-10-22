@@ -1,0 +1,9 @@
+# A desktop board's ITE Super I/O, the chip behind its fan headers
+# (hardware.sh: has ite-superio).
+
+# The in-tree it87 driver finds this board's IT8689E and reads it, but its PWM
+# writes do nothing: every header kept its speed from 0% to 100%. This
+# out-of-tree build replaces it; DKMS builds it against linux-headers.
+it87-dkms-git
+# Headers for the stock kernel, so DKMS can build it87-dkms-git
+linux-headers

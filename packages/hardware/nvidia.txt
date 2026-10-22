@@ -1,0 +1,10 @@
+# An NVIDIA card (hardware.sh: has nvidia). Repo or AUR packages, one per
+# line; every packages/hardware/CAP.txt is installed where `has CAP`.
+
+# The card's driver. Without it the screen runs on the firmware's
+# framebuffer (simpledrm): one fixed 1024x768 mode, no vsync, so everything
+# is low-res and tears. nvidia-open is the one for Turing and newer, built
+# for the stock linux kernel; nvidia-utils comes with it.
+nvidia-open
+# VA-API on NVDEC, so browsers decode video on the GPU
+libva-nvidia-driver

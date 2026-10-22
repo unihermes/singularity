@@ -1,0 +1,9 @@
+# A Wi-Fi card (hardware.sh: has wifi).
+
+# iwd handles Wi-Fi; systemd-networkd hands out addresses and
+# systemd-resolved does DNS, both part of systemd, so wired-only machines
+# need nothing here.
+iwd
+# iw reads the live link's bitrate and signal for the Network settings page.
+# Only that one row needs it, and the row hides itself when it isn't there.
+iw

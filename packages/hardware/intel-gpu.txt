@@ -1,0 +1,6 @@
+# Intel graphics (hardware.sh: has intel-gpu).
+
+# VA-API driver for Intel GPUs (Broadwell and newer): without it browsers
+# decode video (AV1, VP9) in software, which on a 2-P-core Iris Xe chip is
+# busy enough to slow everything, browser launches included
+intel-media-driver

@@ -1,4 +1,6 @@
-# Repo (native) packages. One per line, # comments allowed.
+# Repo (native) packages every machine gets. One per line, # comments allowed.
+# What only some hardware can use goes in hardware/<capability>.txt instead
+# (see hardware.sh).
 # Regenerate from a known-good system with:  pacman -Qqen > packages/pacman.txt
 
 # base tooling
@@ -61,13 +63,8 @@ qt6-declarative
 qt6-svg
 qt6ct
 
-# network
-# iwd handles Wi-Fi, systemd-networkd hands out addresses, systemd-resolved
-# does DNS. networkd and resolved ship with systemd, so only iwd is listed.
-iwd
-# iw reads the live link's bitrate and signal for the Network settings page.
-# Only that one row needs it, and the row hides itself when it isn't there.
-iw
+# network: systemd-networkd and systemd-resolved ship with systemd; Wi-Fi's
+# iwd is in hardware/wifi.txt
 
 # audio
 pipewire
@@ -195,19 +192,12 @@ ttf-caladea
 hunspell-en_us
 java-runtime
 
-# power, backlight, bluetooth
-brightnessctl
+# power and brightness (the backlight's brightnessctl is in
+# hardware/backlight.txt, BlueZ in hardware/bluetooth.txt)
 # External monitors' brightness over DDC/CI (services/DdcBrightness.qml); its
 # package loads i2c-dev and gives the seat user the /dev/i2c-* nodes
 ddcutil
 upower
-# BlueZ itself: the bar's Bluetooth module and flyout talk to its daemon
-bluez
-# bt-agent. BlueZ refuses to pair at all unless some process has registered a
-# pairing agent to answer its confirmation request, and neither Quickshell nor
-# a non-interactive `bluetoothctl pair` provides one -- pairing just fails with
-# "No agent available for request type 2".
-bluez-tools
 # Drives both levers this chip actually responds to: the ACPI
 # platform_profile the firmware exposes, and intel_pstate's EPP. The bar's
 # battery flyout switches profiles over its DBus interface.

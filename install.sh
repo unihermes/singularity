@@ -10,26 +10,36 @@ die()  { printf '\033[1;31mxx\033[0m %s\n'    "$*" >&2; exit 1; }
 # Strip comments and blank lines from a package list.
 list() { sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$1"; }
 
+# has CAP, detect_machine, machine_lists, split_repo_aur
+source ./hardware.sh
+
 usage() {
   cat <<'EOF'
-usage: ./install.sh laptop|desktop
+usage: ./install.sh [laptop|desktop]
 
-  laptop   everything, with hibernation, the battery helpers and the
-           laptop's boot and power fixes
-  desktop  the same desktop without the laptop-only packages and fixes
+  laptop   hibernation and the laptop idle ladder
+  desktop  CoolerControl and the desktop idle ladder
+
+With neither, the type recorded by the last run, else the one the firmware
+reports. Either way, packages and fixes for particular hardware (hardware.sh,
+packages/hardware/) are installed only where that hardware is found.
 EOF
 }
 
-# Laptop or desktop: picks packages/laptop.txt or desktop.txt and the
-# `if (( laptop ))` steps. Recorded for update.sh.
+# Laptop or desktop: picks packages/MACHINE.txt and the `if (( laptop ))`
+# steps. Recorded for update.sh.
+machinefile=${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine
 case ${1:-} in
-  laptop)  laptop=1 ;;
-  desktop) laptop=0 ;;
+  laptop|desktop) machine=$1 ;;
+  "") machine=$(cat "$machinefile" 2>/dev/null || true) ;;
   -h|--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
-machine=$1
-machinefile=${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine
+[[ $machine == laptop || $machine == desktop ]] || machine=$(detect_machine)
+if [[ $machine == laptop ]]; then laptop=1; else laptop=0; fi
+if [[ $(detect_machine) != "$machine" ]]; then
+  warn "installing as a $machine, but this looks like a $(detect_machine)"
+fi
 
 if [[ $EUID -eq 0 ]]; then
   die "run as your user, not root (sudo is called where it is needed)"
@@ -63,10 +73,20 @@ read_list() {
 mkdir -p "${machinefile%/*}"
 echo "$machine" > "$machinefile"
 
+# the lists for this machine type and the hardware found (repo and AUR
+# packages mixed), split between pacman and yay
+mapfile -t lists < <(machine_lists "$machine")
+extra_pkgs=()
+for f in "${lists[@]}"; do
+  read_list more "$f"
+  extra_pkgs+=("${more[@]}")
+done
+split_repo_aur "${extra_pkgs[@]}"
+log "for this machine: ${lists[*]#packages/}"
+
 log "installing repo packages for a $machine"
 read_list pacman_pkgs packages/pacman.txt
-read_list machine_pkgs "packages/$machine.txt"
-pacman_pkgs+=("${machine_pkgs[@]}")
+pacman_pkgs+=("${repo_pkgs[@]}")
 if (( ${#pacman_pkgs[@]} > 0 )); then
   sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}"
 fi
@@ -84,11 +104,9 @@ log "installing AUR packages"
 # Not --noconfirm, so PKGBUILD diffs are shown; --sudoloop keeps sudo alive
 # through long builds.
 aur_failed=0
+machine_aur=("${aur_pkgs[@]}")
 read_list aur_pkgs packages/aur.txt
-if [[ -f packages/aur-$machine.txt ]]; then
-  read_list machine_aur packages/aur-$machine.txt
-  aur_pkgs+=("${machine_aur[@]}")
-fi
+aur_pkgs+=("${machine_aur[@]}")
 if (( ${#aur_pkgs[@]} > 0 )); then
   yay -S --needed --sudoloop --answerclean None "${aur_pkgs[@]}" || aur_failed=1
 fi
@@ -493,9 +511,11 @@ fi
 
 # Shorter deferred-probe timeout (the IPU6 sensor never resolves), and async
 # probing for intel_ish_ipc, whose variable firmware handshake otherwise
-# froze everything behind it, the touchpad included. Harmless elsewhere.
-if (( laptop )); then
+# froze everything behind it, the touchpad included.
+if has ipu6-webcam; then
   edit_cmdline deferred_probe_timeout "deferred_probe_timeout=1"
+fi
+if has intel-ish; then
   edit_cmdline driver_async_probe "driver_async_probe=intel_ish_ipc"
 fi
 
@@ -520,14 +540,14 @@ early_modules() {
   fi
   rebuild_initramfs=1
 }
-if (( laptop )); then
+if has ipu6-webcam; then
   early_modules vfat mac_hid mousedev joydev
 fi
 
 # --- nvidia (desktop) ----------------------------------------------------
 # nvidia loaded from the initramfs, so it takes over before the greeter; the
 # kms hook is dropped, as it only added a 2s amdgpu wait.
-if (( ! laptop )) && pacman -Q nvidia-open &>/dev/null; then
+if (( ! laptop )) && has nvidia && pacman -Q nvidia-open &>/dev/null; then
   early_modules nvidia nvidia_modeset nvidia_uvm nvidia_drm
   if grep -Eq '^HOOKS=\(.*\<kms\>' "$mkconf"; then
     log "leaving the integrated GPU out of the initramfs"
@@ -540,7 +560,7 @@ fi
 # --- SATA probing (desktop) ----------------------------------------------
 # The B650's AHCI asks for staggered spin-up (~0.3s per empty port);
 # probing in parallel is fine for SSDs.
-if (( ! laptop )); then
+if (( ! laptop )) && has ahci; then
   edit_cmdline libahci.ignore_sss "libahci.ignore_sss=1"
 fi
 
@@ -549,7 +569,7 @@ fi
 # CoolerControl sees only the GPU fans. Loaded at boot, not in the initramfs.
 fanconf=/etc/modprobe.d/singularity-it87.conf
 fanload=/etc/modules-load.d/singularity-it87.conf
-if (( ! laptop )) && ! grep -qs 'ignore_resource_conflict=1' "$fanconf"; then
+if has ite-superio && ! grep -qs 'ignore_resource_conflict=1' "$fanconf"; then
   log "setting up the motherboard fan driver"
   echo 'options it87 ignore_resource_conflict=1' | sudo tee "$fanconf" >/dev/null
   echo 'it87' | sudo tee "$fanload" >/dev/null
@@ -560,7 +580,7 @@ fi
 # PSR off: this Alder Lake panel stays black after a resume. A modprobe.d
 # option, so cmdline rewrites can't drop it.
 psrconf=/etc/modprobe.d/singularity-i915.conf
-if (( laptop )) && ! grep -qs 'enable_psr=0' "$psrconf"; then
+if has intel-panel && ! grep -qs 'enable_psr=0' "$psrconf"; then
   log "disabling i915 panel self refresh"
   echo 'options i915 enable_psr=0' | sudo tee "$psrconf" >/dev/null
   rebuild_initramfs=1
@@ -571,13 +591,12 @@ fi
 # boot, and a kernel oops at shutdown after hibernation.
 vscconf=/etc/modprobe.d/singularity-vsc.conf
 vscmods=(mei_vsc ivsc_csi ivsc_ace intel_ipu6 ov01a10)
-if (( laptop )) && [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
+if has ipu6-webcam && [[ "$(cat "$vscconf" 2>/dev/null)" != "$(printf 'blacklist %s\n' "${vscmods[@]}")" ]]; then
   log "switching the webcam off"
   printf 'blacklist %s\n' "${vscmods[@]}" | sudo tee "$vscconf" >/dev/null
   rebuild_initramfs=1
 fi
 
-# --- hibernation ---------------------------------------------------------
 # --- hibernation ---------------------------------------------------------
 # A swapfile on / sized to RAM (zram can't hold an image; it keeps priority),
 # the initramfs resume hook, and resume=/resume_offset= re-read every run.
@@ -668,7 +687,7 @@ fi
 # The touchpad can't wake the machine: its GPIO interrupt kept bouncing
 # s2idle back out. lid.sh's stay_dark() catches the strays.
 touchpadrule=/etc/udev/rules.d/90-singularity-touchpad-wake.rules
-if (( laptop )) && ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
+if has i2c-touchpad && ! grep -qs 'i2c_hid_acpi' "$touchpadrule"; then
   log "disarming the touchpad as a wake source"
   sudo mkdir -p "${touchpadrule%/*}"
   printf '%s\n' \
@@ -681,7 +700,7 @@ fi
 # singularity-charge: the Dell BIOS's charge mode and Custom limits, via
 # dell_laptop, for Settings > Power & Idle through pkexec. Takes only a mode
 # and two numbers; root-owned in /usr/local/bin.
-if (( laptop )) && compgen -G '/sys/class/power_supply/BAT*/charge_types' >/dev/null; then
+if has charge-modes; then
   log "installing the battery charge helper"
   sudo tee /usr/local/bin/singularity-charge >/dev/null <<'CHARGE'
 #!/bin/sh
@@ -795,7 +814,10 @@ done
 # (port 5355). Nothing here uses it; mDNS (.local names) stays on.
 sudo mkdir -p /etc/systemd/resolved.conf.d
 printf '[Resolve]\nLLMNR=no\n' | sudo tee /etc/systemd/resolved.conf.d/singularity.conf >/dev/null
-sudo systemctl enable --now iwd systemd-networkd systemd-resolved
+sudo systemctl enable --now systemd-networkd systemd-resolved
+if has wifi; then
+  sudo systemctl enable --now iwd
+fi
 sudo systemctl try-reload-or-restart systemd-resolved
 # resolv.conf onto resolved's stub, once it's running (a symlink is left)
 if [[ ! -L /etc/resolv.conf ]]; then
@@ -813,7 +835,9 @@ sudo systemctl enable --now paccache.timer
 
 # Nothing enables BlueZ on a Minimal install, and the bar's Bluetooth module
 # and the pairing agent below both need its daemon.
-sudo systemctl enable --now bluetooth.service
+if has bluetooth; then
+  sudo systemctl enable --now bluetooth.service
+fi
 # a unit is installed if `systemctl cat` finds it, or its file exists
 # (templates)
 have_unit() {
@@ -835,16 +859,18 @@ if (( ! laptop )) && have_unit coolercontrold.service; then
 fi
 
 # the BlueZ pairing agent, a user service (see its unit)
-if command -v bt-agent &>/dev/null; then
+if has bluetooth && command -v bt-agent &>/dev/null; then
   log "enabling the bluetooth pairing agent"
   systemctl --user enable --now bt-agent.service ||
     warn "could not enable the bluetooth pairing agent"
 fi
 
 # restores the Bluetooth adapter's power state (see the unit)
-log "enabling Bluetooth power state restore"
-systemctl --user enable --now bt-power-restore.service ||
-  warn "could not enable Bluetooth power state restore"
+if has bluetooth; then
+  log "enabling Bluetooth power state restore"
+  systemctl --user enable --now bt-power-restore.service ||
+    warn "could not enable Bluetooth power state restore"
+fi
 
 # puts Equicord back after Discord updates itself (see the script)
 if command -v equicord &>/dev/null; then
@@ -956,12 +982,12 @@ LY
       warn "sudoers rule for /etc/ly/outputs.sh did not validate, held-off monitors stay off after login"
     fi
     rm -f "$tmp"
-    # the greeter's status lines (root, before login; a desktop has no battery)
-    if (( laptop )); then
-      ly_lines="battery power wifi kernel last"
-    else
-      ly_lines="wifi kernel last"
-    fi
+    # the greeter's status lines (root, before login), the battery's and
+    # Wi-Fi's only where there is one
+    ly_lines=kernel
+    has wifi && ly_lines="wifi $ly_lines"
+    has battery && ly_lines="battery power $ly_lines"
+    ly_lines="$ly_lines last"
     sed "s/@LINES@/$ly_lines/" <<'LY' | sudo tee /etc/ly/info.sh >/dev/null
 #!/bin/sh
 # Written by singularity's install.sh. ly runs `info.sh <line>` for each

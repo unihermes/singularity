@@ -1,0 +1,5 @@
+# A built-in screen with a backlight (hardware.sh: has backlight).
+
+# the brightness keys (hypr/brightness.sh) and hypridle's dim step;
+# external monitors go over DDC/CI (ddcutil, in pacman.txt)
+brightnessctl

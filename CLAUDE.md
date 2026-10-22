@@ -35,6 +35,20 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `python3 tools/check-unused.py`: anything declared and never read fails.
 - `python3 tools/check-settings-index.py`: Settings fields vs the search index.
 - `node --test tools/test-js.mjs`: plain-JS modules and the Hyprland Lua readers/writers.
+- `tools/check-hardware.sh`: `packages/hardware/*.txt` against `hardware.sh`'s capabilities.
+
+## Laptop, desktop and hardware
+
+Anything only some machines can use is gated, never installed everywhere:
+
+- On the hardware first: `hardware.sh`'s `has CAP` (sysfs checks, rerun by every
+  `update.sh`). A package goes in `packages/hardware/CAP.txt` (repo or AUR), a
+  fix or service in install.sh under `if has CAP`. New hardware: add a case to
+  `has()` and its name to `hw_caps`.
+- On the machine type (`laptop`/`desktop`, `if (( laptop ))`, `packages/desktop.txt`)
+  only for a choice about use (hibernation, CoolerControl, idle timings).
+- In the shell, a feature hides itself when its hardware or tool is missing
+  (`Battery.present`, `Brightness.available`, `CommandProbe`), like the lid rows.
 
 ## Running and testing
 

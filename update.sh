@@ -31,11 +31,23 @@ main() {
   # install.sh records whether this is a laptop or a desktop
   local machine
   machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null) \
-    || die "no machine type recorded: run ./install.sh laptop|desktop once"
+    || die "no machine type recorded: run ./install.sh once"
+
+  # the machine type's list and the hardware/ lists for what is found now,
+  # so hardware added since the install gets its packages
+  source ./hardware.sh
+  local -a lists extra=() more
+  local f
+  mapfile -t lists < <(machine_lists "$machine")
+  for f in "${lists[@]}"; do
+    mapfile -t more < <(list "$f")
+    extra+=("${more[@]}")
+  done
+  split_repo_aur "${extra[@]}"
 
   local -a want new
   mapfile -t want < <(list packages/pacman.txt)
-  mapfile -t -O "${#want[@]}" want < <(list "packages/$machine.txt")
+  want+=("${repo_pkgs[@]}")
   mapfile -t new < <(pacman -T "${want[@]}" || true)
   if (( ${#new[@]} > 0 )); then
     log "installing ${new[*]}"
@@ -44,9 +56,7 @@ main() {
 
   # Not --noconfirm: the PKGBUILD diffs are worth reading, as in install.sh.
   mapfile -t want < <(list packages/aur.txt)
-  if [[ -f packages/aur-$machine.txt ]]; then
-    mapfile -t -O "${#want[@]}" want < <(list "packages/aur-$machine.txt")
-  fi
+  want+=("${aur_pkgs[@]}")
   mapfile -t new < <(pacman -T "${want[@]}" || true)
   if (( ${#new[@]} > 0 )); then
     log "installing ${new[*]} from the AUR"

@@ -77,7 +77,8 @@ Item {
 
     BarModule {
         id: btBtn
-        visible: Settings.widgetVisible("bluetooth")
+        // no adapter, nothing to show
+        visible: !!adapter && Settings.widgetVisible("bluetooth")
         readonly property var adapter: Bluetooth.defaultAdapter
         // the connected glyph while a device is on
         readonly property bool linked: !!adapter && !!adapter.devices

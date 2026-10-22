@@ -1,0 +1,4 @@
+# A fingerprint reader (hardware.sh: has fingerprint).
+
+# enrolling fingers (Settings > Lock Screen) and hyprlock's fingerprint unlock
+fprintd

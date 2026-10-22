@@ -1,0 +1,9 @@
+# A Bluetooth adapter (hardware.sh: has bluetooth).
+
+# BlueZ itself: the bar's Bluetooth module and flyout talk to its daemon
+bluez
+# bt-agent. BlueZ refuses to pair at all unless some process has registered a
+# pairing agent to answer its confirmation request, and neither Quickshell nor
+# a non-interactive `bluetoothctl pair` provides one -- pairing just fails with
+# "No agent available for request type 2".
+bluez-tools

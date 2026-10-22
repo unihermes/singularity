@@ -38,3 +38,14 @@ if git diff --cached --name-only | grep -qE 'quickshell/services/.*\.js$|tools/t
         exit 1
     fi
 fi
+
+# The package lists against hardware.sh's capabilities (check-hardware.sh).
+if git diff --cached --name-only | grep -qE '^(packages/|hardware\.sh|install\.sh|update\.sh|tools/check-hardware\.sh)'; then
+    if ! tools/check-hardware.sh; then
+        echo
+        echo "packages/ and hardware.sh disagree (above). A list in packages/hardware/"
+        echo "needs a capability of the same name in hardware.sh's has() and hw_caps."
+        echo "git commit --no-verify skips this."
+        exit 1
+    fi
+fi

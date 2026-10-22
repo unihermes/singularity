@@ -69,9 +69,12 @@ for scope in system user; do
 done
 
 # --- the tools the shell shells out to ---------------------------------------
+# (Wi-Fi's and the backlight's only where there is one, as install.sh does)
+tools=(hyprctl quickshell grim slurp wl-copy wpctl notify-send stow cava matugen fd)
+compgen -G '/sys/class/ieee80211/*' >/dev/null && tools+=(iwctl iw)
+compgen -G '/sys/class/backlight/*' >/dev/null && tools+=(brightnessctl)
 missing=()
-for tool in hyprctl quickshell grim slurp wl-copy iwctl wpctl brightnessctl \
-	notify-send stow cava iw matugen fd; do
+for tool in "${tools[@]}"; do
 	command -v "$tool" &>/dev/null || missing+=("$tool")
 done
 if (( ${#missing[@]} )); then

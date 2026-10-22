@@ -300,6 +300,14 @@ SettingsPage {
 
     // --- lid, in lid.conf ----------------------------------------------------
 
+    // a lid switch to act on; the LID rows hide without one
+    property bool hasLid: false
+    Process {
+        running: true
+        command: ["sh", "-c", "ls /proc/acpi/button/lid/*/state"]
+        onExited: code => page.hasLid = (code === 0)
+    }
+
     property string closeAction: "suspend"
     property int closeDelay: 300
     property bool lockOnClose: false
@@ -606,10 +614,11 @@ SettingsPage {
         }
     }
 
-    SettingsSubhead { caption: "LID" }
+    SettingsSubhead { caption: "LID"; visible: page.hasLid }
 
     // what closing it does, and for Suspend how long after
     SettingsField {
+        visible: page.hasLid
         label: "When the lid closes"
         hint: page.closeAction === "suspend" ? "Not with a monitor plugged in"
             : "Screen off; Power & Idle's steps still apply"
@@ -656,6 +665,7 @@ SettingsPage {
 
     Grid {
         id: lidPair
+        visible: page.hasLid
         width: parent.width
         columns: 2
         columnSpacing: Theme.spaceXl * 2
