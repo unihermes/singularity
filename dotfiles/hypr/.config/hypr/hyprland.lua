@@ -10,6 +10,7 @@
 --   looks      gaps, borders, shadows, blur, tabs, animations
 --   input      keyboard, mouse, touchpad, gestures
 --   overrides  this machine's hyprland.json, then Game Mode
+--   game-keys  SUPER binds and CTRL+SPACE off while a game has focus
 --   binds      every keybind; the Keybinds window rewrites this one
 --   windows    monocle, popouts, scratchpad, tabs (with window-rules and
 --              window-keys)
@@ -23,6 +24,7 @@ require("autostart")
 require("looks")
 require("input")
 require("overrides")
+local syncGameKeys = require("game-keys")
 
 -- An app bind focuses the app when it's open (cycling through its windows,
 -- least recently used next), classes from shared.appClasses; otherwise it
@@ -81,6 +83,7 @@ end
 
 require("binds")
 require("windows")
+syncGameKeys()
 
 -- ~/.local/state/singularity/custom.lua runs last, so it wins; a failure
 -- shows a notification.
