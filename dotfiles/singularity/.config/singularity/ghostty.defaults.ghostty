@@ -16,6 +16,9 @@ window-decoration = none
 # would show on every one.
 resize-overlay = never
 confirm-close-surface = false
+# No progress bar from OSC 9;4: Claude Code reports one the whole time it
+# works, and the tab pulsed with it.
+progress-style = false
 
 # The same font as Alacritty: UbuntuMono Nerd Font owns every glyph the
 # prompt uses, and the "Mono" variant keeps each to one cell.
