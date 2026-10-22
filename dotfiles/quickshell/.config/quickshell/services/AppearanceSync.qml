@@ -709,27 +709,58 @@ Scope {
     ProfileSource { id: floorpChrome; path: Quickshell.env("HOME") + "/.config/floorp/singularity/userChrome.css" }
 
 
-    // Hyprland state files, read on load: a change needs a config-only
-    // reload, one per burst of writes.
-    function hyprWrite(name, text, reload) {
-        AtomicFileWrite.write({
-            path: root.dir + "/" + name,
-            transform: () => text,
-            done: status => { if (reload && status === "ok") hyprReload.restart() },
-        })
+    // Hyprland's state files, read by shared.lua and looks.lua: file name ->
+    // its one line. Hyprland read them when it started, so the first write
+    // only writes; later changes are coalesced (steppers fire once per step)
+    // and a config-only reload follows the ones that changed a file.
+    readonly property var hyprFiles: ({
+        "animations": Settings.animTime + " " + Settings.animWindows + " " + Settings.animWorkspaces,
+        // how windows open, close and minimize
+        "window-anim": Settings.windowAnim,
+        "borders": [Theme.windowBorderActive, Theme.windowBorderInactive]
+            .map(c => "rgba(" + hex(c).slice(1) + ("0" + Math.round(c.a * 255).toString(16)).slice(-2) + ")").join(" "),
+        // window corners, rounded like the shell's panels, so its own
+        // windows' frames fill Hyprland's clip and every other window matches
+        "rounding": String(Theme.windowRadius),
+        // the tab bar over grouped windows
+        "groupbar": [Settings.tabBar === "accent" ? Theme.accent : Theme.selectedFill, Theme.bar,
+                     Settings.tabBar === "accent" ? Theme.textOnAccent : Theme.text, Theme.subtext, Theme.accent]
+            .map(c => "rgba(" + hex(c).slice(1) + "ff)").join(" "),
+        // the windows' gap from the screen's edges, which a floating bar keeps too
+        "gaps": String(Settings.edgeGap),
+        // focused and unfocused opacity, as 0-1 fractions
+        "window-opacity": (Settings.focusedOpacity / 100) + " " + (Settings.unfocusedOpacity / 100),
+        // the bar's extent at the top (0 at the bottom), for the Notes rule
+        "bar-top": String(Theme.barPosition === "top" ? Theme.barExtent : 0),
+        // the windows' border width and shadow, from the style
+        "window-frame": Theme.windowBorderWidth + " " + Theme.windowShadow,
+    })
+    // what each file was last written with
+    property var hyprWritten: ({})
+
+    function writeHypr(reload) {
+        for (var name in hyprFiles) {
+            var text = hyprFiles[name] + "\n"
+            if (hyprWritten[name] === text) continue
+            hyprWritten[name] = text
+            AtomicFileWrite.write({
+                path: root.dir + "/" + name,
+                transform: (t => () => t)(text),
+                done: status => { if (reload && status === "ok") hyprReload.restart() },
+            })
+        }
     }
 
+    onHyprFilesChanged: hyprDebounce.restart()
+    Timer {
+        id: hyprDebounce
+        interval: 200
+        onTriggered: root.writeHypr(true)
+    }
     Timer {
         id: hyprReload
         interval: 150
         onTriggered: Quickshell.execDetached(["hyprctl", "reload", "config-only"])
-    }
-
-    // Animation time. At startup this and the files below are only written,
-    // not reloaded: Hyprland read the same values when it started.
-    function writeHyprAnimations(reload) {
-        var time = Settings.animTime + " " + Settings.animWindows + " " + Settings.animWorkspaces
-        root.hyprWrite("animations", time + "\n", reload)
     }
 
     // Cursor and icon themes for Hyprland's login environment (`cursor`:
@@ -766,133 +797,6 @@ Scope {
         AtomicFileWrite.write({ path: root.dir + "/icons", transform: () => theme + "\n" })
     }
 
-    // window animation style and border colours, for shared.lua
-    function writeWindowAnim(reload) {
-        var style = Settings.windowAnim
-        root.hyprWrite("window-anim", style + "\n", reload)
-    }
-    function writeBorders(reload) {
-        var c = col => "rgba(" + hex(col).slice(1) + ("0" + Math.round(col.a * 255).toString(16)).slice(-2) + ")"
-        var line = c(Theme.windowBorderActive) + " " + c(Theme.windowBorderInactive)
-        root.hyprWrite("borders", line + "\n", reload)
-    }
-
-    // Window corners, rounded like the shell's panels, so its own windows'
-    // frames fill Hyprland's clip and every other window matches them.
-    function writeRounding(reload) {
-        var r = String(Theme.windowRadius)
-        root.hyprWrite("rounding", r + "\n", reload)
-    }
-
-    // the tab bar over grouped windows (looks.lua), in the look's colours
-    function writeGroupbar(reload) {
-        var rgba = c => "rgba(" + hex(c).slice(1) + "ff)"
-        var lit = Settings.tabBar === "accent"
-        var line = [lit ? Theme.accent : Theme.selectedFill, Theme.bar, lit ? Theme.textOnAccent : Theme.text,
-                    Theme.subtext, Theme.accent].map(rgba).join(" ")
-        root.hyprWrite("groupbar", line + "\n", reload)
-    }
-
-    // The windows' gap from the screen's edges, which a floating bar keeps too
-    function writeGaps(reload) {
-        var g = String(Settings.edgeGap)
-        root.hyprWrite("gaps", g + "\n", reload)
-    }
-
-    // Stepping the gap fires once per step; one reload at the end is enough.
-    Timer {
-        id: gapsDebounce
-        interval: 200
-        onTriggered: root.writeGaps(true)
-    }
-
-    // "<focused> <unfocused>" window opacity, as Hyprland's 0-1 fractions
-    function writeWindowOpacity(reload) {
-        var line = (Settings.focusedOpacity / 100) + " " + (Settings.unfocusedOpacity / 100)
-        root.hyprWrite("window-opacity", line + "\n", reload)
-    }
-
-    // Stepping either fires once per step; one reload at the end is enough.
-    Timer {
-        id: opacityDebounce
-        interval: 200
-        onTriggered: root.writeWindowOpacity(true)
-    }
-
-    // the bar's extent at the top (0 at the bottom), for the Notes rule in
-    // window-rules.lua
-    function writeBarTop(reload) {
-        var top = Theme.barPosition === "top" ? Theme.barExtent : 0
-        root.hyprWrite("bar-top", top + "\n", reload)
-    }
-
-    // Stepping the height fires once per step; one reload at the end is enough.
-    Timer {
-        id: barTopDebounce
-        interval: 200
-        onTriggered: root.writeBarTop(true)
-    }
-
-    Connections {
-        target: Theme
-        function onBarPositionChanged() { barTopDebounce.restart() }
-        function onBarExtentChanged() { barTopDebounce.restart() }
-    }
-
-    // the windows' border width and shadow, from the style
-    function writeWindowFrame(reload) {
-        var line = Theme.windowBorderWidth + " " + Theme.windowShadow
-        root.hyprWrite("window-frame", line + "\n", reload)
-    }
-
-    Timer {
-        id: windowFrameDebounce
-        interval: 200
-        onTriggered: root.writeWindowFrame(true)
-    }
-
-    // Stepping the radius fires once per step; one reload at the end is enough.
-    Timer {
-        id: roundingDebounce
-        interval: 200
-        onTriggered: root.writeRounding(true)
-    }
-
-    Connections {
-        target: Theme
-        function onWindowRadiusChanged() { roundingDebounce.restart() }
-        function onWindowBorderWidthChanged() { windowFrameDebounce.restart() }
-        function onWindowShadowChanged() { windowFrameDebounce.restart() }
-    }
-
-    // A look switch changes both colours at once; one reload is enough.
-    Timer {
-        id: bordersDebounce
-        interval: 200
-        onTriggered: root.writeBorders(true)
-    }
-
-    Connections {
-        target: Theme
-        function onWindowBorderActiveChanged() { bordersDebounce.restart() }
-        function onWindowBorderInactiveChanged() { bordersDebounce.restart() }
-    }
-
-    Timer {
-        id: groupbarDebounce
-        interval: 200
-        onTriggered: root.writeGroupbar(true)
-    }
-
-    Connections {
-        target: Theme
-        function onSelectedFillChanged() { groupbarDebounce.restart() }
-        function onBarChanged() { groupbarDebounce.restart() }
-        function onTextChanged() { groupbarDebounce.restart() }
-        function onSubtextChanged() { groupbarDebounce.restart() }
-        function onAccentChanged() { groupbarDebounce.restart() }
-    }
-
     // Stepping the size fires once per step; one setcursor at the end is enough.
     Timer {
         id: cursorDebounce
@@ -900,44 +804,21 @@ Scope {
         onTriggered: root.writeCursor(true)
     }
 
-    // the Animations slider moves in steps; one Hyprland reload per drag
-    Timer {
-        id: animDebounce
-        interval: 200
-        onTriggered: root.writeHyprAnimations(true)
-    }
-
     Connections {
         target: Settings
-        function onAnimTimeChanged() { animDebounce.restart() }
-        function onAnimWindowsChanged() { animDebounce.restart() }
-        function onAnimWorkspacesChanged() { animDebounce.restart() }
         function onSystemFontFamilyChanged() { debounce.restart() }
         function onCursorThemeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onCursorSizeChanged() { cursorDebounce.restart(); debounce.restart() }
         function onIconThemeChanged() { root.writeIcons(); debounce.restart() }
-        function onWindowAnimChanged() { root.writeWindowAnim(true) }
-        function onEdgeGapChanged() { gapsDebounce.restart() }
-        function onFocusedOpacityChanged() { opacityDebounce.restart() }
-        function onUnfocusedOpacityChanged() { opacityDebounce.restart() }
         function onTerminalOpacityChanged() { debounce.restart() }
-        function onTabBarChanged() { groupbarDebounce.restart() }
     }
 
     // Plus the first sync. root.dir needn't exist yet: FileView.setText and
     // AtomicFileWrite both create missing parent directories.
     Component.onCompleted: {
-        writeHyprAnimations(false)
+        writeHypr(false)
         writeCursor(false)
         writeIcons()
-        writeWindowAnim(false)
-        writeBorders(false)
-        writeGroupbar(false)
-        writeBarTop(false)
-        writeRounding(false)
-        writeGaps(false)
-        writeWindowOpacity(false)
-        writeWindowFrame(false)
         debounce.restart()
     }
 }
