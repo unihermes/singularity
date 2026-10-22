@@ -7,10 +7,10 @@ log()  { printf '\033[1;34m::\033[0m %s\n'    "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n'    "$*" >&2; }
 die()  { printf '\033[1;31mxx\033[0m %s\n'    "$*" >&2; exit 1; }
 
-# Strip comments and blank lines from a package list.
-list() { sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$1"; }
+# put PATH MODE -- installs system/PATH (the repo's root-owned files) at PATH
+put() { sudo install -D -m "$2" "system$1" "$1"; }
 
-# has CAP, detect_machine, machine_lists, split_repo_aur
+# has CAP, detect_machine, machine_lists, split_repo_aur, list
 source ./hardware.sh
 
 usage() {
@@ -324,43 +324,8 @@ fi
 # action for the local session. Root-owned in /usr/local/bin.
 if [[ -n $esp ]]; then
   log "installing the boot entry helper"
-  sudo tee /usr/local/bin/singularity-boot >/dev/null <<'BOOT'
-#!/bin/sh
-# singularity-boot list            systemd-boot's entries, as bootctl's JSON
-# singularity-boot default ENTRY   boot ENTRY when nothing else is picked
-set -eu
-case ${1:-} in
-  list) exec bootctl list --json=short --no-pager ;;
-  default)
-    id=${2:-}
-    case $id in
-      ''|*[!A-Za-z0-9._@+-]*) echo "not an entry id: $id" >&2; exit 2 ;;
-    esac
-    bootctl list --json=short --no-pager | grep -Fq "\"id\":\"$id\"" \
-      || { echo "systemd-boot has no entry $id" >&2; exit 1; }
-    exec bootctl set-default "$id" ;;
-  *) echo "usage: singularity-boot list | default ENTRY" >&2; exit 2 ;;
-esac
-BOOT
-  sudo chmod 755 /usr/local/bin/singularity-boot
-
-  sudo tee /usr/share/polkit-1/actions/org.singularity.boot.policy >/dev/null <<'POLICY'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
-  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
-<policyconfig>
-  <action id="org.singularity.boot">
-    <description>Choose which operating system starts</description>
-    <message>Authentication is required to choose which operating system starts</message>
-    <defaults>
-      <allow_any>auth_admin</allow_any>
-      <allow_inactive>auth_admin</allow_inactive>
-      <allow_active>yes</allow_active>
-    </defaults>
-    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/singularity-boot</annotate>
-  </action>
-</policyconfig>
-POLICY
+  put /usr/local/bin/singularity-boot 755
+  put /usr/share/polkit-1/actions/org.singularity.boot.policy 644
 fi
 
 # Shorter deferred-probe timeout (the IPU6 sensor never resolves), and async
@@ -556,61 +521,8 @@ fi
 # and two numbers; root-owned in /usr/local/bin.
 if has charge-modes; then
   log "installing the battery charge helper"
-  sudo tee /usr/local/bin/singularity-charge >/dev/null <<'CHARGE'
-#!/bin/sh
-# singularity-charge Standard|Adaptive|Fast
-# singularity-charge Custom START STOP
-set -eu
-mode=${1:-}
-case $mode in
-  Standard|Adaptive|Fast) ;;
-  Custom)
-    case "${2:-}:${3:-}" in
-      [0-9]*:[0-9]*) ;;
-      *) echo "Custom takes a start and a stop percentage" >&2; exit 2 ;;
-    esac
-    case "$2$3" in *[!0-9]*) echo "not a number: $2 $3" >&2; exit 2 ;; esac
-    start=$2 stop=$3 ;;
-  *) echo "usage: singularity-charge Standard|Adaptive|Fast|Custom [START STOP]" >&2; exit 2 ;;
-esac
-bat=
-for b in /sys/class/power_supply/BAT*; do
-  [ -e "$b/charge_types" ] && { bat=$b; break; }
-done
-[ -n "$bat" ] || { echo "no battery with a charge mode" >&2; exit 1; }
-if [ "$mode" = Custom ]; then
-  # the firmware refuses a stop at or below the current start, so the
-  # start goes first when the stop is coming down past it
-  cur=$(cat "$bat/charge_control_start_threshold")
-  if [ "$stop" -le "$cur" ]; then
-    echo "$start" > "$bat/charge_control_start_threshold"
-    echo "$stop" > "$bat/charge_control_end_threshold"
-  else
-    echo "$stop" > "$bat/charge_control_end_threshold"
-    echo "$start" > "$bat/charge_control_start_threshold"
-  fi
-fi
-echo "$mode" > "$bat/charge_types"
-CHARGE
-  sudo chmod 755 /usr/local/bin/singularity-charge
-
-  sudo tee /usr/share/polkit-1/actions/org.singularity.charge.policy >/dev/null <<'POLICY'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
-  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
-<policyconfig>
-  <action id="org.singularity.charge">
-    <description>Change how the battery charges</description>
-    <message>Authentication is required to change how the battery charges</message>
-    <defaults>
-      <allow_any>auth_admin</allow_any>
-      <allow_inactive>auth_admin</allow_inactive>
-      <allow_active>yes</allow_active>
-    </defaults>
-    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/singularity-charge</annotate>
-  </action>
-</policyconfig>
-POLICY
+  put /usr/local/bin/singularity-charge 755
+  put /usr/share/polkit-1/actions/org.singularity.charge.policy 644
 fi
 
 log "enabling services"
@@ -777,57 +689,12 @@ if [[ -n $dm_unit ]]; then
   # slots by index.
   if [[ -f /etc/ly/config.ini ]]; then
     log "theming ly"
-    sudo tee /etc/ly/singularity.sh >/dev/null <<'LY'
-#!/bin/sh
-# Written by singularity's install.sh. Run by ly (start_cmd) before it takes
-# the TTY: keeps the greeter off held-off monitors (outputs.sh) and loads the
-# Singularity ramp into the VT palette, slots 0-15.
-/etc/ly/outputs.sh
-[ "$TERM" = linux ] || exit 0
-i=0
-for c in 0b0b0b a87676 7d9b7d 969696 a0a0a0 aeaeae b8b8b8 d0e2fa \
-         303030 a87676 7d9b7d adadad b8b8b8 c8c8c8 d8d8d8 ebebeb; do
-  printf '\033]P%x%s' "$i" "$c"
-  i=$((i + 1))
-done
-# repaint with the new slot 0, or the old black shows through until ly draws
-clear
-LY
-    sudo chmod 755 /etc/ly/singularity.sh
+    put /etc/ly/singularity.sh 755
     # A monitor named video=<connector>:d on the cmdline is held off the
     # console (which sizes to its smallest screen); outputs.sh hands it to
     # the session at login and back at logout.
-    sudo tee /etc/ly/outputs.sh >/dev/null <<'LY'
-#!/bin/sh
-# Written by singularity's install.sh. `outputs.sh [off|on]` holds the monitors
-# named as video=<connector>:d on the kernel command line off for the
-# greeter, or gives them back to the session.
-names=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^video=\([^:]*\):d$/\1/p')
-[ -n "$names" ] || exit 0
-state=${1:-off}
-if [ "$state" = off ]; then
-  state=on
-  for s in /sys/class/drm/card*-*/status; do
-    c=${s%/status}; c=${c##*/}; c=${c#card*-}
-    case " $(echo $names) " in *" $c "*) continue ;; esac
-    [ "$(cat "$s")" = connected ] && state=off && break
-  done
-fi
-for n in $names; do
-  for s in /sys/class/drm/card*-"$n"/status; do
-    [ -w "$s" ] || continue
-    if [ "$state" = off ]; then echo off; else echo detect; fi > "$s"
-  done
-done
-LY
-    sudo tee /etc/ly/login.sh >/dev/null <<'LY'
-#!/bin/sh
-# Written by singularity's install.sh. ly's login_cmd, run as the user: gives
-# the session back the monitors outputs.sh held off for the greeter.
-grep -q 'video=[^ ]*:d\( \|$\)' /proc/cmdline && sudo -n /etc/ly/outputs.sh on
-exec "$@"
-LY
-    sudo chmod 755 /etc/ly/outputs.sh /etc/ly/login.sh
+    put /etc/ly/outputs.sh 755
+    put /etc/ly/login.sh 755
     tmp=$(mktemp)
     echo '%wheel ALL=(root) NOPASSWD: /etc/ly/outputs.sh on' > "$tmp"
     if sudo visudo -cqf "$tmp"; then
@@ -842,102 +709,7 @@ LY
     has wifi && ly_lines="wifi $ly_lines"
     has battery && ly_lines="battery power $ly_lines"
     ly_lines="$ly_lines last"
-    sed "s/@LINES@/$ly_lines/" <<'LY' | sudo tee /etc/ly/info.sh >/dev/null
-#!/bin/sh
-# Written by singularity's install.sh. ly runs `info.sh <line>` for each
-# status line at the greeter's bottom-right: @LINES@.
-# ly right-aligns each line by its length in bytes but draws it by
-# characters, so the lines are kept to ASCII, where the two agree, and each
-# is padded to the longest of them: the stack lines up on its left edge
-# and the longest line ends at the screen's right edge.
-export LC_ALL=C
-out() { printf '%-12s%s' "$1" "$2"; }
-read_num() { v=$(cat "$1" 2>/dev/null); echo "${v:-0}"; }
-dur() { [ "$1" -ge 60 ] && printf '%dh %02dm' $(($1 / 60)) $(($1 % 60)) || printf '%dm' "$1"; }
-
-# now/full/rate in µAh and µA, or µWh and µW, depending on what the battery reports
-battery_state() {
-  for b in /sys/class/power_supply/BAT*; do [ -r "$b/capacity" ] && break; done
-  [ -r "$b/capacity" ] || return 1
-  pct=$(read_num "$b/capacity")
-  status=$(cat "$b/status" 2>/dev/null)
-  if [ -r "$b/charge_now" ]; then
-    now=$(read_num "$b/charge_now"); full=$(read_num "$b/charge_full")
-    design=$(read_num "$b/charge_full_design"); rate=$(read_num "$b/current_now")
-    watts=$(awk -v i="$rate" -v v="$(read_num "$b/voltage_now")" 'BEGIN { printf "%.1f", (i < 0 ? -i : i) * v / 1e12 }')
-  else
-    now=$(read_num "$b/energy_now"); full=$(read_num "$b/energy_full")
-    design=$(read_num "$b/energy_full_design"); rate=$(read_num "$b/power_now")
-    watts=$(awk -v p="$rate" 'BEGIN { printf "%.1f", (p < 0 ? -p : p) / 1e6 }')
-  fi
-  rate=${rate#-}
-}
-
-# one status line, unpadded
-line() {
-case $1 in
-battery)
-  battery_state || { out battery 'none'; exit; }
-  filled=$(((pct + 5) / 10)) bar='' i=0
-  while [ $i -lt 10 ]; do
-    [ $i -lt $filled ] && bar="$bar=" || bar="$bar-"
-    i=$((i + 1))
-  done
-  case $status in
-    Discharging)
-      text=''
-      [ "$rate" -gt 0 ] && text="$(dur $((now * 60 / rate))) left"
-      [ "$pct" -le 15 ] && text="low${text:+, $text}" ;;
-    Charging)
-      text='charging'
-      [ "$rate" -gt 0 ] && [ "$full" -gt "$now" ] &&
-        text="charging, full in $(dur $(((full - now) * 60 / rate)))" ;;
-    Full) text='plugged in, full' ;;
-    *) text='plugged in' ;;
-  esac
-  out battery "$bar $pct%  $text" ;;
-power)
-  battery_state || { out power 'on AC'; exit; }
-  case $status in
-    Discharging) text="$watts W" ;;
-    Charging) text="charging at $watts W" ;;
-    *) text='idle' ;;
-  esac
-  [ "$design" -gt 0 ] && text="$text, health $((full * 100 / design))%"
-  out power "$text" ;;
-wifi)
-  for w in /sys/class/net/*/wireless; do [ -d "$w" ] && break; done
-  [ -d "$w" ] || { out wifi 'none'; exit; }
-  dev=${w%/wireless}; dev=${dev##*/}
-  link=$(iw dev "$dev" link 2>/dev/null)
-  ssid=$(printf '%s\n' "$link" | sed -n 's/^[[:space:]]*SSID: //p' | tr -c ' -~\n' '?')
-  signal=$(printf '%s\n' "$link" | sed -n 's/^[[:space:]]*signal: //p')
-  if [ -n "$ssid" ]; then out wifi "$ssid${signal:+, signal $signal}"
-  else out wifi 'not connected'; fi ;;
-kernel)
-  out kernel "linux $(uname -r)" ;;
-last)
-  # newest entry across users; lastlog2's Latest column is the last six fields
-  best=0 text='never'
-  while read -r port when; do
-    t=$(date -d "$when" +%s 2>/dev/null) || continue
-    [ "$t" -gt "$best" ] && best=$t text="$(date -d "@$t" '+%a %-d %b %H:%M') on $port"
-  done <<EOF
-$(lastlog2 2>/dev/null | awk 'NR > 1 && $NF ~ /^[0-9][0-9][0-9][0-9]$/ {
-    print $2, $(NF-5), $(NF-4), $(NF-3), $(NF-2), $(NF-1), $NF }')
-EOF
-  out 'last login' "$text" ;;
-esac
-}
-
-# the longest line sets the width every line is padded to
-width=0
-for l in @LINES@; do
-  t=$(line $l)
-  [ ${#t} -gt $width ] && width=${#t}
-done
-printf '%-*s' "$width" "$(line "$1")"
-LY
+    sed "s/@LINES@/$ly_lines/" system/etc/ly/info.sh | sudo tee /etc/ly/info.sh >/dev/null
     sudo chmod 755 /etc/ly/info.sh
     # Keys edited in place, so pacman keeps taking upstream's new options.
     # Colour ids are 1-based; a 0x01 top byte is bold (the bright half).
@@ -982,47 +754,9 @@ LY
 
     # singularity-autologin: ly's autologin on/off for Settings > Startup,
     # for the pkexec caller only (PKEXEC_UID), never an argument.
-    sudo tee /usr/local/bin/singularity-autologin >/dev/null <<'AUTOLOGIN'
-#!/bin/sh
-# singularity-autologin on    boot straight into Hyprland as the pkexec caller
-# singularity-autologin off   ask for the password at the greeter again
-set -eu
-conf=/etc/ly/config.ini
-set_key() {
-  grep -q "^$1 = " "$conf" || { echo "ly's config has no $1" >&2; exit 1; }
-  sed -i "s|^$1 = .*|$1 = $2|" "$conf"
-}
-case ${1:-} in
-  on)
-    user=$(id -nu "${PKEXEC_UID:?run this through pkexec}")
-    [ "$PKEXEC_UID" -ne 0 ] || { echo "not for root" >&2; exit 1; }
-    set_key auto_login_user "$user"
-    set_key auto_login_session hyprland ;;
-  off)
-    set_key auto_login_user null
-    set_key auto_login_session null ;;
-  *) echo "usage: singularity-autologin on | off" >&2; exit 2 ;;
-esac
-AUTOLOGIN
-    sudo chmod 755 /usr/local/bin/singularity-autologin
+    put /usr/local/bin/singularity-autologin 755
 
-    sudo tee /usr/share/polkit-1/actions/org.singularity.autologin.policy >/dev/null <<'POLICY'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
-  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
-<policyconfig>
-  <action id="org.singularity.autologin">
-    <description>Choose whether signing in is needed at boot</description>
-    <message>Authentication is required to change signing in at boot</message>
-    <defaults>
-      <allow_any>auth_admin</allow_any>
-      <allow_inactive>auth_admin</allow_inactive>
-      <allow_active>auth_admin_keep</allow_active>
-    </defaults>
-    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/singularity-autologin</annotate>
-  </action>
-</policyconfig>
-POLICY
+    put /usr/share/polkit-1/actions/org.singularity.autologin.policy 644
   fi
 else
   warn "no ly unit found. Units the package ships:"

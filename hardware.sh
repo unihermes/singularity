@@ -10,6 +10,9 @@
 # a package or fix can do anything here. Gate on the capability wherever one
 # exists, on the machine type only for what is a matter of use.
 
+# a package list without its comments and blank lines
+list() { sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$1"; }
+
 # the capabilities `has` knows, one per packages/hardware/*.txt and more
 hw_caps=(battery lid backlight wifi bluetooth fingerprint nvidia intel-gpu
   intel-panel ahci ite-superio ipu6-webcam intel-ish i2c-touchpad charge-modes

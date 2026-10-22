@@ -1,0 +1,20 @@
+#!/bin/sh
+# singularity-autologin on    boot straight into Hyprland as the pkexec caller
+# singularity-autologin off   ask for the password at the greeter again
+set -eu
+conf=/etc/ly/config.ini
+set_key() {
+  grep -q "^$1 = " "$conf" || { echo "ly's config has no $1" >&2; exit 1; }
+  sed -i "s|^$1 = .*|$1 = $2|" "$conf"
+}
+case ${1:-} in
+  on)
+    user=$(id -nu "${PKEXEC_UID:?run this through pkexec}")
+    [ "$PKEXEC_UID" -ne 0 ] || { echo "not for root" >&2; exit 1; }
+    set_key auto_login_user "$user"
+    set_key auto_login_session hyprland ;;
+  off)
+    set_key auto_login_user null
+    set_key auto_login_session null ;;
+  *) echo "usage: singularity-autologin on | off" >&2; exit 2 ;;
+esac

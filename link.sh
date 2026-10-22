@@ -83,14 +83,6 @@ seed alacritty.defaults.toml     "$HOME/.config/alacritty/alacritty.toml"
 seed ghostty.defaults.ghostty    "$HOME/.config/ghostty/config.ghostty"
 seed bash_aliases.defaults.sh    "$HOME/.bash_aliases"
 
-# old seeded hypridle.conf: bare dpms toggles become explicit off/on
-idle="$HOME/.config/hypr/hypridle.conf"
-if [[ -f $idle ]] && grep -qF 'hl.dsp.dpms("' "$idle"; then
-  sed -i -e 's|hl\.dsp\.dpms("off")|hl.dsp.dpms({ action = "off" })|g' \
-    -e 's|hl\.dsp\.dpms("on")|hl.dsp.dpms({ action = "on" })|g' "$idle"
-  log "hypridle.conf: screens-off step no longer toggles"
-fi
-
 # GTK bookmarks for the usual folders, written once (holds $HOME, and the
 # file manager rewrites it)
 bookmarks="$HOME/.config/gtk-3.0/bookmarks"

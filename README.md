@@ -335,6 +335,7 @@ singularity/
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
 ├── packages/               # pacman.txt, aur.txt, desktop.txt and hardware/<capability>.txt
+├── system/                 # root-owned files install.sh puts at the same path under /
 ├── wallpapers/
 ├── tools/                  # checks run by the pre-commit hook and CI
 │   ├── git-hooks/pre-commit

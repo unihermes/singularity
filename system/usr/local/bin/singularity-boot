@@ -1,0 +1,16 @@
+#!/bin/sh
+# singularity-boot list            systemd-boot's entries, as bootctl's JSON
+# singularity-boot default ENTRY   boot ENTRY when nothing else is picked
+set -eu
+case ${1:-} in
+  list) exec bootctl list --json=short --no-pager ;;
+  default)
+    id=${2:-}
+    case $id in
+      ''|*[!A-Za-z0-9._@+-]*) echo "not an entry id: $id" >&2; exit 2 ;;
+    esac
+    bootctl list --json=short --no-pager | grep -Fq "\"id\":\"$id\"" \
+      || { echo "systemd-boot has no entry $id" >&2; exit 1; }
+    exec bootctl set-default "$id" ;;
+  *) echo "usage: singularity-boot list | default ENTRY" >&2; exit 2 ;;
+esac

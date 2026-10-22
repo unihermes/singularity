@@ -1,0 +1,34 @@
+#!/bin/sh
+# singularity-charge Standard|Adaptive|Fast
+# singularity-charge Custom START STOP
+set -eu
+mode=${1:-}
+case $mode in
+  Standard|Adaptive|Fast) ;;
+  Custom)
+    case "${2:-}:${3:-}" in
+      [0-9]*:[0-9]*) ;;
+      *) echo "Custom takes a start and a stop percentage" >&2; exit 2 ;;
+    esac
+    case "$2$3" in *[!0-9]*) echo "not a number: $2 $3" >&2; exit 2 ;; esac
+    start=$2 stop=$3 ;;
+  *) echo "usage: singularity-charge Standard|Adaptive|Fast|Custom [START STOP]" >&2; exit 2 ;;
+esac
+bat=
+for b in /sys/class/power_supply/BAT*; do
+  [ -e "$b/charge_types" ] && { bat=$b; break; }
+done
+[ -n "$bat" ] || { echo "no battery with a charge mode" >&2; exit 1; }
+if [ "$mode" = Custom ]; then
+  # the firmware refuses a stop at or below the current start, so the
+  # start goes first when the stop is coming down past it
+  cur=$(cat "$bat/charge_control_start_threshold")
+  if [ "$stop" -le "$cur" ]; then
+    echo "$start" > "$bat/charge_control_start_threshold"
+    echo "$stop" > "$bat/charge_control_end_threshold"
+  else
+    echo "$stop" > "$bat/charge_control_end_threshold"
+    echo "$start" > "$bat/charge_control_start_threshold"
+  fi
+fi
+echo "$mode" > "$bat/charge_types"

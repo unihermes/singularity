@@ -25,6 +25,8 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
   (which requires `window-rules` for the static rules and `window-keys` for the arrow keys).
 - `dotfiles/singularity/.config/singularity/*.defaults.*`: templates `link.sh` copies
   to the user's real files; Settings edits the copies, never the repo.
+- `system/`: root-owned files (pkexec helpers, polkit actions, ly's scripts) that
+  install.sh's `put` copies to the same path under `/`.
 - `qs/DESIGN.md`: the UI design reference. Read the section you need (grep its `##`
   headings) before UI work, not the whole file.
 
