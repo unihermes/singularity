@@ -57,6 +57,10 @@ if #nvidia > 0 and driver then
     -- Floorp's media decoder (RDD) sandbox forbids, so without this their
     -- video falls back to CPU decoding (see browserPrefs in AppearanceSync).
     hl.env("MOZ_DISABLE_RDD_SANDBOX", "1")
+    -- The driver's shader cache stops growing at 1 GiB; a big game's
+    -- pipelines (Overwatch's ~2.3 GB) then compile again on every launch,
+    -- all cores for minutes. 10 GiB; Steam keeps one cache per game.
+    hl.env("__GL_SHADER_DISK_CACHE_SIZE", "10737418240")
     for _, card in ipairs(rest) do table.insert(nvidia, card) end
     hl.env("AQ_DRM_DEVICES", table.concat(nvidia, ":"))
 end
