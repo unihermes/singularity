@@ -48,7 +48,7 @@ Singleton {
             "cfg=$(mktemp /tmp/singularity-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
             + "printf '[general]\\nbars = " + root.barCount + "\\nframerate = " + root.fps + "\\n"
             + "[input]\\nmethod = pipewire\\nsource = auto\\n"
-            + "[output]\\nmethod = raw\\nraw_target = /dev/stdout\\ndata_format = ascii\\n"
+            + "[output]\\nmethod = raw\\nchannels = mono\\nraw_target = /dev/stdout\\ndata_format = ascii\\n"
             + "ascii_max_range = 100\\nbar_delimiter = 59\\nframe_delimiter = 10\\n"
             + "[smoothing]\\nnoise_reduction = 60\\n' > \"$cfg\" && cava -p \"$cfg\""]
         stdout: SplitParser {
