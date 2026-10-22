@@ -279,7 +279,8 @@ SettingsPage {
             required property var modelData
             node: modelData
             label: Audio.nodeName(modelData)
-            hint: Channels.key(modelData) === "game" ? "Where apps play unless moved" : ""
+            hint: Channels.key(modelData) === "game" ? "Where games play"
+                : Channels.key(modelData) === "chat" ? "Where other apps play unless moved" : ""
         }
     }
 

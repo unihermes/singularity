@@ -1,10 +1,11 @@
--- Singularity - new playback lands on the Game channel
+-- Singularity - new playback lands on Chat, a game's on Game
 --
 -- Runs where wireplumber would fall back to the default output: a stream
 -- with no target of its own (not moved, not remembered on another output)
--- plays on Game instead, when Game is there. The channels' own streams
--- (singularity.channel) still go to the default, which is how they reach
--- the real output.
+-- plays on Game if it's a game, else on Chat, when that channel is there.
+-- A game is anything under Wine/Proton or a stream that says it is one
+-- (SDL3's default role). The channels' own streams (singularity.channel)
+-- still go to the default, which is how they reach the real output.
 
 lutils = require ("linking-utils")
 log = Log.open_topic ("s-linking")
@@ -29,13 +30,17 @@ SimpleEventHook {
       return
     end
 
-    local game = om:lookup {
+    local binary = si_props ["application.process.binary"] or ""
+    local isGame = binary:match ("^wine") or binary:match ("^proton")
+        or si_props ["media.role"] == "Game"
+    local name = isGame and "game" or "chat"
+    local channel = om:lookup {
       type = "SiLinkable",
-      Constraint { "node.name", "=", "channel.game" },
+      Constraint { "node.name", "=", "channel." .. name },
     }
-    if game and lutils.canLink (si_props, game) then
-      log:info (si, "... channel picked: Game")
-      event:set_data ("target", game)
+    if channel and lutils.canLink (si_props, channel) then
+      log:info (si, "... channel picked: " .. name)
+      event:set_data ("target", channel)
     end
   end
 }:register ()

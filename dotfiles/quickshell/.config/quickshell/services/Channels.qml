@@ -2,10 +2,10 @@
 // ~/.config/quickshell/services/Channels.qml
 //
 // Game, Chat and Media: the outputs pipewire.conf.d/channels.conf makes,
-// each mixing into the real output. New playback lands on Game. A headset's
-// ChatMix dial (read with headsetcontrol) sets Game and Chat against each
-// other on the channels' own streams into the output, so each channel's
-// level stays the user's.
+// each mixing into the real output. New playback lands on Chat, games' on
+// Game. A headset's ChatMix dial (read with headsetcontrol) sets Game and
+// Chat against each other on the channels' own streams into the output, so
+// each channel's level stays the user's.
 
 pragma Singleton
 
