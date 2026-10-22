@@ -40,9 +40,7 @@ local function sync()
     local on = isGame(hl.get_active_window())
     if on == inGame then return end
     inGame = on
-    if (S.vibranceShader or "") ~= "" then
-        hl.config({ decoration = { screen_shader = on and "" or S.vibranceShader } })
-    end
+    S.setVibranceOff(on)
     local tabs = {}
     for _, b in ipairs(S.tabBinds or {}) do tabs[b] = true end
     for _, b in ipairs(held) do
