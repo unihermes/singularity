@@ -25,6 +25,14 @@ hl.window_rule({
     no_focus = true,
 })
 
+-- Steam's games (Proton ones never say so themselves) count as games, so
+-- render.direct_scanout = 2 can hand their frames straight to the screen
+hl.window_rule({
+    name    = "steam-games",
+    match   = { class = "^(steam_app_\\d+)$" },
+    content = "game",
+})
+
 -- a link from another app opens a Floorp tab and activates its window
 hl.window_rule({
     name  = "floorp-focus-on-activate",
