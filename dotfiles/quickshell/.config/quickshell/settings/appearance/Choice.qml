@@ -1,9 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/Choice.qml
 //
-// One chip per value of a Settings choice, lit on the current one.
-// Past four values the row runs out of room, so those are a dropdown.
-// Both mark the field they sit in as holding a look's setting (lookKey).
+// A Settings choice as a dropdown (Choices is the chip row, for four values
+// or fewer). Marks the field it sits in as holding a look's setting.
 
 import Quickshell
 import QtQuick
