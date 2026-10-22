@@ -537,9 +537,17 @@ Scope {
         var selection = "selection, *:selected, *:selected:focus, row:selected, treeview.view:selected,\n"
             + "entry selection, textview text selection, label selection {\n"
             + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n}\n"
+        // libadwaita's tab bars (Ghostty's tabs): the selected tab as one steady
+        // accent fill. The rule above would also fill what's inside it, and with
+        // the tab's own background transition it flickered to black and back.
+        var tabs = "tabbar tab:selected, tabbar tab:selected:hover, tabbar tab:selected:active {\n"
+            + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n"
+            + "  transition: none;\n}\n"
+            + "tabbar tab:selected *:selected, tabbar tab:selected label selection {\n"
+            + "  background-color: transparent;\n  color: inherit;\n}\n"
         // GTK4 without libadwaita still reads the named colours
         var gtk3 = header + named + selection
-        var gtk4 = header + vars + named + selection
+        var gtk4 = header + vars + named + selection + tabs
         AtomicFileWrite.write({ path: root.dir + "/gtk3.css", transform: () => gtk3 })
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
     }
