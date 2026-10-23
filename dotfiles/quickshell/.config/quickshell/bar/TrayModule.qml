@@ -7,7 +7,7 @@
 // reorder, saved by app id (Settings.trayOrder) once dropped (mid-drag would
 // rebuild the delegates and drop the grab). With the drawer on, only pinned
 // icons show until the chevron opens it. Apps hidden from the tray
-// (Settings.trayHidden) never show.
+// (Settings.trayHidden) never show, not even in the drawer.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -196,7 +196,14 @@ ModuleFrame {
                 return 0
             }
 
-            visible: slot !== -1
+            // a Chromium app's icon goes by a generic id until its tooltip
+            // names it, so it waits a moment for that before showing, in case
+            // the name is one hidden from the tray
+            readonly property bool named: !/^chrome_status_icon_\d+$/.test(host.bar.trayName(modelData))
+            property bool waited: false
+            Timer { running: !trayIcon.named; interval: 1500; onTriggered: trayIcon.waited = true }
+
+            visible: slot !== -1 && (named || waited)
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: trayFrame.slotW
             implicitHeight: Theme.moduleHeight
