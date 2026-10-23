@@ -3,6 +3,7 @@
 //
 // Software updates: check interval, AUR, ignored packages (Settings.qml);
 // pending updates, the upgrade and the Singularity clone from Updates.qml;
+// removing installed packages through singularity-remove and pkexec;
 // upkeep rows from Health's package checks.
 
 import Quickshell
@@ -17,7 +18,7 @@ SettingsPage {
     sectioned: true
 
     title: "Software Update"
-    description: "How often to check, the AUR, and packages to leave out."
+    description: "How often to check, the AUR, packages to leave out, and removing packages."
 
     readonly property var intervals: [0, 30, 60, 360, 1440]
 
@@ -76,6 +77,7 @@ SettingsPage {
     Component.onCompleted: {
         Health.scan()
         installedProc.running = true
+        removeHelperProbe.running = true
     }
 
     // the "ago"s and the next check move on by the minute
@@ -84,24 +86,135 @@ SettingsPage {
         precision: SystemClock.Minutes
     }
 
-    // every installed package, { name, version, aur }, for the search under
-    // Ignore a package…; `pacman -Qm` marks the ones from the AUR
+    // every installed package, { name, version, aur, explicit }, for the
+    // searches under Ignore a package… and Remove a package…; `pacman -Qm`
+    // marks the ones from the AUR, `pacman -Qe` the ones installed on purpose
     property var installed: []
     readonly property int aurInstalled: installed.filter(p => p.aur).length
 
     Process {
         id: installedProc
-        command: ["sh", "-c", "pacman -Q; echo; pacman -Qmq"]
+        command: ["sh", "-c", "pacman -Q; echo; pacman -Qmq; echo; pacman -Qeq"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var parts = text.split("\n\n")
-                var aur = {}
-                ;(parts[1] || "").split("\n").forEach(n => { if (n) aur[n] = true })
+                var set = t => {
+                    var o = {}
+                    ;(t || "").split("\n").forEach(n => { if (n) o[n] = true })
+                    return o
+                }
+                var aur = set(parts[1]), explicit = set(parts[2])
                 page.installed = (parts[0] || "").split("\n").filter(l => l).map(l => {
                     var f = l.split(" ")
-                    return { name: f[0], version: f[1] || "", aur: !!aur[f[0]] }
+                    return { name: f[0], version: f[1] || "", aur: !!aur[f[0]], explicit: !!explicit[f[0]] }
                 })
             }
+        }
+    }
+
+    // --- removing --------------------------------------------------------------
+
+    readonly property string removeHelper: "/usr/local/bin/singularity-remove"
+    property bool removeHelperFound: false
+    Process {
+        id: removeHelperProbe
+        command: ["test", "-x", page.removeHelper]
+        onExited: code => page.removeHelperFound = code === 0
+    }
+
+    property bool removing: false
+    property string removeQuery: ""
+    // the package picked, and what pacman would take with it: [{ name, size }]
+    // with the package first, or the reason it can't go
+    property var removeTarget: null
+    property var removeSet: []
+    property string removeBlocked: ""
+    property bool removeBusy: false
+    readonly property var removeMatches: {
+        if (!removing || removeTarget) return []
+        var q = removeQuery.trim().toLowerCase()
+        var mine = installed.filter(p => p.explicit)
+        if (q === "") return mine
+        var starts = [], rest = []
+        mine.forEach(p => {
+            var i = p.name.indexOf(q)
+            if (i === 0) starts.push(p)
+            else if (i > 0) rest.push(p)
+        })
+        return starts.concat(rest)
+    }
+    readonly property real removeBytes: removeSet.reduce((n, p) => n + p.size, 0)
+
+    function size(bytes) {
+        var units = ["B", "KB", "MB", "GB"], i = 0
+        while (bytes >= 1000 && i < units.length - 1) { bytes /= 1000; i++ }
+        return (i === 0 ? bytes : bytes.toFixed(bytes < 10 ? 1 : 0)) + " " + units[i]
+    }
+
+    function pickRemoval(p) {
+        removeTarget = p
+        removeSet = []
+        removeBlocked = ""
+        removePreview.command = ["pacman", "-Rs", "--print", "--print-format", "%n %s", "--", p.name]
+        removePreview.running = true
+    }
+    function closeRemoval() {
+        removing = false
+        removeTarget = null
+        removeSet = []
+        removeBlocked = ""
+    }
+
+    // what -Rns would remove, worked out unprivileged; a dependency it would
+    // break comes back as ":: removing x breaks dependency 'x' required by y"
+    // on stdout, under an error on stderr
+    Process {
+        id: removePreview
+        stdout: StdioCollector { id: previewOut }
+        stderr: StdioCollector { id: previewErr }
+        onExited: code => {
+            if (code === 0) {
+                page.removeSet = previewOut.text.split("\n").filter(l => l).map(l => {
+                    var f = l.split(" ")
+                    return { name: f[0], size: Number(f[1]) || 0 }
+                })
+                return
+            }
+            var needed = []
+            previewOut.text.split("\n").forEach(l => {
+                var m = /required by (\S+)/.exec(l)
+                if (m && needed.indexOf(m[1]) < 0) needed.push(m[1])
+            })
+            page.removeBlocked = needed.length > 0
+                ? "Needed by " + needed.slice(0, 3).join(", ") + (needed.length > 3 ? " and " + (needed.length - 3) + " more" : "")
+                : previewErr.text.trim().split("\n")[0].replace(/^error: /, "") || "pacman can't remove it"
+        }
+    }
+
+    function remove() {
+        if (!removeTarget || removeBusy) return
+        removeBusy = true
+        remover.command = ["pkexec", removeHelper, removeTarget.name]
+        remover.running = true
+    }
+    Process {
+        id: remover
+        stderr: StdioCollector { id: removeErr }
+        onExited: code => {
+            page.removeBusy = false
+            var name = page.removeTarget ? page.removeTarget.name : ""
+            var lines = removeErr.text.trim().split("\n").filter(l => l)
+            var e = lines.filter(l => l.startsWith("error:")).pop() || lines.pop() || ""
+            if (code === 0) {
+                var more = page.removeSet.length - 1
+                page.say("Removed " + name + (more > 0 ? " and " + more + (more === 1 ? " dependency" : " dependencies") : ""), false)
+                page.closeRemoval()
+                installedProc.running = true
+                Updates.refresh()
+            }
+            // 126/127: pkexec was dismissed or refused
+            else if (code === 126 || code === 127) page.say(name + " wasn't removed", false)
+            else page.say("Couldn't remove " + name + (e ? ": " + e.replace(/^error: /, "") : ""), true)
         }
     }
 
@@ -414,6 +527,103 @@ SettingsPage {
             visible: page.installed.length > 0 && page.matches.length === 0
             enabled: false
             label: "No installed package matches"
+        }
+    }
+
+    SettingsSubhead { caption: "REMOVE" }
+
+    FlyoutRow {
+        leadingIcon: "󰆴"
+        label: "Remove a package…"
+        enabled: page.removeHelperFound
+        note: page.removeHelperFound ? "" : "Run install.sh to remove packages from here"
+        highlighted: page.removing
+        trailing: page.removing ? "󰅀" : "󰅂"
+        onActivated: {
+            if (page.removing) { page.closeRemoval(); return }
+            page.removing = true
+            removeSearch.text = ""
+            Qt.callLater(removeSearch.forceFocus)
+        }
+    }
+
+    SettingsIndent {
+        visible: page.removing
+
+        FlyoutInput {
+            id: removeSearch
+            visible: !page.removeTarget
+            echoPassword: false
+            glyph: "󰍉"
+            placeholder: "Search packages you installed"
+            onTextChanged: page.removeQuery = text
+            onAccepted: if (page.removeMatches.length > 0) page.pickRemoval(page.removeMatches[0])
+            onEscapePressed: page.closeRemoval()
+        }
+
+        Repeater {
+            model: page.removeMatches.slice(0, page.shownMatches)
+
+            FlyoutRow {
+                required property var modelData
+                label: modelData.name
+                note: modelData.version
+                trailing: modelData.aur ? "AUR" : "repo"
+                onActivated: page.pickRemoval(modelData)
+            }
+        }
+
+        FlyoutRow {
+            visible: page.removeMatches.length > page.shownMatches
+            enabled: false
+            label: "and " + (page.removeMatches.length - page.shownMatches) + " more; type to narrow"
+        }
+        FlyoutRow {
+            visible: !page.removeTarget && page.installed.length > 0 && page.removeMatches.length === 0
+            enabled: false
+            label: "No package you installed matches"
+        }
+
+        // the one picked: what goes with it, and the button
+        SettingsField {
+            visible: page.removeTarget !== null
+            searchable: false
+            label: page.removeTarget ? page.removeTarget.name : ""
+            hint: {
+                if (!page.removeTarget) return ""
+                if (page.removeBusy) return "Removing…"
+                if (page.removeBlocked !== "") return page.removeBlocked
+                if (page.removeSet.length === 0) return "Looking…"
+                var deps = page.removeSet.slice(1).map(p => p.name)
+                return page.size(page.removeBytes) + " freed"
+                    + (deps.length === 0 ? ", nothing else goes with it"
+                       : ", with " + (deps.length === 1 ? "1 dependency nothing else uses: " : deps.length + " dependencies nothing else uses: ")
+                         + deps.slice(0, 4).join(", ") + (deps.length > 4 ? "…" : ""))
+            }
+            dimmed: page.removeBlocked !== ""
+
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceXs
+
+                FlyoutChip {
+                    text: "Back"
+                    enabled: !page.removeBusy
+                    onClicked: {
+                        page.removeTarget = null
+                        Qt.callLater(removeSearch.forceFocus)
+                    }
+                }
+                FlyoutChip {
+                    visible: page.removeBlocked === ""
+                    text: "Remove"
+                    icon: "󰆴"
+                    spinning: page.removeBusy
+                    confirmText: page.removeSet.length > 1 ? "Remove " + page.removeSet.length + " packages?" : "Remove it?"
+                    enabled: !page.removeBusy && page.removeSet.length > 0
+                    onClicked: page.remove()
+                }
+            }
         }
     }
 

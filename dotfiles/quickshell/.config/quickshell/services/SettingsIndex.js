@@ -252,6 +252,7 @@ var entries = [
     { page: "updates", section: "Status", label: "Include the AUR",   keywords: "aur yay packages" },
     { page: "updates", section: "Packages", label: "Packages",          keywords: "pending updates available upgrade now yay versions" },
     { page: "updates", section: "Packages", label: "Ignored",           keywords: "ignorepkg hold skip held back ignore a package" },
+    { page: "updates", section: "Packages", label: "Remove",            keywords: "uninstall remove a package delete pacman aur yay installed programs apps" },
     { page: "updates", section: "Upkeep",   label: "Orphaned packages", keywords: "orphans unused dependencies pacman maintenance" },
     { page: "updates", section: "Upkeep",   label: "Reclaimable space", keywords: "cache clean up disk space paccache maintenance" },
 

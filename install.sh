@@ -322,6 +322,12 @@ if [[ -e /sys/firmware/efi/efivars/LoaderConfigTimeout-4a67b082-0a4c-41cf-b6c7-4
   sudo bootctl set-timeout "" || true
 fi
 
+# singularity-remove: removes packages the user installed, with their unused
+# dependencies, for Settings > Software Update, through pkexec.
+log "installing the package removal helper"
+put /usr/local/bin/singularity-remove
+put /usr/share/polkit-1/actions/org.singularity.remove.policy
+
 # singularity-boot: lists systemd-boot's entries and sets the default
 # (LoaderEntryDefault) for Settings > Startup, through pkexec with a polkit
 # action for the local session. Root-owned in /usr/local/bin.

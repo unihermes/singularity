@@ -1,0 +1,16 @@
+#!/bin/sh
+# singularity-remove PKG...   removes packages the user installed (pacman -Qe)
+# with the dependencies only they needed (pacman -Rns), for Settings >
+# Software Update. The few the system can't run without are refused.
+set -eu
+[ $# -gt 0 ] || { echo "usage: singularity-remove PKG..." >&2; exit 2; }
+explicit=$(pacman -Qeq)
+for p in "$@"; do
+  case $p in
+    -*|*[!a-zA-Z0-9@._+-]*) echo "not a package name: $p" >&2; exit 2 ;;
+    base|base-devel|linux|linux-lts|linux-zen|linux-hardened|linux-firmware|pacman|sudo|systemd|polkit|ly|iwd|hyprland|quickshell)
+      echo "$p is needed to boot or sign in; remove it in a terminal if you mean to" >&2; exit 1 ;;
+  esac
+  printf '%s\n' "$explicit" | grep -qxF -- "$p" || { echo "$p isn't a package you installed" >&2; exit 1; }
+done
+exec pacman -Rns --noconfirm -- "$@"
