@@ -65,21 +65,27 @@ hl.on("window.open", function(win)
     hl.dispatch(hl.dsp.focus({ window = target }))
 end)
 
--- A focused game in windowed fullscreen (a screen-sized floater) is made
+-- A focused game in windowed fullscreen (a screen-sized window, or one that
+-- still thinks it's fullscreen after something took that away) is made
 -- fullscreen, so it covers the bar instead of sliding half under it.
--- Checked on focus, on open and a few seconds after (games size their
--- window once loaded), and when one leaves fullscreen, as it does when
--- another window opens over it.
+-- Checked on focus and again just after (alt-tab and the game's own resize
+-- can land late), on open and a few seconds after (games size their window
+-- once loaded), and when one leaves fullscreen, as it does when another
+-- window opens over it.
 local function coverBar()
     local win = hl.get_active_window()
     local mon = win and win.monitor
-    if not (mon and isGame(win) and win.floating and win.fullscreen == 0) then return end
-    if win.size.x >= mon.width / mon.scale and win.size.y >= mon.height / mon.scale then
+    if not (mon and isGame(win) and win.fullscreen == 0) then return end
+    local screenSized = win.size.x >= mon.width / mon.scale and win.size.y >= mon.height / mon.scale
+    if (win.floating and screenSized) or (win.fullscreen_client or 0) ~= 0 then
         hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "set", window = "address:" .. win.address }))
     end
 end
 local function coverBarLater(ms) hl.timer(coverBar, { timeout = ms, type = "oneshot" }) end
-hl.on("window.active", coverBar)
+hl.on("window.active", function()
+    coverBar()
+    coverBarLater(300)
+end)
 hl.on("window.open", function(win)
     if not (win and isGame(win)) then return end
     for _, ms in ipairs({ 500, 2000, 5000 }) do coverBarLater(ms) end
