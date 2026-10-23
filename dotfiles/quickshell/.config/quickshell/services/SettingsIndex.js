@@ -210,6 +210,8 @@ var entries = [
     { page: "audio", section: "Input",  label: "Input",     keywords: "default source microphone mic device" },
     { page: "audio", section: "Channels", label: "Channels", keywords: "game chat media virtual sinks sonar outputs mix" },
     { page: "audio", section: "Channels", label: "ChatMix",  keywords: "dial balance game chat headset steelseries arctis sonar" },
+    // the bands' labels come from Channels.eq; this names their heading
+    { page: "audio", section: "", label: "Equalizer", keywords: "eq bass treble mids footsteps voice clarity game chat media tone sound" },
     // the mixer's rows have no fixed label; these name their heading
     { page: "audio", section: "", label: "Playing",   keywords: "mixer per app volume application stream" },
     { page: "audio", section: "", label: "Recording", keywords: "mixer capture app stream microphone" },

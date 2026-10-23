@@ -4,7 +4,7 @@
 // Output and input: the default device as a card with its level, the
 // others under it (a click makes one the default; outputs with nothing
 // plugged in are left out). CHANNELS: Game, Chat and Media's levels and
-// the ChatMix dial. Then the per-app mixer, one row an app however many
+// the ChatMix dial; EQUALIZER: each one's bands, a slider a band. Then the per-app mixer, one row an app however many
 // streams it plays: its level and the channel or output it plays on. Mute
 // is the button before each level. Straight on Pipewire, as the bar is;
 // wireplumber remembers everything. pactl finds unplugged outputs and
@@ -280,7 +280,7 @@ SettingsPage {
             node: modelData
             label: Audio.nodeName(modelData)
             hint: Channels.key(modelData) === "game" ? "Where games play"
-                : Channels.key(modelData) === "chat" ? "Where other apps play unless moved" : ""
+                : Channels.key(modelData) === "media" ? "Where other apps play unless moved" : ""
         }
     }
 
@@ -321,6 +321,107 @@ SettingsPage {
                 font.family: Theme.fontText
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
+            }
+        }
+    }
+
+    // --- equalizer ---------------------------------------------------------------
+
+    // A band's gain, -12..+12 dB with a tick at 0, applied while dragging.
+    component EqBand: SettingsField {
+        id: band
+        property string channel: ""
+        property var spec: null
+        readonly property real range: Channels.eqRange
+        readonly property real gain: Channels.eqGain(channel, spec)
+
+        label: spec.label
+        hint: spec.hint
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.sp(10)
+
+            Item {
+                width: Theme.fit(220)
+                height: slider.height
+                anchors.verticalCenter: parent.verticalCenter
+
+                Slider {
+                    id: slider
+                    width: parent.width
+                    value: (band.gain + band.range) / (band.range * 2) * 100
+                    onMoved: v => {
+                        var g = Math.round((v / 100 * band.range * 2 - band.range) * 2) / 2
+                        if (g !== band.gain) Channels.setEq(band.channel, band.spec.band, g)
+                    }
+                }
+                Rectangle {
+                    x: parent.width / 2
+                    width: Theme.borderWidth
+                    height: parent.height
+                    color: Theme.subtext
+                    opacity: 0.7
+                }
+            }
+            Text {
+                width: Theme.fs(64)
+                anchors.verticalCenter: parent.verticalCenter
+                horizontalAlignment: Text.AlignRight
+                text: (band.gain > 0 ? "+" : "") + band.gain.toFixed(1) + " dB"
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontBody
+            }
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM; visible: Channels.sinks.length > 0 }
+    FlyoutHeading { text: "EQUALIZER"; visible: Channels.sinks.length > 0 }
+
+    // a channel's bands under its name, Reset on the name's line once moved
+    Repeater {
+        model: ScriptModel { values: Channels.sinks.map(n => Channels.key(n)).filter(k => Channels.eq[k]) }
+
+        Column {
+            id: eqGroup
+            required property string modelData
+            readonly property bool isSectionGroup: true
+            readonly property bool sectioned: true
+            width: parent.width
+            spacing: Theme.spaceM
+
+            Item {
+                width: parent.width
+                height: Math.max(sub.implicitHeight, reset.height)
+
+                SettingsSubhead {
+                    id: sub
+                    anchors.verticalCenter: parent.verticalCenter
+                    caption: eqGroup.modelData
+                }
+                IconButton {
+                    id: reset
+                    visible: Channels.eqMoved(eqGroup.modelData)
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: "󰑓"
+                    onClicked: {
+                        Channels.resetEq(eqGroup.modelData)
+                        page.say(Audio.nodeName(Channels.sinks.find(n => Channels.key(n) === eqGroup.modelData))
+                            + " EQ back to its defaults", false)
+                    }
+                }
+            }
+
+            Repeater {
+                model: Channels.eq[eqGroup.modelData]
+                EqBand {
+                    required property var modelData
+                    channel: eqGroup.modelData
+                    spec: modelData
+                }
             }
         }
     }

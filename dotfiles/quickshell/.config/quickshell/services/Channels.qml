@@ -2,8 +2,8 @@
 // ~/.config/quickshell/services/Channels.qml
 //
 // Game, Chat and Media: the outputs pipewire.conf.d/channels.conf makes,
-// each mixing into the real output. New playback lands on Chat, games' on
-// Game. A headset's ChatMix dial (read with headsetcontrol) sets Game and
+// each mixing into the real output. New playback lands on Media, games' on
+// Game. Each has an EQ, its gains set live from Settings. A headset's ChatMix dial (read with headsetcontrol) sets Game and
 // Chat against each other on the channels' own streams into the output, so
 // each channel's level stays the user's. The same tool says whether the
 // headset itself is on (headset), for the bar's volume icon.
@@ -73,6 +73,80 @@ Singleton {
             target: modelData
             function onReadyChanged() { root.apply() }
         }
+    }
+
+    // --- EQ ----------------------------------------------------------------------
+
+    // Each channel's bands, as channels.conf builds them: the filter's node
+    // name, the gain it starts at (dB), and what it's for.
+    readonly property var eq: ({
+        game: [
+            { band: "rumble", label: "Rumble",  hint: "Under 100 Hz: explosions, engines", gain: -4 },
+            { band: "cues",   label: "Cues",    hint: "2.8 kHz: footsteps, reloads", gain: 3 },
+            { band: "detail", label: "Detail",  hint: "6 kHz: where a sound is", gain: 1.5 }
+        ],
+        chat: [
+            { band: "box",    label: "Boxiness", hint: "250 Hz: cheap headset mics", gain: -3 },
+            { band: "words",  label: "Words",    hint: "3 kHz: how clear speech is", gain: 3 },
+            { band: "ess",    label: "Esses",    hint: "7.5 kHz: harsh s sounds", gain: -2 }
+        ],
+        media: [
+            { band: "bass",   label: "Bass",   hint: "Under 105 Hz", gain: 0 },
+            { band: "mids",   label: "Mids",   hint: "Around 1 kHz", gain: 0 },
+            { band: "treble", label: "Treble", hint: "Over 8 kHz", gain: 0 }
+        ]
+    })
+    readonly property real eqRange: 12
+
+    function eqGain(ch, b) {
+        var v = (Settings.channelEq[ch] || {})[b.band]
+        return typeof v === "number" ? v : b.gain
+    }
+    function eqMoved(ch) {
+        return (eq[ch] || []).some(b => eqGain(ch, b) !== b.gain)
+    }
+    // only what's off its default is saved
+    function setEq(ch, band, v) {
+        var all = Object.assign({}, Settings.channelEq)
+        var mine = Object.assign({}, all[ch] || {})
+        var b = eq[ch].find(x => x.band === band)
+        if (v === b.gain) delete mine[band]
+        else mine[band] = v
+        if (Object.keys(mine).length > 0) all[ch] = mine
+        else delete all[ch]
+        Settings.setChannelEq(all)
+    }
+    function resetEq(ch) {
+        var all = Object.assign({}, Settings.channelEq)
+        delete all[ch]
+        Settings.setChannelEq(all)
+    }
+
+    // Every channel's gains onto its filter, and `pre` down by the highest
+    // boost; again whenever the channels come back (pipewire restarted).
+    property bool eqAgain: false
+    function applyEq() {
+        if (eqProc.running) { eqAgain = true; return }
+        var cmds = sinks.filter(n => eq[key(n)]).map(n => {
+            var ch = key(n)
+            var gains = eq[ch].map(b => eqGain(ch, b))
+            var pre = Math.pow(10, -Math.max(0, ...gains) / 20)
+            var params = eq[ch].map((b, i) => '"' + b.band + ':Gain" ' + gains[i])
+                .concat(['"pre:Gain 1" ' + pre.toFixed(4)])
+            return "pw-cli s " + n.id + " Props '{ params = [ " + params.join(" ") + " ] }' >/dev/null"
+        })
+        if (cmds.length === 0) return
+        eqProc.command = ["sh", "-c", cmds.join("; ")]
+        eqProc.running = true
+    }
+    Process {
+        id: eqProc
+        onExited: if (root.eqAgain) { root.eqAgain = false; root.applyEq() }
+    }
+    onSinksChanged: Qt.callLater(applyEq)
+    Connections {
+        target: Settings
+        function onChannelEqChanged() { root.applyEq() }
     }
 
     CommandProbe { id: probe; name: "headsetcontrol" }

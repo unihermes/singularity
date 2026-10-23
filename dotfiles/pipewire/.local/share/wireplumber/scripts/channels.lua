@@ -1,8 +1,8 @@
--- Singularity - new playback lands on Chat, a game's on Game
+-- Singularity - new playback lands on Media, a game's on Game
 --
 -- Runs where wireplumber would fall back to the default output: a stream
 -- with no target of its own (not moved, not remembered on another output)
--- plays on Game if it's a game, else on Chat, when that channel is there.
+-- plays on Game if it's a game, else on Media, when that channel is there.
 -- A game is anything under Wine/Proton, Java (Minecraft, from Modrinth or
 -- any launcher) or a stream that says it is one (SDL3's default role).
 -- The channels' own streams (singularity.channel) still go to the default,
@@ -34,7 +34,7 @@ SimpleEventHook {
     local binary = si_props ["application.process.binary"] or ""
     local isGame = binary:match ("^wine") or binary:match ("^proton")
         or binary == "java" or si_props ["media.role"] == "Game"
-    local name = isGame and "game" or "chat"
+    local name = isGame and "game" or "media"
     local channel = om:lookup {
       type = "SiLinkable",
       Constraint { "node.name", "=", "channel." .. name },

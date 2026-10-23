@@ -335,6 +335,10 @@ Singleton {
 
     function setWallpaperShuffle(on) { adapter.wallpaperShuffle = on }
     // tray items kept out of the tray drawer, by id
+    // the channels' EQ gains the user moved off their defaults, as
+    // { channel: { band: dB } } (Channels.eq)
+    readonly property alias channelEq: adapter.channelEq
+    function setChannelEq(v) { adapter.channelEq = v }
     readonly property alias trayPinned: adapter.trayPinned
     function setTrayPinned(id, on) {
         var l = adapter.trayPinned.filter(x => x !== id)
@@ -983,6 +987,7 @@ Singleton {
             property string clockFormat: "ddd HH:mm"
             property bool trayDrawer: false
             property var trayPinned: []
+            property var channelEq: ({})
             property var trayHidden: []
             property var trayOrder: []
             property string workspaceNames: ""
