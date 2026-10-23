@@ -183,7 +183,7 @@ Item {
         spacing: Theme.spaceXs
         readonly property var player: Media.player
         readonly property bool sounding: Settings.vizShown ? Visualizer.playing : !!player && player.isPlaying
-        visible: Settings.widgetVisible("visualizer") && (player !== null || Visualizer.playing)
+        visible: Settings.widgetVisible("visualizer") && player !== null
             && (sounding || !Settings.vizHideSilent)
 
         readonly property string style: Visualizer.playing ? Theme.vizStyle : "flat"
