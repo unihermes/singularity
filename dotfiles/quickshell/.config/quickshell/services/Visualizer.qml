@@ -3,10 +3,10 @@
 //
 // Spectrum bars from cava (raw mode, 0-100 per bar, Settings.vizBars of
 // them), run only while the Music module and its visualizer are on and
-// the player it follows (Media.player) is playing, so other sound (a
-// browser tab, which has no MPRIS player) never moves it;
-// `playing` drops after two seconds of silence. Config in a temp file,
-// leaving cava's own alone.
+// an app's audio stream is open; `playing` drops after two seconds of
+// silence. Config in a temp file, leaving cava's own alone. cava's node
+// isn't connected anywhere by itself: every app's stream but the excluded
+// ones is linked into it, so their sound (Floorp's tabs) never moves it.
 
 pragma Singleton
 
@@ -33,19 +33,48 @@ Singleton {
     // sound in the last couple of seconds
     property bool playing: false
 
-    readonly property bool streamOpen: {
-        var nodes = Pipewire.nodes.values
-        for (var i = 0; i < nodes.length; i++)
-            if (nodes[i].type === PwNodeType.AudioOutStream) return true
-        return false
+    // apps whose sound is left out, by binary or application name
+    readonly property var excluded: ["floorp"]
+    // cava's capture node, named so streams can be linked into it
+    readonly property string nodeName: "singularity-viz"
+
+    // the apps' streams it listens to: not the channels' own streams into
+    // the output (each app's sound already passes through a channel), not
+    // an excluded app's
+    readonly property var feeds: Pipewire.nodes.values.filter(n => {
+        if (n.type !== PwNodeType.AudioOutStream || /^channel\./.test(n.name || "") || !n.ready) return false
+        var p = n.properties || {}
+        var app = [p["application.process.binary"], p["application.name"], n.name]
+            .map(x => String(x || "").toLowerCase())
+        return !excluded.some(e => app.indexOf(e) !== -1)
+    })
+    readonly property bool streamOpen: feeds.length > 0
+    // a stream's properties arrive once it's tracked
+    PwObjectTracker { objects: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioOutStream) }
+    readonly property bool nodeUp: Pipewire.nodes.values.some(n => n.name === nodeName)
+
+    // links every feed into cava's node, once it's up and whenever the
+    // feeds change; pw-link refuses one that's already there
+    function relink() { linkTimer.restart() }
+    onFeedsChanged: relink()
+    onNodeUpChanged: relink()
+    Timer {
+        id: linkTimer
+        interval: 200
+        onTriggered: {
+            if (!cava.running || !root.nodeUp || root.feeds.length === 0) return
+            Quickshell.execDetached(["sh", "-c", "for id; do pw-link \"$id\" " + root.nodeName + " 2>/dev/null; done", "sh"]
+                .concat(root.feeds.map(n => String(n.id))))
+        }
     }
 
     CommandProbe { id: cavaProbe; name: "cava" }
 
     Process {
         id: cava
-        running: root.hasCava && root.streamOpen && !!Media.player && Media.player.isPlaying
-            && Settings.widgetVisible("visualizer") && Settings.vizShown && !root.restarting
+        running: root.hasCava && root.streamOpen && Settings.widgetVisible("visualizer") && Settings.vizShown && !root.restarting
+        // not connected to the default output's monitor, as cava would be
+        environment: ({ PIPEWIRE_PROPS: "{ node.autoconnect = false node.name = " + root.nodeName + " }" })
         command: ["sh", "-c",
             "cfg=$(mktemp /tmp/singularity-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
             + "printf '[general]\\nbars = " + root.barCount + "\\nframerate = " + root.fps + "\\n"
