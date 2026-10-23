@@ -1,14 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/AppWindowsFlyout.qml
 //
-// An app's windows from the strip: a card for the app (its icon, how many
-// windows on how many workspaces, New window at its end), then a row a
-// window with its workspace, popouts indented under their owner and a
-// blocked owner dimmed with a lock; Bring all here and Close all as chips.
-// A row raises its window, close on hover, and its ⌄ opens the window's
-// actions under it (float, fullscreen, pin, move, close); a right-click on
-// the bar opens the flyout with that window's actions open. Popouts per
-// windows.lua's tags (Bar.isPopout).
+// An app's windows from the strip, as a menu: a row a window with its
+// workspace, popouts indented under their owner and a blocked owner dimmed
+// with a lock, then New window, Bring all here and Close all. A row raises
+// its window, close on hover, and its ⌄ opens the window's actions under it
+// as one toolbar (mode, the workspaces to move to, close, kill; the hovered
+// one named in the row). An app with one window gets that window's actions
+// as menu rows instead. A right-click on the bar opens the flyout with that
+// window's actions open. Popouts per windows.lua's tags (Bar.isPopout).
 
 import Quickshell
 import Quickshell.Hyprland
@@ -81,25 +81,30 @@ FlyoutPanel {
         Hyprland.refreshToplevels()
     }
 
+    // a window's actions, as [{ icon, name, act, lit }]: its mode, then Pin
+    // while it floats and Promote for a popout
+    function modeTools(w, ipc) {
+        return [
+            { icon: ipc.floating ? "󰕰" : "󰖲", name: ipc.floating ? "Tile" : "Float", act: "float" },
+            { icon: "󰊓", name: "Fullscreen", act: "fullscreen", lit: !!ipc.fullscreen },
+        ].concat(ipc.floating ? [{ icon: "󰐃", name: ipc.pinned ? "Unpin" : "Pin", act: "pin", lit: !!ipc.pinned }] : [])
+         .concat(w.popout ? [{ icon: "󰖯", name: "Make it a main window", act: "promote" }] : [])
+    }
+    function runTool(w, a) {
+        if (a === "promote")
+            Quickshell.execDetached(["hyprctl", "eval", "promoteWindow(\"0x" + w.address + "\")"])
+        else root.act(w, a, a === "float" ? "action=\"toggle\"" : "")
+    }
+    function kill(w) { Hyprland.dispatch("hl.dsp.window.kill({window=\"address:0x" + w.address + "\"})") }
+
+    readonly property bool single: windows.length === 1
+
+
     FlyoutHeading {
         text: root.app ? root.app.name.toUpperCase() : ""
+        hints: root.windows.length > 1 ? [root.windows.length + " windows · "
+            + root.workspaceCount + (root.workspaceCount === 1 ? " workspace" : " workspaces")] : []
     }
-
-    HeadCard {
-        glyph: root.app ? root.app.glyph : ""
-        image: root.app ? root.app.source : ""
-        title: root.app ? root.app.name : ""
-        lines: [root.windows.length + (root.windows.length === 1 ? " window" : " windows")
-            + " · " + root.workspaceCount + (root.workspaceCount === 1 ? " workspace" : " workspaces")]
-
-        IconButton {
-            visible: !!root.entry
-            icon: "󰖯"
-            onClicked: root.newWindow()
-        }
-    }
-
-    FlyoutDivider {}
 
     // the app's own windows, each followed by the popouts it opened; any
     // popout whose window isn't known comes last, unindented
@@ -120,8 +125,10 @@ FlyoutPanel {
         return out
     }
 
+    // --- several windows: the list, a window's actions as a toolbar -------------
+
     Repeater {
-        model: root.rows
+        model: root.single ? [] : root.rows
 
         Column {
             id: entry
@@ -131,6 +138,8 @@ FlyoutPanel {
             readonly property int ws: root.wsOf(win)
             readonly property bool expanded: root.bar.appWindowsOpen === win.address
             readonly property int indent: modelData.child ? Theme.fit(14) : 0
+            // the toolbar button under the pointer, named in the row
+            property string toolHint: ""
             width: parent ? parent.width : 0
             spacing: Theme.spaceXs
 
@@ -163,7 +172,8 @@ FlyoutPanel {
                     leadingImage: entry.win.source
                     leadingIcon: entry.win.source === "" ? entry.win.glyph : ""
                     label: entry.win.toplevel ? entry.win.toplevel.title || entry.win.name : entry.win.name
-                    note: entry.win.popout && !entry.modelData.child ? "Popout" : ""
+                    note: entry.expanded && entry.toolHint !== "" ? entry.toolHint
+                        : entry.win.popout && !entry.modelData.child ? "Popout" : ""
                     dimmed: entry.win.blocked
                     trailing: !entry.win.blocked && entry.ws > 0 ? "ws " + entry.ws : ""
                     trailingIcons: entry.win.blocked ? ["󰌾"] : []
@@ -177,97 +187,169 @@ FlyoutPanel {
                 }
             }
 
-            // its actions, open under it
-            Column {
+            // its actions, open under it: mode, workspaces (its own lit), close, kill
+            Flow {
                 visible: entry.expanded
                 x: entry.indent + Theme.iconCell
                 width: parent.width - x
-                spacing: Theme.spaceS
-                bottomPadding: Theme.spaceS
+                spacing: 2
+                bottomPadding: Theme.spaceXs
 
-                FlyoutChipLine {
-                    chips: [
-                        { icon: entry.ipc.floating ? "󰕰" : "󰖲", text: entry.ipc.floating ? "Tile" : "Float", act: "float" },
-                        { icon: "󰊓", text: "Full", act: "fullscreen" },
-                    ].concat(entry.ipc.floating ? [{ icon: "󰐃", text: entry.ipc.pinned ? "Unpin" : "Pin", act: "pin" }] : [])
-                     .concat(entry.win.popout ? [{ icon: "󰖯", text: "Promote", act: "promote" }] : [])
-                    onPicked: a => {
-                        if (a === "promote")
-                            Quickshell.execDetached(["hyprctl", "eval", "promoteWindow(\"0x" + entry.win.address + "\")"])
-                        else root.act(entry.win, a, a === "float" ? "action=\"toggle\"" : "")
+                Repeater {
+                    model: root.modeTools(entry.win, entry.ipc)
+                    IconButton {
+                        required property var modelData
+                        readonly property string name: modelData.name
+                        icon: modelData.icon
+                        lit: !!modelData.lit
+                        HoverHandler { onHoveredChanged: entry.toolHint = hovered ? parent.name : "" }
+                        onClicked: root.runTool(entry.win, modelData.act)
                     }
                 }
-
-                // the workspaces it can go to, its own lit
-                Row {
-                    spacing: Theme.spaceXs
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        rightPadding: Theme.spaceXs
-                        text: "MOVE"
-                        color: Theme.subtext
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontCaption
-                        font.letterSpacing: 1
-                    }
-
-                    Repeater {
-                        model: Settings.workspaceCount
-
-                        FlyoutChip {
-                            required property int index
-                            text: index + 1
-                            selected: entry.ws === index + 1
-                            onClicked: if (!selected) root.act(entry.win, "move", "workspace=" + (index + 1))
-                        }
+                Item {
+                    width: Theme.spaceS
+                    height: Theme.controlSize
+                    Rectangle { anchors.centerIn: parent; width: 1; height: parent.height * 0.6; color: Theme.border }
+                }
+                Repeater {
+                    model: Settings.workspaceCount
+                    IconButton {
+                        required property int index
+                        icon: String(index + 1)
+                        readonly property string name: entry.ws === index + 1 ? "On workspace " + (index + 1) : "Move to workspace " + (index + 1)
+                        lit: entry.ws === index + 1
+                        HoverHandler { onHoveredChanged: entry.toolHint = hovered ? parent.name : "" }
+                        onClicked: if (!lit) root.act(entry.win, "move", "workspace=" + (index + 1))
                     }
                 }
+                Item {
+                    width: Theme.spaceS
+                    height: Theme.controlSize
+                    Rectangle { anchors.centerIn: parent; width: 1; height: parent.height * 0.6; color: Theme.border }
+                }
+                IconButton {
+                    icon: "󰅖"
+                    readonly property string name: "Close"
+                    HoverHandler { onHoveredChanged: entry.toolHint = hovered ? parent.name : "" }
+                    onClicked: root.closeWin(entry.win)
+                }
+                // for a window that ignores the polite one
+                IconButton {
+                    icon: "󰚌"
+                    readonly property string name: armed ? "Kill it?" : "Kill"
+                    warn: true
+                    confirm: true
+                    HoverHandler { onHoveredChanged: entry.toolHint = hovered ? parent.name : "" }
+                    onArmedChanged: entry.toolHint = armed ? "Kill it?" : ""
+                    onClicked: root.kill(entry.win)
+                }
+            }
+        }
+    }
 
-                Row {
-                    spacing: Theme.spaceS
+    // --- one window: its actions as menu rows ------------------------------------
 
-                    FlyoutChip {
-                        icon: "󰅖"
-                        text: "Close"
-                        onClicked: root.closeWin(entry.win)
-                    }
-                    // for a window that ignores the polite one
-                    FlyoutChip {
-                        icon: "󰚌"
-                        text: "Kill"
-                        confirmText: "Kill it?"
-                        onClicked: Hyprland.dispatch("hl.dsp.window.kill({window=\"address:0x" + entry.win.address + "\"})")
+    Column {
+        id: one
+        visible: root.single && root.rows.length === 1
+        width: parent.width
+        readonly property var win: root.rows.length === 1 ? root.rows[0].win : null
+        readonly property var ipc: win && win.toplevel && win.toplevel.lastIpcObject ? win.toplevel.lastIpcObject : ({})
+        readonly property int ws: win ? root.wsOf(win) : -1
+
+        FlyoutRow {
+            leadingImage: one.win ? one.win.source : ""
+            leadingIcon: one.win && one.win.source === "" ? one.win.glyph : ""
+            label: !one.win ? "" : one.win.toplevel ? one.win.toplevel.title || one.win.name : one.win.name
+            dimmed: !!one.win && one.win.blocked
+            trailing: one.win && !one.win.blocked && one.ws > 0 ? "ws " + one.ws : ""
+            trailingIcons: one.win && one.win.blocked ? ["󰌾"] : []
+            highlighted: !!one.win && !!Hyprland.activeToplevel && Hyprland.activeToplevel.address === one.win.address
+            onActivated: root.focusWin(one.win)
+        }
+    }
+
+    FlyoutDivider { visible: one.visible }
+
+    Column {
+        visible: one.visible
+        width: parent.width
+
+        Repeater {
+            model: one.win ? root.modeTools(one.win, one.ipc) : []
+            FlyoutRow {
+                required property var modelData
+                leadingIcon: modelData.icon
+                label: modelData.name
+                highlighted: !!modelData.lit
+                onActivated: root.runTool(one.win, modelData.act)
+            }
+        }
+
+        // the workspaces it can go to, its own lit
+        FlyoutRow {
+            leadingIcon: "󰁔"
+            label: "Move"
+            enabled: false
+
+            Row {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 2
+
+                Repeater {
+                    model: Settings.workspaceCount
+                    IconButton {
+                        required property int index
+                        icon: String(index + 1)
+                        lit: one.ws === index + 1
+                        onClicked: if (!lit) root.act(one.win, "move", "workspace=" + (index + 1))
                     }
                 }
             }
         }
     }
 
-    // --- the app's actions, with more than one window ---------------------------
+    FlyoutDivider { visible: one.visible || root.windows.length > 1 }
 
-    FlyoutDivider { visible: root.windows.length > 1 }
+    // --- the app's actions ------------------------------------------------------
 
-    Row {
-        id: appChips
-        visible: root.windows.length > 1
+    Column {
         width: parent.width
-        spacing: Theme.spaceS
-        readonly property real cell: (width - spacing) / 2
 
-        FlyoutChip {
-            width: appChips.cell
-            icon: "󰁌"
-            text: "Bring all here"
-            onClicked: root.bringHere()
+        FlyoutRow {
+            visible: !!root.entry
+            leadingIcon: "󰖯"
+            label: "New window"
+            onActivated: root.newWindow()
         }
-        FlyoutChip {
-            width: appChips.cell
-            icon: "󰅖"
-            text: "Close all"
-            confirmText: "Close " + root.windows.length + "?"
-            onClicked: root.closeAll()
+        FlyoutRow {
+            visible: root.windows.length > 1
+            leadingIcon: "󰁌"
+            label: "Bring all here"
+            onActivated: root.bringHere()
+        }
+        FlyoutRow {
+            visible: root.windows.length > 1
+            leadingIcon: "󰅖"
+            label: "Close all"
+            confirmText: "Close all " + root.windows.length + "?"
+            onActivated: root.closeAll()
+        }
+        FlyoutRow {
+            visible: one.visible
+            leadingIcon: "󰅖"
+            label: "Close"
+            onActivated: root.closeWin(one.win)
+        }
+        // for a window that ignores the polite one
+        FlyoutRow {
+            visible: one.visible
+            leadingIcon: "󰚌"
+            label: "Kill"
+            alert: true
+            confirmText: "Kill it?"
+            onActivated: root.kill(one.win)
         }
     }
 }
