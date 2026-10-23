@@ -6,9 +6,7 @@
 // secondary action, double-click forces its window up (showApp). Drag to
 // reorder, saved by app id (Settings.trayOrder) once dropped (mid-drag would
 // rebuild the delegates and drop the grab). With the drawer on, only pinned
-// icons show until the chevron opens it. Discord and its forks (Equicord,
-// Vesktop: all "discord_status_icon_N") draw the icon theme's Discord
-// instead of their own picture.
+// icons show until the chevron opens it.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -227,8 +225,7 @@ ModuleFrame {
 
             TintedIcon {
                 anchors.centerIn: parent
-                source: /^discord_status_icon/.test(trayIcon.modelData.id || "")
-                    ? Quickshell.iconPath("discord", trayIcon.modelData.icon) : trayIcon.modelData.icon
+                source: trayIcon.modelData.icon
                 implicitSize: Theme.barFs(16)
             }
 
