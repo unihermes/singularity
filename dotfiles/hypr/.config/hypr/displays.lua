@@ -96,7 +96,7 @@ end
 
 -- Digital vibrance (0..100, 50 = unchanged): vibrance.frag with the value
 -- filled in, as a screen shader, copied to the runtime dir under a name per
--- value so Hyprland recompiles it.
+-- value so Hyprland recompiles it. S.vibranceOn tells looks.lua.
 do
     local vibrance = math.max(0, math.min(100, tonumber(S.state("vibrance", "50")) or 50))
     local shader = ""
@@ -113,6 +113,7 @@ do
             shader = path
         end
     end
+    S.vibranceOn = shader ~= ""
     hl.config({ decoration = { screen_shader = shader } })
 end
 

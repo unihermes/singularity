@@ -152,9 +152,10 @@ hl.config({
         mouse_move_enables_dpms = true,
     },
 
-    -- direct scanout for windows tagged as games only (1 can flicker)
+    -- direct scanout for windows tagged as games only (1 can flicker); off
+    -- with vibrance on, as a scanned-out game would skip the screen shader
     render = {
-        direct_scanout = 2,
+        direct_scanout = S.vibranceOn and 0 or 2,
     },
 })
 
