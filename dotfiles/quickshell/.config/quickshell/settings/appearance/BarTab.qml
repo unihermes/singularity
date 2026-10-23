@@ -242,6 +242,31 @@ SettingsTab {
         }
     }
 
+    // apps hidden from the tray menu's Hide from the tray, a chip each to
+    // bring one back
+    SettingsField {
+        label: "Hidden tray icons"
+        hint: Settings.trayHidden.length > 0 ? "Click one to show it again"
+            : "Hide an app from its tray menu"
+
+        Flow {
+            anchors.right: parent.right
+            width: parent.width
+            layoutDirection: Qt.RightToLeft
+            spacing: Theme.spaceS
+
+            Repeater {
+                model: Settings.trayHidden
+                FlyoutChip {
+                    required property string modelData
+                    icon: "󰈈"
+                    text: modelData
+                    onClicked: Settings.setTrayHidden(modelData, false)
+                }
+            }
+        }
+    }
+
     Component { id: wsArt; ModuleArt { kind: "workspaceStyle" } }
     Component { id: winArt; ModuleArt { kind: "windowStyle" } }
     Component { id: clockArt; ModuleArt { kind: "clockStyle" } }

@@ -110,6 +110,7 @@ var entries = [
     { page: "appearance", section: "Bar", label: "Visualizer bars", keywords: "audio spectrum bands count cava" },
     { page: "appearance", section: "Bar", label: "Hide when silent", keywords: "visualizer music chip paused player" },
     { page: "appearance", section: "Bar", label: "Tray drawer", keywords: "system tray hide collapse chevron pin icons" },
+    { page: "appearance", section: "Bar", label: "Hidden tray icons", keywords: "system tray hide remove unhide show app icons" },
     { page: "appearance", section: "Bar", label: "Workspaces", keywords: "indicator dots" },
     { page: "appearance", section: "Bar", label: "Workspace names", keywords: "label rename workspaces web code chat" },
     { page: "appearance", section: "Bar", label: "Open windows", keywords: "taskbar tasks apps icons titles tabs glide lift inset segmented spotlight index dots" },

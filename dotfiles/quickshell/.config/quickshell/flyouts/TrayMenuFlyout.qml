@@ -6,8 +6,9 @@
 // in place, like the control centre. Split out of shell.qml; `item` and
 // `stack` are set from outside by BarModules.qml when a tray icon is
 // right-clicked. The app's separators split the menu into sections. At the
-// top level the two things every app has, showing its window and quitting,
-// come out of the list as chips at the end, the same place in every menu.
+// top level the shell's own rows close the menu, the same in every app: show
+// its window, pin it (with the drawer on), hide it from the tray, quit. The
+// app's own show and quit entries come out of the list for them.
 
 import Quickshell
 import QtQuick
@@ -29,7 +30,8 @@ FlyoutPanel {
             : (trayMenu.item ? trayMenu.item.menu : null)
     }
 
-    readonly property string appTitle: item ? (item.title || item.id || "MENU").toUpperCase() : "MENU"
+    readonly property string appName: item ? scope.barWindow.trayName(item) : ""
+    readonly property string appTitle: appName !== "" ? appName.toUpperCase() : "MENU"
     function entryTitle(entry) { return entry.text.replace(/_/g, "").toUpperCase() }
 
     // in a submenu the heading leads with the menu above, the way back
@@ -42,39 +44,35 @@ FlyoutPanel {
         onCrumbClicked: trayMenu.stack = trayMenu.stack.slice(0, -1)
     }
 
-    // with the tray drawer on: keep this app's icon out of the drawer
-    FlyoutRow {
-        visible: Settings.trayDrawer && trayMenu.stack.length === 0 && !!trayMenu.item
-        readonly property bool pinned: !!trayMenu.item && Settings.trayPinned.indexOf(trayMenu.item.id) !== -1
-        leadingIcon: pinned ? "󰐄" : "󰐃"
-        label: pinned ? "Unpin from the bar" : "Pin to the bar"
-        onActivated: {
-            Settings.setTrayPinned(trayMenu.item.id, !pinned)
-            scope.openFlyout = ""
-        }
-    }
-
     readonly property bool atTop: stack.length === 0
     function plain(e) { return e.text.replace(/_/g, "").replace(/\.+$|…$/, "").trim().toLowerCase() }
-    function isShow(e) {
-        var t = plain(e), title = item ? (item.title || "").toLowerCase() : ""
-        return /^(show|restore|unhide)\b/.test(t) || t === "open" || t === "open " + title
-            || /^open (app|window|main window|\S+)$/.test(t)
+    // how surely an entry shows the app's window, 9 for not at all
+    function showRank(e) {
+        var t = plain(e), title = appName.toLowerCase()
+        return /^(show|restore|unhide)\b/.test(t) ? 0
+            : t === "open" || t === "open " + title || /^open (app|window|main window)$/.test(t) ? 1
+            : 9
     }
-    function isQuit(e) { return /^(quit|exit)\b/.test(plain(e)) }
-    // the app's Quit entry, null when it has none
+    // the app's own show and quit entries, null when it has none: the last
+    // that reads as one, since an app's own sits at the end and an entry
+    // above may only share the word (a chat named "Exit")
+    readonly property var topEntries: open && atTop
+        ? trayOpener.children.values.filter(e => !e.isSeparator && !e.hasChildren) : []
+    readonly property var showEntry: {
+        var best = null, bestRank = 9
+        topEntries.forEach(e => { var r = showRank(e); if (r <= bestRank && r < 9) { best = e; bestRank = r } })
+        return best
+    }
     readonly property var quitEntry: {
-        if (!open || !atTop) return null
-        var es = trayOpener.children.values
-        for (var i = 0; i < es.length; i++)
-            if (!es[i].isSeparator && !es[i].hasChildren && isQuit(es[i])) return es[i]
-        return null
+        var found = null
+        topEntries.forEach(e => { if (/^(quit|exit)\b/.test(plain(e))) found = e })
+        return found
     }
-    // the rows: at the top level without the show and quit entries, and no
-    // separator left leading, trailing or doubled
+    // the rows: at the top level without those two, and no separator left
+    // leading, trailing or doubled
     readonly property var entries: {
         if (!open) return []
-        var es = trayOpener.children.values.filter(e => !atTop || e.isSeparator || e.hasChildren || !(isShow(e) || isQuit(e)))
+        var es = trayOpener.children.values.filter(e => e !== showEntry && e !== quitEntry)
         var out = []
         for (var i = 0; i < es.length; i++) {
             if (es[i].isSeparator && (out.length === 0 || out[out.length - 1].isSeparator)) continue
@@ -121,21 +119,17 @@ FlyoutPanel {
         }
     }
 
-    // the way out, at the top level
-    FlyoutDivider { visible: trayMenu.atTop }
+    // the shell's own rows, at the top level
+    FlyoutDivider { visible: trayMenu.atTop && trayMenu.entries.length > 0 }
 
-    Row {
-        id: tail
+    Column {
         visible: trayMenu.atTop
         width: parent.width
-        spacing: Theme.spaceS
-        readonly property real cell: (width - spacing * (quitChip.visible ? 1 : 0)) / (quitChip.visible ? 2 : 1)
 
-        FlyoutChip {
-            width: tail.cell
-            icon: "󰖯"
-            text: "Show window"
-            onClicked: {
+        FlyoutRow {
+            leadingIcon: "󰖯"
+            label: "Show window"
+            onActivated: {
                 var tray = scope.barWindow.widgetItem("tray")
                 var win = scope.barWindow.trayItemWindow(trayMenu.item)
                 if (win) tray.raise(win)
@@ -143,13 +137,32 @@ FlyoutPanel {
                 scope.openFlyout = ""
             }
         }
-        FlyoutChip {
-            id: quitChip
+        // with the tray drawer on: keep this app's icon out of the drawer
+        FlyoutRow {
+            visible: Settings.trayDrawer && !!trayMenu.item
+            readonly property bool pinned: !!trayMenu.item && Settings.trayPinned.indexOf(trayMenu.item.id) !== -1
+            leadingIcon: pinned ? "󰐄" : "󰐃"
+            label: pinned ? "Unpin from the bar" : "Pin to the bar"
+            onActivated: {
+                Settings.setTrayPinned(trayMenu.item.id, !pinned)
+                scope.openFlyout = ""
+            }
+        }
+        // shown again from Settings > Appearance > Bar
+        FlyoutRow {
+            visible: trayMenu.appName !== ""
+            leadingIcon: "󰈉"
+            label: "Hide from the tray"
+            onActivated: {
+                Settings.setTrayHidden(trayMenu.appName, true)
+                scope.openFlyout = ""
+            }
+        }
+        FlyoutRow {
             visible: trayMenu.quitEntry !== null
-            width: tail.cell
-            icon: "󰅖"
-            text: "Quit"
-            onClicked: {
+            leadingIcon: "󰅖"
+            label: "Quit"
+            onActivated: {
                 trayMenu.quitEntry.triggered()
                 scope.openFlyout = ""
             }

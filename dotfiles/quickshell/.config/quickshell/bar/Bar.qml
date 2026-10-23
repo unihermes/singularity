@@ -285,11 +285,15 @@ PanelWindow {
         return tags.indexOf("popout") >= 0 || tags.indexOf("app-held") >= 0
     }
 
+    // a tray item's name: its title, else its tooltip's (Chromium apps
+    // give only a generic id), else its id
+    function trayName(item) { return item.title || item.tooltipTitle || item.id || "" }
+
     // the open window of a tray item, so its click raises it; ids and
-    // titles are reduced to lowercase letters and digits and matched either way
+    // names are reduced to lowercase letters and digits and matched either way
     function trayItemWindow(item) {
         function norm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]/g, "") }
-        var keys = [norm(item.id), norm(item.title)].filter(function(k) { return k.length >= 3 })
+        var keys = [norm(item.id), norm(item.title), norm(item.tooltipTitle)].filter(function(k) { return k.length >= 3 })
         if (keys.length === 0) return null
         var tls = Hyprland.toplevels.values
         for (var pass = 0; pass < 2; pass++) {

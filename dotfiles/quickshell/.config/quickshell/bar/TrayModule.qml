@@ -6,7 +6,8 @@
 // secondary action, double-click forces its window up (showApp). Drag to
 // reorder, saved by app id (Settings.trayOrder) once dropped (mid-drag would
 // rebuild the delegates and drop the grab). With the drawer on, only pinned
-// icons show until the chevron opens it.
+// icons show until the chevron opens it. Apps hidden from the tray
+// (Settings.trayHidden) never show.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -32,7 +33,8 @@ ModuleFrame {
     // the tray's items in the saved order
     readonly property var ordered: {
         var saved = Settings.trayOrder
-        var l = Array.from(SystemTray.items.values)
+        var hidden = Settings.trayHidden
+        var l = Array.from(SystemTray.items.values).filter(it => hidden.indexOf(host.bar.trayName(it)) === -1)
         var rank = l.map((it, i) => {
             var r = saved.indexOf(it.id)
             return r === -1 ? saved.length + i : r

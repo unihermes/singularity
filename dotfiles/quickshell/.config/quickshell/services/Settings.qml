@@ -341,6 +341,13 @@ Singleton {
         if (on) l.push(id)
         adapter.trayPinned = l
     }
+    // tray items left out of the tray altogether, by name (Bar.trayName)
+    readonly property alias trayHidden: adapter.trayHidden
+    function setTrayHidden(name, on) {
+        var l = adapter.trayHidden.filter(x => x !== name)
+        if (on) l.push(name)
+        adapter.trayHidden = l
+    }
     // the tray's order, by id, as the icons were last dragged into: apps
     // not running keep their place in it for when they come back
     readonly property alias trayOrder: adapter.trayOrder
@@ -976,6 +983,7 @@ Singleton {
             property string clockFormat: "ddd HH:mm"
             property bool trayDrawer: false
             property var trayPinned: []
+            property var trayHidden: []
             property var trayOrder: []
             property string workspaceNames: ""
             property string barSeparator: "none"
