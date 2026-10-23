@@ -25,13 +25,13 @@ hl.bind = function(keys, ...)
     return handle
 end
 
--- Steam's games (Proton and native), gamescope, and anything that says
--- it's a game through the content-type protocol
+-- Steam's games (Proton and native), gamescope, Minecraft ("Minecraft* 26.1.2"),
+-- and anything that says it's a game through the content-type protocol
 local function isGame(win)
     if not win then return false end
     local class = win.class or ""
     return class:match("^steam_app_%d+$") ~= nil or class == "gamescope"
-        or win.content_type == "game"
+        or class:match("^Minecraft") ~= nil or win.content_type == "game"
 end
 
 local inGame = false
