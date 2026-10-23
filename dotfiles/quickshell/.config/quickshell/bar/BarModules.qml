@@ -171,8 +171,8 @@ Item {
     }
 
     // the Music module (under the old visualizer's key): the audio spectrum
-    // of everything playing, in the meter colour per Theme.vizStyle (a flat
-    // rule while nothing sounds), and the track's title, each as Settings
+    // of everything playing, in the meter colour per Theme.vizStyle (at rest
+    // in the same look while nothing sounds), and the track's title, each as Settings
     // says; the player's icon only without the spectrum, and with neither a
     // play/pause mark. No easing on the spectrum, so
     // it redraws only on cava's 20 frames a second. Shown while a player is
@@ -187,7 +187,7 @@ Item {
         visible: Settings.widgetVisible("visualizer") && (player !== null || Visualizer.playing)
             && (sounding || !Settings.vizHideSilent)
 
-        readonly property string style: Visualizer.playing ? Theme.vizStyle : "flat"
+        readonly property string style: Theme.vizStyle
         readonly property int bandW: Theme.barFs(3)
         readonly property int bandH: Theme.moduleHeight - 10
         readonly property string playerIcon: player
@@ -226,23 +226,13 @@ Item {
             font.pixelSize: Theme.iconSize
         }
 
-        // nothing sounding: one flat rule the spectrum's width
-        Rectangle {
-            visible: Settings.vizShown && musicFrame.style === "flat"
-            anchors.verticalCenter: parent.verticalCenter
-            width: Visualizer.barCount * (musicFrame.bandW + musicFrame.spacing) - musicFrame.spacing
-            height: Math.max(2, Theme.borderWidth * 2)
-            radius: Theme.pill(height)
-            color: Theme.muted
-        }
-
         Repeater {
-            model: !Settings.vizShown || musicFrame.style === "line" || musicFrame.style === "flat" ? 0 : Visualizer.barCount
+            model: !Settings.vizShown || musicFrame.style === "line" ? 0 : Visualizer.barCount
 
             Item {
                 id: band
                 required property int index
-                readonly property real v: Math.max(0, Math.min(1, (Visualizer.bars[index] || 0) / 100))
+                readonly property real v: Visualizer.playing ? Math.max(0, Math.min(1, (Visualizer.bars[index] || 0) / 100)) : 0
                 anchors.verticalCenter: parent.verticalCenter
                 implicitWidth: musicFrame.bandW
                 implicitHeight: musicFrame.bandH
@@ -300,7 +290,7 @@ Item {
                         var w = musicFrame.style === "line" ? n * (musicFrame.bandW + musicFrame.spacing) - musicFrame.spacing : 0
                         var h = musicFrame.bandH
                         for (var i = 0; i < n; i++) {
-                            var v = Math.max(0, Math.min(1, (Visualizer.bars[i] || 0) / 100))
+                            var v = Visualizer.playing ? Math.max(0, Math.min(1, (Visualizer.bars[i] || 0) / 100)) : 0
                             pts.push(Qt.point(n > 1 ? i * w / (n - 1) : 0, h - 1 - v * (h - 2)))
                         }
                         return pts
