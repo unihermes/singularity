@@ -2,8 +2,9 @@
 // ~/.config/quickshell/flyouts/MediaFlyout.qml
 //
 // The Music module's flyout. Now playing: the art large with the title,
-// artist and player over its foot, the spectrum playing over it while the
-// visualizer is on; the progress (click to seek) and the transport; every
+// artist and player over its foot, the art only while the player plays and
+// in its place the spectrum (while the visualizer is on and something
+// sounds) or a music mark; the progress (click to seek) and the transport; every
 // player as a row (a click picks which the module follows). Then the
 // module's switches (Visualizer, Title on the bar) and Visualizer look, a
 // page of its own (style, bars, hiding when silent). Self-contained: only
@@ -38,7 +39,8 @@ FlyoutPanel {
         onCrumbClicked: mediaFlyout.page = ""
     }
 
-    // the art, as wide as the panel, with the track over its foot
+    // the art, as wide as the panel, with the track over its foot; the art
+    // only while the player plays, otherwise the spectrum or a mark
     ClippingRectangle {
         id: artFrame
         visible: mediaFlyout.page === ""
@@ -48,6 +50,8 @@ FlyoutPanel {
         color: Theme.meterTrack
         border.width: Theme.borderWidth
         border.color: Theme.stroke
+        readonly property bool showArt: art.status === Image.Ready
+            && !!mediaFlyout.player && mediaFlyout.player.isPlaying
 
         Image {
             id: art
@@ -58,23 +62,23 @@ FlyoutPanel {
             // video thumbnail can be several megapixels
             sourceSize.width: artFrame.width * 2
             asynchronous: true
-            visible: status === Image.Ready
+            visible: artFrame.showArt
         }
 
         Text {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: -Theme.fontDisplay / 2
-            visible: art.status !== Image.Ready
+            visible: !artFrame.showArt && !spectrum.visible
             text: "󰝚"
             color: Theme.muted
             font.family: Theme.fontIcon
             font.pixelSize: Theme.fontDisplay
         }
 
-        // the spectrum over the art, mirrored about its middle
+        // the spectrum in the art's place, mirrored about its middle
         Row {
             id: spectrum
-            visible: Settings.vizShown && Visualizer.playing
+            visible: !artFrame.showArt && Settings.vizShown && Visualizer.playing
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: caption.top
             anchors.bottomMargin: Theme.spaceS
@@ -96,8 +100,7 @@ FlyoutPanel {
                         width: parent.width
                         height: Math.max(3, parent.height * parent.v)
                         radius: Math.min(Theme.radiusSmall, width / 2)
-                        color: "white"
-                        opacity: 0.85
+                        color: Theme.meterFill
                     }
                 }
             }
