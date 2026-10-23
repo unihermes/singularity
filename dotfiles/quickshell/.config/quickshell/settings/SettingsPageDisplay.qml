@@ -7,8 +7,8 @@
 // of its own copied from it, so a change never reaches the others. One
 // display is a card with its settings under it; with several, the
 // arrangement picture (extend or duplicate, hl.monitor()'s `mirror`) comes
-// first and picks whose settings show, vibrance among them. Variable
-// refresh is for every display. A mode, scale or rotation change waits in a bar at the
+// first and picks whose settings show. Vibrance and variable refresh are
+// for every display. A mode, scale or rotation change waits in a bar at the
 // foot of the page to be kept.
 
 import Quickshell
@@ -526,19 +526,9 @@ SettingsPage {
         }
     }
 
-    // Digital vibrance per display, 0..100 (50 leaves colours be): a state
-    // file of "NAME VALUE" lines displays.lua turns into a shader (a bare
-    // number, the old format, counts for every display); writes wait for
-    // the slider to settle
-    property var vibrance: ({})
-    property int vibranceAll: 50
-    function vibranceOf(name) { return vibrance[name] !== undefined ? vibrance[name] : vibranceAll }
-    function setVibrance(name, v) {
-        var next = Object.assign({}, vibrance)
-        next[name] = v
-        vibrance = next
-        vibranceWrite.restart()
-    }
+    // Digital vibrance, 0..100 (50 leaves colours be): a state file
+    // displays.lua turns into a shader; writes wait for the slider to settle
+    property int vibrance: 50
     readonly property var vibranceMarks: [
         { at: 0, label: "Greyscale" }, { at: 50, label: "Normal" }, { at: 100, label: "Vivid" },
     ]
@@ -547,12 +537,10 @@ SettingsPage {
         id: vibranceWrite
         interval: 150
         onTriggered: {
-            var names = Object.keys(page.vibrance)
-            page.monitors.forEach(m => { if (names.indexOf(m.name) < 0) names.push(m.name) })
-            var text = names.map(n => n + " " + page.vibranceOf(n)).join("\n") + "\n"
+            var v = page.vibrance
             AtomicFileWrite.write({
                 path: page.stateDir + "/vibrance",
-                transform: () => text,
+                transform: () => v + "\n",
                 after: "hyprctl reload config-only >/dev/null || echo \"Hyprland didn't reload\"",
                 done: (status, detail) => {
                     if ((status === "ok" || status === "unchanged") && detail === "") return
@@ -568,14 +556,8 @@ SettingsPage {
         printErrors: false
         blockLoading: true
         onLoaded: {
-            var named = {}, all = 50
-            text().split("\n").forEach(line => {
-                var m = line.trim().match(/^(\S+)\s+(\d+)$/)
-                if (m) named[m[1]] = Math.max(0, Math.min(100, parseInt(m[2])))
-                else if (/^\d+$/.test(line.trim())) all = Math.max(0, Math.min(100, parseInt(line)))
-            })
-            page.vibranceAll = all
-            page.vibrance = named
+            var v = parseInt(text().trim())
+            page.vibrance = isNaN(v) ? 50 : Math.max(0, Math.min(100, v))
         }
     }
 
@@ -710,23 +692,6 @@ SettingsPage {
                     mon.m.short + (v === 0 ? " turned back to normal" : " turned " + page.rotations[v].text))
             }
         }
-
-        SettingsField {
-            visible: !mon.m.disabled
-            label: "Vibrance"
-            hint: page.vibranceOf(mon.m.name) === 50 ? "How strongly colours show"
-                : "Off while a game has focus"
-
-            FlyoutSliderRow {
-                anchors.right: parent.right
-                width: Theme.fit(260)
-                label: ""
-                suffix: "%"
-                value: page.vibranceOf(mon.m.name)
-                marks: page.vibranceMarks
-                onMoved: v => page.setVibrance(mon.m.name, v)
-            }
-        }
     }
 
     Repeater {
@@ -742,6 +707,22 @@ SettingsPage {
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "EVERY DISPLAY" }
+
+    SettingsField {
+        label: "Vibrance"
+        hint: page.vibrance === 50 ? "How strongly colours show, on every display"
+            : "On every display, off while a game has focus; screenshots show it"
+
+        FlyoutSliderRow {
+            anchors.right: parent.right
+            width: Theme.fit(260)
+            label: ""
+            suffix: "%"
+            value: page.vibrance
+            marks: page.vibranceMarks
+            onMoved: v => { page.vibrance = v; vibranceWrite.restart() }
+        }
+    }
 
     // G-Sync/FreeSync: misc.vrr in hyprland.json (0 off, 2 fullscreen, 1
     // always), one for all displays: hl.monitor()'s vrr doesn't apply on reload

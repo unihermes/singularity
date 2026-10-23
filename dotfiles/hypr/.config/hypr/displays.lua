@@ -94,49 +94,19 @@ if primaryDisplay ~= "" then
     hl.workspace_rule({ workspace = "1", monitor = primaryDisplay, default = true })
 end
 
--- Digital vibrance (0..100, 50 = unchanged), per display: the state file
--- has a line "NAME VALUE" for each, and a bare number (the old format)
--- counts for every display. vibrance.frag gets vibranceOf() filled in by
--- Hyprland's display id and is copied to the runtime dir under a name per
--- set of values, so Hyprland recompiles it. Rebuilt when a display comes or
--- goes, as ids follow the connected displays; S.setVibranceOff(true) (from
--- game-keys.lua, while a game has focus) takes it off every display.
+-- Digital vibrance (0..100, 50 = unchanged): vibrance.frag with the value
+-- filled in, as a screen shader, copied to the runtime dir under a name per
+-- value so Hyprland recompiles it. Kept in S.vibranceShader for game-keys.lua,
+-- which turns it off while a game has focus.
 do
-    local function readVibrance()
-        local all, named = 50, {}
-        local f = io.open(os.getenv("HOME") .. "/.local/state/singularity/vibrance")
-        if f then
-            for line in f:lines() do
-                local name, v = line:match("^(%S+)%s+(%d+)%s*$")
-                if name then named[name] = tonumber(v)
-                elseif tonumber(line) then all = tonumber(line) end
-            end
-            f:close()
-        end
-        return function(name)
-            return math.max(0, math.min(100, named[name] or all))
-        end
-    end
-
-    local shader, off = "", false
-    local function build()
-        local of = readVibrance()
-        local cases, key = {}, {}
-        for _, m in ipairs(hl.get_monitors()) do
-            local v = of(m.name)
-            if v ~= 50 then
-                table.insert(cases, string.format("if (o == %d) return %.2f;", m.id, (v - 50) / 50))
-                table.insert(key, m.id .. "-" .. v)
-            end
-        end
-        shader = ""
-        local src = #cases > 0 and io.open(os.getenv("HOME") .. "/.config/hypr/vibrance.frag")
-        if not src then return end
-        local text = src:read("a"):gsub("float vibranceOf%(int o%) { return 0%.0; }",
-            "float vibranceOf(int o) { " .. table.concat(cases, " ") .. " return 0.0; }", 1)
+    local vibrance = math.max(0, math.min(100, tonumber(S.state("vibrance", "50")) or 50))
+    local shader = ""
+    local src = vibrance ~= 50 and io.open(os.getenv("HOME") .. "/.config/hypr/vibrance.frag")
+    if src then
+        local text = src:read("a"):gsub("const float VIBRANCE = [^;]*;",
+            string.format("const float VIBRANCE = %.2f;", (vibrance - 50) / 50), 1)
         src:close()
-        local path = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-vibrance-"
-            .. table.concat(key, "_") .. ".frag"
+        local path = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-vibrance-" .. vibrance .. ".frag"
         local out = io.open(path, "w")
         if out then
             out:write(text)
@@ -144,21 +114,8 @@ do
             shader = path
         end
     end
-    local function apply()
-        hl.config({ decoration = { screen_shader = off and "" or shader } })
-    end
-
-    function S.setVibranceOff(v)
-        if v == off then return end
-        off = v
-        if shader ~= "" then apply() end
-    end
-
-    build()
-    apply()
-    local function rebuild() build() apply() end
-    hl.on("monitor.added", rebuild)
-    hl.on("monitor.removed", rebuild)
+    S.vibranceShader = shader
+    hl.config({ decoration = { screen_shader = shader } })
 end
 
 -- One workspace per display numbered from the primary (left to right, top
