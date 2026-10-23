@@ -5,7 +5,8 @@
 // each mixing into the real output. New playback lands on Chat, games' on
 // Game. A headset's ChatMix dial (read with headsetcontrol) sets Game and
 // Chat against each other on the channels' own streams into the output, so
-// each channel's level stays the user's.
+// each channel's level stays the user's. The same tool says whether the
+// headset itself is on (headset), for the bar's volume icon.
 
 pragma Singleton
 
@@ -83,6 +84,38 @@ Singleton {
         triggeredOnStart: true
         interval: root.chatmix >= 0 ? 300 : 5000
         onTriggered: if (!dial.running) dial.running = true
+    }
+
+    // --- The headset itself ----------------------------------------------------
+
+    // from its battery read: "on", "off" (the dongle answers, the headset
+    // is off) or "" with no headset found
+    property string headset: ""
+
+    Timer {
+        running: probe.found
+        repeat: true
+        triggeredOnStart: true
+        interval: 3000
+        onTriggered: if (!power.running) power.running = true
+    }
+
+    Process {
+        id: power
+        command: ["headsetcontrol", "-b", "-o", "json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // a read error or timeout keeps what was known
+                var state = ""
+                try {
+                    var found = (JSON.parse(text).devices || []).find(d => d.battery)
+                    var st = found ? found.battery.status : ""
+                    state = /^BATTERY_(AVAILABLE|CHARGING)$/.test(st) ? "on"
+                        : st === "BATTERY_UNAVAILABLE" ? "off" : found ? root.headset : ""
+                } catch (e) { state = root.headset }
+                root.headset = state
+            }
+        }
     }
 
     Process {

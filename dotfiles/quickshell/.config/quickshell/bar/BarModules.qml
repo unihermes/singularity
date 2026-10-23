@@ -109,8 +109,11 @@ Item {
         visible: Settings.widgetVisible("volume")
         fixedWidth: Theme.moduleWidth
         // the bar shows the level; the icon says muted, else where the
-        // sound goes: headphones or speakers
-        icon: Audio.muted ? "󰖁" : Audio.onHead(Audio.sink) ? "󰋋" : "󰕾"
+        // sound goes: headphones or speakers. Headphones whose headset is
+        // switched off (its dongle still there) show crossed out and dim.
+        readonly property bool headsetOff: Audio.onHead(Audio.sink) && Channels.headset === "off"
+        icon: Audio.muted ? "󰖁" : headsetOff ? "󰟎" : Audio.onHead(Audio.sink) ? "󰋋" : "󰕾"
+        dimmed: headsetOff
         fillValue: Audio.muted ? 0 : Audio.percent / 100
         active: screenScope.openFlyout === "volume"
         acceptWheel: true
