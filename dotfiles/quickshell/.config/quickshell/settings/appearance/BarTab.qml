@@ -192,7 +192,7 @@ SettingsTab {
 
     SettingsField {
         label: "Music visualizer"
-        hint: Settings.vizShown ? "The spectrum beside the player's icon"
+        hint: Settings.vizShown ? "The spectrum of everything playing, in place of the player's icon"
             : "Off: no spectrum, and cava doesn't run"
 
         Switch {
@@ -204,8 +204,8 @@ SettingsTab {
 
     SettingsField {
         label: "Music title"
-        hint: Settings.musicTitle ? "Artist and title after the icon"
-            : "The icon alone, or with the spectrum"
+        hint: Settings.musicTitle ? "Artist and title after the spectrum or icon"
+            : "The spectrum or icon alone"
 
         Switch {
             anchors.right: parent.right

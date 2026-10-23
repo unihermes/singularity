@@ -18,7 +18,7 @@ Singleton {
 
     // The shell's own capture: cava listens to the output to draw the
     // visualizer, and that must not light the microphone indicator.
-    readonly property var ignored: ["cava", "singularity-viz"]
+    readonly property var ignored: ["cava"]
 
     readonly property var inStreams: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioInStream)
     PwObjectTracker { objects: root.inStreams }

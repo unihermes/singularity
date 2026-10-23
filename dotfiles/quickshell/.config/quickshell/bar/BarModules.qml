@@ -170,10 +170,11 @@ Item {
         host: barModules
     }
 
-    // the Music module (under the old visualizer's key): the player's icon,
-    // then the audio spectrum in the meter colour per Theme.vizStyle (a flat
-    // rule while nothing sounds) and the track's title, each as Settings
-    // says; with neither, a play/pause mark. No easing on the spectrum, so
+    // the Music module (under the old visualizer's key): the audio spectrum
+    // of everything playing, in the meter colour per Theme.vizStyle (a flat
+    // rule while nothing sounds), and the track's title, each as Settings
+    // says; the player's icon only without the spectrum, and with neither a
+    // play/pause mark. No easing on the spectrum, so
     // it redraws only on cava's 20 frames a second. Shown while a player is
     // open, or only while it sounds with vizHideSilent. A click opens the
     // Media flyout, a middle click plays or pauses.
@@ -194,7 +195,7 @@ Item {
         active: screenScope.openFlyout === "media"
 
         Item {
-            visible: musicFrame.player !== null
+            visible: musicFrame.player !== null && !Settings.vizShown
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: Theme.iconSize + Theme.spaceXs
             implicitHeight: Theme.iconSize
