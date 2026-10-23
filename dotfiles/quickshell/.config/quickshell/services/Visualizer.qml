@@ -52,17 +52,25 @@ Singleton {
             + "ascii_max_range = 100\\nbar_delimiter = 59\\nframe_delimiter = 10\\n"
             + "[smoothing]\\nnoise_reduction = 60\\n' > \"$cfg\" && cava -p \"$cfg\""]
         stdout: SplitParser {
+            id: frames
+            // a frame like the last one (silence, mostly) changes nothing
+            property string last: ""
+            property bool loud: false
             onRead: line => {
-                var v = line.split(";").filter(x => x !== "").map(Number)
-                if (v.length === 0) return
-                root.bars = v
-                if (v.some(x => x > 2)) {
+                if (line !== last) {
+                    last = line
+                    var v = line.split(";").filter(x => x !== "").map(Number)
+                    if (v.length === 0) return
+                    root.bars = v
+                    loud = v.some(x => x > 2)
+                }
+                if (loud) {
                     root.playing = true
                     silence.restart()
                 }
             }
         }
-        onRunningChanged: if (!running) { root.bars = []; root.playing = false }
+        onRunningChanged: if (!running) { root.bars = []; root.playing = false; frames.last = "" }
     }
 
     Timer {

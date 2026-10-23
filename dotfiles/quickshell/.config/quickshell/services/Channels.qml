@@ -77,13 +77,23 @@ Singleton {
 
     CommandProbe { id: probe; name: "headsetcontrol" }
 
-    // quick while a dial answers, slow while nothing does
+    // one read for the dial and the headset's power: quick for a while after
+    // the dial turns, slower while the headset is on, slow while it's off
+    // (its dial can't move) or nothing answers
+    property bool dialBusy: false
     Timer {
-        running: probe.found && root.sinks.length > 0
+        id: dialSettle
+        interval: 10000
+        onTriggered: root.dialBusy = false
+    }
+    onTurned: { dialBusy = true; dialSettle.restart() }
+
+    Timer {
+        running: probe.found
         repeat: true
         triggeredOnStart: true
-        interval: root.chatmix >= 0 ? 300 : 5000
-        onTriggered: if (!dial.running) dial.running = true
+        interval: root.chatmix < 0 || root.headset !== "on" ? 3000 : root.dialBusy ? 300 : 1000
+        onTriggered: if (!read.running) read.running = true
     }
 
     // --- The headset itself ----------------------------------------------------
@@ -92,42 +102,22 @@ Singleton {
     // is off) or "" with no headset found
     property string headset: ""
 
-    Timer {
-        running: probe.found
-        repeat: true
-        triggeredOnStart: true
-        interval: 3000
-        onTriggered: if (!power.running) power.running = true
-    }
-
     Process {
-        id: power
-        command: ["headsetcontrol", "-b", "-o", "json"]
+        id: read
+        command: ["headsetcontrol", "-b", "-m", "-o", "json"]
         stdout: StdioCollector {
             onStreamFinished: {
-                // a read error or timeout keeps what was known
-                var state = ""
-                try {
-                    var found = (JSON.parse(text).devices || []).find(d => d.battery)
-                    var st = found ? found.battery.status : ""
-                    state = /^BATTERY_(AVAILABLE|CHARGING)$/.test(st) ? "on"
-                        : st === "BATTERY_UNAVAILABLE" ? "off" : found ? root.headset : ""
-                } catch (e) { state = root.headset }
-                root.headset = state
-            }
-        }
-    }
-
-    Process {
-        id: dial
-        command: ["headsetcontrol", "-m", "-o", "json"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var level = -1
-                try {
-                    var found = (JSON.parse(text).devices || []).find(d => typeof d.chatmix === "number")
-                    if (found) level = found.chatmix
-                } catch (e) {}
+                // a read error or timeout keeps the headset's last state
+                var devices = null
+                try { devices = JSON.parse(text).devices || [] } catch (e) {}
+                var bat = devices ? devices.find(d => d.battery) : null
+                var st = bat ? bat.battery.status : ""
+                root.headset = /^BATTERY_(AVAILABLE|CHARGING)$/.test(st) ? "on"
+                    : st === "BATTERY_UNAVAILABLE" ? "off" : bat || !devices ? root.headset : ""
+                // the dial only counts with the channels to set
+                var dial = devices && root.sinks.length > 0
+                    ? devices.find(d => typeof d.chatmix === "number") : null
+                var level = dial ? dial.chatmix : -1
                 var was = root.chatmix
                 root.chatmix = level
                 if (was >= 0 && level >= 0 && was !== level) root.turned()
