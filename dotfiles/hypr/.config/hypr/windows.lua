@@ -26,14 +26,18 @@ hl.on("window.active", function() holdPopup(hl.get_active_window()) end)
 hl.on("window.open", function(win) holdPopup(win) end)
 hl.on("window.close", function(win) if win then knownWindows[win.address] = nil end end)
 
--- SUPER+M's global layout mode, kept in a runtime file so a reload keeps
--- it; monocle again at login. The rest of monocle is event hooks.
+-- SUPER+M's layout per workspace ("1 dwindle" lines), kept in a runtime
+-- file so a reload keeps it; back to the pins and monocle at login. The
+-- rest of monocle is event hooks.
 local LAYOUT_FILE = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-layout"
-local monocleEnabled = true
+local workspaceModes = {}
 do
     local f = io.open(LAYOUT_FILE)
     if f then
-        monocleEnabled = f:read("l") ~= "dwindle"
+        for line in f:lines() do
+            local ws, mode = line:match("^(%S+) (%a+)$")
+            if mode == "monocle" or mode == "dwindle" then workspaceModes[ws] = mode end
+        end
         f:close()
     end
 end
@@ -52,11 +56,12 @@ do
     end
 end
 
--- Whether monocle applies on this workspace: its pin, else the global mode.
+-- Whether monocle applies on this workspace: SUPER+M's choice for it,
+-- else its pin, else monocle.
 local function monocleOn(ws)
-    local pin = ws and workspaceLayouts[tostring(ws.id)]
-    if pin then return pin == "monocle" end
-    return monocleEnabled
+    local id = ws and tostring(ws.id)
+    local mode = id and (workspaceModes[id] or workspaceLayouts[id])
+    return mode ~= "dwindle"
 end
 
 -- Per-window state by address, on top of Hyprland's own:
@@ -66,9 +71,11 @@ end
 --   parked    -- moved off-screen while covered (PARKING)
 --   settling  -- coming back from SUPER+C, still animating
 --   small     -- a tiled window unmaximized on purpose (toggleMaximize)
---   minimized -- where SUPER+C hid it from, and whether it was tiled/fullscreen
+--   minimized -- where SUPER+C hid it from, whether it was tiled/fullscreen,
+--                and in monocle
 --   hideGen   -- bumped by every hide and restore, so stale steps skip
 --   restore   -- a non-monocle floater's rect before it was filled
+--   ruleRect  -- a Window Rules floater's rect before dwindle tiled it
 -- Cleared on close: Hyprland reuses addresses.
 local windowState = {}
 local function stateOf(addr)
@@ -137,8 +144,13 @@ local function shrunk(r)
     return { x = r.x + (r.w - w) // 2, y = r.y + (r.h - h) // 2, w = w, h = h }
 end
 
--- Puts a SUPER+C-hidden window back, animated per the window style, and
--- re-tiles it if it was tiled. `instant`: no animation (show desktop).
+-- defined with monocle below; a restored window takes on its layout
+local setWindowMonocle
+
+-- Puts a SUPER+C-hidden window back, animated per the window style,
+-- re-tiles it if it was tiled, then brings it into its workspace's layout
+-- if SUPER+M switched it meanwhile. `instant`: no animation (show
+-- desktop).
 local function restoreMinimized(win, instant)
     local st = stateOf(win.address)
     local saved = st.minimized
@@ -164,10 +176,17 @@ local function restoreMinimized(win, instant)
     -- the rest while it fades in
     local function retile()
         if not current() then return end
-        hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
-        if saved.fullscreen ~= 0 then
-            hl.dispatch(hl.dsp.window.fullscreen({
-                mode = saved.fullscreen == 1 and "maximized" or "fullscreen", action = "set", window = addr }))
+        if saved.tiled then
+            hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
+            if saved.fullscreen ~= 0 then
+                hl.dispatch(hl.dsp.window.fullscreen({
+                    mode = saved.fullscreen == 1 and "maximized" or "fullscreen", action = "set", window = addr }))
+            end
+        end
+        local w = hl.get_window(addr)
+        if w and w.workspace and not w.workspace.special and saved.monocle ~= nil
+                and saved.monocle ~= monocleOn(w.workspace) then
+            setWindowMonocle(w, not saved.monocle, w.monitor)
         end
     end
     -- captureShape() leaves it alone until it has arrived
@@ -180,13 +199,13 @@ local function restoreMinimized(win, instant)
         if windowAnim ~= "fade" then moveTo(addr, saved) end
         -- slide too: the window may have been hidden under another style
         setProp(addr, "opacity", "1")
-        if saved.tiled then afterAnimation(windowSpeed, retile) end
+        afterAnimation(windowSpeed, retile)
     end
 
     if instant then
         moveTo(addr, saved)
         setProp(addr, "opacity", "1")
-        if saved.tiled then retile() end
+        retile()
     elseif windowSlides then
         show()
     else
@@ -530,15 +549,35 @@ hl.on("window.fullscreen", function(win) unflagFloating(win) end)
 -- Moves a window into or out of monocle (SUPER+M's sweep, or a window
 -- landing on a workspace of the other layout), going by its Window Rules
 -- "rule-*" tags rather than tags picked up at map time. Monocle: a
--- fullscreen entry goes fullscreen, a Fills app fills, others float
--- centred. Dwindle: they tile. Float/pin entries and popups float in
--- both; an app's own fullscreen is left alone.
-local function setWindowMonocle(w, on, mon)
+-- fullscreen entry goes fullscreen, a Fills app fills, a float entry
+-- floats where it was before dwindle, others float centred. Dwindle:
+-- every window tiles, whatever its rules, but popups and pinned windows;
+-- an app's own fullscreen is left alone.
+function setWindowMonocle(w, on, mon)
     -- skip windows with no class yet, the shell's and the scratchpad
     if not w.class or w.class == "" or w.class == "org.quickshell" or w.class == SCRATCH_CLASS then return end
-    if w.pinned or hasTag(w, "rule-float") then return end
+    if w.pinned then return end
     local addr = "address:" .. w.address
     local popup = hasTag(w, "app-held") or hasTag(w, "popout")
+    local st = stateOf(w.address)
+    if hasTag(w, "rule-float") then
+        if popup then return end
+        if on and not w.floating then
+            hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
+            if st.ruleRect then moveTo(addr, st.ruleRect) else hl.dispatch(hl.dsp.window.center({ window = addr })) end
+            st.ruleRect = nil
+            syncFillBorder(w.address)
+        elseif not on and w.floating then
+            if w.fullscreen ~= 0 then
+                hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "unset", window = addr }))
+            end
+            st.ruleRect = { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y }
+            hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
+            hl.dispatch(hl.dsp.window.tag({ tag = "-filled", window = addr }))
+            st.restore = nil
+        end
+        return
+    end
     local full = hasTag(w, "rule-full") and not popup
     if on then
         if full then
@@ -553,6 +592,8 @@ local function setWindowMonocle(w, on, mon)
             hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
             if hasTag(w, "rule-fill") and not popup then
                 hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
+                -- filling: not a shape captureShape() took while it floated
+                setShape(w, nil)
                 placeMonocle(w, mon)
             else
                 -- not filled: floated where it is, centred
@@ -565,9 +606,7 @@ local function setWindowMonocle(w, on, mon)
     if full and w.fullscreen ~= 0 then
         hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "unset", window = addr }))
     end
-    -- a Fills app's window by its rule too: it may have lost its monocle tag
-    if w.floating and (full or hasTag(w, "monocle") or hasTag(w, "natural")
-            or (hasTag(w, "rule-fill") and not popup)) then
+    if w.floating and not popup then
         hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
     end
     hl.dispatch(hl.dsp.window.tag({ tag = "-monocle", window = addr }))
@@ -576,7 +615,7 @@ local function setWindowMonocle(w, on, mon)
     hl.dispatch(hl.dsp.window.tag({ tag = "-monocle*", window = addr }))
     hl.dispatch(hl.dsp.window.tag({ tag = "-filled", window = addr }))
     setShape(w, nil)
-    stateOf(w.address).small = nil
+    st.small = nil
 end
 
 -- In monocle right now: floating as well as tagged, since the rule's tag
@@ -1404,7 +1443,8 @@ local function minimizeWindow(win, instant)
     if not tiled then win = unflagFloating(win) end
     local r = { x = math.floor(win.at.x), y = math.floor(win.at.y),
                 w = math.floor(win.size.x), h = math.floor(win.size.y),
-                tiled = tiled, fullscreen = tiled and win.fullscreen or 0 }
+                tiled = tiled, fullscreen = tiled and win.fullscreen or 0,
+                monocle = monocleOn(win.workspace) }
     -- a parked window comes back where it was before it was parked
     if st.parked then
         local pr = shapeRect(win, mon, st.shape)
@@ -1742,33 +1782,24 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.close", function(win) syncAppRules(win and win.address) end)
 
--- SUPER+M: monocle or dwindle everywhere not pinned, converting the open
--- windows. A pinned workspace stays and the toast says so.
+-- SUPER+M: monocle or dwindle on the focused workspace, converting its
+-- open windows; hidden ones keep their state until they come back.
 function toggleLayout()
-    monocleEnabled = not monocleEnabled
+    local ws = hl.get_active_workspace()
+    if not ws or ws.special then return end
+    local on = not monocleOn(ws)
+    workspaceModes[tostring(ws.id)] = on and "monocle" or "dwindle"
     local f = io.open(LAYOUT_FILE, "w")
     if f then
-        f:write(monocleEnabled and "monocle\n" or "dwindle\n")
+        for id, mode in pairs(workspaceModes) do f:write(id .. " " .. mode .. "\n") end
         f:close()
-    end
-
-    local ws = hl.get_active_workspace()
-    local pin = ws and workspaceLayouts[tostring(ws.id)]
-    if pin then
-        hl.exec_cmd("notify-send -a Hyprland -t 3000 'Layout' 'Workspace " .. ws.id
-            .. " is pinned to " .. (pin == "monocle" and "monocle" or "tiled")
-            .. "; windows opened or moved elsewhere now go "
-            .. (monocleEnabled and "monocle" or "tiled") .. "'")
-        return
     end
 
     applyLayoutRules(true)
 
-    -- every following workspace; hidden windows keep their state
     for _, w in ipairs(hl.get_windows()) do
-        if w.workspace and not w.workspace.special and not workspaceLayouts[tostring(w.workspace.id)]
-                and not stateOf(w.address).minimized then
-            setWindowMonocle(w, monocleEnabled, w.monitor or hl.get_active_monitor())
+        if w.workspace and w.workspace.id == ws.id and not stateOf(w.address).minimized then
+            setWindowMonocle(w, on, w.monitor or hl.get_active_monitor())
         end
     end
     scheduleParking()
