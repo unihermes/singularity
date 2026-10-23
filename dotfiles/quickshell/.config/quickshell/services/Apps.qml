@@ -115,12 +115,14 @@ Singleton {
     // The icon for a window class: via desktop entries (heuristicLookup),
     // then the class as an icon name, then its last segment lowercased. A
     // Steam game (steam_app_ID) takes the steam_icon_ID Steam installs with
-    // its shortcut. The shell's own windows get none; they draw a glyph. The
-    // scratchpad terminal (SCRATCH_CLASS) takes the terminal app's icon.
+    // its shortcut, and a knownApp its own icon. The shell's own windows get
+    // none; they draw a glyph. The scratchpad terminal (SCRATCH_CLASS) takes
+    // the terminal app's icon.
     function iconForClass(cls) {
         if (!cls || String(cls) === "org.quickshell") return ""
         var c = byClass(cls)
         if (c.icon === undefined) {
+            var known = knownApp(cls)
             var scratch = String(cls) === "singularity.scratch"
             if (scratch) c.entry = terminalEntry()
             var steamApp = String(cls).match(/^steam_app_(\d+)$/)
@@ -130,6 +132,7 @@ Singleton {
             if (path === "" && steamApp)
                 path = "file://" + Quickshell.env("HOME") + "/.local/share/icons/hicolor/256x256/apps/steam_icon_"
                     + steamApp[1] + ".png"
+            if (path === "" && known) path = Quickshell.iconPath(known.icon, true)
             if (path === "" && c.entry && c.entry.icon) path = Quickshell.iconPath(c.entry.icon, true)
             if (path === "" && !scratch) path = Quickshell.iconPath(cls, true)
             if (path === "" && !scratch) path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
@@ -204,10 +207,19 @@ Singleton {
         return isBackTab(ipc, Hyprland.toplevels.values.map(t => t.lastIpcObject))
     }
 
-    // a short app name: the desktop entry's, else the class's last segment;
-    // the shell's windows go by title
+    // apps whose class has no desktop entry and carries a version: Minecraft's
+    // is "Minecraft 26.1.2", with a * after Minecraft when modded
+    function knownApp(cls) {
+        if (/^Minecraft\*? \d/.test(String(cls))) return { name: "Minecraft", icon: "minecraft" }
+        return null
+    }
+
+    // a short app name: a knownApp's, the desktop entry's, else the class's
+    // last segment; the shell's windows go by title
     function nameForWindow(cls, title) {
         if (String(cls) === "org.quickshell") return String(title || "Singularity")
+        var known = knownApp(cls)
+        if (known) return known.name
         var entry = cls ? byClass(cls).entry : null
         if (entry && entry.name) return entry.name
         var bare = String(cls || "").replace(/^.*\./, "")

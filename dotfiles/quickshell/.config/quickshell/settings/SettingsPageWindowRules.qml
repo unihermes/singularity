@@ -261,7 +261,7 @@ SettingsPage {
         if (key === "opens") { r.float = value === "float"; r.fullscreen = value === "full"; r.pin = value === "pin" }
         else r[key] = value
         r = normalise(r)
-        save([r].concat(rules), "Rule added for " + e.cls)
+        save([r].concat(rules), "Rule added for " + Apps.nameForWindow(e.cls, ""))
         openKey = ruleKey(r)
     }
 
