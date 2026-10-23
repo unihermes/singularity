@@ -711,7 +711,7 @@ SettingsPage {
     SettingsField {
         label: "Vibrance"
         hint: page.vibrance === 50 ? "How strongly colours show, on every display"
-            : "On every display, off while a game has focus; screenshots show it"
+            : "On every display; screenshots show it too"
 
         FlyoutSliderRow {
             anchors.right: parent.right
