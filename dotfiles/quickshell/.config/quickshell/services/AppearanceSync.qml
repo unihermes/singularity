@@ -475,9 +475,21 @@ Scope {
             + "  transition: none;\n}\n"
             + "tabbar tab:selected *:selected, tabbar tab:selected label selection {\n"
             + "  background-color: transparent;\n  color: inherit;\n}\n"
+        // libadwaita's toasts (Ghostty's "Copied to clipboard") as the shell's
+        // panels: its ground, corners and stroke, the inner one in Double
+        var bw = Theme.borderWidth
+        var toast = "toast {\n  background-color: " + rgba(Theme.panelFill, Theme.panelFill.a) + ";\n"
+            + "  color: " + o.window_fg_color + ";\n"
+            + "  border-radius: " + Theme.panelFrameRadius + "px;\n"
+            + "  border: " + (Theme.frameStroked ? bw : 0) + "px solid " + rgba(Theme.stroke, Theme.stroke.a) + ";\n"
+            + (Theme.frameDouble ? "  outline: " + bw + "px solid " + hex(Theme.frameStroke) + ";\n"
+                + "  outline-offset: -" + (Theme.frameInset + bw) + "px;\n" : "")
+            + "}\n"
+            + "toast button.circular { color: " + hex(Theme.subtext) + "; background: none; }\n"
+            + "toast button.circular:hover { color: " + hex(Theme.text) + "; background-color: " + hex(Theme.hoverFill) + "; }\n"
         // GTK4 without libadwaita still reads the named colours
         var gtk3 = header + named + selection
-        var gtk4 = header + vars + named + selection + tabs
+        var gtk4 = header + vars + named + selection + tabs + toast
         AtomicFileWrite.write({ path: root.dir + "/gtk3.css", transform: () => gtk3 })
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
     }
