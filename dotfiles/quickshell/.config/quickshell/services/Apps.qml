@@ -113,16 +113,24 @@ Singleton {
     }
 
     // The icon for a window class: via desktop entries (heuristicLookup),
-    // then the class as an icon name, then its last segment lowercased. The
-    // shell's own windows get none; they draw a glyph. The scratchpad
-    // terminal (SCRATCH_CLASS) takes the terminal app's icon.
+    // then the class as an icon name, then its last segment lowercased. A
+    // Steam game (steam_app_ID) takes the steam_icon_ID Steam installs with
+    // its shortcut. The shell's own windows get none; they draw a glyph. The
+    // scratchpad terminal (SCRATCH_CLASS) takes the terminal app's icon.
     function iconForClass(cls) {
         if (!cls || String(cls) === "org.quickshell") return ""
         var c = byClass(cls)
         if (c.icon === undefined) {
             var scratch = String(cls) === "singularity.scratch"
             if (scratch) c.entry = terminalEntry()
-            var path = c.entry && c.entry.icon ? Quickshell.iconPath(c.entry.icon, true) : ""
+            var steamApp = String(cls).match(/^steam_app_(\d+)$/)
+            var path = steamApp ? Quickshell.iconPath("steam_icon_" + steamApp[1], true) : ""
+            // one installed after the shell started isn't in Qt's icon cache:
+            // Steam always writes a 256px copy
+            if (path === "" && steamApp)
+                path = "file://" + Quickshell.env("HOME") + "/.local/share/icons/hicolor/256x256/apps/steam_icon_"
+                    + steamApp[1] + ".png"
+            if (path === "" && c.entry && c.entry.icon) path = Quickshell.iconPath(c.entry.icon, true)
             if (path === "" && !scratch) path = Quickshell.iconPath(cls, true)
             if (path === "" && !scratch) path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
             c.icon = path
