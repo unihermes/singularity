@@ -447,10 +447,15 @@ PanelWindow {
         placeSlots()
     }
 
-    // Every module's x, and the visible modules of its section in order. A
+    // Every module's x, the visible modules of its section in order, and
+    // where it sits on screen: its distance from the section's fixed edge
+    // (the right section's right edge, as that section grows leftward). A
     // module slides only when that order changes (Bar Widgets moving or
-    // hiding one): a neighbour changing width, like the tray gaining an
-    // icon, moves it at once, as a slide would trail the section's edge.
+    // hiding one) and it really moves on screen: one showing up beside the
+    // right section's modules leaves those after it where they are, though
+    // their x within the section changes. A neighbour changing width, like
+    // the tray gaining an icon, moves it at once, as a slide would trail the
+    // section's edge.
     readonly property var slotPlaces: {
         const out = {}
         for (const key in barModules.widgetItems) {
@@ -460,25 +465,32 @@ PanelWindow {
                 const it = slots.itemFor(k)
                 return it && it.visible
             })
-            out[key] = { x: slotX(slots, key), order: section + ":" + shown.join(",") }
+            const x = slotX(slots, key)
+            const it = slots.itemFor(key)
+            out[key] = { x: x, order: section + ":" + shown.join(","),
+                         edge: section + ":" + (slots === rightSlots ? slotsWidth(slots) - x - (it ? it.width : 0) : x) }
         }
         return out
     }
     property var placedOrders: ({})
+    property var placedEdges: ({})
     onSlotPlacesChanged: placeSlots()
     function placeSlots() {
         const places = slotPlaces
-        const orders = {}
+        const orders = {}, edges = {}
         for (const key in places) {
             const slide = slotsAnimate && placedOrders[key] !== places[key].order
+                && placedEdges[key] !== places[key].edge
             for (const it of [barModules.widgetItems[key], standIns.objectAt(widgetKeys.indexOf(key))]) {
                 if (!it) continue
                 it.slideX = slide
                 it.x = places[key].x
             }
             orders[key] = places[key].order
+            edges[key] = places[key].edge
         }
         placedOrders = orders
+        placedEdges = edges
     }
 
     function slotsFor(section) {
