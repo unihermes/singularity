@@ -133,9 +133,17 @@ Scope {
             screen: root.screen
             visible: root.shown(modelData) && !root.editing && widget.width > 0
             WlrLayershell.layer: WlrLayer.Bottom
-            // a note and the to-do take typing once clicked into
-            WlrLayershell.keyboardFocus: modelData.indexOf("note:") === 0 || modelData === "todo"
-                ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            // A note takes typing once clicked into, and only while the
+            // pointer stays over it or until Esc: Hyprland doesn't always
+            // take the keys back when the window it last focused is clicked.
+            // The to-do takes it once clicked into.
+            property bool holdsKeys: false
+            WlrLayershell.keyboardFocus: holdsKeys ? WlrKeyboardFocus.OnDemand
+                : modelData === "todo" ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            HoverHandler {
+                enabled: win.modelData.indexOf("note:") === 0
+                onHoveredChanged: win.holdsKeys = hovered
+            }
             // outside the shell's blur rule: nothing behind it is frosted
             WlrLayershell.namespace: "desktop-widget"
             exclusionMode: ExclusionMode.Ignore
@@ -151,6 +159,7 @@ Scope {
                 key: win.modelData
                 size: win.place.size
                 desk: root
+                onLetGo: win.holdsKeys = false
                 x: win.rect.x - win.margins.left
                 y: win.rect.y - win.margins.top
                 onWidthChanged: root.report(key, width, height)

@@ -34,7 +34,8 @@ Singleton {
     property real cpuC: -1
     property real gpuC: -1          // the NVIDIA card, else the first amdgpu
     property real driveC: -1        // the hottest NVMe drive
-    property int gpuLoad: -1        // %, NVIDIA only
+    property int gpuLoad: -1        // %, NVIDIA only, the mean of the last two readings
+    property int gpuLoadLast: -1
     property real gpuWatts: -1
     property int gpuFan: -1         // % of the card's own fans, NVIDIA only
 
@@ -267,7 +268,10 @@ Singleton {
                 var v = line.split(",").map(s => Number(s.trim()))
                 if (v.length < 4) return
                 root.gpuC = isNaN(v[0]) ? -1 : v[0]
-                root.gpuLoad = isNaN(v[1]) ? -1 : v[1]
+                // with the reading before it: one alone swings with each frame
+                var load = isNaN(v[1]) ? -1 : v[1]
+                root.gpuLoad = load < 0 ? -1 : Math.round((load + (root.gpuLoadLast >= 0 ? root.gpuLoadLast : load)) / 2)
+                root.gpuLoadLast = load
                 root.gpuWatts = isNaN(v[2]) ? -1 : v[2]
                 root.gpuFan = isNaN(v[3]) ? -1 : v[3]
             }

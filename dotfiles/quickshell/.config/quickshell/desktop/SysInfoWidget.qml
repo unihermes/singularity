@@ -2,9 +2,10 @@
 // ~/.config/quickshell/desktop/SysInfoWidget.qml
 //
 // The machine at a glance, fastfetch style: the distro's mark in the
-// accent beside a row each for the system, kernel, host, uptime, packages
-// and local IP; large adds the CPU, GPU and Hyprland's version. Small
-// keeps the mark, the system and the uptime. Read once a minute.
+// accent beside user@host over a rule and a row each for the system,
+// kernel, uptime, packages and local IP. Large puts the mark, user@host and
+// the uptime over the rows and adds the CPU, GPU, memory and Hyprland's
+// version; small keeps the mark, the host and the uptime. Read once a minute.
 
 import Quickshell
 import Quickshell.Io
@@ -25,15 +26,14 @@ WidgetCard {
         return d > 0 ? d + "d " + h + "h" : h > 0 ? h + "h " + m + "m" : m + "m"
     }
 
-    readonly property var rows: {
-        const all = [
-            ["OS", info.os], ["Kernel", info.kernel], ["Host", info.host],
-            ["Uptime", boot > 0 ? since(now - boot) : ""], ["Packages", info.packages], ["IP", info.ip],
-            ["CPU", info.cpu], ["GPU", info.gpu], ["WM", info.wm]
-        ].filter(r => !!r[1])
-        const keep = small ? ["OS", "Uptime"] : large ? null : ["OS", "Kernel", "Host", "Uptime", "Packages", "IP"]
-        return keep ? all.filter(r => keep.indexOf(r[0]) !== -1) : all
-    }
+    readonly property string uptime: boot > 0 ? since(now - boot) : ""
+    readonly property string title: (Quickshell.env("USER") || "") + "@" + (info.host || "")
+    // large has the uptime under user@host instead
+    readonly property var rows: (large
+        ? [["OS", info.os], ["Kernel", info.kernel], ["Packages", info.packages], ["IP", info.ip],
+           ["CPU", info.cpu], ["GPU", info.gpu], ["Memory", info.mem], ["WM", info.wm]]
+        : [["OS", info.os], ["Kernel", info.kernel], ["Uptime", uptime], ["Packages", info.packages],
+           ["IP", info.ip]]).filter(r => !!r[1])
 
     Process {
         id: probe
@@ -44,6 +44,7 @@ WidgetCard {
             + "command -v pacman >/dev/null && echo \"packages=$(pacman -Qq | wc -l)\"; "
             + "echo \"ip=$(ip -4 route get 1.1.1.1 2>/dev/null | grep -o 'src [0-9.]*' | cut -d' ' -f2)\"; "
             + "echo \"cpu=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2)\"; "
+            + "echo \"mem=$(awk '/^MemTotal/ { printf \"%.0f GiB\", $2 / 1048576 }' /proc/meminfo)\"; "
             + "echo \"gpu=$(lspci 2>/dev/null | grep -iE 'vga|3d' | head -1 | sed 's/.*: //')\"; "
             + "echo \"wm=Hyprland $(hyprctl version -j 2>/dev/null | grep -o '\"tag\": *\"[^\"]*' | sed 's/.*\"//')\""]
         stdout: StdioCollector {
@@ -79,16 +80,97 @@ WidgetCard {
         card: root
         text: (root.info.os || "").indexOf("Arch") !== -1 ? "󰣇" : "󰌽"
         font.family: Theme.fontIcon
-        px: root.small ? Theme.fit(40) : Theme.fit(64)
+        px: root.small ? Theme.fit(56) : root.large ? Theme.fit(84) : Theme.fit(100)
         color: root.accent
-        anchors.verticalCenter: root.small ? undefined : parent.verticalCenter
+        elide: Text.ElideNone
+        lineHeight: 0.85
+        anchors.verticalCenter: root.small || root.large ? undefined : parent.verticalCenter
+        anchors.verticalCenterOffset: -Theme.fit(2)
+    }
+
+    // small: the host over the uptime, at the foot
+    Column {
+        visible: root.small
+        anchors.bottom: parent.bottom
+        width: parent.width
+        WidgetText {
+            width: parent.width
+            card: root
+            px: Theme.fit(13)
+            text: (root.info.host || "").toUpperCase()
+            color: root.accent
+            font.weight: Font.Bold
+            font.letterSpacing: 1
+        }
+        WidgetText {
+            width: parent.width
+            card: root
+            px: Theme.fit(24)
+            text: root.uptime
+            font.weight: Font.Bold
+        }
+    }
+
+    // large: user@host and the system beside the mark
+    Column {
+        visible: root.large
+        x: mark.width + Theme.fit(16)
+        anchors.verticalCenter: mark.verticalCenter
+        width: parent.width - x
+        spacing: Theme.fit(2)
+        WidgetText {
+            width: parent.width
+            card: root
+            px: Theme.fit(18)
+            text: root.title
+            color: root.accent
+            font.weight: Font.Bold
+        }
+        WidgetText {
+            width: parent.width
+            card: root
+            px: Theme.fit(14)
+            text: root.uptime !== "" ? "up " + root.uptime : ""
+            color: root.fgDim
+        }
+    }
+
+    // the widest label, so the values line up just past it
+    TextMetrics {
+        id: keyWidth
+        font.family: root.font
+        font.pixelSize: Theme.fit(14)
+        font.weight: Font.Bold
+        text: root.rows.reduce((a, r) => r[0].length > a.length ? r[0] : a, "")
     }
 
     Column {
-        x: root.small ? 0 : mark.width + Theme.fit(18)
-        y: root.small ? parent.height - height : (parent.height - height) / 2
+        visible: !root.small
+        x: root.large ? 0 : mark.width + Theme.fit(20)
+        y: root.large ? parent.height - height : (parent.height - height) / 2
         width: parent.width - x
-        spacing: Theme.fit(root.large ? 8 : 2)
+        spacing: Theme.fit(root.large ? 9 : 2)
+
+        // medium: user@host over a rule, fastfetch's head
+        WidgetText {
+            visible: !root.large
+            width: parent.width
+            card: root
+            px: Theme.fit(15)
+            text: root.title
+            color: root.accent
+            font.weight: Font.Bold
+        }
+        Item {
+            width: parent.width
+            height: root.large ? 1 : Theme.fit(7)
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
+                height: 1
+                color: root.track
+            }
+        }
 
         Repeater {
             model: root.rows
@@ -99,20 +181,19 @@ WidgetCard {
 
                 WidgetText {
                     id: key
-                    visible: !root.small
-                    width: Theme.fit(80)
+                    width: keyWidth.advanceWidth + Theme.fit(12)
                     card: root
-                    px: Theme.fit(13)
+                    px: Theme.fit(14)
                     text: modelData[0]
                     color: root.accent
                     font.weight: Font.Bold
                 }
                 WidgetText {
                     id: value
-                    x: root.small ? 0 : key.width
+                    x: key.width
                     width: parent.width - x
                     card: root
-                    px: Theme.fit(13)
+                    px: Theme.fit(14)
                     text: modelData[1]
                 }
             }

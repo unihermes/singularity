@@ -483,7 +483,8 @@ Desktop > Widgets.
   unpins it. On the desktop: the title in the accent, + for a new note
   beside it (under, else over, else to the left), × to unpin it (it stays
   in the window), the text under it to type in (the surface takes the
-  keyboard once clicked into; Escape lets go). New ones also come from the
+  keyboard once clicked into, and lets go when the pointer leaves it or on
+  Escape). New ones also come from the
   desktop's menu (where the click was) and edit mode's shelf (the middle).
   Their places live in notes.json with the tabs. The first starts a gap
   under the stats.
@@ -496,13 +497,17 @@ Desktop > Widgets.
   Appearance › Desktop has Google Tasks' Sign in / Sign out. Starts top
   left.
 - **System info:** fastfetch style, the distro's mark large in the accent
-  beside rows of label (accent) and value: OS, kernel, host, uptime,
-  packages, local IP; large adds CPU, GPU and Hyprland's version; small
-  keeps the mark, OS and uptime. Read once a minute. Starts a gap under
+  beside user@host (accent) over a hairline rule and rows of label
+  (accent) and value, the values lined up just past the widest label: OS,
+  kernel, uptime, packages, local IP; large puts the mark and user@host
+  with the uptime over the rows and adds CPU, GPU, memory and Hyprland's
+  version; small keeps the mark, the host and the uptime. Read once a minute. Starts a gap under
   the to-do.
 - **Stats:** a bar each for CPU, GPU (Cooling, desktops with nvidia-smi),
   memory and temperature, label left and value right (over the bar when
-  small); large adds the last minute of CPU and memory in use. A missing
+  small); large adds the last minute of CPU and memory in use. CPU and
+  temperature are the mean of the last five seconds, GPU of the last two
+  readings, like the System window's. A missing
   reading drops its bar.
 
 ## Settings pages

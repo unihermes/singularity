@@ -151,6 +151,16 @@ Singleton {
         return arr.concat([v]).slice(-historyLength)
     }
 
+    // The live numbers are the mean of the last few seconds' samples, by
+    // name: one second alone swings with every burst of load.
+    readonly property int smoothLength: 5
+    property var recent: ({})
+    function smooth(key, v) {
+        var buf = (recent[key] || []).concat([v]).slice(-smoothLength)
+        recent[key] = buf
+        return buf.reduce((a, b) => a + b, 0) / buf.length
+    }
+
     // --- sampling --------------------------------------------------------
 
     FileView { id: statFile;    path: "/proc/stat";      blockLoading: true }
@@ -228,14 +238,14 @@ Singleton {
             if (f[0] === "cpu") {
                 var all = busy(f, cpuPrev)
                 if (all.frac >= 0) {
-                    cpu = all.frac
-                    cpuHistory = pushHistory(cpuHistory, all.frac)
+                    cpu = smooth("cpu", all.frac)
+                    cpuHistory = pushHistory(cpuHistory, cpu)
                 }
                 cpuPrev = all.sample
             } else if (/^cpu\d+$/.test(f[0])) {
                 var n = nextPrev.length
                 var c = busy(f, corePrev[n])
-                nextCores.push(Math.max(0, c.frac))
+                nextCores.push(smooth("cpu" + n, Math.max(0, c.frac)))
                 nextPrev.push(c.sample)
             }
         }
@@ -299,7 +309,7 @@ Singleton {
         tempFile.reload()
         var t = tempFile.text().trim()
         var v = Number(t)
-        tempC = (t === "" || isNaN(v)) ? -1 : v / 1000
+        tempC = (t === "" || isNaN(v)) ? -1 : smooth("temp", v / 1000)
     }
 
     // Whole disks only: the partitions on top of one would count the same
@@ -322,8 +332,8 @@ Singleton {
         if (diskPrev) {
             var dt = (now - diskPrev.t) / 1000
             if (dt > 0) {
-                diskRead = Math.max(0, (rd - diskPrev.rd) / dt)
-                diskWrite = Math.max(0, (wr - diskPrev.wr) / dt)
+                diskRead = smooth("diskRead", Math.max(0, (rd - diskPrev.rd) / dt))
+                diskWrite = smooth("diskWrite", Math.max(0, (wr - diskPrev.wr) / dt))
                 diskReadHistory = pushHistory(diskReadHistory, diskRead)
                 diskWriteHistory = pushHistory(diskWriteHistory, diskWrite)
             }
@@ -346,6 +356,7 @@ Singleton {
             // new counters, so the old baseline would produce a garbage delta
             iface = best
             netPrev = null
+            recent.rx = []; recent.tx = []
             rxRate = txRate = -1
             connType = best.startsWith("wl") ? "Wi-Fi"
                 : best.startsWith("en") || best.startsWith("eth") ? "Ethernet"
@@ -362,8 +373,8 @@ Singleton {
         if (netPrev) {
             var dt = (now - netPrev.t) / 1000
             if (dt > 0) {
-                rxRate = Math.max(0, (rx - netPrev.rx) / dt)
-                txRate = Math.max(0, (tx - netPrev.tx) / dt)
+                rxRate = smooth("rx", Math.max(0, (rx - netPrev.rx) / dt))
+                txRate = smooth("tx", Math.max(0, (tx - netPrev.tx) / dt))
                 rxHistory = pushHistory(rxHistory, rxRate)
                 txHistory = pushHistory(txHistory, txRate)
             }
@@ -448,7 +459,7 @@ Singleton {
 
     // --- timers ----------------------------------------------------------
 
-    // 1s: a gauge that lags two seconds behind a spike reads as broken
+    // 1s, so the averaged gauges still move steadily
     Timer {
         interval: 1000
         repeat: true
@@ -502,6 +513,7 @@ Singleton {
         procs = []
         killPid = -1
         cpuPrev = null; corePrev = []; netPrev = null; diskPrev = null
+        recent = {}
         cpuHistory = []; memHistory = []; tempHistory = []; batHistory = []; batDraw = []
         diskReadHistory = []; diskWriteHistory = []; rxHistory = []; txHistory = []
         cpu = 0; cores = []

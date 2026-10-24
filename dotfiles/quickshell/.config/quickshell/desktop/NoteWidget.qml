@@ -15,6 +15,8 @@ WidgetCard {
     required property string noteId
     // the screen's DesktopWidgets, which places a new note
     property var desk: null
+    // Esc: done typing here
+    signal letGo()
 
     readonly property int index: Notes.indexOf(noteId)
     readonly property var tab: Notes.tabs[index] || { title: "", text: "" }
@@ -97,7 +99,7 @@ WidgetCard {
 
             onTextChanged: if (activeFocus) Notes.setText(root.index, text)
             onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
-            Keys.onEscapePressed: focus = false
+            Keys.onEscapePressed: { focus = false; root.letGo() }
 
             Text {
                 visible: editor.text === "" && !editor.activeFocus

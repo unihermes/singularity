@@ -13,6 +13,8 @@ Item {
     property string size: "m"
     // the screen's DesktopWidgets, for a note's +
     property var desk: null
+    // a note handing its typing back
+    signal letGo()
 
     width: loader.item ? loader.item.width : 0
     height: loader.item ? loader.item.height : 0
@@ -29,5 +31,5 @@ Item {
     Component { id: stats; StatsWidget { size: root.size } }
     Component { id: todo; TodoWidget { size: root.size } }
     Component { id: sysinfo; SysInfoWidget { size: root.size } }
-    Component { id: note; NoteWidget { size: root.size; noteId: root.key.slice(5); desk: root.desk } }
+    Component { id: note; NoteWidget { size: root.size; noteId: root.key.slice(5); desk: root.desk; onLetGo: root.letGo() } }
 }
