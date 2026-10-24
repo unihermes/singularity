@@ -2,7 +2,8 @@
 // ~/.config/quickshell/sidebar/AiComposer.qml
 //
 // Where a message is written: what's attached to it (a click takes one
-// off), the box (Enter sends, Shift+Enter is a new line), then a line with
+// off), the box (Enter sends, Shift+Enter is a new line, Ctrl+L or /clear
+// starts over), then a line with
 // 󰐕 for attaching, the model and, on Code, the permission mode (each a
 // click to the next), what Claude is doing, and Send or Stop.
 
@@ -15,12 +16,19 @@ Column {
 
     required property var session
     signal escapePressed()
+    // Ctrl+L or Ctrl+N, or /clear or /new sent on its own
+    signal newConversation()
 
     property bool attaching: false
 
     function focusInput() { input.forceActiveFocus() }
 
     function submit() {
+        if (/^\/(clear|new)\s*$/.test(input.text.trim())) {
+            input.text = ""
+            root.newConversation()
+            return
+        }
         if (Ai.send(input.text)) input.text = ""
     }
 
@@ -173,6 +181,12 @@ Column {
 
                 Keys.onEscapePressed: root.escapePressed()
                 Keys.onPressed: event => {
+                    if ((event.modifiers & Qt.ControlModifier)
+                            && (event.key === Qt.Key_L || event.key === Qt.Key_N)) {
+                        event.accepted = true
+                        root.newConversation()
+                        return
+                    }
                     if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter) return
                     if (event.modifiers & Qt.ShiftModifier) return
                     event.accepted = true

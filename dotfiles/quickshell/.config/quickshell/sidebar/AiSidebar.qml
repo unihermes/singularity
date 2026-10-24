@@ -65,6 +65,13 @@ PanelWindow {
     readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceM
     readonly property int padY: Theme.channelWidth * 2 + sectionGap + Theme.spaceXs
 
+    // a fresh conversation on this tab; the old one stays under 󰋚
+    function startOver() {
+        session.reset()
+        view = "talk"
+        composer.focusInput()
+    }
+
     function ago(t) {
         var s = Math.max(0, Date.now() / 1000 - t)
         return s < 3600 ? Math.max(1, Math.round(s / 60)) + "m"
@@ -133,10 +140,12 @@ PanelWindow {
                         lit: root.view === "past"
                         onClicked: root.view = root.view === "past" ? "talk" : "past"
                     }
-                    IconButton {
-                        icon: "󰐕"
-                        enabled: !root.session.empty || root.session.sessionId !== ""
-                        onClicked: { root.session.reset(); root.view = "talk"; composer.focusInput() }
+                    FlyoutChip {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !root.session.empty || root.session.sessionId !== ""
+                        icon: "󰝒"
+                        text: Ai.tab === "chat" ? "New chat" : "New"
+                        onClicked: root.startOver()
                     }
                     IconButton {
                         icon: "󰅖"
@@ -301,6 +310,7 @@ PanelWindow {
                 id: composer
                 session: root.session
                 onEscapePressed: Ai.shown = false
+                onNewConversation: root.startOver()
             }
         }
     }

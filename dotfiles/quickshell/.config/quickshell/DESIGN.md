@@ -327,7 +327,7 @@ panel's frame with sections. It stays out until SUPER+I, its × or Escape;
 a click elsewhere leaves it. It slides in from the edge and fades.
 
 - **Heading** CLAUDE (the five-hour usage on it once past half), with
-  past sessions, New conversation and × as icon buttons; then Chat,
+  past sessions and × as icon buttons, and a New chat chip between them while there's a conversation; then Chat,
   Desktop and Code as a segmented strip, a ● on a tab with something
   unread.
 - **The tab's line:** Code's folder as a row (a click lists the folders
@@ -343,7 +343,7 @@ a click elsewhere leaves it. It slides in from the edge and fades.
   "don't ask again" and Deny (Approve / Keep planning for a plan, a chip
   per option for a question).
 - **Composer:** attachments as chips (hover reads Remove), the box
-  (Enter sends, Shift+Enter a new line), then 󰐕 (Area, Window, Screen,
+  (Enter sends, Shift+Enter a new line, Ctrl+L, Ctrl+N or /clear start over), then 󰐕 (Area, Window, Screen,
   Paste, Selected), the model and Code's mode as chips a click steps
   through, what it's doing (pulsing) or the context used, Send or Stop.
 - **Bar module** (key `claude`, the old module's, so a saved hide holds): the
