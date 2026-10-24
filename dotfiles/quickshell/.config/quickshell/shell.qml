@@ -671,6 +671,9 @@ ShellRoot {
         // privacy
         LazyFlyout { name: "privacy"; scope: screenScope; PrivacyFlyout { scope: screenScope } }
 
+        // the phone over adb
+        LazyFlyout { name: "phone"; scope: screenScope; PhoneFlyout { scope: screenScope } }
+
         // failed units
         LazyFlyout { name: "failed"; scope: screenScope; FailedFlyout { scope: screenScope } }
 

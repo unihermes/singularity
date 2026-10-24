@@ -43,6 +43,10 @@ var entries = [
     { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger unplugged" },
     { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
+    // --- Phone -------------------------------------------------------------
+    { page: "phone", section: "Connected", label: "Phone", keywords: "android adb scrcpy mirror screen usb debugging battery" },
+    { page: "phone", section: "Wi-Fi", label: "Pair over Wi-Fi", keywords: "wireless debugging qr code adb pair wifi mirror" },
+
     // --- Recording ---------------------------------------------------------
     { page: "recording", section: "Instant replay", label: "Instant replay", keywords: "clip shadowplay game save last minute buffer gpu-screen-recorder" },
     { page: "recording", section: "Instant replay", label: "Replay length",  keywords: "seconds minutes buffer memory ram clip" },

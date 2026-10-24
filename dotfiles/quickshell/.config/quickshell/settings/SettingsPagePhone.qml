@@ -1,0 +1,100 @@
+// Singularity - Quickshell
+// ~/.config/quickshell/settings/SettingsPagePhone.qml
+//
+// The Android phone over adb (services/Phone.qml): which one is connected
+// and how, and pairing for Wi-Fi through a QR code the phone scans.
+
+import Quickshell
+import QtQuick
+import "../services"
+import "../flyouts"
+
+SettingsPage {
+    id: page
+
+    sectioned: true
+
+    title: "Phone"
+    description: "Your Android phone on screen, over USB or Wi-Fi."
+
+    // the code is only good while this page shows it
+    onVisibleChanged: if (!visible) Phone.cancelPair()
+
+    SettingsNote {
+        visible: !Phone.available
+        text: "scrcpy and android-tools aren't installed"
+        alert: true
+    }
+
+    FlyoutHeading { text: "CONNECTED" }
+
+    SettingsField {
+        label: "Phone"
+        hint: Phone.connected
+            ? [Phone.device.wifi ? "Over Wi-Fi" : "Over USB",
+               Phone.battery >= 0 ? Phone.battery + "%" + (Phone.charging ? " charging" : "") : ""].filter(t => t).join(" · ")
+            : Phone.unauthorized ? "Allow USB debugging on the phone"
+            : "None; plug it in, or pair it over Wi-Fi"
+
+        FlyoutChip {
+            anchors.right: parent.right
+            visible: Phone.connected
+            icon: Phone.mirroring ? "󰓛" : "󰍹"
+            text: Phone.mirroring ? "Stop" : "Mirror"
+            onClicked: Phone.toggleMirror()
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "WI-FI" }
+
+    SettingsField {
+        label: "Pair over Wi-Fi"
+        hint: Phone.pairState === "waiting" ? "Scan the code from the phone"
+            : Phone.pairState === "pairing" ? "Pairing…"
+            : Phone.pairState === "done" ? "Paired; it joins while Wireless debugging is on"
+            : Phone.pairState === "failed" ? Phone.pairError
+            : "Once per phone, with the phone on this Wi-Fi"
+
+        FlyoutChip {
+            anchors.right: parent.right
+            enabled: Phone.available
+            icon: Phone.pairState === "waiting" || Phone.pairState === "pairing" ? "󰅖" : "󰐲"
+            text: Phone.pairState === "waiting" || Phone.pairState === "pairing" ? "Cancel" : "Show code"
+            onClicked: Phone.pairState === "waiting" || Phone.pairState === "pairing" ? Phone.cancelPair() : Phone.pair()
+        }
+    }
+
+    // the code, white round it as scanners like, with where to find the scanner
+    Column {
+        visible: Phone.pairState === "waiting" && Phone.pairQr !== ""
+        width: parent.width
+        spacing: Theme.spaceS
+
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Theme.fit(200)
+            height: width
+            radius: Theme.radiusInner
+            color: "white"
+
+            Image {
+                anchors.fill: parent
+                anchors.margins: Theme.spaceS
+                source: Phone.pairQr
+                smooth: false
+                fillMode: Image.PreserveAspectFit
+                cache: false
+            }
+        }
+
+        SettingsNote {
+            horizontalAlignment: Text.AlignHCenter
+            text: "Developer options › Wireless debugging › Pair device with QR code"
+        }
+    }
+
+    SettingsNote {
+        text: "Wireless debugging turns off on a restart; turn it on again to reconnect"
+    }
+}

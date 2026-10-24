@@ -112,6 +112,12 @@ tesseract-data-eng
 hyprpicker
 # screen recording and instant replay, encoded on the GPU (services/Recorder.qml)
 gpu-screen-recorder
+# phone link: the phone on screen (scrcpy over adb; qrencode draws the
+# wireless-debugging pairing code)
+scrcpy
+android-tools
+android-udev
+qrencode
 hypridle
 hyprsunset
 cava

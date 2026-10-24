@@ -100,6 +100,16 @@ hl.window_rule({
     maximize = false,
 })
 
+-- The phone on screen (scrcpy): floating at the phone's own shape, centred.
+hl.window_rule({
+    name     = "scrcpy",
+    tag      = "-monocle",
+    match    = { class = "^(scrcpy)$" },
+    float    = true,
+    center   = true,
+    maximize = false,
+})
+
 -- Notes (SUPER+N): pinned, top-right. Placed by the rule, since moving a
 -- pinned window as it maps crashes Hyprland; the rule ignores reserved
 -- space, so the bar's extent comes from the bar-top state file.

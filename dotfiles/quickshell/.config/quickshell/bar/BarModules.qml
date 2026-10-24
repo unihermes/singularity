@@ -31,7 +31,7 @@ Item {
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
-        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn,
+        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn,
         failed: failedBtn, updates: updatesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
@@ -279,6 +279,19 @@ Item {
         // left: the history; right: Do Not Disturb
         onActivated: screenScope.toggleFlyout("notifications", notifBtn)
         onRightClicked: Notifications.toggleDnd()
+    }
+
+    // The phone, only while one's connected over adb (USB or Wi-Fi): its
+    // battery beside it, or a warning while it waits to be allowed
+    BarModule {
+        id: phoneBtn
+        visible: (Phone.connected || Phone.unauthorized) && Settings.widgetVisible("phone")
+        icon: Phone.mirroring ? "󰍹" : Phone.charging ? "󱊥" : "󰄜"
+        label: Phone.connected && Phone.battery >= 0 ? Phone.battery + "%" : Phone.unauthorized ? "Allow" : ""
+        iconColor: Phone.unauthorized ? Theme.alert : "transparent"
+        active: screenScope.openFlyout === "phone"
+        onActivated: screenScope.toggleFlyout("phone", phoneBtn)
+        onMiddleClicked: Phone.toggleMirror()
     }
 
     // While recording: a red dot and the time, a click stops it. While a
