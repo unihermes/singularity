@@ -142,8 +142,7 @@ Scope {
             // refocusing what's under the pointer) go straight back.
             readonly property bool note: modelData.indexOf("note:") === 0
             property real pressedAt: 0
-            // The to-do takes typing once clicked into.
-            WlrLayershell.keyboardFocus: note || modelData === "todo" ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: note ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             function giveBack() {
                 Hyprland.dispatch("hl.get_active_window() and hl.dsp.focus({ window = \"address:\" .. "
                     + "hl.get_active_window().address }) or hl.dsp.no_op()")

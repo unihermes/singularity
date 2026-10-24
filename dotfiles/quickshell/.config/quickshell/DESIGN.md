@@ -490,21 +490,13 @@ Desktop > Widgets.
   desktop's menu (where the click was) and edit mode's shelf (the middle).
   Their places live in notes.json with the tabs. The first starts a gap
   under the stats.
-- **To-do:** a Google Tasks list (services/Tasks.qml over
-  scripts/gtasks.py): the list's title in the accent with ‹ › for the
-  others, open tasks then done ones (struck through, faint), a circle to
-  tick each, × under the pointer to delete, and an Add a task line (not
-  when small). A change shows at once and is sent after; it reads again
-  every five minutes. Signed out, it says how to sign in; Settings ›
-  Appearance › Desktop has Google Tasks' Sign in / Sign out. Starts top
-  left.
 - **System info:** fastfetch style, the distro's mark large in the accent
   beside user@host (accent) over a hairline rule and rows of label
   (accent) and value, the values lined up just past the widest label: OS,
   kernel, uptime, packages, local IP; large puts the mark and user@host
   with the uptime over the rows and adds CPU, GPU, memory and Hyprland's
-  version; small keeps the mark, the host and the uptime. Read once a minute. Starts a gap under
-  the to-do.
+  version; small keeps the mark, the host and the uptime. Read once a
+  minute. Starts top left.
 - **Stats:** a bar each for CPU, GPU (Cooling, desktops with nvidia-smi),
   memory and temperature, label left and value right (over the bar when
   small); large adds the last minute of CPU and memory in use. CPU and

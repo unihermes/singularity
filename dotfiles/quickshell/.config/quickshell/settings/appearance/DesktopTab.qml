@@ -209,7 +209,6 @@ SettingsTab {
                     { key: "weather", label: "Weather", hint: "Now and the next five days" },
                     { key: "music", label: "Now playing", hint: "The Music module's player" },
                     { key: "stats", label: "System", hint: "CPU, GPU, memory, temperature" },
-                    { key: "todo", label: "To-do", hint: "A Google Tasks list" },
                     { key: "sysinfo", label: "System info", hint: "Distro, kernel, uptime, IP" }]
 
             SettingsField {
@@ -224,23 +223,6 @@ SettingsTab {
                     onToggled: Settings.setDeskWidget(modelData.key, { on: !checked })
                 }
             }
-        }
-    }
-
-    SettingsField {
-        visible: Settings.deskWidget("todo").on
-        labelWidth: parent.width - tasksChip.width - Theme.spaceL
-        label: "Google Tasks"
-        hint: Tasks.connected ? "Signed in"
-            : Tasks.signingIn ? "Finish signing in in the browser"
-            : Tasks.hasClient ? "Not signed in"
-            : "Needs a Desktop app OAuth client's JSON in ~/Downloads"
-        FlyoutChip {
-            id: tasksChip
-            anchors.right: parent.right
-            enabled: Tasks.connected || (Tasks.hasClient && !Tasks.signingIn)
-            text: Tasks.connected ? "Sign out" : "Sign in"
-            onClicked: Tasks.connected ? Tasks.signOut() : Tasks.signIn()
         }
     }
 
