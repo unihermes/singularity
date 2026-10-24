@@ -257,6 +257,12 @@ Every bar flyout keeps to these (settled 2026-10-20):
   flyout: a row per unit (system or user); a click opens it in place with
   its last three log lines and Full log, Restart and Clear; Clear all
   (two clicks) after them.
+- **Bongo Cat** (2026-10-24): a cat's head over a desk line, drawn in the
+  icon colour at the icons' scale; its paws are raised and one comes down
+  on the desk with each key press, left and right in turn, lifting once
+  typing pauses. Key presses come from scripts/bongo.py (every keyboard's
+  events, a tap per press, never the key), which needs the user in the
+  input group; until then the module hides.
 - **Drives** (2026-10-24): the USB glyph, only while a removable drive
   (lsblk's hotplug: USB sticks and disks, SD cards) is plugged in, with a
   count badge past one. The flyout: each drive a heading with its name and

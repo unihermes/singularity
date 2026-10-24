@@ -32,7 +32,7 @@ Item {
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn, claude: claudeBtn,
-        failed: failedBtn, updates: updatesBtn, drives: drivesBtn,
+        failed: failedBtn, updates: updatesBtn, drives: drivesBtn, bongo: bongoBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
@@ -357,6 +357,18 @@ Item {
         iconColor: Theme.base
         active: screenScope.openFlyout === "privacy"
         onActivated: screenScope.toggleFlyout("privacy", privacyBtn)
+    }
+
+    // taps along with the keyboard; only once it can read one (the input
+    // group)
+    BarModule {
+        id: bongoBtn
+        visible: Bongo.ready && Settings.widgetVisible("bongo")
+        fixedWidth: cat.width + Theme.modulePadH * 2
+        BongoCat {
+            id: cat
+            anchors.centerIn: parent
+        }
     }
 
     // only while a removable drive is plugged in; a badge past one
