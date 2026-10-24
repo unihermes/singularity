@@ -17,9 +17,9 @@ WidgetCard {
 
     readonly property var player: Media.player
     readonly property bool playing: !!player && player.isPlaying
-    readonly property real frac: player && player.length > 0
-        ? Math.max(0, Math.min(1, player.position / player.length)) : 0
-    readonly property bool hasLength: !!player && player.lengthSupported && player.length > 0
+    readonly property real length: Media.lengthOf(player)
+    readonly property real frac: length > 0 ? Math.max(0, Math.min(1, player.position / length)) : 0
+    readonly property bool hasLength: length > 0
 
     // the last player seen, to open again once it's closed
     property string lastEntry: ""
@@ -145,7 +145,7 @@ WidgetCard {
                     enabled: !!root.player && root.player.canSeek
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: mouse => root.player.position =
-                        root.player.length * Math.max(0, Math.min(1, (mouse.x - Theme.fit(6)) / parent.width))
+                        root.length * Math.max(0, Math.min(1, (mouse.x - Theme.fit(6)) / parent.width))
                 }
             }
             Item {
@@ -153,7 +153,7 @@ WidgetCard {
                 width: parent.width
                 height: pos.height
                 WidgetText { id: pos; card: root; px: Theme.fit(13); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
-                WidgetText { anchors.right: parent.right; card: root; px: Theme.fit(13); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.length) : "" }
+                WidgetText { anchors.right: parent.right; card: root; px: Theme.fit(13); color: root.fgDim; text: Media.fmtTime(root.length) }
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter

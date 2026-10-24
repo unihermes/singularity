@@ -124,6 +124,16 @@ Singleton {
         onRunningChanged: if (!running) Qt.callLater(root.fetchPageArt)
     }
 
+    // a player's track length in seconds, 0 when unknown. Read from the
+    // metadata when the player's own length isn't there (yet): browsers
+    // send mpris:length after the rest of a new track's metadata
+    function lengthOf(p) {
+        if (!p) return 0
+        if (p.lengthSupported && p.length > 0) return p.length
+        var us = Number((p.metadata || {})["mpris:length"] || 0)
+        return us > 0 ? us / 1000000 : 0
+    }
+
     function fmtTime(sec) {
         if (!(sec >= 0)) return "--:--"
         var m = Math.floor(sec / 60), s = Math.floor(sec % 60)

@@ -131,12 +131,13 @@ FlyoutPanel {
 
     // progress, and click-to-seek where the player allows it
     Item {
+        id: progress
         width: parent.width
         height: Theme.rowHeight
-        visible: mediaFlyout.player && mediaFlyout.player.lengthSupported && mediaFlyout.player.length > 0
+        readonly property real length: Media.lengthOf(mediaFlyout.player)
+        visible: length > 0
 
-        readonly property real frac: mediaFlyout.player && mediaFlyout.player.length > 0
-            ? Math.max(0, Math.min(1, mediaFlyout.player.position / mediaFlyout.player.length)) : 0
+        readonly property real frac: length > 0 ? Math.max(0, Math.min(1, mediaFlyout.player.position / length)) : 0
 
         Meter {
             id: track
@@ -156,7 +157,7 @@ FlyoutPanel {
                 enabled: mediaFlyout.player && mediaFlyout.player.canSeek
                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: mouse => mediaFlyout.player.position =
-                    mediaFlyout.player.length * Math.max(0, Math.min(1, mouse.x / width))
+                    progress.length * Math.max(0, Math.min(1, mouse.x / width))
             }
         }
 
@@ -172,7 +173,7 @@ FlyoutPanel {
         Text {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            text: mediaFlyout.player ? Media.fmtTime(mediaFlyout.player.length) : ""
+            text: Media.fmtTime(progress.length)
             color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody
