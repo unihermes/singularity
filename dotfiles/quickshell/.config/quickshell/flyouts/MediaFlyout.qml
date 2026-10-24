@@ -1,13 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/MediaFlyout.qml
 //
-// The Music module's flyout, one page. The track: the art beside the
-// title, artist and player, a small spectrum (the bar's style) under them while the
-// visualizer is on; the progress (click to seek) and the transport. Every
-// player as a row when there are several (a click picks which the module
-// follows). Then the switches: Visualizer, with its Style and Bars under
-// it while it's on, Title on the bar, Hide when silent. Self-contained:
-// only needs the Media and Visualizer singletons.
+// The Music module's flyout, one page. The art across the panel, then the
+// title, artist and player with the spectrum (the bar's style) under them
+// while the visualizer is on; the progress (click to seek) and the
+// transport. Every player as a row when there are several (a click picks
+// which the module follows). Then Options, folded: Visualizer, with its
+// Style and Bars under it while it's on, Title on the bar, Hide when
+// silent. Self-contained: only needs the Media and Visualizer singletons.
 
 import Quickshell.Widgets
 import QtQuick
@@ -19,6 +19,9 @@ FlyoutPanel {
     menuWidth: Theme.flyoutMenuWidth
 
     readonly property var player: Media.player
+    // the switches under Options, folded each time this opens
+    property bool showOptions: false
+    onOpenChanged: if (!open) showOptions = false
 
     // MPRIS position isn't pushed while playing, only on seeks and
     // track changes, so it's nudged each second while this is open
@@ -31,83 +34,78 @@ FlyoutPanel {
 
     FlyoutHeading { text: "NOW PLAYING" }
 
-    // the art in its own shape (square to 16:9, a video's thumbnail wider
-    // than a cover), or a music mark without it, beside the track
-    Row {
+    // the art across the panel in its own shape (square to 16:9, a video's
+    // thumbnail wider than a cover), or a music mark in a 16:9 frame
+    ClippingRectangle {
+        id: artFrame
         width: parent.width
-        spacing: Theme.spaceM
+        height: Math.round(width / (art.status === Image.Ready && art.implicitHeight > 0
+            ? Math.max(1, Math.min(16 / 9, art.implicitWidth / art.implicitHeight)) : 16 / 9))
+        radius: Theme.radiusInner
+        color: Theme.meterTrack
+        border.width: Theme.borderWidth
+        border.color: Theme.stroke
 
-        ClippingRectangle {
-            id: artFrame
-            height: Theme.fit(72)
-            width: art.status === Image.Ready && art.implicitHeight > 0
-                ? Math.round(height * Math.max(1, Math.min(16 / 9, art.implicitWidth / art.implicitHeight)))
-                : height
-            radius: Theme.radiusInner
-            color: Theme.meterTrack
-            border.width: Theme.borderWidth
-            border.color: Theme.stroke
-
-            Image {
-                id: art
-                anchors.fill: parent
-                source: mediaFlyout.player ? mediaFlyout.player.trackArtUrl : ""
-                fillMode: Image.PreserveAspectCrop
-                // decoded at the frame's size, not the art's: a browser's
-                // video thumbnail can be several megapixels
-                sourceSize.height: artFrame.height * 2
-                asynchronous: true
-                visible: status === Image.Ready
-            }
-
-            Text {
-                anchors.centerIn: parent
-                visible: art.status !== Image.Ready
-                text: "󰝚"
-                color: Theme.muted
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontIconSize * 2
-            }
+        Image {
+            id: art
+            anchors.fill: parent
+            source: mediaFlyout.player ? mediaFlyout.player.trackArtUrl : ""
+            fillMode: Image.PreserveAspectCrop
+            // decoded at the frame's size, not the art's: a browser's
+            // video thumbnail can be several megapixels
+            sourceSize.width: artFrame.width * 2
+            asynchronous: true
+            visible: status === Image.Ready
         }
 
-        Column {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - artFrame.width - parent.spacing
-            spacing: 1
+        Text {
+            anchors.centerIn: parent
+            visible: art.status !== Image.Ready
+            text: "󰝚"
+            color: Theme.muted
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontIconSize * 2
+        }
+    }
 
-            Text {
-                width: parent.width
-                text: mediaFlyout.player ? (mediaFlyout.player.trackTitle || "Nothing playing") : "No player open"
-                elide: Text.ElideRight
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                width: parent.width
-                visible: text !== ""
-                text: mediaFlyout.player ? [mediaFlyout.player.trackArtist, mediaFlyout.player.identity]
-                    .filter(t => !!t).join(" · ") : ""
-                elide: Text.ElideRight
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
+    // the track, and the spectrum in the bar's style under it
+    Column {
+        width: parent.width
+        spacing: 1
 
-            // the spectrum in the bar's style, under the track
-            Item {
-                visible: Settings.vizShown
-                width: parent.width
-                height: Theme.fit(18) + Theme.spaceS
+        Text {
+            width: parent.width
+            text: mediaFlyout.player ? (mediaFlyout.player.trackTitle || "Nothing playing") : "No player open"
+            elide: Text.ElideRight
+            color: Theme.textStrong
+            font.family: Theme.fontText
+            font.weight: Theme.weightStrong
+            font.pixelSize: Theme.fontBody
+        }
+        Text {
+            width: parent.width
+            visible: text !== ""
+            text: mediaFlyout.player ? [mediaFlyout.player.trackArtist, mediaFlyout.player.identity]
+                .filter(t => !!t).join(" · ") : ""
+            elide: Text.ElideRight
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontSmall
+        }
 
-                Spectrum {
-                    anchors.bottom: parent.bottom
-                    spacing: Theme.spaceXs
-                    bandW: Math.min(Theme.fit(6), (parent.width - spacing * (Visualizer.barCount - 1)) / Visualizer.barCount)
-                    bandH: Theme.fit(18)
-                }
+        Item {
+            visible: Settings.vizShown
+            width: parent.width
+            height: Theme.fit(24) + Theme.spaceS
+
+            // bands no wider than a fifth of their height, so four dots fit
+            Spectrum {
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.spaceXs
+                bandW: Math.min(Theme.fit(5), (parent.width - spacing * (Visualizer.barCount - 1)) / Visualizer.barCount)
+                bandH: Theme.fit(24)
             }
         }
     }
@@ -206,7 +204,15 @@ FlyoutPanel {
 
     FlyoutDivider {}
 
+    FlyoutRow {
+        leadingIcon: "󰔎"
+        label: "Options"
+        trailing: mediaFlyout.showOptions ? "󰅀" : "󰅂"
+        onActivated: mediaFlyout.showOptions = !mediaFlyout.showOptions
+    }
+
     FlyoutAction {
+        visible: mediaFlyout.showOptions
         icon: "󰺢"
         label: "Visualizer"
         checked: Settings.vizShown
@@ -215,7 +221,7 @@ FlyoutPanel {
 
     // the visualizer's look, under its switch while it's on
     Column {
-        visible: Settings.vizShown
+        visible: mediaFlyout.showOptions && Settings.vizShown
         x: Theme.iconCell + Theme.spaceL
         width: parent.width - x
 
@@ -238,6 +244,7 @@ FlyoutPanel {
     }
 
     FlyoutAction {
+        visible: mediaFlyout.showOptions
         icon: "󰊄"
         label: "Title on the bar"
         checked: Settings.musicTitle
@@ -245,6 +252,7 @@ FlyoutPanel {
     }
 
     FlyoutAction {
+        visible: mediaFlyout.showOptions
         icon: "󰖁"
         label: "Hide when silent"
         checked: Settings.vizHideSilent

@@ -217,12 +217,14 @@ Every bar flyout keeps to these (settled 2026-10-20):
   when silent. Bar Widgets lists Music with its Visualizer switch
   indented under it. A click opens the flyout, a middle click plays or
   pauses (the player it shows; the media keys skip browsers, see Media's
-  keyPlayer). The flyout (reworked 2026-10-23, one page): the art (square
-  to 16:9, as given) beside the title, artist and player, a small
-  spectrum in the bar's style under them while the visualizer is on; the progress (click to seek) and the transport; every
-  player as a row when there are several (a click picks which the module
-  follows); Visualizer, with Style (segments) and Bars (a slider) under
-  it while it's on, Title on the bar, Hide when silent; Settings.
+  keyPlayer). The flyout (reworked 2026-10-23, one page): the art across
+  the panel (square to 16:9, as given), the title, artist and player
+  under it with the spectrum in the bar's style while the visualizer is
+  on; the progress (click to seek) and the transport; every player as a
+  row when there are several (a click picks which the module follows);
+  Options, folded each time it opens: Visualizer, with Style (segments)
+  and Bars (a slider) under it while it's on, Title on the bar, Hide
+  when silent; Settings.
 - **Weather** (picked 2026-10-21): the bar as it was, the sky and the
   temperature. The flyout is three tabs under the heading (Updated on
   it): Now (the sky and the temperature large with the condition, feels
