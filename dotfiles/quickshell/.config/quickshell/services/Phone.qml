@@ -16,6 +16,7 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick
 
@@ -139,14 +140,26 @@ Singleton {
 
     function toggleMirror() { mirroring ? mirrorProc.signal(15) : mirror() }
 
-    function mirror() {
+    // app: an Android package to start in it
+    function mirror(app) {
         if (mirroring) return
         withPhone((serial, joined) => {
             mirrorProc.joined = joined ? serial : ""
             mirrorProc.command = ["scrcpy", "-s", serial, "--window-title", name || "Phone",
-                "--turn-screen-off", "--stay-awake"]
+                "--turn-screen-off", "--stay-awake"].concat(app ? ["--start-app=" + app] : [])
             mirrorProc.running = true
         })
+    }
+
+    // An app on the phone's screen here (a notification's click): started
+    // in the mirror, which opens for it or comes to the front
+    function openApp(app) {
+        if (!reachable) return
+        if (!mirroring) { mirror(app); return }
+        withPhone(serial => Quickshell.execDetached({ command: ["adb", "-s", serial, "shell",
+            "monkey", "-p", app, "-c", "android.intent.category.LAUNCHER", "1"], environment: adbEnv }))
+        const win = Hyprland.toplevels.values.find(t => t.lastIpcObject && t.lastIpcObject.class === "scrcpy")
+        if (win) Hyprland.dispatch("hl.dsp.focus({window=\"address:0x" + win.address + "\"})")
     }
 
     // then(serial, joined): the connected phone as it is, else the one over

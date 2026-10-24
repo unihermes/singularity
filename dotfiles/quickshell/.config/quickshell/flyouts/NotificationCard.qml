@@ -2,10 +2,11 @@
 // ~/.config/quickshell/flyouts/NotificationCard.qml
 //
 // One notification: icon, app, age, summary, body, image, and actions while
-// the sender holds it; a click runs "default". In a popup, close and actions
+// the sender holds it; a click opens what it's about (Notifications.activate).
+// In a popup, close and actions
 // only dismiss the popup; in the history (`inHistory`) close clears the
 // entry and new ones are marked. Popups follow Theme.notifStyle, with an
-// urgency stripe shortening with `life`, and stand for `count` when grouped.
+// urgency stripe on its left edge shortening with `life`, and stand for `count` when grouped.
 // `standalone` (the reload toast): close only emits dismissed(), critical
 // always in full.
 
@@ -43,7 +44,6 @@ Item {
     // how much of a popup's time is left, 1 to 0; the stripe shows it
     property real life: 1
     readonly property var actions: entry.live && entry.live.tracked ? entry.live.actions : []
-    readonly property var defaultAction: actions.find(a => a.identifier === "default") || null
     readonly property var buttons: actions.filter(a => a.identifier !== "default" && a.text !== "")
     readonly property bool unread: inHistory && Notifications.isNew(entry)
 
@@ -66,29 +66,28 @@ Item {
         visible: root.framed
         border.color: root.critical ? Theme.alert : Theme.stroke
 
-        // the urgency stripe, inside the frame's strokes
-        Rectangle {
+        // the urgency stripe on the frame's very edge, over its strokes: a
+        // slice of the frame's shape, so it follows the corners
+        Item {
             visible: root.framed
-            readonly property int inset: Theme.frameChannel ? Theme.channelWidth
-                : Theme.frameDouble ? Theme.frameInset + Theme.borderWidth
-                : Theme.frameStroked ? Theme.borderWidth : 0
-            x: inset
-            y: inset
             width: root.stripeW
-            height: (parent.height - inset * 2) * root.life
-            topLeftRadius: Math.max(0, frame.topLeftRadius - inset)
-            bottomLeftRadius: root.life < 1 ? 0 : Math.max(0, frame.bottomLeftRadius - inset)
-            color: root.critical ? Theme.alert : root.low ? Theme.muted : Theme.accent
+            height: parent.height * root.life
+            clip: true
+
+            Rectangle {
+                width: frame.width
+                height: frame.height
+                topLeftRadius: frame.topLeftRadius
+                bottomLeftRadius: frame.bottomLeftRadius
+                color: root.critical ? Theme.alert : root.low ? Theme.muted : Theme.accent
+            }
         }
     }
 
     MouseArea {
         anchors.fill: parent
-        cursorShape: root.defaultAction ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: {
-            if (root.defaultAction) Notifications.invoke(root.entry, root.defaultAction)
-            else if (!root.inHistory) root.close()
-        }
+        cursorShape: root.standalone ? Qt.ArrowCursor : Qt.PointingHandCursor
+        onClicked: root.standalone ? root.close() : Notifications.activate(root.entry)
     }
 
     Column {

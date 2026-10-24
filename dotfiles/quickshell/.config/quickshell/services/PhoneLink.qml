@@ -23,8 +23,8 @@ Singleton {
     property string hostName: ""
 
     // [{ id, name, type, paired, reachable, pairing ("" | "requested" |
-    //    "incoming"), battery, charging, notifications: [{ id, app, title,
-    //    text, time, icon, replyId, clearable, actions }] }]
+    //    "incoming"), battery, charging, notifications: [{ id, app, package,
+    //    title, text, time, icon, replyId, clearable, actions }] }]
     property var devices: []
     // the paired phone in reach, the one the bar and flyout show
     readonly property var device: devices.find(d => d.paired && d.reachable) || null

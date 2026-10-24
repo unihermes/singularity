@@ -6,10 +6,12 @@
 // each entry until cleared by hand, except transient ones; `live` holds the
 // sender's object while it exists (actions, image). New since the history
 // was opened is unread. DND and silenced apps hold back popups only.
+// A click opens what it's about (activate); Claude's make ChatGPT's sound.
 
 pragma Singleton
 
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import QtQuick
@@ -19,8 +21,10 @@ Singleton {
     id: root
 
     // newest first, replaced (never changed in place) so bindings update:
-    // [{ key, id, appName, summary, body, icon, picture, urgency,
-    //    expireTimeout, transient, time, live }]
+    // [{ key, id, appName, desktopEntry, phone, phonePackage, summary,
+    //    body, icon, picture, urgency, expireTimeout, transient, time, live }]
+    // phone: from the phone link (scripts/phone-link.py), phonePackage its
+    // Android app
     property var history: []
     readonly property int count: history.length
     readonly property bool dnd: Settings.notifDnd
@@ -102,6 +106,111 @@ Singleton {
         action.invoke()
     }
 
+    // --- a click: open what it's about ----------------------------------------
+
+    // shell.qml closes the history flyout on it
+    signal activated()
+
+    // The sender's default action if it has one, then the app's window
+    // brought to the front (on whatever workspace, the scratchpad too), else
+    // the app started. A phone's notification opens its app here when it's
+    // installed, else on the phone's mirror.
+    function activate(entry) {
+        hidePopup(entry)
+        activated()
+        const def = entry.live && entry.live.tracked
+            ? entry.live.actions.find(a => a.identifier === "default") : null
+        if (def) def.invoke()
+        raiser.entry = entry
+        raiser.invoked = !!def
+        raiser.tries = 0
+        raiser.restart()
+    }
+
+    // lowercase letters and digits, to match names and classes either way
+    function norm(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "") }
+
+    // what an entry's app goes by: its desktop entry (the last part of a
+    // reverse-DNS one too) and its name
+    function appKeys(entry) {
+        const de = entry.desktopEntry || ""
+        return [de, de.split(".").pop(), entry.appName].map(norm).filter(k => k.length >= 3)
+    }
+
+    // The app's most recently focused window: its class exactly, else (not
+    // for a phone's app, whose short names would catch anything) a class
+    // holding its name
+    function windowFor(entry) {
+        const keys = appKeys(entry)
+        if (keys.length === 0) return null
+        const ipc = t => t.lastIpcObject
+        const wins = Hyprland.toplevels.values.filter(t => ipc(t) && ipc(t).class !== undefined && !Apps.isShellWindow(t))
+            .sort((a, b) => (ipc(a).focusHistoryID ?? 999) - (ipc(b).focusHistoryID ?? 999))
+        const names = t => [norm(ipc(t).class), norm(ipc(t).initialClass)].filter(c => c.length >= 3)
+        return wins.find(t => names(t).some(c => keys.indexOf(c) >= 0))
+            || (entry.phone ? null : wins.find(t => names(t).some(c => keys.some(k => c.indexOf(k) >= 0))))
+            || null
+    }
+
+    // the installed app it's from, by id, name or window class
+    function desktopFor(entry) {
+        const keys = appKeys(entry)
+        if (keys.length === 0) return null
+        return DesktopEntries.applications.values.find(e => !e.noDisplay
+            && [e.id.replace(/\.desktop$/, ""), e.name, e.startupClass].some(s => keys.indexOf(norm(s)) >= 0)) || null
+    }
+
+    function raise(win) {
+        const addr = "address:0x" + win.address
+        Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
+        Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+    }
+
+    // A moment after the click, so an app that raises its own window (the
+    // right one of several) has; asked again while a default action may
+    // still be mapping one
+    Timer {
+        id: raiser
+        property var entry: null
+        property bool invoked: false
+        property int tries: 0
+        interval: 250
+        onTriggered: {
+            const e = entry
+            const win = root.windowFor(e)
+            const active = Hyprland.activeToplevel
+            if (win) {
+                if (!active || active.address !== win.address
+                        || (ipcWorkspace(win) || "").startsWith("special:")) root.raise(win)
+                return
+            }
+            if (invoked) {
+                if (++tries < 8) restart()
+                return
+            }
+            const app = root.desktopFor(e)
+            if (app) Apps.launch(app)
+            else if (e.phone && e.phonePackage) Phone.openApp(e.phonePackage)
+        }
+        function ipcWorkspace(t) { return t.lastIpcObject.workspace ? t.lastIpcObject.workspace.name : "" }
+    }
+
+    // --- sound ---------------------------------------------------------------
+
+    // Claude's own, its desktop app's or Claude Code's through the terminal
+    function isClaude(n) {
+        return /claude/i.test(n.appName) || /claude/i.test(n.desktopEntry)
+            || (n.appName === "" && n.summary === "Claude Code")
+    }
+
+    // ChatGPT's notification sound, else freedesktop's
+    function playClaudeSound() {
+        Quickshell.execDetached(["sh", "-c",
+            "for f in /usr/lib/chatgpt/resources/codex-notification.wav "
+            + "/usr/share/sounds/freedesktop/stereo/message-new-instant.oga; do "
+            + "[ -r \"$f\" ] && exec pw-play \"$f\"; done"])
+    }
+
     // Seconds a popup stays: what the sender asked for, else Settings'
     // time for its urgency; 0 is until dismissed
     function timeoutFor(entry) {
@@ -151,6 +260,9 @@ Singleton {
             key: time + "-" + n.id,
             id: n.id,
             appName: n.appName,
+            desktopEntry: n.desktopEntry,
+            phone: n.hints["x-singularity-phone"] !== undefined,
+            phonePackage: String(n.hints["x-singularity-phone"] || ""),
             summary: n.summary,
             body: n.body,
             icon: iconFor(n),
@@ -231,7 +343,9 @@ Singleton {
             // and an app's silencing
             const hold = (root.dnd || Settings.notifSilent.indexOf(n.appName) >= 0)
                 && n.urgency !== NotificationUrgency.Critical
-            root.popups = hold || n.lastGeneration ? others : [entry].concat(others)
+            const shown = !hold && !n.lastGeneration
+            root.popups = shown ? [entry].concat(others) : others
+            if (shown && root.isClaude(n)) root.playClaudeSound()
             root.now = time
             if (root.viewing) root.lastSeen = time
             root.attach(n)
@@ -243,7 +357,9 @@ Singleton {
 
     function save() {
         const entries = history.filter(e => !e.transient).map(e => ({
-            id: e.id, appName: e.appName, summary: e.summary, body: e.body,
+            id: e.id, appName: e.appName, desktopEntry: e.desktopEntry,
+            phone: e.phone, phonePackage: e.phonePackage,
+            summary: e.summary, body: e.body,
             icon: e.icon,
             // image data doesn't outlive the notification; a file does
             picture: e.picture.startsWith("file://") ? e.picture : "",
@@ -274,7 +390,9 @@ Singleton {
             const entries = (d.entries || []).filter(x => x && typeof x.time === "number").map(x => {
                 const e = {
                     key: x.time + "-" + x.id, id: x.id | 0,
-                    appName: String(x.appName || ""), summary: String(x.summary || ""),
+                    appName: String(x.appName || ""), desktopEntry: String(x.desktopEntry || ""),
+                    phone: !!x.phone, phonePackage: String(x.phonePackage || ""),
+                    summary: String(x.summary || ""),
                     body: String(x.body || ""), icon: String(x.icon || ""),
                     picture: String(x.picture || ""), urgency: x.urgency | 0,
                     expireTimeout: 0, transient: false, time: x.time, live: null

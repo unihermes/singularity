@@ -4,7 +4,8 @@
 // The phone as a card (its name, battery, and how it's connected), with
 // Ring and Send file on it through the phone link; a phone asking to pair,
 // with Accept and Decline; the phone's notifications, a click on one
-// opening its reply field and its actions; then Mirror (Stop while it's on
+// opening its reply field, Open (its app, here or on the mirror) and its
+// actions; then Mirror (Stop while it's on
 // screen) and Screenshot over adb, which joins a phone on Wi-Fi just for
 // them, and Settings. Self-contained: only needs Phone and PhoneLink.
 
@@ -82,7 +83,7 @@ FlyoutPanel {
             label: modelData.title || modelData.app
             note: modelData.text !== label ? modelData.text : ""
             highlighted: root.picked === modelData.id
-            enabled: modelData.replyId !== "" || modelData.actions.length > 0
+            enabled: modelData.replyId !== "" || modelData.actions.length > 0 || modelData.package !== ""
             actionIcon: modelData.clearable ? "󰅖" : ""
             actionHint: "Dismiss on the phone"
             onAction: PhoneLink.dismiss(modelData)
@@ -110,9 +111,17 @@ FlyoutPanel {
     }
 
     FlyoutChipLine {
-        visible: root.pickedNote !== null && root.pickedNote.actions.length > 0
-        chips: root.pickedNote ? root.pickedNote.actions.map(a => ({ icon: "", text: a, act: a })) : []
-        onPicked: act => { PhoneLink.act(root.pickedNote, act); root.picked = "" }
+        visible: chips.length > 0
+        chips: !root.pickedNote ? []
+            : (root.pickedNote.package ? [{ icon: "󰏌", text: "Open", act: "open" }] : [])
+                .concat(root.pickedNote.actions.map(a => ({ icon: "", text: a, act: "action:" + a })))
+        onPicked: act => {
+            const n = root.pickedNote
+            root.picked = ""
+            if (act !== "open") { PhoneLink.act(n, act.slice("action:".length)); return }
+            root.scope.openFlyout = ""
+            Notifications.activate({ appName: n.app, desktopEntry: "", phone: true, phonePackage: n.package })
+        }
     }
 
     FlyoutDivider {}

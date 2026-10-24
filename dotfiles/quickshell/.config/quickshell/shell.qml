@@ -531,6 +531,10 @@ ShellRoot {
                     screenScope.flyoutSection = ""
                     screenScope.openFlyout = screenScope.openFlyout === "notifications" ? "" : "notifications"
                 }
+                // a click on one opened what it's about
+                function onActivated() {
+                    if (screenScope.openFlyout === "notifications") screenScope.openFlyout = ""
+                }
             }
 
             // the gesture the open switcher belongs to; -1 when none

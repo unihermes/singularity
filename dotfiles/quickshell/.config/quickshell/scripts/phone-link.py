@@ -68,8 +68,11 @@ def encode(p):
     return (json.dumps(p) + "\n").encode()
 
 
-def notify(title, body="", app="Phone", icon="phone"):
-    subprocess.Popen(["notify-send", "-a", app, "-i", icon, title, body],
+def notify(title, body="", app="Phone", icon="phone", package=None):
+    # package: the phone notification's Android app, for the shell to open
+    # it with on a click (services/Notifications.qml)
+    hint = ["-h", f"string:x-singularity-phone:{package}"] if package is not None else []
+    subprocess.Popen(["notify-send", "-a", app, "-i", icon] + hint + [title, body],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -473,7 +476,9 @@ class Daemon:
             icon = os.path.join(ICONS, re.sub(r"[^A-Za-z0-9]", "", str(b["payloadHash"])) + ".png")
             if not os.path.exists(icon) and not await self.fetch(link, p, icon):
                 icon = ""
-        entry = {"id": nid, "app": b.get("appName", ""), "title": b.get("title", ""),
+        # Android's notification key: "user|package|id|tag|uid"
+        parts = str(nid).split("|")
+        entry = {"id": nid, "app": b.get("appName", ""), "package": parts[1] if len(parts) > 2 else "", "title": b.get("title", ""),
                  "text": b.get("text", ""), "time": int(b.get("time", 0) or 0), "icon": icon,
                  "replyId": b.get("requestReplyId", ""), "clearable": bool(b.get("isClearable")),
                  "actions": [a for a in b.get("actions", []) if isinstance(a, str)]}
@@ -482,7 +487,7 @@ class Daemon:
         if not (b.get("silent") or b.get("requestAnswer")):
             title = entry["title"] or entry["app"]
             notify(title, entry["text"] if entry["text"] != title else "", app=entry["app"] or link.name,
-                   icon=icon or "phone")
+                   icon=icon or "phone", package=entry["package"])
         self.emit()
 
     async def shared(self, link, p):
