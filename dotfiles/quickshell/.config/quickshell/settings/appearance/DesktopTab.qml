@@ -228,7 +228,7 @@ SettingsTab {
     SettingsField {
         labelWidth: parent.width - placeChip.width - Theme.spaceL
         label: "Placement"
-        hint: "Drag them about on the desktop; right-clicking one does the same"
+        hint: "Drag them about; right-clicking the desktop does the same"
         FlyoutChip {
             id: placeChip
             anchors.right: parent.right

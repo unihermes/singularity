@@ -421,29 +421,46 @@ for the rest, chips for the way out.
 
 ## Desktop widgets
 
-Clock, weather, now playing and system stats on the desktop (picked
-2026-10-24): each a small panel drawn exactly as a flyout is (WidgetFrame:
-the style's frame, ground, section runs and heading), so it follows the
-style and look like everything else. Each is its own surface on the layer
-under the windows (`desktop/DesktopWidgets.qml`). Off until turned on in
-Appearance > Desktop > Widgets.
+Clock, weather, now playing and system stats on the desktop. They have a
+look of their own, the same under every style and look (asked for
+2026-10-24): frosted glass cards like Apple's widgets (`desktop/GlassCard.qml`),
+a see-through ground the layer blur frosts, large round corners, a hairline
+edge, white type in the system font with dimmed and faint tiers, and the
+accent lifted to a tint. Light palettes get white glass and dark type.
+Each is its own surface on the layer under the windows
+(`desktop/DesktopWidgets.qml`). Off until turned on in Appearance >
+Desktop > Widgets.
 
+- **Sizes sit on one grid** so they line up: small is one unit square
+  (164px at the base text size), medium two units and the 16px gap wide,
+  large two by two. Two smalls and a gap are a medium's width.
 - **Where they start:** the clock in the bottom left corner with the
-  weather beside it, the stats top right, the music bottom right, 40px in.
+  weather a gap beside it, the stats top right, the music bottom right, 40px in.
   A moved one is stored as fractions of the room the screen leaves it
   (`WidgetPlacement.js`), so one on an edge stays on it.
-- **Edit mode** (right-click a widget, Placement in Settings, `qs ipc call
-  widgets edit`): the screen dims under the bar and the widgets come over
-  everything, outlined. Drag one anywhere; it snaps to the middle, the
-  thirds and the margin in from each edge, an accent line showing which.
-  The picked one has an accent ring and a toolbar: size (S, M, L scale the
-  whole panel), Move to another screen, Hide. The shelf under the bar adds
-  back hidden ones, Resets places, and is Done (or Escape).
-- **Music** dims the art while paused; with no player it says Nothing
-  playing and offers to open the last player of the session.
-- **Stats** reads CPU, memory and temperature through SystemStats' light
-  sampling, and GPU load from Cooling (desktops with nvidia-smi); a missing
-  reading drops its row.
+- **Edit mode** (right-click the desktop > Edit widgets, right-click a
+  widget, Placement in Settings, `qs ipc call widgets edit`): the screen
+  dims under the bar and the widgets come over everything, outlined. Drag
+  one anywhere; it snaps to the other widgets (in line, or a gap beside),
+  the middle, the thirds and the margin in from each edge, an accent line
+  showing which. The picked one has an accent ring and a toolbar: size
+  (S, M, L), Move to another screen, Hide. The shelf under the bar adds
+  back hidden ones, Resets places, and is Done (or Escape). The edit chrome
+  is the style's, like the bar's edit mode.
+- **The desktop's menu** (right-click bare desktop, at the pointer): Edit
+  widgets, Next wallpaper, Desktop settings. A full-screen surface under
+  the widgets takes the right-click.
+- **Clock:** the day in the accent over the time; medium adds the month,
+  ISO week and this week as a strip with today lit, large the whole month.
+- **Weather:** where, the temperature, the sky and today's high and low;
+  medium adds five days as columns, large the next hours and five days as
+  rows with their range against the week's.
+- **Music:** the art (dimmed while paused), the player in the accent, the
+  track, a thin progress line (click to seek) and bare transport glyphs;
+  with no player it says Nothing playing and offers the last one.
+- **Stats:** a ring each for CPU, GPU (Cooling, desktops with nvidia-smi),
+  memory and temperature; large adds the last minute of CPU and memory in
+  use. A missing reading drops its ring.
 
 ## Settings pages
 

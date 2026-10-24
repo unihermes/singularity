@@ -3,9 +3,10 @@
 //
 // Edit mode for one screen's desktop widgets, over everything (the screen
 // scope's "widgetedit"): drag a widget anywhere and it lines up with the
-// screen's middle, its thirds and the margin in from each edge, a guide
-// showing the line it took. The one picked gets its size, Hide, and Move
-// to the other screen. The shelf under the bar adds back hidden widgets,
+// screen's middle, its thirds, the margin in from each edge and the other
+// widgets (in line, or a gap beside), a guide showing the line it took.
+// The one picked gets its size (small, medium, large), Hide, and Move to
+// the other screen. The shelf under the bar adds back hidden widgets,
 // resets them all, and finishes, as Escape does.
 
 import Quickshell
@@ -99,7 +100,7 @@ OverlayWindow {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: -Theme.spaceS
-                    radius: Theme.panelFrameRadius + Theme.spaceS
+                    radius: Math.round(Theme.fit(164) * 0.14) + Theme.spaceS
                     color: "transparent"
                     border.width: slot.isPicked ? Theme.borderWidth * 2 : Theme.borderWidth
                     border.color: slot.isPicked ? Theme.accent : drag.containsMouse ? Theme.strokeHover : Theme.stroke
@@ -118,8 +119,10 @@ OverlayWindow {
                         if (!pressed) return
                         const p = mapToItem(canvas, mouse.x, mouse.y)
                         if (!slot.dragged && Math.hypot(mouse.x - slot.grab.x, mouse.y - slot.grab.y) < Theme.sp(4)) return
+                        const others = Settings.deskWidgetKeys
+                            .filter(k => k !== slot.modelData && root.layer.shown(k)).map(k => root.layer.rectOf(k))
                         const s = Placement.snap({ x: p.x - slot.grab.x, y: p.y - slot.grab.y, w: slot.width, h: slot.height },
-                                                 root.layer.area, root.layer.margin, Theme.sp(10))
+                                                 root.layer.area, root.layer.margin, Theme.sp(10), others, root.layer.gap)
                         slot.dragged = s
                         root.guides = s.guides
                     }
@@ -194,7 +197,7 @@ OverlayWindow {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Drag a widget: it lines up with the middle and the thirds"
+                    text: "Drag a widget: it lines up with the others, the middle and the thirds"
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody

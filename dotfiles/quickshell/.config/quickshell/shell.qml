@@ -701,8 +701,9 @@ ShellRoot {
         // right-click menu for the bar's empty space
         LazyFlyout { name: "barmenu"; scope: screenScope; BarMenuFlyout { scope: screenScope } }
 
-        // the desktop widgets' edit mode
+        // the desktop widgets' edit mode, and the bare desktop's right-click menu
         LazyFlyout { name: "widgetedit"; scope: screenScope; WidgetEditor { scope: screenScope; layer: deskWidgets } }
+        LazyFlyout { name: "desktopmenu"; scope: screenScope; DesktopMenu { scope: screenScope; layer: deskWidgets } }
 
         // the bar's edit mode: hidden modules, Reset, Done
         LazyFlyout { name: "baredit"; scope: screenScope; BarEditFlyout { scope: screenScope } }

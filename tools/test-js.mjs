@@ -177,24 +177,24 @@ test("WidgetPlacement places, stores and snaps the desktop widgets", () => {
     const sizes = { clock: { w: 300, h: 150 }, weather: { w: 300, h: 200 }, stats: { w: 300, h: 250 }, music: { w: 300, h: 180 } }
     const none = { fx: -1, fy: -1 }
     // where they start out
-    const clock = P.rectOf("clock", none, sizes, a, 48)
+    const clock = P.rectOf("clock", none, sizes, a, 48, 16)
     assert.equal(clock.x, 48)
     assert.equal(clock.y + clock.h, 1440 - 48)
-    const weather = P.rectOf("weather", none, sizes, a, 48)
-    assert.equal(weather.x, 48 + 300 + 24)
+    const weather = P.rectOf("weather", none, sizes, a, 48, 16)
+    assert.equal(weather.x, 48 + 300 + 16)
     assert.equal(weather.y + weather.h, 1440 - 48)
-    const stats = P.rectOf("stats", none, sizes, a, 48)
+    const stats = P.rectOf("stats", none, sizes, a, 48, 16)
     assert.equal(stats.x + stats.w, 2560 - 48)
     assert.equal(stats.y, 44 + 48)
     // stored as fractions, and back
     const r = { x: 1130, y: 600, w: 300, h: 150 }
     const f = P.fractionsOf(r, a)
-    const back = P.rectOf("clock", f, sizes, a, 48)
+    const back = P.rectOf("clock", f, sizes, a, 48, 16)
     assert.equal(back.x, 1130)
     assert.equal(back.y, 600)
     // the far edge stays on the far edge on a smaller screen
     const edge = P.fractionsOf({ x: 2260, y: 1290, w: 300, h: 150 }, a)
-    const small = P.rectOf("clock", edge, sizes, P.area(1920, 1080, 44, false), 48)
+    const small = P.rectOf("clock", edge, sizes, P.area(1920, 1080, 44, false), 48, 16)
     assert.equal(small.x + small.w, 1920)
     assert.equal(small.y + small.h, 1080)
     // the middle snaps to the middle line, within reach only
@@ -207,4 +207,9 @@ test("WidgetPlacement places, stores and snaps the desktop widgets", () => {
     const out = P.snap({ x: -50, y: 10, w: 300, h: 150 }, a, 48, 10)
     assert.equal(out.x, 0)
     assert.equal(out.y, 44)
+    // a gap beside another widget, and in line with its top
+    const other = [{ x: 400, y: 600, w: 300, h: 150 }]
+    const by = P.snap({ x: 712, y: 603, w: 300, h: 150 }, a, 48, 10, other, 16)
+    assert.equal(by.x, 716)
+    assert.equal(by.y, 600)
 })

@@ -4,7 +4,8 @@
 // One screen's desktop widgets, each its own surface on the layer under
 // every window, where Settings.deskWidget places it (WidgetPlacement.js).
 // A right-click on one opens edit mode (WidgetEditor), which draws them
-// over everything while it's open; these step aside meanwhile.
+// over everything while it's open; these step aside meanwhile. Under them
+// the whole screen takes right-clicks, for the desktop's menu.
 
 import Quickshell
 import Quickshell.Wayland
@@ -19,8 +20,12 @@ Scope {
     readonly property var screen: scope.modelData
     readonly property bool editing: scope.openFlyout === "widgetedit"
 
-    // the room from every screen edge, and between the clock and weather
+    // the room from every screen edge, and between widgets (GlassCard's)
     readonly property int margin: Theme.sp(40)
+    readonly property int gap: Theme.fit(16)
+
+    // where the desktop's menu was asked for, from the top
+    property real menuY: 0
     readonly property var area: Placement.area(screen.width, screen.height, Theme.barExtent,
                                                Theme.barPosition === "bottom")
 
@@ -53,7 +58,29 @@ Scope {
         return out
     }
     function rectOf(key) {
-        return Placement.rectOf(key, Settings.deskWidget(key), shownSizes, area, margin)
+        return Placement.rectOf(key, Settings.deskWidget(key), shownSizes, area, margin, gap)
+    }
+
+    // the bare desktop's right-click, made before the widgets so it sits
+    // under them
+    PanelWindow {
+        screen: root.screen
+        WlrLayershell.layer: WlrLayer.Bottom
+        WlrLayershell.namespace: "singularity-desktop"
+        exclusionMode: ExclusionMode.Ignore
+        color: "transparent"
+        anchors { top: true; left: true; right: true; bottom: true }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            onClicked: mouse => {
+                root.menuY = Math.min(mouse.y, height - Theme.fit(220))
+                root.scope.flyoutAnchorX = mouse.x
+                root.scope.flyoutSection = ""
+                root.scope.openFlyout = "desktopmenu"
+            }
+        }
     }
 
     Variants {

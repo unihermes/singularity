@@ -1,21 +1,25 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/MusicWidget.qml
 //
-// What the bar's Music module follows: the art beside the title, artist
-// and album, the progress (click to seek) and the transport; the art dims
-// while paused. With no player open it says so and offers to open the
-// last one that played this session.
+// What the bar's Music module follows. Small: the art with play/pause
+// beside it, the title and artist under. Medium: the art down the left,
+// the player, track, progress and transport beside it. Large: the art
+// across the top, the rest under it. The art dims while paused; with no
+// player open it says so and offers the last one this session.
 
 import Quickshell
 import Quickshell.Widgets
 import QtQuick
 import "../services"
-import "../flyouts"
 
-WidgetFrame {
+GlassCard {
     id: root
 
     readonly property var player: Media.player
+    readonly property bool playing: !!player && player.isPlaying
+    readonly property real frac: player && player.length > 0
+        ? Math.max(0, Math.min(1, player.position / player.length)) : 0
+    readonly property bool hasLength: !!player && player.lengthSupported && player.length > 0
 
     // the last player seen, to open again once it's closed
     property string lastEntry: ""
@@ -24,171 +28,174 @@ WidgetFrame {
         lastEntry = player.desktopEntry
         lastName = player.identity
     }
+    readonly property var lastApp: lastEntry !== "" ? DesktopEntries.byId(lastEntry) : null
 
     // MPRIS position isn't pushed while playing, only on seeks and track
     // changes, so it's nudged each second
     Timer {
         interval: 1000
         repeat: true
-        running: root.visible && !!root.player && root.player.isPlaying
+        running: root.visible && root.playing
         onTriggered: root.player.positionChanged()
     }
 
-    FlyoutHeading {
-        text: "NOW PLAYING"
-        hints: root.player ? [root.player.identity] : []
+    ClippingRectangle {
+        id: art
+        width: root.large ? parent.width : root.small ? Theme.fit(64) : parent.height
+        height: root.large ? Math.round(parent.height * 0.52) : width
+        radius: Theme.fit(12)
+        color: root.track
+
+        Image {
+            id: img
+            readonly property var urls: Media.artUrls(root.player)
+            property int attempt: 0
+            onUrlsChanged: attempt = 0
+            onStatusChanged: if (status === Image.Error && attempt < urls.length - 1) attempt++
+            anchors.fill: parent
+            source: urls[attempt] || ""
+            fillMode: Image.PreserveAspectCrop
+            sourceSize.width: art.width * 2
+            asynchronous: true
+            visible: status === Image.Ready
+            opacity: root.playing ? 1 : 0.45
+        }
+        GlassText {
+            anchors.centerIn: parent
+            visible: img.status !== Image.Ready
+            card: root
+            text: "󰝚"
+            font.family: Theme.fontIcon
+            px: Math.round(art.height * 0.36)
+            color: root.fgFaint
+        }
     }
 
-    Row {
-        width: parent.width
-        spacing: Theme.spaceL
+    // small: play/pause in the top right corner
+    GlassGlyph {
+        card: root
+        visible: root.small && !!root.player
+        anchors.right: parent.right
+        px: Theme.fit(26)
+        text: root.playing ? "󰏤" : "󰐊"
+        active: !!root.player && root.player.canTogglePlaying
+        onClicked: root.player.togglePlaying()
+    }
 
-        ClippingRectangle {
-            id: artFrame
-            width: Theme.fit(64)
-            height: width
-            radius: Theme.radiusInner
-            color: Theme.meterTrack
-            border.width: Theme.borderWidth
-            border.color: Theme.stroke
+    Item {
+        id: info
+        x: root.large || root.small ? 0 : art.width + Theme.fit(14)
+        y: root.large ? art.height + Theme.fit(12) : root.small ? art.height + Theme.fit(8) : 0
+        width: parent.width - x
+        height: parent.height - y
 
-            Image {
-                id: art
-                // Media.artUrls in turn, the next when one fails to load
-                readonly property var urls: Media.artUrls(root.player)
-                property int attempt: 0
-                onUrlsChanged: attempt = 0
-                onStatusChanged: if (status === Image.Error && attempt < urls.length - 1) attempt++
-                anchors.fill: parent
-                source: urls[attempt] || ""
-                fillMode: Image.PreserveAspectCrop
-                sourceSize.width: artFrame.width * 2
-                asynchronous: true
-                visible: status === Image.Ready
-                opacity: root.player && !root.player.isPlaying ? 0.45 : 1
+        Column {
+            width: parent.width
+
+            GlassText {
+                visible: !root.small
+                width: parent.width
+                card: root
+                px: Theme.fit(11)
+                text: (root.player ? root.player.identity : root.lastName).toUpperCase()
+                color: root.accent
+                font.weight: Font.Bold
+                font.letterSpacing: 1
             }
-
-            Text {
-                anchors.centerIn: parent
-                visible: art.status !== Image.Ready
-                text: "󰝚"
-                color: Theme.muted
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontIconSize * 1.5
+            GlassText {
+                width: parent.width
+                card: root
+                px: Theme.fit(root.large ? 18 : 15)
+                text: root.player ? (root.player.trackTitle || "Nothing playing") : "Nothing playing"
+                color: root.player ? root.fg : root.fgDim
+                font.weight: Font.Bold
+            }
+            GlassText {
+                width: parent.width
+                visible: text !== ""
+                card: root
+                px: Theme.fit(13)
+                text: root.player ? (root.player.trackArtist || "") : root.lastName !== "" ? root.lastName + " played last" : ""
+                color: root.fgDim
             }
         }
 
+        // progress and transport, at the foot
         Column {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - artFrame.width - parent.spacing
-            spacing: 1
+            visible: !root.small && !!root.player
+            anchors.bottom: parent.bottom
+            width: parent.width
+            spacing: Theme.fit(6)
 
-            Text {
+            Rectangle {
+                visible: root.hasLength
                 width: parent.width
-                text: root.player ? (root.player.trackTitle || "Nothing playing") : "Nothing playing"
-                elide: Text.ElideRight
-                color: root.player ? Theme.textStrong : Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontBody
+                height: Theme.fit(4)
+                radius: height / 2
+                color: root.track
+                Rectangle {
+                    width: parent.width * root.frac
+                    height: parent.height
+                    radius: parent.radius
+                    color: root.fg
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -Theme.fit(6)
+                    enabled: !!root.player && root.player.canSeek
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: mouse => root.player.position =
+                        root.player.length * Math.max(0, Math.min(1, (mouse.x - Theme.fit(6)) / parent.width))
+                }
             }
-            Repeater {
-                model: root.player ? [root.player.trackArtist, root.player.trackAlbum].filter(t => !!t)
-                    : root.lastName !== "" ? [root.lastName + " played last"] : []
-                Text {
-                    required property string modelData
-                    width: parent.width
-                    text: modelData
-                    elide: Text.ElideRight
-                    color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
+            Item {
+                visible: root.hasLength && root.large
+                width: parent.width
+                height: pos.height
+                GlassText { id: pos; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
+                GlassText { anchors.right: parent.right; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.length) : "" }
+            }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.fit(root.large ? 40 : 28)
+                GlassGlyph {
+                    card: root
+                    px: Theme.fit(root.large ? 26 : 20)
+                    text: "󰒮"
+                    active: !!root.player && root.player.canGoPrevious
+                    onClicked: root.player.previous()
+                }
+                GlassGlyph {
+                    card: root
+                    px: Theme.fit(root.large ? 34 : 26)
+                    text: root.playing ? "󰏤" : "󰐊"
+                    active: !!root.player && root.player.canTogglePlaying
+                    onClicked: root.player.togglePlaying()
+                }
+                GlassGlyph {
+                    card: root
+                    px: Theme.fit(root.large ? 26 : 20)
+                    text: "󰒭"
+                    active: !!root.player && root.player.canGoNext
+                    onClicked: root.player.next()
                 }
             }
         }
-    }
 
-    // progress, and click-to-seek where the player allows it
-    Item {
-        width: parent.width
-        height: Theme.rowHeight
-        visible: !!root.player && root.player.lengthSupported && root.player.length > 0
-
-        Meter {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: Theme.spaceS
-            fraction: root.player && root.player.length > 0
-                ? Math.max(0, Math.min(1, root.player.position / root.player.length)) : 0
-            // position ticks once a second; easing each step reads as lag
-            animated: false
-
+        // no player: open the last one
+        GlassText {
+            visible: !root.player && root.lastApp !== null && !root.small
+            anchors.bottom: parent.bottom
+            card: root
+            px: Theme.fit(13)
+            text: "󰐊  Open " + root.lastName
+            color: root.accent
+            font.weight: Font.Bold
             MouseArea {
                 anchors.fill: parent
-                anchors.topMargin: -Theme.spaceM
-                anchors.bottomMargin: -Theme.spaceM
-                enabled: !!root.player && root.player.canSeek
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: mouse => root.player.position =
-                    root.player.length * Math.max(0, Math.min(1, mouse.x / width))
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.lastApp.execute()
             }
         }
-
-        Text {
-            anchors.left: parent.left
-            anchors.bottom: parent.bottom
-            text: root.player ? Media.fmtTime(root.player.position) : ""
-            color: Theme.subtext
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.fontSmall
-        }
-        Text {
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            text: root.player ? Media.fmtTime(root.player.length) : ""
-            color: Theme.subtext
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.fontSmall
-        }
-    }
-
-    Row {
-        visible: !!root.player
-        anchors.horizontalCenter: parent.horizontalCenter
-        spacing: Theme.spaceL
-
-        FlyoutChip {
-            width: Theme.fit(56)
-            glyph: true
-            text: "󰒮"
-            enabled: !!root.player && root.player.canGoPrevious
-            onClicked: root.player.previous()
-        }
-        FlyoutChip {
-            width: Theme.fit(56)
-            glyph: true
-            text: root.player && root.player.isPlaying ? "󰏤" : "󰐊"
-            enabled: !!root.player && root.player.canTogglePlaying
-            onClicked: root.player.togglePlaying()
-        }
-        FlyoutChip {
-            width: Theme.fit(56)
-            glyph: true
-            text: "󰒭"
-            enabled: !!root.player && root.player.canGoNext
-            onClicked: root.player.next()
-        }
-    }
-
-    FlyoutChip {
-        readonly property var entry: root.lastEntry !== "" ? DesktopEntries.byId(root.lastEntry) : null
-        visible: !root.player && entry !== null
-        icon: "󰐊"
-        text: "Open " + root.lastName
-        onClicked: entry.execute()
     }
 }
