@@ -860,7 +860,9 @@ holdPopup = function(win)
         y = math.min(y + CASCADE, area.y + area.h - h)
     end
     moveTo(addr, { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) })
-    if popupOpts.block and dialogSized and ownerMain then
+    -- a browser's new window is a window (a torn-off tab), never a dialog: its
+    -- owner stays a drop target for dragging the tab back
+    if popupOpts.block and dialogSized and ownerMain and not BROWSER_CLASSES[win.class] then
         blockOwner(win.address, owner.address)
         if onActiveWorkspace(win) then hl.dispatch(hl.dsp.focus({ window = addr })) end
     end
