@@ -32,7 +32,7 @@ Item {
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn, claude: claudeBtn,
-        failed: failedBtn, updates: updatesBtn,
+        failed: failedBtn, updates: updatesBtn, drives: drivesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
@@ -357,6 +357,16 @@ Item {
         iconColor: Theme.base
         active: screenScope.openFlyout === "privacy"
         onActivated: screenScope.toggleFlyout("privacy", privacyBtn)
+    }
+
+    // only while a removable drive is plugged in; a badge past one
+    BarModule {
+        id: drivesBtn
+        visible: Drives.count > 0 && Settings.widgetVisible("drives")
+        icon: "󰕓"
+        badge: Drives.count > 1 ? Drives.count : 0
+        active: screenScope.openFlyout === "drives"
+        onActivated: screenScope.toggleFlyout("drives", drivesBtn)
     }
 
     BarModule {

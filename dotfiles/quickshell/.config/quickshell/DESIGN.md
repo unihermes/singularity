@@ -257,6 +257,12 @@ Every bar flyout keeps to these (settled 2026-10-20):
   flyout: a row per unit (system or user); a click opens it in place with
   its last three log lines and Full log, Restart and Clear; Clear all
   (two clicks) after them.
+- **Drives** (2026-10-24): the USB glyph, only while a removable drive
+  (lsblk's hotplug: USB sticks and disks, SD cards) is plugged in, with a
+  count badge past one. The flyout: each drive a heading with its name and
+  size, its filesystems as rows (label, used of size), Mount (which opens
+  it once mounted) or Open at the right, then Eject (unmounts all, powers
+  it off). udisksctl does the work.
 - **Privacy** (bar picked 2026-10-21): only while something captures, a
   chip filled with the alert colour carrying a recording dot and a glyph
   per kind (mic, camera, screen) in the ground colour. The flyout: Mic,

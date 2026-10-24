@@ -508,7 +508,7 @@ Singleton {
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
-        right:  ["recorder", "privacy", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
+        right:  ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
@@ -532,6 +532,7 @@ Singleton {
         notifications: { label: "Notifications",  icon: "󰂚" },
         privacy:       { label: "Privacy",        icon: "󰍬" },
         recorder:      { label: "Recording",      icon: "󰑋" },
+        drives:        { label: "Drives",         icon: "󰕓" },
         phone:         { label: "Phone",          icon: "󰄜" },
         vpn:           { label: "VPN",            icon: "󰖂" },
         failed:        { label: "Failed Services", icon: "󰀦" },

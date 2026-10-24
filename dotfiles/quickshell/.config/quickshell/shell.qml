@@ -726,6 +726,9 @@ ShellRoot {
         // the VPN
         LazyFlyout { name: "vpn"; scope: screenScope; VpnFlyout { scope: screenScope } }
 
+        // removable drives
+        LazyFlyout { name: "drives"; scope: screenScope; DrivesFlyout { scope: screenScope } }
+
         // failed units
         LazyFlyout { name: "failed"; scope: screenScope; FailedFlyout { scope: screenScope } }
 
