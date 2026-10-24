@@ -698,6 +698,25 @@ local function blockingPopout(ownerAddr)
     return best
 end
 
+-- A blocked owner can't take focus (no_focus), so a focus aimed at one, from
+-- a bind or the shell (alt-tab, the window strip), goes to its popout instead.
+do
+    local focus = hl.dsp.focus
+    hl.dsp.focus = function(args)
+        local target = type(args) == "table" and type(args.window) == "string" and args.window:match("^address:(.+)$")
+        local pop = target and blockingPopout(target)
+        if pop then
+            for _ = 1, 4 do
+                local next = blockingPopout(pop.address)
+                if not next then break end
+                pop = next
+            end
+            args = { window = "address:" .. pop.address }
+        end
+        return focus(args)
+    end
+end
+
 do
     for _, w in ipairs(hl.get_windows()) do
         for _, t in ipairs(tagsOf(w)) do
@@ -1167,7 +1186,7 @@ hl.on("window.close", function(win)
 end)
 
 -- Dialogs stay over the window they came from: focusing a window raises
--- its dialogs over it. Lua isn't told a Wayland dialog's parent, so the
+-- its dialogs over it, and focusing a dialog raises its owner under it. Lua isn't told a Wayland dialog's parent, so the
 -- owner is the window focused just before it opened, if they share a
 -- process or the dialog is a prompt (file chooser, polkit).
 local dialogOwner = {}   -- dialog address -> owner address
@@ -1176,11 +1195,13 @@ local focusedNow, focusedBefore = nil, nil
 local function adoptDialog(addr)
     local win = hl.get_window("address:" .. addr)
     if not win or not win.floating or win.class == "org.quickshell" then return end
-    if hasTag(win, "monocle") or hasTag(win, "app-opened") or win.pinned then return end
+    -- an app rule's window is the app's own, unless it's a prompt
+    local prompt = isPrompt(win.class)
+    if hasTag(win, "monocle") or (hasTag(win, "app-opened") and not prompt) or win.pinned then return end
     local ownerAddr = focusedNow == addr and focusedBefore or focusedNow
     local owner = ownerAddr and hl.get_window("address:" .. ownerAddr)
     if not owner or owner.address == addr then return end
-    if owner.pid ~= win.pid and not isPrompt(win.class) then return end
+    if owner.pid ~= win.pid and not prompt then return end
     dialogOwner[addr] = owner.address
     -- as a dialog it's no natural window for SUPER+M to tile
     hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = "address:" .. addr }))
@@ -1188,6 +1209,13 @@ local function adoptDialog(addr)
     if not hasTag(win, "popout") then
         hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = "address:" .. addr }))
         notifyShell()
+    end
+    -- a modal dialog or a prompt blocks its owner, as a popout does
+    if popupOpts.block and not popoutOwner[addr] and (hasTag(win, "modal") or prompt) then
+        if not hasTag(win, "from_" .. owner.address) then
+            hl.dispatch(hl.dsp.window.tag({ tag = "+from_" .. owner.address, window = "address:" .. addr }))
+        end
+        blockOwner(addr, owner.address)
     end
 end
 
@@ -1203,13 +1231,30 @@ local function raiseDialogs(addr, depth)
     end
 end
 
+-- Raises the windows a dialog came from under it, owner's owner first.
+local function raiseOwners(addr)
+    local chain, o = {}, dialogOwner[addr] or popoutOwner[addr]
+    while o and #chain < 4 do
+        table.insert(chain, 1, o)
+        o = dialogOwner[o] or popoutOwner[o]
+    end
+    if #chain == 0 then return end
+    for _, a in ipairs(chain) do
+        hl.dispatch(hl.dsp.window.alter_zorder({ mode = "top", window = "address:" .. a }))
+    end
+    hl.dispatch(hl.dsp.window.alter_zorder({ mode = "top", window = "address:" .. addr }))
+end
+
 hl.on("window.active", function()
     local win = hl.get_active_window()
     if not win then return end
     if win.address ~= focusedNow then focusedBefore, focusedNow = focusedNow, win.address end
     -- next tick: the focus change raises the window itself after the hooks
     local addr = win.address
-    hl.timer(function() raiseDialogs(addr, 0) end, { timeout = 1, type = "oneshot" })
+    hl.timer(function()
+        raiseOwners(addr)
+        raiseDialogs(addr, 0)
+    end, { timeout = 1, type = "oneshot" })
 end)
 -- after the rules' and holdPopup's tags are on
 hl.on("window.open", function(win)

@@ -182,6 +182,8 @@ for name, match in pairs({ ["system-prompts"] = { class = PROMPT_CLASSES }, ["mo
     hl.window_rule({ name = name .. "-exempt", match = match, tag = "+monocle-exempt" })
     hl.window_rule({ name = name .. "-popout", match = match, tag = "+popout" })
 end
+-- what windows.lua's adoptDialog blocks the owner for
+hl.window_rule({ name = "modal-dialogs-tag", match = { modal = true }, tag = "+modal" })
 
 -- A rule's size: "W H" in pixels, or a share of the screen ("60%").
 local function ruleSize(size)
