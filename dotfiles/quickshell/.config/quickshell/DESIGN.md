@@ -346,7 +346,7 @@ a click elsewhere leaves it. It slides in from the edge and fades.
   (Enter sends, Shift+Enter a new line), then 󰐕 (Area, Window, Screen,
   Paste, Selected), the model and Code's mode as chips a click steps
   through, what it's doing (pulsing) or the context used, Send or Stop.
-- **Bar module** (hidden by default for those who hid the old one): the
+- **Bar module** (key `claude`, the old module's, so a saved hide holds): the
   robot glyph, a spinner while it works, accent while a prompt waits or a
   reply is unread.
 
