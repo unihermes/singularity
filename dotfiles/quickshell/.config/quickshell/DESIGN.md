@@ -423,12 +423,12 @@ for the rest, chips for the way out.
 
 Clock, weather, now playing and system stats on the desktop. They have a
 look of their own, the same under every style and look (asked for
-2026-10-24, the mockup's "On the wallpaper"): no ground, frame or blur,
-the content straight on the wallpaper (`desktop/WidgetCard.qml`) in white
-and bold, kept legible on a light wallpaper by a tight dark shadow round
-every mark and a wide feathered shade behind the whole (no edge, so it
-reads as the wallpaper darkening, not a card); the system font, nothing
-under 13px, dimmed and faint tiers kept strong, the accent lifted. Each is its own
+2026-10-24): a card with a hard hairline edge round a see-through ground,
+dark at the top and fading to nearly clear, no blur
+(`desktop/WidgetCard.qml`); the content in white and bold with a tight
+dark shadow round every mark, the system font, nothing under 13px,
+dimmed and faint tiers kept strong, the accent lifted. A feathered shade
+with no edge was tried and dropped. Each is its own
 surface on the layer under the windows (`desktop/DesktopWidgets.qml`),
 named outside the shell's blur rule. Off until turned on in Appearance >
 Desktop > Widgets.

@@ -1,11 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/WidgetCard.qml
 //
-// A desktop widget's space: no ground at all, its content straight on the
-// wallpaper in white, kept legible on any wallpaper by a tight dark shadow
-// round every mark and a wide feathered shade behind the whole (no edge to
-// it, so it reads as the wallpaper darkening, not a card). The same under
-// every style. Sizes sit on one grid so they line up: small is one unit square,
+// A desktop widget's card: a hard hairline edge round a see-through ground
+// that's dark at the top and fades to nearly clear, its content in white
+// with a tight dark shadow round every mark. The same under every style. Sizes sit on one grid so they line up: small is one unit square,
 // medium two units and a gap wide, large two by two. Holds the inks and
 // type the widgets draw with.
 
@@ -39,14 +37,16 @@ Item {
     width: small ? unit : unit * 2 + gap
     height: large ? unit * 2 + gap : unit
 
-    // the feathered shade
-    RectangularShadow {
+    // the ground: a hard-edged card, dark at the top fading to nearly clear
+    Rectangle {
         anchors.fill: parent
-        anchors.margins: card.pad
-        radius: card.pad
-        blur: card.pad * 3
-        spread: card.pad / 2
-        color: Qt.rgba(0, 0, 0, 0.45)
+        radius: Math.round(card.unit * 0.14)
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.22)
+        gradient: Gradient {
+            GradientStop { position: 0; color: Qt.rgba(0, 0, 0, 0.5) }
+            GradientStop { position: 1; color: Qt.rgba(0, 0, 0, 0.12) }
+        }
     }
 
     Item {
