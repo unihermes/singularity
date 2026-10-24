@@ -496,8 +496,8 @@ Desktop > Widgets.
   in the window), the text under it to type in (the surface takes the
   keyboard once clicked into and keeps it wherever the pointer goes, until
   a click lands off it or Escape; input.lua's click event lets it hand the
-  keys back when Hyprland wouldn't, and keys it gets without a click go
-  straight back). New ones also come from the
+  keys back when Hyprland wouldn't; hovering never takes them, since it asks
+  for the keyboard only from the press on). New ones also come from the
   desktop's menu (where the click was) and edit mode's shelf (the middle).
   Their places live in notes.json with the tabs. The first starts a gap
   under the stats.

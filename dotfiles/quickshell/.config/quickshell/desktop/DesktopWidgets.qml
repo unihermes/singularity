@@ -137,15 +137,21 @@ Scope {
             visible: root.shown(modelData) && !root.editing && widget.width > 0
             WlrLayershell.layer: WlrLayer.Bottom
             // A note takes typing once clicked into and keeps it wherever
-            // the pointer goes, until a click lands off it or Esc. Hyprland
-            // leaves the keys here when the window clicked is the one it
-            // focused last, so on input.lua's click event the note hands
-            // them back itself; and keys it got with no click (Hyprland
-            // refocusing what's under the pointer) go straight back.
+            // the pointer goes, until a click lands off it or Esc. It asks
+            // for the keys only from the press on, or Hyprland would hand
+            // them over on hover: exclusively until they come (on demand
+            // alone they'd wait for the pointer to move), then on demand.
+            // Hyprland leaves the keys here when the window clicked is the
+            // one it focused last, so on input.lua's click event the note
+            // hands them back itself.
             readonly property bool note: modelData.indexOf("note:") === 0
             property real pressedAt: 0
-            WlrLayershell.keyboardFocus: note ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            property bool holdsKeys: false
+            property bool grabbing: false
+            WlrLayershell.keyboardFocus: !note || !holdsKeys ? WlrKeyboardFocus.None
+                : grabbing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
             function giveBack() {
+                holdsKeys = false
                 Hyprland.dispatch("hl.get_active_window() and hl.dsp.focus({ window = \"address:\" .. "
                     + "hl.get_active_window().address }) or hl.dsp.no_op()")
             }
@@ -161,12 +167,6 @@ Scope {
                 id: afterClick
                 interval: 100
                 onTriggered: if (widget.hasKeys && Date.now() - win.pressedAt > 300) win.giveBack()
-            }
-            // the keys come a moment before the press that brought them
-            Timer {
-                id: unclicked
-                interval: 300
-                onTriggered: if (widget.hasKeys && Date.now() - win.pressedAt > 800) win.giveBack()
             }
             // outside the shell's blur rule: nothing behind it is frosted
             WlrLayershell.namespace: "desktop-widget"
@@ -187,7 +187,10 @@ Scope {
                 desk: root
                 onLetGo: win.giveBack()
                 readonly property bool hasKeys: Window.active
-                onHasKeysChanged: if (hasKeys && win.note) unclicked.restart()
+                onHasKeysChanged: {
+                    if (hasKeys) win.grabbing = false
+                    else if (!win.grabbing) win.holdsKeys = false
+                }
                 x: win.rect.x - win.margins.left
                 y: win.rect.y - win.margins.top
                 onWidthChanged: root.report(key, width, height)
@@ -201,7 +204,11 @@ Scope {
                 PointHandler {
                     enabled: win.note
                     acceptedButtons: Qt.LeftButton
-                    onActiveChanged: if (active) win.pressedAt = Date.now()
+                    onActiveChanged: if (active) {
+                        win.pressedAt = Date.now()
+                        win.holdsKeys = true
+                        if (!widget.hasKeys) win.grabbing = true
+                    }
                 }
             }
 
