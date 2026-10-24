@@ -8,7 +8,8 @@
 // shell out. A singleton so the lazily loaded pages need no null guards;
 // the static half is SystemSpecs.qml. Samples only while `sampling`: the
 // window is showing (`active`) or a flyout that reads it is open
-// (`flyoutActive`); the graphs start empty each open.
+// (`flyoutActive`); the graphs start empty each open. The desktop's stats
+// widget keeps the CPU, memory and temperature going on their own (`light`).
 
 pragma Singleton
 
@@ -22,6 +23,9 @@ Singleton {
     property bool active: false
     property bool flyoutActive: false
     readonly property bool sampling: active || flyoutActive
+    // the desktop's stats widget: CPU, memory and the temperature only,
+    // while nothing above wants the rest
+    readonly property bool light: !sampling && Settings.deskWidget("stats").on
     // set while the pointer is over a process list: a refresh landing then
     // is dropped, so a row can't move out from under a click
     property bool holdProcs: false
@@ -480,6 +484,17 @@ Singleton {
         running: root.sampling
         triggeredOnStart: true
         onTriggered: if (!dfProc.running) dfProc.running = true
+    }
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.light
+        triggeredOnStart: true
+        onTriggered: {
+            root.sampleCpu(); root.sampleMem(); root.sampleTemp()
+            if (root.tempC >= 0) root.tempHistory = root.pushHistory(root.tempHistory, root.tempC)
+        }
     }
 
     // cleared on close, so the next open starts from fresh baselines

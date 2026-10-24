@@ -413,6 +413,33 @@ Singleton {
     // asked for, as it listens on the network
     readonly property alias phoneLinkOn: adapter.phoneLinkOn
     function setPhoneLinkOn(on) { adapter.phoneLinkOn = !!on }
+    // Desktop widgets (desktop/), by key: { on, screen, size, fx, fy }.
+    // fx and fy place it across the room the screen leaves it (0 the left
+    // or top edge, 1 the other); below 0 it sits where it starts out.
+    // screen "" is the first screen.
+    readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats"]
+    readonly property var deskWidgetSizes: ["s", "m", "l"]
+    function deskWidget(key) {
+        var w = (adapter.desktopWidgets || {})[key] || {}
+        return { on: w.on === true, screen: String(w.screen || ""),
+                 size: deskWidgetSizes.indexOf(w.size) !== -1 ? w.size : "m",
+                 fx: typeof w.fx === "number" ? w.fx : -1, fy: typeof w.fy === "number" ? w.fy : -1 }
+    }
+    function setDeskWidget(key, patch) {
+        if (deskWidgetKeys.indexOf(key) === -1) return
+        var all = {}, cur = adapter.desktopWidgets || {}
+        for (var k in cur) all[k] = cur[k]
+        var w = deskWidget(key)
+        for (var f in patch) w[f] = patch[f]
+        all[key] = w
+        adapter.desktopWidgets = all
+    }
+    // back where they start out, on the first screen at the middle size
+    function resetDeskWidgets() {
+        var all = {}
+        for (var k of deskWidgetKeys) all[k] = { on: deskWidget(k).on }
+        adapter.desktopWidgets = all
+    }
     // Software Update: minutes between checks (0: only when asked), the AUR,
     // and packages left out
     readonly property alias updateInterval: adapter.updateInterval
@@ -1073,6 +1100,7 @@ Singleton {
             property bool vpnWanted: false
             property bool vpnQbit: true
             property bool phoneLinkOn: false
+            property var desktopWidgets: ({})
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

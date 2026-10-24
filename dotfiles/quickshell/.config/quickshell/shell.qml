@@ -15,6 +15,7 @@ import "flyouts"
 import "bar"
 import "windows"
 import "sidebar"
+import "desktop"
 import "services/TimeWindow.js" as TimeWindow
 import Quickshell
 import Quickshell.Io
@@ -276,6 +277,15 @@ ShellRoot {
         function edit(): void { root.barEditRequested() }
     }
 
+    // Edit mode for the focused screen's desktop widgets, on or off:
+    // `qs ipc call widgets edit`
+    signal widgetEditRequested()
+
+    IpcHandler {
+        target: "widgets"
+        function edit(): void { root.widgetEditRequested() }
+    }
+
     // The power menu (SUPER+SHIFT+E)
     signal powerMenuToggled()
 
@@ -420,6 +430,18 @@ ShellRoot {
                 target: root
                 function onBarEditRequested() {
                     if (screenScope.isFocusedScreen()) screenScope.editBar()
+                }
+            }
+
+            // the desktop widgets' edit mode, over everything on this screen
+            function editWidgets() { screenScope.openFlyout = "widgetedit" }
+
+            Connections {
+                target: root
+                function onWidgetEditRequested() {
+                    if (!screenScope.isFocusedScreen()) return
+                    if (screenScope.openFlyout === "widgetedit") screenScope.openFlyout = ""
+                    else screenScope.editWidgets()
                 }
             }
 
@@ -595,6 +617,12 @@ ShellRoot {
             trayMenu: trayMenu
         }
 
+        // clock, weather, music and stats on the desktop, under the windows
+        DesktopWidgets {
+            id: deskWidgets
+            scope: screenScope
+        }
+
         // --- flyouts --------------------------------------------------
         // Each is its own layer surface. LazyFlyout builds one on first open;
         // the toasts and ALT+Tab are always built, as they must react at once.
@@ -672,6 +700,9 @@ ShellRoot {
 
         // right-click menu for the bar's empty space
         LazyFlyout { name: "barmenu"; scope: screenScope; BarMenuFlyout { scope: screenScope } }
+
+        // the desktop widgets' edit mode
+        LazyFlyout { name: "widgetedit"; scope: screenScope; WidgetEditor { scope: screenScope; layer: deskWidgets } }
 
         // the bar's edit mode: hidden modules, Reset, Done
         LazyFlyout { name: "baredit"; scope: screenScope; BarEditFlyout { scope: screenScope } }

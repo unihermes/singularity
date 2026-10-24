@@ -204,9 +204,10 @@ Singleton {
         }
     }
 
-    // only while something shows it: the bar's Weather, or Night light
-    // following the sunset
-    readonly property bool wanted: Settings.widgetVisible("weather") || Settings.nightLightSchedule === "sun"
+    // only while something shows it: the bar's Weather, the desktop's, or
+    // Night light following the sunset
+    readonly property bool wanted: Settings.widgetVisible("weather") || Settings.deskWidget("weather").on
+        || Settings.nightLightSchedule === "sun"
 
     Timer {
         interval: 1800000

@@ -419,6 +419,32 @@ for the rest, chips for the way out.
   group, dim while hidden, a click hides or shows it; the list by group to
   drag and switch; Edit, Reset (two clicks) and Settings as chips.
 
+## Desktop widgets
+
+Clock, weather, now playing and system stats on the desktop (picked
+2026-10-24): each a small panel drawn exactly as a flyout is (WidgetFrame:
+the style's frame, ground, section runs and heading), so it follows the
+style and look like everything else. Each is its own surface on the layer
+under the windows (`desktop/DesktopWidgets.qml`). Off until turned on in
+Appearance > Desktop > Widgets.
+
+- **Where they start:** the clock in the bottom left corner with the
+  weather beside it, the stats top right, the music bottom right, 40px in.
+  A moved one is stored as fractions of the room the screen leaves it
+  (`WidgetPlacement.js`), so one on an edge stays on it.
+- **Edit mode** (right-click a widget, Placement in Settings, `qs ipc call
+  widgets edit`): the screen dims under the bar and the widgets come over
+  everything, outlined. Drag one anywhere; it snaps to the middle, the
+  thirds and the margin in from each edge, an accent line showing which.
+  The picked one has an accent ring and a toolbar: size (S, M, L scale the
+  whole panel), Move to another screen, Hide. The shelf under the bar adds
+  back hidden ones, Resets places, and is Done (or Escape).
+- **Music** dims the art while paused; with no player it says Nothing
+  playing and offers to open the last player of the session.
+- **Stats** reads CPU, memory and temperature through SystemStats' light
+  sampling, and GPU load from Cooling (desktops with nvidia-smi); a missing
+  reading drops its row.
+
 ## Settings pages
 
 Every page sets `sectioned: true` on its `SettingsPage`. The System

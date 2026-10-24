@@ -1,7 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/DesktopTab.qml
 //
-// The Appearance page's Desktop tab: WALLPAPER, WINDOWS (gaps, borders,
+// The Appearance page's Desktop tab: WALLPAPER, WIDGETS (which show on the
+// desktop, and their edit mode), WINDOWS (gaps, borders,
 // corners, shadow, tab bar), EFFECTS (opacity, dim, blur) and MOTION, with
 // neighbouring steppers, switches and segments two to a line and the three
 // per-part speeds folded away.
@@ -192,6 +193,47 @@ SettingsTab {
                 text: Settings.colourMode === "wallpaper" ? "Back to grayscale" : "Use its colours"
                 onClicked: Settings.set("colourMode", Settings.colourMode === "wallpaper" ? "grayscale" : "wallpaper")
             }
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "WIDGETS" }
+
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        Repeater {
+            model: [{ key: "clock", label: "Clock", hint: "The day, the time and the week" },
+                    { key: "weather", label: "Weather", hint: "Now and the next five days" },
+                    { key: "music", label: "Now playing", hint: "The Music module's player" },
+                    { key: "stats", label: "System", hint: "CPU, GPU, memory, temperature" }]
+
+            SettingsField {
+                required property var modelData
+                width: desktopTab.half
+                labelWidth: desktopTab.switchLabel
+                label: modelData.label
+                hint: modelData.hint
+                Switch {
+                    anchors.right: parent.right
+                    checked: Settings.deskWidget(modelData.key).on
+                    onToggled: Settings.setDeskWidget(modelData.key, { on: !checked })
+                }
+            }
+        }
+    }
+
+    SettingsField {
+        labelWidth: parent.width - placeChip.width - Theme.spaceL
+        label: "Placement"
+        hint: "Drag them about on the desktop; right-clicking one does the same"
+        FlyoutChip {
+            id: placeChip
+            anchors.right: parent.right
+            text: "Edit placement"
+            onClicked: Quickshell.execDetached(["qs", "ipc", "call", "widgets", "edit"])
         }
     }
 
