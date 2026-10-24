@@ -354,7 +354,8 @@ for the rest, chips for the way out.
 - **Root:** a `HeadCard` (the Arch glyph, user@host, how long it's been up
   and the look; the power button at its end opens Power), and in the same
   frame the five toggles as `FlyoutToggle`s (Quiet, Night, Awake, Game,
-  Airplane), Warmth under them while Night Light is on. Then Applications,
+  Airplane), Warmth under them while Night Light is on, then the power
+  profile as a segmented strip (gone while PPD isn't answering). Then Applications,
   Appearance and Bar Widgets as rows; the screen tools (Shot, Colour,
   Text) and the windows (Settings, System, Keys) as two `FlyoutChipLine`s.
 - **Submenus** have no Back row: the heading reads

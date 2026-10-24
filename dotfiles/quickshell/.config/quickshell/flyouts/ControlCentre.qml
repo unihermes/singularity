@@ -30,11 +30,12 @@ FlyoutPanel {
 
     // "" is the root list, anything else a submenu drawn in the same box
     property string page: ""
-    // always reopen at the top level; the card's uptime and the airplane
-    // state are read on each open
+    // always reopen at the top level; the card's uptime, the airplane
+    // state and the power profile are read on each open
     onOpenChanged: if (open) {
         SystemStats.sampleUptime()
         rfkillRead.running = true
+        PpdProfile.refresh()
     } else page = ""
 
     property string appQuery: ""
@@ -208,6 +209,14 @@ FlyoutPanel {
         // minus is warmer, which is the way the kelvin number goes
         // anyway, so the buttons need no inversion
         onStepped: d => Settings.step("nightLightKelvin", d * 250)
+    }
+
+    // left out while power-profiles-daemon isn't answering
+    FlyoutSegmented {
+        visible: controlCentre.page === "" && PpdProfile.profile !== ""
+        model: PpdProfile.choices
+        current: PpdProfile.profile
+        onPicked: v => PpdProfile.set(v)
     }
 
     Repeater {
