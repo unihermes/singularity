@@ -6,8 +6,10 @@
 // screen's middle, its thirds, the margin in from each edge and the other
 // widgets (in line, or a gap beside), a guide showing the line it took.
 // The one picked gets its size (small, medium, large), Hide, and Move to
-// the other screen. The shelf under the bar adds back hidden widgets,
-// resets them all, and finishes, as Escape does.
+// the other screen (a sticky note's Hide leaves it in the Notes window).
+// The shelf under the bar adds back hidden widgets, a new sticky note in
+// the middle, resets the built-in ones' places, and finishes, as Escape
+// does.
 
 import Quickshell
 import Quickshell.Wayland
@@ -35,8 +37,9 @@ OverlayWindow {
     onOpenChanged: { picked = ""; guides = [] }
 
     readonly property var others: Quickshell.screens.filter(s => s.name !== screen.name)
-    readonly property var hidden: Settings.deskWidgetKeys.filter(k => !Settings.deskWidget(k).on)
-    readonly property var names: ({ clock: "Clock", weather: "Weather", music: "Now playing", stats: "System", note: "Note" })
+    // the built-in widgets that are off, to add back
+    readonly property var hidden: Settings.deskWidgetKeys.filter(k => !layer.placeOf(k).on)
+    readonly property var names: ({ clock: "Clock", weather: "Weather", music: "Now playing", stats: "System" })
 
     Item {
         id: canvas
@@ -74,7 +77,7 @@ OverlayWindow {
         }
 
         Repeater {
-            model: Settings.deskWidgetKeys.filter(k => root.layer.shown(k))
+            model: root.layer.keys.filter(k => root.layer.shown(k))
 
             Item {
                 id: slot
@@ -94,7 +97,8 @@ OverlayWindow {
                 DeskWidget {
                     id: widget
                     key: slot.modelData
-                    size: Settings.deskWidget(slot.modelData).size
+                    size: root.layer.placeOf(slot.modelData).size
+                    desk: root.layer
                 }
 
                 Rectangle {
@@ -119,7 +123,7 @@ OverlayWindow {
                         if (!pressed) return
                         const p = mapToItem(canvas, mouse.x, mouse.y)
                         if (!slot.dragged && Math.hypot(mouse.x - slot.grab.x, mouse.y - slot.grab.y) < Theme.sp(4)) return
-                        const others = Settings.deskWidgetKeys
+                        const others = root.layer.keys
                             .filter(k => k !== slot.modelData && root.layer.shown(k)).map(k => root.layer.rectOf(k))
                         const s = Placement.snap({ x: p.x - slot.grab.x, y: p.y - slot.grab.y, w: slot.width, h: slot.height },
                                                  root.layer.area, root.layer.margin, Theme.sp(10), others, root.layer.gap)
@@ -128,7 +132,7 @@ OverlayWindow {
                     }
                     onReleased: {
                         if (slot.dragged)
-                            Settings.setDeskWidget(slot.modelData, Placement.fractionsOf(slot.dragged, root.layer.area))
+                            root.layer.setPlace(slot.modelData, Placement.fractionsOf(slot.dragged, root.layer.area))
                         slot.dragged = null
                         root.guides = []
                     }
@@ -154,8 +158,8 @@ OverlayWindow {
                             width: Theme.fit(120)
                             anchors.verticalCenter: parent.verticalCenter
                             model: [{ value: "s", text: "S" }, { value: "m", text: "M" }, { value: "l", text: "L" }]
-                            current: Settings.deskWidget(slot.modelData).size
-                            onPicked: v => Settings.setDeskWidget(slot.modelData, { size: v })
+                            current: root.layer.placeOf(slot.modelData).size
+                            onPicked: v => root.layer.setPlace(slot.modelData, { size: v })
                         }
                         Repeater {
                             model: root.others
@@ -164,7 +168,7 @@ OverlayWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 icon: "󰍹"
                                 text: "Move to " + modelData.name
-                                onClicked: Settings.setDeskWidget(slot.modelData, { screen: modelData.name })
+                                onClicked: root.layer.setPlace(slot.modelData, { screen: modelData.name })
                             }
                         }
                         FlyoutChip {
@@ -172,7 +176,7 @@ OverlayWindow {
                             icon: "󰈉"
                             text: "Hide"
                             onClicked: {
-                                Settings.setDeskWidget(slot.modelData, { on: false })
+                                root.layer.setPlace(slot.modelData, { on: false })
                                 root.picked = ""
                             }
                         }
@@ -212,6 +216,13 @@ OverlayWindow {
                         text: root.names[modelData]
                         onClicked: Settings.setDeskWidget(modelData, { on: true, screen: root.screen.name })
                     }
+                }
+                FlyoutChip {
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: "󰐕"
+                    text: "Note"
+                    onClicked: root.layer.newNoteAt(root.layer.area.x + root.layer.area.w / 2 - root.layer.noteSize.w / 2,
+                                                    root.layer.area.y + root.layer.area.h / 2 - root.layer.noteSize.h / 2)
                 }
                 FlyoutChip {
                     anchors.verticalCenter: parent.verticalCenter

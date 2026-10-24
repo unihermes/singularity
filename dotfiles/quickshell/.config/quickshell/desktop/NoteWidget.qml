@@ -1,9 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/NoteWidget.qml
 //
-// One of the Notes tabs (SUPER+N) on the desktop, to read and type in: its
-// title in the accent with ‹ › to show another tab, the text under it.
-// Typing here and in the Notes window lands in the same tab (Notes.edited).
+// A sticky note on the desktop: one of the Notes tabs (SUPER+N), to read
+// and type in. Its title in the accent, + for a new note beside it and ×
+// to take it off the desktop (it stays in the Notes window). Typing here
+// and in the window lands in the same tab (Notes.edited).
 
 import QtQuick
 import "../services"
@@ -11,22 +12,16 @@ import "../services"
 WidgetCard {
     id: root
 
-    // the tab shown: the one saved by title, else the first
-    readonly property int index: {
-        const t = Settings.deskWidget("note").tab
-        const i = Notes.tabs.findIndex(x => x.title === t)
-        return i >= 0 ? i : 0
-    }
-    readonly property var tab: Notes.tabs[index] || { title: "Note", text: "" }
+    required property string noteId
+    // the screen's DesktopWidgets, which places a new note
+    property var desk: null
 
-    function show(delta) {
-        const n = Notes.tabs.length
-        if (n < 2) return
-        Settings.setDeskWidget("note", { tab: Notes.tabs[((index + delta) % n + n) % n].title })
-    }
+    readonly property int index: Notes.indexOf(noteId)
+    readonly property var tab: Notes.tabs[index] || { title: "", text: "" }
 
     // set rather than bound, so typing doesn't fight a binding
-    function load() { if (editor.text !== tab.text) editor.text = tab.text }
+    // (not while it's going: its tab already gone)
+    function load() { if (index >= 0 && editor && editor.text !== tab.text) editor.text = tab.text }
     onIndexChanged: load()
     Connections {
         target: Notes
@@ -42,7 +37,7 @@ WidgetCard {
 
         WidgetText {
             id: title
-            width: parent.width - arrows.width
+            width: parent.width - tools.width - Theme.fit(8)
             card: root
             px: Theme.fit(13)
             text: root.tab.title.toUpperCase()
@@ -51,12 +46,23 @@ WidgetCard {
             font.letterSpacing: 1
         }
         Row {
-            id: arrows
-            visible: Notes.tabs.length > 1
+            id: tools
             anchors.right: parent.right
+            anchors.verticalCenter: title.verticalCenter
             spacing: Theme.fit(12)
-            WidgetGlyph { card: root; px: Theme.fit(14); text: "󰅁"; onClicked: root.show(-1) }
-            WidgetGlyph { card: root; px: Theme.fit(14); text: "󰅂"; onClicked: root.show(1) }
+            WidgetGlyph {
+                card: root
+                px: Theme.fit(15)
+                text: "󰐕"
+                active: !!root.desk
+                onClicked: root.desk.newNoteBeside("note:" + root.noteId)
+            }
+            WidgetGlyph {
+                card: root
+                px: Theme.fit(15)
+                text: "󰅖"
+                onClicked: Notes.setDesk(root.index, null)
+            }
         }
     }
 

@@ -462,7 +462,7 @@ Desktop > Widgets.
   back hidden ones, Resets places, and is Done (or Escape). The edit chrome
   is the style's, like the bar's edit mode.
 - **The desktop's menu** (right-click bare desktop, at the pointer): Edit
-  widgets, Next wallpaper, Desktop settings. A full-screen surface under
+  widgets, New sticky note, Next wallpaper, Desktop settings. A full-screen surface under
   the widgets takes the right-click.
 - **Clock:** the day in the accent over the time, its seconds small beside it; medium adds the month,
   ISO week and this week as a strip with today lit, large the whole month.
@@ -472,10 +472,15 @@ Desktop > Widgets.
 - **Music:** the art (dimmed while paused), the player in the accent, the
   track, a thin progress line (click to seek) and bare transport glyphs;
   with no player it says Nothing playing and offers the last one.
-- **Note:** one of the SUPER+N Notes tabs, its title in the accent with
-  ‹ › to show another, the text under it to type in (the surface takes
-  the keyboard once clicked into; Escape lets go). Typing here and in the
-  Notes window lands in the same tab. Starts a gap under the stats.
+- **Sticky notes:** any number, each a Notes tab (SUPER+N) pinned to the
+  desktop; every note lives in the Notes window, where 󰐃 on a tab pins or
+  unpins it. On the desktop: the title in the accent, + for a new note
+  beside it (under, else over, else to the left), × to unpin it (it stays
+  in the window), the text under it to type in (the surface takes the
+  keyboard once clicked into; Escape lets go). New ones also come from the
+  desktop's menu (where the click was) and edit mode's shelf (the middle).
+  Their places live in notes.json with the tabs. The first starts a gap
+  under the stats.
 - **Stats:** a bar each for CPU, GPU (Cooling, desktops with nvidia-smi),
   memory and temperature, label left and value right (over the bar when
   small); large adds the last minute of CPU and memory in use. A missing

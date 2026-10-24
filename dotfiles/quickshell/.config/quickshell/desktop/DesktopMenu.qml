@@ -2,7 +2,8 @@
 // ~/.config/quickshell/desktop/DesktopMenu.qml
 //
 // Right-click menu for the bare desktop, at the pointer: edit the widgets
-// in place, the next wallpaper, or the Desktop settings.
+// in place, a new sticky note where the click was, the next wallpaper, or
+// the Desktop settings.
 
 import QtQuick
 import "../services"
@@ -23,6 +24,15 @@ FlyoutPanel {
         leadingIcon: "󰏫"
         label: "Edit widgets"
         onActivated: menu.scope.editWidgets()
+    }
+
+    FlyoutRow {
+        leadingIcon: "󰐕"
+        label: "New sticky note"
+        onActivated: {
+            menu.requestClose()
+            menu.layer.newNoteAt(menu.anchorX, menu.layer.menuY)
+        }
     }
 
     FlyoutRow {

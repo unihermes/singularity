@@ -3,9 +3,11 @@
 //
 // Sticky notes (SUPER+N): tabbed, pinned top-right over every workspace by
 // window-rules.lua's "notes" rule; saved as you type (services/Notes.qml).
+// Every note lives here; a pinned one also shows on the desktop.
 //
 //   click a tab           switch to it
 //   double-click a tab    rename it (Enter keeps, Escape drops)
+//   󰐃  on the open tab    put it on the desktop, or take it off (lit there)
 //   󰅖  on the open tab    delete it; a second click confirms when it has text
 //   Ctrl+T / Ctrl+W       new tab / delete the open one
 //   Ctrl+Tab, Ctrl+PgDn   next tab (Shift / PgUp for the previous)
@@ -171,6 +173,28 @@ FloatingWindow {
                         Keys.onEnterPressed: finish(true)
                         Keys.onEscapePressed: finish(false)
                         onActiveFocusChanged: if (!activeFocus) finish(true)
+                    }
+
+                    // on the desktop: a pin, lit while it's there; the open
+                    // tab's puts it there or takes it off
+                    Text {
+                        visible: !tab.editing && (tab.open || !!tab.modelData.desk)
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "󰐃"
+                        color: tab.modelData.desk ? Theme.accent
+                            : pinMouse.containsMouse ? Theme.textStrong : Theme.subtext
+                        font.family: Theme.fontIcon
+                        font.pixelSize: Theme.fontSmall
+
+                        MouseArea {
+                            id: pinMouse
+                            anchors.fill: parent
+                            anchors.margins: -Theme.spaceS
+                            enabled: tab.open
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Notes.toggleDesk(tab.index)
+                        }
                     }
 
                     // delete, on the open tab only
