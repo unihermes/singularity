@@ -10,6 +10,7 @@
 // the whole screen takes right-clicks, for the desktop's menu.
 
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import QtQuick
 import "../services"
@@ -133,16 +134,38 @@ Scope {
             screen: root.screen
             visible: root.shown(modelData) && !root.editing && widget.width > 0
             WlrLayershell.layer: WlrLayer.Bottom
-            // A note takes typing once clicked into, and only while the
-            // pointer stays over it or until Esc: Hyprland doesn't always
-            // take the keys back when the window it last focused is clicked.
-            // The to-do takes it once clicked into.
-            property bool holdsKeys: false
-            WlrLayershell.keyboardFocus: holdsKeys ? WlrKeyboardFocus.OnDemand
-                : modelData === "todo" ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
-            HoverHandler {
-                enabled: win.modelData.indexOf("note:") === 0
-                onHoveredChanged: win.holdsKeys = hovered
+            // A note takes typing once clicked into and keeps it wherever
+            // the pointer goes, until a click lands off it or Esc. Hyprland
+            // leaves the keys here when the window clicked is the one it
+            // focused last, so on input.lua's click event the note hands
+            // them back itself; and keys it got with no click (Hyprland
+            // refocusing what's under the pointer) go straight back.
+            readonly property bool note: modelData.indexOf("note:") === 0
+            property real pressedAt: 0
+            // The to-do takes typing once clicked into.
+            WlrLayershell.keyboardFocus: note || modelData === "todo" ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            function giveBack() {
+                Hyprland.dispatch("hl.get_active_window() and hl.dsp.focus({ window = \"address:\" .. "
+                    + "hl.get_active_window().address }) or hl.dsp.no_op()")
+            }
+            Connections {
+                target: win.note ? Hyprland : null
+                function onRawEvent(event) {
+                    if (event.name === "custom" && event.data === "singularity-click") afterClick.restart()
+                }
+            }
+            // after Hyprland has dealt with the click: still here, and not
+            // clicked on itself
+            Timer {
+                id: afterClick
+                interval: 100
+                onTriggered: if (widget.hasKeys && Date.now() - win.pressedAt > 300) win.giveBack()
+            }
+            // the keys come a moment before the press that brought them
+            Timer {
+                id: unclicked
+                interval: 300
+                onTriggered: if (widget.hasKeys && Date.now() - win.pressedAt > 800) win.giveBack()
             }
             // outside the shell's blur rule: nothing behind it is frosted
             WlrLayershell.namespace: "desktop-widget"
@@ -159,12 +182,24 @@ Scope {
                 key: win.modelData
                 size: win.place.size
                 desk: root
-                onLetGo: win.holdsKeys = false
+                onLetGo: win.giveBack()
+                readonly property bool hasKeys: Window.active
+                onHasKeysChanged: if (hasKeys && win.note) unclicked.restart()
                 x: win.rect.x - win.margins.left
                 y: win.rect.y - win.margins.top
                 onWidthChanged: root.report(key, width, height)
                 onHeightChanged: root.report(key, width, height)
                 Component.onCompleted: root.report(key, width, height)
+            }
+
+            // over the note, so it sees the press before the text takes it
+            Item {
+                anchors.fill: widget
+                PointHandler {
+                    enabled: win.note
+                    acceptedButtons: Qt.LeftButton
+                    onActiveChanged: if (active) win.pressedAt = Date.now()
+                }
             }
 
             MouseArea {

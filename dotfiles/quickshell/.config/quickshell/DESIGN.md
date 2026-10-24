@@ -483,8 +483,10 @@ Desktop > Widgets.
   unpins it. On the desktop: the title in the accent, + for a new note
   beside it (under, else over, else to the left), × to unpin it (it stays
   in the window), the text under it to type in (the surface takes the
-  keyboard once clicked into, and lets go when the pointer leaves it or on
-  Escape). New ones also come from the
+  keyboard once clicked into and keeps it wherever the pointer goes, until
+  a click lands off it or Escape; input.lua's click event lets it hand the
+  keys back when Hyprland wouldn't, and keys it gets without a click go
+  straight back). New ones also come from the
   desktop's menu (where the click was) and edit mode's shelf (the middle).
   Their places live in notes.json with the tabs. The first starts a gap
   under the stats.

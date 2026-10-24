@@ -46,3 +46,9 @@ hl.gesture({
     direction = "horizontal",
     action    = "workspace",
 })
+
+-- Every left click, passed on untouched, tells the shell one happened: a
+-- sticky note on the desktop lets go of the keyboard when a click lands
+-- off it. Hyprland leaves the keys with the note when the window clicked
+-- is the one focused before it.
+hl.bind("mouse:272", hl.dsp.event("singularity-click"), { non_consuming = true })
