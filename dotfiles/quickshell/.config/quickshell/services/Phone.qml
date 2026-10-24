@@ -4,7 +4,7 @@
 // An Android phone over adb: which one is connected (USB), or offers
 // wireless debugging over mDNS once paired, its battery, and the phone on
 // screen through scrcpy with its sound, its clipboard shared and its own
-// screen off. USB is used when it's plugged in, as it's smoother. Over
+// screen off, still off once the mirror closes. USB is used when it's plugged in, as it's smoother. Over
 // Wi-Fi adb joins the phone only for Mirror and Screenshot and leaves it
 // after, so the phone's "Wireless debugging connected" notification is
 // only up while it's used (adb's own joining is off: ADB_MDNS_AUTO_CONNECT).
@@ -146,7 +146,7 @@ Singleton {
         withPhone((serial, joined) => {
             mirrorProc.joined = joined ? serial : ""
             mirrorProc.command = ["scrcpy", "-s", serial, "--window-title", name || "Phone",
-                "--turn-screen-off", "--stay-awake"].concat(app ? ["--start-app=" + app] : [])
+                "--turn-screen-off", "--stay-awake", "--power-off-on-close"].concat(app ? ["--start-app=" + app] : [])
             mirrorProc.running = true
         })
     }
