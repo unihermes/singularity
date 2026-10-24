@@ -330,14 +330,14 @@ Singleton {
                 var keys = [
                     ["BitTorrent", "Session\\Interface", root.iface],
                     ["BitTorrent", "Session\\InterfaceName", root.iface],
-                    ["Preferences", "WebUI\\Enabled", "true"],
-                    ["Preferences", "WebUI\\Address", "127.0.0.1"],
-                    ["Preferences", "WebUI\\Port", String(root.qbitWebPort)],
-                    ["Preferences", "WebUI\\LocalHostAuth", "false"],
+                    ["WebUI", "Enabled", "true"],
+                    ["WebUI", "Address", "127.0.0.1"],
+                    ["WebUI", "Port", String(root.qbitWebPort)],
+                    ["WebUI", "LocalHostAuth", "false"],
                 ]
-                if (!/^WebUI\\Password_PBKDF2=/m.test(text)) {
-                    keys.push(["Preferences", "WebUI\\Username", "singularity"])
-                    keys.push(["Preferences", "WebUI\\Password_PBKDF2", '"@ByteArray(Y4YZVcMTo1OqEPGs/vILGA==:HmhjZ/toCxwBXExVze4QQSrsrfPAzlC3UzMO9tVBQsIu6ZxN0fHNR5vzT/UmzAWdMZF1c6AWvnuyl8EENlkjfA==)"'])
+                if (!/^Password_PBKDF2=/m.test(text)) {
+                    keys.push(["WebUI", "Username", "singularity"])
+                    keys.push(["WebUI", "Password_PBKDF2", '"@ByteArray(Y4YZVcMTo1OqEPGs/vILGA==:HmhjZ/toCxwBXExVze4QQSrsrfPAzlC3UzMO9tVBQsIu6ZxN0fHNR5vzT/UmzAWdMZF1c6AWvnuyl8EENlkjfA==)"'])
                 }
                 if (root.port > 0) keys.push(["BitTorrent", "Session\\Port", String(root.port)])
                 keys.forEach(k => { text = VpnConf.iniSet(text, k[0], k[1], k[2]) })
