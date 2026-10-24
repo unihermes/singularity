@@ -76,6 +76,11 @@ Singleton {
     }
     onCodecChanged: restartReplay()
 
+    // a replay length as Settings names it: "30 s", "1:30", "2 min"
+    function lengthLabel(s) {
+        return s < 60 ? s + " s" : s % 60 ? Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") : s / 60 + " min"
+    }
+
     // whether this GPU encodes AV1, from the recorder's --info
     property bool av1Supported: false
     readonly property string codec: av1Supported && Settings.recordCodec === "av1" ? "av1" : "h264"

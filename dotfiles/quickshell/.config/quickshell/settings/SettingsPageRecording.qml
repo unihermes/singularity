@@ -18,8 +18,7 @@ SettingsPage {
     title: "Recording"
     description: "Recordings of the screen, and the last minute of a game kept to save."
 
-    readonly property var lengths: [30, 60, 120, 300]
-    function lengthLabel(s) { return s < 60 ? s + " s" : (s / 60) + " min" }
+    readonly property var lengths: [30, 60, 90, 120, 300]
 
     SettingsNote {
         visible: !Recorder.available
@@ -54,11 +53,11 @@ SettingsPage {
             anchors.right: parent.right
             fill: false
             model: page.lengths
-            labelFor: v => page.lengthLabel(v)
+            labelFor: v => Recorder.lengthLabel(v)
             current: Settings.replaySeconds
             onPicked: v => {
                 Settings.setReplaySeconds(v)
-                page.say("Replays keep " + page.lengthLabel(v), false)
+                page.say("Replays keep " + Recorder.lengthLabel(v), false)
             }
         }
     }
@@ -69,7 +68,7 @@ SettingsPage {
     SettingsField {
         label: "Format"
         hint: !Recorder.av1Supported ? "This GPU can't encode AV1, so H.264"
-            : Settings.recordCodec === "av1" ? "Smaller at the same quality; older phones and editors can't play it"
+            : Settings.recordCodec === "av1" ? "Smaller files; some older phones can't play them"
             : "Plays anywhere, in bigger files"
 
         FlyoutSegmented {
@@ -110,6 +109,6 @@ SettingsPage {
     }
 
     SettingsNote {
-        text: "Keys to record and save a replay are among the Keybinds window's presets"
+        text: "SUPER+R saves the replay, SUPER+SHIFT+S records; both work in games"
     }
 }

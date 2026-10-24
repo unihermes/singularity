@@ -118,7 +118,7 @@ FloatingWindow {
         }
         case "recording":
             if (Recorder.recording) return { text: "Recording now", color: Theme.alert }
-            return { text: Settings.replayOn ? "Replay on · " + (Settings.replaySeconds < 60 ? Settings.replaySeconds + " s" : Settings.replaySeconds / 60 + " min") : "Replay off" }
+            return { text: Settings.replayOn ? "Replay on · " + Recorder.lengthLabel(Settings.replaySeconds) : "Replay off" }
         case "notifications":
             return { text: Settings.notifDnd ? "Do Not Disturb on" : "" }
         case "shell":
