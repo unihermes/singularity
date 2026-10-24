@@ -12,6 +12,7 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Mpris
 import QtQuick
 
@@ -76,19 +77,51 @@ Singleton {
     function next() { var p = keyPlayer; if (p && p.canGoNext) p.next() }
     function previous() { var p = keyPlayer; if (p && p.canGoPrevious) p.previous() }
 
-    // a player's art, best first. A YouTube video's own thumbnails by its
-    // id (a browser's art is often missing or still the last video's):
-    // the full-size one, which not every video has, then the small one.
-    // Else whatever the player gives.
+    // a player's art, best first. A browser's own is often missing or still
+    // the last video's, so first what the page itself names: a YouTube
+    // video's thumbnails by its id (the full-size one, which not every
+    // video has, then the small one), else the page's og:image (pageArt).
+    // Then whatever the player gives.
     function artUrls(p) {
         if (!p) return []
-        var m = /youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/)([\w-]{11})|youtu\.be\/([\w-]{11})/
-            .exec(String(p.metadata["xesam:url"] || ""))
+        var out = []
+        var url = String(p.metadata["xesam:url"] || "")
+        var m = /youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/)([\w-]{11})|youtu\.be\/([\w-]{11})/.exec(url)
         if (m) {
             var id = m[1] || m[2]
-            return ["https://i.ytimg.com/vi/" + id + "/maxresdefault.jpg", "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg"]
+            out.push("https://i.ytimg.com/vi/" + id + "/maxresdefault.jpg", "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg")
+        } else if (pageArt[url]) out.push(pageArt[url])
+        if (p.trackArtUrl) out.push(p.trackArtUrl)
+        return out
+    }
+
+    // page URL -> the picture it names for sharing, "" for none; fetched
+    // for the followed player's page when it's a browser's and not YouTube
+    property var pageArt: ({})
+    readonly property string pageUrl: {
+        var url = player && isBrowser(player) ? String(player.metadata["xesam:url"] || "") : ""
+        return /^https?:\/\//.test(url) && !/youtube\.com\/|youtu\.be\//.test(url) ? url : ""
+    }
+    onPageUrlChanged: fetchPageArt()
+    function fetchPageArt() {
+        if (pageUrl === "" || pageUrl in pageArt || pageFetch.running) return
+        pageFetch.url = pageUrl
+        pageFetch.running = true
+    }
+
+    Process {
+        id: pageFetch
+        property string url: ""
+        command: [Quickshell.shellDir + "/scripts/page-art.py", url]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var art = Object.assign({}, root.pageArt)
+                art[pageFetch.url] = text.trim()
+                root.pageArt = art
+            }
         }
-        return p.trackArtUrl ? [p.trackArtUrl] : []
+        // the page may have changed while this one was out
+        onRunningChanged: if (!running) Qt.callLater(root.fetchPageArt)
     }
 
     function fmtTime(sec) {
