@@ -17,11 +17,14 @@
  * buttons, which Hyprland's keys stand in for */
 #app-mount .base__5e434 {
   --custom-app-top-bar-height: 0px;
+  /* the framed row's height, and where the panels below start */
+  --n-row: calc(var(--custom-guild-list-width) + 2 * var(--n-depth));
+  --serverlist-offset: calc(var(--n-gap) + var(--n-row));
 }
 #app-mount .base__5e434 > .bar_c38106 {
   position: absolute !important;
-  top: 0;
-  right: var(--n-gap);
+  top: calc(var(--n-gap) + var(--n-depth));
+  right: calc(var(--n-gap) + var(--n-depth) + var(--n-gap));
   left: auto;
   width: auto !important;
   height: var(--custom-guild-list-width) !important;
@@ -31,33 +34,33 @@
 .base__5e434 > .bar_c38106 .title_c38106, .winButtons_c38106 {
   display: none !important;
 }
+/* the empty bar UI Refresh Refresh pins over the top would catch the
+ * clicks meant for the servers under it */
+.systemBar_c38106 {
+  display: none !important;
+}
 
-/* the server row as the shell's bar: a strip on the bar's ground, each
- * server a rounded chip, the open one ringed in the accent */
+/* the server row framed as a panel like the ones below it: the frame is
+ * drawn behind the list, which HSL turns on its side */
+#app-mount .base__5e434::before {
+  content: "";
+  position: absolute;
+  top: var(--n-gap);
+  left: var(--n-gap);
+  right: var(--n-gap);
+  height: var(--n-row);
+  background: var(--n-panel);
+  border: var(--n-edge-w) solid var(--n-edge);
+  border-radius: var(--n-radius-panel);
+  box-shadow: inset 0 0 0 var(--n-gutter) var(--n-gutter-fill);
+  outline: var(--n-inner-w) solid var(--n-inner);
+  outline-offset: calc(-1 * var(--n-depth));
+  box-sizing: border-box;
+  pointer-events: none;
+}
 .guilds__5e434 {
-  background: var(--n-bar) !important;
-}
-.guilds__5e434 .blobContainer_e5445c foreignObject {
-  mask: none !important;
-}
-.guilds__5e434 .blobContainer_e5445c foreignObject > *,
-.guilds__5e434 .blobContainer_e5445c foreignObject img {
-  border-radius: var(--n-radius) !important;
-}
-.guilds__5e434 .wrapper_cc5dd2 {
-  border-radius: var(--n-radius);
-  outline: var(--n-bw) solid transparent;
-  outline-offset: 2px;
-  transition: outline-color 0.15s;
-}
-.guilds__5e434 .listItem__650eb:hover .wrapper_cc5dd2 {
-  outline-color: var(--n-edge);
-}
-.guilds__5e434 .blobContainer_e5445c.selected_e5445c .wrapper_cc5dd2 {
-  outline: 2px solid var(--n-accent);
-}
-.guilds__5e434 .item__58105 {
-  background: var(--n-accent) !important;
+  background: transparent !important;
+  translate: calc(var(--n-gap) + var(--n-depth) + var(--n-gap)) calc(-1 * var(--n-depth));
 }
 
 /* the panels sit apart on the base, like the shell's flyouts (#app-mount
