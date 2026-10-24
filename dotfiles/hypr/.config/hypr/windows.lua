@@ -702,6 +702,9 @@ end
 
 -- A blocked owner can't take focus (no_focus), so a focus aimed at one, from
 -- a bind or the shell (alt-tab, the window strip), goes to its popout instead.
+-- A window on a special workspace shown on another monitor (the scratchpad)
+-- is focused there, its monitor first: focused straight from the other
+-- monitor, Hyprland pulls the special workspace across.
 do
     local focus = hl.dsp.focus
     hl.dsp.focus = function(args)
@@ -714,6 +717,16 @@ do
                 pop = next
             end
             args = { window = "address:" .. pop.address }
+        end
+        local w = type(args) == "table" and type(args.window) == "string" and hl.get_window(args.window)
+        local ws, mon = w and w.workspace, w and w.monitor
+        local active = hl.get_active_monitor()
+        if ws and ws.special and mon and active and mon.id ~= active.id and mon.active_special_workspace
+                and mon.active_special_workspace.id == ws.id then
+            return function()
+                hl.dispatch(focus({ monitor = mon.name }))
+                hl.dispatch(focus(args))
+            end
         end
         return focus(args)
     end
