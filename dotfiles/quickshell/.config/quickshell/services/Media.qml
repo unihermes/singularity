@@ -57,7 +57,8 @@ Singleton {
         lastPlaying = p
     }
 
-    // a player other than the picked one starting drops the pick
+    // a player other than the picked one starting drops the pick; each
+    // length a player reports goes in knownLength
     Variants {
         model: root.players
         Connections {
@@ -66,6 +67,14 @@ Singleton {
             function onIsPlayingChanged() {
                 if (modelData.isPlaying && modelData !== root.picked) root.picked = null
             }
+            function onMetadataChanged() {
+                var len = root.reportedLength(modelData)
+                if (len <= 0) return
+                var known = Object.assign({}, root.knownLength)
+                known[modelData.dbusName] = { track: root.trackKey(modelData), length: len }
+                root.knownLength = known
+            }
+            Component.onCompleted: onMetadataChanged()
         }
     }
 
@@ -127,27 +136,44 @@ Singleton {
     // a player's track length in seconds, 0 when unknown. Read from the
     // metadata when the player's own length isn't there (yet): browsers
     // send mpris:length after the rest of a new track's metadata
-    function lengthOf(p) {
+    function reportedLength(p) {
         if (!p) return 0
         if (p.lengthSupported && p.length > 0) return p.length
         var us = Number((p.metadata || {})["mpris:length"] || 0)
         return us > 0 ? us / 1000000 : 0
     }
 
+    // dbusName -> { track, length } of the last length each player
+    // reported. Firefox drops mpris:length a second into a YouTube video,
+    // so the track keeps the one it had. A track is its URL and title, not
+    // uniqueId: Firefox's passing metadata changes count as new tracks
+    property var knownLength: ({})
+    function trackKey(p) {
+        var md = p.metadata || {}
+        return String(md["xesam:url"] || "") + "\n" + String(md["xesam:title"] || "")
+    }
+    function lengthOf(p) {
+        var len = reportedLength(p)
+        if (len > 0 || !p) return len
+        var k = knownLength[p.dbusName]
+        return k && k.track === trackKey(p) ? k.length : 0
+    }
+
     // Firefox and its forks (all on an org.mpris.MediaPlayer2.firefox name)
     // only take a video's length and position from the page on a play,
     // pause or seek, so a YouTube video whose stream loads after it starts
-    // goes without both. A pause and play back to back fills them in: sent
-    // once per track to the followed player when it's been playing a
-    // moment with no length.
-    property int nudgedTrack: -1
+    // goes without both (or loses them a second in, its position falling
+    // back to 0). A pause and play back to back fills them in: sent once
+    // per track to the followed player when it's been playing a moment
+    // with no length reported.
+    property string nudgedTrack: ""
     Timer {
         interval: 2000
         running: !!root.player && root.player.isPlaying && root.player.canPause
             && root.player.dbusName.startsWith("org.mpris.MediaPlayer2.firefox")
-            && root.lengthOf(root.player) === 0 && root.player.uniqueId !== root.nudgedTrack
+            && root.reportedLength(root.player) === 0 && root.trackKey(root.player) !== root.nudgedTrack
         onTriggered: {
-            root.nudgedTrack = root.player.uniqueId
+            root.nudgedTrack = root.trackKey(root.player)
             nudge.command = ["sh", "-c", 'for m in Pause Play; do busctl --user call "$1" /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player $m; done',
                 "sh", root.player.dbusName]
             nudge.running = true
