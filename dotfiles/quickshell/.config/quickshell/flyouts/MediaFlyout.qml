@@ -48,8 +48,13 @@ FlyoutPanel {
 
         Image {
             id: art
+            // Media.artUrls in turn, the next when one fails to load
+            readonly property var urls: Media.artUrls(mediaFlyout.player)
+            property int attempt: 0
+            onUrlsChanged: attempt = 0
+            onStatusChanged: if (status === Image.Error && attempt < urls.length - 1) attempt++
             anchors.fill: parent
-            source: mediaFlyout.player ? mediaFlyout.player.trackArtUrl : ""
+            source: urls[attempt] || ""
             fillMode: Image.PreserveAspectCrop
             // decoded at the frame's size, not the art's: a browser's
             // video thumbnail can be several megapixels

@@ -76,6 +76,21 @@ Singleton {
     function next() { var p = keyPlayer; if (p && p.canGoNext) p.next() }
     function previous() { var p = keyPlayer; if (p && p.canGoPrevious) p.previous() }
 
+    // a player's art, best first. A YouTube video's own thumbnails by its
+    // id (a browser's art is often missing or still the last video's):
+    // the full-size one, which not every video has, then the small one.
+    // Else whatever the player gives.
+    function artUrls(p) {
+        if (!p) return []
+        var m = /youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/)([\w-]{11})|youtu\.be\/([\w-]{11})/
+            .exec(String(p.metadata["xesam:url"] || ""))
+        if (m) {
+            var id = m[1] || m[2]
+            return ["https://i.ytimg.com/vi/" + id + "/maxresdefault.jpg", "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg"]
+        }
+        return p.trackArtUrl ? [p.trackArtUrl] : []
+    }
+
     function fmtTime(sec) {
         if (!(sec >= 0)) return "--:--"
         var m = Math.floor(sec / 60), s = Math.floor(sec % 60)
