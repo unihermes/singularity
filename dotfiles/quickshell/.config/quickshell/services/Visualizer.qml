@@ -3,7 +3,7 @@
 //
 // Spectrum bars from cava (raw mode, 0-100 per bar, Settings.vizBars of
 // them), run only while the Music module and its visualizer are on and
-// an audio stream is open. It hears only the app of the player the module
+// there's something to hear (`sounding`). It hears only the app of the player the module
 // follows (scripts/viz-capture.py), so a paused player stays flat whatever
 // else plays; everything, with no player. `playing` drops after two
 // seconds of silence. Config in a temp file, leaving cava's own alone.
@@ -41,18 +41,23 @@ Singleton {
     // sound in the last couple of seconds
     property bool playing: false
 
+    // an app's output stream open; the Game/Chat/Media channels' own
+    // loopbacks (channel.*) are always there, so they don't count
     readonly property bool streamOpen: {
         var nodes = Pipewire.nodes.values
         for (var i = 0; i < nodes.length; i++)
-            if (nodes[i].type === PwNodeType.AudioOutStream) return true
+            if (nodes[i].type === PwNodeType.AudioOutStream && !String(nodes[i].name).startsWith("channel.")) return true
         return false
     }
+    // with a player, it playing (paused, its spectrum is flat anyway);
+    // with none, any stream open
+    readonly property bool sounding: Media.player ? Media.player.isPlaying : streamOpen
 
     CommandProbe { id: cavaProbe; name: "cava" }
 
     Process {
         id: cava
-        running: root.hasCava && root.streamOpen && Settings.widgetVisible("visualizer") && Settings.vizShown && !root.restarting
+        running: root.hasCava && root.sounding && Settings.widgetVisible("visualizer") && Settings.vizShown && !root.restarting
         command: ["sh", "-c",
             "cfg=$(mktemp /tmp/singularity-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
             + "printf '[general]\\nbars = " + root.barCount + "\\nframerate = " + root.fps + "\\n"

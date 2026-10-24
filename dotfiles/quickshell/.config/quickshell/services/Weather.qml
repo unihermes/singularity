@@ -204,10 +204,14 @@ Singleton {
         }
     }
 
+    // only while something shows it: the bar's Weather, or Night light
+    // following the sunset
+    readonly property bool wanted: Settings.widgetVisible("weather") || Settings.nightLightSchedule === "sun"
+
     Timer {
         interval: 1800000
         repeat: true
-        running: true
+        running: root.wanted
         triggeredOnStart: true
         onTriggered: root.refresh()
     }
@@ -216,7 +220,7 @@ Singleton {
     Timer {
         interval: 180000
         repeat: true
-        running: root.failed
+        running: root.wanted && root.failed
         onTriggered: root.refresh()
     }
 

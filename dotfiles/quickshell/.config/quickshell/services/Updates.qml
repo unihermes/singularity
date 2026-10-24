@@ -231,10 +231,14 @@ Singleton {
         onExited: root.refresh()
     }
 
+    // the checks on a timer, only while the bar's Updates shows them;
+    // Settings' Check now still works without it
+    readonly property bool autoCheck: root.available && Settings.updateInterval > 0 && Settings.widgetVisible("updates")
+
     Timer {
         id: firstCheck
         interval: 60000
-        running: root.available && Settings.updateInterval > 0
+        running: root.autoCheck
         onTriggered: root.refresh()
     }
 
@@ -242,7 +246,7 @@ Singleton {
         id: every
         interval: Math.max(1, Settings.updateInterval) * 60000
         repeat: true
-        running: root.available && Settings.updateInterval > 0
+        running: root.autoCheck
         onTriggered: root.refresh()
     }
 
