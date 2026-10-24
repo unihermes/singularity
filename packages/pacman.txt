@@ -63,6 +63,11 @@ qt6ct
 
 # network: systemd-networkd and systemd-resolved ship with systemd; Wi-Fi's
 # iwd is in hardware/wifi.txt
+# the VPN (services/Vpn.qml): WireGuard through wg-quick, the kill switch in
+# nftables, natpmpc for the forwarded port
+wireguard-tools
+nftables
+libnatpmp
 
 # audio
 pipewire

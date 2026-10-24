@@ -328,6 +328,13 @@ log "installing the package removal helper"
 put /usr/local/bin/singularity-remove
 put /usr/share/polkit-1/actions/org.singularity.remove.policy
 
+# singularity-vpn: brings the WireGuard tunnel up or down and sets the kill
+# switch, for the VPN module through pkexec. Keeps only a config's tunnel
+# keys, so nothing in one runs as root.
+log "installing the VPN helper"
+put /usr/local/bin/singularity-vpn
+put /usr/share/polkit-1/actions/org.singularity.vpn.policy
+
 # singularity-boot: lists systemd-boot's entries and sets the default
 # (LoaderEntryDefault) for Settings > Startup, through pkexec with a polkit
 # action for the local session. Root-owned in /usr/local/bin.

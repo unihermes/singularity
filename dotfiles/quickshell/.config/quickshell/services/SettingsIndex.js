@@ -43,6 +43,15 @@ var entries = [
     { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger unplugged" },
     { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
+    // --- VPN ---------------------------------------------------------------
+    { page: "vpn", section: "Connection", label: "VPN", keywords: "proton wireguard tunnel privacy connect" },
+    { page: "vpn", section: "Connection", label: "Route everything", keywords: "full tunnel split all traffic dns" },
+    { page: "vpn", section: "Connection", label: "Kill switch", keywords: "block leak drop firewall nftables" },
+    { page: "vpn", section: "Connection", label: "Connect at login", keywords: "auto reconnect startup" },
+    { page: "vpn", section: "Servers", label: "Import from Downloads", keywords: "proton wireguard conf file server add country p2p" },
+    { page: "vpn", section: "qBittorrent", label: "Only over the VPN", keywords: "qbittorrent torrent bind interface leak" },
+    { page: "vpn", section: "qBittorrent", label: "Forwarded port", keywords: "port forwarding nat-pmp natpmp seed listening" },
+
     // --- Phone -------------------------------------------------------------
     { page: "phone", section: "Connected", label: "Phone", keywords: "android adb scrcpy mirror screen usb debugging battery" },
     { page: "phone", section: "Wi-Fi", label: "Pair over Wi-Fi", keywords: "wireless debugging qr code adb pair wifi mirror" },

@@ -674,6 +674,9 @@ ShellRoot {
         // the phone over adb
         LazyFlyout { name: "phone"; scope: screenScope; PhoneFlyout { scope: screenScope } }
 
+        // the VPN
+        LazyFlyout { name: "vpn"; scope: screenScope; VpnFlyout { scope: screenScope } }
+
         // failed units
         LazyFlyout { name: "failed"; scope: screenScope; FailedFlyout { scope: screenScope } }
 

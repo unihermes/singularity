@@ -289,6 +289,14 @@ Every bar flyout keeps to these (settled 2026-10-20):
   joined network, with the address); Down and Up as tiles over the last
   minute's graph (SystemStats samples while it's open); the Wi-Fi switch;
   NEARBY with Rescan; Show all N; Settings as a chip.
+- **VPN** (2026-10-24): on the bar once a server's imported, the shield
+  while it's up, the VPN glyph dimmed while off (the alert colour when the
+  server doesn't answer); a middle click turns it on or off. The flyout:
+  the on/off switch on the heading; the tunnel as a card (the country and
+  server, what goes through it, the forwarded port, Copy port at its end);
+  Route everything and, while it's on, Kill switch as switch rows; SERVERS,
+  a row each (the country, the server quieter after, ⇅ on those that
+  forward a port), a click connecting; Settings as a chip.
 - **Volume** (picked 2026-10-21): one panel: the level large with the output beside it (a
   click opens the outputs in place to switch), its slider and Mute, the
   microphone's level and Mute microphone, CHANNELS (Game, Chat and Media,

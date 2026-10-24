@@ -58,7 +58,7 @@ FloatingWindow {
     // the sidebar's groups, in order: connections, the machine itself, how
     // the desktop looks and behaves, apps, then the clock and updates
     readonly property var groups: [
-        { heading: "Connections", ids: ["network", "bluetooth", "phone"] },
+        { heading: "Connections", ids: ["network", "vpn", "bluetooth", "phone"] },
         { heading: "Device",      ids: ["display", "audio", "input", "power", "recording"] },
         { heading: "Look & Feel", ids: ["appearance", "lockscreen", "notifications", "windowrules"] },
         { heading: "Apps",        ids: ["autostart", "filetypes", "shell", "keybinds"] },
@@ -66,6 +66,7 @@ FloatingWindow {
     ]
     readonly property var pages: [
         { id: "network",       label: "Network",       icon: "󰤨", blurb: "Wi-Fi and the link",               source: "../settings/SettingsPageNetwork.qml" },
+        { id: "vpn",           label: "VPN",           icon: "󰖂", blurb: "Proton over WireGuard",            source: "../settings/SettingsPageVpn.qml" },
         { id: "bluetooth",     label: "Bluetooth",     icon: "󰂯", blurb: "Adapter and devices",              source: "../settings/SettingsPageBluetooth.qml" },
         { id: "phone",         label: "Phone",         icon: "󰄜", blurb: "Android on screen",                 source: "../settings/SettingsPagePhone.qml" },
         { id: "display",       label: "Display",       icon: "󰍹", blurb: "Resolution and scale",              source: "../settings/SettingsPageDisplay.qml" },
@@ -117,6 +118,10 @@ FloatingWindow {
             var look = Looks.looks[Settings.look], style = Styles.get(Settings.style)
             return { text: [look ? look.name : Settings.look, style ? style.name : ""].filter(t => t).join(" · ") }
         }
+        case "vpn":
+            if (!Vpn.up) return { text: Vpn.servers.length > 0 ? "Off" : "" }
+            if (Vpn.stalled) return { text: "No answer", color: Theme.alert }
+            return { text: Vpn.currentName + (Vpn.port > 0 ? " · port " + Vpn.port : ""), color: Theme.good }
         case "phone":
             if (Phone.connected) return { text: Phone.name + (Phone.mirroring ? " · on screen" : ""), color: Theme.good }
             return { text: Phone.unauthorized ? "Waiting to be allowed" : "" }

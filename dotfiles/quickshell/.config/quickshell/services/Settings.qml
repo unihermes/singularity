@@ -394,6 +394,21 @@ Singleton {
     function setRecordCodec(c) { adapter.recordCodec = c === "h264" ? "h264" : "av1" }
     function setReplayOn(on) { adapter.replayOn = !!on }
     function setReplaySeconds(s) { adapter.replaySeconds = Math.max(15, Math.min(600, Math.round(s))) }
+    // VPN: the server to use, whether it carries everything or only
+    // qBittorrent, the kill switch (everything only), reconnecting at login
+    // to what was on when last left, and qBittorrent kept on the tunnel
+    readonly property alias vpnServer: adapter.vpnServer
+    readonly property alias vpnFull: adapter.vpnFull
+    readonly property alias vpnKillSwitch: adapter.vpnKillSwitch
+    readonly property alias vpnAtLogin: adapter.vpnAtLogin
+    readonly property alias vpnWanted: adapter.vpnWanted
+    readonly property alias vpnQbit: adapter.vpnQbit
+    function setVpnServer(id) { adapter.vpnServer = String(id) }
+    function setVpnFull(on) { adapter.vpnFull = !!on }
+    function setVpnKillSwitch(on) { adapter.vpnKillSwitch = !!on }
+    function setVpnAtLogin(on) { adapter.vpnAtLogin = !!on }
+    function setVpnWanted(on) { adapter.vpnWanted = !!on }
+    function setVpnQbit(on) { adapter.vpnQbit = !!on }
     // Software Update: minutes between checks (0: only when asked), the AUR,
     // and packages left out
     readonly property alias updateInterval: adapter.updateInterval
@@ -462,7 +477,7 @@ Singleton {
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
-        right:  ["recorder", "privacy", "phone", "failed", "updates", "notifications", "tray",
+        right:  ["recorder", "privacy", "phone", "vpn", "failed", "updates", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
@@ -487,6 +502,7 @@ Singleton {
         privacy:       { label: "Privacy",        icon: "󰍬" },
         recorder:      { label: "Recording",      icon: "󰑋" },
         phone:         { label: "Phone",          icon: "󰄜" },
+        vpn:           { label: "VPN",            icon: "󰖂" },
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },
         cooling:       { label: "Cooling",        icon: "󰈐" },
@@ -1045,6 +1061,12 @@ Singleton {
             property bool replayOn: true
             property int replaySeconds: 60
             property string recordCodec: "av1"
+            property string vpnServer: ""
+            property bool vpnFull: false
+            property bool vpnKillSwitch: false
+            property bool vpnAtLogin: true
+            property bool vpnWanted: false
+            property bool vpnQbit: true
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

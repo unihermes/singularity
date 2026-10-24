@@ -139,3 +139,32 @@ test("HyprBinds parses the real config and round-trips an edit", () => {
     const removed = B.removeBind(model, row)
     assert.equal(B.parse(removed).rows.length, model.rows.length - 1)
 })
+
+test("VpnConf reads a Proton WireGuard file", () => {
+    const V = load("VpnConf.js")
+    const conf = "[Interface]\n# NAT-PMP (Port Forwarding) = on\nPrivateKey = k=\nAddress = 10.2.0.2/32\nDNS = 10.2.0.1\n\n"
+        + "[Peer]\n# NL#245\nPublicKey = p=\nAllowedIPs = 0.0.0.0/0\nEndpoint = 1.2.3.4:51820\n"
+    const s = V.parse("wg-NL-245", conf)
+    assert.equal(s.name, "NL#245")
+    assert.equal(s.country, "Netherlands")
+    assert.equal(s.pf, true)
+    assert.equal(s.gateway, "10.2.0.1")
+    assert.equal(V.parse("x", conf.replace("# NAT-PMP (Port Forwarding) = on\n", "").replace("# NL#245\n", "")).pf, null)
+    assert.equal(V.parse("sc", conf.replace("NL#245", "CH-US#1")).country, "United States")
+    assert.equal(V.parse("x", "[Interface]\nPrivateKey = k\n"), null)
+})
+
+test("VpnConf.iniSet sets, adds and drops keys", () => {
+    const V = load("VpnConf.js")
+    const ini = "[BitTorrent]\nSession\\Port=6881\n\n[Preferences]\nGeneral\\Locale=en\n"
+    let t = V.iniSet(ini, "BitTorrent", "Session\\Port", "51234")
+    assert.match(t, /^Session\\Port=51234$/m)
+    t = V.iniSet(t, "BitTorrent", "Session\\Interface", "proton")
+    assert.match(t, /\[BitTorrent\]\nSession\\Port=51234\nSession\\Interface=proton\n\n\[Preferences\]/)
+    t = V.iniSet(t, "LegalNotice", "Accepted", "true")
+    assert.match(t, /\n\n\[LegalNotice\]\nAccepted=true\n$/)
+    t = V.iniSet(t, "BitTorrent", "Session\\Interface", null)
+    assert.doesNotMatch(t, /Interface/)
+    assert.equal(V.iniSet("", "A", "k", "v"), "[A]\nk=v\n")
+    assert.equal(V.iniSet(ini, "BitTorrent", "Session\\Port", "6881"), ini)
+})

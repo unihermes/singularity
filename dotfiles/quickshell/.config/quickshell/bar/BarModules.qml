@@ -31,7 +31,7 @@ Item {
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
-        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn,
+        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn,
         failed: failedBtn, updates: updatesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
@@ -292,6 +292,19 @@ Item {
         active: screenScope.openFlyout === "phone"
         onActivated: screenScope.toggleFlyout("phone", phoneBtn)
         onMiddleClicked: Phone.toggleMirror()
+    }
+
+    // The VPN, once a server's imported: lit while it's up (the alert colour
+    // while the server doesn't answer), dim while off
+    BarModule {
+        id: vpnBtn
+        visible: Vpn.available && Vpn.servers.length > 0 && Settings.widgetVisible("vpn")
+        icon: Vpn.up ? "󰦝" : "󰖂"
+        dimmed: !Vpn.up
+        iconColor: Vpn.stalled ? Theme.alert : "transparent"
+        active: screenScope.openFlyout === "vpn"
+        onActivated: screenScope.toggleFlyout("vpn", vpnBtn)
+        onMiddleClicked: Vpn.toggle()
     }
 
     // While recording: a red dot and the time, a click stops it. While a
