@@ -40,6 +40,14 @@ Singleton {
 
     readonly property bool mirroring: mirrorProc.running
 
+    // --- with the phone link (PhoneLink) too, for the bar and flyout ---
+
+    readonly property bool shown: connected || unauthorized || PhoneLink.connected || PhoneLink.request !== null
+    readonly property string shownName: PhoneLink.connected ? PhoneLink.device.name : name
+    readonly property bool linkBattery: PhoneLink.connected && PhoneLink.device.battery >= 0
+    readonly property int shownBattery: linkBattery ? PhoneLink.device.battery : battery
+    readonly property bool shownCharging: linkBattery ? PhoneLink.device.charging : charging
+
     // --- devices ---
 
     Timer {

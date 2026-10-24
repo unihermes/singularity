@@ -281,14 +281,16 @@ Item {
         onRightClicked: Notifications.toggleDnd()
     }
 
-    // The phone, only while one's connected over adb (USB or Wi-Fi): its
-    // battery beside it, or a warning while it waits to be allowed
+    // The phone, only while one's connected over adb (USB or Wi-Fi) or the
+    // phone link: its battery beside it, or a word while it waits to be
+    // allowed over USB or asks to pair
     BarModule {
         id: phoneBtn
-        visible: (Phone.connected || Phone.unauthorized) && Settings.widgetVisible("phone")
-        icon: Phone.mirroring ? "󰍹" : Phone.charging ? "󱊥" : "󰄜"
-        label: Phone.connected && Phone.battery >= 0 ? Phone.battery + "%" : Phone.unauthorized ? "Allow" : ""
-        iconColor: Phone.unauthorized ? Theme.alert : "transparent"
+        visible: Phone.shown && Settings.widgetVisible("phone")
+        icon: Phone.mirroring ? "󰍹" : Phone.shownCharging ? "󱊥" : "󰄜"
+        label: (Phone.connected || PhoneLink.connected) && Phone.shownBattery >= 0 ? Phone.shownBattery + "%"
+            : PhoneLink.request ? "Pair" : Phone.unauthorized ? "Allow" : ""
+        iconColor: Phone.unauthorized ? Theme.alert : PhoneLink.request ? Theme.accent : "transparent"
         active: screenScope.openFlyout === "phone"
         onActivated: screenScope.toggleFlyout("phone", phoneBtn)
         onMiddleClicked: Phone.toggleMirror()

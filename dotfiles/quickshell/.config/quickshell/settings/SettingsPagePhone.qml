@@ -2,7 +2,9 @@
 // ~/.config/quickshell/settings/SettingsPagePhone.qml
 //
 // The Android phone over adb (services/Phone.qml): which one is connected
-// and how, and pairing for Wi-Fi through a QR code the phone scans.
+// and how, and pairing for Wi-Fi through a QR code the phone scans. Then
+// the phone link (services/PhoneLink.qml): its switch, and the phones the
+// KDE Connect app shows from, to pair or unpair.
 
 import Quickshell
 import QtQuick
@@ -15,7 +17,7 @@ SettingsPage {
     sectioned: true
 
     title: "Phone"
-    description: "Your Android phone on screen, over USB or Wi-Fi."
+    description: "Your Android phone on screen, and linked through KDE Connect."
 
     // the code is only good while this page shows it
     onVisibleChanged: if (!visible) Phone.cancelPair()
@@ -96,5 +98,85 @@ SettingsPage {
 
     SettingsNote {
         text: "Wireless debugging turns off on a restart; turn it on again to reconnect"
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "PHONE LINK" }
+
+    SettingsField {
+        label: "Phone link"
+        hint: !Settings.phoneLinkOn ? "Off; nothing runs"
+            : PhoneLink.error !== "" ? PhoneLink.error
+            : PhoneLink.connected ? "Linked to " + PhoneLink.device.name
+            : "Open KDE Connect on the phone to find " + (PhoneLink.hostName || "this computer")
+
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.phoneLinkOn
+            onToggled: {
+                Settings.setPhoneLinkOn(!Settings.phoneLinkOn)
+                page.say(Settings.phoneLinkOn ? "Phone link on" : "Phone link off", false)
+            }
+        }
+    }
+
+    Repeater {
+        model: PhoneLink.devices
+
+        SettingsField {
+            id: phoneRow
+            required property var modelData
+            readonly property string pairing: modelData.pairing
+            label: modelData.name
+            hint: pairing === "requested" ? "Accept on the phone…"
+                : pairing === "incoming" ? "Wants to pair"
+                : !modelData.paired ? "Not paired"
+                : !modelData.reachable ? "Paired · out of reach"
+                : "Paired" + (modelData.battery >= 0 ? " · " + modelData.battery + "%" : "")
+
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceS
+
+                FlyoutChip {
+                    visible: !phoneRow.modelData.paired && phoneRow.pairing === ""
+                    text: "Pair"
+                    onClicked: PhoneLink.pair(phoneRow.modelData.id)
+                }
+                FlyoutChip {
+                    visible: phoneRow.pairing === "incoming"
+                    text: "Accept"
+                    onClicked: PhoneLink.accept(phoneRow.modelData.id)
+                }
+                FlyoutChip {
+                    visible: phoneRow.pairing === "incoming"
+                    text: "Decline"
+                    onClicked: PhoneLink.reject(phoneRow.modelData.id)
+                }
+                FlyoutChip {
+                    visible: phoneRow.modelData.paired
+                    text: "Unpair"
+                    confirmText: "Unpair?"
+                    onClicked: PhoneLink.unpair(phoneRow.modelData.id)
+                }
+            }
+        }
+    }
+
+    SettingsField {
+        visible: Settings.phoneLinkOn && PhoneLink.running
+        label: "Look again"
+        hint: "If the phone doesn't show, with both on the same network"
+
+        FlyoutChip {
+            anchors.right: parent.right
+            icon: "󰑐"
+            text: "Look"
+            onClicked: PhoneLink.refresh()
+        }
+    }
+
+    SettingsNote {
+        text: "Needs the KDE Connect app on the phone. Give it notification access there for its notifications here; files it sends land in Downloads. A VPN on the phone has to allow LAN connections."
     }
 }

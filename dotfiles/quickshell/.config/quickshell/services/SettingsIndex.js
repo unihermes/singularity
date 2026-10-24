@@ -55,6 +55,8 @@ var entries = [
     // --- Phone -------------------------------------------------------------
     { page: "phone", section: "Connected", label: "Phone", keywords: "android adb scrcpy mirror screen usb debugging battery" },
     { page: "phone", section: "Wi-Fi", label: "Pair over Wi-Fi", keywords: "wireless debugging qr code adb pair wifi mirror" },
+    { page: "phone", section: "Phone link", label: "Phone link", keywords: "kde connect notifications reply ring find my phone clipboard share send files battery pair unpair" },
+    { page: "phone", section: "Phone link", label: "Look again", keywords: "kde connect discover refresh find phone network" },
 
     // --- Recording ---------------------------------------------------------
     { page: "recording", section: "Instant replay", label: "Instant replay", keywords: "clip shadowplay game save last minute buffer gpu-screen-recorder" },

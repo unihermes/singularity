@@ -123,7 +123,9 @@ FloatingWindow {
             if (Vpn.stalled) return { text: "No answer", color: Theme.alert }
             return { text: Vpn.currentName + (Vpn.port > 0 ? " · port " + Vpn.port : ""), color: Theme.good }
         case "phone":
-            if (Phone.connected) return { text: Phone.name + (Phone.mirroring ? " · on screen" : ""), color: Theme.good }
+            if (Phone.connected || PhoneLink.connected)
+                return { text: Phone.shownName + (Phone.mirroring ? " · on screen" : ""), color: Theme.good }
+            if (PhoneLink.request) return { text: PhoneLink.request.name + " wants to pair", color: Theme.accent }
             return { text: Phone.unauthorized ? "Waiting to be allowed" : "" }
         case "recording":
             if (Recorder.recording) return { text: "Recording now", color: Theme.alert }

@@ -409,6 +409,10 @@ Singleton {
     function setVpnAtLogin(on) { adapter.vpnAtLogin = !!on }
     function setVpnWanted(on) { adapter.vpnWanted = !!on }
     function setVpnQbit(on) { adapter.vpnQbit = !!on }
+    // Phone link: the KDE Connect daemon (services/PhoneLink.qml), off until
+    // asked for, as it listens on the network
+    readonly property alias phoneLinkOn: adapter.phoneLinkOn
+    function setPhoneLinkOn(on) { adapter.phoneLinkOn = !!on }
     // Software Update: minutes between checks (0: only when asked), the AUR,
     // and packages left out
     readonly property alias updateInterval: adapter.updateInterval
@@ -1068,6 +1072,7 @@ Singleton {
             property bool vpnAtLogin: true
             property bool vpnWanted: false
             property bool vpnQbit: true
+            property bool phoneLinkOn: false
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

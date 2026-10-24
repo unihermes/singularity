@@ -123,6 +123,8 @@ scrcpy
 android-tools
 android-udev
 qrencode
+# the phone link's picker for files to send (services/PhoneLink.qml)
+zenity
 hypridle
 hyprsunset
 cava
