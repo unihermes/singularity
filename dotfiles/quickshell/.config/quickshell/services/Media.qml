@@ -144,8 +144,9 @@ Singleton {
     }
 
     // dbusName -> { track, length } of the last length each player
-    // reported. Firefox drops mpris:length a second into a YouTube video,
-    // so the track keeps the one it had. A track is its URL and title, not
+    // reported. Firefox drops mpris:length a second into a YouTube video
+    // (without the media-position userscript in floorp/), so the track
+    // keeps the one it had. A track is its URL and title, not
     // uniqueId: Firefox's passing metadata changes count as new tracks
     property var knownLength: ({})
     function trackKey(p) {
@@ -158,28 +159,6 @@ Singleton {
         var k = knownLength[p.dbusName]
         return k && k.track === trackKey(p) ? k.length : 0
     }
-
-    // Firefox and its forks (all on an org.mpris.MediaPlayer2.firefox name)
-    // only take a video's length and position from the page on a play,
-    // pause or seek, so a YouTube video whose stream loads after it starts
-    // goes without both (or loses them a second in, its position falling
-    // back to 0). A pause and play back to back fills them in: sent once
-    // per track to the followed player when it's been playing a moment
-    // with no length reported.
-    property string nudgedTrack: ""
-    Timer {
-        interval: 2000
-        running: !!root.player && root.player.isPlaying && root.player.canPause
-            && root.player.dbusName.startsWith("org.mpris.MediaPlayer2.firefox")
-            && root.reportedLength(root.player) === 0 && root.trackKey(root.player) !== root.nudgedTrack
-        onTriggered: {
-            root.nudgedTrack = root.trackKey(root.player)
-            nudge.command = ["sh", "-c", 'for m in Pause Play; do busctl --user call "$1" /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player $m; done',
-                "sh", root.player.dbusName]
-            nudge.running = true
-        }
-    }
-    Process { id: nudge }
 
     function fmtTime(sec) {
         if (!(sec >= 0)) return "--:--"
