@@ -20,7 +20,7 @@ SettingsPage {
 
     SettingsNote {
         visible: !Vpn.available
-        text: "wireguard-tools isn't installed"
+        text: Vpn.missing
         alert: true
     }
 
@@ -35,7 +35,7 @@ SettingsPage {
 
         Switch {
             anchors.right: parent.right
-            enabled: Vpn.servers.length > 0 && !Vpn.busy
+            enabled: Vpn.available && Vpn.servers.length > 0 && !Vpn.busy
             checked: Vpn.up
             onToggled: Vpn.toggle()
         }

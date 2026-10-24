@@ -24,7 +24,7 @@ FlyoutPanel {
         id: headingSwitch
         Switch {
             checked: Vpn.up
-            enabled: !Vpn.busy
+            enabled: Vpn.available && !Vpn.busy
             onToggled: Vpn.toggle()
         }
     }
@@ -36,7 +36,7 @@ FlyoutPanel {
         title: Vpn.busy ? "Working…"
             : !Vpn.up ? "Off"
             : (Vpn.current && Vpn.current.country ? Vpn.current.country + "  ·  " : "") + Vpn.currentName
-        lines: !Vpn.up ? [!Vpn.available ? "wireguard-tools isn't installed"
+        lines: !Vpn.up ? [!Vpn.available ? Vpn.missing
                     : Vpn.error !== "" ? Vpn.error
                     : Settings.vpnQbit ? "qBittorrent waits for it" : ""]
             : [Vpn.stalled ? "No answer from the server"
@@ -98,7 +98,7 @@ FlyoutPanel {
 
     FlyoutRow {
         visible: Vpn.servers.length === 0
-        label: Vpn.available ? "No servers; import them in Settings" : "wireguard-tools isn't installed"
+        label: Vpn.available ? "No servers; import them in Settings" : Vpn.missing
         enabled: false
     }
 

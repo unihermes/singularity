@@ -22,7 +22,10 @@ import "VpnConf.js" as VpnConf
 Singleton {
     id: root
 
-    readonly property bool available: wgProbe.found
+    readonly property bool available: wgProbe.found && helperProbe.found
+    // why it isn't, for the flyout and Settings
+    readonly property string missing: !wgProbe.found ? "wireguard-tools isn't installed"
+        : !helperProbe.found ? "Its helper isn't installed; run install.sh" : ""
     readonly property string iface: "proton"
     readonly property string dir: Settings.stateDir + "/vpn"
     readonly property string qbitConf: Quickshell.env("HOME") + "/.config/qBittorrent/qBittorrent.conf"
@@ -339,6 +342,7 @@ Singleton {
     }
 
     CommandProbe { id: wgProbe; name: "wg-quick" }
+    CommandProbe { id: helperProbe; name: "singularity-vpn" }
     CommandProbe { id: natpmpProbe; name: "natpmpc" }
     CommandProbe { id: qbitProbe; name: "qbittorrent" }
     readonly property bool hasQbit: qbitProbe.found
