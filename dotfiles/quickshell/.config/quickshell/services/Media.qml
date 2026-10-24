@@ -134,6 +134,27 @@ Singleton {
         return us > 0 ? us / 1000000 : 0
     }
 
+    // Firefox and its forks (all on an org.mpris.MediaPlayer2.firefox name)
+    // only take a video's length and position from the page on a play,
+    // pause or seek, so a YouTube video whose stream loads after it starts
+    // goes without both. A pause and play back to back fills them in: sent
+    // once per track to the followed player when it's been playing a
+    // moment with no length.
+    property int nudgedTrack: -1
+    Timer {
+        interval: 2000
+        running: !!root.player && root.player.isPlaying && root.player.canPause
+            && root.player.dbusName.startsWith("org.mpris.MediaPlayer2.firefox")
+            && root.lengthOf(root.player) === 0 && root.player.uniqueId !== root.nudgedTrack
+        onTriggered: {
+            root.nudgedTrack = root.player.uniqueId
+            nudge.command = ["sh", "-c", 'for m in Pause Play; do busctl --user call "$1" /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player $m; done',
+                "sh", root.player.dbusName]
+            nudge.running = true
+        }
+    }
+    Process { id: nudge }
+
     function fmtTime(sec) {
         if (!(sec >= 0)) return "--:--"
         var m = Math.floor(sec / 60), s = Math.floor(sec % 60)
