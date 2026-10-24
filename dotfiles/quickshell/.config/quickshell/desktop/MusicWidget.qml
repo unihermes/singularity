@@ -12,7 +12,7 @@ import Quickshell.Widgets
 import QtQuick
 import "../services"
 
-GlassCard {
+WidgetCard {
     id: root
 
     readonly property var player: Media.player
@@ -60,7 +60,7 @@ GlassCard {
             visible: status === Image.Ready
             opacity: root.playing ? 1 : 0.45
         }
-        GlassText {
+        WidgetText {
             anchors.centerIn: parent
             visible: img.status !== Image.Ready
             card: root
@@ -72,7 +72,7 @@ GlassCard {
     }
 
     // small: play/pause in the top right corner
-    GlassGlyph {
+    WidgetGlyph {
         card: root
         visible: root.small && !!root.player
         anchors.right: parent.right
@@ -92,7 +92,7 @@ GlassCard {
         Column {
             width: parent.width
 
-            GlassText {
+            WidgetText {
                 visible: !root.small
                 width: parent.width
                 card: root
@@ -102,7 +102,7 @@ GlassCard {
                 font.weight: Font.Bold
                 font.letterSpacing: 1
             }
-            GlassText {
+            WidgetText {
                 width: parent.width
                 card: root
                 px: Theme.fit(root.large ? 18 : 15)
@@ -110,7 +110,7 @@ GlassCard {
                 color: root.player ? root.fg : root.fgDim
                 font.weight: Font.Bold
             }
-            GlassText {
+            WidgetText {
                 width: parent.width
                 visible: text !== ""
                 card: root
@@ -152,27 +152,27 @@ GlassCard {
                 visible: root.hasLength && root.large
                 width: parent.width
                 height: pos.height
-                GlassText { id: pos; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
-                GlassText { anchors.right: parent.right; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.length) : "" }
+                WidgetText { id: pos; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
+                WidgetText { anchors.right: parent.right; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.length) : "" }
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: Theme.fit(root.large ? 40 : 28)
-                GlassGlyph {
+                WidgetGlyph {
                     card: root
                     px: Theme.fit(root.large ? 26 : 20)
                     text: "󰒮"
                     active: !!root.player && root.player.canGoPrevious
                     onClicked: root.player.previous()
                 }
-                GlassGlyph {
+                WidgetGlyph {
                     card: root
                     px: Theme.fit(root.large ? 34 : 26)
                     text: root.playing ? "󰏤" : "󰐊"
                     active: !!root.player && root.player.canTogglePlaying
                     onClicked: root.player.togglePlaying()
                 }
-                GlassGlyph {
+                WidgetGlyph {
                     card: root
                     px: Theme.fit(root.large ? 26 : 20)
                     text: "󰒭"
@@ -183,7 +183,7 @@ GlassCard {
         }
 
         // no player: open the last one
-        GlassText {
+        WidgetText {
             visible: !root.player && root.lastApp !== null && !root.small
             anchors.bottom: parent.bottom
             card: root

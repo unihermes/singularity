@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/DeskWidget.qml
 //
-// One desktop widget by key, at its size: "s", "m" or "l" (GlassCard's
+// One desktop widget by key, at its size: "s", "m" or "l" (WidgetCard's
 // grid). Sized to its card.
 
 import QtQuick

@@ -11,7 +11,7 @@ import "../services"
 import "../services/Format.js" as Format
 import "../flyouts"
 
-GlassCard {
+WidgetCard {
     id: root
 
     readonly property var readings: [
@@ -63,7 +63,7 @@ GlassCard {
         width: parent.width
         spacing: Theme.fit(6)
 
-        GlassText {
+        WidgetText {
             id: caption
             card: root
             px: Theme.fit(12)
@@ -83,14 +83,14 @@ GlassCard {
             id: memRow
             width: parent.width
             height: mem.height
-            GlassText {
+            WidgetText {
                 id: mem
                 card: root
                 px: Theme.fit(13)
                 text: "Memory"
                 color: root.fgDim
             }
-            GlassText {
+            WidgetText {
                 anchors.right: parent.right
                 card: root
                 px: Theme.fit(13)

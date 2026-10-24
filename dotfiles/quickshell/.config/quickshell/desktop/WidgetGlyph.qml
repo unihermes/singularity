@@ -1,13 +1,13 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/desktop/GlassGlyph.qml
+// ~/.config/quickshell/desktop/WidgetGlyph.qml
 //
-// A Nerd Font glyph on a GlassCard that acts as a button: dims under the
+// A Nerd Font glyph on a WidgetCard that acts as a button: dims under the
 // pointer, faint while it can't act.
 
 import QtQuick
 import "../services"
 
-GlassText {
+WidgetText {
     id: root
 
     property bool active: true

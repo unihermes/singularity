@@ -20,7 +20,7 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
 - `qs/settings/`: `SettingsPage*.qml` (one per page), `appearance/` (Appearance tabs).
   Search index is `services/SettingsIndex.js`; keep it in step with the pages.
 - `qs/windows/`: Settings, System, Keybinds, Notes windows.
-- `qs/desktop/`: the desktop widgets (glass cards, one surface each under the windows), their edit mode
+- `qs/desktop/`: the desktop widgets (straight on the wallpaper, one surface each under the windows), their edit mode
   and the desktop's right-click menu;
   placement maths in `services/WidgetPlacement.js`.
 - `qs/sidebar/`: the Claude sidebar (SUPER+I), driven by `services/Ai.qml` and

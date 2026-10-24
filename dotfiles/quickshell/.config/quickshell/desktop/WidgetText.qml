@@ -1,7 +1,7 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/desktop/GlassText.qml
+// ~/.config/quickshell/desktop/WidgetText.qml
 //
-// Text on a GlassCard, in its type and full ink unless told otherwise.
+// Text on a WidgetCard, in its type and full ink unless told otherwise.
 
 import QtQuick
 
@@ -12,6 +12,6 @@ Text {
     color: card.fg
     font.family: card.font
     font.pixelSize: px
-    font.weight: Font.Medium
+    font.weight: Font.DemiBold
     elide: Text.ElideRight
 }

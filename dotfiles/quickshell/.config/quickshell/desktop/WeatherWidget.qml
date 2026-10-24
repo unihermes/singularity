@@ -8,7 +8,7 @@
 import QtQuick
 import "../services"
 
-GlassCard {
+WidgetCard {
     id: root
 
     readonly property var today: Weather.forecast.length > 0 ? Weather.forecast[0] : null
@@ -24,14 +24,14 @@ GlassCard {
         id: now
         width: root.small ? parent.width : parent.width * 0.55
 
-        GlassText {
+        WidgetText {
             width: parent.width
             card: root
             px: Theme.fit(14)
             text: Weather.area !== "" ? Weather.area.split(",")[0] : "Weather"
             font.weight: Font.Bold
         }
-        GlassText {
+        WidgetText {
             card: root
             px: root.large ? Theme.fit(52) : Theme.fit(42)
             text: Weather.ready ? Weather.temp(Weather.tempF, Weather.tempC) : "--"
@@ -51,7 +51,7 @@ GlassCard {
                 { text: Weather.condition, strong: true },
                 { text: root.hiLo, dim: true }
             ]
-            GlassText {
+            WidgetText {
                 required property var modelData
                 width: parent.width
                 horizontalAlignment: root.small ? Text.AlignLeft : Text.AlignRight
@@ -77,21 +77,21 @@ GlassCard {
                 required property var modelData
                 width: parent.width / 6
                 spacing: Theme.fit(4)
-                GlassText {
+                WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
                     px: Theme.fit(12)
                     text: Qt.formatTime(modelData.at, Theme.hours("HH"))
                     color: root.fgDim
                 }
-                GlassText {
+                WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
                     font.family: Theme.fontIcon
                     px: Theme.fit(18)
                     text: Weather.iconFor(modelData.code, false)
                 }
-                GlassText {
+                WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
                     px: Theme.fit(13)
@@ -114,21 +114,21 @@ GlassCard {
                 required property int index
                 width: parent.width / 5
                 spacing: Theme.fit(2)
-                GlassText {
+                WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
                     px: Theme.fit(12)
                     text: root.dayName(modelData, index)
                     color: root.fgDim
                 }
-                GlassText {
+                WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
                     font.family: Theme.fontIcon
                     px: Theme.fit(18)
                     text: Weather.iconFor(modelData.code, false)
                 }
-                GlassText {
+                WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
                     px: Theme.fit(13)
@@ -153,14 +153,14 @@ GlassCard {
                 width: parent.width
                 height: Theme.fit(28)
 
-                GlassText {
+                WidgetText {
                     id: dname
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.fit(56)
                     card: root
                     text: root.dayName(modelData, index)
                 }
-                GlassText {
+                WidgetText {
                     id: dicon
                     anchors.left: dname.right
                     anchors.verticalCenter: parent.verticalCenter
@@ -170,7 +170,7 @@ GlassCard {
                     px: Theme.fit(16)
                     text: Weather.iconFor(modelData.code, false)
                 }
-                GlassText {
+                WidgetText {
                     id: dlo
                     anchors.left: dicon.right
                     anchors.verticalCenter: parent.verticalCenter
@@ -180,7 +180,7 @@ GlassCard {
                     text: Weather.temp(modelData.loF, modelData.loC)
                     color: root.fgDim
                 }
-                GlassText {
+                WidgetText {
                     id: dhi
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter

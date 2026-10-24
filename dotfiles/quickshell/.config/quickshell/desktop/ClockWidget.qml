@@ -9,7 +9,7 @@ import Quickshell
 import QtQuick
 import "../services"
 
-GlassCard {
+WidgetCard {
     id: root
 
     SystemClock {
@@ -57,7 +57,7 @@ GlassCard {
         width: parent.width
         height: day.height
 
-        GlassText {
+        WidgetText {
             id: day
             card: root
             px: Theme.fit(13)
@@ -66,7 +66,7 @@ GlassCard {
             font.weight: Font.Bold
             font.letterSpacing: 1
         }
-        GlassText {
+        WidgetText {
             visible: !root.small
             anchors.right: parent.right
             card: root
@@ -76,7 +76,7 @@ GlassCard {
         }
     }
 
-    GlassText {
+    WidgetText {
         id: time
         anchors.top: top.bottom
         anchors.topMargin: -Math.round(font.pixelSize * 0.08)
@@ -86,7 +86,7 @@ GlassCard {
         font.weight: Font.DemiBold
     }
 
-    GlassText {
+    WidgetText {
         visible: root.small
         anchors.bottom: parent.bottom
         card: root
@@ -105,7 +105,7 @@ GlassCard {
 
         Repeater {
             model: root.small ? [] : root.daysFrom(root.now, 7)
-            GlassText {
+            WidgetText {
                 required property var modelData
                 width: parent.cell
                 horizontalAlignment: Text.AlignHCenter
@@ -130,10 +130,10 @@ GlassCard {
                     width: Math.min(parent.width, parent.height) - 2
                     height: width
                     radius: width / 2
-                    color: root.accent
+                    color: Theme.accent
                     visible: parent.today
                 }
-                GlassText {
+                WidgetText {
                     anchors.centerIn: parent
                     card: root
                     px: Theme.fit(13)

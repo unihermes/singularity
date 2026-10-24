@@ -20,7 +20,7 @@ Scope {
     readonly property var screen: scope.modelData
     readonly property bool editing: scope.openFlyout === "widgetedit"
 
-    // the room from every screen edge, and between widgets (GlassCard's)
+    // the room from every screen edge, and between widgets (WidgetCard's)
     readonly property int margin: Theme.sp(40)
     readonly property int gap: Theme.fit(16)
 
@@ -97,7 +97,8 @@ Scope {
             screen: root.screen
             visible: root.shown(modelData) && !root.editing && widget.width > 0
             WlrLayershell.layer: WlrLayer.Bottom
-            WlrLayershell.namespace: "singularity-widget"
+            // outside the shell's blur rule: nothing behind it is frosted
+            WlrLayershell.namespace: "desktop-widget"
             exclusionMode: ExclusionMode.Ignore
             color: "transparent"
             anchors { top: true; left: true }
