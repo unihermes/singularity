@@ -267,7 +267,7 @@ ShellRoot {
         function menu(): void { root.powerMenuToggled() }
     }
 
-    // The media keys: whichever player the bar's media module follows
+    // The media keys: Media.keyPlayer, never a browser's tab
     IpcHandler {
         target: "media"
         function toggle(): void { Media.toggle() }

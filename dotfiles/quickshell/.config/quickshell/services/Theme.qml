@@ -140,7 +140,6 @@ Singleton {
     readonly property int fontBody:     fs(16)   // labels, values, chips, inputs
     readonly property int fontIconSize: fs(16)   // Nerd Font glyphs inside rows
     readonly property int fontTitle:    fs(22)   // a flyout's headline figure (temperature)
-    readonly property int fontDisplay:  fs(26)   // placeholder art glyphs
     readonly property int fontHero:     fs(34)   // the one big glyph a flyout leads with
 
     // Section headings (FlyoutHeading), written in caps; title-case looks

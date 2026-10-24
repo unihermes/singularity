@@ -5,7 +5,9 @@
 // else the last one that was, else the first one there is. One picked in
 // the flyout wins over all of those until another player starts playing. Browsers expose
 // a player per tab that has ever had media, so "the first one" alone would
-// often pick a silent tab over the song that's actually on.
+// often pick a silent tab over the song that's actually on. The media keys
+// skip browsers: they drive the player the module follows when that isn't
+// one, else the first player that isn't, so a key never pauses a video.
 
 pragma Singleton
 
@@ -26,6 +28,19 @@ Singleton {
         if (picked && ps.indexOf(picked) !== -1) return picked
         for (var i = 0; i < ps.length; i++) if (ps[i].isPlaying) return ps[i]
         if (lastPlaying && ps.indexOf(lastPlaying) !== -1) return lastPlaying
+        return ps.length > 0 ? ps[0] : null
+    }
+
+    // a browser's tab, by its desktop entry or name
+    function isBrowser(p) {
+        return /floorp|firefox|zen|librewolf|chrom|brave|vivaldi/
+            .test(String(p.desktopEntry || p.identity).toLowerCase())
+    }
+
+    readonly property var keyPlayer: {
+        if (player && !isBrowser(player)) return player
+        var ps = players.filter(p => !isBrowser(p))
+        for (var i = 0; i < ps.length; i++) if (ps[i].isPlaying) return ps[i]
         return ps.length > 0 ? ps[0] : null
     }
 
@@ -54,12 +69,12 @@ Singleton {
     }
 
     // for the media keys; each is a no-op when the player can't do it
-    function toggle() { if (player && player.canTogglePlaying) player.togglePlaying() }
-    function play() { if (player && player.canPlay) player.play() }
-    function pause() { if (player && player.canPause) player.pause() }
-    function stop() { if (player && player.canControl) player.stop() }
-    function next() { if (player && player.canGoNext) player.next() }
-    function previous() { if (player && player.canGoPrevious) player.previous() }
+    function toggle() { var p = keyPlayer; if (p && p.canTogglePlaying) p.togglePlaying() }
+    function play() { var p = keyPlayer; if (p && p.canPlay) p.play() }
+    function pause() { var p = keyPlayer; if (p && p.canPause) p.pause() }
+    function stop() { var p = keyPlayer; if (p && p.canControl) p.stop() }
+    function next() { var p = keyPlayer; if (p && p.canGoNext) p.next() }
+    function previous() { var p = keyPlayer; if (p && p.canGoPrevious) p.previous() }
 
     function fmtTime(sec) {
         if (!(sec >= 0)) return "--:--"

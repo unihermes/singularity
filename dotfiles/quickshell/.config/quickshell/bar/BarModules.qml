@@ -12,8 +12,8 @@ import Quickshell.Bluetooth
 import Quickshell.Widgets
 import Quickshell.Services.UPower
 import QtQuick
-import QtQuick.Shapes
 import "../services"
+import "../flyouts"
 
 Item {
     id: barModules
@@ -171,11 +171,9 @@ Item {
     }
 
     // the Music module (under the old visualizer's key): the audio spectrum
-    // of everything playing, in the meter colour per Theme.vizStyle (at rest
-    // in the same look while nothing sounds), and the track's title, each as Settings
+    // of everything playing (Spectrum) and the track's title, each as Settings
     // says; the player's icon only without the spectrum, and with neither a
-    // play/pause mark. No easing on the spectrum, so
-    // it redraws only on cava's 20 frames a second. Shown while a player is
+    // play/pause mark. Shown while a player is
     // open, or only while it sounds with vizHideSilent. A click opens the
     // Media flyout, a middle click plays or pauses.
     ModuleFrame {
@@ -187,7 +185,6 @@ Item {
         visible: Settings.widgetVisible("visualizer") && (player !== null || Visualizer.playing)
             && (sounding || !Settings.vizHideSilent)
 
-        readonly property string style: Theme.vizStyle
         readonly property int bandW: Theme.barFs(3)
         readonly property int bandH: Theme.moduleHeight - 10
         readonly property string playerIcon: player
@@ -226,77 +223,12 @@ Item {
             font.pixelSize: Theme.iconSize
         }
 
-        Repeater {
-            model: !Settings.vizShown || musicFrame.style === "line" ? 0 : Visualizer.barCount
-
-            Item {
-                id: band
-                required property int index
-                readonly property real v: Visualizer.playing ? Math.max(0, Math.min(1, (Visualizer.bars[index] || 0) / 100)) : 0
-                anchors.verticalCenter: parent.verticalCenter
-                implicitWidth: musicFrame.bandW
-                implicitHeight: musicFrame.bandH
-
-                Rectangle {
-                    visible: musicFrame.style !== "dots"
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: musicFrame.style === "mirror" ? parent.verticalCenter : undefined
-                    anchors.bottom: musicFrame.style === "rise" ? parent.bottom : undefined
-                    width: musicFrame.bandW
-                    radius: musicFrame.style === "rise" ? Math.min(1, Theme.radiusSmall) : Theme.pill(musicFrame.bandW)
-                    height: Math.max(3, parent.height * band.v)
-                    color: Theme.meterFill
-                }
-
-                // four dots from the bottom, lit up to the band's level
-                Column {
-                    visible: musicFrame.style === "dots"
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Math.max(1, (musicFrame.bandH - musicFrame.bandW * 4) / 3)
-                    Repeater {
-                        model: 4
-                        Rectangle {
-                            required property int index
-                            width: musicFrame.bandW
-                            height: musicFrame.bandW
-                            radius: Theme.pill(width)
-                            color: Theme.meterFill
-                            // index 0 is the top dot; the bottom one is always lit
-                            opacity: band.v * 4 >= 3 - index || index === 3 ? 1 : 0.18
-                        }
-                    }
-                }
-            }
-        }
-
-        // the line style: one stroke through every band's level
-        Shape {
-            visible: Settings.vizShown && musicFrame.style === "line"
+        Spectrum {
+            visible: Settings.vizShown
             anchors.verticalCenter: parent.verticalCenter
-            implicitWidth: Visualizer.barCount * (musicFrame.bandW + musicFrame.spacing) - musicFrame.spacing
-            implicitHeight: musicFrame.bandH
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeColor: Theme.meterFill
-                strokeWidth: Math.max(1.5, Theme.borderWidth * 1.5)
-                fillColor: "transparent"
-                capStyle: ShapePath.RoundCap
-                joinStyle: ShapePath.RoundJoin
-                PathPolyline {
-                    path: {
-                        var pts = [], n = Visualizer.barCount
-                        var w = musicFrame.style === "line" ? n * (musicFrame.bandW + musicFrame.spacing) - musicFrame.spacing : 0
-                        var h = musicFrame.bandH
-                        for (var i = 0; i < n; i++) {
-                            var v = Visualizer.playing ? Math.max(0, Math.min(1, (Visualizer.bars[i] || 0) / 100)) : 0
-                            pts.push(Qt.point(n > 1 ? i * w / (n - 1) : 0, h - 1 - v * (h - 2)))
-                        }
-                        return pts
-                    }
-                }
-            }
+            spacing: musicFrame.spacing
+            bandW: musicFrame.bandW
+            bandH: musicFrame.bandH
         }
 
         Text {
@@ -321,8 +253,8 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
-            if (mouse.button === Qt.MiddleButton) Media.toggle()
-            else screenScope.toggleFlyout("media", musicFrame)
+            if (mouse.button === Qt.LeftButton) screenScope.toggleFlyout("media", musicFrame)
+            else if (musicFrame.player && musicFrame.player.canTogglePlaying) musicFrame.player.togglePlaying()
         }
     }
 

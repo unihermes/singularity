@@ -6,6 +6,9 @@
 // so edit this one: edits to the profile's copy are overwritten.
 
 user_pref("media.webrtc.camera.allow-pipewire", true);
+// tabs with media show on the bar's Music module (MPRIS); the media keys
+// still skip browsers (quickshell's Media.keyPlayer)
+user_pref("media.hardwaremediakeys.enabled", true);
 // Screenwise (github.com/unihermes/screenwise) is unsigned and
 // sideloaded into the profile: allow it, and enable it without a prompt
 user_pref("xpinstall.signatures.required", false);
