@@ -97,9 +97,19 @@ function windows(name) {
     return out
 }
 
-// what picking the style sets: Finish switches and styleOptions (ids on)
+// what picking the style sets: Finish switches and styleOptions (ids on).
+// A setting another style's option stands for is put back too, so leaving
+// that style undoes it: a valued one (Flat's bar at the bottom) to its off
+// value, a switch to its default.
 function finish(name) {
     var st = get(name), out = {}
+    for (var n in styles) {
+        var others = styles[n].options
+        for (var j = 0; j < others.length; j++) {
+            var p = others[j]
+            if (p.key && !(p.key in out)) out[p.key] = p.value !== undefined ? offValue(p) : p.on
+        }
+    }
     for (var k in st.finish) out[k] = st.finish[k]
     var ids = []
     for (var i = 0; i < st.options.length; i++) {

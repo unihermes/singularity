@@ -85,6 +85,16 @@ test("Format picks units from the number", () => {
     assert.equal(F.pct(0.456), "46%")
 })
 
+test("Styles: leaving Flat puts the bar back at the top", () => {
+    const S = load("Styles.js")
+    assert.equal(S.finish("flat").barPosition, "bottom")
+    for (const name of S.order.filter(n => n !== "flat")) {
+        assert.equal(S.finish(name).barPosition, "top", name)
+        assert.equal(S.finish(name).heavyLines, false, name)
+    }
+    assert.equal(S.finish("glass").shadows, true)
+})
+
 test("Styles resolve every style, and Flat is square", () => {
     const S = load("Styles.js")
     const base = { radius: 6, barStyle: "full", barHeight: 32, spacing: 100, seeThrough: 100, shadows: true, heavyLines: false }
