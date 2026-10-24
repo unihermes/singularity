@@ -96,7 +96,7 @@ WidgetCard {
                 visible: !root.small
                 width: parent.width
                 card: root
-                px: Theme.fit(11)
+                px: Theme.fit(13)
                 text: (root.player ? root.player.identity : root.lastName).toUpperCase()
                 color: root.accent
                 font.weight: Font.Bold
@@ -152,8 +152,8 @@ WidgetCard {
                 visible: root.hasLength && root.large
                 width: parent.width
                 height: pos.height
-                WidgetText { id: pos; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
-                WidgetText { anchors.right: parent.right; card: root; px: Theme.fit(11); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.length) : "" }
+                WidgetText { id: pos; card: root; px: Theme.fit(13); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
+                WidgetText { anchors.right: parent.right; card: root; px: Theme.fit(13); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.length) : "" }
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter

@@ -425,8 +425,10 @@ Clock, weather, now playing and system stats on the desktop. They have a
 look of their own, the same under every style and look (asked for
 2026-10-24, the mockup's "On the wallpaper"): no ground, frame or blur,
 the content straight on the wallpaper (`desktop/WidgetCard.qml`) in white
-with a tight soft shadow under it, the system font, dimmed and faint
-tiers, and the accent lifted to read on any wallpaper. Each is its own
+and bold, kept legible on a light wallpaper by a tight dark shadow round
+every mark and a wide feathered shade behind the whole (no edge, so it
+reads as the wallpaper darkening, not a card); the system font, nothing
+under 13px, dimmed and faint tiers kept strong, the accent lifted. Each is its own
 surface on the layer under the windows (`desktop/DesktopWidgets.qml`),
 named outside the shell's blur rule. Off until turned on in Appearance >
 Desktop > Widgets.

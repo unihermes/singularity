@@ -110,7 +110,7 @@ WidgetCard {
                 width: parent.cell
                 horizontalAlignment: Text.AlignHCenter
                 card: root
-                px: Theme.fit(11)
+                px: Theme.fit(13)
                 text: Qt.formatDate(modelData, "ddd").charAt(0)
                 color: root.fgFaint
                 font.weight: Font.Bold

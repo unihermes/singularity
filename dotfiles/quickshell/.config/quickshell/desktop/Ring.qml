@@ -67,7 +67,7 @@ Item {
         text: root.label
         color: root.inkDim
         font.family: root.font
-        font.weight: Font.Medium
-        font.pixelSize: Math.round(root.width * 0.15)
+        font.weight: Font.DemiBold
+        font.pixelSize: Math.max(12, Math.round(root.width * 0.17))
     }
 }

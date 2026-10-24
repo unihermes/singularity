@@ -66,7 +66,7 @@ WidgetCard {
         WidgetText {
             id: caption
             card: root
-            px: Theme.fit(12)
+            px: Theme.fit(13)
             text: "CPU · LAST MINUTE"
             color: root.fgDim
             font.weight: Font.Bold

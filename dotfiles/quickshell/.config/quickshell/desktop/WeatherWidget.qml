@@ -80,7 +80,7 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: Theme.fit(12)
+                    px: Theme.fit(13)
                     text: Qt.formatTime(modelData.at, Theme.hours("HH"))
                     color: root.fgDim
                 }
@@ -117,7 +117,7 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: Theme.fit(12)
+                    px: Theme.fit(13)
                     text: root.dayName(modelData, index)
                     color: root.fgDim
                 }
