@@ -1,9 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/ClockWidget.qml
 //
-// The day in the accent over the time. Small adds the date; medium the
-// month and ISO week, and this week as a strip with today lit; large the
-// whole month.
+// The day in the accent over the time, its seconds small beside it.
+// Small adds the date; medium the month and ISO week, and this week as a
+// strip with today lit; large the whole month.
 
 import Quickshell
 import QtQuick
@@ -14,7 +14,7 @@ WidgetCard {
 
     SystemClock {
         id: clock
-        precision: SystemClock.Minutes
+        precision: SystemClock.Seconds
     }
     readonly property date now: clock.date
 
@@ -81,9 +81,18 @@ WidgetCard {
         anchors.top: top.bottom
         anchors.topMargin: -Math.round(font.pixelSize * 0.08)
         card: root
-        px: root.large ? Theme.fit(96) : root.small ? Theme.fit(46) : Theme.fit(60)
+        px: root.large ? Theme.fit(96) : root.small ? Theme.fit(38) : Theme.fit(60)
         text: Qt.formatTime(root.now, Theme.timeFormat)
         font.weight: Font.DemiBold
+    }
+    WidgetText {
+        anchors.left: time.right
+        anchors.leftMargin: Theme.fit(4)
+        anchors.baseline: time.baseline
+        card: root
+        px: Math.round(time.font.pixelSize * 0.4)
+        text: Qt.formatTime(root.now, "ss")
+        color: root.fgDim
     }
 
     WidgetText {

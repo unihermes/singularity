@@ -452,7 +452,7 @@ Desktop > Widgets.
 - **The desktop's menu** (right-click bare desktop, at the pointer): Edit
   widgets, Next wallpaper, Desktop settings. A full-screen surface under
   the widgets takes the right-click.
-- **Clock:** the day in the accent over the time; medium adds the month,
+- **Clock:** the day in the accent over the time, its seconds small beside it; medium adds the month,
   ISO week and this week as a strip with today lit, large the whole month.
 - **Weather:** where, the temperature, the sky and today's high and low;
   medium adds five days as columns, large the next hours and five days as
