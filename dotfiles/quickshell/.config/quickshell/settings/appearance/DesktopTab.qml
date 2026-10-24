@@ -209,7 +209,8 @@ SettingsTab {
                     { key: "weather", label: "Weather", hint: "Now and the next five days" },
                     { key: "music", label: "Now playing", hint: "The Music module's player" },
                     { key: "stats", label: "System", hint: "CPU, GPU, memory, temperature" },
-                    { key: "todo", label: "To-do", hint: "A Google Tasks list" }]
+                    { key: "todo", label: "To-do", hint: "A Google Tasks list" },
+                    { key: "sysinfo", label: "System info", hint: "Distro, kernel, uptime, IP" }]
 
             SettingsField {
                 required property var modelData

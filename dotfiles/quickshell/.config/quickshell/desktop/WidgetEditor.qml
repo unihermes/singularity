@@ -39,7 +39,7 @@ OverlayWindow {
     readonly property var others: Quickshell.screens.filter(s => s.name !== screen.name)
     // the built-in widgets that are off, to add back
     readonly property var hidden: Settings.deskWidgetKeys.filter(k => !layer.placeOf(k).on)
-    readonly property var names: ({ clock: "Clock", weather: "Weather", music: "Now playing", stats: "System", todo: "To-do" })
+    readonly property var names: ({ clock: "Clock", weather: "Weather", music: "Now playing", stats: "System", todo: "To-do", sysinfo: "System info" })
 
     Item {
         id: canvas

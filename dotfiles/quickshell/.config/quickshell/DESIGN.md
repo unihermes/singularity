@@ -489,6 +489,11 @@ Desktop > Widgets.
   every five minutes. Signed out, it says how to sign in; Settings ›
   Appearance › Desktop has Google Tasks' Sign in / Sign out. Starts top
   left.
+- **System info:** fastfetch style, the distro's mark large in the accent
+  beside rows of label (accent) and value: OS, kernel, host, uptime,
+  packages, local IP; large adds CPU, GPU and Hyprland's version; small
+  keeps the mark, OS and uptime. Read once a minute. Starts a gap under
+  the to-do.
 - **Stats:** a bar each for CPU, GPU (Cooling, desktops with nvidia-smi),
   memory and temperature, label left and value right (over the bar when
   small); large adds the last minute of CPU and memory in use. A missing

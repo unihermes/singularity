@@ -417,7 +417,7 @@ Singleton {
     // fx and fy place it across the room the screen leaves it (0 the left
     // or top edge, 1 the other); below 0 it sits where it starts out.
     // screen "" is the first screen. Sticky notes keep theirs in Notes.
-    readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats", "todo"]
+    readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats", "todo", "sysinfo"]
     readonly property var deskWidgetSizes: ["s", "m", "l"]
     function deskWidget(key) {
         var w = (adapter.desktopWidgets || {})[key] || {}

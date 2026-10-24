@@ -20,7 +20,7 @@ Item {
     Loader {
         id: loader
         sourceComponent: root.key.indexOf("note:") === 0 ? note
-            : ({ clock: clock, weather: weather, music: music, stats: stats, todo: todo })[root.key] || null
+            : ({ clock: clock, weather: weather, music: music, stats: stats, todo: todo, sysinfo: sysinfo })[root.key] || null
     }
 
     Component { id: clock; ClockWidget { size: root.size } }
@@ -28,5 +28,6 @@ Item {
     Component { id: music; MusicWidget { size: root.size } }
     Component { id: stats; StatsWidget { size: root.size } }
     Component { id: todo; TodoWidget { size: root.size } }
+    Component { id: sysinfo; SysInfoWidget { size: root.size } }
     Component { id: note; NoteWidget { size: root.size; noteId: root.key.slice(5); desk: root.desk } }
 }

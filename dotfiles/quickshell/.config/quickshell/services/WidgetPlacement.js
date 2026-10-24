@@ -15,7 +15,8 @@ function area(screenW, screenH, barExtent, barAtBottom) {
 
 // Where each starts out: the clock in the bottom left corner with the
 // weather a gap beside it, the stats top right with a sticky note a gap
-// under them, the to-do top left, the music bottom right.
+// under them, the to-do top left with the system info a gap under it, the
+// music bottom right.
 // sizes holds the shown widgets' { w, h }.
 function startRect(key, sizes, a, margin, gap) {
     var s = sizes[key] || { w: 0, h: 0 }
@@ -28,6 +29,10 @@ function startRect(key, sizes, a, margin, gap) {
     }
     if (key === "stats") return { x: right, y: a.y + margin, w: s.w, h: s.h }
     if (key === "todo") return { x: a.x + margin, y: a.y + margin, w: s.w, h: s.h }
+    if (key === "sysinfo") {
+        var td = sizes.todo
+        return { x: a.x + margin, y: a.y + margin + (td ? td.h + gap : 0), w: s.w, h: s.h }
+    }
     if (key.indexOf("note") === 0) {
         var st = sizes.stats
         return { x: right, y: a.y + margin + (st ? st.h + gap : 0), w: s.w, h: s.h }
