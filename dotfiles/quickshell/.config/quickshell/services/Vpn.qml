@@ -316,7 +316,9 @@ Singleton {
 
     // its config file, while it's closed (it writes the file as it quits).
     // The Web UI on 127.0.0.1 only, without a password from there, so the
-    // shell can set the port while it runs.
+    // shell can set the port while it runs. It won't start the Web UI with
+    // no login set, so one goes in where there's none: a random password
+    // nobody knows, as only its hash was kept.
     function qbitWrite(on) {
         AtomicFileWrite.write({
             path: qbitConf,
@@ -333,6 +335,10 @@ Singleton {
                     ["Preferences", "WebUI\\Port", String(root.qbitWebPort)],
                     ["Preferences", "WebUI\\LocalHostAuth", "false"],
                 ]
+                if (!/^WebUI\\Password_PBKDF2=/m.test(text)) {
+                    keys.push(["Preferences", "WebUI\\Username", "singularity"])
+                    keys.push(["Preferences", "WebUI\\Password_PBKDF2", '"@ByteArray(Y4YZVcMTo1OqEPGs/vILGA==:HmhjZ/toCxwBXExVze4QQSrsrfPAzlC3UzMO9tVBQsIu6ZxN0fHNR5vzT/UmzAWdMZF1c6AWvnuyl8EENlkjfA==)"'])
+                }
                 if (root.port > 0) keys.push(["BitTorrent", "Session\\Port", String(root.port)])
                 keys.forEach(k => { text = VpnConf.iniSet(text, k[0], k[1], k[2]) })
                 return text
