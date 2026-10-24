@@ -17,7 +17,7 @@ Singleton {
     id: root
 
     // each tab: id (fixed, for the desktop), title, text, and desk: where
-    // it sits on the desktop (fx, fy, size and screen, as a desktop
+    // it sits on the desktop (fx, fy, size, w and h, and screen, as a desktop
     // widget's place) or null when it's only in the window. Never empty
     // once loaded.
     property var tabs: [blank("Note")]
@@ -79,10 +79,14 @@ Singleton {
         return t.id
     }
 
+    // w and h, when set, are the note's own size in card units (dragged
+    // in edit mode), over the grid's size
     function deskOf(d) {
         d = d || {}
-        return { fx: typeof d.fx === "number" ? d.fx : -1, fy: typeof d.fy === "number" ? d.fy : -1,
-                 size: ["s", "m", "l"].indexOf(d.size) !== -1 ? d.size : "m", screen: String(d.screen || "") }
+        const out = { fx: typeof d.fx === "number" ? d.fx : -1, fy: typeof d.fy === "number" ? d.fy : -1,
+                      size: ["s", "m", "l"].indexOf(d.size) !== -1 ? d.size : "m", screen: String(d.screen || "") }
+        if (d.w > 0 && d.h > 0) { out.w = d.w; out.h = d.h }
+        return out
     }
 
     // on the desktop (merging in place fields), or off it; the tab stays

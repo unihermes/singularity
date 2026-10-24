@@ -45,8 +45,13 @@ Item {
     default property alias content: body.data
     readonly property alias body: body
 
-    width: small ? unit : unit * 2 + gap
-    height: large ? unit * 2 + gap : unit
+    // a size of its own in units (a sticky note's, dragged in edit mode),
+    // 0 for the grid's
+    property real unitsWide: 0
+    property real unitsHigh: 0
+
+    width: unitsWide > 0 ? Math.round(unitsWide * unit) : small ? unit : unit * 2 + gap
+    height: unitsHigh > 0 ? Math.round(unitsHigh * unit) : large ? unit * 2 + gap : unit
 
     // the ground: a hard-edged card, evenly see-through
     Rectangle {

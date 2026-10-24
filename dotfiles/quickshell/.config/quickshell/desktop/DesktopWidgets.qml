@@ -53,12 +53,14 @@ Scope {
     readonly property var keys: Settings.deskWidgetKeys.concat(Notes.deskIds.map(id => "note:" + id))
     function noteIndex(key) { return Notes.indexOf(key.slice(5)) }
 
-    // where it sits: on, screen, size, fx and fy
+    // where it sits: on, screen, size, fx and fy; a note's own w and h
+    // (card units, 0 for its size's)
     function placeOf(key) {
         if (key.indexOf("note:") !== 0) return Settings.deskWidget(key)
         const t = Notes.tabs[noteIndex(key)]
-        if (!t || !t.desk) return { on: false, screen: "", size: "m", fx: -1, fy: -1 }
-        return { on: true, screen: t.desk.screen, size: t.desk.size, fx: t.desk.fx, fy: t.desk.fy }
+        if (!t || !t.desk) return { on: false, screen: "", size: "m", fx: -1, fy: -1, w: 0, h: 0 }
+        return { on: true, screen: t.desk.screen, size: t.desk.size, fx: t.desk.fx, fy: t.desk.fy,
+                 w: t.desk.w || 0, h: t.desk.h || 0 }
     }
     function setPlace(key, fields) {
         if (key.indexOf("note:") !== 0) { Settings.setDeskWidget(key, fields); return }
@@ -180,6 +182,8 @@ Scope {
                 id: widget
                 key: win.modelData
                 size: win.place.size
+                unitsWide: win.place.w || 0
+                unitsHigh: win.place.h || 0
                 desk: root
                 onLetGo: win.giveBack()
                 readonly property bool hasKeys: Window.active

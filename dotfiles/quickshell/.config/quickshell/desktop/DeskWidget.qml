@@ -2,7 +2,8 @@
 // ~/.config/quickshell/desktop/DeskWidget.qml
 //
 // One desktop widget by key, at its size: "s", "m" or "l" (WidgetCard's
-// grid). Sized to its card. A key "note:" and an id is that sticky note.
+// grid). Sized to its card. A key "note:" and an id is that sticky note,
+// which can have its own size instead, in card units.
 
 import QtQuick
 
@@ -11,6 +12,8 @@ Item {
 
     required property string key
     property string size: "m"
+    property real unitsWide: 0
+    property real unitsHigh: 0
     // the screen's DesktopWidgets, for a note's +
     property var desk: null
     // a note handing its typing back
@@ -30,5 +33,5 @@ Item {
     Component { id: music; MusicWidget { size: root.size } }
     Component { id: stats; StatsWidget { size: root.size } }
     Component { id: sysinfo; SysInfoWidget { size: root.size } }
-    Component { id: note; NoteWidget { size: root.size; noteId: root.key.slice(5); desk: root.desk; onLetGo: root.letGo() } }
+    Component { id: note; NoteWidget { size: root.size; unitsWide: root.unitsWide; unitsHigh: root.unitsHigh; noteId: root.key.slice(5); desk: root.desk; onLetGo: root.letGo() } }
 }

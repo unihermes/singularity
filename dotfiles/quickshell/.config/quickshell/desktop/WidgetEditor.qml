@@ -7,6 +7,8 @@
 // widgets (in line, or a gap beside), a guide showing the line it took.
 // The one picked gets its size (small, medium, large), Hide, and Move to
 // the other screen (a sticky note's Hide leaves it in the Notes window).
+// A sticky note has no sizes: its corner drags to any size, stopping at
+// the grid's widths and heights on the way.
 // The shelf under the bar adds back hidden widgets, a new sticky note in
 // the middle, resets the built-in ones' places, and finishes, as Escape
 // does.
@@ -35,6 +37,16 @@ OverlayWindow {
     property string picked: ""
     property var guides: []
     onOpenChanged: { picked = ""; guides = [] }
+
+    // WidgetCard's grid: a note's size snaps to its widths and heights
+    readonly property int unit: Theme.fit(164)
+    function snapSize(v) {
+        for (let n = 1; n <= 4; n++) {
+            const g = n * unit + (n - 1) * layer.gap
+            if (Math.abs(v - g) <= Theme.sp(10)) return g
+        }
+        return Math.round(v)
+    }
 
     readonly property var others: Quickshell.screens.filter(s => s.name !== screen.name)
     // the built-in widgets that are off, to add back
@@ -86,6 +98,10 @@ OverlayWindow {
                 // where the drag has it, null when it's at rest
                 property var dragged: null
                 property point grab: Qt.point(0, 0)
+                // a note's size while its corner is dragged, null at rest
+                property var resized: null
+                readonly property bool note: modelData.indexOf("note:") === 0
+                readonly property var place: root.layer.placeOf(modelData)
                 readonly property bool isPicked: root.picked === modelData
 
                 x: dragged ? dragged.x : rect.x
@@ -97,7 +113,9 @@ OverlayWindow {
                 DeskWidget {
                     id: widget
                     key: slot.modelData
-                    size: root.layer.placeOf(slot.modelData).size
+                    size: slot.place.size
+                    unitsWide: slot.resized ? slot.resized.w / root.unit : slot.place.w || 0
+                    unitsHigh: slot.resized ? slot.resized.h / root.unit : slot.place.h || 0
                     desk: root.layer
                 }
 
@@ -138,10 +156,52 @@ OverlayWindow {
                     }
                 }
 
+                // a picked note's corner, to size it: no smaller than a
+                // unit wide and most of one high, and kept in the area
+                Rectangle {
+                    visible: slot.note && slot.isPicked && !slot.dragged
+                    x: parent.width - width / 2 + Theme.spaceS / 2
+                    y: parent.height - height / 2 + Theme.spaceS / 2
+                    width: Theme.fit(14)
+                    height: width
+                    radius: width / 2
+                    color: Theme.accent
+                    border.width: Theme.borderWidth
+                    border.color: Theme.textOnAccent
+
+                    MouseArea {
+                        anchors.fill: parent
+                        anchors.margins: -Theme.fit(6)
+                        cursorShape: Qt.SizeFDiagCursor
+                        property point start: Qt.point(0, 0)
+                        property size from: Qt.size(0, 0)
+                        onPressed: mouse => {
+                            start = mapToItem(canvas, mouse.x, mouse.y)
+                            from = Qt.size(slot.width, slot.height)
+                        }
+                        onPositionChanged: mouse => {
+                            if (!pressed) return
+                            const p = mapToItem(canvas, mouse.x, mouse.y)
+                            const a = root.layer.area
+                            const w = Math.max(root.unit, Math.min(a.x + a.w - root.layer.margin - slot.x,
+                                root.snapSize(from.width + p.x - start.x)))
+                            const h = Math.max(Math.round(root.unit * 0.6), Math.min(a.y + a.h - root.layer.margin - slot.y,
+                                root.snapSize(from.height + p.y - start.y)))
+                            slot.resized = { w: w, h: h }
+                        }
+                        onReleased: {
+                            if (!slot.resized) return
+                            const r = slot.resized, f = Placement.fractionsOf({ x: slot.x, y: slot.y, w: r.w, h: r.h }, root.layer.area)
+                            root.layer.setPlace(slot.modelData, { fx: f.fx, fy: f.fy, w: r.w / root.unit, h: r.h / root.unit })
+                            slot.resized = null
+                        }
+                    }
+                }
+
                 // the picked one's size, Hide and Move, above it (below it
                 // when there's no room)
                 PanelFrame {
-                    visible: slot.isPicked && !slot.dragged
+                    visible: slot.isPicked && !slot.dragged && !slot.resized
                     ground: Theme.surface
                     x: Math.max(-slot.x + Theme.edgeMargin, Math.min(0, canvas.width - slot.x - width - Theme.edgeMargin))
                     y: slot.y - height - Theme.spaceL * 2 >= root.layer.area.y
@@ -155,10 +215,11 @@ OverlayWindow {
                         spacing: Theme.spaceM
 
                         FlyoutSegmented {
+                            visible: !slot.note
                             width: Theme.fit(120)
                             anchors.verticalCenter: parent.verticalCenter
                             model: [{ value: "s", text: "S" }, { value: "m", text: "M" }, { value: "l", text: "L" }]
-                            current: root.layer.placeOf(slot.modelData).size
+                            current: slot.place.size
                             onPicked: v => root.layer.setPlace(slot.modelData, { size: v })
                         }
                         Repeater {

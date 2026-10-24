@@ -472,7 +472,10 @@ Desktop > Widgets.
   one anywhere; it snaps to the other widgets (in line, or a gap beside),
   the middle, the thirds and the margin in from each edge, an accent line
   showing which. The picked one has an accent ring and a toolbar: size
-  (S, M, L), Move to another screen, Hide. The shelf under the bar adds
+  (S, M, L), Move to another screen, Hide. A sticky note has no S, M, L:
+  an accent dot on its corner drags it to any size (at least a unit wide
+  and 0.6 high, inside the margin), catching on the grid's widths and
+  heights; the size is kept in card units with its place. The shelf under the bar adds
   back hidden ones, Resets places, and is Done (or Escape). The edit chrome
   is the style's, like the bar's edit mode.
 - **The desktop's menu** (right-click bare desktop, at the pointer): Edit
