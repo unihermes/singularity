@@ -468,11 +468,12 @@ Scope {
             + "entry selection, textview text selection, label selection {\n"
             + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n}\n"
         // libadwaita's tab bars (Ghostty's tabs): the selected tab as one steady
-        // accent fill. The rule above would also fill what's inside it, and with
-        // the tab's own background transition it flickered to black and back.
-        var tabs = "tabbar tab:selected, tabbar tab:selected:hover, tabbar tab:selected:active {\n"
-            + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n"
-            + "  transition: none;\n}\n"
+        // accent fill. The rule above would also fill what's inside it, and no
+        // tab animates its background: GTK fades between the accent and
+        // libadwaita's currentColor mixes through black.
+        var tabs = "tabbar tab, tabbar tab * {\n  transition: none;\n}\n"
+            + "tabbar tab:selected, tabbar tab:selected:hover, tabbar tab:selected:active {\n"
+            + "  background-color: " + o.accent_bg_color + ";\n  color: " + o.accent_fg_color + ";\n}\n"
             + "tabbar tab:selected *:selected, tabbar tab:selected label selection {\n"
             + "  background-color: transparent;\n  color: inherit;\n}\n"
         // libadwaita's toasts (Ghostty's "Copied to clipboard") as the shell's
