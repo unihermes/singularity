@@ -417,7 +417,7 @@ Singleton {
     // fx and fy place it across the room the screen leaves it (0 the left
     // or top edge, 1 the other); below 0 it sits where it starts out.
     // screen "" is the first screen. Sticky notes keep theirs in Notes.
-    readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats"]
+    readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats", "todo"]
     readonly property var deskWidgetSizes: ["s", "m", "l"]
     function deskWidget(key) {
         var w = (adapter.desktopWidgets || {})[key] || {}
@@ -434,6 +434,9 @@ Singleton {
         all[key] = w
         adapter.desktopWidgets = all
     }
+    // the Google Tasks list the to-do widget shows, by id ("" the first)
+    readonly property alias todoList: adapter.todoList
+    function setTodoList(id) { adapter.todoList = String(id) }
     // back where they start out, on the first screen at the middle size
     function resetDeskWidgets() {
         var all = {}
@@ -1102,6 +1105,7 @@ Singleton {
             property bool vpnQbit: true
             property bool phoneLinkOn: false
             property var desktopWidgets: ({})
+            property string todoList: ""
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

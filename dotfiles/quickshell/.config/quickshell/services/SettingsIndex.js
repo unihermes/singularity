@@ -165,6 +165,8 @@ var entries = [
     { page: "appearance", section: "Desktop", label: "Weather", keywords: "desktop widgets weather forecast temperature wallpaper" },
     { page: "appearance", section: "Desktop", label: "Now playing", keywords: "desktop widgets music media player spotify wallpaper" },
     { page: "appearance", section: "Desktop", label: "System", keywords: "desktop widgets stats cpu gpu ram memory temperature monitor wallpaper" },
+    { page: "appearance", section: "Desktop", label: "To-do", keywords: "desktop widgets todo tasks list google checklist" },
+    { page: "appearance", section: "Desktop", label: "Google Tasks", keywords: "todo sign in account oauth google tasks sync" },
     { page: "appearance", section: "Desktop", label: "Placement", keywords: "desktop widgets edit move drag place position size small medium large right-click menu sticky notes" },
     { page: "appearance", section: "Desktop", label: "Window gaps", keywords: "gaps_in between windows hyprland tiling" },
     { page: "appearance", section: "Desktop", label: "Edge gaps", keywords: "screen edges gaps_out hyprland bar floating islands margin inset" },
