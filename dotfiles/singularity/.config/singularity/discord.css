@@ -18,22 +18,73 @@
 #app-mount .base__5e434 {
   --custom-app-top-bar-height: 0px;
   /* the framed row's height, and where the panels below start */
-  --n-row: calc(var(--custom-guild-list-width) + 2 * var(--n-depth));
+  --n-row: calc(40px * var(--n-guild-zoom) + 2 * var(--n-guild-pad) + 2 * var(--n-depth));
+  --n-guild-zoom: 1.2;
+  --n-guild-pad: 10px;
+  /* centre the zoomed list in the row and its mark under the icons (in the
+   * list's turned, zoomed units) */
+  --n-guild-shift: -5px;
+  --n-pill-shift: 4px;
   --serverlist-offset: calc(var(--n-gap) + var(--n-row));
 }
 #app-mount .base__5e434 > .bar_c38106 {
   position: absolute !important;
-  top: calc(var(--n-gap) + var(--n-depth));
+  top: var(--n-gap);
   right: calc(var(--n-gap) + var(--n-depth) + var(--n-gap));
   left: auto;
   width: auto !important;
-  height: var(--custom-guild-list-width) !important;
+  height: var(--n-row) !important;
   background: transparent !important;
   z-index: 3;
 }
 .base__5e434 > .bar_c38106 .title_c38106, .winButtons_c38106 {
   display: none !important;
 }
+/* back/forward and inbox/help as two of the shell's bar chips */
+.base__5e434 > .bar_c38106 {
+  align-items: center;
+  gap: var(--n-gap);
+}
+.base__5e434 > .bar_c38106 :is(.leading_c38106, .trailing_c38106) {
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+.base__5e434 > .bar_c38106 :is(.backForwardButtons__63abb, .trailing_c38106) {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px !important;
+  background: var(--n-surface);
+  border: var(--n-edge-w) solid var(--n-edge) !important;
+  border-radius: var(--n-radius);
+  box-shadow: inset 0 0 0 calc(var(--n-edge-w) + 1px) var(--n-gutter-fill);
+}
+.base__5e434 > .bar_c38106 :is(.button__63abb, .clickable__81391) {
+  width: 32px !important;
+  height: 28px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  border-radius: var(--n-radius-inner);
+  color: var(--n-subtext) !important;
+}
+.base__5e434 > .bar_c38106 :is(.button__63abb, .clickable__81391) svg {
+  width: 20px;
+  height: 20px;
+  color: inherit !important;
+}
+.base__5e434 > .bar_c38106 :is(.button__63abb:not(.disabled__63abb), .clickable__81391):hover {
+  background: var(--n-hover) !important;
+  color: var(--n-bright) !important;
+}
+.base__5e434 > .bar_c38106 .disabled__63abb {
+  color: var(--n-muted) !important;
+}
+.base__5e434 > .bar_c38106 .anchor__14d82 { text-decoration: none !important; }
+
 /* the empty bar UI Refresh Refresh pins over the top would catch the
  * clicks meant for the servers under it */
 .systemBar_c38106 {
@@ -60,7 +111,15 @@
 }
 .guilds__5e434 {
   background: transparent !important;
-  translate: calc(var(--n-gap) + var(--n-depth) + var(--n-gap)) calc(-1 * var(--n-depth));
+  zoom: var(--n-guild-zoom);
+  translate: calc(var(--n-gap) + var(--n-depth) + var(--n-gap)) var(--n-guild-shift, 0px);
+}
+/* the open server's mark in the accent, tucked up under its icon */
+.guilds__5e434 .item__58105 {
+  background: var(--n-accent) !important;
+}
+.guilds__5e434 .wrapper__58105 {
+  translate: var(--n-pill-shift, 0px) 0;
 }
 
 /* the panels sit apart on the base, like the shell's flyouts (#app-mount
