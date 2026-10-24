@@ -17,6 +17,10 @@ WidgetCard {
         precision: SystemClock.Seconds
     }
     readonly property date now: clock.date
+    // today, which changes once a day: the week and month hang off it, so
+    // their cells aren't rebuilt each second
+    readonly property string dayKey: Qt.formatDate(now, "yyyy-MM-dd")
+    readonly property date today: new Date(dayKey + "T00:00:00")
 
     // ISO 8601: the week holding the year's first Thursday is week 1
     function isoWeek(d) {
@@ -42,11 +46,13 @@ WidgetCard {
 
     // the month's weeks, as whole weeks
     readonly property var monthDays: {
-        const first = new Date(now.getFullYear(), now.getMonth(), 1)
-        const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+        const first = new Date(today.getFullYear(), today.getMonth(), 1)
+        const last = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
         const lead = (first.getDay() - Settings.weekStart + 7) % 7
         return daysFrom(first, Math.ceil((lead + last) / 7) * 7)
     }
+
+    readonly property var weekDays: daysFrom(today, 7)
 
     function sameDay(a, b) {
         return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -57,21 +63,17 @@ WidgetCard {
         width: parent.width
         height: day.height
 
-        WidgetText {
+        WidgetCaption {
             id: day
             card: root
-            px: Theme.fit(13)
-            text: Qt.formatDate(root.now, "dddd").toUpperCase()
-            color: root.accent
-            font.weight: Font.Bold
-            font.letterSpacing: 1
+            text: Qt.formatDate(root.today, "dddd")
         }
         WidgetText {
             visible: !root.small
             anchors.right: parent.right
             card: root
-            px: Theme.fit(13)
-            text: Qt.formatDate(root.now, "MMMM") + " · Week " + root.isoWeek(root.now)
+            px: root.textCaption
+            text: Qt.formatDate(root.today, "MMMM") + " · Week " + root.isoWeek(root.today)
             color: root.fgDim
         }
     }
@@ -83,7 +85,6 @@ WidgetCard {
         card: root
         px: root.large ? Theme.fit(96) : root.small ? Theme.fit(38) : Theme.fit(60)
         text: Qt.formatTime(root.now, Theme.timeFormat)
-        font.weight: Font.DemiBold
     }
     WidgetText {
         anchors.left: time.right
@@ -99,8 +100,7 @@ WidgetCard {
         visible: root.small
         anchors.bottom: parent.bottom
         card: root
-        px: Theme.fit(14)
-        text: Qt.formatDate(root.now, "d MMMM")
+        text: Qt.formatDate(root.today, "d MMMM")
         color: root.fgDim
     }
 
@@ -113,24 +113,24 @@ WidgetCard {
         readonly property real cell: width / 7
 
         Repeater {
-            model: root.small ? [] : root.daysFrom(root.now, 7)
+            model: root.small ? [] : root.weekDays
             WidgetText {
                 required property var modelData
                 width: parent.cell
                 horizontalAlignment: Text.AlignHCenter
                 card: root
-                px: Theme.fit(13)
+                px: root.textCaption
                 text: Qt.formatDate(modelData, "ddd").charAt(0)
                 color: root.fgFaint
-                font.weight: Font.Bold
+                font.weight: root.weightStrong
             }
         }
 
         Repeater {
-            model: root.large ? root.monthDays : root.small ? [] : root.daysFrom(root.now, 7)
+            model: root.large ? root.monthDays : root.small ? [] : root.weekDays
             Item {
                 required property var modelData
-                readonly property bool today: root.sameDay(modelData, root.now)
+                readonly property bool today: root.sameDay(modelData, root.today)
                 width: parent.cell
                 height: Theme.fit(root.large ? 30 : 26)
 
@@ -145,11 +145,11 @@ WidgetCard {
                 WidgetText {
                     anchors.centerIn: parent
                     card: root
-                    px: Theme.fit(13)
+                    px: root.textCaption
                     text: modelData.getDate()
                     color: parent.today ? Theme.textOnAccent
-                        : modelData.getMonth() === root.now.getMonth() ? root.fg : root.fgFaint
-                    font.weight: parent.today ? Font.Bold : Font.Medium
+                        : modelData.getMonth() === root.today.getMonth() ? root.fg : root.fgFaint
+                    font.weight: parent.today ? root.weightStrong : root.weightBody
                 }
             }
         }

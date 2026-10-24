@@ -24,18 +24,15 @@ WidgetCard {
         id: now
         width: root.small ? parent.width : parent.width * 0.55
 
-        WidgetText {
+        WidgetCaption {
             width: parent.width
             card: root
-            px: Theme.fit(14)
             text: Weather.area !== "" ? Weather.area.split(",")[0] : "Weather"
-            font.weight: Font.Bold
         }
         WidgetText {
             card: root
             px: root.large ? Theme.fit(52) : Theme.fit(42)
             text: Weather.ready ? Weather.temp(Weather.tempF, Weather.tempC) : "--"
-            font.weight: Font.Normal
         }
     }
 
@@ -57,9 +54,9 @@ WidgetCard {
                 horizontalAlignment: root.small ? Text.AlignLeft : Text.AlignRight
                 card: root
                 text: modelData.text
-                px: modelData.icon ? Theme.fit(root.small ? 18 : 22) : Theme.fit(13)
+                px: modelData.icon ? Theme.fit(root.small ? 18 : 22) : root.textCaption
                 font.family: modelData.icon ? Theme.fontIcon : root.font
-                font.weight: modelData.strong ? Font.DemiBold : Font.Medium
+                font.weight: modelData.strong ? root.weightStrong : root.weightBody
                 color: modelData.dim ? root.fgDim : root.fg
             }
         }
@@ -80,7 +77,7 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: Theme.fit(13)
+                    px: root.textCaption
                     text: Qt.formatTime(modelData.at, Theme.hours("HH"))
                     color: root.fgDim
                 }
@@ -94,7 +91,7 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: Theme.fit(13)
+                    px: root.textCaption
                     text: Weather.temp(modelData.tempF, modelData.tempC)
                 }
             }
@@ -117,7 +114,7 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: Theme.fit(13)
+                    px: root.textCaption
                     text: root.dayName(modelData, index)
                     color: root.fgDim
                 }
@@ -131,7 +128,7 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: Theme.fit(13)
+                    px: root.textCaption
                     text: Weather.temp(modelData.hiF, modelData.hiC)
                 }
             }

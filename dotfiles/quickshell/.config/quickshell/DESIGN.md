@@ -444,13 +444,21 @@ look of their own, the same under every style and look (asked for
 2026-10-24): a card with a hard hairline edge round an evenly see-through
 dark ground (35%), no gradient, no blur
 (`desktop/WidgetCard.qml`); the content in white and bold with a tight
-dark shadow round every mark, the system font, nothing under 13px,
-dimmed and faint tiers kept strong, the accent lifted. A feathered shade
+dark shadow round every mark, the system font (Appearance > Apps, else
+the shell's), nothing under 13px, dimmed and faint tiers kept strong, the
+accent lifted. A feathered shade
 with no edge and a top-to-bottom fade were tried and dropped. Each is its own
 surface on the layer under the windows (`desktop/DesktopWidgets.qml`),
 named outside the shell's blur rule. Off until turned on in Appearance >
 Desktop > Widgets.
 
+- **Type** (`WidgetCard`): past each widget's one large figure (the time,
+  the temperature, the uptime) three sizes, caption 13, body 14, title 16,
+  and two weights: medium for anything read, the figures too, bold for
+  what names or leads. A widget leads with a caption (`WidgetCaption`:
+  spaced bold capitals in the accent: the day, the place, the player, the
+  note, the host); the stats' labels and the groups' heads are captions
+  too, dimmed where the accent would be noise.
 - **Sizes sit on one grid** so they line up: small is one unit square
   (164px at the base text size), medium two units and the 16px gap wide,
   large two by two. Two smalls and a gap are a medium's width.
@@ -490,16 +498,20 @@ Desktop > Widgets.
   desktop's menu (where the click was) and edit mode's shelf (the middle).
   Their places live in notes.json with the tabs. The first starts a gap
   under the stats.
-- **System info:** fastfetch style, the distro's mark large in the accent
-  beside user@host (accent) over a hairline rule and rows of label
-  (accent) and value, the values lined up just past the widest label: OS,
-  kernel, uptime, packages, local IP; large puts the mark and user@host
-  with the uptime over the rows and adds CPU, GPU, memory and Hyprland's
-  version; small keeps the mark, the host and the uptime. Read once a
-  minute. Starts top left.
+- **System info:** a head of the distro's mark in the accent beside the
+  host (bold) and a dimmed line, over a hairline rule. Medium: the system
+  and kernel under the host, then uptime, packages and local IP as three
+  captioned figures. Large: the user and uptime under the host, then a
+  System group (OS, kernel, WM, packages, IP) and a Hardware one (CPU, GPU,
+  memory), dimmed labels and their values lined up past the widest.
+  Small: the mark, then the host over the uptime and when it booted. What
+  doesn't change is read once; packages (pacman's database) and the IP
+  once a minute. Starts top left.
 - **Stats:** a bar each for CPU, GPU (Cooling, desktops with nvidia-smi),
-  memory and temperature, label left and value right (over the bar when
-  small); large adds the last minute of CPU and memory in use. CPU and
+  memory, temperature and the root disk, label left and value right (over
+  the bar when small); large adds the last minute of CPU and the memory and
+  disk in use. The bars step each second, unanimated, so the surface draws
+  once a second; the disk is read every 30s. CPU and
   temperature are the mean of the last five seconds, GPU of the last two
   readings, like the System window's. A missing
   reading drops its bar.

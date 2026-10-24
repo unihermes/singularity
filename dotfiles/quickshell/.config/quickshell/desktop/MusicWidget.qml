@@ -92,29 +92,25 @@ WidgetCard {
         Column {
             width: parent.width
 
-            WidgetText {
+            WidgetCaption {
                 visible: !root.small
                 width: parent.width
                 card: root
-                px: Theme.fit(13)
-                text: (root.player ? root.player.identity : root.lastName).toUpperCase()
-                color: root.accent
-                font.weight: Font.Bold
-                font.letterSpacing: 1
+                text: root.player ? root.player.identity : root.lastName
             }
             WidgetText {
                 width: parent.width
                 card: root
-                px: Theme.fit(root.large ? 18 : 15)
+                px: root.large ? Theme.fit(18) : root.textTitle
                 text: root.player ? (root.player.trackTitle || "Nothing playing") : "Nothing playing"
                 color: root.player ? root.fg : root.fgDim
-                font.weight: Font.Bold
+                font.weight: root.weightStrong
             }
             WidgetText {
                 width: parent.width
                 visible: text !== ""
                 card: root
-                px: Theme.fit(13)
+                px: root.textCaption
                 text: root.player ? (root.player.trackArtist || "") : root.lastName !== "" ? root.lastName + " played last" : ""
                 color: root.fgDim
             }
@@ -152,8 +148,8 @@ WidgetCard {
                 visible: root.hasLength && root.large
                 width: parent.width
                 height: pos.height
-                WidgetText { id: pos; card: root; px: Theme.fit(13); color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
-                WidgetText { anchors.right: parent.right; card: root; px: Theme.fit(13); color: root.fgDim; text: Media.fmtTime(root.length) }
+                WidgetText { id: pos; card: root; px: root.textCaption; color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
+                WidgetText { anchors.right: parent.right; card: root; px: root.textCaption; color: root.fgDim; text: Media.fmtTime(root.length) }
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -187,10 +183,10 @@ WidgetCard {
             visible: !root.player && root.lastApp !== null && !root.small
             anchors.bottom: parent.bottom
             card: root
-            px: Theme.fit(13)
+            px: root.textCaption
             text: "󰐊  Open " + root.lastName
             color: root.accent
-            font.weight: Font.Bold
+            font.weight: root.weightStrong
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor

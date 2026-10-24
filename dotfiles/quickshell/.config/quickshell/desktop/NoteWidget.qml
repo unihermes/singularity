@@ -37,15 +37,11 @@ WidgetCard {
         width: parent.width
         height: title.height
 
-        WidgetText {
+        WidgetCaption {
             id: title
             width: parent.width - tools.width - Theme.fit(8)
             card: root
-            px: Theme.fit(13)
-            text: root.tab.title.toUpperCase()
-            color: root.accent
-            font.weight: Font.Bold
-            font.letterSpacing: 1
+            text: root.tab.title
         }
         Row {
             id: tools
@@ -94,8 +90,8 @@ WidgetCard {
             selectionColor: root.accent
             selectedTextColor: "#000000"
             font.family: root.font
-            font.weight: Font.DemiBold
-            font.pixelSize: Theme.fit(15)
+            font.weight: root.weightBody
+            font.pixelSize: root.textBody
 
             onTextChanged: if (activeFocus) Notes.setText(root.index, text)
             onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)

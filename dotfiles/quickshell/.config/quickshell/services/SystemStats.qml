@@ -9,7 +9,8 @@
 // the static half is SystemSpecs.qml. Samples only while `sampling`: the
 // window is showing (`active`) or a flyout that reads it is open
 // (`flyoutActive`); the graphs start empty each open. The desktop's stats
-// widget keeps the CPU, memory and temperature going on their own (`light`).
+// widget keeps the CPU, memory, temperature and filesystems going on their
+// own (`light`).
 
 pragma Singleton
 
@@ -23,8 +24,8 @@ Singleton {
     property bool active: false
     property bool flyoutActive: false
     readonly property bool sampling: active || flyoutActive
-    // the desktop's stats widget: CPU, memory and the temperature only,
-    // while nothing above wants the rest
+    // the desktop's stats widget: CPU, memory, the temperature and the
+    // filesystems only, while nothing above wants the rest
     readonly property bool light: !sampling && Settings.deskWidget("stats").on
     // set while the pointer is over a process list: a refresh landing then
     // is dropped, so a row can't move out from under a click
@@ -492,7 +493,7 @@ Singleton {
     Timer {
         interval: 30000
         repeat: true
-        running: root.sampling
+        running: root.sampling || root.light
         triggeredOnStart: true
         onTriggered: if (!dfProc.running) dfProc.running = true
     }
@@ -502,10 +503,7 @@ Singleton {
         repeat: true
         running: root.light
         triggeredOnStart: true
-        onTriggered: {
-            root.sampleCpu(); root.sampleMem(); root.sampleTemp()
-            if (root.tempC >= 0) root.tempHistory = root.pushHistory(root.tempHistory, root.tempC)
-        }
+        onTriggered: { root.sampleCpu(); root.sampleMem(); root.sampleTemp() }
     }
 
     // cleared on close, so the next open starts from fresh baselines

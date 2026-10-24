@@ -2,8 +2,9 @@
 // ~/.config/quickshell/desktop/StatsWidget.qml
 //
 // A bar each for the CPU, the GPU (NVIDIA's load, from Cooling, on
-// desktops), memory and the CPU's temperature, with its label and value;
-// large adds the last minute of CPU and the memory in use under them. A reading the machine can't give is left out.
+// desktops), memory, the CPU's temperature and the root disk, with its
+// label and value; large adds the last minute of CPU and the memory and
+// disk in use under them. A reading the machine can't give is left out.
 
 import QtQuick
 import "../services"
@@ -13,11 +14,13 @@ import "../flyouts"
 WidgetCard {
     id: root
 
+    readonly property real disk: SystemStats.diskSize > 0 ? SystemStats.diskUsed / SystemStats.diskSize : 0
     readonly property var readings: [
         { label: "CPU", frac: SystemStats.cpu, value: Format.pct(SystemStats.cpu), shown: true },
         { label: "GPU", frac: Cooling.gpuLoad / 100, value: Cooling.gpuLoad + "%", shown: Cooling.gpuLoad >= 0 },
         { label: "RAM", frac: SystemStats.mem, value: Format.pct(SystemStats.mem), shown: SystemStats.memTotalKb > 0 },
-        { label: "TEMP", frac: SystemStats.tempC / 100, value: Math.round(SystemStats.tempC) + "°", shown: SystemStats.tempC >= 0 }
+        { label: "TEMP", frac: SystemStats.tempC / 100, value: Math.round(SystemStats.tempC) + "°", shown: SystemStats.tempC >= 0 },
+        { label: "DISK", frac: disk, value: Format.pct(disk), shown: SystemStats.diskSize > 0 }
     ].filter(r => r.shown)
     // which bars show, apart from their readings, so the bars aren't
     // rebuilt each second
@@ -32,7 +35,7 @@ WidgetCard {
         height: root.large ? implicitHeight : parent.height
         spacing: root.large ? Theme.fit(10)
             : (parent.height - root.labels.length * rowHeight) / Math.max(1, root.labels.length - 1)
-        readonly property real rowHeight: root.small ? Theme.fit(26) : Theme.fit(20)
+        readonly property real rowHeight: root.small ? Theme.fit(24) : Theme.fit(20)
 
         Repeater {
             model: root.labels
@@ -43,17 +46,14 @@ WidgetCard {
                 width: rows.width
                 height: rows.rowHeight
 
-                WidgetText {
+                WidgetCaption {
                     id: label
                     anchors.top: root.small ? parent.top : undefined
                     anchors.verticalCenter: root.small ? undefined : parent.verticalCenter
                     width: Theme.fit(48)
                     card: root
-                    px: Theme.fit(13)
                     text: modelData
                     color: root.fgDim
-                    font.weight: Font.Bold
-                    font.letterSpacing: 1
                 }
                 WidgetText {
                     id: value
@@ -61,7 +61,7 @@ WidgetCard {
                     anchors.top: root.small ? parent.top : undefined
                     anchors.verticalCenter: root.small ? undefined : parent.verticalCenter
                     card: root
-                    px: Theme.fit(13)
+                    px: root.textCaption
                     text: parent.reading.value
                 }
                 Rectangle {
@@ -77,7 +77,6 @@ WidgetCard {
                         height: parent.height
                         radius: parent.radius
                         color: root.accent
-                        Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                     }
                 }
             }
@@ -93,38 +92,57 @@ WidgetCard {
         width: parent.width
         spacing: Theme.fit(6)
 
-        WidgetText {
+        WidgetCaption {
             id: caption
             card: root
-            px: Theme.fit(13)
-            text: "CPU · LAST MINUTE"
+            text: "CPU · last minute"
             color: root.fgDim
-            font.weight: Font.Bold
-            font.letterSpacing: 1
         }
         Spark {
             width: parent.width
-            height: history.height - caption.height - memRow.height - history.spacing * 2
+            height: history.height - caption.height - history.spacing
+                - [memRow, diskRow].reduce((h, r) => h + (r.visible ? r.height + history.spacing : 0), 0)
             bare: true
             series: [{ values: SystemStats.cpuHistory, color: root.accent, fill: true }]
             ceiling: 1
         }
+        // what's in use, of how much
         Item {
             id: memRow
+            visible: SystemStats.memTotalKb * 1024 > 0
             width: parent.width
-            height: mem.height
+            height: memRowUse.height
             WidgetText {
-                id: mem
                 card: root
-                px: Theme.fit(13)
+                px: root.textCaption
                 text: "Memory"
                 color: root.fgDim
             }
             WidgetText {
+                id: memRowUse
                 anchors.right: parent.right
                 card: root
-                px: Theme.fit(13)
+                px: root.textCaption
                 text: Format.bytes(SystemStats.memUsedKb * 1024) + " of " + Format.bytes(SystemStats.memTotalKb * 1024)
+            }
+        }
+        Item {
+            id: diskRow
+            visible: SystemStats.diskSize > 0
+            width: parent.width
+            height: diskRowUse.height
+            WidgetText {
+                card: root
+                px: root.textCaption
+                text: "Disk"
+                color: root.fgDim
+            }
+            WidgetText {
+                id: diskRowUse
+                anchors.right: parent.right
+                card: root
+                px: root.textCaption
+                text: Format.bytes(SystemStats.diskUsed) + " of " + Format.bytes(SystemStats.diskSize)
             }
         }
     }
