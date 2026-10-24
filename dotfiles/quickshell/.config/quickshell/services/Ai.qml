@@ -8,7 +8,8 @@
 //            (scripts/ai-desktop.sh) and applied once the diff is reviewed
 //   Code     Claude Code in a project folder, asking before it acts
 // Screenshots, the clipboard and the selection ride along with a message.
-// The tab, the Code folder and each tab's model and mode live in ai.json.
+// The tab, the Code folder, each tab's model and mode and its conversation
+// (resumed after a reload) live in ai.json.
 
 pragma Singleton
 
@@ -105,7 +106,9 @@ Singleton {
     function send(text) {
         var s = current
         if (s.busy) return false
-        if (s === desktop && !staged) {
+        // a new conversation with nothing waiting starts from a fresh copy,
+        // not one left from before later commits
+        if (s === desktop && (!staged || (!hasChanges && s.sessionId === "" && s.empty))) {
             if (stageProc.running) return false
             stageProc.pending = text
             stageProc.running = true
@@ -193,6 +196,9 @@ Singleton {
         }
         onExited: code => {
             root.staged = code === 0
+            // the Desktop conversation comes back only with its copy
+            if (root.restoreDesktop !== "" && root.staged) root.resumeIn(root.desktop, root.restoreDesktop)
+            root.restoreDesktop = ""
             if (again) { again = false; running = true }
         }
     }
@@ -257,10 +263,21 @@ Singleton {
         pastProc.running = true
     }
 
-    function resume(id) {
-        historyProc.target = current
-        historyProc.sid = id
-        historyProc.command = [py, "history", current.cwd, id]
+    function resume(id) { resumeIn(current, id) }
+
+    // one at a time: a restart restores all three tabs at once
+    property var resumeQueue: []
+    function resumeIn(s, id) {
+        resumeQueue = resumeQueue.concat([{ target: s, id: id }])
+        if (!historyProc.running) nextResume()
+    }
+    function nextResume() {
+        if (resumeQueue.length === 0) return
+        var r = resumeQueue[0]
+        resumeQueue = resumeQueue.slice(1)
+        historyProc.target = r.target
+        historyProc.sid = r.id
+        historyProc.command = [py, "history", r.target.cwd, r.id]
         historyProc.running = true
     }
 
@@ -299,6 +316,7 @@ Singleton {
                 historyProc.target.resume(historyProc.sid, rows)
             }
         }
+        onExited: root.nextResume()
     }
 
     Process {
@@ -371,10 +389,24 @@ Singleton {
 
     CommandProbe { id: probe; name: "claude" }
 
+    // each tab's conversation is picked up again after a reload or restart
+    property string restoreDesktop: ""
+    function restore(ids) {
+        if (ids.chat) resumeIn(chat, ids.chat)
+        if (ids.code) resumeIn(code, ids.code)
+        // the diff read under way, or the next, says whether its copy is there
+        restoreDesktop = ids.desktop || ""
+        refreshDiff()
+    }
+
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", chatDir])
         refreshDiff()
     }
+
+    Connections { target: root.chat; function onSessionIdChanged() { root.save() } }
+    Connections { target: root.desktop; function onSessionIdChanged() { root.save() } }
+    Connections { target: root.code; function onSessionIdChanged() { root.save() } }
 
     // --- ai.json -------------------------------------------------------
 
@@ -384,7 +416,8 @@ Singleton {
         id: saveTimer
         interval: 300
         onTriggered: view.setText(JSON.stringify({
-            tab: root.tab, codeDir: root.codeDir, models: root.models, codeMode: root.codeMode
+            tab: root.tab, codeDir: root.codeDir, models: root.models, codeMode: root.codeMode,
+            sessions: { chat: root.chat.sessionId, desktop: root.desktop.sessionId, code: root.code.sessionId }
         }, null, 2) + "\n")
     }
 
@@ -404,6 +437,7 @@ Singleton {
             if (d.models && typeof d.models === "object")
                 root.models = Object.assign({ chat: "", desktop: "", code: "" }, d.models)
             if (root.modeChoices.some(c => c.value === d.codeMode)) root.codeMode = d.codeMode
+            if (d.sessions && typeof d.sessions === "object") root.restore(d.sessions)
         }
     }
 }

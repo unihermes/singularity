@@ -319,6 +319,37 @@ Every bar flyout keeps to these (settled 2026-10-20):
   All caught up with a green tick. Settings as a chip
   ends it.
 
+### Claude sidebar
+
+Built 2026-10-24 (SUPER+I, `sidebar/`, `services/Ai.qml`). Not a flyout: a
+panel down the right edge of the focused screen, under the bar, in the
+panel's frame with sections. It stays out until SUPER+I, its × or Escape;
+a click elsewhere leaves it. It slides in from the edge and fades.
+
+- **Heading** CLAUDE (the five-hour usage on it once past half), with
+  past sessions, New conversation and × as icon buttons; then Chat,
+  Desktop and Code as a segmented strip, a ● on a tab with something
+  unread.
+- **The tab's line:** Code's folder as a row (a click lists the folders
+  in its place, with a field for any other); Desktop's changes as a row
+  (a click shows the diff in its place) with Apply and Discard (two
+  clicks) as chips.
+- **The conversation** takes the rest: what you sent in a field with its
+  screenshots small under it; replies as markdown you can select; each
+  tool call a quiet line (spinner, tick, ✗) that opens in place to its
+  diff or command and its output.
+- **A prompt waiting** sits in its own section over the composer:
+  what it wants, the command or plan in full, then Allow, the CLI's own
+  "don't ask again" and Deny (Approve / Keep planning for a plan, a chip
+  per option for a question).
+- **Composer:** attachments as chips (hover reads Remove), the box
+  (Enter sends, Shift+Enter a new line), then 󰐕 (Area, Window, Screen,
+  Paste, Selected), the model and Code's mode as chips a click steps
+  through, what it's doing (pulsing) or the context used, Send or Stop.
+- **Bar module** (hidden by default for those who hid the old one): the
+  robot glyph, a spinner while it works, accent while a prompt waits or a
+  reply is unread.
+
 ### Power menu and workspace grid
 
 Picked 2026-10-11. The power menu's list style is large rows: the icon at
