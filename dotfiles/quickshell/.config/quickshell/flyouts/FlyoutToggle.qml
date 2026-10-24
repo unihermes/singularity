@@ -21,6 +21,7 @@ Column {
     FlyoutChip {
         id: chip
         width: root.width
+        height: Theme.rowHeightTall
         glyph: true
         onClicked: root.clicked()
     }

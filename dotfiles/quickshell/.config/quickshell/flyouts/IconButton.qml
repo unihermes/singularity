@@ -19,6 +19,7 @@ Rectangle {
     property bool lit: false
     property bool warn: false
     property bool spinning: false
+    property real glyphSize: Theme.fontIconSize
 
     signal clicked()
 
@@ -47,7 +48,7 @@ Rectangle {
         color: root.armed ? Theme.base : root.warn ? Theme.alert : root.lit ? Theme.accent
             : mouse.containsMouse ? Theme.textStrong : Theme.subtext
         font.family: Theme.fontIcon
-        font.pixelSize: Theme.fontIconSize
+        font.pixelSize: root.glyphSize
     }
 
     RotationAnimation {

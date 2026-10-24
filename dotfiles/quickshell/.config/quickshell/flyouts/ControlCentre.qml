@@ -140,7 +140,11 @@ FlyoutPanel {
         title: Quickshell.env("USER") + "@" + hostFile.text().trim()
         lines: ["up " + controlCentre.uptime + " · " + ((Looks.looks[Settings.look] || {}).name || Settings.look)]
 
+        // as big as the card's own glyph, the one way to the power menu here
         IconButton {
+            implicitWidth: Theme.controlSize * 1.5
+            implicitHeight: Theme.controlSize * 1.5
+            glyphSize: Theme.fontTitle * 1.4
             icon: "󰐥"
             onClicked: controlCentre.page = "power"
         }
