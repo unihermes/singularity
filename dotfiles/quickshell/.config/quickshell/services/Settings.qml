@@ -386,10 +386,12 @@ Singleton {
     readonly property alias weekStart: adapter.weekStart
     function setClock24(on) { adapter.clock24 = !!on }
     function setWeekStart(d) { if (d === 0 || d === 1 || d === 6) adapter.weekStart = d }
-    // Recording: instant replay while a game has focus, and how many
-    // seconds it keeps
+    // Recording: instant replay while a game has focus, how many seconds it
+    // keeps, and the codec ("av1" where the GPU has it, or "h264")
     readonly property alias replayOn: adapter.replayOn
     readonly property alias replaySeconds: adapter.replaySeconds
+    readonly property alias recordCodec: adapter.recordCodec
+    function setRecordCodec(c) { adapter.recordCodec = c === "h264" ? "h264" : "av1" }
     function setReplayOn(on) { adapter.replayOn = !!on }
     function setReplaySeconds(s) { adapter.replaySeconds = Math.max(15, Math.min(600, Math.round(s))) }
     // Software Update: minutes between checks (0: only when asked), the AUR,
@@ -1041,6 +1043,7 @@ Singleton {
             property int updateInterval: 30
             property bool replayOn: true
             property int replaySeconds: 60
+            property string recordCodec: "av1"
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

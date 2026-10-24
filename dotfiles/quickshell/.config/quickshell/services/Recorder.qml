@@ -2,8 +2,9 @@
 // ~/.config/quickshell/services/Recorder.qml
 //
 // Screen recording and instant replay, both through gpu-screen-recorder
-// (encoded on the GPU), with the game and chat (the default output) and
-// the mic mixed into one track:
+// (encoded on the GPU) in AV1 where the GPU encodes it and Settings asks
+// for it, else H.264, with the game and chat (the default output) and the
+// mic mixed into one track:
 //   recording  the focused screen until stopped, into
 //              ~/Videos/Recordings/<what had focus as it started>
 //   replay     the last Settings.replaySeconds kept in RAM while a game is
@@ -63,18 +64,33 @@ Singleton {
     onFocusedGameChanged: armReplay()
     onWantReplayChanged: wantReplay ? armReplay() : stopReplay()
     onAnyGameChanged: if (!anyGame) stopReplay()
-    // a new length takes a fresh buffer
+    // a new length or codec takes a fresh buffer
+    function restartReplay() {
+        if (!replayProc.running) return
+        replayProc.rearm = true
+        stopReplay()
+    }
     Connections {
         target: Settings
-        function onReplaySecondsChanged() {
-            if (!replayProc.running) return
-            replayProc.rearm = true
-            root.stopReplay()
+        function onReplaySecondsChanged() { root.restartReplay() }
+    }
+    onCodecChanged: restartReplay()
+
+    // whether this GPU encodes AV1, from the recorder's --info
+    property bool av1Supported: false
+    readonly property string codec: av1Supported && Settings.recordCodec === "av1" ? "av1" : "h264"
+
+    onAvailableChanged: if (available) info.running = true
+    Process {
+        id: info
+        command: ["gpu-screen-recorder", "--info"]
+        stdout: StdioCollector {
+            onStreamFinished: root.av1Supported = text.split("\n").indexOf("av1") !== -1
         }
     }
 
     function capture(monitor) {
-        return ["-w", monitor, "-f", "60", "-k", "h264", "-q", "very_high", "-c", "mp4",
+        return ["-w", monitor, "-f", "60", "-k", codec, "-q", "very_high", "-c", "mp4",
                 "-a", "default_output|default_input", "-ac", "aac"]
     }
 

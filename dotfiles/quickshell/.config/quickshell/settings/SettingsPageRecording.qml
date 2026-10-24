@@ -67,6 +67,25 @@ SettingsPage {
     FlyoutHeading { text: "FILES" }
 
     SettingsField {
+        label: "Format"
+        hint: !Recorder.av1Supported ? "This GPU can't encode AV1, so H.264"
+            : Settings.recordCodec === "av1" ? "Smaller at the same quality; older phones and editors can't play it"
+            : "Plays anywhere, in bigger files"
+
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            enabled: Recorder.av1Supported
+            model: [{ value: "av1", text: "AV1" }, { value: "h264", text: "H.264" }]
+            current: Recorder.codec
+            onPicked: v => {
+                Settings.setRecordCodec(v)
+                page.say(v === "av1" ? "Recording in AV1" : "Recording in H.264", false)
+            }
+        }
+    }
+
+    SettingsField {
         label: "Recordings"
         hint: Recorder.recordDir.replace(Quickshell.env("HOME"), "~") + ", a folder an app"
 
