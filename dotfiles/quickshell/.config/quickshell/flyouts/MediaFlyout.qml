@@ -31,15 +31,18 @@ FlyoutPanel {
 
     FlyoutHeading { text: "NOW PLAYING" }
 
-    // the art, or a music mark without it, beside the track
+    // the art in its own shape (square to 16:9, a video's thumbnail wider
+    // than a cover), or a music mark without it, beside the track
     Row {
         width: parent.width
         spacing: Theme.spaceM
 
         ClippingRectangle {
             id: artFrame
-            width: Theme.fit(72)
-            height: width
+            height: Theme.fit(72)
+            width: art.status === Image.Ready && art.implicitHeight > 0
+                ? Math.round(height * Math.max(1, Math.min(16 / 9, art.implicitWidth / art.implicitHeight)))
+                : height
             radius: Theme.radiusInner
             color: Theme.meterTrack
             border.width: Theme.borderWidth
@@ -52,7 +55,7 @@ FlyoutPanel {
                 fillMode: Image.PreserveAspectCrop
                 // decoded at the frame's size, not the art's: a browser's
                 // video thumbnail can be several megapixels
-                sourceSize.width: artFrame.width * 2
+                sourceSize.height: artFrame.height * 2
                 asynchronous: true
                 visible: status === Image.Ready
             }

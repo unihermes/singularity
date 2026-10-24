@@ -3,9 +3,10 @@
 //
 // Spectrum bars from cava (raw mode, 0-100 per bar, Settings.vizBars of
 // them), run only while the Music module and its visualizer are on and
-// an audio stream is open;
-// `playing` drops after two seconds of silence. Config in a temp file,
-// leaving cava's own alone.
+// an audio stream is open. It hears only the app of the player the module
+// follows (scripts/viz-capture.py), so a paused player stays flat whatever
+// else plays; everything, with no player. `playing` drops after two
+// seconds of silence. Config in a temp file, leaving cava's own alone.
 
 pragma Singleton
 
@@ -18,12 +19,17 @@ Singleton {
     id: root
 
     readonly property int barCount: Settings.vizBars
-    // a new count needs cava started again with it
+    // the followed player's app, "" for everything
+    readonly property string app: Media.player
+        ? String(Media.player.desktopEntry || Media.player.identity).toLowerCase() : ""
+    // a new count or app needs cava started again with it
     property bool restarting: false
-    onBarCountChanged: {
+    function restart() {
         restarting = true
         Qt.callLater(() => restarting = false)
     }
+    onBarCountChanged: restart()
+    onAppChanged: restart()
     // 20, not 30: at a 20px-tall bar the difference isn't visible, and cava's
     // CPU use scales with it (about 4% of a core at 30)
     readonly property int fps: 20
@@ -47,10 +53,13 @@ Singleton {
         command: ["sh", "-c",
             "cfg=$(mktemp /tmp/singularity-cava.XXXXXX) && trap 'rm -f \"$cfg\"' EXIT && "
             + "printf '[general]\\nbars = " + root.barCount + "\\nframerate = " + root.fps + "\\n"
-            + "[input]\\nmethod = pipewire\\nsource = auto\\n"
+            + (root.app === "" ? "[input]\\nmethod = pipewire\\nsource = auto\\n"
+                : "[input]\\nmethod = fifo\\nsource = /dev/stdin\\nsample_rate = 44100\\nsample_bits = 16\\nchannels = 2\\n")
             + "[output]\\nmethod = raw\\nchannels = mono\\nraw_target = /dev/stdout\\ndata_format = ascii\\n"
             + "ascii_max_range = 100\\nbar_delimiter = 59\\nframe_delimiter = 10\\n"
-            + "[smoothing]\\nnoise_reduction = 60\\n' > \"$cfg\" && cava -p \"$cfg\""]
+            + "[smoothing]\\nnoise_reduction = 60\\n' > \"$cfg\" && "
+            + (root.app === "" ? "cava -p \"$cfg\""
+                : Quickshell.shellDir + "/scripts/viz-capture.py " + JSON.stringify(root.app) + " | cava -p \"$cfg\"")]
         stdout: SplitParser {
             id: frames
             // a frame like the last one (silence, mostly) changes nothing

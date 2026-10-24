@@ -171,7 +171,7 @@ Item {
     }
 
     // the Music module (under the old visualizer's key): the audio spectrum
-    // of everything playing (Spectrum) and the track's title, each as Settings
+    // of the followed player's app (Spectrum, Visualizer) and the track's title, each as Settings
     // says; the player's icon only without the spectrum, and with neither a
     // play/pause mark. Shown while a player is
     // open, or only while it sounds with vizHideSilent. A click opens the
