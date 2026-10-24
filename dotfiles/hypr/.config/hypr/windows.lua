@@ -633,7 +633,9 @@ end
 -- the launcher just launched something (markLaunch). It floats centred over
 -- its owner at its remembered size (per app and title), else its own; one
 -- asking for nearly the whole screen gets POPOUT_SHARE instead.
+-- A browser's popout is a torn-off tab instead (holdPopup).
 local POPOUT_SHARE = { 0.5, 0.6 }
+local TEAR_GRAB = { 48, 16 }
 
 -- Window Rules' popup switches (popups.json), each on unless false
 local popupOpts = { block = true, over = true, remember = true }
@@ -828,12 +830,15 @@ holdPopup = function(win)
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
     local area = fillArea(win, mon)
-    local key = popoutKey(win)
+    local browser = BROWSER_CLASSES[win.class]
+    local key = not browser and popoutKey(win) or nil
     stateOf(win.address).popoutKey = key
     local w, h = win.size.x, win.size.y
     local dialogSized = w <= area.w * 0.85 and h <= area.h * 0.85
     local m = popupOpts.remember and key and type(sizes[key]) == "table" and sizes[key][screenKind(area)]
-    if type(m) == "table" and tonumber(m.fw) and tonumber(m.fh) then
+    if browser then
+        w, h = math.min(owner.size.x, area.w), math.min(owner.size.y, area.h)
+    elseif type(m) == "table" and tonumber(m.fw) and tonumber(m.fh) then
         w, h = math.min(m.fw, 1) * area.w, math.min(m.fh, 1) * area.h
     elseif w > area.w * 0.85 or h > area.h * 0.85 then
         w, h = area.w * POPOUT_SHARE[1], area.h * POPOUT_SHARE[2]
@@ -859,10 +864,16 @@ holdPopup = function(win)
         x = math.min(x + CASCADE, area.x + area.w - w)
         y = math.min(y + CASCADE, area.y + area.h - h)
     end
+    -- A browser's new window is a window (a torn-off tab), never a dialog: its
+    -- owner's size, its corner at the cursor (TEAR_GRAB in), its centre kept
+    -- on the screen, and the owner stays a drop target for dragging the tab back.
+    local cur = browser and hl.get_cursor_pos()
+    if cur and cur.x >= area.x and cur.x < area.x + area.w and cur.y >= area.y and cur.y < area.y + area.h then
+        x = math.max(area.x, math.min(cur.x - TEAR_GRAB[1], area.x + area.w - w / 2))
+        y = math.max(area.y, math.min(cur.y - TEAR_GRAB[2], area.y + area.h - h / 2))
+    end
     moveTo(addr, { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) })
-    -- a browser's new window is a window (a torn-off tab), never a dialog: its
-    -- owner stays a drop target for dragging the tab back
-    if popupOpts.block and dialogSized and ownerMain and not BROWSER_CLASSES[win.class] then
+    if popupOpts.block and dialogSized and ownerMain and not browser then
         blockOwner(win.address, owner.address)
         if onActiveWorkspace(win) then hl.dispatch(hl.dsp.focus({ window = addr })) end
     end
