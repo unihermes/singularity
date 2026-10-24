@@ -43,7 +43,7 @@ SettingsPage {
 
     SettingsField {
         label: "Route everything"
-        hint: Settings.vpnFull ? "Every app, and DNS, goes through it" : "Only qBittorrent; games keep their ping"
+        hint: Settings.vpnFull ? "Every app, and DNS, goes through it" : "Only qBittorrent goes through it"
 
         Switch {
             anchors.right: parent.right

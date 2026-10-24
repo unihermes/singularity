@@ -387,7 +387,7 @@ FlyoutPanel {
         // Flat's Taskbar layout keeps an arrangement of its own
         FlyoutRow {
             visible: Settings.taskbarLayoutOn
-            label: "Taskbar layout, kept apart from yours"
+            label: "Editing the Taskbar layout"
             enabled: false
         }
 

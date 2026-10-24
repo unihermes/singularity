@@ -54,7 +54,7 @@ SettingsTab {
 
     Stepper { visible: styleTab.customSpace || page.highlight === "Spacing"; label: "Spacing"; hint: "Every gap and padding"; key: "spacing"; step: 5; suffix: "%" }
 
-    Stepper { visible: styleTab.customSpace || page.highlight === "Row height"; label: "Row height"; hint: "Lists, fields and chips; text never clips"; key: "rowScale"; step: 5; suffix: "%" }
+    Stepper { visible: styleTab.customSpace || page.highlight === "Row height"; label: "Row height"; hint: "Lists, fields and chips"; key: "rowScale"; step: 5; suffix: "%" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SHAPE" }

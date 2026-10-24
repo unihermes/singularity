@@ -193,7 +193,7 @@ SettingsTab {
     SettingsField {
         label: "Music visualizer"
         hint: Settings.vizShown ? "The spectrum of everything playing, in place of the player's icon"
-            : "Off: no spectrum, and cava doesn't run"
+            : "Off"
 
         Switch {
             anchors.right: parent.right

@@ -76,7 +76,7 @@ Singleton {
 
     // In menu order; `act` is what run() takes
     readonly property var actions: [
-        { act: "lock",      label: "Lock",      icon: "󰌾", key: "L", detail: "Locks the screen; everything keeps running" },
+        { act: "lock",      label: "Lock",      icon: "󰌾", key: "L", detail: "Locks the screen" },
         { act: "suspend",   label: "Suspend",   icon: "󰤄", key: "S", detail: "Sleeps in memory; wakes in a second" },
     ].concat(canHibernate ? [
         { act: "hibernate", label: "Hibernate", icon: "󰒲", key: "H", detail: "Saves to disk and powers off" },

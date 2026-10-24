@@ -109,6 +109,6 @@ SettingsPage {
     }
 
     SettingsNote {
-        text: "SUPER+R saves the replay, SUPER+SHIFT+S records; both work in games"
+        text: "SUPER+R saves the replay, SUPER+SHIFT+S records"
     }
 }

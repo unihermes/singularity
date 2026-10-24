@@ -36,7 +36,7 @@ SettingsPage {
             ? [Phone.device.wifi ? "Over Wi-Fi" : "Over USB",
                Phone.battery >= 0 ? Phone.battery + "%" + (Phone.charging ? " charging" : "") : ""].filter(t => t).join(" · ")
             : Phone.unauthorized ? "Allow USB debugging on the phone"
-            : Phone.wifiAddr !== "" ? "Wireless debugging on; joined only for Mirror and Screenshot"
+            : Phone.wifiAddr !== "" ? "Wireless debugging on"
             : "None; plug it in, or pair it over Wi-Fi"
 
         FlyoutChip {
@@ -55,7 +55,7 @@ SettingsPage {
         label: "Pair over Wi-Fi"
         hint: Phone.pairState === "waiting" ? "Scan the code from the phone"
             : Phone.pairState === "pairing" ? "Pairing…"
-            : Phone.pairState === "done" ? "Paired; Mirror and Screenshot reach it while Wireless debugging is on"
+            : Phone.pairState === "done" ? "Paired"
             : Phone.pairState === "failed" ? Phone.pairError
             : "Once per phone, with the phone on this Wi-Fi"
 
@@ -106,7 +106,7 @@ SettingsPage {
 
     SettingsField {
         label: "Phone link"
-        hint: !Settings.phoneLinkOn ? "Off; nothing runs"
+        hint: !Settings.phoneLinkOn ? "Off"
             : PhoneLink.error !== "" ? PhoneLink.error
             : PhoneLink.connected ? "Linked to " + PhoneLink.device.name
             : "Open KDE Connect on the phone to find " + (PhoneLink.hostName || "this computer")

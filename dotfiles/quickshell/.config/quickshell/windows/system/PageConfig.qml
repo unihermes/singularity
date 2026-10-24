@@ -95,7 +95,7 @@ SystemPage {
                 { label: "starship.toml", path: home + "/.config/starship.toml", note: "The prompt" },
                 { label: ".bashrc", path: home + "/.bashrc", note: "Exports, shell options — the repo's" },
                 { label: ".bash_aliases", path: home + "/.bash_aliases", note: "Aliases — what the Terminal page edits" },
-                { label: ".bashrc.local", path: home + "/.bashrc.local", note: "Your own additions, never in the repo" },
+                { label: ".bashrc.local", path: home + "/.bashrc.local", note: "This machine's own additions" },
                 { label: "fastfetch config.jsonc", path: home + "/.config/fastfetch/config.jsonc", note: "The login banner" },
             ],
         },

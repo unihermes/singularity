@@ -22,7 +22,7 @@ SettingsPage {
     sectioned: true
 
     title: "Input"
-    description: "Keyboard, mouse and touchpad, kept on this machine."
+    description: "Keyboard, mouse and touchpad."
 
     property var conf: ({ found: false, fields: {}, touchpad: {} })
 
