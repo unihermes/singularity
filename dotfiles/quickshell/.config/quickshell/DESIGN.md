@@ -460,9 +460,10 @@ Desktop > Widgets.
 - **Music:** the art (dimmed while paused), the player in the accent, the
   track, a thin progress line (click to seek) and bare transport glyphs;
   with no player it says Nothing playing and offers the last one.
-- **Stats:** a ring each for CPU, GPU (Cooling, desktops with nvidia-smi),
-  memory and temperature; large adds the last minute of CPU and memory in
-  use. A missing reading drops its ring.
+- **Stats:** a bar each for CPU, GPU (Cooling, desktops with nvidia-smi),
+  memory and temperature, label left and value right (over the bar when
+  small); large adds the last minute of CPU and memory in use. A missing
+  reading drops its bar.
 
 ## Settings pages
 

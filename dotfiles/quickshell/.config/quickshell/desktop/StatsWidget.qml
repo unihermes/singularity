@@ -1,10 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/StatsWidget.qml
 //
-// A ring each for the CPU, the GPU (NVIDIA's load, from Cooling, on
-// desktops), memory and the CPU's temperature: two by two when small, in a
-// row when medium, and over the last minute of CPU and the memory in use
-// when large. A reading the machine can't give is left out.
+// A bar each for the CPU, the GPU (NVIDIA's load, from Cooling, on
+// desktops), memory and the CPU's temperature, with its label and value;
+// large adds the last minute of CPU and the memory in use under them. A reading the machine can't give is left out.
 
 import QtQuick
 import "../services"
@@ -20,36 +19,67 @@ WidgetCard {
         { label: "RAM", frac: SystemStats.mem, value: Format.pct(SystemStats.mem), shown: SystemStats.memTotalKb > 0 },
         { label: "TEMP", frac: SystemStats.tempC / 100, value: Math.round(SystemStats.tempC) + "°", shown: SystemStats.tempC >= 0 }
     ].filter(r => r.shown)
-    // which rings show, apart from their readings, so the rings aren't
+    // which bars show, apart from their readings, so the bars aren't
     // rebuilt each second
     readonly property string shownKey: readings.map(r => r.label).join(",")
     readonly property var labels: shownKey.split(",")
 
-    Grid {
-        id: rings
-        columns: root.small ? 2 : root.labels.length
-        readonly property real ring: root.small
-            ? Math.floor((parent.height - Theme.fit(8)) / 2)
-            : Math.min(Theme.fit(76), (parent.width - (columns - 1) * Theme.fit(12)) / columns)
-        spacing: root.small ? Theme.fit(8) : (parent.width - columns * ring) / Math.max(1, columns - 1)
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: root.large ? undefined : parent.verticalCenter
+    // a bar each: label and value over the bar when small, all three on one
+    // line otherwise; the rows share the top (large) or the whole widget
+    Column {
+        id: rows
+        width: parent.width
+        height: root.large ? implicitHeight : parent.height
+        spacing: root.large ? Theme.fit(10)
+            : (parent.height - root.labels.length * rowHeight) / Math.max(1, root.labels.length - 1)
+        readonly property real rowHeight: root.small ? Theme.fit(26) : Theme.fit(20)
 
         Repeater {
             model: root.labels
-            Ring {
+            Item {
                 required property string modelData
                 required property int index
                 readonly property var reading: root.readings[index] || { frac: 0, value: "" }
-                width: rings.ring
-                fraction: reading.frac
-                value: reading.value
-                label: modelData
-                fill: root.accent
-                track: root.track
-                ink: root.fg
-                inkDim: root.fgDim
-                font: root.font
+                width: rows.width
+                height: rows.rowHeight
+
+                WidgetText {
+                    id: label
+                    anchors.top: root.small ? parent.top : undefined
+                    anchors.verticalCenter: root.small ? undefined : parent.verticalCenter
+                    width: Theme.fit(48)
+                    card: root
+                    px: Theme.fit(13)
+                    text: modelData
+                    color: root.fgDim
+                    font.weight: Font.Bold
+                    font.letterSpacing: 1
+                }
+                WidgetText {
+                    id: value
+                    anchors.right: parent.right
+                    anchors.top: root.small ? parent.top : undefined
+                    anchors.verticalCenter: root.small ? undefined : parent.verticalCenter
+                    card: root
+                    px: Theme.fit(13)
+                    text: parent.reading.value
+                }
+                Rectangle {
+                    x: root.small ? 0 : label.width
+                    width: root.small ? parent.width : parent.width - label.width - Theme.fit(56)
+                    y: root.small ? parent.height - height : (parent.height - height) / 2
+                    height: Theme.fit(root.small ? 6 : 8)
+                    radius: height / 2
+                    color: root.track
+
+                    Rectangle {
+                        width: Math.max(parent.height, parent.width * Math.max(0, Math.min(1, parent.parent.reading.frac)))
+                        height: parent.height
+                        radius: parent.radius
+                        color: root.accent
+                        Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                    }
+                }
             }
         }
     }
@@ -57,7 +87,7 @@ WidgetCard {
     Column {
         id: history
         visible: root.large
-        anchors.top: rings.bottom
+        anchors.top: rows.bottom
         anchors.topMargin: Theme.fit(16)
         anchors.bottom: parent.bottom
         width: parent.width
