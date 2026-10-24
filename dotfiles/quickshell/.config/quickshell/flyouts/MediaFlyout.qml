@@ -1,9 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/MediaFlyout.qml
 //
-// The Music module's flyout, one page. The art across the panel, then the
-// title, artist and player with the spectrum (the bar's style) under them
-// while the visualizer is on; the progress (click to seek) and the
+// The Music module's flyout, one page. The art across the panel with the
+// spectrum (the bar's style) rising from its foot while something sounds,
+// then the title, artist and player; the progress (click to seek) and the
 // transport. Every player as a row when there are several (a click picks
 // which the module follows). Then Options, folded: Visualizer, with its
 // Style and Bars under it while it's on, Title on the bar, Hide when
@@ -66,9 +66,38 @@ FlyoutPanel {
             font.family: Theme.fontIcon
             font.pixelSize: Theme.fontIconSize * 2
         }
+
+        // the spectrum in the bar's style, rising from the art's foot over
+        // a fade, across its width; gone while silent
+        Rectangle {
+            visible: Settings.vizShown && Visualizer.playing
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: spectrum.bandH + Theme.spaceXl + Theme.spaceM
+            gradient: Gradient {
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 1; color: Theme.captionScrim }
+            }
+
+            // bands no wider than a fifth of their height, so four dots
+            // fit; spread so the row spans the art
+            Spectrum {
+                id: spectrum
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spaceM
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Theme.spaceM
+                readonly property real span: parent.width - Theme.spaceM * 2
+                bandW: Math.min(Theme.fit(6), span / (Visualizer.barCount * 2))
+                bandH: Theme.fit(32)
+                spacing: Visualizer.barCount > 1 ? (span - bandW * Visualizer.barCount) / (Visualizer.barCount - 1) : 0
+                color: Theme.textStrong
+            }
+        }
     }
 
-    // the track, and the spectrum in the bar's style under it
+    // the track
     Column {
         width: parent.width
         spacing: 1
@@ -92,21 +121,6 @@ FlyoutPanel {
             font.family: Theme.fontText
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
-        }
-
-        Item {
-            visible: Settings.vizShown
-            width: parent.width
-            height: Theme.fit(24) + Theme.spaceS
-
-            // bands no wider than a fifth of their height, so four dots fit
-            Spectrum {
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: Theme.spaceXs
-                bandW: Math.min(Theme.fit(5), (parent.width - spacing * (Visualizer.barCount - 1)) / Visualizer.barCount)
-                bandH: Theme.fit(24)
-            }
         }
     }
 
@@ -166,22 +180,24 @@ FlyoutPanel {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.spaceL
 
-        IconButton {
-            anchors.verticalCenter: parent.verticalCenter
-            icon: "󰒮"
+        FlyoutChip {
+            width: Theme.fit(56)
+            glyph: true
+            text: "󰒮"
             enabled: mediaFlyout.player && mediaFlyout.player.canGoPrevious
             onClicked: mediaFlyout.player.previous()
         }
         FlyoutChip {
+            width: Theme.fit(56)
             glyph: true
-            anchors.verticalCenter: parent.verticalCenter
             text: mediaFlyout.player && mediaFlyout.player.isPlaying ? "󰏤" : "󰐊"
             enabled: mediaFlyout.player && mediaFlyout.player.canTogglePlaying
             onClicked: mediaFlyout.player.togglePlaying()
         }
-        IconButton {
-            anchors.verticalCenter: parent.verticalCenter
-            icon: "󰒭"
+        FlyoutChip {
+            width: Theme.fit(56)
+            glyph: true
+            text: "󰒭"
             enabled: mediaFlyout.player && mediaFlyout.player.canGoNext
             onClicked: mediaFlyout.player.next()
         }

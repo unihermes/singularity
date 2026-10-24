@@ -210,17 +210,18 @@ Every bar flyout keeps to these (settled 2026-10-20):
   opens the same flyout with that window's actions open.
 - **Music** (picked 2026-10-21; Media and the Visualizer as one module,
   under the visualizer's key): the player's icon, then the spectrum of
-  the followed player's app only (flat while it's silent, whatever else
-  plays) and the track's title, each with its
+  the followed player's app only, a browser's by its tab (flat while
+  it's silent, whatever else plays) and the track's title, each with its
   own switch (Music visualizer, Music title); with neither, a play/pause
   mark. Shown while a player is open, or only while it sounds with Hide
   when silent. Bar Widgets lists Music with its Visualizer switch
   indented under it. A click opens the flyout, a middle click plays or
   pauses (the player it shows; the media keys skip browsers, see Media's
   keyPlayer). The flyout (reworked 2026-10-23, one page): the art across
-  the panel (square to 16:9, as given), the title, artist and player
-  under it with the spectrum in the bar's style while the visualizer is
-  on; the progress (click to seek) and the transport; every player as a
+  the panel (square to 16:9, as given) with the spectrum in the bar's
+  style rising from its foot over a fade while something sounds; the
+  title, artist and player under it; the progress (click to seek) and
+  the transport as three equal buttons; every player as a
   row when there are several (a click picks which the module follows);
   Options, folded each time it opens: Visualizer, with Style (segments)
   and Bars (a slider) under it while it's on, Title on the bar, Hide

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # Singularity - Quickshell
-# ~/.config/quickshell/scripts/viz-capture.py <app>
+# ~/.config/quickshell/scripts/viz-capture.py <app> [title]
 #
 # One app's sound for services/Visualizer.qml's cava: raw s16le 44.1 kHz
 # stereo on stdout, from the app's running output stream (matched on its
-# binary, application or node name). Nothing while the app has none; it
+# binary, application or node name). With a title, a stream named after
+# it is the only one taken (a browser's stream per tab), so another tab
+# playing doesn't count. Nothing while the app has none; it
 # looks again every two seconds, and again when the stream goes away.
 # Never falls back to another source, so a paused player stays silent.
 
@@ -17,6 +19,7 @@ import sys
 import time
 
 app = sys.argv[1].lower()
+title = sys.argv[2].lower() if len(sys.argv) > 2 else ""
 
 
 def die_with_parent():
@@ -34,15 +37,17 @@ def running_stream():
         nodes = json.loads(subprocess.run(["pw-dump"], capture_output=True, text=True, timeout=5).stdout)
     except (subprocess.SubprocessError, ValueError):
         return None
+    ours = []
     for o in nodes:
         info = o.get("info") or {}
         p = info.get("props") or {}
-        if p.get("media.class") != "Stream/Output/Audio" or info.get("state") != "running":
+        if p.get("media.class") != "Stream/Output/Audio":
             continue
         names = (p.get("application.process.binary"), p.get("application.name"), p.get("node.name"))
         if any(app in str(n).lower() for n in names if n):
-            return p.get("object.serial")
-    return None
+            ours.append((info.get("state") == "running", str(p.get("media.name") or "").lower(), p.get("object.serial")))
+    titled = [s for s in ours if title and title in s[1]]
+    return next((serial for running, _, serial in titled or ours if running), None)
 
 
 # this goes with the shell's sh, and pw-record with this

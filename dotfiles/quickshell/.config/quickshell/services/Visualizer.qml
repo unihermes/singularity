@@ -19,9 +19,11 @@ Singleton {
     id: root
 
     readonly property int barCount: Settings.vizBars
-    // the followed player's app, "" for everything
+    // the followed player's app, "" for everything, and its track's title
+    // (picks a browser's tab)
     readonly property string app: Media.player
         ? String(Media.player.desktopEntry || Media.player.identity).toLowerCase() : ""
+    readonly property string title: Media.player ? String(Media.player.trackTitle || "") : ""
     // a new count or app needs cava started again with it
     property bool restarting: false
     function restart() {
@@ -30,6 +32,7 @@ Singleton {
     }
     onBarCountChanged: restart()
     onAppChanged: restart()
+    onTitleChanged: restart()
     // 20, not 30: at a 20px-tall bar the difference isn't visible, and cava's
     // CPU use scales with it (about 4% of a core at 30)
     readonly property int fps: 20
@@ -59,7 +62,9 @@ Singleton {
             + "ascii_max_range = 100\\nbar_delimiter = 59\\nframe_delimiter = 10\\n"
             + "[smoothing]\\nnoise_reduction = 60\\n' > \"$cfg\" && "
             + (root.app === "" ? "cava -p \"$cfg\""
-                : Quickshell.shellDir + "/scripts/viz-capture.py " + JSON.stringify(root.app) + " | cava -p \"$cfg\"")]
+                : Quickshell.shellDir + "/scripts/viz-capture.py \"$1\" \"$2\" | cava -p \"$cfg\""),
+            // the app and title as $1 and $2, unquoted by the shell
+            "sh", root.app, root.title]
         stdout: SplitParser {
             id: frames
             // a frame like the last one (silence, mostly) changes nothing

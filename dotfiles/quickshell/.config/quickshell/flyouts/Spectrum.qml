@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/Spectrum.qml
 //
-// The audio spectrum (Visualizer) in the meter colour, drawn per `style`
+// The audio spectrum (Visualizer), in the meter colour unless `color` says, drawn per `style`
 // (Theme.vizStyle): mirror, rise, dots or one line through every band. At
 // rest in the same look while nothing sounds. No easing, so it redraws
 // only on cava's 20 frames a second.
@@ -16,6 +16,7 @@ Row {
     property string style: Theme.vizStyle
     property real bandW: Theme.barFs(3)
     property real bandH: Theme.moduleHeight - 10
+    property color color: Theme.meterFill
 
     function level(i) {
         return Visualizer.playing ? Math.max(0, Math.min(1, (Visualizer.bars[i] || 0) / 100)) : 0
@@ -40,7 +41,7 @@ Row {
                 width: root.bandW
                 radius: root.style === "rise" ? Math.min(1, Theme.radiusSmall) : Theme.pill(root.bandW)
                 height: Math.max(3, parent.height * band.v)
-                color: Theme.meterFill
+                color: root.color
             }
 
             // four dots from the bottom, lit up to the band's level
@@ -56,7 +57,7 @@ Row {
                         width: root.bandW
                         height: root.bandW
                         radius: Theme.pill(width)
-                        color: Theme.meterFill
+                        color: root.color
                         // index 0 is the top dot; the bottom one is always lit
                         opacity: band.v * 4 >= 3 - index || index === 3 ? 1 : 0.18
                     }
@@ -74,7 +75,7 @@ Row {
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-            strokeColor: Theme.meterFill
+            strokeColor: root.color
             strokeWidth: Math.max(1.5, Theme.borderWidth * 1.5)
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
