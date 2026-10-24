@@ -332,10 +332,16 @@ panel down the right edge of the focused screen, under the bar, in the
 panel's frame with sections. It stays out until SUPER+I, its × or Escape;
 a click elsewhere leaves it. It slides in from the edge and fades.
 
-- **Heading** CLAUDE (the five-hour usage on it once past half), with
+- **Heading** CLAUDE, with
   past sessions and × as icon buttons, and a New chat chip between them while there's a conversation; then Chat,
   Desktop and Code as a segmented strip, a ● on a tab with something
   unread.
+- **Usage** under the heading, then a break: a meter each for Claude's
+  five-hour and weekly windows and Codex's limit, used % and when it
+  resets (the time today, the weekday this week, else the date); alert
+  colour from 90%. Read by `ai.py usage` (Claude's usage endpoint with
+  Claude Code's token; Codex's newest session log) every two minutes while
+  the sidebar shows, and after each reply's rate-limit event.
 - **The tab's line:** Code's folder as a row (a click lists the folders
   in its place, with a field for any other); Desktop's changes as a row
   (a click shows the diff in its place) with Apply and Discard (two

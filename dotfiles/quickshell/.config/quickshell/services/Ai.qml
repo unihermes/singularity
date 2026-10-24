@@ -40,10 +40,37 @@ Singleton {
     readonly property bool asking: chat.asks.length + desktop.asks.length + code.asks.length > 0
     readonly property bool unseen: chat.unseen || desktop.unseen || code.unseen
 
-    // the subscription's usage, from the CLI's rate-limit events: 0..1, -1
-    // until one comes
+    // the subscription's usage, 0..1 (-1 until known) and when each window
+    // resets (epoch seconds, 0 unknown): from ai.py usage while the sidebar
+    // shows, and the CLI's rate-limit events between
     property real fiveHour: -1
     property real sevenDay: -1
+    property int fiveHourResets: 0
+    property int sevenDayResets: 0
+    // Codex's own limit: { used, resets, window (minutes), plan }, or null
+    property var codexUsage: null
+
+    function readUsage() { if (!usageProc.running) usageProc.running = true }
+    Process {
+        id: usageProc
+        command: [root.py, "usage"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var u
+                try { u = JSON.parse(text) } catch (e) { return }
+                if (u.five_hour) { root.fiveHour = u.five_hour.used; root.fiveHourResets = u.five_hour.resets }
+                if (u.seven_day) { root.sevenDay = u.seven_day.used; root.sevenDayResets = u.seven_day.resets }
+                root.codexUsage = u.codex
+            }
+        }
+    }
+    Timer {
+        interval: 120000
+        repeat: true
+        running: root.shown
+        triggeredOnStart: true
+        onTriggered: root.readUsage()
+    }
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string cacheDir: home + "/.cache/singularity/ai"
@@ -335,6 +362,7 @@ Singleton {
         var w = info.unifiedWindows || {}
         if (w.five_hour) fiveHour = w.five_hour.utilization
         if (w.seven_day) sevenDay = w.seven_day.utilization
+        readUsage()
     }
 
     ClaudeSession {

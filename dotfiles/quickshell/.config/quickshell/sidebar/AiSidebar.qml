@@ -3,10 +3,11 @@
 //
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar, out until SUPER+I or its × puts it away (a click
-// elsewhere doesn't). Chat, Desktop and Code as tabs over one shape: the
-// tab's own line (Code's folder, Desktop's changes), the conversation or a
-// list in its place (past sessions, folders, the diff), a prompt waiting
-// for an answer, and the composer.
+// elsewhere doesn't). The plans' limits under the heading (AiUsage), then
+// Chat, Desktop and Code as tabs over one shape: the tab's own line (Code's
+// folder, Desktop's changes), the conversation or a list in its place (past
+// sessions, folders, the diff), a prompt waiting for an answer, and the
+// composer.
 
 import Quickshell
 import Quickshell.Wayland
@@ -125,10 +126,16 @@ PanelWindow {
             }
 
             FlyoutHeading {
-                // the subscription's five-hour window, once it's half used
-                text: "CLAUDE" + (Ai.fiveHour >= 0.5 ? "  5h " + Math.round(Ai.fiveHour * 100) + "%" : "")
+                text: "CLAUDE"
                 control: headControls
             }
+
+            // the plans' limits, then a break before the tabs
+            AiUsage {
+                id: usage
+                visible: Ai.fiveHour >= 0 || Ai.sevenDay >= 0 || Ai.codexUsage !== null
+            }
+            FlyoutDivider { visible: usage.visible }
 
             Component {
                 id: headControls

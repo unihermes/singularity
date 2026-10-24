@@ -11,6 +11,9 @@
 #   ai.py sessions DIR                       Claude Code's past sessions there
 #   ai.py history DIR ID                     one session as transcript rows
 #   ai.py projects                           the folders Claude Code has run in
+#   ai.py usage                              the plans' limits: Claude's
+#                                            five-hour and weekly windows,
+#                                            Codex's own
 #
 # An image comes back as { kind: "image", label, path, media, data } (data in
 # base64), text as { kind: "text", label, text }; null when there's nothing.
@@ -22,6 +25,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.request
 
 HOME = os.path.expanduser("~")
 CACHE = os.path.join(os.environ.get("XDG_CACHE_HOME", os.path.join(HOME, ".cache")),
@@ -232,6 +236,67 @@ def projects():
     return rows
 
 
+def iso_epoch(t):
+    try:
+        from datetime import datetime
+        return int(datetime.fromisoformat(t).timestamp())
+    except (TypeError, ValueError):
+        return 0
+
+
+# Each limit as { used: 0..1, resets: epoch seconds, 0 unknown }, null when
+# there's no reading. Claude's from the usage endpoint Claude Code itself
+# reads, with its signed-in token (skipped once that has expired, until
+# Claude Code renews it); Codex's from the last rate-limit event in its
+# newest session log.
+def usage():
+    res = {"five_hour": None, "seven_day": None, "codex": None}
+    try:
+        with open(os.path.join(HOME, ".claude", ".credentials.json")) as f:
+            cred = json.load(f).get("claudeAiOauth") or {}
+        if cred.get("accessToken") and cred.get("expiresAt", 0) / 1000 > time.time():
+            req = urllib.request.Request("https://api.anthropic.com/api/oauth/usage", headers={
+                "Authorization": "Bearer " + cred["accessToken"],
+                "anthropic-beta": "oauth-2025-04-20"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.load(r)
+            for key in ("five_hour", "seven_day"):
+                w = data.get(key)
+                if w and w.get("utilization") is not None:
+                    res[key] = {"used": w["utilization"] / 100, "resets": iso_epoch(w.get("resets_at"))}
+    except (OSError, ValueError, KeyError):
+        pass
+    root = os.path.join(HOME, ".codex", "sessions")
+    newest, at = None, 0
+    for d, _, files in os.walk(root):
+        for f in files:
+            if f.endswith(".jsonl"):
+                p = os.path.join(d, f)
+                m = os.path.getmtime(p)
+                if m > at:
+                    newest, at = p, m
+    if newest:
+        last = None
+        try:
+            with open(newest, errors="replace") as f:
+                for line in f:
+                    if '"rate_limits"' in line:
+                        last = line
+        except OSError:
+            pass
+        if last:
+            try:
+                ev = json.loads(last)
+                rl = (ev.get("payload") or {}).get("rate_limits") or ev.get("rate_limits") or {}
+                prim = rl.get("primary") or {}
+                if prim.get("used_percent") is not None:
+                    res["codex"] = {"used": prim["used_percent"] / 100, "resets": int(prim.get("resets_at") or 0),
+                                    "window": int(prim.get("window_minutes") or 0), "plan": rl.get("plan_type") or ""}
+            except ValueError:
+                pass
+    return res
+
+
 def main():
     a = sys.argv[1:]
     if not a:
@@ -247,6 +312,8 @@ def main():
         out(history(a[1], a[2]))
     elif cmd == "projects":
         out(projects())
+    elif cmd == "usage":
+        out(usage())
     else:
         sys.exit("ai.py: unknown command")
 
