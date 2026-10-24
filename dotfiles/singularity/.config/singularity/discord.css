@@ -1,0 +1,190 @@
+/* Singularity - Discord
+ * ~/.config/singularity/discord.css
+ *
+ * Discord's layout drawn like the shell, in the --n-* values
+ * AppearanceSync.qml writes ahead of it into Equicord's
+ * themes/singularity.theme.css. The class names are Discord's hashed ones
+ * and change when Discord rebuilds a component.
+ */
+
+/* the system font over Discord's and the user's Quick CSS; code keeps its own */
+#app-mount, #app-mount *:not(code):not(code *):not(pre):not(pre *) {
+  font-family: var(--n-font) !important;
+}
+
+/* no title bar: its row folds away, and what's left of it (back,
+ * forward, inbox, help) sits at the right end of the server row; no window
+ * buttons, which Hyprland's keys stand in for */
+#app-mount .base__5e434 {
+  --custom-app-top-bar-height: 0px;
+}
+#app-mount .base__5e434 > .bar_c38106 {
+  position: absolute !important;
+  top: 0;
+  right: var(--n-gap);
+  left: auto;
+  width: auto !important;
+  height: var(--custom-guild-list-width) !important;
+  background: transparent !important;
+  z-index: 3;
+}
+.base__5e434 > .bar_c38106 .title_c38106, .winButtons_c38106 {
+  display: none !important;
+}
+
+/* the server row as the shell's bar: a strip on the bar's ground, each
+ * server a rounded chip, the open one ringed in the accent */
+.guilds__5e434 {
+  background: var(--n-bar) !important;
+}
+.guilds__5e434 .blobContainer_e5445c foreignObject {
+  mask: none !important;
+}
+.guilds__5e434 .blobContainer_e5445c foreignObject > *,
+.guilds__5e434 .blobContainer_e5445c foreignObject img {
+  border-radius: var(--n-radius) !important;
+}
+.guilds__5e434 .wrapper_cc5dd2 {
+  border-radius: var(--n-radius);
+  outline: var(--n-bw) solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.15s;
+}
+.guilds__5e434 .listItem__650eb:hover .wrapper_cc5dd2 {
+  outline-color: var(--n-edge);
+}
+.guilds__5e434 .blobContainer_e5445c.selected_e5445c .wrapper_cc5dd2 {
+  outline: 2px solid var(--n-accent);
+}
+.guilds__5e434 .item__58105 {
+  background: var(--n-accent) !important;
+}
+
+/* the panels sit apart on the base, like the shell's flyouts (#app-mount
+ * outranks other themes' !important, UI Refresh Refresh's square corners) */
+.content__5e434 {
+  background: var(--n-base);
+  padding: var(--n-gap);
+  gap: var(--n-gap);
+  box-sizing: border-box;
+}
+#app-mount .sidebarList__5e434, #app-mount .page__5e434, #app-mount .menu_c1e9c4 {
+  background: var(--n-panel) !important;
+  border: var(--n-edge-w) solid var(--n-edge) !important;
+  border-radius: var(--n-radius-panel) !important;
+  box-shadow: inset 0 0 0 var(--n-gutter) var(--n-gutter-fill) !important;
+  outline: var(--n-inner-w) solid var(--n-inner);
+  outline-offset: calc(-1 * var(--n-depth));
+  padding: calc(var(--n-depth) - var(--n-edge-w) + 1px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+#app-mount .menu_c1e9c4 { background: var(--n-popup) !important; }
+.sidebar__5e434 { background: transparent !important; }
+.sidebarList__5e434 > nav, .chat_f75fb0, .chatContent_f75fb0, .container_c8ffbb,
+.members_c8ffbb, .membersWrap_c8ffbb, section.title_f75fb0, .container_f37cb1, .header_f37cb1 {
+  background: transparent !important;
+}
+section.title_f75fb0, .header_f37cb1 {
+  border-bottom: var(--n-bw) solid var(--n-stroke) !important;
+  box-shadow: none !important;
+}
+.membersWrap_c8ffbb {
+  border-left: var(--n-bw) solid var(--n-stroke) !important;
+}
+
+/* the account panel as one of the flyouts' sections */
+.panels__5e434 {
+  background: var(--n-surface) !important;
+  border: var(--n-edge-w) solid var(--n-section-line) !important;
+  border-radius: var(--n-radius-section) !important;
+  margin: 0 calc(var(--n-gap) + var(--n-depth)) !important;
+  bottom: calc(var(--n-gap) + var(--n-depth)) !important;
+}
+
+/* headings: the mark, caps and colour of the shell's */
+.name__29444, .name__29444 *, .membersGroup_c8ffbb .headerContainer__095fe > span:first-child {
+  color: var(--n-heading) !important;
+  text-transform: var(--n-heading-case);
+  letter-spacing: var(--n-heading-spacing);
+  font-weight: 700 !important;
+}
+.name__29444 > .overflow_b0dfc2::before,
+.membersGroup_c8ffbb .headerContainer__095fe > span:first-child::before {
+  content: var(--n-mark-text);
+  color: var(--n-mark);
+  margin-right: var(--n-mark-gap);
+}
+/* role groups keep their role's colour */
+.membersGroupHeader_c8ffbb {
+  text-transform: var(--n-heading-case);
+  letter-spacing: var(--n-heading-spacing);
+}
+.membersGroupHeader_c8ffbb::before {
+  content: var(--n-mark-text);
+  color: var(--n-mark);
+  margin-right: var(--n-mark-gap);
+}
+.mainContent__29444::after {
+  content: "";
+  flex: 1 1 auto;
+  height: var(--n-rule);
+  margin: 0 var(--n-gap);
+  background: var(--n-stroke);
+}
+
+/* channel rows: overlay on hover; the open one filled with an accent tick */
+.link__2ea32 {
+  border-radius: var(--n-radius-inner) !important;
+}
+.wrapper__2ea32:hover .link__2ea32 {
+  background: var(--n-hover) !important;
+}
+.wrapper__2ea32.modeSelected__2ea32 .link__2ea32 {
+  background: var(--n-selected) !important;
+}
+.wrapper__2ea32.modeSelected__2ea32 .link__2ea32::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--n-accent);
+}
+.wrapper__2ea32:is(:hover, .modeSelected__2ea32) .name__2ea32 {
+  color: var(--n-bright) !important;
+}
+
+/* a message that mentions you: tinted with the accent, its bar in it */
+.mentioned__5126c {
+  background: color-mix(in srgb, var(--n-accent) 10%, transparent) !important;
+}
+.mentioned__5126c:hover {
+  background: color-mix(in srgb, var(--n-accent) 16%, transparent) !important;
+}
+.mentioned__5126c::before {
+  background: var(--n-accent) !important;
+}
+
+/* the message box as the shell's input: outer line and groove, the groove
+ * the accent while typing */
+.scrollableContainer__74017 {
+  background: var(--n-surface) !important;
+  border: var(--n-edge-w) solid var(--n-edge);
+  border-radius: var(--n-radius) !important;
+  box-shadow: inset 0 0 0 2px var(--n-gutter-fill) !important;
+}
+.channelTextArea__74017:focus-within .scrollableContainer__74017 {
+  box-shadow: inset 0 0 0 2px var(--n-accent) !important;
+}
+
+/* menus framed as flyouts (above), their rows as the shell's */
+.item_c1e9c4 {
+  border-radius: var(--n-radius-inner) !important;
+}
+.item_c1e9c4.focused_c1e9c4:not(.colorDanger_c1e9c4) {
+  background: var(--n-hover) !important;
+  color: var(--n-bright) !important;
+}
