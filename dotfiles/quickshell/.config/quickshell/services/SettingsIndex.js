@@ -43,6 +43,12 @@ var entries = [
     { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger unplugged" },
     { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout" },
 
+    // --- Recording ---------------------------------------------------------
+    { page: "recording", section: "Instant replay", label: "Instant replay", keywords: "clip shadowplay game save last minute buffer gpu-screen-recorder" },
+    { page: "recording", section: "Instant replay", label: "Replay length",  keywords: "seconds minutes buffer memory ram clip" },
+    { page: "recording", section: "Files", label: "Recordings", keywords: "screen record video folder videos mp4" },
+    { page: "recording", section: "Files", label: "Replays",    keywords: "clips folder videos game mp4" },
+
     // --- Lock Screen -------------------------------------------------------
     { page: "lockscreen", section: "Background", label: "Background",   keywords: "hyprlock wallpaper screenshot plain image" },
     { page: "lockscreen", section: "Background", label: "Blur",         keywords: "hyprlock blur_passes background" },

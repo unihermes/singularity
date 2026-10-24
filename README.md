@@ -167,6 +167,8 @@ no version numbers: git is the version.
 | `SUPER + SHIFT + E` | Power menu |
 | `ALT + Tab` | Window switcher |
 | `Print` | Screenshot an area (`SHIFT` window, `CTRL` screen, `ALT` copy text) |
+| `SUPER + SHIFT + S` | Start or stop recording the screen |
+| `SUPER + R` | Save the instant replay (the last minute of the game in focus) |
 
 The bar is clickable throughout: the Arch logo opens the Control Centre, and
 each module opens a flyout with its controls and a "More in Settings" link.

@@ -59,7 +59,7 @@ FloatingWindow {
     // the desktop looks and behaves, apps, then the clock and updates
     readonly property var groups: [
         { heading: "Connections", ids: ["network", "bluetooth"] },
-        { heading: "Device",      ids: ["display", "audio", "input", "power"] },
+        { heading: "Device",      ids: ["display", "audio", "input", "power", "recording"] },
         { heading: "Look & Feel", ids: ["appearance", "lockscreen", "notifications", "windowrules"] },
         { heading: "Apps",        ids: ["autostart", "filetypes", "shell", "keybinds"] },
         { heading: "System",      ids: ["datetime", "updates"] },
@@ -71,6 +71,7 @@ FloatingWindow {
         { id: "audio",         label: "Audio",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
         { id: "input",         label: "Input",         icon: "󰌌", blurb: "Keyboard and pointer",              source: "../settings/SettingsPageInput.qml" },
         { id: "power",         label: "Power & Idle",  icon: "󰂄", blurb: "Profile, idle and sleep",           source: "../settings/SettingsPagePower.qml" },
+        { id: "recording",     label: "Recording",     icon: "󰑋", blurb: "Screen and instant replay",         source: "../settings/SettingsPageRecording.qml" },
         { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Theme, bar and desktop",            source: "../settings/SettingsPageAppearance.qml" },
         { id: "lockscreen",    label: "Lock Screen",   icon: "󰌾", blurb: "Look, grace and lid",                source: "../settings/SettingsPageLockScreen.qml" },
         { id: "notifications", label: "Notifications", icon: "󰂚", blurb: "Do Not Disturb, popups",            source: "../settings/SettingsPageNotifications.qml" },
@@ -115,6 +116,9 @@ FloatingWindow {
             var look = Looks.looks[Settings.look], style = Styles.get(Settings.style)
             return { text: [look ? look.name : Settings.look, style ? style.name : ""].filter(t => t).join(" · ") }
         }
+        case "recording":
+            if (Recorder.recording) return { text: "Recording now", color: Theme.alert }
+            return { text: Settings.replayOn ? "Replay on · " + (Settings.replaySeconds < 60 ? Settings.replaySeconds + " s" : Settings.replaySeconds / 60 + " min") : "Replay off" }
         case "notifications":
             return { text: Settings.notifDnd ? "Do Not Disturb on" : "" }
         case "shell":

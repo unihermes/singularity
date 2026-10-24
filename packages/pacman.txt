@@ -110,6 +110,8 @@ satty
 tesseract
 tesseract-data-eng
 hyprpicker
+# screen recording and instant replay, encoded on the GPU (services/Recorder.qml)
+gpu-screen-recorder
 hypridle
 hyprsunset
 cava

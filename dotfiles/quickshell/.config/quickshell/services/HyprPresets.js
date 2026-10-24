@@ -167,6 +167,17 @@ var PACKS = [
         ],
     },
     {
+        // live in games too: game-keys.lua keeps the recorder's binds on
+        name: "Recording",
+        note: "The screen, and saving the instant replay mid-game",
+        binds: [
+            { keys: "SUPER + SHIFT + S", desc: "Start or stop recording the screen", section: "Recording",
+              needs: ["gpu-screen-recorder"], cmd: "qs ipc call recorder toggle" },
+            { keys: "SUPER + R", desc: "Save the instant replay", section: "Recording",
+              needs: ["gpu-screen-recorder"], cmd: "qs ipc call recorder save" },
+        ],
+    },
+    {
         name: "Apps",
         note: "The usual launchers, on the usual keys",
         binds: [

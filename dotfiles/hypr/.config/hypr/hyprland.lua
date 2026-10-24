@@ -64,7 +64,7 @@ do
     local execCmd = hl.dsp.exec_cmd
     hl.dsp.exec_cmd = function(cmd, ...)
         local dispatcher = execCmd(cmd, ...)
-        return function()
+        local run = function()
             local open, target = openWindow(cmd)
             if open then
                 if target then
@@ -78,6 +78,9 @@ do
             if markLaunch then markLaunch() end
             hl.dispatch(dispatcher)
         end
+        -- what it runs, for game-keys.lua
+        shared.cmdOf[run] = cmd
+        return run
     end
 end
 

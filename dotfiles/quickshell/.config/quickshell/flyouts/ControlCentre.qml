@@ -118,6 +118,8 @@ FlyoutPanel {
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/screenshot.sh text"])
         else if (act === "colourpick")
             Quickshell.execDetached(["sh", "-c", "sleep 0.2; ~/.config/hypr/colour-pick.sh"])
+        else if (act === "record")
+            Recorder.recording ? Recorder.stopRecording() : Recorder.startRecordingSoon()
         else if (act === "restartshell") Session.restartShell()
         else if (act === "powersettings") settingsWin.open("power")
     }
@@ -255,7 +257,9 @@ FlyoutPanel {
             { icon: "󰹑", text: "Shot",   act: "screenshot" },
             { icon: "󰈊", text: "Colour", act: "colourpick" },
             { icon: "󰊄", text: "Text",   act: "copytext" },
-        ]
+        ].concat(!Recorder.available ? []
+            : Recorder.recording ? [{ icon: "󰓛", text: "Stop", act: "record" }]
+            : [{ icon: "󰑊", text: "Rec", act: "record" }])
     }
 
     FlyoutDivider { visible: controlCentre.page === "" }

@@ -262,6 +262,10 @@ Every bar flyout keeps to these (settled 2026-10-20):
   per kind (mic, camera, screen) in the ground colour. The flyout: Mic,
   Camera and Screen as three tiles, lit while in use with the apps using
   them, then Mute microphone.
+- **Recording**: only while recording or holding a replay. Recording: a
+  red dot and the time, a click stops it. A replay held for a game: the
+  replay glyph, a click saves it. No flyout; what each did shows as a toast
+  (over a fullscreen game too, where the clock island can't be seen).
 - **Tray menus** (picked 2026-10-21): the app's own entries as rows, its
   separators splitting them into sections; submenus drill down behind a
   breadcrumb heading. At the top level its Show/Open and Quit entries come
@@ -357,7 +361,7 @@ for the rest, chips for the way out.
   Airplane), Warmth under them while Night Light is on, then the power
   profile as a segmented strip (gone while PPD isn't answering). Then Applications,
   Appearance and Bar Widgets as rows; the screen tools (Shot, Colour,
-  Text) and the windows (Settings, System, Keys) as two `FlyoutChipLine`s.
+  Text, and Rec, Stop while recording) and the windows (Settings, System, Keys) as two `FlyoutChipLine`s.
 - **Submenus** have no Back row: the heading reads
   `CONTROL CENTRE › APPEARANCE`, the first part smaller and quieter, and
   clicking it goes back (`FlyoutHeading.crumb`).

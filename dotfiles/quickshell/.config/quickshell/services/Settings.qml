@@ -386,6 +386,12 @@ Singleton {
     readonly property alias weekStart: adapter.weekStart
     function setClock24(on) { adapter.clock24 = !!on }
     function setWeekStart(d) { if (d === 0 || d === 1 || d === 6) adapter.weekStart = d }
+    // Recording: instant replay while a game has focus, and how many
+    // seconds it keeps
+    readonly property alias replayOn: adapter.replayOn
+    readonly property alias replaySeconds: adapter.replaySeconds
+    function setReplayOn(on) { adapter.replayOn = !!on }
+    function setReplaySeconds(s) { adapter.replaySeconds = Math.max(15, Math.min(600, Math.round(s))) }
     // Software Update: minutes between checks (0: only when asked), the AUR,
     // and packages left out
     readonly property alias updateInterval: adapter.updateInterval
@@ -454,7 +460,7 @@ Singleton {
     readonly property var widgetDefaults: ({
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
-        right:  ["privacy", "failed", "updates", "notifications", "tray",
+        right:  ["recorder", "privacy", "failed", "updates", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
@@ -477,6 +483,7 @@ Singleton {
         weather:       { label: "Weather",        icon: "󰖐" },
         notifications: { label: "Notifications",  icon: "󰂚" },
         privacy:       { label: "Privacy",        icon: "󰍬" },
+        recorder:      { label: "Recording",      icon: "󰑋" },
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },
         cooling:       { label: "Cooling",        icon: "󰈐" },
@@ -1032,6 +1039,8 @@ Singleton {
             property bool clock24: true
             property int weekStart: 1
             property int updateInterval: 30
+            property bool replayOn: true
+            property int replaySeconds: 60
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

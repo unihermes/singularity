@@ -31,7 +31,7 @@ Item {
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
-        notifications: notifBtn, privacy: privacyBtn,
+        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn,
         failed: failedBtn, updates: updatesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
@@ -279,6 +279,18 @@ Item {
         // left: the history; right: Do Not Disturb
         onActivated: screenScope.toggleFlyout("notifications", notifBtn)
         onRightClicked: Notifications.toggleDnd()
+    }
+
+    // While recording: a red dot and the time, a click stops it. While a
+    // replay is held for a game: the replay glyph, a click saves it.
+    BarModule {
+        id: recorderBtn
+        visible: (Recorder.recording || Recorder.replaying) && Settings.widgetVisible("recorder")
+        icon: Recorder.recording ? "󰑊" : "󰑙"
+        label: Recorder.recording
+            ? Math.floor(Recorder.elapsed / 60) + ":" + String(Recorder.elapsed % 60).padStart(2, "0") : ""
+        iconColor: Recorder.recording ? Theme.alert : "transparent"
+        onActivated: Recorder.recording ? Recorder.stopRecording() : Recorder.save()
     }
 
     BarModule {

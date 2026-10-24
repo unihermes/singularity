@@ -4,7 +4,7 @@
 -- While a game has focus, fullscreen or windowed, every SUPER bind,
 -- CTRL+SPACE and the bare right-hand modifiers (media taps) are off, so a
 -- stray key can't pull up the launcher, move the game or skip the music;
--- ALT+Tab and every other bind stay live. Required before
+-- ALT+Tab, the recorder's binds and every other bind stay live. Required before
 -- binds.lua: it wraps hl.bind to keep each bind's handle with its keys,
 -- and returns the sync for hyprland.lua to run once they're all bound.
 -- The Tabs binds are left to windows.lua's own switch (shared.tabBinds).
@@ -15,11 +15,26 @@ local S = require("shared")
 
 local held = {}
 
+-- Commands whose binds stay live in a game, on whatever keys they're given:
+-- recording and saving the instant replay. S.cmdOf maps each exec_cmd
+-- dispatcher to its command; hyprland.lua's exec_cmd wrapper fills it.
+local LIVE_IN_GAME = { "qs ipc call recorder " }
+S.cmdOf = setmetatable({}, { __mode = "k" })
+local function liveInGame(action)
+    local cmd = action ~= nil and S.cmdOf[action] or nil
+    if type(cmd) ~= "string" then return false end
+    for _, prefix in ipairs(LIVE_IN_GAME) do
+        if cmd:sub(1, #prefix) == prefix then return true end
+    end
+    return false
+end
+
 local bind = hl.bind
-hl.bind = function(keys, ...)
-    local handle = bind(keys, ...)
+hl.bind = function(keys, action, ...)
+    local handle = bind(keys, action, ...)
     local k = type(keys) == "string" and keys:upper():gsub("%s", "") or ""
-    if handle and (k:find("SUPER", 1, true) or k == "CTRL+SPACE" or k:match("_R$")) then
+    if handle and not liveInGame(action)
+        and (k:find("SUPER", 1, true) or k == "CTRL+SPACE" or k:match("_R$")) then
         table.insert(held, handle)
     end
     return handle

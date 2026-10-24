@@ -456,6 +456,11 @@ ShellRoot {
                 }
             }
 
+            Connections {
+                target: Recorder
+                function onToast(icon, text) { screenScope.showModeToast(icon, text.toUpperCase()) }
+            }
+
             // The launcher on the focused monitor. Its key again closes it;
             // the other mode's key switches mode.
             property string launcherMode: "apps"
