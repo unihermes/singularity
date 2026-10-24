@@ -423,12 +423,12 @@ for the rest, chips for the way out.
 
 Clock, weather, now playing and system stats on the desktop. They have a
 look of their own, the same under every style and look (asked for
-2026-10-24): a card with a hard hairline edge round a see-through ground,
-dark at the top and fading to nearly clear, no blur
+2026-10-24): a card with a hard hairline edge round an evenly see-through
+dark ground (35%), no gradient, no blur
 (`desktop/WidgetCard.qml`); the content in white and bold with a tight
 dark shadow round every mark, the system font, nothing under 13px,
 dimmed and faint tiers kept strong, the accent lifted. A feathered shade
-with no edge was tried and dropped. Each is its own
+with no edge and a top-to-bottom fade were tried and dropped. Each is its own
 surface on the layer under the windows (`desktop/DesktopWidgets.qml`),
 named outside the shell's blur rule. Off until turned on in Appearance >
 Desktop > Widgets.

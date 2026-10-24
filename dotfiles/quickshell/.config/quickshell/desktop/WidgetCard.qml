@@ -1,9 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/WidgetCard.qml
 //
-// A desktop widget's card: a hard hairline edge round a see-through ground
-// that's dark at the top and fades to nearly clear, its content in white
-// with a tight dark shadow round every mark. The same under every style. Sizes sit on one grid so they line up: small is one unit square,
+// A desktop widget's card: a hard hairline edge round an evenly
+// see-through dark ground, its content in white with a tight dark shadow
+// round every mark. The same under every style. Sizes sit on one grid so they line up: small is one unit square,
 // medium two units and a gap wide, large two by two. Holds the inks and
 // type the widgets draw with.
 
@@ -37,16 +37,13 @@ Item {
     width: small ? unit : unit * 2 + gap
     height: large ? unit * 2 + gap : unit
 
-    // the ground: a hard-edged card, dark at the top fading to nearly clear
+    // the ground: a hard-edged card, evenly see-through
     Rectangle {
         anchors.fill: parent
         radius: Math.round(card.unit * 0.14)
+        color: Qt.rgba(0, 0, 0, 0.35)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.22)
-        gradient: Gradient {
-            GradientStop { position: 0; color: Qt.rgba(0, 0, 0, 0.5) }
-            GradientStop { position: 1; color: Qt.rgba(0, 0, 0, 0.12) }
-        }
     }
 
     Item {
