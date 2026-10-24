@@ -1,15 +1,17 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Phone.qml
 //
-// An Android phone over adb: which one is connected (USB, or Wi-Fi once
-// paired through wireless debugging, which adb then joins by itself over
-// mDNS), its battery, and the phone on screen through scrcpy with its
-// sound, its clipboard shared and its own screen off. USB is used when
-// it's plugged in, as it's smoother.
+// An Android phone over adb: which one is connected (USB), or offers
+// wireless debugging over mDNS once paired, its battery, and the phone on
+// screen through scrcpy with its sound, its clipboard shared and its own
+// screen off. USB is used when it's plugged in, as it's smoother. Over
+// Wi-Fi adb joins the phone only for Mirror and Screenshot and leaves it
+// after, so the phone's "Wireless debugging connected" notification is
+// only up while it's used (adb's own joining is off: ADB_MDNS_AUTO_CONNECT).
 //
 // Pairing for Wi-Fi: pair() makes a QR code for the phone's "Pair device
 // with QR code" screen, watches mDNS for the phone offering that pairing,
-// and pairs. Polls `adb devices` only while scrcpy and adb are installed.
+// and pairs. Polls adb only while scrcpy and adb are installed.
 
 pragma Singleton
 
@@ -32,6 +34,12 @@ Singleton {
     // plugged in, but the phone hasn't said yes to this computer yet
     readonly property bool unauthorized: !device && devices.some(d => d.state === "unauthorized")
     readonly property bool connected: device !== null
+    // a phone offering wireless debugging ("192.168.1.64:37915"), to join
+    property string wifiAddr: ""
+    // Mirror and Screenshot can reach it
+    readonly property bool reachable: connected || wifiAddr !== ""
+    // for every adb that might start its server
+    readonly property var adbEnv: ({ ADB_MDNS_AUTO_CONNECT: "0" })
 
     // the phone's own name ("Alex's Pixel"), else its model
     property string name: ""
@@ -42,7 +50,7 @@ Singleton {
 
     // --- with the phone link (PhoneLink) too, for the bar and flyout ---
 
-    readonly property bool shown: connected || unauthorized || PhoneLink.connected || PhoneLink.request !== null
+    readonly property bool shown: reachable || unauthorized || PhoneLink.connected || PhoneLink.request !== null
     readonly property string shownName: PhoneLink.connected ? PhoneLink.device.name : name
     readonly property bool linkBattery: PhoneLink.connected && PhoneLink.device.battery >= 0
     readonly property int shownBattery: linkBattery ? PhoneLink.device.battery : battery
@@ -55,12 +63,16 @@ Singleton {
         interval: 4000
         repeat: true
         triggeredOnStart: true
-        onTriggered: if (!list.running) list.running = true
+        onTriggered: {
+            if (!list.running) list.running = true
+            if (!scan.running) scan.running = true
+        }
     }
 
     Process {
         id: list
         command: ["adb", "devices", "-l"]
+        environment: root.adbEnv
         stdout: StdioCollector {
             onStreamFinished: {
                 var out = []
@@ -76,8 +88,21 @@ Singleton {
         }
     }
 
+    Process {
+        id: scan
+        command: ["adb", "mdns", "services"]
+        environment: root.adbEnv
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var line = text.split("\n").find(l => l.indexOf("_adb-tls-connect") !== -1)
+                root.wifiAddr = line ? (line.match(/(\d+\.\d+\.\d+\.\d+:\d+)/) || ["", ""])[1] : ""
+            }
+        }
+    }
+
+    // the name stays from the last time it was connected, for the card
     onDeviceChanged: {
-        name = device ? device.model : ""
+        if (device && !name) name = device.model
         battery = -1
         if (device) status.run()
     }
@@ -115,16 +140,44 @@ Singleton {
     function toggleMirror() { mirroring ? mirrorProc.signal(15) : mirror() }
 
     function mirror() {
-        if (!device || mirroring) return
-        mirrorProc.command = ["scrcpy", "-s", device.serial, "--window-title", name || "Phone",
-            "--turn-screen-off", "--stay-awake"]
-        mirrorProc.running = true
+        if (mirroring) return
+        withPhone((serial, joined) => {
+            mirrorProc.joined = joined ? serial : ""
+            mirrorProc.command = ["scrcpy", "-s", serial, "--window-title", name || "Phone",
+                "--turn-screen-off", "--stay-awake"]
+            mirrorProc.running = true
+        })
+    }
+
+    // then(serial, joined): the connected phone as it is, else the one over
+    // Wi-Fi joined for this alone (joined), for the caller to leave after
+    function withPhone(then) {
+        if (device) { then(device.serial, false); return }
+        if (wifiAddr === "" || join.running) return
+        join.then = then
+        join.command = ["adb", "connect", wifiAddr]
+        join.running = true
+    }
+
+    Process {
+        id: join
+        property var then: null
+        environment: root.adbEnv
+        stdout: StdioCollector { id: joinOut }
+        onExited: code => {
+            if (code === 0 && /connected to/.test(joinOut.text)) then(command[2], true)
+            else Quickshell.execDetached(["notify-send", "-a", "Phone", "-u", "critical", "Couldn't reach the phone",
+                joinOut.text.trim() || "adb connect failed"])
+        }
     }
 
     Process {
         id: mirrorProc
+        // the Wi-Fi address joined for it, left when it closes
+        property string joined: ""
         stderr: StdioCollector { id: mirrorErr }
         onExited: code => {
+            if (joined !== "") Quickshell.execDetached(["adb", "disconnect", joined])
             if (code === 0 || code === 2) return
             var lines = mirrorErr.text.trim().split("\n").filter(l => /ERROR/.test(l))
             Quickshell.execDetached(["notify-send", "-a", "Phone", "-u", "critical", "Couldn't show the phone",
@@ -134,12 +187,13 @@ Singleton {
 
     // The phone's screen as a picture, saved beside the screenshots and copied
     function screenshot() {
-        if (!device) return
-        Quickshell.execDetached(["sh", "-c",
+        withPhone((serial, joined) => Quickshell.execDetached(["sh", "-c",
             'd="$HOME/Pictures/Screenshots"; mkdir -p "$d"; f="$d/phone_$(date +%Y-%m-%d_%H-%M-%S).png"\n'
-            + 'adb -s "$0" exec-out screencap -p > "$f" && [ -s "$f" ] || { rm -f "$f"; notify-send -a Phone -u critical "Phone screenshot failed"; exit 1; }\n'
-            + 'wl-copy --type image/png < "$f"; notify-send -a Phone -i "$f" "Phone screenshot saved" "${f##*/}"',
-            device.serial])
+            + 'if adb -s "$0" exec-out screencap -p > "$f" && [ -s "$f" ]; then\n'
+            + '  wl-copy --type image/png < "$f"; notify-send -a Phone -i "$f" "Phone screenshot saved" "${f##*/}"\n'
+            + 'else rm -f "$f"; notify-send -a Phone -u critical "Phone screenshot failed"; fi\n'
+            + '[ "$1" = 1 ] && adb disconnect "$0" > /dev/null',
+            serial, joined ? "1" : ""]))
     }
 
     // --- pairing for Wi-Fi ---
@@ -209,6 +263,7 @@ Singleton {
     Process {
         id: mdns
         command: ["adb", "mdns", "services"]
+        environment: root.adbEnv
         stdout: StdioCollector {
             onStreamFinished: {
                 if (root.pairState !== "waiting") return
@@ -225,6 +280,7 @@ Singleton {
 
     Process {
         id: pairProc
+        environment: root.adbEnv
         stdout: StdioCollector { id: pairOut }
         stderr: StdioCollector { id: pairErr }
         onExited: code => {
@@ -244,7 +300,8 @@ Singleton {
         function screenshot(): void { root.screenshot() }
         function status(): string {
             return root.connected ? root.name + (root.device.wifi ? " (Wi-Fi)" : " (USB)") + ", " + root.battery + "%"
-                : root.unauthorized ? "waiting for the phone to allow USB debugging" : "no phone"
+                : root.unauthorized ? "waiting for the phone to allow USB debugging"
+                : root.wifiAddr !== "" ? "wireless debugging on at " + root.wifiAddr : "no phone"
         }
     }
 }

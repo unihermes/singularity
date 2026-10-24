@@ -13,6 +13,9 @@ hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 hl.env("GDK_BACKEND", "wayland,x11")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
+-- adb leaves a phone with wireless debugging alone until asked to join it
+-- (the shell's Mirror and Screenshot), keeping its notification away
+hl.env("ADB_MDNS_AUTO_CONNECT", "0")
 -- The pointer and icon themes picked on the Appearance page, which writes
 -- them to state files.
 hl.env("XCURSOR_THEME", S.cursorTheme)

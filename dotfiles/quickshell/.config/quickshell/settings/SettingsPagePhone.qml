@@ -36,11 +36,12 @@ SettingsPage {
             ? [Phone.device.wifi ? "Over Wi-Fi" : "Over USB",
                Phone.battery >= 0 ? Phone.battery + "%" + (Phone.charging ? " charging" : "") : ""].filter(t => t).join(" · ")
             : Phone.unauthorized ? "Allow USB debugging on the phone"
+            : Phone.wifiAddr !== "" ? "Wireless debugging on; joined only for Mirror and Screenshot"
             : "None; plug it in, or pair it over Wi-Fi"
 
         FlyoutChip {
             anchors.right: parent.right
-            visible: Phone.connected
+            visible: Phone.reachable
             icon: Phone.mirroring ? "󰓛" : "󰍹"
             text: Phone.mirroring ? "Stop" : "Mirror"
             onClicked: Phone.toggleMirror()
@@ -54,7 +55,7 @@ SettingsPage {
         label: "Pair over Wi-Fi"
         hint: Phone.pairState === "waiting" ? "Scan the code from the phone"
             : Phone.pairState === "pairing" ? "Pairing…"
-            : Phone.pairState === "done" ? "Paired; it joins while Wireless debugging is on"
+            : Phone.pairState === "done" ? "Paired; Mirror and Screenshot reach it while Wireless debugging is on"
             : Phone.pairState === "failed" ? Phone.pairError
             : "Once per phone, with the phone on this Wi-Fi"
 

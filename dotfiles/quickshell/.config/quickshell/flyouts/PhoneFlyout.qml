@@ -5,8 +5,8 @@
 // Ring and Send file on it through the phone link; a phone asking to pair,
 // with Accept and Decline; the phone's notifications, a click on one
 // opening its reply field and its actions; then Mirror (Stop while it's on
-// screen) and Screenshot over adb, and Settings. Self-contained: only
-// needs Phone and PhoneLink.
+// screen) and Screenshot over adb, which joins a phone on Wi-Fi just for
+// them, and Settings. Self-contained: only needs Phone and PhoneLink.
 
 import QtQuick
 import "../services"
@@ -26,13 +26,13 @@ FlyoutPanel {
     FlyoutHeading { text: "PHONE" }
 
     HeadCard {
-        visible: Phone.connected || PhoneLink.connected
+        visible: Phone.reachable || PhoneLink.connected
         glyph: Phone.shownCharging ? "󱊥" : "󰄜"
         title: Phone.shownName || "Phone"
         lines: [
             (Phone.shownBattery >= 0 ? Phone.shownBattery + "%" + (Phone.shownCharging ? " · charging" : "") : ""),
             Phone.connected ? (Phone.device.wifi ? "Over Wi-Fi" : "Over USB") + (Phone.mirroring ? " · on screen" : "")
-                : "Through KDE Connect",
+                : PhoneLink.connected ? "Through KDE Connect" : "Wireless debugging on",
         ]
 
         FlyoutChip {
@@ -124,7 +124,7 @@ FlyoutPanel {
             else if (act === "shot") Phone.screenshot()
             else if (act === "settings") root.scope.openSettings("phone")
         }
-        chips: (Phone.connected ? [
+        chips: (Phone.reachable ? [
             Phone.mirroring ? { icon: "󰓛", text: "Stop", act: "mirror" } : { icon: "󰍹", text: "Mirror", act: "mirror" },
             { icon: "󰹑", text: "Screenshot", act: "shot" },
         ] : []).concat([{ icon: "󰒓", text: "Settings", act: "settings" }])

@@ -126,6 +126,7 @@ FloatingWindow {
             if (Phone.connected || PhoneLink.connected)
                 return { text: Phone.shownName + (Phone.mirroring ? " · on screen" : ""), color: Theme.good }
             if (PhoneLink.request) return { text: PhoneLink.request.name + " wants to pair", color: Theme.accent }
+            if (Phone.reachable) return { text: "Wireless debugging on" }
             return { text: Phone.unauthorized ? "Waiting to be allowed" : "" }
         case "recording":
             if (Recorder.recording) return { text: "Recording now", color: Theme.alert }
