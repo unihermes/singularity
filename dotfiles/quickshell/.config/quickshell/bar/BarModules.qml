@@ -31,7 +31,7 @@ Item {
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
-        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn,
+        notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn, claude: claudeBtn,
         failed: failedBtn, updates: updatesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
@@ -292,6 +292,29 @@ Item {
         active: screenScope.openFlyout === "phone"
         onActivated: screenScope.toggleFlyout("phone", phoneBtn)
         onMiddleClicked: Phone.toggleMirror()
+    }
+
+    // The Claude sidebar (Ai): turning while it works, lit while a prompt
+    // waits or a reply is unread; a click puts the sidebar out on this
+    // screen or away
+    BarModule {
+        id: claudeBtn
+        visible: Ai.available && Settings.widgetVisible("claude")
+        icon: "󰚩"
+        label: Ai.busy && !Ai.asking ? spinner.frames[spinner.frame] : ""
+        iconColor: Ai.asking || (Ai.unseen && !Ai.shown) ? Theme.accent : "transparent"
+        active: Ai.shown && Ai.screen === screenScope.modelData
+        onActivated: Ai.toggle(screenScope.modelData)
+
+        Timer {
+            id: spinner
+            readonly property var frames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+            property int frame: 0
+            interval: 90
+            repeat: true
+            running: Ai.busy && claudeBtn.visible
+            onTriggered: frame = (frame + 1) % frames.length
+        }
     }
 
     // The VPN, once a server's imported: lit while it's up (the alert colour

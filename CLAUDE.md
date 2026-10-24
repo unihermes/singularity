@@ -20,6 +20,8 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
 - `qs/settings/`: `SettingsPage*.qml` (one per page), `appearance/` (Appearance tabs).
   Search index is `services/SettingsIndex.js`; keep it in step with the pages.
 - `qs/windows/`: Settings, System, Keybinds, Notes windows.
+- `qs/sidebar/`: the Claude sidebar (SUPER+I), driven by `services/Ai.qml` and
+  `ClaudeSession.qml` (`claude -p` over stream-json); helpers in `scripts/ai.py`, `ai-desktop.sh`.
 - `dotfiles/hypr/.config/hypr/`: `hyprland.lua` requires `shared`, `displays`, `env`,
   `autostart`, `looks`, `input`, `overrides`, `game-keys`, `binds`, `alttab`, `windows`
   (which requires `window-rules` for the static rules and `window-keys` for the arrow keys).

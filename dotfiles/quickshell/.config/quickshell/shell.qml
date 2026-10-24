@@ -14,6 +14,7 @@ import "services"
 import "flyouts"
 import "bar"
 import "windows"
+import "sidebar"
 import "services/TimeWindow.js" as TimeWindow
 import Quickshell
 import Quickshell.Io
@@ -241,6 +242,22 @@ ShellRoot {
     IpcHandler {
         target: "launcher"
         function toggle(mode: string): void { root.launcherToggled(mode) }
+    }
+
+    // The Claude sidebar on the focused screen: `qs ipc call claude toggle`
+    // (SUPER+I)
+    IpcHandler {
+        target: "claude"
+        function toggle(): void {
+            const name = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+            Ai.toggle(Quickshell.screens.find(s => s.name === name) || Quickshell.screens[0])
+        }
+    }
+
+    // built on first open, then kept, so its scroll and draft stay
+    LazyLoader {
+        active: Ai.used
+        AiSidebar {}
     }
 
     // Notifications: the history flyout, Do Not Disturb, Clear all

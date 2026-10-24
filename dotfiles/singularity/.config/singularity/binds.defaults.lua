@@ -132,6 +132,10 @@ hl.bind(mod .. " + H", hl.dsp.exec_cmd("qs ipc call launcher toggle clipboard"))
 hl.bind(mod .. " + slash", hl.dsp.exec_cmd("qs ipc call launcher toggle calc"))   -- Calculator
 hl.bind(mod .. " + S",     hl.dsp.exec_cmd("qs ipc call launcher toggle files"))  -- Search files
 
+-- --- Claude ---
+-- the Claude sidebar (sidebar/AiSidebar.qml)
+hl.bind(mod .. " + I", hl.dsp.exec_cmd("qs ipc call claude toggle"))  -- Open or close the Claude sidebar
+
 -- --- Shell windows ---
 -- The bar's standalone windows; an empty page opens each on its default page
 hl.bind(mod .. " + comma",  hl.dsp.exec_cmd("qs ipc call settings open ''"))  -- Open Settings
