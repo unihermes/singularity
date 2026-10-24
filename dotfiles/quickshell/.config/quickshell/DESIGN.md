@@ -138,10 +138,13 @@ Style: `channel` (frame `channel` in `Styles.js`).
   outline around both. Rounded inside corners join them where the widths
   differ, and the sides are straight where they line up (at the screen edge,
   for instance). It only fades in, since its frame is joined to the bar.
-- **Frame:** a channel with a surface ground and radius `channelPanelRadius`
-  (13px).
+- **Frame:** a channel with a surface ground and radius `panelFrameRadius`
+  (15px at Roundness 6).
 - **Sectioned:** each run of rows between headings and dividers sits in its
-  own frame (panel ground, radius + 3), in place of divider lines. The frame
+  own frame (panel ground, radius + 3, `sectionRadius`), in place of
+  divider lines. The panel's corners are the sections' plus the inset
+  to them (`panelFrameRadius`), so the two are concentric; a window's
+  inner panels take the sections' radius, inside the window's corner. The frame
   is the style's: a channel, a double or single stroke, or the ground
   alone (`SectionRuns`). Settings pages and the System window
   are sectioned the same way under every style.

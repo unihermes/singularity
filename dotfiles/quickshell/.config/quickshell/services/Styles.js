@@ -132,7 +132,6 @@ function resolve(s) {
         shadow: s.shadows ? st.shadow : "none",
         borderWidth: s.heavyLines && st.lines ? 2 : 1,
         radius: radius,
-        panelRadius: radius,
         barRadius: radius,
         flyoutAttach: attach,
         flyoutAnim: !s.flyoutAnim || s.flyoutAnim === "auto" ? st.anim : s.flyoutAnim,

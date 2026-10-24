@@ -178,8 +178,7 @@ Singleton {
     // --- shape -----------------------------------------------------------------
 
     readonly property int radius:      resolved.radius
-    // flyouts, windows and cards; and a floating bar or islands
-    readonly property int panelRadius: resolved.panelRadius
+    // a floating bar or islands
     readonly property int barRadius:   resolved.barRadius
     // one step in from the outer stroke, floored at 0
     readonly property int radiusInner: Math.max(0, radius - 2)
@@ -215,10 +214,12 @@ Singleton {
     readonly property int channelWidth: borderWidth * 2 + channelGrooveWidth
     // the inside corner where a channel's width changes (grown flyouts)
     readonly property int channelFillet: 7
-    // a channel-framed panel's corners, square at Roundness 0
-    readonly property int channelPanelRadius: panelRadius > 0 ? panelRadius + frameInset + channelWidth : 0
-    // a panel's outer corners in the current frame (Hyprland's rounding)
-    readonly property int panelFrameRadius: frameChannel ? channelPanelRadius : panelRadius
+    // a panel's edge in to its section frames (FlyoutPanel, SectionRuns)
+    readonly property int sectionInset: channelWidth + 2
+    // a panel's outer corners (flyouts, toasts, the windows' and
+    // Hyprland's): concentric with the sections inside, so a section is
+    // never rounder than the panel around it. Square at Roundness 0.
+    readonly property int panelFrameRadius: radius > 0 ? sectionRadius + sectionInset : 0
     // Hyprland's windows: rounded like the panels, bordered like the strokes,
     // unless Appearance's Desktop tab sets them its own way
     readonly property int windowRadius: Settings.windowRounding === "own" ? Settings.windowRadius : panelFrameRadius

@@ -81,7 +81,7 @@ OverlayWindow {
     readonly property bool grown: group !== null
     // how close a box edge or width must be to its group's to line up with it
     readonly property real snapReach: Theme.channelFillet + Math.max(Theme.groupRadius, grownRadius)
-    readonly property int grownRadius: Theme.channelPanelRadius
+    readonly property int grownRadius: Theme.panelFrameRadius
     // the box's own rect, snapped to the group's sides only within 2px
     readonly property var grownRect: {
         if (!grown) return null
@@ -92,7 +92,7 @@ OverlayWindow {
 
     // Sectioned: each run of rows sits in its own frame (SectionRuns); the
     // content is padded to clear both frames.
-    readonly property int sectionGap: 2
+    readonly property int sectionGap: Theme.sectionInset - Theme.channelWidth
     readonly property int sectionPadY: Theme.spaceXs
     readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceM
     readonly property int padY: Theme.channelWidth * 2 + sectionGap + sectionPadY
