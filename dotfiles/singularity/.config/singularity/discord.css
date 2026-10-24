@@ -19,12 +19,12 @@
   --custom-app-top-bar-height: 0px;
   /* the framed row's height, and where the panels below start */
   --n-row: calc(40px * var(--n-guild-zoom) + 2 * var(--n-guild-pad) + 2 * var(--n-depth));
-  --n-guild-zoom: 1.2;
-  --n-guild-pad: 10px;
+  --n-guild-zoom: 1;
+  --n-guild-pad: 6px;
   /* centre the zoomed list in the row and its mark under the icons (in the
    * list's turned, zoomed units) */
-  --n-guild-shift: -5px;
-  --n-pill-shift: 4px;
+  --n-guild-shift: -1px;
+  --n-pill-shift: 5px;
   --serverlist-offset: calc(var(--n-gap) + var(--n-row));
 }
 #app-mount .base__5e434 > .bar_c38106 {
