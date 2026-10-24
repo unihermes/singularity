@@ -36,7 +36,7 @@ OverlayWindow {
 
     readonly property var others: Quickshell.screens.filter(s => s.name !== screen.name)
     readonly property var hidden: Settings.deskWidgetKeys.filter(k => !Settings.deskWidget(k).on)
-    readonly property var names: ({ clock: "Clock", weather: "Weather", music: "Now playing", stats: "System" })
+    readonly property var names: ({ clock: "Clock", weather: "Weather", music: "Now playing", stats: "System", note: "Note" })
 
     Item {
         id: canvas

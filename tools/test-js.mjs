@@ -186,6 +186,10 @@ test("WidgetPlacement places, stores and snaps the desktop widgets", () => {
     const stats = P.rectOf("stats", none, sizes, a, 48, 16)
     assert.equal(stats.x + stats.w, 2560 - 48)
     assert.equal(stats.y, 44 + 48)
+    // the note a gap under the stats
+    const note = P.rectOf("note", none, { ...sizes, note: { w: 300, h: 150 } }, a, 48, 16)
+    assert.equal(note.y, 44 + 48 + 250 + 16)
+    assert.equal(note.x + note.w, 2560 - 48)
     // stored as fractions, and back
     const r = { x: 1130, y: 600, w: 300, h: 150 }
     const f = P.fractionsOf(r, a)

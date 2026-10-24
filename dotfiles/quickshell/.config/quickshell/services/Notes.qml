@@ -2,7 +2,9 @@
 // ~/.config/quickshell/services/Notes.qml
 //
 // The sticky notes' tabs (title, text) and the last open one, in
-// notes.json; edits save a moment after typing, flush() at once.
+// notes.json; edits save a moment after typing, flush() at once. Shown by
+// the Notes window (SUPER+N) and the desktop's note widget, which follow
+// each other's typing through edited().
 
 pragma Singleton
 
@@ -17,10 +19,14 @@ Singleton {
     property var tabs: [{ title: "Note", text: "" }]
     property int current: 0
 
+    // a tab's text changed in one editor, for the others showing it
+    signal edited(int index)
+
     function setText(i, text) {
         if (!tabs[i] || tabs[i].text === text) return
         tabs[i].text = text
         saveTimer.restart()
+        edited(i)
     }
 
     function rename(i, title) {

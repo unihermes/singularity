@@ -97,6 +97,8 @@ Scope {
             screen: root.screen
             visible: root.shown(modelData) && !root.editing && widget.width > 0
             WlrLayershell.layer: WlrLayer.Bottom
+            // the note takes typing once clicked into
+            WlrLayershell.keyboardFocus: modelData === "note" ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             // outside the shell's blur rule: nothing behind it is frosted
             WlrLayershell.namespace: "desktop-widget"
             exclusionMode: ExclusionMode.Ignore

@@ -68,6 +68,8 @@ FloatingWindow {
         target: Notes
         function onCurrentChanged() { root.loadCurrent() }
         function onTabsChanged() { root.loadCurrent() }
+        // typed in the desktop's note
+        function onEdited(i) { if (i === Notes.current && !editor.activeFocus) root.loadCurrent() }
     }
     Component.onCompleted: loadCurrent()
 

@@ -208,7 +208,8 @@ SettingsTab {
             model: [{ key: "clock", label: "Clock", hint: "The day, the time and the week" },
                     { key: "weather", label: "Weather", hint: "Now and the next five days" },
                     { key: "music", label: "Now playing", hint: "The Music module's player" },
-                    { key: "stats", label: "System", hint: "CPU, GPU, memory, temperature" }]
+                    { key: "stats", label: "System", hint: "CPU, GPU, memory, temperature" },
+                    { key: "note", label: "Note", hint: "One of your SUPER+N notes, to type in" }]
 
             SettingsField {
                 required property var modelData
