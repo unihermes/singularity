@@ -1225,11 +1225,13 @@ hl.on("window.close", function(win)
     windowState[win.address] = nil
 end)
 
--- Dialogs stay over the window they came from: focusing a window raises
--- its dialogs over it, and focusing a dialog raises its owner under it. Lua isn't told a Wayland dialog's parent, so the
--- owner is the window focused just before it opened, if they share a
--- process or the dialog is a prompt (file chooser, polkit).
-local dialogOwner = {}   -- dialog address -> owner address
+-- Modal dialogs and prompts stay over the window they came from: focusing
+-- a window raises them over it, and focusing one raises its owner under it.
+-- Other windows of the app stack by focus, so the one dragged or switched
+-- to is on top. Lua isn't told a Wayland dialog's parent, so the owner is
+-- the window focused just before it opened, if they share a process or the
+-- dialog is a prompt (file chooser, polkit).
+local dialogOwner = {}   -- modal dialog or prompt address -> owner address
 local focusedNow, focusedBefore = nil, nil
 
 local function adoptDialog(addr)
@@ -1242,7 +1244,8 @@ local function adoptDialog(addr)
     local owner = ownerAddr and hl.get_window("address:" .. ownerAddr)
     if not owner or owner.address == addr then return end
     if owner.pid ~= win.pid and not prompt then return end
-    dialogOwner[addr] = owner.address
+    local modal = hasTag(win, "modal") or prompt
+    if modal then dialogOwner[addr] = owner.address end
     -- as a dialog it's no natural window for SUPER+M to tile
     hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = "address:" .. addr }))
     -- the window strip lists popouts under the window they came from
@@ -1251,7 +1254,7 @@ local function adoptDialog(addr)
         notifyShell()
     end
     -- a modal dialog or a prompt blocks its owner, as a popout does
-    if popupOpts.block and not popoutOwner[addr] and (hasTag(win, "modal") or prompt) then
+    if popupOpts.block and not popoutOwner[addr] and modal then
         if not hasTag(win, "from_" .. owner.address) then
             hl.dispatch(hl.dsp.window.tag({ tag = "+from_" .. owner.address, window = "address:" .. addr }))
         end
