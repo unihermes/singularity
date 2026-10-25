@@ -157,6 +157,10 @@ test("HyprBinds.mergeDefaults adds only the binds new in the defaults", () => {
     assert.match(r.src, /"volume"\)\)  -- Volume\nhl\.bind\(mod \.\. " \+ B"/)
     assert.match(r.src, /\n\n-- --- Claude ---\n-- the sidebar\nhl\.bind\(mod \.\. " \+ I"/)
     assert.doesNotMatch(r.src, /files/)
+    // the file's own lines all stay, unchanged and in order; only whole lines are added
+    const own = mine.split("\n").filter((l) => l !== "")
+    const kept = r.src.split("\n").filter((l) => own.includes(l))
+    assert.deepEqual(kept, own)
     // a first run, with nothing seen, brings back every default the file lacks
     assert.equal(B.mergeDefaults(mine, fresh, "").added.length, 3)
 })
