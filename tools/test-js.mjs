@@ -140,6 +140,27 @@ test("HyprBinds parses the real config and round-trips an edit", () => {
     assert.equal(B.parse(removed).rows.length, model.rows.length - 1)
 })
 
+test("HyprBinds.mergeDefaults adds only the binds new in the defaults", () => {
+    const B = load("HyprBinds.js")
+    const head = 'local mod = "SUPER"\n-- --- Apps ---\nhl.bind(mod .. " + Q", hl.dsp.exec_cmd("kitty"))  -- Terminal\n'
+    const seen = head + 'hl.bind(mod .. " + E", hl.dsp.exec_cmd("files"))  -- Files\n'
+    const fresh = seen + 'hl.bind(mod .. " + B", hl.dsp.exec_cmd("browser"))  -- Browser\n'
+        + 'hl.bind(mod .. " + M", hl.dsp.exec_cmd("mail"))  -- Mail\n'
+        + 'hl.bind(mod .. " + V", hl.dsp.exec_cmd("volume"))  -- Volume\n'
+        + '\n-- --- Claude ---\n-- the sidebar\nhl.bind(mod .. " + I", hl.dsp.exec_cmd("qs ipc call claude toggle"))  -- Claude\n'
+    // E removed on purpose, M's key taken, V's action moved to a combo of its own
+    const mine = head + 'hl.bind(mod .. " + M", hl.dsp.exec_cmd("music"))  -- Music\n'
+        + 'hl.bind(mod .. " + F12", hl.dsp.exec_cmd("volume"))  -- Volume\n'
+    const r = B.mergeDefaults(mine, fresh, seen)
+    assert.deepEqual(Array.from(r.added, (x) => x.keys), ["SUPER + B", "SUPER + I"])
+    assert.deepEqual(Array.from(r.skipped, (x) => x.keys), ["SUPER + M", "SUPER + V"])
+    assert.match(r.src, /"volume"\)\)  -- Volume\nhl\.bind\(mod \.\. " \+ B"/)
+    assert.match(r.src, /\n\n-- --- Claude ---\n-- the sidebar\nhl\.bind\(mod \.\. " \+ I"/)
+    assert.doesNotMatch(r.src, /files/)
+    // a first run, with nothing seen, brings back every default the file lacks
+    assert.equal(B.mergeDefaults(mine, fresh, "").added.length, 3)
+})
+
 test("VpnConf reads a Proton WireGuard file", () => {
     const V = load("VpnConf.js")
     const conf = "[Interface]\n# NAT-PMP (Port Forwarding) = on\nPrivateKey = k=\nAddress = 10.2.0.2/32\nDNS = 10.2.0.1\n\n"

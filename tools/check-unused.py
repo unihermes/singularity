@@ -12,6 +12,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 ALLOW = {
     ("shell.qml", "saveDefault"): "IPC: qs ipc call look saveDefault",
     ("shell.qml", "resetToDefault"): "IPC: qs ipc call look resetToDefault",
+    ("services/HyprBinds.js", "mergeDefaults"): "tools/merge-binds.mjs, run by link.sh",
 }
 
 def main():

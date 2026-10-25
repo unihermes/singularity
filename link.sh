@@ -78,6 +78,12 @@ machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev
 [[ $machine == desktop ]] || machine=laptop
 seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$machine default"
 seed binds.defaults.lua          "$HOME/.config/hypr/binds.lua"
+# binds added to the defaults since the last run go into binds.lua too
+if command -v node &>/dev/null; then
+  node tools/merge-binds.mjs "$defaults/binds.defaults.lua" "$HOME/.config/hypr/binds.lua" \
+    "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/binds.seen.lua" | while IFS= read -r line; do log "binds.lua: $line"; done \
+    || log "binds.lua: the new defaults couldn't be merged in"
+fi
 seed hyprlock.defaults.conf      "$HOME/.config/hypr/hyprlock.conf"
 seed alacritty.defaults.toml     "$HOME/.config/alacritty/alacritty.toml"
 seed ghostty.defaults.ghostty    "$HOME/.config/ghostty/config.ghostty"

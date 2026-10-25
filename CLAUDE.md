@@ -29,7 +29,8 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
   `autostart`, `looks`, `input`, `overrides`, `game-keys`, `binds`, `alttab`, `windows`
   (which requires `window-rules` for the static rules and `window-keys` for the arrow keys).
 - `dotfiles/singularity/.config/singularity/*.defaults.*`: templates `link.sh` copies
-  to the user's real files; Settings edits the copies, never the repo.
+  to the user's real files; Settings edits the copies, never the repo. Binds added to
+  `binds.defaults.lua` reach existing `binds.lua` files through `tools/merge-binds.mjs` (link.sh).
 - `system/`: root-owned files (pkexec helpers, polkit actions, ly's scripts, systemd
   configs) that install.sh's `put` copies to the same path under `/`.
 - `qs/DESIGN.md`: the UI design reference. Read the section you need (grep its `##`

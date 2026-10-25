@@ -684,3 +684,37 @@ function editBind(model, row, fields) {
         src = src.slice(0, reps[i][0]) + reps[i][2] + src.slice(reps[i][1])
     return src
 }
+
+// --- new defaults --------------------------------------------------------
+
+// The binds `fresh` (the repo's defaults now) has and `seen` (the defaults
+// last merged, "" for none) didn't, added to `src` (this machine's file)
+// line for line with the comments right above them. Left out: a combo
+// already bound, and an action the file has moved to a combo of its own.
+// Returns { src, added: [row], skipped: [row] }.
+function mergeDefaults(src, fresh, seen) {
+    var old = {}
+    if (seen !== "") parse(seen).rows.forEach(function(r) { old[r.norm] = true })
+    var def = parse(fresh)
+    var defNorms = {}
+    def.rows.forEach(function(r) { defNorms[r.norm] = true })
+    var defLines = fresh.split("\n")
+    var added = [], skipped = []
+    var model = parse(src)
+    def.rows.forEach(function(row) {
+        if (!row.editable || old[row.norm]) return
+        var action = oneLine(row.cmdSrc)
+        var same = model.rows.find(function(r) { return r.norm === row.norm })
+        var moved = model.rows.some(function(r) { return !defNorms[r.norm] && oneLine(r.cmdSrc) === action })
+        if (same || moved) {
+            if (!same || oneLine(same.cmdSrc) !== action) skipped.push(row)
+            return
+        }
+        var first = row.line - 1
+        while (first > 0 && /^\s*--/.test(defLines[first - 1]) && !MARKER.test(defLines[first - 1].trim())) first--
+        src = insertCall(model, row.category, defLines.slice(first, row.endLine).join("\n"))
+        model = parse(src)
+        added.push(row)
+    })
+    return { src: src, added: added, skipped: skipped }
+}
