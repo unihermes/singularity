@@ -8,7 +8,8 @@
 -- binds.lua: it wraps hl.bind to keep each bind's handle with its keys,
 -- and returns the sync for hyprland.lua to run once they're all bound.
 -- The Tabs binds are left to windows.lua's own switch (shared.tabBinds).
--- Also keeps games fullscreen and out of the scratchpad, and on the
+-- Also opens games on the primary display, keeps them fullscreen and out of
+-- the scratchpad, and on the
 -- desktop holds Power Saver while one is open.
 
 local S = require("shared")
@@ -65,18 +66,33 @@ end
 hl.on("window.active", sync)
 hl.on("window.close", sync)
 
--- A game opened while the scratchpad is up would land in it, floating under
--- the bar; it goes to the workspace below instead, and the scratchpad closes.
+-- The primary display (the Display page's pick), else the first, as
+-- displays.lua's singularityResetWorkspaces() has it.
+local function primaryMonitor()
+    local mons = hl.get_monitors()
+    local name = S.state("primary-display", "")
+    for _, m in ipairs(mons) do
+        if m.name == name then return m end
+    end
+    return mons[1]
+end
+
+-- Games open on the primary display's current workspace. One opened on
+-- another display moves there; one opened while the scratchpad is up would
+-- land in it, floating under the bar, so it moves too and the scratchpad
+-- closes.
 hl.on("window.open", function(win)
-    if not (win and isGame(win) and win.workspace and win.workspace.name == "special:scratchpad") then return end
-    local mon = win.monitor
-    local ws = mon and mon.active_workspace
+    if not (win and isGame(win) and win.workspace) then return end
+    local mon, primary = win.monitor, primaryMonitor()
+    local inScratchpad = win.workspace.name == "special:scratchpad"
+    if not primary or (not inScratchpad and mon and mon.name == primary.name) then return end
+    local ws = primary.active_workspace
     if not ws then return end
     local target = "address:" .. win.address
-    hl.dispatch(hl.dsp.window.move({ workspace = ws.id, window = target }))
-    if mon.active_special_workspace then
+    if inScratchpad and mon and mon.active_special_workspace then
         hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad"))
     end
+    hl.dispatch(hl.dsp.window.move({ workspace = ws.id, window = target }))
     hl.dispatch(hl.dsp.focus({ window = target }))
 end)
 
