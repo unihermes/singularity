@@ -145,10 +145,10 @@ Singleton {
         if (mirroring) return
         withPhone((serial, joined) => {
             mirrorProc.joined = joined ? serial : ""
-            mirrorProc.serial = serial
             // the keys as a physical keyboard's, which the lock screen's
-            // password field takes too
-            mirrorProc.command = ["scrcpy", "-s", serial, "--window-title", name || "Phone",
+            // password field takes too; its output a line at a time, for
+            // the texture sizes the window follows
+            mirrorProc.command = ["stdbuf", "-oL", "scrcpy", "-s", serial, "--window-title", name || "Phone",
                 "--turn-screen-off", "--stay-awake", "--power-off-on-close", "--keyboard=uhid"].concat(app ? ["--start-app=" + app] : [])
             mirrorProc.running = true
         })
@@ -191,7 +191,7 @@ Singleton {
         id: mirrorProc
         // the Wi-Fi address joined for it, left when it closes
         property string joined: ""
-        property string serial: ""
+        stdout: SplitParser { onRead: line => root.pictureSized(line) }
         stderr: StdioCollector { id: mirrorErr }
         onExited: code => {
             if (joined !== "") Quickshell.execDetached(["adb", "disconnect", joined])
@@ -204,34 +204,22 @@ Singleton {
 
     // --- the mirror's window ---
 
-    // A set size, turned with the phone: the largest of the phone's shape
-    // inside 70% of its monitor's width and 80% of its height (less the
-    // bar), in the monitor's top-right corner. Fitted when it opens and whenever the phone turns (a
-    // video gone full screen); a resize by hand holds until the next turn.
-    property int rotation: 0
-    // the phone's long side over its short one, from the window's first size
-    property real mirrorAspect: 0
+    // A set size, turned with the picture: the largest of its shape inside
+    // 70% of its monitor's width and 80% of its height (less the bar), in
+    // the monitor's top-right corner. Fitted when it opens and whenever the
+    // picture turns (a video gone full screen), which scrcpy reports as a
+    // new texture size; a resize by hand holds until the next turn.
+    // [width, height] of the phone's picture, empty before the first
+    property var mirrorSize: []
     // its gap from the bar and the screen's edge
     readonly property int mirrorMargin: 24
 
-    // the phone's rotation, printed as it changes, while the mirror's open
-    Process {
-        id: rotationProc
-        running: root.mirroring
-        command: ["adb", "-s", mirrorProc.serial, "shell", 'r=; while :; do '
-            + 'n=$(dumpsys input 2>/dev/null | grep -m1 -o "Orientation: Rotation[0-9]"); '
-            + '[ "$n" != "$r" ] && echo "$n" && r=$n; sleep 1; done']
-        environment: root.adbEnv
-        stdout: SplitParser {
-            onRead: line => {
-                var m = line.match(/Rotation(\d)/)
-                if (!m) return
-                root.rotation = parseInt(m[1])
-                fitTries.tries = 0
-                fitTries.restart()
-            }
-        }
-        onRunningChanged: if (!running) root.mirrorAspect = 0
+    function pictureSized(line) {
+        var m = line.match(/Texture.*?: (\d+)x(\d+)/)
+        if (!m) return
+        mirrorSize = [parseInt(m[1]), parseInt(m[2])]
+        fitTries.tries = 0
+        fitTries.restart()
     }
 
     // until the window's there; then once more, as scrcpy resizes itself
@@ -251,17 +239,12 @@ Singleton {
         Hyprland.refreshToplevels()
         const win = Hyprland.toplevels.values.find(t => t.lastIpcObject && t.lastIpcObject.class === "scrcpy")
         const mon = win ? win.monitor : null
-        if (!mon || !win.lastIpcObject.size) return false
-        if (mirrorAspect === 0) {
-            const sz = win.lastIpcObject.size
-            mirrorAspect = Math.max(sz[0], sz[1]) / Math.max(1, Math.min(sz[0], sz[1]))
-        }
+        if (!mon || mirrorSize.length !== 2) return false
         const res = (mon.lastIpcObject && mon.lastIpcObject.reserved) || [0, 0, 0, 0]
         const boxW = (mon.width / mon.scale - res[0] - res[2]) * 0.7
         const boxH = (mon.height / mon.scale - res[1] - res[3]) * 0.8
-        const wide = rotation % 2 === 1
         // width over height of the picture as the phone now stands
-        const shape = wide ? mirrorAspect : 1 / mirrorAspect
+        const shape = mirrorSize[0] / Math.max(1, mirrorSize[1])
         const w = Math.round(Math.min(boxW, boxH * shape))
         const h = Math.round(w / shape)
         const addr = "address:0x" + win.address
