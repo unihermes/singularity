@@ -1,20 +1,23 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/flyouts/PhoneFlyout.qml
+// ~/.config/quickshell/flyouts/DevicesFlyout.qml
 //
-// The phone as a card (its name, battery, and how it's connected), with
-// Ring and Send file on it through the phone link; a phone asking to pair,
-// with Accept and Decline; the phone's notifications, a click on one
-// opening it in place: its app and age, its text in full, its reply field,
-// Open (its app, here or on the mirror) and its actions; then Mirror (Stop while it's on
-// screen) and Screenshot over adb, which joins a phone on Wi-Fi just for
-// them, and Settings. Self-contained: only needs Phone and PhoneLink.
+// DEVICES: the phone and every peripheral with a battery (Peripherals) as
+// a row each with its level as a meter and a number, red when it runs
+// low; a paired phone out of reach as away. Then the phone: how it's connected as a card, with Ring
+// and Send file through the phone link; a phone asking to pair, with
+// Accept and Decline; its notifications, a click on one opening it in
+// place: its app and age, its text in full, its reply field, Open (its
+// app, here or on the mirror) and its actions; then Mirror (Stop while
+// it's on screen) and Screenshot over adb, which joins a phone on Wi-Fi
+// just for them, and Settings. Self-contained: only needs Phone,
+// PhoneLink and Peripherals.
 
 import QtQuick
 import "../services"
 
 FlyoutPanel {
     id: root
-    flyout: "phone"
+    flyout: "devices"
     menuWidth: Theme.flyoutMenuWidth
 
     readonly property var notes: PhoneLink.connected ? PhoneLink.device.notifications : []
@@ -23,17 +26,55 @@ FlyoutPanel {
     property string picked: ""
     onOpenChanged: if (!open) picked = ""
 
-    FlyoutHeading { text: "PHONE" }
+    readonly property bool phoneOn: Phone.connected || PhoneLink.connected
+    // the paired phone while it's out of reach
+    readonly property var awayPhone: phoneOn ? null : PhoneLink.devices.find(d => d.paired) || null
+
+    FlyoutHeading { text: "DEVICES" }
+
+    FlyoutRow {
+        visible: root.phoneOn || root.awayPhone !== null
+        leadingIcon: "󰄜"
+        label: root.phoneOn ? Phone.shownName || "Phone" : root.awayPhone ? root.awayPhone.name : ""
+        trailing: !root.phoneOn ? "away" : Phone.shownBattery < 0 ? ""
+            : (Phone.shownCharging ? "󱐋 " : "") + Phone.shownBattery + "%"
+        trailingIsValue: root.phoneOn
+        level: root.phoneOn ? Phone.shownBattery : -1
+        charging: Phone.shownCharging
+        trailingAlert: root.phoneOn && Peripherals.isLow({ level: Phone.shownBattery, charging: Phone.shownCharging })
+        dimmed: !root.phoneOn
+        enabled: false
+    }
+
+    Repeater {
+        model: Peripherals.devices
+        FlyoutRow {
+            required property var modelData
+            leadingIcon: modelData.glyph
+            label: modelData.name
+            trailing: modelData.level < 0 ? "Off" : (modelData.charging ? "󱐋 " : "") + modelData.level + "%"
+            trailingIsValue: modelData.level >= 0
+            level: modelData.level
+            charging: modelData.charging
+            trailingAlert: Peripherals.isLow(modelData)
+            dimmed: modelData.level < 0
+            enabled: false
+        }
+    }
+
+    // --- the phone ---
+
+    FlyoutHeading {
+        visible: Phone.reachable || PhoneLink.connected || PhoneLink.request !== null || Phone.unauthorized
+        text: "PHONE"
+    }
 
     HeadCard {
         visible: Phone.reachable || PhoneLink.connected
-        glyph: Phone.shownCharging ? "󱊥" : "󰄜"
-        title: Phone.shownName || "Phone"
-        lines: [
-            (Phone.shownBattery >= 0 ? Phone.shownBattery + "%" + (Phone.shownCharging ? " · charging" : "") : ""),
-            Phone.connected ? (Phone.device.wifi ? "Over Wi-Fi" : "Over USB") + (Phone.mirroring ? " · on screen" : "")
-                : PhoneLink.connected ? "Through KDE Connect" : "Wireless debugging on",
-        ]
+        glyph: "󰄜"
+        title: Phone.connected ? (Phone.device.wifi ? "Over Wi-Fi" : "Over USB")
+            : PhoneLink.connected ? "Through KDE Connect" : "Wireless debugging on"
+        lines: [Phone.mirroring ? "On screen" : "Not on screen"]
 
         FlyoutChip {
             visible: PhoneLink.connected

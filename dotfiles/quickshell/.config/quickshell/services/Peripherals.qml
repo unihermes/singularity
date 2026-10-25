@@ -4,8 +4,8 @@
 // Battery levels of the things plugged into the machine rather than its
 // own: what UPower reports that isn't a power supply (a wireless mouse or
 // keyboard through its receiver, a Bluetooth device with a battery) and a
-// headset headsetcontrol reads (Channels). For the bar's Peripherals
-// module and its flyout; a warning when one runs low.
+// headset headsetcontrol reads (Channels). For the Devices module and its
+// flyout; a warning when one runs low.
 
 pragma Singleton
 
@@ -52,11 +52,10 @@ Singleton {
         return out
     }
 
-    // the on one lowest on charge, for the bar; null with none on
-    readonly property var lowest: {
-        var on = devices.filter(d => d.level >= 0)
-        return on.length ? on.reduce((a, b) => b.level < a.level ? b : a) : null
-    }
+    // at or under the first warning and not charging, for the flyout's red
+    // and the bar's dot
+    function isLow(d) { return d.level >= 0 && d.level <= warnLevels[0] && !d.charging }
+    readonly property bool low: devices.some(d => isLow(d))
 
     // --- low battery ---------------------------------------------------------
 

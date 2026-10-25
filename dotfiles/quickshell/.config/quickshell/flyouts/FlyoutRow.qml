@@ -20,6 +20,13 @@ Item {
     // the trailing text is the row's current setting (Top, Grayscale), not
     // a chevron or tick, so it reads like a stepper's value
     property bool trailingIsValue: false
+    // the trailing value is trouble (a battery running low)
+    property bool trailingAlert: false
+    // a battery's level, 0..100, as a short meter before the trailing text,
+    // lined up down a list; -1 for none. Green while charging, red with
+    // trailingAlert.
+    property int level: -1
+    property bool charging: false
     // Glyphs in fixed-width cells at the right, in place of `trailing` while
     // that's empty: marks that have to line up down a list (a network's lock
     // and strength). "" leaves its cell blank.
@@ -177,7 +184,8 @@ Item {
     readonly property real labelEnd: showAction ? (extraIcon !== "" ? extraBtn.x : actionText !== "" ? actionChip.x : actionBtn.x)
         : badgeTag.visible ? badgeTag.x
         : quietTag.visible ? quietTag.x
-        : iconCells.visible ? iconCells.x : trailingText.x
+        : iconCells.visible ? iconCells.x
+        : levelMeter.visible ? levelMeter.x : trailingText.x
 
     Text {
         id: noteText
@@ -287,6 +295,23 @@ Item {
         }
     }
 
+    // the widest level the trailing text gives, so the meters line up
+    TextMetrics {
+        id: levelColumn
+        font: trailingText.font
+        text: "󱐋 100%"
+    }
+    Meter {
+        id: levelMeter
+        visible: root.level >= 0 && !root.showAction
+        anchors.right: parent.right
+        anchors.rightMargin: levelColumn.advanceWidth + Theme.spaceS
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.row(40)
+        fraction: root.level / 100
+        fillColor: root.charging ? Theme.good : root.trailingAlert ? Theme.alert : Theme.meterFill
+    }
+
     Text {
         id: trailingText
         visible: !root.showAction
@@ -297,7 +322,8 @@ Item {
         // the information itself, so it reads strong. On a clickable row
         // it's decoration -- a chevron, a check -- and stays quiet; a state
         // in flight (connecting) sits between the two.
-        color: root.trailingIsValue ? Theme.textStrong
+        color: root.trailingAlert ? Theme.alert
+            : root.trailingIsValue ? Theme.textStrong
             : root.busy ? Theme.text
             : root.enabled ? Theme.muted : Theme.textDisabled
         // icon glyphs turn up here (the check/ban marks on toggle rows),

@@ -269,14 +269,19 @@ Every bar flyout keeps to these (settled 2026-10-20):
   size, its filesystems as rows (label, used of size), Mount (which opens
   it once mounted) or Open at the right, then Eject (unmounts all, powers
   it off). udisksctl does the work.
-- **Peripherals** (2026-10-24): the batteries of what's plugged in or
-  paired rather than the machine's own (a wireless mouse or keyboard
-  through UPower, a headset through headsetcontrol). On the bar, a level
-  chip for the one lowest on charge: its glyph, the fill green while
-  charging and alert at 20% or under; only while one reports a level.
-  The flyout: a tile each (its glyph, a bolt while charging, the level,
-  its name, a meter), dimmed and Off while a headset's dongle answers
-  without it. A notification at 15% and 5%.
+- **Devices** (picked 2026-10-24, B "one list"): the phone and the
+  peripherals with a battery (a wireless mouse or keyboard through UPower,
+  a headset through headsetcontrol) in one module, under the old Phone
+  module's key. On the bar a plain glyph: devices while the phone's
+  connected, the mouse without it; Allow or Pair beside it while the phone
+  waits; a red dot while one is at 15% or under and not charging, else a
+  green one while the phone's on screen; a middle click mirrors. The
+  flyout: DEVICES, a row each (its glyph and name, a short level meter
+  and the number, a bolt while charging, red when low; a paired phone out
+  of reach as away, a headset that's off as Off); then PHONE, the
+  connection as a card with Ring and Send file; a pair request; the
+  phone's notifications; Mirror, Screenshot and Settings as chips. A
+  notification at 15% and 5% for a peripheral.
 - **Privacy** (bar picked 2026-10-21): only while something captures, a
   chip filled with the alert colour carrying a recording dot and a glyph
   per kind (mic, camera, screen) in the ground colour. The flyout: Mic,

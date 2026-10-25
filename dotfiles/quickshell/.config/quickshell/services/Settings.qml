@@ -509,7 +509,7 @@ Singleton {
         left:   ["controlcentre", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
         right:  ["bongo", "recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
-                 "cooling", "peripherals", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
+                 "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
     // Every module's name and icon. A new module also needs widgetDefaults
@@ -524,7 +524,6 @@ Singleton {
         volume:        { label: "Volume",         icon: "󰕾" },
         brightness:    { label: "Brightness",     icon: "󰃠" },
         battery:       { label: "Battery",        icon: "󰁹" },
-        peripherals:   { label: "Peripherals",    icon: "󰍽" },
         tray:          { label: "System Tray",    icon: "󰀻" },
         // the Music module; the key is the old visualizer's, so saved
         // layouts keep it where it was
@@ -535,7 +534,9 @@ Singleton {
         recorder:      { label: "Recording",      icon: "󰑋" },
         drives:        { label: "Drives",         icon: "󰕓" },
         bongo:         { label: "Bongo Cat",      icon: "󰄛" },
-        phone:         { label: "Phone",          icon: "󰄜" },
+        // Devices: the phone and the peripherals; the key is the old Phone
+        // module's, so saved layouts keep it where it was
+        phone:         { label: "Devices",        icon: "󰾰" },
         vpn:           { label: "VPN",            icon: "󰖂" },
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },

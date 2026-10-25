@@ -724,17 +724,14 @@ ShellRoot {
         // privacy
         LazyFlyout { name: "privacy"; scope: screenScope; PrivacyFlyout { scope: screenScope } }
 
-        // the phone over adb
-        LazyFlyout { name: "phone"; scope: screenScope; PhoneFlyout { scope: screenScope } }
+        // the phone and the peripherals with a battery
+        LazyFlyout { name: "devices"; scope: screenScope; DevicesFlyout { scope: screenScope } }
 
         // the VPN
         LazyFlyout { name: "vpn"; scope: screenScope; VpnFlyout { scope: screenScope } }
 
         // removable drives
         LazyFlyout { name: "drives"; scope: screenScope; DrivesFlyout { scope: screenScope } }
-
-        // the mouse's, headset's and such batteries
-        LazyFlyout { name: "peripherals"; scope: screenScope; PeripheralsFlyout { scope: screenScope } }
 
         // failed units
         LazyFlyout { name: "failed"; scope: screenScope; FailedFlyout { scope: screenScope } }

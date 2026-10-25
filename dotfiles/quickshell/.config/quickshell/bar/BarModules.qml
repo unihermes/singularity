@@ -32,7 +32,7 @@ Item {
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn, claude: claudeBtn,
-        failed: failedBtn, updates: updatesBtn, drives: drivesBtn, bongo: bongoBtn, peripherals: periphBtn,
+        failed: failedBtn, updates: updatesBtn, drives: drivesBtn, bongo: bongoBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
@@ -137,21 +137,6 @@ Item {
         acceptWheel: true
         onActivated: screenScope.toggleFlyout("brightness", brightBtn)
         onWheeled: d => ddc ? DdcBrightness.set(output, level + d * 5) : Brightness.set(level + d * 5)
-    }
-
-    // the mouse's, headset's and such: the one lowest on charge, its glyph
-    // and level, coloured like the battery's
-    BarModule {
-        id: periphBtn
-        readonly property var dev: Peripherals.lowest
-        fixedWidth: Theme.moduleWidth
-        visible: !!dev && Settings.widgetVisible("peripherals")
-        icon: dev ? dev.glyph : ""
-        fillValue: dev ? dev.level / 100 : 0
-        fillColor: !dev ? Theme.gaugeFill : dev.charging ? Theme.good
-            : dev.level <= 20 ? Theme.alert : Theme.gaugeFill
-        active: screenScope.openFlyout === "peripherals"
-        onActivated: screenScope.toggleFlyout("peripherals", periphBtn)
     }
 
     BarModule {
@@ -296,18 +281,25 @@ Item {
         onRightClicked: Notifications.toggleDnd()
     }
 
-    // The phone, only while one's connected over adb (USB or Wi-Fi) or the
-    // phone link: its battery beside it, or a word while it waits to be
-    // allowed over USB or asks to pair
+    // Devices (the phone's key, so saved layouts keep it): the phone and
+    // the peripherals with a battery. The devices glyph while the phone's
+    // connected, the mouse without it; a word while the phone waits to be
+    // allowed over USB or asks to pair; a red dot while one runs low, else
+    // a green one while the phone's on screen.
     BarModule {
         id: phoneBtn
-        visible: Phone.shown && Settings.widgetVisible("phone")
-        icon: Phone.mirroring ? "󰍹" : Phone.shownCharging ? "󱊥" : "󰄜"
-        label: (Phone.connected || PhoneLink.connected) && Phone.shownBattery >= 0 ? Phone.shownBattery + "%"
-            : PhoneLink.request ? "Pair" : Phone.unauthorized ? "Allow" : ""
+        readonly property bool phoneOn: Phone.connected || PhoneLink.connected
+        readonly property bool phoneLow: phoneOn && Phone.shownBattery >= 0
+            && Phone.shownBattery <= Peripherals.warnLevels[0] && !Phone.shownCharging
+        visible: (Phone.shown || Peripherals.devices.length > 0) && Settings.widgetVisible("phone")
+        icon: phoneOn ? "󰾰" : "󰍽"
+        label: PhoneLink.request ? "Pair" : Phone.unauthorized ? "Allow" : ""
         iconColor: Phone.unauthorized ? Theme.alert : PhoneLink.request ? Theme.accent : "transparent"
-        active: screenScope.openFlyout === "phone"
-        onActivated: screenScope.toggleFlyout("phone", phoneBtn)
+        readonly property bool low: Peripherals.low || phoneLow
+        dot: low || Phone.mirroring
+        dotColor: low ? Theme.alert : Theme.good
+        active: screenScope.openFlyout === "devices"
+        onActivated: screenScope.toggleFlyout("devices", phoneBtn)
         onMiddleClicked: Phone.toggleMirror()
     }
 

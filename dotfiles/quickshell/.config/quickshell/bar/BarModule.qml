@@ -40,6 +40,10 @@ Item {
     property int badge: 0
     // the alert colour, for a count that's trouble (failed services)
     property bool badgeAlert: false
+    // a small dot on the same corner, for a state with no count (a device
+    // running low, the phone on screen); the badge wins
+    property bool dot: false
+    property color dotColor: Theme.alert
     // the icon turns, for work under way (Updates installing)
     property bool spinning: false
 
@@ -118,6 +122,19 @@ Item {
                     font.pixelSize: Theme.barFs(9)
                     font.weight: Font.Bold
                 }
+            }
+
+            Rectangle {
+                visible: root.dot && root.badge === 0
+                x: Math.min(parent.width - width / 2, parent.width + root.chrome / 2 - width - root.badgeInset)
+                y: Math.max(parent.height / 2 - frame.chipHeight / 2 + root.badgeInset,
+                    parent.height / 2 - Theme.iconSize / 2 - height / 2 + 1)
+                width: Math.round(Theme.barFs(9) * 0.7)
+                height: width
+                radius: width / 2
+                color: root.dotColor
+                border.width: 1
+                border.color: Theme.bar
             }
         }
 
