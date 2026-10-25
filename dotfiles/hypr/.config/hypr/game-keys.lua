@@ -9,8 +9,8 @@
 -- and returns the sync for hyprland.lua to run once they're all bound.
 -- The Tabs binds are left to windows.lua's own switch (shared.tabBinds).
 -- Also opens games on the primary display, keeps them fullscreen and out of
--- the scratchpad, and on the
--- desktop holds Power Saver while one is open.
+-- the scratchpad, turns vibrance off while one is open, and on the desktop
+-- holds Power Saver meanwhile.
 
 local S = require("shared")
 
@@ -123,6 +123,31 @@ hl.on("window.open", function(win)
 end)
 hl.on("window.fullscreen", function() coverBarLater(500) end)
 
+local function anyGameOpen()
+    for _, w in ipairs(hl.get_windows()) do
+        if isGame(w) then return true end
+    end
+    return false
+end
+
+-- Vibrance off while any game is open: its screen shader has Hyprland draw
+-- every game frame itself, unevenly paced, which flickers with VRR. The
+-- game gets direct scanout back meanwhile (looks.lua).
+local vibranceOff  -- nil until the first sync; a reload turns it back on
+local function syncVibrance()
+    if not S.vibranceOn then return end
+    local any = anyGameOpen()
+    if any == vibranceOff then return end
+    vibranceOff = any
+    hl.config({
+        decoration = { screen_shader = any and "" or S.vibranceShader },
+        render     = { direct_scanout = any and 2 or 0 },
+    })
+end
+hl.on("window.open", syncVibrance)
+hl.on("window.close", function() hl.timer(syncVibrance, { timeout = 500, type = "oneshot" }) end)
+syncVibrance()
+
 -- Desktop: Power Saver while any game is open, the picked profile back
 -- after the last one closes (unless it was changed meanwhile). The 7700X
 -- runs a game's shader compiling at 85 °C on Balanced and ~57 °C on Power
@@ -140,10 +165,7 @@ if S.state("machine", "") == "desktop" then
 
     local holding  -- nil until the first sync, so a reload settles a left-over hold
     local function syncProfile()
-        local any = false
-        for _, w in ipairs(hl.get_windows()) do
-            if isGame(w) then any = true break end
-        end
+        local any = anyGameOpen()
         if any == holding then return end
         holding = any
         hl.exec_cmd(any and hold or release)
