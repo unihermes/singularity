@@ -3,11 +3,12 @@
 //
 // Screen recording and instant replay, both through gpu-screen-recorder
 // (encoded on the GPU) in AV1 where the GPU encodes it and Settings asks
-// for it, else H.264, with the game and chat (the default output) and the
-// mic mixed into one track:
-//   recording  the focused screen until stopped, into
-//              ~/Videos/Recordings/<what had focus as it started>
-//   replay     the last Settings.replaySeconds kept in RAM while a game is
+// for it, else H.264, with the sound mixed into one track:
+//   recording  the focused screen until stopped, with the default output
+//              and the mic, into ~/Videos/Recordings/<what had focus as it
+//              started>
+//   replay     the last Settings.replaySeconds of the game's screen, with
+//              only the Game and Chat channels, kept in RAM while a game is
 //              open, armed when one takes focus; save() writes it out to
 //              ~/Videos/Replays/<game>
 // `qs ipc call recorder toggle|save`, from SUPER+SHIFT+S and SUPER+R, which
@@ -62,9 +63,14 @@ Singleton {
     readonly property bool wantReplay: available && Settings.replayOn
 
     onFocusedGameChanged: armReplay()
+    // the screen the replay records; a game moved to another screen (as
+    // game-keys.lua moves a new one to the primary) restarts it there
+    property string replayMonitor: ""
+    readonly property string gameMonitor: focusedGame && focusedGame.monitor ? focusedGame.monitor.name : ""
+    onGameMonitorChanged: if (gameMonitor !== "" && gameMonitor !== replayMonitor) restartReplay()
     onWantReplayChanged: wantReplay ? armReplay() : stopReplay()
     onAnyGameChanged: if (!anyGame) stopReplay()
-    // a new length or codec takes a fresh buffer
+    // a new length, codec or screen takes a fresh buffer
     function restartReplay() {
         if (!replayProc.running) return
         replayProc.rearm = true
@@ -94,9 +100,9 @@ Singleton {
         }
     }
 
-    function capture(monitor) {
+    function capture(monitor, audio) {
         return ["-w", monitor, "-f", "60", "-k", codec, "-q", "very_high", "-c", "mp4",
-                "-a", "default_output|default_input", "-ac", "aac"]
+                "-a", audio, "-ac", "aac"]
     }
 
     // gpu-screen-recorder in a shell that makes its folder first; exec, so
@@ -117,7 +123,7 @@ Singleton {
         var dir = recordDir + "/" + folderFor(t && t.monitor === mon ? t : null)
         recordProc.file = dir + "/recording_" + Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".mp4"
         elapsed = 0
-        launch(recordProc, dir, capture(mon.name).concat(["-o", recordProc.file]))
+        launch(recordProc, dir, capture(mon.name, "default_output|default_input").concat(["-o", recordProc.file]))
         toast("󰑊", "Recording")
     }
 
@@ -154,7 +160,10 @@ Singleton {
         var g = focusedGame
         if (!wantReplay || !g || replayProc.running || !g.monitor) return
         replayGame = folderFor(g)
-        launch(replayProc, replayDir + "/" + replayGame, capture(g.monitor.name)
+        replayMonitor = g.monitor.name
+        // the Game and Chat channels' sinks (pipewire's channels.conf)
+        launch(replayProc, replayDir + "/" + replayGame,
+            capture(replayMonitor, "channel.game.monitor|channel.chat.monitor")
             .concat(["-r", String(Settings.replaySeconds), "-replay-storage", "ram",
                      "-o", replayDir + "/" + replayGame]))
     }
