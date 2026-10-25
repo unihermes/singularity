@@ -788,13 +788,27 @@ local function popoutOwnerOf(win)
     return owner, ownerMain
 end
 
+-- The workspace in front of you on the monitor under the cursor (or its
+-- shown scratchpad).
+local function workspaceAtCursor()
+    local mon = hl.get_monitor_at_cursor()
+    return mon and (mon.active_special_workspace or mon.active_workspace)
+end
+
 -- A window an app opens by itself goes to its owner's workspace, not the
 -- one you're on, unless just launched, pinned, or sent by a Window Rules
--- entry. Returns the window after the move.
+-- entry. A browser's opened with the cursor off its owner (a tab dragged
+-- out) goes to the workspace under the cursor instead. Returns the window
+-- after the move.
 local function followOwner(win)
     if launchWaiting or win.pinned or hasTag(win, "rule-ws") or not onActiveWorkspace(win) then return win end
     local owner = popoutOwnerOf(win)
     local ws = owner and owner.workspace
+    local cur = owner and BROWSER_CLASSES[win.class] and hl.get_cursor_pos()
+    if cur and not (cur.x >= owner.at.x and cur.x < owner.at.x + owner.size.x
+            and cur.y >= owner.at.y and cur.y < owner.at.y + owner.size.y) then
+        ws = workspaceAtCursor() or ws
+    end
     if not ws or ws.id == win.workspace.id then return win end
     local special = ws.name and ws.name:find("^special:")
     hl.dispatch(hl.dsp.window.move({ workspace = special and ws.name or ws.id,
