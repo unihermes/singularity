@@ -22,7 +22,11 @@
 # or sent back to its own broadcast) over TCP, and we take the TLS client's
 # side, so its certificate can be read without the standard library having
 # to vouch for it. That certificate is pinned at pairing. The key, the id
-# and paired phones are kept in ~/.local/state/singularity/phone-link/.
+# and paired phones (with their last address, asked directly while they're
+# away) are kept in ~/.local/state/singularity/phone-link/. Each paired
+# phone's battery and notifications are kept in the runtime dir too, taken
+# back when the shell reloads and starts this again: the phone keeps its
+# old connection's plugins then and doesn't send them anew.
 # Exits when stdin closes.
 
 import asyncio
@@ -45,11 +49,17 @@ PAYLOAD_PORTS = range(1739, 1765)
 PROTOCOL = 8
 PAIR_TIMEOUT = 30
 MAX_NOTIFICATIONS = 50
+CARRY_FOR = 300
+# how often a paired phone that's away is asked, by its last address, and
+# everyone is, by broadcast
+ASK_EVERY = 10
+BROADCAST_EVERY = 30
 
 STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state"),
                      "singularity", "phone-link")
 ICONS = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"),
                      "singularity", "phone-link")
+CARRIED = os.path.join(os.environ.get("XDG_RUNTIME_DIR") or "/tmp", "singularity-phone-link.json")
 
 INCOMING = ["kdeconnect.battery", "kdeconnect.notification", "kdeconnect.ping",
             "kdeconnect.share.request", "kdeconnect.clipboard", "kdeconnect.clipboard.connect"]
@@ -207,6 +217,14 @@ class Daemon:
         self.clip_proc = None
         self.udp = None
         self.heard = {}          # address -> when its broadcast was last answered
+        # id -> battery, charging and notifications from before a restart
+        try:
+            with open(CARRIED) as f:
+                carried = json.load(f)
+            self.carried = {did: c for did, c in carried.items() if time.time() - c["time"] < CARRY_FOR}
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            self.carried = {}
+        self.kept = dict(self.carried)
 
     # --- the shell ---
 
@@ -237,6 +255,16 @@ class Daemon:
                 "notifications": link.notifications if link and did in self.paired else [],
             })
         self.out({"event": "state", "devices": devices})
+        for d in devices:
+            if d["paired"] and d["reachable"]:
+                self.kept[d["id"]] = {"battery": d["battery"], "charging": d["charging"],
+                                      "notifications": d["notifications"], "time": time.time()}
+        try:
+            with open(CARRIED + ".tmp", "w") as f:
+                json.dump(self.kept, f)
+            os.replace(CARRIED + ".tmp", CARRIED)
+        except OSError:
+            pass
 
     def save(self):
         tmp = self.store_path + ".tmp"
@@ -326,10 +354,19 @@ class Daemon:
             pass
 
     async def keep_looking(self):
+        n = 0
         while True:
-            if not any(did in self.paired for did in self.links):
+            away = [did for did in self.paired if did not in self.links]
+            for did in away:
+                if self.paired[did].get("addr"):
+                    try:
+                        self.udp.sendto(encode(self.me.identity()), (self.paired[did]["addr"], UDP_PORT))
+                    except OSError:
+                        pass
+            if (away or not self.paired) and n % (BROADCAST_EVERY // ASK_EVERY) == 0:
                 self.broadcast()
-            await asyncio.sleep(60)
+            n += 1
+            await asyncio.sleep(ASK_EVERY)
 
     # --- a phone's connection ---
 
@@ -369,9 +406,15 @@ class Daemon:
         if old:
             old.close()
         link = Link(ident, cert, addr, reader, writer)
+        carried = self.carried.pop(did, None)
+        if saved and carried:
+            link.battery = carried.get("battery", -1)
+            link.charging = carried.get("charging", False)
+            link.notifications = carried.get("notifications", [])
         self.links[did] = link
-        if saved and saved.get("name") != link.name:
+        if saved and (saved.get("name") != link.name or saved.get("addr") != addr):
             saved["name"] = link.name
+            saved["addr"] = addr
             self.save()
         if saved:
             self.linked(link)
@@ -401,7 +444,7 @@ class Daemon:
 
     def set_paired(self, link):
         self.pairing.pop(link.id, None)
-        self.paired[link.id] = {"name": link.name, "type": link.type,
+        self.paired[link.id] = {"name": link.name, "type": link.type, "addr": link.addr,
                                 "cert": base64.b64encode(link.cert).decode()}
         self.save()
         self.linked(link)

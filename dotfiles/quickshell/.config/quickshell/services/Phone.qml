@@ -145,8 +145,10 @@ Singleton {
         if (mirroring) return
         withPhone((serial, joined) => {
             mirrorProc.joined = joined ? serial : ""
+            // the keys as a physical keyboard's, which the lock screen's
+            // password field takes too
             mirrorProc.command = ["scrcpy", "-s", serial, "--window-title", name || "Phone",
-                "--turn-screen-off", "--stay-awake", "--power-off-on-close"].concat(app ? ["--start-app=" + app] : [])
+                "--turn-screen-off", "--stay-awake", "--power-off-on-close", "--keyboard=uhid"].concat(app ? ["--start-app=" + app] : [])
             mirrorProc.running = true
         })
     }
