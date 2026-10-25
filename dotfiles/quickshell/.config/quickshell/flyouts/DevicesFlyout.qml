@@ -1,16 +1,17 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/DevicesFlyout.qml
 //
-// DEVICES: the phone and every peripheral with a battery (Peripherals) as
-// a row each with its level as a meter and a number, red when it runs
-// low; a paired phone out of reach as away. Then the phone: its name as a card, with Ring
-// and Send file through the phone link; a phone asking to pair, with
-// Accept and Decline; its notifications, a click on one opening it in
-// place: its app and age, its text in full, its reply field, Open (its
-// app, here or on the mirror) and its actions; then Mirror (Stop while
-// it's on screen) and Screenshot over adb, which joins a phone on Wi-Fi
-// just for them, and Settings. Self-contained: only needs Phone,
-// PhoneLink and Peripherals.
+// DEVICES: one section, a row per device (its glyph and name, its level
+// as a meter and a number, red when it runs low). The phone's row comes
+// first with a Mirror button at its end (Stop while it's on screen), and
+// opens a tray: Screenshot over adb, which joins a phone on Wi-Fi just for it;
+// Ring and Send file through the phone link; the phone's notifications,
+// a click on one opening it in place: its app and age, its text in full,
+// its reply field, Open (its app, here or on the mirror) and its actions.
+// A paired phone out of reach shows as away; a phone asking to pair, with
+// Accept and Decline. Then every peripheral with a battery (Peripherals),
+// and Settings. Self-contained: only needs Phone, PhoneLink and
+// Peripherals.
 
 import QtQuick
 import "../services"
@@ -24,68 +25,74 @@ FlyoutPanel {
     // the notification opened in place, for more of it, a reply and its
     // actions, by id
     property string picked: ""
-    onOpenChanged: if (!open) picked = ""
+    // the phone's tray, shut each time the flyout opens
+    property bool trayOpen: false
+    onOpenChanged: if (!open) { picked = ""; trayOpen = false }
 
     readonly property bool phoneOn: Phone.connected || PhoneLink.connected
     // the paired phone while it's out of reach
     readonly property var awayPhone: phoneOn ? null : PhoneLink.devices.find(d => d.paired) || null
+    readonly property bool phoneShown: phoneOn || Phone.reachable || awayPhone !== null
+
+    // the tray's, after Mirror
+    readonly property var actions: (Phone.reachable ? [{ glyph: "󰹑", text: "Screenshot", act: "shot" }] : []).concat(PhoneLink.connected ? [{ glyph: "󰂞", text: "Ring", act: "ring" }] : [])
+        .concat(PhoneLink.connected && PhoneLink.canPick ? [{ glyph: "󰒊", text: "Send file", act: "send" }] : [])
+
+    function phoneAct(act) {
+        if (act === "ring") { PhoneLink.ring(); return }
+        root.scope.openFlyout = ""
+        if (act === "mirror") Phone.toggleMirror()
+        else if (act === "shot") Phone.screenshot()
+        else if (act === "send") PhoneLink.pickFiles()
+    }
 
     FlyoutHeading { text: "DEVICES" }
 
-    FlyoutRow {
-        visible: root.phoneOn || root.awayPhone !== null
-        leadingIcon: "󰄜"
-        label: root.phoneOn ? Phone.shownName || "Phone" : root.awayPhone ? root.awayPhone.name : ""
-        trailing: !root.phoneOn ? "away" : Phone.shownBattery < 0 ? ""
-            : (Phone.shownCharging ? "󱐋 " : "") + Phone.shownBattery + "%"
-        trailingIsValue: root.phoneOn
-        level: root.phoneOn ? Phone.shownBattery : -1
-        charging: Phone.shownCharging
-        trailingAlert: root.phoneOn && Peripherals.isLow({ level: Phone.shownBattery, charging: Phone.shownCharging })
-        dimmed: !root.phoneOn
-        enabled: false
+    // --- the phone ---
+
+    // the phone's row, with Mirror (Stop while it's on screen) at its end
+    Item {
+        visible: root.phoneShown
+        width: parent.width
+        height: phoneRow.height
+
+        FlyoutRow {
+            id: phoneRow
+            width: parent.width - (mirrorBtn.visible ? mirrorBtn.width + Theme.spaceS : 0)
+            leadingIcon: "󰄜"
+            label: root.awayPhone ? root.awayPhone.name : Phone.shownName || "Phone"
+            note: Phone.mirroring ? "On screen" : !root.trayOpen && root.notes.length
+                ? root.notes.length + (root.notes.length === 1 ? " notification" : " notifications") : ""
+            trailing: root.awayPhone ? "away" : Phone.shownBattery < 0 ? (root.trayOpen ? "󰅃" : "󰅀")
+                : (Phone.shownCharging ? "󱐋 " : "") + Phone.shownBattery + "%"
+            trailingIsValue: !root.awayPhone && Phone.shownBattery >= 0
+            level: root.awayPhone ? -1 : Phone.shownBattery
+            charging: Phone.shownCharging
+            trailingAlert: !root.awayPhone && Peripherals.isLow({ level: Phone.shownBattery, charging: Phone.shownCharging })
+            highlighted: root.trayOpen
+            dimmed: root.awayPhone !== null
+            enabled: !root.awayPhone
+            onActivated: { root.trayOpen = !root.trayOpen; root.picked = "" }
+        }
+
+        IconButton {
+            id: mirrorBtn
+            visible: Phone.reachable
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            icon: Phone.mirroring ? "󰓛" : "󰍹"
+            lit: Phone.mirroring
+            onClicked: root.phoneAct("mirror")
+        }
     }
 
     Repeater {
-        model: Peripherals.devices
+        model: root.trayOpen ? root.actions : []
         FlyoutRow {
             required property var modelData
             leadingIcon: modelData.glyph
-            label: modelData.name
-            trailing: modelData.level < 0 ? "Off" : (modelData.charging ? "󱐋 " : "") + modelData.level + "%"
-            trailingIsValue: modelData.level >= 0
-            level: modelData.level
-            charging: modelData.charging
-            trailingAlert: Peripherals.isLow(modelData)
-            dimmed: modelData.level < 0
-            enabled: false
-        }
-    }
-
-    // --- the phone ---
-
-    FlyoutHeading {
-        visible: Phone.reachable || PhoneLink.connected || PhoneLink.request !== null || Phone.unauthorized
-        text: "PHONE"
-    }
-
-    HeadCard {
-        visible: Phone.reachable || PhoneLink.connected
-        glyph: "󰄜"
-        title: Phone.shownName || "Phone"
-        lines: [Phone.mirroring ? "On screen" : "Not on screen"]
-
-        FlyoutChip {
-            visible: PhoneLink.connected
-            glyph: true
-            text: "󰂞"
-            onClicked: PhoneLink.ring()
-        }
-        FlyoutChip {
-            visible: PhoneLink.connected && PhoneLink.canPick
-            glyph: true
-            text: "󰒊"
-            onClicked: { root.scope.openFlyout = ""; PhoneLink.pickFiles() }
+            label: modelData.text
+            onActivated: root.phoneAct(modelData.act)
         }
     }
 
@@ -106,15 +113,10 @@ FlyoutPanel {
         enabled: false
     }
 
-    // --- the phone's notifications ---
-
-    FlyoutHeading {
-        visible: PhoneLink.connected
-        text: "NOTIFICATIONS" + (root.notes.length ? "  " + root.notes.length : "")
-    }
+    // --- in the tray, the phone's notifications ---
 
     Repeater {
-        model: root.notes.slice(0, 8)
+        model: root.trayOpen ? root.notes.slice(0, 8) : []
 
         Column {
             id: phoneNote
@@ -194,23 +196,39 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        visible: PhoneLink.connected && root.notes.length === 0
+        visible: root.trayOpen && PhoneLink.connected && root.notes.length === 0
         label: "No notifications"
+        enabled: false
+    }
+
+    // --- the peripherals ---
+
+    Repeater {
+        model: Peripherals.devices
+        FlyoutRow {
+            required property var modelData
+            leadingIcon: modelData.glyph
+            label: modelData.name
+            trailing: modelData.level < 0 ? "Off" : (modelData.charging ? "󱐋 " : "") + modelData.level + "%"
+            trailingIsValue: modelData.level >= 0
+            level: modelData.level
+            charging: modelData.charging
+            trailingAlert: Peripherals.isLow(modelData)
+            dimmed: modelData.level < 0
+            enabled: false
+        }
+    }
+
+    FlyoutRow {
+        visible: !root.phoneShown && Peripherals.devices.length === 0
+        label: "No devices"
         enabled: false
     }
 
     FlyoutDivider {}
 
     FlyoutChipLine {
-        onPicked: act => {
-            root.scope.openFlyout = ""
-            if (act === "mirror") Phone.toggleMirror()
-            else if (act === "shot") Phone.screenshot()
-            else if (act === "settings") root.scope.openSettings("phone")
-        }
-        chips: (Phone.reachable ? [
-            Phone.mirroring ? { icon: "󰓛", text: "Stop", act: "mirror" } : { icon: "󰍹", text: "Mirror", act: "mirror" },
-            { icon: "󰹑", text: "Screenshot", act: "shot" },
-        ] : []).concat([{ icon: "󰒓", text: "Settings", act: "settings" }])
+        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
+        onPicked: root.scope.openSettings("phone")
     }
 }

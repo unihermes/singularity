@@ -276,12 +276,15 @@ Every bar flyout keeps to these (settled 2026-10-20):
   connected, the mouse without it; Allow or Pair beside it while the phone
   waits; a red dot while one is at 15% or under and not charging, else a
   green one while the phone's on screen; a middle click mirrors. The
-  flyout: DEVICES, a row each (its glyph and name, a short level meter
-  and the number, a bolt while charging, red when low; a paired phone out
-  of reach as away, a headset that's off as Off); then PHONE, the
-  connection as a card with Ring and Send file; a pair request; the
-  phone's notifications; Mirror, Screenshot and Settings as chips. A
-  notification at 15% and 5% for a peripheral.
+  flyout (2026-10-25): one DEVICES section, a row per device (glyph and
+  name, a short level meter and the number, a bolt while charging, red
+  when low; Off for a headset that's off). The phone's row comes first,
+  with a Mirror (Stop) button at its end; a click on the phone's
+  row opens its tray (Screenshot, Ring, Send file, then its
+  notifications), shut each time the flyout opens; collapsed, the row's
+  note gives the notification count. A paired phone out of reach is a
+  dimmed row reading away; a pair request a card. Settings as the other
+  flyouts end. A notification at 15% and 5% for a peripheral.
 - **Privacy** (bar picked 2026-10-21): only while something captures, a
   chip filled with the alert colour carrying a recording dot and a glyph
   per kind (mic, camera, screen) in the ground colour. The flyout: Mic,
