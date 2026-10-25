@@ -3,7 +3,7 @@
 //
 // DEVICES: the phone and every peripheral with a battery (Peripherals) as
 // a row each with its level as a meter and a number, red when it runs
-// low; a paired phone out of reach as away. Then the phone: how it's connected as a card, with Ring
+// low; a paired phone out of reach as away. Then the phone: its name as a card, with Ring
 // and Send file through the phone link; a phone asking to pair, with
 // Accept and Decline; its notifications, a click on one opening it in
 // place: its app and age, its text in full, its reply field, Open (its
@@ -72,8 +72,7 @@ FlyoutPanel {
     HeadCard {
         visible: Phone.reachable || PhoneLink.connected
         glyph: "󰄜"
-        title: Phone.connected ? (Phone.device.wifi ? "Over Wi-Fi" : "Over USB")
-            : PhoneLink.connected ? "Through KDE Connect" : "Wireless debugging on"
+        title: Phone.shownName || "Phone"
         lines: [Phone.mirroring ? "On screen" : "Not on screen"]
 
         FlyoutChip {
