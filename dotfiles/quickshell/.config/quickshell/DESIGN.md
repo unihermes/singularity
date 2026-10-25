@@ -269,6 +269,14 @@ Every bar flyout keeps to these (settled 2026-10-20):
   size, its filesystems as rows (label, used of size), Mount (which opens
   it once mounted) or Open at the right, then Eject (unmounts all, powers
   it off). udisksctl does the work.
+- **Peripherals** (2026-10-24): the batteries of what's plugged in or
+  paired rather than the machine's own (a wireless mouse or keyboard
+  through UPower, a headset through headsetcontrol). On the bar, a level
+  chip for the one lowest on charge: its glyph, the fill green while
+  charging and alert at 20% or under; only while one reports a level.
+  The flyout: a tile each (its glyph, a bolt while charging, the level,
+  its name, a meter), dimmed and Off while a headset's dongle answers
+  without it. A notification at 15% and 5%.
 - **Privacy** (bar picked 2026-10-21): only while something captures, a
   chip filled with the alert colour carrying a recording dot and a glyph
   per kind (mic, camera, screen) in the ground colour. The flyout: Mic,

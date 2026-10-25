@@ -6,7 +6,8 @@
 // Game. Each has an EQ, its gains set live from Settings. A headset's ChatMix dial (read with headsetcontrol) sets Game and
 // Chat against each other on the channels' own streams into the output, so
 // each channel's level stays the user's. The same tool says whether the
-// headset itself is on (headset), for the bar's volume icon.
+// headset itself is on (headset), for the bar's volume icon, and its
+// battery, for Peripherals.
 
 pragma Singleton
 
@@ -175,6 +176,10 @@ Singleton {
     // from its battery read: "on", "off" (the dongle answers, the headset
     // is off) or "" with no headset found
     property string headset: ""
+    // its name, and its charge while it's on: 0..100, or -1
+    property string headsetName: ""
+    property int headsetLevel: -1
+    property bool headsetCharging: false
 
     Process {
         id: read
@@ -188,6 +193,11 @@ Singleton {
                 var st = bat ? bat.battery.status : ""
                 root.headset = /^BATTERY_(AVAILABLE|CHARGING)$/.test(st) ? "on"
                     : st === "BATTERY_UNAVAILABLE" ? "off" : bat || !devices ? root.headset : ""
+                if (devices) {
+                    root.headsetName = bat ? bat.product || bat.device : ""
+                    root.headsetLevel = root.headset === "on" && bat.battery.level >= 0 ? bat.battery.level : -1
+                    root.headsetCharging = st === "BATTERY_CHARGING"
+                }
                 // the dial only counts with the channels to set
                 var dial = devices && root.sinks.length > 0
                     ? devices.find(d => typeof d.chatmix === "number") : null

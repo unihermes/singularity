@@ -32,7 +32,7 @@ Item {
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn, claude: claudeBtn,
-        failed: failedBtn, updates: updatesBtn, drives: drivesBtn, bongo: bongoBtn,
+        failed: failedBtn, updates: updatesBtn, drives: drivesBtn, bongo: bongoBtn, peripherals: periphBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
     // Control centre. Sits left of the workspaces, where a
@@ -137,6 +137,21 @@ Item {
         acceptWheel: true
         onActivated: screenScope.toggleFlyout("brightness", brightBtn)
         onWheeled: d => ddc ? DdcBrightness.set(output, level + d * 5) : Brightness.set(level + d * 5)
+    }
+
+    // the mouse's, headset's and such: the one lowest on charge, its glyph
+    // and level, coloured like the battery's
+    BarModule {
+        id: periphBtn
+        readonly property var dev: Peripherals.lowest
+        fixedWidth: Theme.moduleWidth
+        visible: !!dev && Settings.widgetVisible("peripherals")
+        icon: dev ? dev.glyph : ""
+        fillValue: dev ? dev.level / 100 : 0
+        fillColor: !dev ? Theme.gaugeFill : dev.charging ? Theme.good
+            : dev.level <= 20 ? Theme.alert : Theme.gaugeFill
+        active: screenScope.openFlyout === "peripherals"
+        onActivated: screenScope.toggleFlyout("peripherals", periphBtn)
     }
 
     BarModule {

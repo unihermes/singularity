@@ -733,6 +733,9 @@ ShellRoot {
         // removable drives
         LazyFlyout { name: "drives"; scope: screenScope; DrivesFlyout { scope: screenScope } }
 
+        // the mouse's, headset's and such batteries
+        LazyFlyout { name: "peripherals"; scope: screenScope; PeripheralsFlyout { scope: screenScope } }
+
         // failed units
         LazyFlyout { name: "failed"; scope: screenScope; FailedFlyout { scope: screenScope } }
 
