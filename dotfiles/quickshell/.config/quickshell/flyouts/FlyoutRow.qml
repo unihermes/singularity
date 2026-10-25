@@ -187,7 +187,9 @@ Item {
         anchors.baseline: labelText.baseline
         width: Math.max(0, root.labelEnd - Theme.spaceL - x)
         elide: Text.ElideRight
-        text: root.note
+        // on the one line: a phone notification's text comes with its newlines
+        text: root.noteStyled ? root.note : root.note.replace(/\s+/g, " ")
+        maximumLineCount: 1
         textFormat: root.noteStyled ? Text.StyledText : Text.PlainText
         color: Theme.subtext
         font.family: Theme.fontText
