@@ -34,6 +34,17 @@ hl.window_rule({
     content = "game",
 })
 
+-- Steam's other windows (a game's launch window, Settings, its dialogs) are
+-- popouts at their own size even with Steam in the tray, where the first
+-- one up would be taken for the main window and fill the screen as Steam
+-- was left. Untitled as they map, so those are left alone; the friends list
+-- has its own entry.
+hl.window_rule({
+    name  = "steam-popouts",
+    match = { class = "^(steam)$", title = "negative:^(Steam|Friends List|)$" },
+    tag   = "+popout",
+})
+
 -- a link from another app opens a Floorp tab and activates its window
 hl.window_rule({
     name  = "floorp-focus-on-activate",
