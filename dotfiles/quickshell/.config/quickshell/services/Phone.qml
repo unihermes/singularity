@@ -206,11 +206,13 @@ Singleton {
 
     // A set size, turned with the phone: the largest of the phone's shape
     // inside 70% of its monitor's width and 80% of its height (less the
-    // bar), centred. Fitted when it opens and whenever the phone turns (a
+    // bar), in the monitor's top-right corner. Fitted when it opens and whenever the phone turns (a
     // video gone full screen); a resize by hand holds until the next turn.
     property int rotation: 0
     // the phone's long side over its short one, from the window's first size
     property real mirrorAspect: 0
+    // its gap from the bar and the screen's edge
+    readonly property int mirrorMargin: 24
 
     // the phone's rotation, printed as it changes, while the mirror's open
     Process {
@@ -264,7 +266,9 @@ Singleton {
         const h = Math.round(w / shape)
         const addr = "address:0x" + win.address
         Hyprland.dispatch("hl.dsp.window.resize({x=" + w + ", y=" + h + ", window=\"" + addr + "\"})")
-        Hyprland.dispatch("hl.dsp.window.center({window=\"" + addr + "\"})")
+        const x = Math.round(mon.x + mon.width / mon.scale - res[2] - w - mirrorMargin)
+        const y = Math.round(mon.y + res[1] + mirrorMargin)
+        Hyprland.dispatch("hl.dsp.window.move({x=" + x + ", y=" + y + ", window=\"" + addr + "\"})")
         return true
     }
 

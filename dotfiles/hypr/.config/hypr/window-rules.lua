@@ -100,7 +100,8 @@ hl.window_rule({
     maximize = false,
 })
 
--- The phone on screen (scrcpy): floating at the phone's own shape, centred.
+-- The phone on screen (scrcpy): floating at the phone's own shape; Phone.qml
+-- sizes it and puts it in the top-right corner.
 hl.window_rule({
     name     = "scrcpy",
     tag      = "-monocle",
