@@ -70,8 +70,9 @@ FlyoutPanel {
 
                 FlyoutRow {
                     width: parent.width
-                    leadingImage: entry.modelData.icon || ""
-                    leadingIcon: entry.modelData.icon ? "" : "󰂚"
+                    readonly property string appIcon: Notifications.iconOf(entry.modelData)
+                    leadingImage: appIcon
+                    leadingIcon: appIcon ? "" : "󰂚"
                     label: entry.modelData.summary || entry.modelData.appName || "Notification"
                     trailing: (Notifications.isNew(entry.modelData) ? "new · " : "") + Notifications.ago(entry.modelData)
                     highlighted: entry.open

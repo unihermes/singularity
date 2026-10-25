@@ -228,9 +228,23 @@ Singleton {
         return Qt.formatDate(new Date(entry.time), "MMM d")
     }
 
+    // The icon a row or card shows: the app's, else the phone's picture for
+    // its app, else an installed app's going by its name, else Claude's for
+    // Claude Code's through the terminal; "" for none
+    function iconOf(entry) {
+        if (entry.icon) return entry.icon
+        if (entry.phone && entry.picture) return entry.picture
+        const app = desktopFor(entry)
+        if (app && app.icon) return Quickshell.iconPath(app.icon, true)
+        if (isClaude(entry)) return Quickshell.iconPath("claude-desktop", true)
+        return ""
+    }
+
     // The attached picture: the live notification's while there is one (image
-    // data is only served while it lasts), else a file it named
+    // data is only served while it lasts), else a file it named. Not the
+    // phone's, which is its icon (iconOf)
     function pictureOf(entry) {
+        if (entry.phone && !entry.icon) return ""
         return entry.live && entry.live.tracked ? pictureFor(entry.live) : entry.picture
     }
 

@@ -108,7 +108,7 @@ Item {
                 width: visible ? Theme.iconCell : 0
                 height: Theme.iconCell
                 anchors.verticalCenter: parent.verticalCenter
-                source: root.entry.icon
+                source: Notifications.iconOf(root.entry)
                 sourceSize: Qt.size(Theme.iconCell * 2, Theme.iconCell * 2)
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true

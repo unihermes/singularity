@@ -476,6 +476,10 @@ class Daemon:
             icon = os.path.join(ICONS, re.sub(r"[^A-Za-z0-9]", "", str(b["payloadHash"])) + ".png")
             if not os.path.exists(icon) and not await self.fetch(link, p, icon):
                 icon = ""
+        # an update to one sent before may come without its icon
+        old = next((n for n in link.notifications if n["id"] == nid), None)
+        if not icon and old:
+            icon = old["icon"]
         # Android's notification key: "user|package|id|tag|uid"
         parts = str(nid).split("|")
         entry = {"id": nid, "app": b.get("appName", ""), "package": parts[1] if len(parts) > 2 else "", "title": b.get("title", ""),

@@ -4,8 +4,8 @@
 // The phone as a card (its name, battery, and how it's connected), with
 // Ring and Send file on it through the phone link; a phone asking to pair,
 // with Accept and Decline; the phone's notifications, a click on one
-// opening its reply field, Open (its app, here or on the mirror) and its
-// actions; then Mirror (Stop while it's on
+// opening it in place: its app and age, its text in full, its reply field,
+// Open (its app, here or on the mirror) and its actions; then Mirror (Stop while it's on
 // screen) and Screenshot over adb, which joins a phone on Wi-Fi just for
 // them, and Settings. Self-contained: only needs Phone and PhoneLink.
 
@@ -18,11 +18,10 @@ FlyoutPanel {
     menuWidth: Theme.flyoutMenuWidth
 
     readonly property var notes: PhoneLink.connected ? PhoneLink.device.notifications : []
-    // the notification picked for a reply or its actions, by id
+    // the notification opened in place, for more of it, a reply and its
+    // actions, by id
     property string picked: ""
-    readonly property var pickedNote: notes.find(n => n.id === picked) || null
-    onOpenChanged: if (!open) { picked = ""; replyField.text = "" }
-    onPickedChanged: replyField.text = ""
+    onOpenChanged: if (!open) picked = ""
 
     FlyoutHeading { text: "PHONE" }
 
@@ -76,18 +75,81 @@ FlyoutPanel {
 
     Repeater {
         model: root.notes.slice(0, 8)
-        FlyoutRow {
+
+        Column {
+            id: phoneNote
             required property var modelData
-            leadingImage: modelData.icon ? "file://" + modelData.icon : ""
-            leadingIcon: modelData.icon ? "" : "󰂚"
-            label: modelData.title || modelData.app
-            note: modelData.text !== label ? modelData.text : ""
-            highlighted: root.picked === modelData.id
-            enabled: modelData.replyId !== "" || modelData.actions.length > 0 || modelData.package !== ""
-            actionIcon: modelData.clearable ? "󰅖" : ""
-            actionHint: "Dismiss on the phone"
-            onAction: PhoneLink.dismiss(modelData)
-            onActivated: root.picked = root.picked === modelData.id ? "" : modelData.id
+            readonly property bool open: root.picked === modelData.id
+            width: parent.width
+            spacing: Theme.spaceS
+
+            FlyoutRow {
+                readonly property string appIcon: Notifications.iconOf({
+                    icon: phoneNote.modelData.icon ? "file://" + phoneNote.modelData.icon : "", phone: true, picture: "",
+                    appName: phoneNote.modelData.app, desktopEntry: "", summary: phoneNote.modelData.title })
+                width: parent.width
+                leadingImage: appIcon
+                leadingIcon: appIcon ? "" : "󰂚"
+                label: phoneNote.modelData.title || phoneNote.modelData.app
+                note: phoneNote.modelData.text !== label ? phoneNote.modelData.text : ""
+                highlighted: phoneNote.open
+                actionIcon: phoneNote.modelData.clearable ? "󰅖" : ""
+                actionHint: "Dismiss on the phone"
+                onAction: PhoneLink.dismiss(phoneNote.modelData)
+                onActivated: root.picked = phoneNote.open ? "" : phoneNote.modelData.id
+            }
+
+            // opened: the app and age, then the text in full, a few lines
+            Text {
+                visible: phoneNote.open
+                width: parent.width
+                text: [phoneNote.modelData.app, Notifications.ago(phoneNote.modelData)].filter(t => t).join("  ·  ")
+                elide: Text.ElideRight
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontSmall
+                font.weight: Theme.weightBody
+            }
+
+            Text {
+                visible: phoneNote.open && text !== ""
+                width: parent.width
+                text: phoneNote.modelData.text
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                maximumLineCount: 6
+                elide: Text.ElideRight
+                color: Theme.text
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontBody
+                font.weight: Theme.weightBody
+            }
+
+            FlyoutInput {
+                visible: phoneNote.open && phoneNote.modelData.replyId !== ""
+                bleed: true
+                placeholder: "Reply to " + (phoneNote.modelData.title || phoneNote.modelData.app)
+                onVisibleChanged: text = ""
+                onAccepted: {
+                    if (text.trim() === "") return
+                    PhoneLink.reply(phoneNote.modelData, text)
+                    root.picked = ""
+                }
+                onEscapePressed: root.picked = ""
+            }
+
+            FlyoutChipLine {
+                visible: phoneNote.open && chips.length > 0
+                chips: (phoneNote.modelData.package ? [{ icon: "󰏌", text: "Open", act: "open" }] : [])
+                    .concat(phoneNote.modelData.actions.map(a => ({ icon: "", text: a, act: "action:" + a })))
+                onPicked: act => {
+                    const n = phoneNote.modelData
+                    root.picked = ""
+                    if (act !== "open") { PhoneLink.act(n, act.slice("action:".length)); return }
+                    root.scope.openFlyout = ""
+                    Notifications.activate({ appName: n.app, desktopEntry: "", phone: true, phonePackage: n.package })
+                }
+            }
         }
     }
 
@@ -95,33 +157,6 @@ FlyoutPanel {
         visible: PhoneLink.connected && root.notes.length === 0
         label: "No notifications"
         enabled: false
-    }
-
-    FlyoutInput {
-        id: replyField
-        visible: root.pickedNote !== null && root.pickedNote.replyId !== ""
-        bleed: true
-        placeholder: root.pickedNote ? "Reply to " + (root.pickedNote.title || root.pickedNote.app) : ""
-        onAccepted: {
-            if (text.trim() === "") return
-            PhoneLink.reply(root.pickedNote, text)
-            root.picked = ""
-        }
-        onEscapePressed: root.picked = ""
-    }
-
-    FlyoutChipLine {
-        visible: chips.length > 0
-        chips: !root.pickedNote ? []
-            : (root.pickedNote.package ? [{ icon: "󰏌", text: "Open", act: "open" }] : [])
-                .concat(root.pickedNote.actions.map(a => ({ icon: "", text: a, act: "action:" + a })))
-        onPicked: act => {
-            const n = root.pickedNote
-            root.picked = ""
-            if (act !== "open") { PhoneLink.act(n, act.slice("action:".length)); return }
-            root.scope.openFlyout = ""
-            Notifications.activate({ appName: n.app, desktopEntry: "", phone: true, phonePackage: n.package })
-        }
     }
 
     FlyoutDivider {}

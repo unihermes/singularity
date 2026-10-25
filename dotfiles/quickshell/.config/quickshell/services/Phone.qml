@@ -179,7 +179,7 @@ Singleton {
         stdout: StdioCollector { id: joinOut }
         onExited: code => {
             if (code === 0 && /connected to/.test(joinOut.text)) then(command[2], true)
-            else Quickshell.execDetached(["notify-send", "-a", "Phone", "-u", "critical", "Couldn't reach the phone",
+            else Quickshell.execDetached(["notify-send", "-a", "Phone", "-i", "phone", "-u", "critical", "Couldn't reach the phone",
                 joinOut.text.trim() || "adb connect failed"])
         }
     }
@@ -193,7 +193,7 @@ Singleton {
             if (joined !== "") Quickshell.execDetached(["adb", "disconnect", joined])
             if (code === 0 || code === 2) return
             var lines = mirrorErr.text.trim().split("\n").filter(l => /ERROR/.test(l))
-            Quickshell.execDetached(["notify-send", "-a", "Phone", "-u", "critical", "Couldn't show the phone",
+            Quickshell.execDetached(["notify-send", "-a", "Phone", "-i", "phone", "-u", "critical", "Couldn't show the phone",
                 lines.length ? lines[lines.length - 1].replace(/^.*ERROR:\s*/, "") : "scrcpy quit"])
         }
     }
