@@ -218,6 +218,8 @@ PanelWindow {
                 var cls = ipc ? ipc.class : ""
                 if (!cls || Apps.isBackTabToplevel(tls[j])) continue
                 var tags = windowTags(ipc)
+                // an X11 app's menu (window-rules.lua's tag)
+                if (tags.indexOf("menu") >= 0) continue
                 var win = {
                     source: Apps.iconForClass(cls),
                     // drawn instead when nothing resolved, so a

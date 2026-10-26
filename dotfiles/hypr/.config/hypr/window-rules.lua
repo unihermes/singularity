@@ -25,6 +25,14 @@ hl.window_rule({
     no_focus = true,
 })
 
+-- An X11 app's menus (Steam's View, Friends, Games and right-click menus)
+-- are windows of their own with no title. Tagged "menu": windows.lua takes
+-- them for no dialog or window of the app's, only keeping them on their
+-- owner's workspace. The tags drop if a title comes.
+local X11_MENU = { xwayland = true, title = "^$" }
+hl.window_rule({ name = "x11-menus", match = X11_MENU, tag = "+menu" })
+hl.window_rule({ name = "x11-menus-exempt", match = X11_MENU, tag = "+monocle-exempt" })
+
 -- Steam's games (Proton ones never say so themselves) and Minecraft count
 -- as games, so render.direct_scanout = 2 can hand their frames straight to
 -- the screen

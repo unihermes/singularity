@@ -551,12 +551,12 @@ hl.on("window.fullscreen", function(win) unflagFloating(win) end)
 -- "rule-*" tags rather than tags picked up at map time. Monocle: a
 -- fullscreen entry goes fullscreen, a Fills app fills, a float entry
 -- floats where it was before dwindle, others float centred. Dwindle:
--- every window tiles, whatever its rules, but popups and pinned windows;
+-- every window tiles, whatever its rules, but popups, menus and pinned windows;
 -- an app's own fullscreen is left alone.
 function setWindowMonocle(w, on, mon)
     -- skip windows with no class yet, the shell's and the scratchpad
     if not w.class or w.class == "" or w.class == "org.quickshell" or w.class == SCRATCH_CLASS then return end
-    if w.pinned then return end
+    if w.pinned or hasTag(w, "menu") then return end
     local addr = "address:" .. w.address
     local popup = hasTag(w, "app-held") or hasTag(w, "popout")
     local st = stateOf(w.address)
@@ -755,6 +755,11 @@ hl.on("window.active", function()
         hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
     end, { timeout = 1, type = "oneshot" })
 end)
+-- an X11 window comes back with its old address, tags and no_focus, so an
+-- owner hidden while blocked (Steam to its tray) would stay blocked
+hl.on("window.open", function(win)
+    if win and hasTag(win, "blocked") and not blockingPopout(win.address) then setBlocked(win.address, false) end
+end)
 hl.on("window.close", function(win)
     if not win then return end
     releasePopout(win.address)
@@ -816,10 +821,43 @@ local function followOwner(win)
     return hl.get_window("address:" .. win.address) or win
 end
 
+-- A menu goes on its owner's workspace: Hyprland puts an X11 one on the
+-- regular workspace of the monitor it's on, under a shown scratchpad.
+-- Checked again once the app has placed it, and whenever it's moved.
+local menuOwner = {}
+local function syncMenu(addr)
+    local win = hl.get_window("address:" .. addr)
+    local owner = menuOwner[addr] and hl.get_window("address:" .. menuOwner[addr])
+    if not win or not owner or not win.workspace or not owner.workspace
+            or win.workspace.id == owner.workspace.id then return end
+    hl.dispatch(hl.dsp.window.move({ workspace = owner.workspace.special and owner.workspace.name or owner.workspace.id,
+        window = "address:" .. addr, follow = false }))
+end
+local function keepMenuWithOwner(addr)
+    local win = hl.get_window("address:" .. addr)
+    local owner = win and popoutOwnerOf(win)
+    if not owner then return end
+    menuOwner[addr] = owner.address
+    syncMenu(addr)
+    hl.timer(function() syncMenu(addr) end, { timeout = 50, type = "oneshot" })
+end
+hl.on("window.move_to_workspace", function(win) if win and menuOwner[win.address] then syncMenu(win.address) end end)
+hl.on("window.close", function(win) if win then menuOwner[win.address] = nil end end)
+
 holdPopup = function(win)
     if not win or knownWindows[win.address] then return end
     knownWindows[win.address] = true
     if not win.class or win.class == "" or win.class == "org.quickshell" or win.class == SCRATCH_CLASS then return end
+    if hasTag(win, "menu") then
+        -- an X11 window comes back with its old address and tags: drop
+        -- the ones it picked up here as something else (the rules' carry a *)
+        for _, t in ipairs(tagsOf(win)) do
+            t = tostring(t)
+            if t:sub(-1) ~= "*" then hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = "address:" .. win.address })) end
+        end
+        keepMenuWithOwner(win.address)
+        return
+    end
     win = followOwner(win)
     if not win.floating or win.pinned or not monocleOn(win.workspace) then return end
     -- a Window Rules entry's window places itself; a popout entry still blocks
@@ -1119,7 +1157,7 @@ end)
 
 -- A window moved to another workspace takes on its layout.
 hl.on("window.move_to_workspace", function(win, ws)
-    if not win or not ws or ws.special then return end
+    if not win or not ws or ws.special or hasTag(win, "menu") then return end
     local on = monocleOn(ws)
     if on ~= inMonocleState(win) then setWindowMonocle(win, on, ws.monitor or win.monitor) end
 end)
@@ -1236,7 +1274,7 @@ local focusedNow, focusedBefore = nil, nil
 
 local function adoptDialog(addr)
     local win = hl.get_window("address:" .. addr)
-    if not win or not win.floating or win.class == "org.quickshell" then return end
+    if not win or not win.floating or win.class == "org.quickshell" or hasTag(win, "menu") then return end
     -- an app rule's window is the app's own, unless it's a prompt
     local prompt = isPrompt(win.class)
     if hasTag(win, "monocle") or (hasTag(win, "app-opened") and not prompt) or win.pinned then return end
@@ -1305,6 +1343,7 @@ hl.on("window.open", function(win)
     local addr = win.address
     hl.timer(function() adoptDialog(addr) end, { timeout = 60, type = "oneshot" })
 end)
+
 hl.on("window.close", function(win)
     if not win then return end
     dialogOwner[win.address] = nil
@@ -1608,7 +1647,7 @@ end
 -- back. Popouts, pinned, grouped and shell windows never park. The
 -- "parked_x_y_w_h" tag survives a reload.
 local function parkable(w)
-    return w.mapped and w.floating and not w.pinned and not w.group and w.class ~= ""
+    return w.mapped and w.floating and not w.pinned and not w.group and w.class ~= "" and not hasTag(w, "menu")
         and w.class ~= "org.quickshell" and w.class ~= SCRATCH_CLASS
         and (hasTag(w, "monocle") or hasTag(w, "natural"))
         and not (hasTag(w, "popout") or hasTag(w, "app-held"))
