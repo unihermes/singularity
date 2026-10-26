@@ -32,6 +32,8 @@ cursor-style-blink = true
 shell-integration-features = no-cursor
 
 keybind = shift+enter=text:\x1b\r
+# ctrl+enter reaches the program (Ghostty's own takes it for fullscreen)
+keybind = ctrl+enter=unbind
 
 # Tabs on ctrl+t and ctrl+w, without shift; the shift versions are unbound.
 keybind = ctrl+t=new_tab
