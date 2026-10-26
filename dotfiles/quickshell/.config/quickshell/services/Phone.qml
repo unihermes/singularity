@@ -7,7 +7,8 @@
 // screen off, still off once the mirror closes. USB is used when it's plugged in, as it's smoother. Over
 // Wi-Fi adb joins the phone only for Mirror and Screenshot and leaves it
 // after, so the phone's "Wireless debugging connected" notification is
-// only up while it's used (adb's own joining is off: ADB_MDNS_AUTO_CONNECT).
+// only up while it's used (adb's own joining is off: ADB_MDNS_AUTO_CONNECT);
+// a Wi-Fi connection made any other way is left as soon as it's seen.
 //
 // Pairing for Wi-Fi: pair() makes a QR code for the phone's "Pair device
 // with QR code" screen, watches mDNS for the phone offering that pairing,
@@ -85,6 +86,10 @@ Singleton {
                     out.push({ serial: f[0], state: f[1], model: model.replace(/_/g, " "),
                                wifi: f[0].indexOf(":") !== -1 || f[0].indexOf("_adb-tls-connect") !== -1 })
                 })
+                if (!root.mirroring && !shot.running && !join.running) {
+                    out.filter(d => d.wifi).forEach(d => Quickshell.execDetached({ command: ["adb", "disconnect", d.serial], environment: root.adbEnv }))
+                    out = out.filter(d => !d.wifi)
+                }
                 if (JSON.stringify(out) !== JSON.stringify(root.devices)) root.devices = out
             }
         }
@@ -258,14 +263,20 @@ Singleton {
 
     // The phone's screen as a picture, saved beside the screenshots and copied
     function screenshot() {
-        withPhone((serial, joined) => Quickshell.execDetached(["sh", "-c",
-            'd="$HOME/Pictures/Screenshots"; mkdir -p "$d"; f="$d/phone_$(date +%Y-%m-%d_%H-%M-%S).png"\n'
-            + 'if adb -s "$0" exec-out screencap -p > "$f" && [ -s "$f" ]; then\n'
-            + '  wl-copy --type image/png < "$f"; notify-send -a Phone -i "$f" "Phone screenshot saved" "${f##*/}"\n'
-            + 'else rm -f "$f"; notify-send -a Phone -u critical "Phone screenshot failed"; fi\n'
-            + '[ "$1" = 1 ] && adb disconnect "$0" > /dev/null',
-            serial, joined ? "1" : ""]))
+        if (shot.running) return
+        withPhone((serial, joined) => {
+            shot.command = ["sh", "-c",
+                'd="$HOME/Pictures/Screenshots"; mkdir -p "$d"; f="$d/phone_$(date +%Y-%m-%d_%H-%M-%S).png"\n'
+                + 'if adb -s "$0" exec-out screencap -p > "$f" && [ -s "$f" ]; then\n'
+                + '  wl-copy --type image/png < "$f"; notify-send -a Phone -i "$f" "Phone screenshot saved" "${f##*/}"\n'
+                + 'else rm -f "$f"; notify-send -a Phone -u critical "Phone screenshot failed"; fi\n'
+                + '[ "$1" = 1 ] && adb disconnect "$0" > /dev/null',
+                serial, joined ? "1" : ""]
+            shot.running = true
+        })
     }
+
+    Process { id: shot; environment: root.adbEnv }
 
     // --- pairing for Wi-Fi ---
 
