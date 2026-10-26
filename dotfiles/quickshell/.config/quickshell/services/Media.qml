@@ -145,7 +145,7 @@ Singleton {
 
     // dbusName -> { track, length } of the last length each player
     // reported. Firefox drops mpris:length a second into a YouTube video
-    // (without the media-position userscript in floorp/), so the track
+    // (YouTube clears the page's media session), so the track
     // keeps the one it had. A track is its URL and title, not
     // uniqueId: Firefox's passing metadata changes count as new tracks
     property var knownLength: ({})
