@@ -214,6 +214,8 @@ SettingsPage {
 
     SettingsSubhead { caption: "KDE CONNECT" }
 
+    // the linked phone's Unpair and the Look chip sit on the switch's row;
+    // other phones KDE Connect shows get a row each
     SettingsField {
         label: "Phone link"
         hint: !Settings.phoneLinkOn ? "Off"
@@ -221,18 +223,37 @@ SettingsPage {
             : PhoneLink.connected ? "Linked to " + PhoneLink.device.name
             : "Open KDE Connect on the phone to find " + (PhoneLink.hostName || "this computer")
 
-        Switch {
+        Row {
             anchors.right: parent.right
-            checked: Settings.phoneLinkOn
-            onToggled: {
-                Settings.setPhoneLinkOn(!Settings.phoneLinkOn)
-                page.say(Settings.phoneLinkOn ? "Phone link on" : "Phone link off", false)
+            spacing: Theme.spaceS
+
+            FlyoutChip {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: Settings.phoneLinkOn && PhoneLink.running && !PhoneLink.connected
+                icon: "󰑐"
+                text: "Look again"
+                onClicked: PhoneLink.refresh()
+            }
+            FlyoutChip {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: PhoneLink.connected
+                text: "Unpair"
+                confirmText: "Unpair?"
+                onClicked: PhoneLink.unpair(PhoneLink.device.id)
+            }
+            Switch {
+                anchors.verticalCenter: parent.verticalCenter
+                checked: Settings.phoneLinkOn
+                onToggled: {
+                    Settings.setPhoneLinkOn(!Settings.phoneLinkOn)
+                    page.say(Settings.phoneLinkOn ? "Phone link on" : "Phone link off", false)
+                }
             }
         }
     }
 
     Repeater {
-        model: PhoneLink.devices
+        model: PhoneLink.devices.filter(d => d !== PhoneLink.device)
 
         SettingsField {
             id: phoneRow
@@ -242,8 +263,7 @@ SettingsPage {
             hint: pairing === "requested" ? "Accept on the phone…"
                 : pairing === "incoming" ? "Wants to pair"
                 : !modelData.paired ? "Not paired"
-                : !modelData.reachable ? "Paired · out of reach"
-                : "Paired" + (modelData.battery >= 0 ? " · " + modelData.battery + "%" : "")
+                : "Paired · out of reach"
 
             Row {
                 anchors.right: parent.right
@@ -274,21 +294,9 @@ SettingsPage {
         }
     }
 
-    SettingsField {
-        visible: Settings.phoneLinkOn && PhoneLink.running
-        label: "Look again"
-        hint: "If the phone doesn't show, with both on the same network"
-
-        FlyoutChip {
-            anchors.right: parent.right
-            icon: "󰑐"
-            text: "Look"
-            onClicked: PhoneLink.refresh()
-        }
-    }
-
     SettingsNote {
-        text: "Needs the KDE Connect app on the phone. Give it notification access there for its notifications here; files it sends land in Downloads. A VPN on the phone has to allow LAN connections."
+        visible: !PhoneLink.connected
+        text: "Needs KDE Connect on the phone, with notification access; a VPN there has to allow LAN"
     }
 
     // --- headset -------------------------------------------------------------

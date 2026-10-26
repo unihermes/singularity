@@ -55,8 +55,7 @@ var entries = [
     // --- Devices -----------------------------------------------------------
     { page: "devices", section: "Phone", label: "Phone", keywords: "android adb scrcpy mirror screen screenshot usb debugging battery ring send file" },
     { page: "devices", section: "Phone", label: "Pair over Wi-Fi", keywords: "wireless debugging qr code adb pair wifi mirror" },
-    { page: "devices", section: "Phone", label: "Phone link", keywords: "kde connect notifications reply ring find my phone clipboard share send files battery pair unpair" },
-    { page: "devices", section: "Phone", label: "Look again", keywords: "kde connect discover refresh find phone network" },
+    { page: "devices", section: "Phone", label: "Phone link", keywords: "kde connect look again discover refresh notifications reply ring find my phone clipboard share send files battery pair unpair" },
     { page: "devices", section: "Headset", label: "Headset", keywords: "headsetcontrol arctis steelseries battery wireless" },
     { page: "devices", section: "Headset", label: "Sidetone", keywords: "headset mic monitoring hear own voice feedback" },
     { page: "devices", section: "Headset", label: "Microphone level", keywords: "headset mic gain volume input" },
