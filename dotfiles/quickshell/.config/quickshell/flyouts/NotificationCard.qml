@@ -111,7 +111,6 @@ Item {
                 source: Notifications.iconOf(root.entry)
                 sourceSize: Qt.size(Theme.iconCell * 2, Theme.iconCell * 2)
                 fillMode: Image.PreserveAspectFit
-                asynchronous: true
             }
 
             Text {
@@ -194,7 +193,6 @@ Item {
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignLeft
             sourceSize.width: parent.width * 2
-            asynchronous: true
         }
 
         Flow {
