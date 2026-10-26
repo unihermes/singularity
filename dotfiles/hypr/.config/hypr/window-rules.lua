@@ -231,7 +231,8 @@ end
 -- the shipped window-rules.defaults.json. Applied after the rules above so
 -- they win; nearer the top of the file wins. Entries match class, title or
 -- both, literally unless "regex": true ("negative:" for "anything but",
--- since Hyprland's regex has no lookaheads). Broken JSON reads as empty.
+-- since Hyprland's regex has no lookaheads). A floating entry's "place"
+-- ("left", "right") puts it on that side. Broken JSON reads as empty.
 
 -- classes match whole and literally
 local function literalRegex(text)
@@ -337,8 +338,12 @@ do
                 hl.window_rule({ name = name .. "-ws", match = match, tag = "+rule-ws" })
             end
             local applied = hl.window_rule(rule)
+            -- a floating entry can sit on a side (windows.lua places it);
+            -- one by title is then a window of the app's, not a popup
+            local place = r.float and (r.place == "left" or r.place == "right") and r.place
+            if place then hl.window_rule({ name = name .. "-place", match = match, tag = "+place-" .. place }) end
             -- an entry by title is for an app's popups: one icon in the bar
-            if match.title then
+            if match.title and not place then
                 hl.window_rule({ name = name .. "-popout", match = match, tag = "+popout" })
             end
             -- its own rule, switched off in dwindle (applyLayoutRules)

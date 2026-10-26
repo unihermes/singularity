@@ -1,5 +1,16 @@
 [
   {
+    "float": true,
+    "workspace": 0,
+    "fullscreen": false,
+    "pin": false,
+    "label": "Steam friends list",
+    "class": "steam",
+    "title": "Friends List",
+    "size": "420 900",
+    "place": "right"
+  },
+  {
     "float": false,
     "workspace": 0,
     "fullscreen": false,

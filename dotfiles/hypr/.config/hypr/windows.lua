@@ -1274,7 +1274,8 @@ local focusedNow, focusedBefore = nil, nil
 
 local function adoptDialog(addr)
     local win = hl.get_window("address:" .. addr)
-    if not win or not win.floating or win.class == "org.quickshell" or hasTag(win, "menu") then return end
+    if not win or not win.floating or win.class == "org.quickshell" or hasTag(win, "menu")
+            or hasTag(win, "place-left") or hasTag(win, "place-right") then return end
     -- an app rule's window is the app's own, unless it's a prompt
     local prompt = isPrompt(win.class)
     if hasTag(win, "monocle") or (hasTag(win, "app-opened") and not prompt) or win.pinned then return end
@@ -1344,6 +1345,24 @@ hl.on("window.open", function(win)
     hl.timer(function() adoptDialog(addr) end, { timeout = 60, type = "oneshot" })
 end)
 
+-- A Window Rules entry placed on a side ("place": "left" or "right") runs
+-- the usable height against that edge, at its own or its entry's width.
+-- Again once the app has sized it (Steam's friends list sets its own).
+local function placeOnSide(addr)
+    local win = hl.get_window("address:" .. addr)
+    local side = win and (hasTag(win, "place-right") and "right" or hasTag(win, "place-left") and "left")
+    if not side or not win.floating or win.fullscreen ~= 0 or not win.monitor then return end
+    local area = fillArea(win, win.monitor)
+    local w = math.min(win.size.x, area.w)
+    local x = side == "right" and area.x + area.w - w or area.x
+    moveTo("address:" .. addr, { x = math.floor(x), y = math.floor(area.y), w = math.floor(w), h = math.floor(area.h) })
+end
+hl.on("window.open", function(win)
+    if not win then return end
+    local addr = win.address
+    placeOnSide(addr)
+    hl.timer(function() placeOnSide(addr) end, { timeout = 300, type = "oneshot" })
+end)
 hl.on("window.close", function(win)
     if not win then return end
     dialogOwner[win.address] = nil

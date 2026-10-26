@@ -29,7 +29,7 @@ SettingsPage {
     readonly property string defaultsPath:
         (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/singularity/window-rules.defaults.json"
 
-    // [{ label, class, title, regex, float, size, workspace (0 = any), fullscreen, pin }]
+    // [{ label, class, title, regex, float, size, place, workspace (0 = any), fullscreen, pin }]
     property var rules: []
     // [{ class, title }] of the windows open right now
     // follows window open/close (shell.qml refreshes the toplevels)
@@ -280,6 +280,7 @@ SettingsPage {
         if (r.regex) out.regex = true
         if (r.own) out.own = true
         if (validSize(r.size)) out.size = r.size
+        if (r.place === "left" || r.place === "right") out.place = r.place
         return out
     }
 
