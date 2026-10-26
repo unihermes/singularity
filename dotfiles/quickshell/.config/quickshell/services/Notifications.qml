@@ -282,10 +282,10 @@ Singleton {
             + "[ -r \"$f\" ] && exec pw-play \"$f\"; done"])
     }
 
-    // Seconds a popup stays: what the sender asked for, else Settings'
-    // time for its urgency; 0 is until dismissed
+    // Seconds a popup stays: what the sender asked for (expireTimeout is the
+    // D-Bus milliseconds), else Settings' time for its urgency; 0 is until dismissed
     function timeoutFor(entry) {
-        if (entry.expireTimeout > 0) return entry.expireTimeout
+        if (entry.expireTimeout > 0) return entry.expireTimeout / 1000
         return entry.urgency === NotificationUrgency.Critical ? Settings.notifTimeoutCritical
             : entry.urgency === NotificationUrgency.Low ? Settings.notifTimeoutLow
             : Settings.notifTimeout
