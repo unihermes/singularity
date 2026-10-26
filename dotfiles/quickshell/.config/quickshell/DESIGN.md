@@ -282,7 +282,11 @@ Every bar flyout keeps to these (settled 2026-10-20):
   with a Mirror (Stop) button at its end; a click on the phone's
   row opens its tray (Screenshot, Ring, Send file, then its
   notifications), shut each time the flyout opens; collapsed, the row's
-  note gives the notification count. A paired phone out of reach is a
+  note gives the notification count. A click on a notification opens it
+  in place as the notification sidebar's do (2026-10-26): the icon stays
+  put, an accent rail runs down from it, the title larger, then the app
+  and age, the text, the reply field, and Open and its actions as links.
+  A paired phone out of reach is a
   dimmed row reading away; a pair request a card. Settings as the other
   flyouts end. A notification at 15% and 5% for a peripheral.
 - **Privacy** (bar picked 2026-10-21): only while something captures, a

@@ -317,49 +317,12 @@ Item {
         }
 
         // the history's as links, a dot between
-        Flow {
-            width: parent.width
+        LinkLine {
             visible: root.showButtons && root.inHistory
-            spacing: Theme.spaceS
-
-            Repeater {
-                model: root.showButtons && root.inHistory
-                    ? root.buttons.concat([{ text: root.menuOpen ? "Less" : "More", primary: false,
-                                              run: () => root.menuOpen = !root.menuOpen }])
-                    : []
-
-                Row {
-                    id: linkItem
-                    required property var modelData
-                    required property int index
-                    spacing: Theme.spaceS
-
-                    Text {
-                        visible: linkItem.index > 0
-                        text: "·"
-                        color: Theme.muted
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontSmall
-                    }
-
-                    Text {
-                        text: linkItem.modelData.text
-                        color: linkMouse.containsMouse ? Theme.bright : Theme.accent
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontSmall
-                        font.weight: linkItem.modelData.primary ? Theme.weightStrong : Theme.weightBody
-                        font.underline: linkMouse.containsMouse
-
-                        MouseArea {
-                            id: linkMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: linkItem.modelData.run()
-                        }
-                    }
-                }
-            }
+            links: root.showButtons && root.inHistory
+                ? root.buttons.concat([{ text: root.menuOpen ? "Less" : "More", primary: false,
+                                          run: () => root.menuOpen = !root.menuOpen }])
+                : []
         }
 
         // ···: what any notification can do
