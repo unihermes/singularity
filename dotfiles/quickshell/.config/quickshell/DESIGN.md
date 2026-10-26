@@ -281,7 +281,9 @@ Every bar flyout keeps to these (settled 2026-10-20):
   when low; Off for a headset that's off). The phone's row comes first,
   with a Mirror (Stop) button at its end; a click on the phone's
   row opens its tray (Screenshot, Ring, Send file, then its
-  notifications), shut each time the flyout opens; collapsed, the row's
+  notifications) as an opened sidebar notification does: the phone's row
+  stays put and the tray sits under its label, an accent rail down from
+  its icon; shut each time the flyout opens; collapsed, the row's
   note gives the notification count. A click on a notification opens it
   in place as the notification sidebar's do (2026-10-26): the icon stays
   put, an accent rail runs down from it, the title larger, then the app
