@@ -2,10 +2,10 @@
 // ~/.config/quickshell/settings/SettingsPageDevices.qml
 //
 // Everything plugged in or linked, a section each. PHONE: the Android
-// phone over adb (services/Phone.qml) in a card with what it can do now,
-// and pairing for Wi-Fi through a QR code the phone scans. PHONE LINK
-// (services/PhoneLink.qml): its switch, and the phones the KDE Connect app
-// shows from, to pair or unpair. HEADSET: the settings headsetcontrol can
+// phone in a card with what it can do now, then pairing adb for Wi-Fi
+// through a QR code the phone scans (services/Phone.qml), then the phone
+// link (services/PhoneLink.qml): its switch, and the phones the KDE Connect
+// app shows from, to pair or unpair. HEADSET: the settings headsetcontrol can
 // send it, only the ones it has (Peripherals). WIRELESS: what UPower
 // reports with a battery. DRIVES: removable drives to mount, open and
 // eject (Drives). USB: every device plugged in, read from sysfs while the
@@ -160,6 +160,8 @@ SettingsPage {
         }
     }
 
+    SettingsSubhead { caption: "WIRELESS DEBUGGING" }
+
     SettingsField {
         label: "Pair over Wi-Fi"
         hint: Phone.pairState === "waiting" ? "Scan the code from the phone"
@@ -210,10 +212,7 @@ SettingsPage {
         text: "Wireless debugging turns off on a restart; turn it on again to reconnect"
     }
 
-    // --- phone link ----------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PHONE LINK" }
+    SettingsSubhead { caption: "KDE CONNECT" }
 
     SettingsField {
         label: "Phone link"
