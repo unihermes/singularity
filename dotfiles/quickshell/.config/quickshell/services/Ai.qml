@@ -98,6 +98,7 @@ Singleton {
         used = true
         shown = true
         current.unseen = false
+        Notifications.shown = false
     }
 
     function setTab(t) {

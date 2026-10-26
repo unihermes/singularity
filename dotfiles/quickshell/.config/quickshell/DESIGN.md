@@ -341,13 +341,7 @@ Every bar flyout keeps to these (settled 2026-10-20):
   the charge since the shell started (a sample every five minutes, a day
   kept) as a graph; the power profile as one strip; Health. Settings as
   a chip.
-- **Notifications** (picked again 2026-10-21; cards 2026-10-25): a line per notification (the
-  app's icon, the summary, its age, close on hover); a click opens it in
-  place, the icon staying put: the title larger, an accent rail down from
-  the icon, and under the title the app and age, the text, the picture and
-  the buttons as links (Open · the app's own · More). Clear all on the
-  heading, Do Not Disturb under the list; empty, All caught up with a
-  green tick. Settings as a chip ends it.
+- **Notifications**: see the notification sidebar below.
 - **Notification popups** (picked 2026-10-25): title first, the app's
   icon beside it and the age and close at the right; the text under the
   title. Buttons show while the pointer is on it: Copy for a one-time code
@@ -355,6 +349,20 @@ Every bar flyout keeps to these (settled 2026-10-20):
   text, and ··· for Copy text, Silence the app and Notification settings.
   Grouped by app, the older ones are a line each under the newest (title,
   text, age), a click opening that one.
+
+### Notification sidebar
+
+Built 2026-10-25 (the bell, `sidebar/NotificationSidebar.qml`). The
+notification history as a panel down the right edge like the Claude
+sidebar (the two take turns): out until the bell, its ×, Escape or opening
+a notification from it. Clear all on the heading. Newest first under a
+subhead per day (Today, Yesterday, the date), each notification a few
+lines: the app's icon, the title and its age (× on hover), two lines of
+its text. A click opens it in place, the icon staying put: the title
+larger, an accent rail down from the icon, and under the title the app and
+age, the text, the picture and the buttons as links (Open · the app's own
+· More). Do Not Disturb and Settings at the foot. While it's out nothing
+pops up; it all arrives in the list.
 
 ### Claude sidebar
 

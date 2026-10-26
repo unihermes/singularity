@@ -10,11 +10,12 @@
 // A popup (framed) shows its buttons while the pointer is on it, follows
 // Theme.notifStyle, has an urgency stripe on its left edge shortening with
 // `life`, and when grouped lists the `others` it stands for, a line each;
-// a click on it opens what it's about. In the history (`inHistory`) the
-// icon sits where the list's line had it, with an accent rail down from it,
-// the app and age under the title and the buttons as links; a click on the
-// title closes it (collapse()). `standalone` (the reload toast): close only
-// emits dismissed(), no buttons, critical always in full.
+// a click on it opens what it's about. In the history (`inHistory`) it is
+// `collapsed` to a few lines (the title, its age, two lines of text) until
+// a click opens it in place: the icon stays put, an accent rail runs down
+// from it, and the app and age go under the larger title with the buttons
+// as links. Either click is toggled(). `standalone` (the reload toast):
+// close only emits dismissed(), no buttons, critical always in full.
 
 import Quickshell
 import Quickshell.Services.Notifications
@@ -32,8 +33,10 @@ Item {
     property var others: []
     property bool standalone: false
     property int bodyLines: framed ? 4 : 6
+    // the history's few lines, until it's opened
+    property bool collapsed: false
     signal dismissed()
-    signal collapse()
+    signal toggled()
 
     readonly property bool popup: framed && !inHistory
     readonly property string style: popup && !(standalone && critical) ? Theme.notifStyle : "full"
@@ -69,17 +72,16 @@ Item {
         if (link !== "") b.push({ text: "Open link", primary: false, run: () => Notifications.openLink(e, root.link) })
         return b
     }
-    readonly property bool showButtons: !standalone && (inHistory || !framed || hovered)
+    readonly property bool showButtons: !standalone && !collapsed && (inHistory || !framed || hovered)
 
     // the icon's cell and the title's left edge, which everything under the
-    // title shares; in the history the cell is the list line's
-    readonly property real iconCell: popup ? Theme.fit(28) : Theme.iconCell
-    readonly property real iconSize: popup ? iconCell : Theme.fontBody
+    // title shares
+    readonly property real iconCell: popup ? Theme.fit(28) : Theme.fs(26)
+    readonly property real iconSize: popup ? iconCell : Theme.fs(22)
     readonly property real textX: iconCell + (popup ? Theme.spaceM + Theme.spaceXs : Theme.spaceM)
     readonly property real pad: framed ? Theme.panelPad : 0
-    // the header's first line: the list line's height in the history, so
-    // the title's first line sits where the line's label was
-    readonly property real lineH: popup ? Math.max(iconCell, titleMetrics.height) : Theme.rowHeight
+    // the header's first line, the icon centred on it
+    readonly property real lineH: Math.max(popup ? iconCell : Theme.rowHeight, iconSize, titleMetrics.height)
 
     function close() {
         if (standalone) dismissed()
@@ -92,10 +94,19 @@ Item {
 
     function plain(s) { return String(s || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() }
 
-    // the history's open card keeps a gap above the next line
-    implicitHeight: col.y + col.height + (inHistory ? Theme.spaceS : pad)
+    implicitHeight: col.y + col.height + (inHistory ? Theme.spaceXs : pad)
 
     HoverHandler { id: hover }
+
+    // a history line's hover, as a row's
+    Rectangle {
+        visible: root.inHistory
+        anchors.fill: parent
+        anchors.leftMargin: -Theme.spaceS
+        anchors.rightMargin: -Theme.spaceS
+        radius: Theme.radiusInner
+        color: root.collapsed && hover.hovered ? Theme.hoverFill : "transparent"
+    }
 
     PanelFrame {
         id: frame
@@ -121,12 +132,12 @@ Item {
         }
     }
 
-    // a popup's click opens what it's about; the history's title closes it
+    // a popup's click opens what it's about; a history line's opens it
     MouseArea {
         anchors.fill: parent
-        enabled: !root.inHistory
+        enabled: !root.inHistory || root.collapsed
         cursorShape: root.standalone ? Qt.ArrowCursor : Qt.PointingHandCursor
-        onClicked: root.standalone ? root.close() : Notifications.activate(root.entry)
+        onClicked: root.inHistory ? root.toggled() : root.standalone ? root.close() : Notifications.activate(root.entry)
     }
 
     FontMetrics {
@@ -138,15 +149,15 @@ Item {
     Item {
         id: header
         x: root.pad + root.stripeW
-        y: root.pad
+        y: root.inHistory ? Theme.spaceXs : root.pad
         width: parent.width - x - root.pad
         height: Math.max(root.lineH, title.y + title.height)
 
         MouseArea {
             anchors.fill: parent
-            enabled: root.inHistory
+            enabled: root.inHistory && !root.collapsed
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.collapse()
+            onClicked: root.toggled()
         }
 
         Image {
@@ -162,7 +173,7 @@ Item {
             fillMode: Image.PreserveAspectFit
         }
 
-        // no icon to show: the bell in its cell, as the history's line has it
+        // no icon to show: the bell in its cell
         Text {
             visible: !appIcon.shown
             width: root.iconCell
@@ -172,7 +183,7 @@ Item {
             text: root.critical ? "󰀦" : "󰂚"
             color: root.critical ? Theme.alert : Theme.subtext
             font.family: Theme.fontIcon
-            font.pixelSize: root.popup ? Theme.fontLead : Theme.fontBody
+            font.pixelSize: Theme.fontLead
         }
 
         Text {
@@ -187,23 +198,24 @@ Item {
                 : root.entry.summary || root.entry.appName || "Notification"
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
-            maximumLineCount: root.banner ? 1 : 2
+            maximumLineCount: root.banner || root.collapsed ? 1 : 2
             elide: Text.ElideRight
             color: root.critical ? Theme.alert : Theme.bright
             font.family: Theme.fontText
-            font.pixelSize: Theme.fontLead
+            font.pixelSize: root.collapsed ? Theme.fontBody : Theme.fontLead
             font.weight: Theme.weightStrong
         }
 
         Text {
             id: when
-            anchors.right: closeBtn.left
-            anchors.rightMargin: Theme.spaceS
+            anchors.right: closeBtn.visible ? closeBtn.left : parent.right
+            anchors.rightMargin: closeBtn.visible ? Theme.spaceS : 0
             anchors.verticalCenter: closeBtn.verticalCenter
-            // the history gives its age under the title instead
-            text: root.inHistory ? "" : (root.others.length > 0 ? (root.others.length + 1) + " · " : "")
-                + Notifications.ago(root.entry)
-            color: Theme.muted
+            // an open history card gives its age under the title instead
+            text: root.inHistory && !root.collapsed ? ""
+                : (root.unread ? "new · " : "") + (root.others.length > 0 ? (root.others.length + 1) + " · " : "")
+                    + Notifications.ago(root.entry)
+            color: root.unread ? Theme.accent : Theme.muted
             font.family: Theme.fontText
             font.weight: Theme.weightBody
             font.pixelSize: Theme.fontSmall
@@ -211,6 +223,8 @@ Item {
 
         IconButton {
             id: closeBtn
+            // a history line's only while the pointer is on it
+            visible: !root.collapsed || hover.hovered
             anchors.right: parent.right
             y: (root.lineH - height) / 2
             icon: "󰅖"
@@ -220,7 +234,7 @@ Item {
 
     // the history's rail, down from the icon beside everything under the title
     Rectangle {
-        visible: root.inHistory
+        visible: root.inHistory && !root.collapsed
         x: header.x + (root.iconCell - width) / 2
         y: header.y + root.lineH + Theme.spaceXs
         width: Theme.indicatorWidth
@@ -234,11 +248,11 @@ Item {
         x: header.x + root.textX
         y: header.y + header.height + (root.inHistory ? 0 : Theme.spaceXs)
         width: header.width - root.textX
-        spacing: Theme.spaceS
+        spacing: root.collapsed ? 0 : Theme.spaceS
 
         Text {
             width: parent.width
-            visible: root.inHistory
+            visible: root.inHistory && !root.collapsed
             text: (root.unread ? "new · " : "") + (root.entry.appName || "Notification")
                 + " · " + Notifications.ago(root.entry)
             elide: Text.ElideRight
@@ -252,25 +266,27 @@ Item {
             width: parent.width
             visible: text !== "" && root.expanded && !root.banner
             // without its <img> tags: the server doesn't offer body images,
-            // and StyledText would fetch one from wherever it points
-            text: String(root.entry.body || "").replace(/<img\b[^>]*>/gi, "")
-            textFormat: Text.StyledText
+            // and StyledText would fetch one from wherever it points.
+            // Collapsed, plain and quieter, else the app's name
+            text: root.collapsed ? root.plain(root.entry.body) || root.entry.appName || ""
+                : String(root.entry.body || "").replace(/<img\b[^>]*>/gi, "")
+            textFormat: root.collapsed ? Text.PlainText : Text.StyledText
             wrapMode: Text.Wrap
-            maximumLineCount: root.bodyLines
+            maximumLineCount: root.collapsed ? 2 : root.bodyLines
             elide: Text.ElideRight
-            color: Theme.text
+            color: root.collapsed ? Theme.subtext : Theme.text
             linkColor: Theme.strokeFocus
             font.family: Theme.fontText
-            font.pixelSize: Theme.fontBody
+            font.pixelSize: root.collapsed ? Theme.fontSmall : Theme.fontBody
             font.weight: Theme.weightBody
             onLinkActivated: link => Qt.openUrlExternally(link)
         }
 
         Image {
-            visible: status === Image.Ready && root.expanded && !root.banner
+            visible: status === Image.Ready && root.expanded && !root.banner && !root.collapsed
             width: Math.min(parent.width, implicitWidth)
             height: visible ? Math.min(Theme.fs(120), implicitHeight * width / Math.max(1, implicitWidth)) : 0
-            source: Notifications.pictureOf(root.entry)
+            source: root.collapsed ? "" : Notifications.pictureOf(root.entry)
             fillMode: Image.PreserveAspectFit
             horizontalAlignment: Image.AlignLeft
             sourceSize.width: parent.width * 2

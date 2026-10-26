@@ -1,7 +1,7 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Notifications.qml
 //
-// The notification daemon, for the popups, the history flyout, the bar
+// The notification daemon, for the popups, the history sidebar, the bar
 // module and Settings. The history ($XDG_RUNTIME_DIR, gone at logout) keeps
 // each entry until cleared by hand, except transient ones; `live` holds the
 // sender's object while it exists (actions, image). New since the history
@@ -37,6 +37,12 @@ Singleton {
     property double seenBefore: 0
     property bool viewing: false
 
+    // the history sidebar: on which screen, and whether it's out
+    property bool shown: false
+    property var screen: null
+    // built on first open, then kept
+    property bool used: false
+
     // Entries showing as popups, newest first
     property var popups: []
 
@@ -46,14 +52,26 @@ Singleton {
 
     readonly property int maxEntries: 200
 
-    // A bar module's click, IPC or Settings: shell.qml opens the flyout on
-    // the focused screen
-    signal panelToggled()
+    // The sidebar on this screen, or put away if it's out there; the
+    // Claude sidebar, on the same edge, goes. Opening it clears the popups,
+    // since what arrives shows in it.
+    function toggle(screen) {
+        if (shown && root.screen === screen) { shown = false; return }
+        root.screen = screen
+        used = true
+        shown = true
+        popups = []
+        Ai.shown = false
+    }
 
-    function togglePanel() { panelToggled() }
+    // IPC or Settings: on the focused screen
+    function togglePanel() {
+        const name = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+        toggle(Quickshell.screens.find(s => s.name === name) || Quickshell.screens[0])
+    }
     function toggleDnd() { Settings.setNotifDnd(!dnd) }
 
-    // The history flyout opening or closing
+    // The history sidebar coming out or going
     function setViewing(on) {
         if (on === viewing) return
         viewing = on
@@ -158,13 +176,11 @@ Singleton {
 
     function openSettings(entry) {
         hidePopup(entry)
+        shown = false
         settingsRequested()
     }
 
     // --- a click: open what it's about ----------------------------------------
-
-    // shell.qml closes the history flyout on it
-    signal activated()
 
     // The sender's default action if it has one, then the app's window
     // brought to the front (on whatever workspace, the scratchpad too), else
@@ -172,7 +188,7 @@ Singleton {
     // installed, else on the phone's mirror.
     function activate(entry) {
         hidePopup(entry)
-        activated()
+        shown = false
         const def = entry.live && entry.live.tracked
             ? entry.live.actions.find(a => a.identifier === "default") : null
         if (def) def.invoke()
@@ -412,9 +428,10 @@ Singleton {
             // and an app's silencing
             const hold = (root.dnd || Settings.notifSilent.indexOf(n.appName) >= 0)
                 && n.urgency !== NotificationUrgency.Critical
-            const shown = !hold && !n.lastGeneration
-            root.popups = shown ? [entry].concat(others) : others
-            if (shown && root.isClaude(n)) root.playClaudeSound()
+            // none while the sidebar's out, where it shows; the sound still plays
+            const pops = !hold && !n.lastGeneration && !root.shown
+            root.popups = pops ? [entry].concat(others) : others
+            if (!hold && !n.lastGeneration && root.isClaude(n)) root.playClaudeSound()
             root.now = time
             if (root.viewing) root.lastSeen = time
             root.attach(n)

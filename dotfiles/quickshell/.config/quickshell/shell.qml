@@ -261,7 +261,13 @@ ShellRoot {
         AiSidebar {}
     }
 
-    // Notifications: the history flyout, Do Not Disturb, Clear all
+    // built on first open, then kept, so its scroll stays
+    LazyLoader {
+        active: Notifications.used
+        NotificationSidebar {}
+    }
+
+    // Notifications: the history sidebar, Do Not Disturb, Clear all
     IpcHandler {
         target: "notifications"
         function toggle(): void { Notifications.togglePanel() }
@@ -517,24 +523,9 @@ ShellRoot {
                 }
             }
 
-            // the notification history under its module, centred when hidden
+            // a card's Notification settings
             Connections {
                 target: Notifications
-                function onPanelToggled() {
-                    if (!screenScope.isFocusedScreen()) return
-                    const it = screenScope.barWindow.widgetItem("notifications")
-                    if (it && it.visible) {
-                        screenScope.toggleFlyout("notifications", it)
-                        return
-                    }
-                    screenScope.flyoutAnchorX = screenScope.modelData.width / 2
-                    screenScope.flyoutSection = ""
-                    screenScope.openFlyout = screenScope.openFlyout === "notifications" ? "" : "notifications"
-                }
-                // a click on one opened what it's about
-                function onActivated() {
-                    if (screenScope.openFlyout === "notifications") screenScope.openFlyout = ""
-                }
                 function onSettingsRequested() {
                     if (screenScope.isFocusedScreen()) screenScope.openSettings("notifications")
                 }
@@ -743,7 +734,6 @@ ShellRoot {
         LazyFlyout { name: "updates"; scope: screenScope; UpdatesFlyout { scope: screenScope } }
 
         // notification history
-        LazyFlyout { name: "notifications"; scope: screenScope; NotificationsFlyout { scope: screenScope } }
 
         // control centre
         LazyFlyout {

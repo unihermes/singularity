@@ -275,9 +275,9 @@ Item {
         icon: Notifications.dnd ? "󰂛" : "󰂚"
         badge: Notifications.unread
         dimmed: Notifications.dnd || Notifications.unread === 0
-        active: screenScope.openFlyout === "notifications"
+        active: Notifications.shown && Notifications.screen === screenScope.modelData
         // left: the history; right: Do Not Disturb
-        onActivated: screenScope.toggleFlyout("notifications", notifBtn)
+        onActivated: Notifications.toggle(screenScope.modelData)
         onRightClicked: Notifications.toggleDnd()
     }
 
