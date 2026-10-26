@@ -58,8 +58,8 @@ FloatingWindow {
     // the sidebar's groups, in order: connections, the machine itself, how
     // the desktop looks and behaves, apps, then the clock and updates
     readonly property var groups: [
-        { heading: "Connections", ids: ["network", "vpn", "bluetooth", "phone"] },
-        { heading: "Device",      ids: ["display", "audio", "input", "power", "recording"] },
+        { heading: "Connections", ids: ["network", "vpn", "bluetooth"] },
+        { heading: "Device",      ids: ["display", "audio", "input", "devices", "power", "recording"] },
         { heading: "Look & Feel", ids: ["appearance", "lockscreen", "notifications", "windowrules"] },
         { heading: "Apps",        ids: ["autostart", "filetypes", "shell", "keybinds"] },
         { heading: "System",      ids: ["datetime", "updates"] },
@@ -68,10 +68,10 @@ FloatingWindow {
         { id: "network",       label: "Network",       icon: "󰤨", blurb: "Wi-Fi and the link",               source: "../settings/SettingsPageNetwork.qml" },
         { id: "vpn",           label: "VPN",           icon: "󰖂", blurb: "Proton over WireGuard",            source: "../settings/SettingsPageVpn.qml" },
         { id: "bluetooth",     label: "Bluetooth",     icon: "󰂯", blurb: "Adapter and devices",              source: "../settings/SettingsPageBluetooth.qml" },
-        { id: "phone",         label: "Phone",         icon: "󰄜", blurb: "Android on screen",                 source: "../settings/SettingsPagePhone.qml" },
         { id: "display",       label: "Display",       icon: "󰍹", blurb: "Resolution and scale",              source: "../settings/SettingsPageDisplay.qml" },
         { id: "audio",         label: "Audio",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
         { id: "input",         label: "Input",         icon: "󰌌", blurb: "Keyboard and pointer",              source: "../settings/SettingsPageInput.qml" },
+        { id: "devices",       label: "Devices",       icon: "󰾰", blurb: "Phone, headset, USB and drives",    source: "../settings/SettingsPageDevices.qml" },
         { id: "power",         label: "Power & Idle",  icon: "󰂄", blurb: "Profile, idle and sleep",           source: "../settings/SettingsPagePower.qml" },
         { id: "recording",     label: "Recording",     icon: "󰑋", blurb: "Screen and instant replay",         source: "../settings/SettingsPageRecording.qml" },
         { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Theme, bar and desktop",            source: "../settings/SettingsPageAppearance.qml" },
@@ -122,12 +122,16 @@ FloatingWindow {
             if (!Vpn.up) return { text: Vpn.servers.length > 0 ? "Off" : "" }
             if (Vpn.stalled) return { text: "No answer", color: Theme.alert }
             return { text: Vpn.currentName + (Vpn.port > 0 ? " · port " + Vpn.port : ""), color: Theme.good }
-        case "phone":
+        case "devices": {
             if (Phone.connected || PhoneLink.connected)
                 return { text: Phone.shownName + (Phone.mirroring ? " · on screen" : ""), color: Theme.good }
             if (PhoneLink.request) return { text: PhoneLink.request.name + " wants to pair", color: Theme.accent }
-            if (Phone.reachable) return { text: "Wireless debugging on" }
-            return { text: Phone.unauthorized ? "Waiting to be allowed" : "" }
+            if (Phone.unauthorized) return { text: "Phone waiting to be allowed" }
+            var low = Peripherals.devices.find(d => Peripherals.isLow(d))
+            if (low) return { text: low.name + " " + low.level + "%", color: Theme.alert }
+            var on = Peripherals.devices.filter(d => d.level >= 0)
+            return { text: on.map(d => d.name + " " + d.level + "%").join(" · ") }
+        }
         case "recording":
             if (Recorder.recording) return { text: "Recording now", color: Theme.alert }
             return { text: Settings.replayOn ? "Replay on · " + Recorder.lengthLabel(Settings.replaySeconds) : "Replay off" }

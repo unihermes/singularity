@@ -685,6 +685,15 @@ Settings') are laid out the same way.
   network… last. SAVED rows carry everything: where it is, security and
   when it last joined as the hint, the Auto-join switch, and Forget as a
   bin on hover (two clicks).
+- **Devices:** a section per kind of thing: PHONE (a card with the
+  phone's name, how it's joined and its battery, and Mirror, Screenshot,
+  Ring and Send file as chips on it; pairing over Wi-Fi under it), PHONE
+  LINK, HEADSET (a card, then only the settings headsetcontrol says it
+  has; a level reads — until one is picked, as the headset can't say),
+  WIRELESS (UPower's batteries), DRIVES (a row per drive with Eject, its
+  filesystems set in under it with Open and Mount / Unmount) and USB (a
+  row per device, its kind and speed as the hint, its vendor:product id
+  copyable).
 - **Bluetooth** (picked 2026-10-18, 1B 2B 3B 4B 5A): the adapter is a card
   the same way (its name, hci id, how many paired and connected, the power
   switch), with Discoverable and Pairable as toggle chips right after the

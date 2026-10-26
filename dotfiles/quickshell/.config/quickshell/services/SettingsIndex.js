@@ -52,11 +52,23 @@ var entries = [
     { page: "vpn", section: "qBittorrent", label: "Only over the VPN", keywords: "qbittorrent torrent bind interface leak" },
     { page: "vpn", section: "qBittorrent", label: "Forwarded port", keywords: "port forwarding nat-pmp natpmp seed listening" },
 
-    // --- Phone -------------------------------------------------------------
-    { page: "phone", section: "Connected", label: "Phone", keywords: "android adb scrcpy mirror screen usb debugging battery" },
-    { page: "phone", section: "Wi-Fi", label: "Pair over Wi-Fi", keywords: "wireless debugging qr code adb pair wifi mirror" },
-    { page: "phone", section: "Phone link", label: "Phone link", keywords: "kde connect notifications reply ring find my phone clipboard share send files battery pair unpair" },
-    { page: "phone", section: "Phone link", label: "Look again", keywords: "kde connect discover refresh find phone network" },
+    // --- Devices -----------------------------------------------------------
+    { page: "devices", section: "Phone", label: "Phone", keywords: "android adb scrcpy mirror screen screenshot usb debugging battery ring send file" },
+    { page: "devices", section: "Phone", label: "Pair over Wi-Fi", keywords: "wireless debugging qr code adb pair wifi mirror" },
+    { page: "devices", section: "Phone link", label: "Phone link", keywords: "kde connect notifications reply ring find my phone clipboard share send files battery pair unpair" },
+    { page: "devices", section: "Phone link", label: "Look again", keywords: "kde connect discover refresh find phone network" },
+    { page: "devices", section: "Headset", label: "Headset", keywords: "headsetcontrol arctis steelseries battery wireless" },
+    { page: "devices", section: "Headset", label: "Sidetone", keywords: "headset mic monitoring hear own voice feedback" },
+    { page: "devices", section: "Headset", label: "Microphone level", keywords: "headset mic gain volume input" },
+    { page: "devices", section: "Headset", label: "Turn off when idle", keywords: "headset auto off inactive time sleep timeout" },
+    { page: "devices", section: "Headset", label: "Mute light", keywords: "headset mic mute led brightness" },
+    { page: "devices", section: "Headset", label: "Volume limiter", keywords: "headset loudness cap hearing" },
+    { page: "devices", section: "Headset", label: "Bluetooth at power-on", keywords: "headset bt bluetooth on start" },
+    { page: "devices", section: "Headset", label: "Lights", keywords: "headset leds rgb lighting" },
+    { page: "devices", section: "Headset", label: "Voice prompts", keywords: "headset spoken announcements beeps" },
+    { page: "devices", section: "Wireless", label: "Wireless", keywords: "peripherals mouse keyboard controller battery level low upower receiver" },
+    { page: "devices", section: "Drives", label: "Drives", keywords: "usb stick disk sd card mount unmount eject open removable udisks" },
+    { page: "devices", section: "USB", label: "USB", keywords: "devices plugged in peripherals webcam camera receiver hub speed vendor product id lsusb" },
 
     // --- Recording ---------------------------------------------------------
     { page: "recording", section: "Instant replay", label: "Instant replay", keywords: "clip shadowplay game save last minute buffer gpu-screen-recorder" },

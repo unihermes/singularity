@@ -413,6 +413,14 @@ Singleton {
     // asked for, as it listens on the network
     readonly property alias phoneLinkOn: adapter.phoneLinkOn
     function setPhoneLinkOn(on) { adapter.phoneLinkOn = !!on }
+    // Devices: the headset's own settings (Peripherals.headsetFlags keys),
+    // only the ones picked, sent to it each time it turns on
+    readonly property alias headsetOptions: adapter.headsetOptions
+    function setHeadsetOption(key, v) {
+        var o = Object.assign({}, adapter.headsetOptions)
+        o[key] = v
+        adapter.headsetOptions = o
+    }
     // Desktop widgets (desktop/), by key: { on, screen, size, fx, fy }.
     // fx and fy place it across the room the screen leaves it (0 the left
     // or top edge, 1 the other); below 0 it sits where it starts out.
@@ -1104,6 +1112,7 @@ Singleton {
             property bool vpnWanted: false
             property bool vpnQbit: true
             property bool phoneLinkOn: false
+            property var headsetOptions: ({})
             property var desktopWidgets: ({})
             property bool updateAur: true
             property var updateIgnore: []

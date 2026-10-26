@@ -229,6 +229,6 @@ FlyoutPanel {
 
     FlyoutChipLine {
         chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: root.scope.openSettings("phone")
+        onPicked: root.scope.openSettings("devices")
     }
 }
