@@ -106,6 +106,61 @@ Singleton {
         action.invoke()
     }
 
+    // --- what a card offers beyond the sender's own actions ------------------
+
+    // shell.qml opens Settings' Notifications page on the focused screen
+    signal settingsRequested()
+
+    // the summary and body as plain text
+    function plainText(entry) {
+        return [entry.summary, String(entry.body || "").replace(/<[^>]*>/g, " ")]
+            .join("\n").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+            .replace(/[ \t]+/g, " ").trim()
+    }
+
+    // A one-time code in a notification about one (verification, sign-in,
+    // 2FA), its digits run together: "123 456" and "G-123456" give the
+    // digits; "" for none
+    function codeIn(entry) {
+        const t = plainText(entry)
+        if (!/\b(code|verif|otp|passcode|pin|2fa|one[- ]time|log ?in|sign[- ]?in|security|authenticat)/i.test(t)) return ""
+        const m = t.match(/(?:^|[^\d])(\d{3}[ -]\d{3}|\d{4,8})(?![\d])/)
+        return m ? m[1].replace(/[ -]/g, "") : ""
+    }
+
+    // the first web link in the body (a link's target, else one written
+    // out), "" for none
+    function linkIn(entry) {
+        const body = String(entry.body || "")
+        const a = body.match(/href=["'](https?:\/\/[^"']+)["']/i)
+        if (a) return a[1]
+        const m = body.match(/https?:\/\/[^\s<>"']+/i)
+        return m ? m[0].replace(/[.,;:!?)\]]+$/, "") : ""
+    }
+
+    function copy(entry, text) {
+        hidePopup(entry)
+        Quickshell.execDetached(["wl-copy", "--", text])
+    }
+
+    function openLink(entry, url) {
+        hidePopup(entry)
+        Qt.openUrlExternally(url)
+    }
+
+    function silenced(entry) { return Settings.notifSilent.indexOf(entry.appName) >= 0 }
+
+    // the app's popups held (or let through again); the popup goes
+    function toggleSilent(entry) {
+        Settings.setNotifSilent(entry.appName, !silenced(entry))
+        hidePopup(entry)
+    }
+
+    function openSettings(entry) {
+        hidePopup(entry)
+        settingsRequested()
+    }
+
     // --- a click: open what it's about ----------------------------------------
 
     // shell.qml closes the history flyout on it

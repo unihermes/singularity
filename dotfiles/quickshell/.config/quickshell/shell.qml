@@ -535,6 +535,9 @@ ShellRoot {
                 function onActivated() {
                     if (screenScope.openFlyout === "notifications") screenScope.openFlyout = ""
                 }
+                function onSettingsRequested() {
+                    if (screenScope.isFocusedScreen()) screenScope.openSettings("notifications")
+                }
             }
 
             // the gesture the open switcher belongs to; -1 when none

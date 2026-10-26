@@ -138,6 +138,7 @@ Singleton {
     readonly property int fontCaption:  fs(12)   // a row's second line, key hints
     readonly property int fontSmall:    fs(14)   // headings, captions, secondary lines
     readonly property int fontBody:     fs(16)   // labels, values, chips, inputs
+    readonly property int fontLead:     fs(18)   // a notification's title
     readonly property int fontIconSize: fs(16)   // Nerd Font glyphs inside rows
     readonly property int fontTitle:    fs(22)   // a flyout's headline figure (temperature)
     readonly property int fontHero:     fs(34)   // the one big glyph a flyout leads with

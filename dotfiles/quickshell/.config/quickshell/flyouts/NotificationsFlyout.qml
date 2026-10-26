@@ -3,10 +3,10 @@
 //
 // The notification history, newest first, a line each: the app's icon, the
 // summary and its age, a close on hover. A click opens the whole card in
-// place (body, picture, actions). Clear all on the heading while there's
-// any, Do Not Disturb under the list, then Settings. Empty, it says so in a
-// card. Opening it marks everything read; what was new stays marked while
-// it's open.
+// its place (NotificationCard), the icon staying put; its title closes it.
+// Clear all on the heading while there's any, Do Not Disturb under the
+// list, then Settings. Empty, it says so in a card. Opening it marks
+// everything read; what was new stays marked while it's open.
 
 import QtQuick
 import "../services"
@@ -63,31 +63,36 @@ FlyoutPanel {
             model: Notifications.history
 
             delegate: Column {
-                id: entry
+                id: line
                 required property var modelData
                 readonly property bool open: root.expanded === modelData.key
                 width: list.width
 
                 FlyoutRow {
+                    visible: !line.open
                     width: parent.width
-                    readonly property string appIcon: Notifications.iconOf(entry.modelData)
+                    readonly property string appIcon: Notifications.iconOf(line.modelData)
                     leadingImage: appIcon
                     leadingIcon: appIcon ? "" : "󰂚"
-                    label: entry.modelData.summary || entry.modelData.appName || "Notification"
-                    trailing: (Notifications.isNew(entry.modelData) ? "new · " : "") + Notifications.ago(entry.modelData)
-                    highlighted: entry.open
+                    label: line.modelData.summary || line.modelData.appName || "Notification"
+                    trailing: (Notifications.isNew(line.modelData) ? "new · " : "") + Notifications.ago(line.modelData)
                     actionIcon: "󰅖"
                     actionHint: "Clear"
-                    onAction: Notifications.remove(entry.modelData)
-                    onActivated: root.expanded = entry.open ? "" : entry.modelData.key
+                    onAction: Notifications.remove(line.modelData)
+                    onActivated: root.expanded = line.modelData.key
                 }
 
-                NotificationCard {
-                    visible: entry.open
-                    entry: entry.modelData
-                    framed: false
-                    inHistory: true
+                Loader {
+                    active: line.open
+                    visible: active
                     width: parent.width
+
+                    sourceComponent: NotificationCard {
+                        entry: line.modelData
+                        framed: false
+                        inHistory: true
+                        onCollapse: root.expanded = ""
+                    }
                 }
             }
         }

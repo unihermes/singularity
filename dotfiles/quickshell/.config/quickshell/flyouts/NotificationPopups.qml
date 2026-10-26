@@ -4,7 +4,7 @@
 // Notifications as they arrive, stacked from Settings' chosen corner on the
 // focused screen. Each leaves after its timeout (stripe running down, held
 // while hovered) and stays in the history. Grouped (notifGroup), an app's
-// popups share one card with a count.
+// popups share one card, the others a line each under the newest.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -62,7 +62,6 @@ OverlayWindow {
                 readonly property var group: root.shown.find(g => g.entry === modelData) || null
                 entry: modelData
                 others: group ? group.others : []
-                count: others.length + 1
                 width: stack.width
 
                 readonly property real timeout: Notifications.timeoutFor(modelData)
