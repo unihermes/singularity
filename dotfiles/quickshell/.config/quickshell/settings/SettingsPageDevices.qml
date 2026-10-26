@@ -208,10 +208,6 @@ SettingsPage {
         }
     }
 
-    SettingsNote {
-        text: "Wireless debugging turns off on a restart; turn it on again to reconnect"
-    }
-
     SettingsSubhead { caption: "KDE CONNECT" }
 
     // the linked phone's Unpair and the Look chip sit on the switch's row;
