@@ -30,7 +30,6 @@ Column {
 
     // the changes, scrolling on their own past a handful
     Rectangle {
-        id: list
         visible: cb.open
         width: parent.width
         height: Math.min(changes.implicitHeight, Theme.fit(230)) + Theme.spaceS * 2
@@ -129,7 +128,6 @@ Column {
     }
 
     Rectangle {
-        id: strip
         width: parent.width
         height: Theme.rowHeightTall + Theme.spaceL
         radius: Theme.sectionRadius

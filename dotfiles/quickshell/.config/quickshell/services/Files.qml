@@ -95,7 +95,6 @@ Singleton {
 
     // the .xbel read with a regex (two attributes matter)
     FileView {
-        id: recentFile
         path: root.home + "/.local/share/recently-used.xbel"
         preload: true
         watchChanges: true

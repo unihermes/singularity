@@ -90,7 +90,6 @@ ClippingRectangle {
         transformOrigin: Item.TopLeft
 
         Text {
-            id: clockText
             text: Qt.formatDateTime(new Date(), ({ "12": "h:mm AP", "seconds": "HH:mm:ss",
                 "date": "ddd d MMM  HH:mm" })[root.clock] || "HH:mm")
             color: Theme.bright

@@ -188,7 +188,6 @@ Item {
         : levelMeter.visible ? levelMeter.x : trailingText.x
 
     Text {
-        id: noteText
         visible: root.note !== ""
         anchors.left: labelText.right
         anchors.leftMargin: Theme.spaceM

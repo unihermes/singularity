@@ -176,7 +176,6 @@ OverlayWindow {
             }
 
             Meter {
-                id: track
                 visible: !root.chatmix
                 anchors.verticalCenter: parent.verticalCenter
                 width: row.width - row.spacing - Theme.fs(24)

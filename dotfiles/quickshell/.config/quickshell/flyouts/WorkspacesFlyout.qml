@@ -125,7 +125,6 @@ FlyoutPanel {
                 model: group.modelData.windows
 
                 FlyoutRow {
-                    id: row
                     required property var modelData
                     readonly property string iconPath: Apps.iconForClass(modelData.cls)
                     width: parent.width

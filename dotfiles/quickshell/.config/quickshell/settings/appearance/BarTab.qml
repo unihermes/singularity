@@ -102,7 +102,6 @@ SettingsTab {
             : "For the Names workspace style"
 
         FlyoutInput {
-            id: wsNames
             anchors.right: parent.right
             width: Theme.fit(240)
             echoPassword: false

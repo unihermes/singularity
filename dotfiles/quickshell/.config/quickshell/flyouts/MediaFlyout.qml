@@ -140,7 +140,6 @@ FlyoutPanel {
         readonly property real frac: length > 0 ? Math.max(0, Math.min(1, mediaFlyout.player.position / length)) : 0
 
         Meter {
-            id: track
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top

@@ -13,7 +13,6 @@ import QtQuick
 import "../services"
 
 ModuleFrame {
-    id: windowIcons
     required property var host
     anchors.verticalCenter: parent.verticalCenter
     spacing: 0

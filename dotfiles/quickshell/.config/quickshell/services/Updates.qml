@@ -236,7 +236,6 @@ Singleton {
     readonly property bool autoCheck: root.available && Settings.updateInterval > 0 && Settings.widgetVisible("updates")
 
     Timer {
-        id: firstCheck
         interval: 60000
         running: root.autoCheck
         onTriggered: root.refresh()

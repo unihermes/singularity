@@ -375,7 +375,6 @@ SettingsPage {
     }
 
     FileView {
-        id: sizesFile
         path: page.sizesPath
         blockLoading: true
         watchChanges: true

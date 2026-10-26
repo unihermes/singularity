@@ -847,7 +847,6 @@ Scope {
     Connections {
         target: Theme
         function onRadiusChanged() { debounce.restart() }
-        function onPanelRadiusChanged() { debounce.restart() }
         function onResolvedChanged() { debounce.restart() }
         function onRolesChanged() { debounce.restart() }
         function onFontScaleChanged() { debounce.restart() }

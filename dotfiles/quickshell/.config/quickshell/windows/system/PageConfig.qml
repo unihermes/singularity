@@ -256,7 +256,6 @@ SystemPage {
     // forty-odd files: a search finds one by its name, what it's for or
     // where it lives
     FlyoutInput {
-        id: search
         width: parent.width
         echoPassword: false
         glyph: "󰍉"

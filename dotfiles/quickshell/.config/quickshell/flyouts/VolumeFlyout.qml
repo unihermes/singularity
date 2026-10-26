@@ -334,7 +334,6 @@ FlyoutPanel {
                 width: Theme.fit(110)
                 height: parent.height
                 Image {
-                    id: appImg
                     visible: app.icon !== ""
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.fontBody

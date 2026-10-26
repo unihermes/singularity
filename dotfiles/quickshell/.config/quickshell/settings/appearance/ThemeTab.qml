@@ -238,7 +238,6 @@ SettingsTab {
         readonly property int lead: Settings.lookAccent !== "" ? Theme.spaceM : 0
 
         Flow {
-            id: accentFlow
             anchors.right: parent.right
             spacing: accentField.gap
             enabled: Settings.colourMode !== "wallpaper"
@@ -278,7 +277,6 @@ SettingsTab {
 
             // any colour: opens the picker below
             Rectangle {
-                id: customSwatch
                 width: accentField.swatch
                 height: accentField.swatch
                 radius: Theme.radiusSmall
@@ -631,7 +629,6 @@ SettingsTab {
                         width: ya.cw; height: ya.ch
 
                         Rectangle {
-                            id: face
                             anchors.fill: parent
                             visible: ya.v !== "channel" && ya.v !== "flat"
                             radius: ya.r

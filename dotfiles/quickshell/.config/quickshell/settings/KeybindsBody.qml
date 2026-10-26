@@ -691,7 +691,6 @@ Column {
     // The editor, in the slot of whatever opened it; its fields hold root's
     // edit* values, so a rebuild keeps what was typed.
     component BindEditor: SettingsIndent {
-        id: ed
 
         // combo: typed, or recorded from the keyboard
         SettingsField {
@@ -1276,7 +1275,6 @@ Column {
                                     }
 
                                     Label {
-                                        id: descText
                                         anchors.left: keysCell.right
                                         anchors.leftMargin: Theme.spaceL
                                         anchors.verticalCenter: parent.verticalCenter

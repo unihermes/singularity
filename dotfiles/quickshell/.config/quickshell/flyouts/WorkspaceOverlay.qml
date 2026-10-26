@@ -120,7 +120,6 @@ OverlayWindow {
 
     // laid out as the launcher is: a heading with the key hints, then the body
     PanelFrame {
-        id: box
         anchors.centerIn: parent
         width: body.implicitWidth + Theme.panelPad * 4
         height: body.implicitHeight + Theme.panelPad * 4

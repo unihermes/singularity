@@ -109,7 +109,6 @@ Item {
 
                     // the segment's ground
                     Rectangle {
-                        id: ground
                         anchors.fill: parent
                         anchors.margins: root.loose || root.edge === 0 || root.kind === "solid" || root.kind === "glass" ? 0 : 1
                         radius: root.kind === "solid" || root.kind === "glass" ? Math.max(0, Theme.radius - 2)

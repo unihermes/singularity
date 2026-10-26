@@ -133,7 +133,6 @@ Item {
         }
 
         Item {
-            id: thumb
             visible: line.visible
             readonly property int size: track.kind === "flat" ? track.height : Math.round(track.height * 0.85)
             width: track.kind === "flat" ? Math.max(6, Math.round(size * 0.4)) : size

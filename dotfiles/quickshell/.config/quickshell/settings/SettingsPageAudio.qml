@@ -195,7 +195,6 @@ SettingsPage {
     // A device: its icon, plain name and where it is, its level, and the
     // Default tag; a click makes it the default.
     component DeviceRow: FlyoutRow {
-        id: row
         required property var modelData
         property var current: null
         signal chosen(var node)

@@ -16,7 +16,6 @@ import "../../settings"
 import "../system"
 
 SystemPage {
-    id: page
 
     subtitle: "Sampled every 3 seconds"
 

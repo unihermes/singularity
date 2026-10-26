@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Finds what the shell declares and nothing reads: QML files nothing names,
-# and functions, properties and signals named only where declared. A plain
+# and functions, properties, signals and ids named only where declared. A plain
 # text search (qmllint can't resolve the singletons). Run by the pre-commit
 # hook; exits 1 on a find. Intended exceptions go in ALLOW, with the reason.
 import collections, os, re, subprocess, sys
@@ -40,6 +40,11 @@ def main():
         for n in re.findall(r"^\s*signal\s+(\w+)", s, re.M):
             if count(n) <= 1 and count("on" + n[0].upper() + n[1:]) == 0:
                 found.append((f, n, "signal"))
+        # ids only reach their own file; `root` is kept by habit
+        bare = re.sub(r"//[^\n]*", "", s)
+        for n in re.findall(r"^\s*id:\s*(\w+)", s, re.M):
+            if n != "root" and len(re.findall(r"\b" + n + r"\b", bare)) <= 1:
+                found.append((f, n, "id"))
 
     found = [x for x in found if (x[0], x[1]) not in ALLOW]
     for f, n, kind in found:

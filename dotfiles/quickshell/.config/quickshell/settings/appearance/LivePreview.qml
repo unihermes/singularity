@@ -51,7 +51,6 @@ ClippingRectangle {
         transformOrigin: Item.TopLeft
 
         Item {
-            id: previewBar
             width: parent.width
             height: Theme.barHeight
             y: lp.atBottom && lp.below ? lp.below.height + Theme.spaceS : 0

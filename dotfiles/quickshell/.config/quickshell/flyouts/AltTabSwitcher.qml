@@ -232,7 +232,6 @@ OverlayWindow {
 
                         // previews: one frame of the window, fitted inside the card
                         ScreencopyView {
-                            id: shot
                             visible: root.previews
                             anchors.fill: parent
                             anchors.margins: Theme.spaceS

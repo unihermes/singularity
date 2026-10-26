@@ -228,7 +228,6 @@ FloatingWindow {
             }
 
             Loader {
-                id: pane
                 // sections folded on this window's pages (FlyoutHeading),
                 // kept across page switches and dropped with the window
                 property var foldedSections: []

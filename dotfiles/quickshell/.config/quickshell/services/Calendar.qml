@@ -96,7 +96,6 @@ Singleton {
     }
 
     FileView {
-        id: cacheFile
         path: root.cachePath
         preload: true
         watchChanges: true

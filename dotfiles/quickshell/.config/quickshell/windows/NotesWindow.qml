@@ -76,7 +76,6 @@ FloatingWindow {
     Component.onCompleted: loadCurrent()
 
     WindowChrome {
-        id: chrome
         window: root
     }
 
@@ -237,7 +236,6 @@ FloatingWindow {
     // --- the note --------------------------------------------------------------
 
     WindowPanel {
-        id: page
         anchors.top: strip.bottom
         anchors.topMargin: Theme.spaceL
         x: Theme.windowPad

@@ -43,7 +43,6 @@ Item {
     readonly property bool knobbed: kind !== "channel"
 
     Rectangle {
-        id: track
         visible: root.knobbed
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
@@ -79,7 +78,6 @@ Item {
     readonly property int flatLine: Math.max(2, Theme.borderWidth * 2)
 
     Rectangle {
-        id: knob
         visible: root.knobbed
         readonly property int inset: root.kind === "solid" ? 2
             : root.kind === "flat" ? root.flatLine + 2 : Math.max(2, Math.round(root.h / 5))

@@ -21,7 +21,6 @@ WidgetCard {
 
     // where and how warm, top left
     Column {
-        id: now
         width: root.small ? parent.width : parent.width * 0.55
 
         WidgetCaption {
@@ -188,7 +187,6 @@ WidgetCard {
                 }
                 // the day's range against the week's
                 Rectangle {
-                    id: bar
                     anchors.left: dlo.right
                     anchors.right: dhi.left
                     anchors.leftMargin: Theme.fit(10)

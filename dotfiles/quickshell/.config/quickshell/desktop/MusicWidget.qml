@@ -83,7 +83,6 @@ WidgetCard {
     }
 
     Item {
-        id: info
         x: root.large || root.small ? 0 : art.width + Theme.fit(14)
         y: root.large ? art.height + Theme.fit(12) : root.small ? art.height + Theme.fit(8) : 0
         width: parent.width - x

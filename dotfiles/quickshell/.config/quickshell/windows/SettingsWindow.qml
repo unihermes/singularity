@@ -313,7 +313,6 @@ FloatingWindow {
     // --- the panel: the pages (or what the search matched), then the page --
 
     WindowPanel {
-        id: panel
         anchors.top: header.bottom
         anchors.topMargin: Theme.spaceXl
         x: Theme.windowPad
@@ -441,7 +440,6 @@ FloatingWindow {
         }
 
         Item {
-            id: pageArea
             visible: side.visible
             x: split.x + split.width + Theme.panelPad + Theme.spaceS
             y: Theme.panelPad

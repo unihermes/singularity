@@ -19,7 +19,6 @@ Repeater {
     model: Theme.barSeparator === "none" ? [] : slots.order
 
     Item {
-        id: sep
         required property string modelData
         required property int index
         readonly property Item module: root.slots.itemFor(modelData)

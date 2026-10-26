@@ -455,7 +455,6 @@ SettingsPage {
     FlyoutHeading { text: "EVERY TYPE" }
 
     FlyoutInput {
-        id: search
         placeholder: "Search: markdown, avif, image/heif, zathura"
         glyph: "󰍉"
         echoPassword: false

@@ -177,7 +177,6 @@ OverlayWindow {
             : ["Enter open"]).concat(["Tab " + nextModeName])
 
     PanelFrame {
-        id: box
         width: Theme.fit(root.full ? 960 : 760)
         height: body.implicitHeight + Theme.panelPad * 4
         // centred, or under the bar (flush when grown), at a fixed size so it
