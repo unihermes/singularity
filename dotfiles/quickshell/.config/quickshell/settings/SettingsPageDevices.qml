@@ -6,7 +6,9 @@
 // through a QR code the phone scans (services/Phone.qml), then the phone
 // link (services/PhoneLink.qml): its switch, and the phones the KDE Connect
 // app shows from, to pair or unpair. HEADSET: the settings headsetcontrol can
-// send it, only the ones it has (Peripherals). WIRELESS: what UPower
+// send it, only the ones it has (Peripherals). MOUSE: what a mouse keeps
+// on itself (DPI, report rate, its buttons) through libratbag (Mice), only
+// for one it knows. WIRELESS: what UPower
 // reports with a battery. DRIVES: removable drives to mount, open and
 // eject (Drives). USB: every device plugged in, read from sysfs while the
 // page is open.
@@ -27,7 +29,10 @@ SettingsPage {
     description: "Your phone, headset, peripherals and drives."
 
     // the code is only good while this page shows it
-    onVisibleChanged: if (!visible) Phone.cancelPair()
+    onVisibleChanged: {
+        if (!visible) Phone.cancelPair()
+        else Mice.refresh()
+    }
 
     readonly property bool phoneOn: Phone.connected || PhoneLink.connected
     readonly property bool headsetOn: Channels.headset === "on"
@@ -367,6 +372,115 @@ SettingsPage {
         enabled: false
     }
 
+    // --- mouse ---------------------------------------------------------------
+
+    // what each button can be set to: mouse buttons 1..5, or nothing
+    readonly property var buttonActions: [
+        { value: 1, text: "Left click" }, { value: 2, text: "Right click" }, { value: 3, text: "Middle click" },
+        { value: 4, text: "Back" }, { value: 5, text: "Forward" }, { value: 0, text: "Nothing" },
+    ]
+    readonly property var buttonNames: ["Left button", "Right button", "Wheel click", "Back side button", "Front side button"]
+
+    Item { visible: Mice.devices.length > 0; width: 1; height: Theme.spaceM }
+    FlyoutHeading { visible: Mice.devices.length > 0; text: "MOUSE" }
+
+    SettingsNote {
+        visible: Mice.error !== ""
+        text: Mice.error
+        alert: true
+    }
+
+    Repeater {
+        model: Mice.devices
+
+        Column {
+            id: mouse
+            required property var modelData
+            width: parent ? parent.width : 0
+
+            SettingsSubhead { visible: Mice.devices.length > 1; caption: mouse.modelData.name }
+
+            // DPI steps through the ones the mouse has, sent when the drag ends
+            SettingsField {
+                id: dpiRow
+                readonly property var dpis: mouse.modelData.dpis
+                property int dragged: -1
+                readonly property int at: dragged >= 0 ? dragged : Math.max(0, dpis.indexOf(mouse.modelData.dpi))
+                visible: dpis.length > 1
+                label: "DPI"
+                hint: "Set on the mouse; pointer speed scales it"
+
+                Row {
+                    anchors.right: parent.right
+                    spacing: Theme.sp(10)
+
+                    Slider {
+                        width: Theme.fit(220)
+                        anchors.verticalCenter: parent.verticalCenter
+                        value: dpiRow.at / (dpiRow.dpis.length - 1) * 100
+                        onMoved: v => dpiRow.dragged = Math.round(v / 100 * (dpiRow.dpis.length - 1))
+                        onReleased: {
+                            const i = dpiRow.dragged
+                            dpiRow.dragged = -1
+                            if (i >= 0 && dpiRow.dpis[i] !== mouse.modelData.dpi) Mice.setDpi(mouse.modelData, dpiRow.dpis[i])
+                        }
+                    }
+                    Text {
+                        width: Theme.fs(52)
+                        anchors.verticalCenter: parent.verticalCenter
+                        horizontalAlignment: Text.AlignRight
+                        text: dpiRow.dpis[dpiRow.at] || "—"
+                        color: Theme.textStrong
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontBody
+                    }
+                }
+            }
+
+            SettingsField {
+                visible: mouse.modelData.rates.length > 1
+                label: "Polling rate"
+                hint: "How often it tells the computer where it is"
+
+                FlyoutSegmented {
+                    anchors.right: parent.right
+                    fill: false
+                    model: mouse.modelData.rates.map(r => ({ value: r, text: r + " Hz" }))
+                    current: mouse.modelData.rate
+                    onPicked: v => Mice.setRate(mouse.modelData, v)
+                }
+            }
+
+            SettingsSubhead { visible: mouse.modelData.buttons.length > 1; caption: "BUTTONS" }
+
+            // the left button stays a left click, so the mouse can't lose it
+            Repeater {
+                model: mouse.modelData.buttons.length
+
+                SettingsField {
+                    id: buttonRow
+                    required property int index
+                    readonly property var button: mouse.modelData.buttons[index]
+                    // a key, macro or special action set elsewhere
+                    readonly property bool other: button.type > 1
+                    visible: index > 0
+                    label: page.buttonNames[index] || "Button " + (index + 1)
+
+                    SettingsDropdown {
+                        anchors.right: parent.right
+                        width: Theme.fit(150)
+                        model: page.buttonActions.map(a => a.value)
+                        labelFor: v => page.buttonActions.find(a => a.value === v).text
+                        current: buttonRow.other ? undefined : buttonRow.button.type === 0 ? 0 : buttonRow.button.value
+                        placeholder: "Something else"
+                        onPicked: v => Mice.setButton(mouse.modelData, buttonRow.index, v)
+                    }
+                }
+            }
+        }
+    }
+
     // --- wireless ------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
@@ -558,7 +672,10 @@ SettingsPage {
     Timer {
         id: usbSettle
         interval: 600
-        onTriggered: if (!usbRead.running) usbRead.running = true
+        onTriggered: {
+            if (!usbRead.running) usbRead.running = true
+            Mice.refresh()
+        }
     }
 
     Item { width: 1; height: Theme.spaceM }

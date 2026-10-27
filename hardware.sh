@@ -13,7 +13,7 @@
 # the capabilities `has` knows, one per packages/hardware/*.txt and more
 hw_caps=(battery lid backlight wifi bluetooth fingerprint nvidia intel-gpu
   intel-panel ahci ite-superio ipu6-webcam intel-ish i2c-touchpad charge-modes
-  steelseries-headset)
+  steelseries-headset gaming-mouse)
 
 # any PCI device whose class starts with $1 (0x03 display, 0x0106 AHCI),
 # from vendor $2 when given
@@ -100,6 +100,14 @@ has() {
       for f in /sys/bus/usb/devices/*:*; do
         [[ $(cat "${f%:*}/idVendor" 2>/dev/null) == 1038 ]] || continue
         [[ $(cat "$f/bInterfaceClass" 2>/dev/null) == 01 ]] && return 0
+      done
+      return 1 ;;
+    # a mouse (USB HID boot mouse, or a receiver's) from a maker whose
+    # mice libratbag can set up: Logitech, SteelSeries, Roccat, Glorious
+    gaming-mouse)
+      for f in /sys/bus/usb/devices/*:*; do
+        [[ $(cat "${f%:*}/idVendor" 2>/dev/null) == @(046d|1038|1e7d|258a) ]] || continue
+        [[ $(cat "$f/bInterfaceClass" 2>/dev/null)$(cat "$f/bInterfaceProtocol" 2>/dev/null) == 0302 ]] && return 0
       done
       return 1 ;;
     *) echo "has: no capability called '$1' (hardware.sh)" >&2; return 2 ;;

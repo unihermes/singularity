@@ -1,0 +1,5 @@
+# A mouse from a maker libratbag knows (hardware.sh: has gaming-mouse).
+
+# ratbagd sets what the mouse keeps on itself (DPI, polling rate, its
+# buttons) for Settings > Devices (services/Mice.qml); D-Bus starts it.
+libratbag
