@@ -1,7 +1,14 @@
 # To do
 
-Delete this file once both items are done.
+Delete this file once every item is done.
 
 1. Settings, Power & Idle: add hibernate as an idle step / action alongside the
    existing ones (hibernation itself is already set up by install.sh on laptops).
 2. Settings, Lock Screen: rethink the page.
+3. Settings, Appearance: rethink the tabs and simplify them.
+4. Roundness: make sure it is set in one place (one Theme token everything reads,
+   no hard-coded radii elsewhere).
+5. Animations: make sure they are all synced (same durations and curves across the
+   shell, and in step with Hyprland's).
+6. Claude sidebar: polish it; some parts are still incomplete.
+7. Full design review of the shell (against `qs/DESIGN.md`).
