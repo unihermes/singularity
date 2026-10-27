@@ -263,7 +263,7 @@ Scope {
         var shell = {
             base: hex(Theme.base), bar: hex(Theme.bar), panel: hex(Theme.panel), surface: hex(Theme.surface),
             popup: hex(popup), muted: hex(Theme.muted), subtext: hex(Theme.subtext),
-            bright: hex(Theme.bright), accent: hex(Theme.accent),
+            bright: hex(Theme.bright), accent: hex(Theme.accent), "on-accent": hex(onAccent()),
             hover: hex(Theme.hoverFill), selected: hex(Theme.selectedFill),
             stroke: rgba(Theme.stroke, Theme.stroke.a),
             "section-line": rgba(Theme.sectionLine, Theme.sectionLine.a),

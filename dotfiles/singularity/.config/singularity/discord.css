@@ -111,11 +111,13 @@
    * list's turned, zoomed units) */
   --n-guild-shift: -1px;
   --n-pill-shift: 5px;
+  /* how far a notice pushes the row down */
+  --n-notice: 0px;
   --serverlist-offset: calc(var(--n-gap) + var(--n-row));
 }
 #app-mount .base__5e434 > .bar_c38106 {
   position: absolute !important;
-  top: var(--n-gap);
+  top: calc(var(--n-notice) + var(--n-gap));
   right: calc(var(--n-gap) + var(--n-depth) + var(--n-gap));
   left: auto;
   width: auto !important;
@@ -182,7 +184,7 @@
 #app-mount .base__5e434::before {
   content: "";
   position: absolute;
-  top: var(--n-gap);
+  top: calc(var(--n-notice) + var(--n-gap));
   left: var(--n-gap);
   right: var(--n-gap);
   height: var(--n-row);
@@ -206,6 +208,53 @@
 }
 .guilds__5e434 .wrapper__58105 {
   translate: var(--n-pill-shift, 0px) 0;
+}
+
+/* a notice (Equicord's update with its Restart, Discord's own) as a framed
+ * strip across the top, the server row and the panels moved down under it */
+#app-mount .base__5e434:has(> .notice__6e2b9) {
+  --n-notice: calc(var(--n-gap) + var(--notices-height));
+}
+#app-mount .notice__6e2b9 + .content__5e434 {
+  --serverlist-offset: calc(var(--n-notice) + var(--n-gap) + var(--n-row));
+}
+#app-mount .notice__6e2b9 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--notices-height);
+  margin: var(--n-gap) var(--n-gap) 0;
+  padding: 0 var(--notices-height);
+  box-sizing: border-box;
+  line-height: normal;
+  background: var(--n-panel) !important;
+  border: var(--n-edge-w) solid var(--n-edge) !important;
+  border-radius: var(--n-radius-panel) !important;
+  box-shadow: inset 0 0 0 var(--n-gutter) var(--n-gutter-fill) !important;
+  color: var(--n-bright) !important;
+}
+#app-mount .notice__6e2b9 .button__6e2b9 {
+  top: 0;
+  height: 24px;
+  margin-left: var(--n-gap);
+  padding: 0 12px;
+  line-height: normal;
+  background: var(--n-accent) !important;
+  border: none !important;
+  border-radius: var(--n-radius) !important;
+  color: var(--n-on-accent) !important;
+  font-weight: 600;
+}
+#app-mount .notice__6e2b9 .button__6e2b9:hover {
+  filter: brightness(1.15);
+}
+#app-mount .notice__6e2b9 .closeButton__6e2b9 {
+  top: 50%;
+  right: var(--n-gap);
+  translate: 0 -50%;
+}
+#app-mount .notice__6e2b9 .closeIcon__6e2b9 path {
+  fill: var(--n-subtext) !important;
 }
 
 /* the panels sit apart on the base, like the shell's flyouts (#app-mount
