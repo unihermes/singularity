@@ -264,7 +264,7 @@ ShellRoot {
     // built on first open, then kept, so its scroll stays
     LazyLoader {
         active: Notifications.used
-        NotificationSidebar {}
+        NotificationSidebar { bars: screens.instances.map(s => s.barWindow) }
     }
 
     // Notifications: the history sidebar, Do Not Disturb, Clear all

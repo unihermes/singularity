@@ -3,8 +3,8 @@
 //
 // The notification history (services/Notifications.qml) as a panel down
 // the right edge of one screen, under the bar, as the Claude sidebar is:
-// out until the bell, its × or Escape puts it away, or a notification is
-// opened from it. Newest first under a heading per day, each a few lines
+// out until the bell, its ×, Escape or a click off it (DismissGrab, the bars
+// excepted) puts it away, or a notification is opened from it. Newest first under a heading per day, each a few lines
 // (NotificationCard, collapsed) that a click opens in place. Clear all on
 // the heading, then Do Not Disturb and Settings at the foot. Empty, it
 // says so in a card. Coming out marks everything read; what was new stays
@@ -20,6 +20,11 @@ PanelWindow {
     id: root
 
     readonly property bool open: Notifications.shown
+    function requestClose() { Notifications.shown = false }
+
+    // every screen's bar: a press there doesn't put it away
+    property var bars: []
+    DismissGrab { panel: root; also: root.bars }
 
     // the key of the entry opened in place, "" for none
     property string expanded: ""
