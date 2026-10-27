@@ -398,7 +398,17 @@ SettingsPage {
             required property var modelData
             width: parent ? parent.width : 0
 
-            SettingsSubhead { visible: Mice.devices.length > 1; caption: mouse.modelData.name }
+            // its battery from UPower, matched by name
+            readonly property var battery: page.wireless.find(d => d.name === modelData.name) || null
+
+            HeadCard {
+                glyph: "󰍽"
+                glyphColor: mouse.battery && mouse.battery.level < 0 ? Theme.muted : Theme.textStrong
+                title: mouse.modelData.name
+                lines: [[mouse.battery && mouse.battery.level >= 0
+                            ? mouse.battery.level + "%" + (mouse.battery.charging ? " charging" : "") : "",
+                         mouse.modelData.dpi + " DPI", mouse.modelData.rate + " Hz"].filter(t => t).join("  ·  ")]
+            }
 
             // DPI steps through the ones the mouse has, sent when the drag ends
             SettingsField {
