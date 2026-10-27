@@ -3,7 +3,7 @@
 //
 // DEVICES: one section, a row per device (its glyph and name, its level
 // as a meter and a number, red when it runs low). The phone's row comes
-// first with a Mirror button at its end (Stop while it's on screen), and
+// first with a Mirror button before its level (Stop while it's on screen), and
 // opens a tray under its label, an accent rail down from its icon: Screenshot over adb, which joins a phone on Wi-Fi just for it;
 // Ring and Send file through the phone link; the phone's notifications,
 // a click on one opening it in place as an opened history card: the
@@ -51,7 +51,7 @@ FlyoutPanel {
 
     // --- the phone ---
 
-    // the phone's row, with Mirror (Stop while it's on screen) at its end
+    // the phone's row, with Mirror (Stop while it's on screen) before its level
     Item {
         visible: root.phoneShown
         width: parent.width
@@ -59,7 +59,7 @@ FlyoutPanel {
 
         FlyoutRow {
             id: phoneRow
-            width: parent.width - (mirrorBtn.visible ? mirrorBtn.width + Theme.spaceS : 0)
+            reserve: mirrorBtn.visible ? mirrorBtn.width + Theme.spaceS : 0
             leadingIcon: "󰄜"
             label: root.awayPhone ? root.awayPhone.name : Phone.shownName || "Phone"
             note: Phone.mirroring ? "On screen" : !root.trayOpen && root.notes.length
@@ -78,7 +78,7 @@ FlyoutPanel {
         IconButton {
             id: mirrorBtn
             visible: Phone.reachable
-            anchors.right: parent.right
+            x: phoneRow.trailingStart - Theme.spaceS - width
             anchors.verticalCenter: parent.verticalCenter
             icon: Phone.mirroring ? "󰓛" : "󰍹"
             lit: Phone.mirroring

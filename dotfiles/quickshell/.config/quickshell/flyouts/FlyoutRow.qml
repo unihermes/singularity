@@ -180,8 +180,12 @@ Item {
         text: labelText.text
     }
 
+    // room kept clear before the first thing at the right, for a control
+    // laid over the row there (the phone's Mirror, at trailingStart)
+    property real reserve: 0
     // where the label's room ends: the first thing at the right
-    readonly property real labelEnd: showAction ? (extraIcon !== "" ? extraBtn.x : actionText !== "" ? actionChip.x : actionBtn.x)
+    readonly property real labelEnd: trailingStart - reserve
+    readonly property real trailingStart: showAction ? (extraIcon !== "" ? extraBtn.x : actionText !== "" ? actionChip.x : actionBtn.x)
         : badgeTag.visible ? badgeTag.x
         : quietTag.visible ? quietTag.x
         : iconCells.visible ? iconCells.x
