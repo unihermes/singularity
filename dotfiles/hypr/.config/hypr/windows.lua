@@ -1195,6 +1195,14 @@ local function maximizeFocused()
     local mon = hl.get_active_monitor()
     if not mon then return end
 
+    -- a tiled window left in monocle sits under every floater, so it can't
+    -- be raised: it's floated into monocle instead
+    if not isMonocleExempt(win) then
+        setWindowMonocle(win, true, mon)
+        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+        return
+    end
+
     -- a lone window already fills the area with fullscreen=0
     if isAlreadyFull(win, mon) then return end
 
