@@ -18,7 +18,7 @@ local monocleRule, edgeGaps, SCRATCH_CLASS, isPrompt, fullscreenRules, appRules,
 
 -- Popouts (holdPopup below), hooked ahead of monocle's hooks, which would
 -- fill the window. Windows already open at load (a reload) are left alone.
-local holdPopup
+local holdPopup, fillByHand
 local launchWaiting = false
 local knownWindows = {}
 for _, w in ipairs(hl.get_windows()) do knownWindows[w.address] = true end
@@ -901,7 +901,12 @@ holdPopup = function(win)
     local w, h = win.size.x, win.size.y
     local dialogSized = w <= area.w * 0.85 and h <= area.h * 0.85
     local m = popupOpts.remember and key and type(sizes[key]) == "table" and sizes[key][screenKind(area)]
-    if browser then
+    local ownerArea = browser and owner.monitor and fillArea(owner, owner.monitor)
+    if ownerArea then
+        -- the owner's share of its screen, so it's the same shape on another
+        w = math.min(owner.size.x / ownerArea.w, 1) * area.w
+        h = math.min(owner.size.y / ownerArea.h, 1) * area.h
+    elseif browser then
         w, h = math.min(owner.size.x, area.w), math.min(owner.size.y, area.h)
     elseif type(m) == "table" and tonumber(m.fw) and tonumber(m.fh) then
         w, h = math.min(m.fw, 1) * area.w, math.min(m.fh, 1) * area.h
@@ -937,7 +942,16 @@ holdPopup = function(win)
         x = math.max(area.x, math.min(cur.x - TEAR_GRAB[1], area.x + area.w - w / 2))
         y = math.max(area.y, math.min(cur.y - TEAR_GRAB[2], area.y + area.h - h / 2))
     end
-    moveTo(addr, { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) })
+    local rect = { x = math.floor(x), y = math.floor(y), w = math.floor(w), h = math.floor(h) }
+    -- an owner that fills its screen (or is fullscreen) makes it a main
+    -- window filling this one, the cursor rect kept for SUPER+X
+    if ownerArea and (owner.fullscreen ~= 0 or isFitted(owner, ownerArea)) then
+        local st = stateOf(win.address)
+        st.restore, st.placedFromOwner = rect, true
+        fillByHand(hl.get_window(addr) or win)
+        return
+    end
+    moveTo(addr, rect)
     if popupOpts.block and dialogSized and ownerMain and not browser then
         blockOwner(win.address, owner.address)
         if onActiveWorkspace(win) then hl.dispatch(hl.dsp.focus({ window = addr })) end
@@ -983,7 +997,7 @@ local function promotePopout(win)
 end
 
 -- Fills a floater the user asked to fill, promoting it if it's a popout.
-local function fillByHand(win)
+fillByHand = function(win)
     win = promotePopout(win)
     if hasTag(win, "monocle") then
         setShape(win, nil)
@@ -1082,8 +1096,9 @@ local function onMonocleOpen(win)
             and not fresh.pinned and not hasTag(fresh, "popout") then
         hl.dispatch(hl.dsp.window.tag({ tag = "+natural", window = "address:" .. win.address }))
     end
-    -- placed per its remembered shape; exempt windows keep their size
-    if not on then return end
+    -- placed per its remembered shape; exempt windows, and a torn-off tab
+    -- holdPopup placed after its owner, keep their size
+    if not on or stateOf(win.address).placedFromOwner then return end
     fresh = hl.get_window("address:" .. win.address) or fresh
     local mon = fresh.monitor
     local shape = nil
