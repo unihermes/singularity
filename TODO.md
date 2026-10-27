@@ -16,3 +16,5 @@ Delete this file once every item is done.
    the pages and their flow layout. Things are cluttered right now, so first make
    stripped-down flow layouts (structure and navigation only, no styling) and pick
    from those before implementing anything.
+9. Git habits: look back over the repo's history (commit size and frequency, message
+   style, pushes, branches) and recommend more efficient ways of working.
