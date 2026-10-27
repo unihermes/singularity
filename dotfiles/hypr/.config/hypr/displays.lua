@@ -169,17 +169,108 @@ function singularityNudgeDisplays()
     end
 end
 
--- A display plugged in (or the panel back) lays the workspaces out afresh
--- (with the lid shut, lid.sh handles it). From a timer: focusing a display
+-- The workspace layout from before a display was plugged in, one file per
+-- set of displays (so they stack), kept in the runtime dir through reloads:
+-- "ws <id> <display>", "active <display> <id>" and "focus <display>" lines.
+-- Unplugging back to that set puts every workspace that was there back on
+-- its display, showing what it showed; ones opened since stay put.
+local runtimeDir = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
+local layoutPrefix = runtimeDir .. "/singularity-workspaces-"
+
+local function monitorNames()
+    local names = {}
+    for _, m in ipairs(hl.get_monitors()) do names[#names + 1] = m.name end
+    table.sort(names)
+    return names
+end
+
+local function layoutPath(names)
+    return layoutPrefix .. table.concat(names, "+")
+end
+
+local knownMonitors = monitorNames()
+
+local function saveLayout(names)
+    local keep = {}
+    for _, n in ipairs(names) do keep[n] = true end
+    local lines = {}
+    for _, ws in ipairs(hl.get_workspaces()) do
+        if not ws.special and ws.monitor and keep[ws.monitor.name] then
+            lines[#lines + 1] = "ws " .. ws.id .. " " .. ws.monitor.name
+        end
+    end
+    for _, m in ipairs(hl.get_monitors()) do
+        if keep[m.name] and m.active_workspace then
+            lines[#lines + 1] = "active " .. m.name .. " " .. m.active_workspace.id
+        end
+    end
+    local focused = hl.get_active_monitor()
+    if focused and keep[focused.name] then lines[#lines + 1] = "focus " .. focused.name end
+    local f = io.open(layoutPath(names), "w")
+    if not f then return end
+    f:write(table.concat(lines, "\n"), "\n")
+    f:close()
+end
+
+local function restoreLayout()
+    local path = layoutPath(monitorNames())
+    local f = io.open(path)
+    if not f then return end
+    local moves, active, focus = {}, {}, nil
+    for line in f:lines() do
+        local id, mon = line:match("^ws (%-?%d+) (%S+)$")
+        if id then moves[#moves + 1] = { id = tonumber(id), mon = mon } end
+        local am, aid = line:match("^active (%S+) (%-?%d+)$")
+        if am then active[#active + 1] = { mon = am, id = tonumber(aid) } end
+        focus = line:match("^focus (%S+)$") or focus
+    end
+    f:close()
+    os.remove(path)
+
+    for _, mv in ipairs(moves) do
+        local ws = hl.get_workspace(mv.id)
+        if ws and ws.monitor and ws.monitor.name ~= mv.mon then
+            hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(mv.id), monitor = mv.mon }))
+        end
+    end
+    -- The focused display last, so it keeps focus. An empty workspace went
+    -- when the reset moved it, so it's made again on its display.
+    table.sort(active, function(a, b) return b.mon == focus and a.mon ~= focus end)
+    for _, a in ipairs(active) do
+        local ws = hl.get_workspace(a.id)
+        if not ws then hl.dispatch(hl.dsp.focus({ monitor = a.mon })) end
+        if not ws or (ws.monitor and ws.monitor.name == a.mon) then
+            hl.dispatch(hl.dsp.focus({ workspace = a.id }))
+        end
+    end
+end
+
+-- A display plugged in (or the panel back) saves the layout and lays the
+-- workspaces out afresh; one unplugged puts the saved layout back (with the
+-- lid shut, lid.sh handles the panel). From a timer: focusing a display
 -- before its workspace exists crashes Hyprland.
 local function resetWorkspacesSoon()
     hl.timer(function() singularityResetWorkspaces() end, { timeout = 500, type = "oneshot" })
 end
 hl.on("monitor.added", function()
+    local now, before, was = monitorNames(), {}, {}
+    for _, n in ipairs(knownMonitors) do was[n] = true end
+    for _, n in ipairs(now) do
+        if was[n] then before[#before + 1] = n end
+    end
+    knownMonitors = now
+    if #before > 0 and #before < #now then saveLayout(before) end
     resetWorkspacesSoon()
     hl.exec_cmd("~/.config/hypr/lid.sh displays")
 end)
 hl.on("monitor.removed", function()
+    hl.timer(function()
+        knownMonitors = monitorNames()
+        restoreLayout()
+    end, { timeout = 500, type = "oneshot" })
     hl.exec_cmd("~/.config/hypr/lid.sh displays")
 end)
-hl.on("hyprland.start", resetWorkspacesSoon)
+hl.on("hyprland.start", function()
+    os.execute("rm -f '" .. layoutPrefix .. "'*")
+    resetWorkspacesSoon()
+end)
