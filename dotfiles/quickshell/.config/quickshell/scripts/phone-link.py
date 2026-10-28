@@ -17,6 +17,7 @@
 #   out: {"event": "ready", "name": ...}
 #        {"event": "state", "devices": [...]}      after every change
 #        {"event": "error", "text": ...}
+#        {"event": "cancelled", "nid": ...}       the phone dropped a notification
 #
 # The phone always connects to us: it answers our UDP identity (broadcast,
 # or sent back to its own broadcast) over TCP, and we take the TLS client's
@@ -78,10 +79,13 @@ def encode(p):
     return (json.dumps(p) + "\n").encode()
 
 
-def notify(title, body="", app="Phone", icon="phone", package=None):
+def notify(title, body="", app="Phone", icon="phone", package=None, nid=None):
     # package: the phone notification's Android app, for the shell to open
-    # it with on a click (services/Notifications.qml)
+    # it with on a click (services/Notifications.qml); nid: its key on the
+    # phone, for the shell to drop it when the phone does
     hint = ["-h", f"string:x-singularity-phone:{package}"] if package is not None else []
+    if nid is not None:
+        hint += ["-h", f"string:x-singularity-phone-id:{nid}"]
     subprocess.Popen(["notify-send", "-a", app, "-i", icon] + hint + [title, body],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -512,6 +516,7 @@ class Daemon:
             return
         if b.get("isCancel"):
             link.notifications = [n for n in link.notifications if n["id"] != nid]
+            self.out({"event": "cancelled", "nid": str(nid)})
             self.emit()
             return
         icon = ""
@@ -534,7 +539,7 @@ class Daemon:
         if not (b.get("silent") or b.get("requestAnswer")):
             title = entry["title"] or entry["app"]
             notify(title, entry["text"] if entry["text"] != title else "", app=entry["app"] or link.name,
-                   icon=icon or "phone", package=entry["package"])
+                   icon=icon or "phone", package=entry["package"], nid=nid)
         self.emit()
 
     async def shared(self, link, p):

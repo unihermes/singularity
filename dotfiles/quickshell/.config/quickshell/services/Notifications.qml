@@ -21,10 +21,11 @@ Singleton {
     id: root
 
     // newest first, replaced (never changed in place) so bindings update:
-    // [{ key, id, appName, desktopEntry, phone, phonePackage, summary,
-    //    body, icon, picture, urgency, expireTimeout, transient, time, live }]
+    // [{ key, id, appName, desktopEntry, phone, phonePackage, phoneId,
+    //    summary, body, icon, picture, urgency, expireTimeout, transient,
+    //    time, live }]
     // phone: from the phone link (scripts/phone-link.py), phonePackage its
-    // Android app
+    // Android app, phoneId its key on the phone
     property var history: []
     readonly property int count: history.length
     readonly property bool dnd: Settings.notifDnd
@@ -93,6 +94,12 @@ Singleton {
         history = history.filter(e => e.key !== entry.key)
         closeLive(entry)
         saveTimer.restart()
+    }
+
+    // The phone dismissed it (or its app did, read there): gone here too
+    function removePhone(nid) {
+        if (!nid) return
+        history.filter(e => e.phoneId === nid).forEach(remove)
     }
 
     function clearAll() {
@@ -348,6 +355,7 @@ Singleton {
             desktopEntry: n.desktopEntry,
             phone: n.hints["x-singularity-phone"] !== undefined,
             phonePackage: String(n.hints["x-singularity-phone"] || ""),
+            phoneId: String(n.hints["x-singularity-phone-id"] || ""),
             summary: n.summary,
             body: n.body,
             icon: iconFor(n),
@@ -444,7 +452,7 @@ Singleton {
     function save() {
         const entries = history.filter(e => !e.transient).map(e => ({
             id: e.id, appName: e.appName, desktopEntry: e.desktopEntry,
-            phone: e.phone, phonePackage: e.phonePackage,
+            phone: e.phone, phonePackage: e.phonePackage, phoneId: e.phoneId,
             summary: e.summary, body: e.body,
             icon: e.icon,
             // image data doesn't outlive the notification; a file does
@@ -478,6 +486,7 @@ Singleton {
                     key: x.time + "-" + x.id, id: x.id | 0,
                     appName: String(x.appName || ""), desktopEntry: String(x.desktopEntry || ""),
                     phone: !!x.phone, phonePackage: String(x.phonePackage || ""),
+                    phoneId: String(x.phoneId || ""),
                     summary: String(x.summary || ""),
                     body: String(x.body || ""), icon: String(x.icon || ""),
                     picture: String(x.picture || ""), urgency: x.urgency | 0,
