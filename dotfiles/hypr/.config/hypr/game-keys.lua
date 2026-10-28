@@ -66,15 +66,10 @@ end
 hl.on("window.active", sync)
 hl.on("window.close", sync)
 
--- The primary display (the Display page's pick), else the first, as
--- displays.lua's singularityResetWorkspaces() has it.
+-- The primary display (the Display page's pick), else the first in
+-- displays.lua's order, where workspace 1 goes.
 local function primaryMonitor()
-    local mons = hl.get_monitors()
-    local name = S.state("primary-display", "")
-    for _, m in ipairs(mons) do
-        if m.name == name then return m end
-    end
-    return mons[1]
+    return S.orderedMonitors()[1]
 end
 
 -- Games open on the primary display's current workspace. One opened on

@@ -117,22 +117,56 @@ do
     hl.config({ decoration = { screen_shader = shader } })
 end
 
--- One workspace per display numbered from the primary (left to right, top
--- to bottom), the rest gathered on the primary. For the Display page's
--- "Reset workspaces", via `hyprctl eval`.
+-- Displays in the order they were first seen (by EDID description, one per
+-- line in the state dir), so each keeps its workspace number: one plugged in
+-- later numbers after them and they go back to theirs when it's unplugged.
+-- Ones not seen before join the end left to right, top to bottom. The
+-- primary comes first all the same; S.orderedMonitors() for game-keys.lua.
+local orderPath = os.getenv("HOME") .. "/.local/state/singularity/display-order"
+
+local function displayKey(m)
+    return (m.description and m.description ~= "") and m.description or m.name
+end
+
+function S.orderedMonitors()
+    local mons, rank, count = hl.get_monitors(), {}, 0
+    local f = io.open(orderPath)
+    if f then
+        for line in f:lines() do
+            if line ~= "" and not rank[line] then
+                count = count + 1
+                rank[line] = count
+            end
+        end
+        f:close()
+    end
+    local new = {}
+    for _, m in ipairs(mons) do
+        if not rank[displayKey(m)] then new[#new + 1] = m end
+    end
+    if #new > 0 then
+        table.sort(new, function(a, b) return a.x < b.x or (a.x == b.x and a.y < b.y) end)
+        local out = io.open(orderPath, "a")
+        for _, m in ipairs(new) do
+            count = count + 1
+            rank[displayKey(m)] = count
+            if out then out:write(displayKey(m), "\n") end
+        end
+        if out then out:close() end
+    end
+    local function key(m)
+        return m.name == primaryDisplay and 0 or rank[displayKey(m)]
+    end
+    table.sort(mons, function(a, b) return key(a) < key(b) end)
+    return mons
+end
+
+-- One workspace per display in that order, the rest gathered on the first.
+-- For the Display page's "Reset workspaces", via `hyprctl eval`.
 function singularityResetWorkspaces()
-    local mons = hl.get_monitors()
-    if #mons == 0 then return end
-    local primary = mons[1]
-    for _, m in ipairs(mons) do
-        if m.name == primaryDisplay then primary = m end
-    end
-    local order = {}
-    for _, m in ipairs(mons) do
-        if m ~= primary then order[#order + 1] = m end
-    end
-    table.sort(order, function(a, b) return a.x < b.x or (a.x == b.x and a.y < b.y) end)
-    table.insert(order, 1, primary)
+    local order = S.orderedMonitors()
+    if #order == 0 then return end
+    local primary = order[1]
 
     for _, ws in ipairs(hl.get_workspaces()) do
         if not ws.special and ws.id > #order and ws.monitor and ws.monitor.name ~= primary.name then
