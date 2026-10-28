@@ -88,18 +88,24 @@ Singleton {
 
     function isNew(entry) { return entry.time > (viewing ? seenBefore : lastSeen) }
 
-    // Out of the history for good, withdrawing it from the sender too
-    function remove(entry) {
+    // Out of the history for good, withdrawing it from the sender too (a
+    // phone's from the phone, unless the phone is what dropped it)
+    function remove(entry, fromPhone) {
         hidePopup(entry)
         history = history.filter(e => e.key !== entry.key)
         closeLive(entry)
+        if (!fromPhone) dismissOnPhone([entry])
         saveTimer.restart()
     }
 
     // The phone dismissed it (or its app did, read there): gone here too
     function removePhone(nid) {
         if (!nid) return
-        history.filter(e => e.phoneId === nid).forEach(remove)
+        history.filter(e => e.phoneId === nid).forEach(e => remove(e, true))
+    }
+
+    function dismissOnPhone(entries) {
+        new Set(entries.map(e => e.phoneId).filter(id => id)).forEach(id => PhoneLink.dismiss({ id: id }))
     }
 
     function clearAll() {
@@ -107,6 +113,7 @@ Singleton {
         popups = []
         history = []
         all.forEach(closeLive)
+        dismissOnPhone(all)
         saveTimer.restart()
     }
 
