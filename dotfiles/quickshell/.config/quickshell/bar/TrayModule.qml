@@ -2,8 +2,8 @@
 // ~/.config/quickshell/bar/TrayModule.qml
 //
 // The system tray, one frame around every app's icon. Left raises the app's
-// window (else activate()), right opens its menu in a flyout, middle is its
-// secondary action, double-click forces its window up (showApp). Drag to
+// window, else showApp (its menu's Show entry, else its desktop entry), right
+// opens its menu in a flyout, middle is its secondary action. Drag to
 // reorder, saved by app id (Settings.trayOrder) once dropped (mid-drag would
 // rebuild the delegates and drop the grab). With the drawer on, only pinned
 // icons show until the chevron opens it. Apps hidden from the tray
@@ -82,9 +82,9 @@ ModuleFrame {
         Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
     }
 
-    // Double-click: after a moment, the menu's Show/Restore/Open entry, else
-    // the desktop entry run again (many apps ignore or toggle on activate()),
-    // then the window is raised once mapped.
+    // Left click with no window open: after a moment, the menu's
+    // Show/Restore/Open entry, else the desktop entry run again (many apps
+    // ignore or toggle on activate()), then the window is raised once mapped.
     property var showItem: null
     property int showTries: 0
     property int showWaits: 0
@@ -250,9 +250,6 @@ ModuleFrame {
                 // (the icon itself moves under the pointer once dragged)
                 property real pressX: 0
                 property bool moved: false
-                // when the last left click landed, so a double-click's
-                // second click isn't also taken as a click of its own
-                property real lastClick: 0
 
                 onPressed: mouse => {
                     pressX = mapToItem(trayFrame, mouse.x, 0).x
@@ -274,19 +271,8 @@ ModuleFrame {
                 }
                 onReleased: if (moved) trayFrame.drop()
                 onCanceled: { moved = false; trayFrame.dragFrom = -1; trayFrame.dragTo = -1; trayFrame.dragDx = 0 }
-                onDoubleClicked: mouse => {
-                    if (moved || mouse.button !== Qt.LeftButton) return
-                    if (trayIcon.opened) host.screenScope.openFlyout = ""
-                    trayFrame.showApp(trayIcon.modelData)
-                }
                 onClicked: mouse => {
                     if (moved) return
-                    if (mouse.button === Qt.LeftButton) {
-                        var now = Date.now()
-                        var second = now - lastClick < Qt.styleHints.mouseDoubleClickInterval
-                        lastClick = second ? 0 : now
-                        if (second) return
-                    }
                     var item = trayIcon.modelData
                     if (mouse.button === Qt.MiddleButton) {
                         item.secondaryActivate()
@@ -296,11 +282,15 @@ ModuleFrame {
                         menu.item = item
                         menu.stack = []
                         host.screenScope.toggleFlyout("traymenu", trayIcon)
-                    } else {
-                        // the app's own window if open, else activate()
+                    } else if (mouse.button === Qt.LeftButton) {
+                        // the app's own window if open, else showApp
                         var win = host.bar.trayItemWindow(item)
-                        if (win) trayFrame.raise(win)
-                        else item.activate()
+                        if (win) {
+                            trayFrame.raise(win)
+                        } else {
+                            if (trayIcon.opened) host.screenScope.openFlyout = ""
+                            trayFrame.showApp(item)
+                        }
                     }
                 }
             }
