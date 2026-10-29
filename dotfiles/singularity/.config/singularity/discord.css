@@ -306,21 +306,44 @@ section.title_f75fb0, .header_f37cb1 {
   letter-spacing: var(--n-heading-spacing);
   font-weight: 700 !important;
 }
+/* the mark before the label: its text, or the opening piece of its shape
+ * (a bar, a bracket, the rule's start and a notch); the closing piece after
+ * it (a bracket, a notch); the tag shape puts the label on an accent pill */
 .name__29444 > .overflow_b0dfc2::before,
-.membersGroup_c8ffbb .headerContainer__095fe > span:first-child::before {
+.membersGroup_c8ffbb .headerContainer__095fe > span:first-child::before,
+.membersGroupHeader_c8ffbb::before {
   content: var(--n-mark-text);
+  display: inline-block;
+  width: var(--n-mark-w);
+  height: var(--n-mark-h);
+  vertical-align: -0.12em;
   color: var(--n-mark);
+  background: var(--n-mark-fill);
+  border-right: var(--n-mark-notch) solid var(--n-muted);
+  border-radius: var(--n-mark-radius);
   margin-right: var(--n-mark-gap);
+}
+.name__29444 > .overflow_b0dfc2::after,
+.membersGroup_c8ffbb .headerContainer__095fe > span:first-child::after,
+.membersGroupHeader_c8ffbb::after {
+  content: var(--n-mark-end);
+  display: inline-block;
+  height: var(--n-mark-h);
+  vertical-align: -0.12em;
+  color: var(--n-mark);
+  border-left: var(--n-mark-notch) solid var(--n-muted);
+  margin-left: var(--n-mark-gap);
+}
+.name__29444 > .overflow_b0dfc2,
+.membersGroup_c8ffbb .headerContainer__095fe > span:first-child {
+  background: var(--n-tag-fill);
+  padding: 0 var(--n-tag-pad);
+  border-radius: var(--n-radius-inner);
 }
 /* role groups keep their role's colour */
 .membersGroupHeader_c8ffbb {
   text-transform: var(--n-heading-case);
   letter-spacing: var(--n-heading-spacing);
-}
-.membersGroupHeader_c8ffbb::before {
-  content: var(--n-mark-text);
-  color: var(--n-mark);
-  margin-right: var(--n-mark-gap);
 }
 .mainContent__29444::after {
   content: "";

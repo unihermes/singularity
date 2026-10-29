@@ -260,6 +260,9 @@ Scope {
         var gutter = channel ? Theme.channelGrooveWidth : Theme.frameDouble ? Theme.frameInset : 0
         var inner = channel || Theme.frameDouble ? bw : 0
         var px = n => n + "px"
+        // the heading mark: Theme.headingPrefix's text, or its shape drawn
+        // with the --n-mark-* boxes either side of the label
+        var shape = Theme.headingShape
         var shell = {
             base: hex(Theme.base), bar: hex(Theme.bar), panel: hex(Theme.panel), surface: hex(Theme.surface),
             popup: hex(popup), muted: hex(Theme.muted), subtext: hex(Theme.subtext),
@@ -267,8 +270,21 @@ Scope {
             hover: hex(Theme.hoverFill), selected: hex(Theme.selectedFill),
             stroke: rgba(Theme.stroke, Theme.stroke.a),
             "section-line": rgba(Theme.sectionLine, Theme.sectionLine.a),
-            heading: hex(Theme.headingColor), mark: hex(Theme.headingMarkColor),
-            "mark-text": JSON.stringify(Theme.headingPrefix), "mark-gap": Theme.headingPrefix ? "1ch" : "0",
+            heading: hex(shape === "tag" ? Theme.textOnAccent : Theme.headingColor), mark: hex(Theme.headingMarkColor),
+            "mark-text": shape === "text" ? JSON.stringify(Theme.headingPrefix)
+                : shape === "brackets" ? '"["' : shape === "tag" ? "none" : '""',
+            "mark-end": shape === "brackets" ? '"]"' : shape === "tab" ? '""' : "none",
+            "mark-gap": shape === "text" ? (Theme.headingPrefix ? "1ch" : "0")
+                : shape === "tag" ? "0" : px(Theme.spaceM),
+            "mark-w": shape === "bar" ? px(bw * 3) : shape === "tab" ? px(Theme.spaceL) : "auto",
+            "mark-h": shape === "bar" || shape === "tab" ? "1em" : "auto",
+            "mark-fill": shape === "bar" ? hex(Theme.headingMarkColor)
+                : shape === "tab" ? "linear-gradient(" + hex(Theme.stroke) + ", " + hex(Theme.stroke)
+                    + ") center / 100% " + px(bw) + " no-repeat" : "transparent",
+            "mark-radius": shape === "bar" ? px(bw * 1.5) : "0",
+            "mark-notch": px(shape === "tab" ? bw : 0),
+            "tag-fill": shape === "tag" ? hex(Theme.accent) : "transparent",
+            "tag-pad": shape === "tag" ? px(Theme.spaceS) : "0",
             "heading-case": Theme.headingUpper ? "uppercase" : "none",
             "heading-spacing": px(Theme.headingSpacing),
             rule: px(Theme.headingRule ? bw : 0),
@@ -860,6 +876,10 @@ Scope {
         function onHeadingColorChanged() { debounce.restart() }
         function onHeadingBoldChanged() { debounce.restart() }
         function onHeadingUpperChanged() { debounce.restart() }
+        function onHeadingRuleChanged() { debounce.restart() }
+        function onHeadingShapeChanged() { debounce.restart() }
+        function onHeadingPrefixChanged() { debounce.restart() }
+        function onHeadingMarkColorChanged() { debounce.restart() }
     }
 
     Process {
