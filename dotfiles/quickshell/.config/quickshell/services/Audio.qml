@@ -136,10 +136,15 @@ Singleton {
     // An app's own name for itself, falling back to the node's. Pipewire fills
     // application.name for anything launched normally; a bare node (a script
     // piping into pw-play, the visualiser's capture) may only have a name.
+    // Chromium's voice engine names itself, not the app (Discord's calls), so
+    // that goes by the app's binary.
     function appName(n) {
         if (!n) return ""
         var p = n.properties || {}
-        return p["application.name"] || n.description || n.nickname || n.name
+        var name = p["application.name"] || ""
+        if (/^(WEBRTC VoiceEngine|Chromium input)$/.test(name) && p["application.process.binary"])
+            return Apps.nameForWindow(p["application.process.binary"], "")
+        return name || n.description || n.nickname || n.name
     }
 
     // an app stream's icon path: its own icon name, else the app's found

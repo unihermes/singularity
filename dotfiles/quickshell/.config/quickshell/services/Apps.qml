@@ -45,7 +45,8 @@ Singleton {
 
     // Every launchable entry, most launched first then A-Z (or A-Z with
     // `alphabetical`), case-insensitive. With a query, prefix matches first;
-    // genericName is searched too.
+    // genericName, keywords and the window class are searched too (Equicord's
+    // class is discord).
     function list(query, alphabetical) {
         var all = DesktopEntries.applications.values
         var q = (query || "").trim().toLowerCase()
@@ -57,7 +58,9 @@ Singleton {
             if (q === "") { rest.push(e); continue }
             if (name.startsWith(q)) starts.push(e)
             else if (name.indexOf(q) !== -1
-                || (e.genericName || "").toLowerCase().indexOf(q) !== -1) rest.push(e)
+                || (e.genericName || "").toLowerCase().indexOf(q) !== -1
+                || (e.startupClass || "").toLowerCase().indexOf(q) !== -1
+                || Array.from(e.keywords || []).some(k => k.toLowerCase().indexOf(q) !== -1)) rest.push(e)
         }
         var c = counts
         var byName = (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())
