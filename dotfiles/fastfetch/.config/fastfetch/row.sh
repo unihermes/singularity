@@ -71,6 +71,9 @@ case $1 in
     [[ $v =~ ^[0-9]+th\ Gen\ (.*) ]] && v=${BASH_REMATCH[1]}
     [[ $label == Disk ]] && v=${v% - *}
     [[ $label == Icons ]] && v=${v%% \[*}
+    # just the model: no "(16) @ 4.50 GHz" or "[Discrete]"
+    [[ $label == CPU ]] && v=${v%% (*}
+    [[ $label == GPU ]] && v=${v%% \[*}
     [[ $v =~ ^(.*)\ \([0-9]+\+[0-9]+\)(.*)$ ]] && v=${BASH_REMATCH[1]}${BASH_REMATCH[2]}
     # "7 (flatpak-user), 950 (pacman)" -> "950 pacman · 7 flatpak", biggest first
     if [[ $label == Packages ]]; then
