@@ -23,3 +23,5 @@ Delete this file once every item is done.
     straight on the wallpaper, like the desktop widgets).
 12. Battery and Weather: time graphs (battery charge over the past hours, the
     weather's temperature over the coming hours).
+13. Audio: drag and drop an app's row onto the Game, Chat or Media channel (in the
+    Volume flyout and Settings, Audio) to route that app's sound to the channel.
