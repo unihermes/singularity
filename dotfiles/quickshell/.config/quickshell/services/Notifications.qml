@@ -47,6 +47,23 @@ Singleton {
     // Entries showing as popups, newest first
     property var popups: []
 
+    // The screen the popups show on: the primary display (the Display
+    // page's primary-display) while it's on, else the first Hyprland lists.
+    property string savedPrimary: ""
+    readonly property string popupScreen: {
+        var mons = Hyprland.monitors.values
+        return mons.some(m => m.name === savedPrimary) ? savedPrimary
+            : mons.length > 0 ? mons[0].name : ""
+    }
+    FileView {
+        path: Settings.stateDir + "/primary-display"
+        printErrors: false
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root.savedPrimary = text().trim()
+        onLoadFailed: root.savedPrimary = ""
+    }
+
     // Advanced once a minute while there's anything to date, so relative
     // times ("5m") move on
     property double now: Date.now()

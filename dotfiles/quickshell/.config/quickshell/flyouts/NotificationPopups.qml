@@ -2,20 +2,18 @@
 // ~/.config/quickshell/flyouts/NotificationPopups.qml
 //
 // Notifications as they arrive, stacked from Settings' chosen corner on the
-// focused screen. Each leaves after its timeout (stripe running down, held
+// primary display (Notifications.popupScreen). Each leaves after its timeout (stripe running down, held
 // while hovered) and stays in the history. Grouped (notifGroup), an app's
 // popups share one card, the others a line each under the newest.
 
 import Quickshell
-import Quickshell.Hyprland
 import QtQuick
 import "../services"
 
 OverlayWindow {
     id: root
 
-    readonly property bool focused: !!Hyprland.focusedMonitor
-        && Hyprland.focusedMonitor.name === scope.modelData.name
+    readonly property bool onScreen: Notifications.popupScreen === scope.modelData.name
     // [{ entry, others }], newest first
     readonly property var groups: {
         var out = []
@@ -27,7 +25,7 @@ OverlayWindow {
         }
         return out
     }
-    readonly property var shown: focused ? groups.slice(0, 5) : []
+    readonly property var shown: onScreen ? groups.slice(0, 5) : []
     readonly property bool atBottom: Settings.notifPositionY === "bottom"
     // the bar's thickness when the popups start from its edge
     readonly property real barGap: (Theme.barPosition === "bottom") === atBottom ? Theme.barExtent : 0
