@@ -18,3 +18,4 @@ Delete this file once every item is done.
    from those before implementing anything.
 9. Git habits: look back over the repo's history (commit size and frequency, message
    style, pushes, branches) and recommend more efficient ways of working.
+10. Discord: fix ALT+SHIFT+S (share the window in focus on Discord, or stop sharing).
