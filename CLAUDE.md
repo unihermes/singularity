@@ -35,6 +35,8 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
   configs) that install.sh's `put` copies to the same path under `/`.
 - `qs/DESIGN.md`: the UI design reference. Read the section you need (grep its `##`
   headings) before UI work, not the whole file.
+- `TODO.md`: the to-do list. "Add to the to-do" means a new numbered item there; tick
+  items off by removing them once done.
 
 ## Checks
 
