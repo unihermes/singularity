@@ -735,6 +735,28 @@ Singleton {
         procProc.running = true
     }
 
+    // [{ name, memKb }]: the four holding the most memory, for the desktop
+    // sidebar, every 3s while it's on (ps: resident memory doesn't need
+    // top's second frame)
+    property var procsByMem: []
+    Process {
+        id: memProcs
+        command: ["sh", "-c", "ps -eo rss=,comm= --sort=-rss | head -n 4"]
+        stdout: StdioCollector {
+            onStreamFinished: root.procsByMem = text.trim().split("\n").map(l => {
+                var m = l.trim().match(/^(\d+)\s+(.+)$/)
+                return m ? { name: m[2], memKb: Number(m[1]) } : null
+            }).filter(p => p)
+        }
+    }
+    Timer {
+        interval: 3000
+        repeat: true
+        running: Settings.deskSidebar
+        triggeredOnStart: true
+        onTriggered: if (!memProcs.running) memProcs.running = true
+    }
+
     // top's RES in KiB, which it still shortens past its column ("1.9g")
     function kbOf(res) {
         var m = String(res).match(/^([0-9.]+)([mgt]?)$/)

@@ -235,9 +235,11 @@ OverlayWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             icon: "󰈉"
                             text: "Hide"
+                            // unpicked first: hiding it takes this slot away
                             onClicked: {
-                                root.layer.setPlace(slot.modelData, { on: false })
+                                const key = slot.modelData, layer = root.layer
                                 root.picked = ""
+                                layer.setPlace(key, { on: false })
                             }
                         }
                     }

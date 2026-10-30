@@ -40,6 +40,11 @@ Singleton {
     property int gpuLoadLast: -1
     property real gpuWatts: -1
     property int gpuFan: -1         // % of the card's own fans, NVIDIA only
+    // NVIDIA only, -1 without: video memory in MiB, core and memory clocks in MHz
+    property real gpuMemUsed: -1
+    property real gpuMemTotal: -1
+    property real gpuClock: -1
+    property real gpuMemClock: -1
 
     // [{ key, name, rpm, duty, auto }] for every header that has turned; duty
     // is the PWM as a percent, -1 when the header has no PWM node; auto when
@@ -263,7 +268,7 @@ Singleton {
         id: smi
         running: root.wanted && smiProbe.found
         command: ["nvidia-smi",
-            "--query-gpu=temperature.gpu,utilization.gpu,power.draw,fan.speed",
+            "--query-gpu=temperature.gpu,utilization.gpu,power.draw,fan.speed,memory.used,memory.total,clocks.gr,clocks.mem",
             "--format=csv,noheader,nounits", "-l", String(root.interval)]
         stdout: SplitParser {
             onRead: line => {
@@ -276,6 +281,10 @@ Singleton {
                 root.gpuLoadLast = load
                 root.gpuWatts = isNaN(v[2]) ? -1 : v[2]
                 root.gpuFan = isNaN(v[3]) ? -1 : v[3]
+                root.gpuMemUsed = v.length > 4 && !isNaN(v[4]) ? v[4] : -1
+                root.gpuMemTotal = v.length > 5 && !isNaN(v[5]) ? v[5] : -1
+                root.gpuClock = v.length > 6 && !isNaN(v[6]) ? v[6] : -1
+                root.gpuMemClock = v.length > 7 && !isNaN(v[7]) ? v[7] : -1
             }
         }
         onExited: if (root.wanted) smiRestart.start()

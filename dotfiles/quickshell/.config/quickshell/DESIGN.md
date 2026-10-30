@@ -532,17 +532,19 @@ Desktop > Widgets.
   with no player it says Nothing playing and offers the last one.
 - **Sidebar** (`desktop/DesktopSidebar.qml`, Appearance > Desktop >
   Sidebar): a conky-style column flush with the primary display's right
-  edge, from the bar to the foot, on a faint dark ground (30%) with a
+  edge, from the bar to the foot, on a see-through dark ground (50%) with a
   hairline on its left; the same white ink and shadow, the shell's font,
-  body 16. It always fits the height: the sections spread out to fill it,
-  or the whole column scales down when they'd run past. The time large
-  and the date, right-aligned, then ruled sections under the heading mark:
-  System, CPU (a strip of its cores), GPU, Memory, Disks, Network,
-  Processes, Fans, Battery, as label/value rows with thin meters (the alert
-  colour from 85%) and the last minute as sparklines; a section the machine
-  can't fill is left out. It takes no input, and the widgets' room on that
-  screen stops short of it. While it's on, the System window's sampling
-  runs.
+  body 16. Laid out like a classic conky: sections under ruled headings
+  with the heading mark (Info, CPU, GPU, RAM, Drives, Network, Fans,
+  Battery), "Label: value" lines with the label dimmed, outlined meters
+  beside their labels (each core gets one, two columns; the alert colour
+  from 85%), "used / total [ n% ]" right-aligned under them, the busiest
+  processes by CPU and by memory, and the last minute as sparklines. A
+  section or line the machine can't fill is left out. It always fits the
+  height: the sections spread out to fill it, or the whole column scales
+  down when they'd run past. It takes no input, and the widgets' room on
+  that screen stops short of it. While it's on, the System window's
+  sampling runs.
 - **Sticky notes:** any number, each a Notes tab (SUPER+N) pinned to the
   desktop; every note lives in the Notes window, where 󰐃 on a tab pins or
   unpins it. On the desktop: the title in the accent, + for a new note
