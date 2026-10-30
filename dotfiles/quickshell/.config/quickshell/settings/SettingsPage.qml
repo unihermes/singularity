@@ -9,10 +9,9 @@
 // `pinned` sits above the rows while `pinnedVisible`; `footer` floats over
 // the foot of the rows while `footerVisible`.
 // Every page is laid out in cards (DESIGN.md): `status` (with
-// `statusDetail`, `statusControl`) as a card on top, the window filling it
-// in from the sidebar's line where the page sets none; then framed
-// sections showing their first three rows, the rest under the heading's
-// More.
+// `statusDetail`, `statusControl`) as a card on top where the page sets
+// one; then framed sections showing their first three rows, the rest under
+// the heading's More.
 
 import QtQuick
 import "../services"

@@ -642,8 +642,9 @@ Settings') are laid out the same way.
   at `fontTitle` (`WindowPageTitle`), then its own one-line description.
 - **Page layout** (2026-10-30: every page, after a per-page mix was
   tried and dropped): cards. A card on top says what the page is set to
-  now (`status`, `statusDetail`, `statusControl`; the sidebar's line where
-  the page sets none, no card where that's empty), then framed sections
+  now where the page has one worth saying (`status`, `statusDetail`,
+  `statusControl`: the Look pages and Lock Screen; a lone "Off" was tried
+  and dropped), then framed sections
   showing their first three rows; the rest fold away behind More (n) at
   the heading's rule end (Less folds them again). A search hit in the
   folded rows brings them back.
