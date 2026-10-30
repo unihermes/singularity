@@ -14,13 +14,14 @@ discord=$(hyprctl clients | awk '/^Window /{a=$2} $1 == "class:" && $2 == "disco
 
 hyprctl activewindow | awk '/^Window /{print $2; exit}' >"${XDG_RUNTIME_DIR:-/tmp}/singularity-share-window"
 
-# held modifiers ride along, so Discord's text box doesn't take the S
-key() {
-  hyprctl dispatch "hl.dsp.send_key_state({ mods = \"$1\", key = \"$2\", state = \"$3\", window = \"address:0x$discord\" })" >/dev/null
-}
-key "" Shift_L down
-key SHIFT Alt_L down
-key "SHIFT ALT" s down
-key "SHIFT ALT" s up
-key SHIFT Alt_L up
-key "" Shift_L up
+# held modifiers ride along, so Discord's text box doesn't take the S. A
+# separate "up" never reaches an X window (each send enters it afresh, with
+# no keys down), so every release goes with a press through send_shortcut.
+target="window = \"address:0x$discord\""
+down() { hyprctl dispatch "hl.dsp.send_key_state({ mods = \"$1\", key = \"$2\", state = \"down\", $target })" >/dev/null; }
+tap() { hyprctl dispatch "hl.dsp.send_shortcut({ mods = \"$1\", key = \"$2\", $target })" >/dev/null; }
+down "" Shift_L
+down SHIFT Alt_L
+tap "SHIFT ALT" s
+tap "SHIFT ALT" Alt_L
+tap SHIFT Shift_L
