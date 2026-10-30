@@ -56,7 +56,6 @@ Item {
     // the ground: a hard-edged card, evenly see-through
     Rectangle {
         anchors.fill: parent
-        radius: Math.round(card.unit * 0.14)
         color: Qt.rgba(0, 0, 0, 0.35)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.22)

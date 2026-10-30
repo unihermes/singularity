@@ -23,8 +23,9 @@ Scope {
     readonly property var screen: scope.modelData
     readonly property bool editing: scope.openFlyout === "widgetedit"
 
-    // the room from every screen edge, and between widgets (WidgetCard's)
-    readonly property int margin: Theme.sp(40)
+    // the room from every screen edge (none: flush, like conky), and
+    // between widgets (WidgetCard's)
+    readonly property int margin: 0
     readonly property int gap: Theme.fit(16)
 
     // where the desktop's menu was asked for, from the top
@@ -32,7 +33,7 @@ Scope {
     // the screen under the bar, less the sidebar's column when it's here
     readonly property var area: {
         const a = Placement.area(screen.width, screen.height, Theme.barExtent, Theme.barPosition === "bottom")
-        if (sidebar && sidebar.here) a.w -= sidebar.columnWidth + sidebar.margin
+        if (sidebar && sidebar.here) a.w -= sidebar.columnWidth
         return a
     }
     // the screen's DesktopSidebar

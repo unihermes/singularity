@@ -7,7 +7,9 @@
 // of its cores), GPU, memory, disks, network, the busiest processes, fans
 // and the battery, as label/value rows with thin meters and the last
 // minute as sparklines. A section the machine can't fill is left out.
-// The desktop widgets keep clear of it (DesktopWidgets' area).
+// Flush with the screen's right edge on a faint dark ground, filling the
+// height under the bar. The desktop widgets keep clear of it
+// (DesktopWidgets' area).
 
 import Quickshell
 import Quickshell.Wayland
@@ -24,8 +26,9 @@ PanelWindow {
 
     readonly property bool here: Settings.deskSidebar && Notifications.popupScreen === scope.modelData.name
     // the column's width, which DesktopWidgets leaves free
-    readonly property int columnWidth: Theme.fit(300)
-    readonly property int margin: Theme.sp(40)
+    readonly property int columnWidth: Theme.fit(340)
+    // from its edges in to the readings
+    readonly property int inset: Theme.fit(20)
 
     screen: scope.modelData
     visible: here
@@ -33,15 +36,24 @@ PanelWindow {
     WlrLayershell.namespace: "desktop-widget"
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
-    anchors { top: true; right: true }
-    margins.top: (Theme.barPosition === "bottom" ? 0 : Theme.barExtent) + margin - pad
-    margins.right: margin - pad
-    implicitWidth: columnWidth + pad * 2
-    implicitHeight: body.implicitHeight + pad * 2
-    // room round the column for the shadow
-    readonly property int pad: Theme.sp(24)
+    // flush with the right edge, from the bar to the other end
+    anchors { top: true; right: true; bottom: true }
+    margins.top: Theme.barPosition === "bottom" ? 0 : Theme.barExtent
+    margins.bottom: Theme.barPosition === "bottom" ? Theme.barExtent : 0
+    implicitWidth: columnWidth
     // nothing on it takes the pointer
     mask: Region {}
+
+    // the ground: the widget cards' see-through dark, edged on the left
+    Rectangle {
+        anchors.fill: parent
+        color: Qt.rgba(0, 0, 0, 0.3)
+        Rectangle {
+            width: 1
+            height: parent.height
+            color: Qt.rgba(1, 1, 1, 0.22)
+        }
+    }
 
     // the inks and type, as WidgetCard has them, for WidgetText
     Item {
@@ -51,8 +63,8 @@ PanelWindow {
         readonly property color track: Qt.rgba(1, 1, 1, 0.22)
         readonly property color accent: Qt.lighter(Theme.accent, 1.6)
         readonly property string font: Theme.fontText
-        readonly property int textCaption: Theme.fit(13)
-        readonly property int textBody: Theme.fit(14)
+        readonly property int textCaption: Theme.fit(14)
+        readonly property int textBody: Theme.fit(16)
         readonly property int weightBody: Font.Medium
         readonly property int weightStrong: Font.Bold
     }
@@ -132,12 +144,24 @@ PanelWindow {
         bare: true
     }
 
+    // Fits the height whatever shows: the sections spread out to fill it,
+    // or the whole column scales down when they'd run past the foot.
+    readonly property real room: height - inset * 2
+    readonly property int baseGap: Theme.fit(14)
+    readonly property var shownParts: body.children.filter(c => c.visible)
+    readonly property real partsHeight: shownParts.reduce((h, c) => h + c.height, 0)
+    readonly property real natural: partsHeight + baseGap * Math.max(0, shownParts.length - 1)
+    readonly property real fit: natural > room && natural > 0 ? room / natural : 1
+
     Column {
         id: body
-        x: win.pad
-        y: win.pad
-        width: win.columnWidth
-        spacing: Theme.fit(14)
+        x: win.inset
+        y: win.inset
+        transformOrigin: Item.TopLeft
+        scale: win.fit
+        width: (win.columnWidth - win.inset * 2) / win.fit
+        spacing: win.fit < 1 || win.shownParts.length < 2 ? win.baseGap
+            : (win.room - win.partsHeight) / (win.shownParts.length - 1)
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -154,7 +178,7 @@ PanelWindow {
             WidgetText {
                 anchors.right: parent.right
                 card: ink
-                px: Theme.fit(46)
+                px: Theme.fit(56)
                 font.weight: ink.weightStrong
                 text: Qt.formatTime(clock.date, Theme.hours("HH:mm"))
             }

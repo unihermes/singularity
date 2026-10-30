@@ -122,7 +122,6 @@ OverlayWindow {
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: -Theme.spaceS
-                    radius: Math.round(Theme.fit(164) * 0.14) + Theme.spaceS
                     color: "transparent"
                     border.width: slot.isPicked ? Theme.borderWidth * 2 : Theme.borderWidth
                     border.color: slot.isPicked ? Theme.accent : drag.containsMouse ? Theme.strokeHover : Theme.stroke

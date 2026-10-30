@@ -43,7 +43,6 @@ WidgetCard {
         id: art
         width: root.large ? parent.width : root.small ? Theme.fit(64) : parent.height
         height: root.large ? Math.round(parent.height * 0.52) : width
-        radius: Theme.fit(12)
         color: root.track
 
         Image {

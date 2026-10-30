@@ -480,8 +480,8 @@ for the rest, chips for the way out.
 
 Clock, weather, now playing and system stats on the desktop. They have a
 look of their own, the same under every style and look (asked for
-2026-10-24): a card with a hard hairline edge round an evenly see-through
-dark ground (35%), no gradient, no blur
+2026-10-24): a square card (no rounding, like conky) with a hard hairline
+edge round an evenly see-through dark ground (35%), no gradient, no blur
 (`desktop/WidgetCard.qml`); the content in white and bold with a tight
 dark shadow round every mark, the system font (Appearance > Apps, else
 the shell's), nothing under 13px, dimmed and faint tiers kept strong, the
@@ -502,7 +502,8 @@ Desktop > Widgets.
   (164px at the base text size), medium two units and the 16px gap wide,
   large two by two. Two smalls and a gap are a medium's width.
 - **Where they start:** the clock in the bottom left corner with the
-  weather a gap beside it, the stats top right, the music bottom right, 40px in.
+  weather a gap beside it, the stats top right, the music bottom right,
+  flush with the screen's edges (no margin, like conky).
   A moved one is stored as fractions of the room the screen leaves it
   (`WidgetPlacement.js`), so one on an edge stays on it.
 - **Edit mode** (right-click the desktop > Edit widgets, right-click a
@@ -530,8 +531,11 @@ Desktop > Widgets.
   track, a thin progress line (click to seek) and bare transport glyphs;
   with no player it says Nothing playing and offers the last one.
 - **Sidebar** (`desktop/DesktopSidebar.qml`, Appearance > Desktop >
-  Sidebar): a conky-style column down the primary display's right edge,
-  no card, the same white ink and shadow, the shell's font. The time large
+  Sidebar): a conky-style column flush with the primary display's right
+  edge, from the bar to the foot, on a faint dark ground (30%) with a
+  hairline on its left; the same white ink and shadow, the shell's font,
+  body 16. It always fits the height: the sections spread out to fill it,
+  or the whole column scales down when they'd run past. The time large
   and the date, right-aligned, then ruled sections under the heading mark:
   System, CPU (a strip of its cores), GPU, Memory, Disks, Network,
   Processes, Fans, Battery, as label/value rows with thin meters (the alert
