@@ -71,7 +71,7 @@ do
                     local addr = "address:" .. target.address
                     -- focus alone leaves a floating window under the others
                     hl.dispatch(hl.dsp.focus({ window = addr }))
-                    hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+                    hl.dispatch(hl.dsp.window.bring_to_top())
                 end
                 return
             end

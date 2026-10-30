@@ -546,7 +546,7 @@ ModuleFrame {
                                 // focus and bring to top -- so floating windows stay
                                 // accessible even when behind a monocle-maximized window
                                 Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-                                Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+                                Hyprland.dispatch("hl.dsp.window.bring_to_top()")
                             }
                         }
                     }

@@ -89,7 +89,7 @@ OverlayWindow {
                 Hyprland.dispatch("hl.dsp.focus({window=\"" + addr_str + "\"})")
             }
             const bringToTop = () => {
-                Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr_str + "\"})")
+                Hyprland.dispatch("hl.dsp.window.bring_to_top()")
             }
             Qt.callLater(refocus)
             Qt.callLater(bringToTop)

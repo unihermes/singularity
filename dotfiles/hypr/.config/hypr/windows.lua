@@ -530,7 +530,7 @@ local function fillFloating(win)
         end
         sizeToFullFloat(win)
     end
-    hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+    hl.dispatch(hl.dsp.window.bring_to_top())
     -- by selector: hl.get_window() returns nil for a bare address
     return hl.get_window(addr) or win
 end
@@ -752,7 +752,7 @@ hl.on("window.active", function()
     -- next tick, after the hooks that raise the window just focused
     hl.timer(function()
         hl.dispatch(hl.dsp.focus({ window = addr }))
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+        hl.dispatch(hl.dsp.window.bring_to_top())
     end, { timeout = 1, type = "oneshot" })
 end)
 -- an X11 window comes back with its old address, tags and no_focus, so an
@@ -1002,7 +1002,7 @@ fillByHand = function(win)
     if hasTag(win, "monocle") then
         setShape(win, nil)
         placeMonocle(win)
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+        hl.dispatch(hl.dsp.window.bring_to_top())
     else
         fillFloating(win)
     end
@@ -1166,7 +1166,7 @@ hl.on("layer.closed", function(layer)
         local active = hl.get_active_window()
         if not win or (active and active.address == win.address) or not onActiveWorkspace(win) then return end
         hl.dispatch(hl.dsp.focus({ window = addr }))
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = addr }))
+        hl.dispatch(hl.dsp.window.bring_to_top())
     end, { timeout = 1, type = "oneshot" })
 end)
 
@@ -1184,7 +1184,7 @@ local function maximizeFocused()
     -- back and raise it (a re-fit would cut the restore short)
     if win and stateOf(win.address).minimized then
         restoreMinimized(win)
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+        hl.dispatch(hl.dsp.window.bring_to_top())
         return
     end
 
@@ -1199,7 +1199,7 @@ local function maximizeFocused()
         if hasTag(win, "monocle") then
             -- re-fit one left sized for another monitor
             if win.monitor then placeMonocle(win, win.monitor) end
-            hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+            hl.dispatch(hl.dsp.window.bring_to_top())
         end
         return
     end
@@ -1214,7 +1214,7 @@ local function maximizeFocused()
     -- be raised: it's floated into monocle instead
     if not isMonocleExempt(win) then
         setWindowMonocle(win, true, mon)
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+        hl.dispatch(hl.dsp.window.bring_to_top())
         return
     end
 
@@ -1263,7 +1263,7 @@ local function yieldFullscreen()
             stateOf(w.address).yieldedFullscreen = { client = w.fullscreen_client }
             hl.dispatch(hl.dsp.window.fullscreen_state({
                 internal = 0, client = w.fullscreen_client, window = "address:" .. w.address }))
-            hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+            hl.dispatch(hl.dsp.window.bring_to_top())
         end
     end
 end
@@ -1782,7 +1782,7 @@ hl.on("window.active", function()
     local win = hl.get_active_window()
     if win and stateOf(win.address).parked then
         unparkWin(win)
-        hl.dispatch(hl.dsp.window.bring_to_top({ window = "address:" .. win.address }))
+        hl.dispatch(hl.dsp.window.bring_to_top())
     end
     scheduleParking()
 end)

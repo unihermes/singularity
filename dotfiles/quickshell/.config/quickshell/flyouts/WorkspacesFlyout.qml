@@ -154,7 +154,7 @@ FlyoutPanel {
                         // bring to top as well, as the bar's strip does, so
                         // a floating window buried under others surfaces
                         Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-                        Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+                        Hyprland.dispatch("hl.dsp.window.bring_to_top()")
                     }
                 }
             }

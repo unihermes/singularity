@@ -265,7 +265,7 @@ Singleton {
     function raise(win) {
         const addr = "address:0x" + win.address
         Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-        Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+        Hyprland.dispatch("hl.dsp.window.bring_to_top()")
     }
 
     // A moment after the click, so an app that raises its own window (the

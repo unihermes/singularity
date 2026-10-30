@@ -79,7 +79,7 @@ ModuleFrame {
     function raise(win) {
         var addr = "address:0x" + win.address
         Hyprland.dispatch("hl.dsp.focus({window=\"" + addr + "\"})")
-        Hyprland.dispatch("hl.dsp.window.bring_to_top({window=\"" + addr + "\"})")
+        Hyprland.dispatch("hl.dsp.window.bring_to_top()")
     }
 
     // Left click with no window open: after a moment, the menu's
