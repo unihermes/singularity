@@ -619,6 +619,12 @@ ShellRoot {
         DesktopWidgets {
             id: deskWidgets
             scope: screenScope
+            sidebar: deskSidebar
+        }
+        // the conky-style column down the primary display's right edge
+        DesktopSidebar {
+            id: deskSidebar
+            scope: screenScope
         }
 
         // --- flyouts --------------------------------------------------

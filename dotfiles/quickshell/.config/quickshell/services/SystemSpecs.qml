@@ -16,6 +16,8 @@ Singleton {
     id: root
 
     property bool active: false
+    // the System window, or the desktop sidebar's host, kernel and models
+    readonly property bool wanted: active || Settings.deskSidebar
 
     // --- identity --------------------------------------------------------
 
@@ -77,7 +79,9 @@ Singleton {
     FileView { id: kernelFile; path: "/proc/sys/kernel/osrelease"; blockLoading: true }
     FileView { id: hostFile;   path: "/proc/sys/kernel/hostname";  blockLoading: true }
 
-    onActiveChanged: if (active) {
+    onWantedChanged: if (wanted) load()
+    Component.onCompleted: if (wanted) load()
+    function load() {
         kernelFile.reload()
         hostFile.reload()
         kernel = kernelFile.text().trim()

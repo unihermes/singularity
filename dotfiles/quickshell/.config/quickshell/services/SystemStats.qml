@@ -7,8 +7,9 @@
 // (cheap each second); top (3s), ip (3s), a hwmon sweep (5s) and df (30s)
 // shell out. A singleton so the lazily loaded pages need no null guards;
 // the static half is SystemSpecs.qml. Samples only while `sampling`: the
-// window is showing (`active`) or a flyout that reads it is open
-// (`flyoutActive`); the graphs start empty each open. The desktop's stats
+// window is showing (`active`), a flyout that reads it is open
+// (`flyoutActive`) or the desktop sidebar is on; the graphs start empty
+// each open. The desktop's stats
 // widget keeps the CPU, memory, temperature and filesystems going on their
 // own (`light`).
 
@@ -23,7 +24,7 @@ Singleton {
 
     property bool active: false
     property bool flyoutActive: false
-    readonly property bool sampling: active || flyoutActive
+    readonly property bool sampling: active || flyoutActive || Settings.deskSidebar
     // the desktop's stats widget: CPU, memory, the temperature and the
     // filesystems only, while nothing above wants the rest
     readonly property bool light: !sampling && Settings.deskWidget("stats").on
@@ -734,6 +735,12 @@ Singleton {
         procProc.running = true
     }
 
+    // top's RES in KiB, which it still shortens past its column ("1.9g")
+    function kbOf(res) {
+        var m = String(res).match(/^([0-9.]+)([mgt]?)$/)
+        return m ? Number(m[1]) * ({ "": 1, m: 1024, g: 1048576, t: 1073741824 })[m[2]] : 0
+    }
+
     // Heaviest processes: top's second frame (a real 1s sample; ps and top's
     // first frame give lifetime averages). -e k keeps RES in KiB.
     Process {
@@ -756,7 +763,7 @@ Singleton {
                     var f = lines[i].split("|")
                     if (f.length < 5) continue
                     out.push({ pid: Number(f[0]), user: f[1], cpu: Number(f[2]),
-                               memKb: Number(f[3]), name: f[4] })
+                               memKb: root.kbOf(f[3]), name: f[4] })
                 }
                 // top already sorted, but by its own rounding of the column;
                 // this keeps ties and near-ties in a stable, visible order

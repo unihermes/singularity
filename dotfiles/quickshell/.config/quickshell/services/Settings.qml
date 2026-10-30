@@ -425,6 +425,9 @@ Singleton {
     // fx and fy place it across the room the screen leaves it (0 the left
     // or top edge, 1 the other); below 0 it sits where it starts out.
     // screen "" is the first screen. Sticky notes keep theirs in Notes.
+    // the conky-style column down the primary display's right edge
+    // (desktop/DesktopSidebar.qml)
+    readonly property alias deskSidebar: adapter.deskSidebar
     readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats", "sysinfo"]
     readonly property var deskWidgetSizes: ["s", "m", "l"]
     function deskWidget(key) {
@@ -1114,6 +1117,7 @@ Singleton {
             property bool phoneLinkOn: false
             property var headsetOptions: ({})
             property var desktopWidgets: ({})
+            property bool deskSidebar: false
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

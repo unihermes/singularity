@@ -523,11 +523,22 @@ Desktop > Widgets.
 - **Clock:** the day in the accent over the time, its seconds small beside it; medium adds the month,
   ISO week and this week as a strip with today lit, large the whole month.
 - **Weather:** where, the temperature, the sky and today's high and low;
-  medium adds five days as columns, large the next hours and five days as
-  rows with their range against the week's.
+  medium adds five days as columns, large the next day's temperature as a
+  curve (rain as faint bars, the sky every 3 hours) and five days as rows
+  with their range against the week's.
 - **Music:** the art (dimmed while paused), the player in the accent, the
   track, a thin progress line (click to seek) and bare transport glyphs;
   with no player it says Nothing playing and offers the last one.
+- **Sidebar** (`desktop/DesktopSidebar.qml`, Appearance > Desktop >
+  Sidebar): a conky-style column down the primary display's right edge,
+  no card, the same white ink and shadow, the shell's font. The time large
+  and the date, right-aligned, then ruled sections under the heading mark:
+  System, CPU (a strip of its cores), GPU, Memory, Disks, Network,
+  Processes, Fans, Battery, as label/value rows with thin meters (the alert
+  colour from 85%) and the last minute as sparklines; a section the machine
+  can't fill is left out. It takes no input, and the widgets' room on that
+  screen stops short of it. While it's on, the System window's sampling
+  runs.
 - **Sticky notes:** any number, each a Notes tab (SUPER+N) pinned to the
   desktop; every note lives in the Notes window, where 󰐃 on a tab pins or
   unpins it. On the desktop: the title in the accent, + for a new note

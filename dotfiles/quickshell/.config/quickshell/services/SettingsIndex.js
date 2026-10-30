@@ -180,6 +180,7 @@ var entries = [
     { page: "appearance", section: "Desktop", label: "Now playing", keywords: "desktop widgets music media player spotify wallpaper" },
     { page: "appearance", section: "Desktop", label: "System", keywords: "desktop widgets stats cpu gpu ram memory temperature disk storage monitor wallpaper" },
     { page: "appearance", section: "Desktop", label: "System info", keywords: "desktop widgets fastfetch neofetch distro kernel uptime host ip packages cpu gpu hardware" },
+    { page: "appearance", section: "Desktop", label: "Sidebar", keywords: "desktop conky system monitor column right edge cpu gpu memory disks network processes fans battery" },
     { page: "appearance", section: "Desktop", label: "Placement", keywords: "desktop widgets edit move drag place position size small medium large right-click menu sticky notes" },
     { page: "appearance", section: "Desktop", label: "Window gaps", keywords: "gaps_in between windows hyprland tiling" },
     { page: "appearance", section: "Desktop", label: "Edge gaps", keywords: "screen edges gaps_out hyprland bar floating islands margin inset" },

@@ -12,8 +12,6 @@ Delete this file once every item is done.
    the pages and their flow layout. Things are cluttered right now, so first make
    stripped-down flow layouts (structure and navigation only, no styling) and pick
    from those before implementing anything.
-11. Desktop: a conky-style sidebar on the desktop (a column of system info drawn
-    straight on the wallpaper, like the desktop widgets).
 13. Audio: drag and drop an app's row onto the Game, Chat or Media channel (in the
     Volume flyout and Settings, Audio) to route that app's sound to the channel.
 14. Windows: look for edge cases in how windows behave (floating, fullscreen, dialogs,

@@ -227,6 +227,16 @@ SettingsTab {
     }
 
     SettingsField {
+        label: "Sidebar"
+        hint: "System readings down the right edge of the main display"
+        Switch {
+            anchors.right: parent.right
+            checked: Settings.deskSidebar
+            onToggled: Settings.set("deskSidebar", !checked)
+        }
+    }
+
+    SettingsField {
         labelWidth: parent.width - placeChip.width - Theme.spaceL
         label: "Placement"
         hint: "Drag them about; right-clicking the desktop does the same"

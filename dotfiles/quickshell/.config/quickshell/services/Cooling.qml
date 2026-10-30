@@ -25,8 +25,10 @@ Singleton {
 
     readonly property bool desktop: machine === "desktop"
         || (machine === "" && !Battery.present)
-    // the bar's Cooling module, or the desktop's stats widget (GPU load)
-    readonly property bool wanted: desktop && (Settings.widgetVisible("cooling") || Settings.deskWidget("stats").on)
+    // the bar's Cooling module, the desktop's stats widget (GPU load) or
+    // its sidebar
+    readonly property bool wanted: desktop && (Settings.widgetVisible("cooling") || Settings.deskWidget("stats").on
+                                               || Settings.deskSidebar)
     readonly property bool available: wanted && (cpuC >= 0 || gpuC >= 0 || fans.length > 0)
 
     property string machine: ""

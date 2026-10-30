@@ -29,8 +29,14 @@ Scope {
 
     // where the desktop's menu was asked for, from the top
     property real menuY: 0
-    readonly property var area: Placement.area(screen.width, screen.height, Theme.barExtent,
-                                               Theme.barPosition === "bottom")
+    // the screen under the bar, less the sidebar's column when it's here
+    readonly property var area: {
+        const a = Placement.area(screen.width, screen.height, Theme.barExtent, Theme.barPosition === "bottom")
+        if (sidebar && sidebar.here) a.w -= sidebar.columnWidth + sidebar.margin
+        return a
+    }
+    // the screen's DesktopSidebar
+    property var sidebar: null
 
     // each widget's drawn size, as it reports it
     property var sizes: ({})
