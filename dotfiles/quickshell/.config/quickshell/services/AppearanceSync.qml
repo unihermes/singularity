@@ -18,7 +18,8 @@
 // Zen's and Floorp's profiles get a marked block in user.js (browserPrefs)
 // and Floorp its userChrome.css (browserChrome). GTK and Qt apps also get
 // dark/light, icon and cursor themes and the system font, set only here:
-// gsettings for GTK (live), qt6ct.conf for Qt (next launch), the
+// gsettings for GTK (live), xsettingsd.conf for GTK on X11 (live),
+// qt6ct.conf for Qt (next launch), the
 // XCursor fallback index.theme, and xdg/gtk-*/settings.ini for the cursor
 // of GTK and Chromium apps on X11.
 
@@ -594,8 +595,11 @@ Scope {
             + "}\n"
             + "toast button.circular { color: " + hex(Theme.subtext) + "; background: none; }\n"
             + "toast button.circular:hover { color: " + hex(Theme.text) + "; background-color: " + hex(Theme.hoverFill) + "; }\n"
+        // no client-side shadow: Hyprland draws its own, and on X11 GTK3
+        // paints it inside the window, where the border and blur go round it
+        var decoration = "decoration {\n  box-shadow: none;\n  margin: 0;\n}\n"
         // GTK4 without libadwaita still reads the named colours
-        var gtk3 = header + named + selection
+        var gtk3 = header + named + selection + decoration
         var gtk4 = header + vars + named + selection + tabs + toast
         AtomicFileWrite.write({ path: root.dir + "/gtk3.css", transform: () => gtk3 })
         AtomicFileWrite.write({ path: root.dir + "/gtk4.css", transform: () => gtk4 })
@@ -786,7 +790,20 @@ Scope {
             "gsettings set " + iface + " color-scheme " + q(scheme) + "; " +
             "gsettings set " + iface + " icon-theme " + q(Settings.iconTheme) + "; " +
             "gsettings set " + iface + " cursor-theme " + q(Settings.cursorTheme) + "; " +
-            "gsettings set " + iface + " cursor-size " + Settings.cursorSize]
+            "gsettings set " + iface + " cursor-size " + Settings.cursorSize + "; " +
+            // GTK on X11 reads none of that but XSETTINGS: xsettingsd serves
+            // the same, started here or told to reload
+            "command -v xsettingsd >/dev/null || exit 0; " +
+            "c=" + q(root.dir + "/xsettingsd.conf") + "; mkdir -p \"$(dirname \"$c\")\"; " +
+            "printf '%s\\n' \"Net/ThemeName \\\"$t\\\"\" " +
+            q("Net/IconThemeName \"" + Settings.iconTheme + "\"") + " " +
+            q("Gtk/CursorThemeName \"" + Settings.cursorTheme + "\"") + " " +
+            q("Gtk/CursorThemeSize " + Settings.cursorSize) + " " +
+            q("Gtk/FontName \"" + font + "\"") + " " +
+            q("Gtk/MonospaceFontName \"" + monoFont + "\"") + " " +
+            q("Gtk/DecorationLayout \":\"") + " " +
+            "'Xft/Antialias 1' 'Xft/Hinting 1' 'Xft/HintStyle \"hintslight\"' 'Xft/RGBA \"rgb\"' > \"$c\"; " +
+            "pkill -HUP -x xsettingsd || setsid -f xsettingsd -c \"$c\" >/dev/null 2>&1"]
         // only when something changed: every set restyles each running GTK app
         if (cmd.join("\n") === gtkSync.sent) return
         if (gtkSync.running) { gtkSync.again = true; return }

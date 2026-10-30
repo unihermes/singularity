@@ -148,6 +148,9 @@ gnome-themes-extra
 # adw-gtk3: libadwaita's look for GTK3 apps, with its colours left as named
 # ones, so the shell's generated gtk3.css recolours them like GTK4 apps.
 adw-gtk-theme
+# GTK on X11 (XWayland apps, and the file picker the portal opens for them)
+# reads no gsettings, only XSETTINGS; AppearanceSync writes and runs it
+xsettingsd
 
 # fonts
 ttf-ubuntu-nerd

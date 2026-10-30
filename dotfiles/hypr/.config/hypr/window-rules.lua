@@ -28,8 +28,9 @@ hl.window_rule({
 -- An X11 app's menus (Steam's View, Friends, Games and right-click menus)
 -- are windows of their own with no title. Tagged "menu": windows.lua takes
 -- them for no dialog or window of the app's, only keeping them on their
--- owner's workspace. The tags drop if a title comes.
-local X11_MENU = { xwayland = true, title = "^$" }
+-- owner's workspace. The tags drop if a title comes. The portal's file
+-- picker for an X11 app is untitled too, but a dialog.
+local X11_MENU = { xwayland = true, title = "^$", class = "negative:^(Xdg-desktop-portal-gtk)$" }
 hl.window_rule({ name = "x11-menus", match = X11_MENU, tag = "+menu" })
 hl.window_rule({ name = "x11-menus-exempt", match = X11_MENU, tag = "+monocle-exempt" })
 
