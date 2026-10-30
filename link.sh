@@ -93,14 +93,17 @@ if command -v node &>/dev/null; then
     || log "binds.lua: the new defaults couldn't be merged in"
 fi
 seed hyprlock.defaults.conf      "$HOME/.config/hypr/hyprlock.conf"
-# xdph's, with the home directory filled in (it runs the picker without a
-# shell, so no ~); rewritten when the template changes, and the portal with it
+# the Discord share bind and its picker are gone: drop the bind from
+# binds.lua and the xdph.conf that pointed the portal at the picker
+binds=$HOME/.config/hypr/binds.lua
+if grep -q 'discord-share\.sh' "$binds" 2>/dev/null; then
+  sed -i -e '/^-- --- Discord ---$/d' -e '/Toggle Go Live Streaming keybind/d' -e '/discord-share\.sh/d' "$binds"
+  log "removed the Discord share bind from ${binds#"$HOME/"}"
+fi
 xdph=$HOME/.config/hypr/xdph.conf
-want=$(sed "s#@HOME@#$HOME#g" "$defaults/xdph.defaults.conf")
-if [[ $(cat "$xdph" 2>/dev/null) != "$want" ]]; then
-  [[ -L $xdph ]] && rm -f "$xdph"
-  printf '%s\n' "$want" > "$xdph"
-  log "wrote ${xdph#"$HOME/"}"
+if grep -q 'share-picker\.sh' "$xdph" 2>/dev/null; then
+  rm -f "$xdph"
+  log "removed ${xdph#"$HOME/"}"
   systemctl --user try-restart xdg-desktop-portal-hyprland.service 2>/dev/null || true
 fi
 seed alacritty.defaults.toml     "$HOME/.config/alacritty/alacritty.toml"

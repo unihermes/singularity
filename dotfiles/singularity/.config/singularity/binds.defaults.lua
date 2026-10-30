@@ -162,11 +162,6 @@ hl.bind(mod .. " + SHIFT + T", hl.dsp.exec_cmd("~/.config/hypr/screenshot.sh tex
 hl.bind(mod .. " + R",         hl.dsp.exec_cmd("qs ipc call recorder save"))    -- Save the instant replay
 hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd("qs ipc call recorder toggle"))  -- Start or stop recording the screen
 
--- --- Discord ---
--- presses Discord's own Toggle Go Live Streaming keybind (set to ALT+SHIFT+S
--- there) and answers its picker with the active window (discord-share.sh)
-hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("~/.config/hypr/discord-share.sh"))  -- Share the active window on Discord, or stop sharing
-
 -- --- Lid ---
 -- Close blanks the screen and suspends after Settings > Lock Screen's delay;
 -- open undoes it. logind's lid handling is inhibited (autostart.lua);

@@ -12,7 +12,6 @@ Delete this file once every item is done.
    the pages and their flow layout. Things are cluttered right now, so first make
    stripped-down flow layouts (structure and navigation only, no styling) and pick
    from those before implementing anything.
-10. Discord: fix ALT+SHIFT+S (share the window in focus on Discord, or stop sharing).
 11. Desktop: a conky-style sidebar on the desktop (a column of system info drawn
     straight on the wallpaper, like the desktop widgets).
 12. Battery and Weather: time graphs (battery charge over the past hours, the
