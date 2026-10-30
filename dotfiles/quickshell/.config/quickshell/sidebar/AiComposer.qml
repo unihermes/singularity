@@ -6,8 +6,9 @@
 // own: /clear, /new, /model, /mode, /past, /compact; then the CLI's), the
 // box (Enter sends, Shift+Enter is a new line, Ctrl+L or /clear starts
 // over), then a line with
-// 󰐕 for attaching, the model and, on Code, the permission mode (each a
-// click to the next), what Claude is doing, and Send or Stop.
+// 󰐕 for attaching, Claude or Codex (Chat and Code), the model and, on
+// Code, the permission mode (each a click to the next), what it's doing,
+// and Send or Stop.
 
 import QtQuick
 import "../services"
@@ -32,7 +33,8 @@ Column {
     readonly property var ownCommands: [
         { name: "clear", hint: "Start a new conversation" },
         { name: "new", hint: "Start a new conversation" },
-        { name: "model", hint: "opus, sonnet, haiku or default", takes: true },
+        { name: "model", hint: Ai.codex(Ai.tab) ? Ai.codexModels.map(c => c.value).concat(["default"]).join(", ")
+            : "opus, sonnet, haiku or default", takes: true },
         { name: "mode", hint: "ask, edits, plan or auto", takes: true, tab: "code" },
         { name: "past", hint: "Earlier conversations", notTab: "desktop" },
         { name: "compact", hint: "Summarise the conversation so far" }
@@ -73,14 +75,20 @@ Column {
             root.newConversation()
             return
         }
-        if (cmd === "model" && arg in modelWords) {
-            input.text = ""
-            Ai.setModel(Ai.tab, modelWords[arg])
-            return
+        if (cmd === "model") {
+            // Claude's aliases, or one of Codex's by slug or name
+            var pick = Ai.codex(Ai.tab)
+                ? (arg === "default" ? { value: "" } : Ai.codexModels.find(c => c.value.toLowerCase() === arg || c.text.toLowerCase() === arg))
+                : (arg in modelWords ? { value: modelWords[arg] } : null)
+            if (pick) {
+                input.text = ""
+                Ai.setModel(Ai.modelKey(Ai.tab), pick.value)
+                return
+            }
         }
         if (cmd === "mode" && Ai.tab === "code" && arg in modeWords) {
             input.text = ""
-            Ai.code.mode = modeWords[arg]
+            Ai.setCodeMode(modeWords[arg])
             return
         }
         if (cmd === "past" && Ai.tab !== "desktop") {
@@ -287,8 +295,8 @@ Column {
                     elide: Text.ElideRight
                     text: root.session.busy ? "Working…"
                         : Ai.tab === "desktop" ? "Ask for a change to the desktop…"
-                        : Ai.tab === "code" ? "Ask Claude Code…"
-                        : root.session.empty ? "Ask Claude…" : "Reply…"
+                        : Ai.tab === "code" ? (Ai.codex("code") ? "Ask Codex…" : "Ask Claude Code…")
+                        : root.session.empty ? (Ai.codex("chat") ? "Ask Codex…" : "Ask Claude…") : "Reply…"
                     color: Theme.textDisabled
                     font: input.font
                 }
@@ -345,14 +353,21 @@ Column {
                 enabled: Ai.available
                 onClicked: root.attaching = !root.attaching
             }
+            // Claude or Codex, on Chat and Code
+            FlyoutChip {
+                visible: Ai.tab !== "desktop" && Ai.codexAvailable
+                text: Ai.codex(Ai.tab) ? "Codex" : "Claude"
+                enabled: !root.session.busy
+                onClicked: Ai.setEngine(Ai.tab, Ai.codex(Ai.tab) ? "claude" : "codex")
+            }
             FlyoutChip {
                 text: Ai.modelText(Ai.tab)
                 onClicked: Ai.cycleModel()
             }
             FlyoutChip {
                 visible: Ai.tab === "code"
-                text: Ai.label(Ai.modeChoices, Ai.code.mode)
-                selected: Ai.code.mode !== "default"
+                text: Ai.label(Ai.modeChoices, Ai.codeMode)
+                selected: Ai.codeMode !== "default"
                 onClicked: Ai.cycleMode()
             }
         }

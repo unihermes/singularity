@@ -7,6 +7,8 @@
 //   Desktop  changes to this desktop, made in a staging copy of the repo
 //            (scripts/ai-desktop.sh) and applied once the diff is reviewed
 //   Code     Claude Code in a project folder, asking before it acts
+// Chat and Code can run on Codex instead (CodexSession, the engine chip),
+// each engine keeping its own conversation.
 // Screenshots, the clipboard, the selection and files dropped on the
 // sidebar ride along with a message.
 // The tab, the Code folder, each tab's model and mode and its conversation
@@ -35,12 +37,29 @@ Singleton {
     property string tab: "chat"
     readonly property var tabs: ["chat", "desktop", "code"]
     readonly property var current: sessionFor(tab)
-    function sessionFor(t) { return t === "code" ? code : t === "desktop" ? desktop : chat }
+    function sessionFor(t) {
+        return t === "code" ? (codex("code") ? codeCodex : code)
+            : t === "desktop" ? desktop : (codex("chat") ? chatCodex : chat)
+    }
+    readonly property var all: [chat, desktop, code, chatCodex, codeCodex]
+
+    // Claude or Codex, for Chat and Code
+    property var engines: ({ chat: "claude", code: "claude" })
+    function codex(t) { return engines[t] === "codex" }
+    readonly property bool codexAvailable: codexProbe.found
+    function setEngine(t, e) {
+        if (!(t in engines) || (e === "codex" && !codexAvailable)) return
+        var o = Object.assign({}, engines)
+        o[t] = e
+        engines = o
+        current.unseen = false
+        save()
+    }
 
     // for the bar: working, waiting on a prompt, or something new to read
-    readonly property bool busy: chat.busy || desktop.busy || code.busy
-    readonly property bool asking: chat.asks.length + desktop.asks.length + code.asks.length > 0
-    readonly property bool unseen: chat.unseen || desktop.unseen || code.unseen
+    readonly property bool busy: all.some(s => s.busy)
+    readonly property bool asking: all.some(s => s.asks.length > 0)
+    readonly property bool unseen: all.some(s => s.unseen)
 
     // the subscription's usage, 0..1 (-1 until known) and when each window
     // resets (epoch seconds, 0 unknown): from ai.py usage while the sidebar
@@ -81,9 +100,9 @@ Singleton {
     readonly property string desktopScript: Quickshell.shellPath("scripts/ai-desktop.sh")
     readonly property var desktopEnv: ({ SINGULARITY_SETTINGS: Settings.stateDir + "/appearance.json" })
 
-    // saved
+    // saved; models by tab, and by tab + "Codex" for Codex's
     property string codeDir: home
-    property var models: ({ chat: "", desktop: "", code: "" })
+    property var models: ({ chat: "", desktop: "", code: "", chatCodex: "", codeCodex: "" })
     property string codeMode: "default"
 
     // the choices the composer cycles through
@@ -93,6 +112,26 @@ Singleton {
     readonly property var modeChoices: [
         { value: "default", text: "Ask first" }, { value: "acceptEdits", text: "Accept edits" },
         { value: "plan", text: "Plan" }, { value: "auto", text: "Auto" }]
+    // Codex has no plan mode
+    readonly property var codexModeChoices: modeChoices.filter(c => c.value !== "plan")
+    function modesFor(t) { return codex(t) ? codexModeChoices : modeChoices }
+
+    // Codex's models as its own cache lists them, Default first
+    property var codexModels: []
+    FileView {
+        path: root.home + "/.codex/models_cache.json"
+        printErrors: false
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                root.codexModels = (JSON.parse(text()).models || []).filter(m => m.visibility === "list")
+                    .map(m => ({ value: m.slug, text: m.display_name || m.slug }))
+            } catch (e) {}
+        }
+    }
+    function modelKey(t) { return codex(t) ? t + "Codex" : t }
+    function modelChoicesFor(t) { return codex(t) ? [{ value: "", text: "Default" }].concat(codexModels) : modelChoices }
 
     function toggle(screen) {
         if (shown && root.screen === screen) { shown = false; return }
@@ -118,20 +157,31 @@ Singleton {
     }
 
     function cycleModel() {
-        var i = modelChoices.findIndex(c => c.value === models[tab])
-        setModel(tab, modelChoices[(i + 1) % modelChoices.length].value)
+        var list = modelChoicesFor(tab), k = modelKey(tab)
+        var i = list.findIndex(c => c.value === (models[k] || ""))
+        setModel(k, list[(i + 1) % list.length].value)
     }
 
     function cycleMode() {
-        var i = modeChoices.findIndex(c => c.value === code.mode)
-        code.mode = modeChoices[(i + 1) % modeChoices.length].value
+        var list = modesFor("code")
+        var i = list.findIndex(c => c.value === codeMode)
+        setCodeMode(list[(i + 1) % list.length].value)
+    }
+    // Code's mode, shared by both engines (Codex reads plan as Ask first)
+    function setCodeMode(m) {
+        code.mode = m
+        if (codeMode !== m) { codeMode = m; save() }
     }
 
     // the model chip: the pick, else the model the CLI says it runs
     // ("claude-opus-5-5" reads "Opus 5.5"), else Default till it starts
     function modelText(t) {
-        var pick = models[t] || ""
-        if (pick !== "") return label(modelChoices, pick)
+        var pick = models[modelKey(t)] || ""
+        if (pick !== "") return label(modelChoicesFor(t), pick)
+        if (codex(t)) {
+            var running = sessionFor(t).modelName
+            return running !== "" ? label(codexModels, running) : "Default"
+        }
         var m = sessionFor(t).modelName.match(/claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?!\d)/)
         return m ? m[1][0].toUpperCase() + m[1].slice(1) + " " + m[2] + (m[3] ? "." + m[3] : "") : "Default"
     }
@@ -326,12 +376,20 @@ Singleton {
     property bool pastLoading: false
 
     function listPast() {
-        pastProc.command = [py, "sessions", current.cwd]
         pastLoading = true
+        if (codex(tab)) { past = []; current.listPast(); return }
+        pastProc.command = [py, "sessions", current.cwd]
         pastProc.running = true
     }
+    function tookPast(rows) {
+        past = rows
+        pastLoading = false
+    }
 
-    function resume(id) { resumeIn(current, id) }
+    function resume(id) {
+        if (codex(tab)) current.resume(id)
+        else resumeIn(current, id)
+    }
 
     // one at a time: a restart restores all three tabs at once
     property var resumeQueue: []
@@ -359,6 +417,7 @@ Singleton {
         if (dir.indexOf("~") === 0) dir = home + dir.slice(1)
         if (dir === "" || dir === codeDir) return
         code.reset()
+        codeCodex.reset()
         codeDir = dir
         save()
     }
@@ -452,17 +511,55 @@ Singleton {
         onModeChanged: if (mode !== root.codeMode) { root.codeMode = mode; root.save() }
     }
 
+    CodexSession {
+        id: chatCodexSession
+        cwd: root.chatDir
+        readOnly: true
+        modelPick: root.models.chatCodex || ""
+        instructions: "You are the chat in the sidebar of the user's Linux desktop (Arch, Hyprland, "
+            + "a Quickshell shell called Singularity), run through Codex. Just talk; you can read but "
+            + "not change anything. Your replies are rendered as markdown in a narrow panel, so keep "
+            + "tables small. Screenshots, the clipboard or the selected text may come attached."
+        onRateLimit: info => root.noteCodexLimit(info)
+        onListed: rows => root.tookPast(rows)
+    }
+
+    CodexSession {
+        id: codeCodexSession
+        cwd: root.codeDir
+        mode: root.codeMode
+        modelPick: root.models.codeCodex || ""
+        instructions: "You are running in the Code tab of a sidebar on the user's desktop, a narrow "
+            + "panel that renders markdown. Approval requests appear there as cards."
+        onRateLimit: info => root.noteCodexLimit(info)
+        onListed: rows => root.tookPast(rows)
+    }
+
+    // Codex's own limit, as it reports it after each reply
+    function noteCodexLimit(r) {
+        var p = r.primary
+        if (!p || p.usedPercent === undefined) return
+        codexUsage = { used: p.usedPercent / 100, resets: p.resetsAt || 0,
+                       window: p.windowDurationMins || 0, plan: r.planType || "" }
+    }
+
+    readonly property alias chatCodex: chatCodexSession
+    readonly property alias codeCodex: codeCodexSession
     readonly property alias chat: chatSession
     readonly property alias desktop: desktopSession
     readonly property alias code: codeSession
 
     CommandProbe { id: probe; name: "claude" }
+    CommandProbe { id: codexProbe; name: "codex" }
 
     // each tab's conversation is picked up again after a reload or restart
     property string restoreDesktop: ""
     function restore(ids) {
         if (ids.chat) resumeIn(chat, ids.chat)
         if (ids.code) resumeIn(code, ids.code)
+        // Codex's come back through its own app-server, started for it
+        if (ids.chatCodex) chatCodex.resume(ids.chatCodex)
+        if (ids.codeCodex) codeCodex.resume(ids.codeCodex)
         // the diff read under way, or the next, says whether its copy is there
         restoreDesktop = ids.desktop || ""
         refreshDiff()
@@ -520,6 +617,19 @@ Singleton {
         function onAsked(title) { root.notify("code", "waiting for you", title) }
     }
 
+    Connections {
+        target: root.chatCodex
+        function onTurnEnded() { root.notify("chat", "replied", root.chatCodex.lastReply()) }
+        function onAsked(title) { root.notify("chat", "waiting for you", title) }
+        function onSessionIdChanged() { root.save() }
+    }
+    Connections {
+        target: root.codeCodex
+        function onTurnEnded() { root.notify("code", "done", root.codeCodex.lastReply()) }
+        function onAsked(title) { root.notify("code", "waiting for you", title) }
+        function onSessionIdChanged() { root.save() }
+    }
+
     Connections { target: root.chat; function onSessionIdChanged() { root.save() } }
     Connections { target: root.desktop; function onSessionIdChanged() { root.save() } }
     Connections { target: root.code; function onSessionIdChanged() { root.save() } }
@@ -533,7 +643,9 @@ Singleton {
         interval: 300
         onTriggered: view.setText(JSON.stringify({
             tab: root.tab, codeDir: root.codeDir, models: root.models, codeMode: root.codeMode,
-            sessions: { chat: root.chat.sessionId, desktop: root.desktop.sessionId, code: root.code.sessionId }
+            engines: root.engines,
+            sessions: { chat: root.chat.sessionId, desktop: root.desktop.sessionId, code: root.code.sessionId,
+                        chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId }
         }, null, 2) + "\n")
     }
 
@@ -551,7 +663,9 @@ Singleton {
             if (root.tabs.indexOf(d.tab) !== -1) root.tab = d.tab
             if (typeof d.codeDir === "string" && d.codeDir !== "") root.codeDir = d.codeDir
             if (d.models && typeof d.models === "object")
-                root.models = Object.assign({ chat: "", desktop: "", code: "" }, d.models)
+                root.models = Object.assign({ chat: "", desktop: "", code: "", chatCodex: "", codeCodex: "" }, d.models)
+            if (d.engines && typeof d.engines === "object")
+                root.engines = Object.assign({ chat: "claude", code: "claude" }, d.engines)
             if (root.modeChoices.some(c => c.value === d.codeMode)) root.codeMode = d.codeMode
             if (d.sessions && typeof d.sessions === "object") root.restore(d.sessions)
         }

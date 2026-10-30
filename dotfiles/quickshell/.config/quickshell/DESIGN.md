@@ -377,6 +377,14 @@ panel down the right edge of the focused screen, under the bar, in the
 panel's frame with sections. It stays out until SUPER+I, its × or Escape;
 a click elsewhere leaves it. It slides in from the edge and fades.
 
+- **Codex** (`services/CodexSession.qml`, `codex app-server`): Chat and
+  Code can run on Codex instead, a Claude/Codex chip in the composer
+  switching the tab (each engine keeps its own conversation, model and
+  past sessions). The same transcript, attachments and prompt cards: its
+  command and file-change approvals are Allow / Allow for this session /
+  Deny. Code's mode picks its sandbox (Ask first and Plan read-only,
+  Accept edits and Auto writing in the folder, Auto never asking); Chat's
+  Codex only reads. The heading reads CODEX while it's on.
 - **Heading** CLAUDE, with
   past sessions and × as icon buttons, and a New chat chip between them while there's a conversation; then Chat,
   Desktop and Code as a segmented strip, a ● on a tab with something

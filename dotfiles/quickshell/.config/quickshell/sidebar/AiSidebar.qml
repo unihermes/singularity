@@ -126,7 +126,7 @@ PanelWindow {
             }
 
             FlyoutHeading {
-                text: "CLAUDE"
+                text: Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
                 control: headControls
             }
 

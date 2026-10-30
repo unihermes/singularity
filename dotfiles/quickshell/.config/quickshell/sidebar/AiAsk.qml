@@ -1,9 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/sidebar/AiAsk.qml
 //
-// A permission prompt from Claude Code (ClaudeSession.asks): what it wants
-// to do and the command or plan in full, then Allow, the CLI's own "don't
-// ask again" (all edits, or that command), and Deny. A plan is approved or
+// A permission prompt from Claude Code or Codex (their sessions' asks):
+// what it wants to do and the command or plan in full, then Allow, the
+// CLI's own "don't ask again" (all edits, that command, or Codex's for this
+// session), and Deny. A plan is approved or
 // sent back; Claude's questions are answered by picking an option each.
 
 import QtQuick
@@ -45,6 +46,7 @@ Column {
         var s = ask && ask.suggestions.length > 0 ? ask.suggestions[0] : null
         if (!s) return ""
         if (s.type === "setMode" && s.mode === "acceptEdits") return "Allow all edits"
+        if (s.type === "session") return "Allow for this session"
         if (s.type === "addRules") return "Always allow"
         return "Don't ask again"
     }
