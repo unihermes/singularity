@@ -33,6 +33,16 @@ hl.window_rule({
 local X11_MENU = { xwayland = true, title = "^$", class = "negative:^(Xdg-desktop-portal-gtk)$" }
 hl.window_rule({ name = "x11-menus", match = X11_MENU, tag = "+menu" })
 hl.window_rule({ name = "x11-menus-exempt", match = X11_MENU, tag = "+monocle-exempt" })
+-- They draw their own shadow inside the window; a border, blur and shadow
+-- of Hyprland's would frame that see-through margin
+hl.window_rule({
+    name        = "x11-menus-bare",
+    match       = X11_MENU,
+    border_size = 0,
+    rounding    = 0,
+    no_blur     = true,
+    no_shadow   = true,
+})
 
 -- Steam's games (Proton ones never say so themselves) and Minecraft count
 -- as games, so render.direct_scanout = 2 can hand their frames straight to
