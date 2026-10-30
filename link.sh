@@ -118,7 +118,15 @@ if [[ ! -e $bookmarks ]]; then
   log "wrote ${bookmarks#"$HOME/"}"
 fi
 
-# the repo's pre-commit hooks
-[[ -d .git ]] && git config core.hooksPath tools/git-hooks
+# the repo's pre-commit hooks, and pulls that rebase onto the other
+# machine's commits instead of merging (local changes stashed round it,
+# fixup! commits folded in, deleted remote branches pruned)
+if [[ -d .git ]]; then
+  git config core.hooksPath tools/git-hooks
+  git config pull.rebase true
+  git config rebase.autoStash true
+  git config rebase.autoSquash true
+  git config fetch.prune true
+fi
 
 log "done. verify a link with: ls -l ~/.config/hypr/hyprland.lua"
