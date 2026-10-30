@@ -6,8 +6,8 @@
 // its slider, the microphone's level, the Game, Chat and Media channels'
 // levels (a click on a name mutes it) and the ChatMix dial, then each app playing right now with
 // a level of its own (an app with several streams, like a browser's tabs,
-// gets one level for them all). Outputs with nothing plugged in are left
-// out. The Audio page in Settings has the rest: those outputs, recording
+// gets one level for them all; drag its name onto a channel to move it
+// there, for good). Outputs with nothing plugged in are left out. The Audio page in Settings has the rest: those outputs, recording
 // apps, and moving an app to another output.
 
 import "../services"
@@ -22,10 +22,8 @@ FlyoutPanel {
 
     // the outputs list, opened from the device under the level
     property bool picking: false
-    onOpenChanged: {
-        picking = false
-        if (open) Audio.refreshPorts()
-    }
+    onOpenChanged: picking = false
+    Binding { target: Audio; property: "flyoutWatching"; value: volumeFlyout.open }
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
@@ -250,6 +248,12 @@ FlyoutPanel {
                 opacity: channel.muted ? 0.5 : 1
                 onMoved: v => { if (channel.ready) channel.modelData.audio.volume = v / 100 }
             }
+
+            // an app dragged here from APPS plays here from now on
+            ChannelDrop {
+                anchors.fill: parent
+                onAppDropped: nodes => Audio.moveApp(nodes, channel.modelData)
+            }
         }
     }
 
@@ -372,6 +376,13 @@ FlyoutPanel {
                         var mute = !app.muted
                         app.nodes.forEach(n => n.audio.muted = mute)
                     }
+                }
+                // dragged onto a channel above, it moves there
+                AppDrag {
+                    anchors.fill: parent
+                    nodes: app.modelData.nodes
+                    name: app.modelData.name
+                    icon: app.icon
                 }
             }
 

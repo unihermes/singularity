@@ -7,11 +7,10 @@
 // the ChatMix dial; EQUALIZER: each one's bands, a slider a band. Then the per-app mixer, one row an app however many
 // streams it plays: its level and the channel or output it plays on. Mute
 // is the button before each level. Straight on Pipewire, as the bar is;
-// wireplumber remembers everything. pactl finds unplugged outputs and
-// moves streams.
+// wireplumber remembers everything. Audio's pactl finds unplugged outputs
+// and moves streams; an app's row drags onto a channel to move it there.
 
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Pipewire
 import QtQuick
 import "../services"
@@ -48,69 +47,12 @@ SettingsPage {
         return tail !== "" ? tail : media
     }
 
-    // --- what pactl knows ----------------------------------------------------
+    Binding { target: Audio; property: "pageWatching"; value: true }
 
-    // node ids of outputs whose every port is "not available": an HDMI or
-    // DisplayPort output with no screen on it
-    property var unplugged: []
-    // stream node id -> { input, sink }: its sink-input index, and the node
-    // id of the output it plays on
-    property var playsOn: ({})
-
-    Process {
-        id: pactlProc
-        command: ["sh", "-c", "pactl -f json list sinks; echo; pactl -f json list sink-inputs"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var parts = text.trim().split("\n")
-                var sinks = [], inputs = []
-                try { sinks = JSON.parse(parts[0] || "[]"); inputs = JSON.parse(parts[1] || "[]") } catch (e) { return }
-                // pactl numbers sinks by object.serial, which only matches
-                // the node id for devices there since boot
-                var nodeOf = {}
-                sinks.forEach(s => nodeOf[s.index] = Number((s.properties || {})["object.id"]))
-                page.unplugged = sinks.filter(s => s.ports && s.ports.length > 0
-                    && s.ports.every(p => p.availability === "not available")).map(s => nodeOf[s.index])
-                var on = {}
-                inputs.forEach(i => {
-                    var id = Number((i.properties || {})["object.id"])
-                    if (!isNaN(id)) on[id] = { input: i.index, sink: nodeOf[i.sink] }
-                })
-                page.playsOn = on
-            }
-        }
-    }
-    // asked again whenever a device or stream comes or goes
-    Timer {
-        id: pactlSoon
-        interval: 300
-        onTriggered: pactlProc.running = true
-    }
-    // and every few seconds while something plays, since an app can be
-    // moved from outside (pavucontrol, the app itself)
-    Timer {
-        interval: 3000
-        repeat: true
-        running: page.streams.length > 0
-        onTriggered: pactlProc.running = true
-    }
-    onDevicesChanged: pactlSoon.restart()
-    onStreamsChanged: pactlSoon.restart()
-    Component.onCompleted: pactlProc.running = true
-
-    Process {
-        id: moveProc
-        onExited: pactlSoon.restart()
-    }
-    // every stream of an app at once
     function moveTo(streams, sink) {
-        var inputs = streams.map(n => playsOn[n.id]).filter(on => on).map(on => String(on.input))
-        if (inputs.length === 0) return
-        moveProc.command = ["sh", "-c", 't=$1; shift; for i; do pactl move-sink-input "$i" "$t"; done',
-            "sh", sink.name].concat(inputs)
-        moveProc.running = true
-        page.say(Audio.appName(streams[0]) + " plays on "
-            + (Audio.isChannel(sink) ? Audio.nodeName(sink) : Audio.plainName(sink)), false)
+        if (Audio.moveApp(streams, sink))
+            page.say(Audio.appName(streams[0]) + " plays on "
+                + (Audio.isChannel(sink) ? Audio.nodeName(sink) : Audio.plainName(sink)), false)
     }
 
     // --- names -----------------------------------------------------------------
@@ -202,7 +144,7 @@ SettingsPage {
 
         leadingIcon: Audio.glyph(modelData)
         label: Audio.plainName(modelData)
-        note: page.unplugged.indexOf(modelData.id) >= 0 ? "nothing plugged in" : page.where(modelData)
+        note: Audio.unplugged.indexOf(modelData.id) >= 0 ? "nothing plugged in" : page.where(modelData)
         badge: isDefault ? "Default" : ""
         highlighted: isDefault
         trailing: page.levelText(modelData)
@@ -214,9 +156,9 @@ SettingsPage {
     // the others: the default is the card, and outputs with nothing
     // plugged in are left out
     readonly property var sinksShown: sinks.filter(n => n !== Pipewire.defaultAudioSink
-        && unplugged.indexOf(n.id) < 0)
+        && Audio.unplugged.indexOf(n.id) < 0)
     // where an app can play: the channels, then the outputs plugged in
-    readonly property var playTargets: Channels.sinks.concat(sinks.filter(n => unplugged.indexOf(n.id) < 0))
+    readonly property var playTargets: Channels.sinks.concat(sinks.filter(n => Audio.unplugged.indexOf(n.id) < 0))
 
     FlyoutHeading { text: "OUTPUT" }
 
@@ -275,11 +217,19 @@ SettingsPage {
     Repeater {
         model: ScriptModel { values: Channels.sinks }
         Level {
+            id: channelLevel
             required property var modelData
             node: modelData
             label: Audio.nodeName(modelData)
             hint: Channels.key(modelData) === "game" ? "Where games play"
                 : Channels.key(modelData) === "media" ? "Where other apps play unless moved" : ""
+            // an app dragged here from PLAYING plays here from now on
+            // over the whole row, not only the field's control slot
+            ChannelDrop {
+                parent: channelLevel
+                anchors.fill: parent
+                onAppDropped: nodes => page.moveTo(nodes, channelLevel.modelData)
+            }
         }
     }
 
@@ -436,12 +386,22 @@ SettingsPage {
         property bool playback: true
         readonly property var nodes: modelData.nodes
         readonly property var n: nodes[0]
-        readonly property var target: page.playsOn[n.id] || null
+        readonly property var target: Audio.playsOn[n.id] || null
         readonly property var sink: target ? page.playTargets.find(s => s.id === target.sink) || null : null
         readonly property string icon: Audio.appIcon(n)
 
         width: parent ? parent.width : 0
         implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceM, right.height + Theme.spaceS)
+
+        // dragged onto a channel under CHANNELS, it moves there
+        AppDrag {
+            visible: app.playback
+            anchors.fill: texts
+            anchors.leftMargin: -(appImage.width + Theme.spaceM)
+            nodes: app.nodes
+            name: Audio.appName(app.n)
+            icon: app.icon
+        }
 
         Image {
             id: appImage

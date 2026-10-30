@@ -54,25 +54,73 @@ Singleton {
     readonly property var playingApps: byApp(playing)
     readonly property var recordingApps: byApp(recording)
 
+    // Asked of pactl, which knows the ports and sink-inputs Quickshell's
+    // service doesn't, whenever refreshPorts() runs; again whenever a
+    // device or stream comes or goes, and every few seconds while
+    // something plays (an app can be moved from outside), while the volume
+    // flyout or the Audio page is up (`watched`).
     // node ids of outputs whose every port is "not available": an HDMI or
-    // DisplayPort output with no screen on it. Asked of pactl, which knows
-    // the ports Quickshell's service doesn't, whenever refreshPorts() runs.
+    // DisplayPort output with no screen on it
     property var unplugged: []
+    // stream node id -> { input, sink }: its sink-input index, and the node
+    // id of the output or channel it plays on
+    property var playsOn: ({})
+    property bool flyoutWatching: false
+    property bool pageWatching: false
+    readonly property bool watched: flyoutWatching || pageWatching
     function refreshPorts() { portsProc.running = true }
 
     Process {
         id: portsProc
-        command: ["pactl", "-f", "json", "list", "sinks"]
+        command: ["sh", "-c", "pactl -f json list sinks; echo; pactl -f json list sink-inputs"]
         stdout: StdioCollector {
             onStreamFinished: {
-                var sinks = []
-                try { sinks = JSON.parse(text) } catch (e) { return }
-                // pactl numbers sinks by object.serial; object.id is the node
+                var parts = text.trim().split("\n")
+                var sinks = [], inputs = []
+                try { sinks = JSON.parse(parts[0] || "[]"); inputs = JSON.parse(parts[1] || "[]") } catch (e) { return }
+                // pactl numbers sinks by object.serial, which only matches
+                // the node id for devices there since boot
+                var nodeOf = {}
+                sinks.forEach(s => nodeOf[s.index] = Number((s.properties || {})["object.id"]))
                 root.unplugged = sinks.filter(s => s.ports && s.ports.length > 0
-                    && s.ports.every(p => p.availability === "not available"))
-                    .map(s => Number((s.properties || {})["object.id"]))
+                    && s.ports.every(p => p.availability === "not available")).map(s => nodeOf[s.index])
+                var on = {}
+                inputs.forEach(i => {
+                    var id = Number((i.properties || {})["object.id"])
+                    if (!isNaN(id)) on[id] = { input: i.index, sink: nodeOf[i.sink] }
+                })
+                root.playsOn = on
             }
         }
+    }
+    Timer {
+        id: portsSoon
+        interval: 300
+        onTriggered: root.refreshPorts()
+    }
+    Timer {
+        interval: 3000
+        repeat: true
+        running: root.watched && root.playing.length > 0
+        onTriggered: root.refreshPorts()
+    }
+    onDevicesChanged: if (watched) portsSoon.restart()
+    onStreamsChanged: if (watched) portsSoon.restart()
+    onWatchedChanged: if (watched) refreshPorts()
+
+    // Every stream of an app onto an output or channel at once. Wireplumber
+    // remembers it, so the app plays there next time too.
+    function moveApp(streams, sink) {
+        var inputs = streams.map(n => playsOn[n.id]).filter(on => on).map(on => String(on.input))
+        if (inputs.length === 0 || !sink) return false
+        moveProc.command = ["sh", "-c", 't=$1; shift; for i; do pactl move-sink-input "$i" "$t"; done',
+            "sh", sink.name].concat(inputs)
+        moveProc.running = true
+        return true
+    }
+    Process {
+        id: moveProc
+        onExited: portsSoon.restart()
     }
 
     // a Game, Chat or Media channel's sink or stream (pipewire.conf.d/channels.conf),
