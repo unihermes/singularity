@@ -66,16 +66,15 @@ Singleton {
         interval: 4000
         repeat: true
         triggeredOnStart: true
-        onTriggered: {
-            if (!list.running) list.running = true
-            if (!scan.running) scan.running = true
-        }
+        onTriggered: if (!list.running) list.running = true
     }
 
+    // scan runs after list, so only one adb at a time starts the server
     Process {
         id: list
         command: ["adb", "devices", "-l"]
         environment: root.adbEnv
+        onExited: if (!scan.running) scan.running = true
         stdout: StdioCollector {
             onStreamFinished: {
                 var out = []
