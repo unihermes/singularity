@@ -77,15 +77,46 @@ Singleton {
 
     // --- the charge over the day -------------------------------------------
 
-    // the level every five minutes since the shell started, the last day of
-    // it, 0..1, for the flyout's graph
-    readonly property int historyLength: 288
+    // [{ t (ms), v (0..1), c (charging) }] every five minutes and on each
+    // plug or unplug, the last day of it, kept in the state dir so it
+    // outlasts a restart or reboot; the flyout's graph
+    readonly property real historyWindow: 24 * 3600000
     property var history: []
+    readonly property bool charging: present && (device.state === UPowerDeviceState.Charging
+        || device.state === UPowerDeviceState.FullyCharged || device.state === UPowerDeviceState.PendingCharge)
+
+    function sample() {
+        if (!present || !historyFile.loadedOnce) return
+        var now = Date.now()
+        var kept = history.filter(p => p.t > now - historyWindow)
+        kept.push({ t: now, v: percent / 100, c: charging })
+        history = kept
+        historyFile.setText(JSON.stringify(kept))
+    }
+    onChargingChanged: sample()
+    onPresentChanged: sample()
+
+    FileView {
+        id: historyFile
+        property bool loadedOnce: false
+        path: Settings.stateDir + "/battery-history.json"
+        preload: true
+        // no file until the first sample
+        printErrors: false
+        onLoaded: {
+            try { root.history = JSON.parse(text()) || [] } catch (e) { root.history = [] }
+            loadedOnce = true
+            root.sample()
+        }
+        onLoadFailed: {
+            loadedOnce = true
+            root.sample()
+        }
+    }
     Timer {
         interval: 300000
         repeat: true
         running: root.present
-        triggeredOnStart: true
-        onTriggered: root.history = root.history.concat([root.percent / 100]).slice(-root.historyLength)
+        onTriggered: root.sample()
     }
 }

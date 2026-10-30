@@ -2,11 +2,12 @@
 // ~/.config/quickshell/desktop/WeatherWidget.qml
 //
 // Where, the temperature large, and the sky with today's high and low.
-// Medium adds five days as columns; large the next hours, then five days
-// as rows with their range drawn against the week's.
+// Medium adds five days as columns; large the next day's temperature as a
+// curve, then five days as rows with their range drawn against the week's.
 
 import QtQuick
 import "../services"
+import "../flyouts"
 
 WidgetCard {
     id: root
@@ -61,40 +62,20 @@ WidgetCard {
         }
     }
 
-    // the next hours (large), across
-    Row {
-        visible: root.large && Weather.hourly.length > 0
+    // the next day's temperature and rain (large)
+    WeatherCurve {
+        visible: root.large && slots.length > 1
         y: Theme.fit(96)
-        width: parent.width
-
-        Repeater {
-            model: root.large ? Weather.hourly.slice(0, 6) : []
-            Column {
-                required property var modelData
-                width: parent.width / 6
-                spacing: Theme.fit(4)
-                WidgetText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    card: root
-                    px: root.textCaption
-                    text: Qt.formatTime(modelData.at, Theme.hours("HH"))
-                    color: root.fgDim
-                }
-                WidgetText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    card: root
-                    font.family: Theme.fontIcon
-                    px: Theme.fit(18)
-                    text: Weather.iconFor(modelData.code, false)
-                }
-                WidgetText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    card: root
-                    px: root.textCaption
-                    text: Weather.temp(modelData.tempF, modelData.tempC)
-                }
-            }
-        }
+        bare: true
+        graphHeight: Theme.fit(54)
+        iconSize: Theme.fit(16)
+        iconColor: root.fg
+        textColor: root.fg
+        dimColor: root.fgDim
+        lineColor: root.fg
+        barColor: root.fgFaint
+        fontFamily: root.font
+        labelSize: root.textCaption
     }
 
     // five days: columns (medium), rows with their range (large)

@@ -2,7 +2,7 @@
 // ~/.config/quickshell/flyouts/WeatherFlyout.qml
 //
 // Three tabs. Now: the sky, the temperature large, what it feels like and
-// where, the next hours in 3-hour steps, then humidity, wind and rain as
+// where, the next day's temperature as a curve, then humidity, wind and rain as
 // tiles. Hours: every hour of the next day with its chance of rain. Week:
 // each day's low and high, drawn as a range on the week's one scale. Then
 // Refresh and the units. Self-contained: only needs the Weather singleton.
@@ -95,45 +95,10 @@ FlyoutPanel {
         }
     }
 
-    // the next hours, three at a step
-    Row {
-        visible: weatherFlyout.tab === "now" && Weather.hourly.length > 0
-        width: parent.width
-        Repeater {
-            model: Weather.hourly
-            Column {
-                required property var modelData
-                width: parent.width / Math.max(1, Weather.hourly.length)
-                spacing: Theme.spaceXs
-                Text {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Qt.formatTime(modelData.at, Theme.hours("HH"))
-                    color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
-                }
-                Text {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    readonly property int h: modelData.at.getHours() * 60
-                    text: Weather.iconFor(modelData.code, Weather.sunriseMin >= 0 && (h < Weather.sunriseMin || h >= Weather.sunsetMin))
-                    color: Theme.text
-                    font.family: Theme.fontIcon
-                    font.pixelSize: Theme.fontIconSize
-                }
-                Text {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Weather.temp(modelData.tempF, modelData.tempC)
-                    color: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontBody
-                }
-            }
-        }
+    // the next day's temperature and rain
+    WeatherCurve {
+        visible: weatherFlyout.tab === "now" && slots.length > 1
+        graphHeight: Theme.row(84)
     }
 
     FlyoutDivider { visible: weatherFlyout.tab === "now" }

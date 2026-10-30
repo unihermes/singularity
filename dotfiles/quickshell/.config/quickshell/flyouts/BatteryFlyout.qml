@@ -73,14 +73,22 @@ FlyoutPanel {
         }
     }
 
-    Spark {
-        visible: Battery.history.length > 1
-        height: Theme.row(48)
-        floor: 0
-        ceiling: 1
-        historyLength: Battery.historyLength
-        series: [{ values: Battery.history, color: Theme.good, fill: true }]
-        caption: "Since " + Qt.formatTime(new Date(Date.now() - (Battery.history.length - 1) * 300000), Theme.timeFormat)
+    // the charge since the oldest reading kept (a day at most), across the
+    // whole width, charging stretches shaded
+    TimeGraph {
+        readonly property var h: Battery.history
+        visible: h.length > 1
+        height: Theme.row(64)
+        from: visible ? h[0].t : 0
+        to: visible ? h[h.length - 1].t : 1
+        points: h
+        lineColor: Theme.good
+        spans: {
+            var out = []
+            for (var i = 0; i < h.length - 1; i++)
+                if (h[i].c) out.push({ t0: h[i].t, t1: h[i + 1].t })
+            return out
+        }
     }
 
     FlyoutRow {

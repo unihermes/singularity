@@ -14,8 +14,6 @@ Delete this file once every item is done.
    from those before implementing anything.
 11. Desktop: a conky-style sidebar on the desktop (a column of system info drawn
     straight on the wallpaper, like the desktop widgets).
-12. Battery and Weather: time graphs (battery charge over the past hours, the
-    weather's temperature over the coming hours).
 13. Audio: drag and drop an app's row onto the Game, Chat or Media channel (in the
     Volume flyout and Settings, Audio) to route that app's sound to the channel.
 14. Windows: look for edge cases in how windows behave (floating, fullscreen, dialogs,
