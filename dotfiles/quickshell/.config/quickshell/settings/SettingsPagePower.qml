@@ -602,8 +602,6 @@ SettingsPage {
         // a file whose listeners changed under the page shows in file order
         model: (page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i))
             .filter(i => i !== page.pluggedSuspend)
-            // a Hibernate step this machine can't do, unless it's on
-            .filter(i => Session.canHibernate || page.listeners[i].on || page.listeners[i].label !== "Hibernate")
 
         SettingsField {
             id: stepRow
@@ -612,8 +610,11 @@ SettingsPage {
             readonly property var step: page.listeners[index]
             readonly property bool both: index === page.batterySuspend && page.pluggedSuspend >= 0
             readonly property var plugged: both ? page.listeners[page.pluggedSuspend] : null
+            // a Hibernate step logind can't carry out (no swapfile or resume=)
+            readonly property bool unavailable: step.label === "Hibernate" && !Session.canHibernate && !step.on
             label: both ? "Suspend" : step.label
             hint: both ? (step.on || plugged.on ? page.stepHints["Suspend"] : "Skipped")
+                : unavailable ? "Hibernation isn't set up on this machine"
                 : !step.on ? "Skipped" : page.stepHints[step.label] || ""
             dimmed: both ? !step.on && !plugged.on : !step.on
 
@@ -629,7 +630,11 @@ SettingsPage {
                     font.family: Theme.fontIcon
                     font.pixelSize: Theme.fontIconSize
                 }
-                StepTime { index: stepRow.index; anchors.verticalCenter: parent.verticalCenter }
+                StepTime {
+                    index: stepRow.index
+                    enabled: !stepRow.unavailable
+                    anchors.verticalCenter: parent.verticalCenter
+                }
                 Text {
                     visible: stepRow.both
                     anchors.verticalCenter: parent.verticalCenter
