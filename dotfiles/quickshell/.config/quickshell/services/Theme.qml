@@ -334,6 +334,8 @@ Singleton {
     // windows' edge gap); barExtent is where things anchored to the bar start.
     readonly property bool barFloating: Settings.barStyle === "floating"
     readonly property bool barIslands:  Settings.barStyle === "islands"
+    // Plain: full width and flat, no hairline; levels read as text
+    readonly property bool barPlain:    Settings.barStyle === "plain"
     readonly property bool barFull:     !barFloating && !barIslands
     readonly property int barMargin:  barFull ? 0 : Settings.edgeGap
     readonly property int barExtent:  barHeight + barMargin * 2

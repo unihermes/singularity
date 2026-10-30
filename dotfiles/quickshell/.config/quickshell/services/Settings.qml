@@ -239,7 +239,7 @@ Singleton {
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
         windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
-        barStyle:     ["full", "floating", "islands"],
+        barStyle:     ["full", "floating", "islands", "plain"],
         workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman", "names", "apps"],
         controlIcon:  ["arch", "menu", "dashboard", "cog", "home", "star", "blackhole", "vortex", "horizon",
                       "atom", "rocket", "ghost", "planet", "sparkle", "infinity", "radar", "moon"],
@@ -270,7 +270,7 @@ Singleton {
         "scheme-tonal-spot": "Balanced", "scheme-vibrant": "Vivid",
         "scheme-expressive": "Expressive", "double": "Double", "accent": "Accent", "none": "None",
         "compact": "Compact", "roomy": "Roomy", "pill": "Pill", "full": "Full",
-        "floating": "Floating", "islands": "Islands", "pills": "Pills", "dots": "Dots",
+        "floating": "Floating", "islands": "Islands", "plain": "Plain", "pills": "Pills", "dots": "Dots",
         "lines": "Lines", "numbers": "Numbers", "blocks": "Blocks", "roman": "Roman",
         "names": "Names", "apps": "App icons", "popin": "Pop", "zoom": "Zoom", "fade": "Fade",
         "fold": "Fold", "slide": "Slide", "rise": "Rise", "drop": "Drop", "scale": "Scale",
@@ -914,6 +914,13 @@ Singleton {
     // look's shape, the shape's usual one otherwise.
     function setBarStyle(v) {
         if (choices.barStyle.indexOf(v) === -1) return
+        // Plain starts from a classic text bar's other pieces; each can be
+        // changed after
+        if (v === "plain" && adapter.barStyle !== "plain") {
+            adapter.barChips = "bare"
+            adapter.barSeparator = "line"
+            adapter.workspaceStyle = "numbers"
+        }
         adapter.barStyle = v
         adapter.edgeGap = lookBaseline.barStyle === v && lookBaseline.edgeGap !== undefined
             ? lookBaseline.edgeGap : Looks.edgeGaps[v]

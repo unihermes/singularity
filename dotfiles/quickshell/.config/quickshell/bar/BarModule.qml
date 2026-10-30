@@ -20,8 +20,9 @@ Item {
     property int padH: Theme.modulePadH
     property int iconSize: Theme.iconSize
     // -1 for a normal chip; 0..1 replaces the readout with a fill bar and
-    // the exact number moves into the flyout
+    // the exact number moves into the flyout (Plain bar: the number as text)
     property real fillValue: -1
+    readonly property bool levelText: Theme.barPlain && fillValue >= 0
     property color fillColor: Theme.gaugeFill
     property int fixedWidth: 0
     // the width the chip adds around its content: padding and brackets
@@ -78,9 +79,9 @@ Item {
         anchors.centerIn: parent
         active: root.active
         padH: root.padH
-        fillValue: root.fillValue
+        fillValue: root.levelText ? -1 : root.fillValue
         fillColor: root.fillColor
-        fixedWidth: root.fixedWidth
+        fixedWidth: root.levelText ? 0 : root.fixedWidth
 
         Text {
             id: iconText
@@ -144,11 +145,12 @@ Item {
             // shifted down by the gap between line box and ink centres, so
             // digits don't sit high
             anchors.verticalCenterOffset: root.inkNudge(labelInk)
-            visible: root.label !== ""
-            text: root.label
+            visible: text !== ""
+            text: root.levelText ? Math.round(root.fillValue * 100) + "%" : root.label
             width: root.labelMaxWidth > 0 ? Math.min(implicitWidth, root.labelMaxWidth) : implicitWidth
             elide: Text.ElideRight
-            color: root.fg
+            // a level's warning colour (a low battery) carries into its text
+            color: root.levelText && !Qt.colorEqual(root.fillColor, Theme.gaugeFill) ? root.fillColor : root.fg
             font.family: Theme.fontText
             font.pixelSize: Theme.barLabelSize
             font.weight: Theme.weightBody

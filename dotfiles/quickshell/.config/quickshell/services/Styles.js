@@ -131,7 +131,7 @@ function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 function resolve(s) {
     var st = styles[s.style]
     var modules = s.barChips && s.barChips !== "auto" ? s.barChips : st.modules
-    var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
+    var attach = st.attach === "auto" ? (s.barStyle === "full" || s.barStyle === "plain" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {

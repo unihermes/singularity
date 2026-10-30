@@ -573,7 +573,7 @@ PanelWindow {
     // hairline on the bar's inner edge, so it reads as a surface
     // rather than a strip of background
     Rectangle {
-        visible: Theme.barFull
+        visible: Theme.barFull && !Theme.barPlain
         y: Theme.barPosition === "bottom" ? 0 : parent.height - height
         width: parent.width
         height: Theme.borderWidth

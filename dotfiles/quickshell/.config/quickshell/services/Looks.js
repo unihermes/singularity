@@ -213,7 +213,7 @@ var settingsBase = {
 
 // The edge gap each bar shape starts at: a full bar runs to the screen's
 // edges and the windows meet it, a floating one leaves room all round.
-var edgeGaps = { full: 0, floating: 10, islands: 10 }
+var edgeGaps = { full: 0, floating: 10, islands: 10, plain: 0 }
 
 // the fixed half's adjustable parts, in Settings' units ("" for no accent,
 // scrim in percent)

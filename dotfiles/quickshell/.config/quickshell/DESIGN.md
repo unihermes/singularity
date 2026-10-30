@@ -121,7 +121,12 @@ Style: `channel` (frame `channel` in `Styles.js`).
   the desktop shows it fills with the accent. It hides every window on
   every workspace and screen, and it never animates, neither the windows
   nor its own fill, whatever the animation settings.
-- Icon-only, by design; no text readouts beside icons.
+- Icon-only, by design; no text readouts beside icons, except under Plain.
+- **Plain** (Bar shape, added 2026-10-30 from a classic text bar): full
+  width and flat, no hairline; the levels (volume, brightness, battery)
+  read as "icon 100%" text instead of a fill, a low battery's in the alert
+  colour. Choosing it also sets Chips to Bare, separators to Lines and
+  workspaces to Numbers, each changeable after.
 - **Edit mode** (right-click the bar's empty space > Edit bar, Bar Widgets >
   Edit on the bar, `qs ipc call bar edit`): the edit shelf hangs under the
   bar's middle and the bar stops taking clicks. Every movable module gets a
