@@ -210,7 +210,7 @@ SettingsPage {
         "Turn screens off": "Wakes on any input",
         "Suspend on battery": "Only while unplugged",
         "Suspend": "Sleeps the whole machine",
-        "Hibernate": "Saves to disk and powers off",
+        "Hibernate": "Saves to disk and powers off, also about an hour into a suspend",
     })
 
     function parseIdle(text) {
@@ -489,7 +489,9 @@ SettingsPage {
         visible: page.listeners.length > 0
         // held while a dot is dragged, so the scale doesn't move under it
         property real heldSpan: 0
-        readonly property real span: heldSpan > 0 ? heldSpan : Math.max(60, ...page.listeners.map(l => l.timeout)) * 1.04
+        // the steps that are on set the scale; one that's off past them sits at the end
+        readonly property real span: heldSpan > 0 ? heldSpan
+            : Math.max(60, ...page.listeners.filter(l => l.on).map(l => l.timeout)) * 1.04
         width: parent.width
         implicitHeight: Theme.fontTitle + Theme.fontCaption + Theme.spaceL * 2 + Theme.spaceM
 
@@ -520,7 +522,8 @@ SettingsPage {
                 id: marker
                 required property var modelData
                 required property int index
-                x: track.x + track.width * modelData.timeout / timeline.span
+                visible: Session.canHibernate || modelData.on || modelData.label !== "Hibernate"
+                x: track.x + track.width * Math.min(1, modelData.timeout / timeline.span)
                 y: Theme.spaceM
 
                 // a drag sets the step's time, to the nearest on offer
@@ -599,6 +602,8 @@ SettingsPage {
         // a file whose listeners changed under the page shows in file order
         model: (page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i))
             .filter(i => i !== page.pluggedSuspend)
+            // a Hibernate step this machine can't do, unless it's on
+            .filter(i => Session.canHibernate || page.listeners[i].on || page.listeners[i].label !== "Hibernate")
 
         SettingsField {
             id: stepRow

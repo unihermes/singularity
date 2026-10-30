@@ -77,6 +77,14 @@ seed() {
 machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null || true)
 [[ $machine == desktop ]] || machine=laptop
 seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$machine default"
+# a laptop ladder from before the Hibernate step: its suspends go through
+# idle-suspend.sh and the step is added, off
+idle=$HOME/.config/hypr/hypridle.conf
+if [[ $machine == laptop ]] && ! grep -q 'systemctl hibernate' "$idle"; then
+  sed -i -E 's#^([[:space:]]*(\#~ ?)?[[:space:]]*on-timeout[[:space:]]*=.*)systemctl suspend$#\1~/.config/hypr/idle-suspend.sh#' "$idle"
+  sed -n '/^# 1 h: hibernate/,$p' "$defaults/hypridle-laptop.defaults.conf" | sed '1i\\' >> "$idle"
+  log "hypridle.conf: added the Hibernate step (off)"
+fi
 seed binds.defaults.lua          "$HOME/.config/hypr/binds.lua"
 # binds added to the defaults since the last run go into binds.lua too
 if command -v node &>/dev/null; then
