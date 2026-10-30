@@ -37,3 +37,6 @@ dotfiles/gtk/.config/gtk-3.0/bookmarks
 dotfiles/hypr/.config/hypr/hypridle.conf
 dotfiles/hypr/.config/hypr/binds.lua
 dotfiles/hypr/.config/hypr/hyprlock.conf
+
+# xdph's config, written by link.sh with this machine's home directory
+dotfiles/hypr/.config/hypr/xdph.conf

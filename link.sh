@@ -93,6 +93,16 @@ if command -v node &>/dev/null; then
     || log "binds.lua: the new defaults couldn't be merged in"
 fi
 seed hyprlock.defaults.conf      "$HOME/.config/hypr/hyprlock.conf"
+# xdph's, with the home directory filled in (it runs the picker without a
+# shell, so no ~); rewritten when the template changes, and the portal with it
+xdph=$HOME/.config/hypr/xdph.conf
+want=$(sed "s#@HOME@#$HOME#g" "$defaults/xdph.defaults.conf")
+if [[ $(cat "$xdph" 2>/dev/null) != "$want" ]]; then
+  [[ -L $xdph ]] && rm -f "$xdph"
+  printf '%s\n' "$want" > "$xdph"
+  log "wrote ${xdph#"$HOME/"}"
+  systemctl --user try-restart xdg-desktop-portal-hyprland.service 2>/dev/null || true
+fi
 seed alacritty.defaults.toml     "$HOME/.config/alacritty/alacritty.toml"
 seed ghostty.defaults.ghostty    "$HOME/.config/ghostty/config.ghostty"
 seed bash_aliases.defaults.sh    "$HOME/.bash_aliases"
