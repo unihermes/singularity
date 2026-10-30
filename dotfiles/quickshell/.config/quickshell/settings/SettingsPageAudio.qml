@@ -3,10 +3,11 @@
 //
 // Output and input: the default device as a card with its level, the
 // others under it (a click makes one the default; outputs with nothing
-// plugged in are left out). CHANNELS: Game, Chat and Media's levels and
-// the ChatMix dial; EQUALIZER: each one's bands, a slider a band. Then the per-app mixer, one row an app however many
-// streams it plays: its level and the channel or output it plays on. Mute
-// is the button before each level. Straight on Pipewire, as the bar is;
+// plugged in are left out). CHANNELS: Game, Chat and Media's levels, each
+// with the apps playing on it under it, and the ChatMix dial; EQUALIZER:
+// each one's bands, a slider a band. Then the apps playing straight on an
+// output. An app is one row however many streams it plays: its level and
+// the channel or output it plays on. Mute is the button before each level. Straight on Pipewire, as the bar is;
 // wireplumber remembers everything. Audio's pactl finds unplugged outputs
 // and moves streams; an app's row drags onto a channel to move it there.
 
@@ -214,21 +215,34 @@ SettingsPage {
     Item { width: 1; height: Theme.spaceM; visible: Channels.sinks.length > 0 }
     FlyoutHeading { text: "CHANNELS"; visible: Channels.sinks.length > 0 }
 
+    // each channel's level, then the apps playing on it under it
     Repeater {
         model: ScriptModel { values: Channels.sinks }
-        Level {
-            id: channelLevel
+        Item {
+            id: channel
             required property var modelData
-            node: modelData
-            label: Audio.nodeName(modelData)
-            hint: Channels.key(modelData) === "game" ? "Where games play"
-                : Channels.key(modelData) === "media" ? "Where other apps play unless moved" : ""
-            // an app dragged here from PLAYING plays here from now on
-            // over the whole row, not only the field's control slot
+            width: parent ? parent.width : 0
+            implicitHeight: channelColumn.implicitHeight
+
+            Column {
+                id: channelColumn
+                width: parent.width
+                Level {
+                    node: channel.modelData
+                    label: Audio.nodeName(channel.modelData)
+                    hint: Channels.key(channel.modelData) === "game" ? "Where games play"
+                        : Channels.key(channel.modelData) === "media" ? "Where other apps play unless moved" : ""
+                }
+                Repeater {
+                    model: ScriptModel { values: Audio.appsOn(channel.modelData) }
+                    AppRow { indent: Theme.iconCell + Theme.spaceM }
+                }
+            }
+
+            // an app dragged here from another channel plays here from now on
             ChannelDrop {
-                parent: channelLevel
                 anchors.fill: parent
-                onAppDropped: nodes => page.moveTo(nodes, channelLevel.modelData)
+                onAppDropped: nodes => page.moveTo(nodes, channel.modelData)
             }
         }
     }
@@ -384,6 +398,8 @@ SettingsPage {
         id: app
         required property var modelData
         property bool playback: true
+        // under its channel's level, set in to show it belongs there
+        property int indent: 0
         readonly property var nodes: modelData.nodes
         readonly property var n: nodes[0]
         readonly property var target: Audio.playsOn[n.id] || null
@@ -393,7 +409,7 @@ SettingsPage {
         width: parent ? parent.width : 0
         implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceM, right.height + Theme.spaceS)
 
-        // dragged onto a channel under CHANNELS, it moves there
+        // dragged onto another channel, it moves there
         AppDrag {
             visible: app.playback
             anchors.fill: texts
@@ -405,6 +421,7 @@ SettingsPage {
 
         Image {
             id: appImage
+            x: app.indent
             visible: app.icon !== ""
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.iconCell
@@ -477,16 +494,21 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PLAYING" + (page.playingApps.length > 0 ? "  " + page.playingApps.length : "") }
+    Item { width: 1; height: Theme.spaceM; visible: Audio.appsElsewhere.length > 0 || Channels.sinks.length === 0 }
+    // the apps on no channel: straight on an output, or all of them
+    // without the channels
+    FlyoutHeading {
+        visible: Audio.appsElsewhere.length > 0 || Channels.sinks.length === 0
+        text: "PLAYING" + (Audio.appsElsewhere.length > 0 ? "  " + Audio.appsElsewhere.length : "")
+    }
 
     Repeater {
-        model: ScriptModel { values: page.playingApps }
+        model: ScriptModel { values: Audio.appsElsewhere }
         AppRow {}
     }
 
     FlyoutRow {
-        visible: page.playingApps.length === 0
+        visible: Channels.sinks.length === 0 && page.playingApps.length === 0
         enabled: false
         label: "Nothing is playing"
     }
