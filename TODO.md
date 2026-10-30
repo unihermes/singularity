@@ -29,4 +29,5 @@ Delete this file once every item is done.
     popups, focus, placement, rules) and improve usability; look specifically at X11
     windows (menus, dialogs, scaling, focus, drag and drop under XWayland).
 15. Visualizer: test switching to a muted tab and to a tab that has audio but isn't
-    playing (that the visualizer follows the right stream and goes flat, not stale).
+    playing; the visualizer should keep showing the bars of the player that is
+    still playing, not switch to the silent tab.
