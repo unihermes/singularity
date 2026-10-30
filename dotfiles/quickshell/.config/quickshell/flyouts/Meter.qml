@@ -40,6 +40,6 @@ Rectangle {
             enabled: root.animated
             NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease }
         }
-        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
     }
 }

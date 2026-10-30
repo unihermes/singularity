@@ -62,7 +62,7 @@ Item {
         border.color: root.kind === "glass" ? Theme.stroke
             : root.kind === "flat" ? (root.hovered ? Theme.textStrong : Theme.text)
             : root.checked ? Theme.accent : root.hovered ? Theme.strokeHover : Theme.stroke
-        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
         RectangularShadow {
             visible: root.kind === "glass" && root.checked && Theme.glow
@@ -115,7 +115,7 @@ Item {
         color: root.checked ? Theme.accent : Theme.channelGroove
         border.width: Theme.borderWidth
         border.color: root.hovered ? Theme.subtext : Theme.channelOuter
-        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
         // the inner line when off, a dark groove round the fill when on
         Rectangle {

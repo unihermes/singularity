@@ -40,7 +40,7 @@ FlyoutPanel {
     Component.onCompleted: if (open) refreshLater.restart()
     Timer {
         id: refreshLater
-        interval: Theme.dur(150) + 100
+        interval: Theme.durMedium + 100
         onTriggered: DdcBrightness.refresh()
     }
 

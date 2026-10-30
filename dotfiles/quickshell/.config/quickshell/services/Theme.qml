@@ -307,18 +307,22 @@ Singleton {
 
     // --- motion ----------------------------------------------------------------
 
-    // Every duration goes through dur(); 0 makes them instant. A look can
-    // opt out (its `motion` factor).
+    // Every duration is one of these three steps, scaled by dur(); 0 makes
+    // them instant. A look can opt out (its `motion` factor). They match
+    // Hyprland's speeds in looks.lua: layers 100 ms, fades 150, windows and
+    // workspaces 200.
     readonly property real animFactor: look.motion * Settings.animTime / 100 * Settings.animShell / 100
     function dur(ms) { return Math.round(ms * animFactor) }
-    // named steps: colour and hover changes / things appearing / meters filling
-    readonly property int durFast:   dur(110)
+    // colour, hover and small moves / panels and toasts appearing / meters
+    // filling and big moves
+    readonly property int durFast:   dur(100)
     readonly property int durMedium: dur(150)
-    readonly property int durSlow:   dur(250)
+    readonly property int durSlow:   dur(200)
     // the busy pulse's half-cycle; not scaled, it's a status signal
     readonly property int durPulse:  600
 
-    readonly property int ease: Easing.OutCubic
+    // Hyprland's "singularity" bezier (0.22, 1, 0.36, 1) is OutQuint
+    readonly property int ease: Easing.OutQuint
 
     // --- the bar ---------------------------------------------------------------
 

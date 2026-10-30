@@ -123,7 +123,7 @@ OverlayWindow {
                     height: parent.height * Math.max(0, Math.min(1, root.level / 100))
                     radius: parent.radius
                     color: root.mode === "volume" && Audio.muted ? Theme.textDisabled : Theme.meterFill
-                    Behavior on height { NumberAnimation { duration: Theme.dur(90) } }
+                    Behavior on height { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                 }
             }
         }

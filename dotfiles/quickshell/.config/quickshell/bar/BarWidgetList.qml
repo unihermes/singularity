@@ -101,7 +101,7 @@ Column {
 
         // the rows being pushed aside slide rather than jump
         displaced: Transition {
-            NumberAnimation { properties: "y"; duration: Theme.dur(120); easing.type: Theme.ease }
+            NumberAnimation { properties: "y"; duration: Theme.durFast; easing.type: Theme.ease }
         }
 
         delegate: Item {

@@ -46,7 +46,7 @@ Item {
     Band {
         inset: root.bw
         color: root.groove
-        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
     }
     Band { visible: root.innerLine; inset: root.bw + root.grooveWidth; color: Theme.channelInner }
     Band { inset: root.depth; color: root.fill }

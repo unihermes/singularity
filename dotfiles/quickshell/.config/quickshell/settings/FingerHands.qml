@@ -77,7 +77,7 @@ Row {
                         height: finger.under + (finger.height - finger.under - 2 * parent.border.width) * root.progress
                         radius: width / 2
                         color: Theme.accent
-                        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on height { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
                     }
 
                     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

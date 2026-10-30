@@ -420,7 +420,7 @@ PanelWindow {
             property bool slideX: false
             Behavior on x {
                 enabled: standIn.slideX
-                NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
+                NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
             }
 
             Text {

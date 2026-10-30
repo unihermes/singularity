@@ -89,9 +89,9 @@ ModuleFrame {
                 border.color: Theme.muted
 
                 Behavior on width {
-                    NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                    NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
                 }
-                Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
             }
 
             Text {
@@ -191,7 +191,7 @@ ModuleFrame {
                     : scratchMouse.containsMouse ? Theme.text : Theme.subtext
                 font.family: Theme.fontIcon
                 font.pixelSize: Theme.barFs(15)
-                Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
             }
 
             Text {
@@ -239,7 +239,7 @@ ModuleFrame {
                 : overviewMouse.containsMouse ? Theme.text : Theme.subtext
             font.family: Theme.fontIcon
             font.pixelSize: Theme.barFs(15)
-            Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+            Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
         }
 
         MouseArea {

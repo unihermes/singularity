@@ -160,11 +160,12 @@ hl.config({
 
 hl.curve("singularity", { type = "bezier", points = { {0.22, 1}, {0.36, 1} } })
 
--- speed is in 100ms units (3 = 300ms), so lower is faster
+-- speed is in 100ms units (2 = 200ms), so lower is faster; the shell's
+-- Theme.durFast/Medium/Slow are these 1, 1.5 and 2, on the same curve
 local windowSpeed, fadeSpeed = S.windowSpeed, S.fadeSpeed
 local windowStyle, windowsAnimate = S.windowStyle, S.windowsAnimate
-animation({ leaf = "global",     enabled = true, speed = 3, bezier = "singularity" })
-animation({ leaf = "border",     enabled = true, speed = 3, bezier = "singularity" })
+animation({ leaf = "global",     enabled = true, speed = 2, bezier = "singularity" })
+animation({ leaf = "border",     enabled = true, speed = 2, bezier = "singularity" })
 local win, ws = S.windowsFactor, S.workspacesFactor
 animation({ leaf = "windows",    enabled = true, speed = windowSpeed, factor = win, bezier = "singularity", style = windowStyle })
 animation({ leaf = "windowsIn",  enabled = windowsAnimate, speed = windowSpeed, factor = win, bezier = "singularity", style = windowStyle })

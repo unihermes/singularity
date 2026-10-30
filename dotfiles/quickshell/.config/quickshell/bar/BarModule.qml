@@ -56,7 +56,7 @@ Item {
     property bool slideX: false
     Behavior on x {
         enabled: root.slideX
-        NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
+        NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
     }
     signal middleClicked()
     signal rightClicked()

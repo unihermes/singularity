@@ -50,7 +50,7 @@ PanelWindow {
     NumberAnimation on reveal {
         id: slide
         running: false
-        duration: Theme.dur(180)
+        duration: Theme.durMedium
         easing.type: Theme.ease
     }
     onOpenChanged: {

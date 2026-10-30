@@ -47,7 +47,7 @@ Item {
     property bool slideX: false
     Behavior on x {
         enabled: root.slideX
-        NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
+        NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
     }
 
     implicitWidth: frame.width
@@ -93,7 +93,7 @@ Item {
         border.width: style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
         border.color: root.active ? Theme.strokeFocus : Theme.stroke
 
-        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
         Shadow {
             radius: frame.radius
@@ -153,9 +153,9 @@ Item {
                 color: frame.taskbar ? Qt.alpha(root.fillColor, 0.7) : root.fillColor
 
                 Behavior on width {
-                    NumberAnimation { duration: Theme.dur(120); easing.type: Theme.ease }
+                    NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
                 }
-                Behavior on color { ColorAnimation { duration: Theme.durFast } }
+                Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
             }
         }

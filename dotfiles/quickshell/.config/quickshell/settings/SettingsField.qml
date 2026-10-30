@@ -68,7 +68,7 @@ Item {
         opacity: root.lit ? 1 : 0
         visible: opacity > 0
 
-        Behavior on opacity { NumberAnimation { duration: Theme.dur(180); easing.type: Theme.ease } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease } }
     }
 
     Image {

@@ -64,7 +64,7 @@ Item {
             color: Theme.channelGroove
             border.width: Theme.borderWidth
             border.color: track.hot ? Theme.subtext : Theme.channelOuter
-            Behavior on border.color { ColorAnimation { duration: Theme.durFast } }
+            Behavior on border.color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
             Rectangle {
                 id: levelFill

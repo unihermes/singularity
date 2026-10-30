@@ -143,7 +143,7 @@ ModuleFrame {
 
                     Behavior on implicitWidth {
                         enabled: winIcon.style === "titled"
-                        NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                        NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
                     }
 
                     // the rule between one workspace's windows and the next's
@@ -199,7 +199,7 @@ ModuleFrame {
                             : winIcon.hovered ? Theme.overlay : "transparent"
                         border.width: winIcon.focused ? Theme.borderWidth : 0
                         border.color: Theme.strokeFocus
-                        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+                        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
                         // the underline, a segment per window when the app
                         // has more than one
@@ -258,7 +258,7 @@ ModuleFrame {
                             : winIcon.hovered ? Theme.overlay : "transparent"
                         border.width: winIcon.focused && !winIcon.indexed ? Theme.borderWidth : 0
                         border.color: winIcon.spot ? Theme.accent : Qt.alpha(Theme.accent, 0.6)
-                        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+                        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                     }
 
                     // inset: the well the focused icon sits in, its inner
@@ -296,7 +296,7 @@ ModuleFrame {
                             : winIcon.hovered && !winIcon.focused ? Theme.overlay : "transparent"
                         border.width: winIcon.focused ? Theme.borderWidth : 0
                         border.color: Theme.strokeFocus
-                        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+                        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                     }
 
                     Item {
@@ -311,14 +311,14 @@ ModuleFrame {
                         height: winIcon.iconPx
                         opacity: winIcon.lift ? (winIcon.focused ? 1 : winIcon.hovered ? 0.9 : 0.5)
                             : winIcon.lit ? 1 : 0.55
-                        Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+                        Behavior on opacity { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                         Behavior on width {
                             enabled: winIcon.spot || winIcon.lift
-                            NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
+                            NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
                         }
                         Behavior on height {
                             enabled: winIcon.spot || winIcon.lift
-                            NumberAnimation { duration: Theme.dur(160); easing.type: Theme.ease }
+                            NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
                         }
 
                         TintedIcon {
@@ -358,7 +358,7 @@ ModuleFrame {
                         font.pixelSize: Theme.barLabelSize
                         Behavior on width {
                             enabled: winIcon.spot
-                            NumberAnimation { duration: Theme.dur(180); easing.type: Theme.ease }
+                            NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
                         }
                     }
 
@@ -456,9 +456,9 @@ ModuleFrame {
                                 color: winIcon.focused && (!pip.split || index === Math.min(3, winIcon.shownIndex)) ? Theme.accent
                                     : winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
                                 Behavior on width {
-                                    NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                                    NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
                                 }
-                                Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                                Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                             }
                         }
                     }
@@ -475,9 +475,9 @@ ModuleFrame {
                         color: winIcon.focused ? Theme.accent
                             : winIcon.hovered ? Theme.subtext : Theme.muted
                         Behavior on width {
-                            NumberAnimation { duration: Theme.dur(130); easing.type: Theme.ease }
+                            NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
                         }
-                        Behavior on color { ColorAnimation { duration: Theme.dur(130) } }
+                        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                     }
 
                     // dots: a ring round the dot of an app with more than
@@ -579,7 +579,7 @@ ModuleFrame {
             color: Theme.accent
             Behavior on x {
                 enabled: slider.visible
-                NumberAnimation { duration: Theme.dur(220); easing.type: Theme.ease }
+                NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease }
             }
         }
     }

@@ -80,8 +80,8 @@ Item {
         color: Theme.surface
         border.width: 1
         border.color: Theme.muted
-        Behavior on x { NumberAnimation { duration: Theme.dur(140); easing.type: Theme.ease } }
-        Behavior on y { NumberAnimation { duration: Theme.dur(140); easing.type: Theme.ease } }
+        Behavior on x { NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease } }
+        Behavior on y { NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease } }
 
         // the selected-row tick, and two lines of text
         Rectangle { x: 1; y: parent.height * 0.2; width: 2; height: parent.height * 0.6; color: Theme.accent }

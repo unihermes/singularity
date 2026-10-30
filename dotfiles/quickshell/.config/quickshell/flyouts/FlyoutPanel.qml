@@ -49,7 +49,7 @@ OverlayWindow {
         id: revealAnim
         target: root
         property: "reveal"
-        duration: Theme.dur(150)
+        duration: Theme.durMedium
         easing.type: Theme.ease
     }
     function play(to) {
@@ -205,7 +205,7 @@ OverlayWindow {
             transformOrigin: atBottom ? Item.Bottom : Item.Top
 
             Behavior on height {
-                NumberAnimation { duration: Theme.dur(90); easing.type: Theme.ease }
+                NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
             }
 
             Absorber {}
