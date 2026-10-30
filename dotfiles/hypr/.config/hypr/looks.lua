@@ -121,9 +121,8 @@ hl.config({
         },
         groupbar = {
             height              = S.GROUPBAR_HEIGHT,
-            -- tabs edge to edge: -1 rather than 0, since tab widths are
-            -- fractional and 0 leaves a hairline between them
-            gaps_in             = -1,
+            -- tabs edge to edge (0.57 rejects anything below 0)
+            gaps_in             = 0,
             gaps_out            = 0,
             font_family         = "UbuntuMono Nerd Font",
             font_size           = 13,
