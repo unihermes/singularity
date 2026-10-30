@@ -29,7 +29,6 @@ SettingsPage {
     // theme | wallpaper | bar | panels | windows | fonts
     property string part: "theme"
     tab: part
-    anatomy: "cards"
 
     // the card on top: what the part is set to now
     status: {

@@ -13,7 +13,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    anatomy: "bands"
+    sectioned: true
 
     title: "VPN"
     description: "Proton VPN over WireGuard, for qBittorrent or everything."
@@ -24,7 +24,7 @@ SettingsPage {
         alert: true
     }
 
-    FlyoutHeading { text: "CONNECTION"; about: "Proton over WireGuard" }
+    FlyoutHeading { text: "CONNECTION" }
 
     SettingsField {
         label: "VPN"
@@ -79,7 +79,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "SERVERS" + (Vpn.servers.length > 0 ? "  " + Vpn.servers.length : ""); about: "WireGuard configs" }
+    FlyoutHeading { text: "SERVERS" + (Vpn.servers.length > 0 ? "  " + Vpn.servers.length : "") }
 
     // each with whether it forwards a port, Connect, and Remove on hover
     Repeater {
@@ -156,7 +156,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "QBITTORRENT"; about: "Torrents through the tunnel" }
+    FlyoutHeading { text: "QBITTORRENT" }
 
     SettingsField {
         label: "Only over the VPN"

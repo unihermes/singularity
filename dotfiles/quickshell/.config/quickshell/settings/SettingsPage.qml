@@ -8,13 +8,11 @@
 // window is open); `sectioned` frames each group of rows (DESIGN.md);
 // `pinned` sits above the rows while `pinnedVisible`; `footer` floats over
 // the foot of the rows while `footerVisible`.
-// `anatomy` is how the page is laid out (picked per page, DESIGN.md):
-//   list   sections as framed groups of rows (with `sectioned`)
-//   bands  each section a band: its heading and `about` line in a column
-//          on the left, its rows on the right, hairlines between
-//   cards  `status` (and `statusDetail`, `statusControl`) as a card on
-//          top, then framed sections showing their first three rows, the
-//          rest under the heading's More
+// Every page is laid out in cards (DESIGN.md): `status` (with
+// `statusDetail`, `statusControl`) as a card on top, the window filling it
+// in from the sidebar's line where the page sets none; then framed
+// sections showing their first three rows, the rest under the heading's
+// More.
 
 import QtQuick
 import "../services"
@@ -40,10 +38,8 @@ Item {
     property string highlight: ""
     readonly property bool isSettingsPage: true
     property bool sectioned: false
-    property string anatomy: "list"
-    readonly property bool bands: anatomy === "bands"
     // the rows a section shows before its More (FlyoutHeading)
-    readonly property int essentialRows: anatomy === "cards" ? 3 : 0
+    readonly property int essentialRows: 3
     property string status: ""
     property string statusDetail: ""
     property Component statusControl: null
@@ -442,10 +438,8 @@ Item {
                 // sectioned: inset to clear the sections' frames
                 readonly property int inset: root.sectioned ? Theme.channelWidth + Theme.spaceL : 0
                 readonly property bool sectioned: root.sectioned
-                // bands: the column the headings sit in, left of the rows
-                readonly property int gutter: root.bands ? Theme.fit(200) : 0
-                x: Theme.spaceS + inset + gutter
-                width: flick.width - (Theme.spaceS + inset) * 2 - gutter
+                x: Theme.spaceS + inset
+                width: flick.width - x * 2
                 spacing: Theme.spaceM
                 topPadding: root.sectioned ? Theme.channelWidth + Theme.spaceS : 0
                 // clear of the panel's rounded bottom border, as on System
@@ -465,7 +459,6 @@ Item {
 
         // scroll indicator, as in the Keybinds list
         StickyHeading {
-            visible: !root.bands
             width: flick.width
             flickable: flick
             column: root.stickyColumn

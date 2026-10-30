@@ -15,7 +15,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    anatomy: "bands"
+    sectioned: true
 
     title: "Software Update"
     description: "How often to check, the AUR, packages to leave out, and removing packages."
@@ -220,7 +220,7 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    FlyoutHeading { text: "STATUS"; about: "Checks and sources" }
+    FlyoutHeading { text: "STATUS" }
 
     SettingsNote {
         visible: !Updates.available
@@ -405,7 +405,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PACKAGES"; about: "What's waiting and held back" }
+    FlyoutHeading { text: "PACKAGES" }
 
     // what's waiting, only while there's some; the card says when there's none
     SettingsSubhead { visible: Updates.count > 0; caption: "PENDING  " + Updates.count }
@@ -628,7 +628,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "UPKEEP"; about: "Tidying up" }
+    FlyoutHeading { text: "UPKEEP" }
 
     FlyoutRow {
         visible: !page.orphans && !page.reclaim

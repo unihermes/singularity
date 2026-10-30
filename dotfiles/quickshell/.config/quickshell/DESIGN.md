@@ -640,19 +640,13 @@ Settings') are laid out the same way.
   (`SettingsSectionRow`). The page on show has the hover fill and the
   accent tick. The page opens under its icon (lightened accent) and name
   at `fontTitle` (`WindowPageTitle`), then its own one-line description.
-- **Page anatomy** (picked 2026-10-30, round two; `SettingsPage.anatomy`):
-  - **list** (Network, Display, Sound, Default Apps): sections as framed
-    groups of rows.
-  - **bands** (Bluetooth, VPN, Keyboard & Mouse, Devices, Battery & Idle,
-    Recording, Notifications, Login & Startup, Terminal, Date & Time,
-    Software Update): each section a band, its heading and a short `about`
-    line in a column on the left (`fit(200)`), its rows on the right, a
-    hairline over every band but the first; no frames, no sticky heading.
-  - **cards** (the six Look pages, Lock Screen): a card on top with what
-    the page is set to now (`status`, `statusDetail`, `statusControl`),
-    then framed sections showing their first three rows; the rest fold away
-    behind More (n) at the heading's rule end (Less folds them again). A
-    search hit in the folded rows brings them back.
+- **Page layout** (2026-10-30: every page, after a per-page mix was
+  tried and dropped): cards. A card on top says what the page is set to
+  now (`status`, `statusDetail`, `statusControl`; the sidebar's line where
+  the page sets none, no card where that's empty), then framed sections
+  showing their first three rows; the rest fold away behind More (n) at
+  the heading's rule end (Less folds them again). A search hit in the
+  folded rows brings them back.
 - **Search** (Settings): the box at the top of the sidebar. Typed into,
   the sidebar lists the hits under a RESULTS count in place of the pages
   (the page beside it stays). With the box focused and nothing typed, the

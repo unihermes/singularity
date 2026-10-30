@@ -17,7 +17,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    anatomy: "bands"
+    sectioned: true
 
     title: "Login & Startup"
     description: "What starts when the PC boots and when you log in."
@@ -205,7 +205,6 @@ SettingsPage {
     FlyoutHeading {
         visible: page.bootSection
         text: "WHEN THE PC STARTS"
-        about: "Boot"
     }
 
     SettingsField {
@@ -284,7 +283,7 @@ SettingsPage {
 
     // --- at login ------------------------------------------------------------
 
-    FlyoutHeading { text: "AT LOGIN" + (Autostart.userEntries.length > 0 ? "  " + Autostart.userEntries.length : ""); about: "Apps that start with you" }
+    FlyoutHeading { text: "AT LOGIN" + (Autostart.userEntries.length > 0 ? "  " + Autostart.userEntries.length : "") }
 
     Repeater {
         model: Autostart.userEntries

@@ -66,6 +66,8 @@ FloatingWindow {
         { heading: "Apps",        ids: ["autostart", "filetypes", "shell", "keybinds"] },
         { heading: "System",      ids: ["datetime", "updates"] },
     ]
+    // pages whose first section opens on a card of their own (HeadCard)
+    readonly property var headCards: ["network", "bluetooth", "display", "audio", "devices", "power", "notifications", "datetime"]
     // pages reached from another page, with the sidebar showing that one
     readonly property var subpages: ({ windowrules: "windows" })
     readonly property string navCurrent: subpages[currentPage] || currentPage
@@ -446,6 +448,10 @@ FloatingWindow {
                 onLoaded: {
                     if (!item) return
                     item.titled = false
+                    // the status card: the sidebar's line, where the page has
+                    // neither a card nor a head card of its own
+                    if (item.status === "" && root.headCards.indexOf(root.openPage.id) === -1)
+                        item.status = Qt.binding(() => root.openPage ? root.status(root.openPage.id).text : "")
                     if (root.highlight !== "") item.highlight = root.highlight
                 }
                 source: root.openPage ? root.openPage.source : ""

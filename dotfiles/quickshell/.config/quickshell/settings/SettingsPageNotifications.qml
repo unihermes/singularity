@@ -15,7 +15,7 @@ import "../services/TimeWindow.js" as TimeWindow
 SettingsPage {
     id: page
 
-    anatomy: "bands"
+    sectioned: true
 
     title: "Notifications"
     description: "When popups show, where, and for how long."
@@ -65,7 +65,7 @@ SettingsPage {
 
     // --- status ------------------------------------------------------------
 
-    FlyoutHeading { text: "STATUS"; about: "Quiet times and history" }
+    FlyoutHeading { text: "STATUS" }
 
     // whether popups show, and why: the bell, the state, the switch
     HeadCard {
@@ -240,7 +240,7 @@ SettingsPage {
     // --- popups --------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "POPUPS"; about: "How they show" }
+    FlyoutHeading { text: "POPUPS" }
 
     // the spot picker beside where it is, grouping and a test
     Row {
@@ -333,7 +333,7 @@ SettingsPage {
     // --- apps ------------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "APPS" + (page.apps.length > 0 ? "  " + page.apps.length : ""); about: "Each app's own" }
+    FlyoutHeading { text: "APPS" + (page.apps.length > 0 ? "  " + page.apps.length : "") }
 
     SettingsNote { text: "Every app in the history; silent ones skip the popup" }
 

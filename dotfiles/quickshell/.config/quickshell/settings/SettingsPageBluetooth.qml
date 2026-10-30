@@ -18,7 +18,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    anatomy: "bands"
+    sectioned: true
 
     title: "Bluetooth"
     description: "The adapter, paired devices and what's in range."
@@ -91,7 +91,7 @@ SettingsPage {
 
     // --- adapter ---------------------------------------------------------
 
-    FlyoutHeading { text: "ADAPTER"; about: "This PC's radio" }
+    FlyoutHeading { text: "ADAPTER" }
 
     // the adapter: its name, interface and what's on it, and the power switch
     HeadCard {
@@ -136,7 +136,7 @@ SettingsPage {
     // --- paired ----------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "PAIRED" + (page.poweredOn ? "  " + page.paired.length : ""); about: "Your devices" }
+    FlyoutHeading { text: "PAIRED" + (page.poweredOn ? "  " + page.paired.length : "") }
 
     // A paired device and the settings it opens under itself.
     component PairedDevice: Column {

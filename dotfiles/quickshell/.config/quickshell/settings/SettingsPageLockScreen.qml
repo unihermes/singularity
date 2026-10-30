@@ -20,7 +20,6 @@ SettingsPage {
     id: page
 
     sectioned: true
-    anatomy: "cards"
     status: (page.fingerprint ? "Fingerprint or password" : "Password") + " · "
         + (page.grace === 0 ? "no grace" : page.graceLabel(page.grace) + " grace")
     statusDetail: "When it locks is Battery & Idle's Lock step"

@@ -8,11 +8,9 @@
 // section (up to the next heading or FlyoutDivider) on click, by moving the
 // rows into a hidden holder. Settings and System keep folds in a
 // `foldedSections` list while open; flyouts unfold as they close.
-// On a Settings page laid out in bands (its column has a `gutter`) it sits
-// in that gutter beside its rows, with `about` under it and a hairline
-// over the band. On one laid out in cards (`essentialRows`), a section
-// longer than that shows its first rows and folds the rest into a second
-// holder, More (n) at the rule's end bringing them back.
+// On a Settings page (`essentialRows`), a section longer than that shows
+// its first rows and folds the rest into a second holder, More (n) at the
+// rule's end bringing them back.
 
 import QtQuick
 import "../services"
@@ -21,8 +19,6 @@ Item {
     id: root
 
     property string text: ""
-    // bands: a line about the section, under the heading
-    property string about: ""
     // a name after the text, shown as written whatever the heading case
     // (a network's name, which is case-sensitive)
     property string asWritten: ""
@@ -45,16 +41,10 @@ Item {
     // set while a section starts folded, before its rows have moved
     property bool folding: false
 
-    // bands: the gutter left of the rows the heading sits in
-    readonly property int gutter: parent && parent.gutter > 0 ? parent.gutter : 0
-    readonly property bool inBand: gutter > 0
-
     // in a sectioned column, out to just inside the sections' frames' outline
-    x: inBand ? -gutter : -outdent
-    width: inBand ? gutter - Theme.spaceXl : parent ? parent.width + outdent : 0
-    // in a band it takes next to no height: the rows start beside it (a
-    // positioner skips an item 0 high)
-    implicitHeight: inBand ? 1 : Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
+    x: -outdent
+    width: parent ? parent.width + outdent : 0
+    implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
 
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
@@ -178,6 +168,8 @@ Item {
         width: root.width
     }
     readonly property bool trimmed: trimHolder.children.length > 0
+    // a section whose rows only make sense together (the idle ladder)
+    property bool keepAll: false
     // rows a Less would fold again
     property int untrimmedCount: 0
     readonly property int essentials: {
@@ -186,11 +178,14 @@ Item {
         return 0
     }
     function trim() {
-        if (essentials <= 0 || collapsed || trimmed) return
+        if (essentials <= 0 || keepAll || collapsed || trimmed) return
         var items = sectionItems(), shown = 0, moving = []
         for (var i = 0; i < items.length; i++) {
-            if (!items[i].visible) continue
-            if (++shown > essentials) moving.push(items[i])
+            // a Repeater stays put (its rows are made beside it), and so
+            // does anything hidden or with no height yet
+            var it = items[i]
+            if (typeof it.itemAt === "function" || !it.visible || it.height <= 0) continue
+            if (++shown > essentials) moving.push(it)
         }
         // a lone row past the cut isn't worth a More
         if (moving.length < 2) return
@@ -330,12 +325,8 @@ Item {
         anchors.left: crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
         anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
-        anchors.verticalCenter: root.inBand ? undefined : parent.verticalCenter
+        anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: root.lift
-        // beside the band's first row
-        y: root.inBand && root.parent ? root.parent.spacing + 1 : 0
-        width: root.inBand ? root.width - x : implicitWidth
-        elide: root.inBand ? Text.ElideRight : Text.ElideNone
         text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "")
         color: root.shape === "tag" ? Theme.textOnAccent : Theme.headingColor
         font.family: Theme.fontHeading
@@ -373,34 +364,9 @@ Item {
         }
     }
 
-    // bands: the line about the section under the heading, and a hairline
-    // over the whole band
-    Text {
-        visible: root.inBand && root.about !== ""
-        anchors.top: label.bottom
-        anchors.topMargin: Theme.spaceXs
-        anchors.left: label.left
-        width: root.width - label.x
-        wrapMode: Text.WordWrap
-        maximumLineCount: 2
-        elide: Text.ElideRight
-        text: root.about
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontCaption
-    }
-    Rectangle {
-        visible: root.inBand && !root.firstInColumn
-        y: -(root.parent ? root.parent.spacing : 0) / 2
-        width: root.parent ? root.parent.width + root.gutter : 0
-        height: Theme.borderWidth
-        color: Theme.stroke
-    }
-
     // the tab shape is drawn on the rule, so keeps it
     Rectangle {
-        visible: !root.inBand && (Theme.headingRule || root.shape === "tab")
+        visible: Theme.headingRule || root.shape === "tab"
         anchors.left: tail.right
         anchors.leftMargin: root.shape === "tab" ? 0 : root.shape === "tag" ? Theme.spaceL + Theme.spaceS : Theme.spaceL
         anchors.right: controlBox.active ? controlBox.left : more.visible ? more.left : chevron.visible ? chevron.left : hintRow.left
@@ -413,7 +379,7 @@ Item {
     // cards: the folded-away rows, back or away again
     Text {
         id: more
-        visible: !root.inBand && !root.collapsed && (root.trimmed || root.untrimmedCount > 0)
+        visible: !root.collapsed && (root.trimmed || root.untrimmedCount > 0)
         anchors.right: chevron.visible ? chevron.left : parent.right
         anchors.rightMargin: chevron.visible ? Theme.spaceM : 0
         anchors.verticalCenter: label.verticalCenter
@@ -435,7 +401,7 @@ Item {
 
     Text {
         id: chevron
-        visible: root.collapsible && !root.inBand
+        visible: root.collapsible
         anchors.right: parent.right
         anchors.verticalCenter: label.verticalCenter
         text: root.collapsed ? "󰅂" : "󰅀"
