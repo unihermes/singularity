@@ -63,7 +63,7 @@ else
   row "GPU" "$red lspci missing (pciutils)$off"
 fi
 row "Monitors" "$(have hyprctl && hyprctl monitors -j 2>/dev/null \
-  | grep -c '"name"' || echo "$dim n/a$off")"
+  | grep -c '"dpmsStatus"' || echo "$dim n/a$off")"
 
 # --- audio -------------------------------------------------------------------
 # wireplumber routes everything; pipewire alone up means silence

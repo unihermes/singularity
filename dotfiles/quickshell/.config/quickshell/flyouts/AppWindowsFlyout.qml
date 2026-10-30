@@ -66,8 +66,8 @@ FlyoutPanel {
 
     // a window's workspace id, -1 when not known yet
     function wsOf(w) {
-        var o = w.toplevel && w.toplevel.lastIpcObject
-        return o && o.workspace ? o.workspace.id : -1
+        var ws = w.toplevel && w.toplevel.workspace
+        return ws ? ws.id : -1
     }
     readonly property int workspaceCount: {
         var seen = {}

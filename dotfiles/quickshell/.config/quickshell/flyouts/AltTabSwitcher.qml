@@ -48,8 +48,8 @@ OverlayWindow {
         const current = cs.find(c => c.focusHistoryID === 0)
         const all = Theme.altTabScope === "all"
         const onWs = current
-            ? cs.filter(c => c.workspace && (c.workspace.id === current.workspace.id
-                                             || (all && c.workspace.id > 0)))
+            ? cs.filter(c => c.workspace && (c.workspace.name === current.workspace.name
+                                             || (all && !c.workspace.name.startsWith("special:"))))
             : cs
         onWs.sort((a, b) => a.focusHistoryID - b.focusHistoryID)
         const listed = onWs.filter(c => !Apps.isBackTab(c, onWs))
