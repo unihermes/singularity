@@ -1,12 +1,15 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAppearance.qml
 //
-// Appearance, one tab per part of the screen: Theme, Bar, Panels, Desktop,
-// Apps. Each opens on a preview; while anything differs from the baseline,
-// ChangesBar floats at the page's foot (Review, Save as default, Reset); a
-// changed field is marked and its mark resets it. Shell settings are Settings.qml (shared with the Control
-// Centre); window settings go to hyprland.json, then a reload. Tabs live in
-// appearance/; this keeps what they reach through `page`.
+// The Look pages, one part of the screen each (`part`): Theme, Wallpaper &
+// Desktop, Bar, Panels & Popups, Windows, Fonts & Icons; each a thin
+// SettingsPage<Part>.qml over this. Most open on a preview; while anything
+// differs from the baseline, ChangesBar floats at the page's foot (Review,
+// Save as default, Reset), whose Show opens the page a change is on; a
+// changed field is marked and its mark resets it. Shell settings are
+// Settings.qml (shared with the Control Centre); window settings go to
+// hyprland.json, then a reload. Each part's rows live in appearance/; this
+// keeps what they reach through `page`.
 
 import Quickshell
 import Quickshell.Io
@@ -23,22 +26,20 @@ SettingsPage {
     sectioned: true
     footer: ChangesBar {}
     footerVisible: !Settings.lookPristine
-    // a small bar and flyout, drawn by the shell's own pieces, above the
-    // tabs whose settings change how they look
-    pinned: LivePreview { kind: ({ bar: "bar", panels: "launcher", desktop: "windows" })[page.tab] || "flyout" }
+    // theme | wallpaper | bar | panels | windows | fonts
+    property string part: "theme"
+    tab: part
 
-    title: "Appearance"
+    // a small bar, flyout or windows, drawn by the shell's own pieces, above
+    // the parts whose settings change how they look
+    pinned: LivePreview { kind: ({ bar: "bar", panels: "launcher", windows: "windows" })[page.part] || "flyout" }
+    pinnedVisible: page.part !== "wallpaper"
+
+    title: ({ theme: "Theme", wallpaper: "Wallpaper & Desktop", bar: "Bar", panels: "Panels & Popups",
+              windows: "Windows", fonts: "Fonts & Icons" })[part]
     description: "Changes apply as you make them; a dot marks a setting that differs from the baseline."
 
-    tabs: [
-        { id: "theme",   label: "Theme",   icon: "󰏘" },
-        { id: "bar",     label: "Bar",     icon: "󰕰" },
-        { id: "panels",  label: "Panels",  icon: "󰕮" },
-        { id: "desktop", label: "Desktop", icon: "󰖲" },
-        { id: "apps",    label: "Apps",    icon: "󰀻" },
-    ]
-    stickyColumn: (({ theme: tab_theme, bar: tab_bar, panels: tab_panels,
-                      desktop: tab_desktop, apps: tab_apps })[tab] || tab_theme).item || tab_theme
+    stickyColumn: rows.item || rows
 
     function label(v, key) { return Settings.choiceLabel(v, key) }
 
@@ -93,37 +94,13 @@ SettingsPage {
         return page.label(v, k)
     }
 
-    // The tab showing is built with the page; the rest follow in the
-    // background a moment later, and a tab clicked before its turn is
-    // finished on the spot. A search or "Show" builds them all at once, so
-    // its field can be found.
-    property bool buildAll: false
-    onHighlightChanged: if (highlight !== "") buildAll = true
-    property bool warm: false
-    Timer { interval: 400; running: true; onTriggered: page.warm = true }
-
-    component LazyTab: Loader {
-        required property string tabId
-        required property url file
-        readonly property bool showing: page.tab === tabId
-        readonly property bool wanted: showing || page.buildAll || page.warm
-        function build() { if (wanted && source.toString() === "") setSource(file, { page: page }) }
-        onWantedChanged: build()
-        asynchronous: !showing && !page.buildAll
-        Component.onCompleted: build()
+    // the part's rows
+    Loader {
+        id: rows
         width: parent ? parent.width : 0
-        visible: showing
+        Component.onCompleted: setSource("appearance/" + ({ theme: "ThemeTab", wallpaper: "WallpaperTab", bar: "BarTab",
+            panels: "PanelsTab", windows: "WindowsTab", fonts: "FontsTab" })[page.part] + ".qml", { page: page })
     }
-
-    LazyTab { id: tab_theme; tabId: "theme"; file: "appearance/ThemeTab.qml" }
-
-    LazyTab { id: tab_bar; tabId: "bar"; file: "appearance/BarTab.qml" }
-
-    LazyTab { id: tab_panels; tabId: "panels"; file: "appearance/PanelsTab.qml" }
-
-    LazyTab { id: tab_desktop; tabId: "desktop"; file: "appearance/DesktopTab.qml" }
-
-    LazyTab { id: tab_apps; tabId: "apps"; file: "appearance/AppsTab.qml" }
 
     // --- windows: looks.lua, and hyprland.json over it ------------------------
 

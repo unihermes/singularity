@@ -21,7 +21,7 @@ SettingsPage {
 
     sectioned: true
 
-    title: "File Types"
+    title: "Default Apps"
     description: "The app each kind of file opens with."
 
     // the subheads the kinds sit under, in order

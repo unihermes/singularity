@@ -1,8 +1,9 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/AppsTab.qml
+// ~/.config/quickshell/settings/appearance/FontsTab.qml
 //
-// The Appearance page's Apps tab: how apps outside the shell look -- their
-// font, icons (a few shown beside the label) and cursor with its size.
+// The Fonts & Icons page: the shell's font and size (SHELL), then how apps
+// outside the shell look (APPS): their font, icons (a few shown beside the
+// label) and cursor with its size.
 
 import Quickshell
 import QtQuick
@@ -13,11 +14,49 @@ import ".."
 
 SettingsTab {
     id: appsTab
-    tabId: "apps"
+    tabId: "fonts"
 
-    FlyoutHeading { text: "APPS OUTSIDE THE SHELL" }
+    FlyoutHeading { text: "SHELL" }
 
-    // GTK/Qt apps' own font -- independent of the shell's Font under Text. Every
+    // The box shows the font in use, set in itself, and the list sets every
+    // installed choice in its own font.
+    SettingsField {
+        label: "Font"
+        lookKey: "fontFamily"
+        hint: Theme.fontText !== Settings.fontFamily
+            ? page.label(Settings.fontFamily) + " isn't available, so " + page.label(Theme.fontText) + " stands in"
+            : "Monospace; text and icons alike"
+
+        SettingsDropdown {
+            anchors.right: parent.right
+            model: Fonts.available
+            current: Theme.fontText
+            labelFor: v => page.label(v)
+            fontFor: v => v
+            onPicked: v => Settings.set("fontFamily", v)
+        }
+    }
+
+    // Fonts installed since the shell started, which Qt can't draw until
+    // it's restarted (see Fonts.qml)
+    SettingsField {
+        visible: Fonts.pending.length > 0
+        label: Fonts.pending.length === 1 ? "1 new font" : Fonts.pending.length + " new fonts"
+        hint: Fonts.pending.map(f => page.label(f)).join(", ") + " — usable after a restart"
+
+        FlyoutChip {
+            anchors.right: parent.right
+            text: "Restart shell"
+            onClicked: Session.restartShell()
+        }
+    }
+
+    Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "APPS" }
+
+    // GTK/Qt apps' own font -- independent of the shell's Font above. Every
     // choice here is always installed (see Looks.systemFonts), so there's no
     // pending/restart state to show like the shell font has.
     SettingsField {

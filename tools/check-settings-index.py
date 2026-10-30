@@ -53,13 +53,16 @@ def main():
         page = m.group(1).lower()
         pages.add(page)
         src = open(os.path.join(ROOT, "settings", f)).read()
-        # a page split into files keeps them in a folder named after it
-        # (settings/appearance/ for SettingsPageAppearance.qml)
-        sub = os.path.join(ROOT, "settings", page)
-        if os.path.isdir(sub):
-            for g in sorted(os.listdir(sub)):
-                if g.endswith(".qml"):
-                    src += "\n" + open(os.path.join(sub, g)).read()
+        # the Look pages are thin wrappers over SettingsPageAppearance.qml,
+        # each with its rows in settings/appearance/<Part>Tab.qml; the
+        # changes bar they share is indexed under Theme
+        part = re.search(r'SettingsPageAppearance\s*\{\s*part:\s*"(\w+)"', src)
+        if page == "appearance":
+            continue
+        if part:
+            app = os.path.join(ROOT, "settings", "appearance")
+            for g in [part.group(1).capitalize() + "Tab.qml"] + (["ChangesBar.qml"] if part.group(1) == "theme" else []):
+                src += "\n" + open(os.path.join(app, g)).read()
 
         # a field: a SettingsField block, or a one-line component use that
         # carries a label (Appearance's Stepper)

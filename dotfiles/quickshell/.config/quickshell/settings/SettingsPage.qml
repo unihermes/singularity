@@ -79,6 +79,10 @@ Item {
     readonly property real bodyHeight: height - header.height - (headed ? Theme.spaceXl : 0)
         - (sectioned ? (Theme.channelWidth + Theme.spaceS) * 2 : 0)
 
+    // for the window: open another page, or the page a setting is on
+    signal goTo(string pageId)
+    signal showSetting(string label)
+
     function say(msg, isError) {
         notice = msg
         noticeIsError = !!isError

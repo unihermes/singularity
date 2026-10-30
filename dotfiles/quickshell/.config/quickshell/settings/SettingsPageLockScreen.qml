@@ -1,13 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageLockScreen.qml
 //
-// The lock screen and the lid, in three of this machine's files and fprintd:
+// The lock screen's look and unlocking, in two of this machine's files and
+// fprintd (the lid is Battery & Idle's, LidConfig.qml):
 //   hyprlock.conf   background (path, blur, brightness), the clock text and
 //                   auth's fingerprint:enabled; colours and font come from
 //                   the look
 //   hypridle.conf   the grace period, on the idle lock only
-//   lid.conf        close_action, close_delay, lock_on_close, hibernate
-//                   (lid.sh reads it)
 //   fprintd         the enrolled fingers (fprintd-list, -enroll, -delete)
 // Only hypridle needs a restart.
 
@@ -23,13 +22,12 @@ SettingsPage {
     sectioned: true
 
     title: "Lock Screen"
-    description: "Look, fingerprint, password grace and the lid. Colours follow Appearance."
+    description: "Its look, the fingerprint and the password grace. Colours follow Theme."
 
 
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
     readonly property string lockPath: hyprDir + "/hyprlock.conf"
     readonly property string idlePath: hyprDir + "/hypridle.conf"
-    readonly property string lidPath: Settings.stateDir + "/lid.conf"
     readonly property string wallpaperLink: "~/.local/state/singularity/current-wallpaper"
 
     // --- hyprlock.conf -------------------------------------------------------
@@ -298,66 +296,13 @@ SettingsPage {
         return s === 0 ? "Off" : s < 60 ? s + " s" : (s / 60) + " min"
     }
 
-    // --- lid, in lid.conf ----------------------------------------------------
-
-    // a lid switch to act on; the LID rows hide without one
-    property bool hasLid: false
-    Process {
-        running: true
-        command: ["sh", "-c", "ls /proc/acpi/button/lid/*/state"]
-        onExited: code => page.hasLid = (code === 0)
-    }
-
-    property string closeAction: "suspend"
-    property int closeDelay: 300
-    property bool lockOnClose: false
-    property bool hibernate: true
-
-    // lid.sh's defaults until the file says otherwise; a missing file is
-    // every default
-    function rereadLid() {
-        lidFile.reload()
-        lidFile.waitForJob()
-        var text = lidFile.text()
-        var m
-        closeAction = (m = /^close_action=([\w-]+)/m.exec(text)) ? m[1] : "suspend"
-        closeDelay = (m = /^close_delay=(\d+)/m.exec(text)) ? Number(m[1]) : 300
-        lockOnClose = (m = /^lock_on_close=(\d)/m.exec(text)) ? m[1] === "1" : false
-        hibernate = (m = /^hibernate=(\d)/m.exec(text)) ? m[1] === "1" : true
-    }
-
-    function setLid(name, value, message) {
-        var re = new RegExp("^" + name + "=.*$", "m")
-        AtomicFileWrite.write({
-            path: lidPath,
-            transform: text => re.test(text) ? text.replace(re, name + "=" + value)
-                : text + (text === "" || text.endsWith("\n") ? "" : "\n") + name + "=" + value + "\n",
-            done: (status, detail) => {
-                if (status === "ok" || status === "unchanged") page.say(message, false)
-                else page.say("Couldn't write lid.conf", true)
-                page.rereadLid()
-            }
-        })
-    }
-
-    // stepping minutes writes once, after the last step
-    property int pendingDelay: -1
-    Timer {
-        id: delayDebounce
-        interval: 500
-        onTriggered: page.setLid("close_delay", page.pendingDelay,
-            "Suspends " + (page.pendingDelay / 60) + " min after the lid closes")
-    }
-
     Component.onCompleted: {
         rereadLock()
         rereadIdle()
-        rereadLid()
     }
 
     FileView { id: lockFile; path: page.lockPath; blockLoading: true; printErrors: false }
     FileView { id: idleFile; path: page.idlePath; blockLoading: true; printErrors: false }
-    FileView { id: lidFile;  path: page.lidPath;  blockLoading: true; printErrors: false }
 
     // --- layout --------------------------------------------------------------
 
@@ -595,7 +540,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "LOCKING" }
+    FlyoutHeading { text: "UNLOCKING" }
 
     SettingsField {
         label: "Grace period"
@@ -611,97 +556,6 @@ SettingsPage {
             labelFor: v => page.graceLabel(v)
             current: page.grace
             onPicked: v => page.setGrace(v)
-        }
-    }
-
-    SettingsSubhead { caption: "LID"; visible: page.hasLid }
-
-    // what closing it does, and for Suspend how long after
-    SettingsField {
-        visible: page.hasLid
-        label: "When the lid closes"
-        hint: page.closeAction === "suspend" ? "Not with a monitor plugged in"
-            : "Screen off; Power & Idle's steps still apply"
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceM
-
-            FlyoutSegmented {
-                anchors.verticalCenter: parent.verticalCenter
-                fill: false
-                model: [{ value: "suspend", text: "Suspend" }, { value: "screen-off", text: "Screen off" }]
-                current: page.closeAction
-                onPicked: v => page.setLid("close_action", v,
-                    v === "suspend" ? "Closing the lid suspends" : "Closing the lid only turns the screen off")
-            }
-            Text {
-                visible: page.closeAction === "suspend"
-                anchors.verticalCenter: parent.verticalCenter
-                text: "after"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-            FlyoutStepper {
-                visible: page.closeAction === "suspend"
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(170)
-                value: Math.round(page.closeDelay / 60)
-                minimum: 1
-                maximum: 60
-                valueWidth: 64
-                displayValue: Math.round(page.closeDelay / 60) + " min"
-                onStepped: delta => {
-                    var m = Math.max(1, Math.min(60, Math.round(page.closeDelay / 60) + delta))
-                    page.closeDelay = m * 60
-                    page.pendingDelay = m * 60
-                    delayDebounce.restart()
-                }
-            }
-        }
-    }
-
-    Grid {
-        id: lidPair
-        visible: page.hasLid
-        width: parent.width
-        columns: 2
-        columnSpacing: Theme.spaceXl * 2
-        readonly property real half: (width - columnSpacing) / 2
-
-        SettingsField {
-            width: lidPair.half
-            labelWidth: width - Theme.switchWidth - Theme.spaceL
-            label: "Lock right away"
-            hint: page.lockOnClose ? "The moment it shuts" : "Only when it sleeps"
-
-            Switch {
-                anchors.right: parent.right
-                checked: page.lockOnClose
-                onToggled: page.setLid("lock_on_close", page.lockOnClose ? 0 : 1,
-                    page.lockOnClose ? "Locks when it goes to sleep" : "Locks as soon as the lid closes")
-            }
-        }
-
-        // lid.sh's suspend-then-hibernate; the power menu's Hibernate stays
-        SettingsField {
-            width: lidPair.half
-            labelWidth: width - Theme.switchWidth - Theme.spaceL
-            label: "Hibernate"
-            hint: !Session.canHibernate ? "Needs hibernation (install.sh)"
-                : page.closeAction !== "suspend" ? "Only when the lid suspends"
-                : page.hibernate ? "After an hour shut"
-                : "Stays asleep"
-
-            Switch {
-                anchors.right: parent.right
-                checked: page.hibernate && Session.canHibernate
-                enabled: Session.canHibernate && page.closeAction === "suspend"
-                onToggled: page.setLid("hibernate", page.hibernate ? 0 : 1,
-                    page.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
-            }
         }
     }
 }

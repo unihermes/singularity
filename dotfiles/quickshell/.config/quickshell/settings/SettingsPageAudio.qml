@@ -21,7 +21,7 @@ SettingsPage {
 
     sectioned: true
 
-    title: "Audio"
+    title: "Sound"
     description: "Where sound goes, how loud, and each app's share."
 
     // ScriptModels, so a node coming or going doesn't rebuild every row

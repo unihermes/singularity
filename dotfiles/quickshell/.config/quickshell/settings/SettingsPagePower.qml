@@ -9,7 +9,8 @@
 // or stepper settles (each is a firmware write). The ladder is
 // hypridle.conf's listener blocks, edited in place: the `timeout = N`
 // number, or a step turned off commented out with `#~ `; the rest of the
-// file is untouched, and hypridle restarts once per burst.
+// file is untouched, and hypridle restarts once per burst. Then the LID
+// (LidConfig.qml), on machines with one.
 
 import Quickshell
 import Quickshell.Io
@@ -24,8 +25,8 @@ SettingsPage {
 
     sectioned: true
 
-    title: "Power & Idle"
-    description: "Power profile, charging, and the idle steps in hypridle.conf."
+    title: "Battery & Idle"
+    description: "Power profile, charging, the idle steps in hypridle.conf, and the lid."
 
 
     readonly property string idlePath: Quickshell.env("HOME") + "/.config/hypr/hypridle.conf"
@@ -649,6 +650,100 @@ SettingsPage {
                     index: Math.max(0, page.pluggedSuspend)
                     anchors.verticalCenter: parent.verticalCenter
                 }
+            }
+        }
+    }
+
+    // --- the lid (moved from Lock Screen) ----------------------------------
+
+    LidConfig { id: lid; page: page }
+
+    Item { width: 1; height: Theme.spaceM; visible: lid.hasLid }
+    FlyoutHeading { text: "LID"; visible: lid.hasLid }
+
+    // what closing it does, and for Suspend how long after
+    SettingsField {
+        visible: lid.hasLid
+        label: "When the lid closes"
+        hint: lid.closeAction === "suspend" ? "Not with a monitor plugged in"
+            : "Screen off; the idle steps above still apply"
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceM
+
+            FlyoutSegmented {
+                anchors.verticalCenter: parent.verticalCenter
+                fill: false
+                model: [{ value: "suspend", text: "Suspend" }, { value: "screen-off", text: "Screen off" }]
+                current: lid.closeAction
+                onPicked: v => lid.setLid("close_action", v,
+                    v === "suspend" ? "Closing the lid suspends" : "Closing the lid only turns the screen off")
+            }
+            Text {
+                visible: lid.closeAction === "suspend"
+                anchors.verticalCenter: parent.verticalCenter
+                text: "after"
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+            FlyoutStepper {
+                visible: lid.closeAction === "suspend"
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.fit(170)
+                value: Math.round(lid.closeDelay / 60)
+                minimum: 1
+                maximum: 60
+                valueWidth: 64
+                displayValue: Math.round(lid.closeDelay / 60) + " min"
+                onStepped: delta => {
+                    var m = Math.max(1, Math.min(60, Math.round(lid.closeDelay / 60) + delta))
+                    lid.stepDelay(m)
+                }
+            }
+        }
+    }
+
+    Grid {
+        id: lidPair
+        visible: lid.hasLid
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+        readonly property real half: (width - columnSpacing) / 2
+
+        SettingsField {
+            width: lidPair.half
+            labelWidth: width - Theme.switchWidth - Theme.spaceL
+            label: "Lock right away"
+            hint: lid.lockOnClose ? "The moment it shuts" : "Only when it sleeps"
+
+            Switch {
+                anchors.right: parent.right
+                checked: lid.lockOnClose
+                onToggled: lid.setLid("lock_on_close", lid.lockOnClose ? 0 : 1,
+                    lid.lockOnClose ? "Locks when it goes to sleep" : "Locks as soon as the lid closes")
+            }
+        }
+
+        // lid.sh's suspend-then-hibernate; the power menu's Hibernate stays
+        SettingsField {
+            width: lidPair.half
+            labelWidth: width - Theme.switchWidth - Theme.spaceL
+            label: "Hibernate when shut"
+            hint: !Session.canHibernate ? "Needs hibernation (install.sh)"
+                : lid.closeAction !== "suspend" ? "Only when the lid suspends"
+                : lid.hibernate ? "After an hour shut"
+                : "Stays asleep"
+
+            Switch {
+                anchors.right: parent.right
+                checked: lid.hibernate && Session.canHibernate
+                enabled: Session.canHibernate && lid.closeAction === "suspend"
+                onToggled: lid.setLid("hibernate", lid.hibernate ? 0 : 1,
+                    lid.hibernate ? "A shut lid only suspends" : "A lid shut an hour hibernates")
             }
         }
     }

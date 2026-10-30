@@ -59,7 +59,7 @@ Column {
                     topPadding: Theme.spaceS
                     bottomPadding: Theme.spaceS
                     wrapMode: Text.WordWrap
-                    text: "Nothing changed. Anything you change on the tabs shows up here."
+                    text: "Nothing changed. Anything you change on the Look pages shows up here."
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
@@ -83,7 +83,7 @@ Column {
                             spacing: Theme.spaceS
                             FlyoutChip {
                                 text: "Show"
-                                onClicked: cb.page.highlight = change.label
+                                onClicked: cb.page.showSetting(change.label)
                             }
                             FlyoutChip {
                                 text: "Undo"

@@ -614,35 +614,37 @@ Settings') are laid out the same way.
   `FlyoutRow`, as in the flyouts. No paragraphs.
 - **Window frame** (Settings, System, Keybinds; picked 2026-10-11): one
   title bar line (`WindowHeader`): the accent bar, the name with the
-  hostname quieter after it, Settings' search in the rest of the line, and
-  Close. No eyebrow, no separate search row. While a page is open the
-  name is a link back to Home (`linked`).
-- **Home** (Settings and System; picked 2026-10-18): both windows open on
-  Home, one pane with no sidebar: every page as a full-width tile
-  (`WindowHome`, `HomeRow`) in a centred column (`fit(760)`), under group
-  headings, each group one framed block with hairlines between tiles. A
-  tile: the icon in the accent, the name over what's inside, what it's set
-  to or reading now on the right (System's CPU, Memory and Network add
-  their minute as a small graph; only on Home), a chevron. System's Home
-  has its four headline cards over the tiles. `open(page)` and More in
-  Settings rows go straight to a page.
+  hostname quieter after it, and Close. While a sub-page is open the name
+  is a link back to its parent (`linked`).
+- **Settings' structure** (picked 2026-10-30, round one A): no Home. One
+  flat sidebar of short pages under headings (Connections, Device, Look,
+  Apps, System), the search box at its top; it opens on the last page used
+  (Network the first time). Appearance is six Look pages (Theme, Wallpaper
+  & Desktop, Bar, Panels & Popups, Windows, Fonts & Icons), each a part of
+  `SettingsPageAppearance`; Window Rules is a sub-page of Windows (its row
+  under RULES; the sidebar keeps Windows lit, the title reads "Windows ›
+  Window Rules", the name or Escape goes back); the lid is on Battery &
+  Idle. Old page names still open (`aliases`: appearance → Theme).
+- **System's Home** (picked 2026-10-18): System opens on Home, one pane
+  with no sidebar: every page as a full-width tile (`WindowHome`,
+  `HomeRow`) in a centred column (`fit(760)`), under group headings, each
+  group one framed block with hairlines between tiles. A tile: the icon in
+  the accent, the name over what's inside, what it's reading now on the
+  right (CPU, Memory and Network add their minute as a small graph), a
+  chevron, under its four headline cards.
 - **A page** (Settings and System; picked 2026-10-18): one framed panel
   split by a hairline: the pages on the left (`WindowSidebar`, `fit(260)`),
   the open page on the right. The sidebar groups the pages under `//`
   headings; a row is the page's icon and name over what it's set to or
-  reading now (Home's status, in its colour), or what's inside where
-  there's nothing (`SettingsSectionRow`). The page on show has the hover
-  fill and the accent tick. The page opens under its icon (lightened
-  accent) and name at `fontTitle` (`WindowPageTitle`), then its own
-  one-line description. The window's name or Escape goes back to Home;
-  Escape on Home closes.
-- **Search** (Settings): in the title bar. Typed into on Home, Home's
-  column lists the hits under a RESULTS count; on a page, the sidebar lists
-  them in place of the pages (the page beside it stays). With the bar
-  focused and nothing typed, the arrow keys walk Home's tiles (Enter opens
-  one) or, on a page, the pages, opening each at once; with a query they
-  walk the hits. The tile or hit the arrow keys are on has the hover fill
-  and tick.
+  reading now (in its colour), or what's inside where there's nothing
+  (`SettingsSectionRow`). The page on show has the hover fill and the
+  accent tick. The page opens under its icon (lightened accent) and name
+  at `fontTitle` (`WindowPageTitle`), then its own one-line description.
+- **Search** (Settings): the box at the top of the sidebar. Typed into,
+  the sidebar lists the hits under a RESULTS count in place of the pages
+  (the page beside it stays). With the box focused and nothing typed, the
+  arrow keys walk the pages, opening each at once; with a query they walk
+  the hits. The hit the arrow keys are on has the hover fill and tick.
 - A Repeater's Column that holds its own heading and rows sets
   `isSectionGroup: true` and `sectioned`, so its rows get sections as if
   they sat in the page.

@@ -19,7 +19,7 @@ SettingsPage {
 
     sectioned: true
 
-    title: "Startup"
+    title: "Login & Startup"
     description: "What starts when the PC boots and when you log in."
 
     Component.onCompleted: {

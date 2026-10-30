@@ -1,10 +1,10 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/ThemeTab.qml
 //
-// The Appearance page's Theme tab: what restyles all of the chrome at
-// once, in four sections: Look (the look, the style and space), Colour
-// (palette, accent and status), Shape (with the finish) and Text (with the
-// headings). Switches and short rows go two to a line.
+// The Theme page: what restyles all of the chrome at once, in four
+// sections: Look (the look, the style and space), Colour (palette, accent
+// and status), Shape (with the finish) and Headings. Switches and short
+// rows go two to a line. The shell's font is on Fonts & Icons.
 
 import Quickshell
 import QtQuick
@@ -420,44 +420,8 @@ SettingsTab {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "TEXT" }
+    FlyoutHeading { text: "HEADINGS" }
 
-    // The box shows the font in use, set in itself, and the list sets every
-    // installed choice in its own font.
-    SettingsField {
-        label: "Font"
-        lookKey: "fontFamily"
-        hint: Theme.fontText !== Settings.fontFamily
-            ? page.label(Settings.fontFamily) + " isn't available, so " + page.label(Theme.fontText) + " stands in"
-            : "Monospace; text and icons alike"
-
-        SettingsDropdown {
-            anchors.right: parent.right
-            model: Fonts.available
-            current: Theme.fontText
-            labelFor: v => page.label(v)
-            fontFor: v => v
-            onPicked: v => Settings.set("fontFamily", v)
-        }
-    }
-
-    // Fonts installed since the shell started, which Qt can't draw until
-    // it's restarted (see Fonts.qml)
-    SettingsField {
-        visible: Fonts.pending.length > 0
-        label: Fonts.pending.length === 1 ? "1 new font" : Fonts.pending.length + " new fonts"
-        hint: Fonts.pending.map(f => page.label(f)).join(", ") + " — usable after a restart"
-
-        FlyoutChip {
-            anchors.right: parent.right
-            text: "Restart shell"
-            onClicked: Session.restartShell()
-        }
-    }
-
-    Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
-
-    SettingsSubhead { caption: "HEADINGS" }
 
     // The mark before every heading: a preset, a shape, none, or up to
     // four characters of your own

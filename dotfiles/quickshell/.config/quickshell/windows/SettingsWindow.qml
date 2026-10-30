@@ -1,15 +1,16 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/windows/SettingsWindow.qml
 //
-// Settings: a title bar with the search, over one panel. It opens on Home,
-// every page as a tile; a page opens beside the pages (each with what it's
-// set to now), split by a hairline, and the name or Escape goes back.
-// Typed into, the search lists its hits (SettingsIndex.js) in Home's column
-// or in place of the pages; a hit opens its page and rings the setting.
-// Changes apply at once, written straight to what they control. `/`
-// focuses the search, where the arrow keys walk the tiles or the pages;
-// Escape clears, leaves the bar, goes Home, then closes. The page Loader
-// exists only while visible.
+// Settings: one flat sidebar of short pages under headings (each with what
+// it's set to now), the search box at its top, and the open page beside it,
+// split by a hairline. It opens on the last page used (Network the first
+// time). Typed into, the search lists its hits (SettingsIndex.js) in place
+// of the pages; a hit opens its page and rings the setting. A page can
+// open another (Windows its rules, a sub-page whose sidebar entry stays its
+// parent's). Changes apply at once, written straight to what they control.
+// `/` focuses the search, where the arrow keys walk the pages or the hits;
+// Escape clears, leaves the box, back from a sub-page, then closes. The
+// page Loader exists only while visible.
 
 import Quickshell
 import Quickshell.Io
@@ -26,8 +27,8 @@ import "../services/Styles.js" as Styles
 FloatingWindow {
     id: root
 
-    // the open page, or "" for Home
-    property string currentPage: ""
+    // the open page; the last one stays for the next open
+    property string currentPage: "network"
     // the setting a search result picked, for the page to scroll to and ring
     property string highlight: ""
 
@@ -38,15 +39,16 @@ FloatingWindow {
     implicitWidth: Theme.windowSize.width
     implicitHeight: Theme.windowSize.height
 
-    // an unknown or empty page opens Home
+    // pages that moved or split keep their old names working
+    readonly property var aliases: ({ appearance: "theme", lockscreen: "lockscreen" })
+    // an unknown or empty page opens the last one
     function open(page) {
-        currentPage = pages.some(p => p.id === page) ? page : ""
+        page = aliases[page] || page
+        if (pages.some(p => p.id === page)) currentPage = page
         highlight = ""
-        homeCursor = ""
         searchBar.text = ""
         visible = true
-        if (currentPage === "") home.toTop()
-        else Qt.callLater(() => nav.reveal(currentPage))
+        Qt.callLater(() => nav.reveal(navCurrent))
     }
     function close() { visible = false }
 
@@ -58,30 +60,38 @@ FloatingWindow {
     // the sidebar's groups, in order: connections, the machine itself, how
     // the desktop looks and behaves, apps, then the clock and updates
     readonly property var groups: [
-        { heading: "Connections", ids: ["network", "vpn", "bluetooth"] },
+        { heading: "Connections", ids: ["network", "bluetooth", "vpn"] },
         { heading: "Device",      ids: ["display", "audio", "input", "devices", "power", "recording"] },
-        { heading: "Look & Feel", ids: ["appearance", "lockscreen", "notifications", "windowrules"] },
+        { heading: "Look",        ids: ["theme", "wallpaper", "bar", "panels", "windows", "fonts", "lockscreen", "notifications"] },
         { heading: "Apps",        ids: ["autostart", "filetypes", "shell", "keybinds"] },
         { heading: "System",      ids: ["datetime", "updates"] },
     ]
+    // pages reached from another page, with the sidebar showing that one
+    readonly property var subpages: ({ windowrules: "windows" })
+    readonly property string navCurrent: subpages[currentPage] || currentPage
     readonly property var pages: [
         { id: "network",       label: "Network",       icon: "󰤨", blurb: "Wi-Fi and the link",               source: "../settings/SettingsPageNetwork.qml" },
         { id: "vpn",           label: "VPN",           icon: "󰖂", blurb: "Proton over WireGuard",            source: "../settings/SettingsPageVpn.qml" },
         { id: "bluetooth",     label: "Bluetooth",     icon: "󰂯", blurb: "Adapter and devices",              source: "../settings/SettingsPageBluetooth.qml" },
         { id: "display",       label: "Display",       icon: "󰍹", blurb: "Resolution and scale",              source: "../settings/SettingsPageDisplay.qml" },
-        { id: "audio",         label: "Audio",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
-        { id: "input",         label: "Input",         icon: "󰌌", blurb: "Keyboard and pointer",              source: "../settings/SettingsPageInput.qml" },
+        { id: "audio",         label: "Sound",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
+        { id: "input",         label: "Keyboard & Mouse", icon: "󰌌", blurb: "Layouts, keys and pointer",      source: "../settings/SettingsPageInput.qml" },
         { id: "devices",       label: "Devices",       icon: "󰾰", blurb: "Phone, headset, USB and drives",    source: "../settings/SettingsPageDevices.qml" },
-        { id: "power",         label: "Power & Idle",  icon: "󰂄", blurb: "Profile, idle and sleep",           source: "../settings/SettingsPagePower.qml" },
+        { id: "power",         label: "Battery & Idle", icon: "󰂄", blurb: "Profile, idle, sleep and the lid", source: "../settings/SettingsPagePower.qml" },
         { id: "recording",     label: "Recording",     icon: "󰑋", blurb: "Screen and instant replay",         source: "../settings/SettingsPageRecording.qml" },
-        { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Theme, bar and desktop",            source: "../settings/SettingsPageAppearance.qml" },
-        { id: "lockscreen",    label: "Lock Screen",   icon: "󰌾", blurb: "Look, grace and lid",                source: "../settings/SettingsPageLockScreen.qml" },
+        { id: "theme",         label: "Theme",         icon: "󰏘", blurb: "Look, colour and shape",            source: "../settings/SettingsPageTheme.qml" },
+        { id: "wallpaper",     label: "Wallpaper & Desktop", icon: "󰸉", blurb: "Wallpaper and widgets",       source: "../settings/SettingsPageWallpaper.qml" },
+        { id: "bar",           label: "Bar",           icon: "󰕰", blurb: "Shape, modules and tray",           source: "../settings/SettingsPageBar.qml" },
+        { id: "panels",        label: "Panels & Popups", icon: "󰕮", blurb: "Flyouts, launcher and switchers", source: "../settings/SettingsPagePanels.qml" },
+        { id: "windows",       label: "Windows",       icon: "󰖲", blurb: "Gaps, borders, motion and rules",   source: "../settings/SettingsPageWindows.qml" },
+        { id: "fonts",         label: "Fonts & Icons", icon: "󰛖", blurb: "Shell and app fonts, icons, cursor", source: "../settings/SettingsPageFonts.qml" },
+        { id: "lockscreen",    label: "Lock Screen",   icon: "󰌾", blurb: "Look and unlocking",                source: "../settings/SettingsPageLockScreen.qml" },
         { id: "notifications", label: "Notifications", icon: "󰂚", blurb: "Do Not Disturb, popups",            source: "../settings/SettingsPageNotifications.qml" },
         { id: "windowrules",   label: "Window Rules",  icon: "󰖲", blurb: "App rules and layouts",             source: "../settings/SettingsPageWindowRules.qml" },
-        { id: "autostart",     label: "Startup",       icon: "󰐊", blurb: "What runs at login",                source: "../settings/SettingsPageAutostart.qml" },
-        { id: "filetypes",     label: "File Types",    icon: "󰈔", blurb: "Default apps",                      source: "../settings/SettingsPageFileTypes.qml" },
+        { id: "autostart",     label: "Login & Startup", icon: "󰐊", blurb: "Boot and what runs at login",     source: "../settings/SettingsPageAutostart.qml" },
+        { id: "filetypes",     label: "Default Apps",  icon: "󰈔", blurb: "What opens what",                   source: "../settings/SettingsPageFileTypes.qml" },
         { id: "shell",         label: "Terminal",      icon: "󰆍", blurb: "Terminal app and aliases",          source: "../settings/SettingsPageShell.qml" },
-        { id: "keybinds",      label: "Keybinds",      icon: "󰘳", blurb: "Shortcuts and presets",             source: "../settings/SettingsPageKeybinds.qml" },
+        { id: "keybinds",      label: "Shortcuts",     icon: "󰘳", blurb: "Keybinds and presets",              source: "../settings/SettingsPageKeybinds.qml" },
         { id: "datetime",      label: "Date & Time",   icon: "󰥔", blurb: "Time zone and clock",               source: "../settings/SettingsPageDateTime.qml" },
         { id: "updates",       label: "Software Update", icon: "󰚰", blurb: "Checks, AUR and ignored",         source: "../settings/SettingsPageUpdates.qml" },
     ]
@@ -114,7 +124,7 @@ FloatingWindow {
             var c = PpdProfile.choices.find(c => c.value === PpdProfile.profile)
             return { text: [c ? c.text : "", Battery.present ? Battery.percent + "%" : ""].filter(t => t).join(" · ") }
         }
-        case "appearance": {
+        case "theme": {
             var look = Looks.looks[Settings.look], style = Styles.get(Settings.style)
             return { text: [look ? look.name : Settings.look, style ? style.name : ""].filter(t => t).join(" · ") }
         }
@@ -152,20 +162,6 @@ FloatingWindow {
     // output's name, only arrive while something tracks them
     PwObjectTracker { objects: root.visible ? Audio.devices : [] }
 
-    // Home's tiles: what's inside, and what it's set to now at the right
-    readonly property var homeGroups: groups.map(g => ({
-        heading: g.heading,
-        items: g.ids.map(id => {
-            var p = pages.find(p => p.id === id), st = status(id)
-            return { id: id, icon: p.icon, label: p.label, blurb: p.blurb, status: st.text, statusColor: st.color }
-        })
-    }))
-    // with a query, Home's column lists the hits instead
-    readonly property var homeResults: [{
-        heading: rows.length === 1 ? "1 result" : rows.length + " results",
-        items: rows.map((r, i) => ({ id: String(i), icon: r.icon, label: r.label, blurb: r.blurb || "" }))
-    }]
-
     readonly property var navGroups: groups.map(g => ({
         heading: g.heading,
         items: g.ids.map(id => {
@@ -200,30 +196,20 @@ FloatingWindow {
 
     function focusSearch() { searchBar.forceFocus() }
 
-    // the Home tile the arrow keys are on, with no query
-    property string homeCursor: ""
-
-    // with no query the arrows walk Home's tiles, or open the next page at
-    // once beside the sidebar
+    // with no query the arrows open the next page in the sidebar's order
+    // at once; with one they walk the hits
+    readonly property var order: groups.reduce((a, g) => a.concat(g.ids), [])
     function moveCursor(delta) {
-        if (rows.length === 0) return
-        if (query === "" && currentPage === "") {
-            var order = groups.reduce((a, g) => a.concat(g.ids), [])
-            var at = order.indexOf(homeCursor)
-            homeCursor = order[at < 0 ? (delta > 0 ? 0 : order.length - 1) : (at + delta + order.length) % order.length]
-            home.reveal(homeCursor)
-            return
-        }
         if (query === "") {
-            var i = pages.findIndex(p => p.id === currentPage)
+            var i = order.indexOf(navCurrent)
             highlight = ""
-            currentPage = pages[(i + delta + pages.length) % pages.length].id
+            currentPage = order[(i + delta + order.length) % order.length]
             nav.reveal(currentPage)
             return
         }
+        if (rows.length === 0) return
         cursor = (cursor + delta + rows.length) % rows.length
-        if (currentPage === "") home.reveal(String(cursor))
-        else list.reveal(cursor)
+        list.reveal(cursor)
     }
 
     function activate(row) {
@@ -256,10 +242,10 @@ FloatingWindow {
     WindowChrome {
         id: chrome
         window: root
-        // from a page, back to Home first
+        // from a sub-page, back to its parent first
         goBack: () => {
-            if (root.currentPage === "") return false
-            root.select("")
+            if (!root.subpages[root.currentPage]) return false
+            root.select(root.subpages[root.currentPage])
             return true
         }
 
@@ -280,34 +266,8 @@ FloatingWindow {
         window: root
         title: "Settings"
         subtitle: hostFile.text().trim()
-        linked: root.currentPage !== ""
-        onBack: root.select("")
-    }
-
-    FlyoutInput {
-        id: searchBar
-        parent: header.slot
-        anchors.fill: parent
-        echoPassword: false
-        glyph: "󰍉"
-        placeholder: "Search settings"
-        hints: focused ? ["Up/Down navigate", "Enter select"] : ["/ to focus"]
-
-        onTextChanged: root.cursor = 0
-        onDownPressed: root.moveCursor(1)
-        onUpPressed: root.moveCursor(-1)
-        onTabPressed: root.moveCursor(1)
-        onBackTabPressed: root.moveCursor(-1)
-        onAccepted: {
-            if (root.rows.length > 0 && root.query !== "") root.activate(root.rows[root.cursor])
-            else if (root.query === "" && root.currentPage === "" && root.homeCursor !== "") root.select(root.homeCursor)
-        }
-        // first clear the query, then leave the bar; the window's own
-        // Escape closes it after that
-        onEscapePressed: {
-            if (text !== "") text = ""
-            else chrome.keySink.forceActiveFocus()
-        }
+        linked: !!root.subpages[root.currentPage]
+        onBack: root.select(root.subpages[root.currentPage])
     }
 
     // --- the panel: the pages (or what the search matched), then the page --
@@ -320,44 +280,57 @@ FloatingWindow {
         // the window's real size (a Font Size change leaves the window as is)
         height: root.height - y - Theme.windowPad
 
-        WindowHome {
-            id: home
-            x: Theme.panelPad
-            y: Theme.panelPad
-            width: parent.width - Theme.panelPad * 2
-            height: parent.height - Theme.panelPad * 2
-            visible: root.currentPage === ""
-            groups: root.query === "" ? root.homeGroups : root.homeResults
-            cursorId: root.query === "" ? root.homeCursor : root.searchFocused ? String(root.cursor) : ""
-            onActivated: id => {
-                if (root.query === "") root.select(id)
-                else root.activate(root.rows[Number(id)])
-            }
-            onHovered: id => { if (root.query !== "" && root.searchFocused) root.cursor = Number(id) }
-        }
-
         Item {
             id: side
-            visible: root.currentPage !== ""
             x: Theme.panelPad
             y: Theme.panelPad
             width: Theme.fit(260)
             height: parent.height - Theme.panelPad * 2
 
+            // the search, over the pages
+        FlyoutInput {
+            id: searchBar
+            width: parent.width
+            echoPassword: false
+            glyph: "󰍉"
+            placeholder: "Search settings"
+            hints: focused ? ["↑↓", "Enter"] : ["/"]
+
+            onTextChanged: root.cursor = 0
+            onDownPressed: root.moveCursor(1)
+            onUpPressed: root.moveCursor(-1)
+            onTabPressed: root.moveCursor(1)
+            onBackTabPressed: root.moveCursor(-1)
+            onAccepted: {
+                if (root.rows.length > 0 && root.query !== "") root.activate(root.rows[root.cursor])
+            }
+            // first clear the query, then leave the bar; the window's own
+            // Escape closes it after that
+            onEscapePressed: {
+                if (text !== "") text = ""
+                else chrome.keySink.forceActiveFocus()
+            }
+        }
+
             WindowSidebar {
                 id: nav
                 visible: root.query === ""
-                anchors.fill: parent
+                anchors.top: searchBar.bottom
+                anchors.topMargin: Theme.spaceM
+                anchors.bottom: parent.bottom
+                width: parent.width
                 groups: root.navGroups
-                current: root.currentPage
+                current: root.navCurrent
                 onSelected: id => root.select(id)
             }
 
             // what the search matched, under a count
             Item {
-                id: results
                 visible: root.query !== ""
-                anchors.fill: parent
+                anchors.top: searchBar.bottom
+                anchors.topMargin: Theme.spaceM
+                anchors.bottom: parent.bottom
+                width: parent.width
 
                 FlyoutHeading {
                     id: listHeading
@@ -431,7 +404,6 @@ FloatingWindow {
         // the hairline between the pages and the page
         Rectangle {
             id: split
-            visible: side.visible
             x: side.x + side.width + Theme.panelPad
             y: Theme.panelPad
             width: Theme.borderWidth
@@ -440,7 +412,6 @@ FloatingWindow {
         }
 
         Item {
-            visible: side.visible
             x: split.x + split.width + Theme.panelPad + Theme.spaceS
             y: Theme.panelPad
             width: parent.width - x - Theme.panelPad
@@ -450,7 +421,10 @@ FloatingWindow {
             WindowPageTitle {
                 id: pageTitle
                 icon: root.openPage ? root.openPage.icon : ""
-                label: root.openPage ? root.openPage.label : ""
+                // a sub-page under its parent's name
+                label: !root.openPage ? ""
+                    : root.subpages[root.currentPage] ? root.pages.find(p => p.id === root.subpages[root.currentPage]).label + " › " + root.openPage.label
+                    : root.openPage.label
             }
 
             // the open page; built fresh on each switch
@@ -475,6 +449,16 @@ FloatingWindow {
                     if (root.highlight !== "") item.highlight = root.highlight
                 }
                 source: root.openPage ? root.openPage.source : ""
+            }
+            Connections {
+                target: pane.item
+                function onGoTo(pageId) { root.select(pageId) }
+                // a Look page's changed setting, wherever it is
+                function onShowSetting(label) {
+                    var e = root.index.find(x => !x.isPage && x.label === label
+                        && ["theme", "wallpaper", "bar", "panels", "windows", "fonts"].indexOf(x.page) !== -1)
+                    if (e) root.reveal(e)
+                }
             }
         }
     }
