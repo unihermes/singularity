@@ -52,20 +52,6 @@ Singleton {
         return apps
     }
     readonly property var playingApps: byApp(playing)
-    // the apps with a stream on `sink` (a channel, say), by playsOn
-    function appsOn(sink) {
-        return playingApps.filter(a => a.nodes.some(n => (playsOn[n.id] || {}).sink === sink.id))
-    }
-    // the apps on no channel: playing straight on an output, or all of them
-    // where there are no channels; one not placed yet waits for playsOn
-    readonly property var appsElsewhere: {
-        var ch = Channels.sinks.map(s => s.id)
-        if (ch.length === 0) return playingApps
-        return playingApps.filter(a => a.nodes.every(n => {
-            var on = playsOn[n.id]
-            return on && ch.indexOf(on.sink) < 0
-        }))
-    }
     readonly property var recordingApps: byApp(recording)
 
     // Asked of pactl, which knows the ports and sink-inputs Quickshell's

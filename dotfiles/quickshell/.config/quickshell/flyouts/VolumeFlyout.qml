@@ -4,13 +4,11 @@
 // Sound on one panel, the level first: the output's level large with the
 // device beside it (a click there opens the outputs in place to switch),
 // its slider, the microphone's level, the Game, Chat and Media channels'
-// levels (a click on a name mutes it), each with the apps playing on it
-// right now under it, and the ChatMix dial. An app has a level of its own
-// (one for all its streams, like a browser's tabs); drag its name onto
-// another channel to move it there, for good. Apps playing straight on an
-// output are listed after. Outputs with nothing plugged in are left out.
-// The Audio page in Settings has the rest: those outputs, recording apps,
-// and moving an app to another output.
+// levels (a click on a name mutes it) and the ChatMix dial, then each app playing right now with
+// a level of its own (an app with several streams, like a browser's tabs,
+// gets one level for them all; drag its name onto a channel to move it
+// there, for good). Outputs with nothing plugged in are left out. The Audio page in Settings has the rest: those outputs, recording
+// apps, and moving an app to another output.
 
 import "../services"
 import Quickshell
@@ -39,88 +37,6 @@ FlyoutPanel {
     // audio.volume / audio.muted stay invalid until a node is tracked
     PwObjectTracker {
         objects: volumeFlyout.open ? Audio.devices.concat(Audio.streams, Channels.sinks) : []
-    }
-
-    // An app playing: its icon and name (a click mutes all its streams,
-    // a drag moves them to another channel), then one level for them all.
-    component AppRow: Item {
-        id: app
-        required property var modelData
-        // under its channel's row, set in to show it belongs there
-        property int indent: 0
-        readonly property var nodes: modelData.nodes.filter(n => n.ready && !!n.audio)
-        readonly property bool ready: nodes.length > 0
-        readonly property bool muted: ready && nodes.every(n => n.audio.muted)
-        // the loudest stream's level stands for the app
-        readonly property int percent: ready ? Math.round(Math.max(...nodes.map(n => n.audio.volume)) * 100) : 0
-        readonly property string icon: Audio.appIcon(modelData.nodes[0])
-        width: parent ? parent.width : 0
-        implicitHeight: Theme.rowHeight
-
-        // the app's icon and name; a click mutes all its streams
-        Item {
-            id: appName
-            x: app.indent
-            width: Theme.fit(110) - app.indent
-            height: parent.height
-            Image {
-                visible: app.icon !== ""
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fontBody
-                height: width
-                sourceSize: Qt.size(width * 2, height * 2)
-                source: app.icon
-                opacity: app.muted ? 0.45 : 1
-            }
-            Text {
-                visible: app.icon === ""
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fontBody
-                text: "󰓃"
-                color: Theme.subtext
-                font.family: Theme.fontIcon
-                font.pixelSize: Theme.fontBody
-            }
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.fontBody + Theme.spaceM
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-                text: app.muted ? app.modelData.name + " 󰖁" : app.modelData.name
-                color: app.muted ? Theme.subtext : nameMouse.containsMouse ? Theme.textStrong : Theme.text
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            MouseArea {
-                id: nameMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    var mute = !app.muted
-                    app.nodes.forEach(n => n.audio.muted = mute)
-                }
-            }
-            // dragged onto another channel, it moves there
-            AppDrag {
-                anchors.fill: parent
-                nodes: app.modelData.nodes
-                name: app.modelData.name
-                icon: app.icon
-            }
-        }
-
-        Slider {
-            anchors.left: appName.right
-            anchors.leftMargin: Theme.spaceS
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            value: app.percent
-            opacity: app.muted ? 0.5 : 1
-            onMoved: v => app.nodes.forEach(n => n.audio.volume = v / 100)
-        }
     }
 
     // --- output: the level large, the device beside it --------------------------
@@ -280,22 +196,15 @@ FlyoutPanel {
     Repeater {
         model: ScriptModel { values: Channels.sinks }
 
-        // the channel's row, then the apps playing on it under it
         Item {
             id: channel
             required property var modelData
-            readonly property var apps: Audio.appsOn(modelData)
             readonly property bool ready: modelData.ready && !!modelData.audio
             readonly property bool muted: ready && modelData.audio.muted
             readonly property int percent: ready ? Math.round(modelData.audio.volume * 100) : 0
             readonly property string key: Channels.key(modelData)
             width: parent ? parent.width : 0
-            implicitHeight: channelRow.height + appsColumn.height
-
-            Item {
-                id: channelRow
-                width: parent.width
-                height: Theme.rowHeight
+            implicitHeight: Theme.rowHeight
 
             Item {
                 id: channelName
@@ -339,19 +248,8 @@ FlyoutPanel {
                 opacity: channel.muted ? 0.5 : 1
                 onMoved: v => { if (channel.ready) channel.modelData.audio.volume = v / 100 }
             }
-            }
 
-            Column {
-                id: appsColumn
-                anchors.top: channelRow.bottom
-                width: parent.width
-                Repeater {
-                    model: ScriptModel { values: channel.apps }
-                    AppRow { indent: Theme.fontBody + Theme.spaceM }
-                }
-            }
-
-            // an app dragged here from another channel plays here from now on
+            // an app dragged here from APPS plays here from now on
             ChannelDrop {
                 anchors.fill: parent
                 onAppDropped: nodes => Audio.moveApp(nodes, channel.modelData)
@@ -413,21 +311,95 @@ FlyoutPanel {
         }
     }
 
-    // --- apps on no channel -------------------------------------------------------
-    // playing straight on an output, or everything without the channels
+    // --- apps ----------------------------------------------------------------------
 
     FlyoutHeading {
-        visible: Audio.appsElsewhere.length > 0 || Channels.sinks.length === 0
-        text: "APPS" + (Audio.appsElsewhere.length > 0 ? "  " + Audio.appsElsewhere.length : "")
+        text: "APPS" + (Audio.playingApps.length > 0 ? "  " + Audio.playingApps.length : "")
     }
 
     Repeater {
-        model: ScriptModel { values: Audio.appsElsewhere }
-        AppRow {}
+        model: ScriptModel { values: Audio.playingApps }
+
+        Item {
+            id: app
+            required property var modelData
+            readonly property var nodes: modelData.nodes.filter(n => n.ready && !!n.audio)
+            readonly property bool ready: nodes.length > 0
+            readonly property bool muted: ready && nodes.every(n => n.audio.muted)
+            // the loudest stream's level stands for the app
+            readonly property int percent: ready ? Math.round(Math.max(...nodes.map(n => n.audio.volume)) * 100) : 0
+            readonly property string icon: Audio.appIcon(modelData.nodes[0])
+            width: parent ? parent.width : 0
+            implicitHeight: Theme.rowHeight
+
+            // the app's icon and name; a click mutes all its streams
+            Item {
+                id: appName
+                width: Theme.fit(110)
+                height: parent.height
+                Image {
+                    visible: app.icon !== ""
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.fontBody
+                    height: width
+                    sourceSize: Qt.size(width * 2, height * 2)
+                    source: app.icon
+                    opacity: app.muted ? 0.45 : 1
+                }
+                Text {
+                    visible: app.icon === ""
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.fontBody
+                    text: "󰓃"
+                    color: Theme.subtext
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.fontBody + Theme.spaceM
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                    text: app.muted ? app.modelData.name + " 󰖁" : app.modelData.name
+                    color: app.muted ? Theme.subtext : nameMouse.containsMouse ? Theme.textStrong : Theme.text
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontBody
+                }
+                MouseArea {
+                    id: nameMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        var mute = !app.muted
+                        app.nodes.forEach(n => n.audio.muted = mute)
+                    }
+                }
+                // dragged onto a channel above, it moves there
+                AppDrag {
+                    anchors.fill: parent
+                    nodes: app.modelData.nodes
+                    name: app.modelData.name
+                    icon: app.icon
+                }
+            }
+
+            Slider {
+                anchors.left: appName.right
+                anchors.leftMargin: Theme.spaceS
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                value: app.percent
+                opacity: app.muted ? 0.5 : 1
+                onMoved: v => app.nodes.forEach(n => n.audio.volume = v / 100)
+            }
+        }
     }
 
     FlyoutRow {
-        visible: Channels.sinks.length === 0 && Audio.playingApps.length === 0
+        visible: Audio.playingApps.length === 0
         enabled: false
         label: "Nothing is playing"
     }
