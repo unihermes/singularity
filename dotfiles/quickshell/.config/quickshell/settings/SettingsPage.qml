@@ -8,6 +8,13 @@
 // window is open); `sectioned` frames each group of rows (DESIGN.md);
 // `pinned` sits above the rows while `pinnedVisible`; `footer` floats over
 // the foot of the rows while `footerVisible`.
+// `anatomy` is how the page is laid out (picked per page, DESIGN.md):
+//   list   sections as framed groups of rows (with `sectioned`)
+//   bands  each section a band: its heading and `about` line in a column
+//          on the left, its rows on the right, hairlines between
+//   cards  `status` (and `statusDetail`, `statusControl`) as a card on
+//          top, then framed sections showing their first three rows, the
+//          rest under the heading's More
 
 import QtQuick
 import "../services"
@@ -33,6 +40,13 @@ Item {
     property string highlight: ""
     readonly property bool isSettingsPage: true
     property bool sectioned: false
+    property string anatomy: "list"
+    readonly property bool bands: anatomy === "bands"
+    // the rows a section shows before its More (FlyoutHeading)
+    readonly property int essentialRows: anatomy === "cards" ? 3 : 0
+    property string status: ""
+    property string statusDetail: ""
+    property Component statusControl: null
     property Component pinned: null
     property bool pinnedVisible: true
     property Component footer: null
@@ -159,7 +173,7 @@ Item {
                         return false
                     }
                     if (p.isFlyoutHeading === true) {
-                        p.toggle()
+                        p.reveal()
                         return false
                     }
                 }
@@ -291,6 +305,52 @@ Item {
             }
         }
 
+        // cards: what the page is set to now, and its main control
+        Rectangle {
+            visible: root.status !== ""
+            width: parent.width
+            height: visible ? Math.max(statusText.implicitHeight, statusCtl.height) + Theme.spaceL * 2 : 0
+            radius: Theme.sectionRadius
+            color: Theme.controlFill("transparent")
+            border.width: Theme.controlBorder(Theme.stroke)
+            border.color: Theme.controlStroke(Theme.stroke)
+
+            Column {
+                id: statusText
+                x: Theme.spaceL
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - x * 2 - (statusCtl.width > 0 ? statusCtl.width + Theme.spaceL : 0)
+                spacing: Theme.spaceXs
+                Text {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: root.status
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightStrong
+                    font.pixelSize: Theme.fontBody
+                }
+                Text {
+                    width: parent.width
+                    visible: text !== ""
+                    elide: Text.ElideRight
+                    text: root.statusDetail
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontSmall
+                }
+            }
+            Loader {
+                id: statusCtl
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spaceL
+                anchors.verticalCenter: parent.verticalCenter
+                active: root.statusControl !== null
+                sourceComponent: root.statusControl
+            }
+        }
+
         Loader {
             width: parent.width
             active: root.pinned !== null && root.pinnedVisible
@@ -382,8 +442,10 @@ Item {
                 // sectioned: inset to clear the sections' frames
                 readonly property int inset: root.sectioned ? Theme.channelWidth + Theme.spaceL : 0
                 readonly property bool sectioned: root.sectioned
-                x: Theme.spaceS + inset
-                width: flick.width - x * 2
+                // bands: the column the headings sit in, left of the rows
+                readonly property int gutter: root.bands ? Theme.fit(200) : 0
+                x: Theme.spaceS + inset + gutter
+                width: flick.width - (Theme.spaceS + inset) * 2 - gutter
                 spacing: Theme.spaceM
                 topPadding: root.sectioned ? Theme.channelWidth + Theme.spaceS : 0
                 // clear of the panel's rounded bottom border, as on System
@@ -403,6 +465,7 @@ Item {
 
         // scroll indicator, as in the Keybinds list
         StickyHeading {
+            visible: !root.bands
             width: flick.width
             flickable: flick
             column: root.stickyColumn

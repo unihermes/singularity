@@ -13,7 +13,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    sectioned: true
+    anatomy: "bands"
 
     title: "Recording"
     description: "Recordings of the screen, and the last minute of a game kept to save."
@@ -26,7 +26,7 @@ SettingsPage {
         alert: true
     }
 
-    FlyoutHeading { text: "INSTANT REPLAY" }
+    FlyoutHeading { text: "INSTANT REPLAY"; about: "SUPER+R saves the last stretch" }
 
     SettingsField {
         label: "Instant replay"
@@ -63,7 +63,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "FILES" }
+    FlyoutHeading { text: "FILES"; about: "Format and folders" }
 
     SettingsField {
         label: "Format"

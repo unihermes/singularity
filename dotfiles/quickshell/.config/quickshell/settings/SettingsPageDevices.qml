@@ -23,7 +23,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    sectioned: true
+    anatomy: "bands"
 
     title: "Devices"
     description: "Your phone, headset, peripherals and drives."
@@ -121,7 +121,7 @@ SettingsPage {
         alert: true
     }
 
-    FlyoutHeading { text: "PHONE" }
+    FlyoutHeading { text: "PHONE"; about: "Android over adb" }
 
     HeadCard {
         glyph: "󰄜"
@@ -303,7 +303,7 @@ SettingsPage {
     // --- headset -------------------------------------------------------------
 
     Item { visible: Channels.headset !== ""; width: 1; height: Theme.spaceM }
-    FlyoutHeading { visible: Channels.headset !== ""; text: "HEADSET" }
+    FlyoutHeading { visible: Channels.headset !== ""; text: "HEADSET"; about: "Kept on the headset itself" }
 
     HeadCard {
         visible: Channels.headset !== ""
@@ -382,7 +382,7 @@ SettingsPage {
     readonly property var buttonNames: ["Left button", "Right button", "Wheel click", "Back side button", "Front side button"]
 
     Item { visible: Mice.devices.length > 0; width: 1; height: Theme.spaceM }
-    FlyoutHeading { visible: Mice.devices.length > 0; text: "MOUSE" }
+    FlyoutHeading { visible: Mice.devices.length > 0; text: "MOUSE"; about: "Kept on the mouse itself" }
 
     SettingsNote {
         visible: Mice.error !== ""
@@ -494,7 +494,7 @@ SettingsPage {
     // --- wireless ------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "WIRELESS" }
+    FlyoutHeading { text: "WIRELESS"; about: "Dongles and receivers" }
 
     Repeater {
         model: page.wireless
@@ -529,7 +529,7 @@ SettingsPage {
     // --- drives --------------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "DRIVES" }
+    FlyoutHeading { text: "DRIVES"; about: "Disks and partitions" }
 
     Repeater {
         model: Drives.drives
@@ -689,7 +689,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "USB" }
+    FlyoutHeading { text: "USB"; about: "Plugged in" }
 
     Repeater {
         model: page.usbAll ? page.usb : page.usb.slice(0, page.usbShown)

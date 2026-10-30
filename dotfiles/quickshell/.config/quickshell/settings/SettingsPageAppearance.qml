@@ -29,6 +29,34 @@ SettingsPage {
     // theme | wallpaper | bar | panels | windows | fonts
     property string part: "theme"
     tab: part
+    anatomy: "cards"
+
+    // the card on top: what the part is set to now
+    status: {
+        switch (part) {
+        case "theme": {
+            var look = Looks.looks[Settings.look]
+            return (look ? look.name : label(Settings.look)) + " · " + label(Settings.style, "style")
+        }
+        case "wallpaper": return Wallpaper.current !== "" ? Wallpaper.current.split("/").pop() : "No wallpaper"
+        case "bar": return label(Settings.barPosition) + " · " + label(Settings.barStyle, "barStyle") + " · " + Settings.barHeight + " px"
+        case "panels": return "Flyouts: " + label(Settings.flyoutAnim, "flyoutAnim") + " · launcher: " + label(Settings.launcherLayout, "launcherLayout")
+        case "windows": return "Gaps " + (hyprField(["general"], "gaps_in").value || 0) + " px · " + label(Settings.windowAnim, "windowAnim") + " animation"
+        case "fonts": return Theme.fontText + " · " + Settings.fontSize + " px"
+        }
+        return ""
+    }
+    statusDetail: {
+        switch (part) {
+        case "theme": return "Roundness " + Settings.radius + " px · " + label(Settings.colourMode)
+        case "wallpaper": return Settings.wallpaperShuffle ? "Changes on its own" : "Stays until you change it"
+        case "bar": return "Chips " + label(Settings.barChips, "barChips").toLowerCase() + " · separators " + label(Settings.barSeparator, "barSeparator").toLowerCase()
+        case "panels": return "Switcher: " + label(Settings.altTabStyle, "altTabStyle") + " · popups: " + label(Settings.notifStyle, "notifStyle")
+        case "windows": return "Corners " + (Settings.windowRounding === "own" ? Settings.windowRadius + " px" : "as the shell's")
+        case "fonts": return "Apps: " + label(Settings.systemFontFamily) + " · " + Settings.iconTheme + " · " + Settings.cursorTheme
+        }
+        return ""
+    }
 
     // a small bar, flyout or windows, drawn by the shell's own pieces, above
     // the parts whose settings change how they look

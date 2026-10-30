@@ -20,6 +20,15 @@ SettingsPage {
     id: page
 
     sectioned: true
+    anatomy: "cards"
+    status: (page.fingerprint ? "Fingerprint or password" : "Password") + " · "
+        + (page.grace === 0 ? "no grace" : page.graceLabel(page.grace) + " grace")
+    statusDetail: "When it locks is Battery & Idle's Lock step"
+    statusControl: FlyoutChip {
+        icon: "󰌾"
+        text: "Lock now"
+        onClicked: Quickshell.execDetached(["sh", "-c", "pidof hyprlock || hyprlock"])
+    }
 
     title: "Lock Screen"
     description: "Its look, the fingerprint and the password grace. Colours follow Theme."

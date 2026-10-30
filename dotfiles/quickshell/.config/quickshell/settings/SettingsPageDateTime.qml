@@ -14,7 +14,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    sectioned: true
+    anatomy: "bands"
 
     title: "Date & Time"
     description: "The time zone, and how the clocks read."
@@ -162,7 +162,7 @@ SettingsPage {
         return starts.concat(rest)
     }
 
-    FlyoutHeading { text: "TIME ZONE" }
+    FlyoutHeading { text: "TIME ZONE"; about: "Where the clock is set" }
 
     // the time now, large and ticking, and where and how it's kept
     HeadCard {
@@ -260,7 +260,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "CLOCK AND CALENDAR" }
+    FlyoutHeading { text: "CLOCK AND CALENDAR"; about: "Formats" }
 
     SettingsField {
         label: "Hour format"

@@ -17,7 +17,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    sectioned: true
+    anatomy: "bands"
 
     title: "Terminal"
     description: "Which terminal opens, how it looks, and your shell aliases."
@@ -311,7 +311,7 @@ SettingsPage {
     readonly property real opacityShown: opacityDragged >= 0 ? opacityDragged : opacityNow
     readonly property bool blinking: cursorBlinking === "On" || cursorBlinking === "Always"
 
-    FlyoutHeading { text: "TERMINAL" }
+    FlyoutHeading { text: "TERMINAL"; about: "The app and how it looks" }
 
     SettingsField {
         label: "Terminal"
@@ -584,7 +584,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "BASH ALIASES" + (page.aliases.length > 0 ? "  " + page.aliases.length : "") }
+    FlyoutHeading { text: "BASH ALIASES" + (page.aliases.length > 0 ? "  " + page.aliases.length : ""); about: "Short names for commands" }
 
     Repeater {
         model: page.aliases

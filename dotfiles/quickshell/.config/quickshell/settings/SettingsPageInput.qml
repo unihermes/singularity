@@ -19,7 +19,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    sectioned: true
+    anatomy: "bands"
 
     title: "Keyboard & Mouse"
     description: "Keyboard, mouse and touchpad."
@@ -288,7 +288,7 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    FlyoutHeading { text: "KEYBOARD" }
+    FlyoutHeading { text: "KEYBOARD"; about: "Layouts, keys and repeat" }
 
     // each layout is a row that opens to its variant; the first is the main one
     Repeater {
@@ -566,7 +566,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "MOUSE" }
+    FlyoutHeading { text: "MOUSE"; about: "Pointer speed and focus" }
 
     Level {
         key: "sensitivity"
@@ -676,7 +676,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "TOUCHPAD" }
+    FlyoutHeading { text: "TOUCHPAD"; about: "Taps, clicks and scrolling" }
 
     SettingsNote {
         visible: !page.hasTouchpad

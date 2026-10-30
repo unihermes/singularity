@@ -23,7 +23,7 @@ import "../flyouts"
 SettingsPage {
     id: page
 
-    sectioned: true
+    anatomy: "bands"
 
     title: "Battery & Idle"
     description: "Power profile, charging, the idle steps in hypridle.conf, and the lid."
@@ -332,7 +332,7 @@ SettingsPage {
 
     // --- layout --------------------------------------------------------------
 
-    FlyoutHeading { text: "POWER" }
+    FlyoutHeading { text: "POWER"; about: "Profile and charging" }
 
     // the charge now, what it's doing, and its health
     HeadCard {
@@ -476,7 +476,7 @@ SettingsPage {
     }
 
     Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "WHEN IDLE" }
+    FlyoutHeading { text: "WHEN IDLE"; about: "Each step after the last" }
 
     SettingsNote {
         visible: !page.idleRunning
@@ -659,7 +659,7 @@ SettingsPage {
     LidConfig { id: lid; page: page }
 
     Item { width: 1; height: Theme.spaceM; visible: lid.hasLid }
-    FlyoutHeading { text: "LID"; visible: lid.hasLid }
+    FlyoutHeading { text: "LID"; visible: lid.hasLid; about: "Closing it" }
 
     // what closing it does, and for Suspend how long after
     SettingsField {
