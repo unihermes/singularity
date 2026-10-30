@@ -8,7 +8,7 @@
 // streams it plays: its level and the channel or output it plays on. Mute
 // is the button before each level. Straight on Pipewire, as the bar is;
 // wireplumber remembers everything. Audio's pactl finds unplugged outputs
-// and moves streams; an app's row drags onto a channel to move it there.
+// and moves streams.
 
 import Quickshell
 import Quickshell.Services.Pipewire
@@ -217,19 +217,11 @@ SettingsPage {
     Repeater {
         model: ScriptModel { values: Channels.sinks }
         Level {
-            id: channelLevel
             required property var modelData
             node: modelData
             label: Audio.nodeName(modelData)
             hint: Channels.key(modelData) === "game" ? "Where games play"
                 : Channels.key(modelData) === "media" ? "Where other apps play unless moved" : ""
-            // an app dragged here from PLAYING plays here from now on
-            // over the whole row, not only the field's control slot
-            ChannelDrop {
-                parent: channelLevel
-                anchors.fill: parent
-                onAppDropped: nodes => page.moveTo(nodes, channelLevel.modelData)
-            }
         }
     }
 
@@ -392,16 +384,6 @@ SettingsPage {
 
         width: parent ? parent.width : 0
         implicitHeight: Math.max(Theme.fieldHeight, texts.implicitHeight + Theme.spaceM, right.height + Theme.spaceS)
-
-        // dragged onto a channel under CHANNELS, it moves there
-        AppDrag {
-            visible: app.playback
-            anchors.fill: texts
-            anchors.leftMargin: -(appImage.width + Theme.spaceM)
-            nodes: app.nodes
-            name: Audio.appName(app.n)
-            icon: app.icon
-        }
 
         Image {
             id: appImage
