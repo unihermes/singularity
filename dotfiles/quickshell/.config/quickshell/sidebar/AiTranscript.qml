@@ -3,11 +3,14 @@
 //
 // A conversation's rows (ClaudeSession.entries): what you sent in a field
 // with its attachments under it, Claude's replies as markdown you can
-// select, each tool call as a line (a click opens what it did), errors and
-// notes. Follows the end while it's in view; scrolling up stops that.
+// select (Markdown.js; fenced code in a box of its own with Copy), each
+// tool call as a line (a click opens what it did), errors and notes.
+// Follows the end while it's in view; scrolling up stops that.
 
+import Quickshell
 import QtQuick
 import "../services"
+import "../services/Markdown.js" as Markdown
 import "../flyouts"
 
 Item {
@@ -52,6 +55,117 @@ Item {
         font.family: Theme.fontText
         font.weight: Theme.weightBody
         font.pixelSize: Theme.fontSmall
+    }
+
+    // the colours the markdown's rich text is drawn in
+    readonly property var ink: ({
+        text: String(Theme.text), strong: String(Theme.textStrong), muted: String(Theme.subtext),
+        accent: String(Theme.accent), codeFill: String(Theme.overlay), codeInk: String(Theme.textStrong),
+        rule: String(Theme.stroke)
+    })
+
+    // a reply's prose
+    Component {
+        id: textPart
+        TextEdit {
+            readOnly: true
+            selectByMouse: true
+            wrapMode: TextEdit.Wrap
+            textFormat: TextEdit.RichText
+            text: Markdown.html(parent.part.text, root.ink)
+            color: Theme.text
+            selectionColor: Theme.selectedStroke
+            selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontBody
+            onLinkActivated: link => Qt.openUrlExternally(link)
+
+            HoverHandler {
+                cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : Qt.IBeamCursor
+            }
+        }
+    }
+
+    // a reply's fenced code: its language and Copy over it, in a box of its own
+    Component {
+        id: codePart
+        Rectangle {
+            id: block
+            readonly property var part: parent.part
+            property bool copied: false
+            height: codeHead.height + codeText.implicitHeight + Theme.spaceS + Theme.spaceM
+            radius: Theme.radiusInner
+            color: Theme.base
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
+
+            Item {
+                id: codeHead
+                width: parent.width
+                height: Theme.rowHeightDense
+                Text {
+                    x: Theme.spaceM
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: block.part.lang || "code"
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontCaption
+                }
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spaceM
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: block.copied ? "󰄬 Copied" : "󰆏 Copy"
+                    color: copyMouse.containsMouse ? Theme.textStrong : Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontCaption
+                    MouseArea {
+                        id: copyMouse
+                        anchors.fill: parent
+                        anchors.margins: -Theme.spaceS
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            Quickshell.execDetached(["wl-copy", "--", block.part.code])
+                            block.copied = true
+                            copiedTimer.restart()
+                        }
+                    }
+                    Timer {
+                        id: copiedTimer
+                        interval: 1500
+                        onTriggered: block.copied = false
+                    }
+                }
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: Theme.borderWidth
+                    color: Theme.stroke
+                }
+            }
+
+            TextEdit {
+                id: codeText
+                x: Theme.spaceM
+                y: codeHead.height + Theme.spaceS
+                width: parent.width - Theme.spaceM * 2
+                readOnly: true
+                selectByMouse: true
+                wrapMode: TextEdit.WrapAnywhere
+                textFormat: TextEdit.PlainText
+                text: block.part.code
+                color: Theme.textStrong
+                selectionColor: Theme.selectedStroke
+                selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontSmall
+            }
+        }
     }
 
     ListView {
@@ -164,23 +278,17 @@ Item {
 
             Component {
                 id: replyRow
-                TextEdit {
+                Column {
                     width: loader.width
-                    readOnly: true
-                    selectByMouse: true
-                    wrapMode: TextEdit.Wrap
-                    textFormat: TextEdit.MarkdownText
-                    text: entry.text
-                    color: Theme.text
-                    selectionColor: Theme.selectedStroke
-                    selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontBody
-                    onLinkActivated: link => Qt.openUrlExternally(link)
-
-                    HoverHandler {
-                        cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : Qt.IBeamCursor
+                    spacing: Theme.spaceM
+                    Repeater {
+                        model: Markdown.split(entry.text)
+                        Loader {
+                            required property var modelData
+                            width: parent.width
+                            sourceComponent: modelData.kind === "code" ? codePart : textPart
+                            property var part: modelData
+                        }
                     }
                 }
             }

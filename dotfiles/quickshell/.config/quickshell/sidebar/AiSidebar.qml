@@ -7,7 +7,7 @@
 // Chat, Desktop and Code as tabs over one shape: the tab's own line (Code's
 // folder, Desktop's changes), the conversation or a list in its place (past
 // sessions, folders, the diff), a prompt waiting for an answer, and the
-// composer.
+// composer. Files dropped anywhere on it attach to the next message.
 
 import Quickshell
 import Quickshell.Wayland
@@ -318,6 +318,37 @@ PanelWindow {
                 session: root.session
                 onEscapePressed: Ai.shown = false
                 onNewConversation: root.startOver()
+                onShowPast: root.view = "past"
+            }
+        }
+    }
+
+    // files dragged in (a file manager's) attach to this tab's next message
+    DropArea {
+        id: drop
+        anchors.fill: parent
+        keys: ["text/uri-list"]
+        onDropped: drop => {
+            if (drop.hasUrls) Ai.attachFiles(drop.urls)
+            drop.accept()
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: Theme.channelWidth
+            visible: drop.containsDrag
+            radius: Theme.panelFrameRadius
+            color: Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.85)
+            border.width: Theme.borderWidth * 2
+            border.color: Theme.accent
+
+            Text {
+                anchors.centerIn: parent
+                text: "󰁦  Drop to attach"
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontTitle
             }
         }
     }

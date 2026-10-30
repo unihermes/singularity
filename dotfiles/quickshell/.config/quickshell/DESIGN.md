@@ -392,17 +392,30 @@ a click elsewhere leaves it. It slides in from the edge and fades.
   (a click shows the diff in its place) with Apply and Discard (two
   clicks) as chips.
 - **The conversation** takes the rest: what you sent in a field with its
-  screenshots small under it; replies as markdown you can select; each
+  screenshots small under it; replies as markdown you can select
+  (`services/Markdown.js`: inline code tinted, tables ruled), each fenced
+  block in a darker box of its own with its language and Copy; each
   tool call a quiet line (spinner, tick, ✗) that opens in place to its
   diff or command and its output.
+- **Files dropped** anywhere on the panel (from a file manager) attach to
+  the next message: an image scaled like a screenshot, text as text,
+  anything else as its path; the panel shows "Drop to attach" while one
+  hovers.
+- **While it's away**, a finished reply or a prompt waiting is a
+  notification ("Claude · Code: done") with Open, which brings it out on
+  that tab.
 - **A prompt waiting** sits in its own section over the composer:
   what it wants, the command or plan in full, then Allow, the CLI's own
   "don't ask again" and Deny (Approve / Keep planning for a plan, a chip
   per option for a question).
-- **Composer:** attachments as chips (hover reads Remove), the box
-  (Enter sends, Shift+Enter a new line, Ctrl+L, Ctrl+N or /clear start over), then 󰐕 (Area, Window, Screen,
-  Paste, Selected), the model and Code's mode as chips a click steps
-  through, what it's doing (pulsing) or the context used, Send or Stop.
+- **Composer:** attachments as chips (hover reads Remove), the slash
+  commands matching a / typed at the start (↑↓ pick, Tab or Enter take:
+  /clear, /new, /model, /mode, /past and /compact, then the CLI's own),
+  the box (Enter sends, Shift+Enter a new line, Ctrl+L, Ctrl+N or /clear
+  start over), then 󰐕 (Area, Window, Screen, Paste, Selected), the model
+  (the one running when left on Default) and Code's mode as chips a click
+  steps through, what it's doing (pulsing) or the context used, Send or
+  Stop.
 - **Bar module** (key `claude`, the old module's, so a saved hide holds): the
   robot glyph, a spinner while it works, accent while a prompt waits or a
   reply is unread.

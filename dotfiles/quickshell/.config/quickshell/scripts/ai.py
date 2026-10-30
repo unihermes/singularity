@@ -8,6 +8,9 @@
 #                                            what the model reads (1568px)
 #   ai.py paste clipboard|selection          the clipboard or the primary
 #                                            selection: text, or an image
+#   ai.py file PATH                          a file dropped on the sidebar:
+#                                            an image (scaled like a shot),
+#                                            text, or else just its path
 #   ai.py sessions DIR                       Claude Code's past sessions there
 #   ai.py history DIR ID                     one session as transcript rows
 #   ai.py projects                           the folders Claude Code has run in
@@ -64,7 +67,8 @@ def shot_file():
     # the last few only; the session keeps what it was sent
     for old in sorted(os.listdir(d))[:-20]:
         os.remove(os.path.join(d, old))
-    return os.path.join(d, time.strftime("%Y%m%d-%H%M%S") + ".jpg")
+    # milliseconds too: several files dropped at once land in one second
+    return os.path.join(d, time.strftime("%Y%m%d-%H%M%S") + f"-{int(time.time() * 1000) % 1000:03d}.jpg")
 
 
 def shot(kind, output):
@@ -120,6 +124,36 @@ def paste(which):
     if len(text) > TEXT_MAX:
         text = text[:TEXT_MAX] + "\n…"
     return {"kind": "text", "label": label, "text": text}
+
+
+IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+               ".gif": "image/gif", ".webp": "image/webp"}
+
+
+def file(path):
+    path = os.path.abspath(os.path.expanduser(path))
+    name = os.path.basename(path)
+    if not os.path.isfile(path):
+        return None
+    if os.path.splitext(path)[1].lower() in IMAGE_TYPES:
+        # scaled to what the model reads, like a screenshot
+        dest = shot_file()
+        r = run(["magick", path + "[0]", "-resize", f"{LONG_EDGE}x{LONG_EDGE}>", "-quality", "85", dest])
+        if r.returncode == 0:
+            return image(dest, "image/jpeg", name)
+        return image(path, IMAGE_TYPES[os.path.splitext(path)[1].lower()], name)
+    with open(path, "rb") as f:
+        raw = f.read(TEXT_MAX + 1)
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        text = "\0"
+    if "\0" in text:
+        # not text: Claude gets where it is, which Code can read itself
+        return {"kind": "text", "label": name, "text": "A file at " + path}
+    if len(raw) > TEXT_MAX:
+        text = text[:TEXT_MAX] + "\n…"
+    return {"kind": "text", "label": name, "text": text}
 
 
 def project_dir(path):
@@ -306,6 +340,8 @@ def main():
         out(shot(a[1], a[2] if len(a) > 2 else ""))
     elif cmd == "paste" and len(a) >= 2:
         out(paste(a[1]))
+    elif cmd == "file" and len(a) >= 2:
+        out(file(a[1]))
     elif cmd == "sessions" and len(a) >= 2:
         out(sessions(a[1]))
     elif cmd == "history" and len(a) >= 3:

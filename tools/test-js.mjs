@@ -242,3 +242,19 @@ test("WidgetPlacement places, stores and snaps the desktop widgets", () => {
     assert.equal(by.x, 716)
     assert.equal(by.y, 600)
 })
+
+test("Markdown: fences split out, prose to rich text", () => {
+    const M = load("Markdown.js")
+    const ink = { text: "#t", strong: "#s", muted: "#m", accent: "#a", codeFill: "#f", codeInk: "#c", rule: "#r" }
+    const parts = M.split("Hi\n\n```bash\nls -la\n```\nafter\n```py\nunclosed")
+    assert.equal(parts.map(p => p.kind).join(","), "text,code,text,code")
+    assert.equal(parts[1].lang, "bash")
+    assert.equal(parts[1].code, "ls -la")
+    assert.equal(parts[3].code, "unclosed")
+    const h = M.html("# Title\n- **a** `x<y`\n  - nested\n1. one\n\n| a | b |\n|---|---|\n| 1 | 2 |", ink)
+    assert.match(h, /<b style="color:#s">Title<\/b>/)
+    assert.match(h, /<ul><li><b style="color:#s">a<\/b> <span[^>]*background-color:#f[^>]*>&nbsp;x&lt;y&nbsp;<\/span><\/li><ul><li>nested<\/li><\/ul><\/ul><ol><li>one<\/li><\/ol>/)
+    assert.match(h, /<th align="left">a<\/th>/)
+    assert.match(h, /<td>2<\/td>/)
+    assert.match(M.html("see [docs](https://x.y) and *it*", ink), /<a href="https:\/\/x.y" style="color:#a">docs<\/a> and <i>it<\/i>/)
+})

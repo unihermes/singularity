@@ -6,7 +6,6 @@ Delete this file once every item is done.
 3. Settings, Appearance: rethink the tabs and simplify them.
 4. Roundness: make sure it is set in one place (one Theme token everything reads,
    no hard-coded radii elsewhere).
-6. Claude sidebar: polish it; some parts are still incomplete.
 7. Full design review of the shell (against `qs/DESIGN.md`).
 8. Settings redesign: pull design inspiration (other shells, OS settings apps) for
    the pages and their flow layout. Things are cluttered right now, so first make

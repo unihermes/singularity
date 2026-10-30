@@ -47,6 +47,9 @@ Scope {
     property string activity: ""
     // the model the CLI says it's using
     property string modelName: ""
+    // the slash commands the CLI says it takes (its own, the user's and the
+    // project's), known once it has started
+    property var slashCommands: []
     property int contextUsed: 0
     property int contextWindow: 0
     // a turn ended or a prompt came while the sidebar wasn't on this tab
@@ -63,8 +66,20 @@ Scope {
 
     // a file tool finished (the Desktop tab re-reads its diff)
     signal edited()
+    // the last reply's text, for a notification
+    function lastReply() {
+        for (var i = rows.count - 1; i >= 0; i--) {
+            var r = rows.get(i)
+            if (r.kind === "user") return ""
+            if (r.kind === "assistant" || r.kind === "error") return r.text
+        }
+        return ""
+    }
     // the CLI's rate_limit_event, for the subscription's usage
     signal rateLimit(var info)
+    // a turn finished, or a permission prompt came (Ai's notifications)
+    signal turnEnded()
+    signal asked(string title)
 
     ListModel { id: rows }
 
@@ -254,6 +269,7 @@ Scope {
             if (ev.session_id) sessionId = ev.session_id
             if (ev.subtype === "init") {
                 modelName = ev.model || ""
+                slashCommands = ev.slash_commands || []
                 takeMode(ev.permissionMode)
             } else if (ev.subtype === "status" && ev.permissionMode) {
                 takeMode(ev.permissionMode)
@@ -349,6 +365,7 @@ Scope {
         }])
         activity = "Waiting for you"
         unseen = true
+        asked(describe(r.tool_name, r.input || {}))
     }
 
     function result(ev) {
@@ -372,11 +389,13 @@ Scope {
             if (r.kind === "tool" && r.phase === "running") setRow(i, { phase: "stopped" })
             if (r.streaming) setRow(i, { streaming: false })
         }
+        var wasStopped = stopping
         busy = false
         stopping = false
         activity = ""
         asks = []
         unseen = true
+        if (!wasStopped) turnEnded()
     }
 
     // --- rows ------------------------------------------------------------

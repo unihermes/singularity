@@ -7,13 +7,15 @@
 //   Desktop  changes to this desktop, made in a staging copy of the repo
 //            (scripts/ai-desktop.sh) and applied once the diff is reviewed
 //   Code     Claude Code in a project folder, asking before it acts
-// Screenshots, the clipboard and the selection ride along with a message.
+// Screenshots, the clipboard, the selection and files dropped on the
+// sidebar ride along with a message.
 // The tab, the Code folder, each tab's model and mode and its conversation
 // (resumed after a reload) live in ai.json.
 
 pragma Singleton
 
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import QtQuick
 
@@ -123,6 +125,15 @@ Singleton {
     function cycleMode() {
         var i = modeChoices.findIndex(c => c.value === code.mode)
         code.mode = modeChoices[(i + 1) % modeChoices.length].value
+    }
+
+    // the model chip: the pick, else the model the CLI says it runs
+    // ("claude-opus-5-5" reads "Opus 5.5"), else Default till it starts
+    function modelText(t) {
+        var pick = models[t] || ""
+        if (pick !== "") return label(modelChoices, pick)
+        var m = sessionFor(t).modelName.match(/claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?!\d)/)
+        return m ? m[1][0].toUpperCase() + m[1].slice(1) + " " + m[2] + (m[3] ? "." + m[3] : "") : "Default"
     }
 
     function label(list, v) {
@@ -279,6 +290,35 @@ Singleton {
         onExited: root.capturing = false
     }
 
+    // files dropped on the sidebar, one at a time onto this tab
+    property var dropQueue: []
+    function attachFiles(urls) {
+        var paths = urls.map(u => decodeURIComponent(String(u).replace(/^file:\/\//, "")))
+            .filter(p => p.indexOf("/") === 0)
+        dropQueue = dropQueue.concat(paths.map(p => ({ target: current, path: p })))
+        if (!fileProc.running) nextFile()
+    }
+    function nextFile() {
+        if (dropQueue.length === 0) return
+        var f = dropQueue[0]
+        dropQueue = dropQueue.slice(1)
+        fileProc.target = f.target
+        fileProc.command = [py, "file", f.path]
+        fileProc.running = true
+    }
+    Process {
+        id: fileProc
+        property var target: null
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var a = null
+                try { a = JSON.parse(text) } catch (e) {}
+                if (a && fileProc.target) fileProc.target.attach(a)
+            }
+        }
+        onExited: root.nextFile()
+    }
+
     // --- past sessions and projects ------------------------------------
 
     // this tab's earlier conversations: [{ id, title, last, turns, mtime }]
@@ -431,6 +471,53 @@ Singleton {
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", chatDir])
         refreshDiff()
+    }
+
+    // --- notifications while the sidebar is away --------------------------
+
+    // A reply done or a prompt waiting, as a notification with Open, which
+    // brings the sidebar out on that tab on the focused screen. One a tab;
+    // a newer one takes over its Open.
+    readonly property var tabNames: ({ chat: "Chat", desktop: "Desktop", code: "Code" })
+    function notify(t, title, body) {
+        if (shown) return
+        var p = t === "code" ? codeNote : t === "desktop" ? desktopNote : chatNote
+        // the prose only (no code or tables), markdown marks and line
+        // breaks out, a couple of lines kept
+        body = String(body || "").replace(/```[\s\S]*?(```|$)/g, "")
+            .split("\n").filter(l => !/^\s*\|/.test(l)).join(" ")
+            .replace(/[*_`#>]/g, "").replace(/\s+/g, " ").trim()
+        if (body.length > 160) body = body.slice(0, 157) + "…"
+        p.running = false
+        p.command = ["notify-send", "-a", "Claude", "-i", "claude-desktop", "-A", "open=Open",
+                     "Claude · " + tabNames[t] + ": " + title, body]
+        p.running = true
+    }
+    function openFromNote(t, text) {
+        if (text.trim() !== "open") return
+        setTab(t)
+        if (!shown) {
+            const name = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+            toggle(Quickshell.screens.find(s => s.name === name) || Quickshell.screens[0])
+        }
+    }
+    Process { id: chatNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("chat", text) } }
+    Process { id: desktopNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("desktop", text) } }
+    Process { id: codeNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("code", text) } }
+    Connections {
+        target: root.chat
+        function onTurnEnded() { root.notify("chat", "replied", root.chat.lastReply()) }
+        function onAsked(title) { root.notify("chat", "waiting for you", title) }
+    }
+    Connections {
+        target: root.desktop
+        function onTurnEnded() { root.notify("desktop", "done", root.desktop.lastReply()) }
+        function onAsked(title) { root.notify("desktop", "waiting for you", title) }
+    }
+    Connections {
+        target: root.code
+        function onTurnEnded() { root.notify("code", "done", root.code.lastReply()) }
+        function onAsked(title) { root.notify("code", "waiting for you", title) }
     }
 
     Connections { target: root.chat; function onSessionIdChanged() { root.save() } }
