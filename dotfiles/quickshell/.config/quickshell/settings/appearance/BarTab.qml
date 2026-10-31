@@ -38,22 +38,6 @@ SettingsTab {
 
     Stepper { label: "Height"; key: "barHeight"; step: 2; suffix: "px" }
 
-    // a floating bar's or the islands' corners and their gap to the screen edges
-    SettingsField {
-        visible: !Theme.barFull
-        label: "Bar corners"
-        hint: Settings.barCorners === "shell" ? "Rounded like the shell's panels" : "A rounding of their own"
-        Choices { key: "barCorners" }
-    }
-    Stepper { visible: !Theme.barFull && Settings.barCorners === "own"; label: "Bar rounding"; hint: "Corner radius"; key: "barRadius"; suffix: "px" }
-    SettingsField {
-        visible: !Theme.barFull
-        label: "Bar gaps"
-        hint: Settings.barGaps === "shell" ? "The windows' edge gaps" : "A gap of their own to the screen edges"
-        Choices { key: "barGaps" }
-    }
-    Stepper { visible: !Theme.barFull && Settings.barGaps === "own"; label: "Bar gap"; hint: "To the screen edges"; key: "barGap"; suffix: "px" }
-
     SettingsField {
         visible: Styles.get(Settings.style).options.every(o => o.key !== "barSeparator")
         label: "Separators"

@@ -68,8 +68,7 @@ SettingsPage {
         windowBorderWidth: "Border width", windowBorderFocused: "Focused border",
         windowBorderFocusedHex: "Focused colour", windowBorderUnfocused: "Unfocused border",
         windowBorderUnfocusedHex: "Unfocused colour", windowRounding: "Window corners",
-        windowRadius: "Window rounding", barCorners: "Bar corners", barRadius: "Bar rounding",
-        barGaps: "Bar gaps", barGap: "Bar gap", windowShadow: "Window shadow", tabBar: "Tab bar",
+        windowRadius: "Window rounding", windowShadow: "Window shadow", tabBar: "Tab bar",
         flyoutWidth: "Flyout width", launcherRows: "Rows shown", notifWidth: "Popup width",
         seeThrough: "See-through", scrim: "Overlay dimming", barSeparator: "Separators", barChips: "Bar chips", plain: "Plain",
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
@@ -93,7 +92,7 @@ SettingsPage {
     readonly property var keyUnits: ({ radius: "px", edgeGap: "px", spacing: "%", rowScale: "%",
                                          barHeight: "px", barIconSize: "px", modulePad: "px",
                                          windowIconSize: "px", windowIconPadding: "px",
-                                         flyoutWidth: "%", notifWidth: "px", windowRadius: "px", barRadius: "px", barGap: "px", seeThrough: "%", scrim: "%",
+                                         flyoutWidth: "%", notifWidth: "px", windowRadius: "px", seeThrough: "%", scrim: "%",
                                          focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%",
                                          fontSize: "px", animTime: "%", animWindows: "%", animWorkspaces: "%", animShell: "%" })
     function valueText(k, v) {
