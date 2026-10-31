@@ -2,7 +2,7 @@
 // ~/.config/quickshell/sidebar/AiUsage.qml
 //
 // The plans' limits under the sidebar's heading: Claude's five-hour and
-// weekly windows and Codex's own, each a meter with how much is used and
+// weekly windows and Codex's five-hour and weekly windows, each a meter with how much is used and
 // when it resets. A limit with no reading is left out.
 
 import QtQuick
@@ -30,8 +30,10 @@ Column {
         model: [
             { label: "5 hours", used: Ai.fiveHour, resets: Ai.fiveHourResets },
             { label: "Week", used: Ai.sevenDay, resets: Ai.sevenDayResets },
-            { label: "Codex", used: Ai.codexUsage ? Ai.codexUsage.used : -1,
-              resets: Ai.codexUsage ? Ai.codexUsage.resets : 0 }
+            { label: "Codex 5h", used: Ai.codexUsage && Ai.codexUsage.primary ? Ai.codexUsage.primary.used : -1,
+              resets: Ai.codexUsage && Ai.codexUsage.primary ? Ai.codexUsage.primary.resets : 0 },
+            { label: "Codex week", used: Ai.codexUsage && Ai.codexUsage.secondary ? Ai.codexUsage.secondary.used : -1,
+              resets: Ai.codexUsage && Ai.codexUsage.secondary ? Ai.codexUsage.secondary.resets : 0 }
         ]
 
         Item {
@@ -43,7 +45,7 @@ Column {
             Text {
                 id: label
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(64)
+                width: Theme.fit(80)
                 text: modelData.label
                 color: Theme.subtext
                 font.family: Theme.fontText

@@ -515,10 +515,10 @@ a click off it (the bars excepted). It slides in from the edge and fades.
   Desktop and Code as a segmented strip, a ● on a tab with something
   unread.
 - **Usage** under the heading, then a break: a meter each for Claude's
-  five-hour and weekly windows and Codex's limit, used % and when it
+  five-hour and weekly windows and Codex's five-hour and weekly limits, used % and when they
   resets (the time today, the weekday this week, else the date); alert
   colour from 90%. Read by `ai.py usage` (Claude's usage endpoint with
-  Claude Code's token; Codex's newest session log) every two minutes while
+  Claude Code's token; Codex's app server) every two minutes while
   the sidebar shows, and after each reply's rate-limit event.
 - **The tab's line:** Code's folder as a row (a click lists the folders
   in its place, with a field for any other); Desktop's changes as a row

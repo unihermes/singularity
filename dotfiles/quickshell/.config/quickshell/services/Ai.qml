@@ -47,6 +47,7 @@ Singleton {
     property var engines: ({ chat: "claude", code: "claude" })
     function codex(t) { return engines[t] === "codex" }
     readonly property bool codexAvailable: codexProbe.found
+    onCodexAvailableChanged: if (codexAvailable && shown) readUsage()
     function setEngine(t, e) {
         if (!(t in engines) || (e === "codex" && !codexAvailable)) return
         var o = Object.assign({}, engines)
@@ -62,16 +63,19 @@ Singleton {
     readonly property bool unseen: all.some(s => s.unseen)
 
     // the subscription's usage, 0..1 (-1 until known) and when each window
-    // resets (epoch seconds, 0 unknown): from ai.py usage while the sidebar
-    // shows, and the CLI's rate-limit events between
+    // resets (epoch seconds, 0 unknown): refreshed while the sidebar shows,
+    // and from the CLI's rate-limit events between
     property real fiveHour: -1
     property real sevenDay: -1
     property int fiveHourResets: 0
     property int sevenDayResets: 0
-    // Codex's own limit: { used, resets, window (minutes), plan }, or null
+    // Codex's primary and secondary windows, or null until read
     property var codexUsage: null
 
-    function readUsage() { if (!usageProc.running) usageProc.running = true }
+    function readUsage() {
+        if (!usageProc.running) usageProc.running = true
+        if (codexAvailable && !codexUsageProc.running) codexUsageProc.running = true
+    }
     Process {
         id: usageProc
         command: [root.py, "usage"]
@@ -81,9 +85,40 @@ Singleton {
                 try { u = JSON.parse(text) } catch (e) { return }
                 if (u.five_hour) { root.fiveHour = u.five_hour.used; root.fiveHourResets = u.five_hour.resets }
                 if (u.seven_day) { root.sevenDay = u.seven_day.used; root.sevenDayResets = u.seven_day.resets }
-                root.codexUsage = u.codex
             }
         }
+    }
+    Process {
+        id: codexUsageProc
+        command: ["codex", "app-server"]
+        stdinEnabled: true
+        onStarted: {
+            codexUsageProc.write(JSON.stringify({ id: 1, method: "initialize", params: {
+                clientInfo: { name: "singularity", title: "Singularity", version: "1" }, capabilities: null
+            } }) + "\n")
+            codexUsageTimeout.restart()
+        }
+        stdout: SplitParser {
+            onRead: line => {
+                var m
+                try { m = JSON.parse(line) } catch (e) { return }
+                if (m.id === 1 && m.result) {
+                    codexUsageProc.write(JSON.stringify({ method: "initialized", params: {} }) + "\n")
+                    codexUsageProc.write(JSON.stringify({ id: 2, method: "account/rateLimits/read", params: {} }) + "\n")
+                } else if (m.id === 2) {
+                    if (m.result && m.result.rateLimits) root.noteCodexLimit(m.result.rateLimits)
+                    codexUsageProc.running = false
+                } else if (m.id === 1 && m.error) {
+                    codexUsageProc.running = false
+                }
+            }
+        }
+        onExited: codexUsageTimeout.stop()
+    }
+    Timer {
+        id: codexUsageTimeout
+        interval: 15000
+        onTriggered: codexUsageProc.running = false
     }
     Timer {
         interval: 120000
@@ -541,10 +576,12 @@ Singleton {
 
     // Codex's own limit, as it reports it after each reply
     function noteCodexLimit(r) {
-        var p = r.primary
-        if (!p || p.usedPercent === undefined) return
-        codexUsage = { used: p.usedPercent / 100, resets: p.resetsAt || 0,
-                       window: p.windowDurationMins || 0, plan: r.planType || "" }
+        function window(w) {
+            return w && w.usedPercent !== undefined && w.usedPercent !== null
+                ? { used: w.usedPercent / 100, resets: w.resetsAt || 0 } : null
+        }
+        var primary = window(r.primary), secondary = window(r.secondary)
+        if (primary || secondary) codexUsage = { primary: primary, secondary: secondary }
     }
 
     readonly property alias chatCodex: chatCodexSession
