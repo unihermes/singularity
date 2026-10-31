@@ -265,7 +265,7 @@ SettingsPage {
                 labelWidth: width - testChip.width - Theme.spaceL
                 label: "Position"
                 hint: ({ top: "Top", bottom: "Bottom" })[Settings.notifPositionY] + " "
-                    + ({ left: "left", center: "centre", right: "right" })[Settings.notifPositionX] + " · click a spot"
+                    + ({ left: "left", center: "centre", right: "right" })[Settings.notifPositionX]
 
                 FlyoutChip {
                     id: testChip
@@ -334,8 +334,6 @@ SettingsPage {
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "APPS" + (page.apps.length > 0 ? "  " + page.apps.length : "") }
-
-    SettingsNote { text: "Every app in the history; silent ones skip the popup" }
 
     // each app with its popups switch
     Repeater {

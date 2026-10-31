@@ -64,7 +64,6 @@ SettingsPage {
 
     title: ({ theme: "Theme", wallpaper: "Wallpaper & Desktop", bar: "Bar", panels: "Panels & Popups",
               windows: "Windows", fonts: "Fonts & Icons" })[part]
-    description: "Changes apply as you make them; a dot marks a setting that differs from the baseline."
 
     stickyColumn: rows.item || rows
 

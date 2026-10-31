@@ -226,7 +226,6 @@ SettingsTab {
     SettingsField {
         labelWidth: parent.width - placeChip.width - Theme.spaceL
         label: "Placement"
-        hint: "Drag widgets to reposition them"
         FlyoutChip {
             id: placeChip
             anchors.right: parent.right

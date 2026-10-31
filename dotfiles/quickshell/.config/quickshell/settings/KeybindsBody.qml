@@ -1244,12 +1244,6 @@ Column {
                     allText: root.hideBound ? "Show added" : "Hide added"
                     onAllClicked: root.hideBound = !root.hideBound
                 }
-                Label {
-                    width: parent.width
-                    color: Theme.subtext
-                    font.pixelSize: Theme.fontSmall
-                    text: "Select shortcuts to add. Use 󰏫 to edit before adding."
-                }
 
                 Repeater {
                     model: root.presetGroups

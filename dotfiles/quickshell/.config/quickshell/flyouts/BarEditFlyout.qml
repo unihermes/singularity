@@ -36,7 +36,7 @@ FlyoutPanel {
     Text {
         width: parent.width
         wrapMode: Text.Wrap
-        text: "Drag modules along the bar, or down here to hide them. Click a centre module to pin it to the middle."
+        text: "Click a centre module to pin it to the middle."
         color: Theme.subtext
         font.family: Theme.fontText
         font.pixelSize: Theme.fontCaption

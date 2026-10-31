@@ -261,14 +261,6 @@ OverlayWindow {
                 anchors.centerIn: parent
                 spacing: Theme.spaceM
 
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Drag to arrange. Widgets snap to alignment guides."
-                    color: Theme.subtext
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
-                }
                 Repeater {
                     model: root.hidden
                     FlyoutChip {

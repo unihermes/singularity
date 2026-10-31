@@ -294,8 +294,6 @@ SettingsPage {
                     onClicked: page.pendingSsid = ""
                 }
             }
-
-            SettingsNote { text: "iwd keeps the passphrase once it joins" }
         }
     }
 

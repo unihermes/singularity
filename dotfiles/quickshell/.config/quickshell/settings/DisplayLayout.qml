@@ -258,15 +258,4 @@ Item {
             }
         }
     }
-
-    Text {
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        anchors.margins: Theme.spaceL
-        text: root.placed.length > 1 ? "Drag to arrange · click to open" : "Click a display to open it"
-        color: Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontCaption
-    }
 }

@@ -214,7 +214,7 @@ Item {
         anchors.topMargin: Theme.spaceM
         width: parent.width
         name: "hidden"
-        title: "HIDDEN  ·  DRAG A MODULE HERE TO TAKE IT OFF THE BAR"
+        title: "HIDDEN"
         keys: root.hiddenKeys
     }
 

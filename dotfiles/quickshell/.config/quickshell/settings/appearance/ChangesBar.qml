@@ -59,7 +59,7 @@ Column {
                     topPadding: Theme.spaceS
                     bottomPadding: Theme.spaceS
                     wrapMode: Text.WordWrap
-                    text: "Nothing changed. Anything you change on the Look pages shows up here."
+                    text: "No changes"
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody

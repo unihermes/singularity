@@ -17,8 +17,6 @@ import "../system"
 SystemPage {
     id: page
 
-    subtitle: "Click a file to edit it; the folder button shows it in the file manager"
-
     readonly property string home: Quickshell.env("HOME")
     // filled in by rootProc; empty until then, which simply leaves the
     // repository group's rows greyed for the frame before it lands
