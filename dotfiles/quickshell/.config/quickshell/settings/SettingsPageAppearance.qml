@@ -41,7 +41,11 @@ SettingsPage {
     // pieces, showing what the tab changes
     pinned: LivePreview {
         kind: ({ colour: "flyout", shape: "windows", type: "flyout", bar: "bar", panels: "launcher", motion: "windows" })[page.tab]
+        picked: page.barModule
+        onPick: id => page.barModule = id
     }
+    // the module picked on the Bar tab's preview, for its settings
+    property string barModule: "workspaces"
 
     stickyColumn: rows.item || rows
 

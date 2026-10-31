@@ -849,10 +849,18 @@ Settings') are laid out the same way.
   dimming (Shape, Motion). Built from the real components (`ModuleFrame`, `PanelFrame`,
   `FlyoutHeading`, `Slider`, …) over the wallpaper, so it follows every
   setting and can't drift from the shell.
-- **Bar layout on the Bar tab** (`BarZones`): Left, Centre and Right as
-  zones of module chips and a Hidden zone under them; a dragged chip is a
-  ghost following the pointer, an accent marker shows where it lands, and
-  the drop writes the layout and visibility like Bar Widgets.
+- **Bar tab** (picked 2026-10-31, A "click the bar" for every section; the
+  Layout section dropped, as the bar's own edit mode arranges modules):
+  the live preview draws the whole bar with each module as it's set
+  (`LivePreview.Pick`, `ModuleArt`), and a click on the Control Centre,
+  workspaces, open windows, tray, clock or music picks it
+  (`page.barModule`), its chip showing open. BAR: Position, Bar shape,
+  Height, Icon size and Module padding as sliders, Separators (dimmed when
+  the style sets them), Centre anchor. Under it a section named after the
+  picked module holds all of that module's settings: its style tiles,
+  sliders, on/off as lit On chips, and a setting another choice leaves idle
+  (Workspace names, Clock format) dimmed in place. A search for one of a
+  module's settings picks that module.
 - **Lock Screen:** four sections (picked 2026-10-18). BACKGROUND has a
   live preview of the lock screen, with a Lock now chip on its corner,
   beside Background, Blur and Dim, so Background and Clock place are plain

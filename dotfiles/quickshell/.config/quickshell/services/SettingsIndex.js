@@ -166,7 +166,6 @@ var entries = [
     { page: "appearance", section: "Bar", label: "Bar shape", keywords: "bar layout full width floating islands" },
     { page: "appearance", section: "Bar", label: "Height", keywords: "bar height size tall thin px" },
     { page: "appearance", section: "Bar", label: "Separators", keywords: "divider between modules dots lines double stacked capped" },
-    { page: "appearance", section: "Bar", label: "Bar widgets", keywords: "arrange layout modules reset order hide show drag left centre right" },
     { page: "appearance", section: "Bar", label: "Icon size", keywords: "bar glyphs icons size px" },
     { page: "appearance", section: "Bar", label: "Module padding", keywords: "bar chips modules padding room px" },
     { page: "appearance", section: "Bar", label: "Centre anchor", keywords: "pin middle centre clock bar widgets" },

@@ -4,7 +4,8 @@
 // The Appearance page's preview, drawn by the shell's own pieces at a
 // reduced scale over the wallpaper. `kind` is what the tab showing changes:
 //   flyout    the bar and a volume flyout off it
-//   bar       the whole bar, a little larger
+//   bar       the whole bar, a little larger, its modules drawn as
+//             set; a click on one picks it (`picked`, `pick`)
 //   launcher  the bar and the launcher in its layout and position
 //   windows   the bar and two windows, the left one focused
 
@@ -19,6 +20,9 @@ import ".."
 ClippingRectangle {
     id: lp
     property string kind: "flyout"
+    // bar: the module picked for its settings, and a click picking one
+    property string picked: ""
+    signal pick(string id)
     readonly property real sc: kind === "bar" ? 0.8 : 0.62
     // the bar on its own edge, the rest off it; the clock at the right
     // end under Flat's Taskbar layout
@@ -66,8 +70,13 @@ ClippingRectangle {
 
             PreviewGroup {
                 x: Theme.barInset + Theme.moduleGap
-                ModuleFrame { PreviewGlyph { text: Theme.controlGlyph } }
+                ModuleFrame { visible: lp.kind !== "bar"; PreviewGlyph { text: Theme.controlGlyph } }
+                Pick { pid: "controlcentre"; kind: "controlIcon"; value: Settings.controlIcon; artWidth: Theme.fs(28) }
+                Pick { pid: "workspaces"; kind: "workspaceStyle"; value: Settings.workspaceStyle; artWidth: Theme.fs(130) }
+                Pick { pid: "windows"; kind: "windowStyle"; value: Settings.windowStyle; artWidth: Theme.fs(120) }
+                Pick { pid: "tray"; glyph: Settings.trayDrawer ? "󰅁" : "󰀻  󰒓" }
                 ModuleFrame {
+                    visible: lp.kind !== "bar"
                     Row {
                         spacing: Theme.spaceS
                         anchors.verticalCenter: parent.verticalCenter
@@ -84,24 +93,19 @@ ClippingRectangle {
                         }
                     }
                 }
-                // the whole bar: the open windows too
-                ModuleFrame {
-                    visible: lp.kind === "bar"
-                    PreviewGlyph { text: "󰈹" }
-                    PreviewGlyph { text: "󰆍"; color: Theme.subtext }
-                    PreviewGlyph { text: "󰉋"; color: Theme.subtext }
-                }
             }
 
             PreviewGroup {
                 visible: !lp.clockRight
                 anchors.horizontalCenter: parent.horizontalCenter
-                Loader { sourceComponent: lp.clockRight ? null : clockChip }
+                Loader { sourceComponent: lp.clockRight || lp.kind === "bar" ? null : clockChip }
+                Pick { pid: "clock"; kind: "clockStyle"; value: Settings.clockStyle; artWidth: Theme.fs(130) }
             }
 
             PreviewGroup {
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.barInset + Theme.moduleGap
+                Pick { pid: "music"; kind: Settings.vizShown ? "vizStyle" : ""; value: Settings.vizStyle; artWidth: Theme.fs(60); glyph: Settings.vizShown ? "" : "󰝚" }
                 ModuleFrame { visible: lp.kind === "bar"; PreviewGlyph { text: "󰂚" } }
                 ModuleFrame { visible: lp.kind === "bar"; PreviewGlyph { text: "󰂯" } }
                 ModuleFrame { PreviewGlyph { text: "󰖩" } }
@@ -118,6 +122,38 @@ ClippingRectangle {
                     PreviewGlyph { text: "󰂄" }
                 }
                 Loader { sourceComponent: lp.clockRight ? clockChip : null }
+            }
+        }
+
+        // the whole bar: a module drawn as it's set, picked by a click
+        component Pick: Item {
+            id: pk
+            property string pid: ""
+            property string kind: ""
+            property string value: ""
+            property real artWidth: Theme.fs(110)
+            property string glyph: ""
+            visible: lp.kind === "bar"
+            width: mf.implicitWidth
+            height: Theme.barHeight
+
+            ModuleFrame {
+                id: mf
+                active: lp.picked === pk.pid
+                Item {
+                    readonly property string value: pk.value
+                    visible: pk.kind !== ""
+                    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                    width: visible ? pk.artWidth : 0
+                    height: Theme.fs(28)
+                    ModuleArt { kind: pk.kind; width: parent.width }
+                }
+                PreviewGlyph { visible: pk.glyph !== ""; text: pk.glyph }
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: lp.pick(pk.pid)
             }
         }
 
