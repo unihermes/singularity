@@ -23,14 +23,24 @@ local launchWaiting = false
 local knownWindows = {}
 for _, w in ipairs(hl.get_windows()) do knownWindows[w.address] = true end
 hl.on("window.active", function() holdPopup(hl.get_active_window()) end)
--- A window launched (a bind, the launcher) while the scratchpad is up
--- would map in it, filled over everything and out of SUPER+M's reach; it
--- goes to the workspace under the scratchpad instead, which closes.
+-- A window launched (a bind, the launcher, the scratchpad's terminal) while
+-- the scratchpad is up would map in it, filled over everything and out of
+-- SUPER+M's reach; it goes to the workspace under the scratchpad instead,
+-- which closes. A window of an app already in the scratchpad (its dialog,
+-- one stashed there) stays.
+local function inScratchpad(win)
+    return win.workspace and win.workspace.name == "special:scratchpad"
+end
 local function launchOutOfScratchpad(win)
-    if not (launchWaiting and win) then return win end
+    if not win then return win end
     win = hl.get_window("address:" .. win.address) or win
-    if not (win.workspace and win.workspace.name == "special:scratchpad") then return win end
+    if not inScratchpad(win) then return win end
     if win.class == SCRATCH_CLASS or win.class == "org.quickshell" or win.pinned then return win end
+    if not launchWaiting then
+        for _, w in ipairs(hl.get_windows()) do
+            if w.pid == win.pid and w.address ~= win.address and w.mapped and inScratchpad(w) then return win end
+        end
+    end
     local mon = win.monitor
     local ws = mon and mon.active_workspace
     if not ws then return win end
@@ -676,16 +686,16 @@ local function popoutKey(win)
     return "popout:" .. win.class .. ":" .. title
 end
 
--- A dialog-sized popout blocks its owner like a modal dialog: the owner
--- takes no focus (no_focus), and focusing it brings up the popout. Kept on
--- tags too ("owner_<addr>", "blocked"), since no_focus survives a reload
--- and this table doesn't.
+-- A dialog-sized popout blocks its owner like a modal dialog: focusing the
+-- owner (a click on it, alt-tab) brings up the popout instead. Not
+-- no_focus, which would pass a click on the owner through to the window
+-- behind it. Kept on tags too ("owner_<addr>", "blocked"), since this
+-- table doesn't survive a reload.
 local popoutOwner = {}
 
 local function setBlocked(ownerAddr, on)
     local addr = "address:" .. ownerAddr
     if not hl.get_window(addr) then return end
-    setProp(addr, "no_focus", on and "1" or "0")
     hl.dispatch(hl.dsp.window.tag({ tag = (on and "+" or "-") .. "blocked", window = addr }))
     notifyShell()
 end
@@ -717,8 +727,8 @@ local function blockingPopout(ownerAddr)
     return best
 end
 
--- A blocked owner can't take focus (no_focus), so a focus aimed at one, from
--- a bind or the shell (alt-tab, the window strip), goes to its popout instead.
+-- A focus aimed at a blocked owner, from a bind or the shell (alt-tab, the
+-- window strip), goes to its popout instead.
 -- A window on a special workspace shown on another monitor (the scratchpad)
 -- is focused there, its monitor first: focused straight from the other
 -- monitor, Hyprland pulls the special workspace across.
@@ -757,6 +767,8 @@ do
         end
     end
     for _, w in ipairs(hl.get_windows()) do
+        -- no_focus outlives a reload: owners blocked by the old way
+        if hasTag(w, "blocked") then setProp("address:" .. w.address, "no_focus", "0") end
         if hasTag(w, "blocked") and not blockingPopout(w.address) then setBlocked(w.address, false) end
     end
 end
@@ -772,7 +784,7 @@ hl.on("window.active", function()
         hl.dispatch(hl.dsp.window.bring_to_top())
     end, { timeout = 1, type = "oneshot" })
 end)
--- an X11 window comes back with its old address, tags and no_focus, so an
+-- an X11 window comes back with its old address and tags, so an
 -- owner hidden while blocked (Steam to its tray) would stay blocked
 hl.on("window.open", function(win)
     if win and hasTag(win, "blocked") and not blockingPopout(win.address) then setBlocked(win.address, false) end
@@ -861,16 +873,35 @@ end
 hl.on("window.move_to_workspace", function(win) if win and menuOwner[win.address] then syncMenu(win.address) end end)
 hl.on("window.close", function(win) if win then menuOwner[win.address] = nil end end)
 
+-- A titled X11 menu, tooltip or dropdown (Tk's, Java's): Hyprland doesn't
+-- focus a window that says it's one, so it maps unfocused while its app's
+-- window has focus. Taken for a menu like the untitled ones, not a popout
+-- to centre and block the app with. Any focused X11 window on its workspace
+-- counts as the app's: an X11 window reopened at an old address keeps the
+-- old process's pid. Not under a fullscreen one, which a new window can
+-- open behind without focus.
+local function isX11Popup(win)
+    if not win.xwayland or hasTag(win, "modal") then return false end
+    local active = hl.get_active_window()
+    return active ~= nil and active.address ~= win.address and active.xwayland and active.fullscreen == 0
+        and active.workspace ~= nil and win.workspace ~= nil and active.workspace.id == win.workspace.id
+end
+
 holdPopup = function(win)
     if not win or knownWindows[win.address] then return end
     knownWindows[win.address] = true
     if not win.class or win.class == "" or win.class == "org.quickshell" or win.class == SCRATCH_CLASS then return end
-    if hasTag(win, "menu") then
+    local x11Popup = not hasTag(win, "menu") and isX11Popup(win)
+    if hasTag(win, "menu") or x11Popup then
         -- an X11 window comes back with its old address and tags: drop
         -- the ones it picked up here as something else (the rules' carry a *)
         for _, t in ipairs(tagsOf(win)) do
             t = tostring(t)
             if t:sub(-1) ~= "*" then hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = "address:" .. win.address })) end
+        end
+        if x11Popup then
+            hl.dispatch(hl.dsp.window.tag({ tag = "+menu", window = "address:" .. win.address }))
+            hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = "address:" .. win.address }))
         end
         keepMenuWithOwner(win.address)
         return
@@ -1138,6 +1169,31 @@ local function onMonocleOpen(win)
     cascade(fresh)
 end
 hl.on("window.open", onMonocleOpen)
+
+-- An X11 app can place its own window, and some put it at the screen's
+-- corner (Java's at 0,0), under the bar. Once it has, a floater at the
+-- corner is centred, as a new window is, and one reaching past the usable
+-- area is moved back inside it.
+local function keepX11Inside(addr)
+    local win = hl.get_window("address:" .. addr)
+    local mon = win and win.monitor
+    if not win or not win.mapped or not win.floating or win.pinned or win.fullscreen ~= 0
+            or hasTag(win, "menu") or not mon then return end
+    local area = usableArea(mon)
+    local x, y = win.at.x, win.at.y
+    if x == mon.x and y == mon.y then
+        x, y = area.x + (area.w - win.size.x) / 2, area.y + (area.h - win.size.y) / 2
+    end
+    x = math.max(area.x, math.min(x, area.x + area.w - win.size.x))
+    y = math.max(area.y, math.min(y, area.y + area.h - win.size.y))
+    if math.abs(x - win.at.x) < 1 and math.abs(y - win.at.y) < 1 then return end
+    hl.dispatch(hl.dsp.window.move({ x = math.floor(x), y = math.floor(y), window = "address:" .. addr }))
+end
+hl.on("window.open", function(win)
+    if not win or not win.xwayland or win.class == "" then return end
+    local addr = win.address
+    hl.timer(function() keepX11Inside(addr) end, { timeout = 300, type = "oneshot" })
+end)
 
 -- In dwindle every window opens tiled: a maximize or fullscreen asked for
 -- in its first 1.5s is undone.

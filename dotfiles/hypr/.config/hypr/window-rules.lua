@@ -34,10 +34,11 @@ local X11_MENU = { xwayland = true, title = "^$", class = "negative:^(Xdg-deskto
 hl.window_rule({ name = "x11-menus", match = X11_MENU, tag = "+menu" })
 hl.window_rule({ name = "x11-menus-exempt", match = X11_MENU, tag = "+monocle-exempt" })
 -- They draw their own shadow inside the window; a border, blur and shadow
--- of Hyprland's would frame that see-through margin
+-- of Hyprland's would frame that see-through margin. By tag, so the titled
+-- ones windows.lua tags (isX11Popup) are bare too.
 hl.window_rule({
     name        = "x11-menus-bare",
-    match       = X11_MENU,
+    match       = { xwayland = true, tag = "menu" },
     border_size = 0,
     rounding    = 0,
     no_blur     = true,
