@@ -23,7 +23,7 @@ SettingsField {
     property bool grayscaleOnly: true
     readonly property bool live: !grayscaleOnly || Settings.colourMode !== "wallpaper"
     readonly property string value: Settings[key] || ""
-    lookKey: key
+    defaultKey: key
     hint: !live ? "Grayscale palette only" : "Type a hex colour and press Enter"
 
     function parse(t) {

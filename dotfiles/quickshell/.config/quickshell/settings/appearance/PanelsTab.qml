@@ -69,7 +69,7 @@ SettingsTab {
                 width: panelsTab.half
                 labelWidth: panelsTab.switchLabel
                 label: "Launcher details"
-                lookKey: "launcherDetails"
+                defaultKey: "launcherDetails"
                 hint: Settings.launcherDetails ? "Descriptions and keyboard hints"
                     : "Names only"
 

@@ -16,7 +16,7 @@ SettingsField {
     property string key: ""
     property int step: 1
     property string suffix: ""
-    lookKey: key
+    defaultKey: key
 
     FlyoutStepper {
         anchors.right: parent.right

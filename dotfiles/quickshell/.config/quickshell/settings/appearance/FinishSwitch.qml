@@ -14,7 +14,7 @@ SettingsField {
     id: fsw
     property string key: ""
     property bool live: true
-    lookKey: key
+    defaultKey: key
 
     Switch {
         anchors.right: parent.right

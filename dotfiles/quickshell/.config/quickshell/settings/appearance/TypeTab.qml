@@ -27,7 +27,7 @@ SettingsTab {
     // installed choice in its own font.
     SettingsField {
         label: "Font"
-        lookKey: "fontFamily"
+        defaultKey: "fontFamily"
         hint: Theme.fontText !== Settings.fontFamily
             ? page.label(Settings.fontFamily) + " isn't available, so " + page.label(Theme.fontText) + " stands in"
             : "Monospace; text and icons alike"
@@ -77,7 +77,7 @@ SettingsTab {
     SettingsAdvanced {
         SettingsField {
             label: "Mark"
-            lookKey: "headingMark"
+            defaultKey: "headingMark"
             hint: "Drawn before every heading, in its colour"
 
             Row {
@@ -106,7 +106,7 @@ SettingsTab {
             SettingsField {
                 width: typeTab.half; labelWidth: typeTab.half / 2
                 label: "Case"
-                lookKey: "headingUpper"
+                defaultKey: "headingUpper"
                 FlyoutSegmented {
                     anchors.right: parent.right
                     fill: false

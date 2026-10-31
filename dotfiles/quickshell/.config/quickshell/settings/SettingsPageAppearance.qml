@@ -15,7 +15,6 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import "../services/HyprTables.js" as HyprTables
-import "../services/Looks.js" as Looks
 import "../services"
 import "../flyouts"
 import "appearance"
@@ -27,7 +26,7 @@ SettingsPage {
     sectioned: true
     essentialRows: 0
     footer: ChangesBar {}
-    footerVisible: !Settings.lookPristine
+    footerVisible: !Settings.isDefault
 
     tabs: [
         { id: "colour", label: "Colour", icon: "󰏘", file: "ColourTab" },
@@ -48,20 +47,20 @@ SettingsPage {
 
     function label(v, key) { return Settings.choiceLabel(v, key) }
 
-    // the field a control sits in, marked as holding `key` when a look
-    // carries it
+    // the field a control sits in, marked as holding `key` when it has a
+    // default (Settings.defaults)
     function markField(control, key) {
         var f = control.parent ? control.parent.parent : null
-        if (f && f.isSettingsField === true && f.lookKey === "" && Looks.looks[Looks.fallback].settings[key] !== undefined)
-            f.lookKey = key
+        if (f && f.isSettingsField === true && f.defaultKey === "" && Settings.defaults[key] !== undefined)
+            f.defaultKey = key
     }
 
     // --- the list of changes (ChangesBar) -------------------------------------
 
-    // What each setting a look carries is called on this page, for the list
+    // What each setting with a default is called on this page, for the list
     // of changes; the same as its field's label, so "Show" can find it
     readonly property var keyLabels: ({
-        style: "Style", radius: "Roundness", barStyle: "Bar shape", edgeGap: "Edge gaps",
+        style: "Style", styleOptions: "Style options", radius: "Roundness", barStyle: "Bar shape", edgeGap: "Edge gaps",
         focusedOpacity: "Focused opacity", unfocusedOpacity: "Unfocused opacity",
         terminalOpacity: "Terminal opacity", spacing: "Spacing", rowScale: "Row height",
         barHeight: "Height", barIconSize: "Icon size", modulePad: "Module padding",
@@ -74,7 +73,8 @@ SettingsPage {
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
         headingUpper: "Case", headingRule: "Heading rule", headingMark: "Mark",
         headingMarkColour: "Mark colour", headingSize: "Heading size",
-        fontFamily: "Font", barPosition: "Position", workspaceStyle: "Workspaces",
+        fontFamily: "Font", fontSize: "Font size", animTime: "Animations", animWindows: "Window speed",
+        animWorkspaces: "Workspace speed", animShell: "Shell speed", barPosition: "Position", workspaceStyle: "Workspaces",
         controlIcon: "Control Centre icon", clockStyle: "Clock", clockIsland: "Clock island", windowStyle: "Open windows", windowScope: "Windows shown",
         iconTint: "App icons", vizStyle: "Visualizer", vizBars: "Visualizer bars", vizShown: "Music visualizer", musicTitle: "Music title", vizHideSilent: "Hide when silent", flyoutAnim: "Flyouts open",
         launcherLayout: "Launcher layout", launcherPosition: "Launcher position",
@@ -91,7 +91,8 @@ SettingsPage {
     readonly property var keyUnits: ({ radius: "px", edgeGap: "px", spacing: "%", rowScale: "%",
                                          barHeight: "px", barIconSize: "px", modulePad: "px",
                                          flyoutWidth: "%", notifWidth: "px", windowRadius: "px", seeThrough: "%", scrim: "%",
-                                         focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%" })
+                                         focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%",
+                                         fontSize: "px", animTime: "%", animWindows: "%", animWorkspaces: "%", animShell: "%" })
     function valueText(k, v) {
         if (typeof v === "boolean") return v ? "on" : "off"
         if (typeof v === "number") return v + (keyUnits[k] || "")

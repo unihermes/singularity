@@ -6,7 +6,6 @@
 
 import Quickshell
 import QtQuick
-import "../../services/Looks.js" as Looks
 import "../../services"
 import "../../flyouts"
 import ".."
@@ -32,7 +31,7 @@ Column {
     SettingsField {
         label: tl.label
         hint: tl.hint
-        lookKey: Looks.looks[Looks.fallback].settings[tl.key] !== undefined ? tl.key : ""
+        defaultKey: Settings.defaults[tl.key] !== undefined ? tl.key : ""
     }
 
     SettingsTiles {

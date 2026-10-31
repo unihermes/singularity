@@ -453,7 +453,7 @@ SettingsPage {
             width: lookRows.width
             labelWidth: width - opacityRow.width - Theme.spaceL
             label: "Opacity"
-            lookKey: "terminalOpacity"
+            defaultKey: "terminalOpacity"
 
             Row {
                 id: opacityRow

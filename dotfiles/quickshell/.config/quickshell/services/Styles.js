@@ -19,7 +19,12 @@
 //            for a shared Finish setting (with `value`/`off`), the rest are
 //            Settings.styleOptions ids read with Theme.opt(id)
 //   windows  optional { focusedOpacity, unfocusedOpacity, terminalOpacity }
+//   settings optional stock values over `stock` below
 // Controls draw per style too (Switch, Slider, FlyoutSegmented, FlyoutChip).
+//
+// A style owns every Appearance setting but the look's colours
+// (Looks.colourKeys): picking it sets them all to its default, its stock
+// (stockOf) unless Save as default replaced it (Settings.userDefaults).
 
 .pragma library
 
@@ -49,6 +54,7 @@ var styles = {
     },
     solid: {
         name: "Solid", hint: "Filled blocks, no strokes",
+        settings: { radius: 10 },
         frame: "none", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "scale",
         finish: { barSeparator: "none", headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
@@ -63,6 +69,7 @@ var styles = {
         name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
         frame: "single", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "fade", glass: true,
+        settings: { radius: 10 },
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
         options: [
             { id: "blur", label: "Heavy blur", hint: "Grounds a further step see-through", on: true },
@@ -87,6 +94,71 @@ var styles = {
 }
 
 function get(name) { return styles[name] }
+
+// the stock values every style starts from, settings' units as in
+// Settings.limits
+var stock = {
+    radius: 6,
+    fontFamily: "UbuntuMono Nerd Font",
+    fontSize: 16,
+    headingSize: "smaller",
+    animTime: 100,
+    animWindows: 100,
+    animWorkspaces: 100,
+    animShell: 100,
+    spacing: 100,
+    rowScale: 100,
+    barHeight: 32,
+    barIconSize: 17,
+    modulePad: 6,
+    windowRounding: "shell",
+    windowRadius: 6,
+    tabBar: "shell",
+    flyoutWidth: 100,
+    launcherRows: 8,
+    notifWidth: 380,
+    barStyle: "full",
+    barPosition: "top",
+    seeThrough: 100,
+    shadows: true,
+    heavyLines: false,
+    workspaceStyle: "pills",
+    controlIcon: "arch",
+    clockStyle: "stamp",
+    windowStyle: "icons",
+    windowScope: "workspace",
+    iconTint: "colour",
+    vizStyle: "mirror",
+    launcherLayout: "list",
+    launcherPosition: "centre",
+    launcherDetails: true,
+    notifStyle: "full",
+    altTabStyle: "icons",
+    altTabScope: "workspace",
+    overviewLayout: "grid",
+    overviewBackdrop: "dim",
+    powerStyle: "row",
+    levelStyle: "pill",
+}
+
+// The edge gap each bar shape starts at: a full bar runs to the screen's
+// edges and the windows meet it, a floating one leaves room all round.
+var edgeGaps = { full: 0, floating: 10, islands: 10, plain: 0 }
+
+// a style's stock default: `stock`, what picking it sets (finish, windows),
+// then its own `settings`
+function stockOf(name) {
+    var out = { style: name }, k
+    for (k in stock) out[k] = stock[k]
+    var fin = finish(name)
+    for (k in fin) out[k] = fin[k]
+    var win = windows(name)
+    for (k in win) out[k] = win[k]
+    var own = get(name).settings || {}
+    for (k in own) out[k] = own[k]
+    if (out.edgeGap === undefined) out.edgeGap = edgeGaps[out.barStyle] || 0
+    return out
+}
 
 var windowDefaults = { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 }
 

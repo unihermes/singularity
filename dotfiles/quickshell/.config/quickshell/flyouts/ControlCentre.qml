@@ -699,9 +699,9 @@ FlyoutPanel {
                 width: (wayOut.width - wayOut.spacing) / 2
                 icon: "󰕌"
                 text: "Reset"
-                confirmText: "Reset look?"
-                enabled: !Settings.lookPristine
-                onClicked: Settings.resetLook()
+                confirmText: "Reset?"
+                enabled: !Settings.isDefault
+                onClicked: Settings.reset()
             }
 
             // everything this page leaves out

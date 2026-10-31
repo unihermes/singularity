@@ -50,10 +50,11 @@ Singleton {
     readonly property alias wallpaperInterval: adapter.wallpaperInterval
     // how the wallpaper fits the screen: swaybg's fill, fit, center or tile
     readonly property alias wallpaperFill: adapter.wallpaperFill
-    // The active look (Looks.js). Choosing one writes everything it
-    // carries, so a look always arrives whole.
+    // The active look (Looks.js): the colours. Choosing one writes all of
+    // them and leaves the rest, which is the style's.
     readonly property alias look:        adapter.look
-    // how all the chrome is drawn: one of Styles.order (Styles.js)
+    // how all the chrome is drawn: one of Styles.order (Styles.js); picking
+    // one lands on its default (styleDefaultOf)
     readonly property alias style:       adapter.style
     // the style's own options that are on, as comma-joined ids (Styles.js
     // `options`; Theme.opt reads them)
@@ -65,14 +66,15 @@ Singleton {
     readonly property alias shadows:     adapter.shadows
     readonly property alias heavyLines:  adapter.heavyLines
     readonly property alias levelColour: adapter.levelColour
-    // Space's dials and the bar's size (Looks.js); `density` names the
+    // Space's dials and the bar's size (Styles.stock); `density` names the
     // preset they match, "custom" for none
     readonly property alias spacing:     adapter.spacing
     readonly property alias rowScale:    adapter.rowScale
     readonly property alias barHeight:   adapter.barHeight
     readonly property alias barIconSize: adapter.barIconSize
     readonly property alias modulePad:   adapter.modulePad
-    // How Hyprland draws windows beyond the Hyprland tables (Looks.js)
+    // How Hyprland draws windows beyond the Hyprland tables (Styles.stock,
+    // the border colours Looks.colourBase)
     readonly property alias windowBorderWidth: adapter.windowBorderWidth
     readonly property alias windowBorderFocused: adapter.windowBorderFocused
     readonly property alias windowBorderFocusedHex: adapter.windowBorderFocusedHex
@@ -722,57 +724,55 @@ Singleton {
         { at: 0, label: "Off" }, { at: 50, label: "Fast" }, { at: 100, label: "Normal" },
     ]
 
-    // Stock: the fallback look, with its own settings layered over the values
-    // no look sets.
-    readonly property var stockDefaults: {
-        var d = {
-            look: Looks.fallback,
-            fontSize: 16,
-            animTime: 100,
-            animWindows: 100,
-            animWorkspaces: 100,
-            animShell: 100,
-            colourMode: "grayscale",
-            colourScheme: "scheme-tonal-spot",
-            colourVariant: "dark",
-        }
-        var ls = Looks.looks[Looks.fallback].settings
-        for (var k in ls) d[k] = ls[k]
-        return d
-    }
+    // Appearance is two halves: the look's colours (Looks.colourKeys) and
+    // everything else, which is the style's. Each style has a default: its
+    // stock (Styles.stockOf) with what Save as default stored for it laid
+    // over. Picking a style lands on its default; picking a look changes
+    // only the colours.
 
-    // each style's stock default: the fallback look with the style picked
-    function styleStock(st) {
-        var d = {}
-        for (var k in stockDefaults) d[k] = stockDefaults[k]
-        if (stockDefaults.style !== st && Styles.get(st)) {
-            d.style = st
-            var fin = Styles.finish(st)
-            for (var f in fin) d[f] = fin[f]
-            var win = Styles.windows(st)
-            for (var w in win) d[w] = win[w]
-        }
-        return d
-    }
+    // the keys a style's default holds
+    readonly property var styleKeys: Object.keys(Styles.stockOf(Styles.order[0])).filter(k => k !== "style")
 
-    // the current style's saved default, {} when it has none
-    readonly property var styleDefault: (adapter.userDefaults || {})[adapter.style] || {}
-
-    // What Reset returns to: the style's stock overlaid with its saved
-    // default (stock's keys only).
-    readonly property var defaults: {
-        var d = styleStock(adapter.style), u = styleDefault
+    // a style's default: its stock overlaid with its saved one (style keys
+    // only, so an older snapshot's colours are left out)
+    function styleDefaultOf(st) {
+        var d = Styles.stockOf(st), u = (adapter.userDefaults || {})[st] || {}
         for (var k in d)
             if (k !== "style" && u[k] !== undefined) d[k] = u[k]
         return d
     }
 
+    // the current style's saved default, {} when it has none
+    readonly property var styleDefault: (adapter.userDefaults || {})[adapter.style] || {}
     readonly property bool hasUserDefault: Object.keys(styleDefault).length > 0
 
-    // the current appearance becomes the current style's default
+    // What Reset returns to and changes are counted from: the current
+    // style's default with the current look's colours as designed.
+    readonly property var defaults: {
+        var d = styleDefaultOf(adapter.style)
+        var l = Looks.looks[adapter.look] || Looks.looks[Looks.fallback]
+        for (var k in l.settings) d[k] = l.settings[k]
+        d.look = Looks.looks[adapter.look] ? adapter.look : Looks.fallback
+        return d
+    }
+
+    // whether a key is the look's (a colour) rather than the style's
+    function isColourKey(k) { return Looks.colourKeys.indexOf(k) !== -1 }
+
+    // The keys whose value differs from `defaults`, for the Appearance
+    // page's list of changes and its fields' markers. See-through is
+    // wallpaper mode's own there (seeThroughDefaults). filter(), not
+    // every(): a binding only re-runs for what it read last time.
+    readonly property var diffs: Object.keys(defaults).filter(k =>
+        !(k === "seeThrough" && adapter.colourMode === "wallpaper") && adapter[k] !== defaults[k])
+    readonly property bool isDefault: diffs.length === 0
+    // whether Save as default would change anything: a style key differs
+    readonly property bool styleChanged: diffs.some(k => !isColourKey(k))
+
+    // the current style's settings become its default
     function saveAsDefault() {
         var snap = {}
-        for (var k in stockDefaults) if (k !== "style") snap[k] = adapter[k]
+        for (var i = 0; i < styleKeys.length; i++) snap[styleKeys[i]] = adapter[styleKeys[i]]
         var all = {}, u = adapter.userDefaults || {}
         for (var st in u) all[st] = u[st]
         all[adapter.style] = snap
@@ -787,17 +787,21 @@ Singleton {
         reset()
     }
 
-    // Everything the look carries. See-through only in grayscale mode
-    // (wallpaper mode keeps seeThroughDefaults).
+    // values into the adapter; See-through stays wallpaper mode's own
+    function applyValues(o) {
+        for (var k in o) {
+            if (k === "seeThrough" && adapter.colourMode === "wallpaper") continue
+            adapter[k] = o[k]
+        }
+    }
+
+    // The look's colours, leaving the style and everything it holds.
     function applyLook(name) {
         var l = Looks.looks[name]
         if (!l) return
         root.applyLayout(adapter.look, name)
         adapter.look = name
-        for (var k in l.settings) {
-            if (k === "seeThrough" && adapter.colourMode === "wallpaper") continue
-            adapter[k] = l.settings[k]
-        }
+        applyValues(l.settings)
     }
 
     // a look's own module layout replaces Bar Widgets', which is set aside
@@ -825,45 +829,9 @@ Singleton {
         adapter.centreAnchor = lay.anchor !== undefined ? lay.anchor : "clock"
     }
 
-    // changes are counted from the style's saved default when it was saved
-    // with this look, else from the look as designed
-    readonly property bool baselineIsDefault: styleDefault.look === adapter.look
-    readonly property var lookBaseline: {
-        var l = Looks.looks[adapter.look]
-        if (!l) return {}
-        var u = styleDefault
-        var b = {}
-        // the saved default holds no style: it's the one in use
-        for (var k in l.settings)
-            b[k] = !baselineIsDefault ? l.settings[k]
-                : k === "style" ? adapter.style
-                : u[k] !== undefined ? u[k] : l.settings[k]
-        return b
-    }
-
-    // true while every value the look carries is still the baseline's --
-    // what the Appearance page shows as unchanged vs "customised"
-    readonly property bool lookPristine: !!Looks.looks[adapter.look] && lookDiffs.length === 0
-
-    // the keys of the look's settings that no longer have the baseline's
-    // value, for the Appearance page's list of changes and its fields' markers
-    readonly property var lookDiffs: {
-        var b = lookBaseline
-        return Object.keys(b).filter(k =>
-            !(k === "seeThrough" && adapter.colourMode === "wallpaper") && adapter[k] !== b[k])
-    }
-
-    // one setting back to the baseline's value
-    function resetLookKey(k) {
-        if (lookBaseline[k] !== undefined) set(k, lookBaseline[k])
-    }
-
-    // every change back to the baseline: the saved default's values, or
-    // the whole look as designed
-    function undoLookChanges() {
-        if (!baselineIsDefault) { resetLook(); return }
-        var d = lookDiffs.slice()
-        for (var i = 0; i < d.length; i++) set(d[i], lookBaseline[d[i]])
+    // one setting back to its default
+    function resetKey(k) {
+        if (defaults[k] !== undefined) set(k, defaults[k])
     }
 
     function clamp(key, v) {
@@ -892,15 +860,10 @@ Singleton {
         else adapter[key] = clamp(key, v)
     }
 
-    // A style arrives with its own Finish switches and window opacity, so
-    // picking one always lands somewhere it was drawn for.
+    // A style arrives as its default, keeping the look's colours.
     function setStyle(v) {
         if (Styles.order.indexOf(v) === -1) return
-        adapter.style = v
-        var fin = Styles.finish(v)
-        for (var k in fin) adapter[k] = fin[k]
-        var win = Styles.windows(v)
-        for (var w in win) adapter[w] = win[w]
+        applyValues(styleDefaultOf(v))
     }
 
     // one of the current style's own options (Styles.js), on or off
@@ -910,8 +873,8 @@ Singleton {
         adapter.styleOptions = l.sort().join(",")
     }
 
-    // A bar shape arrives with its edge gap: the look's own when it's the
-    // look's shape, the shape's usual one otherwise.
+    // A bar shape arrives with its edge gap: the default's when it's the
+    // default's shape, the shape's usual one otherwise.
     function setBarStyle(v) {
         if (choices.barStyle.indexOf(v) === -1) return
         // Plain starts from a classic text bar's other pieces; each can be
@@ -922,14 +885,13 @@ Singleton {
             adapter.workspaceStyle = "numbers"
         }
         adapter.barStyle = v
-        adapter.edgeGap = lookBaseline.barStyle === v && lookBaseline.edgeGap !== undefined
-            ? lookBaseline.edgeGap : Looks.edgeGaps[v]
+        adapter.edgeGap = defaults.barStyle === v ? defaults.edgeGap : Styles.edgeGaps[v]
     }
 
     // See-through's default per palette: lower on the wallpaper palette, so
     // it shows through. Switching palette moves to the new one's value.
     readonly property var seeThroughDefaults: ({
-        grayscale: (Looks.looks[adapter.look] || Looks.looks[Looks.fallback]).settings.seeThrough,
+        grayscale: defaults.seeThrough,
         wallpaper: 85,
     })
 
@@ -941,19 +903,11 @@ Singleton {
 
     function step(key, delta) { set(key, adapter[key] + delta) }
 
+    // the style's default and the look's colours, every change undone
     function reset() {
         root.applyLayout(adapter.look, defaults.look)
-        for (var key in defaults) adapter[key] = defaults[key]
+        applyValues(defaults)
     }
-
-    // Back to the current look as designed, keeping the look itself and the
-    // values no look sets (font size, motion, colour mode).
-    function resetLook() { applyLook(adapter.look) }
-
-    // filter, not every(): every() stops at the first difference, and a
-    // binding only re-runs for what it read last time (see widgetsDefault)
-    readonly property bool isDefault:
-        Object.keys(defaults).filter(key => adapter[key] !== defaults[key]).length === 0
 
 
     // Writes wait for the first read: the adapter's declared defaults would

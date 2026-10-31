@@ -23,7 +23,7 @@ Item {
 
     readonly property var order: Looks.order
     readonly property int index: order.indexOf(Settings.look)
-    readonly property int changes: Settings.lookDiffs.length
+    readonly property int changes: Settings.diffs.length
 
     function toggle() {
         if (group) group.open = open ? null : root

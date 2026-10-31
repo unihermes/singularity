@@ -2,10 +2,11 @@
 // ~/.config/quickshell/settings/appearance/ChangesBar.qml
 //
 // The bar at the foot of the Appearance page while anything differs: how
-// many settings differ from the baseline (the style's saved default when it
-// was saved with this look, the look as designed otherwise), with Save as
-// default and Reset beside it. Review opens the list of changes above it,
-// each with a way to its field and a way back, and Factory reset at its end.
+// many settings differ from the defaults (the style's default for the
+// style's settings, the look as designed for its colours), with Save as
+// default (the style's settings only) and Reset beside it. Review opens the
+// list of changes above it, each with a way to its field and a way back, and
+// Factory reset at its end.
 
 import Quickshell
 import QtQuick
@@ -23,7 +24,7 @@ Column {
     }
     property bool open: false
     readonly property string styleName: page.label(Settings.style, "style")
-    readonly property string baseName: Settings.baselineIsDefault ? styleName + "'s default" : page.label(Settings.look)
+    readonly property string baseName: styleName + "'s default and " + page.label(Settings.look) + "'s colours"
 
     width: parent ? parent.width : 0
     spacing: Theme.spaceS
@@ -54,7 +55,7 @@ Column {
                 width: flick.width
 
                 Text {
-                    visible: Settings.lookPristine
+                    visible: Settings.isDefault
                     width: parent.width
                     topPadding: Theme.spaceS
                     bottomPadding: Theme.spaceS
@@ -67,7 +68,7 @@ Column {
                 }
 
                 Repeater {
-                    model: Settings.lookDiffs
+                    model: Settings.diffs
 
                     SettingsField {
                         id: change
@@ -75,7 +76,7 @@ Column {
                         // shares its label with the field it stands for
                         searchable: false
                         label: cb.page.keyLabels[modelData] || modelData
-                        hint: cb.page.valueText(modelData, Settings.lookBaseline[modelData])
+                        hint: cb.page.valueText(modelData, Settings.defaults[modelData])
                             + "  →  " + cb.page.valueText(modelData, Settings[modelData])
 
                         Row {
@@ -87,14 +88,14 @@ Column {
                             }
                             FlyoutChip {
                                 text: "Undo"
-                                onClicked: Settings.resetLookKey(change.modelData)
+                                onClicked: Settings.resetKey(change.modelData)
                             }
                         }
                     }
                 }
 
                 SettingsField {
-                    visible: !Settings.lookPristine
+                    visible: !Settings.isDefault
                     searchable: false
                     label: "Undo all"
                     hint: "Put every change back to " + cb.baseName
@@ -102,8 +103,8 @@ Column {
                     FlyoutChip {
                         anchors.right: parent.right
                         text: "Undo all"
-                        confirmText: "Undo " + Settings.lookDiffs.length + "?"
-                        onClicked: Settings.undoLookChanges()
+                        confirmText: "Undo " + Settings.diffs.length + "?"
+                        onClicked: Settings.reset()
                     }
                 }
 
@@ -142,7 +143,7 @@ Column {
             spacing: Theme.spaceM
 
             Rectangle {
-                visible: !Settings.lookPristine
+                visible: !Settings.isDefault
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.fs(8)
                 height: width
@@ -152,10 +153,9 @@ Column {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: Settings.lookPristine
-                    ? (Settings.baselineIsDefault ? "As you saved " + cb.styleName + "'s default" : page.label(Settings.look) + " as designed")
-                    : Settings.lookDiffs.length + " changed from " + cb.baseName
-                color: Settings.lookPristine ? Theme.subtext : Theme.textStrong
+                text: Settings.isDefault ? (Settings.hasUserDefault ? "As you saved " + cb.styleName + "'s default" : cb.styleName + " as stock")
+                    : Settings.diffs.length + " changed from " + cb.baseName
+                color: Settings.isDefault ? Theme.subtext : Theme.textStrong
                 font.family: Theme.fontText
                 font.pixelSize: Theme.fontSmall
                 font.weight: Theme.weightBody
@@ -176,11 +176,11 @@ Column {
             // two clicks: overwriting the style's old default can't be undone
             FlyoutChip {
                 text: "Save as default"
-                confirmText: "Replace default?"
-                enabled: !Settings.isDefault
+                confirmText: "Replace " + cb.styleName + "'s?"
+                enabled: Settings.styleChanged
                 onClicked: {
                     Settings.saveAsDefault()
-                    page.say("Current appearance saved as " + cb.styleName + "'s default", false)
+                    page.say("Saved as " + cb.styleName + "'s default; colours stay the look's", false)
                 }
             }
             FlyoutChip {
@@ -189,7 +189,7 @@ Column {
                 enabled: !Settings.isDefault
                 onClicked: {
                     Settings.reset()
-                    page.say("Appearance reset to " + cb.styleName + "'s default", false)
+                    page.say("Back to " + cb.baseName, false)
                 }
             }
         }

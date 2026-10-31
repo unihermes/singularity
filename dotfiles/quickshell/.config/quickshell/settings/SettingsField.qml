@@ -19,11 +19,11 @@ Item {
     property bool dimmed: false
     // an image before the label and hint (an app's icon)
     property string image: ""
-    // A setting the look carries (Looks.js `settings`): while it differs
-    // from the look's own value the label is marked, and the mark puts it
-    // back. "" for a field that isn't one.
-    property string lookKey: ""
-    readonly property bool modified: lookKey !== "" && Settings.lookDiffs.indexOf(lookKey) !== -1
+    // A setting with a default (Settings.defaults: the style's, or the
+    // look's for a colour): while it differs the label is marked, and the
+    // mark puts it back. "" for a field that isn't one.
+    property string defaultKey: ""
+    readonly property bool modified: defaultKey !== "" && Settings.diffs.indexOf(defaultKey) !== -1
     // width of the label column; controls get the rest. A redesigned page
     // (SettingsPage.sectioned) widens it and keeps hints to one line.
     property int labelWidth: hostPage && hostPage.sectioned ? Theme.fit(320) : Theme.fit(240)
@@ -117,9 +117,9 @@ Item {
                 anchors.verticalCenter: labelText.verticalCenter
                 // under the pointer, what clicking puts back
                 text: !resetMouse.containsMouse ? "●"
-                    : "󰑓 " + (Settings.baselineIsDefault ? Settings.choiceLabel(Settings.style, "style") + " default" : Settings.choiceLabel(Settings.look))
+                    : "󰑓 " + (Settings.isColourKey(root.defaultKey) ? Settings.choiceLabel(Settings.look) : Settings.choiceLabel(Settings.style, "style") + " default")
                       + (root.hostPage && root.hostPage.valueText
-                         ? ": " + root.hostPage.valueText(root.lookKey, Settings.lookBaseline[root.lookKey]) : "")
+                         ? ": " + root.hostPage.valueText(root.defaultKey, Settings.defaults[root.defaultKey]) : "")
                 color: resetMouse.containsMouse ? Theme.textStrong : Theme.accent
                 font.family: Theme.fontIcon
                 font.pixelSize: resetMouse.containsMouse ? Theme.fontSmall : Theme.fontCaption
@@ -142,7 +142,7 @@ Item {
                     anchors.margins: -4
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Settings.resetLookKey(root.lookKey)
+                    onClicked: Settings.resetKey(root.defaultKey)
                 }
             }
 

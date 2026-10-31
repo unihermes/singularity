@@ -22,7 +22,7 @@ SettingsField {
 
     label: option.label || ""
     hint: option.hint || ""
-    lookKey: key !== "" ? key : "styleOptions"
+    defaultKey: key !== "" ? key : "styleOptions"
 
     Switch {
         anchors.right: parent.right

@@ -2,8 +2,8 @@
 
 The design decisions for the shell's UI, element by element. Read this before
 changing or adding UI, so new pieces match what is already there. Values come
-from `services/Theme.qml`; the look that sets them is `singularity` in
-`services/Looks.js`.
+from `services/Theme.qml`; the colours are the `singularity` look in
+`services/Looks.js`, the rest the style's stock in `services/Styles.js`.
 
 The current design is **Channel** (settled 2026-10-01): grayscale, rounded,
 double-lined, with one indigo accent (`#5555c8`) for marks.
@@ -25,8 +25,8 @@ windows' borders, corners and shadow.
 **Each style has three options of its own** (`options` in Styles.js), shown
 first under Advanced in Shape › Style. An option either stands for one of the
 shared Finish settings (`key`), or is an id in `Settings.styleOptions`, read
-with `Theme.opt(id)`. Picking a style sets them all (`Styles.finish`); a look
-can state its own `styleOptions`.
+with `Theme.opt(id)`. Picking a style sets them all (`Styles.finish`) as
+part of its default (see Styles and settings).
 
 **Each style draws its own controls**, keyed on `Theme.style`:
 
@@ -75,6 +75,91 @@ hover, open and level chips still draw the style's way, and a Strip's frame
 is the style's (a channel, double or single strokes). Theme reads
 the derived values through `Styles.resolve()`; the sections below describe
 Channel.
+
+## Styles and settings
+
+Appearance is two halves (2026-10-30). **The look is the colours**:
+`Looks.colourKeys` (the ten palette roles, Good and Alert, Text on the
+accent, the accent, Overlay dimming, Level colour, the heading mark's
+colour and the windows' border colours). **The style is everything else**:
+`Settings.styleKeys`, every key `Styles.stockOf` returns (shape, space,
+type, bar, panels, motion, window opacity and corners, the finish).
+Colour mode, its scheme and variant, the system font, cursor, icon theme
+and window animation belong to neither, so no look, style or Reset moves
+them.
+
+- **Picking a look** writes its colours only; the style and every setting
+  it holds stay.
+- **Picking a style** lands on its default: its stock (`Styles.stock`, then
+  what `Styles.finish` and `Styles.windows` set, then the style's own
+  `settings`), with its saved default laid over. Unsaved changes to the old
+  style's settings go.
+- **Save as default** stores the current style's settings, not the colours,
+  as that style's default (`userDefaults[style]`); it's on only while a
+  style setting differs. Each style keeps its own.
+- **Changes, ● marks, Undo, Reset** count from `Settings.defaults`: the
+  style's default for its settings, the look as designed for colours.
+  Reset puts both back; Factory reset forgets the style's saved default.
+  See-through is left out in Wallpaper mode (wallpaper mode's own 85%).
+
+What each style is (Styles.js) and its stock:
+
+| | Channel | Double | Solid | Glass | Flat |
+|---|---|---|---|---|---|
+| Frame | channel (line, groove, line) | double stroke | none, grounds mark edges | one light hairline | single stroke |
+| Bar chips | one strip per group | outlined | filled | filled, frosted | taskbar slots |
+| Focused window | pill | pill | ground | ground | pill |
+| Shadow | none | none | soft | soft | soft |
+| Strokes (Heavy lines) | yes | yes | no | no | yes |
+| Flyouts sit | grown from the group | flush on a full or plain bar, else floating | floating | floating | as Double |
+| Flyouts open | fade | drop | scale | fade | drop |
+| Corners | Roundness (stock 6) | Roundness (6) | Roundness (10) | Roundness (10) | always square |
+| Row frames in panels | yes | yes | yes | yes | no |
+| Current row | tick | tick | tinted ground | tick | tick |
+| Headings | UPPER, rule, `//` | UPPER, rule, `//` (option) | UPPER | UPPER | Sentence case |
+| Clock island | on | on | on | on | off |
+| Windows' opacity (focused / unfocused / terminal) | 100 / 100 / 90 | 100 / 100 / 90 | 100 / 100 / 100 | 95 / 85 / 75 | 100 / 100 / 90 |
+| Own options (stock) | none | Inner stroke always lit (off), Heavy lines (off), `//` before headings (on) | Shadows (on), Accent-tinted chips (off), Shaded grounds (off) | Heavy blur (on), Accent-tinted glass (off), Glow on accents (on) | Taskbar layout (on), Bar at the bottom (on), Shadows (on) |
+
+Every other stock value is the same for all five (`Styles.stock`): Ubuntu
+Mono at 16px, Normal density (Spacing 100%, Row height 100%, bar 32px),
+icons 17px, padding 6px, a full bar at the top with no edge gap,
+See-through 100%, Shadows on, Heavy lines off, flyouts 100% wide, and the
+first choice of every module style.
+
+How each setting meets the style:
+
+- **Colour tab.** The look, accent and palette roles draw the same in every
+  style; Glass alone swaps the Border role for its hairline, and Channel's
+  bands are Muted, Base and Border. Level colour fills meters, sliders and
+  level chips in every style. Border width "Style" is 1px, 2px with Heavy
+  lines on a style with strokes.
+- **Shape tab.** Roundness does nothing under Flat. Shadows does nothing
+  under Channel and Double (they have none); under Solid and Flat it's one
+  of the style's own options. Heavy lines does nothing under Solid and
+  Glass; under Double it's an option. Shaded grounds works everywhere and is
+  Solid's option. See-through works everywhere; Glass multiplies it by 0.7,
+  0.6 with Heavy blur. Window shadow "Style" follows the style's shadow and
+  Shadows. Density, Spacing and Row height work everywhere; Spacing is the
+  gap between bar chips except in taskbar slots, which touch.
+- **Type tab.** Font, size, heading size and mark colour are style-free.
+  Case, rule and mark start at the style's (the Headings row above) and can
+  be changed under any style.
+- **Bar tab.** Chips other than Style's own replace the bar chips under any
+  style; hover, open and level chips still draw the style's way, and a
+  Strip's frame is the style's. Channel's flyouts only grow from the group
+  while the chips are a Strip. Bar shape decides where Double's and Flat's
+  flyouts sit; Plain also sets Bare chips, line separators and numbered
+  workspaces. Height sizes the chips (taskbar slots take the bar's full
+  height and 4px more padding). Workspaces, Clock, Open windows, Visualizer
+  and the rest are style-free, but the open-windows strip marks its focused
+  window the style's way and widens its slots under taskbar chips.
+  Flat's Taskbar layout rearranges the modules while it's on.
+- **Panels tab.** Launcher, notification, switcher, overview, power and
+  level popup styles are style-free; their frames, controls and grounds are
+  the style's.
+- **Motion tab.** Flyouts open "Style" uses the row above; any other choice
+  holds under every style. The speeds are style-free.
 
 ## The channel
 
@@ -927,14 +1012,13 @@ Settings') are laid out the same way.
 - **Look tiles** open the Colour tab: each look drawn in its own colours
   (panel, bar, text, hint and accent pill), its description as the hint.
   The changes strip alone shows what's changed.
-- **Each style keeps its own saved default** (`userDefaults`, by style):
-  Save as default and Reset act on the style in use only, and a style
-  never saved resets to its stock (the fallback look with the style's own
-  Finish switches).
-- **Changes are counted from the style's saved default** when one was
-  saved with the look in use (`Settings.lookBaseline`), so Save as default
-  empties the list. Otherwise they're counted from the look as designed. Undo, Undo
-  all and the fields' ● marks go back to the same baseline.
+- **Each style keeps its own saved default** (`userDefaults`, by style),
+  holding the style's settings and never the colours: Save as default and
+  Reset act on the style in use only, and a style never saved resets to its
+  stock (`Styles.stockOf`). Picking a style lands on its default.
+- **Changes are counted from `Settings.defaults`**: the style's default for
+  its settings, the look as designed for the colours. Undo, Undo all,
+  Reset and the fields' ● marks go back to the same values.
 
 ## System window
 

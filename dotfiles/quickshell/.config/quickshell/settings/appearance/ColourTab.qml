@@ -150,7 +150,7 @@ SettingsTab {
     SettingsField {
         id: accentField
         label: "Accent"
-        lookKey: "accent"
+        defaultKey: "accent"
         hint: Settings.colourMode === "wallpaper" ? "The wallpaper's own tone is used"
             : Settings.lookAccent !== "" ? "Selection and focus. First is " + page.label(Settings.look) + "'s own"
             : "Selection, focus, the current item"
