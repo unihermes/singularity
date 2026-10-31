@@ -371,6 +371,9 @@ ShellRoot {
     // activespecial events; a monitor with no event yet isn't listed
     property var specialShown: ({})
 
+    // the screen scope ALT+Tab is open on, null while it's shut
+    property var altTabScope: null
+
     // Closes every screen's flyout but `except`'s (null: all of them).
     function closeFlyouts(except) {
         for (const s of screens.instances)
@@ -387,7 +390,11 @@ ShellRoot {
 
             // name of the open flyout, "" for none
             property string openFlyout: ""
-            onOpenFlyoutChanged: if (openFlyout !== "") root.closeFlyouts(screenScope)
+            onOpenFlyoutChanged: {
+                if (openFlyout !== "") root.closeFlyouts(screenScope)
+                if (openFlyout === "alttab") root.altTabScope = screenScope
+                else if (root.altTabScope === screenScope) root.altTabScope = null
+            }
 
             // every bar; a press on any isn't a click off a flyout (DismissGrab)
             readonly property var allBars: screens.instances.map(s => s.barWindow)
@@ -666,6 +673,20 @@ ShellRoot {
         AltTabSwitcher {
             id: altTab
             scope: screenScope
+        }
+
+        // the switcher's backdrop on the other screens while it's open on
+        // one, letting the pointer through
+        OverlayWindow {
+            scope: screenScope
+            visible: root.altTabScope !== null && root.altTabScope !== screenScope
+            layerNamespace: "singularity-alttab"
+            mask: Region {}
+
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.backdrop
+            }
         }
 
         // workspaces / windows
