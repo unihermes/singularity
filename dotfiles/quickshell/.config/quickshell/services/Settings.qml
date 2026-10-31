@@ -111,8 +111,8 @@ Singleton {
     readonly property alias cursorTheme: adapter.cursorTheme
     readonly property alias cursorSize:  adapter.cursorSize
     readonly property alias iconTheme:   adapter.iconTheme
-    // how Hyprland's windows open, close and minimize (AppearanceSync); kept
-    // by Reset
+    // how Hyprland's windows open, close and minimize (AppearanceSync), the
+    // style's like the rest of Motion
     readonly property alias windowAnim:  adapter.windowAnim
     // "full", "floating" or "islands"
     readonly property alias barStyle:    adapter.barStyle

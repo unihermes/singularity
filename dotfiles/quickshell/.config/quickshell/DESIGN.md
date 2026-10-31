@@ -84,8 +84,8 @@ accent, the accent, Overlay dimming, Level colour, the heading mark's
 colour and the windows' border colours). **The style is everything else**:
 `Settings.styleKeys`, every key `Styles.stockOf` returns (shape, space,
 type, bar, panels, motion, window opacity and corners, the finish).
-Colour mode, its scheme and variant, the system font, cursor, icon theme
-and window animation belong to neither, so no look, style or Reset moves
+Colour mode, its scheme and variant, the system font, cursor and icon
+theme belong to neither, so no look, style or Reset moves
 them.
 
 - **Picking a look** writes its colours only; the style and every setting
@@ -121,11 +121,28 @@ What each style is (Styles.js) and its stock:
 | Windows' opacity (focused / unfocused / terminal) | 100 / 100 / 90 | 100 / 100 / 90 | 100 / 100 / 100 | 95 / 85 / 75 | 100 / 100 / 90 |
 | Own options (stock) | none | Inner stroke always lit (off), Heavy lines (off), `//` before headings (on) | Shadows (on), Accent-tinted chips (off), Shaded grounds (off), Plain bar (off) | Heavy blur (on), Accent-tinted glass (off), Glow on accents (on) | Taskbar layout (on), Bar at the bottom (on), Shadows (on) |
 
-Every other stock value is the same for all five (`Styles.stock`): Ubuntu
-Mono at 16px, Normal density (Spacing 100%, Row height 100%, bar 32px),
-icons 17px, padding 6px, a full bar at the top with no edge gap,
-See-through 100%, Shadows on, Heavy lines off, flyouts 100% wide, and the
-first choice of every module style.
+Each style also starts the Bar, Panels and Motion tabs its own way (its
+`settings`; a blank is `Styles.stock`'s, Channel's column):
+
+| | Channel | Double | Solid | Glass | Flat |
+|---|---|---|---|---|---|
+| Workspaces | Pills | Blocks | | Dots | Numbers |
+| Open windows | Icons | Segmented | Lift | Spotlight | |
+| Clock | Time + date | Day + time | Time | Time | |
+| Visualizer | Mirrored | Rising | Rising | | One line |
+| Launcher | List | | Grid | Grid | |
+| Notification popups | Full | Compact | | Compact | |
+| Window switcher | Icons | With titles | Previews | Previews | Previews |
+| Workspace overview | Grid, dimmed | | | Strip, clear | |
+| Power menu | Row | List | Full | Full | List |
+| Level popup | Pill | Screen edge | | | Screen edge |
+| Window animation | Pop | Fold | | Zoom | Rise |
+| Shell and window speed | 100% | | | | 75% |
+
+The rest of the stock is the same for all five: Ubuntu Mono at 16px,
+Normal density (Spacing 100%, Row height 100%, bar 32px), icons 17px,
+padding 6px, a full bar at the top with no edge gap, See-through 100%,
+Shadows on, Heavy lines off, flyouts 100% wide.
 
 How each setting meets the style:
 
@@ -150,16 +167,19 @@ How each setting meets the style:
   Strip's frame is the style's. Channel's flyouts only grow from the group
   while the chips are a Strip. Bar shape decides where Double's and Flat's
   flyouts sit, and is fixed at full width under Solid's Plain bar, which
-  also sets Bare chips, line separators and numbered workspaces. Height sizes the chips (taskbar slots take the bar's full
-  height and 4px more padding). Workspaces, Clock, Open windows, Visualizer
-  and the rest are style-free, but the open-windows strip marks its focused
-  window the style's way and widens its slots under taskbar chips.
+  also sets Bare chips, line separators and numbered workspaces. Height
+  sizes the chips (taskbar slots take the bar's full height and 4px more
+  padding). Workspaces, Clock, Open windows and Visualizer start at the
+  style's (table above) and any choice works under any style; the
+  open-windows strip marks its focused window the style's way and widens
+  its slots under taskbar chips.
   Flat's Taskbar layout rearranges the modules while it's on.
 - **Panels tab.** Launcher, notification, switcher, overview, power and
-  level popup styles are style-free; their frames, controls and grounds are
-  the style's.
-- **Motion tab.** Flyouts open "Style" uses the row above; any other choice
-  holds under every style. The speeds are style-free.
+  level popup styles start at the style's and any works under any style;
+  their frames, controls and grounds are always the style's.
+- **Motion tab.** Window animation and the speeds start at the style's.
+  Flyouts open "Style" uses the style's (first table); any other choice
+  holds under every style.
 
 ## The channel
 
@@ -759,10 +779,10 @@ Settings') are laid out the same way.
   shade; ACCENT; WINDOW BORDERS; WALLPAPER), Shape (STYLE with the finish;
   SPACE: density and the shell's and windows' gaps; GLASS: see-through,
   window opacity, dim, blur; WINDOWS: corners, shadow, the Window Rules
-  row), Type (SHELL FONT; HEADINGS; APPS: system font, icons, cursor), Bar
-  (BAR with the layout zones; MODULES with a subhead per module; MUSIC
-  AND TRAY), Panels (POPUPS; LAUNCHER; OVERLAYS; DESKTOP WIDGETS) and
-  Motion (SPEED; ANIMATIONS: window animation, flyouts open). No status
+  row), Bar (BAR with the layout zones; MODULES with a subhead per
+  module; MUSIC AND TRAY), Panels (POPUPS; LAUNCHER; OVERLAYS; DESKTOP
+  WIDGETS), Motion (SPEED; ANIMATIONS: window animation, flyouts open) and
+  Type last (SHELL FONT; HEADINGS; APPS: system font, icons, cursor). No status
   card. Every section shows all its rows (`essentialRows: 0`), its rarely
   changed ones folded behind an Advanced (n) row at its foot
   (`SettingsAdvanced`; a search for one opens it); a section of only

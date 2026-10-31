@@ -31,10 +31,10 @@ SettingsPage {
     tabs: [
         { id: "colour", label: "Colour", icon: "󰏘", file: "ColourTab" },
         { id: "shape",  label: "Shape",  icon: "󰠲", file: "ShapeTab" },
-        { id: "type",   label: "Type",   icon: "󰛖", file: "TypeTab" },
         { id: "bar",    label: "Bar",    icon: "󰕰", file: "BarTab" },
         { id: "panels", label: "Panels", icon: "󰕮", file: "PanelsTab" },
         { id: "motion", label: "Motion", icon: "󰗘", file: "MotionTab" },
+        { id: "type",   label: "Type",   icon: "󰛖", file: "TypeTab" },
     ]
 
     // a small bar, flyout, launcher or windows, drawn by the shell's own
@@ -73,7 +73,7 @@ SettingsPage {
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
         headingUpper: "Case", headingRule: "Heading rule", headingMark: "Mark",
         headingMarkColour: "Mark colour", headingSize: "Heading size",
-        fontFamily: "Font", fontSize: "Font size", animTime: "Animations", animWindows: "Window speed",
+        fontFamily: "Font", fontSize: "Font size", windowAnim: "Window animation", animTime: "Animations", animWindows: "Window speed",
         animWorkspaces: "Workspace speed", animShell: "Shell speed", barPosition: "Position", workspaceStyle: "Workspaces",
         controlIcon: "Control Centre icon", clockStyle: "Clock", clockIsland: "Clock island", windowStyle: "Open windows", windowScope: "Windows shown",
         iconTint: "App icons", vizStyle: "Visualizer", vizBars: "Visualizer bars", vizShown: "Music visualizer", musicTitle: "Music title", vizHideSilent: "Hide when silent", flyoutAnim: "Flyouts open",

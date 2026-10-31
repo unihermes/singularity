@@ -36,12 +36,18 @@ var styles = {
         frame: "channel", modules: "grouped", mark: "pill",
         shadow: "none", lines: true, attach: "grown", anim: "fade",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true, headingMark: "//", clockIsland: true },
+        // the bar, panels and motion as `stock`
         options: [],
         // solid windows; the terminal a touch see-through, as it always was
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
     },
     double: {
         name: "Double", hint: "Outlined chips, a stroke inside each",
+        settings: {
+            workspaceStyle: "blocks", windowStyle: "segmented", clockStyle: "day", vizStyle: "rise",
+            notifStyle: "compact", altTabStyle: "titled", powerStyle: "list", levelStyle: "edge",
+            windowAnim: "fold",
+        },
         frame: "double", modules: "outline", mark: "pill",
         shadow: "none", lines: true, attach: "auto", anim: "drop",
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true, clockIsland: true },
@@ -54,7 +60,11 @@ var styles = {
     },
     solid: {
         name: "Solid", hint: "Filled blocks, no strokes",
-        settings: { radius: 10 },
+        settings: {
+            radius: 10,
+            windowStyle: "lift", clockStyle: "time", vizStyle: "rise", launcherLayout: "grid",
+            altTabStyle: "previews", powerStyle: "full",
+        },
         frame: "none", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "scale",
         finish: { barSeparator: "none", headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
@@ -71,7 +81,12 @@ var styles = {
         name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
         frame: "single", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "fade", glass: true,
-        settings: { radius: 10 },
+        settings: {
+            radius: 10,
+            workspaceStyle: "dots", windowStyle: "spotlight", clockStyle: "time", launcherLayout: "grid",
+            notifStyle: "compact", altTabStyle: "previews", overviewLayout: "strip", overviewBackdrop: "clear",
+            powerStyle: "full", windowAnim: "zoom",
+        },
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
         options: [
             { id: "blur", label: "Heavy blur", hint: "Grounds a further step see-through", on: true },
@@ -82,6 +97,11 @@ var styles = {
     },
     flat: {
         name: "Flat", hint: "Square and flat; a taskbar along the bottom",
+        // quicker, as a desktop OS's taskbar is
+        settings: {
+            workspaceStyle: "numbers", vizStyle: "line", altTabStyle: "previews", powerStyle: "list",
+            levelStyle: "edge", windowAnim: "rise", animShell: 75, animWindows: 75,
+        },
         frame: "single", modules: "taskbar", mark: "pill",
         shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true,
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
@@ -108,6 +128,7 @@ var stock = {
     animWindows: 100,
     animWorkspaces: 100,
     animShell: 100,
+    windowAnim: "popin",
     spacing: 100,
     rowScale: 100,
     barHeight: 32,
