@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ALIASES = {"qs": "dotfiles/quickshell/.config/quickshell",
            "hypr": "dotfiles/hypr/.config/hypr"}
 SYMBOL = re.compile(
-    r"^\s*(?:import |\.import |(?:async )?function |(?:readonly |required )?property "
+    r"^\s*(?:import |\.import |(?:async )?function |(?:(?:readonly|required) )*property "
     r"|signal |component |(?:async )?def |class |(?:local )?function "
     r"|[A-Za-z_]\w*\(\)\s*\{)")
 
@@ -19,9 +19,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", nargs="?", default=".", help="repo path; aliases: qs, hypr")
     parser.add_argument("--limit", type=int, default=40, help="maximum output rows (default 40)")
+    parser.add_argument("--match", help="filter outline or inventory rows by a case-insensitive regex")
     args = parser.parse_args()
     if args.limit < 1:
         parser.error("--limit must be positive")
+    try:
+        pattern = re.compile(args.match, re.I) if args.match else None
+    except re.error as e:
+        parser.error(f"invalid --match expression: {e}")
     head, sep, tail = args.path.partition("/")
     target = (ROOT / (ALIASES.get(head, head) + sep + tail)).resolve()
     if not target.is_relative_to(ROOT):
@@ -37,7 +42,8 @@ def main():
         if b"\0" in text:
             parser.error("binary file has no source outline")
         lines = text.decode("utf-8", errors="replace").splitlines()
-        rows = [f"{n}: {line.strip()}" for n, line in enumerate(lines, 1) if SYMBOL.match(line)]
+        declaration = re.compile(r"^#{1,6} ") if target.suffix == ".md" else SYMBOL
+        rows = [f"{n}: {line.strip()}" for n, line in enumerate(lines, 1) if declaration.match(line)]
         print(f"{target.relative_to(ROOT)}: {len(lines)} lines, {len(text)} bytes")
     else:
         groups = collections.defaultdict(list)
@@ -50,9 +56,11 @@ def main():
         rows = [f"{name}: {len(paths)} files, {sum(p.stat().st_size for p in paths)} bytes"
                 for name, paths in sorted(groups.items())]
         print(f"{target.relative_to(ROOT)}: {sum(map(len, groups.values()))} files")
+    if pattern:
+        rows = [row for row in rows if pattern.search(row)]
     print("\n".join(rows[:args.limit]))
     if len(rows) > args.limit:
-        print(f"… {len(rows) - args.limit} more; narrow the path or increase --limit")
+        print(f"… {len(rows) - args.limit} more; narrow the path, use --match, or increase --limit")
 
 
 if __name__ == "__main__":

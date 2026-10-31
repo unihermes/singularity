@@ -6,7 +6,10 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-if git diff --cached --name-only | grep -qE 'quickshell/settings/SettingsPage|services/SettingsIndex\.js'; then
+staged=$(git diff --cached --name-only)
+changed() { grep -Eq "^tools/git-hooks/pre-commit$|$1" <<< "$staged"; }
+
+if changed 'quickshell/settings/|services/SettingsIndex\.js$|^tools/check-settings-index\.py$'; then
     if ! python3 tools/check-settings-index.py; then
         echo
         echo "Settings search index is out of step with the pages (above)."
@@ -17,7 +20,7 @@ if git diff --cached --name-only | grep -qE 'quickshell/settings/SettingsPage|se
 fi
 
 # Declarations nothing reads, in the shell's QML and JS (check-unused.py).
-if git diff --cached --name-only | grep -qE 'quickshell/.*\.(qml|js)$'; then
+if changed 'quickshell/.*\.(qml|js)$|^tools/check-unused\.py$'; then
     if ! python3 tools/check-unused.py; then
         echo
         echo "Something in the shell is declared and never read (above)."
@@ -29,18 +32,20 @@ fi
 
 # The plain-JS modules' tests, when one of them or the tests are staged
 # (test-js.mjs also reads the Hyprland modules, so they count too).
-if git diff --cached --name-only | grep -qE 'quickshell/services/.*\.js$|tools/test-js\.mjs|hypr/\.config/hypr/[a-z]+\.lua|binds\.defaults\.lua'; then
-    if ! node --test tools/test-js.mjs >/tmp/singularity-test-js.log 2>&1; then
-        grep -E '^not ok|✖|Error|expected|actual' /tmp/singularity-test-js.log | head -30
+if changed 'quickshell/services/.*\.js$|tools/(test-js|merge-binds)\.mjs$|hypr/\.config/hypr/.*\.lua$|binds\.defaults\.lua$'; then
+    test_log=$(mktemp "${TMPDIR:-/tmp}/singularity-test-js.XXXXXX")
+    trap 'rm -f -- "$test_log"' EXIT
+    if ! node --test tools/test-js.mjs >"$test_log" 2>&1; then
+        cat "$test_log"
         echo
-        echo "JS module tests failed (full output in /tmp/singularity-test-js.log)."
+        echo "JS module tests failed (full output above)."
         echo "git commit --no-verify skips this."
         exit 1
     fi
 fi
 
 # The package lists against hardware.sh's capabilities (check-hardware.sh).
-if git diff --cached --name-only | grep -qE '^(packages/|hardware\.sh|install\.sh|update\.sh|tools/check-hardware\.sh)'; then
+if changed '^(packages/|hardware\.sh$|lib\.sh$|install\.sh$|update\.sh$|tools/check-hardware\.sh$)'; then
     if ! tools/check-hardware.sh; then
         echo
         echo "packages/ and hardware.sh disagree (above). A list in packages/hardware/"
@@ -48,4 +53,9 @@ if git diff --cached --name-only | grep -qE '^(packages/|hardware\.sh|install\.s
         echo "git commit --no-verify skips this."
         exit 1
     fi
+fi
+
+# Repository discovery and check selection.
+if changed '^tools/(context|test-tools)\.py$'; then
+    python3 tools/test-tools.py
 fi

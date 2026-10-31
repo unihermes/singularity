@@ -28,6 +28,12 @@ jobs:
       - name: JS module tests
         run: node --test tools/test-js.mjs
 
+      - name: Hardware package consistency
+        run: tools/check-hardware.sh
+
+      - name: Repository tools
+        run: python3 tools/test-tools.py
+
       - name: Shell scripts parse
         run: git ls-files '*.sh' | xargs -n1 bash -n
 

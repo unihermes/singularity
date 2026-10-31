@@ -371,6 +371,7 @@ singularity/
 For a compact source map, run `python3 tools/context.py [path]`. Directories
 show file counts and sizes; files show imports and declarations with line numbers.
 Use `qs/services` or `hypr` as shortcuts, then read only the relevant file ranges.
+Add `--match function` to filter a large outline; Markdown files show headings.
 `CLAUDE.md` describes the architecture and conventions.
 
 The configs are symlinks into the repo, so editing a file under
@@ -386,8 +387,10 @@ runs, for whatever is staged:
 | `tools/check-settings-index.py` | A Settings field that search can't find, or a search entry for a field that's gone |
 | `tools/check-unused.py` | Files, functions, properties and signals nothing reads |
 | `node --test tools/test-js.mjs` | Regressions in the plain-JS modules: the calculator, time windows, formats, Style resolution, the channel outline, and the readers/writers of the Hyprland modules |
+| `tools/check-hardware.sh` | Hardware capabilities and package lists disagreeing or duplicating packages |
+| `python3 tools/test-tools.py` | Compact inventory and pre-commit check selection regressions |
 
-GitHub Actions runs all three on every push, plus `bash -n` on every script
+GitHub Actions runs all five on every push, plus `bash -n` on every `.sh` file
 and `luac -p` on every Lua file.
 
 **Conventions.** UI work starts from `DESIGN.md`: take colours and sizes from

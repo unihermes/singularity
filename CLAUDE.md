@@ -7,6 +7,8 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
 For compact discovery, run `python3 tools/context.py [path]`: directories show
 file counts/sizes; files show imports and declarations with line numbers. Paths
 accept `qs/` and `hypr/` aliases. Read relevant ranges instead of entire modules.
+Use `--match function` to skip properties in large QML outlines, or any regex to
+filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`).
 
 ## Where things are
 
@@ -52,6 +54,7 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `python3 tools/check-settings-index.py`: Settings fields vs the search index.
 - `node --test tools/test-js.mjs`: plain-JS modules and the Hyprland Lua readers/writers.
 - `tools/check-hardware.sh`: `packages/hardware/*.txt` against `hardware.sh`'s capabilities.
+- `python3 tools/test-tools.py`: compact inventory and pre-commit check selection.
 
 ## Laptop, desktop and hardware
 
