@@ -211,11 +211,10 @@ var entries = [
     { page: "appearance", section: "Panels", label: "Placement", keywords: "desktop widgets edit move drag place position size small medium large right-click menu sticky notes" },
 
     { page: "appearance", section: "Motion", label: "Animations", keywords: "motion transitions speed" },
-    { page: "appearance", section: "Motion", label: "Window speed", keywords: "animation speed windows open close hyprland" },
+    { page: "appearance", section: "Motion", label: "Window speed", keywords: "animation speed windows open close hyprland timeline track" },
     { page: "appearance", section: "Motion", label: "Workspace speed", keywords: "animation speed workspaces switch scratchpad" },
-    { page: "appearance", section: "Motion", label: "Shell speed", keywords: "animation speed flyouts shell hover" },
+    { page: "appearance", section: "Motion", label: "Shell speed", keywords: "animation speed flyouts shell hover flyouts open drop fade scale menu popup" },
     { page: "appearance", section: "Motion", label: "Window animation", keywords: "hyprland open close popin slide fade" },
-    { page: "appearance", section: "Motion", label: "Flyouts open", keywords: "animation drop fade scale menu popup" },
 
     // --- Window Rules ------------------------------------------------------
     { page: "windowrules", section: "Apps", label: "Apps",              keywords: "app class rules remembered sizes list" },

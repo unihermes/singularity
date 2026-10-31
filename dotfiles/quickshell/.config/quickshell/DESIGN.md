@@ -851,6 +851,15 @@ Settings') are laid out the same way.
   Rows shown. OVERLAYS: Window switcher, Switcher windows, Workspace
   overview, Power menu, Backdrop, Overlay dimming (rests unless Dim).
   DESKTOP WIDGETS: each widget as a lit On chip, Sidebar, Placement.
+- **Motion tab** (picked 2026-10-31, B "timeline" for both sections):
+  SPEED is the Animations dial (Off, Fast, Normal marks). ANIMATIONS is a
+  ruler in ms over a track per part (`SpeedTrack`): Window speed,
+  Workspace speed and Shell speed, each a lane whose accent bar is as long
+  as that part's animations take now (its base ms, times Animations, times
+  its own percent), its end dragged to set the percent in 25s, written on
+  release; the window animation and how flyouts open are dropdowns at the
+  end of their tracks. The window animation tiles follow, playing while
+  hovered. With Animations off the lanes rest and read Off.
 - **Live preview (Appearance):** pinned above the rows on every tab, showing
   what that tab changes (`LivePreview.kind`), except Panels, which draws
   its own beside each section: the bar and a flyout
