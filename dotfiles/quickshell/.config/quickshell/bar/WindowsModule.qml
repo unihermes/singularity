@@ -22,7 +22,7 @@ ModuleFrame {
     // rectangle with nothing in it
     visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
     hoverWhole: false
-    // the plain icon styles give each icon a slot as wide as the tray's,
+    // the plain icon styles give each icon a wide slot (Theme.iconSlotW),
     // whose room either side would otherwise stack on the chip's own padding
     padH: Theme.modulePadH - (["icons", "titled", "glide", "lift"].indexOf(Theme.windowStyle) >= 0
         && !Theme.moduleTaskbar ? Math.floor((Theme.iconSlotW - Theme.barFs(16)) / 2) : 0)
@@ -131,7 +131,7 @@ ModuleFrame {
                     readonly property int titleGap: spot ? Theme.spaceS : Theme.spaceXs
                     // spotlight's capsule is fully rounded, so its icon
                     // sits further in to clear the curve; the plain styles'
-                    // slots are the tray's width (Theme.iconSlotW)
+                    // slots are Theme.iconSlotW wide
                     readonly property int padX: spot ? Theme.spaceS + 2
                         : tabs || seg || indexed || inset ? Theme.spaceS
                         : dots ? 1 : slotted ? Theme.spaceL : Math.floor((Theme.iconSlotW - slotW) / 2)

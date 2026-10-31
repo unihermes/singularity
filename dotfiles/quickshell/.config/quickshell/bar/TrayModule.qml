@@ -28,7 +28,7 @@ ModuleFrame {
 
     property bool drawerOpen: false
 
-    readonly property int slotW: Theme.iconSlotW
+    readonly property int slotW: Theme.traySlotW
 
     // the tray's items in the saved order
     readonly property var ordered: {
@@ -217,7 +217,7 @@ ModuleFrame {
                 }
             }
 
-            // the hover fill under just this icon, the open windows' size
+            // the hover fill under just this icon
             Rectangle {
                 visible: trayIcon.hovered || trayIcon.dragged
                 anchors.centerIn: parent
