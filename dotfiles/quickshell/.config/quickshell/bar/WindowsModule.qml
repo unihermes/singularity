@@ -6,6 +6,8 @@
 // Theme.windowStyle (icons, titled, glide, lift, inset, segmented,
 // spotlight, tabs, index, dots). An app with several windows shows it in
 // each style: pips, notches, a count, stacked slot edges or a ringed dot.
+// The icons sit dead centre; every mark goes on the screen edge's side of
+// them, above on a top bar and below on a bottom one.
 
 import Quickshell
 import Quickshell.Hyprland
@@ -40,9 +42,13 @@ ModuleFrame {
                 if (m[i].windows.some(w => w.address === a.address)) return i
             return -1
         }
-        // the top of the marks under the icons: a pixel below an icon
-        // that's lifted a pixel to clear them
-        readonly property int markY: Math.round((Theme.moduleHeight + Theme.barFs(16)) / 2)
+        // marks go toward the screen's edge
+        readonly property bool atBottom: Theme.barPosition === "bottom"
+        // a full-size icon's top and bottom, centred in the strip
+        readonly property int iconTop: Math.round((Theme.moduleHeight - Theme.barFs(16)) / 2)
+        readonly property int iconBottom: iconTop + Theme.barFs(16)
+        // glide's rail, a pixel clear of the icons on the edge's side
+        readonly property int markY: atBottom ? iconBottom + 1 : iconTop - 2
 
         Row {
             id: stripRow
@@ -80,7 +86,7 @@ ModuleFrame {
                     // Theme.windowMark, for the two icon styles
                     readonly property string mark: style === "icons" || style === "titled"
                         ? Theme.windowMark : ""
-                    readonly property bool underMark: mark === "pill"
+                    readonly property bool pillMark: mark === "pill"
                     // Flat's taskbar: each icon a wide slot, the focused
                     // one on a lit ground, the pips on the screen edge
                     readonly property bool slotted: Theme.moduleTaskbar && (style === "icons" || style === "titled")
@@ -101,7 +107,7 @@ ModuleFrame {
                     // the styles without a pip of their own grow one per
                     // window when there's more than one
                     readonly property bool morePips: multi && (mark === "ground" || inset || seg)
-                    readonly property bool pipsShown: underMark || morePips
+                    readonly property bool pipsShown: pillMark || morePips
                     // the window count on the icon's corner
                     readonly property bool badged: multi && (lift || (spot && !focused))
                     // glide's rail: a notch per window under the icon
@@ -207,7 +213,7 @@ ModuleFrame {
                             id: tabLine
                             readonly property int segs: winIcon.multi ? Math.min(4, winIcon.winCount) : 1
                             visible: winIcon.focused || winIcon.multi
-                            anchors.bottom: parent.bottom
+                            y: strip.atBottom ? parent.height - height : 0
                             anchors.horizontalCenter: parent.horizontalCenter
                             spacing: 2
                             Repeater {
@@ -224,8 +230,9 @@ ModuleFrame {
                         }
                     }
 
-                    // index: the top edges of more slots peeking out above
-                    // this one, one per extra window (up to two)
+                    // index: the edges of more slots peeking out past this
+                    // one on the screen edge's side, one per extra window
+                    // (up to two)
                     Repeater {
                         model: winIcon.indexed && winIcon.multi ? Math.min(2, winIcon.winCount - 1) : 0
                         Item {
@@ -233,11 +240,11 @@ ModuleFrame {
                             readonly property int step: index + 1
                             readonly property int groundTop: 4
                             x: winIcon.lead + step * 3
-                            y: groundTop - step * 2
+                            y: strip.atBottom ? winIcon.height - groundTop + step * 2 - height : groundTop - step * 2
                             width: winIcon.width - winIcon.lead - step * 6
                             height: 2
                             readonly property color edge: step === 1 ? Theme.subtext : Theme.muted
-                            Rectangle { width: parent.width; height: 1; color: parent.edge }
+                            Rectangle { y: strip.atBottom ? 1 : 0; width: parent.width; height: 1; color: parent.edge }
                             Rectangle { width: 1; height: 2; color: parent.edge }
                             Rectangle { x: parent.width - 1; width: 1; height: 2; color: parent.edge }
                         }
@@ -304,9 +311,6 @@ ModuleFrame {
                         visible: !winIcon.dots && !winIcon.indexed
                         x: winIcon.lead + winIcon.padX + Math.round((winIcon.slotW - width) / 2)
                         anchors.verticalCenter: parent.verticalCenter
-                        // lifted a pixel to clear the pip
-                        anchors.verticalCenterOffset: winIcon.morePips ? (winIcon.inset ? -2 : -1)
-                            : (winIcon.underMark && !winIcon.slotted) || winIcon.glide ? -1 : 0
                         width: winIcon.iconPx
                         height: winIcon.iconPx
                         opacity: winIcon.lift ? (winIcon.focused ? 1 : winIcon.hovered ? 0.9 : 0.5)
@@ -384,7 +388,8 @@ ModuleFrame {
                         width: Math.max(height, badgeText.implicitWidth + 4)
                         radius: Theme.pill(height)
                         x: glyphBox.x + glyphBox.width - width / 2 - 1
-                        y: Math.max(0, glyphBox.y - height / 2 + 1)
+                        y: strip.atBottom ? Math.min(winIcon.height - height, glyphBox.y + glyphBox.height - height / 2 - 1)
+                            : Math.max(0, glyphBox.y - height / 2 + 1)
                         color: winIcon.focused && Theme.hasAccent ? Theme.accent : Theme.overlay
                         Text {
                             id: badgeText
@@ -426,20 +431,20 @@ ModuleFrame {
                         font.pixelSize: Theme.barLabelSize
                     }
 
-                    // A pip just under the icon; a segment per window (up to
-                    // four, popouts shorter, the focused one in the accent)
-                    // for an app with several. Inset, segmented and the
-                    // "ground" mark show it only then.
+                    // A pip beside the icon on the screen edge's side (on
+                    // Flat's taskbar, on the edge itself); a segment per
+                    // window (up to four, popouts shorter, the focused one
+                    // in the accent) for an app with several. Inset,
+                    // segmented and the "ground" mark show it only then.
                     Row {
                         id: pip
                         readonly property var segs: winIcon.modelData.windows.slice(0, 4)
                         readonly property bool split: segs.length > 1
                         visible: winIcon.pipsShown
-                        // placed by y alone: switching anchors.top off
-                        // leaves y where the anchor last put it
-                        y: !winIcon.slotted || winIcon.morePips
-                            ? glyphBox.y + glyphBox.height + (winIcon.inset ? 3 : 1)
-                            : Theme.barPosition === "bottom" ? winIcon.height - height : 0
+                        readonly property int gap: winIcon.inset ? 3 : 1
+                        y: winIcon.slotted && !winIcon.morePips ? (strip.atBottom ? winIcon.height - height : 0)
+                            : strip.atBottom ? glyphBox.y + glyphBox.height + gap
+                            : glyphBox.y - gap - height
                         anchors.horizontalCenter: glyphBox.horizontalCenter
                         spacing: 1
                         Repeater {
