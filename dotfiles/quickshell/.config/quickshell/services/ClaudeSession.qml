@@ -23,65 +23,18 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-Scope {
+AiSession {
     id: root
 
     // how it runs; a change applies from the next start, but for the model
     // and the mode, which a running session takes at once
-    property string cwd: ""
     // --tools: null for Claude Code's own, "" for none
     property var tools: null
     property string appendPrompt: ""
     property var extraArgs: []
     property var env: ({})
-    // a model alias, "" for the CLI's default
-    property string modelPick: ""
-    // --permission-mode
-    property string mode: "default"
-
     readonly property bool alive: proc.running
-    // a turn is under way
-    property bool busy: false
-    property string sessionId: ""
-    // what it's doing now, for the status line and the bar
-    property string activity: ""
-    // the model the CLI says it's using
-    property string modelName: ""
-    // the slash commands the CLI says it takes (its own, the user's and the
-    // project's), known once it has started
-    property var slashCommands: []
-    property int contextUsed: 0
-    property int contextWindow: 0
-    // a turn ended or a prompt came while the sidebar wasn't on this tab
-    property bool unseen: false
-    // permission prompts waiting:
-    // [{ id, tool, input, title, detail, suggestions }]
-    property var asks: []
-    // what goes with the next message:
-    // [{ kind: "image" | "text", label, path, media, data, text }]
-    property var attachments: []
-
-    readonly property alias entries: rows
-    readonly property bool empty: rows.count === 0
-
-    // a file tool finished (the Desktop tab re-reads its diff)
-    signal edited()
-    // the last reply's text, for a notification
-    function lastReply() {
-        for (var i = rows.count - 1; i >= 0; i--) {
-            var r = rows.get(i)
-            if (r.kind === "user") return ""
-            if (r.kind === "assistant" || r.kind === "error") return r.text
-        }
-        return ""
-    }
-    // the CLI's rate_limit_event, for the subscription's usage
-    signal rateLimit(var info)
-    // a turn finished, or a permission prompt came (Ai's notifications)
-    signal turnEnded()
-    signal asked(string title)
-
-    ListModel { id: rows }
+    readonly property var rows: transcript
 
     // --- sending ---------------------------------------------------------
 
@@ -106,16 +59,6 @@ Scope {
         write({ type: "user", message: { role: "user", content: content },
                 parent_tool_use_id: null, session_id: "" })
         return true
-    }
-
-    function attach(a) {
-        if (a) attachments = attachments.concat([a])
-    }
-
-    function unattach(i) {
-        var a = attachments.slice()
-        a.splice(i, 1)
-        attachments = a
     }
 
     // Stop: the turn ends with its result, like any other
@@ -398,21 +341,6 @@ Scope {
         if (!wasStopped) turnEnded()
     }
 
-    // --- rows ------------------------------------------------------------
-
-    function add(o) {
-        rows.append({
-            kind: o.kind, text: o.text || "", note: o.note || "", images: o.images || "",
-            name: o.name || "", detail: o.detail || "", body: o.body || "", result: "",
-            toolId: o.toolId || "", phase: o.phase || "", streaming: !!o.streaming, open: false
-        })
-        return rows.count - 1
-    }
-
-    function setRow(i, o) {
-        for (var k in o) rows.setProperty(i, k, o[k])
-    }
-
     function addTool(id, name, input, quiet) {
         input = input || {}
         if (toolRows[id] !== undefined) return
@@ -431,16 +359,10 @@ Scope {
         if (i === undefined) return
         var text = typeof content === "string" ? content
             : (content || []).map(b => b.type === "text" ? b.text : b.type === "image" ? "[image]" : "").join("\n")
-        if (text.length > 4000) text = text.slice(0, 4000) + "\n…"
+        text = clip(text)
         setRow(i, { result: text, phase: isError ? "error" : "done" })
         var name = rows.get(i).name
         if (!quiet && !isError && ["Edit", "Write", "MultiEdit", "NotebookEdit"].indexOf(name) !== -1) edited()
-    }
-
-    // a path under the working directory, without it
-    function rel(p) {
-        p = String(p || "")
-        return cwd !== "" && p.indexOf(cwd + "/") === 0 ? p.slice(cwd.length + 1) : p
     }
 
     function describe(name, input) {

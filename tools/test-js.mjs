@@ -95,6 +95,41 @@ test("Styles: leaving Flat puts the bar back at the top", () => {
     assert.equal(S.finish("glass").shadows, true)
 })
 
+test("KeybindGroups keeps sections, action clusters and search filters", () => {
+    const B = load("HyprBinds.js"), G = load("KeybindGroups.js")
+    const row = (keys, desc, category) => ({ keys, desc, category, command: "cmd", norm: B.normalizeKeys(keys) })
+    const a = row("SUPER + A", "Launch", "Launchers")
+    const b = row("SUPER + B", "Other", "Launchers")
+    const c = row("SUPER + C", "Launch", "Launchers")
+    const custom = row("SUPER + D", "Custom", "My section")
+    const model = { rows: [a, b, c, custom], categories: [{ name: "Launchers" }, { name: "My section" }] }
+    const groups = G.groups(model, "", "")
+    assert.deepEqual(Array.from(groups, g => g.name), ["Apps", "My section"])
+    assert.deepEqual(Array.from(groups[0].rows, r => r.keys), [a.keys, c.keys, b.keys])
+    assert.equal(groups[0].section, "Launchers")
+    assert.equal(G.groups(model, "apps", "")[0].rows.length, 3)
+    assert.equal(G.groups(model, "", "WIN + A")[0].rows[0], a)
+    assert.equal(G.groups(model, "no match", "").length, 0)
+    assert.equal(G.groups(null, "", "").length, 0)
+})
+
+test("KeybindGroups filters bound presets and reports missing tools", () => {
+    const B = load("HyprBinds.js"), P = load("HyprPresets.js"), G = load("KeybindGroups.js")
+    const model = B.parse(binds)
+    const visible = G.presetGroups(model, "", "", true, {})
+    assert.ok(visible.length > 0)
+    assert.ok(visible.every(g => g.items.every(i => i.state !== "bound")))
+    const all = G.presetGroups(model, "", "", false, {})
+    assert.equal(all.reduce((n, g) => n + g.items.length, 0), G.presetTotal())
+    assert.equal(all.reduce((n, g) => n + g.bound, 0), G.presetBound(model))
+    const item = all.flatMap(g => Array.from(g.items)).find(i => (i.preset.needs || []).length)
+    assert.ok(item)
+    assert.deepEqual(Array.from(item.missing), Array.from(item.preset.needs))
+    const present = Object.fromEntries(P.neededBinaries().map(n => [n, true]))
+    assert.ok(G.presetGroups(model, "", "", false, present).every(g => g.items.every(i => !i.missing.length)))
+    assert.equal(G.presetGroups(null, "", "", true, {}).length, 0)
+})
+
 test("Styles resolve every style, and Flat is square", () => {
     const S = load("Styles.js")
     const base = { radius: 6, barStyle: "full", barHeight: 32, spacing: 100, seeThrough: 100, shadows: true, heavyLines: false }

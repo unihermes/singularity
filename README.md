@@ -368,6 +368,11 @@ singularity/
 
 ## Development
 
+For a compact source map, run `python3 tools/context.py [path]`. Directories
+show file counts and sizes; files show imports and declarations with line numbers.
+Use `qs/services` or `hypr` as shortcuts, then read only the relevant file ranges.
+`CLAUDE.md` describes the architecture and conventions.
+
 The configs are symlinks into the repo, so editing a file under
 `~/.config` edits the repo, and Quickshell reloads the shell the moment a QML
 file is saved. `quickshell` run from a terminal prints QML errors with file

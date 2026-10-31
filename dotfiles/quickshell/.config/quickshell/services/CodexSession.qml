@@ -21,44 +21,20 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-Scope {
+AiSession {
     id: root
 
-    property string cwd: ""
-    // a model slug, "" for Codex's own default
-    property string modelPick: ""
-    property string mode: "default"
     // added to Codex's instructions for a new thread
     property string instructions: ""
     // the Chat tab's: read-only, never asking
     property bool readOnly: false
 
     readonly property bool alive: proc.running
-    property bool busy: false
-    property string sessionId: ""
     property string turnId: ""
-    property string activity: ""
-    property string modelName: ""
-    property var slashCommands: []
-    property int contextUsed: 0
-    property int contextWindow: 0
-    property bool unseen: false
-    // [{ id, tool, input, title, detail, suggestions }]; id is the request's
-    property var asks: []
-    property var attachments: []
-
-    readonly property alias entries: rows
-    readonly property bool empty: rows.count === 0
-
-    signal edited()
-    // account/rateLimits/updated's, for Codex's line under the heading
-    signal rateLimit(var info)
-    signal turnEnded()
-    signal asked(string title)
     // thread/list's answer, for the past sessions list
     signal listed(var threads)
 
-    ListModel { id: rows }
+    readonly property var rows: transcript
 
     readonly property string approval: readOnly || mode === "auto" ? "never" : "on-request"
     readonly property bool writes: !readOnly && (mode === "acceptEdits" || mode === "auto")
@@ -97,13 +73,6 @@ Scope {
             approvalPolicy: approval, sandboxPolicy: sandboxPolicy
         }, r => { if (r && r.turn) turnId = r.turn.id }, e => fail(e)))
         return true
-    }
-
-    function attach(a) { if (a) attachments = attachments.concat([a]) }
-    function unattach(i) {
-        var a = attachments.slice()
-        a.splice(i, 1)
-        attachments = a
     }
 
     function stop() {
@@ -160,15 +129,6 @@ Scope {
             r => listed(((r && r.data) || []).map(t => ({
                 id: t.id, title: t.name || t.preview || "Untitled", turns: -1, mtime: t.updatedAt || t.createdAt
             }))), () => listed([])))
-    }
-
-    function lastReply() {
-        for (var i = rows.count - 1; i >= 0; i--) {
-            var r = rows.get(i)
-            if (r.kind === "user") return ""
-            if (r.kind === "assistant" || r.kind === "error") return r.text
-        }
-        return ""
     }
 
     // --- JSON-RPC ----------------------------------------------------------
@@ -450,22 +410,5 @@ Scope {
         asks = []
         unseen = true
         if (!wasStopped) turnEnded()
-    }
-
-    // --- rows ------------------------------------------------------------
-
-    function add(o) {
-        rows.append({
-            kind: o.kind, text: o.text || "", note: o.note || "", images: o.images || "",
-            name: o.name || "", detail: o.detail || "", body: o.body || "", result: o.result || "",
-            toolId: o.toolId || "", phase: o.phase || "", streaming: !!o.streaming, open: false
-        })
-        return rows.count - 1
-    }
-    function setRow(i, o) { for (var k in o) rows.setProperty(i, k, o[k]) }
-    function clip(t) { return t.length > 4000 ? t.slice(0, 4000) + "\n…" : t }
-    function rel(p) {
-        p = String(p || "")
-        return cwd !== "" && p.indexOf(cwd + "/") === 0 ? p.slice(cwd.length + 1) : p
     }
 }

@@ -4,6 +4,10 @@ Arch + Hyprland (Lua config) + a Quickshell (QML) shell. `dotfiles/<pkg>/` mirro
 and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config/quickshell`
 (called `qs/` below). Saving a QML file hot-reloads the running shell.
 
+For compact discovery, run `python3 tools/context.py [path]`: directories show
+file counts/sizes; files show imports and declarations with line numbers. Paths
+accept `qs/` and `hypr/` aliases. Read relevant ranges instead of entire modules.
+
 ## Where things are
 
 - `qs/shell.qml`: entry point, IPC handlers, one `screenScope` per screen holding the
@@ -19,12 +23,14 @@ and is symlinked in, so `~/.config/quickshell` *is* `dotfiles/quickshell/.config
   `ControlCentre.qml`.
 - `qs/settings/`: `SettingsPage*.qml` (one per page), `appearance/` (Appearance tabs).
   Search index is `services/SettingsIndex.js`; keep it in step with the pages.
+  Keybind filtering/grouping is in `services/KeybindGroups.js`; the editor is `KeybindsBody.qml`.
 - `qs/windows/`: Settings, System, Keybinds, Notes windows.
 - `qs/desktop/`: the desktop widgets (straight on the wallpaper, one surface each under the windows), their edit mode
   and the desktop's right-click menu;
   placement maths in `services/WidgetPlacement.js`.
 - `qs/sidebar/`: the Claude sidebar (SUPER+I), driven by `services/Ai.qml` and
   `ClaudeSession.qml` (`claude -p` over stream-json); helpers in `scripts/ai.py`, `ai-desktop.sh`.
+  `CodexSession.qml` handles Codex; both inherit state/transcript helpers from `AiSession.qml`.
 - `dotfiles/hypr/.config/hypr/`: `hyprland.lua` requires `shared`, `displays`, `env`,
   `autostart`, `looks`, `input`, `overrides`, `game-keys`, `binds`, `alttab`, `windows`
   (which requires `window-rules` for the static rules and `window-keys` for the arrow keys).
