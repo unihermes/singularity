@@ -55,7 +55,7 @@ Item {
 
     PanelFrame {
         anchors.fill: parent
-        ground: Theme.deskFill(0.45)
+        ground: Theme.deskFill(0.3)
     }
 
     Item {

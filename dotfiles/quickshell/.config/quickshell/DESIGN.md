@@ -628,7 +628,7 @@ Clock, weather, now playing and system stats on the desktop. They follow
 the style (asked for 2026-10-30): each card is a `PanelFrame`, so it takes
 the style's frame, roundness and palette, but its ground stays
 see-through over the wallpaper (`Theme.deskFill`: the panel's tone at
-See-through's opacity, never above 45%), no shadow, no blur
+See-through's opacity, never above 30%), no shadow, no blur
 (`desktop/WidgetCard.qml`); the content in the palette's inks (textStrong,
 text, subtext, the accent lifted on a dark palette) and bold, with a tight halo in the base colour
 round every mark, the system font (Appearance > Type, else the shell's),
