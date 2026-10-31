@@ -1,0 +1,131 @@
+<div class="viz-carousel" id="appearance-proposals" aria-label="Appearance navigation proposals">
+  <section data-variant="Focused pages" aria-label="Focused appearance pages"><div class="sg-app" id="appearance-focused" data-design="focused"></div></section>
+  <section data-variant="Single page" aria-label="Single appearance page" hidden><div class="sg-app" id="appearance-single" data-design="single"></div></section>
+</div>
+<style>
+  #appearance-proposals .sg-app{--sg-bg:light-dark(#f2f2f2,#121212);--sg-panel:light-dark(#fafafa,#141414);--sg-surface:light-dark(#e9e9e9,#1a1a1a);--sg-line:light-dark(#c8c8c8,#383838);--sg-text:light-dark(#242424,#ebebeb);--sg-muted:light-dark(#626262,#a1a1a8);--sg-accent:#5555c8;--sg-radius:8px;color:var(--sg-text);background:var(--sg-bg);font:14px/1.5 'Ubuntu Mono','Courier New',monospace;border:1px solid var(--sg-line);border-radius:12px;min-height:770px;overflow-wrap:anywhere}
+  #appearance-proposals *{box-sizing:border-box}
+  #appearance-proposals button,#appearance-proposals select,#appearance-proposals input{font:inherit}
+  #appearance-proposals button,#appearance-proposals select{color:var(--sg-text);background:var(--sg-surface);border:1px solid var(--sg-line);border-radius:5px;padding:7px 10px}
+  #appearance-proposals button{cursor:var(--cursor-interaction,pointer)}
+  #appearance-proposals button:hover{border-color:var(--sg-muted)}
+  #appearance-proposals button[aria-pressed=true]{border-color:var(--sg-accent);box-shadow:inset 0 0 0 1px var(--sg-accent)}
+  #appearance-proposals .sg-title{padding:12px 18px;border-bottom:1px solid var(--sg-line);display:flex;align-items:center;gap:10px;padding-right:100px}
+  #appearance-proposals .sg-mark{width:4px;height:17px;background:var(--sg-accent)}
+  #appearance-proposals .sg-muted{color:var(--sg-muted)}
+  #appearance-proposals .sg-layout{display:grid;grid-template-columns:185px minmax(0,1fr)}
+  #appearance-proposals aside{padding:20px 12px;border-right:1px solid var(--sg-line)}
+  #appearance-proposals .sg-nav-label{color:var(--sg-muted);margin:15px 8px 7px;text-transform:uppercase;font-size:11px;letter-spacing:1px}
+  #appearance-proposals .sg-nav-row{padding:8px 10px;margin:3px 0;border-left:2px solid transparent}
+  #appearance-proposals .sg-nav-row.active{border-left-color:var(--sg-accent);background:var(--sg-surface)}
+  #appearance-proposals .sg-search{padding:7px 10px;border:1px solid var(--sg-line);border-radius:5px;color:var(--sg-muted);margin-bottom:18px}
+  #appearance-proposals main{padding:22px 25px;min-width:0}
+  #appearance-proposals h2{font-size:20px;font-weight:500;margin:0 0 4px}
+  #appearance-proposals h3{font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:1px;margin:0 0 14px}
+  #appearance-proposals p{margin:0 0 16px}
+  #appearance-proposals .sg-tabs{display:flex;gap:5px;margin:18px 0;flex-wrap:wrap}
+  #appearance-proposals .sg-tabs button[aria-pressed=true]{background:var(--sg-accent);color:#fff}
+  #appearance-proposals .sg-app{min-height:1150px}
+  #appearance-proposals .sg-preview{background:var(--sg-surface);color:var(--sg-text);border:1px solid var(--sg-line);padding:15px;margin:18px 0;border-radius:var(--sg-radius)}
+  #appearance-proposals .sg-preview .sg-muted,#appearance-proposals .sg-preview .sg-caption{color:var(--sg-text)}
+  #appearance-proposals .sg-preview-bar{display:flex;justify-content:space-between;gap:10px;border:3px double var(--sg-line);border-radius:var(--sg-radius);padding:7px 10px}
+  #appearance-proposals .sg-preview-popup{border:3px double var(--sg-line);background:var(--sg-panel);border-radius:var(--sg-radius);padding:var(--sg-padding,12px);max-width:310px;margin:15px 0 0 auto}
+  #appearance-proposals .sg-popup-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px}
+  #appearance-proposals .sg-fill{height:10px;flex:1;background:var(--sg-surface);border:1px solid var(--sg-line);position:relative}
+  #appearance-proposals .sg-fill:before{content:'';display:block;background:var(--sg-accent);width:65%;height:100%}
+  #appearance-proposals .sg-preview[data-style=double] .sg-preview-bar,#appearance-proposals .sg-preview[data-style=double] .sg-preview-popup{border:3px double var(--sg-muted)}
+  #appearance-proposals .sg-preview[data-style=solid] .sg-preview-bar,#appearance-proposals .sg-preview[data-style=solid] .sg-preview-popup{border-color:transparent;box-shadow:0 5px 15px #0002}
+  #appearance-proposals .sg-preview[data-style=glass] .sg-preview-bar,#appearance-proposals .sg-preview[data-style=glass] .sg-preview-popup{border-width:1px;background:color-mix(in srgb,var(--sg-panel),var(--sg-accent) 8%);box-shadow:0 5px 15px #0002}
+  #appearance-proposals .sg-preview[data-style=flat] .sg-preview-bar,#appearance-proposals .sg-preview[data-style=flat] .sg-preview-popup{border-width:1px;border-radius:0}
+  #appearance-proposals .sg-preview[data-style=flat] .sg-preview-bar{border-bottom:2px solid var(--sg-accent)}
+  #appearance-proposals .sg-caption{display:flex;justify-content:space-between;gap:10px;margin-top:12px;color:var(--sg-muted);font-size:12px}
+  #appearance-proposals .sg-section{margin:22px 0}
+  #appearance-proposals .sg-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  #appearance-proposals .sg-scheme{padding:9px;text-align:left;min-width:0}
+  #appearance-proposals .sg-colour-strip{display:flex;height:20px;margin-bottom:8px;border-radius:3px;overflow:hidden}
+  #appearance-proposals .sg-colour-strip span{flex:1}
+  #appearance-proposals .sg-style-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+  #appearance-proposals .sg-style-grid button{padding:10px 4px;min-width:0}
+  #appearance-proposals .sg-style-sample{height:35px;margin:0 6px 8px;background:var(--sg-panel);border:3px double var(--sg-muted);border-radius:6px;display:flex;align-items:center;justify-content:center;gap:4px}
+  #appearance-proposals .sg-style-sample span{width:12px;height:8px;background:var(--sg-accent)}
+  #appearance-proposals [data-style-pick=solid] .sg-style-sample{border:0}
+  #appearance-proposals [data-style-pick=glass] .sg-style-sample{border:1px solid var(--sg-muted);background:color-mix(in srgb,var(--sg-panel),var(--sg-accent) 10%)}
+  #appearance-proposals [data-style-pick=flat] .sg-style-sample{border:1px solid var(--sg-muted);border-radius:0}
+  #appearance-proposals .sg-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid var(--sg-line);flex-wrap:wrap}
+  #appearance-proposals .sg-row small{display:block;color:var(--sg-muted);font-size:12px}
+  #appearance-proposals .sg-segments{display:flex;gap:4px;flex-wrap:wrap}
+  #appearance-proposals label.sg-row input[type=range]{accent-color:var(--sg-accent);width:150px;max-width:100%}
+  #appearance-proposals input[type=checkbox]{accent-color:var(--sg-accent);width:17px;height:17px}
+  #appearance-proposals .sg-note{color:var(--sg-muted);font-size:12px;margin:10px 0}
+  #appearance-proposals details{border-top:1px solid var(--sg-line);margin:20px 0 0;padding-top:12px}
+  #appearance-proposals summary{cursor:var(--cursor-interaction,pointer);color:var(--sg-muted)}
+  #appearance-proposals .sg-state{font-size:12px;color:var(--sg-muted);padding-top:8px}
+  @media(max-width:700px){#appearance-proposals .sg-layout{grid-template-columns:1fr}#appearance-proposals aside{display:none}#appearance-proposals main{padding:18px}#appearance-proposals .sg-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#appearance-proposals .sg-style-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#appearance-proposals .sg-app{min-height:1100px}}
+</style>
+<script>
+(() => {
+  const root = document.getElementById('appearance-proposals');
+  const palettes = [
+    ['Singularity','#121212','#1a1a1a','#5555c8','#d0e2fa'],
+    ['Arch','#12161b','#252b33','#1793d1','#dce4ec'],
+    ['Nord','#2e3440','#434c5e','#81a1c1','#eceff4'],
+    ['Dracula','#282a36','#44475a','#bd93f9','#f8f8f2'],
+    ['Tokyo Night','#1a1b26','#3b4261','#7aa2f7','#c0caf5'],
+    ['Catppuccin','#1e1e2e','#45475a','#cba6f7','#cdd6f4'],
+    ['One Dark','#282c34','#3e4451','#61afef','#abb2bf'],
+    ['Kanagawa','#1f1f28','#363646','#7e9cd8','#dcd7ba']
+  ];
+  const styles = ['Channel','Double','Solid','Glass','Flat'];
+  const descriptions = ['Grooved frames and grouped bar chips.','Outlined chips with an inner stroke.','Filled blocks with soft shadows.','Frosted surfaces with a light hairline.','Square corners and taskbar chips.'];
+  const options = {Channel:[],Double:['Inner stroke always lit','Heavy lines'],Solid:['Accent-tinted chips','Shaded grounds'],Glass:['Heavy blur','Accent-tinted glass','Glow on accents'],Flat:[]};
+  const defaults = {look:'Singularity',style:'Channel',density:'Normal',tab:'Colours',palette:'Scheme',shade:'Dark',radius:8,opacity:90,spacing:100,opts:[]};
+  const saved = window.openai?.widgetState?.modelContent || {};
+  root.querySelectorAll('.sg-app').forEach(app => {
+    const state = {...defaults, ...(saved[app.dataset.design] || {})};
+    const persist = () => {
+      saved[app.dataset.design] = {...state};
+      window.openai?.setWidgetState({modelContent:saved,privateContent:null}).catch(()=>{});
+    };
+    function colours() {
+      return `<section class="sg-section"><h3>Colour scheme</h3><div class="sg-segments">${['Scheme','Wallpaper'].map(v=>`<button data-palette="${v}" aria-pressed="${state.palette===v}">${v}</button>`).join('')}</div>${state.palette==='Scheme'?`<div class="sg-grid" style="margin-top:12px">${palettes.map(p=>`<button class="sg-scheme" data-look="${p[0]}" aria-pressed="${state.look===p[0]}"><span class="sg-colour-strip">${p.slice(1).map(c=>`<span style="background:${c}"></span>`).join('')}</span>${p[0]}</button>`).join('')}</div>`:`<div class="sg-row"><span>Wallpaper palette<small>Colours follow your wallpaper</small></span><span>Monet · dark lilies</span></div><label class="sg-row">Shade<select aria-label="Wallpaper shade"><option>Dark</option><option>Light</option></select></label>`}<p class="sg-note">Changes colours across the desktop and apps. Your style and layout stay as set.</p></section>`;
+    }
+    function style() {
+      return `<section class="sg-section"><h3>Interface style</h3><div class="sg-style-grid">${styles.map(v=>`<button data-style-pick="${v.toLowerCase()}" data-style="${v}" aria-pressed="${state.style===v}"><span class="sg-style-sample"><span></span><span></span><span></span></span>${v}</button>`).join('')}</div><p class="sg-note">${descriptions[styles.indexOf(state.style)]} Colours, fonts and bar position stay as set.</p>${options[state.style].map(v=>`<label class="sg-row">${v}<input type="checkbox" data-option="${v}" ${state.opts.includes(v)?'checked':''}></label>`).join('')}<p class="sg-note">${options[state.style].length?'Only options for the selected style appear here.':'This style has no extra switches.'}</p></section>`;
+    }
+    function size() {
+      return `<section class="sg-section"><h3>Size & spacing</h3><div class="sg-row"><span>Density<small>Gaps, row height and bar height together</small></span><div class="sg-segments">${['Compact','Normal','Roomy','Custom'].map(v=>`<button data-density="${v}" aria-pressed="${state.density===v}">${v}</button>`).join('')}</div></div>${state.density==='Custom'?`<label class="sg-row">Spacing <input aria-label="Spacing" type="range" min="70" max="140" value="${state.spacing}" data-range="spacing"><output>${state.spacing}%</output></label>`:''}<label class="sg-row"><span>Roundness<small>${state.style==='Flat'?'Flat keeps corners square':'Panels, chips and controls'}</small></span><input type="range" aria-label="Roundness" min="0" max="20" value="${state.radius}" data-range="radius" ${state.style==='Flat'?'disabled':''}><output>${state.style==='Flat'?0:state.radius} px</output></label><label class="sg-row">Opacity<input type="range" aria-label="Opacity" min="40" max="100" value="${state.opacity}" data-range="opacity"><output>${state.opacity}%</output></label></section>`;
+    }
+    function render() {
+      const focused = app.dataset.design==='focused';
+      const palette = palettes.find(p=>p[0]===state.look) || palettes[0];
+      app.style.setProperty('--sg-accent',state.palette==='Wallpaper'?'#8a9982':palette[3]);
+      app.style.setProperty('--sg-radius',(state.style==='Flat'?0:state.radius)+'px');
+      app.innerHTML=`<header class="sg-title"><span class="sg-mark"></span>Settings <span class="sg-muted">/ singularity</span></header><div class="sg-layout"><aside><div class="sg-search">Search settings</div><div class="sg-nav-label">Connections</div><div class="sg-nav-row sg-muted">Network</div><div class="sg-nav-row sg-muted">Bluetooth</div><div class="sg-nav-label">Appearance</div><div class="sg-nav-row active">${focused?'Colours & Style':'Appearance'}</div><div class="sg-nav-row">Wallpaper & Desktop</div><div class="sg-nav-row">Bar</div><div class="sg-nav-row">Panels & Popups</div><div class="sg-nav-row">Windows</div><div class="sg-nav-row">Fonts & Icons</div><div class="sg-nav-row">Lock Screen</div><div class="sg-nav-label">Apps</div><div class="sg-nav-row sg-muted">Shortcuts</div></aside><main><h2>${focused?'Colours & Style':'Appearance'}</h2><p class="sg-muted">${focused?'Colours, drawing style and space — each has one job.':'The essentials together. Fine details stay tucked away.'}</p><div class="sg-preview" data-style="${state.style.toLowerCase()}"><div class="sg-preview-bar"><span>● 1　2　3</span><span>Terminal</span><span>Wi-Fi　87%　14:32</span></div><div class="sg-preview-popup"><span>Sound</span><div class="sg-popup-row"><span>Speakers</span><span>65%</span></div><div class="sg-popup-row"><span class="sg-fill"></span><span>♫</span></div><div class="sg-popup-row sg-muted"><span>Microphone</span><span>Muted</span></div></div><div class="sg-caption"><span>Live preview · ${state.palette==='Wallpaper'?'Wallpaper':state.look} / ${state.style}</span><span>${state.density}</span></div></div>${focused?`<nav class="sg-tabs" aria-label="Appearance controls">${['Colours','Style','Size & spacing'].map(v=>`<button data-tab="${v}" aria-pressed="${state.tab===v}">${v}</button>`).join('')}</nav>${state.tab==='Colours'?colours():state.tab==='Style'?style():size()}`:colours()+style()+`<details><summary>Size & spacing · ${state.density}</summary>${size()}</details>`}<details><summary>Advanced colour roles</summary><p class="sg-note">Manual palette roles and status colours belong here, away from everyday choices.</p><div class="sg-row"><span>Surface</span><code>${palette[2]}</code></div><div class="sg-row"><span>Accent</span><code>${palette[3]}</code></div></details><div class="sg-state" aria-live="polite">${state.palette==='Wallpaper'?'Wallpaper':state.look} · ${state.style} · ${state.density} — preview only</div></main></div>`;
+      const preview = app.querySelector('.sg-preview');
+      preview.style.setProperty('--sg-panel',palette[1]);
+      preview.style.setProperty('--sg-surface',palette[2]);
+      preview.style.setProperty('--sg-text',palette[4]);
+      if(state.palette==='Wallpaper'){
+        preview.style.setProperty('--sg-panel',state.shade==='Light'?'#e4e8de':'#1e241e');
+        preview.style.setProperty('--sg-surface',state.shade==='Light'?'#d4dbce':'#2d352d');
+        preview.style.setProperty('--sg-text',state.shade==='Light'?'#253025':'#dde4d7');
+      }
+      preview.style.setProperty('--sg-padding',({Compact:8,Normal:12,Roomy:18,Custom:12})[state.density]+'px');
+      preview.style.opacity=state.opacity/100;
+      app.querySelectorAll('select').forEach(select=>{select.value=state.shade;select.addEventListener('change',()=>{state.shade=select.value;render();persist();});});
+      app.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>{
+        if(button.dataset.look) state.look=button.dataset.look;
+        if(button.dataset.style){state.style=button.dataset.style;state.opts=state.style==='Glass'?['Heavy blur','Glow on accents']:[];}
+        if(button.dataset.tab) state.tab=button.dataset.tab;
+        if(button.dataset.density) state.density=button.dataset.density;
+        if(button.dataset.palette) state.palette=button.dataset.palette;
+        render(); persist();
+      }));
+      app.querySelectorAll('[data-option]').forEach(input=>input.addEventListener('change',()=>{state.opts=input.checked?[...state.opts,input.dataset.option]:state.opts.filter(v=>v!==input.dataset.option);persist();}));
+      app.querySelectorAll('[data-range]').forEach(input=>input.addEventListener('input',()=>{state[input.dataset.range]=Number(input.value);input.nextElementSibling.textContent=input.value+(input.dataset.range==='radius'?' px':'%');app.style.setProperty('--sg-radius',(state.style==='Flat'?0:state.radius)+'px');preview.style.opacity=state.opacity/100;persist();}));
+    }
+    render();
+    if(globalThis.Tweak){const tweak=new Tweak({container:app,onChange:render});tweak.addSlider(state,'radius',{label:'Corner radius',min:0,max:20,unit:'px'});}
+  });
+})();
+</script>
