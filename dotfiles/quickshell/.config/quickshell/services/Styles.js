@@ -133,6 +133,8 @@ var stock = {
     rowScale: 100,
     barHeight: 32,
     barIconSize: 17,
+    windowIconSize: 18,
+    windowIconPadding: 6,
     modulePad: 6,
     windowRounding: "shell",
     windowRadius: 6,

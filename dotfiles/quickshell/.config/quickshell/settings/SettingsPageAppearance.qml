@@ -64,6 +64,7 @@ SettingsPage {
         focusedOpacity: "Focused opacity", unfocusedOpacity: "Unfocused opacity",
         terminalOpacity: "Terminal opacity", spacing: "Spacing", rowScale: "Row height",
         barHeight: "Height", barIconSize: "Icon size", modulePad: "Module padding",
+        windowIconSize: "Window icon size", windowIconPadding: "Window icon padding",
         windowBorderWidth: "Border width", windowBorderFocused: "Focused border",
         windowBorderFocusedHex: "Focused colour", windowBorderUnfocused: "Unfocused border",
         windowBorderUnfocusedHex: "Unfocused colour", windowRounding: "Window corners",
@@ -90,6 +91,7 @@ SettingsPage {
     })
     readonly property var keyUnits: ({ radius: "px", edgeGap: "px", spacing: "%", rowScale: "%",
                                          barHeight: "px", barIconSize: "px", modulePad: "px",
+                                         windowIconSize: "px", windowIconPadding: "px",
                                          flyoutWidth: "%", notifWidth: "px", windowRadius: "px", seeThrough: "%", scrim: "%",
                                          focusedOpacity: "%", unfocusedOpacity: "%", terminalOpacity: "%",
                                          fontSize: "px", animTime: "%", animWindows: "%", animWorkspaces: "%", animShell: "%" })

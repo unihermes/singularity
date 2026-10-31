@@ -137,6 +137,8 @@ Singleton {
     readonly property alias clockStyle:  adapter.clockStyle
     readonly property alias windowStyle: adapter.windowStyle
     readonly property alias windowScope: adapter.windowScope
+    readonly property alias windowIconSize: adapter.windowIconSize
+    readonly property alias windowIconPadding: adapter.windowIconPadding
     // how an app's windows list when its strip icon is clicked
     readonly property alias iconTint:    adapter.iconTint
     readonly property alias vizStyle:    adapter.vizStyle
@@ -697,6 +699,8 @@ Singleton {
         rowScale:  { min: 80, max: 130 },
         barHeight: { min: 22, max: 52 },
         barIconSize: { min: 10, max: 28 },
+        windowIconSize: { min: 12, max: 28 },
+        windowIconPadding: { min: 2, max: 16 },
         modulePad: { min: 0, max: 16 },
         vizBars:   { min: 6, max: 24 },
         flyoutWidth: { min: 80, max: 150 },
@@ -1039,6 +1043,8 @@ Singleton {
             property string clockStyle: "stamp"
             property string windowStyle: "icons"
             property string windowScope: "workspace"
+            property int windowIconSize: 18
+            property int windowIconPadding: 6
             property string iconTint: "colour"
             property string vizStyle: "mirror"
             property int vizBars: 10

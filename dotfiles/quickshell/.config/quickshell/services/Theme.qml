@@ -442,7 +442,9 @@ Singleton {
     // One open window's slot in the bar's strip, and the hover box's
     // height there and in the tray; slots sit flush, so neighbouring boxes
     // meet
-    readonly property int iconSlotW:    barFs(16) + Math.round((spaceL + spaceS) / 2) * 2
+    readonly property int windowIconSize: Math.min(moduleHeight - 8, barFs(Settings.windowIconSize))
+    readonly property int windowIconPadding: sp(Settings.windowIconPadding)
+    readonly property int iconSlotW:    windowIconSize + windowIconPadding * 2
     readonly property int iconHoverHeight: moduleStyle === "grouped" ? groupHeight - channelWidth * 2
         : moduleTaskbar ? moduleHeight : moduleHeight - 2
     // a tray icon's slot, tighter than a window's

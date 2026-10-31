@@ -24,8 +24,8 @@ ModuleFrame {
     hoverWhole: false
     // the plain icon styles give each icon a wide slot (Theme.iconSlotW),
     // whose room either side would otherwise stack on the chip's own padding
-    padH: Theme.modulePadH - (["icons", "titled", "glide", "lift"].indexOf(Theme.windowStyle) >= 0
-        && !Theme.moduleTaskbar ? Math.floor((Theme.iconSlotW - Theme.barFs(16)) / 2) : 0)
+    padH: Math.max(0, Theme.modulePadH - (["icons", "titled", "glide", "lift"].indexOf(Theme.windowStyle) >= 0
+        && !Theme.moduleTaskbar ? Theme.windowIconPadding : 0))
 
     Item {
         id: strip
@@ -45,8 +45,8 @@ ModuleFrame {
         // marks go toward the screen's edge
         readonly property bool atBottom: Theme.barPosition === "bottom"
         // a full-size icon's top and bottom, centred in the strip
-        readonly property int iconTop: Math.round((Theme.moduleHeight - Theme.barFs(16)) / 2)
-        readonly property int iconBottom: iconTop + Theme.barFs(16)
+        readonly property int iconTop: Math.round((Theme.moduleHeight - Theme.windowIconSize) / 2)
+        readonly property int iconBottom: iconTop + Theme.windowIconSize
         // glide's rail, a pixel clear of the icons on the edge's side
         readonly property int markY: atBottom ? iconBottom + 1 : iconTop - 2
 
@@ -117,11 +117,13 @@ ModuleFrame {
                     readonly property bool notched: glide && multi
                     // room for the rule between workspaces, in "all" scope
                     readonly property int lead: modelData.groupStart ? Theme.spaceS + 1 : 0
-                    readonly property int iconPx: spot && !focused ? Theme.barFs(12)
-                        : lift ? (focused ? Theme.barFs(18) : Theme.barFs(12)) : Theme.barFs(16)
+                    readonly property int smallIconPx: Math.round(Theme.windowIconSize * 0.75)
+                    readonly property int largeIconPx: Math.min(Theme.moduleHeight - 8, Math.round(Theme.windowIconSize * 1.125))
+                    readonly property int iconPx: spot && !focused ? smallIconPx
+                        : lift ? (focused ? largeIconPx : smallIconPx) : Theme.windowIconSize
                     // lift keeps a slot the size of its largest icon, so
                     // focusing a window doesn't shuffle the strip
-                    readonly property int slotW: lift ? Theme.barFs(18) : glyphBox.width
+                    readonly property int slotW: lift ? largeIconPx : glyphBox.width
                     // the icon, the dot or the label, and the title after it
                     readonly property int bodyWidth: dots ? dot.width
                         : indexed ? indexNum.implicitWidth + Theme.spaceS + indexName.width
@@ -129,12 +131,9 @@ ModuleFrame {
                             ? Math.min(titleGap, titleText.width) + titleText.width : 0)
                             + (spotCount.visible ? Theme.spaceS + spotCount.implicitWidth : 0)
                     readonly property int titleGap: spot ? Theme.spaceS : Theme.spaceXs
-                    // spotlight's capsule is fully rounded, so its icon
-                    // sits further in to clear the curve; the plain styles'
-                    // slots are Theme.iconSlotW wide
-                    readonly property int padX: spot ? Theme.spaceS + 2
-                        : tabs || seg || indexed || inset ? Theme.spaceS
-                        : dots ? 1 : slotted ? Theme.spaceL : Math.floor((Theme.iconSlotW - slotW) / 2)
+                    // spotlight's capsule needs extra room for its curve
+                    readonly property int padX: spot ? Theme.windowIconPadding + 2
+                        : dots ? 1 : Theme.windowIconPadding
                     // tabs share a fixed budget, so a crowded workspace shortens
                     // every title rather than pushing into the bar's centre
                     readonly property int tabTitleMax: Math.max(Theme.fit(40), Math.min(Theme.fit(140),

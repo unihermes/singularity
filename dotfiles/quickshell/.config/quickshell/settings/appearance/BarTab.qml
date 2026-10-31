@@ -119,6 +119,9 @@ SettingsTab {
 
     Tiles { key: "windowStyle"; label: "Open windows"; art: winArt; columns: 5 }
 
+    Stepper { label: "Window icon size"; hint: "App icons, capped to fit the bar's height"; key: "windowIconSize"; suffix: "px" }
+    Stepper { label: "Window icon padding"; hint: "Room on each side of an app icon"; key: "windowIconPadding"; suffix: "px" }
+
     SettingsField {
         id: windowsShown
         label: "Windows shown"

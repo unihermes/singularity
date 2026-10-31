@@ -229,6 +229,10 @@ Style: `channel` (frame `channel` in `Styles.js`).
   every workspace and screen, and it never animates, neither the windows
   nor its own fill, whatever the animation settings.
 - Icon-only, by design; no text readouts beside icons, except under Plain.
+- **Open windows** default to 18px app icons with 6px padding each side.
+  Appearance > Bar > Open windows has Window icon size and Window icon
+  padding controls; icons are capped to the bar's height. Lift and
+  Spotlight keep their smaller inactive icons relative to that size.
 - **Plain** (Solid's `plain` option, from a classic text bar): full
   width whatever Bar shape says, and flat, no hairline; the levels (volume, brightness, battery)
   read as "icon 100%" text instead of a fill, a low battery's in the alert
