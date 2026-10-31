@@ -800,10 +800,11 @@ Settings') are laid out the same way.
   module; MUSIC AND TRAY), Panels (POPUPS; LAUNCHER; OVERLAYS; DESKTOP
   WIDGETS), Motion (SPEED; ANIMATIONS: window animation, flyouts open) and
   Type last (SHELL FONT; HEADINGS; APPS: system font, icons, cursor). No status
-  card. Every section shows all its rows (`essentialRows: 0`), its rarely
-  changed ones folded behind an Advanced (n) row at its foot
-  (`SettingsAdvanced`; a search for one opens it); a section of only
-  those (Headings) is that one row. Cut in the same round: Text on the
+  card. Every section shows all its rows (`essentialRows: 0`). Being
+  redone tab by tab (from 2026-10-31), and a redone tab folds nothing
+  behind Advanced; the others still fold their rarely changed rows behind
+  an Advanced (n) row at the section's foot (`SettingsAdvanced`; a search
+  for one opens it), a section of only those (Headings) being that one row. Cut in the same round: Text on the
   accent (Auto decides), Your mark (a mark set before stays on the Mark
   list), Colours from it (Palette does it). Neighbours still go two to a
   line. While anything differs from the baseline, the changes
@@ -811,6 +812,21 @@ Settings') are laid out the same way.
   (`SettingsPage.footer`): "N changed from …", Review (the list opening
   above it, with Undo all and Factory reset), Save as default, Reset. A
   changed field's ● names the value it puts back when hovered.
+- **Colour tab** (picked 2026-10-31, B "palette workshop" for every
+  section): SCHEME is Palette (the look's own or the wallpaper's), Look
+  (its description), the eight looks two to a line (name and the look's
+  greys and accent as a strip, the current one ticked), Shade and
+  Intensity while the wallpaper palette is on, then the palette in use as
+  a ramp: the ten greys, a gap, accent, good and alert, each a tall swatch
+  with its name and hex (a dot on one set apart from the look's own). A
+  click opens that swatch in the editor under it: its hex (Custom accent
+  for the accent), and for the accent the presets (the look's own first,
+  None last), Hue and Lightness; then Level colour. WINDOW BORDERS:
+  Focused border and Unfocused border, each with a swatch of the colour
+  it comes to before its choice (the hex row under it on Custom), then
+  Border width. WALLPAPER: the image's name and the previous, shuffle and
+  next arrows on the heading, every image six to a line, New wallpaper,
+  Fit and Folder.
 - **Live preview (Appearance):** pinned above the rows on every tab, showing
   what that tab changes (`LivePreview.kind`): the bar and a flyout
   (Colour, Type), the whole bar a little larger (Bar), the launcher in its
