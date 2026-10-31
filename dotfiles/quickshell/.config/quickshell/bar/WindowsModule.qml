@@ -22,10 +22,10 @@ ModuleFrame {
     // rectangle with nothing in it
     visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
     hoverWhole: false
-    // the plain icon styles pad each icon by a hair, which would
-    // otherwise stack on the chip's own padding
+    // the plain icon styles give each icon a slot as wide as the tray's,
+    // whose room either side would otherwise stack on the chip's own padding
     padH: Theme.modulePadH - (["icons", "titled", "glide", "lift"].indexOf(Theme.windowStyle) >= 0
-        ? Theme.spaceS / 2 : 0)
+        && !Theme.moduleTaskbar ? Math.floor((Theme.iconSlotW - Theme.barFs(16)) / 2) : 0)
 
     Item {
         id: strip
@@ -56,7 +56,8 @@ ModuleFrame {
             spacing: strip.style === "tabs" || strip.style === "dots" || strip.style === "spotlight"
                     || strip.style === "index" ? Theme.spaceXs
                 : strip.style === "segmented" || strip.style === "inset"
-                    || strip.style === "lift" || Theme.moduleTaskbar ? 0 : Theme.spaceS
+                    || strip.style === "lift" || strip.style === "icons" || strip.style === "titled"
+                    || strip.style === "glide" || Theme.moduleTaskbar ? 0 : Theme.spaceS
 
             Repeater {
                 id: iconRepeater
@@ -129,10 +130,11 @@ ModuleFrame {
                             + (spotCount.visible ? Theme.spaceS + spotCount.implicitWidth : 0)
                     readonly property int titleGap: spot ? Theme.spaceS : Theme.spaceXs
                     // spotlight's capsule is fully rounded, so its icon
-                    // sits further in to clear the curve
+                    // sits further in to clear the curve; the plain styles'
+                    // slots are the tray's width (Theme.iconSlotW)
                     readonly property int padX: spot ? Theme.spaceS + 2
                         : tabs || seg || indexed || inset ? Theme.spaceS
-                        : dots ? 1 : slotted ? Theme.spaceL : Theme.spaceS / 2
+                        : dots ? 1 : slotted ? Theme.spaceL : Math.floor((Theme.iconSlotW - slotW) / 2)
                     // tabs share a fixed budget, so a crowded workspace shortens
                     // every title rather than pushing into the bar's centre
                     readonly property int tabTitleMax: Math.max(Theme.fit(40), Math.min(Theme.fit(140),
@@ -177,16 +179,14 @@ ModuleFrame {
                     // the hover fill under this window, for styles with no
                     // ground of their own (and Flat's focused taskbar slot)
                     Rectangle {
-                        readonly property bool grouped: Theme.moduleStyle === "grouped"
                         visible: (winIcon.hovered || winIcon.slotLit) && !winIcon.tabs && !winIcon.seg && !winIcon.spot
                             && !winIcon.indexed && !winIcon.inset
                             && winIcon.mark !== "ground"
                         x: winIcon.lead
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - winIcon.lead
-                        height: grouped ? Theme.groupHeight - Theme.channelWidth * 2
-                            : Theme.moduleTaskbar ? Theme.moduleHeight : Theme.moduleHeight - 6
-                        radius: grouped ? Theme.radius : Theme.radiusSmall
+                        height: Theme.iconHoverHeight
+                        radius: Theme.moduleStyle === "grouped" ? Theme.radius : Theme.radiusSmall
                         color: Theme.overlay
                         border.width: winIcon.opened ? Theme.borderWidth : 0
                         border.color: Theme.strokeFocus
@@ -291,13 +291,13 @@ ModuleFrame {
                         }
                     }
 
-                    // "ground": a square behind the icon, lit for the
-                    // focused window, a hover fill for the rest
+                    // "ground": the hover box's size behind the icon, lit
+                    // for the focused window, a hover fill for the rest
                     Rectangle {
                         visible: winIcon.mark === "ground"
                         anchors.centerIn: glyphBox
-                        width: glyphBox.width + Theme.spaceS
-                        height: glyphBox.height + Theme.spaceS
+                        width: Theme.iconSlotW
+                        height: Theme.iconHoverHeight
                         radius: Theme.radiusSmall
                         color: winIcon.focused ? Theme.selectedFill
                             : winIcon.hovered && !winIcon.focused ? Theme.overlay : "transparent"

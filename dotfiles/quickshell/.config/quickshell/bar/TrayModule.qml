@@ -21,14 +21,14 @@ ModuleFrame {
     anchors.verticalCenter: parent.verticalCenter
     spacing: 0
     hoverWhole: false
-    // each icon carries half the gap on either side as its own hit and
-    // hover area, so the chip's padding gives that half back
-    padH: Theme.modulePadH - Theme.spaceM / 2
+    // each icon carries the room either side of it as its own hit and
+    // hover area, so the chip's padding gives that back
+    padH: Theme.modulePadH - (slotW - Theme.barFs(16)) / 2
     visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
 
     property bool drawerOpen: false
 
-    readonly property int slotW: Theme.barFs(16) + Theme.spaceM
+    readonly property int slotW: Theme.iconSlotW
 
     // the tray's items in the saved order
     readonly property var ordered: {
@@ -217,16 +217,13 @@ ModuleFrame {
                 }
             }
 
-            // the hover fill under just this icon, sized as a whole
-            // module's hover is
+            // the hover fill under just this icon, the open windows' size
             Rectangle {
-                readonly property bool grouped: Theme.moduleStyle === "grouped"
                 visible: trayIcon.hovered || trayIcon.dragged
                 anchors.centerIn: parent
                 width: parent.width
-                height: grouped ? Theme.groupHeight - Theme.channelWidth * 2
-                    : Theme.moduleTaskbar ? Theme.moduleHeight : Theme.moduleHeight - 6
-                radius: grouped ? Theme.radius : Theme.radiusSmall
+                height: Theme.iconHoverHeight
+                radius: Theme.moduleStyle === "grouped" ? Theme.radius : Theme.radiusSmall
                 color: Theme.overlay
                 border.width: trayIcon.opened || trayIcon.dragged ? Theme.borderWidth : 0
                 border.color: Theme.strokeFocus

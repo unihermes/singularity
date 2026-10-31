@@ -438,6 +438,12 @@ Singleton {
     // chips follow the bar's height, floored so the frame doesn't eat them
     readonly property int moduleHeight: moduleTaskbar ? barHeight : Math.max(18, barHeight - 6)
     readonly property int modulePadH:   sp(Settings.modulePad + (moduleTaskbar ? 4 : 0))
+    // One icon's slot in a strip of them (the tray, the open windows) and
+    // the hover box filling it, the same in both so they line up; slots sit
+    // flush, so neighbouring boxes meet
+    readonly property int iconSlotW:    barFs(16) + Math.round((spaceL + spaceS) / 2) * 2
+    readonly property int iconHoverHeight: moduleStyle === "grouped" ? groupHeight - channelWidth * 2
+        : moduleTaskbar ? moduleHeight : moduleHeight - 2
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare
