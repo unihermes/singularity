@@ -129,6 +129,7 @@ var entries = [
     { page: "appearance", section: "Shape", label: "Style", keywords: "theme frames channel double solid glass flat lined modules windows 10 square taskbar" },
     { page: "appearance", section: "Shape", label: "Roundness", keywords: "rounding corners radius panels windows hyprland bar chips" },
     { page: "appearance", section: "Shape", label: "Bar chips", keywords: "modules frame outline outlined bare strip grouped border chip" },
+    { page: "appearance", section: "Shape", label: "Finish", keywords: "style options touches tint glow lit inner stroke taskbar heavy blur" },
     { page: "appearance", section: "Shape", label: "Plain", keywords: "flat classic bare text bar no frames shadows simple" },
     { page: "appearance", section: "Shape", label: "Shadows", keywords: "drop shadow depth hard soft finish windows" },
     { page: "appearance", section: "Shape", label: "Shaded grounds", keywords: "gradient shading bar panels finish" },

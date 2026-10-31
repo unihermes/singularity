@@ -827,6 +827,21 @@ Settings') are laid out the same way.
   Border width. WALLPAPER: the image's name and the previous, shuffle and
   next arrows on the heading, every image six to a line, New wallpaper,
   Fit and Folder.
+- **Shape tab** (picked 2026-10-31, A "live canvas" for every section):
+  the live preview of two windows on top follows every change. Numbers
+  are sliders with their value at the end (`SlideControl`, via
+  `slider: true` on `Stepper`, `HyprInt`, `HyprPercent`), written when the
+  drag ends; one that doesn't apply rests dimmed rather than hiding (Dim
+  strength without Dim, Blur size and passes without Blur, Window rounding
+  while windows match the shell). STYLE: the style tiles, Roundness, then
+  Finish as a line of toggle chips under its label (the style's own
+  options, the shared Shadows, Shaded grounds and Heavy lines it doesn't
+  already offer, Plain last; one the style can't use rests), Bar chips.
+  SPACE: Density as four tiles drawing a list at each preset (moving a
+  dial off every preset reads Custom), Spacing, Row height, Window gaps,
+  Edge gaps. GLASS: See-through, both opacities, Dim unfocused and Blur
+  as lit On chips, each followed by its sliders. WINDOWS: Window corners,
+  Window rounding, Window shadow, Tab bar, the Window rules row.
 - **Live preview (Appearance):** pinned above the rows on every tab, showing
   what that tab changes (`LivePreview.kind`): the bar and a flyout
   (Colour, Type), the whole bar a little larger (Bar), the launcher in its

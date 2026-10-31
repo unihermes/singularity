@@ -4,7 +4,9 @@
 // Appearance's Shape tab, how everything is drawn and spaced: STYLE (with
 // its finish), SPACE (the shell's and the windows' gaps), GLASS (opacity,
 // dim and blur) and WINDOWS (corners, shadow, the rules a click away).
-// Each section's rarely changed rows fold behind its Advanced.
+// Numbers are sliders, written when the drag ends; a slider that doesn't
+// apply (Dim strength with Dim off) rests rather than hiding. The finish
+// is a line of toggle chips. Nothing folds away.
 
 import Quickshell
 import QtQuick
@@ -17,26 +19,85 @@ SettingsTab {
     id: shapeTab
     tabId: "shape"
 
-    // a row in a two-column grid, and its label's share beside a stepper
-    // or a switch
-    readonly property real half: (width - Theme.spaceXl * 2) / 2
-    readonly property real halfLabel: half - Theme.fit(160) - Theme.spaceL
-    readonly property real switchLabel: half - Theme.switchWidth - Theme.spaceL
-
     FlyoutHeading { text: "STYLE" }
 
     Tiles { key: "style"; label: "Style"; hint: Styles.get(Settings.style).hint; art: styleArt; columns: 5 }
 
     Stepper {
-        label: "Roundness"; key: "radius"; suffix: "px"
+        slider: true
+        label: "Roundness"; key: "radius"; suffix: " px"
         enabled: !Styles.get(Settings.style).square
         hint: !enabled ? Styles.get(Settings.style).name + " keeps every corner square"
             : "Chips, panels, the bar and every window"
     }
 
-    FinishSwitch {
-        label: "Plain"; key: "plain"
-        hint: "Flat over any style: bare chips on a full bar, flyouts flush under it, no shadows or frames round rows"
+    // the shared switches its options don't already stand for
+    readonly property var optionKeys: Styles.get(Settings.style).options.map(o => o.key || "")
+
+    // the finish as a line of toggle chips under its label, lit while on:
+    // the style's own options, then the shared ones it doesn't already
+    // offer, then Plain over any style; a chip the style gives nothing to
+    // do rests
+    SettingsField {
+        label: "Finish"
+        hint: Settings.plain ? "Plain: bare chips, flyouts flush under the bar, no shadows"
+            : Styles.get(Settings.style).name + "'s own touches, then Plain over any style"
+    }
+
+    Flow {
+        width: parent.width
+        spacing: Theme.spaceS
+
+        Repeater {
+            model: Styles.get(Settings.style).options
+
+            FlyoutChip {
+                id: opt
+                required property var modelData
+                readonly property string key: modelData.key || ""
+                readonly property bool on: key === "" ? Theme.opt(modelData.id)
+                    : modelData.value !== undefined ? Settings[key] === modelData.value : !!Settings[key]
+                text: modelData.label
+                icon: on ? "󰄬" : ""
+                selected: on
+                onClicked: {
+                    if (opt.key === "") Settings.setStyleOption(opt.modelData.id, !opt.on)
+                    else if (opt.modelData.value !== undefined) Settings.set(opt.key, opt.on ? Styles.offValue(opt.modelData) : opt.modelData.value)
+                    else Settings.set(opt.key, !opt.on)
+                }
+            }
+        }
+        FlyoutChip {
+            readonly property bool live: Styles.get(Settings.style).shadow !== "none" && !Settings.plain
+            visible: shapeTab.optionKeys.indexOf("shadows") === -1
+            enabled: live
+            text: "Shadows"
+            icon: Settings.shadows && live ? "󰄬" : ""
+            selected: Settings.shadows && live
+            onClicked: Settings.set("shadows", !Settings.shadows)
+        }
+        FlyoutChip {
+            visible: shapeTab.optionKeys.indexOf("gradient") === -1
+            text: "Shaded grounds"
+            icon: Settings.gradient ? "󰄬" : ""
+            selected: Settings.gradient
+            onClicked: Settings.set("gradient", !Settings.gradient)
+        }
+        FlyoutChip {
+            readonly property bool live: Styles.get(Settings.style).lines && !Settings.plain
+            visible: shapeTab.optionKeys.indexOf("heavyLines") === -1
+            enabled: live
+            text: "Heavy lines"
+            icon: Settings.heavyLines && live ? "󰄬" : ""
+            selected: Settings.heavyLines && live
+            onClicked: Settings.set("heavyLines", !Settings.heavyLines)
+        }
+        FlyoutChip {
+            text: "Plain"
+            icon: Settings.plain ? "󰄬" : ""
+            selected: Settings.plain
+            onClicked: Settings.set("plain", !Settings.plain)
+        }
     }
 
     SettingsField {
@@ -46,108 +107,64 @@ SettingsTab {
         Choice { key: "barChips" }
     }
 
-    // the shared switches its options don't already stand for
-    readonly property var optionKeys: Styles.get(Settings.style).options.map(o => o.key || "")
-
-    // the finish: the style's own options first, then the shared switches,
-    // two to a line
-    SettingsAdvanced {
-        Grid {
-            width: parent.width
-            columns: 2
-            columnSpacing: Theme.spaceXl * 2
-
-            Repeater {
-                model: Styles.get(Settings.style).options
-                StyleOption { required property var modelData; option: modelData; width: shapeTab.half; labelWidth: shapeTab.switchLabel }
-            }
-
-            FinishSwitch {
-                width: shapeTab.half; labelWidth: shapeTab.switchLabel
-                visible: shapeTab.optionKeys.indexOf("shadows") === -1
-                label: "Shadows"; key: "shadows"
-                live: Styles.get(Settings.style).shadow !== "none" && !Settings.plain
-                hint: Settings.plain ? "Plain has none" : live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
-            }
-
-            FinishSwitch { width: shapeTab.half; labelWidth: shapeTab.switchLabel; visible: shapeTab.optionKeys.indexOf("gradient") === -1; label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
-
-            FinishSwitch {
-                width: shapeTab.half; labelWidth: shapeTab.switchLabel
-                visible: shapeTab.optionKeys.indexOf("heavyLines") === -1
-                label: "Heavy lines"; key: "heavyLines"
-                live: Styles.get(Settings.style).lines && !Settings.plain
-                hint: Settings.plain ? "Plain keeps hairlines" : live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
-            }
-        }
-    }
-
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SPACE" }
 
-    // a preset for the three dials: Spacing and Row height here, Height on
-    // the Bar tab; the dials only show on Custom (or once one leaves every
-    // preset)
-    property bool customSpace: Settings.density === "custom"
-
-    SettingsField {
-        label: "Density"
-        hint: shapeTab.customSpace ? "Your own: set by the dials"
-            : ({ compact: "Tighter gaps and shorter rows", normal: "The shell as designed",
-                 roomy: "Wider gaps and taller rows" })[Settings.density] || ""
-        Choices {
-            id: densityChoices
-            key: "density"
-            value: shapeTab.customSpace ? "custom" : Settings.density
-        }
-        Connections {
-            target: densityChoices
-            function onPicked(v) { shapeTab.customSpace = v === "custom" }
-        }
+    // a preset for the three dials (Spacing and Row height here, Height on
+    // the Bar tab); moving a dial off every preset reads as Custom
+    Tiles {
+        key: "density"; label: "Density"; art: densityArt; columns: 4
+        tileHeight: Theme.fs(64)
+        hint: ({ compact: "Tighter gaps and shorter rows", normal: "The shell as designed",
+                 roomy: "Wider gaps and taller rows", custom: "Your own, from the dials below" })[Settings.density] || ""
     }
 
-    Stepper { visible: shapeTab.customSpace || page.highlight === "Spacing"; label: "Spacing"; hint: "Every gap and padding"; key: "spacing"; step: 5; suffix: "%" }
-
-    Stepper { visible: shapeTab.customSpace || page.highlight === "Row height"; label: "Row height"; hint: "Lists, fields and chips"; key: "rowScale"; step: 5; suffix: "%" }
-
-    Grid {
-        width: parent.width
-        columns: 2
-        columnSpacing: Theme.spaceXl * 2
-
-        HyprInt { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Window gaps"; note: "Between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
-        Stepper { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Edge gaps"; hint: Theme.barFull ? "Windows to the screen edges" : "The bar and windows to the screen edges"; key: "edgeGap"; suffix: "px" }
+    Stepper { slider: true; label: "Spacing"; hint: "Every gap and padding"; key: "spacing"; step: 5; suffix: "%" }
+    Stepper { slider: true; label: "Row height"; hint: "Lists, fields and chips"; key: "rowScale"; step: 5; suffix: "%" }
+    HyprInt { slider: true; label: "Window gaps"; note: "Between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
+    Stepper {
+        slider: true; label: "Edge gaps"; key: "edgeGap"; suffix: " px"
+        hint: Theme.barFull ? "Windows to the screen edges" : "The bar and windows to the screen edges"
     }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "GLASS" }
 
-    Stepper { label: "See-through"; hint: Theme.glass ? "The bar and panels; Glass adds more" : "The bar and every panel"; key: "seeThrough"; step: 5; suffix: "%" }
+    Stepper { slider: true; label: "See-through"; hint: Theme.glass ? "The bar and panels; Glass adds more" : "The bar and every panel"; key: "seeThrough"; step: 5; suffix: "%" }
+    Stepper { slider: true; label: "Focused opacity"; hint: "The window with focus"; key: "focusedOpacity"; step: 5; suffix: "%" }
+    Stepper { slider: true; label: "Unfocused opacity"; hint: "Every other window"; key: "unfocusedOpacity"; step: 5; suffix: "%" }
 
-    Grid {
-        width: parent.width
-        columns: 2
-        columnSpacing: Theme.spaceXl * 2
-
-        Stepper { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Focused opacity"; key: "focusedOpacity"; step: 5; suffix: "%" }
-        Stepper { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Unfocused opacity"; key: "unfocusedOpacity"; step: 5; suffix: "%" }
-        HyprToggle { width: shapeTab.half; labelWidth: shapeTab.switchLabel; label: "Dim unfocused"; path: ["decoration"]; key: "dim_inactive" }
-        HyprPercent { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Dim strength"; visible: page.hyprField(["decoration"], "dim_inactive").value === true; path: ["decoration"]; key: "dim_strength"; min: 0 }
+    // on/off as a lit chip, a level beside it resting while it's off
+    component HyprChip: FlyoutChip {
+        property var path: []
+        property string key: ""
+        property string what: ""
+        readonly property var field: shapeTab.page.hyprField(path, key)
+        enabled: field.editable
+        text: field.value === true ? "On" : "Off"
+        icon: field.value === true ? "󰄬" : ""
+        selected: field.value === true
+        onClicked: shapeTab.page.setHypr(path, key, field.value !== true, what + (field.value === true ? " off" : " on"))
     }
 
-    HyprToggle { label: "Blur"; note: "Behind translucent windows and layers"; path: ["decoration", "blur"]; key: "enabled" }
-
-    SettingsAdvanced {
-        Grid {
-            visible: page.blurOn
-            width: parent.width
-            columns: 2
-            columnSpacing: Theme.spaceXl * 2
-
-            HyprInt { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Blur size"; note: "Each pass's spread"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20 }
-            HyprInt { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Blur passes"; note: "More is smoother"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
-        }
+    SettingsField {
+        label: "Dim unfocused"
+        hint: "Darken the windows you're not in"
+        HyprChip { anchors.right: parent.right; path: ["decoration"]; key: "dim_inactive"; what: "Dim unfocused" }
     }
+    HyprPercent {
+        slider: true; label: "Dim strength"; path: ["decoration"]; key: "dim_strength"; min: 0
+        enabled: page.hyprField(["decoration"], "dim_inactive").value === true
+        hint: !live ? "Not a plain value in looks.lua" : enabled ? "How dark" : "With Dim unfocused"
+    }
+
+    SettingsField {
+        label: "Blur"
+        hint: "Behind translucent windows and the shell"
+        HyprChip { anchors.right: parent.right; path: ["decoration", "blur"]; key: "enabled"; what: "Blur" }
+    }
+    HyprInt { slider: true; enabled: page.blurOn; label: "Blur size"; note: page.blurOn ? "Each pass's spread" : "With Blur"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20; suffix: "" }
+    HyprInt { slider: true; enabled: page.blurOn; label: "Blur passes"; note: page.blurOn ? "More is smoother" : "With Blur"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "WINDOWS" }
@@ -158,13 +175,23 @@ SettingsTab {
         Choices { key: "windowRounding" }
     }
 
-    Stepper { visible: Settings.windowRounding === "own"; label: "Window rounding"; hint: "Corner radius"; key: "windowRadius"; suffix: "px" }
+    Stepper {
+        slider: true; label: "Window rounding"; key: "windowRadius"; suffix: " px"
+        enabled: Settings.windowRounding === "own"
+        hint: enabled ? "Corner radius" : "With a rounding of their own"
+    }
 
     SettingsField {
         label: "Window shadow"
         hint: Settings.windowShadow === "style" ? (Theme.shadow === "none" ? "The style's: none, or Shadows is off" : "The style's soft shadow")
             : "Under every window"
         Choices { key: "windowShadow" }
+    }
+
+    SettingsField {
+        label: "Tab bar"
+        hint: "Over grouped windows: the open tab's fill"
+        Choices { key: "tabBar" }
     }
 
     FlyoutRow {
@@ -175,11 +202,23 @@ SettingsTab {
         onActivated: shapeTab.page.goTo("windowrules")
     }
 
-    SettingsAdvanced {
-        SettingsField {
-            label: "Tab bar"
-            hint: "Over grouped windows: the open tab's fill"
-            Choices { key: "tabBar" }
+    // Four rows of a list at the preset's gap and height
+    Component {
+        id: densityArt
+        Column {
+            readonly property var d: ({ compact: [2, 5], normal: [4, 6], roomy: [7, 7], custom: [4, 6] })[parent ? parent.value : "normal"] || [4, 6]
+            width: Theme.fs(56)
+            spacing: Theme.fs(d[0])
+            Repeater {
+                model: 4
+                Rectangle {
+                    required property int index
+                    width: parent.width * (index === 3 && parent.parent && parent.parent.value === "custom" ? 0.6 : 1)
+                    height: Theme.fs(parent.d[1])
+                    radius: Theme.pill(height)
+                    color: index === 0 ? Theme.accent : Theme.overlay
+                }
+            }
         }
     }
 

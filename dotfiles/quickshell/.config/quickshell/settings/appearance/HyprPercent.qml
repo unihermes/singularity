@@ -16,13 +16,29 @@ SettingsField {
     property var path: []
     property string key: ""
     property int min: 50
+    // a slider, written when the drag ends, in the stepper's place
+    property bool slider: false
     readonly property var field: page.hyprField(path, key)
     readonly property bool live: field.editable && typeof field.value === "number"
     readonly property int pct: live ? Math.round(field.value * 100) : 100
 
     hint: live ? "" : "Not a plain value in looks.lua"
 
+    SlideControl {
+        visible: hp.slider
+        anchors.left: parent.left
+        anchors.right: parent.right
+        enabled: hp.live
+        value: hp.pct
+        minimum: hp.min
+        maximum: 100
+        step: 5
+        suffix: "%"
+        onCommitted: v => page.setHypr(hp.path, hp.key, v / 100, hp.label + " " + v + "%")
+    }
+
     FlyoutStepper {
+        visible: !hp.slider
         anchors.right: parent.right
         width: Theme.fit(160)
         value: Math.round(hp.pct / 5)
