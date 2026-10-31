@@ -381,9 +381,10 @@ ClippingRectangle {
         return on ? Number(p.hyprField(["decoration"], "dim_strength").value) || 0 : 0
     }
 
-    // a picture: nothing in it takes the pointer
+    // Static previews absorb input; the Bar tab's modules are interactive.
     MouseArea {
         anchors.fill: parent
+        enabled: lp.kind !== "bar"
         acceptedButtons: Qt.AllButtons
         hoverEnabled: true
     }
