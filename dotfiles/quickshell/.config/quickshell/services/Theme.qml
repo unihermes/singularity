@@ -390,7 +390,10 @@ Singleton {
     readonly property string levelStyle: Settings.levelStyle
     // the power menu -- see Looks.js and PowerMenu
     readonly property string powerStyle: Settings.powerStyle
-    readonly property string overviewBackdrop: Settings.overviewBackdrop
+    // behind the full-screen overlays (overview, ALT+Tab, the full
+    // launcher, the power menu's row and list): dimmed, clear or solid
+    readonly property color backdrop: Settings.overviewBackdrop === "solid" ? base
+        : Settings.overviewBackdrop === "clear" ? "transparent" : scrim
     // the workspace overview -- see Looks.js and WorkspaceOverlay
     readonly property string overviewLayout: Settings.overviewLayout
     // the ALT+Tab switcher -- see Looks.js and AltTabSwitcher

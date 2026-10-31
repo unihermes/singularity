@@ -47,7 +47,7 @@ OverlayWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: root.full ? Qt.rgba(Theme.base.r, Theme.base.g, Theme.base.b, 0.92) : Theme.scrim
+        color: root.full ? Qt.rgba(Theme.base.r, Theme.base.g, Theme.base.b, 0.92) : Theme.backdrop
 
         Backdrop {
             onDismissed: root.requestClose()

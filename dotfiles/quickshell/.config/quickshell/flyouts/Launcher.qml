@@ -152,7 +152,7 @@ OverlayWindow {
     Rectangle {
         anchors.fill: parent
         visible: root.full
-        color: Theme.scrim
+        color: Theme.backdrop
     }
 
     Backdrop {

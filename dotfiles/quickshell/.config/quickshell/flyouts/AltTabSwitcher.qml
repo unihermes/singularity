@@ -148,7 +148,7 @@ OverlayWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: Theme.scrim
+        color: Theme.backdrop
     }
 
     // cards wrap once a row would be wider than the screen; the highlighted

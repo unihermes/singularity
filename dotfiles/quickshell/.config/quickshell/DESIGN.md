@@ -135,7 +135,8 @@ Each style also starts the Bar, Panels and Motion tabs its own way (its
 | Launcher | List | | Grid | Grid | |
 | Notification popups | Full | Compact | | Compact | |
 | Window switcher | Icons | With titles | Previews | Previews | Previews |
-| Workspace overview | Grid, dimmed | | | Strip, clear | |
+| Workspace overview | Grid | | | Strip | |
+| Backdrop (overview, ALT+Tab, full launcher, power menu) | Dimmed | | | Clear | |
 | Power menu | Row | List | Full | Full | List |
 | Level popup | Pill | Screen edge | | | Screen edge |
 | Window animation | Pop | Fold | | Zoom | Rise |

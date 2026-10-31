@@ -36,6 +36,12 @@ SettingsTab {
         Choices { key: "levelStyle"; live: !Settings.islandActive }
     }
 
+    SettingsField {
+        label: "Backdrop"
+        hint: "Behind the overview, ALT+Tab, the full launcher and the power menu"
+        Choices { key: "overviewBackdrop" }
+    }
+
     SettingsAdvanced {
         Stepper { label: "Popup width"; key: "notifWidth"; step: 20; suffix: "px" }
 
@@ -45,7 +51,7 @@ SettingsTab {
             columnSpacing: Theme.spaceXl * 2
 
             Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Flyout width"; key: "flyoutWidth"; step: 10; suffix: "%" }
-            Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Overlay dimming"; key: "scrim"; step: 5; suffix: "%" }
+            Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Overlay dimming"; key: "scrim"; step: 5; suffix: "%"; enabled: Settings.overviewBackdrop === "dim" }
         }
     }
 
@@ -106,12 +112,6 @@ SettingsTab {
 
     Tiles { key: "powerStyle"; label: "Power menu"; art: powerArt; columns: 3; tileHeight: Theme.fs(64) }
 
-    SettingsAdvanced {
-        SettingsField {
-            label: "Overview backdrop"
-            Choices { key: "overviewBackdrop" }
-        }
-    }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "DESKTOP WIDGETS" }
