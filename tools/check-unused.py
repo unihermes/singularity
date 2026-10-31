@@ -15,30 +15,30 @@ ALLOW = {
     ("services/HyprBinds.js", "mergeDefaults"): "tools/merge-binds.mjs, run by link.sh",
 }
 
-def main():
-    # tracked and new files alike, so a file not yet added still counts
-    files = subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard",
-                                     "*.qml", "*.js"], cwd=ROOT, text=True).split()
-    files = [f for f in files if os.path.exists(os.path.join(ROOT, f))]
-    src = {f: open(os.path.join(ROOT, f)).read() for f in files}
-    words = collections.Counter(re.findall(r"\w+", re.sub(r"//[^\n]*", "", "\n".join(src.values()))))
+def find_unused(src):
+    text = re.sub(r"//[^\n]*", "", "\n".join(src.values()))
+    words = collections.Counter(re.findall(r"\w+", text))
+    # The same unused declaration in two components is not a reference.
+    declarations = collections.Counter(re.findall(
+        r"^\s*(?:function|signal|(?:readonly\s+)?property\s+[\w<>.]+)\s+(\w+)", text, re.M))
     count = lambda n: words[n]
+    unused = lambda n: count(n) <= declarations[n]
 
     found = []
-    for f in files:
+    for f in src:
         if f.endswith(".qml") and f != "shell.qml":
             name = os.path.basename(f)[:-4]
             if words[name] == 0:
                 found.append((f, name, "file nothing uses"))
         s = src[f]
         for n in re.findall(r"^\s*function\s+(\w+)\s*\(", s, re.M):
-            if not (n.startswith("on") and n[2:3].isupper()) and count(n) <= 1:
+            if not (n.startswith("on") and n[2:3].isupper()) and unused(n):
                 found.append((f, n, "function"))
         for n in re.findall(r"^\s*(?:readonly\s+)?property\s+[\w<>.]+\s+(\w+)", s, re.M):
-            if count(n) <= 1:
+            if unused(n):
                 found.append((f, n, "property"))
         for n in re.findall(r"^\s*signal\s+(\w+)", s, re.M):
-            if count(n) <= 1 and count("on" + n[0].upper() + n[1:]) == 0:
+            if unused(n) and count("on" + n[0].upper() + n[1:]) == 0:
                 found.append((f, n, "signal"))
         # ids only reach their own file; `root` is kept by habit
         bare = re.sub(r"//[^\n]*", "", s)
@@ -46,7 +46,20 @@ def main():
             if n != "root" and len(re.findall(r"\b" + n + r"\b", bare)) <= 1:
                 found.append((f, n, "id"))
 
-    found = [x for x in found if (x[0], x[1]) not in ALLOW]
+    return [x for x in found if (x[0], x[1]) not in ALLOW]
+
+
+def main():
+    # tracked and new files alike, so a file not yet added still counts
+    files = subprocess.check_output(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+                                     "*.qml", "*.js"], cwd=ROOT, text=True).split("\0")
+    src = {}
+    for f in set(files):
+        path = os.path.join(ROOT, f)
+        if f and os.path.isfile(path):
+            with open(path) as stream:
+                src[f] = stream.read()
+    found = sorted(find_unused(src))
     for f, n, kind in found:
         print(f"{f}: {kind} {n} is never read")
     return 1 if found else 0

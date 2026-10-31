@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression checks for compact discovery and pre-commit check selection."""
 import os
+import importlib.util
 from pathlib import Path
 import subprocess
 import sys
@@ -42,6 +43,31 @@ class ContextTests(unittest.TestCase):
                 self.assertNotIn("Traceback", result.stderr)
 
 
+class UnusedTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location('check_unused', ROOT / 'tools/check-unused.py')
+        cls.checker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.checker)
+
+    def test_duplicate_declarations_are_not_reads(self):
+        body = 'Item {\n    function disarmNow() {}\n    property bool obsolete: false\n    signal forgotten()\n}'
+        found = self.checker.find_unused({'shell.qml': 'A {}\nB {}', 'A.qml': body, 'B.qml': body})
+        self.assertEqual({(f, n) for f, n, _ in found},
+                         {(f, n) for f in ('A.qml', 'B.qml') for n in ('disarmNow', 'obsolete', 'forgotten')})
+
+    def test_calls_bindings_handlers_and_inheritance_count(self):
+        sources = {
+            'shell.qml': 'Child {}',
+            'Base.qml': 'Item {\n    function helper() {}\n    property bool ready: true\n    signal changed()\n}',
+            'Child.qml': 'Base {\n    function onCompleted() { helper() }\n    visible: ready\n    onChanged: {}\n}',
+        }
+        self.assertEqual(self.checker.find_unused(sources), [])
+
+    def test_external_entry_points_keep_their_allowance(self):
+        self.assertEqual(self.checker.find_unused({'shell.qml': 'function saveDefault() {}'}), [])
+
+
 class SyntaxTests(unittest.TestCase):
     def test_extensionless_helpers_and_python(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -81,7 +107,7 @@ class HookTests(unittest.TestCase):
             cases = {
                 qs + "settings/appearance/ShapeTab.qml": {"check-settings-index.py", "check-unused.py"},
                 "tools/check-settings-index.py": {"check-settings-index.py", "check-syntax.py"},
-                "tools/check-unused.py": {"check-unused.py", "check-syntax.py"},
+                "tools/check-unused.py": {"check-unused.py", "test-tools.py", "check-syntax.py"},
                 "dotfiles/hypr/.config/hypr/window-keys.lua": {"test-js.mjs", "check-syntax.py"},
                 "lib.sh": {"check-hardware.sh", "check-syntax.py"},
                 "tools/context.py": {"test-tools.py", "check-syntax.py"},

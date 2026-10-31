@@ -38,6 +38,11 @@ size and discovery output are proxies for the context needed to make an edit.
   including extensionless shebang scripts. Both CI and the pre-commit hook run
   it; tests verify malformed extensionless helpers are rejected.
 
+- **Unused code:** removed two uncalled button methods and eight unread service
+  properties, including five write-only system facts and their unused probes.
+  The checker now treats duplicate declarations as declarations rather than
+  references; regression tests preserve inherited calls and external entry points.
+
 ## Remaining priorities
 
 ### 1. Align paths between processes before broad XDG support
@@ -109,7 +114,7 @@ comments, or abstracting every similar QML row just to reduce source length.
 
 ## Validation
 
-All seven project checks passed after the follow-up, including six repository-tool
+All seven project checks passed after the follow-up, including nine repository-tool
 tests and six staging integration tests. The three failure tests also reproduce
 against the original staging script. Shell, Lua and Python syntax checks and
 `git diff --check` passed. Earlier live-shell logs contained repeated tray D-Bus

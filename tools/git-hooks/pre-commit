@@ -56,7 +56,7 @@ if changed '^(packages/|hardware\.sh$|lib\.sh$|install\.sh$|update\.sh$|tools/ch
 fi
 
 # Repository discovery and check selection.
-if changed '^tools/(context|check-syntax|test-tools)\.py$'; then
+if changed '^tools/(context|check-syntax|check-unused|test-tools)\.py$'; then
     python3 tools/test-tools.py
 fi
 
