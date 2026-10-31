@@ -181,7 +181,8 @@ animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowS
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 -- the shell's surfaces blur what's behind (Glass, See-through);
--- ignore_alpha leaves fully transparent parts unblurred
+-- ignore_alpha leaves fully transparent parts unblurred. Overlays on a
+-- display scaled under 1 are "unblurred-..." (OverlayWindow.qml), outside it
 hl.layer_rule({
     name  = "shell-blur",
     match = { namespace = "^(quickshell|singularity-.*)$" },

@@ -1145,11 +1145,12 @@ hl.on("window.fullscreen", keepNewWindowTiled)
 -- focus, and the flyout closing hands focus back to the window before it,
 -- which is raised over the new one. Once the last flyout closes, the new
 -- window is focused and raised instead.
-local FLYOUT_NS = "singularity-flyout"
+-- a flyout's namespace, "unblurred-" before it on a display scaled under 1
+local function isFlyout(ns) return ns and ns:match("singularity%-flyout$") ~= nil end
 local openedUnderFlyout = nil
 local function flyoutUp(except)
     for _, l in ipairs(hl.get_layers()) do
-        if l.namespace == FLYOUT_NS and l.mapped and l.address ~= except then return true end
+        if isFlyout(l.namespace) and l.mapped and l.address ~= except then return true end
     end
     return false
 end
@@ -1157,7 +1158,7 @@ hl.on("window.open", function(win)
     if win and flyoutUp() then openedUnderFlyout = win.address end
 end)
 hl.on("layer.closed", function(layer)
-    if not layer or layer.namespace ~= FLYOUT_NS or not openedUnderFlyout or flyoutUp(layer.address) then return end
+    if not layer or not isFlyout(layer.namespace) or not openedUnderFlyout or flyoutUp(layer.address) then return end
     local addr = "address:" .. openedUnderFlyout
     openedUnderFlyout = nil
     -- next tick, after Hyprland's own refocus

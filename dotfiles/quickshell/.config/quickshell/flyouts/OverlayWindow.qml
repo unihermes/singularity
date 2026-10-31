@@ -7,11 +7,13 @@
 // What each one sets:
 //   scope          the bar's per-screen scope (shell.qml); decides the screen
 //   layerNamespace the layer-shell namespace, which Hyprland's layer rules
-//                  match on
+//                  match on; "unblurred-" goes before it on a display
+//                  scaled under 1
 //   focusMode      a WlrKeyboardFocus value; None unless the surface needs keys
 
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import QtQuick
 
 PanelWindow {
@@ -29,5 +31,10 @@ PanelWindow {
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: focusMode
-    WlrLayershell.namespace: layerNamespace
+    // Hyprland blurs a layer on a display scaled under 1 over only its
+    // pixel size (the top-left 75% at 0.75) until what's under it settles,
+    // so the dim reaches the rest late; there the namespace falls outside
+    // the blur rule (looks.lua)
+    readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
+    WlrLayershell.namespace: (monitor && monitor.scale < 1 ? "unblurred-" : "") + layerNamespace
 }
