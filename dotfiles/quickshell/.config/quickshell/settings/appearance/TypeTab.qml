@@ -1,7 +1,8 @@
 // Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/FontsTab.qml
+// ~/.config/quickshell/settings/appearance/TypeTab.qml
 //
-// The Fonts & Icons page: the shell's font and size (SHELL), then how apps
+// Appearance's Type tab: the shell's font and size (SHELL FONT), how
+// headings are set (HEADINGS, all behind its Advanced), then how apps
 // outside the shell look (APPS): their font, icons (a few shown beside the
 // label) and cursor with its size.
 
@@ -13,10 +14,14 @@ import "../../flyouts"
 import ".."
 
 SettingsTab {
-    id: appsTab
-    tabId: "fonts"
+    id: typeTab
+    tabId: "type"
 
-    FlyoutHeading { text: "SHELL" }
+    // a row in a two-column grid, and its label's share beside a switch
+    readonly property real half: (width - Theme.spaceXl * 2) / 2
+    readonly property real switchLabel: half - Theme.switchWidth - Theme.spaceL
+
+    FlyoutHeading { text: "SHELL FONT" }
 
     // The box shows the font in use, set in itself, and the list sets every
     // installed choice in its own font.
@@ -52,6 +57,75 @@ SettingsTab {
     }
 
     Stepper { label: "Font size"; hint: "Everything else scales with it"; key: "fontSize"; suffix: "px" }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "HEADINGS" }
+
+    // The mark before every heading: a preset, a shape or none; a mark of
+    // its own set before stays on the list
+    readonly property var markNames: ({
+        "//": "//  Slashes", "::": "::  Colons", "»": "»  Guillemet", "❯": "❯  Prompt",
+        ">_": ">_  Terminal", "├─": "├─  Branch", "▸": "▸  Arrow", "•": "•  Dot",
+        "shape-bar": "Accent bar", "shape-brackets": "[ Brackets ]", "shape-tab": "Rule tab",
+        "shape-tag": "Filled tag", "": "None"
+    })
+    readonly property var markChoices: {
+        var keys = Object.keys(markNames)
+        return keys.indexOf(Settings.headingMark) === -1 ? keys.concat([Settings.headingMark]) : keys
+    }
+
+    SettingsAdvanced {
+        SettingsField {
+            label: "Mark"
+            lookKey: "headingMark"
+            hint: "Drawn before every heading, in its colour"
+
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceM
+
+                SettingsDropdown {
+                    width: Theme.fit(160)
+                    model: typeTab.markChoices
+                    maxRows: model.length
+                    labelFor: v => typeTab.markNames[v] || v
+                    current: Settings.headingMark
+                    onPicked: v => Settings.set("headingMark", v)
+                }
+                // the mark's colour
+                Choices { key: "headingMarkColour"; anchors.right: undefined }
+            }
+        }
+
+        // Case, the rule and the size, two to a line
+        Grid {
+            width: parent.width
+            columns: 2
+            columnSpacing: Theme.spaceXl * 2
+
+            SettingsField {
+                width: typeTab.half; labelWidth: typeTab.half / 2
+                label: "Case"
+                lookKey: "headingUpper"
+                FlyoutSegmented {
+                    anchors.right: parent.right
+                    fill: false
+                    model: [{ value: true, text: "VOLUME" }, { value: false, text: "Volume" }]
+                    current: Settings.headingUpper
+                    onPicked: v => Settings.set("headingUpper", v)
+                }
+            }
+
+            FinishSwitch { width: typeTab.half; labelWidth: typeTab.switchLabel; label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
+
+            SettingsField {
+                width: typeTab.half; labelWidth: typeTab.half / 2
+                label: "Heading size"
+                hint: "Relative to body text"
+                Choices { key: "headingSize" }
+            }
+        }
+    }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "APPS" }
@@ -105,7 +179,7 @@ SettingsTab {
     SettingsField {
         label: "Cursor"
         hint: "When apps next open"
-        labelWidth: appsTab.width - cursorControls.width - Theme.spaceL
+        labelWidth: typeTab.width - cursorControls.width - Theme.spaceL
 
         Row {
             id: cursorControls

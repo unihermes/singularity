@@ -11,7 +11,7 @@
 // Every page is laid out in cards (DESIGN.md): `status` (with
 // `statusDetail`, `statusControl`) as a card on top where the page sets
 // one; then framed sections showing their first three rows, the rest under
-// the heading's More.
+// the heading's More (or all of them, with `essentialRows` 0).
 
 import QtQuick
 import "../services"
@@ -37,8 +37,9 @@ Item {
     property string highlight: ""
     readonly property bool isSettingsPage: true
     property bool sectioned: false
-    // the rows a section shows before its More (FlyoutHeading)
-    readonly property int essentialRows: 3
+    // the rows a section shows before its More (FlyoutHeading); 0 shows
+    // them all (Appearance folds its rarely changed rows in SettingsAdvanced)
+    property int essentialRows: 3
     property string status: ""
     property string statusDetail: ""
     property Component statusControl: null
@@ -55,7 +56,8 @@ Item {
     // page points it at the tab showing
     property Item stickyColumn: col
     // where stickyColumn sits in col: a tab, or a tab inside a Loader
-    readonly property point stickyAt: stickyColumn === col ? Qt.point(0, 0)
+    // (none while a tab's Loader swaps it out)
+    readonly property point stickyAt: stickyColumn === col || !stickyColumn.parent ? Qt.point(0, 0)
         : stickyColumn.parent === col ? Qt.point(stickyColumn.x, stickyColumn.y)
         : Qt.point(stickyColumn.x + stickyColumn.parent.x, stickyColumn.y + stickyColumn.parent.y)
 
@@ -169,6 +171,10 @@ Item {
                     }
                     if (p.isFlyoutHeading === true) {
                         p.reveal()
+                        return false
+                    }
+                    if (p.isAdvancedFold === true && !p.open) {
+                        p.open = true
                         return false
                     }
                 }

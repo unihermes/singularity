@@ -1,14 +1,14 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageAppearance.qml
 //
-// The Look pages, one part of the screen each (`part`): Theme, Wallpaper &
-// Desktop, Bar, Panels & Popups, Windows, Fonts & Icons; each a thin
-// SettingsPage<Part>.qml over this. Most open on a preview; while anything
-// differs from the baseline, ChangesBar floats at the page's foot (Review,
-// Save as default, Reset), whose Show opens the page a change is on; a
-// changed field is marked and its mark resets it. Shell settings are
+// Appearance: one page, six tabs by what they change (Colour, Shape,
+// Type, Bar, Panels, Motion), each under a preview of what it changes;
+// every section's rarely changed rows fold behind its Advanced. While
+// anything differs from the baseline, ChangesBar floats at the page's foot
+// (Review, Save as default, Reset), whose Show opens the tab a change is
+// on; a changed field is marked and its mark resets it. Shell settings are
 // Settings.qml (shared with the Control Centre); window settings go to
-// hyprland.json, then a reload. Each part's rows live in appearance/; this
+// hyprland.json, then a reload. Each tab's rows live in appearance/; this
 // keeps what they reach through `page`.
 
 import Quickshell
@@ -23,47 +23,26 @@ import "appearance"
 SettingsPage {
     id: page
 
+    title: "Appearance"
     sectioned: true
+    essentialRows: 0
     footer: ChangesBar {}
     footerVisible: !Settings.lookPristine
-    // theme | wallpaper | bar | panels | windows | fonts
-    property string part: "theme"
-    tab: part
 
-    // the card on top: what the part is set to now
-    status: {
-        switch (part) {
-        case "theme": {
-            var look = Looks.looks[Settings.look]
-            return (look ? look.name : label(Settings.look)) + " · " + label(Settings.style, "style")
-        }
-        case "wallpaper": return Wallpaper.current !== "" ? Wallpaper.current.split("/").pop() : "No wallpaper"
-        case "bar": return label(Settings.barPosition) + " · " + label(Settings.barStyle, "barStyle") + " · " + Settings.barHeight + " px"
-        case "panels": return "Flyouts: " + label(Settings.flyoutAnim, "flyoutAnim") + " · launcher: " + label(Settings.launcherLayout, "launcherLayout")
-        case "windows": return "Gaps " + (hyprField(["general"], "gaps_in").value || 0) + " px · " + label(Settings.windowAnim, "windowAnim") + " animation"
-        case "fonts": return Theme.fontText + " · " + Settings.fontSize + " px"
-        }
-        return ""
+    tabs: [
+        { id: "colour", label: "Colour", icon: "󰏘", file: "ColourTab" },
+        { id: "shape",  label: "Shape",  icon: "󰠲", file: "ShapeTab" },
+        { id: "type",   label: "Type",   icon: "󰛖", file: "TypeTab" },
+        { id: "bar",    label: "Bar",    icon: "󰕰", file: "BarTab" },
+        { id: "panels", label: "Panels", icon: "󰕮", file: "PanelsTab" },
+        { id: "motion", label: "Motion", icon: "󰗘", file: "MotionTab" },
+    ]
+
+    // a small bar, flyout, launcher or windows, drawn by the shell's own
+    // pieces, showing what the tab changes
+    pinned: LivePreview {
+        kind: ({ colour: "flyout", shape: "windows", type: "flyout", bar: "bar", panels: "launcher", motion: "windows" })[page.tab]
     }
-    statusDetail: {
-        switch (part) {
-        case "theme": return "Roundness " + Settings.radius + " px · " + label(Settings.colourMode)
-        case "wallpaper": return Settings.wallpaperShuffle ? "Changes on its own" : "Stays until you change it"
-        case "bar": return "Chips " + label(Settings.barChips, "barChips").toLowerCase() + " · separators " + label(Settings.barSeparator, "barSeparator").toLowerCase()
-        case "panels": return "Switcher: " + label(Settings.altTabStyle, "altTabStyle") + " · popups: " + label(Settings.notifStyle, "notifStyle")
-        case "windows": return "Corners " + (Settings.windowRounding === "own" ? Settings.windowRadius + " px" : "as the shell's")
-        case "fonts": return "Apps: " + label(Settings.systemFontFamily) + " · " + Settings.iconTheme + " · " + Settings.cursorTheme
-        }
-        return ""
-    }
-
-    // a small bar, flyout or windows, drawn by the shell's own pieces, above
-    // the parts whose settings change how they look
-    pinned: LivePreview { kind: ({ bar: "bar", panels: "launcher", windows: "windows" })[page.part] || "flyout" }
-    pinnedVisible: page.part !== "wallpaper"
-
-    title: ({ theme: "Theme", wallpaper: "Wallpaper & Desktop", bar: "Bar", panels: "Panels & Popups",
-              windows: "Windows", fonts: "Fonts & Icons" })[part]
 
     stickyColumn: rows.item || rows
 
@@ -120,13 +99,20 @@ SettingsPage {
         return page.label(v, k)
     }
 
-    // the part's rows
+    // the tab showing's rows, built when it's picked
     Loader {
         id: rows
         width: parent ? parent.width : 0
-        Component.onCompleted: setSource("appearance/" + ({ theme: "ThemeTab", wallpaper: "WallpaperTab", bar: "BarTab",
-            panels: "PanelsTab", windows: "WindowsTab", fonts: "FontsTab" })[page.part] + ".qml", { page: page })
+        property string shown: ""
+        function load() {
+            var t = page.tabs.find(x => x.id === page.tab)
+            if (!t || shown === t.id) return
+            shown = t.id
+            setSource("appearance/" + t.file + ".qml", { page: page })
+        }
+        Component.onCompleted: load()
     }
+    onTabChanged: rows.load()
 
     // --- windows: looks.lua, and hyprland.json over it ------------------------
 

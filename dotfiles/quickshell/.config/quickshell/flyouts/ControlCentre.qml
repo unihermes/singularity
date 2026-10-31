@@ -469,7 +469,7 @@ FlyoutPanel {
                 width: widgetChips.cell
                 icon: "󰒓"
                 text: "Settings"
-                onClicked: scope.openSettings("appearance")
+                onClicked: scope.openSettings("appearance/panels")
             }
         }
     }
@@ -709,7 +709,7 @@ FlyoutPanel {
                 width: (wayOut.width - wayOut.spacing) / 2
                 icon: "󰒓"
                 text: "Settings"
-                onClicked: scope.openSettings("appearance")
+                onClicked: scope.openSettings("appearance/colour")
             }
         }
     }

@@ -1,8 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/appearance/BarTab.qml
 //
-// The Appearance page's Bar tab: BAR (where it sits, its shape and size,
-// then the layout of its modules), then MODULES, a subhead per module.
+// Appearance's Bar tab: BAR (where it sits, its shape and size, then the
+// layout of its modules), MODULES (a subhead per module) and MUSIC AND
+// TRAY. Each section's rarely changed rows fold behind its Advanced.
 
 import Quickshell
 import QtQuick
@@ -36,10 +37,6 @@ SettingsTab {
 
     Stepper { label: "Height"; key: "barHeight"; step: 2; suffix: "px" }
 
-    Stepper { label: "Icon size"; hint: "The bar's glyphs, at the base font size"; key: "barIconSize"; suffix: "px" }
-
-    Stepper { label: "Module padding"; key: "modulePad"; suffix: "px" }
-
     SettingsField {
         label: "Chips"
         hint: Settings.barChips === "auto" ? "Framed as the style draws them"
@@ -57,20 +54,6 @@ SettingsTab {
 
     BarZones {}
 
-    // The centre module pinned to the bar's exact middle, the rest of the
-    // centre stacking outward from it; none centres the whole group
-    SettingsField {
-        label: "Centre anchor"
-        hint: "The module that stays dead centre"
-        SettingsDropdown {
-            anchors.right: parent.right
-            model: [""].concat(Settings.widgetOrder("centre").filter(k => Settings.widgetVisible(k)))
-            current: Settings.centreAnchor
-            labelFor: v => v === "" ? "None" : (Settings.widgetMeta[v] || { label: v }).label
-            onPicked: v => Settings.setCentreAnchor(v)
-        }
-    }
-
     SettingsField {
         label: "Bar widgets"
         FlyoutChip {
@@ -79,6 +62,26 @@ SettingsTab {
             confirmText: "Reset?"
             enabled: !Settings.widgetsDefault
             onClicked: Settings.resetWidgets()
+        }
+    }
+
+    SettingsAdvanced {
+        Stepper { label: "Icon size"; hint: "The bar's glyphs, at the base font size"; key: "barIconSize"; suffix: "px" }
+
+        Stepper { label: "Module padding"; key: "modulePad"; suffix: "px" }
+
+        // The centre module pinned to the bar's exact middle, the rest of the
+        // centre stacking outward from it; none centres the whole group
+        SettingsField {
+            label: "Centre anchor"
+            hint: "The module that stays dead centre"
+            SettingsDropdown {
+                anchors.right: parent.right
+                model: [""].concat(Settings.widgetOrder("centre").filter(k => Settings.widgetVisible(k)))
+                current: Settings.centreAnchor
+                labelFor: v => v === "" ? "None" : (Settings.widgetMeta[v] || { label: v }).label
+                onPicked: v => Settings.setCentreAnchor(v)
+            }
         }
     }
 
@@ -165,25 +168,28 @@ SettingsTab {
         }
     }
 
-    SettingsField {
-        label: "Clock island"
-        lookKey: "clockIsland"
-        hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar"
-            : Settings.clockIsland ? "Volume and layout show in the clock"
-            : "Separate toasts under the bar"
-
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.clockIsland
-            onToggled: Settings.setClockIsland(!Settings.clockIsland)
-        }
-    }
-
     SettingsSubhead { caption: "CONTROL CENTRE" }
 
     Tiles { key: "controlIcon"; label: "Control Centre icon"; art: iconArt; columns: 6; tileHeight: Theme.fs(58) }
 
-    SettingsSubhead { caption: "MUSIC AND TRAY" }
+    SettingsAdvanced {
+        SettingsField {
+            label: "Clock island"
+            lookKey: "clockIsland"
+            hint: !Settings.widgetVisible("clock") ? "Needs the clock on the bar"
+                : Settings.clockIsland ? "Volume and layout show in the clock"
+                : "Separate toasts under the bar"
+
+            Switch {
+                anchors.right: parent.right
+                checked: Settings.clockIsland
+                onToggled: Settings.setClockIsland(!Settings.clockIsland)
+            }
+        }
+    }
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "MUSIC AND TRAY" }
 
     SettingsField {
         label: "Music visualizer"
@@ -210,20 +216,6 @@ SettingsTab {
     }
 
     Tiles { key: "vizStyle"; label: "Visualizer"; hint: "The audio spectrum while sound plays"; art: vizArt }
-
-    Stepper { label: "Visualizer bars"; key: "vizBars" }
-
-    SettingsField {
-        label: "Hide when silent"
-        hint: Settings.vizHideSilent ? "The Music module shows only while sound plays"
-            : "The Music module stays while a player is open"
-
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.vizHideSilent
-            onToggled: Settings.set("vizHideSilent", !Settings.vizHideSilent)
-        }
-    }
 
     SettingsField {
         label: "Tray drawer"
@@ -258,6 +250,22 @@ SettingsTab {
                     text: modelData
                     onClicked: Settings.setTrayHidden(modelData, false)
                 }
+            }
+        }
+    }
+
+    SettingsAdvanced {
+        Stepper { label: "Visualizer bars"; key: "vizBars" }
+
+        SettingsField {
+            label: "Hide when silent"
+            hint: Settings.vizHideSilent ? "The Music module shows only while sound plays"
+                : "The Music module stays while a player is open"
+
+            Switch {
+                anchors.right: parent.right
+                checked: Settings.vizHideSilent
+                onToggled: Settings.set("vizHideSilent", !Settings.vizHideSilent)
             }
         }
     }

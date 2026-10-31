@@ -23,7 +23,7 @@ status colours, the headings, the bar's height, icons and padding, and the
 windows' borders, corners and shadow.
 
 **Each style has three options of its own** (`options` in Styles.js), shown
-first under Finish on the Theme tab. An option either stands for one of the
+first under Advanced in Shape › Style. An option either stands for one of the
 shared Finish settings (`key`), or is an id in `Settings.styleOptions`, read
 with `Theme.opt(id)`. Picking a style sets them all (`Styles.finish`); a look
 can state its own `styleOptions`.
@@ -509,13 +509,13 @@ look of their own, the same under every style and look (asked for
 2026-10-24): a square card (no rounding, like conky) with a hard hairline
 edge round an evenly see-through dark ground (35%), no gradient, no blur
 (`desktop/WidgetCard.qml`); the content in white and bold with a tight
-dark shadow round every mark, the system font (Appearance > Apps, else
+dark shadow round every mark, the system font (Appearance > Type, else
 the shell's), nothing under 13px, dimmed and faint tiers kept strong, the
 accent lifted. A feathered shade
 with no edge and a top-to-bottom fade were tried and dropped. Each is its own
 surface on the layer under the windows (`desktop/DesktopWidgets.qml`),
 named outside the shell's blur rule. Off until turned on in Appearance >
-Desktop > Widgets.
+Panels > Desktop Widgets.
 
 - **Type** (`WidgetCard`): past each widget's one large figure (the time,
   the temperature, the uptime) three sizes, caption 13, body 14, title 16,
@@ -556,7 +556,7 @@ Desktop > Widgets.
 - **Music:** the art (dimmed while paused), the player in the accent, the
   track, a thin progress line (click to seek) and bare transport glyphs;
   with no player it says Nothing playing and offers the last one.
-- **Sidebar** (`desktop/DesktopSidebar.qml`, Appearance > Desktop >
+- **Sidebar** (`desktop/DesktopSidebar.qml`, Appearance > Panels >
   Sidebar): a conky-style column flush with the primary display's right
   edge, from the bar to the foot, on a see-through dark ground (50%) with a
   hairline on its left; the same white ink and shadow, the shell's font,
@@ -619,12 +619,13 @@ Settings') are laid out the same way.
 - **Settings' structure** (picked 2026-10-30, round one A): no Home. One
   flat sidebar of short pages under headings (Connections, Device, Look,
   Apps, System), the search box at its top; it opens on the last page used
-  (Network the first time). Appearance is six Look pages (Theme, Wallpaper
-  & Desktop, Bar, Panels & Popups, Windows, Fonts & Icons), each a part of
-  `SettingsPageAppearance`; Window Rules is a sub-page of Windows (its row
-  under RULES; the sidebar keeps Windows lit, the title reads "Windows ›
-  Window Rules", the name or Escape goes back); the lid is on Battery &
-  Idle. Old page names still open (`aliases`: appearance → Theme).
+  (Network the first time). Appearance is one page with six tabs
+  (2026-10-30, below); Window Rules is a sub-page of it (its row under
+  Shape › WINDOWS; the sidebar keeps Appearance lit, the title reads
+  "Appearance › Window Rules", the name or Escape goes back); the lid is
+  on Battery & Idle. Old page names still open (`aliases`: theme, bar, …
+  → appearance and the tab now holding them; `open("appearance/bar")`
+  opens a tab).
 - **System's Home** (picked 2026-10-18): System opens on Home, one pane
   with no sidebar: every page as a full-width tile (`WindowHome`,
   `HomeRow`) in a centred column (`fit(760)`), under group headings, each
@@ -643,8 +644,8 @@ Settings') are laid out the same way.
 - **Page layout** (2026-10-30: every page, after a per-page mix was
   tried and dropped): cards. A card on top says what the page is set to
   now where the page has one worth saying (`status`, `statusDetail`,
-  `statusControl`: the Look pages and Lock Screen; a lone "Off" was tried
-  and dropped), then framed sections
+  `statusControl`: Lock Screen; a lone "Off" was tried and dropped, and
+  Appearance's was dropped with its tabs), then framed sections
   showing their first three rows; the rest fold away behind More (n) at
   the heading's rule end (Less folds them again). A search hit in the
   folded rows brings them back.
@@ -667,36 +668,32 @@ Settings') are laid out the same way.
 - **Hints:** one line, eliding if needed. Write them short, at most about 42
   characters ("Frames, chips and dividers"), with no lists of every choice.
   The label column is wider (`fit(320)`).
-- **Appearance's tabs** (settled 2026-10-16, picks 1B…20A): Theme (four
-  sections, picked 2026-10-18: Look with Style and Space under subheads,
-  Space's two dials only on Custom; Shape with Finish, its switches two to
-  a line; Colour with Accent and Status, Good and Alert as two swatches on
-  one row, a click opening that one's hex; Text with Headings, the mark and
-  its colour on one row, Case, rule and size two to a line), Bar
-  (two sections, picked 2026-10-18: BAR with its position, shape and size,
-  then the layout zones, Centre anchor and Reset layout under a LAYOUT
-  subhead; MODULES with a subhead per module, its drawn tiles open),
-  Panels (three sections, picked 2026-10-18: POPUPS with flyouts, then
-  notifications and the level popup under subheads; LAUNCHER; OVERLAYS;
-  neighbouring steppers and switches two to a line), Desktop (four
-  sections, picked 2026-10-18: WALLPAPER with the current image's thumbnail
-  beside its name, the six in one row, Folder and Colours from it two to a
-  line; WINDOWS with gaps, borders, corners, shadow and tab bar; EFFECTS
-  with opacity, dim and blur; MOTION with the three per-part speeds folded
-  behind a "Per-part speeds…" row and the animation tiles four across;
-  neighbours two to a line) and Apps (one section, picked 2026-10-18:
-  System font; Icons with a few of the theme's icons on the label's line
-  (`SettingsField.labelExtras`); Cursor with its size stepper beside the
-  dropdown; terminal opacity lives on the Terminal page only). While anything differs from the baseline, the changes
+- **Appearance's tabs** (picked 2026-10-30: tabs C, strip A, preview A,
+  sections B): one page, the tabs grouped by what they change, in the
+  segmented strip under the page's name. Colour (SCHEME: look, palette,
+  shade; ACCENT; WINDOW BORDERS; WALLPAPER), Shape (STYLE with the finish;
+  SPACE: density and the shell's and windows' gaps; GLASS: see-through,
+  window opacity, dim, blur; WINDOWS: corners, shadow, the Window Rules
+  row), Type (SHELL FONT; HEADINGS; APPS: system font, icons, cursor), Bar
+  (BAR with the layout zones; MODULES with a subhead per module; MUSIC
+  AND TRAY), Panels (POPUPS; LAUNCHER; OVERLAYS; DESKTOP WIDGETS) and
+  Motion (SPEED; ANIMATIONS: window animation, flyouts open). No status
+  card. Every section shows all its rows (`essentialRows: 0`), its rarely
+  changed ones folded behind an Advanced (n) row at its foot
+  (`SettingsAdvanced`; a search for one opens it); a section of only
+  those (Headings) is that one row. Cut in the same round: Text on the
+  accent (Auto decides), Your mark (a mark set before stays on the Mark
+  list), Colours from it (Palette does it). Neighbours still go two to a
+  line. While anything differs from the baseline, the changes
   bar (`ChangesBar`, picked 2026-10-18) floats at the page's foot
   (`SettingsPage.footer`): "N changed from …", Review (the list opening
   above it, with Undo all and Factory reset), Save as default, Reset. A
   changed field's ● names the value it puts back when hovered.
 - **Live preview (Appearance):** pinned above the rows on every tab, showing
-  what that tab changes (`LivePreview.kind`): the bar and a flyout (Theme,
-  Apps), the whole bar a little larger (Bar), the launcher in its layout
-  (Panels), two windows with their borders, corners, opacity and dimming
-  (Desktop). Built from the real components (`ModuleFrame`, `PanelFrame`,
+  what that tab changes (`LivePreview.kind`): the bar and a flyout
+  (Colour, Type), the whole bar a little larger (Bar), the launcher in its
+  layout (Panels), two windows with their borders, corners, opacity and
+  dimming (Shape, Motion). Built from the real components (`ModuleFrame`, `PanelFrame`,
   `FlyoutHeading`, `Slider`, …) over the wallpaper, so it follows every
   setting and can't drift from the shell.
 - **Bar layout on the Bar tab** (`BarZones`): Left, Centre and Right as
@@ -927,7 +924,7 @@ Settings') are laid out the same way.
   to 1 h, then Never, which comments its block out of hypridle.conf with
   `#~ `). Suspend on battery and plugged in share one Suspend row, a
   battery and a plug mark before their two dropdowns.
-- **Look tiles** open the Theme tab: each look drawn in its own colours
+- **Look tiles** open the Colour tab: each look drawn in its own colours
   (panel, bar, text, hint and accent pill), its description as the hint.
   The changes strip alone shows what's changed.
 - **Each style keeps its own saved default** (`userDefaults`, by style):
@@ -1008,8 +1005,8 @@ Laid out like the sectioned Settings pages (`SystemPage`).
 
 - Bold spaced caps, value in white (`VOLUME  45%`).
 - An accent `//` before each one, drawn a little lighter than the accent
-  (`Settings.headingMark`). Appearance › Theme › Mark offers `//`, `::`, `»`,
-  `❯`, `>_`, `├─`, `▸`, `•`, none or your own, and four shapes in place of a
+  (`Settings.headingMark`). Appearance › Type › Mark offers `//`, `::`, `»`,
+  `❯`, `>_`, `├─`, `▸`, `•`, none (or one set before), and four shapes in place of a
   mark (`shape-*`, `Theme.headingShape`): an accent bar, the label in
   brackets, the label in a notch of the rule, the label on an accent pill.
 - A line from the end of the heading to the right edge (`headingRule`).

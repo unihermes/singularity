@@ -48,6 +48,6 @@ FlyoutPanel {
     FlyoutRow {
         leadingIcon: "󰒓"
         label: "Desktop settings"
-        onActivated: menu.scope.openSettings("appearance")
+        onActivated: menu.scope.openSettings("appearance/colour")
     }
 }

@@ -39,11 +39,16 @@ FloatingWindow {
     implicitWidth: Theme.windowSize.width
     implicitHeight: Theme.windowSize.height
 
-    // pages that moved or split keep their old names working
-    readonly property var aliases: ({ appearance: "theme", lockscreen: "lockscreen" })
-    // an unknown or empty page opens the last one
+    // pages that moved or merged keep their old names working, the six
+    // Look pages as Appearance's tabs
+    readonly property var aliases: ({ theme: "appearance/colour", wallpaper: "appearance/colour",
+                                      bar: "appearance/bar", panels: "appearance/panels",
+                                      windows: "appearance/shape", fonts: "appearance/type" })
+    // an unknown or empty page opens the last one; "page/tab" opens a tab
     function open(page) {
-        page = aliases[page] || page
+        var parts = (aliases[page] || page).split("/")
+        page = parts[0]
+        if (parts.length > 1) showTab(page, parts[1])
         if (pages.some(p => p.id === page)) currentPage = page
         highlight = ""
         searchBar.text = ""
@@ -51,6 +56,18 @@ FloatingWindow {
         Qt.callLater(() => nav.reveal(navCurrent))
     }
     function close() { visible = false }
+
+    // the tab a tabbed page opens on: remembered for when it's built, and
+    // shown now if it's open
+    function showTab(pageId, tabId) {
+        var pg = pages.find(p => p.id === pageId)
+        if (!pg) return
+        var t = {}
+        for (var k in pane.pageTabs) t[k] = pane.pageTabs[k]
+        t[pg.label] = tabId
+        pane.pageTabs = t
+        if (currentPage === pageId && pane.item && pane.item.tabs.some(x => x.id === tabId)) pane.item.tab = tabId
+    }
 
     // the compositor closing it has to clear visible, or the next open()
     // would be a no-op
@@ -62,12 +79,12 @@ FloatingWindow {
     readonly property var groups: [
         { heading: "Connections", ids: ["network", "bluetooth", "vpn"] },
         { heading: "Device",      ids: ["display", "audio", "input", "devices", "power", "recording"] },
-        { heading: "Look",        ids: ["theme", "wallpaper", "bar", "panels", "windows", "fonts", "lockscreen", "notifications"] },
+        { heading: "Look",        ids: ["appearance", "lockscreen", "notifications"] },
         { heading: "Apps",        ids: ["autostart", "filetypes", "shell", "keybinds"] },
         { heading: "System",      ids: ["datetime", "updates"] },
     ]
     // pages reached from another page, with the sidebar showing that one
-    readonly property var subpages: ({ windowrules: "windows" })
+    readonly property var subpages: ({ windowrules: "appearance" })
     readonly property string navCurrent: subpages[currentPage] || currentPage
     readonly property var pages: [
         { id: "network",       label: "Network",       icon: "󰤨", blurb: "Wi-Fi and the link",               source: "../settings/SettingsPageNetwork.qml" },
@@ -79,12 +96,7 @@ FloatingWindow {
         { id: "devices",       label: "Devices",       icon: "󰾰", blurb: "Phone, headset, USB and drives",    source: "../settings/SettingsPageDevices.qml" },
         { id: "power",         label: "Battery & Idle", icon: "󰂄", blurb: "Profile, idle, sleep and the lid", source: "../settings/SettingsPagePower.qml" },
         { id: "recording",     label: "Recording",     icon: "󰑋", blurb: "Screen and instant replay",         source: "../settings/SettingsPageRecording.qml" },
-        { id: "theme",         label: "Theme",         icon: "󰏘", blurb: "Look, colour and shape",            source: "../settings/SettingsPageTheme.qml" },
-        { id: "wallpaper",     label: "Wallpaper & Desktop", icon: "󰸉", blurb: "Wallpaper and widgets",       source: "../settings/SettingsPageWallpaper.qml" },
-        { id: "bar",           label: "Bar",           icon: "󰕰", blurb: "Shape, modules and tray",           source: "../settings/SettingsPageBar.qml" },
-        { id: "panels",        label: "Panels & Popups", icon: "󰕮", blurb: "Flyouts, launcher and switchers", source: "../settings/SettingsPagePanels.qml" },
-        { id: "windows",       label: "Windows",       icon: "󰖲", blurb: "Gaps, borders, motion and rules",   source: "../settings/SettingsPageWindows.qml" },
-        { id: "fonts",         label: "Fonts & Icons", icon: "󰛖", blurb: "Shell and app fonts, icons, cursor", source: "../settings/SettingsPageFonts.qml" },
+        { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Colour, shape, type, bar, panels, motion", source: "../settings/SettingsPageAppearance.qml" },
         { id: "lockscreen",    label: "Lock Screen",   icon: "󰌾", blurb: "Look and unlocking",                source: "../settings/SettingsPageLockScreen.qml" },
         { id: "notifications", label: "Notifications", icon: "󰂚", blurb: "Do Not Disturb, popups",            source: "../settings/SettingsPageNotifications.qml" },
         { id: "windowrules",   label: "Window Rules",  icon: "󰖲", blurb: "App rules and layouts",             source: "../settings/SettingsPageWindowRules.qml" },
@@ -124,7 +136,7 @@ FloatingWindow {
             var c = PpdProfile.choices.find(c => c.value === PpdProfile.profile)
             return { text: [c ? c.text : "", Battery.present ? Battery.percent + "%" : ""].filter(t => t).join(" · ") }
         }
-        case "theme": {
+        case "appearance": {
             var look = Looks.looks[Settings.look], style = Styles.get(Settings.style)
             return { text: [look ? look.name : Settings.look, style ? style.name : ""].filter(t => t).join(" · ") }
         }
@@ -222,6 +234,8 @@ FloatingWindow {
     // opens the result's page and hands it the setting (highlight first, so
     // a fresh page has it on load)
     function reveal(entry) {
+        // on a tabbed page, the tab named by the entry's section
+        showTab(entry.page, entry.section.toLowerCase())
         highlight = entry.label
         if (currentPage === entry.page) {
             if (pane.item) pane.item.highlight = ""
@@ -453,10 +467,9 @@ FloatingWindow {
             Connections {
                 target: pane.item
                 function onGoTo(pageId) { root.select(pageId) }
-                // a Look page's changed setting, wherever it is
+                // a changed Appearance setting, on whichever tab
                 function onShowSetting(label) {
-                    var e = root.index.find(x => !x.isPage && x.label === label
-                        && ["theme", "wallpaper", "bar", "panels", "windows", "fonts"].indexOf(x.page) !== -1)
+                    var e = root.index.find(x => !x.isPage && x.label === label && x.page === "appearance")
                     if (e) root.reveal(e)
                 }
             }

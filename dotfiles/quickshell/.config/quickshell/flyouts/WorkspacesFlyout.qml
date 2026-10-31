@@ -207,7 +207,7 @@ FlyoutPanel {
         ]
         onPicked: act => {
             if (act === "settings") {
-                panel.scope.openSettings("appearance")
+                panel.scope.openSettings("appearance/bar")
                 return
             }
             panel.requestClose()

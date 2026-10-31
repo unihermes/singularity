@@ -284,6 +284,6 @@ FlyoutPanel {
 
     FlyoutChipLine {
         chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: mediaFlyout.scope.openSettings("appearance")
+        onPicked: mediaFlyout.scope.openSettings("appearance/bar")
     }
 }
