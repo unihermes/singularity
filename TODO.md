@@ -8,7 +8,7 @@ Delete this file once every item is done.
     windows (menus, dialogs, scaling, focus, drag and drop under XWayland).
 
 Design review ideas (from other shells and desktops, 2026-10-31; mock up before building).
-My picks: 20, 15+16, 21.
+My picks: 20, 15+16, 21 (mockups: https://claude.ai/artifact/SWxzBmRf4CRi7Yn1Ybbuxi).
 
 15. Control Centre: volume and brightness as full-fill slider rows under the card
     (macOS, GNOME, Windows all lead with them).
