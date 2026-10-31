@@ -283,6 +283,13 @@ the shell, into `~/.local/state/singularity/`:
 
 ### Your settings
 
+For terminal Codex completion notifications with the ChatGPT icon, set the
+top-level `notify` command in `~/.codex/config.toml` to
+`["python3", "/absolute/path/to/your/home/.config/singularity/codex-notify.py"]`.
+Under `[tui]`, set `notifications = ["approval-requested"]` to keep approval
+alerts without duplicate completion popups. Restart Codex after changing it.
+The helper uses the `chatgpt` icon installed by the ChatGPT desktop app.
+
 The repo is the stock setup, the same for everyone who clones it. Nothing
 you change on a machine, through Settings or by hand in the places below,
 ever shows up in `git status`, so `update.sh` always pulls cleanly and your
