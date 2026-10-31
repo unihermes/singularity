@@ -18,7 +18,7 @@
 #
 # SINGULARITY_SETTINGS is the path of appearance.json; the service passes it.
 
-set -uo pipefail
+set -euo pipefail
 
 state="${XDG_CACHE_HOME:-$HOME/.cache}/singularity/ai-desktop"
 work="$state/work"
@@ -31,8 +31,7 @@ repo=$(git -C "$(dirname "$(readlink -f "$HOME/.config/quickshell/shell.qml")")"
 g() { git --git-dir="$snap" --work-tree="$work" "$@"; }
 
 snapshot() {
-    g add -A >/dev/null 2>&1
-    g write-tree
+    g add -A >/dev/null 2>&1 && g write-tree
 }
 
 start() {
@@ -90,8 +89,7 @@ case "${1:-}" in
         if [ -z "$patch$live" ]; then
             notify "Nothing to apply"; rm -rf "$state"; exit 0
         fi
-        # both checked before either is written, so a failure leaves
-        # everything as it was rather than half-applied
+        # Validate both before writing; retain the staging copy if a write fails.
         if [ -n "$patch" ] && ! printf '%s\n' "$patch" | git -C "$repo" apply --check 2>"$state/err"; then
             notify -u critical "Couldn't apply Claude's changes" "$(head -c 300 "$state/err")"
             exit 1
@@ -104,9 +102,14 @@ case "${1:-}" in
                 exit 1
             fi
         fi
-        [ -n "$patch" ] && printf '%s\n' "$patch" | git -C "$repo" apply
+        if [ -n "$patch" ]; then
+            printf '%s\n' "$patch" | git -C "$repo" apply
+        fi
         # a rename, so the shell's watcher never reads a half-written file
-        [ -n "$live" ] && cp "$state/settings.new" "$settings.claude-tmp" && mv "$settings.claude-tmp" "$settings"
+        if [ -n "$live" ]; then
+            cp "$state/settings.new" "$settings.claude-tmp"
+            mv "$settings.claude-tmp" "$settings"
+        fi
         n=$(g diff --name-only "$base" "$cur" | wc -l)
         notify "Claude's changes applied" "$n file(s) changed. Revert with git in $repo."
         rm -rf "$state"

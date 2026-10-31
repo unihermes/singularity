@@ -18,7 +18,7 @@ size and discovery output are proxies for the context needed to make an edit.
   checks. The staged file list is read once, without `git | grep -q` pipelines
   whose early reader exit could produce SIGPIPE under `pipefail`.
 - **CI drift:** hardware consistency and repository-tool tests now run in CI.
-  README and CLAUDE check lists describe the same five checks.
+  README and CLAUDE check lists describe the same checks.
 - **Unhelpful large outlines:** `tools/context.py --match REGEX` filters before
   limiting output. `qs/services/Settings.qml --match function` skips hundreds
   of property declarations. Markdown outlines expose DESIGN.md's sections
@@ -29,21 +29,21 @@ size and discovery output are proxies for the context needed to make an edit.
   complete failures before cleanup, avoiding concurrent commits overwriting
   each other's diagnostics.
 
+- **Desktop staging:** the QML working directory now honors `XDG_CACHE_HOME`,
+  matching the helper. Snapshot/apply/write failures stop the helper and retain
+  staged work; preparation failures appear in the transcript. Six integration
+  tests cover custom/default cache paths, merging, conflicts, and failed writes.
+
 ## Remaining priorities
 
 ### 1. Align paths between processes before broad XDG support
 
-`qs/services/Ai.qml` sets `desktopSession.cwd` to
-`$HOME/.cache/singularity/ai-desktop/work`, but `qs/scripts/ai-desktop.sh` creates
-that directory under `${XDG_CACHE_HOME:-$HOME/.cache}`. With a custom cache home,
-the session and helper disagree about the staging directory. The same family of
-inconsistencies appears in `Settings.qml`, `DiskCache.qml`, `Notes.qml`, and the
-shell helpers that already honor XDG overrides.
-
-First unify the desktop staging path and exercise start/diff/apply with a custom
-cache home. Then define shared QML state/cache paths and an explicit migration
-policy. Changing all defaults immediately could make saved settings or notes
-appear to disappear. Keep repo-backed config paths separate from user data.
+The desktop staging mismatch is fixed. Broader path inconsistencies remain in
+`Settings.qml`, `DiskCache.qml`, `Notes.qml`, the chat working directory, and
+helpers that already honor XDG overrides. Define shared QML state/cache paths
+with an explicit migration policy: changing defaults immediately could make
+saved settings, notes or chat history appear to disappear. Keep repo-backed
+config paths separate from user data.
 
 ### 2. Extract pure behavior from the largest modules
 

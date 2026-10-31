@@ -263,7 +263,11 @@ Singleton {
         command: [root.desktopScript, "start"]
         environment: root.desktopEnv
         onExited: code => {
-            if (code !== 0) return
+            if (code !== 0) {
+                pending = ""
+                root.desktop.add({ kind: "error", text: "Couldn't prepare the desktop staging copy. Try again." })
+                return
+            }
             root.staged = true
             root.desktop.send(pending)
             pending = ""
@@ -480,7 +484,7 @@ Singleton {
 
     ClaudeSession {
         id: desktopSession
-        cwd: root.home + "/.cache/singularity/ai-desktop/work"
+        cwd: (Quickshell.env("XDG_CACHE_HOME") || root.home + "/.cache") + "/singularity/ai-desktop/work"
         tools: "Read,Edit,Write,Glob,Grep"
         mode: "acceptEdits"
         modelPick: root.models.desktop || ""
