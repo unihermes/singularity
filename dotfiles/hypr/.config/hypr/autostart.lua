@@ -16,6 +16,10 @@ hl.on("hyprland.start", function()
         .. " systemctl --user start hyprland-session.target;"
         .. " systemctl --user start hyprpolkitagent.service;"
         .. " systemctl --user start hypridle.service || hypridle")
+    -- After a crash, start-hyprland brings Hyprland back still locked but
+    -- with hyprlock gone, which leaves the lock-dead screen: a new hyprlock
+    -- takes the lock over so the session can be unlocked.
+    hl.exec_cmd("sleep 1; [ \"$(hyprctl locked)\" = true ] && ! pidof hyprlock >/dev/null && exec hyprlock")
     -- logind's lid handling inhibited until Hyprland exits (lid.sh handles it)
     hl.exec_cmd("systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' waitpid $(pidof -s Hyprland)")
     -- the tray's watcher, apart from the shell so a shell restart keeps the

@@ -149,6 +149,9 @@ hl.config({
         -- blanked it -- not only hypridle's own screens-off step
         key_press_enables_dpms  = true,
         mouse_move_enables_dpms = true,
+        -- a new hyprlock may take over a lock whose hyprlock died (see
+        -- autostart.lua), rather than leaving the lock-dead screen
+        allow_session_lock_restore = true,
     },
 
     -- direct scanout for windows tagged as games only (1 can flicker); off

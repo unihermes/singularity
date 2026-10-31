@@ -183,8 +183,10 @@ present() {
 }
 
 # the lid is open again: docked, the panel just comes back beside the other
-# displays, which were on all along -- no hold, and nothing to turn off after
+# displays, which were on all along -- no hold, and nothing to turn off after.
+# No panel (a desktop): Hyprland brings the displays back itself.
 opened() {
+    [[ -n $(internal_panel) ]] || return 0
     if docked; then unblank; else hold; fi
 }
 
@@ -363,7 +365,7 @@ sleep)
     if [[ -e $hibernating ]]; then
         rm -f "$hibernating"
     else
-        lid_closed || panel_on || touch "$slept_dark"
+        [[ -z $(internal_panel) ]] || lid_closed || panel_on || touch "$slept_dark"
     fi
     ;;
 resume)
