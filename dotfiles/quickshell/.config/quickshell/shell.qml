@@ -258,7 +258,7 @@ ShellRoot {
     // built on first open, then kept, so its scroll and draft stay
     LazyLoader {
         active: Ai.used
-        AiSidebar {}
+        AiSidebar { bars: screens.instances.map(s => s.barWindow) }
     }
 
     // built on first open, then kept, so its scroll stays

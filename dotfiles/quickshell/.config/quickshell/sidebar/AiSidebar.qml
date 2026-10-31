@@ -2,10 +2,10 @@
 // ~/.config/quickshell/sidebar/AiSidebar.qml
 //
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
-// screen, under the bar, out until SUPER+I or its × puts it away (a click
-// elsewhere doesn't). The plans' limits under the heading (AiUsage), then
-// Chat, Desktop and Code as tabs over one shape: the tab's own line (Code's
-// folder, Desktop's changes), the conversation or a list in its place (past
+// screen, under the bar, out until SUPER+I, its ×, Escape or a click off
+// it (the bars excepted) puts it away. The plans' limits under the heading
+// (AiUsage), then Chat, Desktop and Code as tabs over one shape: the tab's
+// own line (Code's folder, Desktop's changes), the conversation or a list in its place (past
 // sessions, folders, the diff), a prompt waiting for an answer, and the
 // composer. Files dropped anywhere on it attach to the next message.
 
@@ -20,6 +20,11 @@ PanelWindow {
 
     readonly property bool open: Ai.shown && !Ai.capturing
     readonly property var session: Ai.current
+    function requestClose() { Ai.shown = false }
+
+    // every screen's bar: a press there doesn't put it away
+    property var bars: []
+    DismissGrab { panel: root; also: root.bars }
 
     // what the middle shows: talk | past | projects | diff
     property string view: "talk"

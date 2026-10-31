@@ -472,10 +472,11 @@ Every bar flyout keeps to these (settled 2026-10-20):
 
 Built 2026-10-25 (the bell, `sidebar/NotificationSidebar.qml`). The
 notification history as a panel down the right edge like the Claude
-sidebar (the two take turns): out until the bell, its ×, Escape or opening
-a notification from it. Clear all on the heading. Newest first under a
-subhead per day (Today, Yesterday, the date), each notification a few
-lines: the app's icon, the title and its age (× on hover), two lines of
+sidebar (the two take turns): out until the bell, its ×, Escape, a click
+off it (the bars excepted) or opening a notification from it. Clear all on
+the heading. Newest first under a subhead per day (Today, Yesterday, the
+date), each notification a few lines: the app's icon, the title and its
+age (× on hover), two lines of
 its text. A click opens it in place, the icon staying put: the title
 larger, an accent rail down from the icon, and under the title the app and
 age, the text, the picture and the buttons as links (Open · the app's own
@@ -486,8 +487,8 @@ pops up; it all arrives in the list.
 
 Built 2026-10-24 (SUPER+I, `sidebar/`, `services/Ai.qml`). Not a flyout: a
 panel down the right edge of the focused screen, under the bar, in the
-panel's frame with sections. It stays out until SUPER+I, its × or Escape;
-a click elsewhere leaves it. It slides in from the edge and fades.
+panel's frame with sections. It stays out until SUPER+I, its ×, Escape or
+a click off it (the bars excepted). It slides in from the edge and fades.
 
 - **Codex** (`services/CodexSession.qml`, `codex app-server`): Chat and
   Code can run on Codex instead, a Claude/Codex chip in the composer
