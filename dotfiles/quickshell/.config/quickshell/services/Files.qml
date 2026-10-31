@@ -24,7 +24,6 @@ Singleton {
     property var bookmarked: []
     property bool searching: false
     property string query: ""
-    readonly property bool available: true
 
     readonly property string home: Quickshell.env("HOME")
     // shown, and asked of fd: the gap is what makes ranking possible

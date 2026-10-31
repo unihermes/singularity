@@ -24,7 +24,6 @@ Singleton {
     property string kernel: ""
     property string hostname: ""
     property string distro: ""
-    property string distroBuild: ""
     property string arch: ""
     property string chassis: ""
 
@@ -32,7 +31,6 @@ Singleton {
 
     property int pkgCount: -1
     property int aurCount: -1
-    property int explicitCount: -1
 
     // --- cpu / gpu / board ------------------------------------------------
 
@@ -69,9 +67,6 @@ Singleton {
 
     property string hyprVersion: ""
     property string qsVersion: ""
-    property string qtVersion: ""
-    property string shellName: ""
-    property string sessionType: ""
     property string bootLine: ""     // systemd-analyze's one-line summary
 
     // --- gathering --------------------------------------------------------
@@ -128,8 +123,7 @@ Singleton {
             + "lsblk -d -n -o NAME,SIZE,MODEL,TYPE,TRAN,ROTA\n"
             + "echo ---\n"
             // 6: distribution
-            + "awk -F= '/^PRETTY_NAME=/{gsub(/\"/,\"\",$2); print $2} "
-            + "/^BUILD_ID=/{gsub(/\"/,\"\",$2); b=$2} END{print b}' /etc/os-release 2>/dev/null\n"
+            + "awk -F= '/^PRETTY_NAME=/{gsub(/\"/,\"\",$2); print $2}' /etc/os-release 2>/dev/null\n"
             + "echo ---\n"
             // 7: architecture, then the counts of attached buses
             + "uname -m\n"
@@ -140,10 +134,7 @@ Singleton {
             + "echo ---\n"
             // 8: versions of the pieces this desktop is made of
             + "hyprctl version 2>/dev/null | awk 'NR==1{print $2; exit}'\n"
-            + "quickshell --version 2>/dev/null | awk 'NR==1{print $2; exit}'\n"
-            + "qmake6 -query QT_VERSION 2>/dev/null || pacman -Q qt6-base 2>/dev/null | awk '{print $2}'\n"
-            + "basename \"${SHELL:-}\"\n"
-            + "echo \"${XDG_SESSION_TYPE:-}\""]
+            + "quickshell --version 2>/dev/null | awk 'NR==1{print $2; exit}'\n"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var parts = text.split("\n---\n")
@@ -190,9 +181,7 @@ Singleton {
                 }
                 root.storage = disks
 
-                var os = lines(6)
-                root.distro = os[0] || ""
-                root.distroBuild = os[1] || ""
+                root.distro = lines(6)[0] || ""
 
                 var bus = lines(7)
                 root.arch = bus[0] || ""
@@ -202,9 +191,6 @@ Singleton {
                 var ver = lines(8)
                 root.hyprVersion = (ver[0] || "").replace(/^v/, "")
                 root.qsVersion = ver[1] || ""
-                root.qtVersion = ver[2] || ""
-                root.shellName = ver[3] || ""
-                root.sessionType = ver[4] || ""
             }
         }
     }
@@ -286,14 +272,12 @@ Singleton {
         id: pkgProc
         command: ["sh", "-c",
             "pacman -Qq | wc -l\n"
-            + "pacman -Qqm | wc -l\n"
-            + "pacman -Qqe | wc -l\n"]
+            + "pacman -Qqm | wc -l\n"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var f = text.split("\n")
                 root.pkgCount = Number(f[0])
                 root.aurCount = Number(f[1])
-                root.explicitCount = Number(f[2])
             }
         }
     }

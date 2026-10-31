@@ -25,8 +25,6 @@ Singleton {
     // it aren't rebuilt by every read
     property var answered: []
 
-    readonly property bool available: displays.length > 0
-
     function find(output) {
         for (var i = 0; i < displays.length; i++)
             if (displays[i].output === output) return displays[i]

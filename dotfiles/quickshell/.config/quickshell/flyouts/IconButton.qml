@@ -23,8 +23,6 @@ Rectangle {
 
     signal clicked()
 
-    function disarmNow() { disarm.stop() }
-
     implicitWidth: Theme.controlSize
     implicitHeight: Theme.controlSize
     radius: Theme.radiusInner

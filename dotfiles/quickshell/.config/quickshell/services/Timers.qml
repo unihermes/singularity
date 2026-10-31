@@ -44,8 +44,6 @@ Singleton {
         : Math.min(1, Math.max(0, 1 - remaining / st.duration))
 
     readonly property string text: format(mode === "stopwatch" ? elapsed : remaining)
-    readonly property string icon: paused ? "󰏤" : mode === "stopwatch" ? "󱎫"
-        : mode === "pomodoro" ? (phase === "break" ? "󰾨" : "󰔟") : "󱫍"
     readonly property string title: mode === "stopwatch" ? "Stopwatch"
         : mode === "pomodoro" ? (phase === "break" ? "Break" : "Focus " + (rounds + 1))
         : "Timer"

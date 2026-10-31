@@ -24,8 +24,6 @@ Item {
 
     signal clicked()
 
-    function disarmNow() { disarm.stop() }
-
     readonly property string kind: Theme.style
     readonly property bool hot: root.enabled && mouse.containsMouse
 
