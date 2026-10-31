@@ -128,6 +128,8 @@ var entries = [
 
     { page: "appearance", section: "Shape", label: "Style", keywords: "theme frames channel double solid glass flat lined modules windows 10 square taskbar" },
     { page: "appearance", section: "Shape", label: "Roundness", keywords: "rounding corners radius panels windows hyprland bar chips" },
+    { page: "appearance", section: "Shape", label: "Bar chips", keywords: "modules frame outline outlined bare strip grouped border chip" },
+    { page: "appearance", section: "Shape", label: "Plain", keywords: "flat classic bare text bar no frames shadows simple" },
     { page: "appearance", section: "Shape", label: "Shadows", keywords: "drop shadow depth hard soft finish windows" },
     { page: "appearance", section: "Shape", label: "Shaded grounds", keywords: "gradient shading bar panels finish" },
     { page: "appearance", section: "Shape", label: "Heavy lines", keywords: "stroke width border thickness outline finish" },
@@ -162,7 +164,6 @@ var entries = [
     { page: "appearance", section: "Bar", label: "Position", keywords: "bar top bottom edge" },
     { page: "appearance", section: "Bar", label: "Bar shape", keywords: "bar layout full width floating islands" },
     { page: "appearance", section: "Bar", label: "Height", keywords: "bar height size tall thin px" },
-    { page: "appearance", section: "Bar", label: "Chips", keywords: "modules frame outline outlined bare strip grouped border chip" },
     { page: "appearance", section: "Bar", label: "Separators", keywords: "divider between modules dots lines double stacked capped" },
     { page: "appearance", section: "Bar", label: "Bar widgets", keywords: "arrange layout modules reset order hide show drag left centre right" },
     { page: "appearance", section: "Bar", label: "Icon size", keywords: "bar glyphs icons size px" },

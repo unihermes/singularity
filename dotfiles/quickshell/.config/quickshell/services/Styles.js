@@ -72,8 +72,6 @@ var styles = {
             { key: "shadows", label: "Shadows", hint: "Soft shadows under chips and panels", on: true },
             { id: "tint", label: "Accent-tinted chips", hint: "The bar's chips take a little of the accent", on: false },
             { key: "gradient", label: "Shaded grounds", hint: "A faint shade down the bar and panels", on: false },
-            // Theme.barPlain; Settings.setStyleOption sets its other pieces
-            { id: "plain", label: "Plain bar", hint: "Full width and flat, levels as text, like a classic text bar", on: false },
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
@@ -147,6 +145,7 @@ var stock = {
     seeThrough: 100,
     shadows: true,
     heavyLines: false,
+    plain: false,
     workspaceStyle: "pills",
     controlIcon: "arch",
     clockStyle: "stamp",
@@ -230,11 +229,14 @@ function offValue(o) { return o.off !== undefined ? o.off : "none" }
 function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 
 // s: { style, styleOptions, radius, barStyle, barHeight, spacing, seeThrough, shadows, heavyLines, flyoutAnim,
-//      barChips }; barChips other than "auto" frames the bar's chips its own way under any style
+//      barChips, plain }; barChips other than "auto" frames the bar's chips its own way under any
+// style. Plain flattens any style: bare chips on a full bar, flyouts flush
+// under it, no shadows, hairlines only (Theme.plain does the rest).
 function resolve(s) {
     var st = styles[s.style]
-    var modules = s.barChips && s.barChips !== "auto" ? s.barChips : st.modules
-    var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
+    var modules = s.barChips && s.barChips !== "auto" ? s.barChips : s.plain ? "bare" : st.modules
+    var attach = s.plain ? "flush"
+        : st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
@@ -242,8 +244,8 @@ function resolve(s) {
         frameStyle: st.frame,
         moduleStyle: modules,
         windowMark: st.mark,
-        shadow: s.shadows ? st.shadow : "none",
-        borderWidth: s.heavyLines && st.lines ? 2 : 1,
+        shadow: s.shadows && !s.plain ? st.shadow : "none",
+        borderWidth: s.heavyLines && st.lines && !s.plain ? 2 : 1,
         radius: radius,
         barRadius: radius,
         flyoutAttach: attach,

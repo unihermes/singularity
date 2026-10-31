@@ -32,18 +32,11 @@ SettingsTab {
 
     SettingsField {
         label: "Bar shape"
-        hint: Theme.barPlain ? "Solid's Plain bar is always full width" : ""
+        hint: Theme.barPlain ? "Plain (Shape) is always full width" : ""
         Choices { key: "barStyle"; live: !Theme.barPlain }
     }
 
     Stepper { label: "Height"; key: "barHeight"; step: 2; suffix: "px" }
-
-    SettingsField {
-        label: "Chips"
-        hint: Settings.barChips === "auto" ? "Framed as the style draws them"
-            : "Bare, outlined or one strip per group, whatever the style"
-        Choice { key: "barChips" }
-    }
 
     SettingsField {
         visible: Styles.get(Settings.style).options.every(o => o.key !== "barSeparator")

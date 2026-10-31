@@ -70,7 +70,7 @@ SettingsPage {
         windowBorderUnfocusedHex: "Unfocused colour", windowRounding: "Window corners",
         windowRadius: "Window rounding", windowShadow: "Window shadow", tabBar: "Tab bar",
         flyoutWidth: "Flyout width", launcherRows: "Rows shown", notifWidth: "Popup width",
-        seeThrough: "See-through", scrim: "Overlay dimming", barSeparator: "Separators", barChips: "Chips",
+        seeThrough: "See-through", scrim: "Overlay dimming", barSeparator: "Separators", barChips: "Bar chips", plain: "Plain",
         shadows: "Shadows", gradient: "Shaded grounds", heavyLines: "Heavy lines",
         headingUpper: "Case", headingRule: "Heading rule", headingMark: "Mark",
         headingMarkColour: "Mark colour", headingSize: "Heading size",

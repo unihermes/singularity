@@ -65,6 +65,8 @@ Singleton {
     // stroke 2px, and the colour level fills take ("accent", "good", "text")
     readonly property alias shadows:     adapter.shadows
     readonly property alias heavyLines:  adapter.heavyLines
+    // Plain over any style (Theme.plain)
+    readonly property alias plain:       adapter.plain
     readonly property alias levelColour: adapter.levelColour
     // Space's dials and the bar's size (Styles.stock); `density` names the
     // preset they match, "custom" for none
@@ -875,6 +877,7 @@ Singleton {
         else if (key === "density") setDensity(v)
         else if (key === "headingMark") adapter.headingMark = headingShapes.indexOf(v) !== -1 ? v : String(v).trim().slice(0, 4)
         else if (key === "barStyle") setBarStyle(v)
+        else if (key === "plain") setPlain(!!v)
         else if (typeof adapter[key] === "boolean") adapter[key] = !!v
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
         // free text, such as the workspace names
@@ -892,29 +895,36 @@ Singleton {
     function setStyleOption(id, on) {
         var l = adapter.styleOptions.split(",").filter(x => x !== "" && x !== id)
         if (on) l.push(id)
-        // Solid's Plain bar starts from a classic text bar's other pieces;
-        // each can be changed after
-        if (id === "plain" && on && !Styles.has(adapter.styleOptions, "plain")) {
-            adapter.barChips = "bare"
-            adapter.barSeparator = "line"
-            adapter.workspaceStyle = "numbers"
-        }
         adapter.styleOptions = l.sort().join(",")
     }
 
-    // Plain was a bar shape before it was Solid's option: a saved "plain"
-    // becomes a full bar, with the option on under Solid
+    // Plain starts from a classic text bar's other pieces (line separators,
+    // numbered workspaces); each can be changed after
+    function setPlain(on) {
+        if (on && !adapter.plain) {
+            adapter.barSeparator = "line"
+            adapter.workspaceStyle = "numbers"
+        }
+        adapter.plain = on
+    }
+
+    // Plain was a bar shape, then Solid's option: either becomes the Plain
+    // switch, in the settings and the saved defaults
     function foldPlain() {
-        if (adapter.barStyle === "plain") {
-            adapter.barStyle = "full"
-            if (adapter.style === "solid") setStyleOption("plain", true)
+        var opts = adapter.styleOptions.split(",")
+        if (adapter.barStyle === "plain" || opts.indexOf("plain") !== -1) {
+            if (adapter.barStyle === "plain") adapter.barStyle = "full"
+            adapter.styleOptions = opts.filter(x => x !== "" && x !== "plain").join(",")
+            adapter.plain = true
         }
         var u = adapter.userDefaults || {}, all = {}, moved = false
         for (var st in u) {
             var d = Object.assign({}, u[st])
-            if (d.barStyle === "plain") {
-                d.barStyle = "full"
-                if (st === "solid") d.styleOptions = (d.styleOptions || "").split(",").filter(x => x !== "").concat(["plain"]).sort().join(",")
+            var o = (d.styleOptions || "").split(",")
+            if (d.barStyle === "plain" || o.indexOf("plain") !== -1) {
+                if (d.barStyle === "plain") d.barStyle = "full"
+                d.styleOptions = o.filter(x => x !== "" && x !== "plain").join(",")
+                d.plain = true
                 moved = true
             }
             all[st] = d
@@ -1008,6 +1018,7 @@ Singleton {
             property int seeThrough: 100
             property bool shadows: true
             property bool heavyLines: false
+            property bool plain: false
             property string levelColour: "accent"
             property int spacing: 100
             property int rowScale: 100

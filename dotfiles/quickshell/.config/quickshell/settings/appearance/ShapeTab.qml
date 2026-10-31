@@ -34,6 +34,18 @@ SettingsTab {
             : "Chips, panels, the bar and every window"
     }
 
+    FinishSwitch {
+        label: "Plain"; key: "plain"
+        hint: "Flat over any style: bare chips on a full bar, flyouts flush under it, no shadows or frames round rows"
+    }
+
+    SettingsField {
+        label: "Bar chips"
+        hint: Settings.barChips !== "auto" ? "Bare, outlined or one strip per group, whatever the style"
+            : Settings.plain ? "Bare, as Plain draws them" : "Framed as the style draws them"
+        Choice { key: "barChips" }
+    }
+
     // the shared switches its options don't already stand for
     readonly property var optionKeys: Styles.get(Settings.style).options.map(o => o.key || "")
 
@@ -54,8 +66,8 @@ SettingsTab {
                 width: shapeTab.half; labelWidth: shapeTab.switchLabel
                 visible: shapeTab.optionKeys.indexOf("shadows") === -1
                 label: "Shadows"; key: "shadows"
-                live: Styles.get(Settings.style).shadow !== "none"
-                hint: live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
+                live: Styles.get(Settings.style).shadow !== "none" && !Settings.plain
+                hint: Settings.plain ? "Plain has none" : live ? "The style's " + Styles.get(Settings.style).shadow + " shadow, windows too" : "This style has none"
             }
 
             FinishSwitch { width: shapeTab.half; labelWidth: shapeTab.switchLabel; visible: shapeTab.optionKeys.indexOf("gradient") === -1; label: "Shaded grounds"; key: "gradient"; hint: "A faint shade down the bar and panels" }
@@ -64,8 +76,8 @@ SettingsTab {
                 width: shapeTab.half; labelWidth: shapeTab.switchLabel
                 visible: shapeTab.optionKeys.indexOf("heavyLines") === -1
                 label: "Heavy lines"; key: "heavyLines"
-                live: Styles.get(Settings.style).lines
-                hint: live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
+                live: Styles.get(Settings.style).lines && !Settings.plain
+                hint: Settings.plain ? "Plain keeps hairlines" : live ? "Every stroke 2px, windows' borders too" : "This style has no lines"
             }
         }
     }

@@ -67,9 +67,10 @@ Glass and see-through grounds stay readable. Level chips fill the whole chip
 in every style.
 
 Don't add a setting that changes one piece's frame on its own: that's what
-made combinations clash. A new look of a piece belongs in a style. The one
-exception is **Chips** (Appearance > Bar, `Settings.barChips`, picked
-2026-10-20): Style's own, or the bar's chips Bare (nothing until hover or
+made combinations clash. A new look of a piece belongs in a style. The
+exceptions sit under Style in Shape and act across the shell: **Plain**
+(`Settings.plain`, 2026-10-30) flattens any style (see the Plain bullet
+under Bar), and **Bar chips** (`Settings.barChips`, picked 2026-10-20): Style's own, or the bar's chips Bare (nothing until hover or
 open), Outlined, or one Strip per group, under any style. Whichever it is,
 hover, open and level chips still draw the style's way, and a Strip's frame
 is the style's (a channel, double or single strokes). Theme reads
@@ -121,7 +122,7 @@ What each style is (Styles.js) and its stock:
 | Headings | UPPER, rule, `//` | UPPER, rule, `//` (option) | UPPER | UPPER | Sentence case |
 | Clock island | on | on | on | on | off |
 | Windows' opacity (focused / unfocused / terminal) | 100 / 100 / 90 | 100 / 100 / 90 | 100 / 100 / 100 | 95 / 85 / 75 | 100 / 100 / 90 |
-| Own options (stock) | none | Inner stroke always lit (off), Heavy lines (off), `//` before headings (on) | Shadows (on), Accent-tinted chips (off), Shaded grounds (off), Plain bar (off) | Heavy blur (on), Accent-tinted glass (off), Glow on accents (on) | Taskbar layout (on), Bar at the bottom (on), Shadows (on) |
+| Own options (stock) | none | Inner stroke always lit (off), Heavy lines (off), `//` before headings (on) | Shadows (on), Accent-tinted chips (off), Shaded grounds (off) | Heavy blur (on), Accent-tinted glass (off), Glow on accents (on) | Taskbar layout (on), Bar at the bottom (on), Shadows (on) |
 
 Each style also starts the Bar, Panels and Motion tabs its own way (its
 `settings`; a blank is `Styles.stock`'s, Channel's column):
@@ -165,12 +166,14 @@ How each setting meets the style:
 - **Type tab.** Font, size, heading size and mark colour are style-free.
   Case, rule and mark start at the style's (the Headings row above) and can
   be changed under any style.
-- **Bar tab.** Chips other than Style's own replace the bar chips under any
-  style; hover, open and level chips still draw the style's way, and a
-  Strip's frame is the style's. Channel's flyouts only grow from the group
-  while the chips are a Strip. Bar shape decides where Double's and Flat's
-  flyouts sit, and is fixed at full width under Solid's Plain bar, which
-  also sets Bare chips, line separators and numbered workspaces. Height
+- **Plain and Bar chips (Shape tab).** Bar chips other than Style's own
+  replace the bar chips under any style; hover, open and level chips still
+  draw the style's way, and a Strip's frame is the style's. Channel's
+  flyouts only grow from the group while the chips are a Strip. Plain
+  overrides the style's shadow, Heavy lines, Shaded grounds, glow, row
+  frames, where flyouts sit and Bar shape (its rows grey out).
+- **Bar tab.** Bar shape decides where Double's and Flat's flyouts sit, and
+  is fixed at full width under Plain. Height
   sizes the chips (taskbar slots take the bar's full height and 4px more
   padding). Workspaces, Clock, Open windows and Visualizer start at the
   style's (table above) and any choice works under any style; the
@@ -234,10 +237,14 @@ Style: `channel` (frame `channel` in `Styles.js`).
   Appearance > Bar > Open windows has Window icon size and Window icon
   padding controls; icons are capped to the bar's height. Lift and
   Spotlight keep their smaller inactive icons relative to that size.
-- **Plain** (Solid's `plain` option, from a classic text bar): full
-  width whatever Bar shape says, and flat, no hairline; the levels (volume, brightness, battery)
+- **Plain** (Shape, a switch over any style, from a classic text bar):
+  the bar full width whatever Bar shape says, flat, no hairline, chips Bare
+  unless Bar chips says otherwise; the levels (volume, brightness, battery)
   read as "icon 100%" text instead of a fill, a low battery's in the alert
-  colour. Choosing it also sets Chips to Bare, separators to Lines and
+  colour. Flyouts sit flush under the bar with their rows unframed; no
+  shadows anywhere, windows' too; every stroke a hairline, windows'
+  borders too; no shaded grounds or glow. The style still draws frames,
+  controls and colours. Turning it on also sets separators to Lines and
   workspaces to Numbers, each changeable after.
 - **Edit mode** (right-click the bar's empty space > Edit bar, Bar Widgets >
   Edit on the bar, `qs ipc call bar edit`): the edit shelf hangs under the

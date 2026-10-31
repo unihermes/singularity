@@ -26,9 +26,15 @@ Singleton {
     readonly property var resolved: Styles.resolve({
         style: Settings.style, styleOptions: Settings.styleOptions, radius: Settings.radius, barStyle: Settings.barStyle,
         barHeight: Settings.barHeight, spacing: Settings.spacing, seeThrough: Settings.seeThrough, shadows: Settings.shadows,
-        heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim, barChips: Settings.barChips })
+        heavyLines: Settings.heavyLines, flyoutAnim: Settings.flyoutAnim, barChips: Settings.barChips,
+        plain: Settings.plain })
     // the style in force
     readonly property string style: resolved.styleName
+    // Plain (Shape) over any style: a classic flat desktop. Styles.resolve
+    // gives bare chips, flush flyouts, no shadows and hairlines; here the
+    // bar runs full width with levels as text, rows in panels go unframed,
+    // and shaded grounds and glow are off.
+    readonly property bool plain: Settings.plain
     // one of the style's own options, on or off
     function opt(id) { return Styles.has(Settings.styleOptions, id) }
 
@@ -115,7 +121,7 @@ Singleton {
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
     // Glass's glow option: lit things glow in the accent
-    readonly property bool glow: glass && opt("glow")
+    readonly property bool glow: glass && opt("glow") && !plain
 
     // --- type ------------------------------------------------------------------
 
@@ -200,7 +206,7 @@ Singleton {
     // every style but None draws the plain outer stroke
     readonly property bool frameStroked: !frameNone
     // rows inside a panel are framed (SectionRuns) in every style but Flat
-    readonly property bool sectionFramed: style !== "flat"
+    readonly property bool sectionFramed: style !== "flat" && !plain
     // from a section frame's edge in to its ground, past its innermost line
     readonly property int sectionDepth: frameChannel ? channelWidth
         : frameDouble ? 2 + borderWidth : frameStroked ? borderWidth : 0
@@ -332,9 +338,9 @@ Singleton {
     readonly property int barHeight:  resolved.barHeight
     // Floating and Islands sit barMargin in from the screen edges (the
     // windows' edge gap); barExtent is where things anchored to the bar start.
-    // Solid's Plain bar: full width whatever the shape, flat, no hairline;
-    // levels read as text
-    readonly property bool barPlain:    style === "solid" && opt("plain")
+    // Plain (Shape): the bar full width whatever the shape, flat, no
+    // hairline, levels as text; and see `plain`
+    readonly property bool barPlain:    plain
     readonly property bool barFloating: Settings.barStyle === "floating" && !barPlain
     readonly property bool barIslands:  Settings.barStyle === "islands" && !barPlain
     readonly property bool barFull:     !barFloating && !barIslands
@@ -378,7 +384,7 @@ Singleton {
     // the bar's audio visualizer -- see Looks.js
     readonly property string vizStyle: Settings.vizStyle
     // a top-to-bottom shading on grounds -- see Looks.js
-    readonly property bool gradient: Settings.gradient
+    readonly property bool gradient: Settings.gradient && !plain
     function shadeTop(c) { return Qt.tint(c, Qt.rgba(1, 1, 1, isLight ? 0.35 : 0.06)) }
     function shadeBottom(c) { return Qt.tint(c, Qt.rgba(0, 0, 0, isLight ? 0.06 : 0.12)) }
     // the weights text and its emphasis are set in -- see Looks.js
