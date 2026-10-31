@@ -34,8 +34,8 @@ jobs:
       - name: Repository tools
         run: python3 tools/test-tools.py
 
-      - name: Shell scripts parse
-        run: git ls-files '*.sh' | xargs -n1 bash -n
+      - name: Desktop staging
+        run: python3 tools/test-ai-desktop.py
 
-      - name: Lua parses
-        run: git ls-files '*.lua' | xargs -n1 luac5.4 -p
+      - name: Shell, Python and Lua parse
+        run: python3 tools/check-syntax.py

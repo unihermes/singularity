@@ -42,6 +42,23 @@ class ContextTests(unittest.TestCase):
                 self.assertNotIn("Traceback", result.stderr)
 
 
+class SyntaxTests(unittest.TestCase):
+    def test_extensionless_helpers_and_python(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for name, source in [('helper', '#!/bin/sh\nif then\n'),
+                                 ('python-helper', '#!/usr/bin/env python3\ndef broken(\n'),
+                                 ('module.py', 'def broken(\n')]:
+                with self.subTest(name=name):
+                    file = Path(directory) / name
+                    file.write_text(source)
+                    result = subprocess.run([sys.executable, str(ROOT / 'tools/check-syntax.py'), str(file)],
+                                            capture_output=True, text=True)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(str(file), result.stdout + result.stderr)
+                    file.write_text(source.splitlines()[0] + '\n' if source.startswith('#!') else 'x = 1\n')
+                    subprocess.run([sys.executable, str(ROOT / 'tools/check-syntax.py'), str(file)], check=True)
+
+
 class HookTests(unittest.TestCase):
     def test_check_selection(self):
         # Stub command execution: no checks or user configuration are changed.
@@ -63,14 +80,19 @@ class HookTests(unittest.TestCase):
             qs = "dotfiles/quickshell/.config/quickshell/"
             cases = {
                 qs + "settings/appearance/ShapeTab.qml": {"check-settings-index.py", "check-unused.py"},
-                "tools/check-settings-index.py": {"check-settings-index.py"},
-                "tools/check-unused.py": {"check-unused.py"},
-                "dotfiles/hypr/.config/hypr/window-keys.lua": {"test-js.mjs"},
-                "lib.sh": {"check-hardware.sh"},
-                "tools/context.py": {"test-tools.py"},
+                "tools/check-settings-index.py": {"check-settings-index.py", "check-syntax.py"},
+                "tools/check-unused.py": {"check-unused.py", "check-syntax.py"},
+                "dotfiles/hypr/.config/hypr/window-keys.lua": {"test-js.mjs", "check-syntax.py"},
+                "lib.sh": {"check-hardware.sh", "check-syntax.py"},
+                "tools/context.py": {"test-tools.py", "check-syntax.py"},
+                "tools/check-syntax.py": {"test-tools.py", "check-syntax.py"},
+                "system/usr/local/bin/singularity-charge": {"check-syntax.py"},
+                qs + "scripts/ai-desktop.sh": {"test-ai-desktop.py", "check-syntax.py"},
+                qs + "services/Ai.qml": {"check-unused.py", "test-ai-desktop.py"},
                 "README.md": set(),
                 "tools/git-hooks/pre-commit": {"check-settings-index.py", "check-unused.py",
-                                               "test-js.mjs", "check-hardware.sh", "test-tools.py"},
+                                               "test-js.mjs", "check-hardware.sh", "test-tools.py",
+                                               "test-ai-desktop.py", "check-syntax.py"},
             }
             for staged, expected in cases.items():
                 with self.subTest(staged=staged):

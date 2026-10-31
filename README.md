@@ -388,10 +388,12 @@ runs, for whatever is staged:
 | `tools/check-unused.py` | Files, functions, properties and signals nothing reads |
 | `node --test tools/test-js.mjs` | Regressions in the plain-JS modules: the calculator, time windows, formats, Style resolution, the channel outline, and the readers/writers of the Hyprland modules |
 | `tools/check-hardware.sh` | Hardware capabilities and package lists disagreeing or duplicating packages |
-| `python3 tools/test-tools.py` | Compact inventory and pre-commit check selection regressions |
+| `python3 tools/test-tools.py` | Compact inventory, syntax detection and pre-commit check selection regressions |
+| `python3 tools/test-ai-desktop.py` | Desktop staging paths, settings merges and failure recovery |
+| `python3 tools/check-syntax.py` | Shell, Python and Lua syntax, including extensionless script helpers |
 
-GitHub Actions runs all five on every push, plus `bash -n` on every `.sh` file
-and `luac -p` on every Lua file.
+GitHub Actions runs all seven on every push and pull request. Syntax checks
+parse files without executing scripts or writing Python bytecode.
 
 **Conventions.** UI work starts from `DESIGN.md`: take colours and sizes from
 `Theme`, reach for the shared components (`FlyoutRow`, `SettingsField`,

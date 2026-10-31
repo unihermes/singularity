@@ -54,7 +54,9 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `python3 tools/check-settings-index.py`: Settings fields vs the search index.
 - `node --test tools/test-js.mjs`: plain-JS modules and the Hyprland Lua readers/writers.
 - `tools/check-hardware.sh`: `packages/hardware/*.txt` against `hardware.sh`'s capabilities.
-- `python3 tools/test-tools.py`: compact inventory and pre-commit check selection.
+- `python3 tools/test-tools.py`: compact inventory, syntax detection and pre-commit check selection.
+- `python3 tools/test-ai-desktop.py`: staging paths, settings merges and failed applies.
+- `python3 tools/check-syntax.py [files...]`: shell (including extensionless helpers), Python and Lua syntax.
 
 ## Laptop, desktop and hardware
 

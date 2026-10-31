@@ -56,6 +56,14 @@ if changed '^(packages/|hardware\.sh$|lib\.sh$|install\.sh$|update\.sh$|tools/ch
 fi
 
 # Repository discovery and check selection.
-if changed '^tools/(context|test-tools)\.py$'; then
+if changed '^tools/(context|check-syntax|test-tools)\.py$'; then
     python3 tools/test-tools.py
+fi
+
+if changed 'quickshell/(services/Ai\.qml|scripts/ai-desktop\.sh)$|^tools/test-ai-desktop\.py$'; then
+    python3 tools/test-ai-desktop.py
+fi
+
+if changed '\.(sh|py|lua)$|^system/usr/local/bin/'; then
+    python3 tools/check-syntax.py
 fi

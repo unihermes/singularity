@@ -34,6 +34,10 @@ size and discovery output are proxies for the context needed to make an edit.
   staged work; preparation failures appear in the transcript. Six integration
   tests cover custom/default cache paths, merging, conflicts, and failed writes.
 
+- **Syntax coverage:** one checker now parses shell, Python and Lua sources,
+  including extensionless shebang scripts. Both CI and the pre-commit hook run
+  it; tests verify malformed extensionless helpers are rejected.
+
 ## Remaining priorities
 
 ### 1. Align paths between processes before broad XDG support
@@ -83,9 +87,8 @@ declaration is used. The settings-index check likewise depends on formatting.
 The JS suite covers useful pure logic, but QML process lifecycles, config writes,
 and Lua event behavior lack equivalent regression coverage. Prioritize queued
 config writes and AI reset/resume transitions before consolidating them.
-CI's shell parse step also only selects `*.sh`: extensionless helpers under
-`system/usr/local/bin` need interpreter-aware syntax checking. Python syntax
-checking is another inexpensive coverage addition.
+Shell/Python/Lua syntax checks now cover extensionless helpers too. These parse
+checks do not replace behavioral tests.
 
 ### 5. Consolidate shared session state only after lifecycle tests
 
@@ -106,8 +109,8 @@ comments, or abstracting every similar QML row just to reduce source length.
 
 ## Validation
 
-All five project checks passed, including five new repository-tool tests.
-Syntax checks passed for 38 shell scripts/helpers, 26 Lua files and 13 existing
-Python files; the new Python test file also ran successfully. `git diff --check`
-passed. The live shell log contained repeated tray D-Bus warnings; these checks
-do not establish full interactive QML or hardware coverage.
+All seven project checks passed after the follow-up, including six repository-tool
+tests and six staging integration tests. The three failure tests also reproduce
+against the original staging script. Shell, Lua and Python syntax checks and
+`git diff --check` passed. Earlier live-shell logs contained repeated tray D-Bus
+warnings; these checks do not establish full interactive QML or hardware coverage.
