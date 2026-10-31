@@ -23,7 +23,24 @@ local launchWaiting = false
 local knownWindows = {}
 for _, w in ipairs(hl.get_windows()) do knownWindows[w.address] = true end
 hl.on("window.active", function() holdPopup(hl.get_active_window()) end)
-hl.on("window.open", function(win) holdPopup(win) end)
+-- A window launched (a bind, the launcher) while the scratchpad is up
+-- would map in it, filled over everything and out of SUPER+M's reach; it
+-- goes to the workspace under the scratchpad instead, which closes.
+local function launchOutOfScratchpad(win)
+    if not (launchWaiting and win) then return win end
+    win = hl.get_window("address:" .. win.address) or win
+    if not (win.workspace and win.workspace.name == "special:scratchpad") then return win end
+    if win.class == SCRATCH_CLASS or win.class == "org.quickshell" or win.pinned then return win end
+    local mon = win.monitor
+    local ws = mon and mon.active_workspace
+    if not ws then return win end
+    local target = "address:" .. win.address
+    if mon.active_special_workspace then hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad")) end
+    hl.dispatch(hl.dsp.window.move({ workspace = ws.id, window = target }))
+    hl.dispatch(hl.dsp.focus({ window = target }))
+    return hl.get_window(target) or win
+end
+hl.on("window.open", function(win) holdPopup(launchOutOfScratchpad(win)) end)
 hl.on("window.close", function(win) if win then knownWindows[win.address] = nil end end)
 
 -- SUPER+M's layout per workspace ("1 dwindle" lines), kept in a runtime
