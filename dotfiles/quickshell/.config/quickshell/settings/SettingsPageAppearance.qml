@@ -44,6 +44,8 @@ SettingsPage {
         picked: page.barModule
         onPick: id => page.barModule = id
     }
+    // Panels draws a picture beside each of its sections instead
+    pinnedVisible: page.tab !== "panels"
     // the module picked on the Bar tab's preview, for its settings
     property string barModule: "workspaces"
 

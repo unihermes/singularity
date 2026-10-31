@@ -2,9 +2,11 @@
 // ~/.config/quickshell/settings/appearance/PanelsTab.qml
 //
 // Appearance's Panels tab: POPUPS (notifications, the level popup, the
-// flyouts' size), LAUNCHER, OVERLAYS and DESKTOP WIDGETS (which show on the
-// desktop, the sidebar, and their edit mode). Each section's rarely changed
-// rows fold behind its Advanced; neighbours go two to a line.
+// flyouts' size), LAUNCHER, OVERLAYS (the switcher, the overview, the power
+// menu, the backdrop behind them) and DESKTOP WIDGETS. Each section is a
+// picture of its panels as they're set (PanelArt) beside its settings:
+// choices as segments, sizes as sliders, on/off as lit chips. A size that
+// doesn't apply rests dimmed. Nothing folds away.
 
 import Quickshell
 import QtQuick
@@ -13,113 +15,143 @@ import "../../flyouts"
 import ".."
 
 SettingsTab {
-    id: panelsTab
     tabId: "panels"
 
-    // a row in a two-column grid, and its label's share beside a stepper
-    // or a switch
-    readonly property real half: (width - Theme.spaceXl * 2) / 2
-    readonly property real halfLabel: half - Theme.fit(160) - Theme.spaceL
-    readonly property real switchLabel: half - Theme.switchWidth - Theme.spaceL
+    // a section's picture on the left, its settings beside it
+    component Beside: Item {
+        id: bs
+        property string kind: ""
+        default property alias rows: col.data
+        width: parent ? parent.width : 0
+        height: Math.max(pic.height, col.implicitHeight)
+
+        PanelArt {
+            id: pic
+            kind: bs.kind
+            width: Theme.fit(220)
+            height: Math.round(width * 0.72)
+        }
+        Column {
+            id: col
+            readonly property real labelWidth: Theme.fit(178)
+            x: pic.width + Theme.spaceXl
+            width: bs.width - x
+            spacing: Theme.spaceM
+        }
+    }
+
+    // a Settings boolean as a lit chip, On or Off
+    component OnChip: FlyoutChip {
+        property bool on: false
+        anchors.right: parent ? parent.right : undefined
+        text: on ? "On" : "Off"
+        icon: on ? "󰄬" : ""
+        selected: on
+    }
 
     FlyoutHeading { text: "POPUPS" }
 
-    SettingsField {
-        label: "Notification popups"
-        Choices { key: "notifStyle" }
-    }
+    Beside {
+        kind: "popups"
 
-    SettingsField {
-        label: "Level popup"
-        hint: Settings.islandActive ? "Shown in the clock island instead"
-            : "The volume and brightness popup"
-        Choices { key: "levelStyle"; live: !Settings.islandActive }
-    }
-
-    SettingsField {
-        label: "Backdrop"
-        hint: "Behind the overview, ALT+Tab, the full launcher and the power menu"
-        Choices { key: "overviewBackdrop" }
-    }
-
-    SettingsAdvanced {
-        Stepper { label: "Popup width"; key: "notifWidth"; step: 20; suffix: "px" }
-
-        Grid {
-            width: parent.width
-            columns: 2
-            columnSpacing: Theme.spaceXl * 2
-
-            Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Flyout width"; key: "flyoutWidth"; step: 10; suffix: "%" }
-            Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Overlay dimming"; key: "scrim"; step: 5; suffix: "%"; enabled: Settings.overviewBackdrop === "dim" }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Notification popups"
+            Choices { key: "notifStyle" }
         }
+        Stepper {
+            slider: true; labelWidth: parent.labelWidth
+            label: "Popup width"; key: "notifWidth"; step: 20; suffix: " px"
+            enabled: Settings.notifStyle !== "banner"
+            hint: enabled ? "Each notification popup" : "Banners span the top"
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Level popup"
+            hint: Settings.islandActive ? "In the clock island instead" : "Volume and brightness"
+            Choices { key: "levelStyle"; live: !Settings.islandActive }
+        }
+        Stepper { slider: true; labelWidth: parent.labelWidth; label: "Flyout width"; hint: "For long names"; key: "flyoutWidth"; step: 10; suffix: "%" }
     }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "LAUNCHER" }
 
-    Tiles { key: "launcherLayout"; label: "Launcher layout"; art: launcherArt; columns: 3; tileHeight: Theme.fs(64) }
+    Beside {
+        kind: "launcher"
 
-    SettingsField {
-        label: "Launcher position"
-        Choices { key: "launcherPosition" }
-    }
-
-    SettingsAdvanced {
-        Grid {
-            width: parent.width
-            columns: 2
-            columnSpacing: Theme.spaceXl * 2
-
-            SettingsField {
-                width: panelsTab.half
-                labelWidth: panelsTab.switchLabel
-                label: "Launcher details"
-                defaultKey: "launcherDetails"
-                hint: Settings.launcherDetails ? "Descriptions and keyboard hints"
-                    : "Names only"
-
-                Switch {
-                    anchors.right: parent.right
-                    checked: Settings.launcherDetails
-                    onToggled: Settings.set("launcherDetails", !Settings.launcherDetails)
-                }
-            }
-            Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Rows shown"; hint: "Before it scrolls"; key: "launcherRows" }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Launcher layout"
+            Choices { key: "launcherLayout" }
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Launcher position"
+            Choices { key: "launcherPosition" }
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Launcher details"
+            defaultKey: "launcherDetails"
+            hint: Settings.launcherDetails ? "Descriptions and key hints" : "Names only"
+            OnChip { on: Settings.launcherDetails; onClicked: Settings.set("launcherDetails", !Settings.launcherDetails) }
+        }
+        Stepper {
+            slider: true; labelWidth: parent.labelWidth
+            label: "Rows shown"; key: "launcherRows"
+            hint: "Before it scrolls"
         }
     }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "OVERLAYS" }
 
-    SettingsField {
-        label: "Window switcher"
-        hint: "ALT+Tab"
-        Choices { key: "altTabStyle" }
+    Beside {
+        kind: "overlays"
+
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Window switcher"
+            hint: "ALT+Tab"
+            Choices { key: "altTabStyle" }
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Switcher windows"
+            hint: "And the bar's window list"
+            Choices { key: "altTabScope" }
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Workspace overview"
+            hint: "SUPER+W"
+            Choices { key: "overviewLayout" }
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Power menu"
+            Choices { key: "powerStyle" }
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Backdrop"
+            hint: "Behind the overlays"
+            Choices { key: "overviewBackdrop" }
+        }
+        Stepper {
+            slider: true; labelWidth: parent.labelWidth
+            label: "Overlay dimming"; key: "scrim"; step: 5; suffix: "%"
+            enabled: Settings.overviewBackdrop === "dim"
+            hint: enabled ? "How dark Dim is" : "With the Dim backdrop"
+        }
     }
-
-    SettingsField {
-        label: "Switcher windows"
-        hint: "Also applies to the window list in the bar"
-        Choices { key: "altTabScope" }
-    }
-
-    SettingsField {
-        label: "Workspace overview"
-        hint: "SUPER+W"
-        Choices { key: "overviewLayout" }
-    }
-
-    Tiles { key: "powerStyle"; label: "Power menu"; art: powerArt; columns: 3; tileHeight: Theme.fs(64) }
-
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "DESKTOP WIDGETS" }
 
-    Grid {
-        width: parent.width
-        columns: 2
-        columnSpacing: Theme.spaceXl * 2
+    Beside {
+        kind: "widgets"
 
         Repeater {
             model: [{ key: "clock", label: "Clock", hint: "The day, the time and the week" },
@@ -129,41 +161,32 @@ SettingsTab {
                     { key: "sysinfo", label: "System info", hint: "Distro, kernel, uptime, IP" }]
 
             SettingsField {
+                id: widget
                 required property var modelData
-                width: panelsTab.half
-                labelWidth: panelsTab.switchLabel
+                readonly property bool on: Settings.deskWidget(modelData.key).on
+                labelWidth: parent.labelWidth
                 label: modelData.label
                 hint: modelData.hint
-                Switch {
-                    anchors.right: parent.right
-                    checked: Settings.deskWidget(modelData.key).on
-                    onToggled: Settings.setDeskWidget(modelData.key, { on: !checked })
-                }
+                OnChip { on: widget.on; onClicked: Settings.setDeskWidget(widget.modelData.key, { on: !widget.on }) }
+            }
+        }
+
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Sidebar"
+            hint: "System readings down the right edge"
+            OnChip { on: Settings.deskSidebar; onClicked: Settings.set("deskSidebar", !Settings.deskSidebar) }
+        }
+
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Placement"
+            hint: "Drag them about on the desktop"
+            FlyoutChip {
+                anchors.right: parent.right
+                text: "Edit placement"
+                onClicked: Quickshell.execDetached(["qs", "ipc", "call", "widgets", "edit"])
             }
         }
     }
-
-    SettingsField {
-        label: "Sidebar"
-        hint: "System readings down the right edge of the main display"
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.deskSidebar
-            onToggled: Settings.set("deskSidebar", !checked)
-        }
-    }
-
-    SettingsField {
-        labelWidth: parent.width - placeChip.width - Theme.spaceL
-        label: "Placement"
-        FlyoutChip {
-            id: placeChip
-            anchors.right: parent.right
-            text: "Edit placement"
-            onClicked: Quickshell.execDetached(["qs", "ipc", "call", "widgets", "edit"])
-        }
-    }
-
-    Component { id: launcherArt; ModuleArt { kind: "launcherLayout" } }
-    Component { id: powerArt; ModuleArt { kind: "powerStyle" } }
 }

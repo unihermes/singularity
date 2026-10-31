@@ -358,7 +358,6 @@ SettingsTab {
 
     // what each takes, the colour it comes to beside the choice
     component BorderSwatch: Rectangle {
-        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         width: Theme.chipHeight
         height: Theme.chipHeight
         radius: Theme.radiusSmall
@@ -373,6 +372,7 @@ SettingsTab {
         BorderSwatch {
             anchors.right: focusedChoice.left
             anchors.rightMargin: Theme.spaceM
+            y: (focusedChoice.height - height) / 2
             color: Settings.windowBorderFocused === "text" ? Theme.text
                 : Settings.windowBorderFocused === "custom" ? (Settings.windowBorderFocusedHex || Theme.strokeFocus)
                 : Theme.strokeFocus
@@ -394,6 +394,7 @@ SettingsTab {
         BorderSwatch {
             anchors.right: unfocusedChoice.left
             anchors.rightMargin: Theme.spaceM
+            y: (unfocusedChoice.height - height) / 2
             color: Settings.windowBorderUnfocused === "none" ? "transparent"
                 : Settings.windowBorderUnfocused === "custom" ? (Settings.windowBorderUnfocusedHex || Theme.border)
                 : Theme.border

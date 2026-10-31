@@ -842,8 +842,18 @@ Settings') are laid out the same way.
   Edge gaps. GLASS: See-through, both opacities, Dim unfocused and Blur
   as lit On chips, each followed by its sliders. WINDOWS: Window corners,
   Window rounding, Window shadow, Tab bar, the Window rules row.
+- **Panels tab** (picked 2026-10-31, C "preview beside" for every
+  section): no pinned preview; each section is its own picture
+  (`PanelArt`: the wallpaper, a strip of bar, the section's panels drawn
+  small as set) on the left with its settings beside it, labels narrowed
+  to fit. POPUPS: Notification popups, Popup width (rests for Banner),
+  Level popup, Flyout width. LAUNCHER: layout, position, Launcher details,
+  Rows shown. OVERLAYS: Window switcher, Switcher windows, Workspace
+  overview, Power menu, Backdrop, Overlay dimming (rests unless Dim).
+  DESKTOP WIDGETS: each widget as a lit On chip, Sidebar, Placement.
 - **Live preview (Appearance):** pinned above the rows on every tab, showing
-  what that tab changes (`LivePreview.kind`): the bar and a flyout
+  what that tab changes (`LivePreview.kind`), except Panels, which draws
+  its own beside each section: the bar and a flyout
   (Colour, Type), the whole bar a little larger (Bar), the launcher in its
   layout (Panels), two windows with their borders, corners, opacity and
   dimming (Shape, Motion). Built from the real components (`ModuleFrame`, `PanelFrame`,
