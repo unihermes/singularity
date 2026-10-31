@@ -84,6 +84,10 @@ Singleton {
     readonly property alias windowBorderUnfocusedHex: adapter.windowBorderUnfocusedHex
     readonly property alias windowRounding: adapter.windowRounding
     readonly property alias windowRadius: adapter.windowRadius
+    readonly property alias barCorners: adapter.barCorners
+    readonly property alias barRadius: adapter.barRadius
+    readonly property alias barGaps: adapter.barGaps
+    readonly property alias barGap: adapter.barGap
     readonly property alias windowShadow: adapter.windowShadow
     readonly property alias tabBar:      adapter.tabBar
     // bar flyouts' width (percent), the launcher's rows, the popups' width
@@ -233,6 +237,8 @@ Singleton {
         windowBorderFocused: ["accent", "text", "custom"],
         windowBorderUnfocused: ["border", "none", "custom"],
         windowRounding: ["shell", "own"],
+        barCorners: ["shell", "own"],
+        barGaps: ["shell", "own"],
         windowShadow: ["style", "off", "small", "large"],
         tabBar:       ["shell", "accent"],
         wallpaperFill: ["fill", "fit", "center", "tile"],
@@ -311,6 +317,8 @@ Singleton {
         windowBorderFocused: { "custom": "Custom" },
         windowBorderUnfocused: { "border": "Border", "custom": "Custom" },
         windowRounding: { "shell": "Match shell", "own": "Own" },
+        barCorners: { "shell": "Match shell", "own": "Own" },
+        barGaps: { "shell": "Edge gaps", "own": "Own" },
         windowShadow: { "style": "Style's", "off": "Off", "small": "Small", "large": "Large" },
         tabBar: { "shell": "Shell's colours" },
         wallpaperFill: { "fill": "Fill", "fit": "Fit", "center": "Centre", "tile": "Tile" },
@@ -707,6 +715,8 @@ Singleton {
         vizBars:   { min: 6, max: 24 },
         flyoutWidth: { min: 80, max: 150 },
         windowRadius: { min: 0, max: 30 },
+        barRadius: { min: 0, max: 24 },
+        barGap: { min: 0, max: 30 },
         launcherRows: { min: 3, max: 16 },
         notifWidth: { min: 280, max: 560 },
         edgeGap:   { min: 0,  max: 30 },
@@ -1032,6 +1042,10 @@ Singleton {
             property string windowBorderUnfocusedHex: ""
             property string windowRounding: "shell"
             property int windowRadius: 6
+            property string barCorners: "shell"
+            property int barRadius: 10
+            property string barGaps: "shell"
+            property int barGap: 10
             property string windowShadow: "style"
             property string tabBar: "shell"
             property int flyoutWidth: 100

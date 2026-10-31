@@ -186,7 +186,7 @@ Singleton {
 
     readonly property int radius:      resolved.radius
     // a floating bar or islands
-    readonly property int barRadius:   resolved.barRadius
+    readonly property int barRadius:   Settings.barCorners === "own" ? Settings.barRadius : resolved.barRadius
     // one step in from the outer stroke, floored at 0
     readonly property int radiusInner: Math.max(0, radius - 2)
     // a page's blocks in Settings and System: section frames, the tab strip,
@@ -337,14 +337,14 @@ Singleton {
     readonly property string barPosition: Settings.barPosition
     readonly property int barHeight:  resolved.barHeight
     // Floating and Islands sit barMargin in from the screen edges (the
-    // windows' edge gap); barExtent is where things anchored to the bar start.
+    // windows' edge gap, or the bar's own); barExtent is where things anchored to the bar start.
     // Plain (Shape): the bar full width whatever the shape, flat, no
     // hairline, levels as text; and see `plain`
     readonly property bool barPlain:    plain
     readonly property bool barFloating: Settings.barStyle === "floating" && !barPlain
     readonly property bool barIslands:  Settings.barStyle === "islands" && !barPlain
     readonly property bool barFull:     !barFloating && !barIslands
-    readonly property int barMargin:  barFull ? 0 : Settings.edgeGap
+    readonly property int barMargin:  barFull ? 0 : Settings.barGaps === "own" ? Settings.barGap : Settings.edgeGap
     readonly property int barExtent:  barHeight + barMargin * 2
     // between the bar's (or an island's) edge and its outermost module
     readonly property int barInset: barFloating ? spaceXs : barIslands ? spaceM

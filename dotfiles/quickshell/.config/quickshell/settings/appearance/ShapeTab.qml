@@ -116,7 +116,7 @@ SettingsTab {
         columnSpacing: Theme.spaceXl * 2
 
         HyprInt { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Window gaps"; note: "Between windows"; path: ["general"]; key: "gaps_in"; max: 20 }
-        Stepper { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Edge gaps"; hint: Theme.barFull ? "At the screen edges" : "The bar floats in too"; key: "edgeGap"; suffix: "px" }
+        Stepper { width: shapeTab.half; labelWidth: shapeTab.halfLabel; label: "Edge gaps"; hint: Theme.barFull || Settings.barGaps === "own" ? "At the screen edges" : "The bar floats in too"; key: "edgeGap"; suffix: "px" }
     }
 
     Item { width: 1; height: Theme.spaceM }
