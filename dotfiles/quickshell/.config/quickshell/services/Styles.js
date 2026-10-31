@@ -97,12 +97,18 @@ function windows(name) {
     return out
 }
 
-// what picking the style sets: Finish switches and styleOptions (ids on).
+// the settings that can draw a part their own way, at the value that
+// leaves it to the style
+var deferred = { barChips: "auto", flyoutAnim: "auto", windowBorderWidth: "style", windowShadow: "style" }
+
+// what picking the style sets: Finish switches and styleOptions (ids on),
+// and every part drawn its own way handed back to the style (`deferred`).
 // A setting another style's option stands for is put back too, so leaving
 // that style undoes it: a valued one (Flat's bar at the bottom) to its off
 // value, a switch to its default.
 function finish(name) {
     var st = get(name), out = {}
+    for (var d in deferred) out[d] = deferred[d]
     for (var n in styles) {
         var others = styles[n].options
         for (var j = 0; j < others.length; j++) {

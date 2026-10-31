@@ -93,6 +93,11 @@ test("Styles: leaving Flat puts the bar back at the top", () => {
         assert.equal(S.finish(name).heavyLines, false, name)
     }
     assert.equal(S.finish("glass").shadows, true)
+    // a style takes back every part drawn its own way
+    for (const name of S.order) {
+        assert.equal(S.finish(name).barChips, "auto", name)
+        assert.equal(S.finish(name).flyoutAnim, "auto", name)
+    }
 })
 
 test("KeybindGroups keeps sections, action clusters and search filters", () => {
