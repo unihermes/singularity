@@ -9,6 +9,7 @@ import Quickshell
 import Quickshell.Services.Notifications
 import QtQuick
 import "../services"
+import "../services/Markdown.js" as Markdown
 
 OverlayWindow {
     id: root
@@ -72,7 +73,7 @@ OverlayWindow {
             icon: "",
             summary: root.failed ? "Reload failed" : "Reloaded",
             // the body is styled text; an error's < and & are literal
-            body: root.failed ? root.error.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            body: root.failed ? Markdown.esc(root.error)
                 : "Configuration loaded",
             urgency: root.failed ? NotificationUrgency.Critical : NotificationUrgency.Normal,
             time: root.shownAt,

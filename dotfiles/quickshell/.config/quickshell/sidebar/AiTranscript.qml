@@ -20,21 +20,17 @@ Item {
     property bool available: true
     property string tab: "chat"
 
-    function esc(s) {
-        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    }
-
     // a tool's input and output as styled text, a diff's lines coloured
     function styled(body, result) {
         var out = []
         String(body || "").split("\n").slice(0, 200).forEach(l => {
             var c = l[0] === "+" ? Theme.good : l[0] === "-" ? Theme.alert
                 : l.indexOf("@@") === 0 ? Theme.subtext : Theme.text
-            out.push("<font color='" + c + "'>" + (esc(l) || "&nbsp;") + "</font>")
+            out.push("<font color='" + c + "'>" + (Markdown.esc(l) || "&nbsp;") + "</font>")
         })
         if (result) {
             if (out.length > 0) out.push("<font color='" + Theme.muted + "'>──</font>")
-            String(result).split("\n").slice(0, 60).forEach(l => out.push(esc(l) || "&nbsp;"))
+            String(result).split("\n").slice(0, 60).forEach(l => out.push(Markdown.esc(l) || "&nbsp;"))
         }
         return out.join("<br>")
     }
