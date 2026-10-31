@@ -241,7 +241,7 @@ Singleton {
         cursorTheme:  DesktopThemes.cursors,
         iconTheme:    DesktopThemes.icons,
         windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
-        barStyle:     ["full", "floating", "islands", "plain"],
+        barStyle:     ["full", "floating", "islands"],
         workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman", "names", "apps"],
         controlIcon:  ["arch", "menu", "dashboard", "cog", "home", "star", "blackhole", "vortex", "horizon",
                       "atom", "rocket", "ghost", "planet", "sparkle", "infinity", "radar", "moon"],
@@ -272,7 +272,7 @@ Singleton {
         "scheme-tonal-spot": "Balanced", "scheme-vibrant": "Vivid",
         "scheme-expressive": "Expressive", "double": "Double", "accent": "Accent", "none": "None",
         "compact": "Compact", "roomy": "Roomy", "pill": "Pill", "full": "Full",
-        "floating": "Floating", "islands": "Islands", "plain": "Plain", "pills": "Pills", "dots": "Dots",
+        "floating": "Floating", "islands": "Islands", "pills": "Pills", "dots": "Dots",
         "lines": "Lines", "numbers": "Numbers", "blocks": "Blocks", "roman": "Roman",
         "names": "Names", "apps": "App icons", "popin": "Pop", "zoom": "Zoom", "fade": "Fade",
         "fold": "Fold", "slide": "Slide", "rise": "Rise", "drop": "Drop", "scale": "Scale",
@@ -870,20 +870,40 @@ Singleton {
     function setStyleOption(id, on) {
         var l = adapter.styleOptions.split(",").filter(x => x !== "" && x !== id)
         if (on) l.push(id)
+        // Solid's Plain bar starts from a classic text bar's other pieces;
+        // each can be changed after
+        if (id === "plain" && on && !Styles.has(adapter.styleOptions, "plain")) {
+            adapter.barChips = "bare"
+            adapter.barSeparator = "line"
+            adapter.workspaceStyle = "numbers"
+        }
         adapter.styleOptions = l.sort().join(",")
+    }
+
+    // Plain was a bar shape before it was Solid's option: a saved "plain"
+    // becomes a full bar, with the option on under Solid
+    function foldPlain() {
+        if (adapter.barStyle === "plain") {
+            adapter.barStyle = "full"
+            if (adapter.style === "solid") setStyleOption("plain", true)
+        }
+        var u = adapter.userDefaults || {}, all = {}, moved = false
+        for (var st in u) {
+            var d = Object.assign({}, u[st])
+            if (d.barStyle === "plain") {
+                d.barStyle = "full"
+                if (st === "solid") d.styleOptions = (d.styleOptions || "").split(",").filter(x => x !== "").concat(["plain"]).sort().join(",")
+                moved = true
+            }
+            all[st] = d
+        }
+        if (moved) adapter.userDefaults = all
     }
 
     // A bar shape arrives with its edge gap: the default's when it's the
     // default's shape, the shape's usual one otherwise.
     function setBarStyle(v) {
         if (choices.barStyle.indexOf(v) === -1) return
-        // Plain starts from a classic text bar's other pieces; each can be
-        // changed after
-        if (v === "plain" && adapter.barStyle !== "plain") {
-            adapter.barChips = "bare"
-            adapter.barSeparator = "line"
-            adapter.workspaceStyle = "numbers"
-        }
         adapter.barStyle = v
         adapter.edgeGap = defaults.barStyle === v ? defaults.edgeGap : Styles.edgeGaps[v]
     }
@@ -940,6 +960,7 @@ Singleton {
             root.ready = true
             if (!Looks.looks[adapter.look]) adapter.look = Looks.fallback
             root.foldMedia()
+            root.foldPlain()
         }
         onLoadFailed: root.ready = true
 

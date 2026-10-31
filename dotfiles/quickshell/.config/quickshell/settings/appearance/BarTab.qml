@@ -32,7 +32,8 @@ SettingsTab {
 
     SettingsField {
         label: "Bar shape"
-        Choices { key: "barStyle" }
+        hint: Theme.barPlain ? "Solid's Plain bar is always full width" : ""
+        Choices { key: "barStyle"; live: !Theme.barPlain }
     }
 
     Stepper { label: "Height"; key: "barHeight"; step: 2; suffix: "px" }

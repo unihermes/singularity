@@ -62,6 +62,8 @@ var styles = {
             { key: "shadows", label: "Shadows", hint: "Soft shadows under chips and panels", on: true },
             { id: "tint", label: "Accent-tinted chips", hint: "The bar's chips take a little of the accent", on: false },
             { key: "gradient", label: "Shaded grounds", hint: "A faint shade down the bar and panels", on: false },
+            // Theme.barPlain; Settings.setStyleOption sets its other pieces
+            { id: "plain", label: "Plain bar", hint: "Full width and flat, levels as text, like a classic text bar", on: false },
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
@@ -143,7 +145,7 @@ var stock = {
 
 // The edge gap each bar shape starts at: a full bar runs to the screen's
 // edges and the windows meet it, a floating one leaves room all round.
-var edgeGaps = { full: 0, floating: 10, islands: 10, plain: 0 }
+var edgeGaps = { full: 0, floating: 10, islands: 10 }
 
 // a style's stock default: `stock`, what picking it sets (finish, windows),
 // then its own `settings`
@@ -209,7 +211,7 @@ function has(opts, id) { return (opts || "").split(",").indexOf(id) !== -1 }
 function resolve(s) {
     var st = styles[s.style]
     var modules = s.barChips && s.barChips !== "auto" ? s.barChips : st.modules
-    var attach = st.attach === "auto" ? (s.barStyle === "full" || s.barStyle === "plain" ? "flush" : "floating") : st.attach
+    var attach = st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {

@@ -22,7 +22,7 @@ and sizes and colours that don't touch a frame: the palette's roles, the
 status colours, the headings, the bar's height, icons and padding, and the
 windows' borders, corners and shadow.
 
-**Each style has three options of its own** (`options` in Styles.js), shown
+**Each style has options of its own** (`options` in Styles.js), shown
 first under Advanced in Shape › Style. An option either stands for one of the
 shared Finish settings (`key`), or is an id in `Settings.styleOptions`, read
 with `Theme.opt(id)`. Picking a style sets them all (`Styles.finish`) as
@@ -111,7 +111,7 @@ What each style is (Styles.js) and its stock:
 | Focused window | pill | pill | ground | ground | pill |
 | Shadow | none | none | soft | soft | soft |
 | Strokes (Heavy lines) | yes | yes | no | no | yes |
-| Flyouts sit | grown from the group | flush on a full or plain bar, else floating | floating | floating | as Double |
+| Flyouts sit | grown from the group | flush on a full bar, else floating | floating | floating | as Double |
 | Flyouts open | fade | drop | scale | fade | drop |
 | Corners | Roundness (stock 6) | Roundness (6) | Roundness (10) | Roundness (10) | always square |
 | Row frames in panels | yes | yes | yes | yes | no |
@@ -119,7 +119,7 @@ What each style is (Styles.js) and its stock:
 | Headings | UPPER, rule, `//` | UPPER, rule, `//` (option) | UPPER | UPPER | Sentence case |
 | Clock island | on | on | on | on | off |
 | Windows' opacity (focused / unfocused / terminal) | 100 / 100 / 90 | 100 / 100 / 90 | 100 / 100 / 100 | 95 / 85 / 75 | 100 / 100 / 90 |
-| Own options (stock) | none | Inner stroke always lit (off), Heavy lines (off), `//` before headings (on) | Shadows (on), Accent-tinted chips (off), Shaded grounds (off) | Heavy blur (on), Accent-tinted glass (off), Glow on accents (on) | Taskbar layout (on), Bar at the bottom (on), Shadows (on) |
+| Own options (stock) | none | Inner stroke always lit (off), Heavy lines (off), `//` before headings (on) | Shadows (on), Accent-tinted chips (off), Shaded grounds (off), Plain bar (off) | Heavy blur (on), Accent-tinted glass (off), Glow on accents (on) | Taskbar layout (on), Bar at the bottom (on), Shadows (on) |
 
 Every other stock value is the same for all five (`Styles.stock`): Ubuntu
 Mono at 16px, Normal density (Spacing 100%, Row height 100%, bar 32px),
@@ -149,8 +149,8 @@ How each setting meets the style:
   style; hover, open and level chips still draw the style's way, and a
   Strip's frame is the style's. Channel's flyouts only grow from the group
   while the chips are a Strip. Bar shape decides where Double's and Flat's
-  flyouts sit; Plain also sets Bare chips, line separators and numbered
-  workspaces. Height sizes the chips (taskbar slots take the bar's full
+  flyouts sit, and is fixed at full width under Solid's Plain bar, which
+  also sets Bare chips, line separators and numbered workspaces. Height sizes the chips (taskbar slots take the bar's full
   height and 4px more padding). Workspaces, Clock, Open windows, Visualizer
   and the rest are style-free, but the open-windows strip marks its focused
   window the style's way and widens its slots under taskbar chips.
@@ -207,8 +207,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
   every workspace and screen, and it never animates, neither the windows
   nor its own fill, whatever the animation settings.
 - Icon-only, by design; no text readouts beside icons, except under Plain.
-- **Plain** (Bar shape, added 2026-10-30 from a classic text bar): full
-  width and flat, no hairline; the levels (volume, brightness, battery)
+- **Plain** (Solid's `plain` option, from a classic text bar): full
+  width whatever Bar shape says, and flat, no hairline; the levels (volume, brightness, battery)
   read as "icon 100%" text instead of a fill, a low battery's in the alert
   colour. Choosing it also sets Chips to Bare, separators to Lines and
   workspaces to Numbers, each changeable after.

@@ -332,10 +332,11 @@ Singleton {
     readonly property int barHeight:  resolved.barHeight
     // Floating and Islands sit barMargin in from the screen edges (the
     // windows' edge gap); barExtent is where things anchored to the bar start.
-    readonly property bool barFloating: Settings.barStyle === "floating"
-    readonly property bool barIslands:  Settings.barStyle === "islands"
-    // Plain: full width and flat, no hairline; levels read as text
-    readonly property bool barPlain:    Settings.barStyle === "plain"
+    // Solid's Plain bar: full width whatever the shape, flat, no hairline;
+    // levels read as text
+    readonly property bool barPlain:    style === "solid" && opt("plain")
+    readonly property bool barFloating: Settings.barStyle === "floating" && !barPlain
+    readonly property bool barIslands:  Settings.barStyle === "islands" && !barPlain
     readonly property bool barFull:     !barFloating && !barIslands
     readonly property int barMargin:  barFull ? 0 : Settings.edgeGap
     readonly property int barExtent:  barHeight + barMargin * 2
