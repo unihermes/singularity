@@ -74,6 +74,13 @@ hl.window_rule({
 -- and the other way: while a browser has focus, an app asking to be
 -- activated (a download opened in it) comes to the front
 local BROWSER_CLASSES = { ["zen"] = true, ["zen-browser"] = true, ["floorp"] = true, ["firefox"] = true }
+-- Browsers stay opaque whatever the window opacity: pages and video
+-- through a see-through window are unreadable
+hl.window_rule({
+    name    = "browsers-opaque",
+    match   = { class = "^(zen|zen-browser|floorp|firefox)$" },
+    opacity = "1 override 1 override",
+})
 hl.on("window.urgent", function(win)
     local active = hl.get_active_window()
     if not win or not active or win.address == active.address then return end
