@@ -5,7 +5,8 @@
 // on its monitor with the app's icon in each. Click a miniature to jump, a
 // window to focus it, drag a window onto another miniature to move it.
 // Specials with windows get one too. Centred, not a FlyoutPanel;
-// Theme.overviewLayout and Theme.backdrop style it.
+// Theme.overviewLayout styles it; its backdrop is shell.qml's, on every
+// screen.
 
 import Quickshell
 import Quickshell.Wayland
@@ -85,14 +86,9 @@ OverlayWindow {
     focusMode: root.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     layerNamespace: "singularity-overlay"
 
-    // Dim, and close on a click that misses every cell.
-    Rectangle {
-        anchors.fill: parent
-        color: Theme.backdrop
-
-        Backdrop {
-            onDismissed: root.requestClose()
-        }
+    // close on a click that misses every cell
+    Backdrop {
+        onDismissed: root.requestClose()
     }
 
     // a press on the other monitor too

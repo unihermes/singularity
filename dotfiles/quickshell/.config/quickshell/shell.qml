@@ -371,8 +371,10 @@ ShellRoot {
     // activespecial events; a monitor with no event yet isn't listed
     property var specialShown: ({})
 
-    // the screen scope ALT+Tab is open on, null while it's shut
-    property var altTabScope: null
+    // the screen scope ALT+Tab or the overview (SUPER+W) is open on, null
+    // while neither is: every screen shows the backdrop under it
+    property var backdropScope: null
+    readonly property var backdropFlyouts: ["alttab", "workspaceoverlay"]
 
     // Closes every screen's flyout but `except`'s (null: all of them).
     function closeFlyouts(except) {
@@ -392,8 +394,8 @@ ShellRoot {
             property string openFlyout: ""
             onOpenFlyoutChanged: {
                 if (openFlyout !== "") root.closeFlyouts(screenScope)
-                if (openFlyout === "alttab") root.altTabScope = screenScope
-                else if (root.altTabScope === screenScope) root.altTabScope = null
+                if (root.backdropFlyouts.indexOf(openFlyout) !== -1) root.backdropScope = screenScope
+                else if (root.backdropScope === screenScope) root.backdropScope = null
             }
 
             // every bar; a press on any isn't a click off a flyout (DismissGrab)
@@ -675,14 +677,14 @@ ShellRoot {
             scope: screenScope
         }
 
-        // the switcher's backdrop, on every screen while it's open on one:
-        // under it (the top layer, over the bar), letting the pointer
-        // through, and named outside the blur rule so every screen dims
-        // the same, unblurred (a blurred dim is darker and blotchy, and a
-        // display scaled under 1 can't blur it whole)
+        // ALT+Tab's and the overview's backdrop, on every screen while
+        // either is open on one: under it (the top layer, over the bar),
+        // letting the pointer through, and named outside the blur rule so
+        // every screen dims the same, unblurred (a blurred dim is darker
+        // and blotchy, and a display scaled under 1 can't blur it whole)
         OverlayWindow {
             scope: screenScope
-            visible: root.altTabScope !== null
+            visible: root.backdropScope !== null
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.namespace: "unblurred-backdrop"
             mask: Region {}
