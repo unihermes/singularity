@@ -1044,7 +1044,7 @@ Singleton {
             property string windowStyle: "icons"
             property string windowScope: "workspace"
             property int windowIconSize: 18
-            property int windowIconPadding: 6
+            property int windowIconPadding: 3
             property string iconTint: "colour"
             property string vizStyle: "mirror"
             property int vizBars: 10

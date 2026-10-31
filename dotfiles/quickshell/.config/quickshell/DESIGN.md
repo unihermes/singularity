@@ -229,7 +229,7 @@ Style: `channel` (frame `channel` in `Styles.js`).
   every workspace and screen, and it never animates, neither the windows
   nor its own fill, whatever the animation settings.
 - Icon-only, by design; no text readouts beside icons, except under Plain.
-- **Open windows** default to 18px app icons with 6px padding each side.
+- **Open windows** default to 18px app icons with 3px padding each side.
   Appearance > Bar > Open windows has Window icon size and Window icon
   padding controls; icons are capped to the bar's height. Lift and
   Spotlight keep their smaller inactive icons relative to that size.
