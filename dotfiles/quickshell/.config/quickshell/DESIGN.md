@@ -800,11 +800,11 @@ Settings') are laid out the same way.
   module; MUSIC AND TRAY), Panels (POPUPS; LAUNCHER; OVERLAYS; DESKTOP
   WIDGETS), Motion (SPEED; ANIMATIONS: window animation, flyouts open) and
   Type last (SHELL FONT; HEADINGS; APPS: system font, icons, cursor). No status
-  card. Every section shows all its rows (`essentialRows: 0`). Being
-  redone tab by tab (from 2026-10-31), and a redone tab folds nothing
-  behind Advanced; the others still fold their rarely changed rows behind
-  an Advanced (n) row at the section's foot (`SettingsAdvanced`; a search
-  for one opens it), a section of only those (Headings) being that one row. Cut in the same round: Text on the
+  card. Every section shows all its rows (`essentialRows: 0`). Colour,
+  Shape, Bar, Panels and Motion were redone on 2026-10-31 and fold nothing
+  behind Advanced; Type was left as it was, its rarely changed rows still
+  behind an Advanced (n) row at the section's foot (`SettingsAdvanced`; a
+  search for one opens it), Headings being only that one row. Cut in the same round: Text on the
   accent (Auto decides), Your mark (a mark set before stays on the Mark
   list), Colours from it (Palette does it). Neighbours still go two to a
   line. While anything differs from the baseline, the changes
