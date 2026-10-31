@@ -13,7 +13,7 @@ SettingsPage {
     sectioned: true
 
     title: "Keybinds"
-    description: "Every shortcut in binds.lua, and presets worth adding."
+    description: "Keyboard shortcuts and presets."
     scrolls: false
 
     function focusSearch() { body.focusSearch() }

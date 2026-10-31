@@ -94,7 +94,6 @@ SettingsTab {
 
     SettingsField {
         label: "Fit"
-        hint: "How it fills the screen"
         Choices { key: "wallpaperFill" }
     }
 
@@ -227,7 +226,7 @@ SettingsTab {
     SettingsField {
         labelWidth: parent.width - placeChip.width - Theme.spaceL
         label: "Placement"
-        hint: "Drag them about; right-clicking the desktop does the same"
+        hint: "Drag widgets to reposition them"
         FlyoutChip {
             id: placeChip
             anchors.right: parent.right

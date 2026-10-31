@@ -19,7 +19,6 @@ SettingsPage {
     sectioned: true
 
     title: "Network"
-    description: "Ethernet through systemd-networkd, Wi-Fi through iwd, which keeps the passphrases."
 
     // "" while browsing; the SSID whose passphrase row is open
     property string pendingSsid: ""

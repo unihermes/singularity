@@ -317,7 +317,6 @@ SettingsTab {
         id: hueField
         visible: accentField.picking && Settings.colourMode !== "wallpaper"
         label: "Hue"
-        hint: "Around the colour wheel"
         readonly property color base: Settings.accent !== "" ? Settings.accent : "#5555c8"
         function setHsl(h, l) {
             Settings.set("accent", String(Qt.hsla(h, Math.max(0.3, base.hslSaturation), l, 1)))
@@ -334,7 +333,6 @@ SettingsTab {
     SettingsField {
         visible: hueField.visible
         label: "Lightness"
-        hint: "From deep to pale"
 
         Slider {
             anchors.right: parent.right
@@ -367,7 +365,6 @@ SettingsTab {
 
     SettingsField {
         label: "Status"
-        hint: "Good, then Alert; click one to set it"
 
         Row {
             anchors.right: parent.right
@@ -487,7 +484,6 @@ SettingsTab {
             width: styleTab.half; labelWidth: styleTab.half / 2
             label: "Case"
             lookKey: "headingUpper"
-            hint: "Capitals, or not"
             FlyoutSegmented {
                 anchors.right: parent.right
                 fill: false
@@ -502,7 +498,7 @@ SettingsTab {
         SettingsField {
             width: styleTab.half; labelWidth: styleTab.half / 2
             label: "Heading size"
-            hint: "Against body text"
+            hint: "Relative to body text"
             Choices { key: "headingSize" }
         }
     }

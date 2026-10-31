@@ -47,7 +47,7 @@ FlyoutPanel {
             FlyoutRow {
                 visible: drive.modelData.parts.length === 0
                 width: parent.width
-                label: "Nothing on it to open"
+                label: "No volumes available"
                 enabled: false
             }
 

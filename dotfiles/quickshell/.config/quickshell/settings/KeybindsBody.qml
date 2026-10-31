@@ -229,7 +229,7 @@ Column {
         if (busy || selectionCount === 0) return
         if (selectedTaken > 0 && !presetAck) {
             presetAck = true
-            say(selectedTaken + " of these combos are already used, in your config or by another ticked preset · Add again to bind them anyway", true)
+            say(selectedTaken + " selected shortcuts conflict with existing shortcuts or other selections. Select Add anyway to continue.", true)
             return
         }
         var list = selectedPresets()
@@ -1248,7 +1248,7 @@ Column {
                     width: parent.width
                     color: Theme.subtext
                     font.pixelSize: Theme.fontSmall
-                    text: "Binds worth having: tick the ones you want, or 󰏫 to change one first"
+                    text: "Select shortcuts to add. Use 󰏫 to edit before adding."
                 }
 
                 Repeater {
@@ -1286,7 +1286,7 @@ Column {
                             FlyoutChip {
                                 id: packAll
                                 anchors.right: parent.right
-                                text: root.packFullySelected(pack.modelData) ? "Untick all" : "Tick all"
+                                text: root.packFullySelected(pack.modelData) ? "Deselect all" : "Select all"
                                 onClicked: root.selectPack(pack.modelData, !root.packFullySelected(pack.modelData))
                             }
                         }
@@ -1485,10 +1485,10 @@ Column {
             anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.textStrong
-            text: root.selectionCount + (root.selectionCount === 1 ? " preset ticked" : " presets ticked")
+            text: root.selectionCount + (root.selectionCount === 1 ? " preset selected" : " presets selected")
                 + (root.selectedTaken > 0
-                    ? " · " + root.selectedTaken + " on combos something else uses"
-                    : " · written into their sections, one write")
+                    ? " · " + root.selectedTaken + " with conflicts"
+                    : "")
         }
 
         Row {

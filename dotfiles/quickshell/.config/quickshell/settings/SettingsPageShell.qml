@@ -454,7 +454,6 @@ SettingsPage {
             labelWidth: width - opacityRow.width - Theme.spaceL
             label: "Opacity"
             lookKey: "terminalOpacity"
-            hint: page.opacityShown >= 1 ? "Solid" : "Wallpaper shows through"
 
             Row {
                 id: opacityRow

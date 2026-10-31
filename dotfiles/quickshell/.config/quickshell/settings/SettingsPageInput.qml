@@ -429,7 +429,6 @@ SettingsPage {
     SettingsField {
         visible: page.layouts.length > 1
         label: "Switch layouts with"
-        hint: "Press it to move to the next layout"
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -443,7 +442,7 @@ SettingsPage {
 
     SettingsField {
         label: "Caps Lock key"
-        hint: page.options.caps === "" ? "" : "Caps Lock itself is gone"
+        hint: page.options.caps === "" ? "" : "Replaces the Caps Lock function"
 
         SettingsDropdown {
             anchors.right: parent.right
@@ -476,14 +475,13 @@ SettingsPage {
     Level {
         key: "repeat_delay"
         label: "Repeat delay"
-        hint: "Held this long before it repeats"
+        hint: "Delay before a held key repeats"
         min: 150; max: 1000; step: 50
         readout: v => Math.round(v) + " ms"
     }
     Level {
         key: "repeat_rate"
         label: "Repeat rate"
-        hint: "Then this many a second"
         min: 10; max: 80; step: 5
         readout: v => Math.round(v) + "/s"
     }
@@ -492,7 +490,6 @@ SettingsPage {
     // shows the two levels above as they are
     SettingsField {
         label: "Try it"
-        hint: "Hold a letter down"
 
         Row {
             anchors.right: parent.right
@@ -502,7 +499,7 @@ SettingsPage {
                 id: tryIt
                 width: Theme.fit(300)
                 echoPassword: false
-                placeholder: "hold a key here"
+                placeholder: "Hold a key to test"
                 onEscapePressed: text = ""
             }
             IconButton {

@@ -24,7 +24,7 @@ SettingsPage {
     sectioned: true
 
     title: "Display"
-    description: "Where your displays sit, and how each one draws."
+    description: "Display arrangement, resolution and scaling."
 
     // [{ name, description, width, height, hz, scale, modes: ["WxH@R"] }]
     property var monitors: []
@@ -610,21 +610,20 @@ SettingsPage {
         SettingsValue {
             visible: mon.m.disabled
             label: "Status"
-            hint: mon.m.name === page.lidOff ? "It comes back on when the lid opens" : "Hyprland has it switched off"
+            hint: mon.m.name === page.lidOff ? "Resumes when the lid opens" : "Disabled in Hyprland"
             value: page.offText(mon.m)
         }
 
         SettingsValue {
             visible: !mon.m.disabled && mon.mirrored
             label: "Showing"
-            hint: "Duplicate: the same picture everywhere"
             value: "A copy of " + page.shortName(page.primary)
         }
 
         SettingsField {
             visible: !mon.m.disabled
             label: "Resolution"
-            hint: mon.m.res === mon.nativeRes ? "The display's own; sharpest" : "Below native, so it's scaled up"
+            hint: mon.m.res === mon.nativeRes ? "" : "Scaled to fit the display"
 
             SettingsDropdown {
                 anchors.right: parent.right
@@ -639,7 +638,7 @@ SettingsPage {
         SettingsField {
             visible: !mon.m.disabled
             label: "Refresh rate"
-            hint: mon.rates.length > 1 ? "How often it redraws" : "The only rate at this resolution"
+            hint: mon.rates.length > 1 ? "" : "Only available rate at this resolution"
 
             FlyoutSegmented {
                 visible: mon.rates.length > 1
@@ -681,7 +680,6 @@ SettingsPage {
         SettingsField {
             visible: !mon.m.disabled
             label: "Rotation"
-            hint: "Turns the picture, for a display on its side"
 
             FlyoutSegmented {
                 anchors.right: parent.right

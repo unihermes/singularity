@@ -312,7 +312,7 @@ SettingsPage {
         title: Channels.headsetName || "Headset"
         lines: [page.headsetOn
             ? (Channels.headsetLevel >= 0 ? Channels.headsetLevel + "%" + (Channels.headsetCharging ? " charging" : "") : "On")
-            : "Off; what's picked here is sent when it turns on"]
+            : "Off · Settings apply when connected"]
     }
 
     SettingsNote {
@@ -324,40 +324,35 @@ SettingsPage {
     HeadsetLevel {
         key: "sidetone"
         label: "Sidetone"
-        hint: "Your own voice in your ears"
+        hint: "Microphone monitoring"
     }
     HeadsetLevel {
         key: "micVolume"
         label: "Microphone level"
-        hint: "The headset's own gain"
+        hint: "Headset microphone gain"
     }
     HeadsetChoice {
         key: "inactive"
         label: "Turn off when idle"
-        hint: "After this long with no sound"
         choices: [{ value: 0, text: "Never" }, { value: 10, text: "10 min" }, { value: 30, text: "30 min" },
                   { value: 60, text: "1 h" }, { value: 90, text: "90 min" }]
     }
     HeadsetChoice {
         key: "muteLed"
         label: "Mute light"
-        hint: "How bright it shows the mic is off"
         choices: [{ value: 0, text: "Off" }, { value: 1, text: "Low" }, { value: 2, text: "Mid" }, { value: 3, text: "High" }]
     }
     HeadsetSwitch {
         key: "limiter"
         label: "Volume limiter"
-        hint: "Caps how loud it plays"
     }
     HeadsetSwitch {
         key: "btPower"
         label: "Bluetooth at power-on"
-        hint: "Its Bluetooth comes on with it"
     }
     HeadsetSwitch {
         key: "lights"
         label: "Lights"
-        hint: "The headset's own lights"
     }
     HeadsetSwitch {
         key: "prompts"
@@ -368,7 +363,7 @@ SettingsPage {
     FlyoutRow {
         visible: Channels.headset !== "" && Peripherals.headsetCaps.length > 0
             && !Object.keys(Peripherals.headsetFlags).some(k => Peripherals.headsetCan(k))
-        label: "Nothing on it to set"
+        label: "No configurable settings"
         enabled: false
     }
 
@@ -451,7 +446,6 @@ SettingsPage {
             SettingsField {
                 visible: mouse.modelData.rates.length > 1
                 label: "Polling rate"
-                hint: "How often it tells the computer where it is"
 
                 FlyoutSegmented {
                     anchors.right: parent.right
@@ -518,12 +512,12 @@ SettingsPage {
 
     FlyoutRow {
         visible: page.wireless.length === 0
-        label: "Nothing wireless with a battery"
+        label: "No wireless battery devices detected"
         enabled: false
     }
 
     SettingsNote {
-        text: "A notification when one is down to 15%, and again at 5%"
+        text: "Low battery alerts at 15% and 5%"
     }
 
     // --- drives --------------------------------------------------------------
@@ -713,7 +707,7 @@ SettingsPage {
 
     FlyoutRow {
         visible: page.usb.length === 0
-        label: "Nothing plugged in"
+        label: "No USB devices detected"
         enabled: false
     }
 }

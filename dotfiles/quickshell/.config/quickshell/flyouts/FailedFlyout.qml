@@ -45,7 +45,7 @@ FlyoutPanel {
 
     FlyoutRow {
         visible: FailedUnits.count === 0
-        label: "Nothing has failed"
+        label: "No failed services"
         enabled: false
     }
 

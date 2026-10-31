@@ -30,7 +30,7 @@ SettingsPage {
     }
 
     title: "Lock Screen"
-    description: "Its look, the fingerprint and the password grace. Colours follow Theme."
+    description: "Appearance, fingerprint unlock and password grace period."
 
 
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
@@ -382,7 +382,7 @@ SettingsPage {
                 width: parent.width
                 labelWidth: width - Theme.fit(170) - Theme.spaceL
                 label: "Blur"
-                hint: page.backgroundKind === "plain" ? "Only for an image" : "Passes over it"
+                hint: page.backgroundKind === "plain" ? "Requires a background image" : ""
 
                 FlyoutStepper {
                     anchors.right: parent.right
@@ -404,7 +404,7 @@ SettingsPage {
                 width: parent.width
                 labelWidth: width - Theme.fit(170) - Theme.spaceL
                 label: "Dim"
-                hint: page.backgroundKind === "plain" ? "Only for an image" : "Darkens it"
+                hint: page.backgroundKind === "plain" ? "Requires a background image" : ""
 
                 FlyoutStepper {
                     anchors.right: parent.right

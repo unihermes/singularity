@@ -16,7 +16,7 @@ SettingsPage {
     sectioned: true
 
     title: "Recording"
-    description: "Recordings of the screen, and the last minute of a game kept to save."
+    description: "Screen recording and instant replay."
 
     readonly property var lengths: [30, 60, 90, 120, 300]
 
@@ -46,7 +46,7 @@ SettingsPage {
 
     SettingsField {
         label: "Replay length"
-        hint: "Kept in memory, about " + Math.round(Settings.replaySeconds * 6.25) + " MB"
+        hint: "Estimated memory use: " + Math.round(Settings.replaySeconds * 6.25) + " MB"
         dimmed: !Settings.replayOn
 
         FlyoutSegmented {
@@ -67,9 +67,9 @@ SettingsPage {
 
     SettingsField {
         label: "Format"
-        hint: !Recorder.av1Supported ? "This GPU can't encode AV1, so H.264"
-            : Settings.recordCodec === "av1" ? "Smaller files; some older phones can't play them"
-            : "Plays anywhere, in bigger files"
+        hint: !Recorder.av1Supported ? "AV1 encoding unavailable on this GPU"
+            : Settings.recordCodec === "av1" ? "Smaller files; limited support on older devices"
+            : "Wider compatibility; larger files"
 
         FlyoutSegmented {
             anchors.right: parent.right
@@ -86,7 +86,7 @@ SettingsPage {
 
     SettingsField {
         label: "Recordings"
-        hint: Recorder.recordDir.replace(Quickshell.env("HOME"), "~") + ", a folder an app"
+        hint: Recorder.recordDir.replace(Quickshell.env("HOME"), "~") + " · Grouped by app"
 
         FlyoutChip {
             anchors.right: parent.right
@@ -98,7 +98,7 @@ SettingsPage {
 
     SettingsField {
         label: "Replays"
-        hint: Recorder.replayDir.replace(Quickshell.env("HOME"), "~") + ", a folder a game"
+        hint: Recorder.replayDir.replace(Quickshell.env("HOME"), "~") + " · Grouped by game"
 
         FlyoutChip {
             anchors.right: parent.right

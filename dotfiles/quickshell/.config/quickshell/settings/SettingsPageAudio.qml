@@ -22,7 +22,7 @@ SettingsPage {
     sectioned: true
 
     title: "Sound"
-    description: "Where sound goes, how loud, and each app's share."
+    description: "Audio devices, volume and app routing."
 
     // ScriptModels, so a node coming or going doesn't rebuild every row
     readonly property var devices: Audio.devices

@@ -23,7 +23,7 @@ SettingsTab {
 
     SettingsField {
         label: "Flyouts open"
-        hint: Theme.flyoutGrown ? "Grown flyouts always fade" : "How flyouts appear"
+        hint: Theme.flyoutGrown ? "Expanded flyouts always fade" : ""
         Choice { key: "flyoutAnim" }
     }
 
@@ -32,19 +32,18 @@ SettingsTab {
         columns: 2
         columnSpacing: Theme.spaceXl * 2
 
-        Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Flyout width"; hint: "For long names"; key: "flyoutWidth"; step: 10; suffix: "%" }
-        Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Overlay dimming"; hint: "Behind overlays"; key: "scrim"; step: 5; suffix: "%" }
+        Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Flyout width"; key: "flyoutWidth"; step: 10; suffix: "%" }
+        Stepper { width: panelsTab.half; labelWidth: panelsTab.halfLabel; label: "Overlay dimming"; key: "scrim"; step: 5; suffix: "%" }
     }
 
     SettingsSubhead { caption: "NOTIFICATIONS" }
 
     SettingsField {
         label: "Notification popups"
-        hint: "How much each popup shows"
         Choices { key: "notifStyle" }
     }
 
-    Stepper { label: "Popup width"; hint: "Each notification popup"; key: "notifWidth"; step: 20; suffix: "px" }
+    Stepper { label: "Popup width"; key: "notifWidth"; step: 20; suffix: "px" }
 
     SettingsSubhead { caption: "LEVEL POPUP" }
 
@@ -58,11 +57,10 @@ SettingsTab {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "LAUNCHER" }
 
-    Tiles { key: "launcherLayout"; label: "Launcher layout"; hint: "Rows, an icon grid, or one line"; art: launcherArt; columns: 3; tileHeight: Theme.fs(64) }
+    Tiles { key: "launcherLayout"; label: "Launcher layout"; art: launcherArt; columns: 3; tileHeight: Theme.fs(64) }
 
     SettingsField {
         label: "Launcher position"
-        hint: "Centred, under the bar, or full screen"
         Choices { key: "launcherPosition" }
     }
 
@@ -76,7 +74,7 @@ SettingsTab {
             labelWidth: panelsTab.half - Theme.switchWidth - Theme.spaceL
             label: "Launcher details"
             lookKey: "launcherDetails"
-            hint: Settings.launcherDetails ? "Second lines and key hints"
+            hint: Settings.launcherDetails ? "Descriptions and keyboard hints"
                 : "Names only"
 
             Switch {
@@ -93,30 +91,28 @@ SettingsTab {
 
     SettingsField {
         label: "Window switcher"
-        hint: "ALT+Tab's cards"
+        hint: "ALT+Tab"
         Choices { key: "altTabStyle" }
     }
 
     SettingsField {
         label: "Switcher windows"
-        hint: Settings.altTabScope === "all" ? "Every workspace's, in the bar too"
-            : "Which windows ALT+Tab offers"
+        hint: "Also applies to the window list in the bar"
         Choices { key: "altTabScope" }
     }
 
     SettingsField {
         label: "Workspace overview"
-        hint: "SUPER+W's layout"
+        hint: "SUPER+W"
         Choices { key: "overviewLayout" }
     }
 
     SettingsField {
         label: "Overview backdrop"
-        hint: "Behind the overview"
         Choices { key: "overviewBackdrop" }
     }
 
-    Tiles { key: "powerStyle"; label: "Power menu"; hint: "How the power menu lays out"; art: powerArt; columns: 3; tileHeight: Theme.fs(64) }
+    Tiles { key: "powerStyle"; label: "Power menu"; art: powerArt; columns: 3; tileHeight: Theme.fs(64) }
 
     Component { id: launcherArt; ModuleArt { kind: "launcherLayout" } }
     Component { id: powerArt; ModuleArt { kind: "powerStyle" } }

@@ -263,7 +263,7 @@ OverlayWindow {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Drag a widget: it lines up with the others, the middle and the thirds"
+                    text: "Drag to arrange. Widgets snap to alignment guides."
                     color: Theme.subtext
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody

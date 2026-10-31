@@ -139,7 +139,7 @@ Column {
 
                 Text {
                     visible: root.revision >= 0 && row.header && root.sectionEmpty(row.index)
-                    text: "empty, drag a module here"
+                    text: "Drag modules here"
                     color: Theme.muted
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
