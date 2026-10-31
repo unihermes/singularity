@@ -872,14 +872,26 @@ Settings') are laid out the same way.
   `SettingsValue` with `copyable`: hover fills it, a click copies it, and it
   reads Copied in the good colour for a moment.
 - **Long lists:** the ten most useful rows, then a "Show all N" row.
-- **Network** (picked 2026-10-18, 1C 2A 3B 4B 5B 6A): the joined network
-  in a card (name large, strength icon, security, band, the radio switch)
-  with the link's details two to a line under it in the same block. Then
-  one IN RANGE list with Rescan on its heading: saved networks first,
-  tagged Saved, each row's strength as a word beside the bars, Other
-  network… last. SAVED rows carry everything: where it is, security and
-  when it last joined as the hint, the Auto-join switch, and Forget as a
-  bin on hover (two clicks).
+- **Connection pages** (Network, Bluetooth, VPN; picked 2026-10-31, A
+  "cards and tiles" on all three): not every setting a row with a switch.
+  A connection's on/off is a round `PowerButton` (an accent disc with a
+  ring while on). Bluetooth and VPN pin a `ConnHero` card above their
+  rows (big glyph, a spaced-out line, the state large, what it means, the
+  page's chips, the power button), tinted with the accent while on. A
+  choice or a thing to act on is a `ConnTile` (a `FlyoutTile` with corner
+  items and the search ring) in a `TileGrid`; a click does it. On/off
+  extras on a row are toggle chips (lit while on), not switches.
+  Batteries are bars (`BatteryBars`), never rings; Wi-Fi networks are
+  rows, never cards.
+- **Network:** LINKS: the cable and Wi-Fi as rows (icon, name, In use on
+  the one carrying the traffic, what it's doing; Wi-Fi's power button at
+  its row's end), a click picking whose readings show under them as
+  copyable `StatChip`s (Interface, IP address, Gateway, MAC, Speed, and
+  Signal and Band for Wi-Fi). Then one IN RANGE list with Rescan on its
+  heading: the joined network first (tagged Joined), saved ones (Saved),
+  each row's strength as a word beside the bars, Other network… last.
+  SAVED rows: where it is, security and when it last joined as the hint,
+  Auto-join and Forget (two clicks) as chips.
 - **Devices:** a section per kind of thing: PHONE (a card with the
   phone's name, how it's joined and its battery, and Mirror, Screenshot,
   Ring and Send file as chips on it; pairing over Wi-Fi under it), PHONE
@@ -889,20 +901,26 @@ Settings') are laid out the same way.
   filesystems set in under it with Open and Mount / Unmount) and USB (a
   row per device, its kind and speed as the hint, its vendor:product id
   copyable).
-- **Bluetooth** (picked 2026-10-18, 1B 2B 3B 4B 5A): the adapter is a card
-  the same way (its name, hci id, how many paired and connected, the power
-  switch), with Discoverable and Pairable as toggle chips right after the
-  name (`HeadCard.besideTitle`);
-  Discoverable's chip counts down to BlueZ's timeout (Visible 2:59).
-  Paired devices are two-line rows (`BtPairedRow`): type icon, the name
-  over its type and state, the battery as level chips (`BatteryChips`: one,
-  or L / R / Case for earbuds) on the right, Connect / Disconnect in their
-  place on hover. Opened (`SettingsIndent`): Connect · Rename · Remove as
-  one line of chips, Battery, Reconnect by itself, then a line of fine
-  print (type, the address, which copies, and the advertised name). Scan
-  sits on the IN RANGE heading, its icon turning while it runs
-  (`FlyoutChip.icon` and `spinning`), and the unnamed devices are a last
-  "Show N unnamed" row.
+- **Bluetooth:** the adapter's `ConnHero` (its hci id, Bluetooth is on
+  or off, the name others see and how many are connected) with
+  Discoverable and Pairable as toggle chips; Discoverable's counts down to
+  BlueZ's timeout (Visible 2:59). YOUR DEVICES: a card per paired device,
+  three across (type icon lit while connected, name, kind and state, the
+  battery as bars in a fixed space so closed cards line up, Connect /
+  Disconnect); its ⋯ opens the rest in the card: Rename, Reconnect by
+  itself (toggle chip), the address (copies; the advertised name after
+  it) and Remove (two clicks). Pair a new device is the last tile and
+  starts a scan. Scan sits on the IN RANGE heading, its icon turning while
+  it runs (`FlyoutChip.icon` and `spinning`); devices in range are pills
+  (icon, name, Pair), the unnamed behind a last "Show N unnamed" pill.
+- **VPN:** the tunnel's `ConnHero` (Connected and for how long, the
+  country and server, what goes through it; Off and the server it would
+  use). WHAT GOES THROUGH IT: four tiles, qBittorrent only and Everything
+  (one lit), Kill switch (dimmed without Everything) and Connect at login.
+  SERVERS: a tile per server (its country code, name, country, 󰓢 when it
+  forwards a port, Remove on hover in two clicks; a click connects), then
+  Import. QBITTORRENT: the forwarded port large with Copy, two tiles wide,
+  beside Only over the VPN.
 - **Display** (picked 2026-10-18, 1B 2B 3B 4B 5A): with one display, THIS
   DISPLAY is a card (type icon, name, connector, what it's running) with
   its settings straight under it, nothing to open: Resolution (a dropdown,

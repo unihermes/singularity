@@ -2,9 +2,8 @@
 // ~/.config/quickshell/flyouts/BtDeviceRow.qml
 //
 // A Bluetooth device row (extends FlyoutRow): type icon, state in words,
-// battery when connected. In the flyout a paired device offers and does
-// Connect/Disconnect, a new one pairs; `detailed` (Settings) opens it in
-// place instead.
+// battery when connected. A paired device offers and does
+// Connect/Disconnect, a new one pairs.
 
 import Quickshell.Bluetooth
 import QtQuick
@@ -15,11 +14,6 @@ FlyoutRow {
     id: root
 
     required property var device
-
-    property bool detailed: false
-    // the open one, on the Settings page
-    property bool open: false
-    signal opened()
 
     // `name` is BlueZ's Alias: what it was renamed to, or the advertised
     // deviceName. With no name known BlueZ fills it with a dashed copy of
@@ -42,19 +36,16 @@ FlyoutRow {
         var lv = BtBattery.level(device)
         return (lv >= 0 ? BtKind.battery(lv) + " " + lv + "%    " : "")
             + (device.connected ? "Connected" : "Not connected")
-            + (detailed ? "  " + (open ? "󰅀" : "󰅂") : "")
     }
 
-    highlighted: device.connected || open
+    highlighted: device.connected
 
-    actionText: detailed || !(device.paired || device.connected) ? ""
+    actionText: !(device.paired || device.connected) ? ""
         : device.connected ? "Disconnect" : "Connect"
     onAction: activated()
 
     onActivated: {
-        if (detailed && (device.paired || device.connected)) {
-            opened()
-        } else if (device.connected) {
+        if (device.connected) {
             device.disconnect()
         } else if (device.paired) {
             device.connect()

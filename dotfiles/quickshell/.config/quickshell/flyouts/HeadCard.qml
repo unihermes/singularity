@@ -24,9 +24,6 @@ Item {
     property bool rule: false
 
     default property alias actions: chips.data
-    // controls right after the title, on its line (Bluetooth's
-    // Discoverable and Pairable)
-    property alias besideTitle: titleExtras.data
 
     width: parent ? parent.width : 0
     implicitHeight: Math.max(Theme.fieldHeight, text.implicitHeight + Theme.spaceL * 2)
@@ -59,25 +56,14 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
 
-        Row {
+        Text {
             width: parent.width
-            spacing: Theme.spaceL
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, parent.width - (titleExtras.width > 0 ? titleExtras.width + parent.spacing : 0))
-                elide: Text.ElideRight
-                text: root.title
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontTitle
-            }
-            Row {
-                id: titleExtras
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Theme.spaceS
-            }
+            elide: Text.ElideRight
+            text: root.title
+            color: Theme.textStrong
+            font.family: Theme.fontText
+            font.weight: Theme.weightStrong
+            font.pixelSize: Theme.fontTitle
         }
         Repeater {
             model: root.lines.filter(l => l !== "")

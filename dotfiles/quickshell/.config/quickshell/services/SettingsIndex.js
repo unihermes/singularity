@@ -11,13 +11,14 @@
 
 var entries = [
     // --- Network -----------------------------------------------------------
-    { page: "network", section: "Status", label: "Status",     keywords: "wifi wi-fi wireless radio iwd on off ssid connected joined ethernet wired cable lan networkd" },
-    { page: "network", section: "Status", label: "Interface",  keywords: "device wlan adapter" },
-    { page: "network", section: "Status", label: "IP address", keywords: "ipv4 dhcp address copy" },
-    { page: "network", section: "Status", label: "Gateway",    keywords: "router default route copy" },
-    { page: "network", section: "Status", label: "MAC",        keywords: "hardware address ethernet copy" },
-    { page: "network", section: "Status", label: "Speed",      keywords: "bitrate link rate mbit" },
-    { page: "network", section: "Status", label: "Signal",     keywords: "strength dbm rssi band ghz" },
+    { page: "network", section: "Links", label: "Links",       keywords: "status wifi wi-fi wireless radio power iwd on off ssid connected joined in use ethernet wired cable lan networkd" },
+    { page: "network", section: "Links", label: "Interface",  keywords: "device wlan adapter" },
+    { page: "network", section: "Links", label: "IP address", keywords: "ipv4 dhcp address copy" },
+    { page: "network", section: "Links", label: "Gateway",    keywords: "router default route copy" },
+    { page: "network", section: "Links", label: "MAC",        keywords: "hardware address ethernet copy" },
+    { page: "network", section: "Links", label: "Speed",      keywords: "bitrate link rate mbit" },
+    { page: "network", section: "Links", label: "Signal",     keywords: "strength dbm rssi" },
+    { page: "network", section: "Links", label: "Band",       keywords: "frequency ghz 2.4 5 6 channel" },
     { page: "network", section: "In range", label: "In range", keywords: "wifi scan rescan ssid connect join passphrase saved nearby other networks strength" },
     { page: "network", section: "In range", label: "Other network…", keywords: "hidden ssid connect join passphrase wifi" },
     { page: "network", section: "Saved", label: "Saved",       keywords: "known networks forget remove passphrase" },
@@ -27,9 +28,9 @@ var entries = [
     { page: "bluetooth", section: "Adapter",  label: "Adapter",      keywords: "bt radio bluez power on off rfkill name hci interface" },
     { page: "bluetooth", section: "Adapter",  label: "Discoverable", keywords: "visible advertise findable timeout" },
     { page: "bluetooth", section: "Adapter",  label: "Pairable",     keywords: "accept pairing requests" },
-    { page: "bluetooth", section: "Paired",   label: "Paired",       keywords: "devices connect disconnect rename remove forget trusted address" },
-    { page: "bluetooth", section: "Paired",   label: "Battery",      keywords: "level charge earbuds case left right percent" },
-    { page: "bluetooth", section: "Paired",   label: "Reconnect by itself", keywords: "trusted auto connect automatic" },
+    { page: "bluetooth", section: "Your devices", label: "Your devices", keywords: "paired connect disconnect rename remove forget trusted address battery level charge earbuds case left right percent" },
+    { page: "bluetooth", section: "Your devices", label: "Reconnect by itself", keywords: "trusted auto connect automatic" },
+    { page: "bluetooth", section: "Your devices", label: "Pair a new device", keywords: "add pair scan discover new" },
     { page: "bluetooth", section: "In range", label: "In range",     keywords: "scan discover pair headphones mouse keyboard nearby unnamed" },
 
     // --- Power & Idle ------------------------------------------------------
@@ -45,9 +46,10 @@ var entries = [
 
     // --- VPN ---------------------------------------------------------------
     { page: "vpn", section: "Connection", label: "VPN", keywords: "proton wireguard tunnel privacy connect" },
-    { page: "vpn", section: "Connection", label: "Route everything", keywords: "full tunnel split all traffic dns" },
-    { page: "vpn", section: "Connection", label: "Kill switch", keywords: "block leak drop firewall nftables" },
-    { page: "vpn", section: "Connection", label: "Connect at login", keywords: "auto reconnect startup" },
+    { page: "vpn", section: "What goes through it", label: "qBittorrent only", keywords: "split tunnel route torrent" },
+    { page: "vpn", section: "What goes through it", label: "Everything", keywords: "route everything full tunnel split all traffic dns" },
+    { page: "vpn", section: "What goes through it", label: "Kill switch", keywords: "block leak drop firewall nftables" },
+    { page: "vpn", section: "What goes through it", label: "Connect at login", keywords: "auto reconnect startup" },
     { page: "vpn", section: "Servers", label: "Import from Downloads", keywords: "proton wireguard conf file server add country p2p" },
     { page: "vpn", section: "qBittorrent", label: "Only over the VPN", keywords: "qbittorrent torrent bind interface leak" },
     { page: "vpn", section: "qBittorrent", label: "Forwarded port", keywords: "port forwarding nat-pmp natpmp seed listening" },

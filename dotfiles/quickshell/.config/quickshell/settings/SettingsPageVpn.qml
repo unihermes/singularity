@@ -1,9 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/settings/SettingsPageVpn.qml
 //
-// Proton VPN over WireGuard (services/Vpn.qml): on or off and what goes
-// through it, the servers imported from Proton's WireGuard files, and
-// qBittorrent kept on the tunnel with the forwarded port.
+// Proton VPN over WireGuard (services/Vpn.qml). A card pinned on top says
+// whether it's up, where it comes out and what goes through it, with the
+// round power button. Then tiles: what goes through it (qBittorrent only
+// or Everything, the kill switch, at login), every imported server (a
+// click connects to it; Remove on hover) and Import, and qBittorrent kept
+// on the tunnel with the forwarded port.
 
 import Quickshell
 import QtQuick
@@ -18,194 +21,211 @@ SettingsPage {
     title: "VPN"
     description: "Proton VPN over WireGuard, for qBittorrent or everything."
 
-    SettingsNote {
-        visible: !Vpn.available
-        text: Vpn.missing
-        alert: true
+    // how long it's been up, ticking by the minute
+    property real now: Date.now()
+    Timer {
+        running: Vpn.up
+        interval: 30000
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: page.now = Date.now()
+    }
+    function upFor() {
+        var min = Math.max(0, Math.floor((now - Vpn.upSince) / 60000))
+        return min < 60 ? min + " min" : Math.floor(min / 60) + " h " + (min % 60) + " min"
     }
 
-    FlyoutHeading { text: "CONNECTION" }
+    // "CA" from "CA#816", "US" from "US-CA#98"
+    function code(name) { return name.split(/[#\- ]/)[0].slice(0, 3).toUpperCase() }
 
-    SettingsField {
-        label: "VPN"
-        hint: Vpn.busy ? "Working…"
-            : !Vpn.up ? (Vpn.error !== "" ? Vpn.error : Vpn.servers.length > 0 ? "Off" : "Import a server first")
-            : Vpn.stalled ? "No answer from " + Vpn.currentName
-            : "On  ·  " + Vpn.currentName
+    pinned: ConnHero {
+        glyph: Vpn.up ? "󰦝" : "󰖂"
+        eyebrow: Vpn.busy ? "Working"
+            : !Vpn.up ? "Not connected"
+            : Vpn.stalled ? "No answer from the server"
+            : "Connected  ·  " + page.upFor()
+        title: Vpn.up ? (Vpn.current && Vpn.current.country ? Vpn.current.country + "  ·  " : "") + Vpn.currentName
+            : Vpn.servers.length > 0 ? "Off" : "No servers yet"
+        line: !Vpn.available ? Vpn.missing
+            : !Vpn.up ? (Vpn.error !== "" ? Vpn.error
+                : Vpn.picked ? "Connects to " + Vpn.picked.name : "Import a server below")
+            : Vpn.mode === "full" ? "Everything goes through it" + (Vpn.killSwitchOn ? "  ·  kill switch on" : "")
+            : "Only qBittorrent goes through it"
+        on: Vpn.up
+        powerEnabled: Vpn.available && Vpn.servers.length > 0
+        busy: Vpn.busy
+        onToggled: Vpn.toggle()
+    }
 
-        Switch {
-            anchors.right: parent.right
-            enabled: Vpn.available && Vpn.servers.length > 0 && !Vpn.busy
-            checked: Vpn.up
-            onToggled: Vpn.toggle()
+    // --- what goes through it -------------------------------------------
+
+    FlyoutHeading { text: "WHAT GOES THROUGH IT" }
+
+    TileGrid {
+        columns: 4
+
+        ConnTile {
+            width: parent.cell
+            label: "qBittorrent only"
+            glyph: "󰇚"
+            title: "qBittorrent only"
+            caption: "Nothing else"
+            lit: !Settings.vpnFull
+            clickable: !Vpn.busy
+            onClicked: if (Settings.vpnFull) Vpn.setFull(false)
+        }
+        ConnTile {
+            width: parent.cell
+            label: "Everything"
+            glyph: "󰇧"
+            title: "Everything"
+            caption: "Every app, and DNS"
+            lit: Settings.vpnFull
+            clickable: !Vpn.busy
+            onClicked: if (!Settings.vpnFull) Vpn.setFull(true)
+        }
+        ConnTile {
+            width: parent.cell
+            label: "Kill switch"
+            glyph: "󰒃"
+            title: "Kill switch"
+            caption: !Settings.vpnFull ? "With Everything only"
+                : Settings.vpnKillSwitch ? "No internet if it drops" : "Off"
+            lit: Settings.vpnFull && Settings.vpnKillSwitch
+            dimmed: !Settings.vpnFull
+            clickable: Settings.vpnFull && !Vpn.busy
+            onClicked: Vpn.setKillSwitch(!Settings.vpnKillSwitch)
+        }
+        ConnTile {
+            width: parent.cell
+            label: "Connect at login"
+            glyph: "󰐥"
+            title: "Connect at login"
+            caption: Settings.vpnAtLogin ? "If on when you left" : "Off"
+            lit: Settings.vpnAtLogin
+            onClicked: Settings.setVpnAtLogin(!Settings.vpnAtLogin)
         }
     }
 
-    SettingsField {
-        label: "Route everything"
-        hint: Settings.vpnFull ? "Every app, and DNS, goes through it" : "Only qBittorrent goes through it"
-
-        Switch {
-            anchors.right: parent.right
-            enabled: !Vpn.busy
-            checked: Settings.vpnFull
-            onToggled: Vpn.setFull(!Settings.vpnFull)
-        }
-    }
-
-    SettingsField {
-        label: "Kill switch"
-        hint: !Settings.vpnFull ? "With Route everything only"
-            : "No internet if it drops, till you turn it off"
-        dimmed: !Settings.vpnFull
-
-        Switch {
-            anchors.right: parent.right
-            enabled: Settings.vpnFull && !Vpn.busy
-            checked: Settings.vpnKillSwitch
-            onToggled: Vpn.setKillSwitch(!Settings.vpnKillSwitch)
-        }
-    }
-
-    SettingsField {
-        label: "Connect at login"
-        hint: "If it was on when you left"
-
-        Switch {
-            anchors.right: parent.right
-            checked: Settings.vpnAtLogin
-            onToggled: Settings.setVpnAtLogin(!Settings.vpnAtLogin)
-        }
-    }
+    // --- servers ----------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "SERVERS" + (Vpn.servers.length > 0 ? "  " + Vpn.servers.length : "") }
 
-    // each with whether it forwards a port, Connect, and Remove on hover
-    Repeater {
-        model: Vpn.servers
+    // each a tile with its country's code, the arrows on the ones that
+    // forward a port; a click connects, Remove on hover
+    TileGrid {
+        columns: 4
 
-        SettingsField {
-            id: server
-            required property var modelData
-            readonly property bool on: Vpn.up && Vpn.upServer === modelData.id
+        Repeater {
+            model: Vpn.servers
 
-            label: (modelData.country ? modelData.country + "  " : "") + modelData.name
-            hint: [on ? "Connected" : "",
-                   modelData.pf === true ? "Forwards a port" : modelData.pf === false ? "No port forwarding" : "",
-                   modelData.id].filter(t => t).join("  ·  ")
+            ConnTile {
+                id: server
+                required property var modelData
+                readonly property bool on: Vpn.up && Vpn.upServer === modelData.id
+                width: parent.cell
+                glyph: page.code(modelData.name)
+                title: modelData.name
+                caption: on ? (Vpn.stalled ? "No answer" : "Connected") : modelData.country || modelData.id
+                lit: on
+                clickable: !on && !Vpn.busy && Vpn.available
+                onClicked: Vpn.connect(modelData.id)
 
-            HoverHandler { id: serverHover }
-
-            Row {
-                anchors.right: parent.right
-                spacing: Theme.spaceL
-
-                IconButton {
-                    id: removeBtn
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: (serverHover.hovered || armed) && !server.on
-                    icon: "󰆴"
-                    confirm: true
-                    onClicked: {
-                        Vpn.remove(server.modelData.id)
-                        page.say("Removed " + server.modelData.name, false)
+                corner: [
+                    IconButton {
+                        visible: (server.hovered || armed) && !server.on
+                        implicitWidth: Theme.chipHeight
+                        implicitHeight: Theme.chipHeight
+                        icon: "󰆴"
+                        confirm: true
+                        onClicked: {
+                            Vpn.remove(server.modelData.id)
+                            page.say("Removed " + server.modelData.name, false)
+                        }
+                    },
+                    Text {
+                        visible: server.modelData.pf === true
+                        height: Theme.chipHeight
+                        verticalAlignment: Text.AlignVCenter
+                        text: "󰓢"
+                        color: Theme.subtext
+                        font.family: Theme.fontIcon
+                        font.pixelSize: Theme.fontIconSize
                     }
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: removeBtn.armed
-                    text: "Click again to remove"
-                    color: Theme.alert
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontSmall
-                }
-                FlyoutChip {
-                    anchors.verticalCenter: parent.verticalCenter
-                    enabled: !server.on && !Vpn.busy
-                    text: server.on ? "Connected" : "Connect"
-                    onClicked: Vpn.connect(server.modelData.id)
-                }
+                ]
             }
         }
-    }
 
-    FlyoutRow {
-        visible: Vpn.servers.length === 0
-        enabled: false
-        label: "No servers yet"
-    }
-
-    SettingsField {
-        label: "Import from Downloads"
-        hint: Vpn.importCount === 0 ? "No WireGuard files in Downloads"
-            : Vpn.importCount > 0 ? "Moved in " + Vpn.importCount + (Vpn.importCount === 1 ? " server" : " servers")
-            : "Proton's WireGuard files; they're moved here"
-
-        FlyoutChip {
-            anchors.right: parent.right
-            icon: "󰈠"
-            text: "Import"
+        ConnTile {
+            width: parent.cell
+            label: "Import from Downloads"
+            glyph: "󰈠"
+            title: "Import"
+            caption: Vpn.importCount === 0 ? "None in Downloads"
+                : Vpn.importCount > 0 ? "Moved in " + Vpn.importCount
+                : "From Downloads"
             onClicked: Vpn.importDownloads()
         }
     }
 
     SettingsNote {
-        text: "account.protonvpn.com › Downloads › WireGuard: GNU/Linux, NAT-PMP on, a P2P server"
+        text: "From account.protonvpn.com › Downloads › WireGuard, NAT-PMP on  ·  󰓢 forwards a port"
     }
+
+    // --- qBittorrent --------------------------------------------------------
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "QBITTORRENT" }
 
-    SettingsField {
-        label: "Only over the VPN"
-        hint: !Vpn.hasQbit ? "qBittorrent isn't installed"
-            : !Settings.vpnQbit ? "Off; it uses any connection"
-            : Vpn.qbitState === "restart" ? "Quit qBittorrent once to apply"
-            : Vpn.qbitState === "saved" ? "Set; it downloads only while the VPN is on"
-            : Vpn.qbitState === "set" ? "On the VPN" + (Vpn.up ? "" : "; waiting for it")
-            : "Checking…"
-        dimmed: !Vpn.hasQbit
+    Row {
+        id: qbit
+        readonly property real cell: (width - spacing * 2) / 3
+        readonly property real tileHeight: Math.max(port.implicitHeight, only.implicitHeight)
+        width: parent.width
+        spacing: Theme.spaceS
 
-        Switch {
-            anchors.right: parent.right
-            enabled: Vpn.hasQbit
-            checked: Settings.vpnQbit
-            onToggled: Settings.setVpnQbit(!Settings.vpnQbit)
-        }
-    }
+        ConnTile {
+            id: port
+            width: qbit.cell * 2 + qbit.spacing
+            height: qbit.tileHeight
+            label: "Forwarded port"
+            glyph: "󰓢"
+            title: Vpn.port > 0 ? String(Vpn.port) : "No port"
+            big: true
+            clickable: false
+            dimmed: Vpn.port === 0
+            caption: Vpn.port > 0 ? "qBittorrent's listening port"
+                : !Vpn.hasNatpmp ? "libnatpmp isn't installed"
+                : !Vpn.connected ? "While the VPN is on"
+                : Vpn.current && Vpn.current.pf === false ? "This server doesn't forward ports"
+                : Vpn.portError !== "" ? Vpn.portError
+                : "Asking…"
 
-    SettingsField {
-        label: "Forwarded port"
-        hint: Vpn.port > 0 ? "Set as qBittorrent's listening port"
-            : !Vpn.hasNatpmp ? "libnatpmp isn't installed"
-            : !Vpn.connected ? "While the VPN is on"
-            : Vpn.current && Vpn.current.pf === false ? "This server doesn't forward ports"
-            : Vpn.portError !== "" ? Vpn.portError
-            : "Asking…"
-        dimmed: Vpn.port === 0
-
-        Row {
-            anchors.right: parent.right
-            spacing: Theme.spaceL
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: Vpn.port > 0
-                text: Vpn.port
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightStrong
-                font.pixelSize: Theme.fontBody
-            }
-            FlyoutChip {
-                anchors.verticalCenter: parent.verticalCenter
+            corner: FlyoutChip {
                 visible: Vpn.port > 0
                 icon: "󰆏"
                 text: "Copy"
                 onClicked: Quickshell.execDetached(["wl-copy", String(Vpn.port)])
             }
+        }
+        ConnTile {
+            id: only
+            width: qbit.cell
+            height: qbit.tileHeight
+            label: "Only over the VPN"
+            glyph: "󰒃"
+            title: "Only over the VPN"
+            caption: !Vpn.hasQbit ? "qBittorrent isn't installed"
+                : !Settings.vpnQbit ? "Off; it uses any connection"
+                : Vpn.qbitState === "restart" ? "Quit it once to apply"
+                : Vpn.qbitState === "saved" ? "Downloads only while it's on"
+                : Vpn.qbitState === "set" ? (Vpn.up ? "On the VPN" : "Waiting for the VPN")
+                : "Checking…"
+            lit: Settings.vpnQbit && Vpn.hasQbit
+            dimmed: !Vpn.hasQbit
+            clickable: Vpn.hasQbit
+            onClicked: Settings.setVpnQbit(!Settings.vpnQbit)
         }
     }
 
