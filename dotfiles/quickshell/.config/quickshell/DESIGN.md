@@ -92,7 +92,9 @@ them.
   it holds stay.
 - **Picking a style** lands on its default: its stock (`Styles.stock`, then
   what `Styles.finish` and `Styles.windows` set, then the style's own
-  `settings`), with its saved default laid over. Unsaved changes to the old
+  `settings`), then this machine's own stock (`style-defaults.json` in the
+  state folder: `all` for every style, or a style's name), with its saved
+  default laid over. Unsaved changes to the old
   style's settings go.
 - **Save as default** stores the current style's settings, not the colours,
   as that style's default (`userDefaults[style]`); it's on only while a

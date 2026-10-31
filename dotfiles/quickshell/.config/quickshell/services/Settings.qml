@@ -733,12 +733,30 @@ Singleton {
     // the keys a style's default holds
     readonly property var styleKeys: Object.keys(Styles.stockOf(Styles.order[0])).filter(k => k !== "style")
 
-    // a style's default: its stock overlaid with its saved one (style keys
-    // only, so an older snapshot's colours are left out)
+    // This machine's own stock, laid over every style's before its saved
+    // default: style-defaults.json in the state folder, never the repo, as
+    // { "all": { key: value }, "<style>": { key: value } }
+    FileView {
+        id: machineView
+        path: root.stateDir + "/style-defaults.json"
+        preload: true
+        blockLoading: true
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+    }
+    readonly property var machineStock: {
+        try { return JSON.parse(machineView.text()) || {} } catch (e) { return {} }
+    }
+
+    // a style's default: its stock, this machine's, then its saved one
+    // (style keys only, so an older snapshot's colours are left out)
     function styleDefaultOf(st) {
-        var d = Styles.stockOf(st), u = (adapter.userDefaults || {})[st] || {}
-        for (var k in d)
-            if (k !== "style" && u[k] !== undefined) d[k] = u[k]
+        var d = Styles.stockOf(st)
+        var layers = [machineStock.all || {}, machineStock[st] || {}, (adapter.userDefaults || {})[st] || {}]
+        for (var i = 0; i < layers.length; i++)
+            for (var k in d)
+                if (k !== "style" && layers[i][k] !== undefined) d[k] = layers[i][k]
         return d
     }
 
