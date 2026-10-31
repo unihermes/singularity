@@ -2,7 +2,8 @@
 // ~/.config/quickshell/desktop/MusicWidget.qml
 //
 // What the bar's Music module follows. Small: the art with play/pause
-// beside it, the title and artist under. Medium: the art down the left,
+// beside it, the title and artist under; the progress bar and transport
+// are the media flyout's (the shell's Meter and chips). Medium: the art down the left,
 // the player, track, progress and transport beside it. Large: the art
 // across the top, the rest under it. The art dims while paused; with no
 // player open it says so and offers the last one this session.
@@ -11,6 +12,7 @@ import Quickshell
 import Quickshell.Widgets
 import QtQuick
 import "../services"
+import "../flyouts"
 
 WidgetCard {
     id: root
@@ -71,13 +73,12 @@ WidgetCard {
     }
 
     // small: play/pause in the top right corner
-    WidgetGlyph {
-        card: root
+    FlyoutChip {
         visible: root.small && !!root.player
         anchors.right: parent.right
-        px: Theme.fit(26)
+        glyph: true
         text: root.playing ? "󰏤" : "󰐊"
-        active: !!root.player && root.player.canTogglePlaying
+        enabled: !!root.player && root.player.canTogglePlaying
         onClicked: root.player.togglePlaying()
     }
 
@@ -121,25 +122,20 @@ WidgetCard {
             width: parent.width
             spacing: Theme.fit(6)
 
-            Rectangle {
+            // position ticks once a second; easing each step reads as lag
+            Meter {
                 visible: root.hasLength
                 width: parent.width
-                height: Theme.fit(4)
-                radius: height / 2
-                color: root.track
-                Rectangle {
-                    width: parent.width * root.frac
-                    height: parent.height
-                    radius: parent.radius
-                    color: root.fg
-                }
+                fraction: root.frac
+                animated: false
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -Theme.fit(6)
+                    anchors.topMargin: -Theme.fit(6)
+                    anchors.bottomMargin: -Theme.fit(6)
                     enabled: !!root.player && root.player.canSeek
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: mouse => root.player.position =
-                        root.length * Math.max(0, Math.min(1, (mouse.x - Theme.fit(6)) / parent.width))
+                        root.length * Math.max(0, Math.min(1, mouse.x / width))
                 }
             }
             Item {
@@ -149,28 +145,29 @@ WidgetCard {
                 WidgetText { id: pos; card: root; px: root.textCaption; color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
                 WidgetText { anchors.right: parent.right; card: root; px: root.textCaption; color: root.fgDim; text: Media.fmtTime(root.length) }
             }
+            // the media flyout's transport
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: Theme.fit(root.large ? 40 : 28)
-                WidgetGlyph {
-                    card: root
-                    px: Theme.fit(root.large ? 26 : 20)
+                spacing: Theme.spaceM
+                FlyoutChip {
+                    width: Theme.fit(root.large ? 56 : 44)
+                    glyph: true
                     text: "󰒮"
-                    active: !!root.player && root.player.canGoPrevious
+                    enabled: !!root.player && root.player.canGoPrevious
                     onClicked: root.player.previous()
                 }
-                WidgetGlyph {
-                    card: root
-                    px: Theme.fit(root.large ? 34 : 26)
+                FlyoutChip {
+                    width: Theme.fit(root.large ? 56 : 44)
+                    glyph: true
                     text: root.playing ? "󰏤" : "󰐊"
-                    active: !!root.player && root.player.canTogglePlaying
+                    enabled: !!root.player && root.player.canTogglePlaying
                     onClicked: root.player.togglePlaying()
                 }
-                WidgetGlyph {
-                    card: root
-                    px: Theme.fit(root.large ? 26 : 20)
+                FlyoutChip {
+                    width: Theme.fit(root.large ? 56 : 44)
+                    glyph: true
                     text: "󰒭"
-                    active: !!root.player && root.player.canGoNext
+                    enabled: !!root.player && root.player.canGoNext
                     onClicked: root.player.next()
                 }
             }

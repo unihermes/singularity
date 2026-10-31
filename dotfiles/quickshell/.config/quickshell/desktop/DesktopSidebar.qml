@@ -3,15 +3,16 @@
 //
 // A conky-style column down the right edge of the primary display, on the
 // wallpaper under the windows (Settings.deskSidebar). A section each under
-// a ruled heading, as "Label: value" lines, meters beside their labels and
-// "used / total [ n% ]" under them: Info (OS, kernel, uptime, host), CPU
-// (model, clock, temperature, each core, the last minute, the busiest
-// processes), GPU (model, clocks, temperature, power, use, video memory),
-// RAM (with the processes holding most), Drives, Network (address, rates,
-// totals, the last minute), Fans and Battery. A section or line the
-// machine can't fill is left out. Flush with the screen's right edge on a
-// panel framed as the style has it, kept see-through, filling the height under the bar. The desktop
-// widgets keep clear of it (DesktopWidgets' area).
+// the shell's section heading, as label and value lines, the shell's
+// meters beside their labels and "used / total [ n% ]" under them: Info
+// (OS, kernel, uptime, host), CPU (model, clock, temperature, each core,
+// the last minute, the busiest processes), GPU (model, clocks,
+// temperature, power, use, video memory), RAM (with the processes holding
+// most), Drives, Network (address, rates, totals, the last minute), Fans
+// and Battery. A section or line the machine can't fill is left out. Flush
+// with the screen's right edge on a panel framed as the style has it, kept
+// see-through, filling the height under the bar. The desktop widgets keep
+// clear of it (DesktopWidgets' area).
 
 import Quickshell
 import Quickshell.Wayland
@@ -58,7 +59,7 @@ PanelWindow {
     Item {
         id: ink
         readonly property color fg: Theme.textStrong
-        readonly property color fgDim: Theme.subtext
+        readonly property color fgDim: Theme.text
         readonly property color accent: Theme.isLight ? Theme.accent : Qt.lighter(Theme.accent, 1.4)
         readonly property string font: Theme.fontText
         readonly property int textCaption: Theme.fit(14)
@@ -87,25 +88,8 @@ PanelWindow {
     // the network's sparklines share a scale: the busiest second shown
     readonly property real netPeak: Math.max(1024, ...SystemStats.rxHistory, ...SystemStats.txHistory)
 
-    // an outlined box, filled as far as frac
-    component Meter: Rectangle {
-        id: meter
-        property real frac: 0
-        width: parent.width
-        height: Theme.fit(8)
-        color: "transparent"
-        border.width: 1
-        border.color: Theme.subtext
-        Rectangle {
-            x: 2
-            y: 2
-            width: (meter.width - 4) * Math.max(0, Math.min(1, meter.frac))
-            height: meter.height - 4
-            color: meter.frac >= 0.85 ? Theme.alert : ink.fg
-            Behavior on width { NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease } }
-        }
-    }
-    // "Label: value", the label dimmed
+    // a label on the left, dimmed, and its value on the right (InfoRow's
+    // layout, at the column's tighter line)
     component KeyValue: Item {
         id: kv
         property string label: ""
@@ -114,10 +98,12 @@ PanelWindow {
         height: k.implicitHeight
         WidgetText { id: k; card: ink; color: ink.fgDim; text: kv.label }
         WidgetText {
-            text: kv.value
-            x: k.implicitWidth + Theme.spaceS
-            width: parent.width - x
+            anchors.left: k.right
+            anchors.leftMargin: Theme.spaceL
+            anchors.right: parent.right
+            horizontalAlignment: Text.AlignRight
             card: ink
+            text: kv.value
             font.features: ({ "tnum": 1 })
         }
     }
@@ -144,7 +130,8 @@ PanelWindow {
             x: parent.labelWidth + Theme.spaceS
             width: parent.width - x
             anchors.verticalCenter: parent.verticalCenter
-            frac: parent.frac
+            fraction: bar.frac
+            fillColor: bar.frac >= 0.85 ? Theme.alert : Theme.meterFill
         }
     }
     // a "used / total [ n% ]" line, to the right
@@ -159,25 +146,7 @@ PanelWindow {
         property string title: ""
         width: parent.width
         spacing: Theme.fit(4)
-        Item {
-            width: parent.width
-            height: heading.implicitHeight + Theme.fit(2)
-            WidgetText {
-                id: heading
-                card: ink
-                text: (Theme.headingPrefix !== "" ? Theme.headingPrefix + " " : "") + parent.parent.title
-                font.weight: ink.weightStrong
-                font.letterSpacing: 1
-            }
-            Rectangle {
-                anchors.left: heading.right
-                anchors.leftMargin: Theme.spaceS
-                anchors.right: parent.right
-                anchors.verticalCenter: heading.verticalCenter
-                height: 1
-                color: Theme.muted
-            }
-        }
+        FlyoutHeading { text: parent.title }
     }
     component Line: Spark {
         width: parent.width
@@ -216,18 +185,18 @@ PanelWindow {
 
         Section {
             title: "INFO"
-            KeyValue { label: "OS:"; value: SystemSpecs.distro + (SystemSpecs.arch ? " " + SystemSpecs.arch : "") }
-            KeyValue { label: "Kernel:"; value: SystemSpecs.kernel }
-            KeyValue { label: "Uptime:"; value: Format.duration(SystemStats.uptimeSec) }
-            KeyValue { label: "Hostname:"; value: SystemSpecs.hostname }
+            KeyValue { label: "OS"; value: SystemSpecs.distro + (SystemSpecs.arch ? " " + SystemSpecs.arch : "") }
+            KeyValue { label: "Kernel"; value: SystemSpecs.kernel }
+            KeyValue { label: "Uptime"; value: Format.duration(SystemStats.uptimeSec) }
+            KeyValue { label: "Hostname"; value: SystemSpecs.hostname }
         }
 
         Section {
             title: "CPU"
-            KeyValue { label: "CPU:"; value: win.shortModel(SystemSpecs.cpuModel) }
-            KeyValue { visible: SystemStats.cpuMhz > 0; label: "Frequency:"; value: Math.round(SystemStats.cpuMhz) + " MHz" }
-            KeyValue { visible: SystemStats.tempC >= 0; label: "Temperature:"; value: win.temp(SystemStats.tempC) }
-            Bar { label: "Usage: " + Format.pct(SystemStats.cpu); frac: SystemStats.cpu }
+            KeyValue { label: "CPU"; value: win.shortModel(SystemSpecs.cpuModel) }
+            KeyValue { visible: SystemStats.cpuMhz > 0; label: "Frequency"; value: Math.round(SystemStats.cpuMhz) + " MHz" }
+            KeyValue { visible: SystemStats.tempC >= 0; label: "Temperature"; value: win.temp(SystemStats.tempC) }
+            Bar { label: "Usage " + Format.pct(SystemStats.cpu); frac: SystemStats.cpu }
             // each core, two columns
             Grid {
                 id: coreGrid
@@ -241,12 +210,12 @@ PanelWindow {
                         required property int index
                         width: (coreGrid.width - coreGrid.columnSpacing) / 2
                         labelWidth: Theme.fit(68)
-                        label: (index + 1) + ": " + Math.round((SystemStats.cores[index] || 0) * 100) + "%"
+                        label: (index + 1) + "  " + Math.round((SystemStats.cores[index] || 0) * 100) + "%"
                         frac: SystemStats.cores[index] || 0
                     }
                 }
             }
-            Line { series: [{ values: SystemStats.cpuHistory, color: ink.fg, fill: true }] }
+            Line { series: [{ values: SystemStats.cpuHistory, color: Theme.meterFill, fill: true }] }
             Repeater {
                 model: SystemStats.procs.slice(0, 4)
                 Pair {
@@ -260,15 +229,15 @@ PanelWindow {
         Section {
             visible: win.hasGpu
             title: "GPU"
-            KeyValue { label: "Model:"; value: win.shortModel(SystemSpecs.gpuModel) }
-            KeyValue { visible: Cooling.gpuClock >= 0; label: "Core clock:"; value: Cooling.gpuClock + " MHz" }
-            KeyValue { visible: Cooling.gpuMemClock >= 0; label: "Mem clock:"; value: Cooling.gpuMemClock + " MHz" }
-            KeyValue { visible: Cooling.gpuC >= 0; label: "Temperature:"; value: win.temp(Cooling.gpuC) }
-            KeyValue { visible: Cooling.gpuWatts >= 0; label: "Power:"; value: Math.round(Cooling.gpuWatts) + " W" }
-            Bar { visible: Cooling.gpuLoad >= 0; label: "Usage: " + Cooling.gpuLoad + "%"; frac: Cooling.gpuLoad / 100 }
+            KeyValue { label: "Model"; value: win.shortModel(SystemSpecs.gpuModel) }
+            KeyValue { visible: Cooling.gpuClock >= 0; label: "Core clock"; value: Cooling.gpuClock + " MHz" }
+            KeyValue { visible: Cooling.gpuMemClock >= 0; label: "Mem clock"; value: Cooling.gpuMemClock + " MHz" }
+            KeyValue { visible: Cooling.gpuC >= 0; label: "Temperature"; value: win.temp(Cooling.gpuC) }
+            KeyValue { visible: Cooling.gpuWatts >= 0; label: "Power"; value: Math.round(Cooling.gpuWatts) + " W" }
+            Bar { visible: Cooling.gpuLoad >= 0; label: "Usage " + Cooling.gpuLoad + "%"; frac: Cooling.gpuLoad / 100 }
             Bar {
                 visible: Cooling.gpuMemTotal > 0
-                label: "VRAM:"
+                label: "VRAM"
                 frac: Cooling.gpuMemUsed / Math.max(1, Cooling.gpuMemTotal)
             }
             Caption {
@@ -281,18 +250,18 @@ PanelWindow {
                 floor: 30
                 ceiling: 100
                 historyLength: Cooling.historyLength
-                series: [{ values: Cooling.gpuHistory, color: ink.fg, fill: true }]
+                series: [{ values: Cooling.gpuHistory, color: Theme.meterFill, fill: true }]
             }
         }
 
         Section {
             visible: SystemStats.memTotalKb > 0
             title: "RAM"
-            Bar { label: "RAM:"; frac: SystemStats.mem }
+            Bar { label: "RAM"; frac: SystemStats.mem }
             Caption { text: win.ofTotal(SystemStats.memUsedKb * 1024, SystemStats.memTotalKb * 1024) }
             Bar {
                 visible: SystemStats.swapTotalKb > 0
-                label: "Swap:"
+                label: "Swap"
                 frac: 1 - SystemStats.swapFreeKb / Math.max(1, SystemStats.swapTotalKb)
             }
             Repeater {
@@ -320,7 +289,7 @@ PanelWindow {
             }
             KeyValue {
                 visible: SystemStats.diskRead >= 0
-                label: "Read / write:"
+                label: "Read / write"
                 value: Format.rate(SystemStats.diskRead) + " / " + Format.rate(SystemStats.diskWrite)
             }
         }
@@ -328,16 +297,16 @@ PanelWindow {
         Section {
             visible: SystemStats.iface !== ""
             title: "NETWORK"
-            KeyValue { label: "IP:"; value: SystemStats.ipAddr + " (" + SystemStats.iface + ")" }
-            KeyValue { label: "Up:"; value: Format.rate(SystemStats.txRate) }
-            KeyValue { label: "Down:"; value: Format.rate(SystemStats.rxRate) }
-            KeyValue { label: "Total up:"; value: Format.bytes(SystemStats.txTotal) }
-            KeyValue { label: "Total down:"; value: Format.bytes(SystemStats.rxTotal) }
+            KeyValue { label: "IP"; value: SystemStats.ipAddr + " (" + SystemStats.iface + ")" }
+            KeyValue { label: "Up"; value: Format.rate(SystemStats.txRate) }
+            KeyValue { label: "Down"; value: Format.rate(SystemStats.rxRate) }
+            KeyValue { label: "Total up"; value: Format.bytes(SystemStats.txTotal) }
+            KeyValue { label: "Total down"; value: Format.bytes(SystemStats.rxTotal) }
             Line {
                 height: Theme.fit(20)
                 ceiling: win.netPeak
-                series: [{ values: SystemStats.rxHistory, color: ink.fg, fill: true },
-                         { values: SystemStats.txHistory, color: ink.fgDim, fill: false }]
+                series: [{ values: SystemStats.rxHistory, color: Theme.meterFill, fill: true },
+                         { values: SystemStats.txHistory, color: Theme.subtext, fill: false }]
             }
         }
 
@@ -348,7 +317,7 @@ PanelWindow {
                 model: Cooling.fans
                 KeyValue {
                     required property var modelData
-                    label: modelData.name + ":"
+                    label: modelData.name
                     value: modelData.rpm + " rpm"
                 }
             }
@@ -358,7 +327,7 @@ PanelWindow {
             visible: Battery.present
             title: "BATTERY"
             Bar {
-                label: (Battery.charging ? "Charging: " : "On battery: ") + Battery.percent + "%"
+                label: (Battery.charging ? "Charging " : "On battery ") + Battery.percent + "%"
                 frac: Battery.percent / 100
             }
         }

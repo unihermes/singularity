@@ -64,20 +64,12 @@ WidgetCard {
                     px: root.textCaption
                     text: parent.reading.value
                 }
-                Rectangle {
+                Meter {
                     x: root.small ? 0 : label.width
                     width: root.small ? parent.width : parent.width - label.width - Theme.fit(56)
                     y: root.small ? parent.height - height : (parent.height - height) / 2
-                    height: Theme.fit(root.small ? 6 : 8)
-                    radius: height / 2
-                    color: root.track
-
-                    Rectangle {
-                        width: Math.max(parent.height, parent.width * Math.max(0, Math.min(1, parent.parent.reading.frac)))
-                        height: parent.height
-                        radius: parent.radius
-                        color: root.accent
-                    }
+                    height: Theme.meterHeight
+                    fraction: parent.reading.frac
                 }
             }
         }
@@ -103,7 +95,7 @@ WidgetCard {
             height: history.height - caption.height - history.spacing
                 - [memRow, diskRow].reduce((h, r) => h + (r.visible ? r.height + history.spacing : 0), 0)
             bare: true
-            series: [{ values: SystemStats.cpuHistory, color: root.accent, fill: true }]
+            series: [{ values: SystemStats.cpuHistory, color: Theme.meterFill, fill: true }]
             ceiling: 1
         }
         // what's in use, of how much
