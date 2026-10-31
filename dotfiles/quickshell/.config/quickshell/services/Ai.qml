@@ -1,14 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/services/Ai.qml
 //
-// The Claude sidebar (SUPER+I): three conversations through the claude CLI
+// The Claude sidebar (SUPER+I): two conversations through the claude CLI
 // on the user's own subscription, one a tab.
 //   Chat     plain chat, no tools, in a folder of its own
-//   Desktop  changes to this desktop, made in a staging copy of the repo
-//            (scripts/ai-desktop.sh) and applied once the diff is reviewed
 //   Code     Claude Code in a project folder, asking before it acts
-// Chat and Code can run on Codex instead (CodexSession, the engine chip),
-// each engine keeping its own conversation.
+// Either can run on Codex instead (CodexSession, the engine chip), each
+// engine keeping its own conversation.
 // Screenshots, the clipboard, the selection and files dropped on the
 // sidebar ride along with a message.
 // The tab, the Code folder, each tab's model and mode and its conversation
@@ -35,13 +33,13 @@ Singleton {
     property bool capturing: false
 
     property string tab: "chat"
-    readonly property var tabs: ["chat", "desktop", "code"]
+    readonly property var tabs: ["chat", "code"]
     readonly property var current: sessionFor(tab)
     function sessionFor(t) {
         return t === "code" ? (codex("code") ? codeCodex : code)
-            : t === "desktop" ? desktop : (codex("chat") ? chatCodex : chat)
+            : (codex("chat") ? chatCodex : chat)
     }
-    readonly property var all: [chat, desktop, code, chatCodex, codeCodex]
+    readonly property var all: [chat, code, chatCodex, codeCodex]
 
     // Claude or Codex, for Chat and Code
     property var engines: ({ chat: "claude", code: "claude" })
@@ -132,12 +130,10 @@ Singleton {
     readonly property string cacheDir: home + "/.cache/singularity/ai"
     readonly property string chatDir: cacheDir + "/chat"
     readonly property string py: Quickshell.shellPath("scripts/ai.py")
-    readonly property string desktopScript: Quickshell.shellPath("scripts/ai-desktop.sh")
-    readonly property var desktopEnv: ({ SINGULARITY_SETTINGS: Settings.stateDir + "/appearance.json" })
 
     // saved; models by tab, and by tab + "Codex" for Codex's
     property string codeDir: home
-    property var models: ({ chat: "", desktop: "", code: "", chatCodex: "", codeCodex: "" })
+    property var models: ({ chat: "", code: "", chatCodex: "", codeCodex: "" })
     property string codeMode: "default"
 
     // the choices the composer cycles through
@@ -226,122 +222,8 @@ Singleton {
         return c ? c.text : v
     }
 
-    // the Desktop tab needs its staging copy before Claude starts in it
     function send(text) {
-        var s = current
-        if (s.busy) return false
-        // a new conversation with nothing waiting starts from a fresh copy,
-        // not one left from before later commits
-        if (s === desktop && (!staged || (!hasChanges && s.sessionId === "" && s.empty))) {
-            if (stageProc.running) return false
-            stageProc.pending = text
-            stageProc.running = true
-            return true
-        }
-        return s.send(text)
-    }
-
-    // --- Desktop: the staging copy -------------------------------------
-
-    property bool staged: false
-    property string diff: ""
-    // [{ path, added, removed }]
-    readonly property var files: parseFiles(diff)
-    readonly property bool hasChanges: files.length > 0
-    property bool applying: false
-
-    function apply() {
-        if (desktop.busy || !hasChanges) return
-        // detached: the reload after applying would kill a child
-        Quickshell.execDetached({ command: [desktopScript, "apply"], environment: desktopEnv })
-        applying = true
-        afterApply.restart()
-    }
-
-    // the conversation goes first, so nothing still writes into the copy
-    function discard() {
-        desktop.reset()
-        dropWhenGone = true
-        if (!desktop.alive) dropStaging()
-    }
-    property bool dropWhenGone: false
-    function dropStaging() {
-        dropWhenGone = false
-        Quickshell.execDetached({ command: [desktopScript, "discard"], environment: desktopEnv })
-        staged = false
-        diff = ""
-    }
-
-    function refreshDiff() {
-        if (diffProc.running) diffProc.again = true
-        else diffProc.running = true
-    }
-
-    function parseFiles(d) {
-        var out = [], cur = null
-        d.split("\n").forEach(l => {
-            if (l.indexOf("diff --git ") === 0) {
-                var m = l.match(/ b\/(.*)$/)
-                cur = { path: m ? m[1] : l, added: 0, removed: 0 }
-                out.push(cur)
-            } else if (cur && l.indexOf("+++") !== 0 && l.indexOf("---") !== 0) {
-                if (l[0] === "+") cur.added++
-                else if (l[0] === "-") cur.removed++
-            }
-        })
-        return out
-    }
-
-    Process {
-        id: stageProc
-        property string pending: ""
-        command: [root.desktopScript, "start"]
-        environment: root.desktopEnv
-        onExited: code => {
-            if (code !== 0) {
-                pending = ""
-                root.desktop.add({ kind: "error", text: "Couldn't prepare the desktop staging copy. Try again." })
-                return
-            }
-            root.staged = true
-            root.desktop.send(pending)
-            pending = ""
-        }
-    }
-
-    Process {
-        id: diffProc
-        property bool again: false
-        command: [root.desktopScript, "diff"]
-        environment: root.desktopEnv
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.diff = text
-                // gone with nothing left means the apply went through
-                if (root.applying && text === "") root.desktop.reset()
-                root.applying = false
-            }
-        }
-        onExited: code => {
-            root.staged = code === 0
-            // the Desktop conversation comes back only with its copy
-            if (root.restoreDesktop !== "" && root.staged) root.resumeIn(root.desktop, root.restoreDesktop)
-            root.restoreDesktop = ""
-            if (again) { again = false; running = true }
-        }
-    }
-
-    Timer {
-        id: afterApply
-        interval: 1500
-        onTriggered: root.refreshDiff()
-    }
-
-    Connections {
-        target: root.desktop
-        function onEdited() { root.refreshDiff() }
-        function onBusyChanged() { if (!root.desktop.busy) root.refreshDiff() }
-        function onAliveChanged() { if (!root.desktop.alive && root.dropWhenGone) root.dropStaging() }
+        return current.busy ? false : current.send(text)
     }
 
     // --- attachments ---------------------------------------------------
@@ -430,7 +312,7 @@ Singleton {
         else resumeIn(current, id)
     }
 
-    // one at a time: a restart restores all three tabs at once
+    // one at a time: a restart restores every tab at once
     property var resumeQueue: []
     function resumeIn(s, id) {
         resumeQueue = resumeQueue.concat([{ target: s, id: id }])
@@ -495,7 +377,7 @@ Singleton {
         }
     }
 
-    // --- the three conversations ---------------------------------------
+    // --- the conversations ---------------------------------------
 
     function noteLimit(info) {
         var w = info.unifiedWindows || {}
@@ -514,28 +396,6 @@ Singleton {
             + "a Quickshell shell called Singularity). You have no tools here: just talk. Your "
             + "replies are rendered as markdown in a narrow panel, so keep tables small. "
             + "Screenshots, the clipboard or the selected text may come attached to a message."
-        onRateLimit: info => root.noteLimit(info)
-    }
-
-    ClaudeSession {
-        id: desktopSession
-        cwd: (Quickshell.env("XDG_CACHE_HOME") || root.home + "/.cache") + "/singularity/ai-desktop/work"
-        tools: "Read,Edit,Write,Glob,Grep"
-        mode: "acceptEdits"
-        modelPick: root.models.desktop || ""
-        extraArgs: ["--strict-mcp-config"]
-        appendPrompt: "You were invoked from the Desktop tab of the Claude sidebar in the user's "
-            + "Singularity desktop. The working directory is a staging copy of their Singularity "
-            + "repo: an Arch Linux + Hyprland + Quickshell desktop whose dotfiles live under "
-            + "dotfiles/<app>/ and are symlinked into $HOME (dotfiles/quickshell/.config/quickshell "
-            + "is ~/.config/quickshell, and so on). .live/appearance.json is the shell's live "
-            + "settings file (bar height, radius, fonts, look, widget layout); edit it for requests "
-            + "about those rather than changing defaults in code. Your edits are not live yet: the "
-            + "user reviews the diff and applies it, and then Quickshell and Hyprland hot-reload. "
-            + "You cannot run commands. Make focused, minimal edits that match the surrounding "
-            + "code's style and comment density. End with one to three plain sentences saying what "
-            + "you changed; the diff is shown separately. If the request is only a question, just "
-            + "answer it."
         onRateLimit: info => root.noteLimit(info)
     }
 
@@ -587,39 +447,31 @@ Singleton {
     readonly property alias chatCodex: chatCodexSession
     readonly property alias codeCodex: codeCodexSession
     readonly property alias chat: chatSession
-    readonly property alias desktop: desktopSession
     readonly property alias code: codeSession
 
     CommandProbe { id: probe; name: "claude" }
     CommandProbe { id: codexProbe; name: "codex" }
 
     // each tab's conversation is picked up again after a reload or restart
-    property string restoreDesktop: ""
     function restore(ids) {
         if (ids.chat) resumeIn(chat, ids.chat)
         if (ids.code) resumeIn(code, ids.code)
         // Codex's come back through its own app-server, started for it
         if (ids.chatCodex) chatCodex.resume(ids.chatCodex)
         if (ids.codeCodex) codeCodex.resume(ids.codeCodex)
-        // the diff read under way, or the next, says whether its copy is there
-        restoreDesktop = ids.desktop || ""
-        refreshDiff()
     }
 
-    Component.onCompleted: {
-        Quickshell.execDetached(["mkdir", "-p", chatDir])
-        refreshDiff()
-    }
+    Component.onCompleted: Quickshell.execDetached(["mkdir", "-p", chatDir])
 
     // --- notifications while the sidebar is away --------------------------
 
     // A reply done or a prompt waiting, as a notification with Open, which
     // brings the sidebar out on that tab on the focused screen. One a tab;
     // a newer one takes over its Open.
-    readonly property var tabNames: ({ chat: "Chat", desktop: "Desktop", code: "Code" })
+    readonly property var tabNames: ({ chat: "Chat", code: "Code" })
     function notify(t, title, body) {
         if (shown) return
-        var p = t === "code" ? codeNote : t === "desktop" ? desktopNote : chatNote
+        var p = t === "code" ? codeNote : chatNote
         // the prose only (no code or tables), markdown marks and line
         // breaks out, a couple of lines kept
         body = String(body || "").replace(/```[\s\S]*?(```|$)/g, "")
@@ -640,17 +492,11 @@ Singleton {
         }
     }
     Process { id: chatNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("chat", text) } }
-    Process { id: desktopNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("desktop", text) } }
     Process { id: codeNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("code", text) } }
     Connections {
         target: root.chat
         function onTurnEnded() { root.notify("chat", "replied", root.chat.lastReply()) }
         function onAsked(title) { root.notify("chat", "waiting for you", title) }
-    }
-    Connections {
-        target: root.desktop
-        function onTurnEnded() { root.notify("desktop", "done", root.desktop.lastReply()) }
-        function onAsked(title) { root.notify("desktop", "waiting for you", title) }
     }
     Connections {
         target: root.code
@@ -672,7 +518,6 @@ Singleton {
     }
 
     Connections { target: root.chat; function onSessionIdChanged() { root.save() } }
-    Connections { target: root.desktop; function onSessionIdChanged() { root.save() } }
     Connections { target: root.code; function onSessionIdChanged() { root.save() } }
 
     // --- ai.json -------------------------------------------------------
@@ -685,7 +530,7 @@ Singleton {
         onTriggered: view.setText(JSON.stringify({
             tab: root.tab, codeDir: root.codeDir, models: root.models, codeMode: root.codeMode,
             engines: root.engines,
-            sessions: { chat: root.chat.sessionId, desktop: root.desktop.sessionId, code: root.code.sessionId,
+            sessions: { chat: root.chat.sessionId, code: root.code.sessionId,
                         chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId }
         }, null, 2) + "\n")
     }
@@ -704,7 +549,7 @@ Singleton {
             if (root.tabs.indexOf(d.tab) !== -1) root.tab = d.tab
             if (typeof d.codeDir === "string" && d.codeDir !== "") root.codeDir = d.codeDir
             if (d.models && typeof d.models === "object")
-                root.models = Object.assign({ chat: "", desktop: "", code: "", chatCodex: "", codeCodex: "" }, d.models)
+                root.models = Object.assign({ chat: "", code: "", chatCodex: "", codeCodex: "" }, d.models)
             if (d.engines && typeof d.engines === "object")
                 root.engines = Object.assign({ chat: "claude", code: "claude" }, d.engines)
             if (root.modeChoices.some(c => c.value === d.codeMode)) root.codeMode = d.codeMode

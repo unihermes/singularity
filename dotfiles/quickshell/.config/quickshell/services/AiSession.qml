@@ -22,7 +22,6 @@ Scope {
     readonly property alias entries: rows
     readonly property alias transcript: rows
     readonly property bool empty: rows.count === 0
-    signal edited()
     signal rateLimit(var info)
     signal turnEnded()
     signal asked(string title)

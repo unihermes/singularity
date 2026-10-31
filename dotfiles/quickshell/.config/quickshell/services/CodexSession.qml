@@ -29,7 +29,6 @@ AiSession {
     // the Chat tab's: read-only, never asking
     property bool readOnly: false
 
-    readonly property bool alive: proc.running
     property string turnId: ""
     // thread/list's answer, for the past sessions list
     signal listed(var threads)
@@ -362,7 +361,6 @@ AiSession {
             if (r === undefined) itemRows[it.id] = add({ kind: "tool", name: "Edit", toolId: it.id, phase: fphase,
                 detail: detail, body: body, result: it.status === "declined" ? "Declined" : "" })
             else setRow(r, { phase: fphase, body: body, result: it.status === "declined" ? "Declined" : "" })
-            if (!history && fphase === "done") edited()
             if (!history && fphase === "running") activity = detail
             break
         }

@@ -31,7 +31,7 @@ filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`
   and the desktop's right-click menu;
   placement maths in `services/WidgetPlacement.js`.
 - `qs/sidebar/`: the Claude sidebar (SUPER+I), driven by `services/Ai.qml` and
-  `ClaudeSession.qml` (`claude -p` over stream-json); helpers in `scripts/ai.py`, `ai-desktop.sh`.
+  `ClaudeSession.qml` (`claude -p` over stream-json); helpers in `scripts/ai.py`.
   `CodexSession.qml` handles Codex; both inherit state/transcript helpers from `AiSession.qml`.
 - `dotfiles/hypr/.config/hypr/`: `hyprland.lua` requires `shared`, `displays`, `env`,
   `autostart`, `looks`, `input`, `overrides`, `game-keys`, `binds`, `alttab`, `windows`
@@ -55,7 +55,6 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `node --test tools/test-js.mjs`: plain-JS modules and the Hyprland Lua readers/writers.
 - `tools/check-hardware.sh`: `packages/hardware/*.txt` against `hardware.sh`'s capabilities.
 - `python3 tools/test-tools.py`: compact inventory, syntax detection and pre-commit check selection.
-- `python3 tools/test-ai-desktop.py`: staging paths, settings merges and failed applies.
 - `python3 tools/check-syntax.py [files...]`: shell (including extensionless helpers), Python and Lua syntax.
 
 ## Laptop, desktop and hardware

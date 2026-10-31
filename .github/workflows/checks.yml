@@ -34,8 +34,5 @@ jobs:
       - name: Repository tools
         run: python3 tools/test-tools.py
 
-      - name: Desktop staging
-        run: python3 tools/test-ai-desktop.py
-
       - name: Shell, Python and Lua parse
         run: python3 tools/check-syntax.py

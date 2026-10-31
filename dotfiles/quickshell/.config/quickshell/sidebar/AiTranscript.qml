@@ -37,7 +37,6 @@ Item {
 
     readonly property string emptyText: !available ? "Claude Code isn't installed. Install it (the claude-code package) and sign in with `claude` once."
         : tab === "chat" ? (Ai.codex("chat") ? "Ask Codex anything" : "Ask anything") + ". Attach a screenshot, the clipboard or the selected text with 󰐕 below."
-        : tab === "desktop" ? "Ask for a change to this desktop: the bar, a flyout, a keybind, a colour. Claude works on a copy of the repo; nothing changes until you apply it."
         : (Ai.codex("code") ? "Codex" : "Claude Code") + " in the folder above. It asks before it runs a command or edits a file, unless you change that under the box."
 
     Text {

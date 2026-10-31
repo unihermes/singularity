@@ -60,10 +60,6 @@ if changed '^tools/(context|check-syntax|check-unused|test-tools)\.py$'; then
     python3 tools/test-tools.py
 fi
 
-if changed 'quickshell/(services/Ai\.qml|scripts/ai-desktop\.sh)$|^tools/test-ai-desktop\.py$'; then
-    python3 tools/test-ai-desktop.py
-fi
-
 if changed '\.(sh|py|lua)$|^system/usr/local/bin/'; then
     python3 tools/check-syntax.py
 fi

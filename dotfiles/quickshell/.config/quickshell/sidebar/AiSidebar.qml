@@ -4,9 +4,9 @@
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar, out until SUPER+I, its ×, Escape or a click off
 // it (the bars excepted) puts it away. The plans' limits under the heading
-// (AiUsage), then Chat, Desktop and Code as tabs over one shape: the tab's
-// own line (Code's folder, Desktop's changes), the conversation or a list in its place (past
-// sessions, folders, the diff), a prompt waiting for an answer, and the
+// (AiUsage), then Chat and Code as tabs over one shape: Code's folder, the
+// conversation or a list in its place (past sessions, folders), a prompt
+// waiting for an answer, and the
 // composer. Files dropped anywhere on it attach to the next message.
 
 import Quickshell
@@ -26,7 +26,7 @@ PanelWindow {
     property var bars: []
     DismissGrab { panel: root; also: root.bars }
 
-    // what the middle shows: talk | past | projects | diff
+    // what the middle shows: talk | past | projects
     property string view: "talk"
     onViewChanged: {
         if (view === "past") Ai.listPast()
@@ -35,7 +35,6 @@ PanelWindow {
     Connections {
         target: Ai
         function onTabChanged() { root.view = "talk" }
-        function onHasChangesChanged() { if (!Ai.hasChanges && root.view === "diff") root.view = "talk" }
     }
 
     screen: Ai.screen
@@ -148,7 +147,6 @@ PanelWindow {
                     spacing: Theme.spaceXs
                     IconButton {
                         icon: "󰋚"
-                        visible: Ai.tab !== "desktop"
                         lit: root.view === "past"
                         onClicked: root.view = root.view === "past" ? "talk" : "past"
                     }
@@ -169,7 +167,6 @@ PanelWindow {
             FlyoutSegmented {
                 model: [
                     { value: "chat", text: "Chat" + (Ai.chat.unseen && Ai.tab !== "chat" ? " ●" : "") },
-                    { value: "desktop", text: "Desktop" + (Ai.desktop.unseen && Ai.tab !== "desktop" ? " ●" : "") },
                     { value: "code", text: "Code" + (Ai.code.unseen && Ai.tab !== "code" ? " ●" : "") }]
                 current: Ai.tab
                 onPicked: v => Ai.setTab(v)
@@ -183,35 +180,6 @@ PanelWindow {
                 note: Ai.codeDir.indexOf(Ai.home) === 0 ? "~" + Ai.codeDir.slice(Ai.home.length) : Ai.codeDir
                 trailing: root.view === "projects" ? "󰅀" : "󰅂"
                 onActivated: root.view = root.view === "projects" ? "talk" : "projects"
-            }
-
-            // Desktop: what's waiting to be applied
-            FlyoutRow {
-                visible: Ai.tab === "desktop" && Ai.hasChanges
-                leadingIcon: "󰦒"
-                label: Ai.files.length + (Ai.files.length === 1 ? " file changed" : " files changed")
-                note: "+" + Ai.files.reduce((n, f) => n + f.added, 0)
-                    + " −" + Ai.files.reduce((n, f) => n + f.removed, 0)
-                trailing: root.view === "diff" ? "󰅀" : "󰅂"
-                onActivated: root.view = root.view === "diff" ? "talk" : "diff"
-            }
-
-            Row {
-                visible: Ai.tab === "desktop" && Ai.hasChanges
-                spacing: Theme.spaceM
-
-                FlyoutChip {
-                    icon: "󰄬"
-                    text: Ai.applying ? "Applying…" : "Apply"
-                    enabled: !Ai.desktop.busy && !Ai.applying
-                    onClicked: Ai.apply()
-                }
-                FlyoutChip {
-                    icon: "󰅖"
-                    text: "Discard"
-                    confirmText: "Discard all?"
-                    onClicked: Ai.discard()
-                }
             }
 
             FlyoutDivider {}
@@ -295,13 +263,6 @@ PanelWindow {
                         }
                         ScrollBar { flickable: projList; anchors.right: parent.right }
                     }
-                }
-
-                // Desktop: the staged diff
-                AiDiff {
-                    anchors.fill: parent
-                    visible: root.view === "diff"
-                    diff: visible ? Ai.diff : ""
                 }
             }
 

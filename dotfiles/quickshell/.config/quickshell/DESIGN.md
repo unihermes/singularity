@@ -511,25 +511,23 @@ a click off it (the bars excepted). It slides in from the edge and fades.
   Accept edits and Auto writing in the folder, Auto never asking); Chat's
   Codex only reads. The heading reads CODEX while it's on.
 - **Heading** CLAUDE, with
-  past sessions and × as icon buttons, and a New chat chip between them while there's a conversation; then Chat,
-  Desktop and Code as a segmented strip, a ● on a tab with something
-  unread.
-- **Usage** under the heading, then a break: a meter each for Claude's
-  five-hour and weekly windows and Codex's five-hour and weekly limits, used % and when they
+  past sessions and × as icon buttons, and a New chat chip between them while there's a conversation; then Chat
+  and Code as a segmented strip, a ● on a tab with something unread.
+- **Usage** under the heading, then a break: a meter each for the
+  five-hour and weekly windows of the tab's engine (Claude's or Codex's), used % and when it
   resets (the time today, the weekday this week, else the date); alert
   colour from 90%. Read by `ai.py usage` (Claude's usage endpoint with
   Claude Code's token; Codex's app server) every two minutes while
   the sidebar shows, and after each reply's rate-limit event.
-- **The tab's line:** Code's folder as a row (a click lists the folders
-  in its place, with a field for any other); Desktop's changes as a row
-  (a click shows the diff in its place) with Apply and Discard (two
-  clicks) as chips.
+- **Code's folder** as a row (a click lists the folders in its place,
+  with a field for any other).
 - **The conversation** takes the rest: what you sent in a field with its
   screenshots small under it; replies as markdown you can select
   (`services/Markdown.js`: inline code tinted, tables ruled), each fenced
   block in a darker box of its own with its language and Copy; each
-  tool call a quiet line (spinner, tick, ✗) that opens in place to its
-  diff or command and its output.
+  tool call a quiet line (spinner, tick, ✗; a multi-line command shows
+  its first line), a run of them close together, that opens in place to
+  its diff or command and its output.
 - **Files dropped** anywhere on the panel (from a file manager) attach to
   the next message: an image scaled like a screenshot, text as text,
   anything else as its path; the panel shows "Drop to attach" while one

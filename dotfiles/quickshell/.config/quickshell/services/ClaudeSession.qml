@@ -33,7 +33,6 @@ AiSession {
     property string appendPrompt: ""
     property var extraArgs: []
     property var env: ({})
-    readonly property bool alive: proc.running
     readonly property var rows: transcript
 
     // --- sending ---------------------------------------------------------
@@ -112,7 +111,7 @@ AiSession {
             if (r.kind === "user") add({ kind: "user", text: r.text, note: r.note || "" })
             else if (r.kind === "assistant") add({ kind: "assistant", text: r.text })
             else if (r.kind === "tool") addTool(r.toolId, r.name, r.input, true)
-            else if (r.kind === "result") toolResult(r.toolId, r.content, r.isError, true)
+            else if (r.kind === "result") toolResult(r.toolId, r.content, r.isError)
         })
         for (var i = 0; i < rows.count; i++)
             if (rows.get(i).phase === "running") setRow(i, { phase: "done" })
@@ -230,7 +229,7 @@ AiSession {
         case "user":
             if (ev.parent_tool_use_id || !ev.message || typeof ev.message.content === "string") break
             ev.message.content.forEach(b => {
-                if (b.type === "tool_result") toolResult(b.tool_use_id, b.content, b.is_error, false)
+                if (b.type === "tool_result") toolResult(b.tool_use_id, b.content, b.is_error)
             })
             break
         case "control_request":
@@ -354,15 +353,13 @@ AiSession {
         if (!quiet) activity = describe(name, input)
     }
 
-    function toolResult(id, content, isError, quiet) {
+    function toolResult(id, content, isError) {
         var i = toolRows[id]
         if (i === undefined) return
         var text = typeof content === "string" ? content
             : (content || []).map(b => b.type === "text" ? b.text : b.type === "image" ? "[image]" : "").join("\n")
         text = clip(text)
         setRow(i, { result: text, phase: isError ? "error" : "done" })
-        var name = rows.get(i).name
-        if (!quiet && !isError && ["Edit", "Write", "MultiEdit", "NotebookEdit"].indexOf(name) !== -1) edited()
     }
 
     function describe(name, input) {

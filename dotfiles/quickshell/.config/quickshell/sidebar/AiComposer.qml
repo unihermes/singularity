@@ -36,9 +36,9 @@ Column {
         { name: "model", hint: Ai.codex(Ai.tab) ? Ai.codexModels.map(c => c.value).concat(["default"]).join(", ")
             : "opus, sonnet, haiku or default", takes: true },
         { name: "mode", hint: "ask, edits, plan or auto", takes: true, tab: "code" },
-        { name: "past", hint: "Earlier conversations", notTab: "desktop" },
+        { name: "past", hint: "Earlier conversations" },
         { name: "compact", hint: "Summarise the conversation so far" }
-    ].filter(c => (!c.tab || c.tab === Ai.tab) && c.notTab !== Ai.tab)
+    ].filter(c => !c.tab || c.tab === Ai.tab)
     readonly property var commands: ownCommands.concat(root.session.slashCommands
         .filter(n => !ownCommands.some(c => c.name === n))
         .map(n => ({ name: n, hint: "Claude Code" })))
@@ -91,7 +91,7 @@ Column {
             Ai.setCodeMode(modeWords[arg])
             return
         }
-        if (cmd === "past" && Ai.tab !== "desktop") {
+        if (cmd === "past") {
             input.text = ""
             root.showPast()
             return
@@ -294,7 +294,6 @@ Column {
                     width: parent.width
                     elide: Text.ElideRight
                     text: root.session.busy ? "Working…"
-                        : Ai.tab === "desktop" ? "Ask for a change to the desktop…"
                         : Ai.tab === "code" ? (Ai.codex("code") ? "Ask Codex…" : "Ask Claude Code…")
                         : root.session.empty ? (Ai.codex("chat") ? "Ask Codex…" : "Ask Claude…") : "Reply…"
                     color: Theme.textDisabled
@@ -353,9 +352,9 @@ Column {
                 enabled: Ai.available
                 onClicked: root.attaching = !root.attaching
             }
-            // Claude or Codex, on Chat and Code
+            // Claude or Codex
             FlyoutChip {
-                visible: Ai.tab !== "desktop" && Ai.codexAvailable
+                visible: Ai.codexAvailable
                 text: Ai.codex(Ai.tab) ? "Codex" : "Claude"
                 enabled: !root.session.busy
                 onClicked: Ai.setEngine(Ai.tab, Ai.codex(Ai.tab) ? "claude" : "codex")

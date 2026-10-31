@@ -113,12 +113,11 @@ class HookTests(unittest.TestCase):
                 "tools/context.py": {"test-tools.py", "check-syntax.py"},
                 "tools/check-syntax.py": {"test-tools.py", "check-syntax.py"},
                 "system/usr/local/bin/singularity-charge": {"check-syntax.py"},
-                qs + "scripts/ai-desktop.sh": {"test-ai-desktop.py", "check-syntax.py"},
-                qs + "services/Ai.qml": {"check-unused.py", "test-ai-desktop.py"},
+                qs + "services/Ai.qml": {"check-unused.py"},
                 "README.md": set(),
                 "tools/git-hooks/pre-commit": {"check-settings-index.py", "check-unused.py",
                                                "test-js.mjs", "check-hardware.sh", "test-tools.py",
-                                               "test-ai-desktop.py", "check-syntax.py"},
+                                               "check-syntax.py"},
             }
             for staged, expected in cases.items():
                 with self.subTest(staged=staged):
