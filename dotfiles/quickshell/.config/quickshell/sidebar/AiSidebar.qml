@@ -131,7 +131,10 @@ PanelWindow {
 
             FlyoutHeading {
                 text: Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
+                icon: Qt.resolvedUrl(Ai.codex(Ai.tab) ? "icons/codex.svg" : "icons/claude.svg")
                 control: headControls
+                labelClickable: Ai.codexAvailable && !root.session.busy
+                onLabelClicked: Ai.setEngine(Ai.tab, Ai.codex(Ai.tab) ? "claude" : "codex")
             }
 
             // the plans' limits, then a break before the tabs

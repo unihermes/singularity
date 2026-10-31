@@ -15,7 +15,9 @@
 // mode, as the Code tab's chip sets it, picks the approval policy and the
 // sandbox: default (and plan, which Codex lacks) asks before any write or
 // command outside read-only, acceptEdits lets it write in the folder and
-// asks to go further, auto never asks (it stays in the folder).
+// asks to go further, auto never asks (it stays in the folder). Writing, it
+// also reaches the network and the folder's git directory (when that sits
+// above it), so it can commit and push.
 
 import Quickshell
 import Quickshell.Io
@@ -39,7 +41,24 @@ AiSession {
     readonly property bool writes: !readOnly && (mode === "acceptEdits" || mode === "auto")
     readonly property string sandbox: writes ? "workspace-write" : "read-only"
     readonly property var sandboxPolicy: sandbox === "read-only" ? { type: "readOnly" }
-        : { type: "workspaceWrite", writableRoots: [], networkAccess: false }
+        : { type: "workspaceWrite", writableRoots: gitDirs, networkAccess: true }
+
+    // the folder's git and common directories, absolute
+    property var gitDirs: []
+    function findGit() {
+        gitProbe.running = false
+        if (cwd !== "") gitProbe.running = true
+    }
+    onCwdChanged: findGit()
+    Component.onCompleted: findGit()
+    Process {
+        id: gitProbe
+        command: ["git", "-C", root.cwd, "rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir"]
+        // nothing on stdout outside a repo
+        stdout: StdioCollector {
+            onStreamFinished: root.gitDirs = text.split("\n").filter((d, i, a) => d !== "" && a.indexOf(d) === i)
+        }
+    }
 
     // --- sending ---------------------------------------------------------
 
@@ -69,6 +88,7 @@ AiSession {
         activity = "Thinking"
         whenThread(() => call("turn/start", {
             threadId: sessionId, input: input, model: modelPick !== "" ? modelPick : null,
+            effort: reasoningPick !== "" ? reasoningPick : null,
             approvalPolicy: approval, sandboxPolicy: sandboxPolicy
         }, r => { if (r && r.turn) turnId = r.turn.id }, e => fail(e)))
         return true

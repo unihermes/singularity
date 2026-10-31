@@ -503,12 +503,13 @@ panel's frame with sections. It stays out until SUPER+I, its ×, Escape or
 a click off it (the bars excepted). It slides in from the edge and fades.
 
 - **Codex** (`services/CodexSession.qml`, `codex app-server`): Chat and
-  Code can run on Codex instead, a Claude/Codex chip in the composer
+  Code can run on Codex instead, the Claude/Codex heading with its icon
   switching the tab (each engine keeps its own conversation, model and
   past sessions). The same transcript, attachments and prompt cards: its
   command and file-change approvals are Allow / Allow for this session /
   Deny. Code's mode picks its sandbox (Ask first and Plan read-only,
-  Accept edits and Auto writing in the folder, Auto never asking); Chat's
+  Accept edits and Auto writing in the folder, its git directory and the
+  network, so they can commit and push; Auto never asking); Chat's
   Codex only reads. The heading reads CODEX while it's on.
 - **Heading** CLAUDE, with
   past sessions and × as icon buttons, and a New chat chip between them while there's a conversation; then Chat
@@ -544,8 +545,8 @@ a click off it (the bars excepted). It slides in from the edge and fades.
   /clear, /new, /model, /mode, /past and /compact, then the CLI's own),
   the box (Enter sends, Shift+Enter a new line, Ctrl+L, Ctrl+N or /clear
   start over), then 󰐕 (Area, Window, Screen, Paste, Selected), the model
-  (the one running when left on Default) and Code's mode as chips a click
-  steps through, what it's doing (pulsing) or the context used, Send or
+  (the one running when left on Default) as a dropdown, Code's mode as a
+  chip a click steps through, what it's doing (pulsing) or the context used, Send or
   Stop.
 - **Bar module** (key `claude`, the old module's, so a saved hide holds): the
   robot glyph, a spinner while it works, accent while a prompt waits or a

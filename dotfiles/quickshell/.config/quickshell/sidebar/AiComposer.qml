@@ -6,8 +6,8 @@
 // own: /clear, /new, /model, /mode, /past, /compact; then the CLI's), the
 // box (Enter sends, Shift+Enter is a new line, Ctrl+L or /clear starts
 // over), then a line with
-// 󰐕 for attaching, Claude or Codex (Chat and Code), the model and, on
-// Code, the permission mode (each a click to the next), what it's doing,
+// 󰐕 for attaching, the model and, on
+// Code, the permission mode, what it's doing,
 // and Send or Stop.
 
 import QtQuick
@@ -25,6 +25,9 @@ Column {
     signal showPast()
 
     property bool attaching: false
+    property bool choosingModel: false
+    property bool choosingReasoning: false
+    onSessionChanged: { choosingModel = false; choosingReasoning = false }
 
     function focusInput() { input.forceActiveFocus() }
 
@@ -240,6 +243,47 @@ Column {
         }
     }
 
+    ListView {
+        visible: root.choosingModel
+        width: parent.width
+        height: visible ? Math.min(contentHeight, Theme.rowHeightDense * 5) : 0
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        model: Ai.modelChoicesFor(Ai.tab)
+        delegate: FlyoutRow {
+            required property var modelData
+            width: ListView.view.width - Theme.scrollGutter
+            label: modelData.text
+            highlighted: modelData.value === (Ai.models[Ai.modelKey(Ai.tab)] || "")
+            onActivated: {
+                Ai.setModel(Ai.modelKey(Ai.tab), modelData.value)
+                root.choosingModel = false
+                root.focusInput()
+            }
+        }
+        ScrollBar { flickable: parent; anchors.right: parent.right }
+    }
+
+    ListView {
+        visible: root.choosingReasoning
+        width: parent.width
+        height: visible ? Math.min(contentHeight, Theme.rowHeightDense * 5) : 0
+        clip: true
+        model: Ai.codex(Ai.tab) ? ["", "low", "medium", "high", "xhigh", "max", "ultra"] : ["", "low", "medium", "high", "xhigh", "max"]
+        delegate: FlyoutRow {
+            required property string modelData
+            width: ListView.view.width - Theme.scrollGutter
+            label: modelData === "" ? "Default" : modelData[0].toUpperCase() + modelData.slice(1)
+            highlighted: modelData === (Ai.reasoning[Ai.modelKey(Ai.tab)] || "")
+            onActivated: {
+                Ai.setReasoning(Ai.modelKey(Ai.tab), modelData)
+                root.choosingReasoning = false
+                root.focusInput()
+            }
+        }
+        ScrollBar { flickable: parent; anchors.right: parent.right }
+    }
+
     // the box
     Rectangle {
         id: well
@@ -352,16 +396,14 @@ Column {
                 enabled: Ai.available
                 onClicked: root.attaching = !root.attaching
             }
-            // Claude or Codex
             FlyoutChip {
-                visible: Ai.codexAvailable
-                text: Ai.codex(Ai.tab) ? "Codex" : "Claude"
-                enabled: !root.session.busy
-                onClicked: Ai.setEngine(Ai.tab, Ai.codex(Ai.tab) ? "claude" : "codex")
+                text: Ai.modelText(Ai.tab) + (root.choosingModel ? " ▴" : " ▾")
+                onClicked: { root.choosingModel = !root.choosingModel; root.choosingReasoning = false }
             }
             FlyoutChip {
-                text: Ai.modelText(Ai.tab)
-                onClicked: Ai.cycleModel()
+                text: "Reasoning: " + (Ai.reasoning[Ai.modelKey(Ai.tab)] || "Default") + " ▾"
+                enabled: !root.session.busy
+                onClicked: { root.choosingReasoning = !root.choosingReasoning; root.choosingModel = false }
             }
             FlyoutChip {
                 visible: Ai.tab === "code"

@@ -5,6 +5,7 @@ import QtQuick
 Scope {
     property string cwd: ""
     property string modelPick: ""
+    property string reasoningPick: ""
     property string mode: "default"
     property bool busy: false
     property string sessionId: ""

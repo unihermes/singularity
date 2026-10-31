@@ -197,7 +197,7 @@ Item {
 
             // a run of tool calls sits close together; anything else gets room
             readonly property real gap: index === 0 ? 0
-                : kind === "tool" && root.session.entries.get(index - 1).kind === "tool" ? Theme.spaceXs : Theme.spaceL
+                : kind === "tool" && (root.session.entries.get(index - 1) || {}).kind === "tool" ? Theme.spaceXs : Theme.spaceL
 
             width: list.width - Theme.scrollGutter
             height: loader.height + gap

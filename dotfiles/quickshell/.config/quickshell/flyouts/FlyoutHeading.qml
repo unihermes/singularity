@@ -19,6 +19,9 @@ Item {
     id: root
 
     property string text: ""
+    property url icon: ""
+    property bool labelClickable: false
+    signal labelClicked()
     // a name after the text, shown as written whatever the heading case
     // (a network's name, which is case-sensitive)
     property string asWritten: ""
@@ -320,20 +323,48 @@ Item {
         color: Theme.accent
     }
 
-    Text {
-        id: label
+    Image {
+        id: headingIcon
+        visible: root.icon !== ""
         anchors.left: crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
         anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
+        anchors.verticalCenter: label.verticalCenter
+        width: Theme.fontHeadingSize
+        height: width
+        source: root.icon
+        sourceSize.width: width * 2
+        sourceSize.height: height * 2
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.labelClickable
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.labelClicked()
+        }
+    }
+
+    Text {
+        id: label
+        anchors.left: headingIcon.visible ? headingIcon.right : crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
+        anchors.leftMargin: headingIcon.visible ? Theme.spaceS : (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
+            + (root.shape === "tag" ? Theme.spaceS : 0)
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: root.lift
-        text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "")
+        text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "") + (root.labelClickable ? "  ▾" : "")
         color: root.shape === "tag" ? Theme.textOnAccent : Theme.headingColor
         font.family: Theme.fontHeading
         font.pixelSize: Theme.fontHeadingSize
         font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
         // tighter beside a crumb, which shares the line
         font.letterSpacing: root.crumb !== "" ? Theme.headingSpacing / 2 : Theme.headingSpacing
+
+        MouseArea {
+            anchors.fill: parent
+            anchors.margins: -Theme.spaceXs
+            enabled: root.labelClickable
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.labelClicked()
+        }
     }
 
     // the shape's closing piece after the label: a bracket, or the

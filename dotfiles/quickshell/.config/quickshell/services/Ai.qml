@@ -134,9 +134,16 @@ Singleton {
     // saved; models by tab, and by tab + "Codex" for Codex's
     property string codeDir: home
     property var models: ({ chat: "", code: "", chatCodex: "", codeCodex: "" })
+    property var reasoning: ({ chat: "", code: "", chatCodex: "", codeCodex: "" })
+    function setReasoning(k, value) {
+        var choices = Object.assign({}, reasoning)
+        choices[k] = value
+        reasoning = choices
+        save()
+    }
     property string codeMode: "default"
 
-    // the choices the composer cycles through
+    // the composer's choices
     readonly property var modelChoices: [
         { value: "", text: "Default" }, { value: "opus", text: "Opus" },
         { value: "sonnet", text: "Sonnet" }, { value: "haiku", text: "Haiku" }]
@@ -185,12 +192,6 @@ Singleton {
         o[t] = m
         models = o
         save()
-    }
-
-    function cycleModel() {
-        var list = modelChoicesFor(tab), k = modelKey(tab)
-        var i = list.findIndex(c => c.value === (models[k] || ""))
-        setModel(k, list[(i + 1) % list.length].value)
     }
 
     function cycleMode() {
@@ -391,6 +392,7 @@ Singleton {
         cwd: root.chatDir
         tools: ""
         modelPick: root.models.chat || ""
+        reasoningPick: root.reasoning.chat || ""
         extraArgs: ["--strict-mcp-config"]
         appendPrompt: "You are the chat in the sidebar of the user's Linux desktop (Arch, Hyprland, "
             + "a Quickshell shell called Singularity). You have no tools here: just talk. Your "
@@ -404,6 +406,7 @@ Singleton {
         cwd: root.codeDir
         mode: root.codeMode
         modelPick: root.models.code || ""
+        reasoningPick: root.reasoning.code || ""
         appendPrompt: "You are running in the Code tab of the Claude sidebar on the user's desktop, "
             + "a narrow panel that renders markdown. Permission prompts appear there as cards."
         onRateLimit: info => root.noteLimit(info)
@@ -415,6 +418,7 @@ Singleton {
         cwd: root.chatDir
         readOnly: true
         modelPick: root.models.chatCodex || ""
+        reasoningPick: root.reasoning.chatCodex || ""
         instructions: "You are the chat in the sidebar of the user's Linux desktop (Arch, Hyprland, "
             + "a Quickshell shell called Singularity), run through Codex. Just talk; you can read but "
             + "not change anything. Your replies are rendered as markdown in a narrow panel, so keep "
@@ -428,6 +432,7 @@ Singleton {
         cwd: root.codeDir
         mode: root.codeMode
         modelPick: root.models.codeCodex || ""
+        reasoningPick: root.reasoning.codeCodex || ""
         instructions: "You are running in the Code tab of a sidebar on the user's desktop, a narrow "
             + "panel that renders markdown. Approval requests appear there as cards."
         onRateLimit: info => root.noteCodexLimit(info)
@@ -528,7 +533,7 @@ Singleton {
         id: saveTimer
         interval: 300
         onTriggered: view.setText(JSON.stringify({
-            tab: root.tab, codeDir: root.codeDir, models: root.models, codeMode: root.codeMode,
+            tab: root.tab, codeDir: root.codeDir, models: root.models, reasoning: root.reasoning, codeMode: root.codeMode,
             engines: root.engines,
             sessions: { chat: root.chat.sessionId, code: root.code.sessionId,
                         chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId }
@@ -550,6 +555,8 @@ Singleton {
             if (typeof d.codeDir === "string" && d.codeDir !== "") root.codeDir = d.codeDir
             if (d.models && typeof d.models === "object")
                 root.models = Object.assign({ chat: "", code: "", chatCodex: "", codeCodex: "" }, d.models)
+            if (d.reasoning && typeof d.reasoning === "object")
+                root.reasoning = Object.assign({ chat: "", code: "", chatCodex: "", codeCodex: "" }, d.reasoning)
             if (d.engines && typeof d.engines === "object")
                 root.engines = Object.assign({ chat: "claude", code: "claude" }, d.engines)
             if (root.modeChoices.some(c => c.value === d.codeMode)) root.codeMode = d.codeMode

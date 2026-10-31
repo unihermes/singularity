@@ -151,6 +151,7 @@ AiSession {
                  "--verbose", "--include-partial-messages", "--permission-prompt-tool", "stdio",
                  "--permission-mode", mode]
         if (modelPick !== "") c.push("--model", modelPick)
+        if (reasoningPick !== "") c.push("--effort", reasoningPick)
         if (tools !== null) c.push("--tools", tools)
         if (appendPrompt !== "") c.push("--append-system-prompt", appendPrompt)
         if (sessionId !== "") c.push("--resume", sessionId)
@@ -160,6 +161,7 @@ AiSession {
     }
 
     onModelPickChanged: if (proc.running) control({ subtype: "set_model", model: modelPick || "default" })
+    onReasoningPickChanged: if (proc.running && !busy) { killing = true; proc.signal(15) }
     onModeChanged: if (proc.running && mode !== cliMode) control({ subtype: "set_permission_mode", mode: mode })
 
     Process {
