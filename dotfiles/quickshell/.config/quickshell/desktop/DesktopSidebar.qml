@@ -10,7 +10,7 @@
 // RAM (with the processes holding most), Drives, Network (address, rates,
 // totals, the last minute), Fans and Battery. A section or line the
 // machine can't fill is left out. Flush with the screen's right edge on a
-// see-through dark ground, filling the height under the bar. The desktop
+// panel framed as the style has it, kept see-through, filling the height under the bar. The desktop
 // widgets keep clear of it (DesktopWidgets' area).
 
 import Quickshell
@@ -46,23 +46,20 @@ PanelWindow {
     // nothing on it takes the pointer
     mask: Region {}
 
-    // the ground: see-through dark, edged on the left
-    Rectangle {
+    // rounded only on the side away from the edge
+    PanelFrame {
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.5)
-        Rectangle {
-            width: 1
-            height: parent.height
-            color: Qt.rgba(1, 1, 1, 0.22)
-        }
+        ground: Theme.deskFill(0.55)
+        topRightRadius: 0
+        bottomRightRadius: 0
     }
 
     // the inks and type, as WidgetCard has them, for WidgetText
     Item {
         id: ink
-        readonly property color fg: "#ffffff"
-        readonly property color fgDim: Qt.rgba(1, 1, 1, 0.75)
-        readonly property color accent: Qt.lighter(Theme.accent, 1.6)
+        readonly property color fg: Theme.textStrong
+        readonly property color fgDim: Theme.subtext
+        readonly property color accent: Theme.isLight ? Theme.accent : Qt.lighter(Theme.accent, 1.4)
         readonly property string font: Theme.fontText
         readonly property int textCaption: Theme.fit(14)
         readonly property int textBody: Theme.fit(16)
@@ -98,7 +95,7 @@ PanelWindow {
         height: Theme.fit(8)
         color: "transparent"
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.55)
+        border.color: Theme.subtext
         Rectangle {
             x: 2
             y: 2
@@ -178,7 +175,7 @@ PanelWindow {
                 anchors.right: parent.right
                 anchors.verticalCenter: heading.verticalCenter
                 height: 1
-                color: Qt.rgba(1, 1, 1, 0.4)
+                color: Theme.muted
             }
         }
     }
@@ -210,7 +207,7 @@ PanelWindow {
         layer.enabled: true
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 1)
+            shadowColor: Theme.base
             blurMax: 8
             shadowBlur: 0.6
             shadowVerticalOffset: 1

@@ -88,7 +88,7 @@ WidgetCard {
             selectByMouse: true
             color: root.fg
             selectionColor: root.accent
-            selectedTextColor: "#000000"
+            selectedTextColor: Theme.textOnAccent
             font.family: root.font
             font.weight: root.weightBody
             font.pixelSize: root.textBody

@@ -1,15 +1,16 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/WidgetCard.qml
 //
-// A desktop widget's card: a hard hairline edge round an evenly
-// see-through dark ground, its content in white with a tight dark shadow
-// round every mark. The same under every style. Sizes sit on one grid so they line up: small is one unit square,
+// A desktop widget's card: a panel framed and rounded as the style has
+// it, on its ground kept see-through, its content in the palette's inks
+// with a tight halo of the base colour round every mark. Sizes sit on one grid so they line up: small is one unit square,
 // medium two units and a gap wide, large two by two. Holds the inks and
 // type the widgets draw with.
 
 import QtQuick
 import QtQuick.Effects
 import "../services"
+import "../flyouts"
 
 Item {
     id: card
@@ -22,13 +23,12 @@ Item {
     readonly property int gap: Theme.fit(16)
     readonly property int pad: Theme.fit(16)
 
-    // white whatever the palette: it's over the wallpaper
-    readonly property color fg: "#ffffff"
-    readonly property color fgDim: Qt.rgba(1, 1, 1, 0.9)
-    readonly property color fgFaint: Qt.rgba(1, 1, 1, 0.72)
-    readonly property color track: Qt.rgba(1, 1, 1, 0.28)
-    // the accent, lifted so it reads on any wallpaper
-    readonly property color accent: Qt.lighter(Theme.accent, 1.6)
+    readonly property color fg: Theme.textStrong
+    readonly property color fgDim: Theme.text
+    readonly property color fgFaint: Theme.subtext
+    readonly property color track: Qt.rgba(Theme.muted.r, Theme.muted.g, Theme.muted.b, 0.6)
+    // lifted on a dark palette, so it reads through the see-through ground
+    readonly property color accent: Theme.isLight ? Theme.accent : Qt.lighter(Theme.accent, 1.4)
     // the system font (Appearance > Apps), else the shell's
     readonly property string font: Fonts.loaded.indexOf(Settings.systemFontFamily) !== -1
         ? Settings.systemFontFamily : Theme.fontText
@@ -53,12 +53,9 @@ Item {
     width: unitsWide > 0 ? Math.round(unitsWide * unit) : small ? unit : unit * 2 + gap
     height: unitsHigh > 0 ? Math.round(unitsHigh * unit) : large ? unit * 2 + gap : unit
 
-    // the ground: a hard-edged card, evenly see-through
-    Rectangle {
+    PanelFrame {
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.35)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.22)
+        ground: Theme.deskFill(0.45)
     }
 
     Item {
@@ -69,7 +66,7 @@ Item {
         layer.enabled: true
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 1)
+            shadowColor: Theme.base
             blurMax: 8
             shadowBlur: 0.6
             shadowVerticalOffset: 1
