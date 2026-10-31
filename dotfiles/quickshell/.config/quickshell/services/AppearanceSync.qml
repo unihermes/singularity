@@ -263,12 +263,22 @@ Scope {
         var px = n => n + "px"
         // a colour with its alpha (Glass's strokes are see-through), where
         // hex() would read #aarrggbb's first six as a colour
-        var css = c => c.a < 1 ? rgba(c, c.a) : hex(c)
+        var css = c => c.a < 1 ? rgba(c, Math.round(c.a * 100) / 100) : hex(c)
+        // the grounds at the style's opacity (Glass, See-through), so the
+        // window shows through them as the shell's panels do; the base
+        // between the panels at half that. Window transparency in Equicord
+        // lets it through the window too.
+        var o = Theme.panelOpacity
+        var see = (c, a) => css(Qt.rgba(c.r, c.g, c.b, a))
         // the heading mark: Theme.headingPrefix's text, or its shape drawn
         // with the --n-mark-* boxes either side of the label
         var shape = Theme.headingShape
         var shell = {
-            base: hex(Theme.base), bar: hex(Theme.bar), panel: hex(Theme.panel), surface: hex(Theme.surface),
+            base: see(Theme.base, o < 1 ? o / 2 : 1), bar: hex(Theme.bar), panel: css(Theme.panelFill),
+            surface: see(Theme.surface, o),
+            // Glass's glow: lit things (the open channel and server, the
+            // message box while typing) glow in the accent
+            glow: Theme.glow ? "0 0 8px " + rgba(Theme.accent, 0.7) : "none",
             popup: hex(popup), muted: hex(Theme.muted), subtext: hex(Theme.subtext),
             bright: hex(Theme.bright), accent: hex(Theme.accent), "on-accent": hex(onAccent()),
             hover: hex(Theme.hoverFill), selected: hex(Theme.selectedFill),
@@ -893,6 +903,8 @@ Scope {
         function onIsLightChanged() { debounce.restart() }
         function onBorderWidthChanged() { debounce.restart() }
         function onPanelOpacityChanged() { debounce.restart() }
+        function onPanelFillChanged() { debounce.restart() }
+        function onGlowChanged() { debounce.restart() }
         function onHeadingColorChanged() { debounce.restart() }
         function onHeadingBoldChanged() { debounce.restart() }
         function onHeadingUpperChanged() { debounce.restart() }

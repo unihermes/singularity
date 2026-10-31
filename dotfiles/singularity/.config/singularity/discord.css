@@ -205,6 +205,7 @@
 /* the open server's mark in the accent, tucked up under its icon */
 .guilds__5e434 .item__58105 {
   background: var(--n-accent) !important;
+  box-shadow: var(--n-glow);
 }
 .guilds__5e434 .wrapper__58105 {
   translate: var(--n-pill-shift, 0px) 0;
@@ -258,9 +259,17 @@
 }
 
 /* the panels sit apart on the base, like the shell's flyouts (#app-mount
- * outranks other themes' !important, UI Refresh Refresh's square corners) */
+ * outranks other themes' !important, UI Refresh Refresh's square corners).
+ * The base fills the whole window, under the server row too, and nothing
+ * under it is painted, so a see-through style shows what's behind. */
+html, body, #app-mount, #app-mount [class^="app_"], #app-mount [class^="bg_"] {
+  background: transparent !important;
+}
+#app-mount .base__5e434 {
+  background: var(--n-base) !important;
+}
 .content__5e434 {
-  background: var(--n-base);
+  background: transparent !important;
   padding: var(--n-gap);
   gap: var(--n-gap);
   box-sizing: border-box;
@@ -372,6 +381,7 @@ section.title_f75fb0, .header_f37cb1 {
   width: 2px;
   border-radius: 1px;
   background: var(--n-accent);
+  box-shadow: var(--n-glow);
 }
 .wrapper__2ea32:is(:hover, .modeSelected__2ea32) .name__2ea32 {
   color: var(--n-bright) !important;
@@ -397,7 +407,7 @@ section.title_f75fb0, .header_f37cb1 {
   box-shadow: inset 0 0 0 2px var(--n-gutter-fill) !important;
 }
 .channelTextArea__74017:focus-within .scrollableContainer__74017 {
-  box-shadow: inset 0 0 0 2px var(--n-accent) !important;
+  box-shadow: inset 0 0 0 2px var(--n-accent), var(--n-glow) !important;
 }
 
 /* menus framed as flyouts (above), their rows as the shell's */
