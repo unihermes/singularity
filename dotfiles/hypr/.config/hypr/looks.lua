@@ -192,21 +192,21 @@ hl.layer_rule({
 
 -- Hyprland blurs a see-through window on a display scaled under 1 over
 -- only its pixel size (its top-left 75% at 0.75), leaving that part darker
--- than the rest, so windows there are opaque. A rule per display, on while
--- its scale is under 1.
-local opaqueRules = {}
-local function opaqueUnderOne()
+-- than the rest, so windows there aren't blurred: still see-through, just
+-- not frosted. A rule per display, on while its scale is under 1.
+local unblurredRules = {}
+local function unblurUnderOne()
     for _, m in ipairs(hl.get_monitors()) do
-        if not opaqueRules[m.name] then
-            opaqueRules[m.name] = hl.window_rule({
-                name    = "opaque-under-one-" .. m.name,
+        if not unblurredRules[m.name] then
+            unblurredRules[m.name] = hl.window_rule({
+                name    = "unblurred-under-one-" .. m.name,
                 match   = { workspace = "m[" .. m.name .. "]" },
-                opacity = "1 override 1 override",
+                no_blur = true,
             })
         end
-        opaqueRules[m.name]:set_enabled(m.scale < 1)
+        unblurredRules[m.name]:set_enabled(m.scale < 1)
     end
 end
-opaqueUnderOne()
-hl.on("monitor.added", opaqueUnderOne)
-hl.on("monitor.layout_changed", opaqueUnderOne)
+unblurUnderOne()
+hl.on("monitor.added", unblurUnderOne)
+hl.on("monitor.layout_changed", unblurUnderOne)

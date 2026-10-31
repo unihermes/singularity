@@ -261,6 +261,9 @@ Scope {
         var gutter = channel ? Theme.channelGrooveWidth : Theme.frameDouble ? Theme.frameInset : 0
         var inner = channel || Theme.frameDouble ? bw : 0
         var px = n => n + "px"
+        // a colour with its alpha (Glass's strokes are see-through), where
+        // hex() would read #aarrggbb's first six as a colour
+        var css = c => c.a < 1 ? rgba(c, c.a) : hex(c)
         // the heading mark: Theme.headingPrefix's text, or its shape drawn
         // with the --n-mark-* boxes either side of the label
         var shape = Theme.headingShape
@@ -280,7 +283,7 @@ Scope {
             "mark-w": shape === "bar" ? px(bw * 3) : shape === "tab" ? px(Theme.spaceL) : "auto",
             "mark-h": shape === "bar" || shape === "tab" ? "1em" : "auto",
             "mark-fill": shape === "bar" ? hex(Theme.headingMarkColor)
-                : shape === "tab" ? "linear-gradient(" + hex(Theme.stroke) + ", " + hex(Theme.stroke)
+                : shape === "tab" ? "linear-gradient(" + css(Theme.stroke) + ", " + css(Theme.stroke)
                     + ") center / 100% " + px(bw) + " no-repeat" : "transparent",
             "mark-radius": shape === "bar" ? px(bw * 1.5) : "0",
             "mark-notch": px(shape === "tab" ? bw : 0),
@@ -290,9 +293,9 @@ Scope {
             "heading-spacing": px(Theme.headingSpacing),
             rule: px(Theme.headingRule ? bw : 0),
             font: '"' + Settings.systemFontFamily + '"',
-            bw: px(bw), edge: hex(channel ? Theme.channelOuter : Theme.stroke),
+            bw: px(bw), edge: css(channel ? Theme.channelOuter : Theme.stroke),
             "edge-w": px(edge), gutter: px(gutter), "gutter-fill": channel ? hex(Theme.channelGroove) : "transparent",
-            "inner-w": px(inner), inner: hex(channel ? Theme.channelInner : Theme.frameStroke),
+            "inner-w": px(inner), inner: css(channel ? Theme.channelInner : Theme.frameStroke),
             depth: px(edge + gutter + inner),
             gap: px(Theme.spaceS),
             radius: px(Theme.radius), "radius-inner": px(Theme.radiusInner),
