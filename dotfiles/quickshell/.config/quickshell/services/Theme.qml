@@ -120,9 +120,6 @@ Singleton {
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
-    // the desktop widgets' and sidebar's ground: the panel's, kept see-through
-    // at no more than `cap` over the wallpaper
-    function deskFill(cap) { return Qt.rgba(panelTone.r, panelTone.g, panelTone.b, Math.min(panelOpacity, cap)) }
     // Glass's glow option: lit things glow in the accent
     readonly property bool glow: glass && opt("glow") && !plain
 

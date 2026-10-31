@@ -624,16 +624,14 @@ for the rest, chips for the way out.
 
 ## Desktop widgets
 
-Clock, weather, now playing and system stats on the desktop. They follow
-the style (asked for 2026-10-30): each card is a `PanelFrame`, so it takes
-the style's frame, roundness and palette, but its ground stays
-see-through over the wallpaper (`Theme.deskFill`: the panel's tone at
-See-through's opacity, never above 30%), no shadow, no blur
-(`desktop/WidgetCard.qml`); the content in the palette's inks (textStrong,
+Clock, weather, now playing and system stats on the desktop. Each card has
+its own ground whatever the style: square, a white hairline edge (22%)
+round an evenly see-through black (35%), no shadow, no blur
+(`desktop/WidgetCard.qml`); what's on it follows the style: the content in the palette's inks (textStrong,
 text, subtext, the accent lifted on a dark palette) and bold, with a tight halo in the base colour
 round every mark, the system font (Appearance > Type, else the shell's),
-nothing under 13px. Before, they had a look of their own (square, dark
-35% ground, white ink). A feathered shade
+nothing under 13px. A `PanelFrame` in the style's frame and panel tone
+was tried and dropped, as were a feathered shade
 with no edge and a top-to-bottom fade were tried and dropped. Each is its own
 surface on the layer under the windows (`desktop/DesktopWidgets.qml`),
 named outside the shell's blur rule. Off until turned on in Appearance >
@@ -681,8 +679,8 @@ Panels > Desktop Widgets.
   with no player it says Nothing playing and offers the last one.
 - **Sidebar** (`desktop/DesktopSidebar.qml`, Appearance > Panels >
   Sidebar): a conky-style column flush with the primary display's right
-  edge, from the bar to the foot, on the same kind of ground (a `PanelFrame`
-  capped at 55%, rounded only on its left); the same inks and halo, the shell's font,
+  edge, from the bar to the foot, on a ground of its own (black at 50%, a white
+  hairline on its left); the same inks and halo, the shell's font,
   body 16. Laid out like a classic conky: sections under the shell's
   `FlyoutHeading` (mark, case and rule as Appearance sets them: Info, CPU,
   GPU, RAM, Drives, Network, Fans, Battery), label and value lines as

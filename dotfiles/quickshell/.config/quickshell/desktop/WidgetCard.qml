@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/WidgetCard.qml
 //
-// A desktop widget's card: a panel framed and rounded as the style has
-// it, on its ground kept see-through, its content in the palette's inks
+// A desktop widget's card: a hard hairline edge round an evenly
+// see-through dark ground, the same under every style, its content in the palette's inks
 // with a tight halo of the base colour round every mark. Sizes sit on one grid so they line up: small is one unit square,
 // medium two units and a gap wide, large two by two. Holds the inks and
 // type the widgets draw with.
@@ -10,7 +10,6 @@
 import QtQuick
 import QtQuick.Effects
 import "../services"
-import "../flyouts"
 
 Item {
     id: card
@@ -53,9 +52,12 @@ Item {
     width: unitsWide > 0 ? Math.round(unitsWide * unit) : small ? unit : unit * 2 + gap
     height: unitsHigh > 0 ? Math.round(unitsHigh * unit) : large ? unit * 2 + gap : unit
 
-    PanelFrame {
+    // the ground: a hard-edged card, evenly see-through dark
+    Rectangle {
         anchors.fill: parent
-        ground: Theme.deskFill(0.3)
+        color: Qt.rgba(0, 0, 0, 0.35)
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.22)
     }
 
     Item {

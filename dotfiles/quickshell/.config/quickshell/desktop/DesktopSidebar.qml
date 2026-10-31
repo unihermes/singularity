@@ -10,8 +10,8 @@
 // temperature, power, use, video memory), RAM (with the processes holding
 // most), Drives, Network (address, rates, totals, the last minute), Fans
 // and Battery. A section or line the machine can't fill is left out. Flush
-// with the screen's right edge on a panel framed as the style has it, kept
-// see-through, filling the height under the bar. The desktop widgets keep
+// with the screen's right edge on a see-through dark ground, filling the
+// height under the bar. The desktop widgets keep
 // clear of it (DesktopWidgets' area).
 
 import Quickshell
@@ -47,12 +47,15 @@ PanelWindow {
     // nothing on it takes the pointer
     mask: Region {}
 
-    // rounded only on the side away from the edge
-    PanelFrame {
+    // the ground: see-through dark, edged on the left
+    Rectangle {
         anchors.fill: parent
-        ground: Theme.deskFill(0.55)
-        topRightRadius: 0
-        bottomRightRadius: 0
+        color: Qt.rgba(0, 0, 0, 0.5)
+        Rectangle {
+            width: 1
+            height: parent.height
+            color: Qt.rgba(1, 1, 1, 0.22)
+        }
     }
 
     // the inks and type, as WidgetCard has them, for WidgetText
