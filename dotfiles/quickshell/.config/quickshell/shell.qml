@@ -675,12 +675,16 @@ ShellRoot {
             scope: screenScope
         }
 
-        // the switcher's backdrop on the other screens while it's open on
-        // one, letting the pointer through
+        // the switcher's backdrop, on every screen while it's open on one:
+        // under it (the top layer, over the bar), letting the pointer
+        // through, and named outside the blur rule so every screen dims
+        // the same, unblurred (a blurred dim is darker and blotchy, and a
+        // display scaled under 1 can't blur it whole)
         OverlayWindow {
             scope: screenScope
-            visible: root.altTabScope !== null && root.altTabScope !== screenScope
-            layerNamespace: "singularity-alttab"
+            visible: root.altTabScope !== null
+            WlrLayershell.layer: WlrLayer.Top
+            WlrLayershell.namespace: "unblurred-backdrop"
             mask: Region {}
 
             Rectangle {

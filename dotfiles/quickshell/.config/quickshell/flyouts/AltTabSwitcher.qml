@@ -146,11 +146,6 @@ OverlayWindow {
         }
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: Theme.backdrop
-    }
-
     // cards wrap once a row would be wider than the screen; the highlighted
     // window's app and title are the caption under them
     readonly property bool previews: Theme.altTabStyle === "previews"
