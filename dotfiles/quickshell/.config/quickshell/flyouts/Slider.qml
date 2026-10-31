@@ -119,7 +119,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: track.kind === "glass" ? 4 : Math.max(2, Theme.borderWidth * 2)
-            radius: track.kind === "glass" ? 2 : 0
+            radius: track.kind === "glass" ? Theme.pill(height) : 0
             color: track.kind === "glass" ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.08) : Qt.rgba(1, 1, 1, 0.1))
                 : track.hot ? Theme.subtext : Theme.muted
 

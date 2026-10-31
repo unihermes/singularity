@@ -107,7 +107,7 @@ ClippingRectangle {
             visible: root.info
             width: 360
             height: 14
-            radius: 7
+            radius: Theme.pill(height)
             color: Theme.subtext
             x: root.place === "corner" ? 62 : (space.width - width) / 2
             y: root.place === "top" ? 60 + root.clockPx * 1.5

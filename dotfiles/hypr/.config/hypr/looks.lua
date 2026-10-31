@@ -129,8 +129,8 @@ hl.config({
             -- room either side, so a long title's "…" isn't against the edge
             text_padding        = 10,
             gradients           = true,
-            rounding            = 3,
-            gradient_rounding   = 3,
+            rounding            = math.min(3, windowRounding),
+            gradient_rounding   = math.min(3, windowRounding),
             indicator_height    = 0,
             middle_click_close  = true,
             text_color          = tabText or "rgba(d0e2faff)",
