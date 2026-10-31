@@ -168,7 +168,6 @@ Item {
         id: list
         anchors.fill: parent
         clip: true
-        spacing: Theme.spaceL
         boundsBehavior: Flickable.StopAtBounds
         model: root.session.entries
 
@@ -197,11 +196,16 @@ Item {
             required property bool streaming
             required property bool open
 
+            // a run of tool calls sits close together; anything else gets room
+            readonly property real gap: index === 0 ? 0
+                : kind === "tool" && root.session.entries.get(index - 1).kind === "tool" ? Theme.spaceXs : Theme.spaceL
+
             width: list.width - Theme.scrollGutter
-            height: loader.height
+            height: loader.height + gap
 
             Loader {
                 id: loader
+                y: entry.gap
                 width: parent.width
                 sourceComponent: entry.kind === "user" ? userRow
                     : entry.kind === "assistant" ? replyRow
@@ -326,7 +330,7 @@ Item {
                             anchors.rightMargin: Theme.spaceS
                             anchors.verticalCenter: parent.verticalCenter
                             elide: Text.ElideMiddle
-                            text: entry.detail
+                            text: root.session.oneLine(entry.detail)
                             color: toolMouse.containsMouse ? Theme.textStrong : Theme.subtext
                             font.family: Theme.fontText
                             font.weight: Theme.weightBody

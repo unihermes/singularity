@@ -138,7 +138,7 @@ PanelWindow {
             // the plans' limits, then a break before the tabs
             AiUsage {
                 id: usage
-                visible: Ai.fiveHour >= 0 || Ai.sevenDay >= 0 || Ai.codexUsage !== null
+                visible: hasReading
             }
             FlyoutDivider { visible: usage.visible }
 

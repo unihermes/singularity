@@ -297,7 +297,7 @@ AiSession {
         var command = m.method.indexOf("commandExecution") !== -1
         var r = itemRows[q.itemId]
         var row = r !== undefined ? rows.get(r) : null
-        var title = command ? "Run " + shortCommand(q.command || "", q.commandActions)
+        var title = command ? "Run " + oneLine(shortCommand(q.command || "", q.commandActions))
             : row ? row.detail : "Edit files"
         asks = asks.concat([{
             id: m.id, tool: command ? "Bash" : "Edit", input: {}, title: title,
@@ -341,12 +341,12 @@ AiSession {
             if (!history) activity = "Thinking"
             break
         case "commandExecution": {
-            var cmd = shortCommand(it.command, it.commandActions)
+            var full = shortCommand(it.command, it.commandActions), cmd = oneLine(full)
             var phase = it.status === "inProgress" ? "running"
                 : it.status === "completed" && (it.exitCode === 0 || it.exitCode === null) ? "done" : "error"
             var o = { phase: history && phase === "running" ? "done" : phase, result: clip(it.aggregatedOutput || "") }
             if (r === undefined) itemRows[it.id] = add(Object.assign({ kind: "tool", name: "Bash", toolId: it.id,
-                detail: cmd, body: "$ " + cmd }, o))
+                detail: cmd, body: "$ " + full }, o))
             else setRow(r, o)
             if (!history && phase === "running") activity = cmd
             break

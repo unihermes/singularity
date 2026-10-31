@@ -1,9 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/sidebar/AiUsage.qml
 //
-// The plans' limits under the sidebar's heading: Claude's five-hour and
-// weekly windows and Codex's five-hour and weekly windows, each a meter with how much is used and
-// when it resets. A limit with no reading is left out.
+// The plan's limits under the sidebar's heading, for the engine on this
+// tab (Claude or Codex): the five-hour and weekly windows, each a meter with
+// how much is used and when it resets. A limit with no reading is left out.
 
 import QtQuick
 import "../services"
@@ -26,14 +26,20 @@ Column {
         return Qt.formatDate(d, "d MMM")
     }
 
+    // the engine on this tab: Codex's windows or Claude's
+    readonly property var codexLimits: Ai.codexUsage || ({})
+    readonly property bool codex: Ai.codex(Ai.tab)
+    readonly property bool hasReading: codex ? Ai.codexUsage !== null : Ai.fiveHour >= 0 || Ai.sevenDay >= 0
+
     Repeater {
-        model: [
+        model: root.codex ? [
+            { label: "5 hours", used: root.codexLimits.primary ? root.codexLimits.primary.used : -1,
+              resets: root.codexLimits.primary ? root.codexLimits.primary.resets : 0 },
+            { label: "Week", used: root.codexLimits.secondary ? root.codexLimits.secondary.used : -1,
+              resets: root.codexLimits.secondary ? root.codexLimits.secondary.resets : 0 }
+        ] : [
             { label: "5 hours", used: Ai.fiveHour, resets: Ai.fiveHourResets },
-            { label: "Week", used: Ai.sevenDay, resets: Ai.sevenDayResets },
-            { label: "Codex 5h", used: Ai.codexUsage && Ai.codexUsage.primary ? Ai.codexUsage.primary.used : -1,
-              resets: Ai.codexUsage && Ai.codexUsage.primary ? Ai.codexUsage.primary.resets : 0 },
-            { label: "Codex week", used: Ai.codexUsage && Ai.codexUsage.secondary ? Ai.codexUsage.secondary.used : -1,
-              resets: Ai.codexUsage && Ai.codexUsage.secondary ? Ai.codexUsage.secondary.resets : 0 }
+            { label: "Week", used: Ai.sevenDay, resets: Ai.sevenDayResets }
         ]
 
         Item {

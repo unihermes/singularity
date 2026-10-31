@@ -55,6 +55,11 @@ Scope {
         return rows.count - 1
     }
     function setRow(i, o) { for (var k in o) rows.setProperty(i, k, o[k]) }
+    // a multi-line command as its first line, for a row or the status line
+    function oneLine(t) {
+        var l = String(t).trim().split("\n")
+        return l.length > 1 ? l[0].trim() + " …" : l[0]
+    }
     function clip(t) { return t.length > 4000 ? t.slice(0, 4000) + "\n…" : t }
     function rel(p) {
         p = String(p || "")
