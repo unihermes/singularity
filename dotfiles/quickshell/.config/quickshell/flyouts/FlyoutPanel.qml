@@ -99,7 +99,7 @@ OverlayWindow {
     // Grown, the edge against the bar has no outline of its own (the group's
     // runs straight on into the box's), so it leaves out a channel's room.
     readonly property int padNear: grown ? padY - Theme.channelWidth : padY
-    readonly property int padTop: atBottom ? padY : padNear
+    readonly property int padTop: (atBottom ? padY : padNear) - Theme.spaceXs
 
     visible: open || reveal > 0
     // one focus mode while the surface is up (a change while mapped doesn't
@@ -192,7 +192,7 @@ OverlayWindow {
             width: root.grown && root.section !== "centre"
                     && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
                 ? root.group.x1 - root.group.x0 : ownWidth
-            height: contentColumn.implicitHeight + root.padY + root.padNear
+            height: contentColumn.implicitHeight + root.padTop + (atBottom ? root.padNear : root.padY)
 
             readonly property bool atBottom: Theme.barPosition === "bottom"
             opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
