@@ -58,6 +58,13 @@ Item {
             height: modelData.y1 - modelData.y0 + out * 2
             visible: Theme.sectionFramed
 
+            StyleFrame {
+                visible: Theme.frameCustom
+                ground: root.fill
+                section: true
+                sunken: Theme.frameStyle === "bevel"
+            }
+
             Channel {
                 visible: Theme.frameChannel
                 radius: root.radius
@@ -66,7 +73,7 @@ Item {
 
             Rectangle {
                 id: plain
-                visible: !Theme.frameChannel
+                visible: !Theme.frameChannel && !Theme.frameCustom
                 anchors.fill: parent
                 radius: root.radius
                 color: root.fill

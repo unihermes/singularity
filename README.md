@@ -44,7 +44,7 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
   daemon, lock screen setup, Settings and System windows, all in
   [Quickshell](https://quickshell.outfoxxed.me) and editable live.
 - **Looks and Styles.** Eight looks (Singularity, Arch, Nord, Dracula, Tokyo
-  Night, Catppuccin Mocha, One Dark, Kanagawa) on top of five Styles that draw
+  Night, Catppuccin Mocha, One Dark, Kanagawa) on top of ten Styles that draw
   all of the chrome, controls included, at once, so no combination of
   settings can clash.
 - **Settings for everything.** Displays, input, power and idle, the lock
@@ -197,9 +197,12 @@ Control Centre's Look card.
 
 A **Style** decides how the chrome is drawn: frames, bar chips, hover, level
 meters, section frames, the heading mark, where flyouts sit, and its own
-switches, sliders, segmented controls and buttons. There are five:
-Channel, Double, Solid, Glass and Flat. Each has three options of its own
-(Glass's heavy blur, Flat's taskbar layout, …). Beside it are only dials that
+switches, sliders, segmented controls and buttons. There are ten:
+Channel, Double, Solid, Glass, Flat, Rail, Notch, Ledger, Capsule and Bevel.
+Rail uses leading spines; Notch cuts the panel corners; Ledger uses rules and
+segmented levels; Capsule rounds independent islands; Bevel raises edges over
+crisp shadows. Some have options of their own (Glass's heavy blur, Flat's
+taskbar layout, …). Beside them are dials that
 move everything together (Roundness, Bar shape, Density, See-through) and a
 few finishing switches.
 

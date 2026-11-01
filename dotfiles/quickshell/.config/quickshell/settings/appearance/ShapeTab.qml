@@ -27,7 +27,7 @@ SettingsTab {
         slider: true
         label: "Roundness"; key: "radius"; suffix: " px"
         enabled: !Styles.get(Settings.style).square
-        hint: !enabled ? Styles.get(Settings.style).name + " keeps every corner square"
+        hint: !enabled ? Styles.get(Settings.style).name + (Settings.style === "notch" ? " keeps its cut corners" : " keeps every corner square")
             : "Chips, panels, the bar and every window"
     }
 
@@ -230,7 +230,8 @@ SettingsTab {
             readonly property string v: parent ? parent.value : ""
             readonly property int cw: Theme.fs(24)
             readonly property int ch: Theme.fs(16)
-            readonly property int r: Math.min(Theme.radius, 5)
+            readonly property int r: ya.v === "capsule" ? Theme.fs(8)
+                : Styles.get(ya.v) && Styles.get(ya.v).square ? 0 : Math.min(Theme.radius, 5)
             width: Theme.fs(64)
             height: Theme.fs(34)
 
@@ -274,7 +275,7 @@ SettingsTab {
 
                         Rectangle {
                             anchors.fill: parent
-                            visible: ya.v !== "channel" && ya.v !== "flat"
+                            visible: ["channel", "flat", "rail", "notch", "ledger", "bevel"].indexOf(ya.v) === -1
                             radius: ya.r
                             color: ya.v === "glass" ? (chip.lit ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Qt.rgba(1, 1, 1, 0.08))
                                 : ya.v === "double" ? (chip.lit ? Theme.overlay : Theme.panel)
@@ -290,6 +291,14 @@ SettingsTab {
                                 color: "transparent"
                                 border.width: 1; border.color: chip.lit ? Theme.muted : Theme.surface
                             }
+                        }
+                        StyleFrame {
+                            visible: ["rail", "notch", "ledger", "bevel"].indexOf(ya.v) !== -1
+                            kind: Styles.get(ya.v) ? Styles.get(ya.v).frame : "none"
+                            ground: chip.lit ? Theme.overlay : Theme.surface
+                            stroke: chip.lit ? Theme.accent : Theme.muted
+                            control: true
+                            sunken: chip.lit
                         }
                         // Channel's open chip: a fill and an accent ring
                         Rectangle {
@@ -313,7 +322,7 @@ SettingsTab {
                             anchors.centerIn: parent
                             width: Theme.fs(8); height: Theme.fs(5)
                             radius: 1
-                            color: chip.lit && (ya.v === "solid" || ya.v === "glass") ? "#ffffff" : Theme.text
+                            color: chip.lit && (ya.v === "solid" || ya.v === "glass" || ya.v === "capsule") ? Theme.textOnAccent : Theme.text
                         }
                     }
                 }

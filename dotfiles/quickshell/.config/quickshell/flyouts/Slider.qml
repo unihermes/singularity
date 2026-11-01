@@ -47,9 +47,54 @@ Item {
         width: parent.width
         height: Theme.switchHeight
 
-        readonly property string kind: Theme.style
+        readonly property string kind: Theme.controlStyle
         readonly property real frac: Math.max(0, Math.min(1, root.value / 100))
         readonly property bool hot: drag.pressed || drag.containsMouse
+
+        Rectangle {
+            id: customTrack
+            visible: ["rail", "notch", "ledger", "bevel"].indexOf(track.kind) !== -1
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            height: track.kind === "rail" ? Theme.meterHeight : Theme.switchHeight
+            color: Theme.meterTrack
+
+            Rectangle {
+                x: track.kind === "bevel" ? Theme.borderWidth * 2 : 0
+                y: x
+                width: Math.max(0, (parent.width - x * 2) * track.frac)
+                height: Math.max(0, parent.height - y * 2)
+                color: root.fillColor
+            }
+
+            Repeater {
+                id: divisions
+                model: track.kind === "ledger" ? Math.max(1, Math.floor(customTrack.width / Theme.sp(12))) : 0
+                Rectangle {
+                    required property int index
+                    x: (index + 1) * customTrack.width / (divisions.count + 1) - width / 2
+                    width: Theme.spaceXs
+                    height: customTrack.height
+                    color: Theme.panel
+                }
+            }
+
+            StyleFrame {
+                visible: track.kind === "bevel"
+                control: true
+                sunken: true
+            }
+
+            Rectangle {
+                visible: track.kind === "notch" || track.kind === "rail"
+                anchors.verticalCenter: parent.verticalCenter
+                width: track.kind === "notch" ? Theme.spaceM : Theme.borderWidth * 2
+                height: Theme.switchHeight
+                x: Math.max(0, Math.min(parent.width - width, parent.width * track.frac - width / 2))
+                rotation: track.kind === "notch" ? 15 : 0
+                color: Theme.bright
+            }
+        }
 
         // channel: a level chip, filled inside a dark groove, with a bright
         // marker at the level
@@ -154,6 +199,16 @@ Item {
                 border.width: track.kind === "glass" ? 2 : 0
                 border.color: Theme.isLight ? Qt.rgba(1, 1, 1, 0.9) : Qt.rgba(1, 1, 1, 0.3)
             }
+        }
+
+        Rectangle {
+            visible: Theme.style === "capsule"
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.switchHeight
+            height: width
+            radius: Theme.pill(width)
+            x: Math.max(0, Math.min(track.width - width, track.width * track.frac - width / 2))
+            color: Theme.textStrong
         }
 
         MouseArea {

@@ -84,20 +84,29 @@ Item {
 
         height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
         radius: Theme.radius
-        color: flush ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+        readonly property color ground: flush ? (root.active || hover.hovered ? Theme.overlay : "transparent")
             : openFill ? (Theme.glass ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Theme.accent)
             : root.hovered ? (Theme.glass ? Theme.stroke : Theme.overlay)
             : root.active ? Theme.selectedFill
             : solid ? restFill : "transparent"
 
-        border.width: style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
+        color: Theme.frameCustom && !flush ? "transparent" : ground
+        border.width: !Theme.frameCustom && style === "outline" && Theme.frameStroked ? Theme.borderWidth : 0
         border.color: root.active ? Theme.strokeFocus : Theme.stroke
 
         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
         Shadow {
             radius: frame.radius
-            opaque: frame.solid
+            opaque: frame.solid || (Theme.frameStyle === "bevel" && !frame.flush)
+        }
+
+        StyleFrame {
+            visible: Theme.frameCustom && !frame.flush
+            ground: frame.ground
+            stroke: root.active ? Theme.accent : Theme.stroke
+            control: true
+            sunken: root.active
         }
 
         // Glass's glow, round the open chip

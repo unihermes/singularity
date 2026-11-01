@@ -27,7 +27,7 @@ Item {
 
     signal clicked()
 
-    readonly property string kind: Theme.style
+    readonly property string kind: Theme.controlStyle
     readonly property bool hot: clickable && mouse.containsMouse
 
     implicitHeight: col.implicitHeight + Theme.spaceL * 2
@@ -39,11 +39,12 @@ Item {
         readonly property color frost: Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: root.kind === "solid" ? (root.lit ? Qt.tint(Theme.surface, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25))
+        readonly property color faceFill: root.kind === "solid" ? (root.lit ? Qt.tint(Theme.surface, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25))
                 : root.hot ? Theme.overlay : Theme.surface)
             : root.kind === "glass" ? (root.hot ? Theme.stroke : frost)
             : root.kind === "flat" ? (root.hot ? Theme.overlay : Theme.surface)
             : Theme.controlFill(root.hot ? Theme.hoverFillSoft : "transparent")
+        color: Theme.frameCustom && Theme.frameStyle === "notch" ? "transparent" : faceFill
         border.width: root.kind === "solid" ? 0
             : root.kind === "flat" ? (root.lit ? Math.max(2, Theme.borderWidth * 2) : 0)
             : Theme.controlBorder(edge)
@@ -51,7 +52,8 @@ Item {
             : root.kind === "flat" ? Theme.accent : Theme.controlStroke(edge)
 
         ControlEdge {
-            visible: root.kind === "channel" || root.kind === "double"
+            visible: root.kind === "channel" || root.kind === "double" || Theme.frameCustom
+            ground: Theme.frameStyle === "notch" ? box.faceFill : "transparent"
             stroke: box.edge; radius: box.radius
             lit: root.lit
         }

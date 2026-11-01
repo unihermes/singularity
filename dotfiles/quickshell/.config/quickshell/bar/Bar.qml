@@ -121,9 +121,10 @@ PanelWindow {
             height: rect ? rect.h : 0
 
             Channel { visible: Theme.frameChannel; radius: Theme.groupRadius }
+            StyleFrame { visible: Theme.frameCustom; ground: Theme.surface; section: true }
 
             Rectangle {
-                visible: !Theme.frameChannel
+                visible: !Theme.frameChannel && !Theme.frameCustom
                 anchors.fill: parent
                 radius: Theme.groupRadius
                 color: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)) : Theme.surface

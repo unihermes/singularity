@@ -25,7 +25,7 @@ Item {
 
     signal clicked()
 
-    readonly property string kind: Theme.style
+    readonly property string kind: Theme.controlStyle
     readonly property bool hot: root.enabled && mouse.containsMouse
 
     implicitWidth: content.implicitWidth + Theme.spaceM * 2 + (glyph && !armed ? 2 : 0)
@@ -39,13 +39,14 @@ Item {
         readonly property color frost: Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: root.transparent ? (root.hot ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
+        readonly property color faceFill: root.transparent ? (root.hot ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
             : root.armed ? Theme.alert
             : root.selected ? Theme.accent
             : root.kind === "solid" ? (root.hot ? Theme.overlay : Theme.surface)
             : root.kind === "glass" ? (root.hot ? Theme.stroke : frost)
             : root.kind === "flat" ? Theme.overlay
             : Theme.controlFill(root.hot ? Theme.hoverFillSoft : "transparent")
+        color: !root.transparent && Theme.frameCustom && Theme.frameStyle === "notch" ? "transparent" : faceFill
         border.width: root.transparent ? 0 : root.kind === "solid" ? 0
             : root.kind === "glass" ? Theme.borderWidth
             : root.kind === "flat" ? (root.hot && !root.armed && !root.selected ? Math.max(2, Theme.borderWidth * 2) : 0)
@@ -55,7 +56,8 @@ Item {
 
         // a lit chip is a pressed button
         ControlEdge {
-            visible: !root.transparent && (root.kind === "channel" || root.kind === "double")
+            visible: !root.transparent && (root.kind === "channel" || root.kind === "double" || Theme.frameCustom)
+            ground: Theme.frameStyle === "notch" ? box.faceFill : "transparent"
             stroke: box.edge; sunken: root.selected; radius: box.radius
             lit: false
         }

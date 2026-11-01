@@ -30,6 +30,7 @@ Singleton {
         plain: Settings.plain })
     // the style in force
     readonly property string style: resolved.styleName
+    readonly property string controlStyle: resolved.controlStyle
     // Plain (Shape) over any style: a classic flat desktop. Styles.resolve
     // gives bare chips, flush flyouts, no shadows and hairlines; here the
     // bar runs full width with levels as text, rows in panels go unframed,
@@ -203,6 +204,10 @@ Singleton {
     readonly property bool frameNone:   frameStyle === "none"
     // "channel": outer line, dark groove, inner line (Channel.qml)
     readonly property bool frameChannel: frameStyle === "channel"
+    readonly property bool frameCustom: ["rail", "ruled", "notch", "bevel"].indexOf(frameStyle) !== -1 && !plain
+    readonly property int notchSize: sp(8)
+    readonly property color bevelLight: Qt.lighter(surface, isLight ? 1.12 : 2)
+    readonly property color bevelDark: Qt.darker(surface, isLight ? 1.6 : 2)
     // every style but None draws the plain outer stroke
     readonly property bool frameStroked: !frameNone
     // rows inside a panel are framed (SectionRuns) in every style but Flat
@@ -239,11 +244,12 @@ Singleton {
         : Settings.windowBorderUnfocused === "custom" && Settings.windowBorderUnfocusedHex !== "" ? Settings.windowBorderUnfocusedHex
         : border
     // their shadow: the style's (with Shadows on), none, or a set size
-    readonly property string windowShadow: Settings.windowShadow === "style" ? shadow
+    readonly property string windowShadow: Settings.windowShadow === "style" ? (shadow === "hard" ? "small" : shadow)
         : Settings.windowShadow === "off" ? "none" : Settings.windowShadow
     // A control's stroke in a panel (chips, fields, steppers, cards): under
     // None only where a lit or focused state shows.
     function controlBorder(c) {
+        if (frameCustom) return 0
         if (frameStroked) return borderWidth
         return Qt.colorEqual(c, stroke) || Qt.colorEqual(c, "transparent") ? 0 : borderWidth
     }
@@ -260,7 +266,7 @@ Singleton {
     // how far the inner stroke sits inside a panel's outer one
     readonly property int frameInset:  3
     // how a list marks its current row: "tick" or "tint"
-    readonly property string rowMark: style === "solid" ? "tint" : "tick"
+    readonly property string rowMark: controlStyle === "solid" ? "tint" : "tick"
     // the left-edge bar marking the current row in a list
     readonly property int indicatorWidth: 2
     readonly property int meterHeight: 6

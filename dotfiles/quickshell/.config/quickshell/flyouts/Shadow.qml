@@ -21,10 +21,21 @@ Item {
     visible: Theme.shadow !== "none" && opaque
 
     RectangularShadow {
+        visible: Theme.shadow !== "hard"
         anchors.fill: parent
         radius: root.radius
         offset.y: Theme.sp(3)
         blur: Theme.sp(14)
+        color: Qt.rgba(0, 0, 0, Theme.isLight ? 0.22 : 0.55)
+    }
+
+    Rectangle {
+        visible: Theme.shadow === "hard"
+        x: Theme.spaceS
+        y: Theme.spaceS
+        width: parent.width
+        height: parent.height
+        radius: root.radius
         color: Qt.rgba(0, 0, 0, Theme.isLight ? 0.22 : 0.55)
     }
 }

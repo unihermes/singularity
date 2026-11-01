@@ -56,9 +56,9 @@ Item {
     //   solid      a sunken track with a raised accent pill
     //   glass      a frosted strip
     //   flat       separate flat blocks
-    readonly property string kind: Theme.style
+    readonly property string kind: Theme.controlStyle
     // drawn as a row of separate choices rather than one strip
-    readonly property bool loose: kind === "flat"
+    readonly property bool loose: kind === "flat" || kind === "rail" || kind === "ledger"
     readonly property int gap: loose ? Theme.spaceXs : 0
     readonly property int edge: loose ? 0
         : kind === "solid" || kind === "glass" ? Theme.spaceXs : Theme.borderWidth
@@ -109,11 +109,12 @@ Item {
 
                     // the segment's ground
                     Rectangle {
+                        id: segBox
                         anchors.fill: parent
                         anchors.margins: root.loose || root.edge === 0 || root.kind === "solid" || root.kind === "glass" ? 0 : 1
                         radius: root.kind === "solid" || root.kind === "glass" ? Math.max(0, Theme.radius - 2)
                             : Theme.radiusSmall
-                        color: {
+                        readonly property color faceFill: {
                             var k = root.kind
                             if (seg.on) {
                                 if (k === "double") return Theme.overlay
@@ -123,9 +124,17 @@ Item {
                             if (k === "flat") return seg.hot ? Theme.muted : Theme.overlay
                             return seg.hot ? Theme.hoverFillSoft : "transparent"
                         }
+                        color: Theme.frameCustom && Theme.frameStyle === "notch" ? "transparent" : faceFill
                         border.width: seg.on && root.kind === "double" ? Theme.borderWidth
                             : seg.on && root.kind === "channel" ? Theme.channelGrooveWidth : 0
                         border.color: root.kind === "channel" ? Theme.channelGroove : Theme.accent
+
+                        ControlEdge {
+                            visible: Theme.frameCustom
+                            ground: Theme.frameStyle === "notch" ? segBox.faceFill : "transparent"
+                            sunken: seg.on
+                            stroke: seg.on ? Theme.accent : Theme.stroke
+                        }
                     }
 
                     // the hairline between joined segments

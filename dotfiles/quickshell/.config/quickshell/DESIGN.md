@@ -12,7 +12,8 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
 Channel, Double, Solid, Glass (settled 2026-10-08 from two rounds of
-mockups) and Flat (2026-10-16). A style sets the frame,
+mockups), Flat (2026-10-16), and Rail, Notch, Ledger, Capsule and Bevel
+(2026-11-01, from the interactive style studies). A style sets the frame,
 bar modules, hover, level chips, focused window mark and where flyouts sit,
 all at once, and starts the Finish switches and the heading mark off its
 own way. Beside it are dials that move everything together (Roundness, Bar
@@ -37,6 +38,30 @@ part of its default (see Styles and settings).
 | Solid | fat pill, white knob | thick bar | sunken track, raised accent pill | filled block | accent-tinted ground |
 | Glass | frosted track, knob glows | thin line, glowing round thumb | frosted strip | glass chip | tick |
 | Flat | pill outlined in the text colour; on, accent with a white knob | thin line, upright rounded thumb | separate flat blocks, 2px apart | flat block, heavy outline on hover | tick |
+| Rail | accent underline when on | slim track, upright marker | separate ruled choices | underlined action | tick |
+| Notch | filled cut-corner box | bar, angled marker | notched strip and choices | cut-corner action | tick |
+| Ledger | square box with a check | segmented bar | separate ruled choices | ruled action | tick |
+| Capsule | pill with a white knob | rounded thick bar, round thumb | pill track and chosen pill | rounded filled action | accent-tinted ground |
+| Bevel | recessed well, accent when on | recessed filled track | recessed strip, pressed choice | raised, pressed when selected | tick |
+
+The five additional styles use the same palette roles and shared components.
+`StyleFrame.qml` draws the leading rail, ruled edges, cut corners and directional
+bevels; `PanelFrame`, `SectionRuns`, `ControlEdge` and the bar reuse it.
+Capsule shares Solid's control family through `Theme.controlStyle`, with its own
+roundness and slider thumb. Plain suppresses the custom frame treatment.
+
+| Additional style | Frame / sections | Bar | Headings | Motion | Stock differences |
+|---|---|---|---|---|---|
+| Rail | accent leading spine / neutral leading rule | ruled groups | title case, bar mark, no rule | drop | Roundness 3 |
+| Notch | opposite cut corners | outlined notched chips | upper, brackets, no rule | drop | angular corners; Blocks, Segmented windows, Rising visualizer |
+| Ledger | square outer stroke / top rule | ruled groups | upper, no mark or rule | fade | square corners; Numbers, Inset windows, Day + time, One line visualizer |
+| Capsule | rounded grounds, soft shadow | independent islands, filled chips | title case, no mark or rule | scale | Roundness 14; Dots, Time, Grid launcher, Preview switcher |
+| Bevel | raised outer edge / recessed sections, hard offset shadow | raised chips | upper, `::`, rule | drop | Roundness 2; Blocks, Segmented windows, Rising visualizer |
+
+These inherit the shared stock unless listed above. Notch and Ledger keep their
+angular corners regardless of Roundness. Bevel's shell shadows are hard offsets;
+its application-window shadow uses the compositor's Small preset. The stock
+comparison tables below describe the original five styles.
 
 - **Bar chips:** Double outlines every module with an inner stroke 2px in,
   faint at rest (lit with `lit`); Solid and Glass fill the open chip with

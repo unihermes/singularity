@@ -21,7 +21,13 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         height: Theme.groupHeight
-        Channel { radius: Theme.groupRadius }
+        PanelFrame {
+            anchors.fill: parent
+            radius: Theme.groupRadius
+            ground: Theme.surface
+            section: true
+            shadowed: false
+        }
     }
     Row {
         id: chipRow
