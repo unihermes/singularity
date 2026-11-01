@@ -59,8 +59,9 @@ part of its default (see Styles and settings).
   the value it takes when off).
 - Glass's `blur` and `tint` change its frost. Grounds retain 38% opacity
   with Heavy blur, 48% without it, scaled by See-through. Panels have a
-  white reflective hairline and a soft top highlight that preserves alpha.
-  Flyout sections use a faint tint over one translucent outer ground so
+  faint white hairline and a lightly lifted ground with a soft top highlight
+  that preserves alpha. Glass sections have no outlines; flyout sections
+  use a faint white wash over one translucent outer ground so
   desktop colour remains visible through the whole panel.
 
 Across every style, a chosen segment, tab or chip fills with the accent
