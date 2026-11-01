@@ -74,6 +74,7 @@ WidgetCard {
 
     // small: play/pause in the top right corner
     FlyoutChip {
+        transparent: true
         visible: root.small && !!root.player
         anchors.right: parent.right
         glyph: true
@@ -150,6 +151,7 @@ WidgetCard {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: Theme.spaceM
                 FlyoutChip {
+                    transparent: true
                     width: Theme.fit(root.large ? 56 : 44)
                     glyph: true
                     text: "󰒮"
@@ -157,6 +159,7 @@ WidgetCard {
                     onClicked: root.player.previous()
                 }
                 FlyoutChip {
+                    transparent: true
                     width: Theme.fit(root.large ? 56 : 44)
                     glyph: true
                     text: root.playing ? "󰏤" : "󰐊"
@@ -164,6 +167,7 @@ WidgetCard {
                     onClicked: root.player.togglePlaying()
                 }
                 FlyoutChip {
+                    transparent: true
                     width: Theme.fit(root.large ? 56 : 44)
                     glyph: true
                     text: "󰒭"

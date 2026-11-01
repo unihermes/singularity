@@ -638,7 +638,7 @@ its own ground whatever the style: square, a white hairline edge (22%)
 round an evenly see-through black (35%), no shadow, no blur
 (`desktop/WidgetCard.qml`); what's on it follows the style: the content in the palette's inks (textStrong,
 text, subtext, the accent lifted on a dark palette) and bold, with a tight halo in the base colour
-round every mark, the system font (Appearance > Type, else the shell's),
+round every mark, the shell font (Appearance > Type),
 nothing under 13px. A `PanelFrame` in the style's frame and panel tone
 was tried and dropped, as were a feathered shade
 with no edge and a top-to-bottom fade were tried and dropped. Each is its own
@@ -648,8 +648,7 @@ Panels > Desktop Widgets.
 
 - **Type** (`WidgetCard`): past each widget's one large figure (the time,
   the temperature, the uptime) three sizes, caption 13, body 14, title 16,
-  and two weights: medium for anything read, the figures too, bold for
-  what names or leads. A widget leads with a caption (`WidgetCaption`:
+  with bold text and figures. A widget leads with a caption (`WidgetCaption`:
   spaced bold capitals in the accent: the day, the place, the player, the
   note, the host); the stats' labels and the groups' heads are captions
   too, dimmed where the accent would be noise.
@@ -684,7 +683,7 @@ Panels > Desktop Widgets.
   with their range against the week's.
 - **Music:** the art (dimmed while paused), the player in the accent, the
   track, the shell's `Meter` as the progress (click to seek) and the
-  media flyout's transport chips (`FlyoutChip`); the Stats bars are `Meter`s too;
+  media flyout's transport chips (`FlyoutChip`) with transparent grounds; the Stats bars are `Meter`s too;
   with no player it says Nothing playing and offers the last one.
 - **Sidebar** (`desktop/DesktopSidebar.qml`, Appearance > Panels >
   Sidebar): a conky-style column flush with the primary display's right

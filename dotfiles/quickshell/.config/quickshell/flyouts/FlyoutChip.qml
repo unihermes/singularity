@@ -13,6 +13,7 @@ Item {
     property string text: ""
     // icon glyphs render bigger than letters at the same size
     property bool glyph: false
+    property bool transparent: false
     property bool enabled: true
     // lit, for the current choice in a pair (°F / °C)
     property bool selected: false
@@ -38,13 +39,14 @@ Item {
         readonly property color frost: Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: root.armed ? Theme.alert
+        color: root.transparent ? (root.hot ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
+            : root.armed ? Theme.alert
             : root.selected ? Theme.accent
             : root.kind === "solid" ? (root.hot ? Theme.overlay : Theme.surface)
             : root.kind === "glass" ? (root.hot ? Theme.stroke : frost)
             : root.kind === "flat" ? Theme.overlay
             : Theme.controlFill(root.hot ? Theme.hoverFillSoft : "transparent")
-        border.width: root.kind === "solid" ? 0
+        border.width: root.transparent ? 0 : root.kind === "solid" ? 0
             : root.kind === "glass" ? Theme.borderWidth
             : root.kind === "flat" ? (root.hot && !root.armed && !root.selected ? Math.max(2, Theme.borderWidth * 2) : 0)
             : Theme.controlBorder(edge)
@@ -53,7 +55,7 @@ Item {
 
         // a lit chip is a pressed button
         ControlEdge {
-            visible: root.kind === "channel" || root.kind === "double"
+            visible: !root.transparent && (root.kind === "channel" || root.kind === "double")
             stroke: box.edge; sunken: root.selected; radius: box.radius
             lit: false
         }

@@ -28,17 +28,15 @@ Item {
     readonly property color track: Qt.rgba(Theme.muted.r, Theme.muted.g, Theme.muted.b, 0.6)
     // lifted on a dark palette, so it reads through the see-through ground
     readonly property color accent: Theme.isLight ? Theme.accent : Qt.lighter(Theme.accent, 1.4)
-    // the system font (Appearance > Apps), else the shell's
-    readonly property string font: Fonts.loaded.indexOf(Settings.systemFontFamily) !== -1
-        ? Settings.systemFontFamily : Theme.fontText
+    readonly property string font: Theme.fontText
     // Three sizes and two weights, past each widget's one large figure:
     // captions (spaced capitals, bold, the accent for a widget's lead),
-    // body and titles. Medium for anything read, the figures too; bold for
+    // body and titles. Bold for anything read, including the figures and
     // what names or leads: captions, labels, titles, today.
     readonly property int textCaption: Theme.fit(13)
     readonly property int textBody: Theme.fit(14)
     readonly property int textTitle: Theme.fit(16)
-    readonly property int weightBody: Font.Medium
+    readonly property int weightBody: Font.Bold
     readonly property int weightStrong: Font.Bold
 
     default property alias content: body.data

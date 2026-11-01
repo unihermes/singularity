@@ -67,7 +67,7 @@ PanelWindow {
         readonly property string font: Theme.fontText
         readonly property int textCaption: Theme.fit(14)
         readonly property int textBody: Theme.fit(16)
-        readonly property int weightBody: Font.Medium
+        readonly property int weightBody: Font.Bold
         readonly property int weightStrong: Font.Bold
     }
 
