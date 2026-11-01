@@ -1522,6 +1522,23 @@ end
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
+
+-- The bar calls this after its reserved edge changes. Tiled windows are
+-- handled by Hyprland; floating fills and monocle shapes are ours to refit.
+function singularityRefitWindows()
+    for _, w in ipairs(hl.get_windows()) do
+        if w.floating and w.fullscreen == 0 and w.monitor then
+            local st = stateOf(w.address)
+            if not (st.minimized or st.parked or st.settling) then
+                if hasTag(w, "monocle") and monocleOn(w.workspace) then
+                    placeMonocle(w, w.monitor)
+                elseif hasTag(w, "filled") then
+                    sizeToFullFloat(w, w.monitor)
+                end
+            end
+        end
+    end
+end
 -- and after every load, for a changed edge gap, keeping what the mouse did
 -- to the focused window first
 hl.timer(function()

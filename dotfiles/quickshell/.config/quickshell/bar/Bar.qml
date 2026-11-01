@@ -35,6 +35,17 @@ PanelWindow {
     // a floating bar's window also holds the gap between it and the
     // screen edge, so windows tile clear of the whole thing
     implicitHeight: Theme.barHeight + Theme.barMargin
+    onImplicitHeightChanged: refitWindows.restart()
+    Connections {
+        target: Theme
+        function onBarPositionChanged() { refitWindows.restart() }
+    }
+    // Let the layer surface's new reservation reach Hyprland first.
+    Timer {
+        id: refitWindows
+        interval: 250
+        onTriggered: Quickshell.execDetached(["hyprctl", "eval", "singularityRefitWindows()"])
+    }
     // transparent at creation, or the surface can never show opacity
     color: "transparent"
 
