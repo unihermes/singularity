@@ -316,6 +316,16 @@ Singleton {
             || (n.appName === "" && n.summary === "Claude Code")
     }
 
+    // Claude's and Codex's, as one card each that the next replaces: the
+    // sidebar's per conversation, the terminal's per CLI; "" for the rest
+    function stackOf(n) {
+        if (n.phone) return ""
+        if (/^singularity-sidebar-/.test(n.desktopEntry || "")) return n.desktopEntry
+        if (n.appName === "" && n.summary === "Claude Code") return "terminal-claude"
+        if (n.appName === "Codex" && !n.desktopEntry) return "terminal-codex"
+        return ""
+    }
+
     // ChatGPT's notification sound, else freedesktop's
     function playClaudeSound() {
         Quickshell.execDetached(["sh", "-c",
@@ -472,12 +482,16 @@ Singleton {
             }
             const time = Date.now()
             const entry = root.entryFor(n, time)
-            // a replacement (same id, still held by its sender) takes over
-            // the old entry and its popup rather than stacking a second one
-            const old = root.history.find(e => e.id === n.id && e.live)
-            const rest = root.history.filter(e => e !== old)
+            // a replacement (same id, still held by its sender) or the next
+            // of a stack takes over the old entry and its popup rather than
+            // stacking a second one
+            const stack = root.stackOf(n)
+            const replaced = root.history.filter(e => (e.id === n.id && e.live)
+                || (stack && root.stackOf(e) === stack))
+            const rest = root.history.filter(e => replaced.indexOf(e) < 0)
             root.history = [entry].concat(rest).slice(0, root.maxEntries)
-            const others = root.popups.filter(p => !old || p.key !== old.key)
+            const others = root.popups.filter(p => !replaced.some(e => e.key === p.key))
+            replaced.filter(e => e.live !== n).forEach(root.closeLive)
             // critical ones (a battery about to die) still come through DND
             // and an app's silencing
             const hold = (root.dnd || Settings.notifSilent.indexOf(n.appName) >= 0)

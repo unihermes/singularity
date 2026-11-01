@@ -494,6 +494,9 @@ larger, an accent rail down from the icon, and under the title the app and
 age, the text, the picture and the buttons as links (Open · the app's own
 · More). Do Not Disturb and Settings at the foot. While it's out nothing
 pops up; it all arrives in the list.
+Claude's and Codex's never pile up: each sidebar conversation and each
+terminal CLI (Claude Code, Codex's notify hook) keeps one card, the next
+replacing it (`Notifications.stackOf`).
 
 ### Claude sidebar
 

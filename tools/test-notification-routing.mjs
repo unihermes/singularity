@@ -78,3 +78,17 @@ test('Claude and Codex sidebar logos occupy the app icon slot, never the body im
     assert.equal(ctx.iconOf(other), 'mail-icon')
     assert.equal(ctx.pictureOf(other), 'file:///photo.png')
 })
+
+test('Claude and Codex cards stack per sidebar conversation and per terminal CLI', () => {
+    const ctx = vm.createContext({})
+    vm.runInContext(source.match(/    function stackOf\([^]*?\n    }/)[0], ctx)
+    const sidebar = 'singularity-sidebar-code-codex'
+    assert.equal(ctx.stackOf({ appName: 'Codex', desktopEntry: sidebar, summary: 'Codex · Code: done' }), sidebar)
+    assert.notEqual(ctx.stackOf({ appName: 'Codex', desktopEntry: 'singularity-sidebar-chat-codex' }), sidebar)
+    assert.equal(ctx.stackOf({ appName: '', desktopEntry: '', summary: 'Claude Code' }), 'terminal-claude')
+    assert.equal(ctx.stackOf({ appName: 'Codex', desktopEntry: '', summary: 'Codex' }), 'terminal-codex')
+    for (const other of [{ appName: 'Mail', desktopEntry: '', summary: 'Codex' },
+                         { appName: 'Codex', desktopEntry: '', summary: 'Codex', phone: true },
+                         { appName: '', desktopEntry: '', summary: 'Something else' }])
+        assert.equal(ctx.stackOf(other), '')
+})
