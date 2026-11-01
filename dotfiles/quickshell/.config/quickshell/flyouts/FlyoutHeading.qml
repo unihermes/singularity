@@ -324,7 +324,7 @@ Item {
 
     Image {
         id: headingIcon
-        visible: root.icon !== ""
+        visible: root.icon.toString() !== ""
         anchors.left: crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
         anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
