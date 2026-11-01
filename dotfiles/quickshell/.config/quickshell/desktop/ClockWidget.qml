@@ -82,7 +82,7 @@ WidgetCard {
         anchors.top: top.bottom
         anchors.topMargin: -Math.round(font.pixelSize * 0.08)
         card: root
-        px: root.large ? Theme.fit(96) : root.small ? Theme.fit(38) : Theme.fit(60)
+        px: root.large ? Theme.fit(96) : root.small ? Theme.fit(42) : Theme.fit(60)
         text: Qt.formatTime(root.now, Theme.timeFormat)
     }
     WidgetText {
@@ -110,6 +110,16 @@ WidgetCard {
         width: parent.width
         columns: 7
         readonly property real cell: width / 7
+        // large: the weeks share what the time leaves
+        readonly property real rowHeight: !root.large ? Theme.fit(26)
+            : Math.max(Theme.fit(26), Math.floor((parent.height - time.y - time.height - Theme.fit(8) - letters.height)
+                / Math.max(1, root.monthDays.length / 7)))
+
+        FontMetrics {
+            id: letters
+            font.family: root.font
+            font.pixelSize: root.textBody
+        }
 
         Repeater {
             model: root.small ? [] : root.weekDays
@@ -130,7 +140,7 @@ WidgetCard {
                 required property var modelData
                 readonly property bool today: root.sameDay(modelData, root.today)
                 width: parent.cell
-                height: Theme.fit(root.large ? 30 : 26)
+                height: parent.rowHeight
 
                 Rectangle {
                     anchors.centerIn: parent

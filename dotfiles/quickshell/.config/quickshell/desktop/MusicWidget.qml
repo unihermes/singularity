@@ -2,7 +2,7 @@
 // ~/.config/quickshell/desktop/MusicWidget.qml
 //
 // What the bar's Music module follows. Small: the art with play/pause
-// beside it, the title and artist under; the progress bar and transport
+// on its corner, the title and artist under; the progress bar and transport
 // are the media flyout's (the shell's Meter and chips). Medium: the art down the left,
 // the player, track, progress and transport beside it. Large: the art
 // across the top, the rest under it. The art dims while nothing's heard (a browser's
@@ -46,7 +46,7 @@ WidgetCard {
         id: art
         // medium: a square down the left; otherwise all the height the
         // words and controls under it leave
-        width: root.large ? parent.width : root.small ? height : parent.height
+        width: foot.beside ? parent.height : parent.width
         height: foot.beside ? width : parent.height - foot.height - foot.gap
         color: root.track
 
@@ -75,9 +75,8 @@ WidgetCard {
         }
     }
 
-    // small: play/pause in the top right corner
+    // small: play/pause on the art's top right corner
     FlyoutChip {
-        transparent: true
         visible: root.small && !!root.player
         anchors.right: parent.right
         glyph: true

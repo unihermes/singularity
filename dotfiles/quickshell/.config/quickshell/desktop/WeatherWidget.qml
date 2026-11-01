@@ -31,7 +31,7 @@ WidgetCard {
         }
         WidgetText {
             card: root
-            px: root.large ? Theme.fit(52) : Theme.fit(42)
+            px: root.large || root.small ? Theme.fit(52) : Theme.fit(42)
             text: Weather.ready ? Weather.temp(Weather.tempF, Weather.tempC) : "--"
         }
     }

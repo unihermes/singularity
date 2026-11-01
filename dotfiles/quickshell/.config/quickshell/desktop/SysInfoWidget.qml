@@ -235,7 +235,7 @@ WidgetCard {
         card: root
         text: mark.text
         font.family: Theme.fontIcon
-        px: Theme.fit(40)
+        px: Theme.fit(52)
         color: root.accent
         elide: Text.ElideNone
     }
