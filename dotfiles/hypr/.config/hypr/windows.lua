@@ -94,6 +94,7 @@ end
 -- Per-window state by address, on top of Hyprland's own:
 --   shape     -- a monocle window's size and place (shapeRect)
 --   placedOn  -- the monitor placeMonocle() last fitted it to
+--   filledOn  -- the monitor sizeToFullFloat() last filled it on
 --   lastShape -- the shape SUPER+equal brings a filled window back to
 --   parked    -- moved off-screen while covered (PARKING)
 --   settling  -- coming back from SUPER+C, still animating
@@ -315,6 +316,7 @@ local function sizeToFullFloat(win, mon)
     if not mon then return end
     local area = fillArea(win, mon)
     local addr = "address:" .. win.address
+    stateOf(win.address).filledOn = mon.id
     hl.dispatch(hl.dsp.window.resize({ x = math.floor(area.w), y = math.floor(area.h), window = addr }))
     hl.dispatch(hl.dsp.window.move({ x = math.floor(area.x), y = math.floor(area.y), window = addr }))
     syncFillBorder(win.address)
@@ -1498,6 +1500,22 @@ local function refitMonocle()
     end
 end
 
+-- A filled window dragged to another monitor fills that one once let go.
+-- Lua isn't told of a drag, so the button's release checks the focused
+-- window (with SUPER still held or not). A monocle window at a shape keeps
+-- its share of the screen where it was dropped.
+local function refitDragged()
+    local win = hl.get_active_window()
+    if not (win and win.floating and win.fullscreen == 0 and win.monitor) then return end
+    local st = stateOf(win.address)
+    local monocle = hasTag(win, "monocle")
+    local from = monocle and st.placedOn or st.filledOn
+    if not from or from == win.monitor.id then return end
+    if monocle and st.shape then captureShape(win) else refitMoved(win) end
+end
+hl.bind("mouse:272", refitDragged, { release = true, non_consuming = true })
+hl.bind("SUPER + mouse:272", refitDragged, { release = true, non_consuming = true })
+
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
 hl.on("monitor.layout_changed", refitMonocle)
@@ -1613,6 +1631,7 @@ local function toggleMaximizeWin(win)
             end
             hl.dispatch(hl.dsp.window.resize({ x = r.w, y = r.h, window = addr }))
             hl.dispatch(hl.dsp.window.move({ x = r.x, y = r.y, window = addr }))
+            syncFillBorder(win.address)
         else
             hl.dispatch(hl.dsp.window.resize({
                 x = math.floor(area.w * 0.7), y = math.floor(area.h * 0.7), window = addr }))
