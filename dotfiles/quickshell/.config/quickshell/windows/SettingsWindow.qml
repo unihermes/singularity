@@ -3,7 +3,7 @@
 //
 // Settings: one flat sidebar of short pages under headings (each with what
 // it's set to now), the search box at its top, and the open page beside it,
-// split by a hairline. It opens on the last page used (Network the first
+// split by a hairline. It opens on the last page used (Appearance the first
 // time). Typed into, the search lists its hits (SettingsIndex.js) in place
 // of the pages; a hit opens its page and rings the setting. A page can
 // open another (Windows its rules, a sub-page whose sidebar entry stays its
@@ -28,7 +28,7 @@ FloatingWindow {
     id: root
 
     // the open page; the last one stays for the next open
-    property string currentPage: "network"
+    property string currentPage: "appearance"
     // the setting a search result picked, for the page to scroll to and ring
     property string highlight: ""
 
