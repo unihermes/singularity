@@ -4,8 +4,9 @@
 // The Music module's flyout, one page. The art across the panel with the
 // spectrum (the bar's style) rising from its foot while something sounds,
 // then the title, artist and player; the progress (click to seek) and the
-// transport. Every player as a row when there are several (a click picks
-// which the module follows). Then Options, folded: Visualizer, with its
+// transport. With several players the art flips between them (arrows at
+// its sides, a dot each along its top, the wheel), picking which the
+// module follows. Then Options, folded: Visualizer, with its
 // Style and Bars under it while it's on, Title on the bar, Hide when
 // silent. Self-contained: only needs the Media and Visualizer singletons.
 
@@ -19,6 +20,12 @@ FlyoutPanel {
     menuWidth: Theme.flyoutMenuWidth
 
     readonly property var player: Media.player
+    // the followed player `step` along from the shown one, round the ends
+    function flip(step) {
+        var ps = Media.players, n = ps.length
+        if (n < 2) return
+        Media.pick(ps[(Math.max(0, ps.indexOf(player)) + step + n) % n])
+    }
     // the switches under Options, folded each time this opens
     property bool showOptions: false
     onOpenChanged: if (!open) showOptions = false
@@ -98,6 +105,84 @@ FlyoutPanel {
                 bandH: Theme.fit(32)
                 spacing: Visualizer.barCount > 1 ? (span - bandW * Visualizer.barCount) / (Visualizer.barCount - 1) : 0
                 color: Theme.textStrong
+            }
+        }
+
+        // with several players: the wheel flips between them, an arrow at
+        // each side and a dot each along the top (the shown one long)
+        MouseArea {
+            anchors.fill: parent
+            enabled: Media.players.length > 1
+            acceptedButtons: Qt.NoButton
+            onWheel: wheel => mediaFlyout.flip(wheel.angleDelta.y > 0 ? -1 : 1)
+        }
+
+        Repeater {
+            model: Media.players.length > 1 ? [-1, 1] : []
+
+            Rectangle {
+                required property int modelData
+                anchors.verticalCenter: parent.verticalCenter
+                x: modelData < 0 ? Theme.spaceM : artFrame.width - width - Theme.spaceM
+                width: Theme.controlSize
+                height: width
+                radius: width / 2
+                color: flipMouse.containsMouse ? Theme.base : Theme.captionScrim
+
+                Text {
+                    anchors.centerIn: parent
+                    text: parent.modelData < 0 ? "󰅁" : "󰅂"
+                    color: Theme.textStrong
+                    font.family: Theme.fontIcon
+                    font.pixelSize: Theme.fontIconSize
+                }
+                MouseArea {
+                    id: flipMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mediaFlyout.flip(parent.modelData)
+                }
+            }
+        }
+
+        Rectangle {
+            visible: Media.players.length > 1
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: Theme.spaceM
+            width: dots.width + Theme.spaceM * 2
+            height: dots.height + Theme.spaceS * 2
+            radius: height / 2
+            color: Theme.captionScrim
+
+            Row {
+                id: dots
+                anchors.centerIn: parent
+                spacing: Theme.spaceS
+
+                Repeater {
+                    model: Media.players.length > 1 ? Media.players : []
+
+                    Rectangle {
+                        required property var modelData
+                        readonly property bool shown: modelData === mediaFlyout.player
+                        width: shown ? Theme.spaceL * 2 : Theme.spaceS * 2
+                        height: Theme.spaceS * 2
+                        radius: height / 2
+                        color: shown || dotMouse.containsMouse ? Theme.textStrong : Theme.muted
+                        Behavior on width { NumberAnimation { duration: Theme.durMedium } }
+
+                        MouseArea {
+                            id: dotMouse
+                            anchors.fill: parent
+                            anchors.margins: -Theme.spaceXs
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Media.pick(parent.modelData)
+                        }
+                    }
+                }
             }
         }
     }
@@ -205,21 +290,6 @@ FlyoutPanel {
             text: "󰒭"
             enabled: mediaFlyout.player && mediaFlyout.player.canGoNext
             onClicked: mediaFlyout.player.next()
-        }
-    }
-
-    FlyoutDivider { visible: Media.players.length > 1 }
-
-    // every player as a row: a click picks which the module follows
-    Repeater {
-        model: Media.players.length > 1 ? Media.players : []
-
-        FlyoutRow {
-            required property var modelData
-            leadingIcon: modelData.isPlaying ? "󰏤" : "󰝚"
-            label: modelData.identity
-            highlighted: modelData === Media.player
-            onActivated: Media.pick(modelData)
         }
     }
 
