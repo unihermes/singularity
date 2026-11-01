@@ -1539,11 +1539,12 @@ function singularityRefitWindows()
         end
     end
 end
--- and after every load, for a changed edge gap, keeping what the mouse did
--- to the focused window first
+-- A filled window's old geometry may predate the new edge gap. Its tag
+-- keeps it filled across a reload; only capture an unfilled mouse resize.
 hl.timer(function()
-    captureShape(hl.get_active_window())
-    refitMonocle()
+    local active = hl.get_active_window()
+    if active and not hasTag(active, "filled") then captureShape(active) end
+    singularityRefitWindows()
 end, { timeout = 200, type = "oneshot" })
 hl.timer(function()
     for _, w in ipairs(hl.get_windows()) do syncFillBorder(w.address) end
