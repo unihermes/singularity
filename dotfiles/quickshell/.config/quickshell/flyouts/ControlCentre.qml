@@ -124,7 +124,7 @@ FlyoutPanel {
 
     function run(act) {
         scope.openFlyout = ""
-        if (act === "settings") settingsWin.open()
+        if (act === "settings") settingsWin.open("")
         else if (act === "system") systemWin.open()
         else if (act === "keybinds") keybindsWin.open()
         // the pause lets the flyout unmap before slurp/hyprpicker draw
