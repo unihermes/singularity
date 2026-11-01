@@ -186,7 +186,9 @@ FlyoutPanel {
         }
         IconButton {
             icon: "󰐥"
-            glyphSize: Theme.fontIconSize + Theme.spaceXs
+            implicitWidth: Theme.controlSize + Theme.spaceS
+            implicitHeight: Theme.controlSize + Theme.spaceS
+            glyphSize: Theme.fontIconSize + Theme.spaceS
             onClicked: controlCentre.page = "power"
         }
     }
@@ -417,7 +419,7 @@ FlyoutPanel {
             FlyoutChip {
                 required property var modelData
                 width: (toolsRow.width - toolsRow.spacing * (toolsRow.actions.length - 1)) / toolsRow.actions.length
-                height: Theme.fieldHeight + Theme.spaceS * 2
+                height: Theme.fieldHeight + Theme.spaceS
                 glyph: true
                 text: modelData.icon
                 onClicked: controlCentre.run(modelData.act)
