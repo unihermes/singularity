@@ -27,6 +27,8 @@ Singleton {
     // the sidebar: on which screen, and whether it's out
     property bool shown: false
     property var screen: null
+    onShownChanged: save()
+    onScreenChanged: if (screen) save()
     // built on first open, then kept
     property bool used: false
     // hidden for a screenshot, so it isn't in it
@@ -534,7 +536,7 @@ Singleton {
         interval: 300
         onTriggered: view.setText(JSON.stringify({
             tab: root.tab, codeDir: root.codeDir, models: root.models, reasoning: root.reasoning, codeMode: root.codeMode,
-            engines: root.engines,
+            engines: root.engines, shown: root.shown, screen: root.screen ? root.screen.name : "",
             sessions: { chat: root.chat.sessionId, code: root.code.sessionId,
                         chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId }
         }, null, 2) + "\n")
@@ -561,6 +563,11 @@ Singleton {
                 root.engines = Object.assign({ chat: "claude", code: "claude" }, d.engines)
             if (root.modeChoices.some(c => c.value === d.codeMode)) root.codeMode = d.codeMode
             if (d.sessions && typeof d.sessions === "object") root.restore(d.sessions)
+            if (d.shown === true) {
+                root.screen = Quickshell.screens.find(s => s.name === d.screen) || Quickshell.screens[0] || null
+                root.used = true
+                root.shown = true
+            }
         }
     }
 }

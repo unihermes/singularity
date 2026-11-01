@@ -19,6 +19,7 @@ Rectangle {
     radius: Math.min(width / 2, Theme.radius)
     color: Theme.muted
     visible: overflow > 0
-    height: Math.max(20, flickable.height * flickable.height / Math.max(1, flickable.contentHeight))
-    y: flickable.y + (flickable.height - height) * (flickable.contentY / Math.max(1, overflow))
+    height: Math.min(flickable.height, Math.max(20, flickable.height * flickable.visibleArea.heightRatio))
+    y: flickable.y + (flickable.height - height) * Math.max(0, Math.min(1,
+        flickable.visibleArea.yPosition / Math.max(0.00001, 1 - flickable.visibleArea.heightRatio)))
 }
