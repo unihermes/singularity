@@ -145,7 +145,8 @@ OverlayWindow {
                             .filter(k => k !== slot.modelData && root.layer.shown(k)).map(k => root.layer.rectOf(k))
                             .concat(root.layer.sidebarRect ? [root.layer.sidebarRect] : [])
                         const s = Placement.snap({ x: p.x - slot.grab.x, y: p.y - slot.grab.y, w: slot.width, h: slot.height },
-                                                 root.layer.area, root.layer.margin, Theme.sp(10), others, root.layer.gap)
+                                                 root.layer.area, root.layer.margin, Theme.sp(10), others, root.layer.gap,
+                                                 root.layer.sidebarRect ? root.layer.sidebar.gap : 0)
                         slot.dragged = s
                         root.guides = s.guides
                     }
