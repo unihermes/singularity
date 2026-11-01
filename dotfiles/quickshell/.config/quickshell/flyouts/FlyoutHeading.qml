@@ -255,19 +255,10 @@ Item {
             color: Theme.headingMarkColor
         }
 
-        // the rule's start, and the notch's left side
-        Rectangle {
-            id: leadLine
-            visible: root.shape === "tab"
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.spaceL
-            height: Theme.borderWidth
-            color: Theme.stroke
-        }
+        // the notch's left side
         Rectangle {
             id: notch
             visible: root.shape === "tab"
-            x: leadLine.width
             anchors.verticalCenter: parent.verticalCenter
             width: Theme.borderWidth
             height: label.font.pixelSize
