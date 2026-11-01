@@ -28,6 +28,9 @@ jobs:
       - name: JS module tests
         run: node --test tools/test-js.mjs
 
+      - name: Sidebar host and notification routing
+        run: python3 tools/test-ai-host.py && node --test tools/test-notification-routing.mjs
+
       - name: Hardware package consistency
         run: tools/check-hardware.sh
 

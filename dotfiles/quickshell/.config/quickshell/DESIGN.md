@@ -500,7 +500,9 @@ pops up; it all arrives in the list.
 Built 2026-10-24 (SUPER+I, `sidebar/`, `services/Ai.qml`). Not a flyout: a
 panel down the right edge of the focused screen, under the bar, in the
 panel's frame with sections. It stays out until SUPER+I, its ×, Escape or
-a click off it (the bars excepted). It slides in from the edge and fades.
+a click off it, the bars included: it runs in its own Quickshell process
+(`AiHost.qml`), so a shell reload leaves a conversation running and the
+grab can't take the shell's bars in. It slides in from the edge and fades.
 
 - **Codex** (`services/CodexSession.qml`, `codex app-server`): Chat and
   Code can run on Codex instead, the Claude/Codex heading with its icon

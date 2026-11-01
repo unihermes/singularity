@@ -3,7 +3,7 @@
 //
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar, out until SUPER+I, its ×, Escape or a click off
-// it (the bars excepted) puts it away. The plans' limits under the heading
+// it (the bars too, as it runs in its own process) puts it away. The plans' limits under the heading
 // (AiUsage), then Chat and Code as tabs over one shape: Code's folder, the
 // conversation or a list in its place (past sessions, folders), a prompt
 // waiting for an answer, and the
@@ -22,9 +22,7 @@ PanelWindow {
     readonly property var session: Ai.current
     function requestClose() { Ai.shown = false }
 
-    // every screen's bar: a press there doesn't put it away
-    property var bars: []
-    DismissGrab { panel: root; also: root.bars }
+    DismissGrab { panel: root }
 
     // what the middle shows: talk | past | projects
     property string view: "talk"

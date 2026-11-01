@@ -49,7 +49,7 @@ Singleton {
     property var engines: ({ chat: "claude", code: "claude" })
     function codex(t) { return engines[t] === "codex" }
     readonly property bool codexAvailable: codexProbe.found
-    onCodexAvailableChanged: if (codexAvailable && shown) readUsage()
+    onCodexAvailableChanged: if (hosted && codexAvailable && shown) readUsage()
     function setEngine(t, e) {
         if (!(t in engines) || (e === "codex" && !codexAvailable)) return
         var o = Object.assign({}, engines)
@@ -205,7 +205,7 @@ Singleton {
 
     function close() {
         if (hosted) shown = false
-        else Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "close"])
+        else if (shown) Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "close"])
     }
 
     function setTab(t) {
@@ -509,19 +509,6 @@ Singleton {
             root.screen = Quickshell.screens.find(s => s.name === root.hostStatus.screen) || null
             root.shown = !!root.hostStatus.shown
         }
-    }
-
-    // Upgrade older hosts only after the current turn and the visible UI are done.
-    Timer {
-        interval: 3000
-        repeat: true
-        running: !root.hosted && root.hostStatus.notificationVersion !== 1
-            && root.hostStatus.busy === false && root.hostStatus.shown === false
-        onTriggered: if (!hostUpgrade.running) hostUpgrade.running = true
-    }
-    Process {
-        id: hostUpgrade
-        command: ["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "upgrade"]
     }
 
     // --- notifications while the sidebar is away --------------------------
