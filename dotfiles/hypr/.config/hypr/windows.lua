@@ -94,7 +94,7 @@ end
 -- Per-window state by address, on top of Hyprland's own:
 --   shape     -- a monocle window's size and place (shapeRect)
 --   placedOn  -- the monitor placeMonocle() last fitted it to
---   filledOn  -- the monitor sizeToFullFloat() last filled it on
+--   refilling -- filled, moved to another monitor, not yet settled there
 --   lastShape -- the shape SUPER+equal brings a filled window back to
 --   parked    -- moved off-screen while covered (PARKING)
 --   settling  -- coming back from SUPER+C, still animating
@@ -316,7 +316,6 @@ local function sizeToFullFloat(win, mon)
     if not mon then return end
     local area = fillArea(win, mon)
     local addr = "address:" .. win.address
-    stateOf(win.address).filledOn = mon.id
     hl.dispatch(hl.dsp.window.resize({ x = math.floor(area.w), y = math.floor(area.h), window = addr }))
     hl.dispatch(hl.dsp.window.move({ x = math.floor(area.x), y = math.floor(area.y), window = addr }))
     syncFillBorder(win.address)
@@ -399,17 +398,37 @@ end
 
 -- Re-fits a floater that filled its old monitor to the one it's now on
 -- (`mon`, else its own): monocle to its shape, any other to the whole area.
+-- A drag carries it across monitors with no event at the end, so it's
+-- sized at once and placed once it has kept still for REFILL_SETTLE ms.
+local REFILL_TICK, REFILL_SETTLE = 50, 150
 local function refitMoved(win, mon)
     win = win and hl.get_window("address:" .. win.address)
     if not (win and win.floating and win.fullscreen == 0) then return end
     mon = mon or win.monitor
     local st = stateOf(win.address)
     if not mon or st.minimized or st.parked then return end
-    if hasTag(win, "monocle") then
-        placeMonocle(win, mon)
-    elseif hasTag(win, "filled") and not isFitted(win, fillArea(win, mon)) then
-        sizeToFullFloat(win, mon)
+    if hasTag(win, "monocle") then return placeMonocle(win, mon) end
+    if not (hasTag(win, "filled") or st.refilling) then return end
+    sizeToFullFloat(win, mon)
+    if st.refilling then return end
+    st.refilling = true
+    local addr, last, still = "address:" .. win.address, nil, 0
+    local function tick()
+        local w = hl.get_window(addr)
+        if not w or windowState[w.address] ~= st or not w.floating or w.fullscreen ~= 0 then
+            st.refilling = nil
+            return
+        end
+        local at = w.at.x .. "," .. w.at.y
+        still = at == last and still + REFILL_TICK or 0
+        last = at
+        if still < REFILL_SETTLE then
+            return hl.timer(tick, { timeout = REFILL_TICK, type = "oneshot" })
+        end
+        st.refilling = nil
+        if w.monitor and not isFitted(w, fillArea(w, w.monitor)) then sizeToFullFloat(w, w.monitor) end
     end
+    hl.timer(tick, { timeout = REFILL_TICK, type = "oneshot" })
 end
 
 -- REMEMBERED SIZES. An app's main window reopens as last left, per kind of
@@ -1499,22 +1518,6 @@ local function refitMonocle()
         end
     end
 end
-
--- A filled window dragged to another monitor fills that one once let go.
--- Lua isn't told of a drag, so the button's release checks the focused
--- window (with SUPER still held or not). A monocle window at a shape keeps
--- its share of the screen where it was dropped.
-local function refitDragged()
-    local win = hl.get_active_window()
-    if not (win and win.floating and win.fullscreen == 0 and win.monitor) then return end
-    local st = stateOf(win.address)
-    local monocle = hasTag(win, "monocle")
-    local from = monocle and st.placedOn or st.filledOn
-    if not from or from == win.monitor.id then return end
-    if monocle and st.shape then captureShape(win) else refitMoved(win) end
-end
-hl.bind("mouse:272", refitDragged, { release = true, non_consuming = true })
-hl.bind("SUPER + mouse:272", refitDragged, { release = true, non_consuming = true })
 
 hl.on("monitor.added", refitMonocle)
 hl.on("monitor.removed", refitMonocle)
