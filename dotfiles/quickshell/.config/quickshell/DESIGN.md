@@ -618,8 +618,8 @@ line (one at a time, 󰅂 → 󰅀); a tile with 󰅂 at its end opens a page.
   Light (warmth slider in its details), Keep Awake, Game Mode, Airplane,
   Power (a click steps the profile, the details show all three; gone
   while PPD isn't answering, Airplane then runs the width), Appearance
-  and Bar Widgets as pages; then the screen tools and the windows as one
-  icon-only `FlyoutChipLine` region.
+  and Bar Widgets as pages; then the screen tools and the windows as
+  icon-only buttons, sized and styled like the tiles.
 - **Pages** have no Back row: the heading reads
   `CONTROL CENTRE › APPEARANCE`, the first part clickable as the way
   back (`FlyoutHeading.crumb`); what the page sums up sits in its hints.
