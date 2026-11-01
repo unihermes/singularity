@@ -57,6 +57,8 @@ Item {
     readonly property bool unread: inHistory && Notifications.isNew(entry)
 
     readonly property var actions: entry.live && entry.live.tracked ? entry.live.actions : []
+    readonly property var phoneNote: entry.phoneId && PhoneLink.connected
+        ? PhoneLink.device.notifications.find(n => String(n.id) === entry.phoneId) : null
     readonly property string code: standalone ? "" : Notifications.codeIn(entry)
     readonly property string link: standalone ? "" : Notifications.linkIn(entry)
     // [{ text, primary, run }]: a code's Copy leads when there is one, else Open
@@ -69,6 +71,12 @@ Item {
                  primary: code === "", run: () => Notifications.activate(e) })
         actions.filter(a => a.identifier !== "default" && a.text !== "")
             .forEach(a => b.push({ text: a.text, primary: false, run: () => Notifications.invoke(e, a) }))
+        if (phoneNote) phoneNote.actions.filter(a => a !== "").forEach(a => b.push({
+            text: a, primary: false, run: () => {
+                Notifications.hidePopup(e)
+                PhoneLink.act({ id: e.phoneId }, a)
+            }
+        }))
         if (link !== "") b.push({ text: "Open link", primary: false, run: () => Notifications.openLink(e, root.link) })
         return b
     }
