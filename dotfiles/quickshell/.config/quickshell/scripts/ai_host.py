@@ -27,6 +27,9 @@ def main():
                 raise SystemExit('Chat host failed to start; see ' + str(runtime / 'singularity-ai-host.log'))
         if len(sys.argv) > 2 and sys.argv[2] == 'close':
             subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'close'], check=True)
+        elif len(sys.argv) > 4 and sys.argv[2] == 'open':
+            subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'open',
+                            sys.argv[3], sys.argv[4]], check=True)
         elif len(sys.argv) > 2 and sys.argv[2] == 'toggle':
             subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'toggle',
                             sys.argv[3] if len(sys.argv) > 3 else ''], check=True)

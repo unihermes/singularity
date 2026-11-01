@@ -37,6 +37,12 @@ class HostTests(unittest.TestCase):
         self.assertEqual(calls[-1].args[0][-3:], ['call', 'chat', 'close'])
         self.assertTrue(calls[-1].kwargs['check'])
 
+    def test_open_forwards_tab_and_engine(self):
+        calls, launches = self.invoke(['open', 'code', 'codex'], [0, 0])
+        self.assertFalse(launches)
+        self.assertEqual(calls[-1].args[0][-5:], ['call', 'chat', 'open', 'code', 'codex'])
+        self.assertTrue(calls[-1].kwargs['check'])
+
     def test_start_without_command(self):
         calls, launches = self.invoke([], [1, 0])
         self.assertEqual(len(launches), 1)

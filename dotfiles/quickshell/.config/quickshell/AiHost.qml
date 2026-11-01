@@ -9,6 +9,7 @@ ShellRoot {
     Component.onCompleted: Quickshell.watchFiles = false
     IpcHandler {
         target: "chat"
+        function open(tab: string, engine: string): void { Ai.openConversation(tab, engine) }
         function close(): void { Ai.close() }
         function toggle(name: string): void {
             Ai.toggle(Quickshell.screens.find(s => s.name === name) || Quickshell.screens[0])

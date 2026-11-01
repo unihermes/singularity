@@ -152,6 +152,7 @@ Singleton {
     // Runs one of the sender's actions; the popup goes, the entry stays
     function invoke(entry, action) {
         hidePopup(entry)
+        if (openSidebar(entry)) return
         action.invoke()
     }
 
@@ -217,9 +218,18 @@ Singleton {
     // brought to the front (on whatever workspace, the scratchpad too), else
     // the app started. A phone's notification opens its app here when it's
     // installed, else on the phone's mirror.
+    function openSidebar(entry) {
+        const match = /^singularity-sidebar-(chat|code)-(claude|codex)$/.exec(entry.desktopEntry || "")
+        if (!match || entry.phone) return false
+        shown = false
+        Ai.openConversation(match[1], match[2])
+        return true
+    }
+
     function activate(entry) {
         hidePopup(entry)
         shown = false
+        if (openSidebar(entry)) return
         const def = entry.live && entry.live.tracked
             ? entry.live.actions.find(a => a.identifier === "default") : null
         if (def) def.invoke()

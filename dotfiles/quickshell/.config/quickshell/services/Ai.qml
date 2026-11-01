@@ -188,6 +188,21 @@ Singleton {
         current.unseen = false
     }
 
+    function openConversation(t, engine) {
+        if (tabs.indexOf(t) === -1) return
+        if (!hosted) {
+            Notifications.shown = false
+            Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "open", t, engine])
+            return
+        }
+        setEngine(t, engine)
+        setTab(t)
+        const name = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+        root.screen = Quickshell.screens.find(s => s.name === name) || Quickshell.screens[0]
+        used = true
+        shown = true
+    }
+
     function close() {
         if (hosted) shown = false
         else Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "close"])
@@ -502,7 +517,7 @@ Singleton {
     // brings the sidebar out on that tab on the focused screen. One a tab;
     // a newer one takes over its Open.
     readonly property var tabNames: ({ chat: "Chat", code: "Code" })
-    function notify(t, title, body) {
+    function notify(t, engine, title, body) {
         if (shown) return
         var p = t === "code" ? codeNote : chatNote
         // the prose only (no code or tables), markdown marks and line
@@ -512,41 +527,47 @@ Singleton {
             .replace(/[*_`#>]/g, "").replace(/\s+/g, " ").trim()
         if (body.length > 160) body = body.slice(0, 157) + "…"
         p.running = false
-        p.command = ["notify-send", "-a", "Claude", "-i", "claude-desktop", "-A", "open=Open",
+        p.engine = engine
+        p.command = ["notify-send", "-a", "Claude", "-i", "claude-desktop", "-A", "default=Open",
+                     "-h", "string:desktop-entry:singularity-sidebar-" + t + "-" + engine,
                      "Claude · " + tabNames[t] + ": " + title, body]
         p.running = true
     }
-    function openFromNote(t, text) {
-        if (text.trim() !== "open") return
-        setTab(t)
-        if (!shown) {
-            const name = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
-            toggle(Quickshell.screens.find(s => s.name === name) || Quickshell.screens[0])
-        }
+    function openFromNote(t, engine, text) {
+        if (text.trim() !== "open" && text.trim() !== "default") return
+        openConversation(t, engine)
     }
-    Process { id: chatNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("chat", text) } }
-    Process { id: codeNote; stdout: StdioCollector { onStreamFinished: root.openFromNote("code", text) } }
+    Process {
+        id: chatNote
+        property string engine: "claude"
+        stdout: StdioCollector { onStreamFinished: root.openFromNote("chat", chatNote.engine, text) }
+    }
+    Process {
+        id: codeNote
+        property string engine: "claude"
+        stdout: StdioCollector { onStreamFinished: root.openFromNote("code", codeNote.engine, text) }
+    }
     Connections {
         target: root.chat
-        function onTurnEnded() { root.notify("chat", "replied", root.chat.lastReply()) }
-        function onAsked(title) { root.notify("chat", "waiting for you", title) }
+        function onTurnEnded() { root.notify("chat", "claude", "replied", root.chat.lastReply()) }
+        function onAsked(title) { root.notify("chat", "claude", "waiting for you", title) }
     }
     Connections {
         target: root.code
-        function onTurnEnded() { root.notify("code", "done", root.code.lastReply()) }
-        function onAsked(title) { root.notify("code", "waiting for you", title) }
+        function onTurnEnded() { root.notify("code", "claude", "done", root.code.lastReply()) }
+        function onAsked(title) { root.notify("code", "claude", "waiting for you", title) }
     }
 
     Connections {
         target: root.chatCodex
-        function onTurnEnded() { root.notify("chat", "replied", root.chatCodex.lastReply()) }
-        function onAsked(title) { root.notify("chat", "waiting for you", title) }
+        function onTurnEnded() { root.notify("chat", "codex", "replied", root.chatCodex.lastReply()) }
+        function onAsked(title) { root.notify("chat", "codex", "waiting for you", title) }
         function onSessionIdChanged() { root.save() }
     }
     Connections {
         target: root.codeCodex
-        function onTurnEnded() { root.notify("code", "done", root.codeCodex.lastReply()) }
-        function onAsked(title) { root.notify("code", "waiting for you", title) }
+        function onTurnEnded() { root.notify("code", "codex", "done", root.codeCodex.lastReply()) }
+        function onAsked(title) { root.notify("code", "codex", "waiting for you", title) }
         function onSessionIdChanged() { root.save() }
     }
 
