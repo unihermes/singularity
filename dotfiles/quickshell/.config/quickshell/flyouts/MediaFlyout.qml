@@ -4,9 +4,10 @@
 // The Music module's flyout, one page. The art across the panel with the
 // spectrum (the bar's style) rising from its foot while something sounds,
 // then the title, artist and player; the progress (click to seek) and the
-// transport. With several players the art flips between them (arrows at
-// its sides, a dot each along its top, the wheel), picking which the
-// module follows. Then Options, folded: Visualizer, with its
+// transport. With several sources (players, and a browser's tabs each)
+// the art flips between them (arrows at its sides, a dot each along its
+// top, the wheel), picking which the module follows. A tab the browser's
+// player has moved on from shows but takes no transport. Then Options, folded: Visualizer, with its
 // Style and Bars under it while it's on, Title on the bar, Hide when
 // silent. Self-contained: only needs the Media and Visualizer singletons.
 
@@ -20,11 +21,11 @@ FlyoutPanel {
     menuWidth: Theme.flyoutMenuWidth
 
     readonly property var player: Media.player
-    // the followed player `step` along from the shown one, round the ends
+    // the source `step` along from the shown one, round the ends
     function flip(step) {
-        var ps = Media.players, n = ps.length
+        var ss = Media.sources, n = ss.length
         if (n < 2) return
-        Media.pick(ps[(Math.max(0, ps.indexOf(player)) + step + n) % n])
+        Media.pickSource(ss[(Math.max(0, ss.findIndex(s => Media.isShown(s))) + step + n) % n])
     }
     // the switches under Options, folded each time this opens
     property bool showOptions: false
@@ -112,13 +113,13 @@ FlyoutPanel {
         // each side and a dot each along the top (the shown one long)
         MouseArea {
             anchors.fill: parent
-            enabled: Media.players.length > 1
+            enabled: Media.sources.length > 1
             acceptedButtons: Qt.NoButton
             onWheel: wheel => mediaFlyout.flip(wheel.angleDelta.y > 0 ? -1 : 1)
         }
 
         Repeater {
-            model: Media.players.length > 1 ? [-1, 1] : []
+            model: Media.sources.length > 1 ? [-1, 1] : []
 
             Rectangle {
                 required property int modelData
@@ -147,7 +148,7 @@ FlyoutPanel {
         }
 
         Rectangle {
-            visible: Media.players.length > 1
+            visible: Media.sources.length > 1
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
             anchors.topMargin: Theme.spaceM
@@ -162,11 +163,11 @@ FlyoutPanel {
                 spacing: Theme.spaceS
 
                 Repeater {
-                    model: Media.players.length > 1 ? Media.players : []
+                    model: Media.sources.length > 1 ? Media.sources : []
 
                     Rectangle {
                         required property var modelData
-                        readonly property bool shown: modelData === mediaFlyout.player
+                        readonly property bool shown: Media.isShown(modelData)
                         width: shown ? Theme.spaceL * 2 : Theme.spaceS * 2
                         height: Theme.spaceS * 2
                         radius: height / 2
@@ -179,7 +180,7 @@ FlyoutPanel {
                             anchors.margins: -Theme.spaceXs
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Media.pick(parent.modelData)
+                            onClicked: Media.pickSource(parent.modelData)
                         }
                     }
                 }
@@ -238,7 +239,7 @@ FlyoutPanel {
                 anchors.fill: parent
                 anchors.topMargin: -Theme.spaceM
                 anchors.bottomMargin: -Theme.spaceM
-                enabled: mediaFlyout.player && mediaFlyout.player.canSeek && !Media.heard
+                enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canSeek
                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: mouse => mediaFlyout.player.position =
                     progress.length * Math.max(0, Math.min(1, mouse.x / width))
@@ -274,21 +275,21 @@ FlyoutPanel {
             width: Theme.fit(56)
             glyph: true
             text: "󰒮"
-            enabled: mediaFlyout.player && mediaFlyout.player.canGoPrevious
+            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoPrevious
             onClicked: mediaFlyout.player.previous()
         }
         FlyoutChip {
             width: Theme.fit(56)
             glyph: true
-            text: mediaFlyout.player && mediaFlyout.player.isPlaying ? "󰏤" : "󰐊"
-            enabled: mediaFlyout.player && mediaFlyout.player.canTogglePlaying
+            text: Media.shownPlaying ? "󰏤" : "󰐊"
+            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canTogglePlaying
             onClicked: mediaFlyout.player.togglePlaying()
         }
         FlyoutChip {
             width: Theme.fit(56)
             glyph: true
             text: "󰒭"
-            enabled: mediaFlyout.player && mediaFlyout.player.canGoNext
+            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoNext
             onClicked: mediaFlyout.player.next()
         }
     }

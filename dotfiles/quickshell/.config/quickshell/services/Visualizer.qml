@@ -19,11 +19,12 @@ Singleton {
     id: root
 
     readonly property int barCount: Settings.vizBars
-    // the followed player's app, "" for everything, and its track's title
-    // (picks a browser's tab)
+    // the followed player's app, "" for everything, and the shown tab's
+    // stream name, else the track's title (picks a browser's tab)
     readonly property string app: Media.player
         ? String(Media.player.desktopEntry || Media.player.identity).toLowerCase() : ""
-    readonly property string title: Media.player ? String(Media.player.trackTitle || "") : ""
+    readonly property string title: Media.shownTabName !== "" ? Media.shownTabName
+        : Media.player ? String(Media.player.trackTitle || "") : ""
     // a new count or app needs cava started again with it
     property bool restarting: false
     function restart() {
@@ -60,18 +61,9 @@ Singleton {
     // with none, any stream open. A browser has one player for all its
     // tabs, left on the last one started: pausing that tab leaves it paused
     // while another tab plays on, so a paused browser counts while one of
-    // its streams runs (viz-capture.py passes on the tab still sounding)
+    // its streams runs (Media shows the tab still sounding)
     readonly property bool sounding: Media.player
         ? Media.player.isPlaying || (Media.isBrowser(Media.player) && appStreamRunning) : streamOpen
-
-    // the followed player heard: it playing, or a paused browser whose
-    // other tab still plays (only known while the visualizer runs)
-    readonly property bool playerHeard: !!Media.player
-        && (Media.player.isPlaying || (Media.isBrowser(Media.player) && playing))
-
-    // the stream viz-capture.py passes on, Media's heard tab while there's sound
-    property string tab: ""
-    Binding { target: Media; property: "heardTab"; value: root.playing ? root.tab : "" }
 
     CommandProbe { id: cavaProbe; name: "cava" }
 
@@ -109,11 +101,7 @@ Singleton {
                 }
             }
         }
-        // the stream viz-capture.py passes on
-        stderr: SplitParser {
-            onRead: line => { if (line.startsWith("tab ")) root.tab = line.slice(4) }
-        }
-        onRunningChanged: if (!running) { root.bars = []; root.playing = false; frames.last = ""; root.tab = "" }
+        onRunningChanged: if (!running) { root.bars = []; root.playing = false; frames.last = "" }
     }
 
     Timer {

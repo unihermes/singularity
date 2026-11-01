@@ -19,7 +19,7 @@ WidgetCard {
     id: root
 
     readonly property var player: Media.player
-    readonly property bool playing: !!player && player.isPlaying
+    readonly property bool playing: Media.shownPlaying
     readonly property real length: Media.lengthOf(player)
     readonly property real frac: length > 0 ? Math.max(0, Math.min(1, Media.positionOf(player) / length)) : 0
     readonly property bool hasLength: length > 0
@@ -62,7 +62,7 @@ WidgetCard {
             sourceSize.width: art.width * 2
             asynchronous: true
             visible: status === Image.Ready
-            opacity: Visualizer.playerHeard ? 1 : 0.45
+            opacity: Media.shownPlaying ? 1 : 0.45
         }
         WidgetText {
             anchors.centerIn: parent
@@ -81,7 +81,7 @@ WidgetCard {
         anchors.right: parent.right
         glyph: true
         text: root.playing ? "󰏤" : "󰐊"
-        enabled: !!root.player && root.player.canTogglePlaying
+        enabled: Media.controllable(root.player) && root.player.canTogglePlaying
         onClicked: root.player.togglePlaying()
     }
 
@@ -140,7 +140,7 @@ WidgetCard {
                     anchors.fill: parent
                     anchors.topMargin: -Theme.fit(6)
                     anchors.bottomMargin: -Theme.fit(6)
-                    enabled: !!root.player && root.player.canSeek && !Media.heard
+                    enabled: Media.controllable(root.player) && root.player.canSeek
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: mouse => root.player.position =
                         root.length * Math.max(0, Math.min(1, mouse.x / width))
@@ -162,7 +162,7 @@ WidgetCard {
                     width: Theme.fit(root.large ? 56 : 44)
                     glyph: true
                     text: "󰒮"
-                    enabled: !!root.player && root.player.canGoPrevious
+                    enabled: Media.controllable(root.player) && root.player.canGoPrevious
                     onClicked: root.player.previous()
                 }
                 FlyoutChip {
@@ -170,7 +170,7 @@ WidgetCard {
                     width: Theme.fit(root.large ? 56 : 44)
                     glyph: true
                     text: root.playing ? "󰏤" : "󰐊"
-                    enabled: !!root.player && root.player.canTogglePlaying
+                    enabled: Media.controllable(root.player) && root.player.canTogglePlaying
                     onClicked: root.player.togglePlaying()
                 }
                 FlyoutChip {
@@ -178,7 +178,7 @@ WidgetCard {
                     width: Theme.fit(root.large ? 56 : 44)
                     glyph: true
                     text: "󰒭"
-                    enabled: !!root.player && root.player.canGoNext
+                    enabled: Media.controllable(root.player) && root.player.canGoNext
                     onClicked: root.player.next()
                 }
             }

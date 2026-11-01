@@ -9,9 +9,7 @@
 # tab) while it makes sound, else the one that made sound last, so
 # switching to a muted or silent tab keeps the bars of the tab still
 # playing. Streams are looked for again every two seconds. Never falls
-# back to another app, so a paused player stays silent. The name of the
-# stream passed on (a browser's tab title) goes to stderr as "tab <name>"
-# each time it changes.
+# back to another app, so a paused player stays silent.
 
 import ctypes
 import json
@@ -92,7 +90,6 @@ def pick(taps, now, last):
 die_with_parent()
 taps = {}
 scanned = 0.0
-told = None
 chosen = None
 try:
     while True:
@@ -114,9 +111,6 @@ try:
         ready = select.select(list(by_fd), [], [], 0.25)[0]
         now = time.monotonic()
         chosen = pick(list(taps.values()), now, chosen)
-        if chosen and chosen.name != told:
-            told = chosen.name
-            print("tab " + told, file=sys.stderr, flush=True)
         for fd in ready:
             serial, tap = by_fd[fd]
             data = os.read(fd, CHUNK)

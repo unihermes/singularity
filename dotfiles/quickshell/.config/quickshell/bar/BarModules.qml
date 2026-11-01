@@ -181,7 +181,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spaceXs
         readonly property var player: Media.player
-        readonly property bool sounding: Settings.vizShown ? Visualizer.playing : !!player && player.isPlaying
+        readonly property bool sounding: Settings.vizShown ? Visualizer.playing : Media.shownPlaying
         visible: Settings.widgetVisible("visualizer") && (player !== null || Visualizer.playing)
             && (sounding || !Settings.vizHideSilent)
 
@@ -217,7 +217,7 @@ Item {
         Text {
             visible: !Settings.vizShown && !Settings.musicTitle
             anchors.verticalCenter: parent.verticalCenter
-            text: musicFrame.player && musicFrame.player.isPlaying ? "󰏤" : "󰐊"
+            text: Media.shownPlaying ? "󰏤" : "󰐊"
             color: Theme.text
             font.family: Theme.fontIcon
             font.pixelSize: Theme.iconSize
@@ -254,7 +254,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton) screenScope.toggleFlyout("media", musicFrame)
-            else if (musicFrame.player && musicFrame.player.canTogglePlaying) musicFrame.player.togglePlaying()
+            else if (Media.controllable(musicFrame.player) && musicFrame.player.canTogglePlaying) musicFrame.player.togglePlaying()
         }
     }
 

@@ -349,10 +349,13 @@ Every bar flyout keeps to these (settled 2026-10-20):
   the panel (square to 16:9, as given) with the spectrum in the bar's
   style rising from its foot over a fade while something sounds; the
   title, artist and player under it; the progress (click to seek) and
-  the transport as three equal buttons; with several players the art
-  flips between them (round arrows at its sides, a dot per player along
+  the transport as three equal buttons; with several sources the art
+  flips between them (round arrows at its sides, a dot per source along
   its top with the shown one long, the wheel), picking which the module
-  follows;
+  follows. A browser's tabs are sources of their own (its Pipewire
+  stream per tab; the sound settings keep it one app), each tab showing
+  the track it played; a tab the browser's player has moved on from
+  takes no transport (greyed);
   Options, folded each time it opens: Visualizer, with Style (segments)
   and Bars (a slider) under it while it's on, Title on the bar, Hide
   when silent; Settings.

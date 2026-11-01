@@ -8,12 +8,16 @@
 // often pick a silent tab over the song that's actually on. The media keys
 // skip browsers: they drive the player the module follows when that isn't
 // one, else the first player that isn't, so a key never pauses a video.
+// A browser's tabs are sources of their own (`sources`), from its
+// Pipewire streams, one per tab; the sound settings still group them as
+// one app (Audio.byApp).
 
 pragma Singleton
 
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import QtQuick
 
 Singleton {
@@ -28,6 +32,7 @@ Singleton {
         var ps = players
         if (picked && ps.indexOf(picked) !== -1) return picked
         for (var i = 0; i < ps.length; i++) if (ps[i].isPlaying) return ps[i]
+        for (var j = 0; j < ps.length; j++) if (tabsOf(ps[j]).some(t => t.running)) return ps[j]
         if (lastPlaying && ps.indexOf(lastPlaying) !== -1) return lastPlaying
         return ps.length > 0 ? ps[0] : null
     }
@@ -54,31 +59,146 @@ Singleton {
 
     function pick(p) {
         picked = p
+        pickedTab = -1
         lastPlaying = p
     }
+    // a source from `sources`: a player, or one of a browser's tabs
+    function pickSource(src) {
+        pick(src.player)
+        pickedTab = src.tab
+    }
 
-    // A browser has one player for all its tabs, left on the last one
-    // started, so pausing that tab while an earlier one plays on leaves it
-    // showing the paused one. Each track a browser player shows is kept in
-    // seenTracks (latest last); while the followed browser is paused and
-    // the visualizer hears another of its tabs (heardTab, the stream's
-    // name: the tab's title), that tab's track stands in for the player's
-    // title, artist and art (heard)
-    property var seenTracks: []
-    property string heardTab: ""
-    readonly property var heard: {
-        var p = player
-        var tab = heardTab.toLowerCase()
-        if (!p || p.isPlaying || !isBrowser(p) || tab === "") return null
-        var own = String(p.trackTitle || "").toLowerCase()
-        if (own !== "" && tab.indexOf(own) !== -1) return null
+    // --- a browser's tabs ---------------------------------------------------
+    // A browser has one MPRIS player for all its tabs, left on the last one
+    // started, but an output stream per tab, named after it (media.name)
+    // and running while it sounds. Each track the player shows is bound to
+    // the tab that started it (tabTrack, by stream id), so a tab still
+    // playing after the player moved on to another, now paused, shows its
+    // own title and art (heard). Tabs the player can't reach take no
+    // transport (controllable).
+    readonly property var outStreams: Pipewire.nodes.values.filter(n =>
+        n.type === PwNodeType.AudioOutStream && !String(n.name).startsWith("channel."))
+    PwObjectTracker { objects: root.outStreams }
+    // the streams' links out, not the visualizer's taps; one active is the
+    // stream running
+    readonly property var outLinks: Pipewire.linkGroups.values.filter(g => g.source && g.target
+        && g.source.type === PwNodeType.AudioOutStream && g.target.name !== "singularity-viz")
+    PwObjectTracker { objects: root.outLinks }
+    readonly property var runningIds: {
+        var ids = []
+        outLinks.forEach(g => { if (g.state === PwLinkState.Active && ids.indexOf(g.source.id) === -1) ids.push(g.source.id) })
+        return ids
+    }
+    // stream id -> when it last started running
+    property var startedAt: ({})
+    property var wasRunning: []
+    onRunningIdsChanged: {
+        var now = Date.now(), fresh = false
+        runningIds.forEach(id => {
+            if (wasRunning.indexOf(id) === -1) { startedAt[id] = now; fresh = true }
+        })
+        wasRunning = runningIds
+        // a tab starting drops a picked tab, like a player starting
+        if (fresh) pickedTab = -1
+    }
+
+    // a player's tabs: [{ id, name, running }], none for a non-browser
+    function tabsOf(p) {
+        if (!p || !isBrowser(p)) return []
+        var app = String(p.desktopEntry || p.identity).toLowerCase()
+        return outStreams.filter(n => {
+            var pr = n.properties || {}
+            return [pr["application.process.binary"], pr["application.name"], n.name]
+                .some(v => v && String(v).toLowerCase().indexOf(app) !== -1)
+        }).map(n => ({ id: n.id, name: String((n.properties || {})["media.name"] || ""),
+            running: runningIds.indexOf(n.id) !== -1 }))
+    }
+
+    // stream id -> the track bound to it; mprisTab, the tab the player's
+    // own track is bound to (-1 for none known)
+    property var tabTrack: ({})
+    property int mprisTab: -1
+    // bound a moment after the player's track or state changes, once the
+    // tab that started it is running: the tab named after the track, else
+    // the one that just started, else the same tab moving on, else the one
+    // tab running
+    function bindTrack(p) {
+        if (!p || !isBrowser(p) || p !== player && !p.isPlaying) return
+        var t = trackOf(p)
+        if (t.title === "") return
+        var tabs = tabsOf(p), title = t.title.toLowerCase(), now = Date.now()
+        var running = tabs.filter(x => x.running)
+        var tab = tabs.find(x => x.name.toLowerCase().indexOf(title) !== -1)
+            || running.filter(x => now - (startedAt[x.id] || 0) < 4000)
+                .sort((a, b) => startedAt[b.id] - startedAt[a.id])[0]
+            || running.find(x => x.id === mprisTab)
+            || (running.length === 1 ? running[0] : null)
+        if (!tab) { mprisTab = -1; return }
+        var bound = Object.assign({}, tabTrack)
+        bound[tab.id] = t
+        tabTrack = bound
+        mprisTab = tab.id
+    }
+    Timer {
+        id: bindLater
+        interval: 1500
+        onTriggered: root.bindTrack(root.player)
+    }
+
+    // a tab's track: the one bound to it, else one seen whose title its
+    // name holds
+    function trackOfTab(tab) {
+        if (tabTrack[tab.id]) return tabTrack[tab.id]
+        var name = tab.name.toLowerCase()
         for (var i = seenTracks.length - 1; i >= 0; i--)
-            if (seenTracks[i].title !== "" && tab.indexOf(seenTracks[i].title.toLowerCase()) !== -1) return seenTracks[i]
+            if (seenTracks[i].title !== "" && name.indexOf(seenTracks[i].title.toLowerCase()) !== -1) return seenTracks[i]
         return null
     }
-    function rememberTrack(p) {
-        var t = { title: String(p.trackTitle || ""), artist: String(p.trackArtist || ""),
+
+    // what the module can follow: each player, a browser's as one per tab
+    // that has played (bound or running) when it has two or more
+    readonly property var sources: {
+        var out = []
+        players.forEach(p => {
+            var tabs = tabsOf(p).filter(t => t.running || t.id === mprisTab || trackOfTab(t) !== null)
+            if (tabs.length < 2) out.push({ player: p, tab: -1 })
+            else tabs.forEach(t => out.push({ player: p, tab: t.id }))
+        })
+        return out
+    }
+    function isShown(src) { return src.player === player && (src.tab === -1 || src.tab === shownTab) }
+
+    // the followed browser's tab on show: the picked one, else the player's
+    // own while it plays, else the one that started running last, else the
+    // player's own
+    property int pickedTab: -1
+    readonly property int shownTab: {
+        var tabs = tabsOf(player)
+        if (tabs.length === 0) return -1
+        if (pickedTab !== -1 && tabs.some(t => t.id === pickedTab)) return pickedTab
+        if (player.isPlaying) return mprisTab
+        var run = tabs.filter(t => t.running && t.id !== mprisTab)
+            .sort((a, b) => (startedAt[b.id] || 0) - (startedAt[a.id] || 0))
+        return run.length > 0 ? run[0].id : mprisTab
+    }
+    readonly property var shownTabInfo: tabsOf(player).find(t => t.id === shownTab) || null
+    // the shown tab's stream name, for the visualizer to hear it
+    readonly property string shownTabName: shownTabInfo ? shownTabInfo.name : ""
+    // the shown tab's track when it isn't the player's own
+    readonly property var heard: shownTabInfo === null || shownTab === mprisTab ? null
+        : trackOfTab(shownTabInfo) || { title: shownTabInfo.name, artist: "", url: "", artUrl: "" }
+    // the source on show sounding: the player playing, or the heard tab running
+    readonly property bool shownPlaying: heard ? shownTabInfo.running : !!player && player.isPlaying
+    // the transport reaches the player's own track only
+    function controllable(p) { return !!p && !(p === player && heard) }
+
+    property var seenTracks: []
+    function trackOf(p) {
+        return { title: String(p.trackTitle || ""), artist: String(p.trackArtist || ""),
             url: String(p.metadata["xesam:url"] || ""), artUrl: String(p.trackArtUrl || "") }
+    }
+    function rememberTrack(p) {
+        var t = trackOf(p)
         if (t.title === "") return
         var kept = seenTracks.filter(x => x.title !== t.title).slice(-19)
         kept.push(t)
@@ -124,10 +244,17 @@ Singleton {
             required property var modelData
             target: modelData
             function onIsPlayingChanged() {
-                if (modelData.isPlaying && modelData !== root.picked) root.picked = null
+                if (modelData.isPlaying) {
+                    if (modelData !== root.picked) root.picked = null
+                    root.pickedTab = -1
+                }
+                if (root.isBrowser(modelData)) bindLater.restart()
             }
             function onMetadataChanged() {
-                if (root.isBrowser(modelData)) root.rememberTrack(modelData)
+                if (root.isBrowser(modelData)) {
+                    root.rememberTrack(modelData)
+                    bindLater.restart()
+                }
                 var len = root.reportedLength(modelData)
                 if (len <= 0) return
                 var known = Object.assign({}, root.knownLength)
