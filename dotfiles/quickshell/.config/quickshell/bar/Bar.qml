@@ -68,7 +68,9 @@ PanelWindow {
     // Theme.gradient, tinted under Glass's tint option
     readonly property color barTone: Theme.glass && Theme.opt("tint")
         ? Qt.tint(Theme.bar, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25)) : Theme.bar
-    readonly property color barGround: Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b, Theme.barOpacity)
+    readonly property color barGround: Theme.glass
+        ? Theme.glassHighlight(Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b, Theme.barOpacity), Theme.glassLift)
+        : Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b, Theme.barOpacity)
     property Gradient barShading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }
         GradientStop { position: 1; color: Theme.shadeBottom(bar.barGround) }
