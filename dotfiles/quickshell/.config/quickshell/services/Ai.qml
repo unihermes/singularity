@@ -22,6 +22,8 @@ import QtQuick
 Singleton {
     id: root
 
+    readonly property bool hosted: Quickshell.env("SINGULARITY_AI_HOST") === "1"
+    property var hostStatus: ({})
     readonly property bool available: probe.found
 
     // the sidebar: on which screen, and whether it's out
@@ -58,9 +60,9 @@ Singleton {
     }
 
     // for the bar: working, waiting on a prompt, or something new to read
-    readonly property bool busy: all.some(s => s.busy)
-    readonly property bool asking: all.some(s => s.asks.length > 0)
-    readonly property bool unseen: all.some(s => s.unseen)
+    readonly property bool busy: hosted ? all.some(s => s.busy) : !!hostStatus.busy
+    readonly property bool asking: hosted ? all.some(s => s.asks.length > 0) : !!hostStatus.asking
+    readonly property bool unseen: hosted ? all.some(s => s.unseen) : !!hostStatus.unseen
 
     // the subscription's usage, 0..1 (-1 until known) and when each window
     // resets (epoch seconds, 0 unknown): refreshed while the sidebar shows,
@@ -123,7 +125,7 @@ Singleton {
     Timer {
         interval: 120000
         repeat: true
-        running: root.shown
+        running: root.hosted && root.shown
         triggeredOnStart: true
         onTriggered: root.readUsage()
     }
@@ -174,12 +176,21 @@ Singleton {
     function modelChoicesFor(t) { return codex(t) ? [{ value: "", text: "Default" }].concat(codexModels) : modelChoices }
 
     function toggle(screen) {
+        if (!hosted) {
+            Notifications.shown = false
+            Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "toggle", screen ? screen.name : ""])
+            return
+        }
         if (shown && root.screen === screen) { shown = false; return }
         root.screen = screen
         used = true
         shown = true
         current.unseen = false
-        Notifications.shown = false
+    }
+
+    function close() {
+        if (hosted) shown = false
+        else Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "close"])
     }
 
     function setTab(t) {
@@ -468,7 +479,22 @@ Singleton {
         if (ids.codeCodex) codeCodex.resume(ids.codeCodex)
     }
 
-    Component.onCompleted: Quickshell.execDetached(["mkdir", "-p", chatDir])
+    Component.onCompleted: {
+        Quickshell.execDetached(["mkdir", "-p", chatDir])
+        if (!hosted) Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml")])
+    }
+    FileView {
+        path: root.hosted ? "" : Quickshell.env("XDG_RUNTIME_DIR") + "/singularity-ai-status.json"
+        watchChanges: !root.hosted
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            if (root.hosted) return
+            try { root.hostStatus = JSON.parse(text()) } catch (e) { return }
+            root.screen = Quickshell.screens.find(s => s.name === root.hostStatus.screen) || null
+            root.shown = !!root.hostStatus.shown
+        }
+    }
 
     // --- notifications while the sidebar is away --------------------------
 
@@ -529,7 +555,7 @@ Singleton {
 
     // --- ai.json -------------------------------------------------------
 
-    function save() { saveTimer.restart() }
+    function save() { if (hosted) saveTimer.restart() }
 
     Timer {
         id: saveTimer
@@ -551,6 +577,7 @@ Singleton {
         printErrors: false
 
         onLoaded: {
+            if (!root.hosted) return
             var d
             try { d = JSON.parse(text()) } catch (e) { return }
             if (root.tabs.indexOf(d.tab) !== -1) root.tab = d.tab

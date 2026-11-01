@@ -30,6 +30,9 @@ filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`
 - `qs/desktop/`: the desktop widgets (straight on the wallpaper, one surface each under the windows), their edit mode
   and the desktop's right-click menu;
   placement maths in `services/WidgetPlacement.js`.
+- `qs/AiHost.qml`: independent sidebar process, started by `scripts/ai_host.py`;
+  file watching is disabled so shell edits do not interrupt chat. Restart this
+  host explicitly to apply sidebar code changes after its active turns finish.
 - `qs/sidebar/`: the Claude sidebar (SUPER+I), driven by `services/Ai.qml` and
   `ClaudeSession.qml` (`claude -p` over stream-json); helpers in `scripts/ai.py`.
   `CodexSession.qml` handles Codex; both inherit state/transcript helpers from `AiSession.qml`.

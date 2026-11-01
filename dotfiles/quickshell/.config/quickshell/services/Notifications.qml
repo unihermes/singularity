@@ -79,7 +79,7 @@ Singleton {
         used = true
         shown = true
         popups = []
-        Ai.shown = false
+        Ai.close()
     }
 
     // IPC or Settings: on the focused screen

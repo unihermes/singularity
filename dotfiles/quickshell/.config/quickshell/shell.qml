@@ -14,7 +14,6 @@ import "services"
 import "flyouts"
 import "bar"
 import "windows"
-import "sidebar"
 import "desktop"
 import "services/TimeWindow.js" as TimeWindow
 import Quickshell
@@ -255,11 +254,7 @@ ShellRoot {
         }
     }
 
-    // built on first open, then kept, so its scroll and draft stay
-    LazyLoader {
-        active: Ai.used
-        AiSidebar { bars: screens.instances.map(s => s.barWindow) }
-    }
+    // The chat sidebar runs in AiHost.qml, independently of this shell.
 
     // built on first open, then kept, so its scroll stays
     LazyLoader {
