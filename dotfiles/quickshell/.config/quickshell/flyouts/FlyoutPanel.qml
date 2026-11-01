@@ -168,7 +168,7 @@ OverlayWindow {
         PanelFrame {
             id: box
             bare: root.grown
-            ground: Theme.surface
+            ground: Theme.flyoutFill
             x: {
                 var free = Math.max(root.edgeMargin,
                                     Math.min(root.anchorX - width / 2,
@@ -218,6 +218,7 @@ OverlayWindow {
                 x: Theme.channelWidth + root.sectionGap
                 width: box.width - x * 2
                 height: box.height
+                fill: Theme.glass ? Theme.glassSectionFill : Theme.panelFill
                 column: contentColumn
                 columnY: contentColumn.y
                 padY: root.sectionPadY

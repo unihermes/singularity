@@ -100,7 +100,7 @@ Singleton {
     readonly property color fieldFill:     surface
     // Glass draws one light hairline instead of the ramp's border
     readonly property bool glass: resolved.glass
-    readonly property color stroke: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.14) : Qt.rgba(1, 1, 1, 0.14))
+    readonly property color stroke: glass ? (isLight ? Qt.rgba(1, 1, 1, 0.55) : Qt.rgba(1, 1, 1, 0.28))
         : border
     readonly property color strokeHover:   muted
     readonly property color strokeFocus:   hasAccent ? accent : subtext
@@ -120,6 +120,13 @@ Singleton {
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
+    // One translucent ground lets the compositor carry desktop colour through.
+    readonly property color flyoutFill: glass ? panelFill : Qt.rgba(surface.r, surface.g, surface.b, panelOpacity)
+    readonly property color glassSectionFill: Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity * 0.18)
+    function glassHighlight(c, amount) {
+        return Qt.rgba(c.r + (1 - c.r) * amount, c.g + (1 - c.g) * amount,
+                       c.b + (1 - c.b) * amount, c.a)
+    }
     // Glass's glow option: lit things glow in the accent
     readonly property bool glow: glass && opt("glow") && !plain
 

@@ -20,10 +20,10 @@ Rectangle {
     radius: Theme.panelFrameRadius
     color: bare || channel ? "transparent" : ground
     // Theme.gradient: the same ground, shaded top to bottom
-    gradient: Theme.gradient && !bare && !channel ? shading : null
+    gradient: (Theme.glass || Theme.gradient) && !bare && !channel ? shading : null
     property Gradient shading: Gradient {
-        GradientStop { position: 0; color: Theme.shadeTop(root.color) }
-        GradientStop { position: 1; color: Theme.shadeBottom(root.color) }
+        GradientStop { position: 0; color: Theme.glass ? Theme.glassHighlight(root.color, Theme.isLight ? 0.32 : 0.16) : Theme.shadeTop(root.color) }
+        GradientStop { position: 1; color: Theme.glass ? root.color : Theme.shadeBottom(root.color) }
     }
     border.width: Theme.frameStroked && !bare && !channel ? Theme.borderWidth : 0
     border.color: Theme.stroke

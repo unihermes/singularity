@@ -57,7 +57,11 @@ part of its default (see Styles and settings).
   the option off (or leaving Flat) brings the usual arrangement back. Its
   `barPosition` option puts the bar at the bottom (an option's `off` is
   the value it takes when off).
-- Glass's `blur` and `tint` change its frost.
+- Glass's `blur` and `tint` change its frost. Grounds retain 38% opacity
+  with Heavy blur, 48% without it, scaled by See-through. Panels have a
+  white reflective hairline and a soft top highlight that preserves alpha.
+  Flyout sections use a faint tint over one translucent outer ground so
+  desktop colour remains visible through the whole panel.
 
 Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.textOnAccent`) unless its row in the table says otherwise.
