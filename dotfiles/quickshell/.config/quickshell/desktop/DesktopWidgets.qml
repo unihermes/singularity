@@ -229,7 +229,7 @@ Scope {
             MouseArea {
                 anchors.fill: widget
                 acceptedButtons: Qt.RightButton
-                onClicked: root.scope.editWidgets()
+                onClicked: Qt.callLater(root.scope.editWidgets)
             }
         }
     }
