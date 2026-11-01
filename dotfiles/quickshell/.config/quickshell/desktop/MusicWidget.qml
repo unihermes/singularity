@@ -21,7 +21,7 @@ WidgetCard {
     readonly property var player: Media.player
     readonly property bool playing: !!player && player.isPlaying
     readonly property real length: Media.lengthOf(player)
-    readonly property real frac: length > 0 ? Math.max(0, Math.min(1, player.position / length)) : 0
+    readonly property real frac: length > 0 ? Math.max(0, Math.min(1, Media.positionOf(player) / length)) : 0
     readonly property bool hasLength: length > 0
 
     // the last player seen, to open again once it's closed
@@ -134,7 +134,7 @@ WidgetCard {
                     anchors.fill: parent
                     anchors.topMargin: -Theme.fit(6)
                     anchors.bottomMargin: -Theme.fit(6)
-                    enabled: !!root.player && root.player.canSeek
+                    enabled: !!root.player && root.player.canSeek && !Media.heard
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: mouse => root.player.position =
                         root.length * Math.max(0, Math.min(1, mouse.x / width))
@@ -144,7 +144,7 @@ WidgetCard {
                 visible: root.hasLength && root.large
                 width: parent.width
                 height: pos.height
-                WidgetText { id: pos; card: root; px: root.textCaption; color: root.fgDim; text: root.player ? Media.fmtTime(root.player.position) : "" }
+                WidgetText { id: pos; card: root; px: root.textCaption; color: root.fgDim; text: root.player ? Media.fmtTime(Media.positionOf(root.player)) : "" }
                 WidgetText { anchors.right: parent.right; card: root; px: root.textCaption; color: root.fgDim; text: Media.fmtTime(root.length) }
             }
             // the media flyout's transport

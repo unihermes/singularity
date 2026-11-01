@@ -84,6 +84,34 @@ Singleton {
         kept.push(t)
         seenTracks = kept
     }
+    // title -> { pos, at, len } of each browser track when last seen
+    // playing, written each second (in place: only read through clock)
+    property var trackPos: ({})
+    Timer {
+        interval: 1000
+        repeat: true
+        running: !!root.player && root.player.isPlaying && root.isBrowser(root.player)
+        onTriggered: {
+            var p = root.player
+            p.positionChanged()
+            if (p.trackTitle) root.trackPos[String(p.trackTitle)] = { pos: p.position, at: Date.now(), len: root.lengthOf(p) }
+        }
+    }
+    // ticks while a heard tab stands in, so its position moves on
+    property real clock: Date.now()
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.heard !== null
+        onTriggered: root.clock = Date.now()
+    }
+    // a heard tab's position, from where it was last seen playing on: it
+    // has played since
+    function heardPos() {
+        var s = heard ? trackPos[heard.title] : null
+        return s ? Math.min(s.len > 0 ? s.len : Infinity, s.pos + Math.max(0, clock - s.at) / 1000) : 0
+    }
+    function positionOf(p) { return !p ? 0 : p === player && heard ? heardPos() : p.position }
     function titleOf(p) { return p === player && heard ? heard.title : p ? String(p.trackTitle || "") : "" }
     function artistOf(p) { return p === player && heard ? heard.artist : p ? String(p.trackArtist || "") : "" }
 
@@ -142,7 +170,7 @@ Singleton {
     // for the followed player's page when it's a browser's and not YouTube
     property var pageArt: ({})
     readonly property string pageUrl: {
-        var url = player && isBrowser(player) ? String(player.metadata["xesam:url"] || "") : ""
+        var url = heard ? heard.url : player && isBrowser(player) ? String(player.metadata["xesam:url"] || "") : ""
         return /^https?:\/\//.test(url) && !/youtube\.com\/|youtu\.be\//.test(url) ? url : ""
     }
     onPageUrlChanged: fetchPageArt()
@@ -187,9 +215,11 @@ Singleton {
         var md = p.metadata || {}
         return String(md["xesam:url"] || "") + "\n" + String(md["xesam:title"] || "")
     }
-    // 0 for a heard tab's track: the player's position is the paused tab's
     function lengthOf(p) {
-        if (p && p === player && heard) return 0
+        if (p && p === player && heard) {
+            var s = trackPos[heard.title]
+            return s ? s.len : 0
+        }
         var len = reportedLength(p)
         if (len > 0 || !p) return len
         var k = knownLength[p.dbusName]

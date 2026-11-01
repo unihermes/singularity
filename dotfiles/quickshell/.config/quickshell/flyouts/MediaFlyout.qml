@@ -137,7 +137,7 @@ FlyoutPanel {
         readonly property real length: Media.lengthOf(mediaFlyout.player)
         visible: length > 0
 
-        readonly property real frac: length > 0 ? Math.max(0, Math.min(1, mediaFlyout.player.position / length)) : 0
+        readonly property real frac: length > 0 ? Math.max(0, Math.min(1, Media.positionOf(mediaFlyout.player) / length)) : 0
 
         Meter {
             anchors.left: parent.left
@@ -153,7 +153,7 @@ FlyoutPanel {
                 anchors.fill: parent
                 anchors.topMargin: -Theme.spaceM
                 anchors.bottomMargin: -Theme.spaceM
-                enabled: mediaFlyout.player && mediaFlyout.player.canSeek
+                enabled: mediaFlyout.player && mediaFlyout.player.canSeek && !Media.heard
                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: mouse => mediaFlyout.player.position =
                     progress.length * Math.max(0, Math.min(1, mouse.x / width))
@@ -163,7 +163,7 @@ FlyoutPanel {
         Text {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            text: mediaFlyout.player ? Media.fmtTime(mediaFlyout.player.position) : ""
+            text: mediaFlyout.player ? Media.fmtTime(Media.positionOf(mediaFlyout.player)) : ""
             color: Theme.subtext
             font.family: Theme.fontText
             font.weight: Theme.weightBody
