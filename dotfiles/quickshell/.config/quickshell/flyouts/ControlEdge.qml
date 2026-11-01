@@ -12,6 +12,7 @@ Item {
     id: root
 
     property color stroke: Theme.stroke
+    property color ground: "transparent"
     property bool sunken: false
     // the host's corner radius, which the inner stroke follows
     property real radius: 0
@@ -19,6 +20,14 @@ Item {
     property bool lit: Qt.colorEqual(stroke, Theme.strokeFocus) && !Qt.colorEqual(stroke, Theme.stroke)
 
     anchors.fill: parent
+
+    StyleFrame {
+        visible: Theme.frameCustom
+        stroke: root.stroke
+        ground: root.ground
+        control: true
+        sunken: root.sunken
+    }
 
     Rectangle {
         visible: Theme.frameChannel

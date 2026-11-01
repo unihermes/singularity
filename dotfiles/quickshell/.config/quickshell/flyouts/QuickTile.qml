@@ -27,7 +27,7 @@ Item {
     signal clicked()
     signal moreClicked()
 
-    readonly property string kind: Theme.style
+    readonly property string kind: Theme.controlStyle
     readonly property bool hot: usable && (face.containsMouse || more.containsMouse)
     readonly property color ink: armed ? Theme.base : lit ? Theme.textOnAccent
         : hot ? Theme.textStrong : Theme.text
@@ -43,12 +43,13 @@ Item {
         readonly property color frost: Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
         anchors.fill: parent
         radius: Theme.radiusInner
-        color: root.armed ? Theme.alert
+        readonly property color faceFill: root.armed ? Theme.alert
             : root.lit ? Theme.accent
             : root.kind === "solid" ? (root.hot ? Theme.overlay : Theme.surface)
             : root.kind === "glass" ? (root.hot ? Theme.stroke : frost)
             : root.kind === "flat" ? Theme.overlay
             : Theme.controlFill(root.hot ? Theme.hoverFillSoft : "transparent")
+        color: Theme.frameCustom && Theme.frameStyle === "notch" ? "transparent" : faceFill
         border.width: root.kind === "solid" ? 0
             : root.kind === "glass" ? Theme.borderWidth
             : root.kind === "flat" ? (root.hot && !root.armed && !root.lit ? Math.max(2, Theme.borderWidth * 2) : 0)
@@ -58,7 +59,8 @@ Item {
 
         // a lit tile is a pressed button
         ControlEdge {
-            visible: root.kind === "channel" || root.kind === "double"
+            visible: root.kind === "channel" || root.kind === "double" || Theme.frameCustom
+            ground: Theme.frameStyle === "notch" ? box.faceFill : "transparent"
             stroke: box.edge; sunken: root.lit; radius: box.radius
             lit: false
         }

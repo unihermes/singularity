@@ -126,7 +126,7 @@ var entries = [
     { page: "appearance", section: "Colour", label: "Folder", keywords: "wallpaper folder directory images open add" },
     { page: "appearance", section: "Colour", label: "Fit", keywords: "wallpaper fill fit centre center tile scale swaybg" },
 
-    { page: "appearance", section: "Shape", label: "Style", keywords: "theme frames channel double solid glass flat lined modules windows 10 square taskbar" },
+    { page: "appearance", section: "Shape", label: "Style", keywords: "theme frames channel double solid glass flat rail notch ledger capsule bevel lined modules windows 10 square taskbar spines ruled cut corners islands raised recessed" },
     { page: "appearance", section: "Shape", label: "Roundness", keywords: "rounding corners radius panels windows hyprland bar chips" },
     { page: "appearance", section: "Shape", label: "Bar chips", keywords: "modules frame outline outlined bare strip grouped border chip" },
     { page: "appearance", section: "Shape", label: "Finish", keywords: "style options touches tint glow lit inner stroke taskbar heavy blur" },
@@ -171,7 +171,7 @@ var entries = [
     { page: "appearance", section: "Bar", label: "Centre anchor", keywords: "pin middle centre clock bar widgets" },
     { page: "appearance", section: "Bar", label: "Workspaces", keywords: "indicator dots" },
     { page: "appearance", section: "Bar", label: "Workspace names", keywords: "label rename workspaces web code chat" },
-    { page: "appearance", section: "Bar", label: "Open windows", keywords: "taskbar tasks apps icons glide lift inset segmented dots rings fade viewfinder corners tint liquid blob" },
+    { page: "appearance", section: "Bar", label: "Open windows", keywords: "taskbar tasks apps icons glide lift inset segmented rings fade viewfinder corners tint liquid blob" },
     { page: "appearance", section: "Bar", label: "Window icon size", keywords: "taskbar tasks apps icons bigger smaller size px" },
     { page: "appearance", section: "Bar", label: "Window icon padding", keywords: "taskbar tasks apps icons spacing compact gap room px" },
     { page: "appearance", section: "Bar", label: "Windows shown", keywords: "taskbar workspace all scope" },

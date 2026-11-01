@@ -3,7 +3,8 @@
 //
 // A conversation's rows (ClaudeSession.entries): what you sent in a field
 // with its attachments under it, Claude's replies as markdown you can
-// select (Markdown.js; fenced code in a box of its own with Copy), each
+// select (Markdown.js; fenced code in a box of its own with Copy, an
+// artifact as a card that opens it in a window), each
 // tool call as a line (a click opens what it did), errors and notes.
 // Follows the end while it's in view; scrolling up stops that.
 
@@ -163,6 +164,111 @@ Item {
         }
     }
 
+    // a reply's artifact: a card that opens it in a window (Ai.openArtifact),
+    // in the browser, or copies its source; "Writing" until its fence closes
+    Component {
+        id: artifactPart
+        Rectangle {
+            id: card
+            readonly property var part: parent.part
+            readonly property var kinds: ({
+                html: ["󰌝", "HTML"], react: ["󰜈", "React"], svg: ["󰜡", "SVG"],
+                mermaid: ["󰙅", "Diagram"], markdown: ["󰍔", "Document"], md: ["󰍔", "Document"]
+            })
+            readonly property var kind: kinds[part.type] || ["󰈔", part.type]
+            property bool copied: false
+            height: Theme.spaceM * 2 + Theme.rowHeightDense * 2 + Theme.spaceS
+            radius: Theme.radiusInner
+            color: Theme.base
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
+
+            Text {
+                id: kindGlyph
+                x: Theme.spaceM
+                y: Theme.spaceM
+                width: Theme.iconCell
+                height: Theme.rowHeightDense
+                verticalAlignment: Text.AlignVCenter
+                text: card.kind[0]
+                color: Theme.accent
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontBody
+            }
+            Text {
+                anchors.left: kindGlyph.right
+                anchors.leftMargin: Theme.spaceS
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spaceM
+                y: Theme.spaceM
+                height: Theme.rowHeightDense
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+                text: card.part.title || "Artifact"
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontBody
+            }
+
+            Text {
+                x: Theme.spaceM
+                y: Theme.spaceM + Theme.rowHeightDense + Theme.spaceS
+                height: Theme.rowHeightDense
+                verticalAlignment: Text.AlignVCenter
+                text: card.part.done ? card.kind[1] : card.kind[1] + " · Writing…"
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.weight: Theme.weightBody
+                font.pixelSize: Theme.fontCaption
+            }
+            Row {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spaceM
+                y: Theme.spaceM + Theme.rowHeightDense + Theme.spaceS
+                height: Theme.rowHeightDense
+                spacing: Theme.spaceL
+                visible: card.part.done
+
+                Repeater {
+                    model: [
+                        { label: "󰏌 Open", act: "open" },
+                        { label: "󰖟 Browser", act: "browser" },
+                        { label: card.copied ? "󰄬 Copied" : "󰆏 Copy", act: "copy" }
+                    ]
+                    Text {
+                        required property var modelData
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.label
+                        color: actMouse.containsMouse ? Theme.textStrong : Theme.subtext
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
+                        MouseArea {
+                            id: actMouse
+                            anchors.fill: parent
+                            anchors.margins: -Theme.spaceS
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (parent.modelData.act === "copy") {
+                                    Quickshell.execDetached(["wl-copy", "--", card.part.code])
+                                    card.copied = true
+                                    artifactCopied.restart()
+                                } else Ai.openArtifact(card.part, parent.modelData.act === "browser")
+                            }
+                        }
+                    }
+                }
+            }
+            Timer {
+                id: artifactCopied
+                interval: 1500
+                onTriggered: card.copied = false
+            }
+        }
+    }
+
     ListView {
         id: list
         anchors.fill: parent
@@ -285,7 +391,8 @@ Item {
                         Loader {
                             required property var modelData
                             width: parent.width
-                            sourceComponent: modelData.kind === "code" ? codePart : textPart
+                            sourceComponent: modelData.kind === "code" ? codePart
+                                : modelData.kind === "artifact" ? artifactPart : textPart
                             property var part: modelData
                         }
                     }

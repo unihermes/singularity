@@ -181,7 +181,10 @@ FlyoutPanel {
         text: Health.busyRepair === "reclaim" ? "Cleaning…" : "Clean up " + (root.reclaimParts ? root.reclaimParts[1] : "")
         confirmText: root.reclaimParts ? "Clean up " + root.reclaimParts[1] + "?" : "Clean up?"
         enabled: Health.busyRepair === ""
-        onClicked: Health.repair(root.reclaim)
+        onClicked: {
+            Health.repair(root.reclaim)
+            scope.openFlyout = ""
+        }
     }
 
     FlyoutDivider { visible: root.page === "" }

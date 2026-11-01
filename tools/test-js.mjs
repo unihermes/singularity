@@ -150,6 +150,37 @@ test("Styles resolve every style, and Flat is square", () => {
     assert.equal(S.resolve(Object.assign({ style: "glass" }, base)).opacity, 70)
 })
 
+test("Styles: new defaults reset layout and retain their frame and control families", () => {
+    const S = load("Styles.js")
+    const expected = { rail: ["rail", "grouped"], notch: ["notch", "outline"],
+        ledger: ["ruled", "grouped"], capsule: ["none", "filled"], bevel: ["bevel", "outline"] }
+    for (const [name, [frame, modules]] of Object.entries(expected)) {
+        assert.ok(S.order.includes(name), name)
+        const stock = S.stockOf(name), resolved = S.resolve(stock)
+        assert.equal(resolved.frameStyle, frame, name)
+        assert.equal(resolved.moduleStyle, modules, name)
+        assert.equal(resolved.controlStyle, name === "capsule" ? "solid" : name, name)
+        assert.equal(stock.barStyle, name === "capsule" ? "islands" : "full", name)
+        assert.equal(stock.edgeGap, name === "capsule" ? 10 : 0, name)
+        assert.equal(stock.barPosition, "top", name)
+        assert.equal(stock.styleOptions, "", name)
+        const plain = S.resolve({ ...stock, plain: true })
+        assert.equal(plain.shadow, "none", name)
+        assert.equal(plain.moduleStyle, "bare", name)
+        assert.equal(plain.flyoutAttach, "flush", name)
+        const overridden = S.resolve({ ...stock, barChips: "outline", flyoutAnim: "fade", shadows: false })
+        assert.equal(overridden.moduleStyle, "outline", name)
+        assert.equal(overridden.flyoutAnim, "fade", name)
+        assert.equal(overridden.shadow, "none", name)
+    }
+    assert.equal(S.resolve(S.stockOf("notch")).radius, 0)
+    assert.equal(S.resolve(S.stockOf("ledger")).radius, 0)
+    assert.equal(S.resolve(S.stockOf("bevel")).shadow, "hard")
+    // Moving away from Capsule restores a full bar with no island gap.
+    assert.equal(S.stockOf("channel").barStyle, "full")
+    assert.equal(S.stockOf("channel").edgeGap, 0)
+})
+
 test("ChannelPath snaps near edges and closes its outline", () => {
     const C = load("ChannelPath.js")
     const g = { x0: 100, x1: 300, y0: 0, y1: 30, r: 8 }
@@ -291,6 +322,10 @@ test("Markdown: fences split out, prose to rich text", () => {
     assert.equal(parts[1].lang, "bash")
     assert.equal(parts[1].code, "ls -la")
     assert.equal(parts[3].code, "unclosed")
+    const art = M.split("Look:\n````artifact html My page\n```js\nx\n```\n````\n\n````artifact react Live")
+    assert.equal(art.map(p => p.kind).join(","), "text,artifact,artifact")
+    assert.deepEqual([art[1].type, art[1].title, art[1].code, art[1].done], ["html", "My page", "```js\nx\n```", true])
+    assert.deepEqual([art[2].type, art[2].title, art[2].done], ["react", "Live", false])
     const h = M.html("# Title\n- **a** `x<y`\n  - nested\n1. one\n\n| a | b |\n|---|---|\n| 1 | 2 |", ink)
     assert.match(h, /<b style="color:#s">Title<\/b>/)
     assert.match(h, /<ul><li><b style="color:#s">a<\/b> <span[^>]*background-color:#f[^>]*>&nbsp;x&lt;y&nbsp;<\/span><\/li><ul><li>nested<\/li><\/ul><\/ul><ol><li>one<\/li><\/ol>/)

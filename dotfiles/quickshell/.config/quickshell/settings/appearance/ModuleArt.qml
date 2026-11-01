@@ -84,6 +84,7 @@ Item {
 
     // --- open windows: three apps, the first focused ---
     Row {
+        id: winRow
         visible: art.kind === "windowStyle"
         anchors.centerIn: parent
         spacing: art.value === "segmented" ? 0 : Theme.fs(5)
@@ -101,17 +102,22 @@ Item {
                     : art.value === "rings" || art.value === "viewfinder" || art.value === "tint" ? Theme.fs(6) : 0)
                 height: Theme.fs(22)
 
-                // a ground: inset's well, segments, liquid's blob
+                // a ground: inset's well, the lit segment, liquid's blob
                 Rectangle {
                     anchors.fill: parent
                     visible: wn.foc && ["inset", "segmented", "liquid"].indexOf(art.value) !== -1
-                        || (!wn.foc && art.value === "segmented")
-                    radius: art.value === "liquid" ? Theme.fs(7) : Theme.radiusSmall
+                    radius: art.value === "liquid" ? height / 2 : Theme.radiusSmall
                     color: art.value === "inset" ? Theme.base
-                        : art.value === "liquid" ? Qt.alpha(Theme.accent, 0.45)
-                        : wn.foc ? Theme.overlay : "transparent"
-                    border.width: art.value === "inset" || art.value === "segmented" ? 1 : 0
+                        : Qt.alpha(Theme.accent, art.value === "liquid" ? 0.45 : 0.3)
+                    border.width: art.value === "inset" ? 1 : 0
                     border.color: Theme.stroke
+                }
+                // segmented: the divider between two unlit segments
+                Rectangle {
+                    visible: art.value === "segmented" && wn.index > 1
+                    width: 1
+                    height: parent.height
+                    color: Theme.stroke
                 }
 
                 // tint's tile in the app's colour, rings' ring
@@ -121,9 +127,9 @@ Item {
                     width: wn.width
                     height: width
                     radius: art.value === "rings" ? width / 2 : Theme.radiusSmall
-                    color: art.value === "tint" ? Qt.alpha(wn.appColour, wn.foc ? 0.4 : 0.18) : "transparent"
-                    border.width: art.value === "rings" || wn.foc ? 1.5 : 0
-                    border.color: art.value === "rings" ? Theme.accent : wn.appColour
+                    color: art.value === "tint" ? Qt.alpha(wn.appColour, wn.foc ? 0.55 : 0.18) : "transparent"
+                    border.width: art.value === "rings" ? 1.5 : 0
+                    border.color: Theme.accent
                 }
 
                 // viewfinder's corners round the focused icon
@@ -147,21 +153,12 @@ Item {
                     anchors.centerIn: parent
                     spacing: Theme.fs(3)
                     Rectangle {
-                        visible: art.value !== "dots"
                         anchors.verticalCenter: parent.verticalCenter
                         width: wn.iconSize
                         height: width
                         radius: 2
-                        color: (art.value === "lift" || art.value === "fade") && !wn.foc ? Theme.muted : wn.appColour
-                        opacity: art.value === "fade" && !wn.foc ? 0.5 : 1
-                    }
-                    Rectangle {
-                        visible: art.value === "dots"
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: wn.foc ? Theme.fs(12) : Theme.fs(5)
-                        height: Theme.fs(5)
-                        radius: Theme.pill(height)
-                        color: wn.foc ? Theme.accent : Theme.muted
+                        color: art.value === "fade" && !wn.foc ? Theme.muted : wn.appColour
+                        opacity: art.value === "fade" && !wn.foc ? 0.5 : art.value === "lift" && !wn.foc ? 0.8 : 1
                     }
                 }
 
@@ -177,15 +174,27 @@ Item {
             }
         }
     }
-    // glide: one rail under the icons, a slider at the focused one
+    // glide: one groove under the icons, a slider at the focused one
     Rectangle {
         visible: art.kind === "windowStyle" && art.value === "glide"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         width: Theme.fs(48)
-        height: 2
-        color: Theme.border
-        Rectangle { width: Theme.fs(12); height: 2; color: Theme.accent }
+        height: 3
+        radius: 1.5
+        color: Theme.overlay
+        Rectangle { width: Theme.fs(12); height: 3; radius: 1.5; color: Theme.accent }
+    }
+    // segmented: the track round all three
+    Rectangle {
+        visible: art.kind === "windowStyle" && art.value === "segmented"
+        anchors.centerIn: parent
+        width: winRow.width
+        height: Theme.fs(22)
+        radius: Theme.radiusSmall
+        color: "transparent"
+        border.width: 1
+        border.color: Theme.stroke
     }
 
     // --- clock: the style's own format, now ---

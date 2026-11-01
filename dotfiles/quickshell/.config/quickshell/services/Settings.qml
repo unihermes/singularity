@@ -250,7 +250,7 @@ Singleton {
         controlIcon:  ["arch", "menu", "dashboard", "cog", "home", "star", "blackhole", "vortex", "horizon",
                       "atom", "rocket", "ghost", "planet", "sparkle", "infinity", "radar", "moon"],
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
-        windowStyle:  ["icons", "glide", "lift", "inset", "segmented", "dots", "rings", "fade", "viewfinder", "tint", "liquid"],
+        windowStyle:  ["icons", "glide", "lift", "inset", "segmented", "rings", "fade", "viewfinder", "tint", "liquid"],
         windowScope:  ["workspace", "all"],
         iconTint:     ["colour", "mono", "accent"],
         vizStyle:     ["mirror", "rise", "dots", "line"],

@@ -124,7 +124,7 @@ FlyoutPanel {
 
     function run(act) {
         scope.openFlyout = ""
-        if (act === "settings") settingsWin.open()
+        if (act === "settings") settingsWin.open("")
         else if (act === "system") systemWin.open()
         else if (act === "keybinds") keybindsWin.open()
         // the pause lets the flyout unmap before slurp/hyprpicker draw
@@ -186,6 +186,9 @@ FlyoutPanel {
         }
         IconButton {
             icon: "󰐥"
+            implicitWidth: Theme.controlSize + Theme.spaceS
+            implicitHeight: Theme.controlSize + Theme.spaceS
+            glyphSize: Theme.fontIconSize + Theme.spaceS
             onClicked: controlCentre.page = "power"
         }
     }
@@ -393,20 +396,35 @@ FlyoutPanel {
     FlyoutDivider { visible: controlCentre.home && !controlCentre.searching }
 
     // the screen tools, then the windows
-    FlyoutChipLine {
+    Row {
+        id: toolsRow
         visible: controlCentre.home && !controlCentre.searching
-        onPicked: act => controlCentre.run(act)
-        chips: [
-            { icon: "󰹑", text: "", act: "screenshot" },
-            { icon: "󰈊", text: "", act: "colourpick" },
-            { icon: "󰊄", text: "", act: "copytext" },
+        width: parent.width
+        spacing: Theme.spaceS
+        readonly property var actions: [
+            { icon: "󰹑", act: "screenshot" },
+            { icon: "󰈊", act: "colourpick" },
+            { icon: "󰊄", act: "copytext" },
         ].concat(!Recorder.available ? []
-            : [{ icon: Recorder.recording ? "󰓛" : "󰑊", text: "", act: "record" }]
+            : [{ icon: Recorder.recording ? "󰓛" : "󰑊", act: "record" }]
         ).concat([
-            { icon: "󰒓", text: "", act: "settings" },
-            { icon: "󰍛", text: "", act: "system" },
-            { icon: "󰌌", text: "", act: "keybinds" },
+            { icon: "󰒓", act: "settings" },
+            { icon: "󰍛", act: "system" },
+            { icon: "󰌌", act: "keybinds" },
         ])
+
+        Repeater {
+            model: toolsRow.actions
+
+            FlyoutChip {
+                required property var modelData
+                width: (toolsRow.width - toolsRow.spacing * (toolsRow.actions.length - 1)) / toolsRow.actions.length
+                height: Theme.fieldHeight + Theme.spaceS
+                glyph: true
+                text: modelData.icon
+                onClicked: controlCentre.run(modelData.act)
+            }
+        }
     }
 
     // --- Appearance -------------------------------------------

@@ -27,20 +27,46 @@ Item {
     property bool interactive: true
     signal toggled()
 
-    readonly property string kind: Theme.style
+    readonly property string kind: Theme.controlStyle
     readonly property bool hovered: mouse.containsMouse
     readonly property int h: Theme.switchHeight
     // the fill a lit switch takes
     readonly property color onFill: Theme.meterFill
 
-    implicitWidth: kind === "solid" ? Theme.row(34)
+    implicitWidth: kind === "ledger" ? h : kind === "solid" ? Theme.row(34)
         : kind === "flat" ? Theme.row(32)
         : Theme.switchWidth
     implicitHeight: kind === "solid" ? Theme.row(20) : h
     opacity: enabled ? 1 : 0.5
 
     // --- tracks with a knob: every style but channel
-    readonly property bool knobbed: kind !== "channel"
+    readonly property bool knobbed: ["channel", "rail", "notch", "ledger", "bevel"].indexOf(kind) === -1
+
+    Rectangle {
+        visible: !root.knobbed && root.kind !== "channel"
+        anchors.fill: parent
+        color: root.kind === "rail" || root.kind === "notch" ? "transparent" : root.checked ? root.onFill : Theme.meterTrack
+        border.width: root.kind === "ledger" ? Theme.borderWidth : 0
+        border.color: root.hovered ? Theme.strokeHover : Theme.stroke
+
+        StyleFrame {
+            visible: root.kind !== "ledger"
+            ground: root.kind === "notch" ? (root.checked ? root.onFill : Theme.meterTrack) : "transparent"
+            control: true
+            sunken: true
+            stroke: root.checked ? root.onFill : root.hovered ? Theme.strokeHover : Theme.muted
+        }
+
+        Text {
+            visible: root.kind === "ledger" && root.checked
+            anchors.centerIn: parent
+            text: "󰄬"
+            color: Theme.textOnMeter
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontSmall
+            font.weight: Theme.weightBody
+        }
+    }
 
     Rectangle {
         visible: root.knobbed

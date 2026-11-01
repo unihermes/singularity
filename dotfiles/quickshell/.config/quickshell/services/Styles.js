@@ -4,11 +4,13 @@
 // The Styles: each a complete way of drawing the chrome. resolve() turns
 // Settings.style and its dials into everything Theme hands out (the look
 // cards use it too). Each style:
-//   frame    panel and chip strokes: "channel", "double", "single", "none"
+//   frame    panel and chip strokes: channel, double, single, none,
+//            rail, notch, ruled, bevel (StyleFrame.qml)
 //   modules  bar chips: "grouped", "outline", "filled", "taskbar" ("bare" only
 //            from Settings.barChips)
 //   mark     the strip's focused window: "pill" or "ground"
-//   shadow   what Shadows turns on: "none" or "soft"
+//   shadow   what Shadows turns on: "none", "soft" or "hard"
+//   controls optional shared control family (Capsule uses Solid's pills)
 //   lines    whether it has strokes (Heavy lines)
 //   attach   flyouts "grown", "floating", or "auto" (flush on a full bar)
 //   anim     how flyouts open when left to the style
@@ -28,7 +30,7 @@
 
 .pragma library
 
-var order = ["channel", "double", "solid", "glass", "flat"]
+var order = ["channel", "double", "solid", "glass", "flat", "rail", "notch", "ledger", "capsule", "bevel"]
 
 var styles = {
     channel: {
@@ -110,6 +112,46 @@ var styles = {
             { key: "shadows", label: "Shadows", hint: "Soft shadows under flyouts", on: true },
         ],
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
+    },
+    rail: {
+        name: "Rail", hint: "Leading spines, ruled groups and underline switches",
+        frame: "rail", modules: "grouped", mark: "pill",
+        shadow: "none", lines: true, attach: "floating", anim: "drop",
+        settings: { radius: 3, workspaceStyle: "pills", windowStyle: "icons" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "shape-bar", clockIsland: true },
+        options: [],
+    },
+    notch: {
+        name: "Notch", hint: "Cut corners, bracket headings and angular controls",
+        frame: "notch", modules: "outline", mark: "pill",
+        shadow: "none", lines: true, attach: "floating", anim: "drop", square: true,
+        settings: { workspaceStyle: "blocks", windowStyle: "segmented", vizStyle: "rise" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "shape-brackets", clockIsland: true },
+        options: [],
+    },
+    ledger: {
+        name: "Ledger", hint: "Ruled sections, square switches and segmented levels",
+        frame: "ruled", modules: "grouped", mark: "pill",
+        shadow: "none", lines: true, attach: "floating", anim: "fade", square: true,
+        settings: { workspaceStyle: "numbers", windowStyle: "inset", clockStyle: "day", vizStyle: "line" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
+        options: [],
+    },
+    capsule: {
+        name: "Capsule", hint: "Rounded islands, soft sections and pill controls",
+        frame: "none", modules: "filled", mark: "ground", controls: "solid",
+        shadow: "soft", lines: false, attach: "floating", anim: "scale",
+        settings: { radius: 14, barStyle: "islands", workspaceStyle: "dots", clockStyle: "time", launcherLayout: "grid", altTabStyle: "previews" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: true },
+        options: [{ key: "shadows", label: "Shadows", hint: "Soft shadows under islands and panels", on: true }],
+    },
+    bevel: {
+        name: "Bevel", hint: "Raised edges, recessed controls and crisp offset shadows",
+        frame: "bevel", modules: "outline", mark: "pill",
+        shadow: "hard", lines: true, attach: "floating", anim: "drop",
+        settings: { radius: 2, workspaceStyle: "blocks", windowStyle: "segmented", vizStyle: "rise" },
+        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: true, headingMark: "::", clockIsland: true },
+        options: [{ key: "shadows", label: "Shadows", hint: "Crisp offset shadows under panels and chips", on: true }],
     },
 }
 
@@ -241,6 +283,7 @@ function resolve(s) {
     var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
         styleName: s.style,
+        controlStyle: st.controls || s.style,
         frameStyle: st.frame,
         moduleStyle: modules,
         windowMark: st.mark,

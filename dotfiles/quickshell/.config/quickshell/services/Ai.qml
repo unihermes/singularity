@@ -406,6 +406,48 @@ Singleton {
         }
     }
 
+    // --- artifacts -----------------------------------------------------
+
+    // A reply's artifact (Markdown.split) as a page in a viewer window of its
+    // own, or the browser; artifact.py builds the page from its source on
+    // stdin. Opens queue one at a time.
+    readonly property string artifactPrompt: " To show something visual or interactive (a web page, "
+        + "app, game, chart, diagram or long document), write it as an artifact: a fence of four "
+        + "backticks whose info string is `artifact <type> <title>`, type one of html, react, svg, "
+        + "mermaid or markdown, e.g. ````artifact html Pomodoro timer. The user sees a card and opens "
+        + "it in a window of its own, so keep it self-contained. html is a whole page; scripts from "
+        + "cdnjs or jsdelivr load. react is one component, the default export, which can import "
+        + "react, recharts and lucide-react, with Tailwind classes available. Use artifacts for "
+        + "substantial standalone content, not for snippets or code meant for a file. To change "
+        + "one, write it again in full."
+    property var artifactQueue: []
+    function openArtifact(part, browser) {
+        artifactQueue = artifactQueue.concat([{ part: part, browser: browser }])
+        nextArtifact()
+    }
+    function nextArtifact() {
+        if (artifactProc.running || artifactQueue.length === 0) return
+        var job = artifactQueue[0]
+        artifactQueue = artifactQueue.slice(1)
+        artifactProc.source = job.part.code
+        artifactProc.command = ["python3", Quickshell.shellPath("scripts/artifact.py"),
+            Quickshell.shellPath("scripts/ArtifactViewer.qml"), job.part.type, job.part.title,
+            String(Theme.base), String(Theme.text), String(Theme.accent)].concat(job.browser ? ["browser"] : [])
+        artifactProc.stdinEnabled = true
+        artifactProc.running = true
+    }
+    Process {
+        id: artifactProc
+        property string source: ""
+        // written whole, then stdin closed so the script sees the end
+        onStarted: {
+            write(source)
+            source = ""
+            stdinEnabled = false
+        }
+        onRunningChanged: if (!running) root.nextArtifact()
+    }
+
     // --- the conversations ---------------------------------------
 
     function noteLimit(info) {
@@ -425,7 +467,7 @@ Singleton {
         appendPrompt: "You are the chat in the sidebar of the user's Linux desktop (Arch, Hyprland, "
             + "a Quickshell shell called Singularity). You have no tools here: just talk. Your "
             + "replies are rendered as markdown in a narrow panel, so keep tables small. "
-            + "Screenshots, the clipboard or the selected text may come attached to a message."
+            + "Screenshots, the clipboard or the selected text may come attached to a message." + root.artifactPrompt
         onRateLimit: info => root.noteLimit(info)
     }
 
@@ -436,7 +478,7 @@ Singleton {
         modelPick: root.models.code || ""
         reasoningPick: root.reasoning.code || ""
         appendPrompt: "You are running in the Code tab of the Claude sidebar on the user's desktop, "
-            + "a narrow panel that renders markdown. Permission prompts appear there as cards."
+            + "a narrow panel that renders markdown. Permission prompts appear there as cards." + root.artifactPrompt
         onRateLimit: info => root.noteLimit(info)
         onModeChanged: if (mode !== root.codeMode) { root.codeMode = mode; root.save() }
     }
@@ -450,7 +492,7 @@ Singleton {
         instructions: "You are the chat in the sidebar of the user's Linux desktop (Arch, Hyprland, "
             + "a Quickshell shell called Singularity), run through Codex. Just talk; you can read but "
             + "not change anything. Your replies are rendered as markdown in a narrow panel, so keep "
-            + "tables small. Screenshots, the clipboard or the selected text may come attached."
+            + "tables small. Screenshots, the clipboard or the selected text may come attached." + root.artifactPrompt
         onRateLimit: info => root.noteCodexLimit(info)
         onListed: rows => root.tookPast(rows)
     }
@@ -462,7 +504,7 @@ Singleton {
         modelPick: root.models.codeCodex || ""
         reasoningPick: root.reasoning.codeCodex || ""
         instructions: "You are running in the Code tab of a sidebar on the user's desktop, a narrow "
-            + "panel that renders markdown. Approval requests appear there as cards."
+            + "panel that renders markdown. Approval requests appear there as cards." + root.artifactPrompt
         onRateLimit: info => root.noteCodexLimit(info)
         onListed: rows => root.tookPast(rows)
     }

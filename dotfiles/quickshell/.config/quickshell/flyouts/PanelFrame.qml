@@ -13,19 +13,20 @@ Rectangle {
 
     // no ground, stroke or shadow: the content straight on what's behind
     property bool bare: false
+    property bool section: false
     // what the panel is filled with
     property color ground: Theme.panelFill
     readonly property bool channel: Theme.frameChannel && !bare
 
     radius: Theme.panelFrameRadius
-    color: bare || channel ? "transparent" : ground
+    color: bare || channel || Theme.frameCustom ? "transparent" : ground
     // Theme.gradient: the same ground, shaded top to bottom
-    gradient: Theme.gradient && !bare && !channel ? shading : null
+    gradient: Theme.gradient && !bare && !channel && !Theme.frameCustom ? shading : null
     property Gradient shading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(root.color) }
         GradientStop { position: 1; color: Theme.shadeBottom(root.color) }
     }
-    border.width: Theme.frameStroked && !bare && !channel ? Theme.borderWidth : 0
+    border.width: Theme.frameStroked && !bare && !channel && !Theme.frameCustom ? Theme.borderWidth : 0
     border.color: Theme.stroke
 
     // false for panels inside a window Hyprland already shadows
@@ -43,6 +44,13 @@ Rectangle {
         bottomLeftRadius: root.bottomLeftRadius
         bottomRightRadius: root.bottomRightRadius
         fill: root.ground
+    }
+
+    StyleFrame {
+        visible: Theme.frameCustom && !root.bare
+        ground: root.ground
+        section: root.section
+        sunken: root.section && Theme.frameStyle === "bevel"
     }
 
     Rectangle {
