@@ -5,13 +5,15 @@
 // prose and fenced code blocks, the prose turned into the rich text a Text
 // renders. Covers what replies use: headings, paragraphs, lists (nested by
 // indent), quotes, rules, small tables, and inline code, bold, italics,
-// strikethrough and links. Colours come in as `ink`:
+// strikethrough and links. A fence whose info string is
+// `artifact <type> <title>` is an artifact (AiTranscript's card). Colours come in as `ink`:
 //   { text, strong, muted, accent, codeFill, codeInk, rule }
 // An unclosed fence (a reply still streaming) runs to the end.
 
 .pragma library
 
-// [{ kind: "text", text } | { kind: "code", lang, code }]
+// [{ kind: "text", text } | { kind: "code", lang, code }
+//  | { kind: "artifact", type, title, code, done }], done false while unclosed
 function split(md) {
     var out = [], prose = [], lines = String(md || "").split("\n")
     var i = 0
@@ -21,14 +23,19 @@ function split(md) {
         prose = []
     }
     while (i < lines.length) {
-        var m = lines[i].match(/^\s*(```+|~~~+)\s*([\w+#.-]*)/)
+        var m = lines[i].match(/^\s*(```+|~~~+)\s*([\w+#.-]*)(.*)$/)
         if (!m) { prose.push(lines[i++]); continue }
         flush()
         var fence = m[1], lang = m[2] || "", code = []
         i++
         while (i < lines.length && lines[i].trim().indexOf(fence) !== 0) code.push(lines[i++])
+        var done = i < lines.length
         i++
-        out.push({ kind: "code", lang: lang, code: code.join("\n") })
+        if (lang === "artifact") {
+            var info = m[3].trim().split(/\s+/)
+            out.push({ kind: "artifact", type: (info.shift() || "html").toLowerCase(),
+                       title: info.join(" "), code: code.join("\n"), done: done })
+        } else out.push({ kind: "code", lang: lang, code: code.join("\n") })
     }
     flush()
     return out

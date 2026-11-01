@@ -59,6 +59,8 @@ hyprpolkitagent
 qt6-wayland
 qt6-declarative
 qt6-svg
+# the sidebar's artifact viewer (scripts/ArtifactViewer.qml)
+qt6-webengine
 qt6ct
 
 # network: systemd-networkd and systemd-resolved ship with systemd; Wi-Fi's
