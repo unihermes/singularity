@@ -457,7 +457,8 @@ Singleton {
     readonly property int iconHoverHeight: moduleStyle === "grouped" ? groupHeight - channelWidth * 2
         : moduleTaskbar ? moduleHeight : moduleHeight - 2
     // a tray icon's slot, tighter than a window's
-    readonly property int traySlotW:    barFs(16) + Math.round(spaceM / 2) * 2
+    readonly property int trayIconSize: barFs(14)
+    readonly property int traySlotW:    trayIconSize + Math.round(spaceS / 2) * 2
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare

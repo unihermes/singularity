@@ -23,7 +23,7 @@ ModuleFrame {
     hoverWhole: false
     // each icon carries the room either side of it as its own hit and
     // hover area, so the chip's padding gives that back
-    padH: Theme.modulePadH - (slotW - Theme.barFs(16)) / 2
+    padH: Theme.modulePadH - (slotW - Theme.trayIconSize) / 2
     visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
 
     property bool drawerOpen: false
@@ -232,7 +232,7 @@ ModuleFrame {
             TintedIcon {
                 anchors.centerIn: parent
                 source: trayIcon.modelData.icon
-                implicitSize: Theme.barFs(16)
+                implicitSize: Theme.trayIconSize
             }
 
             MouseArea {
