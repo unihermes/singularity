@@ -14,6 +14,7 @@ import "services"
 import "flyouts"
 import "bar"
 import "windows"
+import "sidebar"
 import "desktop"
 import "services/TimeWindow.js" as TimeWindow
 import Quickshell

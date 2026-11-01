@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Start the independent chat host once and forward sidebar commands."""
 import fcntl
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -28,8 +29,19 @@ def main():
         if len(sys.argv) > 2 and sys.argv[2] == 'close':
             subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'close'], check=True)
         elif len(sys.argv) > 4 and sys.argv[2] == 'open':
-            subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'open',
-                            sys.argv[3], sys.argv[4]], check=True)
+            methods = subprocess.run(probe, capture_output=True, text=True, check=True).stdout
+            if 'function open(' in methods:
+                subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'open',
+                                sys.argv[3], sys.argv[4]], check=True)
+            else:
+                # Older hosts can stay alive until their active conversation finishes.
+                try:
+                    status = json.loads((runtime / 'singularity-ai-status.json').read_text())
+                except (OSError, ValueError):
+                    status = {}
+                if not status.get('shown'):
+                    subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'toggle',
+                                    status.get('screen', '')], check=True)
         elif len(sys.argv) > 2 and sys.argv[2] == 'toggle':
             subprocess.run(['qs', 'ipc', '-p', config, 'call', 'chat', 'toggle',
                             sys.argv[3] if len(sys.argv) > 3 else ''], check=True)

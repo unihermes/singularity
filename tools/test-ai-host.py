@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check independent sidebar startup and command forwarding without a desktop."""
 import importlib.util
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -14,13 +15,15 @@ spec.loader.exec_module(host)
 
 
 class HostTests(unittest.TestCase):
-    def invoke(self, args, results):
+    def invoke(self, args, results, methods='function open(tab: string, engine: string): void', status=None):
         with tempfile.TemporaryDirectory() as runtime, \
                 patch.dict(os.environ, {'XDG_RUNTIME_DIR': runtime}), \
                 patch.object(host.sys, 'argv', ['ai_host.py', '/config/AiHost.qml', *args]), \
-                patch.object(host.subprocess, 'run', side_effect=[Mock(returncode=r) for r in results]) as run, \
+                patch.object(host.subprocess, 'run', side_effect=[Mock(returncode=r, stdout=methods) for r in results]) as run, \
                 patch.object(host.subprocess, 'Popen') as launch, \
                 patch.object(host.time, 'sleep'):
+            if status is not None:
+                (Path(runtime) / 'singularity-ai-status.json').write_text(json.dumps(status))
             host.main()
             return run.call_args_list, launch.call_args_list
 
@@ -38,10 +41,24 @@ class HostTests(unittest.TestCase):
         self.assertTrue(calls[-1].kwargs['check'])
 
     def test_open_forwards_tab_and_engine(self):
-        calls, launches = self.invoke(['open', 'code', 'codex'], [0, 0])
+        calls, launches = self.invoke(['open', 'code', 'codex'], [0, 0, 0])
         self.assertFalse(launches)
         self.assertEqual(calls[-1].args[0][-5:], ['call', 'chat', 'open', 'code', 'codex'])
         self.assertTrue(calls[-1].kwargs['check'])
+
+    def test_old_host_opens_without_restart(self):
+        calls, launches = self.invoke(['open', 'code', 'codex'], [0, 0, 0],
+                                     methods='function toggle(name: string): void',
+                                     status={'shown': False, 'screen': 'DP-2'})
+        self.assertFalse(launches)
+        self.assertEqual(calls[-1].args[0][-4:], ['call', 'chat', 'toggle', 'DP-2'])
+
+    def test_old_host_is_not_toggled_closed(self):
+        calls, launches = self.invoke(['open', 'code', 'codex'], [0, 0],
+                                     methods='function toggle(name: string): void',
+                                     status={'shown': True})
+        self.assertFalse(launches)
+        self.assertEqual(len(calls), 2)
 
     def test_start_without_command(self):
         calls, launches = self.invoke([], [1, 0])

@@ -42,3 +42,21 @@ test('desktop and phone notifications keep their normal activation', () => {
         assert.equal(raised.length, 1)
     }
 })
+
+test('notifications from the running older sidebar invoke its Open action', () => {
+    const { ctx, opened, raised } = context()
+    let invoked = false
+    ctx.activate({ appName: 'Claude', desktopEntry: '', summary: 'Claude · Code: done',
+        live: { tracked: true, actions: [{ identifier: 'open', invoke: () => { invoked = true } }] } })
+    assert.equal(invoked, true)
+    assert.deepEqual(opened, [])
+    assert.deepEqual(raised, [])
+    assert.equal(ctx.shown, false)
+})
+
+test('older sidebar history still routes to the host when its action has expired', () => {
+    const { ctx, opened, raised } = context()
+    ctx.activate({ appName: 'Claude', desktopEntry: '', summary: 'Claude · Chat: replied', live: null })
+    assert.deepEqual(opened, [['chat', 'claude']])
+    assert.deepEqual(raised, [])
+})

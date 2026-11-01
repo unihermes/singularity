@@ -220,9 +220,15 @@ Singleton {
     // installed, else on the phone's mirror.
     function openSidebar(entry) {
         const match = /^singularity-sidebar-(chat|code)-(claude|codex)$/.exec(entry.desktopEntry || "")
-        if (!match || entry.phone) return false
+        if (entry.phone) return false
+        const legacy = entry.appName === "Claude" && !entry.desktopEntry
+            ? /^Claude · (Chat|Code): /.exec(entry.summary || "") : null
+        if (!match && !legacy) return false
         shown = false
-        Ai.openConversation(match[1], match[2])
+        const action = entry.live && entry.live.tracked
+            ? entry.live.actions.find(a => a.identifier === "open" || a.identifier === "default") : null
+        if (legacy && action) action.invoke()
+        else Ai.openConversation(match ? match[1] : legacy[1].toLowerCase(), match ? match[2] : "claude")
         return true
     }
 
