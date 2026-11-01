@@ -214,21 +214,19 @@ Singleton {
 
     // --- a click: open what it's about ----------------------------------------
 
+    // The sidebar's own notification opens its conversation there
+    function openSidebar(entry) {
+        const match = /^singularity-sidebar-(chat|code)-(claude|codex)$/.exec(entry.desktopEntry || "")
+        if (!match || entry.phone) return false
+        shown = false
+        Ai.openConversation(match[1], match[2])
+        return true
+    }
+
     // The sender's default action if it has one, then the app's window
     // brought to the front (on whatever workspace, the scratchpad too), else
     // the app started. A phone's notification opens its app here when it's
     // installed, else on the phone's mirror.
-    function openSidebar(entry) {
-        const match = /^singularity-sidebar-(chat|code)-(claude|codex)$/.exec(entry.desktopEntry || "")
-        if (entry.phone) return false
-        const legacy = entry.appName === "Claude" && !entry.desktopEntry
-            ? /^Claude · (Chat|Code): /.exec(entry.summary || "") : null
-        if (!match && !legacy) return false
-        shown = false
-        Ai.openConversation(match ? match[1] : legacy[1].toLowerCase(), match ? match[2] : "claude")
-        return true
-    }
-
     function activate(entry) {
         hidePopup(entry)
         shown = false
@@ -349,10 +347,7 @@ Singleton {
     function sidebarIcon(entry) {
         if (entry.phone) return ""
         const match = /^singularity-sidebar-(chat|code)-(claude|codex)$/.exec(entry.desktopEntry || "")
-        if (match) return "file://" + Quickshell.shellPath("sidebar/icons/" + match[2] + ".svg")
-        if (entry.appName === "Claude" && !entry.desktopEntry && /^Claude · (Chat|Code): /.test(entry.summary || ""))
-            return "file://" + Quickshell.shellPath("sidebar/icons/claude.svg")
-        return ""
+        return match ? "file://" + Quickshell.shellPath("sidebar/icons/" + match[2] + ".svg") : ""
     }
 
     function iconOf(entry) {
@@ -498,45 +493,6 @@ Singleton {
         }
     }
 
-    // Old hosts emitted a sidebar card and Codex's user-configured hook for
-    // the same reply. Keep the sidebar card, with a durable route and identity.
-    function repairSidebarHistory() {
-        const removed = new Set()
-        const plain = text => String(text || "").replace(/[*_`#>]/g, "").replace(/\s+/g, " ").trim()
-        let changed = false
-        const repaired = history.map(entry => {
-            if (entry.phone || entry.appName !== "Claude" || entry.desktopEntry) return entry
-            const tab = /^Claude · (Chat|Code): /.exec(entry.summary)
-            if (!tab) return entry
-            const prefix = plain(entry.body).slice(0, 100)
-            const duplicate = history.find(other => !other.phone && other.appName === "Codex"
-                && !other.desktopEntry && other.summary === "Codex" && !removed.has(other.key)
-                && Math.abs(other.time - entry.time) < 1000 && prefix.length >= 30
-                && plain(other.body).startsWith(prefix))
-            if (!duplicate) return entry
-            removed.add(duplicate.key)
-            if (duplicate.live) duplicate.live.tracked = false
-            if (entry.live) entry.live.tracked = false
-            changed = true
-            return Object.assign({}, entry, { appName: "Codex", live: null,
-                desktopEntry: "singularity-sidebar-" + tab[1].toLowerCase() + "-codex",
-                summary: entry.summary.replace(/^Claude/, "Codex"),
-                icon: "file://" + Quickshell.shellPath("sidebar/icons/codex.svg") })
-        })
-        const seen = new Set()
-        const unique = repaired.filter(e => {
-            if (removed.has(e.key)) return false
-            if (!/^singularity-sidebar-/.test(e.desktopEntry || "")) return true
-            if (seen.has(e.id)) { changed = true; return false }
-            seen.add(e.id)
-            return true
-        })
-        if (!changed) return
-        history = unique
-        popups = popups.filter(e => !removed.has(e.key)).map(e => history.find(h => h.key === e.key) || e)
-        saveTimer.restart()
-    }
-
     // --- persistence --------------------------------------------------------
 
     function save() {
@@ -594,7 +550,6 @@ Singleton {
             root.history = entries.slice(0, root.maxEntries)
             root.lastSeen = typeof d.lastSeen === "number" ? d.lastSeen : 0
             root.adoptLive()
-            Qt.callLater(root.repairSidebarHistory)
         }
         onLoadFailed: root.adoptLive()
     }

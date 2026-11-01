@@ -536,7 +536,7 @@ Singleton {
         p.running = true
     }
     function openFromNote(t, engine, text) {
-        if (text.trim() !== "open" && text.trim() !== "default") return
+        if (text.trim() !== "default") return
         openConversation(t, engine)
     }
     Process {

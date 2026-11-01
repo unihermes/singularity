@@ -43,24 +43,6 @@ test('desktop and phone notifications keep their normal activation', () => {
     }
 })
 
-test('older notifications use durable routing even when a stale action is present', () => {
-    const { ctx, opened, raised } = context()
-    let invoked = false
-    ctx.activate({ appName: 'Claude', desktopEntry: '', summary: 'Claude · Code: done',
-        live: { tracked: true, actions: [{ identifier: 'open', invoke: () => { invoked = true } }] } })
-    assert.equal(invoked, false)
-    assert.deepEqual(opened, [['code', 'claude']])
-    assert.deepEqual(raised, [])
-    assert.equal(ctx.shown, false)
-})
-
-test('older sidebar history still routes to the host when its action has expired', () => {
-    const { ctx, opened, raised } = context()
-    ctx.activate({ appName: 'Claude', desktopEntry: '', summary: 'Claude · Chat: replied', live: null })
-    assert.deepEqual(opened, [['chat', 'claude']])
-    assert.deepEqual(raised, [])
-})
-
 test('sidebar completion notifications use the source service and retain their routing marker', () => {
     const ai = fs.readFileSync(new URL('../dotfiles/quickshell/.config/quickshell/services/Ai.qml', import.meta.url), 'utf8')
     for (const engine of ['claude', 'codex']) {
@@ -79,26 +61,6 @@ test('sidebar completion notifications use the source service and retain their r
     }
 })
 
-test('old duplicate pairs become one Codex card with a durable route', () => {
-    const body = 'The finished task has a detailed result that is shared by both notifications.'
-    const old = { key: 'a', id: 1, time: 1000, appName: 'Claude', summary: 'Claude · Code: done', body, live: { tracked: true } }
-    const hook = { key: 'b', id: 2, time: 1100, appName: 'Codex', summary: 'Codex', body, live: { tracked: true } }
-    const unrelated = { key: 'c', id: 3, time: 1200, appName: 'Codex', summary: 'Codex', body: 'A separate terminal task', live: null }
-    const ctx = vm.createContext({ history: [hook, old, unrelated], popups: [hook, old],
-        Quickshell: { shellPath: p => `/shell/${p}` }, saveTimer: { restart() {} } })
-    vm.runInContext(source.match(/    function repairSidebarHistory\([^]*?\n    }/)[0], ctx)
-    ctx.repairSidebarHistory()
-    assert.equal(ctx.history.length, 2)
-    assert.equal(ctx.history[0].desktopEntry, 'singularity-sidebar-code-codex')
-    assert.equal(ctx.history[0].appName, 'Codex')
-    assert.equal(ctx.popups.length, 1)
-    assert.equal(hook.live.tracked, false)
-    assert.equal(old.live.tracked, false)
-    assert.equal(ctx.history[1], unrelated)
-    ctx.repairSidebarHistory()
-    assert.equal(ctx.history.length, 2)
-})
-
 test('Claude and Codex sidebar logos occupy the app icon slot, never the body image', () => {
     const ctx = vm.createContext({ Quickshell: { shellPath: p => `/shell/${p}` },
         pictureFor: n => n.image, desktopFor: () => null, isClaude: () => false })
@@ -115,7 +77,4 @@ test('Claude and Codex sidebar logos occupy the app icon slot, never the body im
     const other = { appName: 'Mail', icon: 'mail-icon', picture: 'file:///photo.png', live: null }
     assert.equal(ctx.iconOf(other), 'mail-icon')
     assert.equal(ctx.pictureOf(other), 'file:///photo.png')
-    const legacy = { appName: 'Claude', summary: 'Claude · Chat: replied', picture: 'file:///logo.svg' }
-    assert.equal(ctx.iconOf(legacy), 'file:///shell/sidebar/icons/claude.svg')
-    assert.equal(ctx.pictureOf(legacy), '')
 })
