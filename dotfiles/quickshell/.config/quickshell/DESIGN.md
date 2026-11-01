@@ -130,7 +130,7 @@ Each style also starts the Bar, Panels and Motion tabs its own way (its
 | | Channel | Double | Solid | Glass | Flat |
 |---|---|---|---|---|---|
 | Workspaces | Pills | Blocks | | Dots | Numbers |
-| Open windows | Icons | Segmented | Lift | Spotlight | |
+| Open windows | Icons | Segmented | Lift | Icons | |
 | Clock | Time + date | Day + time | Time | Time | |
 | Visualizer | Mirrored | Rising | Rising | | One line |
 | Launcher | List | | Grid | Grid | |
@@ -235,8 +235,9 @@ Style: `channel` (frame `channel` in `Styles.js`).
 - Icon-only, by design; no text readouts beside icons, except under Plain.
 - **Open windows** default to 18px app icons with 3px padding each side.
   Appearance > Bar > Open windows has Window icon size and Window icon
-  padding controls; icons are capped to the bar's height. Lift and
-  Spotlight keep their smaller inactive icons relative to that size.
+  padding controls; icons are capped to the bar's height. Lift keeps
+  its smaller inactive icons relative to that size; Rings fits the icon
+  inside its ring.
 - **Plain** (Shape, a switch over any style, from a classic text bar):
   the bar full width whatever Bar shape says, flat, no hairline, chips Bare
   unless Bar chips says otherwise; the levels (volume, brightness, battery)

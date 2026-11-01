@@ -86,33 +86,60 @@ Item {
     Row {
         visible: art.kind === "windowStyle"
         anchors.centerIn: parent
-        spacing: art.value === "segmented" || art.value === "tabs" ? 0 : Theme.fs(5)
+        spacing: art.value === "segmented" ? 0 : Theme.fs(5)
         Repeater {
             model: 3
             Item {
                 id: wn
                 required property int index
                 readonly property bool foc: index === 0
-                readonly property bool named: art.value === "tabs" || art.value === "index"
-                    || ((art.value === "titled" || art.value === "spotlight") && foc)
+                readonly property color appColour: art.appColours[index]
                 readonly property real iconSize: art.value === "lift" ? (foc ? Theme.fs(15) : Theme.fs(9))
-                    : art.value === "spotlight" && !foc ? Theme.fs(8) : Theme.fs(11)
+                    : art.value === "rings" ? Theme.fs(9) : Theme.fs(11)
                 anchors.verticalCenter: parent.verticalCenter
-                width: wnRow.width + (art.value === "segmented" || art.value === "tabs" || art.value === "index"
-                    || (art.value === "spotlight" && foc) ? Theme.fs(8) : 0)
+                width: wnRow.width + (art.value === "segmented" || art.value === "liquid" ? Theme.fs(8)
+                    : art.value === "rings" || art.value === "viewfinder" || art.value === "tint" ? Theme.fs(6) : 0)
                 height: Theme.fs(22)
 
-                // a ground: inset's well, segments, tabs, index, spotlight's capsule
+                // a ground: inset's well, segments, liquid's blob
                 Rectangle {
                     anchors.fill: parent
-                    visible: wn.foc && ["inset", "segmented", "tabs", "index", "spotlight"].indexOf(art.value) !== -1
+                    visible: wn.foc && ["inset", "segmented", "liquid"].indexOf(art.value) !== -1
                         || (!wn.foc && art.value === "segmented")
-                    radius: art.value === "spotlight" ? Theme.pill(height) : Theme.radiusSmall
-                    color: art.value === "index" && wn.foc ? Theme.accent
-                        : art.value === "inset" ? Theme.base
+                    radius: art.value === "liquid" ? Theme.fs(7) : Theme.radiusSmall
+                    color: art.value === "inset" ? Theme.base
+                        : art.value === "liquid" ? Qt.alpha(Theme.accent, 0.45)
                         : wn.foc ? Theme.overlay : "transparent"
                     border.width: art.value === "inset" || art.value === "segmented" ? 1 : 0
                     border.color: Theme.stroke
+                }
+
+                // tint's tile in the app's colour, rings' ring
+                Rectangle {
+                    visible: art.value === "tint" || (art.value === "rings" && wn.foc)
+                    anchors.centerIn: parent
+                    width: wn.width
+                    height: width
+                    radius: art.value === "rings" ? width / 2 : Theme.radiusSmall
+                    color: art.value === "tint" ? Qt.alpha(wn.appColour, wn.foc ? 0.4 : 0.18) : "transparent"
+                    border.width: art.value === "rings" || wn.foc ? 1.5 : 0
+                    border.color: art.value === "rings" ? Theme.accent : wn.appColour
+                }
+
+                // viewfinder's corners round the focused icon
+                Repeater {
+                    model: art.value === "viewfinder" && wn.foc ? 4 : 0
+                    Item {
+                        required property int index
+                        readonly property bool east: index % 2 === 1
+                        readonly property bool south: index > 1
+                        x: east ? wn.width - width : 0
+                        y: (wn.height - wn.width) / 2 + (south ? wn.width - height : 0)
+                        width: Theme.fs(4)
+                        height: width
+                        Rectangle { y: parent.south ? parent.height - height : 0; width: parent.width; height: 1.5; color: Theme.accent }
+                        Rectangle { x: parent.east ? parent.width - width : 0; width: 1.5; height: parent.height; color: Theme.accent }
+                    }
                 }
 
                 Row {
@@ -120,12 +147,13 @@ Item {
                     anchors.centerIn: parent
                     spacing: Theme.fs(3)
                     Rectangle {
-                        visible: art.value !== "dots" && art.value !== "index"
+                        visible: art.value !== "dots"
                         anchors.verticalCenter: parent.verticalCenter
                         width: wn.iconSize
                         height: width
                         radius: 2
-                        color: art.value === "lift" && !wn.foc ? Theme.muted : art.appColours[wn.index]
+                        color: (art.value === "lift" || art.value === "fade") && !wn.foc ? Theme.muted : wn.appColour
+                        opacity: art.value === "fade" && !wn.foc ? 0.5 : 1
                     }
                     Rectangle {
                         visible: art.value === "dots"
@@ -135,20 +163,11 @@ Item {
                         radius: Theme.pill(height)
                         color: wn.foc ? Theme.accent : Theme.muted
                     }
-                    Text {
-                        visible: wn.named
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: art.value === "index" ? (wn.index + 1) + " " + ["web", "term", "files"][wn.index] : ["web", "term", "files"][wn.index]
-                        color: art.value === "index" && wn.foc ? Theme.textOnAccent : wn.foc ? Theme.textStrong : Theme.subtext
-                        font.family: Theme.fontText
-                        font.pixelSize: Theme.fontCaption
-                        font.weight: Theme.weightBody
-                    }
                 }
 
-                // the marks under the icons: icons, titled, glide
+                // the marks under the icons
                 Rectangle {
-                    visible: art.value === "icons" || art.value === "titled"
+                    visible: art.value === "icons"
                     anchors.bottom: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: wn.foc ? Theme.fs(12) : Theme.fs(4)

@@ -81,7 +81,7 @@ var styles = {
         shadow: "soft", lines: false, attach: "floating", anim: "fade", glass: true,
         settings: {
             radius: 10,
-            workspaceStyle: "dots", windowStyle: "spotlight", clockStyle: "time", launcherLayout: "grid",
+            workspaceStyle: "dots", windowStyle: "icons", clockStyle: "time", launcherLayout: "grid",
             notifStyle: "compact", altTabStyle: "previews", overviewLayout: "strip", overviewBackdrop: "clear",
             powerStyle: "full", windowAnim: "zoom",
         },

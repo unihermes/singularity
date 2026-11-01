@@ -137,7 +137,7 @@ Singleton {
     readonly property alias controlIcon: adapter.controlIcon
     // "stamp", "time", "seconds", "day", "long" or "iso" -- what the clock chip shows
     readonly property alias clockStyle:  adapter.clockStyle
-    readonly property alias windowStyle: adapter.windowStyle
+    readonly property string windowStyle: choices.windowStyle.indexOf(adapter.windowStyle) >= 0 ? adapter.windowStyle : "icons"
     readonly property alias windowScope: adapter.windowScope
     readonly property alias windowIconSize: adapter.windowIconSize
     readonly property alias windowIconPadding: adapter.windowIconPadding
@@ -250,7 +250,7 @@ Singleton {
         controlIcon:  ["arch", "menu", "dashboard", "cog", "home", "star", "blackhole", "vortex", "horizon",
                       "atom", "rocket", "ghost", "planet", "sparkle", "infinity", "radar", "moon"],
         clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
-        windowStyle:  ["icons", "titled", "glide", "lift", "inset", "segmented", "spotlight", "tabs", "index", "dots"],
+        windowStyle:  ["icons", "glide", "lift", "inset", "segmented", "dots", "rings", "fade", "viewfinder", "tint", "liquid"],
         windowScope:  ["workspace", "all"],
         iconTint:     ["colour", "mono", "accent"],
         vizStyle:     ["mirror", "rise", "dots", "line"],
@@ -283,7 +283,8 @@ Singleton {
         "stamp": "Time + date", "time": "Time", "seconds": "Seconds", "day": "Day + time",
         "long": "Full date", "iso": "ISO date", "custom": "Custom", "icons": "Icons",
         "titled": "With titles", "tabs": "Tabs", "previews": "Previews", "glide": "Glide",
-        "inset": "Inset", "segmented": "Segmented", "spotlight": "Spotlight", "index": "Index",
+        "inset": "Inset", "segmented": "Segmented", "rings": "Rings", "viewfinder": "Viewfinder",
+        "tint": "Tint", "liquid": "Liquid",
         "workspace": "This workspace", "all": "All workspaces", "dot": "Dot", "colour": "Colour",
         "mono": "Mono", "mirror": "Mirrored", "line": "Line", "lift": "Lift", "edge": "Screen edge",
         "number": "Number", "row": "Row", "list": "List", "grid": "Grid", "strip": "Strip",
@@ -298,7 +299,6 @@ Singleton {
     // where one value means different things under different settings
     readonly property var keyedLabels: ({
         barStyle: { "full": "Full width" },
-        windowStyle: { "titled": "Focused title" },
         barChips: { "bare": "Bare", "outline": "Outlined", "grouped": "Strip" },
         vizStyle: { "rise": "Rising", "line": "One line" },
         barSeparator: { "line": "Lines", "double": "Double lines", "dot": "Dots",

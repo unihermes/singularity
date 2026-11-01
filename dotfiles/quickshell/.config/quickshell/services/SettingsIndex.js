@@ -171,7 +171,7 @@ var entries = [
     { page: "appearance", section: "Bar", label: "Centre anchor", keywords: "pin middle centre clock bar widgets" },
     { page: "appearance", section: "Bar", label: "Workspaces", keywords: "indicator dots" },
     { page: "appearance", section: "Bar", label: "Workspace names", keywords: "label rename workspaces web code chat" },
-    { page: "appearance", section: "Bar", label: "Open windows", keywords: "taskbar tasks apps icons titles tabs glide lift inset segmented spotlight index dots" },
+    { page: "appearance", section: "Bar", label: "Open windows", keywords: "taskbar tasks apps icons glide lift inset segmented dots rings fade viewfinder corners tint liquid blob" },
     { page: "appearance", section: "Bar", label: "Window icon size", keywords: "taskbar tasks apps icons bigger smaller size px" },
     { page: "appearance", section: "Bar", label: "Window icon padding", keywords: "taskbar tasks apps icons spacing compact gap room px" },
     { page: "appearance", section: "Bar", label: "Windows shown", keywords: "taskbar workspace all scope" },
