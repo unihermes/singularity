@@ -41,7 +41,7 @@ Singleton {
     property int warned: 101
 
     onPercentChanged: checkLow()
-    onDischargingChanged: checkLow()
+    onDischargingChanged: { checkLow(); sample() }
 
     function checkLow() {
         if (!discharging) { warned = 101; return }
@@ -75,21 +75,35 @@ Singleton {
         stdout: StdioCollector { onStreamFinished: root.picked(text) }
     }
 
-    // --- the charge over the day -------------------------------------------
+    // --- charge history -------------------------------------------
 
-    // [{ t (ms), v (0..1), c (charging) }] every five minutes and on each
-    // plug or unplug, the last day of it, kept in the state dir so it
-    // outlasts a restart or reboot; the flyout's graph
+    // [{ t (ms), v (0..1), c (charging), d (discharging) }], sampled every
+    // five minutes and on state changes. Keep the current discharge in full
+    // and at least the last day, including across shell reloads.
     readonly property real historyWindow: 24 * 3600000
     property var history: []
+    readonly property var dischargeHistory: {
+        if (!discharging) return []
+        var start = history.length
+        while (start > 0) {
+            var p = history[start - 1]
+            // Older saved readings have only the charging flag.
+            if (p.d === false || p.c) break
+            start--
+        }
+        return history.slice(start)
+    }
     readonly property bool charging: present && (device.state === UPowerDeviceState.Charging
         || device.state === UPowerDeviceState.FullyCharged || device.state === UPowerDeviceState.PendingCharge)
 
     function sample() {
         if (!present || !historyFile.loadedOnce) return
         var now = Date.now()
-        var kept = history.filter(p => p.t > now - historyWindow)
-        kept.push({ t: now, v: percent / 100, c: charging })
+        var cutoff = now - historyWindow
+        if (dischargeHistory.length > 0)
+            cutoff = Math.min(cutoff, dischargeHistory[0].t)
+        var kept = history.filter(p => p.t >= cutoff && p.t <= now)
+        kept.push({ t: now, v: percent / 100, c: charging, d: discharging })
         history = kept
         historyFile.setText(JSON.stringify(kept))
     }

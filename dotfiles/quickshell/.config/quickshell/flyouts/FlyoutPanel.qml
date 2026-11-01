@@ -141,6 +141,7 @@ OverlayWindow {
     }
 
     GrownFrame {
+        fill: Theme.flyoutFill
         visible: root.grown
         anchors.fill: parent
         opacity: box.opacity
@@ -168,7 +169,7 @@ OverlayWindow {
         PanelFrame {
             id: box
             bare: root.grown
-            ground: Theme.surface
+            ground: Theme.flyoutFill
             x: {
                 var free = Math.max(root.edgeMargin,
                                     Math.min(root.anchorX - width / 2,

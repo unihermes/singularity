@@ -288,7 +288,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
   outline around both. Rounded inside corners join them where the widths
   differ, and the sides are straight where they line up (at the screen edge,
   for instance). It only fades in, since its frame is joined to the bar.
-- **Frame:** a channel with a surface ground and radius `panelFrameRadius`
+- **Frame:** a channel with a surface ground using the shared panel opacity
+  (Glass and See-through), and radius `panelFrameRadius`
   (15px at Roundness 6).
 - **Sectioned:** each run of rows between headings and dividers sits in its
   own frame (panel ground, radius + 3, `sectionRadius`), in place of

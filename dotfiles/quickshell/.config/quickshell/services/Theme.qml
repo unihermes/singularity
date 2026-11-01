@@ -121,6 +121,7 @@ Singleton {
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
+    readonly property color flyoutFill: Qt.rgba(surface.r, surface.g, surface.b, panelOpacity)
     // Glass's glow option: lit things glow in the accent
     readonly property bool glow: glass && opt("glow") && !plain
 

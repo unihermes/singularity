@@ -73,21 +73,100 @@ FlyoutPanel {
         }
     }
 
-    // the charge since the oldest reading kept (a day at most), across the
-    // whole width, charging stretches shaded
-    TimeGraph {
-        readonly property var h: Battery.history
-        visible: h.length > 1
-        height: Theme.row(64)
-        from: visible ? h[0].t : 0
-        to: visible ? h[h.length - 1].t : 1
-        points: h
-        lineColor: Theme.good
-        spans: {
-            var out = []
-            for (var i = 0; i < h.length - 1; i++)
-                if (h[i].c) out.push({ t0: h[i].t, t1: h[i + 1].t })
-            return out
+    Column {
+        id: historyChart
+        width: parent.width
+        spacing: Theme.spaceS
+        visible: Battery.discharging
+        property real now: Date.now()
+
+        Timer {
+            interval: 60000
+            running: batteryFlyout.open
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: historyChart.now = Date.now()
+        }
+
+        Text {
+            text: "Current discharge · " + Format.duration((chargeGraph.to - chargeGraph.from) / 1000)
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontCaption
+        }
+
+        Item {
+            width: parent.width
+            height: Theme.row(80)
+
+            Repeater {
+                model: [100, 50, 0]
+                Item {
+                    required property int modelData
+                    width: parent.width
+                    y: chargeGraph.y + chargeGraph.height * (1 - modelData / 100)
+                    Text {
+                        anchors.verticalCenter: parent.top
+                        text: modelData + "%"
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.pixelSize: Theme.fontCaption
+                    }
+                    Rectangle {
+                        x: chargeGraph.x
+                        width: chargeGraph.width
+                        height: Theme.borderWidth
+                        color: Theme.meterStroke
+                    }
+                }
+            }
+
+            TimeGraph {
+                id: chargeGraph
+                x: Theme.sp(36)
+                y: Theme.fontCaption / 2
+                width: parent.width - x
+                height: parent.height - Theme.fontCaption
+                bare: true
+                showTicks: false
+                fill: false
+                from: Battery.dischargeHistory.length > 0 ? Battery.dischargeHistory[0].t : to
+                to: Math.max(historyChart.now, Battery.history.length > 0 ? Battery.history[Battery.history.length - 1].t : 0)
+                points: {
+                    var readings = Battery.dischargeHistory.slice()
+                    if (readings.length > 0 && to > readings[readings.length - 1].t)
+                        readings.push({ t: to, v: Battery.percent / 100 })
+                    return readings
+                }
+                lineColor: Theme.good
+            }
+
+            Text {
+                anchors.centerIn: chargeGraph
+                visible: chargeGraph.points.length < 2
+                text: "Collecting battery history…"
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontCaption
+            }
+        }
+
+        Item {
+            x: chargeGraph.x
+            width: parent.width - x
+            height: Theme.fontCaption + Theme.spaceXs
+            Repeater {
+                model: [Qt.formatTime(new Date(chargeGraph.from), Theme.hours("HH:mm")), "Now"]
+                Text {
+                    required property int index
+                    required property string modelData
+                    x: index === 0 ? 0 : parent.width - width
+                    text: modelData
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontCaption
+                }
+            }
         }
     }
 
