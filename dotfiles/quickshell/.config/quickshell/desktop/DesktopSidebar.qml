@@ -65,8 +65,8 @@ PanelWindow {
         readonly property color fgDim: Theme.text
         readonly property color accent: Theme.isLight ? Theme.accent : Qt.lighter(Theme.accent, 1.4)
         readonly property string font: Theme.fontText
-        readonly property int textCaption: Theme.fit(14)
-        readonly property int textBody: Theme.fit(16)
+        readonly property int textCaption: Theme.fontSmall
+        readonly property int textBody: Theme.fontBody
         readonly property int weightBody: Font.Bold
         readonly property int weightStrong: Font.Bold
     }

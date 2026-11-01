@@ -35,7 +35,7 @@ WidgetCard {
         height: root.large ? implicitHeight : parent.height
         spacing: root.large ? Theme.fit(10)
             : (parent.height - root.labels.length * rowHeight) / Math.max(1, root.labels.length - 1)
-        readonly property real rowHeight: root.small ? Theme.fit(24) : Theme.fit(20)
+        readonly property real rowHeight: root.small ? Theme.fit(26) : Theme.fit(22)
 
         Repeater {
             model: root.labels
@@ -61,7 +61,6 @@ WidgetCard {
                     anchors.top: root.small ? parent.top : undefined
                     anchors.verticalCenter: root.small ? undefined : parent.verticalCenter
                     card: root
-                    px: root.textCaption
                     text: parent.reading.value
                 }
                 Meter {
@@ -106,7 +105,6 @@ WidgetCard {
             height: memRowUse.height
             WidgetText {
                 card: root
-                px: root.textCaption
                 text: "Memory"
                 color: root.fgDim
             }
@@ -114,7 +112,6 @@ WidgetCard {
                 id: memRowUse
                 anchors.right: parent.right
                 card: root
-                px: root.textCaption
                 text: Format.bytes(SystemStats.memUsedKb * 1024) + " of " + Format.bytes(SystemStats.memTotalKb * 1024)
             }
         }
@@ -125,7 +122,6 @@ WidgetCard {
             height: diskRowUse.height
             WidgetText {
                 card: root
-                px: root.textCaption
                 text: "Disk"
                 color: root.fgDim
             }
@@ -133,7 +129,6 @@ WidgetCard {
                 id: diskRowUse
                 anchors.right: parent.right
                 card: root
-                px: root.textCaption
                 text: Format.bytes(SystemStats.diskUsed) + " of " + Format.bytes(SystemStats.diskSize)
             }
         }

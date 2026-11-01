@@ -125,7 +125,6 @@ WidgetCard {
             WidgetText {
                 width: parent.width
                 card: root
-                px: root.textCaption
                 color: root.fgDim
                 text: root.large
                     ? [Quickshell.env("USER") || "", root.uptime !== "" ? "up " + root.uptime : ""].filter(s => s !== "").join(" · ")
@@ -258,7 +257,6 @@ WidgetCard {
         WidgetText {
             width: parent.width
             card: root
-            px: root.textCaption
             color: root.fgDim
             text: root.boot <= 0 ? ""
                 : "up since " + (root.now - root.boot > 86400 ? Qt.formatDate(new Date(root.boot * 1000), "d MMM")

@@ -72,7 +72,6 @@ WidgetCard {
             visible: !root.small
             anchors.right: parent.right
             card: root
-            px: root.textCaption
             text: Qt.formatDate(root.today, "MMMM") + " · Week " + root.isoWeek(root.today)
             color: root.fgDim
         }
@@ -119,7 +118,6 @@ WidgetCard {
                 width: parent.cell
                 horizontalAlignment: Text.AlignHCenter
                 card: root
-                px: root.textCaption
                 text: Qt.formatDate(modelData, "ddd").charAt(0)
                 color: root.fgFaint
                 font.weight: root.weightStrong
@@ -145,7 +143,6 @@ WidgetCard {
                 WidgetText {
                     anchors.centerIn: parent
                     card: root
-                    px: root.textCaption
                     text: modelData.getDate()
                     color: parent.today ? Theme.textOnAccent
                         : modelData.getMonth() === root.today.getMonth() ? root.fg : root.fgFaint

@@ -54,7 +54,7 @@ WidgetCard {
                 horizontalAlignment: root.small ? Text.AlignLeft : Text.AlignRight
                 card: root
                 text: modelData.text
-                px: modelData.icon ? Theme.fit(root.small ? 18 : 22) : root.textCaption
+                px: modelData.icon ? Theme.fit(root.small ? 18 : 22) : root.textBody
                 font.family: modelData.icon ? Theme.fontIcon : root.font
                 font.weight: modelData.strong ? root.weightStrong : root.weightBody
                 color: modelData.dim ? root.fgDim : root.fg
@@ -75,7 +75,7 @@ WidgetCard {
         lineColor: root.fg
         barColor: root.fgFaint
         fontFamily: root.font
-        labelSize: root.textCaption
+        labelSize: root.textBody
     }
 
     // five days: columns (medium), rows with their range (large)
@@ -94,7 +94,6 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: root.textCaption
                     text: root.dayName(modelData, index)
                     color: root.fgDim
                 }
@@ -108,7 +107,6 @@ WidgetCard {
                 WidgetText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     card: root
-                    px: root.textCaption
                     text: Weather.temp(modelData.hiF, modelData.hiC)
                 }
             }

@@ -33,9 +33,9 @@ Item {
     // captions (spaced capitals, bold, the accent for a widget's lead),
     // body and titles. Bold for anything read, including the figures and
     // what names or leads: captions, labels, titles, today.
-    readonly property int textCaption: Theme.fit(13)
-    readonly property int textBody: Theme.fit(14)
-    readonly property int textTitle: Theme.fit(16)
+    readonly property int textCaption: Theme.fontSmall
+    readonly property int textBody: Theme.fontBody
+    readonly property int textTitle: Theme.fontLead
     readonly property int weightBody: Font.Bold
     readonly property int weightStrong: Font.Bold
 

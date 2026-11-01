@@ -44,8 +44,10 @@ WidgetCard {
 
     ClippingRectangle {
         id: art
-        width: root.large ? parent.width : root.small ? Theme.fit(64) : parent.height
-        height: root.large ? Math.round(parent.height * 0.52) : width
+        // medium: a square down the left; otherwise all the height the
+        // words and controls under it leave
+        width: root.large ? parent.width : root.small ? height : parent.height
+        height: foot.beside ? width : parent.height - foot.height - foot.gap
         color: root.track
 
         Image {
@@ -85,12 +87,17 @@ WidgetCard {
     }
 
     Item {
-        x: root.large || root.small ? 0 : art.width + Theme.fit(14)
-        y: root.large ? art.height + Theme.fit(12) : root.small ? art.height + Theme.fit(8) : 0
+        id: foot
+        readonly property bool beside: !root.large && !root.small
+        readonly property int gap: Theme.fit(root.large ? 12 : 8)
+        readonly property Item low: controls.visible ? controls : openLast.visible ? openLast : null
+        x: beside ? art.width + Theme.fit(14) : 0
+        y: parent.height - height
         width: parent.width - x
-        height: parent.height - y
+        height: beside ? parent.height : info.height + (low ? gap + low.height : 0)
 
         Column {
+            id: info
             width: parent.width
 
             WidgetCaption {
@@ -102,7 +109,7 @@ WidgetCard {
             WidgetText {
                 width: parent.width
                 card: root
-                px: root.large ? Theme.fit(18) : root.textTitle
+                px: root.textTitle
                 text: root.player ? (Media.titleOf(root.player) || "Nothing playing") : "Nothing playing"
                 color: root.player ? root.fg : root.fgDim
                 font.weight: root.weightStrong
@@ -111,7 +118,6 @@ WidgetCard {
                 width: parent.width
                 visible: text !== ""
                 card: root
-                px: root.textCaption
                 text: root.player ? Media.artistOf(root.player) : root.lastName !== "" ? root.lastName + " played last" : ""
                 color: root.fgDim
             }
@@ -119,6 +125,7 @@ WidgetCard {
 
         // progress and transport, at the foot
         Column {
+            id: controls
             visible: !root.small && !!root.player
             anchors.bottom: parent.bottom
             width: parent.width
@@ -144,8 +151,8 @@ WidgetCard {
                 visible: root.hasLength && root.large
                 width: parent.width
                 height: pos.height
-                WidgetText { id: pos; card: root; px: root.textCaption; color: root.fgDim; text: root.player ? Media.fmtTime(Media.positionOf(root.player)) : "" }
-                WidgetText { anchors.right: parent.right; card: root; px: root.textCaption; color: root.fgDim; text: Media.fmtTime(root.length) }
+                WidgetText { id: pos; card: root; color: root.fgDim; text: root.player ? Media.fmtTime(Media.positionOf(root.player)) : "" }
+                WidgetText { anchors.right: parent.right; card: root; color: root.fgDim; text: Media.fmtTime(root.length) }
             }
             // the media flyout's transport
             Row {
@@ -180,10 +187,10 @@ WidgetCard {
 
         // no player: open the last one
         WidgetText {
+            id: openLast
             visible: !root.player && root.lastApp !== null && !root.small
             anchors.bottom: parent.bottom
             card: root
-            px: root.textCaption
             text: "󰐊  Open " + root.lastName
             color: root.accent
             font.weight: root.weightStrong
