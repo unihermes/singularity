@@ -5,7 +5,8 @@
 // beside it, the title and artist under; the progress bar and transport
 // are the media flyout's (the shell's Meter and chips). Medium: the art down the left,
 // the player, track, progress and transport beside it. Large: the art
-// across the top, the rest under it. The art dims while paused; with no
+// across the top, the rest under it. The art dims while nothing's heard (a browser's
+// paused tab stays lit while another tab plays); with no
 // player open it says so and offers the last one this session.
 
 import Quickshell
@@ -59,7 +60,7 @@ WidgetCard {
             sourceSize.width: art.width * 2
             asynchronous: true
             visible: status === Image.Ready
-            opacity: root.playing ? 1 : 0.45
+            opacity: Visualizer.playerHeard ? 1 : 0.45
         }
         WidgetText {
             anchors.centerIn: parent

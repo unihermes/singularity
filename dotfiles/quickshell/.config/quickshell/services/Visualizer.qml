@@ -49,9 +49,25 @@ Singleton {
             if (nodes[i].type === PwNodeType.AudioOutStream && !String(nodes[i].name).startsWith("channel.")) return true
         return false
     }
+    // the followed app's streams' links (not viz-capture.py's taps), bound
+    // so their state is live; one active is a stream running
+    readonly property var appLinks: app === "" ? [] : Pipewire.linkGroups.values.filter(g => g.source && g.target
+        && g.source.type === PwNodeType.AudioOutStream && String(g.source.name).toLowerCase().indexOf(app) !== -1
+        && g.target.name !== "singularity-viz")
+    readonly property bool appStreamRunning: appLinks.some(g => g.state === PwLinkState.Active)
+    PwObjectTracker { objects: root.appLinks }
     // with a player, it playing (paused, its spectrum is flat anyway);
-    // with none, any stream open
-    readonly property bool sounding: Media.player ? Media.player.isPlaying : streamOpen
+    // with none, any stream open. A browser has one player for all its
+    // tabs, left on the last one started: pausing that tab leaves it paused
+    // while another tab plays on, so a paused browser counts while one of
+    // its streams runs (viz-capture.py passes on the tab still sounding)
+    readonly property bool sounding: Media.player
+        ? Media.player.isPlaying || (Media.isBrowser(Media.player) && appStreamRunning) : streamOpen
+
+    // the followed player heard: it playing, or a paused browser whose
+    // other tab still plays (only known while the visualizer runs)
+    readonly property bool playerHeard: !!Media.player
+        && (Media.player.isPlaying || (Media.isBrowser(Media.player) && playing))
 
     CommandProbe { id: cavaProbe; name: "cava" }
 
