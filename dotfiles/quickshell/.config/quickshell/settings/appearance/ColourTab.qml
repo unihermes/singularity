@@ -3,7 +3,7 @@
 //
 // Appearance's Colour tab, laid out round the palette itself (the
 // "palette workshop"). SCHEME: where the colours come from, the looks as
-// rows each with its own strip, then the palette in use as a ramp of
+// a carousel each with its own strip, then the palette in use as a ramp of
 // labelled swatches (the ten greys, then accent, good and alert); a click
 // on one opens it in the editor under the ramp (its hex, and for the
 // accent the presets, Hue and Lightness), and Level colour. WINDOW
@@ -72,34 +72,44 @@ SettingsTab {
             + (Settings.colourMode === "wallpaper" ? "; its greys rest while the wallpaper's are on" : "")
     }
 
-    // the looks, two to a line: each its name and its palette as a strip
-    Grid {
-        id: looks
+    // browse the looks without expanding the page vertically
+    Row {
         width: parent.width
-        columns: 2
-        columnSpacing: Theme.spaceL
-        rowSpacing: Theme.spaceXs
+        spacing: Theme.spaceS
 
-        Repeater {
+        IconButton {
+            icon: "󰅁"
+            enabled: looks.contentX > 0
+            onClicked: looks.contentX = Math.max(0, looks.contentX - looks.width / 2)
+        }
+        ListView {
+            id: looks
+            width: parent.width - 2 * (Theme.controlSize + parent.spacing)
+            height: Theme.rowHeight
+            orientation: ListView.Horizontal
+            spacing: Theme.spaceS
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
             model: Looks.order
+            currentIndex: Looks.order.indexOf(Settings.look)
+            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+            Component.onCompleted: positionViewAtIndex(currentIndex, ListView.Contain)
 
-            Item {
+            delegate: Item {
                 id: lookRow
                 required property string modelData
                 readonly property var look: Looks.looks[modelData]
                 readonly property bool current: Settings.look === modelData
-                width: (looks.width - looks.columnSpacing) / 2
+                width: Math.max(Theme.fs(200), (looks.width - looks.spacing) / 2)
                 height: Theme.rowHeight
 
                 Rectangle {
                     anchors.fill: parent
-                    anchors.leftMargin: -Theme.spaceS
                     radius: Theme.radiusInner
                     color: lookRow.current || lookMouse.containsMouse ? Theme.hoverFill : "transparent"
                 }
                 Rectangle {
                     visible: lookRow.current
-                    x: -Theme.spaceS
                     anchors.verticalCenter: parent.verticalCenter
                     width: Theme.indicatorWidth
                     height: parent.height - Theme.spaceM
@@ -151,6 +161,11 @@ SettingsTab {
                 }
             }
         }
+        IconButton {
+            icon: "󰅂"
+            enabled: looks.contentX < looks.contentWidth - looks.width
+            onClicked: looks.contentX = Math.min(looks.contentWidth - looks.width, looks.contentX + looks.width / 2)
+        }
     }
 
     SettingsField {
@@ -193,7 +208,7 @@ SettingsTab {
                 Rectangle {
                     x: sw.index === colourTab.greys.length ? ramp.gapAfterGreys : 0
                     width: ramp.cell
-                    height: Theme.fs(64)
+                    height: Theme.fs(44)
                     radius: Theme.radiusInner
                     color: sw.shade
                     border.width: sw.picked ? 2 : Theme.borderWidth

@@ -829,10 +829,10 @@ Settings') are laid out the same way.
   changed field's ● names the value it puts back when hovered.
 - **Colour tab** (picked 2026-10-31, B "palette workshop" for every
   section): SCHEME is Palette (the look's own or the wallpaper's), Look
-  (its description), the eight looks two to a line (name and the look's
-  greys and accent as a strip, the current one ticked), Shade and
+  (its description), the looks in a horizontal carousel (name and the look's
+  greys and accent as a strip, the current one marked), Shade and
   Intensity while the wallpaper palette is on, then the palette in use as
-  a ramp: the ten greys, a gap, accent, good and alert, each a tall swatch
+  a ramp: the ten greys, a gap, accent, good and alert, each a swatch
   with its name and hex (a dot on one set apart from the look's own). A
   click opens that swatch in the editor under it: its hex (Custom accent
   for the accent), and for the accent the presets (the look's own first,
