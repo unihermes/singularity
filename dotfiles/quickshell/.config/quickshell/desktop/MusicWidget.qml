@@ -103,7 +103,7 @@ WidgetCard {
                 width: parent.width
                 card: root
                 px: root.large ? Theme.fit(18) : root.textTitle
-                text: root.player ? (root.player.trackTitle || "Nothing playing") : "Nothing playing"
+                text: root.player ? (Media.titleOf(root.player) || "Nothing playing") : "Nothing playing"
                 color: root.player ? root.fg : root.fgDim
                 font.weight: root.weightStrong
             }
@@ -112,7 +112,7 @@ WidgetCard {
                 visible: text !== ""
                 card: root
                 px: root.textCaption
-                text: root.player ? (root.player.trackArtist || "") : root.lastName !== "" ? root.lastName + " played last" : ""
+                text: root.player ? Media.artistOf(root.player) : root.lastName !== "" ? root.lastName + " played last" : ""
                 color: root.fgDim
             }
         }

@@ -105,7 +105,11 @@ Singleton {
                 }
             }
         }
-        onRunningChanged: if (!running) { root.bars = []; root.playing = false; frames.last = "" }
+        // the stream viz-capture.py passes on, for Media.heardTab
+        stderr: SplitParser {
+            onRead: line => { if (line.startsWith("tab ")) Media.heardTab = line.slice(4) }
+        }
+        onRunningChanged: if (!running) { root.bars = []; root.playing = false; frames.last = ""; Media.heardTab = "" }
     }
 
     Timer {

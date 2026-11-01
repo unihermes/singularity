@@ -238,8 +238,8 @@ Item {
             width: Math.min(implicitWidth, Theme.fit(220))
             elide: Text.ElideRight
             text: !musicFrame.player ? ""
-                : (musicFrame.player.trackArtist ? musicFrame.player.trackArtist + " – " : "")
-                    + (musicFrame.player.trackTitle || musicFrame.player.identity)
+                : (Media.artistOf(musicFrame.player) ? Media.artistOf(musicFrame.player) + " – " : "")
+                    + (Media.titleOf(musicFrame.player) || musicFrame.player.identity)
             color: Theme.text
             font.family: Theme.fontText
             font.weight: Theme.weightBody

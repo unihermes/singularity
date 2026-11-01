@@ -57,8 +57,39 @@ Singleton {
         lastPlaying = p
     }
 
+    // A browser has one player for all its tabs, left on the last one
+    // started, so pausing that tab while an earlier one plays on leaves it
+    // showing the paused one. Each track a browser player shows is kept in
+    // seenTracks (latest last); while the followed browser is paused and
+    // the visualizer hears another of its tabs (heardTab, the stream's
+    // name: the tab's title), that tab's track stands in for the player's
+    // title, artist and art (heard)
+    property var seenTracks: []
+    property string heardTab: ""
+    readonly property var heard: {
+        var p = player
+        var tab = heardTab.toLowerCase()
+        if (!p || p.isPlaying || !isBrowser(p) || tab === "") return null
+        var own = String(p.trackTitle || "").toLowerCase()
+        if (own !== "" && tab.indexOf(own) !== -1) return null
+        for (var i = seenTracks.length - 1; i >= 0; i--)
+            if (seenTracks[i].title !== "" && tab.indexOf(seenTracks[i].title.toLowerCase()) !== -1) return seenTracks[i]
+        return null
+    }
+    function rememberTrack(p) {
+        var t = { title: String(p.trackTitle || ""), artist: String(p.trackArtist || ""),
+            url: String(p.metadata["xesam:url"] || ""), artUrl: String(p.trackArtUrl || "") }
+        if (t.title === "") return
+        var kept = seenTracks.filter(x => x.title !== t.title).slice(-19)
+        kept.push(t)
+        seenTracks = kept
+    }
+    function titleOf(p) { return p === player && heard ? heard.title : p ? String(p.trackTitle || "") : "" }
+    function artistOf(p) { return p === player && heard ? heard.artist : p ? String(p.trackArtist || "") : "" }
+
     // a player other than the picked one starting drops the pick; each
-    // length a player reports goes in knownLength
+    // length a player reports goes in knownLength; a browser's tracks go
+    // in seenTracks
     Variants {
         model: root.players
         Connections {
@@ -68,6 +99,7 @@ Singleton {
                 if (modelData.isPlaying && modelData !== root.picked) root.picked = null
             }
             function onMetadataChanged() {
+                if (root.isBrowser(modelData)) root.rememberTrack(modelData)
                 var len = root.reportedLength(modelData)
                 if (len <= 0) return
                 var known = Object.assign({}, root.knownLength)
@@ -94,13 +126,15 @@ Singleton {
     function artUrls(p) {
         if (!p) return []
         var out = []
-        var url = String(p.metadata["xesam:url"] || "")
+        var h = p === player ? heard : null
+        var url = h ? h.url : String(p.metadata["xesam:url"] || "")
         var m = /youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/)([\w-]{11})|youtu\.be\/([\w-]{11})/.exec(url)
         if (m) {
             var id = m[1] || m[2]
             out.push("https://i.ytimg.com/vi/" + id + "/maxresdefault.jpg", "https://i.ytimg.com/vi/" + id + "/mqdefault.jpg")
         } else if (pageArt[url]) out.push(pageArt[url])
-        if (p.trackArtUrl) out.push(p.trackArtUrl)
+        var art = h ? h.artUrl : p.trackArtUrl
+        if (art) out.push(art)
         return out
     }
 
@@ -153,7 +187,9 @@ Singleton {
         var md = p.metadata || {}
         return String(md["xesam:url"] || "") + "\n" + String(md["xesam:title"] || "")
     }
+    // 0 for a heard tab's track: the player's position is the paused tab's
     function lengthOf(p) {
+        if (p && p === player && heard) return 0
         var len = reportedLength(p)
         if (len > 0 || !p) return len
         var k = knownLength[p.dbusName]

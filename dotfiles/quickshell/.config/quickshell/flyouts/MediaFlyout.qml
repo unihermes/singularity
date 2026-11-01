@@ -109,7 +109,7 @@ FlyoutPanel {
 
         Text {
             width: parent.width
-            text: mediaFlyout.player ? (mediaFlyout.player.trackTitle || "Nothing playing") : "No player open"
+            text: mediaFlyout.player ? (Media.titleOf(mediaFlyout.player) || "Nothing playing") : "No player open"
             elide: Text.ElideRight
             color: Theme.textStrong
             font.family: Theme.fontText
@@ -119,7 +119,7 @@ FlyoutPanel {
         Text {
             width: parent.width
             visible: text !== ""
-            text: mediaFlyout.player ? [mediaFlyout.player.trackArtist, mediaFlyout.player.identity]
+            text: mediaFlyout.player ? [Media.artistOf(mediaFlyout.player), mediaFlyout.player.identity]
                 .filter(t => !!t).join(" · ") : ""
             elide: Text.ElideRight
             color: Theme.subtext
