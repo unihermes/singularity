@@ -95,7 +95,8 @@ OverlayWindow {
     // content is padded to clear both frames.
     readonly property int sectionGap: Theme.sectionInset - Theme.channelWidth
     readonly property int sectionPadY: Theme.spaceXs
-    readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceM
+    readonly property int padX: compactMenu ? Theme.channelWidth + Theme.spaceS
+        : Theme.channelWidth * 2 + sectionGap + Theme.spaceM
     readonly property int padY: Theme.channelWidth * 2 + sectionGap + sectionPadY
     // Grown, the edge against the bar has no outline of its own (the group's
     // runs straight on into the box's), so it leaves out a channel's room.

@@ -156,7 +156,8 @@ Item {
     Text {
         id: labelText
         anchors.left: leadText.visible ? leadText.right : parent.left
-        anchors.leftMargin: leadText.visible ? Theme.spaceM : root.highlighted ? Theme.spaceM : 0
+        anchors.leftMargin: leadText.visible ? (root.compactMenu ? Theme.spaceS : Theme.spaceM)
+            : root.highlighted ? Theme.spaceM : 0
         anchors.verticalCenter: parent.verticalCenter
         // up to whatever sits at the right; the note takes what's left
         width: Math.max(0, Math.min(root.note === "" ? Infinity
