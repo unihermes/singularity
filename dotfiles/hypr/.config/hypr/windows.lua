@@ -18,11 +18,16 @@ local monocleRule, edgeGaps, SCRATCH_CLASS, isPrompt, fullscreenRules, appRules,
 
 -- Popouts (holdPopup below), hooked ahead of monocle's hooks, which would
 -- fill the window. Windows already open at load (a reload) are left alone.
-local holdPopup, fillByHand
+local holdPopup, fillByHand, browserOpenedThunar
+local focusedNow, focusedBefore = nil, nil
 local launchWaiting = false
 local knownWindows = {}
 for _, w in ipairs(hl.get_windows()) do knownWindows[w.address] = true end
-hl.on("window.active", function() holdPopup(hl.get_active_window()) end)
+hl.on("window.active", function()
+    local win = hl.get_active_window()
+    if win and not knownWindows[win.address] then win = browserOpenedThunar(win) end
+    holdPopup(win)
+end)
 -- A window launched (a bind, the launcher, the scratchpad's terminal) while
 -- the scratchpad is up would map in it, filled over everything and out of
 -- SUPER+M's reach; it goes to the workspace under the scratchpad instead,
@@ -50,7 +55,10 @@ local function launchOutOfScratchpad(win)
     hl.dispatch(hl.dsp.focus({ window = target }))
     return hl.get_window(target) or win
 end
-hl.on("window.open", function(win) holdPopup(launchOutOfScratchpad(win)) end)
+hl.on("window.open", function(win)
+    if win then win = browserOpenedThunar(win) end
+    holdPopup(launchOutOfScratchpad(win))
+end)
 hl.on("window.close", function(win) if win then knownWindows[win.address] = nil end end)
 
 -- SUPER+M's layout per workspace ("1 dwindle" lines), kept in a runtime
@@ -871,7 +879,7 @@ end
 -- out) goes to the workspace under the cursor instead. Returns the window
 -- after the move.
 local function followOwner(win)
-    if launchWaiting or win.pinned or hasTag(win, "rule-ws") or not onActiveWorkspace(win) then return win end
+    if launchWaiting or hasTag(win, "app-opened") or win.pinned or hasTag(win, "rule-ws") or not onActiveWorkspace(win) then return win end
     local owner = popoutOwnerOf(win)
     local ws = owner and owner.workspace
     local cur = owner and BROWSER_CLASSES[win.class] and hl.get_cursor_pos()
@@ -1408,7 +1416,6 @@ end)
 -- the window focused just before it opened, if they share a process or the
 -- dialog is a prompt (file chooser, polkit).
 local dialogOwner = {}   -- modal dialog or prompt address -> owner address
-local focusedNow, focusedBefore = nil, nil
 
 local function adoptDialog(addr)
     local win = hl.get_window("address:" .. addr)
@@ -2040,6 +2047,36 @@ hl.on("workspace.active", function() applyLayoutRules() end)
 -- The app rules' switch: on while none of the app's windows is open or a
 -- launch is pending. `closing` is a window still listed on its way out.
 local launchPending = {}
+-- A browser's Show in Folder opens a main Thunar window even when Thunar's
+-- daemon already has windows. Give it the configured main-window size.
+browserOpenedThunar = function(win)
+    if not win.class or win.class:lower() ~= "thunar" or win.modal then return win end
+    local active = hl.get_active_window()
+    local previous = active and active.address ~= win.address and active
+        or hl.get_window("address:" .. (focusedNow == win.address and focusedBefore or focusedNow or ""))
+    local class = previous and previous.class and previous.class:lower()
+    if class ~= "floorp" and class ~= "zen" and class ~= "zen-browser" then return win end
+    for _, app in ipairs(appRules) do
+        if hasTag(win, app.tag) then
+            local addr = "address:" .. win.address
+            hl.dispatch(hl.dsp.window.tag({ tag = "+app-opened", window = addr }))
+            local w, h
+            if type(app.size) == "string" then w, h = app.size:match("^(%d+%%?) (%d+%%?)$") end
+            local mon = win.monitor
+            if w and h and mon then
+                local function pixels(value, extent)
+                    local pct = value:match("^(%d+)%%$")
+                    return pct and math.floor(extent * tonumber(pct) / 100) or tonumber(value)
+                end
+                hl.dispatch(hl.dsp.window.resize({ x = pixels(w, mon.width / mon.scale),
+                    y = pixels(h, mon.height / mon.scale), window = addr }))
+                hl.dispatch(hl.dsp.window.center({ window = addr }))
+            end
+        end
+    end
+    return hl.get_window("address:" .. win.address) or win
+end
+
 local function syncAppRules(closing)
     if #appRules == 0 then return end
     local open = {}
@@ -2082,8 +2119,9 @@ hl.on("window.open", function(win)
     for _, app in ipairs(appRules) do
         if hasTag(win, app.tag) then
             local addr = "address:" .. win.address
-            hl.dispatch(hl.dsp.window.tag({ tag = app.on and "+app-opened" or "+app-held", window = addr }))
-            if not app.on then hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr })) end
+            local opened = app.on or hasTag(win, "app-opened")
+            hl.dispatch(hl.dsp.window.tag({ tag = opened and "+app-opened" or "+app-held", window = addr }))
+            if not opened then hl.dispatch(hl.dsp.window.tag({ tag = "+monocle-exempt", window = addr })) end
             launchPending[app.tag] = nil
         end
     end

@@ -332,7 +332,8 @@ do
             local name = "settings-rule-" .. n
             local rule = { name = name, match = match }
             local exempt = r.float or r.pin or r.fullscreen
-            local app = not match.title and { tag = classTag(match.class), rules = {}, on = true } or nil
+            local app = not match.title and { tag = classTag(match.class), rules = {}, on = true,
+                size = r.float and r.size or nil } or nil
             local appMatch = match
             if app then
                 appMatch = { class = match.class, tag = "negative:app-held" }
