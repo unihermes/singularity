@@ -10,7 +10,8 @@ import "../services"
 FlyoutPanel {
     id: barMenu
     flyout: "barmenu"
-    menuWidth: 220
+    menuWidth: 190
+    compactMenu: true
 
     FlyoutHeading { text: "BAR" }
 

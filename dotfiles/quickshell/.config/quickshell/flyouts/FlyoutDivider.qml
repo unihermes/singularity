@@ -21,7 +21,12 @@ Item {
     }
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.spaceL + 1
+    readonly property bool compactMenu: {
+        for (var p = parent; p; p = p.parent)
+            if (p.compactMenu === true) return true
+        return false
+    }
+    implicitHeight: compactMenu ? Theme.spaceS + 1 : Theme.spaceL + 1
 
     Rectangle {
         anchors.left: parent.left

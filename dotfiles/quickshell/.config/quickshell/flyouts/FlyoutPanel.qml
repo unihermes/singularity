@@ -28,6 +28,7 @@ OverlayWindow {
     function requestClose() { scope.openFlyout = "" }
 
     property real menuWidth: 240
+    property bool compactMenu: false
     // Exclusive keyboard focus instead of OnDemand; fixed while it's up
     property bool keyboardExclusive: false
     // distance from the bar's screen edge to the near edge of the box
@@ -211,6 +212,7 @@ OverlayWindow {
             Absorber {}
 
             SectionRuns {
+                visible: !root.compactMenu
                 x: Theme.channelWidth + root.sectionGap
                 width: box.width - x * 2
                 height: box.height
@@ -224,9 +226,10 @@ OverlayWindow {
                 x: root.padX
                 y: root.padTop
                 width: parent.width - root.padX * 2
-                spacing: Theme.flyoutSpacing
+                spacing: root.compactMenu ? 0 : Theme.flyoutSpacing
                 // FlyoutHeading and FlyoutDivider make room for the sections
-                readonly property bool sectioned: true
+                readonly property bool sectioned: !root.compactMenu
+                readonly property bool compactMenu: root.compactMenu
 
                 // the marker LookStepper looks for to place a dropdown's overlay
                 readonly property bool isFlyoutPage: true

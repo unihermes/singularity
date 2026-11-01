@@ -93,7 +93,12 @@ Item {
     property bool dimmed: false
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.rowHeight
+    readonly property bool compactMenu: {
+        for (var p = parent; p; p = p.parent)
+            if (p.compactMenu === true) return true
+        return false
+    }
+    implicitHeight: compactMenu ? Theme.rowHeightDense : Theme.rowHeight
 
     // How the active entry is marked is the style's (Theme.rowMark): a
     // tick on the left edge, or an accent-tinted ground

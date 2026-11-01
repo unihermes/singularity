@@ -12,7 +12,8 @@ import "../flyouts"
 FlyoutPanel {
     id: menu
     flyout: "desktopmenu"
-    menuWidth: 220
+    menuWidth: 190
+    compactMenu: true
 
     // this screen's DesktopWidgets, which keeps where the click was
     required property var layer
