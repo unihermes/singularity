@@ -346,7 +346,18 @@ Singleton {
     // The icon a row or card shows: the app's, else the phone's picture for
     // its app, else an installed app's going by its name, else Claude's for
     // Claude Code's through the terminal; "" for none
+    function sidebarIcon(entry) {
+        if (entry.phone) return ""
+        const match = /^singularity-sidebar-(chat|code)-(claude|codex)$/.exec(entry.desktopEntry || "")
+        if (match) return "file://" + Quickshell.shellPath("sidebar/icons/" + match[2] + ".svg")
+        if (entry.appName === "Claude" && !entry.desktopEntry && /^Claude · (Chat|Code): /.test(entry.summary || ""))
+            return "file://" + Quickshell.shellPath("sidebar/icons/claude.svg")
+        return ""
+    }
+
     function iconOf(entry) {
+        const sidebar = sidebarIcon(entry)
+        if (sidebar) return sidebar
         if (entry.icon) return entry.icon
         if (entry.phone && entry.picture) return entry.picture
         const app = desktopFor(entry)
@@ -359,6 +370,9 @@ Singleton {
     // data is only served while it lasts), else a file it named. Not the
     // phone's, which is its icon (iconOf)
     function pictureOf(entry) {
+        // notify-send exposes a file icon as an image hint; sidebar logos
+        // belong in the app-icon cell, never in the message body.
+        if (sidebarIcon(entry)) return ""
         if (entry.phone && !entry.icon) return ""
         return entry.live && entry.live.tracked ? pictureFor(entry.live) : entry.picture
     }

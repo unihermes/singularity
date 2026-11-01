@@ -98,3 +98,24 @@ test('old duplicate pairs become one Codex card with a durable route', () => {
     ctx.repairSidebarHistory()
     assert.equal(ctx.history.length, 2)
 })
+
+test('Claude and Codex sidebar logos occupy the app icon slot, never the body image', () => {
+    const ctx = vm.createContext({ Quickshell: { shellPath: p => `/shell/${p}` },
+        pictureFor: n => n.image, desktopFor: () => null, isClaude: () => false })
+    for (const name of ['sidebarIcon', 'iconOf', 'pictureOf'])
+        vm.runInContext(source.match(new RegExp('    function ' + name + '\\([^]*?\\n    }'))[0], ctx)
+    for (const engine of ['claude', 'codex']) {
+        for (const live of [null, { tracked: true, image: `file:///shell/sidebar/icons/${engine}.svg` }]) {
+            const entry = { desktopEntry: `singularity-sidebar-code-${engine}`, icon: '',
+                picture: `file:///shell/sidebar/icons/${engine}.svg`, live }
+            assert.equal(ctx.iconOf(entry), `file:///shell/sidebar/icons/${engine}.svg`)
+            assert.equal(ctx.pictureOf(entry), '')
+        }
+    }
+    const other = { appName: 'Mail', icon: 'mail-icon', picture: 'file:///photo.png', live: null }
+    assert.equal(ctx.iconOf(other), 'mail-icon')
+    assert.equal(ctx.pictureOf(other), 'file:///photo.png')
+    const legacy = { appName: 'Claude', summary: 'Claude · Chat: replied', picture: 'file:///logo.svg' }
+    assert.equal(ctx.iconOf(legacy), 'file:///shell/sidebar/icons/claude.svg')
+    assert.equal(ctx.pictureOf(legacy), '')
+})
