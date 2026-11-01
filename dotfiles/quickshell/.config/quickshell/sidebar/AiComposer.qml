@@ -5,7 +5,7 @@
 // off), the slash commands matching a / typed at the start (the sidebar's
 // own: /clear, /new, /model, /mode, /past, /compact; then the CLI's), the
 // box (Enter sends, Shift+Enter is a new line, Ctrl+L or /clear starts
-// over), then a line with
+// over; ! runs a shell command), then a line with
 // 󰐕 for attaching, the model and, on
 // Code, the permission mode, what it's doing,
 // and Send or Stop.

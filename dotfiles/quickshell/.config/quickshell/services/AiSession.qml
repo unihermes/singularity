@@ -1,8 +1,10 @@
 // Shared transcript and conversation state for the CLI adapters.
 import Quickshell
+import Quickshell.Io
 import QtQuick
 
 Scope {
+    id: root
     property string cwd: ""
     property string modelPick: ""
     property string reasoningPick: ""
@@ -28,6 +30,70 @@ Scope {
     signal asked(string title)
 
     ListModel { id: rows }
+
+    readonly property bool commandRunning: commandProc.running
+    property int commandRow: -1
+    property string commandOutput: ""
+    property string commandText: ""
+    property string shellContext: ""
+    property bool commandStopped: false
+
+    function runCommand(text) {
+        var command = text.slice(1).trim()
+        if (!command || busy || commandRunning) return false
+        commandText = command
+        commandOutput = ""
+        commandStopped = false
+        commandRow = add({ kind: "tool", name: "Bash", detail: oneLine(command), body: command, phase: "running" })
+        busy = true
+        activity = oneLine(command)
+        commandProc.command = ["python3", Quickshell.shellPath("scripts/ai-command.py"), command]
+        commandProc.running = true
+        return true
+    }
+
+    function commandLine(line) {
+        commandOutput = clip(commandOutput + line + "\n")
+        if (commandRow >= 0) setRow(commandRow, { result: commandOutput })
+    }
+
+    function stopCommand() {
+        if (!commandRunning) return false
+        commandStopped = true
+        commandProc.signal(15)
+        return true
+    }
+
+    function resetCommands() {
+        commandRow = -1
+        shellContext = ""
+        stopCommand()
+    }
+
+    function withCommandContext(text) {
+        if (!shellContext) return text
+        var context = shellContext
+        shellContext = ""
+        return "Commands run by the user in " + cwd + ":\n" + context + "\nUser message:\n" + text
+    }
+
+    Process {
+        id: commandProc
+        workingDirectory: root.cwd
+        stdout: SplitParser { onRead: line => root.commandLine(line) }
+        stderr: SplitParser { onRead: line => root.commandLine(line) }
+        onExited: (code, status) => {
+            if (root.commandRow < 0) return
+            var result = root.commandOutput + (root.commandStopped ? "\nStopped" : "\nExit code: " + code)
+            root.setRow(root.commandRow, { phase: root.commandStopped ? "stopped" : code === 0 && status === 0 ? "done" : "error", result: result })
+            root.shellContext = root.clip(root.shellContext + "$ " + root.commandText + "\n" + result + "\n")
+            root.commandRow = -1
+            root.busy = false
+            root.activity = ""
+            root.unseen = true
+            root.turnEnded()
+        }
+    }
 
     function attach(a) { if (a) attachments = attachments.concat([a]) }
     function unattach(i) {

@@ -39,7 +39,8 @@ AiSession {
 
     function send(text) {
         text = (text || "").trim()
-        if (busy || (text === "" && attachments.length === 0)) return false
+        if (busy || commandRunning || (text === "" && attachments.length === 0)) return false
+        if (text.startsWith("!")) return runCommand(text)
         var content = [], labels = [], images = []
         attachments.forEach(a => {
             if (a.kind === "image") {
@@ -50,7 +51,7 @@ AiSession {
             }
             labels.push(a.label)
         })
-        if (text !== "") content.push({ type: "text", text: text })
+        if (text !== "" || shellContext !== "") content.push({ type: "text", text: withCommandContext(text) })
         add({ kind: "user", text: text, note: labels.join("  ·  "), images: images.join("\n") })
         attachments = []
         busy = true
@@ -62,6 +63,7 @@ AiSession {
 
     // Stop: the turn ends with its result, like any other
     function stop() {
+        if (stopCommand()) return
         if (!busy || !proc.running) return
         stopping = true
         control({ subtype: "interrupt" })
@@ -84,6 +86,7 @@ AiSession {
     // A fresh conversation: the process goes, and the next message starts
     // a new one.
     function reset() {
+        resetCommands()
         if (proc.running) {
             killing = true
             proc.signal(15)

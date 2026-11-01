@@ -64,7 +64,8 @@ AiSession {
 
     function send(text) {
         text = (text || "").trim()
-        if (busy || (text === "" && attachments.length === 0)) return false
+        if (busy || commandRunning || (text === "" && attachments.length === 0)) return false
+        if (text.startsWith("!")) return runCommand(text)
         if (text === "/compact" && attachments.length === 0) {
             if (sessionId === "") return false
             add({ kind: "note", text: "Summarising the conversation…" })
@@ -81,7 +82,7 @@ AiSession {
             }
             labels.push(a.label)
         })
-        if (text !== "") input.push({ type: "text", text: text, text_elements: [] })
+        if (text !== "" || shellContext !== "") input.push({ type: "text", text: withCommandContext(text), text_elements: [] })
         add({ kind: "user", text: text, note: labels.join("  ·  "), images: images.join("\n") })
         attachments = []
         busy = true
@@ -95,6 +96,7 @@ AiSession {
     }
 
     function stop() {
+        if (stopCommand()) return
         if (!busy || sessionId === "" || turnId === "") return
         stopping = true
         call("turn/interrupt", { threadId: sessionId, turnId: turnId })
@@ -110,6 +112,7 @@ AiSession {
     }
 
     function reset() {
+        resetCommands()
         if (proc.running) {
             killing = true
             proc.signal(15)
