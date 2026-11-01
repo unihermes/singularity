@@ -70,7 +70,7 @@ Item {
                 anchors.fill: parent
                 radius: root.radius
                 color: root.fill
-                border.width: Theme.frameStroked && !Theme.glass ? Theme.borderWidth : 0
+                border.width: Theme.frameStroked ? Theme.borderWidth : 0
                 border.color: Theme.stroke
 
                 Rectangle {

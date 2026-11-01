@@ -57,14 +57,7 @@ part of its default (see Styles and settings).
   the option off (or leaving Flat) brings the usual arrangement back. Its
   `barPosition` option puts the bar at the bottom (an option's `off` is
   the value it takes when off).
-- Glass's `blur` and `tint` change its frost. Grounds retain 38% opacity
-  with Heavy blur, 48% without it, scaled by See-through. Panels have a
-  faint white hairline and a lightly lifted ground with a soft top highlight
-  that preserves alpha. Glass modules and meter tracks use a white wash,
-  without shadows showing through their translucent fills. The bar keeps
-  its palette tint. Glass sections have no outlines; flyout sections
-  use a faint white wash over one translucent outer ground so
-  desktop colour remains visible through the whole panel.
+- Glass's `blur` and `tint` change its frost.
 
 Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.textOnAccent`) unless its row in the table says otherwise.
@@ -270,7 +263,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
   outline around both. Rounded inside corners join them where the widths
   differ, and the sides are straight where they line up (at the screen edge,
   for instance). It only fades in, since its frame is joined to the bar.
-- **Frame:** a channel with a surface ground and radius `panelFrameRadius`
+- **Frame:** a channel with a surface ground using the shared panel opacity
+  (Glass and See-through), and radius `panelFrameRadius`
   (15px at Roundness 6).
 - **Sectioned:** each run of rows between headings and dividers sits in its
   own frame (panel ground, radius + 3, `sectionRadius`), in place of

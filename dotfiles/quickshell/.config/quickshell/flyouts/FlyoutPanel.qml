@@ -141,6 +141,7 @@ OverlayWindow {
     }
 
     GrownFrame {
+        fill: Theme.flyoutFill
         visible: root.grown
         anchors.fill: parent
         opacity: box.opacity
@@ -218,7 +219,6 @@ OverlayWindow {
                 x: Theme.channelWidth + root.sectionGap
                 width: box.width - x * 2
                 height: box.height
-                fill: Theme.glass ? Theme.glassSectionFill : Theme.panelFill
                 column: contentColumn
                 columnY: contentColumn.y
                 padY: root.sectionPadY

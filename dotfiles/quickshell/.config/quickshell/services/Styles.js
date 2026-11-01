@@ -12,7 +12,7 @@
 //   lines    whether it has strokes (Heavy lines)
 //   attach   flyouts "grown", "floating", or "auto" (flush on a full bar)
 //   anim     how flyouts open when left to the style
-//   glass    translucent grounds, reflective hairline
+//   glass    grounds 30% more see-through, light hairline
 //   square   every corner square
 //   finish   the Finish switches picking it sets
 //   options  its own switches { id, label, hint, on }; one with `key` stands
@@ -76,7 +76,7 @@ var styles = {
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
     glass: {
-        name: "Glass", hint: "Clear, softly lit glass with desktop colour showing through",
+        name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
         frame: "single", modules: "filled", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "fade", glass: true,
         settings: {
@@ -238,7 +238,7 @@ function resolve(s) {
     var attach = s.plain ? "flush"
         : st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
-    var see = st.glass ? (has(s.styleOptions, "blur") ? 0.38 : 0.48) : 1
+    var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
         styleName: s.style,
         frameStyle: st.frame,

@@ -126,7 +126,7 @@ PanelWindow {
                 visible: !Theme.frameChannel
                 anchors.fill: parent
                 radius: Theme.groupRadius
-                color: Theme.glass ? Theme.glassModuleFill : Theme.surface
+                color: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)) : Theme.surface
                 border.width: Theme.frameStroked ? Theme.borderWidth : 0
                 border.color: Theme.stroke
 
