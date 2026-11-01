@@ -400,7 +400,7 @@ end
 -- (`mon`, else its own): monocle to its shape, any other to the whole area.
 -- A drag carries it across monitors with no event at the end, so it's
 -- sized at once and placed once it has kept still for REFILL_SETTLE ms.
-local REFILL_TICK, REFILL_SETTLE = 50, 150
+local REFILL_TICK, REFILL_SETTLE = 25, 50
 local function refitMoved(win, mon)
     win = win and hl.get_window("address:" .. win.address)
     if not (win and win.floating and win.fullscreen == 0) then return end
