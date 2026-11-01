@@ -3,10 +3,10 @@
 //
 // The open windows after the workspaces, in one frame: the focused
 // workspace's or every workspace's (Theme.windowScope), drawn per
-// Theme.windowStyle (icons, glide, lift, inset, segmented, dots, rings,
-// fade, viewfinder, tint, liquid), never with text. An app with several
-// windows shows it in each style: pips, notches, a count, arcs, ghost
-// copies, ticks, stacked edges or a ringed dot.
+// Theme.windowStyle (icons, glide, lift, inset, segmented, rings, fade,
+// viewfinder, tint, liquid), never with text. An app with several windows
+// shows it in each style: pips, notches, a count, arcs, ghost copies,
+// ticks or stacked edges.
 // The icons sit dead centre; every mark goes on the screen edge's side of
 // them, above on a top bar and below on a bottom one.
 
@@ -107,8 +107,23 @@ ModuleFrame {
         // a full-size icon's top and bottom, centred in the strip
         readonly property int iconTop: Math.round((Theme.moduleHeight - Theme.windowIconSize) / 2)
         readonly property int iconBottom: iconTop + Theme.windowIconSize
-        // glide's rail, a pixel clear of the icons on the edge's side
-        readonly property int markY: atBottom ? iconBottom + 1 : iconTop - 2
+        // glide's groove, in the gap between the icons and the screen's edge
+        readonly property int markH: 3
+        readonly property int markY: atBottom ? Math.min(Theme.moduleHeight - markH, iconBottom + 1)
+            : Math.max(0, iconTop - markH - 1)
+
+        // segmented: the outlined track every segment sits in
+        Rectangle {
+            visible: strip.style === "segmented"
+            x: stripRow.x
+            width: stripRow.width
+            height: Theme.moduleHeight - 6
+            anchors.verticalCenter: parent.verticalCenter
+            radius: Theme.radiusSmall
+            color: "transparent"
+            border.width: 1
+            border.color: Theme.stroke
+        }
 
         // liquid: the blob behind the focused icon; on a move its leading
         // edge goes first and the trailing one catches up
@@ -126,7 +141,7 @@ ModuleFrame {
             width: Math.max(0, r - l)
             height: Theme.iconHoverHeight
             anchors.verticalCenter: parent.verticalCenter
-            radius: Math.min(height / 2, Theme.radius + 2)
+            radius: height / 2
             color: Qt.alpha(Theme.accent, 0.45)
             onWantLChanged: place()
             onWantRChanged: place()
@@ -151,9 +166,8 @@ ModuleFrame {
         Row {
             id: stripRow
             anchors.verticalCenter: parent.verticalCenter
-            spacing: strip.style === "dots" ? Theme.spaceXs
-                : strip.style === "segmented" || strip.style === "inset" || strip.wideSlots
-                    || Theme.moduleTaskbar ? 0 : Theme.spaceS
+            spacing: strip.style === "segmented" || strip.style === "inset" || strip.wideSlots
+                || Theme.moduleTaskbar ? 0 : Theme.spaceS
 
             Repeater {
                 id: iconRepeater
@@ -171,7 +185,6 @@ ModuleFrame {
                     readonly property bool hovered: winMouse.containsMouse || opened
                     readonly property bool lit: focused || hovered
                     readonly property string style: strip.style
-                    readonly property bool dots: style === "dots"
                     readonly property bool glide: style === "glide"
                     readonly property bool seg: style === "segmented"
                     readonly property bool inset: style === "inset"
@@ -222,15 +235,14 @@ ModuleFrame {
                     // focusing a window doesn't shuffle the strip; rings
                     // one the ring's size
                     readonly property int slotW: lift ? largeIconPx : rings ? ringPx : glyphBox.width
-                    readonly property int bodyWidth: dots ? dot.width : slotW
-                    readonly property int padX: dots ? 1 : Theme.windowIconPadding
+                    readonly property int padX: Theme.windowIconPadding
                     // viewfinder's and tint's box round the icon
                     readonly property int boxPx: Theme.windowIconSize + 6
 
                     anchors.verticalCenter: parent.verticalCenter
                     // a little wider than the icon, so neighbours' pips
                     // don't run together and each is a comfortable target
-                    implicitWidth: lead + bodyWidth + padX * 2
+                    implicitWidth: lead + slotW + padX * 2
                     implicitHeight: Theme.moduleHeight
 
                     // the rule between one workspace's windows and the next's
@@ -243,7 +255,7 @@ ModuleFrame {
                         color: Theme.stroke
                     }
 
-                    // segmented: the hairline between two segments, gone
+                    // segmented: the divider between two segments, gone
                     // beside the lit one
                     Rectangle {
                         visible: winIcon.seg && winIcon.index > 0 && !winIcon.modelData.groupStart
@@ -251,7 +263,7 @@ ModuleFrame {
                         x: 0
                         anchors.verticalCenter: parent.verticalCenter
                         width: 1
-                        height: Math.round(Theme.moduleHeight * 0.45)
+                        height: Theme.moduleHeight - 6
                         color: Theme.stroke
                     }
 
@@ -272,7 +284,7 @@ ModuleFrame {
                     }
 
                     // segmented: the slot's ground (accent under the focused
-                    // window, hover fill under the rest)
+                    // window, hover fill under the rest), inside the track
                     Rectangle {
                         visible: winIcon.seg
                         x: winIcon.lead
@@ -280,10 +292,8 @@ ModuleFrame {
                         width: parent.width - winIcon.lead
                         height: Theme.moduleHeight - 6
                         radius: Theme.radiusSmall
-                        color: winIcon.focused ? Qt.alpha(Theme.accent, 0.22)
+                        color: winIcon.focused ? Qt.alpha(Theme.accent, 0.3)
                             : winIcon.hovered ? Theme.overlay : "transparent"
-                        border.width: winIcon.focused ? Theme.borderWidth : 0
-                        border.color: Qt.alpha(Theme.accent, 0.6)
                         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                     }
 
@@ -326,7 +336,7 @@ ModuleFrame {
                     }
 
                     // tint: a tile washed in the app's own colours, deeper
-                    // and outlined for the focused window, with an edge per
+                    // for the focused window, with an edge per
                     // extra window (up to two) stacked behind it toward the
                     // screen's edge (so drawn a little past the strip)
                     Item {
@@ -358,17 +368,6 @@ ModuleFrame {
                             height: parent.height
                             visible: false
                             layer.enabled: winIcon.tint
-                            Rectangle {
-                                visible: winIcon.focused
-                                x: tintMask.tileX
-                                y: tintMask.tileY
-                                width: winIcon.boxPx
-                                height: width
-                                radius: Theme.radiusSmall
-                                color: "transparent"
-                                border.width: 1.5
-                                border.color: "white"
-                            }
                             Repeater {
                                 model: winIcon.tint && winIcon.multi ? Math.min(2, winIcon.winCount - 1) : 0
                                 Rectangle {
@@ -391,11 +390,11 @@ ModuleFrame {
                             iconX: glyphBox.x
                             iconY: tintLayer.grow + glyphBox.y
                             iconPx: winIcon.iconPx
-                            opacity: winIcon.focused ? 0.55 : winIcon.hovered ? 0.4 : 0.22
+                            opacity: winIcon.focused ? 0.8 : winIcon.hovered ? 0.4 : 0.22
                             Behavior on opacity { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                         }
                         Wash {
-                            visible: winIcon.tint && winIcon.modelData.source !== "" && (winIcon.focused || winIcon.multi)
+                            visible: winIcon.tint && winIcon.modelData.source !== "" && winIcon.multi
                             width: parent.width
                             height: parent.height
                             mask: tintRim
@@ -415,9 +414,7 @@ ModuleFrame {
                         width: winIcon.boxPx
                         height: width
                         radius: Theme.radiusSmall
-                        color: winIcon.focused ? Theme.selectedFill : winIcon.hovered ? Theme.overlay : Theme.surface
-                        border.width: winIcon.focused ? 1 : 0
-                        border.color: Theme.strokeFocus
+                        color: winIcon.focused ? Theme.subtext : winIcon.hovered ? Theme.overlay : Theme.surface
                     }
 
                     // rings: a ring round the icon, an arc per window (up to
@@ -491,12 +488,11 @@ ModuleFrame {
 
                     Item {
                         id: glyphBox
-                        visible: !winIcon.dots
                         x: winIcon.lead + winIcon.padX + Math.round((winIcon.slotW - width) / 2)
                         anchors.verticalCenter: parent.verticalCenter
                         width: winIcon.iconPx
                         height: winIcon.iconPx
-                        opacity: winIcon.lift ? (winIcon.focused ? 1 : winIcon.hovered ? 0.9 : 0.5)
+                        opacity: winIcon.lift ? (winIcon.lit ? 1 : 0.8)
                             : winIcon.fade ? (winIcon.focused ? 1 : winIcon.hovered ? 0.85 : 0.42)
                             : winIcon.lit || winIcon.rings || winIcon.finder || winIcon.tint || winIcon.liquid ? 1 : 0.55
                         Behavior on opacity { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
@@ -513,7 +509,7 @@ ModuleFrame {
                             anchors.fill: parent
                             visible: winIcon.modelData.source !== ""
                             source: winIcon.modelData.source
-                            grey: (winIcon.lift || winIcon.fade) && !winIcon.lit
+                            grey: winIcon.fade && !winIcon.lit
                         }
 
                         // apps with no themed icon, and the shell's own windows
@@ -609,49 +605,18 @@ ModuleFrame {
                         }
                     }
 
-                    // the dots style's whole mark
-                    Rectangle {
-                        id: dot
-                        visible: winIcon.dots
-                        x: winIcon.lead + winIcon.padX
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: Theme.barFs(6)
-                        width: winIcon.focused ? Theme.barFs(14) : height
-                        radius: Theme.pill(height)
-                        color: winIcon.focused ? Theme.accent
-                            : winIcon.hovered ? Theme.subtext : Theme.muted
-                        Behavior on width {
-                            NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
-                        }
-                        Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
-                    }
-
-                    // dots: a ring round the dot of an app with more than
-                    // one window
-                    Rectangle {
-                        visible: winIcon.dots && winIcon.multi
-                        x: dot.x - 2
-                        anchors.verticalCenter: dot.verticalCenter
-                        width: dot.width + 4
-                        height: dot.height + 4
-                        radius: Theme.pill(height)
-                        color: "transparent"
-                        border.width: 1
-                        border.color: winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
-                    }
-
-                    // glide: the rail's notch per window under the icon,
+                    // glide: the groove's notch per window by the icon,
                     // which the slider lights for the window shown
                     Row {
                         visible: winIcon.notched
                         x: glyphBox.x
-                        y: strip.markY - Math.floor((Theme.indicatorWidth - 1) / 2)
+                        y: strip.markY
                         spacing: 1
                         Repeater {
                             model: winIcon.notched ? winIcon.notchSegs : 0
                             Rectangle {
                                 width: winIcon.notchW
-                                height: Theme.indicatorWidth
+                                height: strip.markH
                                 radius: Theme.pill(height)
                                 color: winIcon.focused || winIcon.hovered ? Theme.subtext : Theme.muted
                             }
@@ -700,15 +665,17 @@ ModuleFrame {
             }
         }
 
-        // glide: the rail under every icon, and the slider that
-        // travels along it to the focused one
+        // glide: the groove along every icon, and the slider that
+        // travels in it to the focused one
         Rectangle {
             visible: strip.style === "glide"
+            z: -1
             x: stripRow.x + Theme.spaceS / 2
             y: strip.markY
             width: stripRow.width - Theme.spaceS
-            height: 1
-            color: Theme.stroke
+            height: strip.markH
+            radius: Theme.pill(height)
+            color: Theme.overlay
         }
         Rectangle {
             id: slider
@@ -716,10 +683,10 @@ ModuleFrame {
             visible: target !== null
             x: target ? stripRow.x + target.x + target.lead + target.padX
                 + (target.notched ? Math.min(3, target.shownIndex) * (target.notchW + 1) : 0) : 0
-            y: strip.markY - Math.floor((Theme.indicatorWidth - 1) / 2)
+            y: strip.markY
             width: target ? (target.notched ? target.notchW : target.iconPx) : 0
-            z: 1
-            height: Theme.indicatorWidth
+            z: 2
+            height: strip.markH
             radius: Theme.pill(height)
             color: Theme.accent
             Behavior on x {
