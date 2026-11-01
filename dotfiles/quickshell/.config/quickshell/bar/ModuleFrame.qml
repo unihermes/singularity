@@ -78,15 +78,15 @@ Item {
         readonly property bool openRing: root.active && (flush || (Theme.moduleOpenFill && root.gauge))
         // a solid chip's own ground: Glass's is a faint frost, and Solid's
         // tint option mixes in the accent
-        readonly property color restFill: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06))
+        readonly property color restFill: Theme.glass ? Theme.glassModuleFill
             : Theme.style === "solid" && Theme.opt("tint") ? Qt.tint(Theme.surface, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16))
             : Theme.surface
 
         height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
         radius: Theme.radius
-        color: flush ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+        color: flush ? (root.active || hover.hovered ? (Theme.glass ? Theme.glassModuleHover : Theme.overlay) : "transparent")
             : openFill ? (Theme.glass ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Theme.accent)
-            : root.hovered ? (Theme.glass ? Theme.stroke : Theme.overlay)
+            : root.hovered ? (Theme.glass ? Theme.glassModuleHover : Theme.overlay)
             : root.active ? Theme.selectedFill
             : solid ? restFill : "transparent"
 
@@ -97,7 +97,7 @@ Item {
 
         Shadow {
             radius: frame.radius
-            opaque: frame.solid
+            opaque: frame.solid && !Theme.glass
         }
 
         // Glass's glow, round the open chip
@@ -134,8 +134,8 @@ Item {
             anchors.margins: frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
             radius: frame.flush ? frame.radius : Theme.radiusSmall
-            color: frame.flush || frame.taskbar ? (root.active || hover.hovered ? Theme.overlay : "transparent")
-                : Theme.meterTrack
+            color: frame.flush || frame.taskbar ? (root.active || hover.hovered ? (Theme.glass ? Theme.glassModuleHover : Theme.overlay) : "transparent")
+                : Theme.glass ? Theme.glassModuleFill : Theme.meterTrack
 
 
             Rectangle {

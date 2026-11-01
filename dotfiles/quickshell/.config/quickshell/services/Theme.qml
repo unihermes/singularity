@@ -119,12 +119,13 @@ Singleton {
     readonly property real panelOpacity:   resolved.opacity / 100
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
-    readonly property real glassLift: isLight ? 0.4 : 0.65
     readonly property color panelFill: glass
-        ? glassHighlight(Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity), glassLift)
+        ? glassHighlight(Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity), isLight ? 0.12 : 0.22)
         : Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
     // One translucent ground lets the compositor carry desktop colour through.
     readonly property color flyoutFill: glass ? panelFill : Qt.rgba(surface.r, surface.g, surface.b, panelOpacity)
+    readonly property color glassModuleFill: Qt.rgba(1, 1, 1, 0.16)
+    readonly property color glassModuleHover: Qt.rgba(1, 1, 1, 0.24)
     readonly property color glassSectionFill: Qt.rgba(1, 1, 1, panelOpacity * 0.08)
     function glassHighlight(c, amount) {
         return Qt.rgba(c.r + (1 - c.r) * amount, c.g + (1 - c.g) * amount,

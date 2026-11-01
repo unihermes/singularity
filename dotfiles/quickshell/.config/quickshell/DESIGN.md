@@ -59,9 +59,10 @@ part of its default (see Styles and settings).
   the value it takes when off).
 - Glass's `blur` and `tint` change its frost. Grounds retain 38% opacity
   with Heavy blur, 48% without it, scaled by See-through. Panels have a
-  faint white hairline and a pale ground with a soft top highlight
-  that preserves alpha. Bar and panel fills lift the palette toward white
-  by 65% in dark looks and 40% in light looks. Glass sections have no outlines; flyout sections
+  faint white hairline and a lightly lifted ground with a soft top highlight
+  that preserves alpha. Glass modules and meter tracks use a white wash,
+  without shadows showing through their translucent fills. The bar keeps
+  its palette tint. Glass sections have no outlines; flyout sections
   use a faint white wash over one translucent outer ground so
   desktop colour remains visible through the whole panel.
 
