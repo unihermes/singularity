@@ -88,7 +88,8 @@ Singleton {
         checkProc.running = true
     }
 
-    // yay, repo and AUR in one unattended pass after the sudo prompt
+    // yay, repo and AUR in one unattended pass after the sudo prompt, the
+    // package lists always redownloaded (-yy)
     // (--sudoloop, no menus, diffs or confirm, --removemake), ignoring
     // Settings.updateIgnore. The terminal closes on success and stays on
     // failure; the list is re-checked after.
@@ -97,7 +98,7 @@ Singleton {
         var flags = " --noconfirm --answerdiff None" + (Settings.updateAur ? "" : " --repo")
             + (Settings.updateIgnore.length > 0 ? " --ignore " + Settings.updateIgnore.join(",") : "")
         updateProc.command = [Settings.terminal, "--class", "singularity.update", "-e", "sh", "-c",
-            "yay -Syu" + flags + " --sudoloop --answerclean None --answeredit None --removemake; "
+            "yay -Syyu" + flags + " --sudoloop --answerclean None --answeredit None --removemake; "
             + "if [ $? -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "
             + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi"]
         updateProc.running = true
