@@ -603,33 +603,40 @@ state directory, never the repo.
 
 ### Control Centre
 
-Picked 2026-10-21, page by page: a card saying where things stand, rows
-for the rest, chips for the way out.
+Redesigned 2026-11-01 as quick-settings tiles (`QuickTile`, two to a
+line in a `Flow`): each tile is a glyph, its name and its state in words
+("4500 K", "Radios off"), accent-filled while on. A tile with a split
+chevron end toggles on its face and opens its details in place under its
+line (one at a time, 󰅂 → 󰅀); a tile with 󰅂 at its end opens a page.
 
-- **Root:** a `HeadCard` (the Arch glyph, user@host, how long it's been up
-  and the look; the power button at its end opens Power), and in the same
-  frame the five toggles as `FlyoutToggle`s (Quiet, Night, Awake, Game,
-  Airplane), Warmth under them while Night Light is on, then the power
-  profile as a segmented strip (gone while PPD isn't answering). Then Applications,
-  Appearance and Bar Widgets as rows; the screen tools (Shot, Colour,
-  Text, and Rec, Stop while recording) and the windows (Settings, System, Keys) as two `FlyoutChipLine`s.
-- **Submenus** have no Back row: the heading reads
-  `CONTROL CENTRE › APPEARANCE`, the first part smaller and quieter, and
-  clicking it goes back (`FlyoutHeading.crumb`).
-- **Power:** a card with how long it's been up, since when and the windows
-  open; each action with what it does under it (Reboot's chevron opens
-  the one-off targets); Restart shell and Settings as chips.
-- **Applications:** the search, then every app as a row.
-- **Appearance:** the look as a card (`LookStepper`: the name large between
-  ‹ and ›, "N of M · K changed", the palette as a band; a click on the name
-  opens the list); the wallpaper as a card (the picture with its name and
-  transport, every wallpaper as a strip under it); then a setting a line:
-  Style, Colours (Look · Wallpaper, Intensity once it's Wallpaper), Bar,
-  See-through, Font size, Animations; Reset (two clicks) and Settings as
-  chips.
-- **Bar Widgets:** your bar in small as a card, a glyph per module in its
-  group, dim while hidden, a click hides or shows it; the list by group to
-  drag and switch; Edit, Reset (two clicks) and Settings as chips.
+- **Bar button:** left click opens home, right click opens on Power,
+  middle click locks.
+- **Home:** a `HeadCard` (user@host, uptime and look; lock and power
+  buttons at its end, power opening Power); a search field that takes
+  the keyboard on open, its matches (most used first, Enter launches)
+  replacing the tiles while there's a query; the tiles: Quiet, Night
+  Light (warmth slider in its details), Keep Awake, Game Mode, Airplane,
+  Power (a click steps the profile, the details show all three; gone
+  while PPD isn't answering, Airplane then runs the width), Appearance
+  and Bar Widgets as pages; then the screen tools and the windows as one
+  icon-only `FlyoutChipLine` region.
+- **Pages** have no Back row: the heading reads
+  `CONTROL CENTRE › APPEARANCE`, the first part clickable as the way
+  back (`FlyoutHeading.crumb`); what the page sums up sits in its hints.
+- **Appearance:** every look as a palette card, four to a line, the
+  current one outlined; every wallpaper as a thumbnail, four to a line,
+  shuffle last; Colours (details: Look · Wallpaper, intensity), Style
+  (details: every style), Bar (a click flips it) and Animations (details:
+  the named points) as tiles; See-through and Font size as rows; Reset
+  (two clicks) and All settings as chips.
+- **Bar Widgets:** each group under its heading (shown of total in its
+  hints), every module a square, dim while hidden; a click hides or shows
+  it, hover names it in the page heading. Arrange on the bar (the bar's
+  edit mode, where order and the centre anchor are set) and Reset.
+- **Power:** the power menu's actions and Restart Shell as tiles with a
+  short line each; Log Out, Reboot and Shut Down take a second click
+  ("Click again", alert-filled for 3 s). Reboot's chevron shows the
+  one-off reboots (Windows, BIOS) as a chip region under the tiles.
 
 ## Desktop widgets
 
@@ -1241,11 +1248,11 @@ back. Always the Nerd glyphs (`Theme.fontIcon`), never a typed `>`.
 | Tab on show | accent fill, no chevron | Settings tabs, `FlyoutSegmented` |
 | Goes deeper in the same flyout or window | 󰅂 | submenus, tray submenus, other System pages, Open Health |
 | Leaves for another window | 󰁔 | More in Settings, System's "Settings" |
-| Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more" |
+| Opens in place | 󰅂 → 󰅀 | expandable rows, "12 more", `QuickTile`'s split end |
 | Dropdown | 󰅀 → 󰅃 | `DropdownMenu`, `SettingsDropdown` |
 | Back | breadcrumb heading (`crumb`), no Back row | Control Centre, tray menu |
 | Breadcrumb separator | 󰅂 | `FlyoutHeading` |
-| Stepper | 󰅁 󰅂 | `LookStepper`, `FlyoutStepper` (wrap), calendar months |
+| Stepper | 󰅁 󰅂 | `FlyoutStepper` (wrap), calendar months |
 
 ## Controls (level-chip style)
 

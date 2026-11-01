@@ -233,7 +233,7 @@ OverlayWindow {
                 readonly property bool sectioned: !root.compactMenu
                 readonly property bool compactMenu: root.compactMenu
 
-                // the marker LookStepper looks for to place a dropdown's overlay
+                // the marker FlyoutHeading looks for to tell a flyout from a window
                 readonly property bool isFlyoutPage: true
             }
         }

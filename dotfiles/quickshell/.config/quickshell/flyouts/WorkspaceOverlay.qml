@@ -231,7 +231,7 @@ OverlayWindow {
                                     }
 
                                     // click focuses; drag onto a miniature moves
-                                    // (hand-rolled, like BarWidgetList's grip)
+                                    // (hand-rolled)
                                     MouseArea {
                                         id: winDrag
                                         anchors.fill: parent

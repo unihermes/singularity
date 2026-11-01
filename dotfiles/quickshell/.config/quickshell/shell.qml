@@ -388,6 +388,8 @@ ShellRoot {
 
             // name of the open flyout, "" for none
             property string openFlyout: ""
+            // the Control Centre page the next open lands on ("" for home)
+            property string controlPage: ""
             onOpenFlyoutChanged: {
                 if (openFlyout !== "") root.closeFlyouts(screenScope)
                 if (root.backdropFlyouts.indexOf(openFlyout) !== -1) root.backdropScope = screenScope

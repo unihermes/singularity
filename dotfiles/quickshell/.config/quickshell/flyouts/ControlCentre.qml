@@ -1,25 +1,27 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ControlCentre.qml
 //
-// The control centre flyout: its root page (a card with who and how long
-// up, the power button and the everyday toggles; the submenus; the screen
-// tools and the windows as chips) and every submenu. Root's state and the
-// standalone windows come in as required properties.
+// The control centre flyout, as quick-settings tiles. Home: who and how
+// long up (with lock and power), an app search whose matches take the
+// tiles' place, the tiles (each says its state; a split chevron opens its
+// details in place, a 󰅂 a page), then the screen tools and the windows as
+// one row of buttons. Pages: Appearance, Bar Widgets and Power, each tiles
+// too. Root's state and the standalone windows come in as required
+// properties; the bar button's right click asks for Power through
+// scope.controlPage.
 
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
-import Quickshell.Hyprland
 import QtQuick
 import "../services"
-import "../bar"
 import "../services/Looks.js" as Looks
 import "../services/Format.js" as Format
 
 FlyoutPanel {
     id: controlCentre
     flyout: "controlcentre"
-    menuWidth: Theme.flyoutMenuWidth
+    menuWidth: Theme.flyoutMenuWidth + 40
     // first module in the bar -- run it into the left corner
     edgeMargin: 0
 
@@ -28,33 +30,41 @@ FlyoutPanel {
     required property var systemWin
     required property var keybindsWin
 
-    // "" is the root list, anything else a submenu drawn in the same box
+    // "" is home, anything else a page drawn in the same box
     property string page: ""
-    // always reopen at the top level; the card's uptime, the airplane
-    // state and the power profile are read on each open
-    onOpenChanged: if (open) {
+    // the one tile whose details are open, "" for none
+    property string expanded: ""
+    function expand(name) { expanded = expanded === name ? "" : name }
+
+    // Opened on the page the bar asked for, home otherwise; the card's
+    // uptime, the airplane state and the power profile are read each time.
+    function opened() {
         SystemStats.sampleUptime()
         rfkillRead.running = true
         PpdProfile.refresh()
-    } else page = ""
-
-    property string appQuery: ""
-    property point lastPointer: Qt.point(-1, -1)
-    onPageChanged: if (page === "power") {
-        rebootOpen = false
-        Session.refresh()
-    } else if (page === "apps") {
-        appQuery = ""
-        appSearch.text = ""
-        appView.currentIndex = 0
-        // after the field has become visible, or focus is refused
+        page = scope.controlPage
+        scope.controlPage = ""
         Qt.callLater(appSearch.forceFocus)
+    }
+    Component.onCompleted: if (open) opened()
+    onOpenChanged: if (open) opened()
+        else { page = ""; appSearch.text = "" }
+    Connections {
+        target: controlCentre.scope
+        function onControlPageChanged() {
+            if (!controlCentre.open || controlCentre.scope.controlPage === "") return
+            controlCentre.page = controlCentre.scope.controlPage
+            controlCentre.scope.controlPage = ""
+        }
+    }
+    onPageChanged: {
+        expanded = ""
+        if (page === "power") Session.refresh()
     }
 
     readonly property var pageTitles: ({
         "power": "POWER",
         "appearance": "APPEARANCE",
-        "apps": "APPLICATIONS",
         "widgets": "BAR WIDGETS"
     })
 
@@ -98,8 +108,14 @@ FlyoutPanel {
     }
 
     readonly property string uptime: Format.duration(SystemStats.uptimeSec)
+    readonly property string lookName: (Looks.looks[Settings.look] || {}).name || Settings.look
 
     FileView { id: hostFile; path: "/proc/sys/kernel/hostname"; blockLoading: true }
+
+    // the next of a list after `now`, round to the first
+    function nextOf(list, now) {
+        return list[(list.indexOf(now) + 1) % list.length]
+    }
 
     function launch(entry) {
         scope.openFlyout = ""
@@ -121,202 +137,101 @@ FlyoutPanel {
         else if (act === "record")
             Recorder.recording ? Recorder.stopRecording() : Recorder.startRecordingSoon()
         else if (act === "restartshell") Session.restartShell()
-        else if (act === "powersettings") settingsWin.open("power")
+        else if (act.startsWith("into:")) Session.rebootInto(act.substring(5))
+        else Session.run(act)
     }
+
+    // the modules on the bar now, of every one there is
+    readonly property var widgetKeys: {
+        var l = Settings.widgetLayout()
+        return Settings.widgetSections.reduce((a, s) => a.concat(l[s]), [])
+    }
+    readonly property int widgetsShown: widgetKeys.filter(k => Settings.widgetVisible(k)).length
+    // the module square under the pointer, named in the heading
+    property string widgetHover: ""
 
     // a submenu's heading leads with CONTROL CENTRE, the way back
     FlyoutHeading {
-        crumb: controlCentre.page === "" ? "" : "CONTROL CENTRE"
-        text: controlCentre.page === ""
-            ? "CONTROL CENTRE"
-            : (controlCentre.pageTitles[controlCentre.page] || "")
+        visible: controlCentre.page !== ""
+        crumb: "CONTROL CENTRE"
+        text: controlCentre.pageTitles[controlCentre.page] || ""
         onCrumbClicked: controlCentre.page = ""
+        hints: controlCentre.page === "appearance"
+            ? (Settings.diffs.length > 0 ? [Settings.diffs.length + " changed"] : [])
+            : controlCentre.page === "widgets"
+            ? [controlCentre.widgetHover !== ""
+                ? (Settings.widgetMeta[controlCentre.widgetHover] || {}).label
+                : controlCentre.widgetsShown + " of " + controlCentre.widgetKeys.length]
+            : controlCentre.page === "power"
+            ? ["up " + controlCentre.uptime + " · since " + Qt.formatTime(SystemStats.bootTime, Theme.timeFormat)]
+            : []
     }
 
-    // Root: the card (who, how long up, the power button, the everyday
-    // toggles), the submenus, then the screen tools and the windows as
-    // chips. `sub` opens a submenu.
+    // --- Home -------------------------------------------------
+
+    readonly property bool home: page === ""
+    readonly property bool searching: home && appQuery !== ""
+    property string appQuery: ""
+    property point lastPointer: Qt.point(-1, -1)
 
     HeadCard {
-        visible: controlCentre.page === ""
+        visible: controlCentre.home
         glyph: "󰣇"
         title: Quickshell.env("USER") + "@" + hostFile.text().trim()
-        lines: ["up " + controlCentre.uptime + " · " + ((Looks.looks[Settings.look] || {}).name || Settings.look)]
+        lines: ["up " + controlCentre.uptime + " · " + controlCentre.lookName]
 
-        // as big as the card's own glyph, the one way to the power menu here
         IconButton {
-            implicitWidth: Theme.controlSize * 1.5
-            implicitHeight: Theme.controlSize * 1.5
-            glyphSize: Theme.fontTitle * 1.4
+            icon: "󰌾"
+            onClicked: controlCentre.run("lock")
+        }
+        IconButton {
             icon: "󰐥"
             onClicked: controlCentre.page = "power"
         }
     }
 
-    Row {
-        id: toggles
-        visible: controlCentre.page === ""
-        width: parent.width
-        spacing: Theme.spaceS
-        readonly property real cell: (width - spacing * 4) / 5
-
-        FlyoutToggle {
-            width: toggles.cell
-            icon: Notifications.dnd ? "󰂛" : "󰂚"
-            caption: "Quiet"
-            lit: Notifications.dnd
-            onClicked: Notifications.toggleDnd()
-        }
-        FlyoutToggle {
-            width: toggles.cell
-            icon: shellRoot.nightLight ? "󰖔" : "󰖙"
-            caption: "Night"
-            lit: shellRoot.nightLight
-            usable: shellRoot.hasHyprsunset
-            onClicked: shellRoot.nightLight = !shellRoot.nightLight
-        }
-        FlyoutToggle {
-            width: toggles.cell
-            icon: shellRoot.keepAwake ? "󰅶" : "󰾪"
-            caption: "Awake"
-            lit: shellRoot.keepAwake
-            onClicked: shellRoot.keepAwake = !shellRoot.keepAwake
-        }
-        FlyoutToggle {
-            width: toggles.cell
-            icon: "󰊴"
-            caption: "Game"
-            lit: GameMode.active
-            onClicked: GameMode.toggle()
-        }
-        FlyoutToggle {
-            width: toggles.cell
-            icon: controlCentre.airplane ? "󰀝" : "󰀞"
-            caption: "Airplane"
-            lit: controlCentre.airplane
-            onClicked: controlCentre.setAirplane(!controlCentre.airplane)
-        }
-    }
-
-    // Only while it's on: a warmth control for a light that's off
-    // is a setting you can't see the effect of.
-    FlyoutStepper {
-        visible: controlCentre.page === "" && shellRoot.nightLight
-        label: "Warmth"
-        valueWidth: 52
-        suffix: "K"
-        value: Settings.nightLightKelvin
-        minimum: Settings.limits.nightLightKelvin.min
-        maximum: Settings.limits.nightLightKelvin.max
-        // minus is warmer, which is the way the kelvin number goes
-        // anyway, so the buttons need no inversion
-        onStepped: d => Settings.step("nightLightKelvin", d * 250)
-    }
-
-    // left out while power-profiles-daemon isn't answering
-    FlyoutSegmented {
-        visible: controlCentre.page === "" && PpdProfile.profile !== ""
-        model: PpdProfile.choices
-        current: PpdProfile.profile
-        onPicked: v => PpdProfile.set(v)
-    }
-
-    Repeater {
-        model: controlCentre.page === "" ? [
-            { divider: true },
-            { label: "Applications",  icon: "󰀻", sub: "apps" },
-            { label: "Appearance",    icon: "󰏘", sub: "appearance" },
-            { label: "Bar Widgets",   icon: "󰕮", sub: "widgets" },
-            { divider: true },
-        ] : []
-
-        Loader {
-            id: entry
-            required property var modelData
-            readonly property bool isSectionBreak: modelData.divider === true
-            width: parent ? parent.width : 0
-            sourceComponent: isSectionBreak ? divider : row
-
-            Component { id: divider; FlyoutDivider {} }
-            Component {
-                id: row
-                FlyoutRow {
-                    leadingIcon: entry.modelData.icon
-                    label: entry.modelData.label
-                    trailing: "󰅂"
-                    onActivated: controlCentre.page = entry.modelData.sub
-                }
-            }
-        }
-    }
-
-    FlyoutChipLine {
-        onPicked: act => controlCentre.run(act)
-        visible: controlCentre.page === ""
-        chips: [
-            { icon: "󰹑", text: "Shot",   act: "screenshot" },
-            { icon: "󰈊", text: "Colour", act: "colourpick" },
-            { icon: "󰊄", text: "Text",   act: "copytext" },
-        ].concat(!Recorder.available ? []
-            : Recorder.recording ? [{ icon: "󰓛", text: "Stop", act: "record" }]
-            : [{ icon: "󰑊", text: "Rec", act: "record" }])
-    }
-
-    FlyoutDivider { visible: controlCentre.page === "" }
-
-    FlyoutChipLine {
-        onPicked: act => controlCentre.run(act)
-        visible: controlCentre.page === ""
-        chips: [
-            { icon: "󰒓", text: "Settings", act: "settings" },
-            { icon: "󰍛", text: "System",   act: "system" },
-            { icon: "󰌌", text: "Keys",     act: "keybinds" },
-        ]
-    }
-
-    // --- Applications -----------------------------------------
-    // a scrolling list, as ~30 apps would run down the screen
-
+    // typing anywhere in the panel lands here; matches replace the tiles
     FlyoutInput {
         id: appSearch
-        bleed: true
-        visible: controlCentre.page === "apps"
-        placeholder: "Search"
+        visible: controlCentre.home
+        glyph: "󰍉"
+        placeholder: "Search apps"
         echoPassword: false
         onTextChanged: {
             controlCentre.appQuery = text
             appView.currentIndex = 0
         }
-        // Enter launches whatever is highlighted -- the top match
-        // until the arrows move it
+        // Enter launches whatever is highlighted -- the top match until the
+        // arrows move it
         onAccepted: if (appView.count > 0)
             controlCentre.launch(appView.model[appView.currentIndex])
         onDownPressed: if (appView.currentIndex < appView.count - 1) appView.currentIndex++
         onUpPressed: if (appView.currentIndex > 0) appView.currentIndex--
-        onEscapePressed: scope.openFlyout = ""
+        onEscapePressed: {
+            if (text !== "") text = ""
+            else scope.openFlyout = ""
+        }
     }
 
     FlyoutRow {
-        visible: controlCentre.page === "apps" && appView.count === 0
+        visible: controlCentre.searching && appView.count === 0
         label: "No matches"
         enabled: false
     }
 
     ListView {
         id: appView
-        visible: controlCentre.page === "apps"
+        visible: controlCentre.searching
         width: parent.width
-        // 14 rows, or fewer if there are fewer apps
-        height: visible ? Math.min(contentHeight, 14 * (Theme.rowHeightTall + spacing)) : 0
+        // eight rows, or fewer if there are fewer matches
+        height: visible ? Math.min(contentHeight, 8 * (Theme.rowHeightTall + spacing)) : 0
 
         clip: true
         spacing: Theme.spaceXs
         boundsBehavior: Flickable.StopAtBounds
-        model: visible ? Apps.list(controlCentre.appQuery, true) : []
+        model: visible ? Apps.list(controlCentre.appQuery) : []
         // keeps the arrow-key selection scrolled into view
         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-        // back to the top each time the page opens
-        onVisibleChanged: if (visible) positionViewAtBeginning()
 
         delegate: Item {
             id: appRow
@@ -373,110 +288,131 @@ FlyoutPanel {
         }
     }
 
-    // --- Bar Widgets ------------------------------------------
+    FlyoutDivider { visible: controlCentre.home && !controlCentre.searching }
 
-    // your bar in small as a card (a click hides or shows a module),
-    // then every module by group, to drag and switch
-    Column {
-        visible: controlCentre.page === "widgets"
+    Flow {
+        id: tiles
+        visible: controlCentre.home && !controlCentre.searching
         width: parent.width
-        spacing: Theme.flyoutSpacing
-        readonly property bool isSectionGroup: true
-        readonly property bool sectioned: true
+        spacing: Theme.spaceS
+        readonly property real cell: (width - spacing) / 2
 
-        // Flat's Taskbar layout keeps an arrangement of its own
-        FlyoutRow {
-            visible: Settings.taskbarLayoutOn
-            label: "Editing the Taskbar layout"
-            enabled: false
+        QuickTile {
+            width: tiles.cell
+            icon: Notifications.dnd ? "󰂛" : "󰂚"
+            title: "Quiet"
+            caption: Notifications.dnd ? "Banners held" : "Off"
+            lit: Notifications.dnd
+            onClicked: Notifications.toggleDnd()
         }
-
-        Text {
-            text: "YOUR BAR · click one to hide it"
-            color: Theme.subtext
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.fontCaption
+        QuickTile {
+            width: tiles.cell
+            icon: shellRoot.nightLight ? "󰖔" : "󰖙"
+            title: "Night Light"
+            caption: shellRoot.nightLight ? Settings.nightLightKelvin + " K" : "Off"
+            lit: shellRoot.nightLight
+            usable: shellRoot.hasHyprsunset
+            split: true
+            expanded: controlCentre.expanded === "night"
+            onClicked: shellRoot.nightLight = !shellRoot.nightLight
+            onMoreClicked: controlCentre.expand("night")
         }
-
-        Flow {
-            width: parent.width
-            spacing: Theme.spaceS
-
-            Repeater {
-                model: Settings.widgetSections
-
-                Row {
-                    id: zone
-                    required property string modelData
-                    spacing: Theme.spaceXs
-
-                    Repeater {
-                        model: Settings.widgetLayout()[zone.modelData]
-
-                        IconButton {
-                            required property string modelData
-                            readonly property var info: Settings.widgetMeta[modelData] || { icon: "" }
-                            icon: info.icon
-                            lit: Settings.widgetVisible(modelData)
-                            opacity: lit ? 1 : 0.4
-                            enabled: Settings.lockedWidgets.indexOf(modelData) === -1
-                            onClicked: Settings.setWidgetVisible(modelData, !lit)
-                        }
-                    }
-
-                    // a hairline between the groups
-                    Rectangle {
-                        visible: zone.modelData !== "right"
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Theme.borderWidth
-                        height: Theme.controlSize * 0.6
-                        color: Theme.stroke
-                    }
-                }
-            }
+        FlyoutSliderRow {
+            visible: controlCentre.expanded === "night"
+            width: tiles.width
+            label: "Warmth"
+            suffix: "K"
+            step: 250
+            value: Settings.nightLightKelvin
+            minimum: Settings.limits.nightLightKelvin.min
+            maximum: Settings.limits.nightLightKelvin.max
+            onMoved: v => Settings.set("nightLightKelvin", v)
         }
-
-        FlyoutDivider {}
-
-        BarWidgetList {
-            meta: Settings.widgetMeta
+        QuickTile {
+            width: tiles.cell
+            icon: shellRoot.keepAwake ? "󰅶" : "󰾪"
+            title: "Keep Awake"
+            caption: shellRoot.keepAwake ? "No sleep" : "Off"
+            lit: shellRoot.keepAwake
+            onClicked: shellRoot.keepAwake = !shellRoot.keepAwake
         }
-
-        FlyoutDivider {}
-
-        Row {
-            id: widgetChips
-            width: parent.width
-            spacing: Theme.spaceS
-            readonly property real cell: (width - spacing * 2) / 3
-
-            FlyoutChip {
-                width: widgetChips.cell
-                icon: "󰏫"
-                text: "Edit"
-                onClicked: controlCentre.scope.editBar()
-            }
-            FlyoutChip {
-                width: widgetChips.cell
-                icon: "󰕌"
-                text: "Reset"
-                confirmText: "Reset?"
-                enabled: !Settings.widgetsDefault
-                onClicked: Settings.resetWidgets()
-            }
-            FlyoutChip {
-                width: widgetChips.cell
-                icon: "󰒓"
-                text: "Settings"
-                onClicked: scope.openSettings("appearance/panels")
-            }
+        QuickTile {
+            width: tiles.cell
+            icon: "󰊴"
+            title: "Game Mode"
+            caption: GameMode.active ? "On" : "Off"
+            lit: GameMode.active
+            onClicked: GameMode.toggle()
+        }
+        // alone on its line while power-profiles-daemon isn't answering
+        QuickTile {
+            width: PpdProfile.profile !== "" ? tiles.cell : tiles.width
+            icon: controlCentre.airplane ? "󰀝" : "󰀞"
+            title: "Airplane"
+            caption: controlCentre.airplane ? "Radios off" : "Off"
+            lit: controlCentre.airplane
+            onClicked: controlCentre.setAirplane(!controlCentre.airplane)
+        }
+        // a click steps to the next profile; the chevron shows all three
+        QuickTile {
+            visible: PpdProfile.profile !== ""
+            width: tiles.cell
+            icon: "󰓅"
+            title: "Power"
+            caption: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "" }).text
+            split: true
+            expanded: controlCentre.expanded === "profile"
+            onClicked: PpdProfile.set(controlCentre.nextOf(PpdProfile.choices.map(c => c.value), PpdProfile.profile))
+            onMoreClicked: controlCentre.expand("profile")
+        }
+        FlyoutSegmented {
+            visible: controlCentre.expanded === "profile" && PpdProfile.profile !== ""
+            width: tiles.width
+            model: PpdProfile.choices
+            current: PpdProfile.profile
+            onPicked: v => PpdProfile.set(v)
+        }
+        QuickTile {
+            width: tiles.cell
+            icon: "󰏘"
+            title: "Appearance"
+            caption: controlCentre.lookName + (Wallpaper.title !== "" ? " · " + Wallpaper.title : "")
+            goes: true
+            onClicked: controlCentre.page = "appearance"
+        }
+        QuickTile {
+            width: tiles.cell
+            icon: "󰕮"
+            title: "Bar Widgets"
+            caption: controlCentre.widgetsShown + " of " + controlCentre.widgetKeys.length + " shown"
+            goes: true
+            onClicked: controlCentre.page = "widgets"
         }
     }
 
+    FlyoutDivider { visible: controlCentre.home && !controlCentre.searching }
+
+    // the screen tools, then the windows
+    FlyoutChipLine {
+        visible: controlCentre.home && !controlCentre.searching
+        onPicked: act => controlCentre.run(act)
+        chips: [
+            { icon: "󰹑", text: "", act: "screenshot" },
+            { icon: "󰈊", text: "", act: "colourpick" },
+            { icon: "󰊄", text: "", act: "copytext" },
+        ].concat(!Recorder.available ? []
+            : [{ icon: Recorder.recording ? "󰓛" : "󰑊", text: "", act: "record" }]
+        ).concat([
+            { icon: "󰒓", text: "", act: "settings" },
+            { icon: "󰍛", text: "", act: "system" },
+            { icon: "󰌌", text: "", act: "keybinds" },
+        ])
+    }
+
     // --- Appearance -------------------------------------------
-    // quick changes only: the look as a card, the wallpaper as a card,
-    // then a line a setting; the rest is a chip away in Settings
+    // every look as a palette card, every wallpaper, then the rest as
+    // tiles (details in place) and two controls; the whole of it is a chip
+    // away in Settings
 
     Column {
         id: appearancePage
@@ -487,95 +423,94 @@ FlyoutPanel {
         readonly property bool isSectionGroup: true
         readonly property bool sectioned: true
 
-        readonly property var styleOrder: Settings.choices.style
-        function styleStep(d) {
-            var n = styleOrder.length
-            Settings.set("style", styleOrder[(styleOrder.indexOf(Settings.style) + d + n) % n])
-        }
-        readonly property var schemes: Settings.choices.colourScheme
-
-        // one open list at a time; closed on the way out
-        QtObject { id: selects; property var open: null }
-        onVisibleChanged: if (!visible) selects.open = null
-
-        LookStepper { group: selects }
-
-        FlyoutDivider {}
-
-        // The picture is the control: click it for the next wallpaper, or
-        // use the chips in its corner.
-        ClippingRectangle {
-            width: parent.width
-            height: Math.round(width / 2)
-            radius: Theme.radiusInner
-            color: Theme.base
-            border.width: Theme.borderWidth
-            border.color: previewMouse.containsMouse ? Theme.strokeFocus : Theme.stroke
-
-            Image {
-                anchors.fill: parent
-                source: Wallpaper.current !== "" ? "file://" + Wallpaper.current : ""
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                // decoded at preview size, not the wallpaper's own 4K,
-                // which would hold tens of MB for a thumbnail
-                sourceSize.width: 480
-            }
-
-            MouseArea {
-                id: previewMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Wallpaper.step(1)
-            }
-
-            // the name and the transport along the bottom, on a scrim so
-            // they read over any image
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: Theme.chipHeight + Theme.spaceS * 2
-                color: Theme.captionScrim
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spaceM
-                    anchors.right: transport.left
-                    anchors.rightMargin: Theme.spaceS
-                    anchors.verticalCenter: parent.verticalCenter
-                    elide: Text.ElideRight
-                    text: Wallpaper.title !== "" ? Wallpaper.title : "No wallpaper"
-                    color: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightBody
-                    font.pixelSize: Theme.fontCaption
-                }
-
-                Row {
-                    id: transport
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spaceS
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Theme.spaceXs
-                    readonly property bool many: Wallpaper.images.length > 1
-
-                    FlyoutChip { glyph: true; text: "󰒮"; enabled: transport.many; onClicked: Wallpaper.step(-1) }
-                    FlyoutChip { glyph: true; text: "󰒝"; enabled: transport.many; onClicked: Wallpaper.shuffle() }
-                    FlyoutChip { glyph: true; text: "󰒭"; enabled: transport.many; onClicked: Wallpaper.step(1) }
-                }
-            }
+        // a look's palette, dark to light, then its accent if it has one
+        function swatches(name) {
+            var l = Looks.looks[name]
+            if (!l) return []
+            var p = l.palette
+            return [p.base, p.border, p.subtext, p.text].concat(l.accent ? [l.accent] : [])
         }
 
-        // every wallpaper, six to a line, the one showing lit
         Grid {
-            id: strip
-            visible: Wallpaper.images.length > 1
+            id: lookGrid
             width: parent.width
-            columns: 6
+            columns: 4
             spacing: Theme.spaceXs
             readonly property real cell: (width - spacing * (columns - 1)) / columns
+
+            Repeater {
+                model: Looks.order
+
+                Rectangle {
+                    id: lookCard
+                    required property string modelData
+                    readonly property bool isCurrent: modelData === Settings.look
+                    width: lookGrid.cell
+                    height: lookCol.implicitHeight + Theme.spaceS * 2
+                    radius: Theme.radiusInner
+                    color: lookMouse.containsMouse ? Theme.hoverFill : Theme.base
+                    border.width: isCurrent ? 2 : Theme.borderWidth
+                    border.color: isCurrent ? Theme.selectedStroke : Theme.stroke
+
+                    Column {
+                        id: lookCol
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.margins: Theme.spaceS
+                        spacing: Theme.spaceXs
+
+                        Row {
+                            id: band
+                            width: parent.width
+                            readonly property var colours: appearancePage.swatches(lookCard.modelData)
+                            Repeater {
+                                model: band.colours
+                                Rectangle {
+                                    required property string modelData
+                                    width: band.width / band.colours.length
+                                    height: Theme.spaceS
+                                    color: modelData
+                                }
+                            }
+                        }
+
+                        Text {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            text: (Looks.looks[lookCard.modelData] || {}).name || lookCard.modelData
+                            color: lookCard.isCurrent ? Theme.textStrong : Theme.text
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontCaption
+                        }
+                    }
+
+                    MouseArea {
+                        id: lookMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Settings.set("look", lookCard.modelData)
+                    }
+                }
+            }
+        }
+
+        FlyoutHeading {
+            text: "WALLPAPER"
+            hints: [Wallpaper.title !== "" ? Wallpaper.title : "None"]
+        }
+
+        // every wallpaper, four to a line, the one showing lit; shuffle last
+        Grid {
+            id: strip
+            width: parent.width
+            columns: 4
+            spacing: Theme.spaceXs
+            readonly property real cell: (width - spacing * (columns - 1)) / columns
+            readonly property real thumbHeight: Math.round(cell * 0.625)
 
             Repeater {
                 model: Wallpaper.images
@@ -585,7 +520,7 @@ FlyoutPanel {
                     required property string modelData
                     readonly property bool isCurrent: modelData === Wallpaper.current
                     width: strip.cell
-                    height: Math.round(strip.cell * 0.625)
+                    height: strip.thumbHeight
                     radius: Theme.radiusSmall
                     color: Theme.base
 
@@ -594,7 +529,8 @@ FlyoutPanel {
                         source: "file://" + thumb.modelData
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        sourceSize.width: 96
+                        // decoded at thumbnail size, not the wallpaper's 4K
+                        sourceSize.width: 128
                     }
 
                     // the lit groove round the current one, a stroke on hover
@@ -616,44 +552,104 @@ FlyoutPanel {
                     }
                 }
             }
+
+            FlyoutChip {
+                width: strip.cell
+                height: strip.thumbHeight
+                glyph: true
+                text: "󰒝"
+                enabled: Wallpaper.images.length > 1
+                onClicked: Wallpaper.shuffle()
+            }
         }
 
         FlyoutDivider {}
 
-        FlyoutStepper {
-            label: "Style"
-            wrap: true
-            valueWidth: 76
-            displayValue: Settings.choiceLabel(Settings.style, "style")
-            onStepped: d => appearancePage.styleStep(d)
-        }
+        Flow {
+            id: lookTiles
+            width: parent.width
+            spacing: Theme.spaceS
+            readonly property real cell: (width - spacing) / 2
 
-        // the look's own colours, or tinted by the wallpaper
-        FlyoutSegmented {
-            label: "Colours"
-            model: [{ value: "grayscale", text: "Look" }, { value: "wallpaper", text: "Wallpaper" }]
-            current: Settings.colourMode
-            onPicked: v => Settings.set("colourMode", v)
-        }
-
-        // only means anything once the colours come from the image
-        FlyoutStepper {
-            visible: Settings.colourMode === "wallpaper"
-            label: "Intensity"
-            wrap: true
-            valueWidth: 84
-            displayValue: Settings.choiceLabel(Settings.colourScheme) + (Wallpaper.generating ? " …" : "")
-            onStepped: d => {
-                var n = appearancePage.schemes.length
-                Settings.set("colourScheme", appearancePage.schemes[(appearancePage.schemes.indexOf(Settings.colourScheme) + d + n) % n])
+            // the look's own colours, or tinted by the wallpaper
+            QuickTile {
+                width: lookTiles.cell
+                icon: "󰏘"
+                title: "Colours"
+                caption: Settings.colourMode === "wallpaper"
+                    ? "Wallpaper · " + Settings.choiceLabel(Settings.colourScheme) + (Wallpaper.generating ? " …" : "")
+                    : "From the look"
+                split: true
+                expanded: controlCentre.expanded === "colours"
+                onClicked: Settings.set("colourMode", Settings.colourMode === "wallpaper" ? "grayscale" : "wallpaper")
+                onMoreClicked: controlCentre.expand("colours")
             }
-        }
+            QuickTile {
+                width: lookTiles.cell
+                icon: "󰕰"
+                title: "Style"
+                caption: Settings.choiceLabel(Settings.style, "style")
+                split: true
+                expanded: controlCentre.expanded === "style"
+                onClicked: Settings.set("style", controlCentre.nextOf(Settings.choices.style, Settings.style))
+                onMoreClicked: controlCentre.expand("style")
+            }
+            Column {
+                visible: controlCentre.expanded === "colours"
+                width: lookTiles.width
+                spacing: Theme.spaceS
 
-        FlyoutSegmented {
-            label: "Bar"
-            model: [{ value: "top", text: "Top" }, { value: "bottom", text: "Bottom" }]
-            current: Settings.barPosition
-            onPicked: v => Settings.set("barPosition", v)
+                FlyoutSegmented {
+                    model: [{ value: "grayscale", text: "Look" }, { value: "wallpaper", text: "Wallpaper" }]
+                    current: Settings.colourMode
+                    onPicked: v => Settings.set("colourMode", v)
+                }
+                // only means anything once the colours come from the image
+                FlyoutSegmented {
+                    visible: Settings.colourMode === "wallpaper"
+                    model: Settings.choices.colourScheme.map(v => ({ value: v, text: Settings.choiceLabel(v) }))
+                    current: Settings.colourScheme
+                    onPicked: v => Settings.set("colourScheme", v)
+                }
+            }
+            FlyoutSegmented {
+                visible: controlCentre.expanded === "style"
+                width: lookTiles.width
+                model: Settings.choices.style.map(v => ({ value: v, text: Settings.choiceLabel(v, "style") }))
+                current: Settings.style
+                onPicked: v => Settings.set("style", v)
+            }
+            // two ends only, so a click is the whole choice
+            QuickTile {
+                width: lookTiles.cell
+                icon: Settings.barPosition === "top" ? "󰁝" : "󰁅"
+                title: "Bar"
+                caption: Settings.barPosition === "top" ? "At the top" : "At the bottom"
+                onClicked: Settings.set("barPosition", Settings.barPosition === "top" ? "bottom" : "top")
+            }
+            // the slider's named points; anything between them is Settings' to set
+            QuickTile {
+                id: motion
+                readonly property var mark: Settings.animTimeMarks.find(m => m.at === Settings.animTime)
+                width: lookTiles.cell
+                icon: "󰄉"
+                title: "Animations"
+                caption: mark ? mark.label : Settings.animTime + "%"
+                split: true
+                expanded: controlCentre.expanded === "motion"
+                onClicked: {
+                    var next = Settings.animTimeMarks.find(m => m.at > Settings.animTime) || Settings.animTimeMarks[0]
+                    Settings.set("animTime", next.at)
+                }
+                onMoreClicked: controlCentre.expand("motion")
+            }
+            FlyoutSegmented {
+                visible: controlCentre.expanded === "motion"
+                width: lookTiles.width
+                model: Settings.animTimeMarks.map(m => ({ value: m.at, text: m.label }))
+                current: Settings.animTime
+                onPicked: v => Settings.set("animTime", v)
+            }
         }
 
         FlyoutSliderRow {
@@ -678,16 +674,6 @@ FlyoutPanel {
             onStepped: d => Settings.set("fontSize", Settings.fontSize + d)
         }
 
-        // the slider's named points; anything between them is Settings' to set
-        FlyoutSegmented {
-            label: "Animations"
-            model: Settings.animTimeMarks.map(m => ({ value: m.at, text: m.label }))
-            current: Settings.animTime
-            onPicked: v => Settings.set("animTime", v)
-        }
-
-        // --- the way out ---
-
         FlyoutDivider {}
 
         Row {
@@ -708,77 +694,150 @@ FlyoutPanel {
             FlyoutChip {
                 width: (wayOut.width - wayOut.spacing) / 2
                 icon: "󰒓"
-                text: "Settings"
+                text: "All settings"
                 onClicked: scope.openSettings("appearance/colour")
             }
         }
     }
 
+    // --- Bar Widgets ------------------------------------------
+    // every module as a square, by where it sits, dim while hidden; a
+    // click hides or shows it (Settings ignores it for the locked Control
+    // Centre). Order is the bar's own edit mode.
+
+    Column {
+        visible: controlCentre.page === "widgets"
+        width: parent.width
+        spacing: Theme.flyoutSpacing
+        readonly property bool isSectionGroup: true
+        readonly property bool sectioned: true
+        onVisibleChanged: if (!visible) controlCentre.widgetHover = ""
+
+        // Flat's Taskbar layout keeps an arrangement of its own
+        FlyoutRow {
+            visible: Settings.taskbarLayoutOn
+            label: "Editing the Taskbar layout"
+            enabled: false
+        }
+
+        Repeater {
+            model: Settings.widgetSections
+
+            Column {
+                id: zone
+                required property string modelData
+                readonly property var keys: Settings.widgetLayout()[modelData]
+                visible: keys.length > 0
+                width: parent.width
+                spacing: Theme.spaceS
+
+                FlyoutHeading {
+                    text: zone.modelData === "centre" ? "CENTRE" : zone.modelData.toUpperCase()
+                    hints: [zone.keys.filter(k => Settings.widgetVisible(k)).length + " of " + zone.keys.length]
+                }
+
+                Flow {
+                    id: mods
+                    width: parent.width
+                    spacing: Theme.spaceXs
+                    readonly property real cell: (width - spacing * 6) / 7
+
+                    Repeater {
+                        model: zone.keys
+
+                        FlyoutChip {
+                            required property string modelData
+                            readonly property bool shown: Settings.widgetVisible(modelData)
+                            width: mods.cell
+                            height: mods.cell
+                            glyph: true
+                            text: (Settings.widgetMeta[modelData] || { icon: "" }).icon
+                            opacity: shown ? 1 : 0.4
+                            onHotChanged: {
+                                if (hot) controlCentre.widgetHover = modelData
+                                else if (controlCentre.widgetHover === modelData) controlCentre.widgetHover = ""
+                            }
+                            onClicked: Settings.setWidgetVisible(modelData, !shown)
+                        }
+                    }
+                }
+            }
+        }
+
+        FlyoutDivider {}
+
+        Row {
+            id: widgetChips
+            width: parent.width
+            spacing: Theme.spaceS
+
+            FlyoutChip {
+                width: (widgetChips.width - widgetChips.spacing) / 2
+                icon: "󰏫"
+                text: "Arrange on the bar"
+                onClicked: controlCentre.scope.editBar()
+            }
+            FlyoutChip {
+                width: (widgetChips.width - widgetChips.spacing) / 2
+                icon: "󰕌"
+                text: "Reset"
+                confirmText: "Reset?"
+                enabled: !Settings.widgetsDefault
+                onClicked: Settings.resetWidgets()
+            }
+        }
+    }
+
     // --- Power ----------------------------------------------
-    // how long it's been up as a card, then the power menu's actions with
-    // what each does; Reboot's chevron adds one-off reboots (Windows, BIOS),
-    // which the power menu leaves out
-    property bool rebootOpen: false
+    // the power menu's actions as tiles, then Restart shell; the ones
+    // that end the session take a second click. Reboot's chevron offers
+    // the one-off reboots (Windows, BIOS), which the power menu leaves out.
 
-    HeadCard {
+    readonly property var shortDetail: ({
+        lock: "Screen only", suspend: "Wakes in a second", hibernate: "Saves to disk",
+        logout: "To the login screen", reboot: "Restarts", poweroff: "Powers off"
+    })
+    readonly property var confirmed: ["logout", "reboot", "poweroff"]
+    readonly property var powerTiles: Session.actions.concat([
+        { act: "restartshell", label: "Restart Shell", icon: "󰑓", detail: "Reloads Quickshell" }
+    ])
+
+    Flow {
+        id: powerGrid
         visible: controlCentre.page === "power"
-        glyph: "󰐥"
-        title: "Up " + controlCentre.uptime
-        lines: ["since " + Qt.formatTime(SystemStats.bootTime, Theme.timeFormat)
-            + " · " + Hyprland.toplevels.values.length + " windows open"]
-    }
+        width: parent.width
+        spacing: Theme.spaceS
+        readonly property real cell: (width - spacing) / 2
 
-    FlyoutDivider { visible: controlCentre.page === "power" }
+        Repeater {
+            model: controlCentre.powerTiles
 
-    Repeater {
-        model: {
-            if (controlCentre.page !== "power") return []
-            const list = []
-            for (const a of Session.actions) {
-                list.push(a)
-                if (a.act === "reboot" && controlCentre.rebootOpen)
-                    for (const t of Session.rebootTargets)
-                        list.push({ act: t.act, label: "Into " + t.label, icon: t.icon, into: true })
-            }
-            return list
-        }
-
-        FlyoutAction {
-            id: powerRow
-            required property var modelData
-            readonly property bool hasMore: modelData.act === "reboot" && Session.rebootTargets.length > 0
-            x: modelData.into ? Theme.iconCell : 0
-            width: parent ? parent.width - x : 0
-            checkable: false
-            icon: modelData.icon
-            label: modelData.label
-            status: modelData.detail || ""
-            trailingInset: hasMore ? more.width : 0
-            onActivated: {
-                scope.openFlyout = ""
-                if (modelData.into) Session.rebootInto(modelData.act)
-                else Session.run(modelData.act)
-            }
-
-            IconButton {
-                id: more
-                visible: powerRow.hasMore
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                icon: controlCentre.rebootOpen ? "󰅃" : "󰅀"
-                onClicked: controlCentre.rebootOpen = !controlCentre.rebootOpen
+            QuickTile {
+                required property var modelData
+                required property int index
+                readonly property bool odd: controlCentre.powerTiles.length % 2 === 1
+                // an odd one out runs the width
+                width: odd && index === controlCentre.powerTiles.length - 1 ? powerGrid.width : powerGrid.cell
+                icon: modelData.icon
+                title: modelData.label
+                caption: controlCentre.shortDetail[modelData.act] || modelData.detail || ""
+                confirmText: controlCentre.confirmed.indexOf(modelData.act) !== -1 ? "Click again" : ""
+                split: modelData.act === "reboot" && Session.rebootTargets.length > 0
+                expanded: controlCentre.expanded === "reboot"
+                onClicked: controlCentre.run(modelData.act)
+                onMoreClicked: controlCentre.expand("reboot")
             }
         }
     }
 
-    FlyoutDivider { visible: controlCentre.page === "power" }
+    FlyoutHeading {
+        visible: controlCentre.page === "power" && controlCentre.expanded === "reboot"
+        text: "REBOOT INTO"
+    }
 
     FlyoutChipLine {
+        visible: controlCentre.page === "power" && controlCentre.expanded === "reboot"
         onPicked: act => controlCentre.run(act)
-        visible: controlCentre.page === "power"
-        chips: [
-            { icon: "󰑓", text: "Restart shell", act: "restartshell" },
-            { icon: "󰒓", text: "Settings",      act: "powersettings" },
-        ]
+        chips: Session.rebootTargets.map(t => ({ icon: t.icon, text: t.label, act: "into:" + t.act }))
     }
 }

@@ -45,6 +45,13 @@ Item {
         fixedWidth: Theme.moduleWidth
         active: screenScope.openFlyout === "controlcentre"
         onActivated: screenScope.toggleFlyout("controlcentre", ccBtn)
+        // straight to Power, or there from whichever page is open
+        onRightClicked: {
+            screenScope.controlPage = "power"
+            if (screenScope.openFlyout !== "controlcentre")
+                screenScope.toggleFlyout("controlcentre", ccBtn)
+        }
+        onMiddleClicked: Session.run("lock")
     }
 
     WorkspacesModule {
