@@ -279,6 +279,7 @@ Item {
         id: crumbRow
         visible: root.crumb !== ""
         anchors.left: lead.shown ? lead.right : parent.left
+        anchors.leftMargin: lead.shown ? Theme.spaceS : 0
         anchors.verticalCenter: label.verticalCenter
         spacing: Theme.spaceXs
 
@@ -326,7 +327,7 @@ Item {
         id: headingIcon
         visible: root.icon.toString() !== ""
         anchors.left: crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
-        anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : 0)
+        anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceS : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
         anchors.verticalCenter: label.verticalCenter
         width: Theme.fontHeadingSize
@@ -345,7 +346,7 @@ Item {
     Text {
         id: label
         anchors.left: headingIcon.visible ? headingIcon.right : crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
-        anchors.leftMargin: (headingIcon.visible ? Theme.spaceS : crumbRow.visible ? Theme.spaceXs : 0)
+        anchors.leftMargin: (headingIcon.visible ? Theme.spaceS : crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceS : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: root.lift
