@@ -143,6 +143,7 @@ OverlayWindow {
                         if (!slot.dragged && Math.hypot(mouse.x - slot.grab.x, mouse.y - slot.grab.y) < Theme.sp(4)) return
                         const others = root.layer.keys
                             .filter(k => k !== slot.modelData && root.layer.shown(k)).map(k => root.layer.rectOf(k))
+                            .concat(root.layer.sidebarRect ? [root.layer.sidebarRect] : [])
                         const s = Placement.snap({ x: p.x - slot.grab.x, y: p.y - slot.grab.y, w: slot.width, h: slot.height },
                                                  root.layer.area, root.layer.margin, Theme.sp(10), others, root.layer.gap)
                         slot.dragged = s

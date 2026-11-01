@@ -106,6 +106,13 @@ Scope {
     function rectOf(key) {
         return Placement.rectOf(key, placeOf(key), shownSizes, area, margin, gap)
     }
+    // the sidebar's rect when it's here, for the widgets to line up with
+    readonly property var sidebarRect: !sidebar || !sidebar.here ? null : {
+        x: screen.width - sidebar.gap - sidebar.columnWidth,
+        y: (Theme.barPosition === "bottom" ? 0 : Theme.barExtent) + sidebar.gap,
+        w: sidebar.columnWidth,
+        h: screen.height - Theme.barExtent - sidebar.gap * 2
+    }
 
     // the bare desktop's right-click, made before the widgets so it sits
     // under them

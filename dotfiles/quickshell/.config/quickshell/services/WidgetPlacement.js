@@ -57,7 +57,8 @@ function fractionsOf(r, a) {
 
 // The lines a dragged widget is drawn to: the area's thirds and middle,
 // the margin in from each edge, and the other widgets' edges, both in line
-// with them and a gap beside them. Each axis snaps the widget's near edge,
+// with them and a gap beside them (the editor counts the sidebar among
+// them). Each axis snaps the widget's near edge,
 // middle or far edge to the closest line within reach; the result is kept
 // inside the area. guides lists the lines it took, as { dir: "v" | "h", at }.
 function snap(r, a, margin, reach, others, gap) {
