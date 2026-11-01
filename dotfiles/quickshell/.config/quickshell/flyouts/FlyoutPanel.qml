@@ -97,11 +97,12 @@ OverlayWindow {
     readonly property int sectionPadY: Theme.spaceXs
     readonly property int padX: compactMenu ? Theme.channelWidth + Theme.spaceS
         : Theme.channelWidth * 2 + sectionGap + Theme.spaceM
-    readonly property int padY: Theme.channelWidth * 2 + sectionGap + sectionPadY
+    readonly property int padY: compactMenu ? Theme.channelWidth + Theme.spaceS
+        : Theme.channelWidth * 2 + sectionGap + sectionPadY
     // Grown, the edge against the bar has no outline of its own (the group's
     // runs straight on into the box's), so it leaves out a channel's room.
     readonly property int padNear: grown ? padY - Theme.channelWidth : padY
-    readonly property int padTop: (atBottom ? padY : padNear) - Theme.spaceXs
+    readonly property int padTop: (atBottom ? padY : padNear) - (compactMenu ? 0 : Theme.spaceXs)
 
     visible: open || reveal > 0
     // one focus mode while the surface is up (a change while mapped doesn't
