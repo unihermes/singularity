@@ -5,10 +5,9 @@
 // off), the slash commands matching a / typed at the start (the sidebar's
 // own: /clear, /new, /model, /mode, /past, /compact; then the CLI's), the
 // box (Enter sends, Shift+Enter is a new line, Ctrl+L or /clear starts
-// over; ! runs a shell command), then a line with
-// 󰐕 for attaching, the model and, on
-// Code, the permission mode, what it's doing,
-// and Send or Stop.
+// over; ! runs a shell command) under a line saying what it's doing,
+// then a line with 󰐕 for attaching, the model, reasoning and, on Code,
+// the permission mode, and Send or Stop.
 
 import QtQuick
 import "../services"
@@ -284,6 +283,35 @@ Column {
         ScrollBar { flickable: parent; anchors.right: parent.right }
     }
 
+    // what it's doing, or how full the context is
+    Text {
+        width: parent.width
+        visible: text !== ""
+        elide: Text.ElideRight
+        text: root.session.asks.length > 0 ? "Waiting for you"
+            : root.session.busy ? root.session.oneLine(root.session.activity) || "Working"
+            : root.session.contextWindow > 0 && root.session.contextUsed >= root.session.contextWindow / 100
+                ? Math.round(root.session.contextUsed / root.session.contextWindow * 100) + "% of context"
+                : ""
+        color: root.session.busy ? Theme.text : Theme.subtext
+        font.family: Theme.fontText
+        font.weight: Theme.weightBody
+        font.pixelSize: Theme.fontCaption
+        opacity: root.session.busy ? pulse.value : 1
+
+        QtObject {
+            id: pulse
+            property real value: 1
+        }
+        SequentialAnimation {
+            running: root.session.busy
+            loops: Animation.Infinite
+            onRunningChanged: if (!running) pulse.value = 1
+            NumberAnimation { target: pulse; property: "value"; to: 0.45; duration: Theme.durPulse }
+            NumberAnimation { target: pulse; property: "value"; to: 1; duration: Theme.durPulse }
+        }
+    }
+
     // the box
     Rectangle {
         id: well
@@ -380,13 +408,14 @@ Column {
         ScrollBar { flickable: flick; anchors.right: parent.right; anchors.rightMargin: 2 }
     }
 
-    // attach, model, mode, what it's doing, send or stop
+    // attach, model, reasoning, mode, send or stop
     Item {
         width: parent.width
         height: Theme.controlSize
 
         Row {
-            id: left
+            width: Math.min(implicitWidth, parent.width - send.width - Theme.spaceM)
+            clip: true
             spacing: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
 
@@ -410,38 +439,6 @@ Column {
                 text: Ai.label(Ai.modeChoices, Ai.codeMode)
                 selected: Ai.codeMode !== "default"
                 onClicked: Ai.cycleMode()
-            }
-        }
-
-        Text {
-            anchors.left: left.right
-            anchors.leftMargin: Theme.spaceM
-            anchors.right: send.left
-            anchors.rightMargin: Theme.spaceM
-            anchors.verticalCenter: parent.verticalCenter
-            horizontalAlignment: Text.AlignRight
-            elide: Text.ElideRight
-            text: root.session.asks.length > 0 ? "Waiting for you"
-                : root.session.busy ? root.session.activity || "Working"
-                : root.session.contextWindow > 0 && root.session.contextUsed >= root.session.contextWindow / 100
-                    ? Math.round(root.session.contextUsed / root.session.contextWindow * 100) + "% of context"
-                    : ""
-            color: root.session.busy ? Theme.text : Theme.subtext
-            font.family: Theme.fontText
-            font.weight: Theme.weightBody
-            font.pixelSize: Theme.fontCaption
-            opacity: root.session.busy ? pulse.value : 1
-
-            QtObject {
-                id: pulse
-                property real value: 1
-            }
-            SequentialAnimation {
-                running: root.session.busy
-                loops: Animation.Infinite
-                onRunningChanged: if (!running) pulse.value = 1
-                NumberAnimation { target: pulse; property: "value"; to: 0.45; duration: Theme.durPulse }
-                NumberAnimation { target: pulse; property: "value"; to: 1; duration: Theme.durPulse }
             }
         }
 
