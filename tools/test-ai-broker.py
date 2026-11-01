@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise subprocess ownership and event replay without a Unix socket."""
+"""Exercise subprocess ownership and event replay across client connections."""
 import asyncio
 import importlib.util
 import json
@@ -23,6 +23,49 @@ class Writer:
 
 
 class BrokerTest(unittest.IsolatedAsyncioTestCase):
+    async def test_socket_reconnect_preserves_waiting_request(self):
+        broker = module.Broker()
+        with tempfile.TemporaryDirectory() as directory:
+            server = await asyncio.start_unix_server(broker.client, path=directory + '/socket')
+            async def connect():
+                return await asyncio.open_unix_connection(directory + '/socket')
+            async def send(writer, request):
+                writer.write((json.dumps(request) + '\n').encode())
+                await writer.drain()
+            async def read(reader):
+                return json.loads(await asyncio.wait_for(reader.readline(), 3))
+            reader, writer = await connect()
+            await send(writer, {'id': 1, 'action': 'start', 'session': 'chat', 'cwd': directory,
+                                'argv': [sys.executable, '-u', '-c',
+                                         'import sys; print("approval:42"); print(sys.stdin.readline().strip())']})
+            self.assertIn('pid', (await read(reader))['result'])
+            writer.close()
+            await writer.wait_closed()
+            for _ in range(100):
+                if any(e.get('line') == 'approval:42' for e in broker.events):
+                    break
+                await asyncio.sleep(0.02)
+            reader, writer = await connect()
+            await send(writer, {'id': 2, 'action': 'watch', 'since': 0})
+            events = []
+            while True:
+                message = await read(reader)
+                if message.get('id') == 2:
+                    break
+                events.append(message)
+            self.assertTrue(any(e.get('line') == 'approval:42' for e in events))
+            await send(writer, {'id': 3, 'action': 'write', 'session': 'chat', 'data': 'approved:42\n'})
+            while True:
+                message = await read(reader)
+                if message.get('event') == 'exit':
+                    break
+                events.append(message)
+            self.assertTrue(any(e.get('line') == 'approved:42' for e in events))
+            writer.close()
+            await writer.wait_closed()
+            server.close()
+            await server.wait_closed()
+
     async def test_process_survives_disconnect_and_replays(self):
         broker = module.Broker()
         first = Writer()
