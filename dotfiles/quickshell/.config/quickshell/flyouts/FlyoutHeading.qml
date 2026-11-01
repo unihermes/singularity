@@ -29,6 +29,8 @@ Item {
     property string crumb: ""
     signal crumbClicked()
     property Component control: null
+    // the label's size, the shell's heading size unless told otherwise
+    property int textSize: Theme.fontHeadingSize
 
     readonly property bool isFlyoutHeading: true
     readonly property bool collapsible: mirrorOf ? mirrorOf.collapsible
@@ -47,7 +49,7 @@ Item {
     // in a sectioned column, out to just inside the sections' frames' outline
     x: -outdent
     width: parent ? parent.width + outdent : 0
-    implicitHeight: Math.max(Theme.headingHeight, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
+    implicitHeight: Math.max(Theme.headingHeight, textSize + 2, controlBox.active ? controlBox.height : 0) + sectionRoom * (firstInColumn ? 1 : 2)
 
     // in a sectioned flyout, room round the heading for the sections' frames:
     // below it, and above it too unless it opens the column
@@ -330,7 +332,7 @@ Item {
         anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
         anchors.verticalCenter: label.verticalCenter
-        width: Theme.fontHeadingSize
+        width: root.textSize
         height: width
         source: root.icon
         sourceSize.width: width * 2
@@ -353,7 +355,7 @@ Item {
         text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "") + (root.labelClickable ? "  ▾" : "")
         color: root.shape === "tag" ? Theme.textOnAccent : Theme.headingColor
         font.family: Theme.fontHeading
-        font.pixelSize: Theme.fontHeadingSize
+        font.pixelSize: root.textSize
         font.weight: Theme.headingBold ? Theme.weightStrong : Theme.weightBody
         // tighter beside a crumb, which shares the line
         font.letterSpacing: root.crumb !== "" ? Theme.headingSpacing / 2 : Theme.headingSpacing

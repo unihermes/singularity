@@ -149,7 +149,7 @@ PanelWindow {
         property string title: ""
         width: parent.width
         spacing: Theme.fit(4)
-        FlyoutHeading { text: parent.title }
+        FlyoutHeading { text: parent.title; textSize: Theme.fontTitle }
     }
     component Line: Spark {
         width: parent.width
