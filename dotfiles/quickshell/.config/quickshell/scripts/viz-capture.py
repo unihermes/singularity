@@ -74,14 +74,18 @@ class Tap:
         self.proc.wait()
 
 
-def pick(taps, now):
-    """the tap to pass on: the titled one while sounding, else the one that sounded last"""
+def pick(taps, now, last):
+    """the tap to pass on: the titled one while sounding, else the one that
+    sounded last; in silence, the last one passed on, so a pause in the
+    sound doesn't flip back to a paused tab"""
     sounding = [t for t in taps if now - t.loud_at < HOLD]
     titled = [t for t in sounding if t.titled]
     if titled:
         return titled[0]
     if sounding:
         return max(sounding, key=lambda t: t.loud_at)
+    if last in taps:
+        return last
     return next((t for t in taps if t.titled), taps[0] if taps else None)
 
 
@@ -89,6 +93,7 @@ die_with_parent()
 taps = {}
 scanned = 0.0
 told = None
+chosen = None
 try:
     while True:
         now = time.monotonic()
@@ -108,7 +113,7 @@ try:
             continue
         ready = select.select(list(by_fd), [], [], 0.25)[0]
         now = time.monotonic()
-        chosen = pick(list(taps.values()), now)
+        chosen = pick(list(taps.values()), now, chosen)
         if chosen and chosen.name != told:
             told = chosen.name
             print("tab " + told, file=sys.stderr, flush=True)

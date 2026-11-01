@@ -69,6 +69,10 @@ Singleton {
     readonly property bool playerHeard: !!Media.player
         && (Media.player.isPlaying || (Media.isBrowser(Media.player) && playing))
 
+    // the stream viz-capture.py passes on, Media's heard tab while there's sound
+    property string tab: ""
+    Binding { target: Media; property: "heardTab"; value: root.playing ? root.tab : "" }
+
     CommandProbe { id: cavaProbe; name: "cava" }
 
     Process {
@@ -105,11 +109,11 @@ Singleton {
                 }
             }
         }
-        // the stream viz-capture.py passes on, for Media.heardTab
+        // the stream viz-capture.py passes on
         stderr: SplitParser {
-            onRead: line => { if (line.startsWith("tab ")) Media.heardTab = line.slice(4) }
+            onRead: line => { if (line.startsWith("tab ")) root.tab = line.slice(4) }
         }
-        onRunningChanged: if (!running) { root.bars = []; root.playing = false; frames.last = ""; Media.heardTab = "" }
+        onRunningChanged: if (!running) { root.bars = []; root.playing = false; frames.last = ""; root.tab = "" }
     }
 
     Timer {
