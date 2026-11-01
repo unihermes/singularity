@@ -28,9 +28,10 @@ PanelWindow {
     required property var scope
 
     readonly property bool here: Settings.deskSidebar && Notifications.popupScreen === scope.modelData.name
-    // the column's width, and what DesktopWidgets leaves free for it: a
+    // the column's width, a medium or large widget's (WidgetCard's two
+    // units and a gap), and what DesktopWidgets leaves free for it: a
     // floating one keeps the widgets' gap from the screen's edges and theirs
-    readonly property int columnWidth: Theme.fit(340)
+    readonly property int columnWidth: Theme.fit(164) * 2 + Theme.fit(16)
     readonly property bool floating: Settings.deskSidebarStyle === "floating"
     readonly property int gap: floating ? Theme.fit(16) : 0
     readonly property int footprint: columnWidth + gap * 2
