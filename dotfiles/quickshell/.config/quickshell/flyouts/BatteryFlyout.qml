@@ -77,7 +77,7 @@ FlyoutPanel {
         id: historyChart
         width: parent.width
         spacing: Theme.spaceS
-        visible: Battery.present
+        visible: Battery.discharging
         property real now: Date.now()
 
         Timer {
@@ -89,7 +89,7 @@ FlyoutPanel {
         }
 
         Text {
-            text: "Last 24 hours · shaded when plugged in"
+            text: "Current discharge · " + Format.duration((chargeGraph.to - chargeGraph.from) / 1000)
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontCaption
@@ -130,19 +130,15 @@ FlyoutPanel {
                 bare: true
                 showTicks: false
                 fill: false
-                from: historyChart.now - Battery.historyWindow
-                to: historyChart.now
-                points: Battery.history.filter(p => p.t >= from && p.t <= to)
-                lineColor: Theme.good
-                spans: {
-                    var out = []
-                    for (var i = 0; i < points.length - 1; i++) {
-                        var a = points[i], b = points[i + 1]
-                        if (a.c && b.t - a.t <= breakAfter)
-                            out.push({ t0: a.t, t1: b.t })
-                    }
-                    return out
+                from: Battery.dischargeHistory.length > 0 ? Battery.dischargeHistory[0].t : to
+                to: Math.max(historyChart.now, Battery.history.length > 0 ? Battery.history[Battery.history.length - 1].t : 0)
+                points: {
+                    var readings = Battery.dischargeHistory.slice()
+                    if (readings.length > 0 && to > readings[readings.length - 1].t)
+                        readings.push({ t: to, v: Battery.percent / 100 })
+                    return readings
                 }
+                lineColor: Theme.good
             }
 
             Text {
@@ -160,11 +156,11 @@ FlyoutPanel {
             width: parent.width - x
             height: Theme.fontCaption + Theme.spaceXs
             Repeater {
-                model: ["24h ago", "12h ago", "Now"]
+                model: [Qt.formatTime(new Date(chargeGraph.from), Theme.hours("HH:mm")), "Now"]
                 Text {
                     required property int index
                     required property string modelData
-                    x: index === 0 ? 0 : index === 1 ? (parent.width - width) / 2 : parent.width - width
+                    x: index === 0 ? 0 : parent.width - width
                     text: modelData
                     color: Theme.subtext
                     font.family: Theme.fontText
