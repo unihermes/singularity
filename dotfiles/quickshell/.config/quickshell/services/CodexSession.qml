@@ -210,7 +210,8 @@ AiSession {
         id: proc
         stdinEnabled: true
         workingDirectory: root.cwd
-        command: ["codex", "app-server"]
+        // The sidebar owns completion notifications and their Open action.
+        command: ["codex", "app-server", "-c", "notify=[]"]
 
         onStarted: {
             root.call("initialize", { clientInfo: { name: "singularity", title: "Singularity", version: "1" }, capabilities: null }, () => {

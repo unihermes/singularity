@@ -31,7 +31,7 @@ ShellRoot {
         repeat: true
         property string last: ""
         onTriggered: {
-            var value = JSON.stringify({ shown: Ai.shown, screen: Ai.screen ? Ai.screen.name : "",
+            var value = JSON.stringify({ notificationVersion: 1, shown: Ai.shown, screen: Ai.screen ? Ai.screen.name : "",
                 busy: Ai.busy, asking: Ai.asking, unseen: Ai.unseen })
             if (value !== last) { status.setText(value); last = value }
         }

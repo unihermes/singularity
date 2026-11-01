@@ -511,6 +511,19 @@ Singleton {
         }
     }
 
+    // Upgrade older hosts only after the current turn and the visible UI are done.
+    Timer {
+        interval: 3000
+        repeat: true
+        running: !root.hosted && root.hostStatus.notificationVersion !== 1
+            && root.hostStatus.busy === false && root.hostStatus.shown === false
+        onTriggered: if (!hostUpgrade.running) hostUpgrade.running = true
+    }
+    Process {
+        id: hostUpgrade
+        command: ["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "upgrade"]
+    }
+
     // --- notifications while the sidebar is away --------------------------
 
     // A reply done or a prompt waiting, as a notification with Open, which
@@ -528,9 +541,11 @@ Singleton {
         if (body.length > 160) body = body.slice(0, 157) + "…"
         p.running = false
         p.engine = engine
-        p.command = ["notify-send", "-a", "Claude", "-i", "claude-desktop", "-A", "default=Open",
+        const service = engine === "codex" ? "Codex" : "Claude"
+        const icon = Quickshell.shellPath("sidebar/icons/" + engine + ".svg")
+        p.command = ["notify-send", "-a", service, "-i", icon, "-A", "default=Open",
                      "-h", "string:desktop-entry:singularity-sidebar-" + t + "-" + engine,
-                     "Claude · " + tabNames[t] + ": " + title, body]
+                     service + " · " + tabNames[t] + ": " + title, body]
         p.running = true
     }
     function openFromNote(t, engine, text) {

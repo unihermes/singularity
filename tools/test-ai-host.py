@@ -60,6 +60,19 @@ class HostTests(unittest.TestCase):
         self.assertFalse(launches)
         self.assertEqual(len(calls), 2)
 
+    def test_upgrade_leaves_busy_visible_and_current_hosts_alone(self):
+        for status in [{'busy': True, 'shown': False}, {'busy': False, 'shown': True},
+                       {'busy': False, 'shown': False, 'notificationVersion': 1}, {}]:
+            calls, launches = self.invoke(['upgrade'], [], status=status)
+            self.assertFalse(calls)
+            self.assertFalse(launches)
+
+    def test_upgrade_restarts_obsolete_host_after_exit(self):
+        calls, launches = self.invoke(['upgrade'], [0, 0, 1, 1, 0],
+                                     status={'busy': False, 'shown': False})
+        self.assertEqual(calls[0].args[0], ['qs', 'kill', '-p', '/config/AiHost.qml'])
+        self.assertEqual(len(launches), 1)
+
     def test_start_without_command(self):
         calls, launches = self.invoke([], [1, 0])
         self.assertEqual(len(launches), 1)

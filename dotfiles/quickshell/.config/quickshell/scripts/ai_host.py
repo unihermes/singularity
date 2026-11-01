@@ -9,12 +9,30 @@ import sys
 import time
 
 
+def upgrade(config, runtime, probe):
+    """Stop an obsolete, idle, hidden host so startup can load the current code."""
+    try:
+        status = json.loads((runtime / 'singularity-ai-status.json').read_text())
+    except (OSError, ValueError):
+        return False
+    if status.get('notificationVersion') == 1 or status.get('busy') is not False or status.get('shown') is not False:
+        return False
+    subprocess.run(['qs', 'kill', '-p', config], check=True)
+    for _ in range(100):
+        if subprocess.run(probe, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
+            return True
+        time.sleep(0.05)
+    raise SystemExit('Chat host did not stop for the update')
+
+
 def main():
     config = sys.argv[1]
     runtime = Path(os.environ['XDG_RUNTIME_DIR'])
     with (runtime / 'singularity-ai-host.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         probe = ['qs', 'ipc', '-p', config, 'show']
+        if len(sys.argv) > 2 and sys.argv[2] == 'upgrade' and not upgrade(config, runtime, probe):
+            return
         if subprocess.run(probe, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
             env = dict(os.environ, SINGULARITY_AI_HOST='1')
             with (runtime / 'singularity-ai-host.log').open('a') as log:

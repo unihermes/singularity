@@ -60,3 +60,21 @@ test('older sidebar history still routes to the host when its action has expired
     assert.deepEqual(opened, [['chat', 'claude']])
     assert.deepEqual(raised, [])
 })
+
+test('sidebar completion notifications use the source service and retain their routing marker', () => {
+    const ai = fs.readFileSync(new URL('../dotfiles/quickshell/.config/quickshell/services/Ai.qml', import.meta.url), 'utf8')
+    for (const engine of ['claude', 'codex']) {
+        const note = {}
+        const ctx = vm.createContext({ shown: false, chatNote: note, codeNote: note,
+            tabNames: { chat: 'Chat', code: 'Code' },
+            Quickshell: { shellPath: p => `/shell/${p}` } })
+        vm.runInContext(ai.match(/    function notify\([^]*?\n    }/)[0], ctx)
+        ctx.notify('code', engine, 'done', 'Finished')
+        const args = Array.from(note.command)
+        assert.equal(args[args.indexOf('-a') + 1], engine === 'codex' ? 'Codex' : 'Claude')
+        assert.equal(args[args.indexOf('-i') + 1], `/shell/sidebar/icons/${engine}.svg`)
+        assert.ok(args.includes(`string:desktop-entry:singularity-sidebar-code-${engine}`))
+        assert.ok(args.includes('default=Open'))
+        assert.equal(note.running, true)
+    }
+})
