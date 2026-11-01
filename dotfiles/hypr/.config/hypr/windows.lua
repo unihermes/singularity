@@ -395,6 +395,21 @@ local function captureShape(win)
     placeMonocle(win, mon)
 end
 
+-- Re-fits a floater that filled its old monitor to the one it's now on
+-- (`mon`, else its own): monocle to its shape, any other to the whole area.
+local function refitMoved(win, mon)
+    win = win and hl.get_window("address:" .. win.address)
+    if not (win and win.floating and win.fullscreen == 0) then return end
+    mon = mon or win.monitor
+    local st = stateOf(win.address)
+    if not mon or st.minimized or st.parked then return end
+    if hasTag(win, "monocle") then
+        placeMonocle(win, mon)
+    elseif hasTag(win, "filled") and not isFitted(win, fillArea(win, mon)) then
+        sizeToFullFloat(win, mon)
+    end
+end
+
 -- REMEMBERED SIZES. An app's main window reopens as last left, per kind of
 -- screen (wide, normal, tall): fullscreen, filled, or at its shape. Kept in
 -- window-sizes.json, the 100 most recent apps; monocle and natural windows
@@ -1244,11 +1259,16 @@ hl.on("layer.closed", function(layer)
     end, { timeout = 1, type = "oneshot" })
 end)
 
--- A window moved to another workspace takes on its layout.
+-- A window moved to another workspace takes on its layout, or re-fits to
+-- its monitor if it filled the old one.
 hl.on("window.move_to_workspace", function(win, ws)
     if not win or not ws or ws.special or hasTag(win, "menu") then return end
     local on = monocleOn(ws)
-    if on ~= inMonocleState(win) then setWindowMonocle(win, on, ws.monitor or win.monitor) end
+    if on ~= inMonocleState(win) then
+        setWindowMonocle(win, on, ws.monitor or win.monitor)
+    else
+        refitMoved(win, ws.monitor)
+    end
 end)
 
 local function maximizeFocused()
@@ -1585,6 +1605,12 @@ local function toggleMaximizeWin(win)
         elseif st.restore then
             local r = st.restore
             st.restore = nil
+            -- saved on another monitor: brought over, centred, at most the area
+            local cx, cy = r.x + r.w / 2, r.y + r.h / 2
+            if cx < area.x or cx > area.x + area.w or cy < area.y or cy > area.y + area.h then
+                local w, h = math.min(r.w, area.w), math.min(r.h, area.h)
+                r = { x = math.floor(area.x + (area.w - w) / 2), y = math.floor(area.y + (area.h - h) / 2), w = w, h = h }
+            end
             hl.dispatch(hl.dsp.window.resize({ x = r.w, y = r.h, window = addr }))
             hl.dispatch(hl.dsp.window.move({ x = r.x, y = r.y, window = addr }))
         else
@@ -1948,7 +1974,7 @@ end
 
 require("window-keys")({
     isMonocleWin = isMonocleWin, stateOf = stateOf,
-    placeMonocle = placeMonocle, captureShape = captureShape,
+    placeMonocle = placeMonocle, captureShape = captureShape, refitMoved = refitMoved,
 })
 
 -- The monocle, natural and fullscreen rules act at map time, so they're
