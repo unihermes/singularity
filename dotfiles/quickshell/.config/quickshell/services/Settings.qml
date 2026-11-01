@@ -434,6 +434,8 @@ Singleton {
     // the conky-style column down the primary display's right edge
     // (desktop/DesktopSidebar.qml)
     readonly property alias deskSidebar: adapter.deskSidebar
+    // "edge": flush down the edge; "floating": a card like the widgets
+    readonly property alias deskSidebarStyle: adapter.deskSidebarStyle
     readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats", "sysinfo"]
     readonly property var deskWidgetSizes: ["s", "m", "l"]
     function deskWidget(key) {
@@ -1135,6 +1137,7 @@ Singleton {
             property var headsetOptions: ({})
             property var desktopWidgets: ({})
             property bool deskSidebar: false
+            property string deskSidebarStyle: "edge"
             property bool updateAur: true
             property var updateIgnore: []
             property bool notifDnd: false

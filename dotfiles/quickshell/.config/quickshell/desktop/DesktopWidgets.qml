@@ -33,7 +33,7 @@ Scope {
     // the screen under the bar, less the sidebar's column when it's here
     readonly property var area: {
         const a = Placement.area(screen.width, screen.height, Theme.barExtent, Theme.barPosition === "bottom")
-        if (sidebar && sidebar.here) a.w -= sidebar.columnWidth
+        if (sidebar && sidebar.here) a.w -= sidebar.footprint
         return a
     }
     // the screen's DesktopSidebar

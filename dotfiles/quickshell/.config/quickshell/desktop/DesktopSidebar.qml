@@ -28,8 +28,12 @@ PanelWindow {
     required property var scope
 
     readonly property bool here: Settings.deskSidebar && Notifications.popupScreen === scope.modelData.name
-    // the column's width, which DesktopWidgets leaves free
+    // the column's width, and what DesktopWidgets leaves free for it: a
+    // floating one keeps the widgets' gap from the screen's edges and theirs
     readonly property int columnWidth: Theme.fit(340)
+    readonly property bool floating: Settings.deskSidebarStyle === "floating"
+    readonly property int gap: floating ? Theme.fit(16) : 0
+    readonly property int footprint: columnWidth + gap * 2
     // from its edges in to the readings
     readonly property int inset: Theme.fit(20)
 
@@ -39,19 +43,25 @@ PanelWindow {
     WlrLayershell.namespace: "desktop-widget"
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
-    // flush with the right edge, from the bar to the other end
+    // down the right edge, from the bar to the other end
     anchors { top: true; right: true; bottom: true }
-    margins.top: Theme.barPosition === "bottom" ? 0 : Theme.barExtent
-    margins.bottom: Theme.barPosition === "bottom" ? Theme.barExtent : 0
+    margins.top: (Theme.barPosition === "bottom" ? 0 : Theme.barExtent) + gap
+    margins.bottom: (Theme.barPosition === "bottom" ? Theme.barExtent : 0) + gap
+    margins.right: gap
     implicitWidth: columnWidth
     // nothing on it takes the pointer
     mask: Region {}
 
-    // the ground: see-through dark, edged on the left
+    // the ground: see-through dark, edged on the left; floating, a
+    // widget's card
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(0, 0, 0, 0.5)
+        color: Qt.rgba(0, 0, 0, win.floating ? 0.35 : 0.5)
+        radius: win.floating ? Theme.panelFrameRadius : 0
+        border.width: win.floating ? 1 : 0
+        border.color: Qt.rgba(1, 1, 1, 0.22)
         Rectangle {
+            visible: !win.floating
             width: 1
             height: parent.height
             color: Qt.rgba(1, 1, 1, 0.22)

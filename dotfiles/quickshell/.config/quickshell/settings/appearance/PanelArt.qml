@@ -371,11 +371,14 @@ ClippingRectangle {
         }
         Rectangle {
             id: sidebar
+            readonly property real gap: Settings.deskSidebarStyle === "floating" ? 3 * art.u : 0
             visible: Settings.deskSidebar
             anchors.right: parent.right
-            y: art.barH
+            anchors.rightMargin: gap
+            y: art.barH + gap
             width: visible ? 22 * art.u : 0
-            height: parent.height - art.barH
+            height: parent.height - art.barH - gap * 2
+            radius: gap
             color: Qt.rgba(0, 0, 0, 0.35)
             Column {
                 anchors.horizontalCenter: parent.horizontalCenter

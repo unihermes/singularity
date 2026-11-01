@@ -179,6 +179,20 @@ SettingsTab {
         }
 
         SettingsField {
+            visible: Settings.deskSidebar
+            labelWidth: parent.labelWidth
+            label: "Sidebar style"
+            hint: Settings.deskSidebarStyle === "floating" ? "A card like the widgets, clear of the edges" : "Flush down the screen's edge"
+            FlyoutSegmented {
+                anchors.right: parent.right
+                fill: false
+                model: [{ value: "edge", text: "Edge" }, { value: "floating", text: "Floating" }]
+                current: Settings.deskSidebarStyle
+                onPicked: v => Settings.set("deskSidebarStyle", v)
+            }
+        }
+
+        SettingsField {
             labelWidth: parent.labelWidth
             label: "Placement"
             hint: "Drag them about on the desktop"

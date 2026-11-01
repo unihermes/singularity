@@ -208,6 +208,7 @@ var entries = [
     { page: "appearance", section: "Panels", label: "System", keywords: "desktop widgets stats cpu gpu ram memory temperature disk storage monitor wallpaper" },
     { page: "appearance", section: "Panels", label: "System info", keywords: "desktop widgets fastfetch neofetch distro kernel uptime host ip packages cpu gpu hardware" },
     { page: "appearance", section: "Panels", label: "Sidebar", keywords: "desktop conky system monitor column right edge cpu gpu memory disks network processes fans battery" },
+    { page: "appearance", section: "Panels", label: "Sidebar style", keywords: "desktop conky sidebar edge attached floating card rounded" },
     { page: "appearance", section: "Panels", label: "Placement", keywords: "desktop widgets edit move drag place position size small medium large right-click menu sticky notes" },
 
     { page: "appearance", section: "Motion", label: "Animations", keywords: "motion transitions speed" },
