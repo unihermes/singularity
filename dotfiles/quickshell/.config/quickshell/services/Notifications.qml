@@ -225,10 +225,7 @@ Singleton {
             ? /^Claude · (Chat|Code): /.exec(entry.summary || "") : null
         if (!match && !legacy) return false
         shown = false
-        const action = entry.live && entry.live.tracked
-            ? entry.live.actions.find(a => a.identifier === "open" || a.identifier === "default") : null
-        if (legacy && action) action.invoke()
-        else Ai.openConversation(match ? match[1] : legacy[1].toLowerCase(), match ? match[2] : "claude")
+        Ai.openConversation(match ? match[1] : legacy[1].toLowerCase(), match ? match[2] : "claude")
         return true
     }
 
@@ -487,6 +484,45 @@ Singleton {
         }
     }
 
+    // Old hosts emitted a sidebar card and Codex's user-configured hook for
+    // the same reply. Keep the sidebar card, with a durable route and identity.
+    function repairSidebarHistory() {
+        const removed = new Set()
+        const plain = text => String(text || "").replace(/[*_`#>]/g, "").replace(/\s+/g, " ").trim()
+        let changed = false
+        const repaired = history.map(entry => {
+            if (entry.phone || entry.appName !== "Claude" || entry.desktopEntry) return entry
+            const tab = /^Claude · (Chat|Code): /.exec(entry.summary)
+            if (!tab) return entry
+            const prefix = plain(entry.body).slice(0, 100)
+            const duplicate = history.find(other => !other.phone && other.appName === "Codex"
+                && !other.desktopEntry && other.summary === "Codex" && !removed.has(other.key)
+                && Math.abs(other.time - entry.time) < 1000 && prefix.length >= 30
+                && plain(other.body).startsWith(prefix))
+            if (!duplicate) return entry
+            removed.add(duplicate.key)
+            if (duplicate.live) duplicate.live.tracked = false
+            if (entry.live) entry.live.tracked = false
+            changed = true
+            return Object.assign({}, entry, { appName: "Codex", live: null,
+                desktopEntry: "singularity-sidebar-" + tab[1].toLowerCase() + "-codex",
+                summary: entry.summary.replace(/^Claude/, "Codex"),
+                icon: "file://" + Quickshell.shellPath("sidebar/icons/codex.svg") })
+        })
+        const seen = new Set()
+        const unique = repaired.filter(e => {
+            if (removed.has(e.key)) return false
+            if (!/^singularity-sidebar-/.test(e.desktopEntry || "")) return true
+            if (seen.has(e.id)) { changed = true; return false }
+            seen.add(e.id)
+            return true
+        })
+        if (!changed) return
+        history = unique
+        popups = popups.filter(e => !removed.has(e.key)).map(e => history.find(h => h.key === e.key) || e)
+        saveTimer.restart()
+    }
+
     // --- persistence --------------------------------------------------------
 
     function save() {
@@ -544,6 +580,7 @@ Singleton {
             root.history = entries.slice(0, root.maxEntries)
             root.lastSeen = typeof d.lastSeen === "number" ? d.lastSeen : 0
             root.adoptLive()
+            Qt.callLater(root.repairSidebarHistory)
         }
         onLoadFailed: root.adoptLive()
     }

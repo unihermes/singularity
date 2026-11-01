@@ -43,13 +43,13 @@ test('desktop and phone notifications keep their normal activation', () => {
     }
 })
 
-test('notifications from the running older sidebar invoke its Open action', () => {
+test('older notifications use durable routing even when a stale action is present', () => {
     const { ctx, opened, raised } = context()
     let invoked = false
     ctx.activate({ appName: 'Claude', desktopEntry: '', summary: 'Claude · Code: done',
         live: { tracked: true, actions: [{ identifier: 'open', invoke: () => { invoked = true } }] } })
-    assert.equal(invoked, true)
-    assert.deepEqual(opened, [])
+    assert.equal(invoked, false)
+    assert.deepEqual(opened, [['code', 'claude']])
     assert.deepEqual(raised, [])
     assert.equal(ctx.shown, false)
 })
@@ -77,4 +77,24 @@ test('sidebar completion notifications use the source service and retain their r
         assert.ok(args.includes('default=Open'))
         assert.equal(note.running, true)
     }
+})
+
+test('old duplicate pairs become one Codex card with a durable route', () => {
+    const body = 'The finished task has a detailed result that is shared by both notifications.'
+    const old = { key: 'a', id: 1, time: 1000, appName: 'Claude', summary: 'Claude · Code: done', body, live: { tracked: true } }
+    const hook = { key: 'b', id: 2, time: 1100, appName: 'Codex', summary: 'Codex', body, live: { tracked: true } }
+    const unrelated = { key: 'c', id: 3, time: 1200, appName: 'Codex', summary: 'Codex', body: 'A separate terminal task', live: null }
+    const ctx = vm.createContext({ history: [hook, old, unrelated], popups: [hook, old],
+        Quickshell: { shellPath: p => `/shell/${p}` }, saveTimer: { restart() {} } })
+    vm.runInContext(source.match(/    function repairSidebarHistory\([^]*?\n    }/)[0], ctx)
+    ctx.repairSidebarHistory()
+    assert.equal(ctx.history.length, 2)
+    assert.equal(ctx.history[0].desktopEntry, 'singularity-sidebar-code-codex')
+    assert.equal(ctx.history[0].appName, 'Codex')
+    assert.equal(ctx.popups.length, 1)
+    assert.equal(hook.live.tracked, false)
+    assert.equal(old.live.tracked, false)
+    assert.equal(ctx.history[1], unrelated)
+    ctx.repairSidebarHistory()
+    assert.equal(ctx.history.length, 2)
 })
