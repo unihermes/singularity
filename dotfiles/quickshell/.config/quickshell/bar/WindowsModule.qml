@@ -104,6 +104,7 @@ ModuleFrame {
             ? iconRepeater.itemAt(focusIndex) : null
         // marks go toward the screen's edge
         readonly property bool atBottom: Theme.barPosition === "bottom"
+        readonly property int segmentHeight: Math.min(Theme.moduleHeight, Theme.iconHoverHeight)
         // a full-size icon's top and bottom, centred in the strip
         readonly property int iconTop: Math.round((Theme.moduleHeight - Theme.windowIconSize) / 2)
         readonly property int iconBottom: iconTop + Theme.windowIconSize
@@ -117,7 +118,7 @@ ModuleFrame {
             visible: strip.style === "segmented"
             x: stripRow.x
             width: stripRow.width
-            height: Theme.moduleHeight - 6
+            height: strip.segmentHeight
             anchors.verticalCenter: parent.verticalCenter
             radius: Theme.radiusSmall
             color: "transparent"
@@ -263,7 +264,7 @@ ModuleFrame {
                         x: 0
                         anchors.verticalCenter: parent.verticalCenter
                         width: 1
-                        height: Theme.moduleHeight - 6
+                        height: strip.segmentHeight
                         color: Theme.stroke
                     }
 
@@ -290,7 +291,7 @@ ModuleFrame {
                         x: winIcon.lead
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - winIcon.lead
-                        height: Theme.moduleHeight - 6
+                        height: strip.segmentHeight
                         radius: Theme.radiusSmall
                         color: winIcon.focused ? Qt.alpha(Theme.accent, 0.3)
                             : winIcon.hovered ? Theme.overlay : "transparent"
