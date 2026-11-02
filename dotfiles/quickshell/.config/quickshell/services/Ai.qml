@@ -653,15 +653,31 @@ Singleton {
 
     function save() { if (hosted) saveTimer.restart() }
 
-    Timer {
-        id: saveTimer
-        interval: 300
-        onTriggered: view.setText(JSON.stringify({
+    function writeState() {
+        view.setText(JSON.stringify({
             tab: root.tab, codeDir: root.codeDir, models: root.models, reasoning: root.reasoning, codeMode: root.codeMode,
             engines: root.engines, shown: root.shown, screen: root.screen ? root.screen.name : "",
             sessions: { chat: root.chat.sessionId, code: root.code.sessionId,
                         chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId }
         }, null, 2) + "\n")
+    }
+
+    function reloadSidebar() {
+        if (!hosted || busy || asking) return
+        saveTimer.stop()
+        view.waitForJob()
+        stateWriteFailed = false
+        writeState()
+        view.waitForJob()
+        if (!stateWriteFailed) Quickshell.reload(true)
+    }
+
+    property bool stateWriteFailed: false
+
+    Timer {
+        id: saveTimer
+        interval: 300
+        onTriggered: root.writeState()
     }
 
     FileView {
@@ -671,6 +687,10 @@ Singleton {
         blockLoading: true
         atomicWrites: true
         printErrors: false
+        onSaveFailed: error => {
+            root.stateWriteFailed = true
+            console.warn("Could not save sidebar state:", error)
+        }
 
         onLoaded: {
             if (!root.hosted) return

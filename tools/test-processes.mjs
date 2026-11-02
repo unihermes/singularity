@@ -7,6 +7,44 @@ import vm from 'node:vm'
 import { spawnSync } from 'node:child_process'
 import { source, functions, handler } from './qml-harness.mjs'
 
+test('Sidebar reload waits for saved state and excludes active sessions and failed writes', () => {
+    for (const blocked of ['busy', 'asking', 'unhosted', 'write failure', '']) {
+        const events = []
+        let saved
+        const s = functions(source('Ai.qml'), {
+            hosted: blocked !== 'unhosted', busy: blocked === 'busy', asking: blocked === 'asking',
+            stateWriteFailed: false,
+            tab: 'code', codeDir: '/project', models: { codeCodex: 'gpt-6-astra' }, reasoning: {},
+            codeMode: 'auto', engines: { code: 'codex' }, shown: true, screen: { name: 'DP-1' },
+            chat: { sessionId: 'chat' }, code: { sessionId: 'code' },
+            chatCodex: { sessionId: 'chatCodex' }, codeCodex: { sessionId: 'codeCodex' },
+            saveTimer: { stop() { events.push('stop timer') } },
+            view: {
+                waitForJob() { events.push('wait') },
+                setText(text) {
+                    events.push('write')
+                    saved = JSON.parse(text)
+                    if (blocked === 'write failure') s.stateWriteFailed = true
+                }
+            },
+            Quickshell: { reload(hard) { assert.equal(hard, true); events.push('reload') } }
+        })
+        s.root = s
+        s.reloadSidebar()
+        if (['busy', 'asking', 'unhosted'].includes(blocked)) {
+            assert.deepEqual(events, [])
+        } else {
+            assert.deepEqual(events, ['stop timer', 'wait', 'write', 'wait',
+                ...(blocked === 'write failure' ? [] : ['reload'])])
+            assert.equal(saved.tab, 'code')
+            assert.equal(saved.shown, true)
+            assert.equal(saved.screen, 'DP-1')
+            assert.equal(saved.models.codeCodex, 'gpt-6-astra')
+            assert.deepEqual(saved.sessions, { chat: 'chat', code: 'code', chatCodex: 'chatCodex', codeCodex: 'codeCodex' })
+        }
+    }
+})
+
 function writer() {
     const files = new Map(), results = [], sent = []
     const reader = { path: '', reload() {}, waitForJob() {}, text() { return files.get(this.path) || '' } }

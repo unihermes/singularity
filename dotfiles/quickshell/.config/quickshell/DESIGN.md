@@ -568,7 +568,8 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
   network, so they can commit and push; Auto never asking); Chat's
   Codex only reads. The heading reads CODEX while it's on.
 - **Heading** CLAUDE, with
-  past sessions and × as icon buttons, and a New chat chip between them while there's a conversation; then Chat
+  past sessions and × as icon buttons, a Reload chip that saves state and reloads
+  the sidebar when all sessions are idle, and a New chat chip while there's a conversation; then Chat
   and Code as a segmented strip, a ● on a tab with something unread.
 - **Usage** under the heading, then a break: a meter each for the
   five-hour and weekly windows of the tab's engine (Claude's or Codex's), used % and when it

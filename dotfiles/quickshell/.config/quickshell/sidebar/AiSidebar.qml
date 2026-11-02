@@ -153,6 +153,13 @@ PanelWindow {
                     }
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
+                        icon: "󰑓"
+                        text: "Reload"
+                        enabled: !Ai.busy && !Ai.asking
+                        onClicked: Ai.reloadSidebar()
+                    }
+                    FlyoutChip {
+                        anchors.verticalCenter: parent.verticalCenter
                         visible: !root.session.empty || root.session.sessionId !== ""
                         icon: "󰝒"
                         text: Ai.tab === "chat" ? "New chat" : "New"
