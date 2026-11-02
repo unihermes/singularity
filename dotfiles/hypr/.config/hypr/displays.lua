@@ -186,22 +186,8 @@ function singularityResetWorkspaces()
     end
 end
 
--- Layer surfaces aren't re-placed when Hyprland slides a display over, so a
--- one-pixel monitor-rule nudge and a reload put them right; lid.sh runs it
--- after display changes.
-function singularityNudgeDisplays()
-    for _, m in ipairs(hl.get_monitors()) do
-        if not m.is_mirror then
-            hl.monitor({
-                output    = m.name,
-                mode      = string.format("%dx%d@%.3f", m.width, m.height, m.refresh_rate),
-                position  = (m.x + 1) .. "x" .. m.y,
-                scale     = m.scale,
-                transform = m.transform,
-            })
-        end
-    end
-end
+-- Hotplug recovery leaves monitor modes to the compositor. Rewriting modes
+-- while DRM connectors resume can race the backend's connector recovery.
 
 -- The workspace layout from before a display was plugged in, one file per
 -- set of displays (so they stack), kept in the runtime dir through reloads:

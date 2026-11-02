@@ -6,6 +6,7 @@ set -euo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source ./lib.sh
+source ./hardware.sh
 
 command -v stow &>/dev/null || die "stow is not installed: sudo pacman -S stow"
 [[ -d dotfiles ]] || die "no dotfiles/ directory next to this script"
@@ -72,13 +73,16 @@ seed() {
   log "wrote ${dst#"$HOME/"}${3:+ ($3)}"
 }
 
-# the idle ladder's default per machine type (laptop's when unknown)
+# The idle ladder follows the saved machine choice, or firmware detection.
 machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null || true)
-[[ $machine == desktop ]] || machine=laptop
+[[ $machine == laptop || $machine == desktop ]] || machine=$(detect_machine)
 seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$machine default"
-# a ladder from before the Hibernate step: its suspends go through
-# idle-suspend.sh and the step is added, off
 idle=$HOME/.config/hypr/hypridle.conf
+# Keep existing timings and enabled steps while routing sleep by hardware.
+sed -i -e 's#~/.config/hypr/lid.sh sleep#~/.config/hypr/sleep.sh sleep#g' \
+  -e 's#~/.config/hypr/lid.sh resume#~/.config/hypr/sleep.sh resume#g' \
+  -e 's#= brightnessctl -s set 1%#= [ -n "$(ls -A /sys/class/backlight)" ] \&\& brightnessctl -c backlight -s set 1%#' \
+  -e 's#= brightnessctl -r#= [ -n "$(ls -A /sys/class/backlight)" ] \&\& brightnessctl -c backlight -r#' "$idle"
 if ! grep -q 'systemctl hibernate' "$idle"; then
   sed -i -E 's#^([[:space:]]*(\#~ ?)?[[:space:]]*on-timeout[[:space:]]*=.*)systemctl suspend$#\1~/.config/hypr/idle-suspend.sh#' "$idle"
   sed -n '/^# 1 h: hibernate/,$p' "$defaults/hypridle-$machine.defaults.conf" | sed '1i\\' >> "$idle"

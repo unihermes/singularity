@@ -37,6 +37,9 @@
 # The lid and monitors are read from sysfs, so the timer needs no Hyprland.
 set -u
 
+# Lid policy only applies where the kernel exposes a lid switch.
+compgen -G '/proc/acpi/button/lid/*/state' >/dev/null || exit 0
+
 unit=singularity-lid-suspend
 # Settings -> Lock Screen's four, overridden from lid.conf below
 close_action=suspend  # suspend | screen-off (never suspends on its own)
@@ -222,36 +225,6 @@ stay_dark() {
     log "woke with the screen off and nobody there: leaving it off"
 }
 
-# Whether any layer surface (the bar, the wallpaper) sticks out of the
-# display it belongs to -- left behind where the display used to be.
-stale_layers() {
-    { hyprctl monitors; echo "--layers"; hyprctl layers; } 2>/dev/null | awk '
-        /^--layers/ { layers = 1; next }
-        !layers && /^Monitor / { name = $2 }
-        !layers && / at [-0-9]+x[-0-9]+/ {
-            split($1, res, "[x@]"); split($3, pos, "x")
-            mx[name] = pos[1]; my[name] = pos[2]; mw[name] = res[1]; mh[name] = res[2]
-        }
-        !layers && /scale:/ { mw[name] /= $2; mh[name] /= $2 }
-        layers && /^Monitor / { name = $2; sub(":", "", name) }
-        layers && /xywh:/ && (name in mx) {
-            split($0, a, "xywh: "); split(a[2], v, "[ ,]")
-            if (v[1] < mx[name] || v[2] < my[name] || v[1] + v[3] > mx[name] + mw[name] || v[2] + v[4] > my[name] + mh[name]) bad = 1
-        }
-        END { exit !bad }'
-}
-
-# displays with no layer surface (not even the wallpaper); mirrors don't count
-bare_displays() {
-    { hyprctl monitors; echo "--layers"; hyprctl layers; } 2>/dev/null | awk '
-        /^--layers/ { layers = 1; next }
-        !layers && /^Monitor / { name = $2 }
-        !layers && /mirrorOf:/ && $2 != "none" { mirror[name] = 1 }
-        layers && /^Monitor / { name = $2; sub(":", "", name); if (!(name in mirror)) seen[name] = 0 }
-        layers && /xywh:/ && (name in seen) { seen[name] = 1 }
-        END { for (n in seen) if (!seen[n]) print n }'
-}
-
 # switches the panel off or on through displays.lua; a no-op when it already is
 panel_off() {
     unhold
@@ -338,25 +311,6 @@ displays)
         # the last external display went with the lid shut
         panel_back
         closed_undocked
-    fi
-    # Hyprland leaves layer surfaces where displays used to be
-    # (singularityNudgeDisplays); retried while they settle
-    for _ in 1 2 3; do
-        hyprctl eval 'singularityNudgeDisplays()' >/dev/null
-        hyprctl reload config-only >/dev/null
-        sleep 1
-        stale_layers || break
-    done
-    stale_layers && log "bar or wallpaper still out of place after nudging the displays"
-    # a display Hyprland never announced to clients gets toggled off and on
-    if [[ -n $(bare_displays) ]]; then
-        sleep 2
-        for m in $(bare_displays); do
-            log "$m has no bar or wallpaper: switching it off and on"
-            hyprctl eval "hl.monitor({ output = \"$m\", disabled = true })" >/dev/null
-        done
-        sleep 1
-        hyprctl reload config-only >/dev/null
     fi
     ;;
 sleep)
