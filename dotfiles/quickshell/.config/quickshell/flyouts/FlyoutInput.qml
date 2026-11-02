@@ -38,6 +38,22 @@ Item {
     // Shift+Enter, for a field whose list has a second action on a row
     // (the launcher's file mode opens the containing folder with it)
     signal shiftReturnPressed()
+    // Ctrl or Alt chords reported instead of handled, by name: "ctrl+p",
+    // "alt+1", "ctrl+up" (the launcher's pin, row and rail keys)
+    property var chordKeys: []
+    signal chordPressed(string name)
+    // Backspace with nothing left to delete
+    signal emptyBackspace()
+    property int textSize: Theme.fontBody
+
+    function takeChord(event, key) {
+        var m = event.modifiers
+        var pre = (m & Qt.ControlModifier) ? "ctrl+" : (m & Qt.AltModifier) ? "alt+" : ""
+        if (pre === "" || chordKeys.indexOf(pre + key) === -1) return false
+        chordPressed(pre + key)
+        event.accepted = true
+        return true
+    }
 
     width: parent ? parent.width : 0
     implicitHeight: Theme.rowHeightTall
@@ -124,7 +140,7 @@ Item {
         color: Theme.textDisabled
         font.family: Theme.fontText
         font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontBody
+        font.pixelSize: root.textSize
     }
 
     TextInput {
@@ -143,13 +159,13 @@ Item {
 
         font.family: Theme.fontText
         font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontBody
+        font.pixelSize: root.textSize
         echoMode: root.echoPassword ? TextInput.Password : TextInput.Normal
         // the panel is dismissed by click-off or Escape, so Enter is the only
         // key this needs to act on itself
         onAccepted: root.accepted()
-        Keys.onUpPressed: root.upPressed()
-        Keys.onDownPressed: root.downPressed()
+        Keys.onUpPressed: event => { if (!root.takeChord(event, "up")) root.upPressed() }
+        Keys.onDownPressed: event => { if (!root.takeChord(event, "down")) root.downPressed() }
         Keys.onLeftPressed: event => {
             if (root.sidewaysKeys && !(event.modifiers & Qt.ShiftModifier)) root.leftPressed()
             else event.accepted = false
@@ -162,6 +178,11 @@ Item {
         Keys.onTabPressed: root.tabPressed()
         Keys.onBacktabPressed: root.backTabPressed()
         Keys.onPressed: event => {
+            var k = event.key
+            var name = k >= Qt.Key_A && k <= Qt.Key_Z ? String.fromCharCode(k).toLowerCase()
+                : k >= Qt.Key_0 && k <= Qt.Key_9 ? String(k - Qt.Key_0) : ""
+            if (name !== "" && root.takeChord(event, name)) return
+            if (k === Qt.Key_Backspace && field.text === "") root.emptyBackspace()
             if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {
                 root.shiftDeletePressed()
                 event.accepted = true

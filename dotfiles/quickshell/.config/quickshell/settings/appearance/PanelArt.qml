@@ -5,7 +5,8 @@
 // a strip of bar, and the section's panels drawn small as they're set, in
 // the theme's colours. `kind`:
 //   popups    a notification popup, a flyout and the level popup
-//   launcher  the launcher in its layout and position
+//   launcher  the launcher in its layout (and position, for List, Grid and
+//             One line)
 //   overlays  the window switcher and the power menu over the backdrop
 //   widgets   the desktop widgets that are on, and the sidebar
 
@@ -40,7 +41,7 @@ ClippingRectangle {
 
     // the backdrop behind the overlays and the full launcher
     Rectangle {
-        visible: art.kind === "overlays" || (art.kind === "launcher" && Settings.launcherPosition === "full")
+        visible: art.kind === "overlays" || (art.kind === "launcher" && Settings.launcherPosition === "full" && Theme.launcherPlaced)
         anchors.fill: parent
         color: Settings.overviewBackdrop === "solid" ? Theme.base : "black"
         opacity: Settings.overviewBackdrop === "solid" ? 1 : Settings.overviewBackdrop === "dim" ? Settings.scrim / 100 : 0
@@ -164,11 +165,21 @@ ClippingRectangle {
 
     // --- launcher ----------------------------------------------------------
 
+    // the other layouts, as their Launcher layout tile draws them
+    LauncherArt {
+        visible: art.kind === "launcher" && !launcher.classic
+        anchors.fill: parent
+        screen: false
+        barH: art.barH
+        value: Settings.launcherLayout
+    }
+
     Ground {
         id: launcher
         readonly property bool full: Settings.launcherPosition === "full"
         readonly property bool line: Settings.launcherLayout === "line"
-        visible: art.kind === "launcher"
+        readonly property bool classic: ["list", "grid", "line"].indexOf(Settings.launcherLayout) !== -1
+        visible: art.kind === "launcher" && classic
         x: full ? 0 : art.width * 0.2
         y: full ? art.barH : Settings.launcherPosition === "top" ? art.barH + 3 * art.u : (line ? art.height * 0.4 : art.height * 0.22)
         width: full ? art.width : art.width * 0.6

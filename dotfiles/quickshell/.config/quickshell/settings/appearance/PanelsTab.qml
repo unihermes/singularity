@@ -77,18 +77,16 @@ SettingsTab {
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "LAUNCHER" }
 
+    Tiles { key: "launcherLayout"; label: "Launcher layout"; art: launcherArt; columns: 3; tileHeight: Theme.fs(100) }
+
     Beside {
         kind: "launcher"
 
         SettingsField {
             labelWidth: parent.labelWidth
-            label: "Launcher layout"
-            Choices { key: "launcherLayout" }
-        }
-        SettingsField {
-            labelWidth: parent.labelWidth
             label: "Launcher position"
-            Choices { key: "launcherPosition" }
+            hint: Theme.launcherPlaced ? "" : "Set by the layout"
+            Choices { key: "launcherPosition"; live: Theme.launcherPlaced }
         }
         SettingsField {
             labelWidth: parent.labelWidth
@@ -203,4 +201,6 @@ SettingsTab {
             }
         }
     }
+
+    Component { id: launcherArt; LauncherArt {} }
 }

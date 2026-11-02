@@ -267,7 +267,7 @@ Singleton {
         barChips:     ["auto", "bare", "outline", "grouped"],
         notifStyle:   ["full", "compact", "banner"],
         launcherPosition: ["centre", "top", "full"],
-        launcherLayout: ["list", "grid", "line"],
+        launcherLayout: ["list", "grid", "line", "spotlight", "home", "start", "drawer", "bar", "mosaic"],
         flyoutAnim:   ["auto", "drop", "fade", "scale", "none"],
     })
     readonly property var choiceLabels: ({
@@ -314,7 +314,8 @@ Singleton {
         windowShadow: { "style": "Style's", "off": "Off", "small": "Small", "large": "Large" },
         tabBar: { "shell": "Shell's colours" },
         wallpaperFill: { "fill": "Fill", "fit": "Fit", "center": "Centre", "tile": "Tile" },
-        launcherLayout: { "line": "One line" },
+        launcherLayout: { "line": "One line", "spotlight": "Spotlight", "home": "Home", "start": "Start menu",
+                          "drawer": "Drawer", "bar": "In the bar", "mosaic": "Mosaic" },
         launcherPosition: { "top": "Under the bar", "full": "Full screen" },
         powerStyle: { "full": "Full screen" },
         overviewLayout: { "strip": "One row" },

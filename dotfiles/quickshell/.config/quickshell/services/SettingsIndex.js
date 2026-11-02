@@ -193,7 +193,7 @@ var entries = [
     { page: "appearance", section: "Panels", label: "Popup width", keywords: "notifications popups wider narrower width px" },
     { page: "appearance", section: "Panels", label: "Flyout width", keywords: "flyouts menus wider narrower width percent" },
     { page: "appearance", section: "Panels", label: "Overlay dimming", keywords: "scrim dark backdrop" },
-    { page: "appearance", section: "Panels", label: "Launcher layout", keywords: "launcher apps grid list dmenu spotlight" },
+    { page: "appearance", section: "Panels", label: "Launcher layout", keywords: "launcher apps grid list dmenu spotlight home start menu drawer bar mosaic tiles pinned" },
     { page: "appearance", section: "Panels", label: "Launcher position", keywords: "launcher centre top fullscreen dim" },
     { page: "appearance", section: "Panels", label: "Launcher details", keywords: "launcher description comment hints keys" },
     { page: "appearance", section: "Panels", label: "Rows shown", keywords: "launcher results rows count height" },

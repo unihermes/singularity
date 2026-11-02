@@ -359,3 +359,21 @@ test("Settings search follows hardware capabilities independently of profile", (
         assert.ok(attached.some(e => e.label === label), label)
     assert.ok(!attached.some(e => e.section === "Lid"))
 })
+
+test("Mosaic packs tiles densely and walks them with the arrows", () => {
+    const M = load("Mosaic.js")
+    const r = M.pack([[2, 2], [2, 2], [2, 1], [2, 1], [1, 1], [1, 1], [1, 1]], 6)
+    assert.deepEqual(JSON.parse(JSON.stringify(r)), [
+        { x: 0, y: 0, w: 2, h: 2 }, { x: 2, y: 0, w: 2, h: 2 }, { x: 4, y: 0, w: 2, h: 1 },
+        { x: 4, y: 1, w: 2, h: 1 }, { x: 0, y: 2, w: 1, h: 1 }, { x: 1, y: 2, w: 1, h: 1 }, { x: 2, y: 2, w: 1, h: 1 },
+    ])
+    // a tile wider than the grid is cut to fit
+    assert.equal(M.pack([[9, 1]], 4)[0].w, 4)
+    assert.equal(M.step(r, 0, 1, 0), 1)
+    assert.equal(M.step(r, 1, 1, 0), 2)
+    assert.equal(M.step(r, 2, 0, 1), 3)
+    assert.equal(M.step(r, 0, 0, 1), 4)
+    // nothing that way: stays put; a tile ok() refuses is passed over
+    assert.equal(M.step(r, 0, -1, 0), 0)
+    assert.equal(M.step(r, 0, 0, 1, (i) => i !== 4), 5)
+})

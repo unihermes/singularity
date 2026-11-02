@@ -71,6 +71,59 @@ Singleton {
         return starts.concat(rest)
     }
 
+    // --- pinned and grouped, for the launcher's Home and Start menu --------
+
+    // desktop entry ids pinned in the launcher (Ctrl+P), in pin order. No
+    // file yet: the twelve most launched stand in.
+    property var pinnedIds: []
+    property bool pinsSaved: false
+    FileView {
+        id: pinsFile
+        path: Settings.stateDir + "/app-pins.json"
+        preload: true
+        printErrors: false
+        onLoaded: {
+            try { root.pinnedIds = JSON.parse(text()) || []; root.pinsSaved = true } catch (e) { root.pinnedIds = [] }
+        }
+    }
+    readonly property var pinned: {
+        var all = list("")
+        if (!pinsSaved) return all.slice(0, 12)
+        var byId = {}
+        for (var i = 0; i < all.length; i++) byId[all[i].id] = all[i]
+        return pinnedIds.map(id => byId[id]).filter(e => !!e)
+    }
+    function isPinned(entry) { return pinned.indexOf(entry) !== -1 }
+    function togglePin(entry) {
+        var ids = pinned.map(e => e.id)
+        var i = ids.indexOf(entry.id)
+        if (i === -1) ids.push(entry.id)
+        else ids.splice(i, 1)
+        pinnedIds = ids
+        pinsSaved = true
+        pinsFile.setText(JSON.stringify(ids))
+    }
+
+    // the Start menu's groups, in its order: the first freedesktop main
+    // category an entry has that maps to one, else "other"
+    readonly property var groups: [
+        { key: "internet", label: "Internet", cats: ["Network"] },
+        { key: "dev", label: "Development", cats: ["Development"] },
+        { key: "games", label: "Games", cats: ["Game"] },
+        { key: "media", label: "Media", cats: ["AudioVideo", "Audio", "Video", "Graphics"] },
+        { key: "office", label: "Office", cats: ["Office", "Education"] },
+        { key: "system", label: "System", cats: ["System", "Settings", "Utility"] },
+        { key: "other", label: "Other", cats: [] },
+    ]
+    function groupOf(entry) {
+        var cats = Array.from(entry.categories || [])
+        // a game is a game whatever else it lists
+        if (cats.indexOf("Game") !== -1) return "games"
+        for (var i = 0; i < groups.length; i++)
+            if (groups[i].cats.some(c => cats.indexOf(c) !== -1)) return groups[i].key
+        return "other"
+    }
+
     // The pointer for what the shell starts, as env.lua sets it for
     // Hyprland: the shell's own environment is fixed at its launch, so a
     // theme picked since would otherwise miss X11 apps (Electron there

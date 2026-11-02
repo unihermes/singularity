@@ -12,6 +12,7 @@
 
 import "services"
 import "flyouts"
+import "launcher"
 import "bar"
 import "windows"
 import "sidebar"

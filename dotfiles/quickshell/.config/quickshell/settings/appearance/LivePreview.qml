@@ -215,7 +215,9 @@ ClippingRectangle {
             id: launcher
             visible: lp.kind === "launcher"
             readonly property int pad: Theme.channelWidth * 2 + 3 + Theme.spaceL
-            readonly property string layout: Theme.launcherLayout
+            // the newer layouts as the nearest of these three
+            readonly property string layout: ({ spotlight: "list", bar: "list", drawer: "list",
+                home: "grid", start: "grid", mosaic: "grid" })[Theme.launcherLayout] || Theme.launcherLayout
             x: Math.round((parent.width - width) / 2)
             y: lp.atBottom ? 0 : Theme.barHeight + Theme.spaceS
             width: Math.min(parent.width, Theme.fit(Theme.launcherPosition === "full" ? 760 : 600))

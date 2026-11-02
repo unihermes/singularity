@@ -23,6 +23,8 @@ filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`
   `PanelFrame.qml`, `SectionRuns.qml` (section frames), shared rows/controls
   (`FlyoutRow`, `FlyoutHeading`, `FlyoutSegmented`, ...), one `*Flyout.qml` per module,
   `ControlCentre.qml`.
+- `qs/launcher/`: `Launcher.qml` (modes, results, Enter) and one `Launcher*.qml` per layout,
+  sharing `LauncherField`, `LauncherRow`, `LauncherTile`; Mosaic packing in `services/Mosaic.js`.
 - `qs/settings/`: `SettingsPage*.qml` (one per page), `appearance/` (Appearance tabs).
   Search index is `services/SettingsIndex.js`; keep it in step with the pages.
   Keybind filtering/grouping is in `services/KeybindGroups.js`; the editor is `KeybindsBody.qml`.

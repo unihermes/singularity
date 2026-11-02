@@ -419,8 +419,10 @@ Singleton {
     readonly property string notifStyle: Settings.notifStyle
     readonly property bool launcherDetails: Settings.launcherDetails
     readonly property string launcherPosition: Settings.launcherPosition
-    // the launcher -- see Looks.js and flyouts/Launcher.qml
+    // the launcher -- see Looks.js and launcher/Launcher.qml
     readonly property string launcherLayout: Settings.launcherLayout
+    // the launcher layouts the Position setting places; the rest have their own place
+    readonly property bool launcherPlaced: ["list", "grid", "line", "spotlight", "home"].indexOf(launcherLayout) !== -1
     readonly property string flyoutAttach: resolved.flyoutAttach
     // how flyouts open and where they sit -- see Looks.js and FlyoutPanel
     readonly property string flyoutAnim: resolved.flyoutAnim

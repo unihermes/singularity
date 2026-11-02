@@ -497,6 +497,24 @@ Every bar flyout keeps to these (settled 2026-10-20):
   the charge since the shell started (a sample every five minutes, a day
   kept) as a graph; the power profile as one strip; Health. Settings as
   a chip.
+- **Launcher** (layouts picked 2026-11-02 from B–G of the mockups):
+  `launcher/`, one file per layout over one set of modes and results
+  (`Launcher.qml`), all with the same rows (`LauncherRow`), tiles
+  (`LauncherTile`) and field (`LauncherField`). List, Grid, One line: a
+  box with the mode's heading. Spotlight: a big field, no heading; apps
+  mode searches apps, files, clipboard and sums at once under small
+  labels with the top hit large, the most used apps as icons before
+  typing; Tab narrows (named at the field's end), Backspace on empty
+  widens. Home: the List box, but pinned apps (Ctrl+P), recent files and
+  last copies before typing; files shows folder chips. Start menu: hung
+  under the Control Centre button; groups down the side (Pinned, All
+  apps, Apps.groups with counts, then Files, Clipboard, Calculator), apps
+  as a grid, lock and power along the bottom (ending ones two clicks).
+  Drawer: full height on the Control Centre's side, modes as tabs, apps A
+  to Z under letter headings with a letter strip. In the bar: the field
+  over the clock, one-line rows dropping from it numbered Alt 1–9, the
+  mode prefixes (/ ; =) in the foot. Mosaic: full screen, apps as tiles
+  sized by use; typing fades non-matches in place; pictures as previews.
 - **Notifications**: see the notification sidebar below.
 - **Notification popups** (picked 2026-10-25): title first, the app's
   icon beside it and the age and close at the right; the text under the
@@ -888,8 +906,9 @@ Settings') are laid out the same way.
   (`PanelArt`: the wallpaper, a strip of bar, the section's panels drawn
   small as set) on the left with its settings beside it, labels narrowed
   to fit. POPUPS: Notification popups, Popup width (rests for Banner),
-  Level popup, Flyout width. LAUNCHER: layout, position, Launcher details,
-  Rows shown. OVERLAYS: Window switcher, Switcher windows, Workspace
+  Level popup, Flyout width. LAUNCHER: Launcher layout as nine small-screen
+  tiles (`LauncherArt`, three across) over the picture, then position (rests
+  for the layouts with their own place), Launcher details, Rows shown. OVERLAYS: Window switcher, Switcher windows, Workspace
   overview, Power menu, Backdrop, Overlay dimming (rests unless Dim).
   DESKTOP WIDGETS: each widget as a lit On chip, Sidebar, Placement.
 - **Motion tab** (picked 2026-10-31, B "timeline" for both sections):
