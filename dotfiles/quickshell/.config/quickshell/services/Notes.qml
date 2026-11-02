@@ -145,7 +145,7 @@ Singleton {
 
     FileView {
         id: view
-        path: Quickshell.env("HOME") + "/.local/state/singularity/notes.json"
+        path: Paths.stateDir + "/notes.json"
         preload: true
         blockLoading: true
         atomicWrites: true

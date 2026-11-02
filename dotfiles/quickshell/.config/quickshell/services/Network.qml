@@ -280,7 +280,7 @@ Singleton {
 
     FileView {
         id: wifiPref
-        path: Quickshell.env("HOME") + "/.local/state/singularity/wifi"
+        path: Paths.stateDir + "/wifi"
         blockLoading: true
         atomicWrites: true
         // no file until the radio is first toggled

@@ -131,8 +131,7 @@ Singleton {
     }
 
     readonly property string home: Quickshell.env("HOME")
-    readonly property string cacheDir: home + "/.cache/singularity/ai"
-    readonly property string chatDir: cacheDir + "/chat"
+    readonly property string chatDir: Paths.chatDir
     readonly property string py: Quickshell.shellPath("scripts/ai.py")
 
     // saved; models by tab, and by tab + "Codex" for Codex's

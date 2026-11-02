@@ -30,7 +30,7 @@ import time
 import urllib.request
 
 HOME = os.path.expanduser("~")
-CACHE = os.path.join(os.environ.get("XDG_CACHE_HOME", os.path.join(HOME, ".cache")),
+CACHE = os.path.join((os.environ.get("XDG_CACHE_HOME") or os.path.join(HOME, ".cache")),
                      "singularity", "ai")
 PROJECTS = os.path.join(HOME, ".claude", "projects")
 # the long edge the model downscales to anyway

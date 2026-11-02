@@ -43,7 +43,7 @@ ClippingRectangle {
 
         Image {
             anchors.fill: parent
-            source: "file://" + Quickshell.env("HOME") + "/.local/state/singularity/current-wallpaper"
+            source: "file://" + Paths.stateDir + "/current-wallpaper"
             sourceSize.width: 480
             fillMode: Image.PreserveAspectCrop
             asynchronous: true

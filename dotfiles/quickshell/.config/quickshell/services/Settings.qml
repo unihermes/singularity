@@ -19,7 +19,7 @@ Singleton {
 
     // Everything the shell and its scripts save or generate, in one place
     // outside ~/.config: those directories are stow links into the repo.
-    readonly property string stateDir: Quickshell.env("HOME") + "/.local/state/singularity"
+    readonly property string stateDir: Paths.stateDir
 
     // "top" or "bottom" -- which screen edge the bar is anchored to
     readonly property alias barPosition: adapter.barPosition

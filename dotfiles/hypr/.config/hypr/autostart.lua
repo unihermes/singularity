@@ -7,6 +7,9 @@
 local S = require("shared")
 
 hl.on("hyprland.start", function()
+    -- Complete XDG migration before the shell or wallpaper reads persisted state.
+    local migration = io.popen("python3 ~/.config/singularity/state-paths.py")
+    if migration then migration:read("a"); migration:close() end
     -- hyprland-session.target brings up graphical-session.target (no UWSM);
     -- its units are started by hand (keeping respawn and cgroup), after
     -- reset-failed for a restart after a crash; hypridle runs bare without

@@ -16,7 +16,7 @@ FileView {
     required property string name
     signal restored(var data)
 
-    readonly property string dir: Quickshell.env("HOME") + "/.cache/singularity"
+    readonly property string dir: Paths.cacheDir
 
     function save(data) {
         dirMade.running = true

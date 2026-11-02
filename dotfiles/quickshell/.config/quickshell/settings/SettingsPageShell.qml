@@ -346,7 +346,7 @@ SettingsPage {
         Image {
             anchors.fill: parent
             fillMode: Image.PreserveAspectCrop
-            source: "file://" + page.home + "/.local/state/singularity/current-wallpaper"
+            source: "file://" + Paths.stateDir + "/current-wallpaper"
             sourceSize.width: 640
             cache: false
         }

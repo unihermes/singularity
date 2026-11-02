@@ -10,6 +10,7 @@ import time
 
 def main():
     config = sys.argv[1]
+    subprocess.run(['python3', str(Path.home() / '.config/singularity/state-paths.py')], check=True)
     runtime = Path(os.environ['XDG_RUNTIME_DIR'])
     with (runtime / 'singularity-ai-host.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)

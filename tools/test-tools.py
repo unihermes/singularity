@@ -118,7 +118,7 @@ class HookTests(unittest.TestCase):
                 "README.md": set(),
                 "tools/git-hooks/pre-commit": {"check-settings-index.py", "check-unused.py",
                                                "test-js.mjs", "test-ai-host.py",
-                                               "test-notification-routing.mjs", "check-hardware.sh",
+                                               "test-notification-routing.mjs", "test-state-paths.py", "check-hardware.sh",
                                                "test-tools.py", "test-platform.py", "check-syntax.py"},
             }
             for staged, expected in cases.items():

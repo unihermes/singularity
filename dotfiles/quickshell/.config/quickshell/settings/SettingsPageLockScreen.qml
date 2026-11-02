@@ -37,7 +37,7 @@ SettingsPage {
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
     readonly property string lockPath: hyprDir + "/hyprlock.conf"
     readonly property string idlePath: hyprDir + "/hypridle.conf"
-    readonly property string wallpaperLink: "~/.local/state/singularity/current-wallpaper"
+    readonly property string wallpaperLink: Paths.stateDir + "/current-wallpaper"
 
     // --- hyprlock.conf -------------------------------------------------------
 

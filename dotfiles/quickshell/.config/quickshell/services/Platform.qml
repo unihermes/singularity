@@ -25,7 +25,7 @@ Singleton {
         }
     }
     FileView {
-        path: (Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state") + "/singularity/machine"
+        path: Paths.stateDir + "/machine"
         watchChanges: true
         printErrors: false
         onFileChanged: { reload(); probe.running = true }

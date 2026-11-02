@@ -10,6 +10,7 @@ source ./scripts/hardware.sh
 
 (( $# <= 1 )) || die "usage: ./link.sh [laptop|desktop|auto]"
 select_machine "${1:-}" || exit $?
+python3 dotfiles/singularity/.config/singularity/state-paths.py
 save_machine
 
 command -v stow &>/dev/null || die "stow is not installed: sudo pacman -S stow"

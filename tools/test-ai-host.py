@@ -18,11 +18,12 @@ class HostTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as runtime, \
                 patch.dict(os.environ, {'XDG_RUNTIME_DIR': runtime}), \
                 patch.object(host.sys, 'argv', ['ai_host.py', '/config/AiHost.qml', *args]), \
-                patch.object(host.subprocess, 'run', side_effect=[Mock(returncode=r) for r in results]) as run, \
+                patch.object(host.subprocess, 'run', side_effect=[Mock(returncode=r) for r in [0, *results]]) as run, \
                 patch.object(host.subprocess, 'Popen') as launch, \
                 patch.object(host.time, 'sleep'):
             host.main()
-            return run.call_args_list, launch.call_args_list
+            self.assertTrue(run.call_args_list[0].args[0][-1].endswith("state-paths.py"))
+            return run.call_args_list[1:], launch.call_args_list
 
     def test_existing_host_is_reused(self):
         calls, launches = self.invoke(['toggle', 'DP-1'], [0, 0])

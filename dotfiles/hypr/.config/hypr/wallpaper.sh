@@ -15,9 +15,9 @@ set -euo pipefail
 
 # relative to this script's real location, so the repo can live anywhere
 wallpaper_dir="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../../wallpapers")"
-state="$HOME/.local/state/singularity/wallpaper.state"
+state="${XDG_STATE_HOME:-$HOME/.local/state}/singularity/wallpaper.state"
 # the image on screen, for hyprlock.conf's background
-current_link="$HOME/.local/state/singularity/current-wallpaper"
+current_link="${XDG_STATE_HOME:-$HOME/.local/state}/singularity/current-wallpaper"
 
 list() {
   find "$wallpaper_dir" -maxdepth 1 -type f \

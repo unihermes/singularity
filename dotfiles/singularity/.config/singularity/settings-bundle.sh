@@ -12,7 +12,7 @@
 # --no-apply.
 set -euo pipefail
 
-state="$HOME/.local/state/singularity"
+state="${XDG_STATE_HOME:-$HOME/.local/state}/singularity"
 # relative to this script's real location, so the repo can live anywhere
 repo="$(realpath -m "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../..")"
 files=(appearance.json app-usage.json notes.json window-rules.json workspace-layouts.json wallpaper.state)

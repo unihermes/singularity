@@ -16,7 +16,7 @@ Singleton {
     id: root
 
     readonly property string confPath: Settings.stateDir + "/calendars.conf"
-    readonly property string cachePath: Quickshell.env("HOME") + "/.cache/singularity/calendar/events.json"
+    readonly property string cachePath: Paths.cacheDir + "/calendar/events.json"
     readonly property string script: Quickshell.env("HOME") + "/.config/quickshell/scripts/calendar-events.py"
 
     // at least one feed in calendars.conf

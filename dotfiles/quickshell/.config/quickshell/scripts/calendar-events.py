@@ -27,8 +27,8 @@ import icalendar
 import recurring_ical_events
 
 HOME = os.path.expanduser("~")
-CONF = os.path.join(HOME, ".local/state/singularity/calendars.conf")
-CACHE = os.path.join(HOME, ".cache/singularity/calendar")
+CONF = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.join(HOME, ".local/state"), "singularity/calendars.conf")
+CACHE = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.join(HOME, ".cache"), "singularity/calendar")
 OUT = os.path.join(CACHE, "events.json")
 STATE = os.path.join(CACHE, "fetched.json")
 
