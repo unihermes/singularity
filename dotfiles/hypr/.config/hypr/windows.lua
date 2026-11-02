@@ -123,6 +123,11 @@ local function stateOf(addr)
     return st
 end
 
+-- Minimized windows a focus dispatch asked for (alt-tab, the window strip,
+-- a notification): only these come back when focused. Hyprland's own
+-- fallback focus, after a menu or window closes, leaves them hidden.
+local restoreWanted = {}
+
 -- SUPER+C's saved rect, also kept as a tag so it survives a config reload.
 local function minimizedTag(m)
     return string.format("minimized_%d_%d_%d_%d_%d_%d",
@@ -191,6 +196,7 @@ local function restoreMinimized(win, instant)
     local st = stateOf(win.address)
     local saved = st.minimized
     st.minimized = nil
+    restoreWanted[win.address] = nil
     st.hideGen = (st.hideGen or 0) + 1
     local gen = st.hideGen
     local addr = "address:" .. win.address
@@ -790,6 +796,18 @@ do
             args = { window = "address:" .. pop.address }
         end
         local w = type(args) == "table" and type(args.window) == "string" and hl.get_window(args.window)
+        if w and stateOf(w.address).minimized then
+            return function()
+                restoreWanted[w.address] = true
+                hl.dispatch(focus(args))
+                -- already focused: no window.active to restore it
+                local a = hl.get_active_window()
+                if a and a.address == w.address and stateOf(a.address).minimized then
+                    restoreMinimized(a)
+                    hl.dispatch(hl.dsp.window.bring_to_top())
+                end
+            end
+        end
         local ws, mon = w and w.workspace, w and w.monitor
         local active = hl.get_active_monitor()
         if ws and ws.special and mon and active and mon.id ~= active.id and mon.active_special_workspace
@@ -1300,14 +1318,34 @@ hl.on("window.move_to_workspace", function(win, ws)
     end
 end)
 
+-- Focuses the most recently used window still showing on `hidden`'s
+-- workspace, if there is one.
+local function focusShowing(hidden)
+    local next
+    for _, w in ipairs(hl.get_windows()) do
+        if w.address ~= hidden.address and w.mapped and not w.hidden
+                and w.workspace and hidden.workspace and w.workspace.id == hidden.workspace.id
+                and not stateOf(w.address).minimized
+                and (not next or w.focus_history_id < next.focus_history_id) then
+            next = w
+        end
+    end
+    if next then hl.dispatch(hl.dsp.focus({ window = "address:" .. next.address })) end
+end
+
 local function maximizeFocused()
     local win = hl.get_active_window()
 
-    -- a hidden window focused by any route is being asked for: bring it
-    -- back and raise it (a re-fit would cut the restore short)
+    -- a hidden window a focus dispatch asked for comes back and is raised
+    -- (a re-fit would cut the restore short); one Hyprland fell back to
+    -- stays hidden and hands focus to the last window still showing
     if win and stateOf(win.address).minimized then
-        restoreMinimized(win)
-        hl.dispatch(hl.dsp.window.bring_to_top())
+        if restoreWanted[win.address] then
+            restoreMinimized(win)
+            hl.dispatch(hl.dsp.window.bring_to_top())
+        else
+            focusShowing(win)
+        end
         return
     end
 
@@ -1742,7 +1780,7 @@ end
 
 -- SUPER+C: hides a window below the screen, animated per windowAnim (slide,
 -- or fade then move), and transparent while hidden. A tiled window is
--- floated first. Focusing it any way restores it (maximizeFocused).
+-- floated first. A focus dispatch aimed at it restores it (maximizeFocused).
 local function hiddenRect(r, mon)
     -- mon.height is in pixels, the layout in logical ones
     local y = windowAnim == "drop" and mon.y - r.h - 100 or mon.y + math.ceil(mon.height / mon.scale) + 100
@@ -1783,25 +1821,10 @@ local function minimizeWindow(win, instant)
         return windowState[win.address] == st and st.hideGen == gen
     end
 
-    -- focus the most recently used window left on the workspace (not a
-    -- hidden one), once this one is gone
-    local function focusNext()
-        local next
-        for _, w in ipairs(hl.get_windows()) do
-            if w.address ~= win.address and w.mapped and not w.hidden
-                    and w.workspace and win.workspace and w.workspace.id == win.workspace.id
-                    and not stateOf(w.address).minimized
-                    and (not next or w.focus_history_id < next.focus_history_id) then
-                next = w
-            end
-        end
-        if next then hl.dispatch(hl.dsp.focus({ window = "address:" .. next.address })) end
-    end
-
     local function gone()
         if not current() then return end
         if not windowSlides then jumpTo(addr, hiddenRect(r, mon)) end
-        focusNext()
+        focusShowing(win)
     end
     local function hide()
         if not current() then return end
