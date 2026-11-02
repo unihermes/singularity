@@ -3,7 +3,7 @@
 //
 // Temperatures and fans for the desktop's Cooling module: CPU package, GPU,
 // hottest drive, every fan with a tacho. Desktops only (install.sh's record,
-// else no battery). hwmon nodes probed once, then re-read by FileView;
+// via Platform). hwmon nodes probed once, then re-read by FileView;
 // NVIDIA via one looping nvidia-smi. Fan names from fan-names.json in the
 // state directory (fan1 to CPU, say); headers that never turned are hidden.
 
@@ -23,15 +23,13 @@ Singleton {
     // a reading at or over this is drawn in the alert colour
     readonly property int hotC: 85
 
-    readonly property bool desktop: machine === "desktop"
-        || (machine === "" && !Battery.present)
+    readonly property bool desktop: Platform.allows("cooling")
     // the bar's Cooling module, the desktop's stats widget (GPU load) or
     // its sidebar
     readonly property bool wanted: desktop && (Settings.widgetVisible("cooling") || Settings.deskWidget("stats").on
                                                || Settings.deskSidebar)
     readonly property bool available: wanted && (cpuC >= 0 || gpuC >= 0 || fans.length > 0)
 
-    property string machine: ""
 
     property real cpuC: -1
     property real gpuC: -1          // the NVIDIA card, else the first amdgpu
@@ -162,18 +160,6 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: root.sample()
-    }
-
-    FileView {
-        path: Settings.stateDir + "/machine"
-        // read before the first binding settles, so a laptop never starts
-        // the probes on the way to finding out it's a laptop
-        blockLoading: true
-        watchChanges: true
-        printErrors: false
-        onLoaded: root.machine = text().trim()
-        onLoadFailed: root.machine = ""
-        onFileChanged: reload()
     }
 
     FileView {

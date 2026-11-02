@@ -4,6 +4,7 @@
 -- The Lua config. It only runs the modules beside it, in order:
 --
 --   shared     the Settings state files and constants the others share
+--   platform   hardware and profile gates for configuration and bindings
 --   displays   monitor rules, docked mode, workspaces across displays
 --   env        environment variables
 --   autostart  what starts with the session
@@ -18,6 +19,7 @@
 -- Every reload starts a fresh Lua state, so each module runs once per load.
 
 require("shared")
+require("platform")
 require("displays")
 require("env")
 require("autostart")

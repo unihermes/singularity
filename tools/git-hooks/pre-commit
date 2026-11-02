@@ -51,7 +51,7 @@ if changed 'quickshell/(scripts/ai_host\.py|AiHost\.qml|services/(Ai|Notificatio
 fi
 
 # The package lists against hardware.sh's capabilities (check-hardware.sh).
-if changed '^(packages/|hardware\.sh$|lib\.sh$|install\.sh$|update\.sh$|tools/check-hardware\.sh$)'; then
+if changed '^(packages/|hardware\.sh$|lib\.sh$|install\.sh$|update\.sh$|tools/check-hardware\.sh$)|singularity/(platform\.sh|profiles/)'; then
     if ! tools/check-hardware.sh; then
         echo
         echo "packages/ and hardware.sh disagree (above). A list in packages/hardware/"
@@ -59,6 +59,11 @@ if changed '^(packages/|hardware\.sh$|lib\.sh$|install\.sh$|update\.sh$|tools/ch
         echo "git commit --no-verify skips this."
         exit 1
     fi
+fi
+
+# Selection and runtime gates share a policy and hardware resolver.
+if changed '^(hardware\.sh|install\.sh|link\.sh|update\.sh|tools/test-platform\.py)$|singularity/(platform\.sh|profiles/)|hypr/platform\.lua$'; then
+    python3 tools/test-platform.py
 fi
 
 # Repository discovery and check selection.

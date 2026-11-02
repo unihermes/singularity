@@ -1,0 +1,2 @@
+# Laptop policy packages. Hibernation uses the common system tools.
+# Battery, backlight, Wi-Fi and other device packages belong in hardware/.

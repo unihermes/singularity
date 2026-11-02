@@ -147,11 +147,11 @@ class Me:
             os.chmod(self.key, 0o600)
         self.name = socket.gethostname()
         try:
-            with open("/sys/class/dmi/id/chassis_type") as f:
-                laptop = f.read().strip() in ("8", "9", "10", "13", "14", "31", "32")
-        except OSError:
-            laptop = False
-        self.type = "laptop" if laptop else "desktop"
+            resolver = os.path.expanduser("~/.config/singularity/platform.sh")
+            kind = subprocess.check_output([resolver, "type"], text=True).strip()
+        except (OSError, subprocess.CalledProcessError):
+            kind = "desktop"
+        self.type = kind if kind in ("laptop", "desktop") else "desktop"
         self.tcp_port = 0
 
     def identity(self):

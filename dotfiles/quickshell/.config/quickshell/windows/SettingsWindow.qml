@@ -72,7 +72,7 @@ FloatingWindow {
     // the compositor closing it has to clear visible, or the next open()
     // would be a no-op
     onClosed: visible = false
-    onVisibleChanged: if (visible) chrome.keySink.forceActiveFocus()
+    onVisibleChanged: if (visible) { chrome.keySink.forceActiveFocus(); Platform.refresh() }
 
     // the sidebar's groups, in order: connections, the machine itself, how
     // the desktop looks and behaves, apps, then the clock and updates
@@ -94,7 +94,7 @@ FloatingWindow {
         { id: "audio",         label: "Sound",         icon: "󰕾", blurb: "Outputs and inputs",                source: "../settings/SettingsPageAudio.qml" },
         { id: "input",         label: "Keyboard & Mouse", icon: "󰌌", blurb: "Layouts, keys and pointer",      source: "../settings/SettingsPageInput.qml" },
         { id: "devices",       label: "Devices",       icon: "󰾰", blurb: "Phone, headset, USB and drives",    source: "../settings/SettingsPageDevices.qml" },
-        { id: "power",         label: "Battery & Idle", icon: "󰂄", blurb: Session.hasLid ? "Profile, idle, sleep and the lid" : "Profile, idle and sleep", source: "../settings/SettingsPagePower.qml" },
+        { id: "power",         label: Platform.has("battery") ? "Battery & Idle" : "Power & Idle", icon: "󰂄", blurb: Session.hasLid ? "Profile, idle, sleep and the lid" : "Profile, idle and sleep", source: "../settings/SettingsPagePower.qml" },
         { id: "recording",     label: "Recording",     icon: "󰑋", blurb: "Screen and instant replay",         source: "../settings/SettingsPageRecording.qml" },
         { id: "appearance",    label: "Appearance",    icon: "󰏘", blurb: "Colour, shape, type, bar, panels, motion", source: "../settings/SettingsPageAppearance.qml" },
         { id: "lockscreen",    label: "Lock Screen",   icon: "󰌾", blurb: "Look and unlocking",                source: "../settings/SettingsPageLockScreen.qml" },
@@ -193,7 +193,10 @@ FloatingWindow {
     // --- search ------------------------------------------------------------
 
     readonly property string query: searchBar.text.trim()
-    readonly property var index: SettingsIndex.build(pages, { lid: Session.hasLid })
+    readonly property var index: SettingsIndex.build(pages, { lid: Session.hasLid,
+        touchpad: Platform.has("touchpad"), fingerprint: Platform.has("fingerprint"),
+        charging: Platform.has("charge-modes"), backlight: Platform.has("backlight"),
+        battery: Platform.has("battery") })
     // what the arrow keys walk: the pages, or what matched
     readonly property var rows: query === ""
         ? pages.map(p => ({ page: p.id, label: p.label, blurb: p.blurb, icon: p.icon, isPage: true }))

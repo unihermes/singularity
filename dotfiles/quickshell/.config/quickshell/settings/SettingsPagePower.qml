@@ -25,7 +25,7 @@ SettingsPage {
 
     sectioned: true
 
-    title: "Battery & Idle"
+    title: Platform.has("battery") ? "Battery & Idle" : "Power & Idle"
     description: Session.hasLid ? "Power profile, charging, idle steps and the lid."
         : "Power profile, charging and idle steps."
 
@@ -105,7 +105,12 @@ SettingsPage {
         return chargeHints[chargeMode] || chargeMode
     }
 
-    function chargeRead() { chargeReader.running = true }
+    Connections {
+        target: Platform
+        function onInventoryChanged() { page.chargeRead() }
+    }
+
+    function chargeRead() { if (Platform.has("charge-modes")) chargeReader.running = true }
 
     function chargeWrite(mode) {
         chargeBusy = true
@@ -459,6 +464,7 @@ SettingsPage {
     }
 
     SettingsField {
+        visible: Platform.has("charge-modes")
         label: "Charging"
         hint: page.chargeMode === "Custom" && page.chargeHelperFound
             ? "Drag the band's ends to set it" : page.chargeHint()
@@ -524,7 +530,7 @@ SettingsPage {
                 id: marker
                 required property var modelData
                 required property int index
-                visible: Session.canHibernate || modelData.on || modelData.label !== "Hibernate"
+                visible: page.stepApplicable(modelData) && (Session.canHibernate || modelData.on || modelData.label !== "Hibernate")
                 x: track.x + track.width * Math.min(1, modelData.timeout / timeline.span)
                 y: Theme.spaceM
 
@@ -597,13 +603,18 @@ SettingsPage {
     }
 
     // the battery-only suspend, which shares its row with the plain one
-    readonly property int batterySuspend: listeners.findIndex(l => l.label === "Suspend on battery")
+    function stepApplicable(step) {
+        return (step.label !== "Dim the screen" || Platform.has("backlight"))
+            && (step.label !== "Suspend on battery" || Platform.has("battery"))
+    }
+
+    readonly property int batterySuspend: !Platform.has("battery") ? -1 : listeners.findIndex(l => l.label === "Suspend on battery")
     readonly property int pluggedSuspend: batterySuspend < 0 ? -1 : listeners.findIndex(l => l.label === "Suspend")
 
     Repeater {
         // a file whose listeners changed under the page shows in file order
         model: (page.ladder.length === page.listeners.length ? page.ladder : page.listeners.map((l, i) => i))
-            .filter(i => i !== page.pluggedSuspend)
+            .filter(i => i !== page.pluggedSuspend && page.stepApplicable(page.listeners[i]))
 
         SettingsField {
             id: stepRow

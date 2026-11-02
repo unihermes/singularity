@@ -347,3 +347,15 @@ test("Settings search excludes lid controls without lid hardware", () => {
     assert.equal(laptop.filter(e => e.section === "Lid").length, 3)
     assert.ok(index.search(laptop, "lid closes").length > 0)
 })
+
+test("Settings search follows hardware capabilities independently of profile", () => {
+    const index = load("SettingsIndex.js")
+    const pages = ["power", "input", "lockscreen"].map(id => ({ id, label: id, icon: "" }))
+    const absent = index.build(pages, {})
+    for (const label of ["Charging", "Dim the screen", "Suspend on battery", "Tap to click", "Unlock with a fingerprint"])
+        assert.ok(!absent.some(e => e.label === label), label)
+    const attached = index.build(pages, { touchpad: true, fingerprint: true, backlight: true, battery: true, charging: true })
+    for (const label of ["Charging", "Dim the screen", "Suspend on battery", "Tap to click", "Unlock with a fingerprint"])
+        assert.ok(attached.some(e => e.label === label), label)
+    assert.ok(!attached.some(e => e.section === "Lid"))
+})

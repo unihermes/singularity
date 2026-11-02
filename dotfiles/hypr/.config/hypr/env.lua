@@ -34,7 +34,8 @@ end
 hl.env("QS_ICON_THEME", S.state("icons", "kora"))
 
 -- An NVIDIA card on its own driver: VA-API, GLX and Hyprland's rendering go
--- to it, the iGPU listed after. From sysfs; skipped while still on the
+-- to it on desktops, the iGPU listed after. Hybrid laptops keep automatic
+-- GPU selection. From sysfs; skipped while still on the
 -- firmware framebuffer.
 local function drmCards()
     local nvidia, rest = {}, {}
@@ -52,7 +53,7 @@ end
 local nvidia, rest = drmCards()
 local driver = io.open("/sys/module/nvidia_drm")
 if driver then driver:close() end
-if #nvidia > 0 and driver then
+if S.platform.type == "desktop" and #nvidia > 0 and driver then
     hl.env("LIBVA_DRIVER_NAME", "nvidia")
     hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
     hl.env("NVD_BACKEND", "direct")

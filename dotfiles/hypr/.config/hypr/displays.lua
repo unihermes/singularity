@@ -10,6 +10,7 @@ local S = require("shared")
 -- The built-in panel off while the lid is shut on a docked laptop: lid.sh
 -- writes its name here and reloads. After the rules, so it wins.
 local function panelOffWhileLidShut()
+    if not S.allows("lid") then return end
     local f = io.open((os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-lid-docked")
     if not f then return end
     local panel = f:read("l")
@@ -281,14 +282,14 @@ hl.on("monitor.added", function()
     knownMonitors = now
     if #before > 0 and #before < #now then saveLayout(before) end
     resetWorkspacesSoon()
-    hl.exec_cmd("~/.config/hypr/lid.sh displays")
+    if S.allows("lid") then hl.exec_cmd("~/.config/hypr/lid.sh displays") end
 end)
 hl.on("monitor.removed", function()
     hl.timer(function()
         knownMonitors = monitorNames()
         restoreLayout()
     end, { timeout = 500, type = "oneshot" })
-    hl.exec_cmd("~/.config/hypr/lid.sh displays")
+    if S.allows("lid") then hl.exec_cmd("~/.config/hypr/lid.sh displays") end
 end)
 hl.on("hyprland.start", function()
     os.execute("rm -f '" .. layoutPrefix .. "'*")

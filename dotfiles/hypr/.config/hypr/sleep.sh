@@ -6,7 +6,8 @@ case ${1:-} in
     *) echo 'usage: sleep.sh sleep|resume' >&2; exit 2 ;;
 esac
 
-if compgen -G '/proc/acpi/button/lid/*/state' >/dev/null; then
+source "$HOME/.config/singularity/platform.sh"
+if feature lid; then
     exec "${BASH_SOURCE[0]%/*}/lid.sh" "$1"
 fi
 

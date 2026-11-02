@@ -27,14 +27,10 @@ main() {
 
   ./link.sh
 
-  # install.sh records whether this is a laptop or a desktop
-  local machine
-  machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null) \
-    || die "no machine type recorded: run ./install.sh once"
-
-  # the machine type's list and the hardware/ lists for what is found now,
-  # so hardware added since the install gets its packages
+  # Relinking records or reuses the profile; all consumers use its resolver.
   source ./hardware.sh
+  local machine
+  select_machine || return
   local -a lists extra=() more
   local f
   mapfile -t lists < <(machine_lists "$machine")

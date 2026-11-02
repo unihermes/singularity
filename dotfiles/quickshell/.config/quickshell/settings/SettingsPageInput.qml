@@ -22,7 +22,7 @@ SettingsPage {
     sectioned: true
 
     title: "Keyboard & Mouse"
-    description: "Keyboard, mouse and touchpad."
+    description: Platform.has("touchpad") ? "Keyboard, mouse and touchpad." : "Keyboard and mouse."
 
     property var conf: ({ found: false, fields: {}, touchpad: {} })
 
@@ -45,6 +45,7 @@ SettingsPage {
     function value(sub, key) { return field(sub, key).value }
 
     function set(sub, key, v, message) {
+        if (sub === "touchpad" && !hasTouchpad) return
         HyprLuaWrite.setLocal([[sub ? ["input", sub] : ["input"], key, v]], message, page.reported)
     }
 
@@ -65,7 +66,7 @@ SettingsPage {
     Component.onCompleted: {
         reread()
         xkbList.running = true
-        devices.running = true
+        Platform.refresh()
     }
 
     FileView {
@@ -185,19 +186,7 @@ SettingsPage {
 
     // --- devices -------------------------------------------------------------
 
-    property bool hasTouchpad: true
-
-    Process {
-        id: devices
-        command: ["hyprctl", "devices", "-j"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    page.hasTouchpad = JSON.parse(text).mice.some(m => /touchpad/i.test(m.name))
-                } catch (e) {}
-            }
-        }
-    }
+    readonly property bool hasTouchpad: Platform.has("touchpad")
 
     // --- pieces --------------------------------------------------------------
 
@@ -672,19 +661,15 @@ SettingsPage {
         hint: "Swaps the primary and secondary buttons"
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "TOUCHPAD" }
+    Item { width: 1; height: Theme.spaceM; visible: page.hasTouchpad }
+    FlyoutHeading { text: "TOUCHPAD"; visible: page.hasTouchpad }
 
-    SettingsNote {
-        visible: !page.hasTouchpad
-        text: "No touchpad connected; these apply when one is"
-    }
-
-    SettingsSubhead { caption: "CLICKING" }
+    SettingsSubhead { visible: page.hasTouchpad; caption: "CLICKING" }
 
     // two to a line
     Grid {
         id: clicking
+        visible: page.hasTouchpad
         width: parent.width
         columns: 2
         columnSpacing: Theme.spaceXl * 2
@@ -711,9 +696,10 @@ SettingsPage {
         }
     }
 
-    SettingsSubhead { caption: "SCROLLING AND TYPING" }
+    SettingsSubhead { visible: page.hasTouchpad; caption: "SCROLLING AND TYPING" }
 
     Level {
+        visible: page.hasTouchpad
         sub: "touchpad"; key: "scroll_factor"
         label: "Scroll speed"
         hint: current < 1 ? "Slower than the fingers" : current > 1 ? "Further than the fingers" : "As far as the fingers"
@@ -722,11 +708,13 @@ SettingsPage {
         readout: v => v.toFixed(1) + "×"
     }
     Toggle {
+        visible: page.hasTouchpad
         sub: "touchpad"; key: "natural_scroll"
         label: "Natural scrolling"
         hint: on ? "Content follows the fingers, as on a phone" : "The scroll bar follows the fingers"
     }
     Toggle {
+        visible: page.hasTouchpad
         sub: "touchpad"; key: "disable_while_typing"
         label: "Disable while typing"
         hint: "So a palm doesn't move the pointer"

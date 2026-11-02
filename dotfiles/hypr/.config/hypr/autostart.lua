@@ -21,7 +21,9 @@ hl.on("hyprland.start", function()
     -- takes the lock over so the session can be unlocked.
     hl.exec_cmd("sleep 1; [ \"$(hyprctl locked)\" = true ] && ! pidof hyprlock >/dev/null && exec hyprlock")
     -- logind's lid handling inhibited until Hyprland exits (lid.sh handles it)
-    hl.exec_cmd("test -d /proc/acpi/button/lid && systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' waitpid $(pidof -s Hyprland)")
+    if S.allows("lid") then
+    hl.exec_cmd("systemd-inhibit --what=handle-lid-switch --who=Hyprland --why='Hyprland handles the lid' waitpid $(pidof -s Hyprland)")
+    end
     -- the tray's watcher, apart from the shell so a shell restart keeps the
     -- tray up; the shell waits for it (5 s at most), or it would take the name
     hl.exec_cmd("exec ~/.config/hypr/tray-watcher.py > ~/.cache/tray-watcher.log 2>&1")

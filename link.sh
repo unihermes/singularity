@@ -8,6 +8,10 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ./lib.sh
 source ./hardware.sh
 
+(( $# <= 1 )) || die "usage: ./link.sh [laptop|desktop|auto]"
+select_machine "${1:-}" || exit $?
+save_machine
+
 command -v stow &>/dev/null || die "stow is not installed: sudo pacman -S stow"
 [[ -d dotfiles ]] || die "no dotfiles/ directory next to this script"
 
@@ -73,16 +77,26 @@ seed() {
   log "wrote ${dst#"$HOME/"}${3:+ ($3)}"
 }
 
-# The idle ladder follows the saved machine choice, or firmware detection.
-machine=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine" 2>/dev/null || true)
-[[ $machine == laptop || $machine == desktop ]] || machine=$(detect_machine)
-seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$machine default"
+# Track which profile supplied the idle ladder. A deliberate profile change
+# keeps a backup of custom timings before seeding the new policy.
+idle_profile=${XDG_STATE_HOME:-$HOME/.local/state}/singularity/idle-profile
+previous=$(cat "$idle_profile" 2>/dev/null || true)
 idle=$HOME/.config/hypr/hypridle.conf
+if [[ -z $previous && -f $idle ]]; then
+  if grep -q "desktop's default" "$idle"; then previous=desktop
+  elif grep -q "laptop's default" "$idle"; then previous=laptop; fi
+fi
+if [[ -n $previous && $previous != "$machine" && -f $idle ]]; then
+  mv "$idle" "$idle.$previous.$(date +%Y%m%d-%H%M%S).bak"
+fi
+seed "hypridle-$machine.defaults.conf" "$HOME/.config/hypr/hypridle.conf" "$machine default"
+printf '%s\n' "$machine" > "$idle_profile"
 # Keep existing timings and enabled steps while routing sleep by hardware.
 sed -i -e 's#~/.config/hypr/lid.sh sleep#~/.config/hypr/sleep.sh sleep#g' \
   -e 's#~/.config/hypr/lid.sh resume#~/.config/hypr/sleep.sh resume#g' \
   -e 's#= brightnessctl -s set 1%#= [ -n "$(ls -A /sys/class/backlight)" ] \&\& brightnessctl -c backlight -s set 1%#' \
   -e 's#= brightnessctl -r#= [ -n "$(ls -A /sys/class/backlight)" ] \&\& brightnessctl -c backlight -r#' "$idle"
+sed -i 's#= grep -qsx 1 /sys/class/power_supply/\*/online || ~/.config/hypr/idle-suspend.sh$#= ~/.config/singularity/platform.sh has battery \&\& { grep -qsx 1 /sys/class/power_supply/*/online || ~/.config/hypr/idle-suspend.sh; }#' "$idle"
 if ! grep -q 'systemctl hibernate' "$idle"; then
   sed -i -E 's#^([[:space:]]*(\#~ ?)?[[:space:]]*on-timeout[[:space:]]*=.*)systemctl suspend$#\1~/.config/hypr/idle-suspend.sh#' "$idle"
   sed -n '/^# 1 h: hibernate/,$p' "$defaults/hypridle-$machine.defaults.conf" | sed '1i\\' >> "$idle"
@@ -96,6 +110,9 @@ if command -v node &>/dev/null; then
     || log "binds.lua: the new defaults couldn't be merged in"
 fi
 seed hyprlock.defaults.conf      "$HOME/.config/hypr/hyprlock.conf"
+if ! has fingerprint; then
+  sed -i -E 's/^( *fingerprint:enabled *= *)true/\1false/' "$HOME/.config/hypr/hyprlock.conf"
+fi
 # the Discord share bind and its picker are gone: drop the bind from
 # binds.lua and the xdph.conf that pointed the portal at the picker
 binds=$HOME/.config/hypr/binds.lua

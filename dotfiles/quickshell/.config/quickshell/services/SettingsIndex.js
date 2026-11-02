@@ -357,7 +357,13 @@ function build(pages, capabilities) {
     for (var j = 0; j < entries.length; j++) {
         var e = entries[j], p = byId[e.page]
         if (!p) continue
-        if (e.section === "Lid" && !(capabilities && capabilities.lid)) continue
+        var required = e.section === "Lid" ? "lid"
+            : e.section === "Touchpad" ? "touchpad"
+            : e.section === "Fingerprint" ? "fingerprint"
+            : e.page === "power" && e.label === "Charging" ? "charging"
+            : e.page === "power" && e.label === "Dim the screen" ? "backlight"
+            : e.page === "power" && e.label === "Suspend on battery" ? "battery" : ""
+        if (required && !(capabilities && capabilities[required])) continue
         out.push({
             page: e.page,
             pageLabel: p.page.label,

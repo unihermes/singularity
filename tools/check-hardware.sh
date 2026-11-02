@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The package lists against hardware.sh: every packages/hardware/CAP.txt
+# The package lists against the shared platform resolver: every packages/hardware/CAP.txt
 # names a capability `has` knows, every capability in hw_caps is one, and
 # no package sits in two lists (it would install where it shouldn't).
 set -uo pipefail

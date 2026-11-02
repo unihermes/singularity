@@ -22,6 +22,19 @@ do
     S.decodeJson = ok and decoder or function() return nil end
 end
 
+-- Live capabilities and the selected policy, shared with install/update and QML.
+S.platform = {}
+do
+    local helper = os.getenv("HOME") .. "/.config/singularity/platform.sh"
+    local p = io.popen("bash '" .. helper:gsub("'", "'\\''") .. "' json")
+    if p then
+        S.platform = S.decodeJson(p:read("a")) or {}
+        p:close()
+    end
+end
+function S.has(capability) return (S.platform.hardware or {})[capability] == true end
+function S.allows(feature) return (S.platform.features or {})[feature] == true end
+
 -- Animation time, "<all> <windows> <workspaces>" percentages of looks.lua's
 -- speeds; all scales everything (0: off), the others their own leaves.
 do

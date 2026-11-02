@@ -38,7 +38,8 @@
 set -u
 
 # Lid policy only applies where the kernel exposes a lid switch.
-compgen -G '/proc/acpi/button/lid/*/state' >/dev/null || exit 0
+source "$HOME/.config/singularity/platform.sh"
+feature lid || exit 0
 
 unit=singularity-lid-suspend
 # Settings -> Lock Screen's four, overridden from lid.conf below

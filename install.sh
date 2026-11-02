@@ -18,31 +18,23 @@ put() {
 
 usage() {
   cat <<'EOF'
-usage: ./install.sh [laptop|desktop]
+usage: ./install.sh [laptop|desktop|auto]
+       ./install.sh --plan [laptop|desktop|auto]
 
-  laptop   hibernation and the laptop idle ladder
-  desktop  CoolerControl and the desktop idle ladder
-
-With neither, the type recorded by the last run, else the one the firmware
-reports. Either way, packages and fixes for particular hardware (hardware.sh,
-packages/hardware/) are installed only where that hardware is found.
+First interactive install asks for a profile, with firmware detection as the
+suggestion. Noninteractive installs use detection. Later runs reuse the saved
+choice; auto detects again. --plan previews selection without changing anything.
+Hardware-specific packages and fixes still require matching hardware.
 EOF
 }
 
-# Laptop or desktop: picks packages/MACHINE.txt and the `if (( laptop ))`
-# steps. Recorded for update.sh.
-machinefile=${XDG_STATE_HOME:-$HOME/.local/state}/singularity/machine
-case ${1:-} in
-  laptop|desktop) machine=$1 ;;
-  "") machine=$(cat "$machinefile" 2>/dev/null || true) ;;
-  -h|--help) usage; exit 0 ;;
-  *) usage >&2; exit 2 ;;
-esac
-[[ $machine == laptop || $machine == desktop ]] || machine=$(detect_machine)
-if [[ $machine == laptop ]]; then laptop=1; else laptop=0; fi
-if [[ $(detect_machine) != "$machine" ]]; then
-  warn "installing as a $machine, but this looks like a $(detect_machine)"
-fi
+preview=false
+if [[ ${1:-} == --plan ]]; then preview=true; shift; fi
+case ${1:-} in -h|--help) usage; exit 0 ;; esac
+(( $# <= 1 )) || { usage >&2; exit 2; }
+select_machine "${1:-}" "$([[ $preview == false ]] && echo true || echo false)" || exit $?
+if $preview; then machine_plan; exit 0; fi
+log "using the $machine profile"
 
 if [[ $EUID -eq 0 ]]; then
   die "run as your user, not root (sudo is called where it is needed)"
@@ -73,8 +65,7 @@ read_list() {
   mapfile -t _out < <(list "$2")
 }
 
-mkdir -p "${machinefile%/*}"
-echo "$machine" > "$machinefile"
+save_machine
 
 # the lists for this machine type and the hardware found (repo and AUR
 # packages mixed), split between pacman and yay
@@ -382,7 +373,7 @@ fi
 # --- nvidia (desktop) ----------------------------------------------------
 # nvidia loaded from the initramfs, so it takes over before the greeter; the
 # kms hook is dropped, as it only added a 2s amdgpu wait.
-if (( ! laptop )) && has nvidia && pacman -Q nvidia-open &>/dev/null; then
+if feature early-nvidia && pacman -Q nvidia-open &>/dev/null; then
   early_modules nvidia nvidia_modeset nvidia_uvm nvidia_drm
   if grep -Eq '^HOOKS=\(.*\<kms\>' "$mkconf"; then
     log "leaving the integrated GPU out of the initramfs"
@@ -395,7 +386,7 @@ fi
 # --- SATA probing (desktop) ----------------------------------------------
 # The B650's AHCI asks for staggered spin-up (~0.3s per empty port);
 # probing in parallel is fine for SSDs.
-if (( ! laptop )) && has ahci; then
+if feature parallel-sata; then
   edit_cmdline libahci.ignore_sss "libahci.ignore_sss=1"
 fi
 
@@ -483,7 +474,7 @@ setup_hibernation() {
   edit_cmdline resume "resume=UUID=$uuid"
   edit_cmdline resume_offset "resume_offset=$offset"
 }
-if (( laptop )); then
+if feature hibernate-setup; then
   setup_hibernation || warn "couldn't set up the hibernation swapfile, so hibernation won't resume"
 fi
 
@@ -502,7 +493,7 @@ fi
 # Suspend lasts 55 min before hibernating (lid.sh suspends after 5 min and
 # wants 1 h in all; change both together).
 sleepconf=/etc/systemd/sleep.conf.d/singularity.conf
-if (( laptop )) && ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
+if feature hibernate-setup && ! grep -qsx 'HibernateDelaySec=55min' "$sleepconf"; then
   log "hibernating after 55 min of lid-closed suspend"
   sudo mkdir -p "${sleepconf%/*}"
   printf '[Sleep]\nHibernateDelaySec=55min\n' | sudo tee "$sleepconf" >/dev/null
@@ -512,7 +503,7 @@ fi
 # snapshot and resume (single-threaded LZO; Arch has no LZ4) stays quick.
 imageconf=/etc/tmpfiles.d/singularity-hibernate.conf
 image_size=4294967296
-if (( laptop )) && ! grep -qs "image_size .* $image_size\$" "$imageconf"; then
+if feature hibernate-setup && ! grep -qs "image_size .* $image_size\$" "$imageconf"; then
   log "capping the hibernation image at $((image_size / 1024 ** 3))G"
   printf 'w /sys/power/image_size - - - - %s\n' "$image_size" \
     | sudo tee "$imageconf" >/dev/null
@@ -553,7 +544,7 @@ sudo usermod -aG seat "$USER"
 # timesyncd works on either.
 if ! compgen -G "/etc/systemd/network/*.network" >/dev/null; then
   log "adding DHCP configs for systemd-networkd"
-  put /etc/systemd/network/25-wireless.network
+  if has wifi; then put /etc/systemd/network/25-wireless.network; fi
   put /etc/systemd/network/20-wired.network
 elif [[ $(cat /etc/systemd/network/20-wired.network 2>/dev/null) == $'[Match]\nType=ether\n\n[Link]\nRequiredForOnline=no\n\n[Network]\nDHCP=yes' ]]; then
   # The config an earlier install.sh wrote, unedited: bring it up to date.
@@ -619,9 +610,12 @@ fi
 
 # CoolerControl's daemon applies the fan curves, with or without its window
 # open.
-if (( ! laptop )) && have_unit coolercontrold.service; then
+if feature cooling && have_unit coolercontrold.service; then
   log "enabling coolercontrold"
   sudo systemctl enable --now coolercontrold.service
+elif ! feature cooling && systemctl is-enabled -q coolercontrold.service 2>/dev/null; then
+  log "disabling desktop cooling for the laptop profile"
+  sudo systemctl disable --now coolercontrold.service
 fi
 
 # the BlueZ pairing agent, a user service (see its unit)
@@ -647,7 +641,7 @@ fi
 
 
 # iwd as Type=exec, so the greeter doesn't wait out its module stall
-if have_unit iwd.service; then
+if has wifi && have_unit iwd.service; then
   log "stopping ly from waiting on iwd"
   put /etc/systemd/system/iwd.service.d/singularity.conf
   sudo systemctl daemon-reload

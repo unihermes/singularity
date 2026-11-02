@@ -36,7 +36,7 @@ filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`
 - `qs/sidebar/`: the Claude sidebar (SUPER+I), driven by `services/Ai.qml` and
   `ClaudeSession.qml` (`claude -p` over stream-json); helpers in `scripts/ai.py`.
   `CodexSession.qml` handles Codex; both inherit state/transcript helpers from `AiSession.qml`.
-- `dotfiles/hypr/.config/hypr/`: `hyprland.lua` requires `shared`, `displays`, `env`,
+- `dotfiles/hypr/.config/hypr/`: `hyprland.lua` requires `shared`, `platform`, `displays`, `env`,
   `autostart`, `looks`, `input`, `overrides`, `game-keys`, `binds`, `alttab`, `windows`
   (which requires `window-rules` for the static rules and `window-keys` for the arrow keys).
 - `dotfiles/singularity/.config/singularity/*.defaults.*`: templates `link.sh` copies
@@ -62,16 +62,23 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 
 ## Laptop, desktop and hardware
 
-Anything only some machines can use is gated, never installed everywhere:
-
-- On the hardware first: `hardware.sh`'s `has CAP` (sysfs checks, rerun by every
-  `update.sh`). A package goes in `packages/hardware/CAP.txt` (repo or AUR), a
-  fix or service in install.sh under `if has CAP`. New hardware: add a case to
-  `has()` and its name to `hw_caps`.
-- On the machine type (`laptop`/`desktop`, `if (( laptop ))`, `packages/desktop.txt`)
-  only for a choice about use (hibernation, CoolerControl, idle timings).
-- In the shell, a feature hides itself when its hardware or tool is missing
-  (`Battery.present`, `Brightness.available`, `CommandProbe`), like the lid rows.
+- `dotfiles/singularity/.config/singularity/platform.sh` is the single detector
+  (`has CAP`) and policy resolver (`feature NAME`). Its `profiles/laptop.conf`
+  and `profiles/desktop.conf` select usage policies; hardware gates still apply.
+- `hardware.sh` sources that resolver and adds provisioning helpers. First
+  interactive install offers the detected choice; explicit laptop/desktop,
+  saved choice, then detection supply it elsewhere. `--plan` is read-only.
+  Install, link and update must use `select_machine`, never duplicate detection.
+- Hardware packages go in `packages/hardware/CAP.txt`; policy packages in
+  `packages/laptop.txt` or `packages/desktop.txt`. Hardware fixes use `has`;
+  hibernation setup, cooling and other usage policies use `feature`.
+- QML uses `Platform.has()` and `Platform.allows()` (fail closed until loaded).
+  Hyprland uses `shared.has/allows`; `platform.lua` gates device configuration,
+  including saved overrides. Keep settings visibility and search gates aligned.
+- Shared files can be linked everywhere; unsupported code must not activate.
+  A desktop may have an external touchpad; a laptop may lack a lid or backlight.
+- `python3 tools/test-platform.py` checks profile selection, package selection,
+  hardware/policy combinations, preview side effects and compositor gates.
 
 ## Running and testing
 

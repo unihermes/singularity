@@ -118,7 +118,7 @@ class HookTests(unittest.TestCase):
                 "tools/git-hooks/pre-commit": {"check-settings-index.py", "check-unused.py",
                                                "test-js.mjs", "test-ai-host.py",
                                                "test-notification-routing.mjs", "check-hardware.sh",
-                                               "test-tools.py", "check-syntax.py"},
+                                               "test-tools.py", "test-platform.py", "check-syntax.py"},
             }
             for staged, expected in cases.items():
                 with self.subTest(staged=staged):

@@ -30,7 +30,8 @@ SettingsPage {
     }
 
     title: "Lock Screen"
-    description: "Appearance, fingerprint unlock and password grace period."
+    description: Platform.has("fingerprint") ? "Appearance, fingerprint unlock and password grace period."
+        : "Appearance and password grace period."
 
 
     readonly property string hyprDir: Quickshell.env("HOME") + "/.config/hypr"
@@ -151,7 +152,12 @@ SettingsPage {
         return m ? (m[1] === "left" ? "Left " : "Right ") + m[2] : f
     }
 
-    function rereadFingers() { fingerList.running = true }
+    Connections {
+        target: Platform
+        function onInventoryChanged() { page.rereadFingers() }
+    }
+
+    function rereadFingers() { if (Platform.has("fingerprint")) fingerList.running = true }
 
     // a dark finger enrolls, a lit one arms and then removes
     function pickFinger(f) {
@@ -496,11 +502,12 @@ SettingsPage {
         }
     }
 
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "FINGERPRINT" }
+    Item { width: 1; height: Theme.spaceM; visible: Platform.has("fingerprint") }
+    FlyoutHeading { text: "FINGERPRINT"; visible: Platform.has("fingerprint") }
 
     SettingsField {
         labelWidth: width - Theme.switchWidth - Theme.spaceL
+        visible: Platform.has("fingerprint")
         label: "Unlock with a fingerprint"
         hint: !page.reader ? "No fingerprint reader"
             : page.fingers.length === 0 ? "Add a finger below first"

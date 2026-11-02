@@ -19,7 +19,7 @@ the terminal, the editor, GTK and Qt apps, the greeter and even Claude Code
 change together when you pick a new look.
 
 ```bash
-git clone https://github.com/unihermes/singularity.git && cd singularity && ./install.sh laptop
+git clone https://github.com/unihermes/singularity.git && cd singularity && ./install.sh
 ```
 
 ![The Singularity desktop: the bar, a terminal and Thunar over the wallpaper](.github/assets/desktop.jpg)
@@ -76,19 +76,51 @@ where that hardware is found.
 ```bash
 sudo pacman -S --needed git
 git clone https://github.com/unihermes/singularity.git ~/singularity
-cd ~/singularity && ./install.sh laptop    # or: ./install.sh desktop
+cd ~/singularity && ./install.sh
 ```
 
-`laptop` adds hibernation; `desktop` adds CoolerControl and the desktop idle
-timings. With neither, `install.sh` goes by what the firmware says the machine
-is. `update.sh` remembers which one you picked.
+The first interactive install asks **desktop or laptop**, suggesting the firmware's
+answer. For unattended installs, pass `./install.sh desktop` or `./install.sh laptop`;
+without a terminal, detection supplies the default. The choice is recorded in
+`~/.local/state/singularity/machine` (or `$XDG_STATE_HOME/singularity/machine`).
+Install, link and update reuse it. `auto` explicitly detects again; an invalid saved
+value stops setup instead of silently choosing a different policy.
 
-Apart from that choice, everything tied to hardware is gated on the hardware
-itself: `hardware.sh` checks sysfs for a battery, a lid, a backlight, Wi-Fi,
-Bluetooth, a fingerprint reader, an NVIDIA or Intel GPU, the fan controller,
-the webcam and so on, and installs `packages/hardware/<name>.txt` and the
-matching fixes only where `has <name>` is true. `update.sh` asks again on
-every run, so hardware added later gets its packages.
+Preview the selection without installing, linking, prompting, or writing state:
+
+```bash
+./install.sh --plan              # saved choice, otherwise detection
+./install.sh --plan desktop      # preview a specific profile
+```
+
+The two policies live in `dotfiles/singularity/.config/singularity/profiles/`:
+
+| Policy | Laptop | Desktop |
+| --- | --- | --- |
+| Idle defaults | Shorter, with battery-only suspend | Longer, no battery-only step |
+| Lid handling and settings | Only with a real lid switch | Off |
+| Hibernation setup | Swapfile and resume configuration | Not provisioned automatically |
+| CoolerControl and cooling probes | Off | On, readings shown when available |
+| Early NVIDIA loading / parallel SATA probing | Off | Only with matching hardware |
+| Forced NVIDIA rendering environment | Off; automatic hybrid GPU selection | Only with NVIDIA hardware |
+
+`platform.sh` is the shared hardware and policy resolver. `hardware.sh` adds the
+installer's package selection and saved-choice helpers. Hardware packages remain
+in `packages/hardware/<capability>.txt`; usage-specific packages belong in
+`packages/laptop.txt` or `packages/desktop.txt`. A desktop with a USB touchpad or
+fingerprint reader still gets that feature. A laptop without one does not.
+Quickshell's `Platform.qml`, Hyprland's `platform.lua`, sleep hooks, settings/search,
+and phone identity use the same resolver. Unsupported touchpad, charging,
+fingerprint, lid and backlight controls are hidden. Saved touchpad overrides and
+lid/brightness bindings are also gated before reaching Hyprland.
+
+`update.sh` rechecks hardware for packages; opening Settings refreshes its hardware
+inventory. Reload Hyprland after attaching input hardware to refresh compositor
+gates. To change the chosen policy, rerun `install.sh desktop` or `install.sh laptop`.
+The idle ladder is backed up before changing profiles; ordinary updates retain
+custom timings. Packages and swapfiles are not deleted on a profile change.
+`link.sh [desktop|laptop|auto]` applies just the configuration side; it does not
+provision or disable system services. Log out and back in after a profile change.
 
 Clone it somewhere you'll keep it: the configs are symlinked from this folder,
 so moving it later leaves `~/.config` pointing nowhere. Reboot when it
@@ -346,9 +378,9 @@ singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
-├── hardware.sh             # what this machine has (`has CAP`), sourced by the scripts
+├── hardware.sh             # profile selection and package helpers; sources platform.sh
 ├── lib.sh                  # log, warn, die, list, sourced by the scripts
-├── packages/               # pacman.txt, aur.txt, desktop.txt and hardware/<capability>.txt
+├── packages/               # pacman.txt, aur.txt, laptop/desktop.txt and hardware/<capability>.txt
 ├── system/                 # root-owned files install.sh puts at the same path under /
 ├── wallpapers/
 ├── tools/                  # checks run by the pre-commit hook and CI
@@ -397,6 +429,7 @@ runs, for whatever is staged:
 | `tools/check-settings-index.py` | A Settings field that search can't find, or a search entry for a field that's gone |
 | `tools/check-unused.py` | Files, functions, properties and signals nothing reads |
 | `node --test tools/test-js.mjs` | Regressions in the plain-JS modules: the calculator, time windows, formats, Style resolution, the channel outline, and the readers/writers of the Hyprland modules |
+| `python3 tools/test-platform.py` | Profile persistence, hardware/policy matrix, read-only preview and compositor gates |
 | `tools/check-hardware.sh` | Hardware capabilities and package lists disagreeing or duplicating packages |
 | `python3 tools/test-tools.py` | Compact inventory, syntax detection and pre-commit check selection regressions |
 | `python3 tools/check-syntax.py` | Shell, Python and Lua syntax, including extensionless script helpers |
