@@ -333,3 +333,17 @@ test("Markdown: fences split out, prose to rich text", () => {
     assert.match(h, /<td>2<\/td>/)
     assert.match(M.html("see [docs](https://x.y) and *it*", ink), /<a href="https:\/\/x.y" style="color:#a">docs<\/a> and <i>it<\/i>/)
 })
+
+test("Settings search excludes lid controls without lid hardware", () => {
+    const index = load("SettingsIndex.js")
+    const pages = [{ id: "power", label: "Battery & Idle", icon: "", blurb: "Profile, idle and sleep" }]
+    for (const capabilities of [undefined, { lid: false }]) {
+        const desktop = index.build(pages, capabilities)
+        assert.equal(desktop.filter(e => e.section === "Lid").length, 0)
+        assert.equal(index.search(desktop, "lid").length, 0)
+        assert.ok(index.search(desktop, "hibernate").length > 0)
+    }
+    const laptop = index.build(pages, { lid: true })
+    assert.equal(laptop.filter(e => e.section === "Lid").length, 3)
+    assert.ok(index.search(laptop, "lid closes").length > 0)
+})

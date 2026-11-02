@@ -19,12 +19,8 @@ Item {
     readonly property string lidPath: Settings.stateDir + "/lid.conf"
 
     // a lid switch to act on; the LID rows hide without one
-    property bool hasLid: false
-    Process {
-        running: true
-        command: ["sh", "-c", "ls /proc/acpi/button/lid/*/state"]
-        onExited: code => lid.hasLid = (code === 0)
-    }
+    readonly property bool hasLid: Session.hasLid
+    onHasLidChanged: { if (hasLid) rereadLid() }
 
     property string closeAction: "suspend"
     property int closeDelay: 300
@@ -34,6 +30,7 @@ Item {
     // lid.sh's defaults until the file says otherwise; a missing file is
     // every default
     function rereadLid() {
+        if (!hasLid) return
         lidFile.reload()
         lidFile.waitForJob()
         var text = lidFile.text()
@@ -45,6 +42,7 @@ Item {
     }
 
     function setLid(name, value, message) {
+        if (!hasLid) return
         var re = new RegExp("^" + name + "=.*$", "m")
         AtomicFileWrite.write({
             path: lidPath,
@@ -61,6 +59,7 @@ Item {
     // stepping minutes writes once, after the last step
     property int pendingDelay: -1
     function stepDelay(minutes) {
+        if (!hasLid) return
         closeDelay = minutes * 60
         pendingDelay = minutes * 60
         delayDebounce.restart()
@@ -73,5 +72,5 @@ Item {
     }
 
     Component.onCompleted: rereadLid()
-    FileView { id: lidFile; path: lid.lidPath; blockLoading: true; printErrors: false }
+    FileView { id: lidFile; path: lid.hasLid ? lid.lidPath : ""; blockLoading: true; printErrors: false }
 }

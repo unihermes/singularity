@@ -21,6 +21,14 @@ Singleton {
         hibernateCheck.running = true
         rebootCheck.running = true
     }
+    // Shared by power settings and search; absent until hardware confirms it.
+    property bool hasLid: false
+    Process {
+        running: true
+        command: ["sh", "-c", "for f in /proc/acpi/button/lid/*/state; do [ -r \"$f\" ] && { echo present; break; }; done"]
+        stdout: StdioCollector { onStreamFinished: root.hasLid = text.trim() === "present" }
+    }
+
     Component.onCompleted: refresh()
 
     // a fresh process (Restart shell, and how Qt rereads fonts), started by

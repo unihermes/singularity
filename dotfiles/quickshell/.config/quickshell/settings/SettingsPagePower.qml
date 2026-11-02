@@ -26,7 +26,8 @@ SettingsPage {
     sectioned: true
 
     title: "Battery & Idle"
-    description: "Power profile, charging, the idle steps in hypridle.conf, and the lid."
+    description: Session.hasLid ? "Power profile, charging, idle steps and the lid."
+        : "Power profile, charging and idle steps."
 
 
     readonly property string idlePath: Quickshell.env("HOME") + "/.config/hypr/hypridle.conf"

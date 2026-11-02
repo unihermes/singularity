@@ -42,7 +42,7 @@ var entries = [
     { page: "power", section: "When idle", label: "Turn screens off",  keywords: "idle dpms blank timeout" },
     { page: "power", section: "When idle", label: "Suspend",           keywords: "idle sleep timeout on battery plugged in charger unplugged ac" },
     { page: "power", section: "When idle", label: "Suspend on battery", keywords: "idle sleep timeout charger unplugged" },
-    { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout lid hibernation suspend-then-hibernate disk power off battery" },
+    { page: "power", section: "When idle", label: "Hibernate",         keywords: "idle timeout hibernation suspend-then-hibernate disk power off battery" },
 
     // --- VPN ---------------------------------------------------------------
     { page: "vpn", section: "Connection", label: "VPN", keywords: "proton wireguard tunnel privacy connect" },
@@ -338,7 +338,7 @@ var entries = [
 
 // every entry with its page's name folded in, plus one per page; `pages` is
 // the Settings window's own list
-function build(pages) {
+function build(pages, capabilities) {
     var byId = {}
     var out = []
     for (var i = 0; i < pages.length; i++) {
@@ -357,6 +357,7 @@ function build(pages) {
     for (var j = 0; j < entries.length; j++) {
         var e = entries[j], p = byId[e.page]
         if (!p) continue
+        if (e.section === "Lid" && !(capabilities && capabilities.lid)) continue
         out.push({
             page: e.page,
             pageLabel: p.page.label,
