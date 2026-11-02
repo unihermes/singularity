@@ -1,6 +1,6 @@
 # Repo (native) packages every machine gets. One per line, # comments allowed.
 # What only some hardware can use goes in hardware/<capability>.txt instead
-# (see hardware.sh).
+# (see scripts/hardware.sh).
 # Regenerate from a known-good system with:  pacman -Qqen > packages/pacman.txt
 
 # base tooling

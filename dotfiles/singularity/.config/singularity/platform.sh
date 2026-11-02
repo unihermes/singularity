@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Singularity - what this machine has
 #
-# Shared by provisioning (through hardware.sh), Hyprland and Quickshell.
+# Shared by provisioning (through scripts/hardware.sh), Hyprland and Quickshell.
 # `has CAP` answers from sysfs, so it holds for any machine and is asked
 # again on every run: hardware added later is picked up by the next
 # update.sh. packages/hardware/CAP.txt is installed where `has CAP`.

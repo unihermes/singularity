@@ -19,7 +19,7 @@ done
 for f in packages/hardware/*.txt; do
   cap=${f##*/}; cap=${cap%.txt}
   if [[ " ${hw_caps[*]} " != *" $cap "* ]]; then
-    echo "$f: no capability '$cap' in hardware.sh's hw_caps"
+    echo "$f: no capability '$cap' in scripts/hardware.sh's hw_caps"
     bad=1
   fi
 done
