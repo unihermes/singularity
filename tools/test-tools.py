@@ -115,9 +115,11 @@ class HookTests(unittest.TestCase):
                 "tools/check-syntax.py": {"test-tools.py", "check-syntax.py"},
                 "system/usr/local/bin/singularity-charge": {"check-syntax.py"},
                 qs + "services/Ai.qml": {"check-unused.py", "test-ai-host.py", "test-notification-routing.mjs"},
+                qs + "services/Settings.qml": {"check-unused.py", "test-settings.mjs"},
+                qs + "services/SettingsValues.js": {"check-unused.py", "test-js.mjs", "test-settings.mjs"},
                 "README.md": set(),
                 "tools/git-hooks/pre-commit": {"check-settings-index.py", "check-unused.py",
-                                               "test-js.mjs", "test-ai-host.py",
+                                               "test-js.mjs", "test-settings.mjs", "test-ai-host.py",
                                                "test-notification-routing.mjs", "test-state-paths.py", "check-hardware.sh",
                                                "test-tools.py", "test-platform.py", "check-syntax.py"},
             }

@@ -13,6 +13,7 @@ import Quickshell.Io
 import QtQuick
 import "Looks.js" as Looks
 import "Styles.js" as Styles
+import "SettingsValues.js" as Values
 
 Singleton {
     id: root
@@ -222,53 +223,13 @@ Singleton {
     }
 
     // Cycled through by the Appearance page's choice rows, in this order.
-    readonly property var choices: ({
-        colourMode:   ["grayscale", "wallpaper"],
-        colourScheme: ["scheme-neutral", "scheme-tonal-spot", "scheme-vibrant", "scheme-expressive"],
-        colourVariant: ["dark", "light"],
-        accentText:   ["auto", "white", "dark"],
-        headingMarkColour: ["accent", "text", "muted"],
-        headingSize:  ["smaller", "same", "larger"],
-        windowBorderWidth: ["style", "0", "1", "2", "3"],
-        windowBorderFocused: ["accent", "text", "custom"],
-        windowBorderUnfocused: ["border", "none", "custom"],
-        windowRounding: ["shell", "own"],
-        windowShadow: ["style", "off", "small", "large"],
-        tabBar:       ["shell", "accent"],
-        wallpaperFill: ["fill", "fit", "center", "tile"],
-        look:         Looks.order,
-        style:        Styles.order,
-        density:      ["compact", "normal", "roomy", "custom"],
-        fontFamily:   Fonts.available,
+    readonly property var choices: Object.assign({}, Values.choices, {
+        look: Looks.order,
+        style: Styles.order,
+        fontFamily: Fonts.available,
         systemFontFamily: Looks.systemFonts,
-        terminalApp:  ["alacritty", "ghostty"],
-        cursorTheme:  DesktopThemes.cursors,
-        iconTheme:    DesktopThemes.icons,
-        windowAnim:   ["popin", "zoom", "fade", "fold", "slide", "rise", "drop", "none"],
-        barStyle:     ["full", "floating", "islands"],
-        workspaceStyle: ["pills", "dots", "lines", "blocks", "numbers", "roman", "names", "apps"],
-        controlIcon:  ["arch", "menu", "dashboard", "cog", "home", "star", "blackhole", "vortex", "horizon",
-                      "atom", "rocket", "ghost", "planet", "sparkle", "infinity", "radar", "moon"],
-        clockStyle:   ["stamp", "time", "seconds", "day", "long", "iso", "custom"],
-        windowStyle:  ["icons", "glide", "lift", "inset", "segmented", "rings", "fade", "viewfinder", "tint", "liquid"],
-        windowScope:  ["workspace", "all"],
-        iconTint:     ["colour", "mono", "accent"],
-        vizStyle:     ["mirror", "rise", "dots", "line"],
-        levelColour:  ["accent", "good", "text"],
-        levelStyle:   ["pill", "edge", "number"],
-        powerStyle:   ["row", "list", "full"],
-        overviewBackdrop: ["dim", "clear", "solid"],
-        overviewLayout: ["grid", "strip"],
-        altTabStyle:  ["icons", "titled", "previews"],
-        altTabScope:  ["workspace", "all"],
-        lockClockPlace: ["centre", "top", "corner"],
-        lockClockSize: ["small", "large", "huge"],
-        barSeparator: ["none", "line", "double", "dot", "dots", "capped"],
-        barChips:     ["auto", "bare", "outline", "grouped"],
-        notifStyle:   ["full", "compact", "banner"],
-        launcherPosition: ["centre", "top", "full"],
-        launcherLayout: ["list", "grid", "line", "spotlight", "home", "start", "drawer", "bar", "mosaic"],
-        flyoutAnim:   ["auto", "drop", "fade", "scale", "none"],
+        cursorTheme: DesktopThemes.cursors,
+        iconTheme: DesktopThemes.icons,
     })
     readonly property var choiceLabels: ({
         "normal": "Normal", "auto": "Style's own", "grayscale": "Grayscale",
@@ -333,6 +294,7 @@ Singleton {
 
     function cycle(key, direction) {
         var list = choices[key]
+        if (!list || list.length === 0) return
         direction = direction || 1
         var currentIndex = list.indexOf(adapter[key])
         var newIndex = (currentIndex + direction) % list.length
@@ -381,7 +343,8 @@ Singleton {
     }
     // a schedule time, stepped with wrap-around past midnight
     function setScheduleTime(key, minutes) {
-        if (["nightLightFrom", "nightLightTo", "notifQuietFrom", "notifQuietTo"].indexOf(key) >= 0)
+        if (typeof minutes === "number" && isFinite(minutes)
+                && ["nightLightFrom", "nightLightTo", "notifQuietFrom", "notifQuietTo"].indexOf(key) >= 0)
             adapter[key] = ((Math.round(minutes) % 1440) + 1440) % 1440
     }
     // "F" or "C", switched from the weather flyout
@@ -400,7 +363,7 @@ Singleton {
     readonly property alias recordCodec: adapter.recordCodec
     function setRecordCodec(c) { adapter.recordCodec = c === "h264" ? "h264" : "av1" }
     function setReplayOn(on) { adapter.replayOn = !!on }
-    function setReplaySeconds(s) { adapter.replaySeconds = Math.max(15, Math.min(600, Math.round(s))) }
+    function setReplaySeconds(s) { set("replaySeconds", s) }
     // VPN: the server to use, whether it carries everything or only
     // qBittorrent, the kill switch (everything only), reconnecting at login
     // to what was on when last left, and qBittorrent kept on the tunnel
@@ -465,7 +428,7 @@ Singleton {
     readonly property alias updateInterval: adapter.updateInterval
     readonly property alias updateAur: adapter.updateAur
     readonly property alias updateIgnore: adapter.updateIgnore
-    function setUpdateInterval(m) { adapter.updateInterval = Math.max(0, Math.min(10080, Math.round(m))) }
+    function setUpdateInterval(m) { set("updateInterval", m) }
     function setUpdateAur(on) { adapter.updateAur = !!on }
     function setUpdateIgnore(list) {
         var seen = {}
@@ -490,7 +453,7 @@ Singleton {
     function setNotifDndBySchedule(on) { adapter.notifDndBySchedule = !!on }
     function setNotifTimeout(key, s) {
         if (["notifTimeout", "notifTimeoutLow", "notifTimeoutCritical"].indexOf(key) >= 0)
-            adapter[key] = Math.max(0, Math.min(60, Math.round(s)))
+            set(key, s)
     }
     // Apps whose popups are held (by app name): their notifications go
     // straight to the history, except critical ones
@@ -697,35 +660,7 @@ Singleton {
     }
 
     // the bounds set() clamps to, hand edits included
-    readonly property var limits: ({
-        radius:    { min: 0,  max: 14 },
-        spacing:   { min: 50, max: 160 },
-        rowScale:  { min: 80, max: 130 },
-        barHeight: { min: 22, max: 52 },
-        barIconSize: { min: 10, max: 28 },
-        windowIconSize: { min: 12, max: 28 },
-        windowIconPadding: { min: 2, max: 16 },
-        modulePad: { min: 0, max: 16 },
-        vizBars:   { min: 6, max: 24 },
-        flyoutWidth: { min: 80, max: 150 },
-        windowRadius: { min: 0, max: 30 },
-        launcherRows: { min: 3, max: 16 },
-        notifWidth: { min: 280, max: 560 },
-        edgeGap:   { min: 0,  max: 30 },
-        focusedOpacity:   { min: 50, max: 100 },
-        unfocusedOpacity: { min: 50, max: 100 },
-        terminalOpacity:  { min: 30, max: 100 },
-        seeThrough: { min: 50, max: 100 },
-        fontSize:  { min: 12, max: 22 },
-        scrim:        { min: 0,  max: 80 },
-        nightLightKelvin: { min: 2500, max: 6000 },
-        cursorSize:   { min: 16, max: 48 },
-        wallpaperInterval: { min: 0, max: 1440 },
-        animTime:     { min: 0,  max: 100 },
-        animWindows:  { min: 25, max: 200 },
-        animWorkspaces: { min: 25, max: 200 },
-        animShell:    { min: 25, max: 200 },
-    })
+    readonly property var limits: Values.limits
 
     // The named points on the Animations slider, as animTime values.
     readonly property var animTimeMarks: [
@@ -817,7 +752,7 @@ Singleton {
     function applyValues(o) {
         for (var k in o) {
             if (k === "seeThrough" && adapter.colourMode === "wallpaper") continue
-            adapter[k] = o[k]
+            if (adapter[k] !== undefined) adapter[k] = Values.stored(k, o[k])
         }
     }
 
@@ -861,8 +796,7 @@ Singleton {
     }
 
     function clamp(key, v) {
-        var l = limits[key]
-        return Math.max(l.min, Math.min(l.max, Math.round(v)))
+        return Values.clamp(key, v)
     }
 
     // the colours that take a hex or "" (the look's own)
@@ -871,6 +805,7 @@ Singleton {
     // Single entry point for the menu, so clamping can't be forgotten at a
     // call site and every write goes through one place.
     function set(key, v) {
+        if (key !== "density" && adapter[key] === undefined) return
         if (key === "barPosition") adapter.barPosition = (v === "bottom") ? "bottom" : "top"
         else if (key === "colourMode") setColourMode(v)
         else if (key === "look") applyLook(v)
@@ -884,7 +819,10 @@ Singleton {
         else if (choices[key]) { if (choices[key].indexOf(v) !== -1) adapter[key] = v }
         // free text, such as the workspace names
         else if (typeof adapter[key] === "string") adapter[key] = String(v)
-        else adapter[key] = clamp(key, v)
+        else if (limits[key]) {
+            var number = clamp(key, v)
+            if (number !== undefined) adapter[key] = number
+        }
     }
 
     // A style arrives as its default, keeping the look's colours.
@@ -964,6 +902,14 @@ Singleton {
     }
 
 
+    // Validate hand-edited values after folding legacy spellings.
+    function normalizeStored() {
+        for (var key in Values.defaults) {
+            var value = Values.stored(key, adapter[key])
+            if (value !== adapter[key]) adapter[key] = value
+        }
+    }
+
     // Writes wait for the first read: the adapter's declared defaults would
     // otherwise be saved over the file at startup.
     property bool ready: false
@@ -995,6 +941,7 @@ Singleton {
             if (!Looks.looks[adapter.look]) adapter.look = Looks.fallback
             root.foldMedia()
             root.foldPlain()
+            root.normalizeStored()
         }
         onLoadFailed: root.ready = true
 
@@ -1003,155 +950,155 @@ Singleton {
 
         JsonAdapter {
             id: adapter
-            property string barPosition: "top"
-            property int radius: 6
-            property int fontSize: 16
+            property string barPosition: Values.defaults.barPosition
+            property int radius: Values.defaults.radius
+            property int fontSize: Values.defaults.fontSize
 
-            property int animTime: 100
-            property int animWindows: 100
-            property int animWorkspaces: 100
-            property int animShell: 100
-            property string colourMode: "grayscale"
-            property string colourScheme: "scheme-tonal-spot"
-            property string colourVariant: "dark"
-            property string look: "singularity"
-            property string style: "channel"
-            property string styleOptions: ""
-            property int seeThrough: 100
-            property bool shadows: true
-            property bool heavyLines: false
-            property bool plain: false
-            property string levelColour: "accent"
-            property int spacing: 100
-            property int rowScale: 100
-            property int barHeight: 32
-            property int barIconSize: 17
-            property int modulePad: 6
-            property string windowBorderWidth: "style"
-            property string windowBorderFocused: "accent"
-            property string windowBorderFocusedHex: ""
-            property string windowBorderUnfocused: "border"
-            property string windowBorderUnfocusedHex: ""
-            property string windowRounding: "shell"
-            property int windowRadius: 6
-            property string windowShadow: "style"
-            property string tabBar: "shell"
-            property int flyoutWidth: 100
-            property int launcherRows: 8
-            property int notifWidth: 380
-            property string fontFamily: "UbuntuMono Nerd Font"
-            property string systemFontFamily: "Ubuntu Nerd Font"
-            property string cursorTheme: "Bibata-Modern-Classic"
-            property int cursorSize: 20
-            property string iconTheme: "kora"
-            property string windowAnim: "popin"
-            property string barStyle: "full"
-            property int edgeGap: 0
-            property int focusedOpacity: 100
-            property int unfocusedOpacity: 100
-            property int terminalOpacity: 90
-            property string terminalApp: "alacritty"
-            property string workspaceStyle: "pills"
-            property string controlIcon: "arch"
-            property string clockStyle: "stamp"
-            property string windowStyle: "icons"
-            property string windowScope: "workspace"
-            property int windowIconSize: 18
-            property int windowIconPadding: 3
-            property string iconTint: "colour"
-            property string vizStyle: "mirror"
-            property int vizBars: 10
-            property bool vizShown: true
-            property bool musicTitle: false
-            property bool vizHideSilent: false
-            property bool gradient: false
-            property string levelStyle: "pill"
-            property string powerStyle: "row"
-            property string overviewBackdrop: "dim"
-            property string overviewLayout: "grid"
-            property string altTabStyle: "icons"
-            property string altTabScope: "workspace"
-            property bool lockNotifs: false
-            property bool lockMedia: false
-            property bool lockDate: false
-            property string lockClockPlace: "centre"
-            property string lockClockSize: "large"
-            property string clockFormat: "ddd HH:mm"
-            property bool trayDrawer: false
+            property int animTime: Values.defaults.animTime
+            property int animWindows: Values.defaults.animWindows
+            property int animWorkspaces: Values.defaults.animWorkspaces
+            property int animShell: Values.defaults.animShell
+            property string colourMode: Values.defaults.colourMode
+            property string colourScheme: Values.defaults.colourScheme
+            property string colourVariant: Values.defaults.colourVariant
+            property string look: Values.defaults.look
+            property string style: Values.defaults.style
+            property string styleOptions: Values.defaults.styleOptions
+            property int seeThrough: Values.defaults.seeThrough
+            property bool shadows: Values.defaults.shadows
+            property bool heavyLines: Values.defaults.heavyLines
+            property bool plain: Values.defaults.plain
+            property string levelColour: Values.defaults.levelColour
+            property int spacing: Values.defaults.spacing
+            property int rowScale: Values.defaults.rowScale
+            property int barHeight: Values.defaults.barHeight
+            property int barIconSize: Values.defaults.barIconSize
+            property int modulePad: Values.defaults.modulePad
+            property string windowBorderWidth: Values.defaults.windowBorderWidth
+            property string windowBorderFocused: Values.defaults.windowBorderFocused
+            property string windowBorderFocusedHex: Values.defaults.windowBorderFocusedHex
+            property string windowBorderUnfocused: Values.defaults.windowBorderUnfocused
+            property string windowBorderUnfocusedHex: Values.defaults.windowBorderUnfocusedHex
+            property string windowRounding: Values.defaults.windowRounding
+            property int windowRadius: Values.defaults.windowRadius
+            property string windowShadow: Values.defaults.windowShadow
+            property string tabBar: Values.defaults.tabBar
+            property int flyoutWidth: Values.defaults.flyoutWidth
+            property int launcherRows: Values.defaults.launcherRows
+            property int notifWidth: Values.defaults.notifWidth
+            property string fontFamily: Values.defaults.fontFamily
+            property string systemFontFamily: Values.defaults.systemFontFamily
+            property string cursorTheme: Values.defaults.cursorTheme
+            property int cursorSize: Values.defaults.cursorSize
+            property string iconTheme: Values.defaults.iconTheme
+            property string windowAnim: Values.defaults.windowAnim
+            property string barStyle: Values.defaults.barStyle
+            property int edgeGap: Values.defaults.edgeGap
+            property int focusedOpacity: Values.defaults.focusedOpacity
+            property int unfocusedOpacity: Values.defaults.unfocusedOpacity
+            property int terminalOpacity: Values.defaults.terminalOpacity
+            property string terminalApp: Values.defaults.terminalApp
+            property string workspaceStyle: Values.defaults.workspaceStyle
+            property string controlIcon: Values.defaults.controlIcon
+            property string clockStyle: Values.defaults.clockStyle
+            property string windowStyle: Values.defaults.windowStyle
+            property string windowScope: Values.defaults.windowScope
+            property int windowIconSize: Values.defaults.windowIconSize
+            property int windowIconPadding: Values.defaults.windowIconPadding
+            property string iconTint: Values.defaults.iconTint
+            property string vizStyle: Values.defaults.vizStyle
+            property int vizBars: Values.defaults.vizBars
+            property bool vizShown: Values.defaults.vizShown
+            property bool musicTitle: Values.defaults.musicTitle
+            property bool vizHideSilent: Values.defaults.vizHideSilent
+            property bool gradient: Values.defaults.gradient
+            property string levelStyle: Values.defaults.levelStyle
+            property string powerStyle: Values.defaults.powerStyle
+            property string overviewBackdrop: Values.defaults.overviewBackdrop
+            property string overviewLayout: Values.defaults.overviewLayout
+            property string altTabStyle: Values.defaults.altTabStyle
+            property string altTabScope: Values.defaults.altTabScope
+            property bool lockNotifs: Values.defaults.lockNotifs
+            property bool lockMedia: Values.defaults.lockMedia
+            property bool lockDate: Values.defaults.lockDate
+            property string lockClockPlace: Values.defaults.lockClockPlace
+            property string lockClockSize: Values.defaults.lockClockSize
+            property string clockFormat: Values.defaults.clockFormat
+            property bool trayDrawer: Values.defaults.trayDrawer
             property var trayPinned: []
             property var channelEq: ({})
             property var trayHidden: []
             property var trayOrder: []
-            property string workspaceNames: ""
-            property string barSeparator: "none"
-            property string barChips: "auto"
-            property bool notifGroup: false
-            property string notifStyle: "full"
-            property bool launcherDetails: true
-            property string launcherPosition: "centre"
-            property string launcherLayout: "list"
-            property string flyoutAnim: "auto"
-            property string accent: "#5555c8"
-            property string paletteBase: ""
-            property string paletteBar: ""
-            property string palettePanel: ""
-            property string paletteSurface: ""
-            property string paletteOverlay: ""
-            property string paletteBorder: ""
-            property string paletteMuted: ""
-            property string paletteSubtext: ""
-            property string paletteText: ""
-            property string paletteBright: ""
-            property string colourGood: ""
-            property string colourAlert: ""
-            property string accentText: "auto"
-            property int scrim: 40
-            property bool headingUpper: true
-            property bool headingRule: true
-            property string headingMark: "//"
-            property string headingMarkColour: "accent"
-            property string headingSize: "smaller"
+            property string workspaceNames: Values.defaults.workspaceNames
+            property string barSeparator: Values.defaults.barSeparator
+            property string barChips: Values.defaults.barChips
+            property bool notifGroup: Values.defaults.notifGroup
+            property string notifStyle: Values.defaults.notifStyle
+            property bool launcherDetails: Values.defaults.launcherDetails
+            property string launcherPosition: Values.defaults.launcherPosition
+            property string launcherLayout: Values.defaults.launcherLayout
+            property string flyoutAnim: Values.defaults.flyoutAnim
+            property string accent: Values.defaults.accent
+            property string paletteBase: Values.defaults.paletteBase
+            property string paletteBar: Values.defaults.paletteBar
+            property string palettePanel: Values.defaults.palettePanel
+            property string paletteSurface: Values.defaults.paletteSurface
+            property string paletteOverlay: Values.defaults.paletteOverlay
+            property string paletteBorder: Values.defaults.paletteBorder
+            property string paletteMuted: Values.defaults.paletteMuted
+            property string paletteSubtext: Values.defaults.paletteSubtext
+            property string paletteText: Values.defaults.paletteText
+            property string paletteBright: Values.defaults.paletteBright
+            property string colourGood: Values.defaults.colourGood
+            property string colourAlert: Values.defaults.colourAlert
+            property string accentText: Values.defaults.accentText
+            property int scrim: Values.defaults.scrim
+            property bool headingUpper: Values.defaults.headingUpper
+            property bool headingRule: Values.defaults.headingRule
+            property string headingMark: Values.defaults.headingMark
+            property string headingMarkColour: Values.defaults.headingMarkColour
+            property string headingSize: Values.defaults.headingSize
 
-            property bool wallpaperShuffle: true
-            property int wallpaperInterval: 0
-            property string wallpaperFill: "fill"
-            property bool clockIsland: true
-            property int nightLightKelvin: 4000
-            property string nightLightSchedule: "off"
-            property int nightLightFrom: 1200
-            property int nightLightTo: 420
-            property string weatherUnits: "F"
-            property bool clock24: true
-            property int weekStart: 1
-            property int updateInterval: 30
-            property bool replayOn: true
-            property int replaySeconds: 60
-            property string recordCodec: "av1"
-            property string vpnServer: ""
-            property bool vpnFull: false
-            property bool vpnKillSwitch: false
-            property bool vpnAtLogin: true
-            property bool vpnWanted: false
-            property bool vpnQbit: true
-            property bool phoneLinkOn: false
+            property bool wallpaperShuffle: Values.defaults.wallpaperShuffle
+            property int wallpaperInterval: Values.defaults.wallpaperInterval
+            property string wallpaperFill: Values.defaults.wallpaperFill
+            property bool clockIsland: Values.defaults.clockIsland
+            property int nightLightKelvin: Values.defaults.nightLightKelvin
+            property string nightLightSchedule: Values.defaults.nightLightSchedule
+            property int nightLightFrom: Values.defaults.nightLightFrom
+            property int nightLightTo: Values.defaults.nightLightTo
+            property string weatherUnits: Values.defaults.weatherUnits
+            property bool clock24: Values.defaults.clock24
+            property int weekStart: Values.defaults.weekStart
+            property int updateInterval: Values.defaults.updateInterval
+            property bool replayOn: Values.defaults.replayOn
+            property int replaySeconds: Values.defaults.replaySeconds
+            property string recordCodec: Values.defaults.recordCodec
+            property string vpnServer: Values.defaults.vpnServer
+            property bool vpnFull: Values.defaults.vpnFull
+            property bool vpnKillSwitch: Values.defaults.vpnKillSwitch
+            property bool vpnAtLogin: Values.defaults.vpnAtLogin
+            property bool vpnWanted: Values.defaults.vpnWanted
+            property bool vpnQbit: Values.defaults.vpnQbit
+            property bool phoneLinkOn: Values.defaults.phoneLinkOn
             property var headsetOptions: ({})
             property var desktopWidgets: ({})
-            property bool deskSidebar: false
-            property string deskSidebarStyle: "edge"
-            property bool updateAur: true
+            property bool deskSidebar: Values.defaults.deskSidebar
+            property string deskSidebarStyle: Values.defaults.deskSidebarStyle
+            property bool updateAur: Values.defaults.updateAur
             property var updateIgnore: []
-            property bool notifDnd: false
-            property bool notifQuiet: false
-            property int notifQuietFrom: 1320
-            property int notifQuietTo: 420
-            property bool notifDndBySchedule: false
+            property bool notifDnd: Values.defaults.notifDnd
+            property bool notifQuiet: Values.defaults.notifQuiet
+            property int notifQuietFrom: Values.defaults.notifQuietFrom
+            property int notifQuietTo: Values.defaults.notifQuietTo
+            property bool notifDndBySchedule: Values.defaults.notifDndBySchedule
             property var notifSilent: []
-            property int notifTimeout: 8
-            property int notifTimeoutLow: 4
-            property int notifTimeoutCritical: 16
-            property string notifPositionX: "right"
-            property string notifPositionY: "top"
-            property string centreAnchor: "clock"
+            property int notifTimeout: Values.defaults.notifTimeout
+            property int notifTimeoutLow: Values.defaults.notifTimeoutLow
+            property int notifTimeoutCritical: Values.defaults.notifTimeoutCritical
+            property string notifPositionX: Values.defaults.notifPositionX
+            property string notifPositionY: Values.defaults.notifPositionY
+            property string centreAnchor: Values.defaults.centreAnchor
             property var barLayout: ({})
             // Flat's Taskbar layout, once rearranged (widgetLayout)
             property var taskbarLayout: ({})

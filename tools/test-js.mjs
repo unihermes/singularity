@@ -377,3 +377,50 @@ test("Mosaic packs tiles densely and walks them with the arrows", () => {
     assert.equal(M.step(r, 0, -1, 0), 0)
     assert.equal(M.step(r, 0, 0, 1, (i) => i !== 4), 5)
 })
+
+test("Settings defaults, looks and styles obey their choices and bounds", () => {
+    const V = load("SettingsValues.js"), L = load("Looks.js"), S = load("Styles.js")
+    const validate = (values, label) => {
+        for (const [key, value] of Object.entries(values)) {
+            assert.equal(V.stored(key, value), value, `${label}.${key}: ${value}`)
+        }
+    }
+    validate(V.defaults, 'defaults')
+    for (const [name, look] of Object.entries(L.looks)) validate(look.settings, `look ${name}`)
+    for (const name of S.order) validate(S.stockOf(name), `style ${name}`)
+    for (const key of Object.keys(V.limits)) assert.equal(typeof V.defaults[key], 'number', key)
+    for (const key of Object.keys(V.choices)) {
+        if (key === 'density') continue // derived from three primitive dimensions
+        assert.ok(key in V.defaults, key)
+        assert.ok(V.choices[key].length > 0, key)
+        assert.equal(new Set(V.choices[key]).size, V.choices[key].length, key)
+    }
+    const qml = fs.readFileSync(path.join(services, 'Settings.qml'), 'utf8')
+    const declared = [...qml.matchAll(/property (?:string|int|bool) (\w+): Values\.defaults\.(\w+)/g)]
+    for (const [, key, ref] of declared) {
+        assert.equal(key, ref)
+        assert.ok(key in V.defaults, key)
+    }
+    assert.equal(declared.length, Object.keys(V.defaults).length)
+    // Installed choices must also accept the declared stock names.
+    assert.ok(L.order.includes(V.defaults.look))
+    assert.ok(S.order.includes(V.defaults.style))
+    assert.ok(L.systemFonts.includes(V.defaults.systemFontFamily))
+})
+
+test("Settings reject invalid numeric edits and repair invalid stored values", () => {
+    const V = load("SettingsValues.js")
+    assert.equal(V.clamp('radius', -100), 0)
+    assert.equal(V.clamp('radius', 999), 14)
+    assert.equal(V.clamp('radius', 3.6), 4)
+    for (const value of [NaN, Infinity, -Infinity, undefined, null, '5']) {
+        assert.equal(V.clamp('radius', value), undefined)
+        assert.equal(V.stored('radius', value), V.defaults.radius)
+    }
+    assert.equal(V.clamp('unknown', 5), undefined)
+    assert.equal(V.stored('notifPositionX', 'typo'), 'right')
+    assert.equal(V.stored('weekStart', 3), 1)
+    assert.equal(V.stored('replaySeconds', 1000), 600)
+    assert.equal(V.stored('fontFamily', 'A font currently uninstalled'), 'A font currently uninstalled')
+    assert.equal(V.stored('cursorTheme', 'A theme currently uninstalled'), 'A theme currently uninstalled')
+})

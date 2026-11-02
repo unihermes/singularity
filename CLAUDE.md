@@ -58,6 +58,7 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 
 - `python3 tools/check-unused.py`: anything declared and never read fails.
 - `python3 tools/check-settings-index.py`: Settings fields vs the search index.
+- `node --test tools/test-settings.mjs`: settings public setters and stored-value repair.
 - `node --test tools/test-js.mjs`: plain-JS modules and the Hyprland Lua readers/writers.
 - `tools/check-hardware.sh`: `packages/hardware/*.txt` against `scripts/hardware.sh`'s capabilities.
 - `python3 tools/test-state-paths.py`: XDG migration, conflicts and compatibility paths.
