@@ -262,7 +262,11 @@ Style: `channel` (frame `channel` in `Styles.js`).
   Appearance > Bar > Open windows has Window icon size and Window icon
   padding controls; icons are capped to the bar's height. Lift keeps
   its smaller inactive icons relative to that size; Rings fits the icon
-  inside its ring.
+  inside its ring. In a closed rounded chip frame, slot backgrounds reach
+  the inner border, including the first/last icon's padding (both ends for
+  one icon). Only outside corners round off; dividers join the frame and
+  occur only between icons. Segmented reuses that outline instead of
+  drawing a second track inside it.
 - **Plain** (Shape, a switch over any style, from a classic text bar):
   the bar full width whatever Bar shape says, flat, no hairline, chips Bare
   unless Bar chips says otherwise; the levels (volume, brightness, battery)

@@ -107,6 +107,10 @@ Item {
                     anchors.fill: parent
                     visible: wn.foc && ["inset", "segmented", "liquid"].indexOf(art.value) !== -1
                     radius: art.value === "liquid" ? height / 2 : Theme.radiusSmall
+                    topLeftRadius: art.value === "segmented" && wn.index > 0 ? 0 : radius
+                    bottomLeftRadius: topLeftRadius
+                    topRightRadius: art.value === "segmented" && wn.index < 2 ? 0 : radius
+                    bottomRightRadius: topRightRadius
                     color: art.value === "inset" ? Theme.base
                         : Qt.alpha(Theme.accent, art.value === "liquid" ? 0.45 : 0.3)
                     border.width: art.value === "inset" ? 1 : 0

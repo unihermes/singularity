@@ -18,6 +18,7 @@ import QtQuick.Effects
 import "../services"
 
 ModuleFrame {
+    id: windowsModule
     required property var host
     anchors.verticalCenter: parent.verticalCenter
     spacing: 0
@@ -104,7 +105,13 @@ ModuleFrame {
             ? iconRepeater.itemAt(focusIndex) : null
         // marks go toward the screen's edge
         readonly property bool atBottom: Theme.barPosition === "bottom"
-        readonly property int segmentHeight: Math.min(Theme.moduleHeight, Theme.iconHoverHeight)
+        // A closed module frame owns the strip's ends; no nested track.
+        readonly property bool framed: Theme.moduleStyle === "outline" && Theme.frameStroked && !Theme.frameCustom
+        readonly property int frameInset: Theme.frameDouble ? 2 + Theme.borderWidth : Theme.borderWidth
+        readonly property real fillHeight: framed ? windowsModule.chipHeight - frameInset * 2 : Theme.iconHoverHeight
+        readonly property real fillRadius: framed ? Math.max(0, Theme.radius - frameInset) : Theme.radiusSmall
+        readonly property real endBleed: framed ? windowsModule.padH - frameInset : 0
+        readonly property real segmentHeight: fillHeight
         // a full-size icon's top and bottom, centred in the strip
         readonly property int iconTop: Math.round((Theme.moduleHeight - Theme.windowIconSize) / 2)
         readonly property int iconBottom: iconTop + Theme.windowIconSize
@@ -115,7 +122,7 @@ ModuleFrame {
 
         // segmented: the outlined track every segment sits in
         Rectangle {
-            visible: strip.style === "segmented"
+            visible: strip.style === "segmented" && !strip.framed
             x: stripRow.x
             width: stripRow.width
             height: strip.segmentHeight
@@ -131,8 +138,8 @@ ModuleFrame {
         Rectangle {
             id: blob
             readonly property Item target: strip.style === "liquid" ? strip.focusItem : null
-            readonly property real wantL: target ? stripRow.x + target.x + 1 : 0
-            readonly property real wantR: target ? stripRow.x + target.x + target.width - 1 : 0
+            readonly property real wantL: target ? stripRow.x + target.x + (strip.framed ? target.fillX : 1) : 0
+            readonly property real wantR: target ? stripRow.x + target.x + (strip.framed ? target.fillX + target.fillWidth : target.width - 1) : 0
             property real l: 0
             property real r: 0
             property bool rightward: true
@@ -140,9 +147,13 @@ ModuleFrame {
             visible: target !== null
             x: l
             width: Math.max(0, r - l)
-            height: Theme.iconHoverHeight
+            height: strip.fillHeight
             anchors.verticalCenter: parent.verticalCenter
             radius: height / 2
+            topLeftRadius: strip.framed ? (target && target.first ? strip.fillRadius : 0) : radius
+            bottomLeftRadius: topLeftRadius
+            topRightRadius: strip.framed ? (target && target.last ? strip.fillRadius : 0) : radius
+            bottomRightRadius: topRightRadius
             color: Qt.alpha(Theme.accent, 0.45)
             onWantLChanged: place()
             onWantRChanged: place()
@@ -235,6 +246,10 @@ ModuleFrame {
                     // one the ring's size
                     readonly property int slotW: lift ? largeIconPx : rings ? ringPx : glyphBox.width
                     readonly property int padX: Theme.windowIconPadding
+                    readonly property bool first: index === 0
+                    readonly property bool last: index === iconRepeater.count - 1
+                    readonly property real fillX: first ? -strip.endBleed : 0
+                    readonly property real fillWidth: width + (first ? strip.endBleed : 0) + (last ? strip.endBleed : 0)
                     // viewfinder's and tint's box round the icon
                     readonly property int boxPx: Theme.windowIconSize + 6
 
@@ -247,12 +262,12 @@ ModuleFrame {
                     // the rule between one workspace's windows and the next's,
                     // centred in the gap so it takes no room of its own
                     Rectangle {
-                        visible: winIcon.modelData.groupStart
+                        visible: winIcon.index > 0 && winIcon.modelData.groupStart
                         z: 1
                         x: -Math.round(stripRow.spacing / 2)
                         anchors.verticalCenter: parent.verticalCenter
                         width: 1
-                        height: Math.round(Theme.moduleHeight * 0.5)
+                        height: strip.framed || winIcon.seg ? strip.fillHeight : Math.round(Theme.moduleHeight * 0.5)
                         color: Theme.stroke
                     }
 
@@ -274,11 +289,15 @@ ModuleFrame {
                         visible: (winIcon.hovered || winIcon.slotLit) && !winIcon.seg && !winIcon.inset
                             && !winIcon.rings && !winIcon.fade && !winIcon.finder && !winIcon.tint
                             && !(winIcon.liquid && winIcon.focused) && winIcon.mark !== "ground"
-                        x: 0
+                        x: winIcon.fillX
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width
-                        height: Theme.iconHoverHeight
+                        width: winIcon.fillWidth
+                        height: strip.fillHeight
                         radius: Theme.moduleStyle === "grouped" ? Theme.radius : Theme.radiusSmall
+                        topLeftRadius: strip.framed || winIcon.seg ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        bottomLeftRadius: topLeftRadius
+                        topRightRadius: strip.framed || winIcon.seg ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        bottomRightRadius: topRightRadius
                         color: Theme.overlay
                         border.width: winIcon.opened ? Theme.borderWidth : 0
                         border.color: Theme.strokeFocus
@@ -288,11 +307,15 @@ ModuleFrame {
                     // window, hover fill under the rest), inside the track
                     Rectangle {
                         visible: winIcon.seg
-                        x: 0
+                        x: winIcon.fillX
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width
+                        width: winIcon.fillWidth
                         height: strip.segmentHeight
                         radius: Theme.radiusSmall
+                        topLeftRadius: strip.framed || winIcon.seg ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        bottomLeftRadius: topLeftRadius
+                        topRightRadius: strip.framed || winIcon.seg ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        bottomRightRadius: topRightRadius
                         color: winIcon.focused ? Qt.alpha(Theme.accent, 0.3)
                             : winIcon.hovered ? Theme.overlay : "transparent"
                         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
@@ -302,16 +325,21 @@ ModuleFrame {
                     // stroke echoing the double frame
                     Rectangle {
                         visible: winIcon.inset && winIcon.lit
-                        anchors.centerIn: glyphBox
-                        width: glyphBox.width + 6
-                        height: glyphBox.height + 4
+                        x: strip.framed ? winIcon.fillX : glyphBox.x + (glyphBox.width - width) / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: strip.framed ? winIcon.fillWidth : glyphBox.width + 6
+                        height: strip.framed ? strip.fillHeight : glyphBox.height + 4
                         radius: Theme.radiusSmall
+                        topLeftRadius: strip.framed ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        bottomLeftRadius: topLeftRadius
+                        topRightRadius: strip.framed ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        bottomRightRadius: topRightRadius
                         color: winIcon.focused ? Theme.base : Theme.overlay
-                        border.width: winIcon.focused ? 1 : 0
+                        border.width: winIcon.focused && !strip.framed ? 1 : 0
                         border.color: Theme.stroke
 
                         Rectangle {
-                            visible: winIcon.focused
+                            visible: winIcon.focused && !strip.framed
                             anchors.fill: parent
                             anchors.margins: 2
                             radius: Math.max(0, parent.radius - 2)
@@ -325,13 +353,18 @@ ModuleFrame {
                     // for the focused window, a hover fill for the rest
                     Rectangle {
                         visible: winIcon.mark === "ground"
-                        anchors.centerIn: glyphBox
-                        width: Theme.iconSlotW
-                        height: Theme.iconHoverHeight
+                        x: strip.framed ? winIcon.fillX : glyphBox.x + (glyphBox.width - width) / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: strip.framed ? winIcon.fillWidth : Theme.iconSlotW
+                        height: strip.fillHeight
                         radius: Theme.radiusSmall
+                        topLeftRadius: strip.framed ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        bottomLeftRadius: topLeftRadius
+                        topRightRadius: strip.framed ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        bottomRightRadius: topRightRadius
                         color: winIcon.focused ? Theme.selectedFill
                             : winIcon.hovered && !winIcon.focused ? Theme.overlay : "transparent"
-                        border.width: winIcon.focused ? Theme.borderWidth : 0
+                        border.width: winIcon.focused && !strip.framed ? Theme.borderWidth : 0
                         border.color: Theme.strokeFocus
                         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                     }
