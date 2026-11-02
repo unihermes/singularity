@@ -26,9 +26,9 @@ ModuleFrame {
     // rectangle with nothing in it
     visible: iconRepeater.count > 0 && Settings.widgetVisible("windows")
     hoverWhole: false
-    // the plain icon styles give each icon a wide slot (Theme.iconSlotW),
-    // whose room either side would otherwise stack on the chip's own padding
-    padH: Math.max(0, Theme.modulePadH - (strip.wideSlots && !Theme.moduleTaskbar ? Theme.windowIconPadding : 0))
+    // End slots keep half the extra module padding beyond their own icon padding.
+    padH: Math.max(0, Math.floor((Theme.modulePadH
+        - (strip.wideSlots && !Theme.moduleTaskbar ? Theme.windowIconPadding : 0)) / 2))
 
     // four corner brackets round a box, viewfinder's mark
     component Corners: Item {
