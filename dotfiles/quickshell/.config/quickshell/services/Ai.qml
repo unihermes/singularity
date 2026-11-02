@@ -157,7 +157,7 @@ Singleton {
     readonly property var codexModeChoices: modeChoices.filter(c => c.value !== "plan")
     function modesFor(t) { return codex(t) ? codexModeChoices : modeChoices }
 
-    // Codex's models as its own cache lists them, Default first
+    // Codex models by power tier, newest first within each tier; Default stays first.
     property var codexModels: []
     FileView {
         path: root.home + "/.codex/models_cache.json"
@@ -167,6 +167,17 @@ Singleton {
         onLoaded: {
             try {
                 root.codexModels = (JSON.parse(text()).models || []).filter(m => m.visibility === "list")
+                    .sort((a, b) => {
+                        const tiers = ["astra", "sol", "terra", "luna"]
+                        const tier = m => {
+                            const index = tiers.indexOf(m.slug.split("-").pop())
+                            return index < 0 ? tiers.length : index
+                        }
+                        const difference = tier(a) - tier(b)
+                        if (difference !== 0) return difference
+                        if (tier(a) === tiers.length) return 0
+                        return b.slug.localeCompare(a.slug, undefined, { numeric: true })
+                    })
                     .map(m => ({ value: m.slug, text: m.display_name || m.slug }))
             } catch (e) {}
         }
