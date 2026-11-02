@@ -407,7 +407,7 @@ ModuleFrame {
                     // tint: a tile washed in the app's own colours, deeper
                     // for the focused window, with an edge per
                     // extra window (up to two) stacked behind it toward the
-                    // screen's edge (so drawn a little past the strip)
+                    // screen's edge when there is no enclosing frame
                     Item {
                         id: tintLayer
                         readonly property int grow: 4
@@ -453,7 +453,7 @@ ModuleFrame {
                             visible: false
                             layer.enabled: winIcon.tint
                             Repeater {
-                                model: winIcon.tint && winIcon.multi ? Math.min(2, winIcon.winCount - 1) : 0
+                                model: winIcon.tint && winIcon.multi && !strip.framed ? Math.min(2, winIcon.winCount - 1) : 0
                                 Rectangle {
                                     required property int index
                                     readonly property int step: index + 1
@@ -478,7 +478,7 @@ ModuleFrame {
                             Behavior on opacity { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                         }
                         Wash {
-                            visible: winIcon.tint && winIcon.modelData.source !== "" && winIcon.multi
+                            visible: winIcon.tint && winIcon.modelData.source !== "" && winIcon.multi && !strip.framed
                             width: parent.width
                             height: parent.height
                             mask: tintRim
