@@ -70,7 +70,9 @@ ModuleFrame {
         IconImage {
             x: wash.iconX + wash.iconPx / 2 - width / 2
             y: wash.iconY + wash.iconPx / 2 - height / 2
-            width: wash.iconPx * 3
+            width: Math.max(wash.iconPx * 3, 2 * (wash.iconX + wash.iconPx / 2),
+                2 * (wash.width - wash.iconX - wash.iconPx / 2), 2 * (wash.iconY + wash.iconPx / 2),
+                2 * (wash.height - wash.iconY - wash.iconPx / 2))
             height: width
             source: wash.source
             layer.enabled: wash.visible
@@ -105,12 +107,34 @@ ModuleFrame {
             ? iconRepeater.itemAt(focusIndex) : null
         // marks go toward the screen's edge
         readonly property bool atBottom: Theme.barPosition === "bottom"
-        // A closed module frame owns the strip's ends; no nested track.
-        readonly property bool framed: Theme.moduleStyle === "outline" && Theme.frameStroked && !Theme.frameCustom
-        readonly property int frameInset: Theme.frameDouble ? 2 + Theme.borderWidth : Theme.borderWidth
-        readonly property real fillHeight: framed ? windowsModule.chipHeight - frameInset * 2 : Theme.iconHoverHeight
-        readonly property real fillRadius: framed ? Math.max(0, Theme.radius - frameInset) : Theme.radiusSmall
-        readonly property real endBleed: framed ? windowsModule.padH - frameInset : 0
+        // Match the geometry actually drawn by ModuleFrame or the shared group.
+        readonly property bool closedFrame: Theme.frameStroked
+            && (!Theme.frameCustom || Theme.frameStyle === "notch" || Theme.frameStyle === "bevel")
+        readonly property bool grouped: Theme.moduleGrouped && closedFrame
+        readonly property bool framed: grouped || (closedFrame && (Theme.moduleStyle === "outline"
+            || (Theme.frameCustom && Theme.moduleStyle !== "bare")))
+        readonly property real frameInset: Theme.frameCustom && Theme.frameStyle === "bevel" ? Theme.borderWidth * 1.5
+            : Theme.frameDouble ? 2 + Theme.borderWidth
+            : grouped && Theme.frameChannel ? Theme.channelWidth : Theme.borderWidth
+        readonly property bool leftEnd: !grouped || groupEnd(false)
+        readonly property bool rightEnd: !grouped || groupEnd(true)
+        function groupEnd(reverse) {
+            var order = Settings.widgetOrder(host.bar.sectionOf(windowsModule))
+            for (var n = 0; n < order.length; n++) {
+                var key = order[reverse ? order.length - n - 1 : n]
+                var item = host.bar.slotItem(key)
+                if (item && item.visible) return item === windowsModule
+            }
+            return false
+        }
+        readonly property real frameHeight: grouped ? Theme.groupHeight : windowsModule.chipHeight
+        readonly property real fillHeight: framed ? Math.max(0, frameHeight - frameInset * 2) : Theme.iconHoverHeight
+        readonly property real fillRadius: framed ? (Theme.frameCustom ? 0
+            : Math.max(0, (grouped ? Theme.groupRadius : Theme.radius) - frameInset)) : Theme.radiusSmall
+        readonly property real endBleed: framed ? windowsModule.padH + (grouped ? Theme.channelWidth : 0) - frameInset : 0
+        readonly property var groupFrame: grouped ? host.bar.groupRect(host.bar.sectionOf(windowsModule)) : null
+        readonly property real cut: framed && Theme.frameCustom && Theme.frameStyle === "notch"
+            ? Math.max(0, Math.min(Theme.notchSize, (groupFrame ? groupFrame.w : windowsModule.width) / 4, frameHeight / 3) - frameInset * (2 - Math.SQRT2)) : 0
         readonly property real segmentHeight: fillHeight
         // a full-size icon's top and bottom, centred in the strip
         readonly property int iconTop: Math.round((Theme.moduleHeight - Theme.windowIconSize) / 2)
@@ -123,6 +147,7 @@ ModuleFrame {
         // segmented: the outlined track every segment sits in
         Rectangle {
             visible: strip.style === "segmented" && !strip.framed
+            z: 2
             x: stripRow.x
             width: stripRow.width
             height: strip.segmentHeight
@@ -135,7 +160,7 @@ ModuleFrame {
 
         // liquid: the blob behind the focused icon; on a move its leading
         // edge goes first and the trailing one catches up
-        Rectangle {
+        WindowSlotFill {
             id: blob
             readonly property Item target: strip.style === "liquid" ? strip.focusItem : null
             readonly property real wantL: target ? stripRow.x + target.x + (strip.framed ? target.fillX : 1) : 0
@@ -150,10 +175,12 @@ ModuleFrame {
             height: strip.fillHeight
             anchors.verticalCenter: parent.verticalCenter
             radius: height / 2
-            topLeftRadius: strip.framed ? (target && target.first ? strip.fillRadius : 0) : radius
+            topLeftRadius: strip.framed ? (target && target.first && strip.leftEnd ? strip.fillRadius : 0) : radius
             bottomLeftRadius: topLeftRadius
-            topRightRadius: strip.framed ? (target && target.last ? strip.fillRadius : 0) : radius
+            topRightRadius: strip.framed ? (target && target.last && strip.rightEnd ? strip.fillRadius : 0) : radius
             bottomRightRadius: topRightRadius
+            leftCut: target && target.first && strip.leftEnd ? strip.cut : 0
+            rightCut: target && target.last && strip.rightEnd ? strip.cut : 0
             color: Qt.alpha(Theme.accent, 0.45)
             onWantLChanged: place()
             onWantRChanged: place()
@@ -248,8 +275,8 @@ ModuleFrame {
                     readonly property int padX: Theme.windowIconPadding
                     readonly property bool first: index === 0
                     readonly property bool last: index === iconRepeater.count - 1
-                    readonly property real fillX: first ? -strip.endBleed : 0
-                    readonly property real fillWidth: width + (first ? strip.endBleed : 0) + (last ? strip.endBleed : 0)
+                    readonly property real fillX: first ? -(strip.leftEnd ? strip.endBleed : strip.framed ? windowsModule.padH : 0) : 0
+                    readonly property real fillWidth: width - fillX + (last ? (strip.rightEnd ? strip.endBleed : strip.framed ? windowsModule.padH : 0) : 0)
                     // viewfinder's and tint's box round the icon
                     readonly property int boxPx: Theme.windowIconSize + 6
 
@@ -285,7 +312,7 @@ ModuleFrame {
 
                     // the hover fill under this window, for styles with no
                     // hover of their own (and Flat's focused taskbar slot)
-                    Rectangle {
+                    WindowSlotFill {
                         visible: (winIcon.hovered || winIcon.slotLit) && !winIcon.seg && !winIcon.inset
                             && !winIcon.rings && !winIcon.fade && !winIcon.finder && !winIcon.tint
                             && !(winIcon.liquid && winIcon.focused) && winIcon.mark !== "ground"
@@ -294,28 +321,32 @@ ModuleFrame {
                         width: winIcon.fillWidth
                         height: strip.fillHeight
                         radius: Theme.moduleStyle === "grouped" ? Theme.radius : Theme.radiusSmall
-                        topLeftRadius: strip.framed || winIcon.seg ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        topLeftRadius: strip.framed || winIcon.seg ? (winIcon.first && strip.leftEnd ? strip.fillRadius : 0) : radius
                         bottomLeftRadius: topLeftRadius
-                        topRightRadius: strip.framed || winIcon.seg ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        topRightRadius: strip.framed || winIcon.seg ? (winIcon.last && strip.rightEnd ? strip.fillRadius : 0) : radius
                         bottomRightRadius: topRightRadius
+                        leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
+                        rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
                         color: Theme.overlay
-                        border.width: winIcon.opened ? Theme.borderWidth : 0
+                        border.width: winIcon.opened && !strip.framed ? Theme.borderWidth : 0
                         border.color: Theme.strokeFocus
                     }
 
                     // segmented: the slot's ground (accent under the focused
                     // window, hover fill under the rest), inside the track
-                    Rectangle {
+                    WindowSlotFill {
                         visible: winIcon.seg
                         x: winIcon.fillX
                         anchors.verticalCenter: parent.verticalCenter
                         width: winIcon.fillWidth
                         height: strip.segmentHeight
                         radius: Theme.radiusSmall
-                        topLeftRadius: strip.framed || winIcon.seg ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        topLeftRadius: strip.framed || winIcon.seg ? (winIcon.first && strip.leftEnd ? strip.fillRadius : 0) : radius
                         bottomLeftRadius: topLeftRadius
-                        topRightRadius: strip.framed || winIcon.seg ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        topRightRadius: strip.framed || winIcon.seg ? (winIcon.last && strip.rightEnd ? strip.fillRadius : 0) : radius
                         bottomRightRadius: topRightRadius
+                        leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
+                        rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
                         color: winIcon.focused ? Qt.alpha(Theme.accent, 0.3)
                             : winIcon.hovered ? Theme.overlay : "transparent"
                         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
@@ -323,17 +354,19 @@ ModuleFrame {
 
                     // inset: the well the focused icon sits in, its inner
                     // stroke echoing the double frame
-                    Rectangle {
+                    WindowSlotFill {
                         visible: winIcon.inset && winIcon.lit
                         x: strip.framed ? winIcon.fillX : glyphBox.x + (glyphBox.width - width) / 2
                         anchors.verticalCenter: parent.verticalCenter
                         width: strip.framed ? winIcon.fillWidth : glyphBox.width + 6
                         height: strip.framed ? strip.fillHeight : glyphBox.height + 4
                         radius: Theme.radiusSmall
-                        topLeftRadius: strip.framed ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        topLeftRadius: strip.framed ? (winIcon.first && strip.leftEnd ? strip.fillRadius : 0) : radius
                         bottomLeftRadius: topLeftRadius
-                        topRightRadius: strip.framed ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        topRightRadius: strip.framed ? (winIcon.last && strip.rightEnd ? strip.fillRadius : 0) : radius
                         bottomRightRadius: topRightRadius
+                        leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
+                        rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
                         color: winIcon.focused ? Theme.base : Theme.overlay
                         border.width: winIcon.focused && !strip.framed ? 1 : 0
                         border.color: Theme.stroke
@@ -351,17 +384,19 @@ ModuleFrame {
 
                     // "ground": the hover box's size behind the icon, lit
                     // for the focused window, a hover fill for the rest
-                    Rectangle {
+                    WindowSlotFill {
                         visible: winIcon.mark === "ground"
                         x: strip.framed ? winIcon.fillX : glyphBox.x + (glyphBox.width - width) / 2
                         anchors.verticalCenter: parent.verticalCenter
                         width: strip.framed ? winIcon.fillWidth : Theme.iconSlotW
                         height: strip.fillHeight
                         radius: Theme.radiusSmall
-                        topLeftRadius: strip.framed ? (winIcon.first ? strip.fillRadius : 0) : radius
+                        topLeftRadius: strip.framed ? (winIcon.first && strip.leftEnd ? strip.fillRadius : 0) : radius
                         bottomLeftRadius: topLeftRadius
-                        topRightRadius: strip.framed ? (winIcon.last ? strip.fillRadius : 0) : radius
+                        topRightRadius: strip.framed ? (winIcon.last && strip.rightEnd ? strip.fillRadius : 0) : radius
                         bottomRightRadius: topRightRadius
+                        leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
+                        rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
                         color: winIcon.focused ? Theme.selectedFill
                             : winIcon.hovered && !winIcon.focused ? Theme.overlay : "transparent"
                         border.width: winIcon.focused && !strip.framed ? Theme.borderWidth : 0
@@ -377,24 +412,39 @@ ModuleFrame {
                         id: tintLayer
                         readonly property int grow: 4
                         visible: winIcon.tint
+                        x: winIcon.fillX
                         y: -grow
-                        width: parent.width
+                        width: winIcon.fillWidth
                         height: parent.height + grow * 2
                         Item {
                             id: tintMask
-                            readonly property real tileX: glyphBox.x + glyphBox.width / 2 - winIcon.boxPx / 2
-                            readonly property real tileY: tintLayer.grow + glyphBox.y + glyphBox.height / 2 - winIcon.boxPx / 2
+                            readonly property real tileX: strip.framed ? 0 : glyphBox.x + glyphBox.width / 2 - winIcon.boxPx / 2
+                            readonly property real tileY: tintLayer.grow + (winIcon.height - tileHeight) / 2
+                            readonly property real tileWidth: strip.framed ? winIcon.fillWidth : winIcon.boxPx
+                            readonly property real tileHeight: strip.framed ? strip.fillHeight : winIcon.boxPx
                             width: parent.width
                             height: parent.height
-                            visible: false
-                            layer.enabled: winIcon.tint
-                            Rectangle {
+                            WindowSlotFill {
                                 x: tintMask.tileX
                                 y: tintMask.tileY
-                                width: winIcon.boxPx
-                                height: width
-                                radius: Theme.radiusSmall
+                                width: tintMask.tileWidth
+                                height: tintMask.tileHeight
+                                radius: strip.framed ? strip.fillRadius : Theme.radiusSmall
+                                topLeftRadius: strip.framed && !(winIcon.first && strip.leftEnd) ? 0 : radius
+                                bottomLeftRadius: topLeftRadius
+                                topRightRadius: strip.framed && !(winIcon.last && strip.rightEnd) ? 0 : radius
+                                bottomRightRadius: topRightRadius
+                                leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
+                                rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
                             }
+                        }
+                        // Keep cut-corner geometry live while hiding the mask itself.
+                        ShaderEffectSource {
+                            id: tintMaskTexture
+                            sourceItem: winIcon.tint ? tintMask : null
+                            hideSource: true
+                            visible: false
+                            live: true
                         }
                         Item {
                             id: tintRim
@@ -407,9 +457,9 @@ ModuleFrame {
                                 Rectangle {
                                     required property int index
                                     readonly property int step: index + 1
-                                    x: tintMask.tileX + step * 3
-                                    y: strip.atBottom ? tintMask.tileY + winIcon.boxPx + step * 2 - 1
-                                        : tintMask.tileY - step * 2
+                                    x: glyphBox.x - tintLayer.x + glyphBox.width / 2 - winIcon.boxPx / 2 + step * 3
+                                    y: tintLayer.grow + glyphBox.y + glyphBox.height / 2
+                                        + (strip.atBottom ? winIcon.boxPx / 2 + step * 2 - 1 : -winIcon.boxPx / 2 - step * 2)
                                     width: winIcon.boxPx - step * 6
                                     height: 1
                                 }
@@ -419,9 +469,9 @@ ModuleFrame {
                             visible: winIcon.tint && winIcon.modelData.source !== ""
                             width: parent.width
                             height: parent.height
-                            mask: tintMask
+                            mask: tintMaskTexture
                             source: visible ? winIcon.modelData.source : ""
-                            iconX: glyphBox.x
+                            iconX: glyphBox.x - tintLayer.x
                             iconY: tintLayer.grow + glyphBox.y
                             iconPx: winIcon.iconPx
                             opacity: winIcon.focused ? 0.8 : winIcon.hovered ? 0.4 : 0.22
@@ -434,20 +484,26 @@ ModuleFrame {
                             mask: tintRim
                             lift: 0.35
                             source: visible ? winIcon.modelData.source : ""
-                            iconX: glyphBox.x
+                            iconX: glyphBox.x - tintLayer.x
                             iconY: tintLayer.grow + glyphBox.y
                             iconPx: winIcon.iconPx
                             opacity: winIcon.focused ? 1 : 0.7
                         }
                     }
                     // an app with no icon washes in plain grey
-                    Rectangle {
+                    WindowSlotFill {
                         visible: winIcon.tint && winIcon.modelData.source === ""
-                        x: tintMask.tileX
+                        x: tintLayer.x + tintMask.tileX
                         y: tintMask.tileY - tintLayer.grow
-                        width: winIcon.boxPx
-                        height: width
-                        radius: Theme.radiusSmall
+                        width: tintMask.tileWidth
+                        height: tintMask.tileHeight
+                        radius: strip.framed ? strip.fillRadius : Theme.radiusSmall
+                        topLeftRadius: strip.framed && !(winIcon.first && strip.leftEnd) ? 0 : radius
+                        bottomLeftRadius: topLeftRadius
+                        topRightRadius: strip.framed && !(winIcon.last && strip.rightEnd) ? 0 : radius
+                        bottomRightRadius: topRightRadius
+                        leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
+                        rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
                         color: winIcon.focused ? Theme.subtext : winIcon.hovered ? Theme.overlay : Theme.surface
                     }
 
@@ -659,8 +715,8 @@ ModuleFrame {
 
                     MouseArea {
                         id: winMouse
-                        x: 0
-                        width: parent.width
+                        x: winIcon.fillX
+                        width: winIcon.fillWidth
                         height: parent.height
                         hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton

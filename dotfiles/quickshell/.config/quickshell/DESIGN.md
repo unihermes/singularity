@@ -262,11 +262,13 @@ Style: `channel` (frame `channel` in `Styles.js`).
   Appearance > Bar > Open windows has Window icon size and Window icon
   padding controls; icons are capped to the bar's height. Lift keeps
   its smaller inactive icons relative to that size; Rings fits the icon
-  inside its ring. In a closed rounded chip frame, slot backgrounds reach
+  inside its ring. In a closed chip or group frame, slot backgrounds reach
   the inner border, including the first/last icon's padding (both ends for
-  one icon). Only outside corners round off; dividers join the frame and
-  occur only between icons. Segmented reuses that outline instead of
-  drawing a second track inside it.
+  one icon). Only outside corners round off or follow Notch's cuts;
+  dividers join the frame and occur only between icons. Segmented reuses
+  that outline instead of drawing a second track inside it. Fills respect
+  the inner stroke of Double and Channel and the raised edge of Bevel;
+  Rail and Ledger keep their open rules. Tint follows the same slot shape.
 - **Plain** (Shape, a switch over any style, from a classic text bar):
   the bar full width whatever Bar shape says, flat, no hairline, chips Bare
   unless Bar chips says otherwise; the levels (volume, brightness, battery)
