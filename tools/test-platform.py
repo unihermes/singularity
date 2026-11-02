@@ -18,7 +18,7 @@ class PlatformTests(unittest.TestCase):
         self.env = dict(os.environ, XDG_STATE_HOME=str(self.state))
 
     def shell(self, body, check=True):
-        return subprocess.run(['bash', '-eu', '-c', 'source ./hardware.sh\n' + body],
+        return subprocess.run(['bash', '-eu', '-c', 'source ./scripts/hardware.sh\n' + body],
                               cwd=ROOT, env=self.env, text=True, capture_output=True, check=check)
 
     def test_selection_persists_and_auto_redetects(self):
@@ -38,7 +38,7 @@ class PlatformTests(unittest.TestCase):
             master, slave = os.openpty()
             try:
                 process = subprocess.Popen(['bash', '-eu', '-c',
-                    'source ./hardware.sh; detect_machine() { echo laptop; }; '
+                    'source ./scripts/hardware.sh; detect_machine() { echo laptop; }; '
                     'select_machine "" true; echo "$machine"'], cwd=ROOT,
                     env=self.env, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 os.write(master, answer)

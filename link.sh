@@ -5,8 +5,8 @@ set -euo pipefail
 
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-source ./lib.sh
-source ./hardware.sh
+source ./scripts/lib.sh
+source ./scripts/hardware.sh
 
 (( $# <= 1 )) || die "usage: ./link.sh [laptop|desktop|auto]"
 select_machine "${1:-}" || exit $?

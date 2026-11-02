@@ -58,7 +58,7 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `python3 tools/check-unused.py`: anything declared and never read fails.
 - `python3 tools/check-settings-index.py`: Settings fields vs the search index.
 - `node --test tools/test-js.mjs`: plain-JS modules and the Hyprland Lua readers/writers.
-- `tools/check-hardware.sh`: `packages/hardware/*.txt` against `hardware.sh`'s capabilities.
+- `tools/check-hardware.sh`: `packages/hardware/*.txt` against `scripts/hardware.sh`'s capabilities.
 - `python3 tools/test-tools.py`: compact inventory, syntax detection and pre-commit check selection.
 - `python3 tools/check-syntax.py [files...]`: shell (including extensionless helpers), Python and Lua syntax.
 
@@ -67,7 +67,7 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `dotfiles/singularity/.config/singularity/platform.sh` is the single detector
   (`has CAP`) and policy resolver (`feature NAME`). Its `profiles/laptop.conf`
   and `profiles/desktop.conf` select usage policies; hardware gates still apply.
-- `hardware.sh` sources that resolver and adds provisioning helpers. First
+- `scripts/hardware.sh` sources that resolver and adds provisioning helpers. First
   interactive install offers the detected choice; explicit laptop/desktop,
   saved choice, then detection supply it elsewhere. `--plan` is read-only.
   Install, link and update must use `select_machine`, never duplicate detection.

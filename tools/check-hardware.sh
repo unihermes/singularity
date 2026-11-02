@@ -5,8 +5,8 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-source ./lib.sh
-source ./hardware.sh
+source ./scripts/lib.sh
+source ./scripts/hardware.sh
 
 bad=0
 for cap in "${hw_caps[@]}"; do

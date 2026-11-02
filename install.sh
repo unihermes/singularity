@@ -4,9 +4,9 @@ set -euo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # log, warn, die, list
-source ./lib.sh
+source ./scripts/lib.sh
 # has CAP, detect_machine, machine_lists, split_repo_aur
-source ./hardware.sh
+source ./scripts/hardware.sh
 
 # put PATH -- installs system/PATH (the repo's root-owned files) at PATH,
 # executable where the repo's copy is

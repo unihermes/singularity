@@ -68,7 +68,7 @@ git clone https://github.com/unihermes/singularity.git && cd singularity && ./in
 
 The repo is built and tested on a Dell XPS 13 with Intel graphics and a
 desktop with an RTX 4070. Nothing in the shell is specific to either: the
-packages and boot fixes for particular hardware (`hardware.sh`) install only
+packages and boot fixes for particular hardware (`scripts/hardware.sh`) install only
 where that hardware is found.
 
 ## Installing
@@ -104,7 +104,7 @@ The two policies live in `dotfiles/singularity/.config/singularity/profiles/`:
 | Early NVIDIA loading / parallel SATA probing | Off | Only with matching hardware |
 | Forced NVIDIA rendering environment | Off; automatic hybrid GPU selection | Only with NVIDIA hardware |
 
-`platform.sh` is the shared hardware and policy resolver. `hardware.sh` adds the
+`platform.sh` is the shared hardware and policy resolver. `scripts/hardware.sh` adds the
 installer's package selection and saved-choice helpers. Hardware packages remain
 in `packages/hardware/<capability>.txt`; usage-specific packages belong in
 `packages/laptop.txt` or `packages/desktop.txt`. A desktop with a USB touchpad or
@@ -378,8 +378,9 @@ singularity/
 ├── install.sh              # provision a whole machine
 ├── link.sh                 # link the dotfiles only
 ├── update.sh               # pull, relink, install newly listed packages
-├── hardware.sh             # profile selection and package helpers; sources platform.sh
-├── lib.sh                  # log, warn, die, list, sourced by the scripts
+├── scripts/                # shared provisioning and logging helpers
+│   ├── hardware.sh         # profile selection and package helpers; sources platform.sh
+│   └── lib.sh              # log, warn, die, list
 ├── packages/               # pacman.txt, aur.txt, laptop/desktop.txt and hardware/<capability>.txt
 ├── system/                 # root-owned files install.sh puts at the same path under /
 ├── wallpapers/

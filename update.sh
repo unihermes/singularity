@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # log, warn, die, list
-source ./lib.sh
+source ./scripts/lib.sh
 
 # Everything sits in main so bash has read the whole script before the pull
 # can rewrite it.
@@ -28,7 +28,7 @@ main() {
   ./link.sh
 
   # Relinking records or reuses the profile; all consumers use its resolver.
-  source ./hardware.sh
+  source ./scripts/hardware.sh
   local machine
   select_machine || return
   local -a lists extra=() more
