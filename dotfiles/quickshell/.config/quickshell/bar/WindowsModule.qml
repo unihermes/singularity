@@ -131,7 +131,7 @@ ModuleFrame {
         Rectangle {
             id: blob
             readonly property Item target: strip.style === "liquid" ? strip.focusItem : null
-            readonly property real wantL: target ? stripRow.x + target.x + target.lead + 1 : 0
+            readonly property real wantL: target ? stripRow.x + target.x + 1 : 0
             readonly property real wantR: target ? stripRow.x + target.x + target.width - 1 : 0
             property real l: 0
             property real r: 0
@@ -224,8 +224,6 @@ ModuleFrame {
                     readonly property int notchSegs: Math.min(4, winCount)
                     readonly property real notchW: (iconPx - (notchSegs - 1)) / notchSegs
                     readonly property bool notched: glide && multi
-                    // room for the rule between workspaces, in "all" scope
-                    readonly property int lead: modelData.groupStart ? Theme.spaceS + 1 : 0
                     readonly property int smallIconPx: Math.round(Theme.windowIconSize * 0.75)
                     readonly property int largeIconPx: Math.min(Theme.moduleHeight - 8, Math.round(Theme.windowIconSize * 1.125))
                     // rings: the ring as tall as the strip allows, the icon inside it
@@ -243,13 +241,15 @@ ModuleFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     // a little wider than the icon, so neighbours' pips
                     // don't run together and each is a comfortable target
-                    implicitWidth: lead + slotW + padX * 2
+                    implicitWidth: slotW + padX * 2
                     implicitHeight: Theme.moduleHeight
 
-                    // the rule between one workspace's windows and the next's
+                    // the rule between one workspace's windows and the next's,
+                    // centred in the gap so it takes no room of its own
                     Rectangle {
                         visible: winIcon.modelData.groupStart
-                        x: 0
+                        z: 1
+                        x: -Math.round(stripRow.spacing / 2)
                         anchors.verticalCenter: parent.verticalCenter
                         width: 1
                         height: Math.round(Theme.moduleHeight * 0.5)
@@ -274,9 +274,9 @@ ModuleFrame {
                         visible: (winIcon.hovered || winIcon.slotLit) && !winIcon.seg && !winIcon.inset
                             && !winIcon.rings && !winIcon.fade && !winIcon.finder && !winIcon.tint
                             && !(winIcon.liquid && winIcon.focused) && winIcon.mark !== "ground"
-                        x: winIcon.lead
+                        x: 0
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - winIcon.lead
+                        width: parent.width
                         height: Theme.iconHoverHeight
                         radius: Theme.moduleStyle === "grouped" ? Theme.radius : Theme.radiusSmall
                         color: Theme.overlay
@@ -288,9 +288,9 @@ ModuleFrame {
                     // window, hover fill under the rest), inside the track
                     Rectangle {
                         visible: winIcon.seg
-                        x: winIcon.lead
+                        x: 0
                         anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - winIcon.lead
+                        width: parent.width
                         height: strip.segmentHeight
                         radius: Theme.radiusSmall
                         color: winIcon.focused ? Qt.alpha(Theme.accent, 0.3)
@@ -489,7 +489,7 @@ ModuleFrame {
 
                     Item {
                         id: glyphBox
-                        x: winIcon.lead + winIcon.padX + Math.round((winIcon.slotW - width) / 2)
+                        x: winIcon.padX + Math.round((winIcon.slotW - width) / 2)
                         anchors.verticalCenter: parent.verticalCenter
                         width: winIcon.iconPx
                         height: winIcon.iconPx
@@ -570,7 +570,7 @@ ModuleFrame {
                                 height: winIcon.liquid ? 3 : Theme.indicatorWidth
                                 radius: Theme.pill(height)
                                 width: winIcon.liquid ? height
-                                    : !pip.split ? (winIcon.focused && winIcon.slotted ? winIcon.width - winIcon.lead
+                                    : !pip.split ? (winIcon.focused && winIcon.slotted ? winIcon.width
                                         : winIcon.focused || winIcon.slotted ? glyphBox.width - 2 : Theme.barFs(6))
                                     : modelData.popout ? Theme.barFs(winIcon.focused ? 6 : 4)
                                     : Theme.barFs(winIcon.focused ? 7 : 4)
@@ -626,8 +626,8 @@ ModuleFrame {
 
                     MouseArea {
                         id: winMouse
-                        x: winIcon.lead
-                        width: parent.width - winIcon.lead
+                        x: 0
+                        width: parent.width
                         height: parent.height
                         hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -682,7 +682,7 @@ ModuleFrame {
             id: slider
             readonly property Item target: strip.style === "glide" ? strip.focusItem : null
             visible: target !== null
-            x: target ? stripRow.x + target.x + target.lead + target.padX
+            x: target ? stripRow.x + target.x + target.padX
                 + (target.notched ? Math.min(3, target.shownIndex) * (target.notchW + 1) : 0) : 0
             y: strip.markY
             width: target ? (target.notched ? target.notchW : target.iconPx) : 0
@@ -704,7 +704,7 @@ ModuleFrame {
             visible: target !== null
             width: target ? target.boxPx : 0
             height: width
-            x: target ? stripRow.x + target.x + target.lead + target.padX + target.slotW / 2 - width / 2 : 0
+            x: target ? stripRow.x + target.x + target.padX + target.slotW / 2 - width / 2 : 0
             anchors.verticalCenter: parent.verticalCenter
             z: 1
             ink: Theme.accent
