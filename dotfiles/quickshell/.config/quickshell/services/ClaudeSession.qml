@@ -95,6 +95,8 @@ AiSession {
         rows.clear()
         toolRows = {}
         streamed = {}
+        streamMsg = ""
+        streamIndex = {}
         sessionId = ""
         busy = false
         stopping = false
@@ -102,6 +104,9 @@ AiSession {
         asks = []
         attachments = []
         contextUsed = 0
+        contextWindow = 0
+        modelName = ""
+        slashCommands = []
         unseen = false
     }
 
@@ -140,7 +145,7 @@ AiSession {
         else {
             queue = queue.concat([line])
             // one on its way out starts again once it's gone
-            if (!proc.running) start()
+            if (!proc.running && !killing) start()
         }
     }
 
@@ -175,6 +180,7 @@ AiSession {
         environment: root.env
 
         onStarted: {
+            if (root.killing) return
             ready = true
             var q = root.queue
             root.queue = []

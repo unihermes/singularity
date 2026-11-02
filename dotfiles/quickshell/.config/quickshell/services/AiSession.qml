@@ -5,6 +5,8 @@ import QtQuick
 
 Scope {
     id: root
+    // Invalidates asynchronous history reads when a conversation is replaced.
+    property int generation: 0
     property string cwd: ""
     property string modelPick: ""
     property string reasoningPick: ""
@@ -65,6 +67,7 @@ Scope {
     }
 
     function resetCommands() {
+        generation++
         commandRow = -1
         shellContext = ""
         stopCommand()

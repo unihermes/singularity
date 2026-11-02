@@ -64,7 +64,7 @@ AiSession {
 
     function send(text) {
         text = (text || "").trim()
-        if (busy || commandRunning || (text === "" && attachments.length === 0)) return false
+        if (busy || resuming || commandRunning || (text === "" && attachments.length === 0)) return false
         if (text.startsWith("!")) return runCommand(text)
         if (text === "/compact" && attachments.length === 0) {
             if (sessionId === "") return false
@@ -119,6 +119,9 @@ AiSession {
         }
         pending = ({})
         waiting = []
+        resuming = false
+        initialized = false
+        threadReady = false
         rows.clear()
         itemRows = {}
         sessionId = ""
@@ -129,6 +132,9 @@ AiSession {
         asks = []
         attachments = []
         contextUsed = 0
+        contextWindow = 0
+        modelName = ""
+        slashCommands = []
         unseen = false
     }
 
@@ -139,6 +145,7 @@ AiSession {
         resuming = true
         whenReady(() => call("thread/resume", threadArgs({ threadId: id }), r => {
             resuming = false
+            threadReady = true
             var t = r && r.thread
             if (r && r.model) modelName = r.model
             ;((t && t.turns) || []).forEach(turn => (turn.items || []).forEach(it => item(it, true)))
@@ -159,6 +166,7 @@ AiSession {
     property bool stopping: false
     property bool resuming: false
     property bool initialized: false
+    property bool threadReady: false
     property int nextId: 0
     // request id -> { ok, fail }
     property var pending: ({})
@@ -178,14 +186,22 @@ AiSession {
     function whenReady(f) {
         if (proc.running && initialized && !killing) { f(); return }
         waiting = waiting.concat([f])
-        if (!proc.running) start()
+        if (!proc.running && !killing) start()
     }
     // a thread to send into: the one there is, else a new one
     function whenThread(f) {
         whenReady(() => {
-            if (sessionId !== "") { f(); return }
+            if (sessionId !== "") {
+                if (threadReady) f()
+                else call("thread/resume", threadArgs({ threadId: sessionId }), r => {
+                    threadReady = true
+                    f()
+                }, e => fail(e))
+                return
+            }
             call("thread/start", threadArgs({ developerInstructions: instructions || null }), r => {
                 sessionId = r.thread.id
+                threadReady = true
                 if (r.model) modelName = r.model
                 f()
             }, e => fail(e))
@@ -201,10 +217,12 @@ AiSession {
 
     function start() {
         initialized = false
+        threadReady = false
         proc.running = true
     }
 
     function fail(e) {
+        resuming = false
         add({ kind: "error", text: (e && e.message) || "Codex stopped with an error" })
         endTurn(true)
     }
@@ -217,13 +235,20 @@ AiSession {
         command: ["codex", "app-server", "-c", "notify=[]"]
 
         onStarted: {
+            if (root.killing) return
             root.call("initialize", { clientInfo: { name: "singularity", title: "Singularity", version: "1" }, capabilities: null }, () => {
                 root.write({ method: "initialized", params: {} })
                 root.initialized = true
                 var w = root.waiting
                 root.waiting = []
                 w.forEach(f => f())
-            }, e => root.fail(e))
+            }, e => {
+                root.waiting = []
+                root.pending = ({})
+                root.killing = true
+                proc.signal(15)
+                root.fail(e)
+            })
         }
 
         stdout: SplitParser {
@@ -243,7 +268,12 @@ AiSession {
                 if (root.waiting.length > 0) root.start()
                 return
             }
-            if (root.busy) {
+            var interrupted = root.busy || root.resuming
+            root.pending = ({})
+            root.waiting = []
+            root.resuming = false
+            root.threadReady = false
+            if (interrupted) {
                 root.add({ kind: "error", text: errors.text.trim().split("\n").slice(-3).join("\n")
                     || "codex stopped (exit code " + code + ")" })
                 root.endTurn(true)

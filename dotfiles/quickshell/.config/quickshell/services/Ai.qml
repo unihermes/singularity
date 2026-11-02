@@ -343,17 +343,31 @@ Singleton {
     // one at a time: a restart restores every tab at once
     property var resumeQueue: []
     function resumeIn(s, id) {
-        resumeQueue = resumeQueue.concat([{ target: s, id: id }])
-        if (!historyProc.running) nextResume()
+        s.reset()
+        s.sessionId = id
+        s.busy = true
+        s.activity = "Loading conversation"
+        resumeQueue = resumeQueue.concat([{ target: s, id: id, generation: s.generation }])
+        nextResume()
     }
     function nextResume() {
-        if (resumeQueue.length === 0) return
-        var r = resumeQueue[0]
-        resumeQueue = resumeQueue.slice(1)
-        historyProc.target = r.target
-        historyProc.sid = r.id
-        historyProc.command = [py, "history", r.target.cwd, r.id]
-        historyProc.running = true
+        if (historyProc.running || historyProc.job !== null) return
+        while (resumeQueue.length > 0) {
+            var r = resumeQueue[0]
+            resumeQueue = resumeQueue.slice(1)
+            if (r.target.generation !== r.generation) continue
+            historyProc.job = r
+            historyProc.collected = false
+            historyProc.exited = false
+            historyProc.command = [py, "history", r.target.cwd, r.id]
+            historyProc.running = true
+            return
+        }
+    }
+    function finishResume() {
+        if (!historyProc.collected || !historyProc.exited) return
+        historyProc.job = null
+        nextResume()
     }
 
     // the folders Claude Code has worked in: [{ path, name, used }]
@@ -383,16 +397,23 @@ Singleton {
 
     Process {
         id: historyProc
-        property var target: null
-        property string sid: ""
+        property var job: null
+        property bool collected: false
+        property bool exited: false
         stdout: StdioCollector {
             onStreamFinished: {
+                var r = historyProc.job
                 var rows = []
                 try { rows = JSON.parse(text) || [] } catch (e) {}
-                historyProc.target.resume(historyProc.sid, rows)
+                if (r && r.target.generation === r.generation) r.target.resume(r.id, rows)
+                historyProc.collected = true
+                root.finishResume()
             }
         }
-        onExited: root.nextResume()
+        onExited: {
+            exited = true
+            root.finishResume()
+        }
     }
 
     Process {

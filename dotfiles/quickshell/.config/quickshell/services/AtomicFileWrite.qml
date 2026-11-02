@@ -28,8 +28,9 @@ import QtQuick
 Singleton {
     id: root
 
-    readonly property bool busy: proc.running || current !== null || queue.length > 0
+    readonly property bool busy: advancing || proc.running || current !== null || queue.length > 0
 
+    property bool advancing: false
     property var queue: []
     property var current: null
     // the new text, handed to the script on stdin once it starts: as an
@@ -52,30 +53,35 @@ Singleton {
     // Runs from both ends of a write -- the output collected and the process
     // reaped arrive in either order -- and goes ahead once both have.
     function next() {
-        if (proc.running || current !== null) return
-        while (queue.length > 0) {
-            var job = queue[0]
-            queue = queue.slice(1)
-            reader.path = job.path
-            reader.reload()
-            reader.waitForJob()
-            var src = reader.text()
-            // a transform that throws is a refusal, so report() still runs
-            var out
-            try { out = job.transform(src) }
-            catch (e) {
-                console.warn("AtomicFileWrite: transform for " + job.path + " failed: " + e)
-                out = null
+        if (advancing || proc.running || current !== null) return
+        advancing = true
+        try {
+            while (queue.length > 0) {
+                var job = queue[0]
+                queue = queue.slice(1)
+                reader.path = job.path
+                reader.reload()
+                reader.waitForJob()
+                var src = reader.text()
+                // a transform that throws is a refusal, so report() still runs
+                var out
+                try { out = job.transform(src) }
+                catch (e) {
+                    console.warn("AtomicFileWrite: transform for " + job.path + " failed: " + e)
+                    out = null
+                }
+                if (out === null || out === undefined) { report(job, "refused", job.refusal || ""); continue }
+                if (out === src) { report(job, "unchanged", ""); continue }
+                current = job
+                pendingText = out
+                proc.command = ["sh", "-c", script, "sh", job.path,
+                    job.check || "", job.backup || "", job.after || ""]
+                proc.stdinEnabled = true
+                proc.running = true
+                return
             }
-            if (out === null || out === undefined) { report(job, "refused", job.refusal || ""); continue }
-            if (out === src) { report(job, "unchanged", ""); continue }
-            current = job
-            pendingText = out
-            proc.command = ["sh", "-c", script, "sh", job.path,
-                job.check || "", job.backup || "", job.after || ""]
-            proc.stdinEnabled = true
-            proc.running = true
-            return
+        } finally {
+            advancing = false
         }
     }
 
@@ -120,6 +126,10 @@ Singleton {
             onStreamFinished: {
                 var lines = text.split("\n")
                 var status = lines.shift().trim()
+                if (["ok", "unchanged", "refused", "syntax", "write"].indexOf(status) === -1) {
+                    lines.unshift(status)
+                    status = "write"
+                }
                 var job = root.current
                 root.current = null
                 if (job) root.report(job, status, lines.join("\n").trim())

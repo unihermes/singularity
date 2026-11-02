@@ -49,6 +49,11 @@ if changed 'services/(Settings\.qml|SettingsValues\.js)$|tools/(test-settings|qm
     node --test tools/test-settings.mjs
 fi
 
+# Process callbacks, queued writes and reset/resume ordering.
+if changed 'services/(AtomicFileWrite|Ai|AiSession|ClaudeSession|CodexSession)\.qml$|tools/(test-processes|qml-harness)\.mjs$'; then
+    node --test tools/test-processes.mjs
+fi
+
 # The sidebar host's launcher and the notification routing to it.
 if changed 'quickshell/(scripts/ai_host\.py|AiHost\.qml|services/(Ai|Notifications)\.qml)$|^tools/test-(ai-host\.py|notification-routing\.mjs)$'; then
     python3 tools/test-ai-host.py
