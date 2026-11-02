@@ -17,6 +17,7 @@ Item {
     required property var entry
     property bool current: false
     property bool pinMark: false
+    property real iconScale: 0.42
     signal hovered()
     signal clicked()
 
@@ -32,7 +33,7 @@ Item {
     IconImage {
         anchors.horizontalCenter: parent.horizontalCenter
         y: Math.round(parent.height * 0.16)
-        implicitSize: Math.round(Math.min(parent.width, parent.height) * 0.42)
+        implicitSize: Math.round(Math.min(parent.width, parent.height) * tile.iconScale)
         source: Quickshell.iconPath(tile.entry.icon || "", true)
     }
 

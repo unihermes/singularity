@@ -16,6 +16,7 @@ Item {
     property alias text: field.text
     property bool echoPassword: true
     property bool bleed: false
+    property bool borderless: false
     property string glyph: ""
     property var hints: []
     readonly property bool focused: field.activeFocus
@@ -73,6 +74,7 @@ Item {
 
     Rectangle {
         id: well
+        visible: !root.borderless
         readonly property color edge: field.activeFocus ? Theme.strokeFocus : Theme.stroke
         anchors.fill: parent
         anchors.leftMargin: root.bleed ? -Theme.spaceS : 0

@@ -48,7 +48,6 @@ Item {
     }
 
     PanelFrame {
-        id: frame
         width: Theme.fit(view.launcher.full ? 860 : 700)
         height: body.implicitHeight
         x: Math.round((parent.width - width) / 2)
@@ -70,6 +69,7 @@ Item {
                 width: parent.width - Theme.panelPad * 2
                 height: Theme.fs(64)
                 textSize: Theme.fs(22)
+                borderless: true
                 hints: view.launcher.blended ? [] : [view.launcher.modeNames[view.launcher.mode]]
             }
 
@@ -85,9 +85,10 @@ Item {
                 id: strip
                 property int current: 0
                 visible: view.recents
-                x: Theme.panelPad * 2
-                topPadding: Theme.spaceM
-                bottomPadding: Theme.spaceM
+                x: Theme.panelPad
+                width: parent.width - Theme.panelPad * 2
+                topPadding: Theme.spaceS
+                bottomPadding: Theme.spaceS
                 Repeater {
                     model: view.recents ? view.mostUsed : []
                     LauncherTile {
@@ -95,8 +96,9 @@ Item {
                         required property int index
                         launcher: view.launcher
                         entry: modelData
-                        width: Math.floor((frame.width - Theme.panelPad * 4) / 8)
+                        width: strip.width / 8
                         height: width
+                        iconScale: 0.55
                         current: strip.current === index
                         onHovered: strip.current = index
                         onClicked: view.launcher.activate(modelData, "app")
