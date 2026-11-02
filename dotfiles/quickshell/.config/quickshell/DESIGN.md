@@ -267,7 +267,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
   one icon). Only outside corners round off or follow Notch's cuts;
   dividers join the frame and occur only between icons. Segmented reuses
   that outline instead of drawing a second track inside it. Fills respect
-  the inner stroke of Double and Channel and the raised edge of Bevel;
+  Channel’s inner stroke and the raised edge of Bevel; Tint reaches
+  Double’s outer stroke, covering the inner stroke beside its end slots;
   Rail and Ledger keep their open rules. Tint follows the same slot shape.
 - **Plain** (Shape, a switch over any style, from a classic text bar):
   the bar full width whatever Bar shape says, flat, no hairline, chips Bare

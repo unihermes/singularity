@@ -66,6 +66,8 @@ ModuleFrame {
         layer.effect: MultiEffect {
             maskEnabled: true
             maskSource: wash.mask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.01
         }
         IconImage {
             x: wash.iconX + wash.iconPx / 2 - width / 2
@@ -114,7 +116,7 @@ ModuleFrame {
         readonly property bool framed: grouped || (closedFrame && (Theme.moduleStyle === "outline"
             || (Theme.frameCustom && Theme.moduleStyle !== "bare")))
         readonly property real frameInset: Theme.frameCustom && Theme.frameStyle === "bevel" ? Theme.borderWidth * 1.5
-            : Theme.frameDouble ? 2 + Theme.borderWidth
+            : Theme.frameDouble && style !== "tint" ? 2 + Theme.borderWidth
             : grouped && Theme.frameChannel ? Theme.channelWidth : Theme.borderWidth
         readonly property bool leftEnd: !grouped || groupEnd(false)
         readonly property bool rightEnd: !grouped || groupEnd(true)
@@ -419,7 +421,7 @@ ModuleFrame {
                         leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
                         rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
                         color: winIcon.modelData.source === "" ? (winIcon.focused ? Theme.subtext : winIcon.hovered ? Theme.overlay : Theme.surface)
-                            : winIcon.focused ? Theme.selectedFill : winIcon.hovered ? Theme.overlay : Theme.surface
+                            : Theme.surface
                     }
 
                     // tint: a tile washed in the app's own colours, deeper
@@ -459,6 +461,7 @@ ModuleFrame {
                         // Keep cut-corner geometry live while hiding the mask itself.
                         ShaderEffectSource {
                             id: tintMaskTexture
+                            anchors.fill: parent
                             sourceItem: winIcon.tint ? tintMask : null
                             hideSource: true
                             visible: false
