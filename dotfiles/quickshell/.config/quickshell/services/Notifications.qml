@@ -5,7 +5,8 @@
 // module and Settings. The history ($XDG_RUNTIME_DIR, gone at logout) keeps
 // each entry until cleared by hand, except transient ones; `live` holds the
 // sender's object while it exists (actions, image). New since the history
-// was opened is unread. DND and silenced apps hold back popups only.
+// was opened and not handled in a popup is unread. DND and silenced apps
+// hold back popups only.
 // A click opens what it's about (activate); Claude's make ChatGPT's sound.
 
 pragma Singleton
@@ -30,9 +31,10 @@ Singleton {
     readonly property int count: history.length
     readonly property bool dnd: Settings.notifDnd
 
-    // Date.now() when the history was last looked at; newer entries are unread
+    // Date.now() when the history was last looked at; popup reads are per entry
     property double lastSeen: 0
-    readonly property int unread: history.filter(e => e.time > lastSeen).length
+    property var readKeys: []
+    readonly property int unread: history.filter(e => e.time > lastSeen && readKeys.indexOf(e.key) < 0).length
     // lastSeen as it was when the open history was opened, so what was new
     // then stays marked while it's on screen
     property double seenBefore: 0
@@ -103,7 +105,17 @@ Singleton {
         saveTimer.restart()
     }
 
-    function isNew(entry) { return entry.time > (viewing ? seenBefore : lastSeen) }
+    function isNew(entry) {
+        return entry.time > (viewing ? seenBefore : lastSeen) && readKeys.indexOf(entry.key) < 0
+    }
+
+    // A popup interaction reads only those entries, leaving other arrivals pending.
+    function markRead(entries) {
+        const keys = entries.map(e => e.key)
+        if (!history.some(e => keys.indexOf(e.key) >= 0 && readKeys.indexOf(e.key) < 0)) return
+        readKeys = history.filter(e => keys.indexOf(e.key) >= 0 || readKeys.indexOf(e.key) >= 0).map(e => e.key)
+        saveTimer.restart()
+    }
 
     // Out of the history for good, withdrawing it from the sender too (a
     // phone's from the phone, unless the phone is what dropped it)
@@ -139,8 +151,9 @@ Singleton {
         if (entry.live && entry.live.tracked) entry.live.dismiss()
     }
 
-    // The popup only; the entry stays in the history
-    function hidePopup(entry) {
+    // The popup only; the entry stays in the history. Timeouts leave it unread.
+    function hidePopup(entry, interacted = true) {
+        if (interacted) markRead([entry])
         if (!popups.some(p => p.key === entry.key)) return
         popups = popups.filter(p => p.key !== entry.key)
         if (entry.transient) {
@@ -517,7 +530,7 @@ Singleton {
             icon: e.icon,
             // image data doesn't outlive the notification; a file does
             picture: e.picture.startsWith("file://") ? e.picture : "",
-            urgency: e.urgency, time: e.time
+            urgency: e.urgency, time: e.time, read: readKeys.indexOf(e.key) >= 0
         }))
         view.setText(JSON.stringify({ lastSeen: lastSeen, entries: entries }, null, 1) + "\n")
     }
@@ -561,6 +574,7 @@ Singleton {
                 }
                 return e
             })
+            root.readKeys = (d.entries || []).filter(x => x && x.read === true).map(x => x.time + "-" + x.id)
             root.history = entries.slice(0, root.maxEntries)
             root.lastSeen = typeof d.lastSeen === "number" ? d.lastSeen : 0
             root.adoptLive()

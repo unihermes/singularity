@@ -91,12 +91,12 @@ Item {
     // the header's first line, the icon centred on it
     readonly property real lineH: Math.max(popup ? iconCell : Theme.rowHeight, iconSize, titleMetrics.height)
 
-    function close() {
+    function close(interacted = true) {
         if (standalone) dismissed()
         else if (inHistory) Notifications.remove(entry)
         else {
-            Notifications.hidePopup(entry)
-            for (var i = 0; i < others.length; i++) Notifications.hidePopup(others[i])
+            Notifications.hidePopup(entry, interacted)
+            for (var i = 0; i < others.length; i++) Notifications.hidePopup(others[i], interacted)
         }
     }
 

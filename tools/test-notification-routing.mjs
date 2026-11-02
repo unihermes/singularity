@@ -92,3 +92,39 @@ test('Claude and Codex cards stack per sidebar conversation and per terminal CLI
                          { appName: '', desktopEntry: '', summary: 'Something else' }])
         assert.equal(ctx.stackOf(other), '')
 })
+
+test('banner interactions read only their entries; timeout leaves notifications pending', () => {
+    let saves = 0
+    const entries = ['older', 'clicked', 'newer', 'grouped'].map((key, i) => ({ key, time: i + 1 }))
+    const ctx = vm.createContext({ history: entries, popups: entries.slice(), readKeys: [],
+        lastSeen: 0, viewing: false, saveTimer: { restart: () => saves++ } })
+    for (const name of ['markRead', 'isNew', 'hidePopup', 'replaceLive'])
+        vm.runInContext(source.match(new RegExp('    function ' + name + '\\([^]*?\\n    }'))[0], ctx)
+    const pending = () => ctx.history.filter(e => ctx.isNew(e)).map(e => e.key)
+    ctx.hidePopup(entries[1])
+    assert.deepEqual(pending(), ['older', 'newer', 'grouped'])
+    assert.equal(ctx.history.length, 4)
+    assert.equal(ctx.popups.some(e => e.key === 'clicked'), false)
+    ctx.hidePopup(entries[2], false)
+    assert.deepEqual(pending(), ['older', 'newer', 'grouped'])
+    ctx.markRead([entries[0], entries[3]])
+    assert.deepEqual(pending(), ['newer'])
+    ctx.replaceLive(entries[1], null)
+    assert.equal(ctx.isNew(ctx.history.find(e => e.key === 'clicked')), false)
+    ctx.markRead([entries[1]])
+    assert.equal(saves, 2)
+    ctx.lastSeen = 4
+    assert.deepEqual(pending(), [])
+})
+
+test('banner read state is included in saved history', () => {
+    let saved
+    const ctx = vm.createContext({ history: [
+        { key: '1-1', id: 1, time: 1, picture: '' },
+        { key: '2-2', id: 2, time: 2, picture: '' }
+    ], readKeys: ['1-1'], lastSeen: 0, view: { setText: text => { saved = JSON.parse(text) } } })
+    vm.runInContext(source.match(/    function save\([^]*?\n    }/)[0], ctx)
+    ctx.save()
+    assert.equal(saved.lastSeen, 0)
+    assert.deepEqual(saved.entries.map(e => e.read), [true, false])
+})

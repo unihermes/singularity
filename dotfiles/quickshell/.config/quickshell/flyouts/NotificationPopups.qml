@@ -64,13 +64,16 @@ OverlayWindow {
 
                 readonly property real timeout: Notifications.timeoutFor(modelData)
 
+                onHoveredChanged: { if (hovered) Notifications.markRead([entry].concat(others)) }
+                onOthersChanged: { if (hovered) Notifications.markRead([entry].concat(others)) }
+
                 NumberAnimation on life {
                     from: 1
                     to: 0
                     duration: card.timeout * 1000
                     running: card.timeout > 0
                     paused: running && card.hovered
-                    onFinished: card.close()
+                    onFinished: card.close(false)
                 }
             }
         }
