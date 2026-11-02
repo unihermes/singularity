@@ -119,10 +119,11 @@ Item {
             color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.45)
         }
 
-        // inner stroke, inset -- the second half of the double border
+        // Keep the inner stroke above content fills, including end slots.
         Rectangle {
             anchors.fill: parent
             visible: Theme.frameDouble && frame.style === "outline"
+            z: 1
             anchors.margins: 2
             radius: Theme.radiusInner
             color: "transparent"

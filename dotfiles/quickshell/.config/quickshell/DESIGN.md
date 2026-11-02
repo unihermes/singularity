@@ -268,7 +268,7 @@ Style: `channel` (frame `channel` in `Styles.js`).
   dividers join the frame and occur only between icons. Segmented reuses
   that outline instead of drawing a second track inside it. Fills respect
   Channel’s inner stroke and the raised edge of Bevel; Tint reaches
-  Double’s outer stroke, covering the inner stroke beside its end slots;
+  Double’s outer stroke, with the inner stroke drawn above the fill;
   Rail and Ledger keep their open rules. Tint follows the same slot shape.
 - **Plain** (Shape, a switch over any style, from a classic text bar):
   the bar full width whatever Bar shape says, flat, no hairline, chips Bare
