@@ -4,7 +4,8 @@
 // Conditions, the next hours and a 3-day forecast from wttr.in (no key,
 // IP-located), every 30 minutes, then a week of days from Open-Meteo for
 // the place wttr.in found (its 3 days stand in when that fails); a failure
-// keeps the last reading.
+// keeps the last reading. Open-Meteo also supplies current conditions when
+// wttr.in is unavailable, using the saved place or IP geolocation.
 
 pragma Singleton
 
@@ -53,13 +54,46 @@ Singleton {
     property real longitude: NaN
     property var updated: null
     property bool failed: false
-    readonly property bool fetching: fetch.running
+    readonly property bool fetching: fetch.running || locate.running || week.running
 
     readonly property bool metric: Settings.weatherUnits === "C"
 
     function temp(f, c) { return Math.round(metric ? c : f) + "°" }
 
-    function refresh() { if (!fetch.running) fetch.running = true }
+    function refresh() { if (!root.fetching) fetch.running = true }
+
+    function fallback() {
+        root.failed = true
+        if (isFinite(root.latitude) && isFinite(root.longitude)) {
+            if (!week.running) week.running = true
+        } else if (!locate.running) locate.running = true
+    }
+
+    function parseCurrent(text, at) {
+        var d = JSON.parse(text)
+        var c = d.current
+        if (!c || typeof c.temperature_2m !== "number" || !d.daily.time.length)
+            throw new Error("Missing current weather")
+        root.parseWeek(text)
+        root.code = root.wwoOf(c.weather_code)
+        var w = c.weather_code
+        root.condition = w === 0 ? "Clear" : w <= 2 ? "Partly cloudy" : w === 3 ? "Overcast"
+            : w <= 48 ? "Fog" : w <= 57 ? "Drizzle" : w <= 67 ? "Rain"
+            : w <= 77 ? "Snow" : w <= 82 ? "Rain showers" : w <= 86 ? "Snow showers" : "Thunderstorm"
+        root.tempC = c.temperature_2m; root.tempF = c.temperature_2m * 9 / 5 + 32
+        root.feelsC = c.apparent_temperature; root.feelsF = c.apparent_temperature * 9 / 5 + 32
+        root.humidity = c.relative_humidity_2m
+        root.windKmph = c.wind_speed_10m; root.windMph = c.wind_speed_10m / 1.609344
+        root.windDir = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"][Math.round(c.wind_direction_10m / 22.5) % 16]
+        var rise = new Date(d.daily.sunrise[0]), set = new Date(d.daily.sunset[0])
+        root.sunriseMin = rise.getHours() * 60 + rise.getMinutes()
+        root.sunsetMin = set.getHours() * 60 + set.getMinutes()
+        root.rainChance = root.forecast[0].rain
+        root.hourly = root.hours.slice(0, 6)
+        root.updated = at
+        root.ready = true
+        root.failed = false
+    }
 
     // WWO weather codes (what wttr.in returns) to Material Design glyphs
     function iconFor(c, night) {
@@ -185,8 +219,27 @@ Singleton {
                     root.parse(text, at)
                     cache.save({ fetched: at.toISOString(), body: text })
                 } catch (e) {
-                    root.failed = true
+                    root.fallback()
                 }
+            }
+        }
+        onExited: code => { if (code !== 0 && !week.running && !locate.running) root.fallback() }
+    }
+
+    Process {
+        id: locate
+        command: ["curl", "-sf", "--max-time", "15", "https://ipwho.is/"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var d = JSON.parse(text)
+                    if (!d.success || typeof d.latitude !== "number" || typeof d.longitude !== "number")
+                        throw new Error("Missing location")
+                    root.latitude = d.latitude
+                    root.longitude = d.longitude
+                    root.area = d.city + ", " + d.region
+                    if (!week.running) week.running = true
+                } catch (e) { root.failed = true }
             }
         }
         onExited: code => { if (code !== 0) root.failed = true }
@@ -196,11 +249,21 @@ Singleton {
         id: week
         command: ["curl", "-sf", "--max-time", "15", "https://api.open-meteo.com/v1/forecast?latitude="
             + root.latitude + "&longitude=" + root.longitude
-            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+            + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m"
+            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset"
             + "&hourly=temperature_2m,weather_code,precipitation_probability"
             + "&timezone=auto&forecast_days=7"]
         stdout: StdioCollector {
-            onStreamFinished: { try { root.parseWeek(text) } catch (e) {} }
+            onStreamFinished: {
+                try {
+                    var at = new Date()
+                    if (root.failed || !root.ready) {
+                        root.parseCurrent(text, at)
+                        cache.save({ fetched: at.toISOString(), body: text, provider: "open-meteo",
+                                     latitude: root.latitude, longitude: root.longitude, area: root.area })
+                    } else root.parseWeek(text)
+                } catch (e) {}
+            }
         }
     }
 
@@ -232,8 +295,23 @@ Singleton {
         name: "weather"
         onRestored: data => {
             var at = new Date(data.fetched)
-            if (root.ready || !data.body || !(Date.now() - at < 3 * 3600000)) return
-            try { root.parse(data.body, at) } catch (e) {}
+            if (root.ready || !data.body) return
+            try {
+                // Coordinates remain useful after the report expires.
+                if (data.provider === "open-meteo") {
+                    root.latitude = data.latitude
+                    root.longitude = data.longitude
+                    root.area = data.area
+                } else {
+                    var a = JSON.parse(data.body).nearest_area[0]
+                    root.latitude = Number(a.latitude)
+                    root.longitude = Number(a.longitude)
+                    root.area = a.areaName[0].value + ", " + a.region[0].value
+                }
+                if (!(Date.now() - at < 3 * 3600000)) return
+                if (data.provider === "open-meteo") root.parseCurrent(data.body, at)
+                else root.parse(data.body, at)
+            } catch (e) {}
         }
     }
 }
