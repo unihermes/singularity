@@ -404,6 +404,24 @@ ModuleFrame {
                         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
                     }
 
+                    // Give transparent app icons a continuous ground inside a frame.
+                    WindowSlotFill {
+                        visible: winIcon.tint && (strip.framed || winIcon.modelData.source === "")
+                        x: tintLayer.x + tintMask.tileX
+                        y: tintMask.tileY - tintLayer.grow
+                        width: tintMask.tileWidth
+                        height: tintMask.tileHeight
+                        radius: strip.framed ? strip.fillRadius : Theme.radiusSmall
+                        topLeftRadius: strip.framed && !(winIcon.first && strip.leftEnd) ? 0 : radius
+                        bottomLeftRadius: topLeftRadius
+                        topRightRadius: strip.framed && !(winIcon.last && strip.rightEnd) ? 0 : radius
+                        bottomRightRadius: topRightRadius
+                        leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
+                        rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
+                        color: winIcon.modelData.source === "" ? (winIcon.focused ? Theme.subtext : winIcon.hovered ? Theme.overlay : Theme.surface)
+                            : winIcon.focused ? Theme.selectedFill : winIcon.hovered ? Theme.overlay : Theme.surface
+                    }
+
                     // tint: a tile washed in the app's own colours, deeper
                     // for the focused window, with an edge per
                     // extra window (up to two) stacked behind it toward the
@@ -490,23 +508,6 @@ ModuleFrame {
                             opacity: winIcon.focused ? 1 : 0.7
                         }
                     }
-                    // an app with no icon washes in plain grey
-                    WindowSlotFill {
-                        visible: winIcon.tint && winIcon.modelData.source === ""
-                        x: tintLayer.x + tintMask.tileX
-                        y: tintMask.tileY - tintLayer.grow
-                        width: tintMask.tileWidth
-                        height: tintMask.tileHeight
-                        radius: strip.framed ? strip.fillRadius : Theme.radiusSmall
-                        topLeftRadius: strip.framed && !(winIcon.first && strip.leftEnd) ? 0 : radius
-                        bottomLeftRadius: topLeftRadius
-                        topRightRadius: strip.framed && !(winIcon.last && strip.rightEnd) ? 0 : radius
-                        bottomRightRadius: topRightRadius
-                        leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
-                        rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
-                        color: winIcon.focused ? Theme.subtext : winIcon.hovered ? Theme.overlay : Theme.surface
-                    }
-
                     // rings: a ring round the icon, an arc per window (up to
                     // six), accent on the focused app with its shown window
                     // brightest, grey on hover or for an app with several
