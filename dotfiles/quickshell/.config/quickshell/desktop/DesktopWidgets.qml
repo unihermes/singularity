@@ -50,10 +50,11 @@ Scope {
         sizes = out
     }
 
-    // on this screen: its own, or the first when it's on none connected
+    // on its chosen screen, or the primary when that screen is unavailable
     function here(place) {
         const names = Quickshell.screens.map(s => s.name)
-        const name = names.indexOf(place.screen) !== -1 ? place.screen : names[0]
+        const fallback = names.indexOf(Notifications.popupScreen) !== -1 ? Notifications.popupScreen : names[0]
+        const name = names.indexOf(place.screen) !== -1 ? place.screen : fallback
         return name === screen.name
     }
     // every widget that can show: the built-in ones, then the notes

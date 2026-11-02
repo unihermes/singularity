@@ -430,7 +430,7 @@ Singleton {
     // Desktop widgets (desktop/), by key: { on, screen, size, fx, fy }.
     // fx and fy place it across the room the screen leaves it (0 the left
     // or top edge, 1 the other); below 0 it sits where it starts out.
-    // screen "" is the first screen. Sticky notes keep theirs in Notes.
+    // screen "" is the primary screen. Sticky notes keep theirs in Notes.
     // the conky-style column down the primary display's right edge
     // (desktop/DesktopSidebar.qml)
     readonly property alias deskSidebar: adapter.deskSidebar
@@ -453,7 +453,7 @@ Singleton {
         all[key] = w
         adapter.desktopWidgets = all
     }
-    // back where they start out, on the first screen at the middle size
+    // back where they start out, on the primary screen at the middle size
     function resetDeskWidgets() {
         var all = {}
         for (var k of deskWidgetKeys) all[k] = { on: deskWidget(k).on }
