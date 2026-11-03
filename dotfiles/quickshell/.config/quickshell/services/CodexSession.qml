@@ -83,7 +83,7 @@ AiSession {
             labels.push(a.label)
         })
         if (text !== "" || shellContext !== "") input.push({ type: "text", text: withCommandContext(text), text_elements: [] })
-        add({ kind: "user", text: text, note: labels.join("  ·  "), images: images.join("\n") })
+        add({ kind: "user", text: text, note: labels.join("  ·  "), images: images.join("\n"), timestamp: new Date().toISOString() })
         attachments = []
         busy = true
         activity = "Thinking"
@@ -403,6 +403,7 @@ AiSession {
             if (history) {
                 var c = it.content || []
                 add({ kind: "user", text: c.filter(x => x.type === "text").map(x => x.text).join("\n"),
+                      timestamp: typeof it.createdAt === "string" ? it.createdAt : "",
                       note: c.some(x => x.type === "localImage" || x.type === "image") ? "Image" : "" })
             }
             break

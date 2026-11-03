@@ -580,7 +580,7 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
 - **Code's folder** as a row (a click lists the folders in its place,
   with a field for any other).
 - **The conversation** takes the rest: what you sent in a field with its
-  screenshots small under it and a YOU caption. A NEXT PROMPT rule separates
+  screenshots small under it and a YOU caption. A rule with the prompt's time separates
   turns. Live reasoning, when the engine provides it, sits in smaller muted
   text under a THINKING caption and quiet rail. Assistant messages during a
   turn read WORKING with a muted rail; the last message of a completed

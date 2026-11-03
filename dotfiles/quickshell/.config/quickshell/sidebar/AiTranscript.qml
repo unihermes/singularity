@@ -291,6 +291,7 @@ Item {
             required property int index
             required property string kind
             required property string text
+            required property string timestamp
             required property string note
             required property string images
             required property string name
@@ -325,13 +326,18 @@ Item {
                 }
                 Rectangle {
                     anchors.centerIn: parent
+                    visible: dividerText.text !== ""
                     width: dividerText.implicitWidth + Theme.spaceL * 2
                     height: dividerText.implicitHeight
                     color: Theme.surface
                     Text {
                         id: dividerText
                         anchors.centerIn: parent
-                        text: "NEXT PROMPT"
+                        text: {
+                            if (!entry.timestamp) return ""
+                            var time = new Date(entry.timestamp)
+                            return isNaN(time.getTime()) ? "" : Qt.formatTime(time, "h:mm AP")
+                        }
                         color: Theme.subtext
                         font.family: Theme.fontText
                         font.weight: Theme.weightBody

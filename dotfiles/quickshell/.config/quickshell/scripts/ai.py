@@ -230,7 +230,7 @@ def history(path, sid):
             if e["type"] == "user":
                 if isinstance(content, str):
                     if content.strip() and not is_noise(content):
-                        rows.append({"kind": "user", "text": content})
+                        rows.append({"kind": "user", "text": content, "timestamp": e.get("timestamp", "")})
                     continue
                 for b in content or []:
                     if b.get("type") == "tool_result":
@@ -238,9 +238,9 @@ def history(path, sid):
                                      "content": text_of(b.get("content"))[:RESULT_MAX],
                                      "isError": bool(b.get("is_error"))})
                     elif b.get("type") == "text" and b.get("text", "").strip() and not is_noise(b["text"]):
-                        rows.append({"kind": "user", "text": b["text"]})
+                        rows.append({"kind": "user", "text": b["text"], "timestamp": e.get("timestamp", "")})
                     elif b.get("type") == "image":
-                        rows.append({"kind": "user", "text": "", "note": "Image"})
+                        rows.append({"kind": "user", "text": "", "note": "Image", "timestamp": e.get("timestamp", "")})
             else:
                 for b in content or []:
                     if b.get("type") == "text" and b.get("text", "").strip():

@@ -52,7 +52,7 @@ AiSession {
             labels.push(a.label)
         })
         if (text !== "" || shellContext !== "") content.push({ type: "text", text: withCommandContext(text) })
-        add({ kind: "user", text: text, note: labels.join("  ·  "), images: images.join("\n") })
+        add({ kind: "user", text: text, note: labels.join("  ·  "), images: images.join("\n"), timestamp: new Date().toISOString() })
         attachments = []
         busy = true
         activity = "Thinking"
@@ -118,7 +118,7 @@ AiSession {
         ;(saved || []).forEach(r => {
             if (r.kind === "user") {
                 markFinal()
-                add({ kind: "user", text: r.text, note: r.note || "" })
+                add({ kind: "user", text: r.text, note: r.note || "", timestamp: r.timestamp || "" })
             }
             else if (r.kind === "reasoning") add({ kind: "reasoning", text: r.text })
             else if (r.kind === "assistant") add({ kind: "assistant", text: r.text })
