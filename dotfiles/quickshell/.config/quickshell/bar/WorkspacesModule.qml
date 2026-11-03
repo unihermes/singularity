@@ -29,6 +29,9 @@ ModuleFrame {
         const extra = Hyprland.workspaces.values.map(w => w.id).filter(id => id > n)
         return Array.from({ length: n }, (_, i) => i + 1).concat(extra.sort((a, b) => a - b))
     }
+    readonly property var visibleIds: Hyprland.monitors.values
+        .filter(m => m.activeWorkspace)
+        .map(m => m.activeWorkspace.id)
 
     // the scroll wheel over the marks steps through the workspaces, a
     // notch at a time, wrapping at the ends
@@ -51,8 +54,9 @@ ModuleFrame {
         Item {
             required property int modelData
             readonly property int wsId: modelData
-            readonly property bool current: Hyprland.monitors.values.some(m =>
-                m.activeWorkspace && m.activeWorkspace.id === wsId)
+            readonly property bool current: wsFrame.visibleIds.includes(wsId)
+            readonly property bool joinsNext: current && wsFrame.visibleIds.includes(
+                wsFrame.ids[wsFrame.ids.indexOf(wsId) + 1])
             readonly property bool occupied: host.bar.workspaceHasWindows(wsId)
 
             anchors.verticalCenter: parent.verticalCenter
@@ -65,6 +69,17 @@ ModuleFrame {
             readonly property bool appMark: Theme.workspaceStyle === "apps" && app !== null
             implicitWidth: (appMark ? appBox.width : textual ? num.width : pip.width) + 4
             implicitHeight: Theme.moduleHeight - 8
+
+            // Join adjacent visible marks without covering other workspaces.
+            Rectangle {
+                visible: parent.joinsNext && !parent.textual && !parent.appMark
+                    && Theme.workspaceStyle !== "apps"
+                x: parent.width / 2
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width / 2 + wsFrame.spacing + 2
+                height: pip.height
+                color: Theme.accent
+            }
 
             // pills, dots, lines and blocks: the same three states,
             // drawn as a pill that stretches, a dot or a short rule
