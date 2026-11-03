@@ -1,8 +1,8 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/bar/WorkspacesModule.qml
 //
-// One frame around the whole set, with the current
-// workspace shown as a widened pill rather than a number.
+// One frame around the whole set, with visible workspaces
+// shown as widened pills rather than numbers.
 // Three states read by size and weight alone: current is a
 // long bright bar, occupied a short one, empty a dim stub --
 // the same language as the gauges on the right, where how
@@ -51,9 +51,8 @@ ModuleFrame {
         Item {
             required property int modelData
             readonly property int wsId: modelData
-            readonly property bool current: Hyprland.focusedWorkspace
-                ? Hyprland.focusedWorkspace.id === wsId
-                : false
+            readonly property bool current: Hyprland.monitors.values.some(m =>
+                m.activeWorkspace && m.activeWorkspace.id === wsId)
             readonly property bool occupied: host.bar.workspaceHasWindows(wsId)
 
             anchors.verticalCenter: parent.verticalCenter
