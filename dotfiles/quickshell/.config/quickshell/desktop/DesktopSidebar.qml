@@ -222,8 +222,6 @@ PanelWindow {
             KeyValue { label: "Uptime"; value: Format.duration(SystemStats.uptimeSec) }
             KeyValue { visible: SystemStats.uptimeSec > 0; label: "Booted"; value: Qt.formatDateTime(SystemStats.bootTime, "d MMM · HH:mm") }
             KeyValue { visible: SystemSpecs.hyprVersion !== ""; label: "Hyprland"; value: SystemSpecs.hyprVersion }
-            KeyValue { visible: SystemSpecs.pkgCount >= 0; label: "Packages"; value: SystemSpecs.pkgCount.toLocaleString() }
-            KeyValue { visible: SystemSpecs.chassis !== ""; label: "Chassis"; value: SystemSpecs.chassis }
         }
 
         Section {
@@ -232,9 +230,23 @@ PanelWindow {
             KeyValue { visible: SystemStats.cpuMhz > 0; label: "Frequency"; value: Math.round(SystemStats.cpuMhz) + " MHz" }
             KeyValue { visible: SystemStats.tempC >= 0; label: "Temperature"; value: win.temp(SystemStats.tempC) }
             Bar { label: "Usage " + Format.pct(SystemStats.cpu); frac: SystemStats.cpu }
-            KeyValue {
-                label: "Load 1 / 5 / 15 min"
-                value: [SystemStats.load1, SystemStats.load5, SystemStats.load15].map(v => v.toFixed(2)).join(" / ")
+            // Per-core meters stay in two columns, below total usage.
+            Grid {
+                id: coreGrid
+                width: parent.width
+                columns: 2
+                columnSpacing: Theme.spaceL
+                rowSpacing: Theme.fit(2)
+                Repeater {
+                    model: SystemStats.cores.length
+                    Bar {
+                        required property int index
+                        width: (coreGrid.width - coreGrid.columnSpacing) / 2
+                        labelWidth: Theme.fit(68)
+                        label: (index + 1) + "  " + Math.round((SystemStats.cores[index] || 0) * 100) + "%"
+                        frac: SystemStats.cores[index] || 0
+                    }
+                }
             }
             Line { series: [{ values: SystemStats.cpuHistory, color: Theme.meterFill, fill: true }] }
             Repeater {
