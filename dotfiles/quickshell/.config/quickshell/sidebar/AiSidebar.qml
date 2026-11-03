@@ -144,6 +144,13 @@ PanelWindow {
                     spacing: Theme.spaceXs
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
+                        icon: "󰑓"
+                        text: "Reload"
+                        enabled: !Ai.busy && !Ai.asking
+                        onClicked: Ai.reloadSidebar()
+                    }
+                    FlyoutChip {
+                        anchors.verticalCenter: parent.verticalCenter
                         icon: "󰐃"
                         text: root.pinned ? "Pinned" : "Pin"
                         selected: root.pinned
@@ -162,28 +169,6 @@ PanelWindow {
                     { value: "code", text: "Code" + (Ai.code.unseen && Ai.tab !== "code" ? " ●" : "") }]
                 current: Ai.tab
                 onPicked: v => Ai.setTab(v)
-            }
-
-            Row {
-                spacing: Theme.spaceXs
-                FlyoutChip {
-                    icon: "󰝒"
-                    text: "New"
-                    enabled: !root.session.empty || root.session.sessionId !== ""
-                    onClicked: root.startOver()
-                }
-                FlyoutChip {
-                    icon: "󰋚"
-                    text: "History"
-                    selected: root.view === "past"
-                    onClicked: root.view = root.view === "past" ? "talk" : "past"
-                }
-                FlyoutChip {
-                    icon: "󰑓"
-                    text: "Reload"
-                    enabled: !Ai.busy && !Ai.asking
-                    onClicked: Ai.reloadSidebar()
-                }
             }
 
             AiUsage {
@@ -296,6 +281,22 @@ PanelWindow {
             }
 
             FlyoutDivider {}
+
+            Row {
+                spacing: Theme.spaceXs
+                FlyoutChip {
+                    icon: "󰝒"
+                    text: "New"
+                    enabled: !root.session.empty || root.session.sessionId !== ""
+                    onClicked: root.startOver()
+                }
+                FlyoutChip {
+                    icon: "󰋚"
+                    text: "History"
+                    selected: root.view === "past"
+                    onClicked: root.view = root.view === "past" ? "talk" : "past"
+                }
+            }
 
             AiComposer {
                 id: composer

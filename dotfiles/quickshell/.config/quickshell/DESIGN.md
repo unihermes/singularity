@@ -569,11 +569,11 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
   Accept edits and Auto writing in the folder, its git directory and the
   network, so they can commit and push; Auto never asking); Chat's
   Codex only reads. The heading reads CODEX while it's on.
-- **Heading** CLAUDE or CODEX, with Pin and × for the sidebar. Chat
-  and Code follow as a segmented strip, a ● on a tab with something unread;
-  New, History and Reload actions sit beneath it. Reload saves state and reloads
-  the sidebar when all sessions are idle.
-- **Usage** under the conversation actions: a meter each for the
+- **Heading** CLAUDE or CODEX, with Reload, Pin and × for the sidebar. Chat
+  and Code follow as a segmented strip, a ● on a tab with something unread.
+  New and History sit above the composer. Reload saves state and reloads the
+  sidebar when all sessions are idle.
+- **Usage** under the tabs: a meter each for the
   five-hour and weekly windows of the tab's engine (Claude's or Codex's), used % and when it
   resets (the time today, the weekday this week, else the date); alert
   colour from 90%. Read by `ai.py usage` (Claude's usage endpoint with
