@@ -3,8 +3,8 @@
 //
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar. Pinning keeps it open when clicking elsewhere;
-// SUPER+I, its × and Escape still close it. Ctrl+P toggles the pin and Ctrl+R
-// reloads. Chat and Code are tabs over one shape: Code's folder, the
+// SUPER+I, its × and Escape still close it. Ctrl+P toggles the pin, Ctrl+R
+// reloads, Ctrl+N starts over and Ctrl+H toggles the history. Chat and Code are tabs over one shape: Code's folder, the
 // conversation or a list in its place (past sessions, folders), a prompt
 // waiting for an answer, and the composer. Files dropped anywhere on it attach to the next message.
 
@@ -109,6 +109,19 @@ PanelWindow {
             context: Qt.WindowShortcut
             enabled: root.open
             onActivated: Ai.reloadSidebar()
+        }
+        // Ctrl+N starts a new conversation, Ctrl+H toggles the history list
+        Shortcut {
+            sequence: "Ctrl+N"
+            context: Qt.WindowShortcut
+            enabled: root.open
+            onActivated: root.startOver()
+        }
+        Shortcut {
+            sequence: "Ctrl+H"
+            context: Qt.WindowShortcut
+            enabled: root.open
+            onActivated: root.view = root.view === "past" ? "talk" : "past"
         }
 
         Absorber {}

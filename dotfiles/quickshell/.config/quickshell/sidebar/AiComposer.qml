@@ -18,7 +18,7 @@ Column {
 
     required property var session
     signal escapePressed()
-    // Ctrl+L or Ctrl+N, or /clear or /new sent on its own
+    // Ctrl+L (or Ctrl+N, from AiSidebar), or /clear or /new sent on its own
     signal newConversation()
     // /past
     signal showPast()
@@ -440,8 +440,7 @@ Column {
                             return
                         }
                     }
-                    if ((event.modifiers & Qt.ControlModifier)
-                            && (event.key === Qt.Key_L || event.key === Qt.Key_N)) {
+                    if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_L) {
                         event.accepted = true
                         root.newConversation()
                         return
