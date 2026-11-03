@@ -3,10 +3,10 @@
 //
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar. Pinning keeps it open when clicking elsewhere;
-// SUPER+I, its × and Escape still close it. Chat and Code are tabs over one shape: Code's folder, the
+// SUPER+I, its × and Escape still close it. Ctrl+P toggles the pin and Ctrl+R
+// reloads. Chat and Code are tabs over one shape: Code's folder, the
 // conversation or a list in its place (past sessions, folders), a prompt
-// waiting for an answer, and the
-// composer. Files dropped anywhere on it attach to the next message.
+// waiting for an answer, and the composer. Files dropped anywhere on it attach to the next message.
 
 import Quickshell
 import Quickshell.Wayland
@@ -96,6 +96,20 @@ PanelWindow {
         // Escape from anywhere that doesn't take it itself
         focus: true
         Keys.onEscapePressed: Ai.shown = false
+
+        // Ctrl+P pins or unpins, Ctrl+R reloads the sidebar (as its Reload chip)
+        Shortcut {
+            sequence: "Ctrl+P"
+            context: Qt.WindowShortcut
+            enabled: root.open
+            onActivated: root.pinned = !root.pinned
+        }
+        Shortcut {
+            sequence: "Ctrl+R"
+            context: Qt.WindowShortcut
+            enabled: root.open
+            onActivated: Ai.reloadSidebar()
+        }
 
         Absorber {}
 
