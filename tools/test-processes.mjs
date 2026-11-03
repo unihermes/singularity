@@ -150,7 +150,7 @@ function session(engine) {
     const s = functions(source('AiSession.qml') + '\n' + source(`${engine}Session.qml`), {
         rows, transcript: rows, proc, errors: { text: '' }, console: { warn() {} },
         queue: [], killing: false, stopping: false, initialized: false, resuming: false, threadReady: false,
-        pending: {}, waiting: [], itemRows: {}, toolRows: {}, streamed: {}, streamIndex: {}, streamMsg: '',
+        pending: {}, waiting: [], itemRows: {}, reasoningSource: {}, toolRows: {}, streamed: {}, streamIndex: {}, streamMsg: '',
         sessionId: '', turnId: '', busy: false, activity: '', asks: [], attachments: [],
         cwd: '/project', modelPick: '', reasoningPick: '', mode: 'default',
         modelName: '', slashCommands: [], contextUsed: 0, contextWindow: 0, unseen: false,
@@ -196,6 +196,29 @@ test('Claude reset/resume ignores late output and old startup, then sends queued
     assert.deepEqual(Object.keys(c.s.streamIndex), [])
     assert.equal(c.s.streamMsg, '')
     assert.deepEqual(c.events, [])
+})
+
+test('Claude keeps streamed reasoning before the final reply', () => {
+    const c = session('Claude')
+    c.read({ type: 'stream_event', event: { type: 'message_start', message: { id: 'm' } } })
+    c.read({ type: 'stream_event', event: { type: 'content_block_start', index: 0, content_block: { type: 'thinking' } } })
+    c.read({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'thinking_delta', thinking: 'Check the layout.' } } })
+    c.read({ type: 'stream_event', event: { type: 'content_block_start', index: 1, content_block: { type: 'text' } } })
+    c.read({ type: 'assistant', message: { id: 'm', content: [{ type: 'thinking', thinking: 'Check the layout.' }, { type: 'text', text: 'Done.' }] } })
+    assert.deepEqual(c.data.map(row => [row.kind, row.text]), [['reasoning', 'Check the layout.'], ['assistant', 'Done.']])
+    assert.equal(c.data[0].streaming, false)
+})
+
+test('Codex shows reasoning summaries once and restores them from history', () => {
+    const c = session('Codex')
+    c.read({ method: 'item/started', params: { item: { id: 'r', type: 'reasoning' } } })
+    c.read({ method: 'item/reasoning/textDelta', params: { itemId: 'r', delta: 'Raw text' } })
+    c.read({ method: 'item/reasoning/summaryTextDelta', params: { itemId: 'r', delta: 'Summary' } })
+    c.read({ method: 'item/reasoning/textDelta', params: { itemId: 'r', delta: ' ignored' } })
+    c.read({ method: 'item/completed', params: { item: { id: 'r', type: 'reasoning', summary: ['Summary'] } } })
+    assert.deepEqual(c.data.map(row => [row.kind, row.text, row.streaming]), [['reasoning', 'Summary', false]])
+    c.s.item({ id: 'past', type: 'reasoning', summary: ['Earlier summary'] }, true)
+    assert.equal(c.data[1].text, 'Earlier summary')
 })
 
 test('Codex reset/resume drops old responses, clears canceled resume state and waits for history before send', () => {

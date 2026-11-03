@@ -245,6 +245,8 @@ def history(path, sid):
                 for b in content or []:
                     if b.get("type") == "text" and b.get("text", "").strip():
                         rows.append({"kind": "assistant", "text": b["text"]})
+                    elif b.get("type") == "thinking" and b.get("thinking", "").strip():
+                        rows.append({"kind": "reasoning", "text": b["thinking"]})
                     elif b.get("type") == "tool_use":
                         rows.append({"kind": "tool", "toolId": b.get("id", ""), "name": b.get("name", ""),
                                      "input": b.get("input") or {}})

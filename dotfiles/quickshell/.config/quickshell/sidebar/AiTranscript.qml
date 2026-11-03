@@ -313,6 +313,7 @@ Item {
                 y: entry.gap
                 width: parent.width
                 sourceComponent: entry.kind === "user" ? userRow
+                    : entry.kind === "reasoning" ? reasoningRow
                     : entry.kind === "assistant" ? replyRow
                     : entry.kind === "tool" ? toolRow
                     : noteRow
@@ -334,6 +335,14 @@ Item {
                         y: Theme.spaceM
                         width: parent.width - Theme.spaceL * 2
                         spacing: Theme.spaceS
+
+                        Text {
+                            text: "YOU"
+                            color: Theme.subtext
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontCaption
+                        }
 
                         TextEdit {
                             visible: entry.text !== ""
@@ -382,18 +391,87 @@ Item {
             }
 
             Component {
+                id: reasoningRow
+                Column {
+                    width: loader.width
+                    spacing: Theme.spaceS
+
+                    Text {
+                        text: "THINKING"
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
+                    }
+
+                    Item {
+                        width: parent.width
+                        height: reasoningText.implicitHeight
+
+                        Rectangle {
+                            width: Theme.borderWidth
+                            height: parent.height
+                            color: Theme.muted
+                        }
+                        TextEdit {
+                            id: reasoningText
+                            x: Theme.spaceL
+                            width: parent.width - x
+                            readOnly: true
+                            selectByMouse: true
+                            wrapMode: TextEdit.Wrap
+                            textFormat: TextEdit.PlainText
+                            text: entry.text
+                            color: Theme.text
+                            opacity: 0.75
+                            selectionColor: Theme.selectedStroke
+                            selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightBody
+                            font.pixelSize: Theme.fontSmall
+                        }
+                    }
+                }
+            }
+
+            Component {
                 id: replyRow
                 Column {
                     width: loader.width
-                    spacing: Theme.spaceM
-                    Repeater {
-                        model: Markdown.split(entry.text)
-                        Loader {
-                            required property var modelData
-                            width: parent.width
-                            sourceComponent: modelData.kind === "code" ? codePart
-                                : modelData.kind === "artifact" ? artifactPart : textPart
-                            property var part: modelData
+                    spacing: Theme.spaceS
+
+                    Text {
+                        text: "REPLY"
+                        color: Theme.accent
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
+                    }
+
+                    Item {
+                        width: parent.width
+                        height: replyContent.implicitHeight
+
+                        Rectangle {
+                            width: Theme.borderWidth
+                            height: parent.height
+                            color: Theme.accent
+                        }
+                        Column {
+                            id: replyContent
+                            x: Theme.spaceL
+                            width: parent.width - x
+                            spacing: Theme.spaceM
+                            Repeater {
+                                model: Markdown.split(entry.text)
+                                Loader {
+                                    required property var modelData
+                                    width: parent.width
+                                    sourceComponent: modelData.kind === "code" ? codePart
+                                        : modelData.kind === "artifact" ? artifactPart : textPart
+                                    property var part: modelData
+                                }
+                            }
                         }
                     }
                 }

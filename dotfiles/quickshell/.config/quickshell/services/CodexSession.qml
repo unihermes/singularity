@@ -124,6 +124,7 @@ AiSession {
         threadReady = false
         rows.clear()
         itemRows = {}
+        reasoningSource = {}
         sessionId = ""
         turnId = ""
         busy = false
@@ -174,6 +175,12 @@ AiSession {
     property var waiting: []
     // item id -> row
     property var itemRows: ({})
+    property var reasoningSource: ({})
+
+    function reasoningText(summary) {
+        if (typeof summary === "string") return summary
+        return (summary || []).map(x => typeof x === "string" ? x : x.text || "").filter(Boolean).join("\n\n")
+    }
 
     function write(obj) { proc.write(JSON.stringify(obj) + "\n") }
     function call(method, params, ok, bad) {
@@ -310,9 +317,21 @@ AiSession {
             break
         }
         case "item/reasoning/summaryTextDelta":
-        case "item/reasoning/textDelta":
+        case "item/reasoning/textDelta": {
+            var summary = m.method === "item/reasoning/summaryTextDelta"
+            var source = reasoningSource[q.itemId] || ""
+            if (summary && source !== "summary") {
+                reasoningSource[q.itemId] = "summary"
+                var previous = itemRows[q.itemId]
+                if (previous !== undefined) setRow(previous, { text: "" })
+            }
+            if (!summary && source === "summary") break
+            var reasonRow = itemRows[q.itemId]
+            if (reasonRow === undefined) itemRows[q.itemId] = reasonRow = add({ kind: "reasoning", text: "", streaming: true })
+            setRow(reasonRow, { text: rows.get(reasonRow).text + (q.delta || "") })
             activity = "Thinking"
             break
+        }
         case "turn/plan/updated":
             plan(q)
             break
@@ -391,6 +410,12 @@ AiSession {
             }
             break
         case "reasoning":
+            var reason = reasoningText(it.summary)
+            if (r === undefined) {
+                if (reason !== "") itemRows[it.id] = add({ kind: "reasoning", text: reason, streaming: !!starting })
+            } else if (!starting) {
+                setRow(r, { text: reason || rows.get(r).text, streaming: false })
+            }
             if (!history) activity = "Thinking"
             break
         case "commandExecution": {

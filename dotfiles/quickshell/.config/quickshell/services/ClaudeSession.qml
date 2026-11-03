@@ -8,7 +8,7 @@
 //
 // The transcript is a ListModel whose rows are only ever appended, so a
 // row's index stays its id. Every row has every role:
-//   kind     user | assistant | tool | error | note
+//   kind     user | reasoning | assistant | tool | error | note
 //   text     what was said (markdown for the assistant)
 //   note     a user row's attachments
 //   images   a user row's screenshots, one path a line
@@ -117,6 +117,7 @@ AiSession {
         sessionId = id
         ;(saved || []).forEach(r => {
             if (r.kind === "user") add({ kind: "user", text: r.text, note: r.note || "" })
+            else if (r.kind === "reasoning") add({ kind: "reasoning", text: r.text })
             else if (r.kind === "assistant") add({ kind: "assistant", text: r.text })
             else if (r.kind === "tool") addTool(r.toolId, r.name, r.input, true)
             else if (r.kind === "result") toolResult(r.toolId, r.content, r.isError)
@@ -273,15 +274,19 @@ AiSession {
                 streamIndex[e.index] = row
                 streamed[streamMsg].push(row)
             } else if (b.type === "thinking") {
+                streamIndex[e.index] = add({ kind: "reasoning", text: "", streaming: true })
                 activity = "Thinking"
             } else if (b.type === "tool_use") {
                 activity = describe(b.name, {})
             }
-        } else if (e.type === "content_block_delta" && e.delta.type === "text_delta") {
+        } else if (e.type === "content_block_delta" && (e.delta.type === "text_delta" || e.delta.type === "thinking_delta")) {
             var r = streamIndex[e.index]
             if (r === undefined) return
-            setRow(r, { text: rows.get(r).text + e.delta.text })
-            activity = "Writing"
+            setRow(r, { text: rows.get(r).text + (e.delta.text || e.delta.thinking || "") })
+            activity = e.delta.type === "thinking_delta" ? "Thinking" : "Writing"
+        } else if (e.type === "content_block_stop") {
+            var finished = streamIndex[e.index]
+            if (finished !== undefined) setRow(finished, { streaming: false })
         }
     }
     property string streamMsg: ""
@@ -297,6 +302,10 @@ AiSession {
                 var q = streamed[msg.id] || []
                 if (q.length > 0) setRow(q.shift(), { text: b.text, streaming: false })
                 else if (b.text.trim() !== "") add({ kind: "assistant", text: b.text })
+            } else if (b.type === "thinking") {
+                var thinkingRow = streamIndex[(msg.content || []).indexOf(b)]
+                if (thinkingRow !== undefined) setRow(thinkingRow, { text: b.thinking || rows.get(thinkingRow).text, streaming: false })
+                else if ((b.thinking || "").trim() !== "") add({ kind: "reasoning", text: b.thinking })
             } else if (b.type === "tool_use") {
                 addTool(b.id, b.name, b.input, false)
             }
