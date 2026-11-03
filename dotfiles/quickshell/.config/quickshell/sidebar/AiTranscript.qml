@@ -299,18 +299,50 @@ Item {
             required property string result
             required property string phase
             required property bool streaming
+            required property bool final
             required property bool open
 
             // a run of tool calls sits close together; anything else gets room
             readonly property real gap: index === 0 ? 0
                 : kind === "tool" && (root.session.entries.get(index - 1) || {}).kind === "tool" ? Theme.spaceXs : Theme.spaceL
+            readonly property bool breakBefore: kind === "user" && index > 0
 
             width: list.width - Theme.scrollGutter
-            height: loader.height + gap
+            height: loader.height + gap + turnDivider.height
+
+            Item {
+                id: turnDivider
+                y: entry.gap
+                width: parent.width
+                height: entry.breakBefore ? Theme.rowHeightDense + Theme.spaceM : 0
+                visible: entry.breakBefore
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: Theme.sp(1)
+                    color: Theme.strokeHover
+                }
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: dividerText.implicitWidth + Theme.spaceL * 2
+                    height: dividerText.implicitHeight
+                    color: Theme.surface
+                    Text {
+                        id: dividerText
+                        anchors.centerIn: parent
+                        text: "NEXT PROMPT"
+                        color: Theme.subtext
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
+                    }
+                }
+            }
 
             Loader {
                 id: loader
-                y: entry.gap
+                y: entry.gap + turnDivider.height
                 width: parent.width
                 sourceComponent: entry.kind === "user" ? userRow
                     : entry.kind === "reasoning" ? reasoningRow
@@ -441,8 +473,8 @@ Item {
                     spacing: Theme.spaceS
 
                     Text {
-                        text: "REPLY"
-                        color: Theme.accent
+                        text: entry.final ? "FINAL ANSWER" : "WORKING"
+                        color: entry.final ? Theme.accent : Theme.subtext
                         font.family: Theme.fontText
                         font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontCaption
@@ -453,15 +485,16 @@ Item {
                         height: replyContent.implicitHeight
 
                         Rectangle {
-                            width: Theme.borderWidth
+                            width: entry.final ? Theme.sp(2) : Theme.borderWidth
                             height: parent.height
-                            color: Theme.accent
+                            color: entry.final ? Theme.accent : Theme.muted
                         }
                         Column {
                             id: replyContent
                             x: Theme.spaceL
                             width: parent.width - x
                             spacing: Theme.spaceM
+                            opacity: entry.final ? 1 : 0.78
                             Repeater {
                                 model: Markdown.split(entry.text)
                                 Loader {

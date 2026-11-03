@@ -119,11 +119,22 @@ Scope {
         rows.append({
             kind: o.kind, text: o.text || "", note: o.note || "", images: o.images || "",
             name: o.name || "", detail: o.detail || "", body: o.body || "", result: o.result || "",
-            toolId: o.toolId || "", phase: o.phase || "", streaming: !!o.streaming, open: false
+            toolId: o.toolId || "", phase: o.phase || "", streaming: !!o.streaming,
+            final: !!o.final, open: false
         })
         return rows.count - 1
     }
     function setRow(i, o) { for (var k in o) rows.setProperty(i, k, o[k]) }
+    function markFinal(since) {
+        for (var i = rows.count - 1; i >= (since || 0); i--) {
+            var row = rows.get(i)
+            if (row.kind === "user") break
+            if (row.kind === "assistant" && row.text.trim() !== "") {
+                setRow(i, { final: true })
+                break
+            }
+        }
+    }
     // a multi-line command as its first line, for a row or the status line
     function oneLine(t) {
         var l = String(t).trim().split("\n")

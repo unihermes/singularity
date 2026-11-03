@@ -116,12 +116,16 @@ AiSession {
         reset()
         sessionId = id
         ;(saved || []).forEach(r => {
-            if (r.kind === "user") add({ kind: "user", text: r.text, note: r.note || "" })
+            if (r.kind === "user") {
+                markFinal()
+                add({ kind: "user", text: r.text, note: r.note || "" })
+            }
             else if (r.kind === "reasoning") add({ kind: "reasoning", text: r.text })
             else if (r.kind === "assistant") add({ kind: "assistant", text: r.text })
             else if (r.kind === "tool") addTool(r.toolId, r.name, r.input, true)
             else if (r.kind === "result") toolResult(r.toolId, r.content, r.isError)
         })
+        markFinal()
         for (var i = 0; i < rows.count; i++)
             if (rows.get(i).phase === "running") setRow(i, { phase: "done" })
     }
@@ -333,6 +337,7 @@ AiSession {
     function result(ev) {
         var mu = ev.modelUsage || {}
         Object.keys(mu).forEach(k => { if (mu[k].contextWindow) contextWindow = mu[k].contextWindow })
+        if (!stopping && !ev.is_error && (!ev.subtype || ev.subtype === "success")) markFinal()
         if (stopping) add({ kind: "note", text: "Stopped" })
         else if (ev.is_error || (ev.subtype && ev.subtype !== "success"))
             add({ kind: "error", text: ev.result || errorText(ev.subtype) })

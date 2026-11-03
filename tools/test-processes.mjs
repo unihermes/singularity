@@ -221,6 +221,23 @@ test('Codex shows reasoning summaries once and restores them from history', () =
     assert.equal(c.data[1].text, 'Earlier summary')
 })
 
+test('Only the last assistant message of a completed prompt is final', () => {
+    for (const engine of ['Claude', 'Codex']) {
+        const c = session(engine)
+        c.s.sessionId = 'thread'
+        c.s.add({ kind: 'user', text: 'First prompt' })
+        c.s.add({ kind: 'assistant', text: 'Working update' })
+        c.s.add({ kind: 'tool', name: 'Bash', phase: 'done' })
+        c.s.add({ kind: 'assistant', text: 'Final answer' })
+        if (engine === 'Claude') c.read({ type: 'result', subtype: 'success' })
+        else c.read({ method: 'turn/completed', params: { threadId: 'thread', turn: { status: 'completed' } } })
+        assert.deepEqual(c.data.filter(row => row.kind === 'assistant').map(row => row.final), [false, true])
+        c.s.add({ kind: 'user', text: 'Second prompt' })
+        c.s.add({ kind: 'assistant', text: 'Still working' })
+        assert.equal(c.data.at(-1).final, false)
+    }
+})
+
 test('Codex reset/resume drops old responses, clears canceled resume state and waits for history before send', () => {
     const c = session('Codex')
     c.proc.running = true

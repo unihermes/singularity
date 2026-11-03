@@ -580,9 +580,11 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
 - **Code's folder** as a row (a click lists the folders in its place,
   with a field for any other).
 - **The conversation** takes the rest: what you sent in a field with its
-  screenshots small under it and a YOU caption; live reasoning, when the
-  engine provides it, in smaller muted text under a THINKING caption and
-  quiet rail; final replies under a REPLY caption and accent rail, as markdown you can select
+  screenshots small under it and a YOU caption. A NEXT PROMPT rule separates
+  turns. Live reasoning, when the engine provides it, sits in smaller muted
+  text under a THINKING caption and quiet rail. Assistant messages during a
+  turn read WORKING with a muted rail; only the last message of a completed
+  turn reads FINAL ANSWER with an accent rail. Replies are markdown you can select
   (`services/Markdown.js`: inline code tinted, tables ruled), each fenced
   block in a darker box of its own with its language and Copy; each
   tool call a quiet line (spinner, tick, ✗; a multi-line command shows

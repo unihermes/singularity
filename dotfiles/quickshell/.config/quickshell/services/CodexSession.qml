@@ -149,7 +149,11 @@ AiSession {
             threadReady = true
             var t = r && r.thread
             if (r && r.model) modelName = r.model
-            ;((t && t.turns) || []).forEach(turn => (turn.items || []).forEach(it => item(it, true)))
+            ;((t && t.turns) || []).forEach(turn => {
+                var start = rows.count
+                ;(turn.items || []).forEach(it => item(it, true))
+                if (turn.status === "completed" || !turn.status) markFinal(start)
+            })
         }, e => { resuming = false; sessionId = ""; add({ kind: "error", text: "Couldn't load that Codex conversation" }) }))
     }
 
@@ -349,6 +353,7 @@ AiSession {
             break
         case "turn/completed": {
             var t = q.turn || {}
+            if (!stopping && t.status === "completed") markFinal()
             if (stopping || t.status === "interrupted") add({ kind: "note", text: "Stopped" })
             else if (t.status === "failed") add({ kind: "error", text: (t.error && t.error.message) || "Codex stopped with an error" })
             endTurn(false)
