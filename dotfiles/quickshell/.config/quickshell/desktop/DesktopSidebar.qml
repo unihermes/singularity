@@ -292,11 +292,6 @@ PanelWindow {
             title: "RAM"
             Bar { label: "RAM"; frac: SystemStats.mem }
             Caption { text: win.ofTotal(SystemStats.memUsedKb * 1024, SystemStats.memTotalKb * 1024) }
-            Bar {
-                visible: SystemStats.swapTotalKb > 0
-                label: "Swap"
-                frac: 1 - SystemStats.swapFreeKb / Math.max(1, SystemStats.swapTotalKb)
-            }
             Repeater {
                 model: SystemStats.procsByMem.slice(0, 3)
                 Pair {
