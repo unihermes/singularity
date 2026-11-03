@@ -55,7 +55,7 @@ Column {
         : commands.filter(c => c.name.toLowerCase().indexOf(query) === 0).slice(0, 8)
     readonly property var shellQuery: {
         var m = input.text.match(/^!([^\n]*)$/)
-        return m ? m[1].trimStart().toLowerCase() : null
+        return m ? m[1].replace(/^\s+/, "").toLowerCase() : null
     }
     readonly property var commonShellCommands: ["git status", "git diff", "git log --oneline -10",
         "ls", "pwd", "rg ", "find ", "cat ", "npm test", "python3 "]
