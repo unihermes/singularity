@@ -57,6 +57,8 @@ ModuleFrame {
             readonly property bool current: wsFrame.visibleIds.includes(wsId)
             readonly property bool joinsNext: current && wsFrame.visibleIds.includes(
                 wsFrame.ids[wsFrame.ids.indexOf(wsId) + 1])
+            readonly property bool joinsPrevious: current && wsFrame.visibleIds.includes(
+                wsFrame.ids[wsFrame.ids.indexOf(wsId) - 1])
             readonly property bool occupied: host.bar.workspaceHasWindows(wsId)
 
             anchors.verticalCenter: parent.verticalCenter
@@ -76,7 +78,7 @@ ModuleFrame {
                     && Theme.workspaceStyle !== "apps"
                 x: parent.width / 2
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width / 2 + wsFrame.spacing + 2
+                width: parent.width / 2 + wsFrame.spacing + 6
                 height: pip.height
                 color: Theme.accent
             }
@@ -92,7 +94,7 @@ ModuleFrame {
                 anchors.centerIn: parent
                 height: blocks ? 10 : lines ? 3 : 7
                 width: blocks ? 10 : lines ? 14 : Theme.workspaceStyle === "dots" || Theme.workspaceStyle === "apps" ? 7
-                    : parent.current ? 22 : (parent.occupied ? 11 : 7)
+                    : parent.current && !parent.joinsPrevious ? 22 : (parent.occupied ? 11 : 7)
                 // fully rounded: half the height makes a pill
                 // at any width, and a circle at the stub size
                 radius: blocks ? Math.min(2, Theme.radiusSmall) : Theme.pill(height)
