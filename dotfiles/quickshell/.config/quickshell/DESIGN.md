@@ -613,7 +613,7 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
   Stop.
 - **Shell commands:** a message starting with `!` runs in the tab's folder
   without an AI turn, for either engine. Its command, output and exit status
-  appear as a tool row; Stop cancels it. Results accompany the next AI message.
+  appear in an expanded tool row; a click can collapse it and Stop cancels it. Results accompany the next AI message.
   Typing `!` offers recent and common commands; ↑↓ selects and Tab or a click
   fills the box, while Enter runs the text in it. Recent commands persist across
   sidebar reloads. Attachments stay queued for that message. Commands run as the user, independently

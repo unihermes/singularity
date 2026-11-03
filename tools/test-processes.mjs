@@ -316,6 +316,19 @@ test('Claude queued history keeps its target through either event order and disc
     }
 })
 
+test('User shell commands start open and agent tool rows start closed', () => {
+    for (const engine of ['Claude', 'Codex']) {
+        const c = session(engine)
+        c.s.Quickshell = { shellPath: p => p }
+        assert.equal(c.s.runCommand('!pwd'), true)
+        assert.equal(c.data[0].open, true)
+        c.s.commandLine('/project')
+        assert.equal(c.data[0].open, true)
+        c.s.add({ kind: 'tool', name: 'Bash' })
+        assert.equal(c.data[1].open, false)
+    }
+})
+
 test('Session reset excludes late shell-command output from the next conversation', () => {
     for (const engine of ['Claude', 'Codex']) {
         const c = session(engine)

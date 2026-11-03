@@ -46,7 +46,7 @@ Scope {
         commandText = command
         commandOutput = ""
         commandStopped = false
-        commandRow = add({ kind: "tool", name: "Bash", detail: oneLine(command), body: command, phase: "running" })
+        commandRow = add({ kind: "tool", name: "Bash", detail: oneLine(command), body: command, phase: "running", open: true })
         busy = true
         activity = oneLine(command)
         commandProc.command = ["python3", Quickshell.shellPath("scripts/ai-command.py"), command]
@@ -120,7 +120,7 @@ Scope {
             kind: o.kind, text: o.text || "", note: o.note || "", images: o.images || "", timestamp: o.timestamp || "",
             name: o.name || "", detail: o.detail || "", body: o.body || "", result: o.result || "",
             toolId: o.toolId || "", phase: o.phase || "", streaming: !!o.streaming,
-            final: !!o.final, open: false
+            final: !!o.final, open: !!o.open
         })
         return rows.count - 1
     }
