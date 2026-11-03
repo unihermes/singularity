@@ -283,6 +283,7 @@ PanelWindow {
             FlyoutDivider {}
 
             Row {
+                anchors.right: parent.right
                 spacing: Theme.spaceXs
                 FlyoutChip {
                     icon: "󰝒"
