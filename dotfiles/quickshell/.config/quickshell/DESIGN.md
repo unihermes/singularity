@@ -672,7 +672,9 @@ line (one at a time, 󰅂 → 󰅀); a tile with 󰅂 at its end opens a page.
 - **Home:** a `HeadCard` (user@host, uptime and look; lock and power
   buttons at its end, power opening Power); a search field that takes
   the keyboard on open, its matches (most used first, Enter launches)
-  replacing the tiles while there's a query; the tiles: Quiet, Night
+  replacing the tiles while there's a query; its apps button shows the same
+  list alphabetically without a query, and Escape returns to the tiles;
+  the tiles: Quiet, Night
   Light (warmth slider in its details), Keep Awake, Game Mode, Airplane,
   Power (a click steps the profile, the details show all three; gone
   while PPD isn't answering, Airplane then runs the width), Appearance

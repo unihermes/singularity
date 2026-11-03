@@ -48,7 +48,7 @@ FlyoutPanel {
     }
     Component.onCompleted: if (open) opened()
     onOpenChanged: if (open) opened()
-        else { page = ""; appSearch.text = "" }
+        else { page = ""; appSearch.text = ""; browsingApps = false }
     Connections {
         target: controlCentre.scope
         function onControlPageChanged() {
@@ -170,8 +170,9 @@ FlyoutPanel {
     // --- Home -------------------------------------------------
 
     readonly property bool home: page === ""
-    readonly property bool searching: home && appQuery !== ""
+    readonly property bool searching: home && (appQuery !== "" || browsingApps)
     property string appQuery: ""
+    property bool browsingApps: false
     property point lastPointer: Qt.point(-1, -1)
 
     HeadCard {
@@ -198,11 +199,25 @@ FlyoutPanel {
         id: appSearch
         visible: controlCentre.home
         glyph: "󰍉"
+        actionGlyph: "󰀻"
+        actionLabel: "Browse applications"
+        actionActive: controlCentre.browsingApps
         placeholder: "Search apps"
         echoPassword: false
         onTextChanged: {
             controlCentre.appQuery = text
+            if (text !== "") controlCentre.browsingApps = false
             appView.currentIndex = 0
+        }
+        onActionClicked: {
+            if (controlCentre.searching) {
+                text = ""
+                controlCentre.browsingApps = false
+            } else {
+                controlCentre.browsingApps = true
+                appView.currentIndex = 0
+            }
+            forceFocus()
         }
         // Enter launches whatever is highlighted -- the top match until the
         // arrows move it
@@ -212,6 +227,7 @@ FlyoutPanel {
         onUpPressed: if (appView.currentIndex > 0) appView.currentIndex--
         onEscapePressed: {
             if (text !== "") text = ""
+            else if (controlCentre.browsingApps) controlCentre.browsingApps = false
             else scope.openFlyout = ""
         }
     }
@@ -232,7 +248,7 @@ FlyoutPanel {
         clip: true
         spacing: Theme.spaceXs
         boundsBehavior: Flickable.StopAtBounds
-        model: visible ? Apps.list(controlCentre.appQuery) : []
+        model: visible ? Apps.list(controlCentre.appQuery, controlCentre.browsingApps) : []
         // keeps the arrow-key selection scrolled into view
         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 

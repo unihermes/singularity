@@ -18,10 +18,14 @@ Item {
     property bool bleed: false
     property bool borderless: false
     property string glyph: ""
+    property string actionGlyph: ""
+    property string actionLabel: ""
+    property bool actionActive: false
     property var hints: []
     readonly property bool focused: field.activeFocus
 
     signal accepted()
+    signal actionClicked()
     // Arrow keys and Escape, for fields that drive a list below them. Emitted
     // from the field itself because it holds focus -- the list never sees a
     // key event while the cursor is here.
@@ -150,7 +154,8 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: root.glyph !== "" ? glyphCell.x + glyphCell.width + Theme.spaceM
             : Theme.spaceXs + (root.bleed ? 0 : Theme.spaceS)
-        anchors.rightMargin: root.hints.length > 0 ? hintRow.width + Theme.spaceL + Theme.spaceXl
+        anchors.rightMargin: root.actionGlyph !== "" ? action.width + Theme.spaceS
+            : root.hints.length > 0 ? hintRow.width + Theme.spaceL + Theme.spaceXl
             : Theme.spaceXs + (root.bleed ? 0 : Theme.spaceS)
         verticalAlignment: TextInput.AlignVCenter
         // text scrolled out of view past either end stays inside the frame
@@ -196,6 +201,39 @@ Item {
                 root.shiftReturnPressed()
                 event.accepted = true
             }
+        }
+    }
+
+    Item {
+        id: action
+        visible: root.actionGlyph !== ""
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: Theme.controlSize + Theme.spaceS
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.borderWidth
+            height: parent.height - Theme.spaceM * 2
+            color: Theme.stroke
+        }
+        Text {
+            anchors.centerIn: parent
+            text: root.actionGlyph
+            color: root.actionActive ? Theme.accent : actionMouse.containsMouse ? Theme.textStrong : Theme.subtext
+            font.family: Theme.fontIcon
+            font.pixelSize: Theme.fontIconSize
+        }
+        MouseArea {
+            id: actionMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            Accessible.role: Accessible.Button
+            Accessible.name: root.actionLabel
+            onClicked: root.actionClicked()
         }
     }
 }
