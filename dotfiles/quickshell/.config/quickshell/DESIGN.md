@@ -748,13 +748,14 @@ Panels > Desktop Widgets.
   Sidebar): a conky-style column flush with the primary display's right
   edge, from the bar to the foot, on a ground of its own (black at 50%, a white
   hairline on its left); the same inks and halo, the shell's font,
-  body 16. Laid out like a classic conky: sections under the shell's
-  `FlyoutHeading` (mark, case and rule as Appearance sets them: Info, CPU,
-  GPU, RAM, Drives, Network, Fans, Battery), label and value lines as
-  `InfoRow` lays them out (label left in text, value right), the shell's
-  `Meter` in the level colour beside their labels (each core gets one, two columns; the alert colour
-  from 85%), "used / total [ n% ]" right-aligned under them, the busiest
-  processes by CPU and by memory, and the last minute as sparklines in the level colour. A
+  body 16. An Info section leads with the distro mark, host and OS, then
+  kernel, uptime, boot time, Hyprland, package count and chassis when known.
+  The following sections use the shell's `FlyoutHeading` (mark, case and
+  rule as Appearance sets them): CPU, GPU, RAM, Drives, Network, Fans and
+  Battery. Label and value lines follow `InfoRow`, with the shell's `Meter`
+  in the level colour beside their labels and the alert colour from 85%.
+  CPU load averages, short process lists and sparklines give context to the
+  current readings; network rates and totals are paired to save room. A
   section or line the machine can't fill is left out. It always fits the
   height: the sections spread out to fill it, or the whole column scales
   down when they'd run past. It takes no input, and the widgets' room on

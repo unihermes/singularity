@@ -1,18 +1,9 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/desktop/DesktopSidebar.qml
 //
-// A conky-style column down the right edge of the primary display, on the
-// wallpaper under the windows (Settings.deskSidebar). A section each under
-// the shell's section heading, as label and value lines, the shell's
-// meters beside their labels and "used / total [ n% ]" under them: Info
-// (OS, kernel, uptime, host), CPU (model, clock, temperature, each core,
-// the last minute, the busiest processes), GPU (model, clocks,
-// temperature, power, use, video memory), RAM (with the processes holding
-// most), Drives, Network (address, rates, totals, the last minute), Fans
-// and Battery. A section or line the machine can't fill is left out. Flush
-// with the screen's right edge on a see-through dark ground, filling the
-// height under the bar. The desktop widgets keep
-// clear of it (DesktopWidgets' area).
+// A passive system overview on the primary display's desktop. Machine
+// identity leads the live CPU, GPU, memory, storage and network readings;
+// unavailable readings are omitted and the column fits the screen height.
 
 import Quickshell
 import Quickshell.Wayland
@@ -199,10 +190,40 @@ PanelWindow {
 
         Section {
             title: "INFO"
-            KeyValue { label: "OS"; value: SystemSpecs.distro + (SystemSpecs.arch ? " " + SystemSpecs.arch : "") }
-            KeyValue { label: "Kernel"; value: SystemSpecs.kernel }
+            Row {
+                width: parent.width
+                spacing: Theme.spaceM
+                WidgetText {
+                    card: ink
+                    text: SystemSpecs.distro.indexOf("Arch") !== -1 ? "󰣇" : "󰌽"
+                    font.family: Theme.fontIcon
+                    px: Theme.fit(36)
+                    color: ink.accent
+                    elide: Text.ElideNone
+                }
+                Column {
+                    width: parent.width - x
+                    anchors.verticalCenter: parent.verticalCenter
+                    WidgetText {
+                        width: parent.width
+                        card: ink
+                        px: Theme.fs(20)
+                        text: SystemSpecs.hostname || "System"
+                    }
+                    WidgetText {
+                        width: parent.width
+                        card: ink
+                        color: ink.fgDim
+                        text: [SystemSpecs.distro, SystemSpecs.arch].filter(s => s !== "").join(" · ")
+                    }
+                }
+            }
+            KeyValue { visible: SystemSpecs.kernel !== ""; label: "Kernel"; value: SystemSpecs.kernel }
             KeyValue { label: "Uptime"; value: Format.duration(SystemStats.uptimeSec) }
-            KeyValue { label: "Hostname"; value: SystemSpecs.hostname }
+            KeyValue { visible: SystemStats.uptimeSec > 0; label: "Booted"; value: Qt.formatDateTime(SystemStats.bootTime, "d MMM · HH:mm") }
+            KeyValue { visible: SystemSpecs.hyprVersion !== ""; label: "Hyprland"; value: SystemSpecs.hyprVersion }
+            KeyValue { visible: SystemSpecs.pkgCount >= 0; label: "Packages"; value: SystemSpecs.pkgCount.toLocaleString() }
+            KeyValue { visible: SystemSpecs.chassis !== ""; label: "Chassis"; value: SystemSpecs.chassis }
         }
 
         Section {
@@ -211,27 +232,13 @@ PanelWindow {
             KeyValue { visible: SystemStats.cpuMhz > 0; label: "Frequency"; value: Math.round(SystemStats.cpuMhz) + " MHz" }
             KeyValue { visible: SystemStats.tempC >= 0; label: "Temperature"; value: win.temp(SystemStats.tempC) }
             Bar { label: "Usage " + Format.pct(SystemStats.cpu); frac: SystemStats.cpu }
-            // each core, two columns
-            Grid {
-                id: coreGrid
-                width: parent.width
-                columns: 2
-                columnSpacing: Theme.spaceL
-                rowSpacing: Theme.fit(2)
-                Repeater {
-                    model: SystemStats.cores.length
-                    Bar {
-                        required property int index
-                        width: (coreGrid.width - coreGrid.columnSpacing) / 2
-                        labelWidth: Theme.fit(68)
-                        label: (index + 1) + "  " + Math.round((SystemStats.cores[index] || 0) * 100) + "%"
-                        frac: SystemStats.cores[index] || 0
-                    }
-                }
+            KeyValue {
+                label: "Load 1 / 5 / 15 min"
+                value: [SystemStats.load1, SystemStats.load5, SystemStats.load15].map(v => v.toFixed(2)).join(" / ")
             }
             Line { series: [{ values: SystemStats.cpuHistory, color: Theme.meterFill, fill: true }] }
             Repeater {
-                model: SystemStats.procs.slice(0, 4)
+                model: SystemStats.procs.slice(0, 3)
                 Pair {
                     required property var modelData
                     label: modelData.name
@@ -279,7 +286,7 @@ PanelWindow {
                 frac: 1 - SystemStats.swapFreeKb / Math.max(1, SystemStats.swapTotalKb)
             }
             Repeater {
-                model: SystemStats.procsByMem
+                model: SystemStats.procsByMem.slice(0, 3)
                 Pair {
                     required property var modelData
                     label: modelData.name
@@ -312,10 +319,8 @@ PanelWindow {
             visible: SystemStats.iface !== ""
             title: "NETWORK"
             KeyValue { label: "IP"; value: SystemStats.ipAddr + " (" + SystemStats.iface + ")" }
-            KeyValue { label: "Up"; value: Format.rate(SystemStats.txRate) }
-            KeyValue { label: "Down"; value: Format.rate(SystemStats.rxRate) }
-            KeyValue { label: "Total up"; value: Format.bytes(SystemStats.txTotal) }
-            KeyValue { label: "Total down"; value: Format.bytes(SystemStats.rxTotal) }
+            KeyValue { visible: SystemStats.rxRate >= 0; label: "Down / up"; value: Format.rate(SystemStats.rxRate) + " / " + Format.rate(SystemStats.txRate) }
+            KeyValue { label: "Received / sent"; value: Format.bytes(SystemStats.rxTotal) + " / " + Format.bytes(SystemStats.txTotal) }
             Line {
                 height: Theme.fit(20)
                 ceiling: win.netPeak
