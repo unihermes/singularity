@@ -12,16 +12,25 @@
 # saved file in place.
 set -euo pipefail
 
+# Keep the frozen layer visible until grim has captured the selected region.
+capture_area() (
+  hyprpicker -r -z -q >/dev/null 2>&1 &
+  picker=$!
+  trap 'kill "$picker" 2>/dev/null || true; wait "$picker" 2>/dev/null || true' EXIT
+  sleep 0.2
+  geometry=$(slurp) || return 1
+  [[ -n $geometry ]] || return 1
+  grim -g "$geometry" "$@"
+)
+
 if [[ ${1:-} == text ]]; then
   if ! command -v tesseract &>/dev/null || ! tesseract --list-langs 2>/dev/null | grep -qx eng; then
     notify-send -a Screenshot -u critical "Copy text needs tesseract" \
       "Install tesseract and tesseract-data-eng" 2>/dev/null || true
     exit 1
   fi
-  geometry=$(slurp) || exit 0
-  [[ -n $geometry ]] || exit 0
   # upscaled first: tesseract reads screen-sized text far better at 2x
-  text=$(grim -g "$geometry" -s 2 - | tesseract - - -l eng 2>/dev/null | sed -e 's/[[:space:]]*$//' | sed -e '/./,$!d')
+  text=$(capture_area -s 2 - | tesseract - - -l eng 2>/dev/null | sed -e 's/[[:space:]]*$//' | sed -e '/./,$!d') || exit 0
   if [[ -z ${text//[[:space:]]/} ]]; then
     notify-send -a Screenshot "No text found" "Nothing readable in that area" 2>/dev/null || true
     exit 0
@@ -49,9 +58,7 @@ window_geometry() {
 
 case "${1:-area}" in
   area)
-    geometry=$(slurp) || exit 0   # empty on Esc/cancel -- nothing to capture
-    [[ -n $geometry ]] || exit 0
-    grim -g "$geometry" "$file" ;;
+    capture_area "$file" || exit 0 ;;
   window)
     geometry=$(window_geometry)
     # no window focused: the monitor is the closest thing to what was asked
