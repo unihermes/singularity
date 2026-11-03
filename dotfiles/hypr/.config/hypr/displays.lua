@@ -284,10 +284,49 @@ hl.on("monitor.added", function()
     resetWorkspacesSoon()
     if S.allows("lid") then hl.exec_cmd("~/.config/hypr/lid.sh displays") end
 end)
+-- Which display each workspace was on, while the display set is steady, so
+-- a workspace whose display was just unplugged can be told from the rest
+-- (Hyprland has already moved it by the time monitor.removed arrives).
+local wsOwner = {}
+local function snapshotOwners()
+    if table.concat(monitorNames(), "+") ~= table.concat(knownMonitors, "+") then return end
+    for _, ws in ipairs(hl.get_workspaces()) do
+        if not ws.special and ws.monitor then wsOwner[ws.id] = ws.monitor.name end
+    end
+end
+hl.on("workspace.active", snapshotOwners)
+hl.on("monitor.added", function() hl.timer(snapshotOwners, { timeout = 1000, type = "oneshot" }) end)
+hl.on("hyprland.start", function() hl.timer(snapshotOwners, { timeout = 1000, type = "oneshot" }) end)
+
+-- Windows of the unplugged display's workspaces go to the first remaining
+-- display's current workspace; window.move_to_workspace (windows.lua)
+-- re-fits each, so maximized stays maximized and floaters keep their share.
+local function rehomeOrphans()
+    local present = {}
+    for _, m in ipairs(hl.get_monitors()) do present[m.name] = true end
+    local target = S.orderedMonitors()[1]
+    local dest = target and target.active_workspace
+    if not dest then return end
+    local orphan = {}
+    for id, name in pairs(wsOwner) do
+        if not present[name] then orphan[id] = true end
+    end
+    for _, w in ipairs(hl.get_windows()) do
+        local ws = w.workspace
+        if ws and not ws.special and orphan[ws.id] and ws.id ~= dest.id then
+            hl.dispatch(hl.dsp.window.move({ workspace = dest.id,
+                window = "address:" .. w.address, follow = false }))
+        end
+    end
+    for id in pairs(orphan) do wsOwner[id] = nil end
+    snapshotOwners()
+end
+
 hl.on("monitor.removed", function()
     hl.timer(function()
         knownMonitors = monitorNames()
         restoreLayout()
+        rehomeOrphans()
     end, { timeout = 500, type = "oneshot" })
     if S.allows("lid") then hl.exec_cmd("~/.config/hypr/lid.sh displays") end
 end)
