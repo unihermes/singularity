@@ -44,7 +44,7 @@ Singleton {
         var o = t ? t.lastIpcObject : null
         if (!o) return false
         var c = o.class || ""
-        return /^steam_app_\d+$/.test(c) || c === "gamescope" || /^Minecraft/.test(c)
+        return /^steam_app_\d+$/.test(c) || c === "gamescope" || /^minecraft(?:\b|\*)/i.test(c)
             || o.contentType === "game"
     }
 
@@ -53,6 +53,7 @@ Singleton {
     function folderFor(t) {
         var o = t ? t.lastIpcObject : null
         if (!o) return "Desktop"
+        if (/^minecraft(?:\b|\*)/i.test(o.class || "")) return "Minecraft"
         var entry = isGame(t) ? null : Apps.byClass(o.class || "").entry
         var name = isGame(t) ? t.title : entry ? entry.name : String(o.class || "").replace(/^.*\./, "")
         return String(name || "").replace(/[\/\\:*?"<>|]/g, "").trim() || "Desktop"

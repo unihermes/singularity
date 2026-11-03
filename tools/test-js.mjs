@@ -38,6 +38,23 @@ function load(name) {
     return (loaded[name] = ctx)
 }
 
+test("Recorder groups Minecraft versions under Minecraft", () => {
+    const source = fs.readFileSync(path.join(services, "Recorder.qml"), "utf8")
+    const ctx = { Apps: { byClass: () => ({ entry: null }) } }
+    vm.createContext(ctx)
+    for (const name of ["isGame", "folderFor"]) {
+        const match = source.match(new RegExp(`    function ${name}\\(t\\) \\{[\\s\\S]*?\\n    \\}`))
+        assert.ok(match, `${name} exists`)
+        vm.runInContext(match[0], ctx)
+    }
+    for (const cls of ["Minecraft* 26.1.2", "Minecraft 1.21.4", "minecraft 1.8.9"]) {
+        const window = { title: cls, lastIpcObject: { class: cls } }
+        assert.equal(ctx.isGame(window), true)
+        assert.equal(ctx.folderFor(window), "Minecraft")
+    }
+    assert.equal(ctx.folderFor({ title: "Overwatch", lastIpcObject: { class: "steam_app_2357570" } }), "Overwatch")
+})
+
 test("Calc evaluates arithmetic, functions and units", () => {
     const Calc = load("Calc.js")
     const v = (s) => Calc.evaluate(s)
