@@ -53,8 +53,27 @@ Column {
     }
     readonly property var matches: query === null ? []
         : commands.filter(c => c.name.toLowerCase().indexOf(query) === 0).slice(0, 8)
+    readonly property var shellQuery: {
+        var m = input.text.match(/^!([^\n]*)$/)
+        return m ? m[1].trimStart().toLowerCase() : null
+    }
+    readonly property var commonShellCommands: ["git status", "git diff", "git log --oneline -10",
+        "ls", "pwd", "rg ", "find ", "cat ", "npm test", "python3 "]
+    readonly property var shellMatches: shellQuery === null ? [] : Ai.commandHistory.concat(commonShellCommands)
+        .filter((c, i, all) => all.indexOf(c) === i && c.toLowerCase().indexOf(shellQuery) === 0
+            && c.toLowerCase() !== shellQuery)
+        .slice(0, 8).map(c => ({ name: c, hint: Ai.commandHistory.indexOf(c) !== -1 ? "Recent" : "Suggested" }))
+    readonly property var suggestions: shellQuery !== null ? shellMatches : matches
     property int pick: 0
-    onQueryChanged: pick = 0
+    property bool suggestionsDismissed: false
+    onQueryChanged: { pick = 0; suggestionsDismissed = false }
+    onShellQueryChanged: { pick = 0; suggestionsDismissed = false }
+
+    function chooseShell(c) {
+        input.text = "!" + c.name
+        input.cursorPosition = input.text.length
+        suggestionsDismissed = true
+    }
 
     // the picked command into the box: run at once when it needs nothing more
     function choose(c) {
@@ -176,11 +195,11 @@ Column {
 
     // the slash commands matching what's typed: ↑↓ pick, Tab or Enter take
     Column {
-        visible: root.matches.length > 0
+        visible: !root.suggestionsDismissed && root.suggestions.length > 0
         width: parent.width
 
         Repeater {
-            model: root.matches
+            model: root.suggestions
             Rectangle {
                 id: cmdRow
                 required property var modelData
@@ -195,7 +214,9 @@ Column {
                     id: cmdName
                     x: Theme.spaceM
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "/" + cmdRow.modelData.name
+                    text: (root.shellQuery !== null ? "!" : "/") + cmdRow.modelData.name
+                    width: Math.min(implicitWidth, parent.width * 0.7)
+                    elide: Text.ElideRight
                     color: cmdRow.lit ? Theme.textStrong : Theme.text
                     font.family: Theme.fontText
                     font.weight: Theme.weightBody
@@ -221,7 +242,8 @@ Column {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        root.choose(cmdRow.modelData)
+                        if (root.shellQuery !== null) root.chooseShell(cmdRow.modelData)
+                        else root.choose(cmdRow.modelData)
                         input.forceActiveFocus()
                     }
                 }
@@ -399,21 +421,22 @@ Column {
                 }
 
                 Keys.onEscapePressed: {
-                    if (root.matches.length > 0) input.text = ""
+                    if (!root.suggestionsDismissed && root.suggestions.length > 0) root.suggestionsDismissed = true
                     else root.escapePressed()
                 }
                 Keys.onPressed: event => {
-                    if (root.matches.length > 0) {
-                        var n = root.matches.length
+                    if (!root.suggestionsDismissed && root.suggestions.length > 0) {
+                        var n = root.suggestions.length
                         if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
                             root.pick = (root.pick + (event.key === Qt.Key_Down ? 1 : n - 1)) % n
                             event.accepted = true
                             return
                         }
-                        if (event.key === Qt.Key_Tab || ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                        if (event.key === Qt.Key_Tab || (root.shellQuery === null && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                                 && !(event.modifiers & Qt.ShiftModifier))) {
                             event.accepted = true
-                            root.choose(root.matches[Math.min(root.pick, n - 1)])
+                            if (root.shellQuery !== null) root.chooseShell(root.suggestions[Math.min(root.pick, n - 1)])
+                            else root.choose(root.suggestions[Math.min(root.pick, n - 1)])
                             return
                         }
                     }

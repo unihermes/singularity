@@ -270,8 +270,17 @@ Singleton {
         return c ? c.text : v
     }
 
+    property var commandHistory: []
+
     function send(text) {
-        return current.busy ? false : current.send(text)
+        if (current.busy || !current.send(text)) return false
+        var command = text.trim()
+        if (command[0] === "!" && command.slice(1).trim()) {
+            command = command.slice(1).trim()
+            commandHistory = [command].concat(commandHistory.filter(c => c !== command)).slice(0, 100)
+            save()
+        }
+        return true
     }
 
     // --- attachments ---------------------------------------------------
@@ -665,7 +674,7 @@ Singleton {
     function writeState() {
         view.setText(JSON.stringify({
             tab: root.tab, codeDir: root.codeDir, models: root.models, reasoning: root.reasoning, codeMode: root.codeMode,
-            engines: root.engines, shown: root.shown, screen: root.screen ? root.screen.name : "",
+            engines: root.engines, commandHistory: root.commandHistory, shown: root.shown, screen: root.screen ? root.screen.name : "",
             sessions: { chat: root.chat.sessionId, code: root.code.sessionId,
                         chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId }
         }, null, 2) + "\n")
@@ -707,6 +716,8 @@ Singleton {
             try { d = JSON.parse(text()) } catch (e) { return }
             if (root.tabs.indexOf(d.tab) !== -1) root.tab = d.tab
             if (typeof d.codeDir === "string" && d.codeDir !== "") root.codeDir = d.codeDir
+            if (Array.isArray(d.commandHistory))
+                root.commandHistory = d.commandHistory.filter(c => typeof c === "string" && c.trim() !== "").slice(0, 100)
             if (d.models && typeof d.models === "object")
                 root.models = Object.assign({ chat: "", code: "", chatCodex: "", codeCodex: "" }, d.models)
             if (d.reasoning && typeof d.reasoning === "object")

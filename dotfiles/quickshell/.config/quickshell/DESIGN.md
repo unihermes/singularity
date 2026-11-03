@@ -614,7 +614,9 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
 - **Shell commands:** a message starting with `!` runs in the tab's folder
   without an AI turn, for either engine. Its command, output and exit status
   appear as a tool row; Stop cancels it. Results accompany the next AI message.
-  Attachments stay queued for that message. Commands run as the user, independently
+  Typing `!` offers recent and common commands; ↑↓ selects and Tab or a click
+  fills the box, while Enter runs the text in it. Recent commands persist across
+  sidebar reloads. Attachments stay queued for that message. Commands run as the user, independently
   of the AI's permission mode, and each starts a fresh shell.
 - **Bar module** (key `claude`, the old module's, so a saved hide holds): the
   robot glyph, a spinner while it works, accent while a prompt waits or a
