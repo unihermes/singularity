@@ -282,29 +282,14 @@ PanelWindow {
 
             FlyoutDivider {}
 
-            Row {
-                anchors.right: parent.right
-                spacing: Theme.spaceXs
-                FlyoutChip {
-                    icon: "󰝒"
-                    text: "New"
-                    enabled: !root.session.empty || root.session.sessionId !== ""
-                    onClicked: root.startOver()
-                }
-                FlyoutChip {
-                    icon: "󰋚"
-                    text: "History"
-                    selected: root.view === "past"
-                    onClicked: root.view = root.view === "past" ? "talk" : "past"
-                }
-            }
-
             AiComposer {
                 id: composer
                 session: root.session
+                historyShown: root.view === "past"
                 onEscapePressed: Ai.shown = false
                 onNewConversation: root.startOver()
                 onShowPast: root.view = "past"
+                onTogglePast: root.view = root.view === "past" ? "talk" : "past"
             }
         }
     }

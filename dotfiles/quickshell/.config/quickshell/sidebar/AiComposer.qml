@@ -22,6 +22,8 @@ Column {
     signal newConversation()
     // /past
     signal showPast()
+    signal togglePast()
+    property bool historyShown: false
 
     property bool attaching: false
     property bool choosingModel: false
@@ -283,32 +285,56 @@ Column {
         ScrollBar { flickable: parent; anchors.right: parent.right }
     }
 
-    // what it's doing, or how full the context is
-    Text {
+    // Status and conversation actions share the line above the input.
+    Item {
         width: parent.width
-        visible: text !== ""
-        elide: Text.ElideRight
-        text: root.session.asks.length > 0 ? "Waiting for you"
-            : root.session.busy ? root.session.oneLine(root.session.activity) || "Working"
-            : root.session.contextWindow > 0 && root.session.contextUsed >= root.session.contextWindow / 100
-                ? Math.round(root.session.contextUsed / root.session.contextWindow * 100) + "% of context"
-                : ""
-        color: root.session.busy ? Theme.text : Theme.subtext
-        font.family: Theme.fontText
-        font.weight: Theme.weightBody
-        font.pixelSize: Theme.fontCaption
-        opacity: root.session.busy ? pulse.value : 1
+        height: actions.height
+        Text {
+            anchors.left: parent.left
+            anchors.right: actions.left
+            anchors.rightMargin: Theme.spaceXs
+            anchors.verticalCenter: parent.verticalCenter
+            elide: Text.ElideRight
+            text: root.session.asks.length > 0 ? "Waiting for you"
+                : root.session.busy ? root.session.oneLine(root.session.activity) || "Working"
+                : root.session.contextWindow > 0 && root.session.contextUsed >= root.session.contextWindow / 100
+                    ? Math.round(root.session.contextUsed / root.session.contextWindow * 100) + "% of context"
+                    : ""
+            color: root.session.busy ? Theme.text : Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontCaption
+            opacity: root.session.busy ? pulse.value : 1
 
-        QtObject {
-            id: pulse
-            property real value: 1
+            QtObject {
+                id: pulse
+                property real value: 1
+            }
+            SequentialAnimation {
+                running: root.session.busy
+                loops: Animation.Infinite
+                onRunningChanged: if (!running) pulse.value = 1
+                NumberAnimation { target: pulse; property: "value"; to: 0.45; duration: Theme.durPulse }
+                NumberAnimation { target: pulse; property: "value"; to: 1; duration: Theme.durPulse }
+            }
         }
-        SequentialAnimation {
-            running: root.session.busy
-            loops: Animation.Infinite
-            onRunningChanged: if (!running) pulse.value = 1
-            NumberAnimation { target: pulse; property: "value"; to: 0.45; duration: Theme.durPulse }
-            NumberAnimation { target: pulse; property: "value"; to: 1; duration: Theme.durPulse }
+
+        Row {
+            id: actions
+            anchors.right: parent.right
+            spacing: Theme.spaceXs
+            FlyoutChip {
+                icon: "󰝒"
+                text: "New"
+                enabled: !root.session.empty || root.session.sessionId !== ""
+                onClicked: root.newConversation()
+            }
+            FlyoutChip {
+                icon: "󰋚"
+                text: "History"
+                selected: root.historyShown
+                onClicked: root.togglePast()
+            }
         }
     }
 
