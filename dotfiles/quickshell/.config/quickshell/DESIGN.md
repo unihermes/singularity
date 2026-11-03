@@ -772,7 +772,9 @@ Panels > Desktop Widgets.
   for the keyboard only from the press on). New ones also come from the
   desktop's menu (where the click was) and edit mode's shelf (the middle).
   Their places live in notes.json with the tabs. The first starts a gap
-  under the stats.
+  under the stats. Notes support bold, italic and struck text; the Notes
+  window has formatting chips and both editors accept Ctrl+B, Ctrl+I and
+  Ctrl+Shift+X. Existing plain notes are converted when edited.
 - **System info:** a head of the distro's mark in the accent beside the
   host (bold) and a dimmed line, over a hairline rule. Medium: the system
   and kernel under the host, then uptime, packages and local IP as three

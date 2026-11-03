@@ -30,8 +30,28 @@ Singleton {
     signal edited(int index)
 
     function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }
-    function blank(title) { return { id: newId(), title: title, text: "", desk: null } }
+    function blank(title) { return { id: newId(), title: title, text: "", format: "html", desk: null } }
     function indexOf(id) { return tabs.findIndex(t => t.id === id) }
+
+    function editorText(tab) {
+        if (!tab) return ""
+        if (tab.format === "html") return tab.text
+        return tab.text.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/\n/g, "<br>")
+    }
+
+    function hasContent(tab) {
+        if (!tab) return false
+        const text = tab.format === "html" ? tab.text.replace(/<[^>]*>/g, "") : tab.text
+        return text.replace(/&nbsp;|&#160;/gi, " ").trim() !== ""
+    }
+
+    function toggleFormat(editor, kind) {
+        if (kind === "bold") editor.cursorSelection.font.bold = !editor.cursorSelection.font.bold
+        else if (kind === "italic") editor.cursorSelection.font.italic = !editor.cursorSelection.font.italic
+        else if (kind === "strikeout") editor.cursorSelection.font.strikeout = !editor.cursorSelection.font.strikeout
+        editor.forceActiveFocus()
+    }
 
     // a copy of tab i with fields changed, put back so bindings notice
     function patch(i, fields) {
@@ -45,8 +65,9 @@ Singleton {
     }
 
     function setText(i, text) {
-        if (!tabs[i] || tabs[i].text === text) return
+        if (!tabs[i] || (tabs[i].text === text && tabs[i].format === "html")) return
         tabs[i].text = text
+        tabs[i].format = "html"
         saveTimer.restart()
         edited(i)
     }
@@ -160,6 +181,7 @@ Singleton {
             const t = (d.tabs || []).filter(x => x && typeof x.title === "string")
                 .map(x => ({ id: typeof x.id === "string" && x.id !== "" ? x.id : root.newId(),
                              title: x.title, text: typeof x.text === "string" ? x.text : "",
+                             format: x.format === "html" ? "html" : "plain",
                              desk: x.desk ? root.deskOf(x.desk) : null }))
             if (t.length === 0) return
             const fresh = (d.tabs || []).some(x => x && typeof x.title === "string" && !x.id)

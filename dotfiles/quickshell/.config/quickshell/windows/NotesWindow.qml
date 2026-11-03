@@ -11,6 +11,8 @@
 //   󰅖  on the open tab    delete it; a second click confirms when it has text
 //   Ctrl+T / Ctrl+W       new tab / delete the open one
 //   Ctrl+Tab, Ctrl+PgDn   next tab (Shift / PgUp for the previous)
+//   Ctrl+B / Ctrl+I       bold / italic selection
+//   Ctrl+Shift+X          strike through selection
 //   Escape                hide the window
 
 import Quickshell
@@ -42,9 +44,10 @@ FloatingWindow {
     property int renaming: -1
     // the tab whose × has been clicked once, waiting for the second
     property int armed: -1
+    property bool loadingNote: false
 
     function removeTab(i) {
-        if (Notes.tabs[i].text.trim() !== "" && armed !== i) {
+        if (Notes.hasContent(Notes.tabs[i]) && armed !== i) {
             armed = i
             disarm.restart()
             return
@@ -63,7 +66,11 @@ FloatingWindow {
     // doesn't fight a binding
     function loadCurrent() {
         const t = Notes.tabs[Notes.current]
-        if (t && editor.text !== t.text) editor.text = t.text
+        if (t && editor.text !== Notes.editorText(t)) {
+            loadingNote = true
+            editor.text = Notes.editorText(t)
+            loadingNote = false
+        }
         armed = -1
     }
     Connections {
@@ -242,10 +249,22 @@ FloatingWindow {
         width: root.width - Theme.windowPad * 2
         height: root.height - y - Theme.windowPad
 
+        Row {
+            id: formatTools
+            x: Theme.panelPad
+            y: Theme.spaceS
+            spacing: Theme.spaceS
+            FlyoutChip { text: "B"; selected: editor.cursorSelection.font.bold; onClicked: Notes.toggleFormat(editor, "bold") }
+            FlyoutChip { text: "I"; selected: editor.cursorSelection.font.italic; onClicked: Notes.toggleFormat(editor, "italic") }
+            FlyoutChip { text: "S̶"; selected: editor.cursorSelection.font.strikeout; onClicked: Notes.toggleFormat(editor, "strikeout") }
+        }
+
         Flickable {
             id: flick
-            anchors.fill: parent
-            anchors.margins: Theme.panelPad
+            x: Theme.panelPad
+            y: formatTools.y + formatTools.height + Theme.spaceS
+            width: parent.width - Theme.panelPad * 2
+            height: parent.height - y - Theme.panelPad
             contentWidth: width
             contentHeight: editor.implicitHeight
             clip: true
@@ -263,6 +282,7 @@ FloatingWindow {
                 // clicks below the last line still land in the note
                 height: Math.max(implicitHeight, flick.height)
                 wrapMode: TextEdit.Wrap
+                textFormat: TextEdit.RichText
                 selectByMouse: true
                 persistentSelection: true
                 color: Theme.text
@@ -272,11 +292,11 @@ FloatingWindow {
                 font.weight: Theme.weightBody
                 font.pixelSize: Theme.fontBody
 
-                onTextChanged: Notes.setText(Notes.current, text)
+                onTextChanged: if (!root.loadingNote) Notes.setText(Notes.current, text)
                 onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
 
                 Text {
-                    visible: editor.text === ""
+                    visible: editor.length === 0
                     text: "Write something…"
                     color: Theme.textDisabled
                     font: editor.font
@@ -286,7 +306,10 @@ FloatingWindow {
                 Keys.onPressed: event => {
                     const ctrl = event.modifiers & Qt.ControlModifier
                     if (!ctrl) return
-                    if (event.key === Qt.Key_T) Notes.add()
+                    if (event.key === Qt.Key_B) Notes.toggleFormat(editor, "bold")
+                    else if (event.key === Qt.Key_I) Notes.toggleFormat(editor, "italic")
+                    else if (event.key === Qt.Key_X && (event.modifiers & Qt.ShiftModifier)) Notes.toggleFormat(editor, "strikeout")
+                    else if (event.key === Qt.Key_T) Notes.add()
                     else if (event.key === Qt.Key_W) root.removeTab(Notes.current)
                     else if (event.key === Qt.Key_Tab || event.key === Qt.Key_PageDown) Notes.step(1)
                     else if (event.key === Qt.Key_Backtab || event.key === Qt.Key_PageUp) Notes.step(-1)

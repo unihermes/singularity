@@ -23,7 +23,13 @@ WidgetCard {
 
     // set rather than bound, so typing doesn't fight a binding
     // (not while it's going: its tab already gone)
-    function load() { if (index >= 0 && editor && editor.text !== tab.text) editor.text = tab.text }
+    property bool loadingNote: false
+    function load() {
+        if (index < 0 || !editor || editor.text === Notes.editorText(tab)) return
+        loadingNote = true
+        editor.text = Notes.editorText(tab)
+        loadingNote = false
+    }
     onIndexChanged: load()
     Connections {
         target: Notes
@@ -85,6 +91,7 @@ WidgetCard {
             width: flick.width
             height: Math.max(implicitHeight, flick.height)
             wrapMode: TextEdit.Wrap
+            textFormat: TextEdit.RichText
             selectByMouse: true
             color: root.fg
             selectionColor: root.accent
@@ -93,12 +100,20 @@ WidgetCard {
             font.weight: root.weightBody
             font.pixelSize: root.textBody
 
-            onTextChanged: if (activeFocus) Notes.setText(root.index, text)
+            onTextChanged: if (activeFocus && !root.loadingNote) Notes.setText(root.index, text)
             onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
             Keys.onEscapePressed: { focus = false; root.letGo() }
+            Keys.onPressed: event => {
+                if (!(event.modifiers & Qt.ControlModifier)) return
+                if (event.key === Qt.Key_B) Notes.toggleFormat(editor, "bold")
+                else if (event.key === Qt.Key_I) Notes.toggleFormat(editor, "italic")
+                else if (event.key === Qt.Key_X && (event.modifiers & Qt.ShiftModifier)) Notes.toggleFormat(editor, "strikeout")
+                else return
+                event.accepted = true
+            }
 
             Text {
-                visible: editor.text === "" && !editor.activeFocus
+                visible: editor.length === 0 && !editor.activeFocus
                 text: "Click to write…"
                 color: root.fgFaint
                 font: editor.font
