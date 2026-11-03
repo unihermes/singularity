@@ -137,14 +137,29 @@ Item {
     PanelFrame {
         width: Theme.fit(720)
         height: body.implicitHeight
-        // under the Control Centre button: from its left on the left of the
-        // screen, from its right on the right, centred on it between
+        // Follow the Control Centre's anchor and its grown bar group.
         readonly property real anchorX: view.launcher.controlX >= 0 ? view.launcher.controlX : Theme.fs(20)
-        readonly property real wantX: anchorX < parent.width / 3 ? anchorX - Theme.fs(20)
-            : anchorX > parent.width * 2 / 3 ? anchorX - width + Theme.fs(20)
-            : anchorX - width / 2
-        x: Math.round(Math.max(Theme.edgeMargin, Math.min(parent.width - width - Theme.edgeMargin, wantX)))
-        y: view.launcher.atBottom ? parent.height - Theme.flyoutOffset - height : Theme.flyoutOffset
+        readonly property var controlGroup: {
+            var bar = view.launcher.scope.barWindow
+            var button = bar ? bar.widgetItem("controlcentre") : null
+            if (!Theme.flyoutGrown || !button) return null
+            var section = bar.sectionOf(button)
+            if (section === "") return null
+            return bar.groupRect(section)
+        }
+        x: {
+            var free = Math.max(0, Math.min(anchorX - width / 2, parent.width - width))
+            if (!controlGroup) return Math.round(free)
+            var near = Theme.channelFillet + Math.max(Theme.groupRadius, Theme.panelFrameRadius)
+            if (Math.abs(free - controlGroup.x) < near) return controlGroup.x
+            if (Math.abs(free + width - controlGroup.x - controlGroup.w) < near)
+                return controlGroup.x + controlGroup.w - width
+            return Math.round(free)
+        }
+        y: controlGroup
+            ? (view.launcher.atBottom ? parent.height - view.launcher.scope.barWindow.implicitHeight + controlGroup.y - height
+                : controlGroup.y + controlGroup.h)
+            : (view.launcher.atBottom ? parent.height - Theme.flyoutOffset - height : Theme.flyoutOffset)
 
         Absorber {}
 
