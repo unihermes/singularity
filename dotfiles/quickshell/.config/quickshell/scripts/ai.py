@@ -24,6 +24,7 @@ import base64
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -73,7 +74,13 @@ def shot_file():
 def shot(kind, output):
     args = []
     if kind == "area":
-        r = run(["slurp"], text=True)
+        selector = subprocess.Popen(["slurp"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        previous = signal.signal(signal.SIGTERM, lambda *_: selector.terminate())
+        try:
+            stdout, _ = selector.communicate()
+        finally:
+            signal.signal(signal.SIGTERM, previous)
+        r = subprocess.CompletedProcess(selector.args, selector.returncode, stdout)
         if r.returncode != 0 or not r.stdout.strip():
             return None
         geo = r.stdout.strip()

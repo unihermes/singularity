@@ -191,6 +191,15 @@ Singleton {
             Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml"), "toggle", screen ? screen.name : ""])
             return
         }
+        if (capturing) {
+            shotDelay.stop()
+            if (shotProc.running) shotProc.signal(15)
+            capturing = false
+            root.screen = screen
+            used = true
+            shown = true
+            return
+        }
         if (shown && root.screen === screen) { shown = false; return }
         root.screen = screen
         used = true
