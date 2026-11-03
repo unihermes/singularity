@@ -320,8 +320,12 @@ test('User shell commands start open and agent tool rows start closed', () => {
     for (const engine of ['Claude', 'Codex']) {
         const c = session(engine)
         c.s.Quickshell = { shellPath: p => p }
-        assert.equal(c.s.runCommand('!pwd'), true)
+        c.s.attachments = [{ kind: 'text', text: 'queued', label: 'attachment' }]
+        assert.equal(c.s.send('!pwd'), true)
         assert.equal(c.data[0].open, true)
+        assert.equal(c.s.attachments.length, 1)
+        assert.equal(c.proc.running, false)
+        assert.equal(c.s.commandProc.running, true)
         c.s.commandLine('/project')
         assert.equal(c.data[0].open, true)
         c.s.add({ kind: 'tool', name: 'Bash' })

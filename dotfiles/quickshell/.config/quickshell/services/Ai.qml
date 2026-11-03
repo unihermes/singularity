@@ -467,7 +467,8 @@ Singleton {
         + "it in a window of its own, so keep it self-contained. html is a whole page; scripts from "
         + "cdnjs or jsdelivr load. react is one component, the default export, which can import "
         + "react, recharts and lucide-react, with Tailwind classes available. Use artifacts for "
-        + "substantial standalone content, not for snippets or code meant for a file. To change "
+        + "substantial standalone content, not for snippets or code meant for a file. For mockups, "
+        + "always use self-contained interactive HTML artifacts with working local controls. To change "
         + "one, write it again in full."
     property var artifactQueue: []
     function openArtifact(part, browser) {

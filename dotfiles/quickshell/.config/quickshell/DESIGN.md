@@ -611,6 +611,9 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
   (the one running when left on Default) as a dropdown, Code's mode as a
   chip a click steps through, what it's doing (pulsing) or the context used, Send or
   Stop.
+- **Mockups:** both engines receive the same instruction to return self-contained
+  interactive HTML artifacts; the transcript shows a card that opens a standalone
+  window, opens the browser or copies the source.
 - **Shell commands:** a message starting with `!` runs in the tab's folder
   without an AI turn, for either engine. Its command, output and exit status
   appear in an expanded tool row; a click can collapse it and Stop cancels it. Results accompany the next AI message.
