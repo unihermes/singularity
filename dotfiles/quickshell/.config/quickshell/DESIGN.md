@@ -583,8 +583,8 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
   screenshots small under it and a YOU caption. A NEXT PROMPT rule separates
   turns. Live reasoning, when the engine provides it, sits in smaller muted
   text under a THINKING caption and quiet rail. Assistant messages during a
-  turn read WORKING with a muted rail; only the last message of a completed
-  turn reads FINAL ANSWER with an accent rail. Replies are markdown you can select
+  turn read WORKING with a muted rail; the last message of a completed
+  turn has an accent rail. Replies are markdown you can select
   (`services/Markdown.js`: inline code tinted, tables ruled), each fenced
   block in a darker box of its own with its language and Copy; each
   tool call a quiet line (spinner, tick, ✗; a multi-line command shows

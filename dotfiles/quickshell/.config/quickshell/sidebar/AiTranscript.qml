@@ -473,8 +473,9 @@ Item {
                     spacing: Theme.spaceS
 
                     Text {
-                        text: entry.final ? "FINAL ANSWER" : "WORKING"
-                        color: entry.final ? Theme.accent : Theme.subtext
+                        visible: !entry.final
+                        text: "WORKING"
+                        color: Theme.subtext
                         font.family: Theme.fontText
                         font.weight: Theme.weightBody
                         font.pixelSize: Theme.fontCaption
