@@ -554,7 +554,9 @@ replacing it (`Notifications.stackOf`).
 Built 2026-10-24 (SUPER+I, `sidebar/`, `services/Ai.qml`). Not a flyout: a
 panel down the right edge of the focused screen, under the bar, in the
 panel's frame with sections. It stays out until SUPER+I, its ×, Escape or
-a click off it, the bars included: it runs in its own Quickshell process
+a click off it, the bars included, unless pinned. Pin releases the focus grab
+so other windows can be used while it stays open; explicit close still works.
+It runs in its own Quickshell process
 (`AiHost.qml`), so a shell reload leaves a conversation running and the
 grab can't take the shell's bars in. It slides in from the edge and fades.
 
@@ -567,11 +569,11 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
   Accept edits and Auto writing in the folder, its git directory and the
   network, so they can commit and push; Auto never asking); Chat's
   Codex only reads. The heading reads CODEX while it's on.
-- **Heading** CLAUDE, with
-  past sessions and × as icon buttons, a Reload chip that saves state and reloads
-  the sidebar when all sessions are idle, and a New chat chip while there's a conversation; then Chat
-  and Code as a segmented strip, a ● on a tab with something unread.
-- **Usage** under the heading, then a break: a meter each for the
+- **Heading** CLAUDE or CODEX, with Pin and × for the sidebar. Chat
+  and Code follow as a segmented strip, a ● on a tab with something unread;
+  New, History and Reload actions sit beneath it. Reload saves state and reloads
+  the sidebar when all sessions are idle.
+- **Usage** under the conversation actions: a meter each for the
   five-hour and weekly windows of the tab's engine (Claude's or Codex's), used % and when it
   resets (the time today, the weekday this week, else the date); alert
   colour from 90%. Read by `ai.py usage` (Claude's usage endpoint with

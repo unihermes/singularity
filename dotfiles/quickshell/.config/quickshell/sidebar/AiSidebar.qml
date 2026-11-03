@@ -2,9 +2,8 @@
 // ~/.config/quickshell/sidebar/AiSidebar.qml
 //
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
-// screen, under the bar, out until SUPER+I, its ×, Escape or a click off
-// it (the bars too, as it runs in its own process) puts it away. The plans' limits under the heading
-// (AiUsage), then Chat and Code as tabs over one shape: Code's folder, the
+// screen, under the bar. Pinning keeps it open when clicking elsewhere;
+// SUPER+I, its × and Escape still close it. Chat and Code are tabs over one shape: Code's folder, the
 // conversation or a list in its place (past sessions, folders), a prompt
 // waiting for an answer, and the
 // composer. Files dropped anywhere on it attach to the next message.
@@ -20,9 +19,13 @@ PanelWindow {
 
     readonly property bool open: Ai.shown && !Ai.capturing
     readonly property var session: Ai.current
-    function requestClose() { Ai.shown = false }
+    property bool pinned: false
+    function requestClose() { if (!pinned) Ai.shown = false }
 
-    DismissGrab { panel: root }
+    DismissGrab {
+        panel: root
+        active: root.open && !root.pinned
+    }
 
     // what the middle shows: talk | past | projects
     property string view: "talk"
@@ -135,35 +138,16 @@ PanelWindow {
                 onLabelClicked: Ai.setEngine(Ai.tab, Ai.codex(Ai.tab) ? "claude" : "codex")
             }
 
-            // the plans' limits, then a break before the tabs
-            AiUsage {
-                id: usage
-                visible: hasReading
-            }
-            FlyoutDivider { visible: usage.visible }
-
             Component {
                 id: headControls
                 Row {
                     spacing: Theme.spaceXs
-                    IconButton {
-                        icon: "󰋚"
-                        lit: root.view === "past"
-                        onClicked: root.view = root.view === "past" ? "talk" : "past"
-                    }
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
-                        icon: "󰑓"
-                        text: "Reload"
-                        enabled: !Ai.busy && !Ai.asking
-                        onClicked: Ai.reloadSidebar()
-                    }
-                    FlyoutChip {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: !root.session.empty || root.session.sessionId !== ""
-                        icon: "󰝒"
-                        text: Ai.tab === "chat" ? "New chat" : "New"
-                        onClicked: root.startOver()
+                        icon: "󰐃"
+                        text: root.pinned ? "Pinned" : "Pin"
+                        selected: root.pinned
+                        onClicked: root.pinned = !root.pinned
                     }
                     IconButton {
                         icon: "󰅖"
@@ -178,6 +162,32 @@ PanelWindow {
                     { value: "code", text: "Code" + (Ai.code.unseen && Ai.tab !== "code" ? " ●" : "") }]
                 current: Ai.tab
                 onPicked: v => Ai.setTab(v)
+            }
+
+            Row {
+                spacing: Theme.spaceXs
+                FlyoutChip {
+                    icon: "󰝒"
+                    text: "New"
+                    enabled: !root.session.empty || root.session.sessionId !== ""
+                    onClicked: root.startOver()
+                }
+                FlyoutChip {
+                    icon: "󰋚"
+                    text: "History"
+                    selected: root.view === "past"
+                    onClicked: root.view = root.view === "past" ? "talk" : "past"
+                }
+                FlyoutChip {
+                    icon: "󰑓"
+                    text: "Reload"
+                    enabled: !Ai.busy && !Ai.asking
+                    onClicked: Ai.reloadSidebar()
+                }
+            }
+
+            AiUsage {
+                visible: hasReading
             }
 
             // Code: the folder it works in; a click picks another
