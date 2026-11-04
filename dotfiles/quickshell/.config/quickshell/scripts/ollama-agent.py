@@ -21,8 +21,11 @@ def main():
         path.write_text(json.dumps(catalog()))
         # App and browser tool catalogs overflow the local context and can push
         # the shell tools out of Ollama's prompt. Exclude them for this provider.
+        # Web search is turned off too: Ollama serves it from ollama.com and
+        # answers 401 without an account.
         process = subprocess.Popen(['codex', 'app-server', '-c', 'notify=[]', '-c', 'model_provider="ollama"',
                                 '-c', 'features.apps=false', '-c', 'mcp_servers.node_repl.enabled=false',
+                                '-c', 'web_search="disabled"',
                                 '-c', 'model_catalog_json=' + json.dumps(str(path)),
                                 '-c', 'model_context_window=16384'])
         signal.signal(signal.SIGTERM, lambda *_: process.terminate())
