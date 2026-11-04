@@ -50,6 +50,7 @@ PanelWindow {
         target: Hyprland
         function onRawEvent(event) {
             if (event.name !== "custom" || event.data !== "singularity-click") return
+            console.log("DBG click scratch=" + root.scratchShown + " open=" + root.open + " inside=" + root.pointerInside)
             if (root.scratchShown && root.open && !root.pointerInside) {
                 root.yieldKeyboard = true
                 yieldTimer.restart()
@@ -203,7 +204,11 @@ PanelWindow {
 
             FlyoutHeading {
                 text: Ai.ollama(Ai.tab) ? "OLLAMA" : Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
-                icon: Qt.resolvedUrl(Ai.ollama(Ai.tab) || Ai.codex(Ai.tab) ? "icons/codex.svg" : "icons/claude.svg")
+                icon: Ai.ollama(Ai.tab)
+                    ? Qt.resolvedUrl("icons/ollama.svg")
+                    : Ai.codex(Ai.tab)
+                        ? Qt.resolvedUrl("icons/codex.svg")
+                        : Qt.resolvedUrl("icons/claude.svg")
                 control: headControls
                 labelClickable: Ai.codexAvailable && !root.session.busy
                 onLabelClicked: Ai.cycleEngine(Ai.tab)
