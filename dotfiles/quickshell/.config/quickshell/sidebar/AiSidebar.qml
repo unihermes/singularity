@@ -39,6 +39,12 @@ PanelWindow {
             root.specialShown = shown
         }
     }
+    // Showing the scratchpad drops the sidebar's keyboard focus for a moment,
+    // so the compositor hands it to the scratchpad window instead of the
+    // sidebar keeping it and the first click on that window being a no-op.
+    property bool yieldKeyboard: false
+    onScratchShownChanged: if (scratchShown && open) { yieldKeyboard = true; yieldTimer.restart() }
+    Timer { id: yieldTimer; interval: 150; onTriggered: root.yieldKeyboard = false }
     function requestClose() { if (!pinned && !scratchShown) Ai.shown = false }
 
     DismissGrab {
@@ -65,7 +71,7 @@ PanelWindow {
     exclusiveZone: 0
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: yieldKeyboard ? WlrKeyboardFocus.None : WlrKeyboardFocus.OnDemand
     WlrLayershell.namespace: "singularity-sidebar"
 
     // 0 in, 1 out; slides in from the edge
