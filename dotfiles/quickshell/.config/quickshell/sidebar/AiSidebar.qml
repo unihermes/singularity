@@ -39,11 +39,13 @@ PanelWindow {
             root.specialShown = shown
         }
     }
-    // Showing the scratchpad drops the sidebar's keyboard focus for a moment,
-    // so the compositor hands it to the scratchpad window instead of the
-    // sidebar keeping it and the first click on that window being a no-op.
+    // With the scratchpad up, the sidebar drops its keyboard focus for a
+    // moment when it appears and when the pointer leaves, so the compositor
+    // hands focus to the scratchpad window; otherwise the first click on that
+    // window, still its active one, is a no-op.
     property bool yieldKeyboard: false
-    onScratchShownChanged: if (scratchShown && open) { yieldKeyboard = true; yieldTimer.restart() }
+    function yieldToScratchpad() { if (scratchShown && open) { yieldKeyboard = true; yieldTimer.restart() } }
+    onScratchShownChanged: yieldToScratchpad()
     Timer { id: yieldTimer; interval: 150; onTriggered: root.yieldKeyboard = false }
     function requestClose() { if (!pinned && !scratchShown) Ai.shown = false }
 
@@ -117,6 +119,8 @@ PanelWindow {
         ground: Theme.surface
         opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
         transform: Translate { x: (1 - root.reveal) * Theme.sp(24) }
+
+        HoverHandler { onHoveredChanged: if (!hovered) root.yieldToScratchpad() }
 
         // Escape from anywhere that doesn't take it itself
         focus: true
