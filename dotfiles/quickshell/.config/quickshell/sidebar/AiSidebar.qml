@@ -22,14 +22,13 @@ PanelWindow {
     readonly property bool open: Ai.shown && !Ai.capturing
     readonly property var session: Ai.current
     property bool pinned: false
-    readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
     property var specialShown: ({})
-    readonly property bool scratchShown: {
-        const name = monitor ? monitor.name : ""
+    readonly property bool scratchShown: Hyprland.monitors.values.some(monitor => {
+        const name = monitor.name
         if (name in specialShown) return specialShown[name] === "special:scratchpad"
-        const special = monitor && monitor.lastIpcObject && monitor.lastIpcObject.specialWorkspace
+        const special = monitor.lastIpcObject && monitor.lastIpcObject.specialWorkspace
         return !!special && special.name === "special:scratchpad"
-    }
+    })
     Connections {
         target: Hyprland
         function onRawEvent(event) {
