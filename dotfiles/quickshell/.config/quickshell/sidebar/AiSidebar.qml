@@ -11,6 +11,7 @@
 
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import QtQuick
 import "../services"
 import "../flyouts"
@@ -21,11 +22,29 @@ PanelWindow {
     readonly property bool open: Ai.shown && !Ai.capturing
     readonly property var session: Ai.current
     property bool pinned: false
-    function requestClose() { if (!pinned) Ai.shown = false }
+    readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
+    property var specialShown: ({})
+    readonly property bool scratchShown: {
+        const name = monitor ? monitor.name : ""
+        if (name in specialShown) return specialShown[name] === "special:scratchpad"
+        const special = monitor && monitor.lastIpcObject && monitor.lastIpcObject.specialWorkspace
+        return !!special && special.name === "special:scratchpad"
+    }
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event.name !== "activespecial") return
+            const cut = event.data.lastIndexOf(",")
+            const shown = Object.assign({}, root.specialShown)
+            shown[event.data.slice(cut + 1)] = event.data.slice(0, cut)
+            root.specialShown = shown
+        }
+    }
+    function requestClose() { if (!pinned && !scratchShown) Ai.shown = false }
 
     DismissGrab {
         panel: root
-        active: root.open && !root.pinned
+        active: root.open && !root.pinned && !root.scratchShown
     }
 
     // what the middle shows: talk | past | projects
