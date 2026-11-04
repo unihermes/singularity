@@ -39,14 +39,11 @@ PanelWindow {
             root.specialShown = shown
         }
     }
-    // With the scratchpad up, the sidebar drops its keyboard focus for a
-    // moment when it appears and when the pointer leaves, so the compositor
-    // hands focus to the scratchpad window; otherwise the first click on that
-    // window, still its active one, is a no-op.
-    property bool yieldKeyboard: false
-    function yieldToScratchpad() { if (scratchShown && open) { yieldKeyboard = true; yieldTimer.restart() } }
-    onScratchShownChanged: yieldToScratchpad()
-    Timer { id: yieldTimer; interval: 150; onTriggered: root.yieldKeyboard = false }
+    // With the scratchpad up, the sidebar only keeps the keyboard while the
+    // pointer is over it. The scratchpad window stays Hyprland's active window,
+    // so a click on it is a no-op while a layer surface holds the keyboard.
+    readonly property bool yieldKeyboard: scratchShown && !pointerInside
+    property bool pointerInside: false
     function requestClose() { if (!pinned && !scratchShown) Ai.shown = false }
 
     DismissGrab {
@@ -120,7 +117,7 @@ PanelWindow {
         opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
         transform: Translate { x: (1 - root.reveal) * Theme.sp(24) }
 
-        HoverHandler { onHoveredChanged: if (!hovered) root.yieldToScratchpad() }
+        HoverHandler { onHoveredChanged: root.pointerInside = hovered }
 
         // Escape from anywhere that doesn't take it itself
         focus: true
