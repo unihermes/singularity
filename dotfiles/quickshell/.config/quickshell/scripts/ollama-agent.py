@@ -38,7 +38,7 @@ def main():
                                 '-c', 'features.apps=false',
                                 '-c', 'web_search="disabled"',
                                 '-c', 'model_catalog_json=' + json.dumps(str(path)),
-                                '-c', 'model_context_window=16384', '-c', 'analytics.enabled=false'], env=env)
+                                '-c', 'model_context_window=32768', '-c', 'analytics.enabled=false'], env=env)
         signal.signal(signal.SIGTERM, lambda *_: process.terminate())
         signal.signal(signal.SIGINT, lambda *_: process.terminate())
         return process.wait()

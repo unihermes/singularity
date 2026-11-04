@@ -29,8 +29,8 @@
     "limit": 10000
   },
   "supports_image_detail_original": true,
-  "context_window": 16384,
-  "max_context_window": 16384,
+  "context_window": 32768,
+  "max_context_window": 32768,
   "comp_hash": "3000",
   "effective_context_window_percent": 95,
   "experimental_supported_tools": [],
