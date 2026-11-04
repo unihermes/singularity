@@ -29,14 +29,14 @@ def main():
         path.write_text(json.dumps(catalog()))
         # App tool catalogs overflow the local context and can push the shell
         # tools out of Ollama's prompt, so they stay off for this provider.
-        # Web search stays on: Ollama serves it from ollama.com, so it needs
-        # `ollama signin` and answers 401 without an account.
+        # Web search is turned off too: Ollama serves it from ollama.com and
+        # answers 401 without an account.
         # A Codex home of its own: no ChatGPT login to bill or sync, so nothing
         # leaves the machine, and its threads stay apart from the Codex tab's.
         env = dict(os.environ, CODEX_HOME=codex_home())
         process = subprocess.Popen(['codex', 'app-server', '-c', 'notify=[]', '-c', 'model_provider="ollama"',
                                 '-c', 'features.apps=false',
-                                '-c', 'web_search="live"',
+                                '-c', 'web_search="disabled"',
                                 '-c', 'model_catalog_json=' + json.dumps(str(path)),
                                 '-c', 'model_context_window=16384', '-c', 'analytics.enabled=false'], env=env)
         signal.signal(signal.SIGTERM, lambda *_: process.terminate())
