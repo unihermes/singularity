@@ -39,11 +39,23 @@ PanelWindow {
             root.specialShown = shown
         }
     }
-    // With the scratchpad up, the sidebar only keeps the keyboard while the
-    // pointer is over it. The scratchpad window stays Hyprland's active window,
-    // so a click on it is a no-op while a layer surface holds the keyboard.
-    readonly property bool yieldKeyboard: scratchShown && !pointerInside
+    // With the scratchpad up, the sidebar keeps the keyboard until a click
+    // lands outside it. The scratchpad window stays Hyprland's active window,
+    // so that click is a no-op while a layer surface holds the keyboard; the
+    // sidebar lets go for a moment and the compositor hands the window focus.
+    property bool yieldKeyboard: false
     property bool pointerInside: false
+    Timer { id: yieldTimer; interval: 150; onTriggered: root.yieldKeyboard = false }
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event.name !== "custom" || event.data !== "singularity-click") return
+            if (root.scratchShown && root.open && !root.pointerInside) {
+                root.yieldKeyboard = true
+                yieldTimer.restart()
+            }
+        }
+    }
     function requestClose() { if (!pinned && !scratchShown) Ai.shown = false }
 
     DismissGrab {
