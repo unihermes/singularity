@@ -36,9 +36,9 @@ Item {
         return out.join("<br>")
     }
 
-    readonly property string emptyText: !available ? "Claude Code isn't installed. Install it (the claude-code package) and sign in with `claude` once."
-        : tab === "chat" ? (Ai.codex("chat") ? "Ask Codex anything" : "Ask anything") + ". Attach a screenshot, the clipboard or the selected text with 󰐕 below."
-        : (Ai.codex("code") ? "Codex" : "Claude Code") + " in the folder above. It asks before it runs a command or edits a file, unless you change that under the box."
+    readonly property string emptyText: !available ? (Ai.ollama(tab) || Ai.codex(tab) ? "Codex is required for this engine." : "Claude Code isn't installed. Install it (the claude-code package) and sign in with `claude` once.")
+        : tab === "chat" ? (Ai.ollama("chat") ? "Ask Ollama anything" : Ai.codex("chat") ? "Ask Codex anything" : "Ask anything") + ". Attach a screenshot, the clipboard or the selected text with 󰐕 below."
+        : (Ai.ollama("code") ? "Ollama" : Ai.codex("code") ? "Codex" : "Claude Code") + " in the folder above. It asks before it runs a command or edits a file, unless you change that under the box."
 
     Text {
         visible: root.session.empty

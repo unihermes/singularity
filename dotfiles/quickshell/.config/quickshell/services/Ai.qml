@@ -24,7 +24,7 @@ Singleton {
 
     readonly property bool hosted: Quickshell.env("SINGULARITY_AI_HOST") === "1"
     property var hostStatus: ({})
-    readonly property bool available: probe.found
+    readonly property bool available: ollama(tab) || codex(tab) ? codexAvailable : probe.found
 
     // the sidebar: on which screen, and whether it's out
     property bool shown: false
@@ -40,18 +40,24 @@ Singleton {
     readonly property var tabs: ["chat", "code"]
     readonly property var current: sessionFor(tab)
     function sessionFor(t) {
-        return t === "code" ? (codex("code") ? codeCodex : code)
-            : (codex("chat") ? chatCodex : chat)
+        return ollama(t) ? (t === "code" ? codeOllama : chatOllama)
+            : t === "code" ? (codex(t) ? codeCodex : code) : (codex(t) ? chatCodex : chat)
     }
-    readonly property var all: [chat, code, chatCodex, codeCodex]
+    readonly property var all: [chat, code, chatCodex, codeCodex, chatOllama, codeOllama]
 
-    // Claude or Codex, for Chat and Code
+    // Each tab chooses Claude, Codex or the local Ollama provider.
     property var engines: ({ chat: "claude", code: "claude" })
     function codex(t) { return engines[t] === "codex" }
+    function ollama(t) { return engines[t] === "ollama" }
+    function cycleEngine(t) {
+        var choices = ["claude"].concat(codexAvailable ? ["codex", "ollama"] : [])
+        setEngine(t, choices[(choices.indexOf(engines[t]) + 1) % choices.length])
+        if (ollama(t)) refreshOllama()
+    }
     readonly property bool codexAvailable: codexProbe.found
     onCodexAvailableChanged: if (hosted && codexAvailable && shown) readUsage()
     function setEngine(t, e) {
-        if (!(t in engines) || (e === "codex" && !codexAvailable)) return
+        if (!(t in engines) || (["codex", "ollama"].indexOf(e) !== -1 && !codexAvailable) || ["claude", "codex", "ollama"].indexOf(e) === -1) return
         var o = Object.assign({}, engines)
         o[t] = e
         engines = o
@@ -155,7 +161,7 @@ Singleton {
         { value: "plan", text: "Plan" }, { value: "auto", text: "Auto" }]
     // Codex has no plan mode
     readonly property var codexModeChoices: modeChoices.filter(c => c.value !== "plan")
-    function modesFor(t) { return codex(t) ? codexModeChoices : modeChoices }
+    function modesFor(t) { return codex(t) || ollama(t) ? codexModeChoices : modeChoices }
 
     // Codex models by power tier, newest first within each tier; Default stays first.
     property var codexModels: []
@@ -182,8 +188,20 @@ Singleton {
             } catch (e) {}
         }
     }
-    function modelKey(t) { return codex(t) ? t + "Codex" : t }
-    function modelChoicesFor(t) { return codex(t) ? [{ value: "", text: "Default" }].concat(codexModels) : modelChoices }
+    property var ollamaModels: []
+    function refreshOllama() { if (!ollamaProbe.running) ollamaProbe.running = true }
+    Process {
+        id: ollamaProbe
+        command: ["python3", Quickshell.shellPath("scripts/ollama-models.py")]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try { root.ollamaModels = JSON.parse(text).map(n => ({ value: n, text: n })) }
+                catch (e) { root.ollamaModels = [] }
+            }
+        }
+    }
+    function modelKey(t) { return ollama(t) ? t + "Ollama" : codex(t) ? t + "Codex" : t }
+    function modelChoicesFor(t) { return ollama(t) ? ollamaModels : codex(t) ? [{ value: "", text: "Default" }].concat(codexModels) : modelChoices }
 
     function toggle(screen) {
         if (!hosted) {
@@ -257,6 +275,7 @@ Singleton {
     function modelText(t) {
         var pick = models[modelKey(t)] || ""
         if (pick !== "") return label(modelChoicesFor(t), pick)
+        if (ollama(t)) return sessionFor(t).modelName || (ollamaModels.length ? ollamaModels[0].text : "No local models")
         if (codex(t)) {
             var running = sessionFor(t).modelName
             return running !== "" ? label(codexModels, running) : "Default"
@@ -355,7 +374,7 @@ Singleton {
 
     function listPast() {
         pastLoading = true
-        if (codex(tab)) { past = []; current.listPast(); return }
+        if (codex(tab) || ollama(tab)) { past = []; current.listPast(); return }
         pastProc.command = [py, "sessions", current.cwd]
         pastProc.running = true
     }
@@ -365,7 +384,7 @@ Singleton {
     }
 
     function resume(id) {
-        if (codex(tab)) current.resume(id)
+        if (codex(tab) || ollama(tab)) current.resume(id)
         else resumeIn(current, id)
     }
 
@@ -410,6 +429,7 @@ Singleton {
         if (dir === "" || dir === codeDir) return
         code.reset()
         codeCodex.reset()
+        codeOllama.reset()
         codeDir = dir
         save()
     }
@@ -559,6 +579,25 @@ Singleton {
         onListed: rows => root.tookPast(rows)
     }
 
+    CodexSession {
+        id: chatOllamaSession
+        cwd: root.chatDir
+        local: true
+        readOnly: true
+        modelPick: root.models.chatOllama || (root.ollamaModels.length ? root.ollamaModels[0].value : "")
+        instructions: "You are the chat in the user's desktop sidebar. Replies are markdown in a narrow panel." + root.artifactPrompt
+        onListed: rows => root.tookPast(rows)
+    }
+    CodexSession {
+        id: codeOllamaSession
+        cwd: root.codeDir
+        local: true
+        mode: root.codeMode
+        modelPick: root.models.codeOllama || (root.ollamaModels.length ? root.ollamaModels[0].value : "")
+        instructions: "You are the coding agent in the user's desktop sidebar. Replies are markdown in a narrow panel." + root.artifactPrompt
+        onListed: rows => root.tookPast(rows)
+    }
+
     // Codex's own limit, as it reports it after each reply
     function noteCodexLimit(r) {
         function window(w) {
@@ -569,6 +608,8 @@ Singleton {
         if (primary || secondary) codexUsage = { primary: primary, secondary: secondary }
     }
 
+    readonly property alias chatOllama: chatOllamaSession
+    readonly property alias codeOllama: codeOllamaSession
     readonly property alias chatCodex: chatCodexSession
     readonly property alias codeCodex: codeCodexSession
     readonly property alias chat: chatSession
@@ -582,12 +623,15 @@ Singleton {
         if (ids.chat) resumeIn(chat, ids.chat)
         if (ids.code) resumeIn(code, ids.code)
         // Codex's come back through its own app-server, started for it
+        if (ids.chatOllama) chatOllama.resume(ids.chatOllama)
+        if (ids.codeOllama) codeOllama.resume(ids.codeOllama)
         if (ids.chatCodex) chatCodex.resume(ids.chatCodex)
         if (ids.codeCodex) codeCodex.resume(ids.codeCodex)
     }
 
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", chatDir])
+        if (hosted) refreshOllama()
         if (!hosted) Quickshell.execDetached(["python3", Quickshell.shellPath("scripts/ai_host.py"), Quickshell.shellPath("AiHost.qml")])
     }
     FileView {
@@ -620,8 +664,8 @@ Singleton {
         if (body.length > 160) body = body.slice(0, 157) + "…"
         p.running = false
         p.engine = engine
-        const service = engine === "codex" ? "Codex" : "Claude"
-        const icon = Quickshell.shellPath("sidebar/icons/" + engine + ".svg")
+        const service = engine === "ollama" ? "Ollama" : engine === "codex" ? "Codex" : "Claude"
+        const icon = Quickshell.shellPath("sidebar/icons/" + (engine === "ollama" ? "codex" : engine) + ".svg")
         p.command = ["notify-send", "-a", service, "-i", icon, "-A", "default=Open",
                      "-h", "string:desktop-entry:singularity-sidebar-" + t + "-" + engine,
                      service + " · " + tabNames[t] + ": " + title, body]
@@ -665,6 +709,18 @@ Singleton {
         function onSessionIdChanged() { root.save() }
     }
 
+    Connections {
+        target: root.chatOllama
+        function onTurnEnded() { root.notify("chat", "ollama", "replied", root.chatOllama.lastReply()) }
+        function onAsked(title) { root.notify("chat", "ollama", "waiting for you", title) }
+        function onSessionIdChanged() { root.save() }
+    }
+    Connections {
+        target: root.codeOllama
+        function onTurnEnded() { root.notify("code", "ollama", "done", root.codeOllama.lastReply()) }
+        function onAsked(title) { root.notify("code", "ollama", "waiting for you", title) }
+        function onSessionIdChanged() { root.save() }
+    }
     Connections { target: root.chat; function onSessionIdChanged() { root.save() } }
     Connections { target: root.code; function onSessionIdChanged() { root.save() } }
 
@@ -677,7 +733,8 @@ Singleton {
             tab: root.tab, codeDir: root.codeDir, models: root.models, reasoning: root.reasoning, codeMode: root.codeMode,
             engines: root.engines, commandHistory: root.commandHistory, shown: root.shown, screen: root.screen ? root.screen.name : "",
             sessions: { chat: root.chat.sessionId, code: root.code.sessionId,
-                        chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId }
+                        chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId,
+                        chatOllama: root.chatOllama.sessionId, codeOllama: root.codeOllama.sessionId }
         }, null, 2) + "\n")
     }
 

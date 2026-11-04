@@ -28,6 +28,7 @@ AiSession {
 
     // added to Codex's instructions for a new thread
     property string instructions: ""
+    property bool local: false
     // the Chat tab's: read-only, never asking
     property bool readOnly: false
 
@@ -66,6 +67,10 @@ AiSession {
         text = (text || "").trim()
         if (busy || resuming || commandRunning || (text === "" && attachments.length === 0)) return false
         if (text.startsWith("!")) return runCommand(text)
+        if (root.local && modelPick === "") {
+            add({ kind: "error", text: "No Ollama models found. Start Ollama and download a model, then switch engines to refresh." })
+            return false
+        }
         if (text === "/compact" && attachments.length === 0) {
             if (sessionId === "") return false
             add({ kind: "note", text: "Summarising the conversation…" })
@@ -159,7 +164,7 @@ AiSession {
 
     // this folder's threads, newest first (listed)
     function listPast() {
-        whenReady(() => call("thread/list", { cwd: cwd, sortKey: "updated_at", limit: 50 },
+        whenReady(() => call("thread/list", { cwd: cwd, sortKey: "updated_at", limit: 50, modelProviders: root.local ? ["ollama"] : null },
             r => listed(((r && r.data) || []).map(t => ({
                 id: t.id, title: t.name || t.preview || "Untitled", turns: -1, mtime: t.updatedAt || t.createdAt
             }))), () => listed([])))
@@ -243,7 +248,7 @@ AiSession {
         stdinEnabled: true
         workingDirectory: root.cwd
         // The sidebar owns completion notifications and their Open action.
-        command: ["codex", "app-server", "-c", "notify=[]"]
+        command: ["codex", "app-server", "-c", "notify=[]"].concat(root.local ? ["-c", "model_provider=\"ollama\""] : [])
 
         onStarted: {
             if (root.killing) return

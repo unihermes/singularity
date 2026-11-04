@@ -37,7 +37,7 @@ Column {
     readonly property var ownCommands: [
         { name: "clear", hint: "Start a new conversation" },
         { name: "new", hint: "Start a new conversation" },
-        { name: "model", hint: Ai.codex(Ai.tab) ? Ai.codexModels.map(c => c.value).concat(["default"]).join(", ")
+        { name: "model", hint: Ai.ollama(Ai.tab) ? Ai.ollamaModels.map(c => c.value).join(", ") : Ai.codex(Ai.tab) ? Ai.codexModels.map(c => c.value).concat(["default"]).join(", ")
             : "opus, sonnet, haiku or default", takes: true },
         { name: "mode", hint: "ask, edits, plan or auto", takes: true, tab: "code" },
         { name: "past", hint: "Earlier conversations" },
@@ -100,7 +100,7 @@ Column {
         }
         if (cmd === "model") {
             // Claude's aliases, or one of Codex's by slug or name
-            var pick = Ai.codex(Ai.tab)
+            var pick = Ai.ollama(Ai.tab) ? Ai.ollamaModels.find(c => c.value.toLowerCase() === arg) : Ai.codex(Ai.tab)
                 ? (arg === "default" ? { value: "" } : Ai.codexModels.find(c => c.value.toLowerCase() === arg || c.text.toLowerCase() === arg))
                 : (arg in modelWords ? { value: modelWords[arg] } : null)
             if (pick) {
@@ -414,6 +414,7 @@ Column {
                     width: parent.width
                     elide: Text.ElideRight
                     text: root.session.busy ? "Working…"
+                        : Ai.ollama(Ai.tab) ? "Ask Ollama…"
                         : Ai.tab === "code" ? (Ai.codex("code") ? "Ask Codex…" : "Ask Claude Code…")
                         : root.session.empty ? (Ai.codex("chat") ? "Ask Codex…" : "Ask Claude…") : "Reply…"
                     color: Theme.textDisabled
@@ -475,9 +476,10 @@ Column {
             }
             FlyoutChip {
                 text: Ai.modelText(Ai.tab) + (root.choosingModel ? " ▴" : " ▾")
-                onClicked: { root.choosingModel = !root.choosingModel; root.choosingReasoning = false }
+                onClicked: { if (Ai.ollama(Ai.tab)) Ai.refreshOllama(); root.choosingModel = !root.choosingModel; root.choosingReasoning = false }
             }
             FlyoutChip {
+                visible: !Ai.ollama(Ai.tab)
                 text: "Reasoning: " + (Ai.reasoning[Ai.modelKey(Ai.tab)] || "Default") + " ▾"
                 enabled: !root.session.busy
                 onClicked: { root.choosingReasoning = !root.choosingReasoning; root.choosingModel = false }

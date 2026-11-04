@@ -29,7 +29,7 @@ Column {
     // the engine on this tab: Codex's windows or Claude's
     readonly property var codexLimits: Ai.codexUsage || ({})
     readonly property bool codex: Ai.codex(Ai.tab)
-    readonly property bool hasReading: codex ? Ai.codexUsage !== null : Ai.fiveHour >= 0 || Ai.sevenDay >= 0
+    readonly property bool hasReading: !Ai.ollama(Ai.tab) && (codex ? Ai.codexUsage !== null : Ai.fiveHour >= 0 || Ai.sevenDay >= 0)
 
     Repeater {
         model: root.codex ? [

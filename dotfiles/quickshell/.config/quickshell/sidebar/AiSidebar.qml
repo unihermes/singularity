@@ -128,7 +128,7 @@ PanelWindow {
             sequence: "Ctrl+M"
             context: Qt.WindowShortcut
             enabled: root.open
-            onActivated: Ai.setEngine(Ai.tab, Ai.codex(Ai.tab) ? "claude" : "codex")
+            onActivated: Ai.cycleEngine(Ai.tab)
         }
 
         Absorber {}
@@ -165,11 +165,11 @@ PanelWindow {
             }
 
             FlyoutHeading {
-                text: Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
-                icon: Qt.resolvedUrl(Ai.codex(Ai.tab) ? "icons/codex.svg" : "icons/claude.svg")
+                text: Ai.ollama(Ai.tab) ? "OLLAMA" : Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
+                icon: Qt.resolvedUrl(Ai.ollama(Ai.tab) || Ai.codex(Ai.tab) ? "icons/codex.svg" : "icons/claude.svg")
                 control: headControls
                 labelClickable: Ai.codexAvailable && !root.session.busy
-                onLabelClicked: Ai.setEngine(Ai.tab, Ai.codex(Ai.tab) ? "claude" : "codex")
+                onLabelClicked: Ai.cycleEngine(Ai.tab)
             }
 
             Component {
@@ -199,8 +199,8 @@ PanelWindow {
 
             FlyoutSegmented {
                 model: [
-                    { value: "chat", text: "Chat" + (Ai.chat.unseen && Ai.tab !== "chat" ? " ●" : "") },
-                    { value: "code", text: "Code" + (Ai.code.unseen && Ai.tab !== "code" ? " ●" : "") }]
+                    { value: "chat", text: "Chat" + ((Ai.chat.unseen || Ai.chatCodex.unseen || Ai.chatOllama.unseen) && Ai.tab !== "chat" ? " ●" : "") },
+                    { value: "code", text: "Code" + ((Ai.code.unseen || Ai.codeCodex.unseen || Ai.codeOllama.unseen) && Ai.tab !== "code" ? " ●" : "") }]
                 current: Ai.tab
                 onPicked: v => Ai.setTab(v)
             }

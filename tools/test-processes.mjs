@@ -18,6 +18,7 @@ test('Sidebar reload waits for saved state and excludes active sessions and fail
             codeMode: 'auto', engines: { code: 'codex' }, shown: true, screen: { name: 'DP-1' },
             chat: { sessionId: 'chat' }, code: { sessionId: 'code' },
             chatCodex: { sessionId: 'chatCodex' }, codeCodex: { sessionId: 'codeCodex' },
+            chatOllama: { sessionId: 'chatOllama' }, codeOllama: { sessionId: 'codeOllama' },
             saveTimer: { stop() { events.push('stop timer') } },
             view: {
                 waitForJob() { events.push('wait') },
@@ -40,7 +41,7 @@ test('Sidebar reload waits for saved state and excludes active sessions and fail
             assert.equal(saved.shown, true)
             assert.equal(saved.screen, 'DP-1')
             assert.equal(saved.models.codeCodex, 'gpt-6-astra')
-            assert.deepEqual(saved.sessions, { chat: 'chat', code: 'code', chatCodex: 'chatCodex', codeCodex: 'codeCodex' })
+            assert.deepEqual(saved.sessions, { chat: 'chat', code: 'code', chatCodex: 'chatCodex', codeCodex: 'codeCodex', chatOllama: 'chatOllama', codeOllama: 'codeOllama' })
         }
     }
 })
@@ -168,6 +169,14 @@ function session(engine) {
     const started = handler(process, 'onStarted', s)
     return { s, data, writes, signals, events, proc, read: value => read(JSON.stringify(value)), exit, started }
 }
+
+test('Ollama refuses to start a turn without an installed model', () => {
+    const c = session('Codex')
+    c.s.local = true
+    assert.equal(c.s.send('hello'), false)
+    assert.match(c.data[0].text, /No Ollama models found/)
+    assert.equal(c.proc.running, false)
+})
 
 test('Claude reset/resume ignores late output and old startup, then sends queued input to the resumed process', () => {
     const c = session('Claude')
