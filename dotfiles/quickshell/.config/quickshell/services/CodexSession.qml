@@ -248,7 +248,8 @@ AiSession {
         stdinEnabled: true
         workingDirectory: root.cwd
         // The sidebar owns completion notifications and their Open action.
-        command: ["codex", "app-server", "-c", "notify=[]"].concat(root.local ? ["-c", "model_provider=\"ollama\""] : [])
+        command: root.local ? ["python3", Quickshell.shellPath("scripts/ollama-agent.py")]
+            : ["codex", "app-server", "-c", "notify=[]"]
 
         onStarted: {
             if (root.killing) return
