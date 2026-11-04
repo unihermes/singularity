@@ -665,7 +665,7 @@ Singleton {
         p.running = false
         p.engine = engine
         const service = engine === "ollama" ? "Ollama" : engine === "codex" ? "Codex" : "Claude"
-        const icon = Quickshell.shellPath("sidebar/icons/" + (engine === "ollama" ? "codex" : engine) + ".svg")
+        const icon = Quickshell.shellPath("sidebar/icons/" + engine + ".svg")
         p.command = ["notify-send", "-a", service, "-i", icon, "-A", "default=Open",
                      "-h", "string:desktop-entry:singularity-sidebar-" + t + "-" + engine,
                      service + " · " + tabNames[t] + ": " + title, body]
