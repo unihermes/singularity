@@ -321,7 +321,7 @@ Column {
                 { text: "Widgets", page: "widgets" },
             ].concat(PpdProfile.profile === "" ? [] : [{
                 text: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text,
-                page: "power" }])
+                page: "", profile: true }])
             Rectangle {
                 required property var modelData
                 width: (pages.width - pages.spacing * (pages.children.length - 2)) / (pages.children.length - 1)
@@ -331,20 +331,37 @@ Column {
                 border.width: 1
                 border.color: Theme.stroke
                 Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
-                Text {
+                Row {
                     anchors.centerIn: parent
-                    text: parent.modelData.text
-                    color: Theme.textStrong
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightStrong
-                    font.pixelSize: Theme.fontBody
+                    spacing: Theme.spaceS
+                    Text {
+                        visible: parent.parent.modelData.profile === true
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "󰓅"
+                        color: Theme.textStrong
+                        font.family: Theme.fontIcon
+                        font.pixelSize: Theme.fontIconSize
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: parent.parent.modelData.text
+                        color: Theme.textStrong
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightStrong
+                        font.pixelSize: Theme.fontBody
+                    }
                 }
                 MouseArea {
                     id: pillMouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.cc.page = parent.modelData.page
+                    // the power pill steps to the next profile, as the tile did
+                    onClicked: {
+                        if (parent.modelData.profile)
+                            PpdProfile.set(root.cc.nextOf(PpdProfile.choices.map(c => c.value), PpdProfile.profile))
+                        else root.cc.page = parent.modelData.page
+                    }
                 }
             }
         }
