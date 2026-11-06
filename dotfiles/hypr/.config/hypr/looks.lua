@@ -183,6 +183,8 @@ animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowS
 -- layers (flyouts) faster than global, fading
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
+-- A short, even fade lets the incoming wallpaper blend over the old one.
+animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "linear" })
 -- the shell's surfaces blur what's behind (Glass, See-through);
 -- ignore_alpha leaves fully transparent parts unblurred. Overlays on a
 -- display scaled under 1 are "unblurred-..." (OverlayWindow.qml), outside it
