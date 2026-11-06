@@ -9,6 +9,22 @@ shell.
 Mockups are self-contained interactive HTML artifacts (see `AGENTS.md`). Never
 commit them or their helper files.
 
+## Default: keep it light
+
+Match the earlier artifacts (Launcher directions, Control Centre concept): one
+small file, about 6-12 KB, built in one pass.
+
+- Shell palette and frame as plain hex values copied from `qs ipc call theme css`,
+  the mono font, the two-line channel frame, real sizes for rows and tiles.
+- One screen at a time. No wallpaper image, no drawn bar, no embedded fonts or
+  images, no per-page notes, no headless screenshot loop.
+- A handful of choice rows (one per element, any combination works), working
+  toggles and sliders, a "Copy picks" button.
+- Unicode symbols for icons; skip any that show as boxes.
+- One syntax check, then send it. Subpages come after a layout is picked.
+
+Go to the full high-fidelity process below only when asked for it.
+
 ## Quick recipe (for local models such as Ollama)
 
 The sidebar's Ollama models read this section only. Do these in order and
