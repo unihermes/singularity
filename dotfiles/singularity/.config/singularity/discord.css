@@ -305,7 +305,7 @@ section.title_z_gUBg, .header_XFjmsP {
   border: var(--n-edge-w) solid var(--n-section-line) !important;
   border-radius: var(--n-radius-section) !important;
   margin: 0 calc(var(--n-gap) + var(--n-depth)) !important;
-  bottom: calc(var(--n-gap) + var(--n-depth)) !important;
+  bottom: calc(2 * var(--n-gap) + 2 * var(--n-depth) + 4px) !important;
 }
 
 /* headings: the mark, caps and colour of the shell's */
