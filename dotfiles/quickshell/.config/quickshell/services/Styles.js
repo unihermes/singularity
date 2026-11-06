@@ -101,7 +101,7 @@ var styles = {
             barHeight: 28, barIconSize: 16, modulePad: 5, windowIconSize: 22,
             workspaceStyle: "dots", windowStyle: "icons", clockStyle: "long", launcherLayout: "spotlight",
             notifStyle: "compact", altTabStyle: "previews", overviewLayout: "strip", overviewBackdrop: "clear",
-            powerStyle: "full", windowAnim: "zoom", windowRounding: "own", windowRadius: 12,
+            powerStyle: "full", windowAnim: "zoom",
         },
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
         options: [

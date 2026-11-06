@@ -194,9 +194,9 @@ FlyoutPanel {
 
         IconButton {
             icon: "󰍉"
-            implicitWidth: Theme.controlSize + Theme.spaceS
-            implicitHeight: Theme.controlSize + Theme.spaceS
-            glyphSize: Theme.fontIconSize + Theme.spaceS
+            implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
+            implicitHeight: implicitWidth
+            glyphSize: Theme.glass ? Theme.fontIconSize : Theme.fontIconSize + Theme.spaceS
             onClicked: {
                 controlCentre.searchOpen = !controlCentre.searchOpen
                 if (controlCentre.searchOpen) Qt.callLater(appSearch.forceFocus)
@@ -205,16 +205,16 @@ FlyoutPanel {
         }
         IconButton {
             icon: "󰌾"
-            implicitWidth: Theme.controlSize + Theme.spaceS
-            implicitHeight: Theme.controlSize + Theme.spaceS
-            glyphSize: Theme.fontIconSize + Theme.spaceS
+            implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
+            implicitHeight: implicitWidth
+            glyphSize: Theme.glass ? Theme.fontIconSize : Theme.fontIconSize + Theme.spaceS
             onClicked: controlCentre.run("lock")
         }
         IconButton {
             icon: "󰐥"
-            implicitWidth: Theme.controlSize + Theme.spaceS
-            implicitHeight: Theme.controlSize + Theme.spaceS
-            glyphSize: Theme.fontIconSize + Theme.spaceS
+            implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
+            implicitHeight: implicitWidth
+            glyphSize: Theme.glass ? Theme.fontIconSize : Theme.fontIconSize + Theme.spaceS
             onClicked: controlCentre.page = "power"
         }
     }
@@ -441,25 +441,26 @@ FlyoutPanel {
         }
     }
 
-    FlyoutDivider { visible: controlCentre.home && !controlCentre.searching }
+    FlyoutDivider { visible: controlCentre.home && !controlCentre.searching && !Theme.glass }
 
     // the screen tools, then the windows
+    readonly property var toolActions: [
+        { icon: "󰹑", act: "screenshot", name: "Screenshot" },
+        { icon: "󰈊", act: "colourpick", name: "Colour picker" },
+        { icon: "󰊄", act: "copytext", name: "Copy text" },
+    ].concat(!Recorder.available ? []
+        : [{ icon: Recorder.recording ? "󰓛" : "󰑊", act: "record", name: Recorder.recording ? "Stop recording" : "Record" }]
+    ).concat([
+        { icon: "󰒓", act: "settings", name: "Settings" },
+        { icon: "󰍛", act: "system", name: "System" },
+        { icon: "󰌌", act: "keybinds", name: "Keybinds" },
+    ])
     Row {
         id: toolsRow
-        visible: controlCentre.home && !controlCentre.searching
+        visible: controlCentre.home && !controlCentre.searching && !Theme.glass
         width: parent.width
         spacing: Theme.spaceS
-        readonly property var actions: [
-            { icon: "󰹑", act: "screenshot" },
-            { icon: "󰈊", act: "colourpick" },
-            { icon: "󰊄", act: "copytext" },
-        ].concat(!Recorder.available ? []
-            : [{ icon: Recorder.recording ? "󰓛" : "󰑊", act: "record" }]
-        ).concat([
-            { icon: "󰒓", act: "settings" },
-            { icon: "󰍛", act: "system" },
-            { icon: "󰌌", act: "keybinds" },
-        ])
+        readonly property var actions: controlCentre.toolActions
 
         Repeater {
             model: toolsRow.actions

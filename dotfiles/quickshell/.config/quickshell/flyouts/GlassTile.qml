@@ -25,8 +25,8 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
     GlassDot {
-        x: Theme.spaceL + 2
-        y: Theme.spaceL + 2
+        x: Theme.spaceL
+        y: Theme.spaceL
         icon: root.icon
         lit: root.lit
         usable: root.usable
@@ -34,7 +34,7 @@ Rectangle {
 
     Column {
         anchors.left: parent.left
-        anchors.leftMargin: Theme.spaceL + 4
+        anchors.leftMargin: Theme.spaceL + 2
         anchors.right: parent.right
         anchors.rightMargin: Theme.spaceL
         anchors.bottom: parent.bottom

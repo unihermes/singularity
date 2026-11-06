@@ -19,7 +19,7 @@ Column {
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool btOn: !!bar && bar.btAdapterOn(adapter)
     readonly property real cell: (width - spacing) / 2
-    readonly property int tileH: Theme.fs(78)
+    readonly property int tileH: Theme.fs(92)
 
     width: parent.width
     spacing: Theme.spaceL
@@ -97,8 +97,8 @@ Column {
             Column {
                 anchors.fill: parent
                 anchors.margins: Theme.spaceL
-                spacing: Theme.spaceS
-                topPadding: Theme.spaceS
+                // the rows spread down the card
+                spacing: Math.max(Theme.spaceS, (height - visibleChildren.length * Theme.fs(38)) / Math.max(1, visibleChildren.length - 1))
 
                 Link {
                     icon: "󰤨"
@@ -310,25 +310,63 @@ Column {
         }
     }
 
-    // the pages
+    // the pages, as capsules
+    Row {
+        id: pages
+        width: parent.width
+        spacing: Theme.spaceM
+        Repeater {
+            model: [
+                { text: "Appearance", page: "appearance" },
+                { text: "Widgets", page: "widgets" },
+            ].concat(PpdProfile.profile === "" ? [] : [{
+                text: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text,
+                page: "power" }])
+            Rectangle {
+                required property var modelData
+                width: (pages.width - pages.spacing * (pages.children.length - 2)) / (pages.children.length - 1)
+                height: Theme.fs(32)
+                radius: height / 2
+                color: pillMouse.containsMouse ? Theme.washActive : Theme.washHover
+                border.width: 1
+                border.color: Theme.stroke
+                Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
+                Text {
+                    anchors.centerIn: parent
+                    text: parent.modelData.text
+                    color: Theme.textStrong
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightStrong
+                    font.pixelSize: Theme.fontBody
+                }
+                MouseArea {
+                    id: pillMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.cc.page = parent.modelData.page
+                }
+            }
+        }
+    }
+
+    // the tools, as round buttons spread along the foot
     Row {
         width: parent.width
-        spacing: Theme.spaceS
-        FlyoutChip {
-            width: (parent.width - Theme.spaceS * 2) / 3
-            text: "Appearance"
-            onClicked: root.cc.page = "appearance"
-        }
-        FlyoutChip {
-            width: (parent.width - Theme.spaceS * 2) / 3
-            text: "Widgets"
-            onClicked: root.cc.page = "widgets"
-        }
-        FlyoutChip {
-            visible: PpdProfile.profile !== ""
-            width: (parent.width - Theme.spaceS * 2) / 3
-            text: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text
-            onClicked: root.cc.page = "power"
+        readonly property var acts: root.cc.toolActions
+        spacing: (width - acts.length * Theme.fs(34)) / Math.max(1, acts.length - 1)
+        Repeater {
+            model: parent.acts
+            GlassDot {
+                required property var modelData
+                icon: modelData.icon
+                lit: modelData.act === "record" && Recorder.recording
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.cc.run(parent.modelData.act)
+                }
+            }
         }
     }
 }

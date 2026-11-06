@@ -105,7 +105,7 @@ comparison tables below describe the original five styles.
   connectivity card (Wi-Fi, Bluetooth, Airplane as round switches; the label opens
   the module's flyout) beside Quiet and Night Light, Keep Awake and Game Mode
   tiles, thick Display (when there's a backlight) and Sound capsules, a
-  now-playing card and the pages as pills. The other styles keep the QuickTile grid.
+  now-playing card, the pages as capsules and the tools as round buttons. The other styles keep the QuickTile grid.
 - Glass blurs harder (Hyprland blur 22 px, 3 passes, vibrancy 0.25, via the
   `blur` state file) so text behind a panel can't ghost through. In Spotlight a
   pin on each app row (or right-click, Ctrl+P) keeps it in the Dock.
