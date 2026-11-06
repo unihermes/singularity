@@ -160,6 +160,37 @@ ShellRoot {
         function isDefault(): bool { return Settings.isDefault }
     }
 
+    // `qs ipc call theme css`: the live tokens as a CSS :root block, for HTML mockups
+    IpcHandler {
+        target: "theme"
+        function css(): string {
+            var v = {
+                base: Theme.base, bar: Theme.bar, panel: Theme.panel, surface: Theme.surface,
+                overlay: Theme.overlay, border: Theme.border, muted: Theme.muted, subtext: Theme.subtext,
+                text: Theme.text, bright: Theme.bright, accent: Theme.accent, good: Theme.good, alert: Theme.alert,
+                "hover-fill": Theme.hoverFill, "selected-fill": Theme.selectedFill,
+                "selected-stroke": Theme.selectedStroke, "stroke": Theme.stroke
+            }
+            var px = {
+                "space-xs": Theme.spaceXs, "space-s": Theme.spaceS, "space-m": Theme.spaceM,
+                "space-l": Theme.spaceL, "space-xl": Theme.spaceXl, "space-xxl": Theme.spaceXxl,
+                "panel-pad": Theme.panelPad, "window-pad": Theme.windowPad,
+                radius: Theme.radius, "radius-inner": Theme.radiusInner,
+                "radius-section": Theme.sectionRadius, "radius-small": Theme.radiusSmall,
+                "radius-panel": Theme.panelFrameRadius, "border-width": Theme.borderWidth,
+                "channel-width": Theme.channelWidth, "section-inset": Theme.sectionInset,
+                "bar-height": Theme.barHeight, "bar-margin": Theme.barMargin,
+                "flyout-offset": Theme.flyoutOffset, "module-height": Theme.moduleHeight,
+                "icon-size": Theme.iconSize, "row-height": Theme.rowHeight,
+                "chip-height": Theme.chipHeight, "font-size": Theme.fs(16)
+            }
+            var out = ":root {\n  --font: \"" + Theme.fontText + "\";\n"
+            for (var k in v) out += "  --" + k + ": " + v[k] + ";\n"
+            for (var p in px) out += "  --" + p + ": " + px[p] + "px;\n"
+            return out + "  --panel-opacity: " + Theme.panelOpacity + ";\n}"
+        }
+    }
+
     AppearanceSync {}
 
     // SUPER+W (`qs ipc call overlay toggle`). A signal, because the overlays

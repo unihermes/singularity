@@ -9,6 +9,40 @@ shell.
 Mockups are self-contained interactive HTML artifacts (see `AGENTS.md`). Never
 commit them or their helper files.
 
+## Quick recipe (for local models such as Ollama)
+
+The sidebar's Ollama models read this section only. Do these in order and
+keep the whole page small.
+
+1. Run `qs ipc call theme css`. Paste the `:root { ... }` block into the page
+   unchanged. It holds the user's real colours, spacing, radii, bar and row
+   sizes, and `--font`. Use only `var(--...)` for colours and sizes: no hex
+   codes, no px values of your own. `--panel` is a flyout's ground,
+   `--surface` fields and section grounds, `--overlay` hover and selected
+   fill, `--base` meter tracks, `--subtext` secondary text, `--accent` marks.
+2. Set `font-family: var(--font), monospace; font-size: var(--font-size)`.
+   Icons are Nerd Font glyphs in that same font; don't use emoji.
+3. Put the mockup on the real bar: a `--bar-height` strip in `--bar`, the
+   modules in a row, then the flyout `--flyout-offset` below the top, with
+   `--radius-panel` corners and `--panel-pad` padding, on a dark wallpaper
+   colour. Never draw a flyout on an empty page.
+4. Inside the flyout, each run of rows between headings is its own box:
+   `--surface` ground, `--radius-section` corners, `--space-s` gaps. Rows are
+   `--row-height` tall, chips and segmented buttons `--chip-height`. Selected
+   things use `--selected-fill` with a `--selected-stroke` outline; hover uses
+   `--hover-fill`.
+5. Use the user's real content (names, numbers, apps), plus one long name and
+   one disabled row. Make hover, click, toggles and sliders work.
+6. Several options for several elements: give each element its own picker and
+   render the whole mockup from one state object like
+   `{header:"B", rows:"A", controls:"C"}`. Every combination must look right;
+   never offer "Option 1/2/3" as whole designs only. Start on what the shell
+   has today and add a Reset button.
+7. Add a "Copy picks" button at the top and the bottom that copies the state
+   object as text, and leave 200px of padding at the bottom.
+
+Everything below is the long form of the same rules.
+
 ## 1. Start from the live shell, not from memory
 
 Before drawing anything:
@@ -21,7 +55,8 @@ Before drawing anything:
 2. **Read the user's real settings**, not the defaults:
    `~/.local/state/singularity/appearance.json` (look, accent, bar height,
    spacing, roundness, font, font size, style, bar layout).
-3. **Read the tokens.** `services/Theme.qml` is the source for every size and
+3. **Read the tokens.** `qs ipc call theme css` prints the live values as a
+   CSS `:root` block; use it as the base. `services/Theme.qml` is the source for every size and
    colour; `services/Looks.js` has each look's ten-role palette and accent.
    `qs/DESIGN.md` describes the frames and layouts (grep its `##` headings
    and read only the section you need).

@@ -490,6 +490,11 @@ Singleton {
         + "substantial standalone content, not for snippets or code meant for a file. For mockups, "
         + "always use self-contained interactive HTML artifacts with working local controls. To change "
         + "one, write it again in full."
+    // for the local models, which skip long guides: the short recipe, with the
+    // live tokens a command away
+    readonly property string mockupPrompt: " For a mockup of the shell, first run `qs ipc call theme css` "
+        + "and paste its :root block unchanged; use only those variables and its font. Then read the "
+        + "\"Quick recipe\" section of " + home + "/singularity/MOCKUPS.md and follow it."
     property var artifactQueue: []
     function openArtifact(part, browser) {
         artifactQueue = artifactQueue.concat([{ part: part, browser: browser }])
@@ -585,7 +590,7 @@ Singleton {
         local: true
         readOnly: true
         modelPick: root.models.chatOllama || (root.ollamaModels.length ? root.ollamaModels[0].value : "")
-        instructions: "You are the chat in the user's desktop sidebar. Replies are markdown in a narrow panel." + root.artifactPrompt
+        instructions: "You are the chat in the user's desktop sidebar. Replies are markdown in a narrow panel." + root.artifactPrompt + root.mockupPrompt
         onListed: rows => root.tookPast(rows)
     }
     CodexSession {
@@ -594,7 +599,7 @@ Singleton {
         local: true
         mode: root.codeMode
         modelPick: root.models.codeOllama || (root.ollamaModels.length ? root.ollamaModels[0].value : "")
-        instructions: "You are the coding agent in the user's desktop sidebar. Replies are markdown in a narrow panel." + root.artifactPrompt
+        instructions: "You are the coding agent in the user's desktop sidebar. Replies are markdown in a narrow panel." + root.artifactPrompt + root.mockupPrompt
         onListed: rows => root.tookPast(rows)
     }
 
