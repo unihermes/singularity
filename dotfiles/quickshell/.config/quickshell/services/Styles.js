@@ -25,7 +25,7 @@
 //            with the open windows left to the Dock)
 //   bar      optional { left, right }: the arrangement its layout option turns
 //            on, every module named (the centre stays empty; any left out
-//            joins the right). Modules only such an arrangement names
+//            joins the right), plus `hidden`, modules it never shows. Modules only such an arrangement names
 //            (Settings.styleOnlyWidgets) appear only under it
 //   windows  optional { focusedOpacity, unfocusedOpacity, terminalOpacity }
 //   settings optional stock values over `stock` below
@@ -152,7 +152,7 @@ var styles = {
         name: "Ledger", hint: "Windows 10: a square taskbar along the bottom, flat tiles",
         // quicker, as a desktop OS's taskbar is
         settings: {
-            fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 18, windowIconSize: 24, windowIconPadding: 12, controlIcon: "windows",
+            fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 18, windowIconSize: 24, windowIconPadding: 16, modulePad: 1, controlIcon: "windows",
             workspaceStyle: "numbers", windowStyle: "icons", clockStyle: "stack", vizStyle: "line", altTabStyle: "previews",
             powerStyle: "list", levelStyle: "edge", windowAnim: "rise", launcherLayout: "grid", animShell: 75, animWindows: 75,
         },
@@ -162,9 +162,10 @@ var styles = {
         // open windows; the tray, the clock and the Action Centre at the right
         bar: {
             left: ["controlcentre", "search", "taskview", "workspaces", "windows"],
-            right: ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "cooling",
-                    "visualizer", "weather", "tray", "bluetooth", "network", "volume", "brightness", "battery",
-                    "clock", "notifications", "desktop"],
+            right: ["tray", "recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "cooling",
+                    "visualizer", "weather", "bluetooth", "network", "battery", "clock", "notifications", "desktop"],
+            // Windows keeps these in its flyouts, not the taskbar
+            hidden: ["volume", "brightness"],
         },
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
         options: [

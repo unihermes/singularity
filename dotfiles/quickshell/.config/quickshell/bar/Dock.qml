@@ -4,7 +4,8 @@
 // Glass's Dock: a frosted pill floating along the screen's bottom with the
 // pinned apps and whatever else is open, a dot under each running one. Icons
 // swell toward the pointer. Click raises an app's window (again for the
-// next), or starts it; middle click starts another. Shown while Settings.dockOn. It reserves a strip
+// next), or starts it; middle click starts another, right click opens its menu (windows, new window, pin,
+// close). Shown while Settings.dockOn. It reserves a strip
 // of its own, or with Settings.dockAutohide slides away over the windows,
 // which fill the screen, and returns when the pointer reaches the bottom edge.
 
@@ -41,7 +42,7 @@ PanelWindow {
     // out of sight until the pointer reaches the edge, and for a moment after
     // it leaves
     property bool called: false
-    readonly property bool shown: !Settings.dockAutohide || called
+    readonly property bool shown: !Settings.dockAutohide || called || menu.visible
     Timer {
         id: leave
         interval: 450
@@ -106,6 +107,100 @@ PanelWindow {
 
     // the pill's resting place and what swells out of it; auto-hiding, a band
     // across the screen's foot (a thin strip while hidden)
+    // the menu of the app right-clicked: its windows, then what to do with it
+    property var menuApp: null
+    readonly property var menuRows: {
+        var it = menuApp
+        if (!it) return []
+        var rows = it.windows.slice(0, 6).map(w => ({ label: w.title || it.name, act: "focus", win: w }))
+        if (it.entry) {
+            rows.push({ label: it.windows.length > 0 ? "New window" : "Open", act: "new" })
+            rows.push({ label: Apps.isPinned(it.entry) ? "Unpin" : "Pin", act: "pin" })
+        }
+        if (it.windows.length > 0) rows.push({ label: it.windows.length > 1 ? "Close all" : "Close", act: "close" })
+        return rows
+    }
+    function openMenu(slot) {
+        menuApp = slot.modelData
+        menu.anchor.item = slot
+        menu.visible = true
+    }
+    function pick(row) {
+        var it = menuApp
+        menu.visible = false
+        if (row.act === "focus") {
+            Hyprland.dispatch("hl.dsp.focus({window=\"address:0x" + row.win.address + "\"})")
+            Hyprland.dispatch("hl.dsp.window.bring_to_top()")
+        } else if (row.act === "new") Apps.launch(it.entry)
+        else if (row.act === "pin") Apps.togglePin(it.entry)
+        else it.windows.slice().forEach(w => Hyprland.dispatch("hl.dsp.window.close({window=\"address:0x" + w.address + "\"})"))
+    }
+
+    PopupWindow {
+        id: menu
+        anchor.edges: Edges.Top
+        anchor.gravity: Edges.Top
+        anchor.margins.top: Theme.sp(10)
+        implicitWidth: Theme.sp(240)
+        implicitHeight: menuColumn.height + Theme.sp(12)
+        color: "transparent"
+
+        // gone a moment after the pointer leaves both it and the Dock
+        Timer {
+            id: menuAway
+            interval: 700
+            onTriggered: menu.visible = false
+        }
+        HoverHandler {
+            onHoveredChanged: if (hovered) menuAway.stop(); else menuAway.restart()
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.radius
+            color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Math.min(1, Theme.barOpacity + 0.2))
+            border.width: 1
+            border.color: pill.border.color
+
+            Column {
+                id: menuColumn
+                x: Theme.sp(6)
+                y: Theme.sp(6)
+                width: parent.width - Theme.sp(12)
+
+                Repeater {
+                    model: dock.menuRows
+
+                    Rectangle {
+                        required property var modelData
+                        width: menuColumn.width
+                        height: Theme.sp(30)
+                        radius: Theme.radiusSmall
+                        color: rowMouse.containsMouse ? Theme.accent : "transparent"
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: Theme.sp(10)
+                            width: parent.width - Theme.sp(20)
+                            elide: Text.ElideRight
+                            text: modelData.label
+                            color: rowMouse.containsMouse ? Theme.textOnAccent : Theme.text
+                            font.family: Theme.fontText
+                            font.pixelSize: Theme.barLabelSize
+                        }
+                        MouseArea {
+                            id: rowMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: dock.pick(modelData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Item {
         id: hit
         readonly property real restH: pill.height + dock.margin + dock.iconSize * dock.swell
@@ -240,12 +335,13 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         anchors.margins: -dock.gap / 2
-                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
                         onClicked: mouse => {
                             if (mouse.button === Qt.MiddleButton) {
                                 if (slot.modelData.entry) Apps.launch(slot.modelData.entry)
-                            } else dock.open(slot.modelData)
+                            } else if (mouse.button === Qt.RightButton) dock.openMenu(slot)
+                            else dock.open(slot.modelData)
                         }
                     }
                 }

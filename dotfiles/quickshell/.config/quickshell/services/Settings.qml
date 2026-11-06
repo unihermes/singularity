@@ -571,6 +571,10 @@ Singleton {
         var b = taskbarLayoutOn ? Styles.get(adapter.style).bar : null
         return b ? b.left.concat(b.right) : []
     }
+    readonly property var styleHidden: {
+        var b = taskbarLayoutOn ? Styles.get(adapter.style).bar : null
+        return b && b.hidden ? b.hidden : []
+    }
     function ownLayout() {
         var own = (adapter.styleLayouts || {})[adapter.style]
         if (own) return own
@@ -649,6 +653,7 @@ Singleton {
         if (key === "windows" && dockOn) return false
         // the menu bar has no Show Desktop corner
         if (key === "desktop" && layoutKind === "menubar") return false
+        if (styleHidden.indexOf(key) !== -1) return false
         if (styleOnlyWidgets.indexOf(key) !== -1 && styleModules.indexOf(key) === -1) return false
         return lockedWidgets.indexOf(key) !== -1
             || (adapter.barHidden || []).indexOf(key) === -1

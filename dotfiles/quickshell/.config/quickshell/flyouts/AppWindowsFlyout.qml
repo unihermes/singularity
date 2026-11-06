@@ -324,6 +324,12 @@ FlyoutPanel {
             onActivated: root.newWindow()
         }
         FlyoutRow {
+            visible: !!root.entry
+            leadingIcon: "󰐃"
+            label: root.entry && Apps.isPinned(root.entry) ? "Unpin" : "Pin"
+            onActivated: { Apps.togglePin(root.entry); root.requestClose() }
+        }
+        FlyoutRow {
             visible: root.windows.length > 1
             leadingIcon: "󰁌"
             label: "Bring all here"
