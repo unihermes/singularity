@@ -96,6 +96,11 @@ comparison tables below describe the original five styles.
   `bar` orders are in Styles.js, each module named. Search, Task View and
   Focused App (`Settings.styleOnlyWidgets`) exist only under an arrangement
   that names them. Each style keeps its own rearranging in `styleLayouts`.
+- Hover and open states of bare chips (Glass, the taskbar) are washes of the
+  foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
+  and level fills are softened to 45%; the open Glass chip has no accent ring.
+  A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
+  an `unblurred-` namespace and lift their ground (`Theme.unfrosted`).
 - Glass's `autohide` slides the Dock away over the windows (it reserves no
   strip); pointing at the screen's bottom edge brings it back.
 - Glass's `blur` and `tint` change its frost.

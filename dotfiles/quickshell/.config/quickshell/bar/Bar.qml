@@ -79,7 +79,13 @@ PanelWindow {
     // Theme.gradient, tinted under Glass's tint option
     readonly property color barTone: Theme.glass && Theme.opt("tint")
         ? Qt.tint(Theme.bar, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25)) : Theme.bar
-    readonly property color barGround: Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b, Theme.barOpacity)
+    // a display scaled under 1 can't use the blur (looks.lua): no frost
+    // there, so the ground is lifted to read as frosted as the others'
+    readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
+    readonly property bool unblurred: !!monitor && monitor.scale < 1
+    WlrLayershell.namespace: unblurred ? "unblurred-quickshell" : "quickshell"
+    readonly property color barGround: Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b,
+        unblurred ? Theme.unfrosted(Theme.barOpacity) : Theme.barOpacity)
     property Gradient barShading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }
         GradientStop { position: 1; color: Theme.shadeBottom(bar.barGround) }

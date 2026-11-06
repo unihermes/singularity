@@ -75,7 +75,9 @@ Item {
         // filled with the accent while open (Solid, Glass);
         // a level chip keeps its fill and takes an accent ring instead
         readonly property bool openFill: Theme.moduleOpenFill && root.active && !root.gauge
-        readonly property bool openRing: root.active && (flush || (Theme.moduleOpenFill && root.gauge))
+        readonly property bool openRing: root.active && !Theme.washed && (flush || (Theme.moduleOpenFill && root.gauge))
+        // what a bare chip's hover and open states fill with
+        readonly property color wash: root.active ? Theme.washActive : hover.hovered ? Theme.washHover : "transparent"
         // a solid chip's own ground: Glass's is a faint frost, and Solid's
         // tint option mixes in the accent
         readonly property color restFill: Theme.glass ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06))
@@ -84,7 +86,7 @@ Item {
 
         height: grouped ? Theme.groupHeight - Theme.channelWidth * 2 : Theme.moduleHeight
         radius: Theme.radius
-        readonly property color ground: flush ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+        readonly property color ground: flush ? (Theme.washed ? wash : root.active || hover.hovered ? Theme.overlay : "transparent")
             : openFill ? (Theme.glass ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Theme.accent)
             : root.hovered ? (Theme.glass ? Theme.stroke : Theme.overlay)
             : root.active ? Theme.selectedFill
@@ -111,7 +113,7 @@ Item {
 
         // Glass's glow, round the open chip
         RectangularShadow {
-            visible: Theme.glow && root.active
+            visible: Theme.glow && root.active && !frame.flush
             anchors.fill: parent
             z: -1
             radius: frame.radius
@@ -144,7 +146,7 @@ Item {
             anchors.margins: frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
             radius: frame.flush ? frame.radius : Theme.radiusSmall
-            color: frame.flush || frame.taskbar ? (root.active || hover.hovered ? Theme.overlay : "transparent")
+            color: frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
 
 
@@ -160,7 +162,7 @@ Item {
                 radius: parent.radius
                 // softened on Flat's bare taskbar, where a full-strength
                 // fill would outweigh everything round it
-                color: frame.taskbar ? Qt.alpha(root.fillColor, 0.7) : root.fillColor
+                color: frame.taskbar || Theme.washed ? Qt.alpha(root.fillColor, 0.45) : root.fillColor
 
                 Behavior on width {
                     NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }

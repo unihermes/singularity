@@ -85,6 +85,14 @@ Singleton {
     readonly property color textStrong:    bright
     // a row or button under the pointer
     readonly property color hoverFill:     overlay
+    // a bare chip under the pointer or open on a see-through bar (Glass, the
+    // taskbar): a wash of the foreground, which an opaque grey would clash with
+    readonly property bool washed: glass || moduleTaskbar
+    readonly property color washHover:  isLight ? Qt.rgba(0, 0, 0, 0.07) : Qt.rgba(1, 1, 1, 0.09)
+    readonly property color washActive: isLight ? Qt.rgba(0, 0, 0, 0.13) : Qt.rgba(1, 1, 1, 0.16)
+    // a ground's alpha where the blur can't frost it (a display scaled under
+    // 1, looks.lua), lifted so it reads as frosted as elsewhere
+    function unfrosted(a) { return a + (1 - a) * 0.4 }
     // a smaller control under the pointer, or a chip/tab that's lit
     readonly property color hoverFillSoft: surface
     readonly property color selectedFill:  overlay

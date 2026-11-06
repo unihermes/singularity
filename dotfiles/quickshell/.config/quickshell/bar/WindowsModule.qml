@@ -329,7 +329,7 @@ ModuleFrame {
                         bottomRightRadius: topRightRadius
                         leftCut: winIcon.first && strip.leftEnd ? strip.cut : 0
                         rightCut: winIcon.last && strip.rightEnd ? strip.cut : 0
-                        color: Theme.overlay
+                        color: Theme.washed ? (winIcon.focused ? Theme.washActive : Theme.washHover) : Theme.overlay
                         border.width: winIcon.opened && !strip.framed ? Theme.borderWidth : 0
                         border.color: Theme.strokeFocus
                     }
