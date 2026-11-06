@@ -285,6 +285,10 @@ html, body, #app-mount, #app-mount [class^="app_"], #app-mount [class^="bg_"] {
   box-sizing: border-box;
   overflow: hidden;
 }
+#app-mount .sidebarList_pog62O {
+  min-height: 0;
+  height: calc(100% - 2 * var(--n-gap)) !important;
+}
 #app-mount .menu_M3qk4j { background: var(--n-popup) !important; }
 .sidebar_pog62O { background: transparent !important; }
 .sidebarList_pog62O > nav, .chat_z_gUBg, .chatContent_z_gUBg, .container_86es0b,
