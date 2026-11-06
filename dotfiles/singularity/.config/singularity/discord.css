@@ -285,7 +285,7 @@ html, body, #app-mount, #app-mount [class^="app_"], #app-mount [class^="bg_"] {
   box-sizing: border-box;
   overflow: hidden;
 }
-#app-mount .sidebarList_pog62O {
+#app-mount .sidebarList_pog62O, #app-mount .page_pog62O {
   min-height: 0;
   height: calc(100% - 2 * var(--n-gap)) !important;
 }
