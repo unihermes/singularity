@@ -2,8 +2,7 @@
 // ~/.config/quickshell/bar/Dock.qml
 //
 // Glass's Dock: a frosted pill floating along the screen's bottom with the
-// pinned apps and whatever else is open, a dot under each running one. Icons
-// swell toward the pointer. Click raises an app's window (again for the
+// pinned apps and whatever else is open, a dot under each running one. Click raises an app's window (again for the
 // next), or starts it; middle click starts another; dragging a pinned app moves it among the
 // pinned ones; right click opens its
 // menu (windows, new window, pin, close), on the Dock itself its own. Shown
@@ -42,9 +41,8 @@ PanelWindow {
     readonly property int margin: Theme.sp(8)
     // room above the pill for swollen icons and the name label
     readonly property int headroom: Theme.sp(56)
-    // how far the pointer's pull reaches, and the largest icon's scale
+    // how far the pointer's pull reaches (it names the icon pointed at)
     readonly property real reach: iconSize * 1.1
-    readonly property real swell: 0.4
 
     // Out of sight until the pointer has rested on the bottom edge a moment,
     // and for a while after it leaves the edge, the pill and its menu.
@@ -83,7 +81,7 @@ PanelWindow {
         interval: 250
         onTriggered: Quickshell.execDetached(["hyprctl", "eval", "singularityRefitWindows()"])
     }
-    // only the pill and the icons swelling out of it take the pointer
+    // only the pill takes the pointer
     mask: Region { item: hit }
 
     // Pinned apps first, then the other open ones; each as { key, name,
@@ -305,11 +303,11 @@ PanelWindow {
         }
     }
 
-    // the pill's resting place and what swells out of it; auto-hiding, a band
+    // the pill's resting place; auto-hiding, a band
     // across the screen's foot (a thin strip while hidden)
     Item {
         id: hit
-        readonly property real restH: pill.height + dock.margin + dock.iconSize * dock.swell
+        readonly property real restH: pill.height + dock.margin
         x: Settings.dockAutohide ? 0 : Math.round((dock.width - pill.width) / 2)
         width: Settings.dockAutohide ? dock.width : pill.width
         y: dock.height - (dock.shown ? restH : Theme.sp(4))
@@ -399,8 +397,6 @@ PanelWindow {
                     Item {
                         width: parent.width
                         height: parent.height
-                        scale: 1 + dock.swell * slot.pulled
-                        transformOrigin: Item.Bottom
                         x: slot.dragging ? slot.dragDx : slot.shiftX
                         z: slot.dragging ? 10 : 0
                         Behavior on x {
@@ -433,7 +429,7 @@ PanelWindow {
                     Rectangle {
                         visible: slot.pulled > 0.85
                         anchors.horizontalCenter: parent.horizontalCenter
-                        y: -height - dock.iconSize * dock.swell - Theme.sp(8)
+                        y: -height - Theme.sp(8)
                         width: tip.implicitWidth + Theme.sp(16)
                         height: tip.implicitHeight + Theme.sp(8)
                         radius: Theme.radius

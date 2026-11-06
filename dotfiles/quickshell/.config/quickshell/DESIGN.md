@@ -86,9 +86,9 @@ comparison tables below describe the original five styles.
   bar with bare chips, the Apple button, the focused app's name (the
   `activeapp` module, menu bar only) and the status icons and clock packed at
   the right; the open windows move to the Dock (`bar/Dock.qml`), a frosted
-  pill along the bottom of pinned and open apps that swell toward the pointer,
+  pill along the bottom of pinned and open apps,
   a dot under each running one. The Dock reserves its own strip. Liberation
-  Sans, 12px corners, Spotlight launcher at the top.
+  Sans, 12px corners, Spotlight launcher a fifth down.
 - Ledger's `taskbar` and Glass's `menubar` options (Styles' `layout`) arrange the
   bar: Ledger as the Windows taskbar (Start, a light search box, Task View,
   open windows; tray, stacked clock, Action Centre, Show Desktop), Glass as the
