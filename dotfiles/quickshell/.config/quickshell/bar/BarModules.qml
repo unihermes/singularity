@@ -27,7 +27,7 @@ Item {
 
     readonly property var widgetItems: ({
         controlcentre: ccBtn, workspaces: wsFrame,
-        windows: windowIcons, activeapp: activeApp, clock: clock, bluetooth: btBtn,
+        windows: windowIcons, activeapp: activeApp, search: searchBtn, taskview: taskViewBtn, clock: clock, bluetooth: btBtn,
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
@@ -75,6 +75,74 @@ Item {
         labelMaxWidth: Theme.sp(180)
         active: screenScope.openFlyout === "workspaces"
         onActivated: screenScope.toggleFlyout("workspaces", activeApp)
+    }
+
+    // Search: the Windows taskbar's search box, or the menu bar's magnifier;
+    // either opens the launcher.
+    Item {
+        id: searchBtn
+        visible: Settings.widgetVisible("search")
+        readonly property bool box: Theme.moduleTaskbar
+        property bool slideX: false
+        signal activated()
+        onActivated: barModules.shellRoot.launcherToggled("apps")
+
+        implicitWidth: box ? Theme.sp(240) : Theme.moduleWidth
+        implicitHeight: Theme.barHeight
+
+        // the box is a light field on the dark bar, as Windows draws it
+        Rectangle {
+            visible: searchBtn.box
+            anchors.fill: parent
+            color: searchMouse.containsMouse ? Theme.bright : Qt.darker(Theme.bright, 1.08)
+            border.width: Theme.borderWidth
+            border.color: searchMouse.containsMouse ? Theme.accent : "transparent"
+        }
+        Rectangle {
+            visible: !searchBtn.box && searchMouse.containsMouse
+            anchors.centerIn: parent
+            width: Theme.moduleHeight
+            height: Theme.moduleHeight
+            radius: Theme.radiusSmall
+            color: Theme.overlay
+        }
+        Row {
+            anchors.verticalCenter: parent.verticalCenter
+            x: searchBtn.box ? Theme.sp(12) : Math.round((parent.width - width) / 2)
+            spacing: Theme.sp(10)
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰍉"
+                color: searchBtn.box ? Theme.base : Theme.text
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.iconSize
+            }
+            Text {
+                visible: searchBtn.box
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Type here to search"
+                color: Qt.lighter(Theme.base, 2.2)
+                font.family: Theme.fontText
+                font.pixelSize: Theme.barLabelSize
+            }
+        }
+        MouseArea {
+            id: searchMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: searchBtn.activated()
+        }
+    }
+
+    // Task View: the workspace grid, from the Windows taskbar's button
+    BarModule {
+        id: taskViewBtn
+        visible: Settings.widgetVisible("taskview")
+        icon: "󰕮"
+        fixedWidth: Theme.moduleWidth
+        active: screenScope.openFlyout === "workspaceoverlay"
+        onActivated: barModules.shellRoot.workspaceOverlayToggled()
     }
 
     // Time and date in one chip, which briefly shows volume, brightness and

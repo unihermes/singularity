@@ -89,8 +89,15 @@ comparison tables below describe the original five styles.
   pill along the bottom of pinned and open apps that swell toward the pointer,
   a dot under each running one. The Dock reserves its own strip. Liberation
   Sans, 12px corners, Spotlight launcher at the top.
-- Ledger's `taskbar` and Glass's `menubar` options (Styles' `layout`) rearrange
-  the bar like Flat's; each style keeps its own arrangement in `styleLayouts`.
+- Ledger's `taskbar` and Glass's `menubar` options (Styles' `layout`) arrange the
+  bar: Ledger as the Windows taskbar (Start, a light search box, Task View,
+  open windows; tray, stacked clock, Action Centre, Show Desktop), Glass as the
+  menu bar (logo, app name, workspaces; status items, search, clock last). Their
+  `bar` orders are in Styles.js, each module named. Search, Task View and
+  Focused App (`Settings.styleOnlyWidgets`) exist only under an arrangement
+  that names them. Each style keeps its own rearranging in `styleLayouts`.
+- Glass's `autohide` slides the Dock away over the windows (it reserves no
+  strip); pointing at the screen's bottom edge brings it back.
 - Glass's `blur` and `tint` change its frost.
 
 Across every style, a chosen segment, tab or chip fills with the accent

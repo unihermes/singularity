@@ -4,7 +4,9 @@
 // Glass's Dock: a frosted pill floating along the screen's bottom with the
 // pinned apps and whatever else is open, a dot under each running one. Icons
 // swell toward the pointer. Click raises an app's window (again for the
-// next), or starts it; middle click starts another. Shown while Settings.dockOn; it reserves its own strip.
+// next), or starts it; middle click starts another. Shown while Settings.dockOn. It reserves a strip
+// of its own, or with Settings.dockAutohide slides away over the windows,
+// which fill the screen, and returns when the pointer reaches the bottom edge.
 
 import "../services"
 import "../flyouts"
@@ -21,6 +23,9 @@ PanelWindow {
 
     visible: Settings.dockOn
     anchors.bottom: true
+    // hidden, the window spans the screen so the whole bottom edge calls it back
+    anchors.left: Settings.dockAutohide
+    anchors.right: Settings.dockAutohide
     color: "transparent"
 
     readonly property int iconSize: Theme.sp(46)
@@ -33,9 +38,19 @@ PanelWindow {
     readonly property real reach: iconSize * 1.1
     readonly property real swell: 0.4
 
+    // out of sight until the pointer reaches the edge, and for a moment after
+    // it leaves
+    property bool called: false
+    readonly property bool shown: !Settings.dockAutohide || called
+    Timer {
+        id: leave
+        interval: 450
+        onTriggered: dock.called = false
+    }
+
     implicitWidth: pill.width
     implicitHeight: pill.height + margin + headroom
-    exclusiveZone: pill.height + margin + Theme.sp(4)
+    exclusiveZone: Settings.dockAutohide ? 0 : pill.height + margin + Theme.sp(4)
     onExclusiveZoneChanged: refit.restart()
     // the strip the Dock reserves reaches Hyprland, then the windows re-tile
     Timer {
@@ -89,19 +104,32 @@ PanelWindow {
         Hyprland.dispatch("hl.dsp.window.bring_to_top()")
     }
 
+    // the pill's resting place and what swells out of it; auto-hiding, a band
+    // across the screen's foot (a thin strip while hidden)
     Item {
         id: hit
-        x: pill.x
-        width: pill.width
-        y: pill.y - dock.iconSize * dock.swell
-        height: pill.height + dock.iconSize * dock.swell
+        readonly property real restH: pill.height + dock.margin + dock.iconSize * dock.swell
+        x: Settings.dockAutohide ? 0 : Math.round((dock.width - pill.width) / 2)
+        width: Settings.dockAutohide ? dock.width : pill.width
+        y: dock.height - (dock.shown ? restH : 2)
+        height: dock.shown ? restH : 2
+
+        HoverHandler {
+            onHoveredChanged: {
+                if (hovered) { leave.stop(); dock.called = true }
+                else leave.restart()
+            }
+        }
     }
 
     Rectangle {
         id: pill
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: dock.margin
+        anchors.bottomMargin: dock.shown ? dock.margin : -(pill.height + Theme.sp(12))
+        Behavior on anchors.bottomMargin {
+            NumberAnimation { duration: Theme.durMedium; easing.type: Theme.ease }
+        }
         width: strip.width + dock.pad * 2
         height: dock.iconSize + dock.pad * 2 + Theme.sp(6)
         radius: Theme.radius + Theme.sp(6)

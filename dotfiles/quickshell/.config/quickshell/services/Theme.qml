@@ -371,7 +371,7 @@ Singleton {
         day:   "ddd d MMM\u2002HH:mm",
         long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
         seconds: "HH:mm:ss",
-        stack: "HH:mm\nd/M/yyyy",
+        stack: "HH:mm\nM/d/yyyy",
         iso:   "yyyy-MM-dd\u2002HH:mm",
         custom: Settings.clockFormat || "HH:mm",
     })

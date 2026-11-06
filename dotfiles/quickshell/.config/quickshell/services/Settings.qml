@@ -489,7 +489,7 @@ Singleton {
     // modules added since.
 
     readonly property var widgetDefaults: ({
-        left:   ["controlcentre", "activeapp", "workspaces", "windows"],
+        left:   ["controlcentre", "activeapp", "search", "taskview", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
         right:  ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
@@ -502,6 +502,8 @@ Singleton {
         workspaces:    { label: "Workspaces",     icon: "󰇘" },
         windows:       { label: "Open Windows",   icon: "󰀻" },
         activeapp:     { label: "Focused App",    icon: "󰀵" },
+        search:        { label: "Search",         icon: "󰍉" },
+        taskview:      { label: "Task View",      icon: "󰕮" },
         clock:         { label: "Clock",          icon: "󰅐" },
         bluetooth:     { label: "Bluetooth",      icon: "󰂯" },
         network:       { label: "Network",        icon: "󰤨" },
@@ -560,13 +562,28 @@ Singleton {
     }
     readonly property bool taskbarLayoutOn: layoutKind !== ""
     // Glass's Dock holds the open windows, so the menu bar's strip goes
+    readonly property bool dockAutohide: dockOn && Styles.has(adapter.styleOptions, "autohide")
     readonly property bool dockOn: adapter.style === "glass" && Styles.has(adapter.styleOptions, "dock")
+    // modules only a style's own arrangement (Styles' `bar`) brings, and the
+    // ones the current style names
+    readonly property var styleOnlyWidgets: ["activeapp", "search", "taskview"]
+    readonly property var styleModules: {
+        var b = taskbarLayoutOn ? Styles.get(adapter.style).bar : null
+        return b ? b.left.concat(b.right) : []
+    }
     function ownLayout() {
         var own = (adapter.styleLayouts || {})[adapter.style]
         if (own) return own
         return adapter.style === "flat" ? (adapter.taskbarLayout || {}) : {}
     }
     function taskbarOf(l) {
+        var b = Styles.get(adapter.style).bar
+        if (b) {
+            var r = resolveLayout({ left: b.left, centre: [], right: b.right })
+            r.right.splice.apply(r.right, [r.right.length - 1, 0].concat(r.centre))
+            r.centre = []
+            return r
+        }
         var lead = l.centre.filter(k => k !== "clock")
         var tail = l.centre.indexOf("clock") !== -1 ? ["clock"] : []
         var right = l.right.filter(k => k !== "desktop")
@@ -612,6 +629,8 @@ Singleton {
         out.centre = out.centre.filter(k => k !== "desktop")
         out.left.unshift("controlcentre")
         out.right.push("desktop")
+        for (var sec2 in out)
+            out[sec2] = out[sec2].filter(k => styleOnlyWidgets.indexOf(k) === -1 || styleModules.indexOf(k) !== -1)
         return out
     }
 
@@ -630,8 +649,7 @@ Singleton {
         if (key === "windows" && dockOn) return false
         // the menu bar has no Show Desktop corner
         if (key === "desktop" && layoutKind === "menubar") return false
-        // the focused app's name belongs to the menu bar
-        if (key === "activeapp" && layoutKind !== "menubar") return false
+        if (styleOnlyWidgets.indexOf(key) !== -1 && styleModules.indexOf(key) === -1) return false
         return lockedWidgets.indexOf(key) !== -1
             || (adapter.barHidden || []).indexOf(key) === -1
     }

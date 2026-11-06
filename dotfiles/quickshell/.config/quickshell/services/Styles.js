@@ -23,6 +23,10 @@
 //   layout   optional bar arrangement the style's option of that id turns on:
 //            "taskbar" (centre moved right, clock last) or "menubar" (the same,
 //            with the open windows left to the Dock)
+//   bar      optional { left, right }: the arrangement its layout option turns
+//            on, every module named (the centre stays empty; any left out
+//            joins the right). Modules only such an arrangement names
+//            (Settings.styleOnlyWidgets) appear only under it
 //   windows  optional { focusedOpacity, unfocusedOpacity, terminalOpacity }
 //   settings optional stock values over `stock` below
 // Controls draw per style too (Switch, Slider, FlyoutSegmented, FlyoutChip).
@@ -84,8 +88,16 @@ var styles = {
         name: "Glass", hint: "Frosted menu bar and a floating Dock, as on a Mac",
         frame: "single", modules: "bare", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "scale", glass: true, layout: "menubar",
+        // as the macOS menu bar: the app's name by the logo, then status
+        // items running to the clock
+        bar: {
+            left: ["controlcentre", "activeapp", "workspaces"],
+            right: ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "tray", "cooling",
+                    "visualizer", "weather", "bluetooth", "volume", "brightness", "battery", "network", "search",
+                    "notifications", "clock"],
+        },
         settings: {
-            radius: 12, fontFamily: "Liberation Sans", fontSize: 14,
+            radius: 12, fontFamily: "Liberation Sans", fontSize: 14, controlIcon: "apple",
             barHeight: 28, barIconSize: 16, modulePad: 5, windowIconSize: 22,
             workspaceStyle: "dots", windowStyle: "icons", clockStyle: "long", launcherLayout: "spotlight", launcherPosition: "top",
             notifStyle: "compact", altTabStyle: "previews", overviewLayout: "strip", overviewBackdrop: "clear",
@@ -95,6 +107,7 @@ var styles = {
         options: [
             { id: "menubar", label: "Menu bar layout", hint: "Status and the clock packed at the right, apps in the Dock", on: true },
             { id: "dock", label: "Dock", hint: "A floating Dock of pinned and open apps along the bottom", on: true },
+            { id: "autohide", label: "Auto-hide Dock", hint: "Slides away over the windows; point at the bottom edge to bring it back", on: true },
             { id: "blur", label: "Heavy blur", hint: "Grounds a further step see-through", on: true },
             { id: "tint", label: "Accent-tinted glass", hint: "The frost takes a little of the accent", on: false },
             { id: "glow", label: "Glow on accents", hint: "Lit switches, thumbs and chips glow", on: true },
@@ -139,15 +152,23 @@ var styles = {
         name: "Ledger", hint: "Windows 10: a square taskbar along the bottom, flat tiles",
         // quicker, as a desktop OS's taskbar is
         settings: {
-            fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 18, windowIconSize: 24, controlIcon: "windows",
+            fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 18, windowIconSize: 24, windowIconPadding: 12, controlIcon: "windows",
             workspaceStyle: "numbers", windowStyle: "icons", clockStyle: "stack", vizStyle: "line", altTabStyle: "previews",
             powerStyle: "list", levelStyle: "edge", windowAnim: "rise", launcherLayout: "grid", animShell: 75, animWindows: 75,
         },
         frame: "single", modules: "taskbar", mark: "pill",
         shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true, layout: "taskbar",
+        // as the Windows taskbar: Start, the search box, Task View, then the
+        // open windows; the tray, the clock and the Action Centre at the right
+        bar: {
+            left: ["controlcentre", "search", "taskview", "workspaces", "windows"],
+            right: ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "cooling",
+                    "visualizer", "weather", "tray", "bluetooth", "network", "volume", "brightness", "battery",
+                    "clock", "notifications", "desktop"],
+        },
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
         options: [
-            { id: "taskbar", label: "Taskbar layout", hint: "Status and the clock packed at the right", on: true },
+            { id: "taskbar", label: "Taskbar layout", hint: "Start, search and Task View at the left; the clock at the right", on: true },
             { key: "barPosition", value: "bottom", off: "top", label: "Bar at the bottom", hint: "Along the screen's bottom edge", on: true },
             { key: "shadows", label: "Shadows", hint: "Soft shadows under flyouts", on: true },
         ],
