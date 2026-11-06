@@ -4,7 +4,8 @@
 // Glass's Dock: a frosted pill floating along the screen's bottom with the
 // pinned apps and whatever else is open, a dot under each running one. Icons
 // swell toward the pointer. Click raises an app's window (again for the
-// next), or starts it; middle click starts another; right click opens its
+// next), or starts it; middle click starts another; dragging a pinned app moves it among the
+// pinned ones; right click opens its
 // menu (windows, new window, pin, close), on the Dock itself its own. Shown
 // while Settings.dockOn. It reserves a strip of its own, or with
 // Settings.dockAutohide slides away over the windows, which fill the screen,
@@ -115,6 +116,8 @@ PanelWindow {
         }
         return out.concat(extra)
     }
+
+    readonly property int pinnedCount: items.filter(i => i.pinned).length
 
     // raise the app's next window, on whatever workspace it's on
     function open(item) {
@@ -354,6 +357,9 @@ PanelWindow {
             spacing: dock.gap
 
             property real pull: -10000
+            // a pinned app being dragged, and the place it would land
+            property int dragFrom: -1
+            property int dragTo: -1
 
             Repeater {
                 model: dock.items
@@ -365,6 +371,16 @@ PanelWindow {
                     readonly property bool lead: index > 0 && dock.items[index - 1].pinned && !modelData.pinned
                     readonly property bool running: modelData.windows.length > 0
                     readonly property real centreX: x + width / 2
+                    property bool dragging: false
+                    property real dragDx: 0
+                    // the others step aside to open the gap
+                    readonly property real shiftX: {
+                        var f = strip.dragFrom, t = strip.dragTo, p = dock.iconSize + dock.gap
+                        if (f < 0 || index === f) return 0
+                        if (f < t && index > f && index <= t) return -p
+                        if (f > t && index >= t && index < f) return p
+                        return 0
+                    }
                     readonly property real pulled: Math.exp(-Math.pow((centreX - strip.pull) / dock.reach, 2))
                     width: dock.iconSize
                     height: dock.iconSize
@@ -384,6 +400,12 @@ PanelWindow {
                         height: parent.height
                         scale: 1 + dock.swell * slot.pulled
                         transformOrigin: Item.Bottom
+                        x: slot.dragging ? slot.dragDx : slot.shiftX
+                        z: slot.dragging ? 10 : 0
+                        Behavior on x {
+                            enabled: !slot.dragging
+                            NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
+                        }
 
                         IconImage {
                             anchors.fill: parent
@@ -443,7 +465,30 @@ PanelWindow {
                         anchors.margins: -dock.gap / 2
                         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
+                        property real pressX: 0
+                        property bool dragged: false
+                        onPressed: mouse => { pressX = mouse.x; dragged = false }
+                        onPositionChanged: mouse => {
+                            if (!(pressedButtons & Qt.LeftButton) || !slot.modelData.pinned) return
+                            var dx = mouse.x - pressX
+                            if (!slot.dragging && Math.abs(dx) < Theme.sp(8)) return
+                            slot.dragging = true
+                            slot.dragDx = dx
+                            strip.dragFrom = slot.index
+                            strip.dragTo = Math.max(0, Math.min(dock.pinnedCount - 1,
+                                Math.round(slot.index + dx / (dock.iconSize + dock.gap))))
+                        }
+                        onReleased: {
+                            if (!slot.dragging) return
+                            dragged = true
+                            slot.dragging = false
+                            var to = strip.dragTo
+                            strip.dragFrom = -1
+                            strip.dragTo = -1
+                            if (to !== slot.index) Apps.movePin(slot.modelData.entry, to)
+                        }
                         onClicked: mouse => {
+                            if (dragged) return
                             if (mouse.button === Qt.MiddleButton) {
                                 if (slot.modelData.entry) Apps.launch(slot.modelData.entry)
                             } else if (mouse.button === Qt.RightButton) dock.openMenu(slot)

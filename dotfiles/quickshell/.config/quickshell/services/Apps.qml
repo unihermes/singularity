@@ -104,6 +104,18 @@ Singleton {
         pinsFile.setText(JSON.stringify(ids))
     }
 
+    // put a pinned app at place `to` among the pinned ones
+    function movePin(entry, to) {
+        var ids = pinned.map(e => e.id)
+        var from = ids.indexOf(entry.id)
+        if (from === -1) return
+        ids.splice(from, 1)
+        ids.splice(Math.max(0, Math.min(ids.length, to)), 0, entry.id)
+        pinnedIds = ids
+        pinsSaved = true
+        pinsFile.setText(JSON.stringify(ids))
+    }
+
     // the Start menu's groups, in its order: the first freedesktop main
     // category an entry has that maps to one, else "other"
     readonly property var groups: [
