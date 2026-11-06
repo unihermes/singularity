@@ -143,7 +143,7 @@ Item {
         visible: field.text === ""
         text: root.placeholder
         elide: Text.ElideRight
-        color: Theme.textDisabled
+        color: Theme.subtext
         font.family: Theme.fontText
         font.weight: Theme.weightBody
         font.pixelSize: root.textSize
