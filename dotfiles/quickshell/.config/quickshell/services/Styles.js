@@ -99,7 +99,7 @@ var styles = {
         settings: {
             radius: 12, fontFamily: "Liberation Sans", fontSize: 14, controlIcon: "apple",
             barHeight: 28, barIconSize: 16, modulePad: 5, windowIconSize: 22,
-            workspaceStyle: "dots", windowStyle: "icons", clockStyle: "long", launcherLayout: "spotlight", launcherPosition: "top",
+            workspaceStyle: "dots", windowStyle: "icons", clockStyle: "long", launcherLayout: "spotlight",
             notifStyle: "compact", altTabStyle: "previews", overviewLayout: "strip", overviewBackdrop: "clear",
             powerStyle: "full", windowAnim: "zoom", windowRounding: "own", windowRadius: 12,
         },

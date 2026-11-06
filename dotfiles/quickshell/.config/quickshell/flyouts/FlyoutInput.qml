@@ -18,6 +18,8 @@ Item {
     property bool bleed: false
     property bool borderless: false
     property string glyph: ""
+    property int glyphSize: Theme.fontIconSize
+    property bool glyphQuiet: false
     property string actionGlyph: ""
     property string actionLabel: ""
     property bool actionActive: false
@@ -102,15 +104,15 @@ Item {
         id: glyphCell
         visible: root.glyph !== ""
         x: Theme.spaceL
-        width: visible ? Theme.iconCell : 0
+        width: visible ? Math.max(Theme.iconCell, root.glyphSize + Theme.spaceS) : 0
         height: parent.height
 
         Text {
             anchors.centerIn: parent
             text: root.glyph
-            color: field.activeFocus ? Theme.accent : Theme.subtext
+            color: field.activeFocus && !root.glyphQuiet ? Theme.accent : Theme.subtext
             font.family: Theme.fontIcon
-            font.pixelSize: Theme.fontIconSize
+            font.pixelSize: root.glyphSize
         }
     }
 

@@ -128,9 +128,9 @@ Singleton {
     // the dimming behind full-screen overlays
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // the ground of flyouts, windows, cards and the bar (See-through)
-    // Panels that carry text (flyouts, the launcher) sit a step more solid
-    // than the bar under Glass, so the text reads over any wallpaper
-    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.22) : resolved.opacity / 100
+    // Under Glass the frost is a step more solid than See-through alone gives,
+    // so text reads over any wallpaper; the bar, Dock and panels share it
+    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.15) : resolved.opacity / 100
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
@@ -469,7 +469,7 @@ Singleton {
     // between a flyout's rows, and round its headings
     readonly property int flyoutSpacing: spaceS
 
-    readonly property real barOpacity: resolved.opacity / 100
+    readonly property real barOpacity: panelOpacity
     // chips follow the bar's height, floored so the frame doesn't eat them
     readonly property int moduleHeight: moduleTaskbar ? barHeight : Math.max(18, barHeight - 6)
     readonly property int modulePadH:   sp(Settings.modulePad + (moduleTaskbar ? 4 : 0))

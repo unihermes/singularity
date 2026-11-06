@@ -5,7 +5,8 @@
 // icon or glyph, the name, and the details (what the app is, where the file
 // is, what the syntax does) under it, or at the right end when `oneLine`.
 // The current row is lit as Settings' search hits are. `number` puts a key
-// label before the icon; `large` is Spotlight's top hit; `hug` sizes the
+// label before the icon; `large` is Spotlight's top hit; `apple` draws the
+// current row as an accent-filled capsule with the kind of result at the right; `hug` sizes the
 // row to its name (One line) with no chevron.
 
 import Quickshell
@@ -23,6 +24,7 @@ Item {
     property bool oneLine: false
     property bool large: false
     property bool hug: false
+    property bool apple: false
     property string number: ""
     signal hovered()
     signal clicked()
@@ -37,20 +39,27 @@ Item {
             : kind === "clip" ? ""
             : item.genericName || item.comment) || ""
 
+    // the kind of result, for the apple look
+    readonly property string kindLabel: kind === "app" ? "Application"
+        : kind === "file" ? (item.isDir ? "Folder" : "Document")
+        : kind === "clip" ? "Clipboard" : kind === "calc" ? (isResult ? "" : "Calculator") : ""
+    readonly property color onFill: apple && current ? Theme.textOnAccent : Theme.text
+    readonly property color onFillDim: apple && current ? Qt.alpha(Theme.textOnAccent, 0.75) : Theme.subtext
+
     width: parent ? parent.width : 0
     implicitWidth: Math.min(Theme.fit(240), iconCell.width + nameText.implicitWidth + Theme.spaceL * 2 + Theme.spaceM)
     height: large ? Theme.fs(56) : oneLine ? launcher.lineHeight : launcher.rowHeight
 
     Rectangle {
         anchors.fill: parent
-        radius: Theme.radiusInner
-        color: row.current ? Theme.selectedFill : "transparent"
-        border.width: Theme.borderWidth
+        radius: row.apple ? Theme.fs(10) : Theme.radiusInner
+        color: row.current ? (row.apple ? Theme.accent : Theme.selectedFill) : "transparent"
+        border.width: row.apple ? 0 : Theme.borderWidth
         border.color: row.current ? Theme.strokeHover : "transparent"
     }
 
     Rectangle {
-        visible: row.current
+        visible: row.current && !row.apple
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.indicatorWidth
         height: parent.height - 6
@@ -90,7 +99,7 @@ Item {
             text: row.kind === "calc" ? (row.item.kind === "ref" ? "󰘧" : "󰃬")
                 : row.kind === "file" ? (row.item.isDir ? "󰉋" : "󰈔")
                 : row.item.isImage ? "󰋩" : "󰅍"
-            color: row.current ? Theme.textStrong : Theme.subtext
+            color: row.apple ? row.onFill : row.current ? Theme.textStrong : Theme.subtext
             font.family: Theme.fontIcon
             font.pixelSize: row.large ? Theme.fs(28) : Theme.fontIconSize
         }
@@ -113,7 +122,8 @@ Item {
             textFormat: Text.PlainText
             elide: Text.ElideRight
             maximumLineCount: 1
-            color: row.isResult && !row.item.ok ? Theme.subtext
+            color: row.apple ? row.onFill
+                : row.isResult && !row.item.ok ? Theme.subtext
                 : row.current || row.isResult ? Theme.textStrong : Theme.text
             font.family: Theme.fontText
             font.pixelSize: row.large ? Theme.fontHeadingSize + 2 : Theme.fontBody
@@ -136,14 +146,14 @@ Item {
     // one line: the details at the right end
     Text {
         id: inlineNote
-        visible: row.oneLine && row.note !== ""
+        visible: row.oneLine && text !== ""
         anchors.right: chevron.left
         anchors.rightMargin: Theme.spaceM
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(implicitWidth, row.width * 0.4)
-        text: row.note
+        text: row.apple ? row.kindLabel : row.note
         elide: row.kind === "file" ? Text.ElideLeft : Text.ElideRight
-        color: Theme.subtext
+        color: row.onFillDim
         font.family: Theme.fontText
         font.weight: Theme.weightBody
         font.pixelSize: Theme.fontCaption
@@ -155,7 +165,7 @@ Item {
         anchors.rightMargin: Theme.spaceL
         anchors.verticalCenter: parent.verticalCenter
         text: "󰅂"
-        visible: !row.hug
+        visible: !row.hug && !row.apple
         opacity: row.current ? 1 : 0
         color: Theme.subtext
         font.family: Theme.fontIcon

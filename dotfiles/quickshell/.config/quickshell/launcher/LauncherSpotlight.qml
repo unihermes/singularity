@@ -1,12 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/launcher/LauncherSpotlight.qml
 //
-// The Spotlight layout: one large field, no heading. Apps mode searches
-// apps, files, clipboard and sums together (Launcher.blendedItems), under
-// small section labels with the top hit large; before typing, the most
-// used apps as a row of icons. Tab narrows to one kind, named at the
-// field's end; Backspace in an empty field widens again. The box is only
-// as tall as its results and grows from its top edge.
+// The Spotlight layout, after Apple's: a large rounded search field and
+// nothing else until you type. Apps mode searches apps, files, clipboard and
+// sums together (Launcher.blendedItems), under small section titles with the
+// top hit large; the current result is an accent capsule with its kind at
+// the right. Tab narrows to one kind, named at the field's end; Backspace in
+// an empty field widens again. The box is only as tall as its results and
+// grows from its top edge.
 
 import QtQuick
 import "../services"
@@ -22,20 +23,16 @@ Item {
     // rows as { item, kind, section }, whatever the mode
     readonly property var rows: launcher.blended ? launcher.blendedItems
         : launcher.items.map(i => ({ item: i, kind: launcher.kind, section: "" }))
-    readonly property var mostUsed: launcher.open ? Apps.list("").slice(0, 8) : []
 
-    readonly property int count: recents ? mostUsed.length : list.count
-    readonly property bool sideways: recents
+    readonly property int count: recents ? 0 : list.count
+    readonly property bool sideways: false
     readonly property var chords: []
     function move(dx, dy) {
-        if (recents) {
-            strip.current = Math.max(0, Math.min(mostUsed.length - 1, strip.current + dx))
-            return
-        }
+        if (recents) return
         list.currentIndex = Math.max(0, Math.min(list.count - 1, list.currentIndex + dy))
     }
     function current() {
-        if (recents) return mostUsed.length > 0 ? { item: mostUsed[strip.current], kind: "app" } : null
+        if (recents) return null
         var r = rows[list.currentIndex]
         return list.count > 0 && r ? { item: r.item, kind: r.kind } : null
     }
@@ -43,13 +40,14 @@ Item {
 
     Connections {
         target: view.launcher
-        function onWasReset() { list.currentIndex = 0; strip.current = 0 }
+        function onWasReset() { list.currentIndex = 0 }
         function onWasTyped() { list.currentIndex = 0 }
     }
 
     PanelFrame {
-        width: Theme.fit(view.launcher.full ? 860 : 700)
+        width: Theme.fit(view.launcher.full ? 860 : 680)
         height: body.implicitHeight
+        radius: Theme.fs(20)
         x: Math.round((parent.width - width) / 2)
         // its top edge stays put as results come and go
         y: !view.launcher.underBar ? Math.round(parent.height * 0.2)
@@ -67,67 +65,44 @@ Item {
                 view: view
                 x: Theme.panelPad
                 width: parent.width - Theme.panelPad * 2
-                height: Theme.fs(64)
-                textSize: Theme.fs(22)
+                height: Theme.fs(62)
+                textSize: Theme.fs(24)
+                glyph: view.launcher.blended ? "󰍉" : view.launcher.glyphs[view.launcher.mode]
+                glyphSize: Theme.fs(26)
+                glyphQuiet: true
                 borderless: true
                 hints: view.launcher.blended ? [] : [view.launcher.modeNames[view.launcher.mode]]
             }
 
             Rectangle {
-                visible: view.recents ? view.mostUsed.length > 0 : true
+                visible: !view.recents
                 width: parent.width
                 height: Theme.borderWidth
                 color: Theme.stroke
             }
 
-            // before typing: the most used apps
-            Row {
-                id: strip
-                property int current: 0
-                visible: view.recents
-                x: Theme.panelPad
-                width: parent.width - Theme.panelPad * 2
-                topPadding: Theme.spaceS
-                bottomPadding: Theme.spaceS
-                Repeater {
-                    model: view.recents ? view.mostUsed : []
-                    LauncherTile {
-                        required property var modelData
-                        required property int index
-                        launcher: view.launcher
-                        entry: modelData
-                        width: strip.width / 8
-                        height: width
-                        iconScale: 0.55
-                        current: strip.current === index
-                        onHovered: strip.current = index
-                        onClicked: view.launcher.activate(modelData, "app")
-                    }
-                }
-            }
-
             Item {
                 visible: !view.recents
-                x: Theme.panelPad
-                width: parent.width - Theme.panelPad * 2
+                x: Theme.spaceM
+                width: parent.width - Theme.spaceM * 2
                 height: visible ? Math.max(list.count > 0 ? 0 : view.launcher.rowHeight,
                         Math.min(list.contentHeight, (Settings.launcherRows + 3) * view.launcher.lineHeight))
-                    + Theme.panelPad * 2 : 0
+                    + Theme.spaceM * 2 : 0
 
                 LauncherEmpty {
                     launcher: view.launcher
-                    y: Theme.panelPad
+                    y: Theme.spaceM
                     visible: list.count === 0
                     text: view.launcher.blended && Files.searching ? "Searching…" : view.launcher.emptyText
                 }
 
                 ListView {
                     id: list
-                    y: Theme.panelPad
+                    y: Theme.spaceM
                     width: parent.width
-                    height: parent.height - Theme.panelPad * 2
+                    height: parent.height - Theme.spaceM * 2
                     clip: true
-                    spacing: 1
+                    spacing: 2
                     boundsBehavior: Flickable.StopAtBounds
                     model: view.recents ? [] : view.rows
                     onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
@@ -143,12 +118,11 @@ Item {
                             x: Theme.spaceL
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: Theme.spaceXs
-                            text: parent.section.toUpperCase()
+                            text: parent.section
                             color: Theme.subtext
                             font.family: Theme.fontText
-                            font.weight: Theme.weightBody
-                            font.pixelSize: Theme.fontEyebrow
-                            font.letterSpacing: 1
+                            font.weight: Theme.weightStrong
+                            font.pixelSize: Theme.fontCaption
                         }
                     }
 
@@ -158,6 +132,7 @@ Item {
                         launcher: view.launcher
                         item: modelData.item
                         kind: modelData.kind
+                        apple: true
                         large: modelData.section === "Top hit"
                         oneLine: !large
                         current: ListView.isCurrentItem
