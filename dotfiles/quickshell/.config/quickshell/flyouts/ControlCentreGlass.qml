@@ -315,16 +315,20 @@ Column {
         id: pages
         width: parent.width
         spacing: Theme.spaceM
+        readonly property var shown: [
+            { text: "Appearance", page: "appearance" },
+            { text: "Widgets", page: "widgets" },
+        ].concat(PpdProfile.profile === "" ? [] : [{
+            text: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text,
+            page: "", profile: true }])
+        readonly property real total: shown.reduce((a, p) => a + p.text.length + (p.profile ? 3 : 0) + 5, 0)
         Repeater {
-            model: [
-                { text: "Appearance", page: "appearance" },
-                { text: "Widgets", page: "widgets" },
-            ].concat(PpdProfile.profile === "" ? [] : [{
-                text: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text,
-                page: "", profile: true }])
+            model: pages.shown
             Rectangle {
                 required property var modelData
-                width: (pages.width - pages.spacing * (pages.children.length - 2)) / (pages.children.length - 1)
+                // wide enough for its label: shares in proportion to the text
+                readonly property real weight: modelData.text.length + (modelData.profile ? 3 : 0) + 5
+                width: (pages.width - pages.spacing * (pages.shown.length - 1)) * weight / pages.total
                 height: Theme.fs(32)
                 radius: height / 2
                 color: pillMouse.containsMouse ? Theme.washActive : Theme.washHover
@@ -344,11 +348,15 @@ Column {
                     }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
+                        // inside the capsule whatever the label
+                        width: Math.min(implicitWidth, parent.parent.width - Theme.spaceL * 2
+                            - (parent.parent.modelData.profile ? Theme.fontIconSize + Theme.spaceS : 0))
+                        elide: Text.ElideRight
                         text: parent.parent.modelData.text
                         color: Theme.textStrong
                         font.family: Theme.fontText
                         font.weight: Theme.weightStrong
-                        font.pixelSize: Theme.fontBody
+                        font.pixelSize: Theme.fontCaption
                     }
                 }
                 MouseArea {
