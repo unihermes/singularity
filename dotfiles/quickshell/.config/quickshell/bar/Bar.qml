@@ -84,7 +84,8 @@ PanelWindow {
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
     readonly property bool unblurred: !!monitor && monitor.scale < 1
     WlrLayershell.namespace: unblurred ? "unblurred-quickshell" : "quickshell"
-    readonly property color barGround: Qt.rgba(bar.barTone.r, bar.barTone.g, bar.barTone.b,
+    readonly property color barBase: unblurred ? Theme.unfrostedTone(bar.barTone) : bar.barTone
+    readonly property color barGround: Qt.rgba(barBase.r, barBase.g, barBase.b,
         unblurred ? Theme.unfrosted(Theme.barOpacity) : Theme.barOpacity)
     property Gradient barShading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }

@@ -329,7 +329,8 @@ PanelWindow {
         width: strip.width + dock.pad * 2
         height: dock.iconSize + dock.pad * 2 + Theme.sp(6)
         radius: Theme.radius + Theme.sp(6)
-        color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, dock.unblurred ? Theme.unfrosted(Theme.barOpacity) : Theme.barOpacity)
+        color: dock.unblurred ? Qt.alpha(Theme.unfrostedTone(Theme.bar), Theme.unfrosted(Theme.barOpacity))
+            : Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
         border.width: 1
         border.color: Theme.isLight ? Qt.rgba(0, 0, 0, 0.12) : Qt.rgba(1, 1, 1, 0.2)
 
