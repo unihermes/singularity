@@ -144,7 +144,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             // shifted down by the gap between line box and ink centres, so
             // digits don't sit high
-            anchors.verticalCenterOffset: root.inkNudge(labelInk)
+            anchors.verticalCenterOffset: root.stacked ? 0 : root.inkNudge(labelInk)
             visible: text !== ""
             text: root.levelText ? Math.round(root.fillValue * 100) + "%" : root.label
             width: root.labelMaxWidth > 0 ? Math.min(implicitWidth, root.labelMaxWidth) : implicitWidth
@@ -152,10 +152,15 @@ Item {
             // a level's warning colour (a low battery) carries into its text
             color: root.levelText && !Qt.colorEqual(root.fillColor, Theme.gaugeFill) ? root.fillColor : root.fg
             font.family: Theme.fontText
-            font.pixelSize: Theme.barLabelSize
+            font.pixelSize: root.stacked ? Theme.stackLabelSize : Theme.barLabelSize
             font.weight: Theme.weightBody
+            horizontalAlignment: Text.AlignHCenter
+            lineHeight: root.stacked ? 0.95 : 1
         }
     }
+
+    // a label of two lines (the clock's Stack style), set a size smaller
+    readonly property bool stacked: label.indexOf("\n") !== -1
 
     // A fixed reference string, not the live text: per-glyph ink varies, and
     // following the label would make it bob every time the number changed.

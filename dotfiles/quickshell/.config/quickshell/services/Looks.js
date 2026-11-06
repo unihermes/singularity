@@ -202,6 +202,8 @@ var fonts = [
     "CaskaydiaCove Nerd Font", "SauceCodePro Nerd Font", "BlexMono Nerd Font", "VictorMono Nerd Font",
     "GeistMono Nerd Font", "CommitMono Nerd Font", "SpaceMono Nerd Font", "MartianMono Nerd Font",
     "Mononoki Nerd Font", "Terminess Nerd Font", "Iosevka Nerd Font",
+    // proportional faces, for the styles that follow a desktop OS (Glass, Ledger)
+    "Liberation Sans", "Noto Sans",
 ]
 // the fonts' own names, not the Nerd Fonts' renamed families
 var fontLabels = {
@@ -213,6 +215,7 @@ var fontLabels = {
     "SpaceMono Nerd Font": "Space Mono", "MartianMono Nerd Font": "Martian Mono",
     "Mononoki Nerd Font": "Mononoki", "Terminess Nerd Font": "Terminus",
     "Iosevka Nerd Font": "Iosevka",
+    "Liberation Sans": "Liberation Sans", "Noto Sans": "Noto Sans",
 }
 
 // The weight body text is set in, for the fonts that need other than

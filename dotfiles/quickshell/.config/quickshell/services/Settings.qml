@@ -242,7 +242,7 @@ Singleton {
         "names": "Names", "apps": "App icons", "popin": "Pop", "zoom": "Zoom", "fade": "Fade",
         "fold": "Fold", "slide": "Slide", "rise": "Rise", "drop": "Drop", "scale": "Scale",
         "stamp": "Time + date", "time": "Time", "seconds": "Seconds", "day": "Day + time",
-        "long": "Full date", "iso": "ISO date", "custom": "Custom", "icons": "Icons",
+        "long": "Full date", "iso": "ISO date", "stack": "Stacked", "custom": "Custom", "icons": "Icons",
         "titled": "With titles", "tabs": "Tabs", "previews": "Previews", "glide": "Glide",
         "inset": "Inset", "segmented": "Segmented", "rings": "Rings", "viewfinder": "Viewfinder",
         "tint": "Tint", "liquid": "Liquid",
@@ -252,7 +252,7 @@ Singleton {
         "dim": "Dimmed", "clear": "Clear", "solid": "Solid", "banner": "Banner", "centre": "Centre",
         "arch": "Arch", "menu": "Menu", "dashboard": "Dashboard", "cog": "Cog", "home": "Home",
         "star": "Star", "blackhole": "Black hole", "vortex": "Vortex", "horizon": "Event horizon",
-        "radar": "Radar", "moon": "Moon", "atom": "Atom",
+        "radar": "Radar", "moon": "Moon", "atom": "Atom", "apple": "Apple", "windows": "Windows",
         "rocket": "Rocket", "ghost": "Ghost", "planet": "Planet", "sparkle": "Sparkle",
         "infinity": "Infinity", "white": "White", "smaller": "Smaller", "same": "Same",
         "larger": "Larger", "muted": "Muted", "text": "Text", "alacritty": "Alacritty", "ghostty": "Ghostty", "top": "Top", "corner": "Corner", "small": "Small", "large": "Large", "huge": "Huge",
@@ -489,7 +489,7 @@ Singleton {
     // modules added since.
 
     readonly property var widgetDefaults: ({
-        left:   ["controlcentre", "workspaces", "windows"],
+        left:   ["controlcentre", "activeapp", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
         right:  ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
                  "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
@@ -501,6 +501,7 @@ Singleton {
         controlcentre: { label: "Control Centre", icon: "󰣇" },
         workspaces:    { label: "Workspaces",     icon: "󰇘" },
         windows:       { label: "Open Windows",   icon: "󰀻" },
+        activeapp:     { label: "Focused App",    icon: "󰀵" },
         clock:         { label: "Clock",          icon: "󰅐" },
         bluetooth:     { label: "Bluetooth",      icon: "󰂯" },
         network:       { label: "Network",        icon: "󰤨" },
@@ -545,13 +546,26 @@ Singleton {
     // unsaved module (new since) goes beside its default neighbours.
     function widgetLayout() {
         if (!taskbarLayoutOn) return resolveLayout(adapter.barLayout)
-        var own = adapter.taskbarLayout || {}
+        var own = ownLayout()
         return Object.keys(own).length > 0 ? resolveLayout(own) : taskbarOf(resolveLayout(adapter.barLayout))
     }
 
-    // Flat's Taskbar layout: nothing in the centre. Until rearranged (into
-    // taskbarLayout) it's the usual one with the centre moved right.
-    readonly property bool taskbarLayoutOn: adapter.style === "flat" && Styles.has(adapter.styleOptions, "taskbar")
+    // A style's own bar arrangement (Styles' `layout`: Flat's and Ledger's
+    // taskbar, Glass's menu bar) while its option of that name is on: nothing
+    // in the centre. Until rearranged (into styleLayouts) it's the usual
+    // one with the centre moved right.
+    readonly property string layoutKind: {
+        var k = Styles.get(adapter.style).layout || ""
+        return k !== "" && Styles.has(adapter.styleOptions, k) ? k : ""
+    }
+    readonly property bool taskbarLayoutOn: layoutKind !== ""
+    // Glass's Dock holds the open windows, so the menu bar's strip goes
+    readonly property bool dockOn: adapter.style === "glass" && Styles.has(adapter.styleOptions, "dock")
+    function ownLayout() {
+        var own = (adapter.styleLayouts || {})[adapter.style]
+        if (own) return own
+        return adapter.style === "flat" ? (adapter.taskbarLayout || {}) : {}
+    }
     function taskbarOf(l) {
         var lead = l.centre.filter(k => k !== "clock")
         var tail = l.centre.indexOf("clock") !== -1 ? ["clock"] : []
@@ -613,6 +627,11 @@ Singleton {
     }
 
     function widgetVisible(key) {
+        if (key === "windows" && dockOn) return false
+        // the menu bar has no Show Desktop corner
+        if (key === "desktop" && layoutKind === "menubar") return false
+        // the focused app's name belongs to the menu bar
+        if (key === "activeapp" && layoutKind !== "menubar") return false
         return lockedWidgets.indexOf(key) !== -1
             || (adapter.barHidden || []).indexOf(key) === -1
     }
@@ -632,8 +651,11 @@ Singleton {
             centre: (layout.centre || []).slice(),
             right:  (layout.right  || []).slice(),
         }
-        if (taskbarLayoutOn) adapter.taskbarLayout = l
-        else adapter.barLayout = l
+        if (taskbarLayoutOn) {
+            var all = Object.assign({}, adapter.styleLayouts || {})
+            all[adapter.style] = l
+            adapter.styleLayouts = all
+        } else adapter.barLayout = l
     }
 
     // the centre module pinned to the bar's middle; the others stack outward
@@ -644,6 +666,7 @@ Singleton {
     function resetWidgets() {
         adapter.barLayout = {}
         adapter.taskbarLayout = {}
+        adapter.styleLayouts = {}
         adapter.barHidden = []
         adapter.centreAnchor = "clock"
     }
@@ -1102,6 +1125,8 @@ Singleton {
             property var barLayout: ({})
             // Flat's Taskbar layout, once rearranged (widgetLayout)
             property var taskbarLayout: ({})
+            // the same per style (Ledger's, Glass's), keyed by its name
+            property var styleLayouts: ({})
             property var barHidden: []
             // Bar Widgets' arrangement, held while a look with its own
             // layout is on (applyLayout)

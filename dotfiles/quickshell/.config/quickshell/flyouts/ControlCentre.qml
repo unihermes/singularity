@@ -773,10 +773,10 @@ FlyoutPanel {
         readonly property bool sectioned: true
         onVisibleChanged: if (!visible) controlCentre.widgetHover = ""
 
-        // Flat's Taskbar layout keeps an arrangement of its own
+        // a style's bar layout keeps an arrangement of its own
         FlyoutRow {
             visible: Settings.taskbarLayoutOn
-            label: "Editing the Taskbar layout"
+            label: Settings.layoutKind === "menubar" ? "Editing the Menu bar layout" : "Editing the Taskbar layout"
             enabled: false
         }
 

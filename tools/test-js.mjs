@@ -102,10 +102,11 @@ test("Format picks units from the number", () => {
     assert.equal(F.pct(0.456), "46%")
 })
 
-test("Styles: leaving Flat puts the bar back at the top", () => {
+test("Styles: leaving Flat or Ledger puts the bar back at the top", () => {
     const S = load("Styles.js")
     assert.equal(S.finish("flat").barPosition, "bottom")
-    for (const name of S.order.filter(n => n !== "flat")) {
+    assert.equal(S.finish("ledger").barPosition, "bottom")
+    for (const name of S.order.filter(n => n !== "flat" && n !== "ledger")) {
         assert.equal(S.finish(name).barPosition, "top", name)
         assert.equal(S.finish(name).heavyLines, false, name)
     }
@@ -170,7 +171,7 @@ test("Styles resolve every style, and Flat is square", () => {
 test("Styles: new defaults reset layout and retain their frame and control families", () => {
     const S = load("Styles.js")
     const expected = { rail: ["rail", "grouped"], notch: ["notch", "outline"],
-        ledger: ["ruled", "grouped"], capsule: ["none", "filled"], bevel: ["bevel", "outline"] }
+        capsule: ["none", "filled"], bevel: ["bevel", "outline"] }
     for (const [name, [frame, modules]] of Object.entries(expected)) {
         assert.ok(S.order.includes(name), name)
         const stock = S.stockOf(name), resolved = S.resolve(stock)
@@ -191,7 +192,17 @@ test("Styles: new defaults reset layout and retain their frame and control famil
         assert.equal(overridden.shadow, "none", name)
     }
     assert.equal(S.resolve(S.stockOf("notch")).radius, 0)
-    assert.equal(S.resolve(S.stockOf("ledger")).radius, 0)
+    // Ledger is the Windows 10 take: a square taskbar along the bottom
+    const ledger = S.stockOf("ledger"), win10 = S.resolve(ledger)
+    assert.equal(win10.radius, 0)
+    assert.equal(win10.moduleStyle, "taskbar")
+    assert.equal(ledger.barPosition, "bottom")
+    assert.equal(ledger.styleOptions, "taskbar")
+    // Glass is the macOS take: a menu bar with a Dock
+    const mac = S.stockOf("glass")
+    assert.equal(S.resolve(mac).moduleStyle, "bare")
+    assert.equal(mac.styleOptions.split(",").includes("dock"), true)
+    assert.equal(mac.styleOptions.split(",").includes("menubar"), true)
     assert.equal(S.resolve(S.stockOf("bevel")).shadow, "hard")
     // Moving away from Capsule restores a full bar with no island gap.
     assert.equal(S.stockOf("channel").barStyle, "full")

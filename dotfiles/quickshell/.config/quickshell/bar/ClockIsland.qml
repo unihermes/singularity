@@ -39,9 +39,9 @@ BarModule {
     TextMetrics {
         id: timeMetrics
         font.family: Theme.fontText
-        font.pixelSize: Theme.barLabelSize
+        font.pixelSize: root.timeText.indexOf("\n") !== -1 ? Theme.stackLabelSize : Theme.barLabelSize
         font.weight: Theme.weightBody
-        text: root.timeText
+        text: root.timeText.split("\n").sort((a, b) => b.length - a.length)[0]
     }
     readonly property int idleWidth: Math.ceil(timeMetrics.advanceWidth) + root.chrome
 

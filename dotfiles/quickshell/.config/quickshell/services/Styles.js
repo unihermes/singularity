@@ -20,6 +20,9 @@
 //   options  its own switches { id, label, hint, on }; one with `key` stands
 //            for a shared Finish setting (with `value`/`off`), the rest are
 //            Settings.styleOptions ids read with Theme.opt(id)
+//   layout   optional bar arrangement the style's option of that id turns on:
+//            "taskbar" (centre moved right, clock last) or "menubar" (the same,
+//            with the open windows left to the Dock)
 //   windows  optional { focusedOpacity, unfocusedOpacity, terminalOpacity }
 //   settings optional stock values over `stock` below
 // Controls draw per style too (Switch, Slider, FlyoutSegmented, FlyoutChip).
@@ -78,22 +81,25 @@ var styles = {
         windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 100 },
     },
     glass: {
-        name: "Glass", hint: "Frosted grounds over the blur, a light hairline",
-        frame: "single", modules: "filled", mark: "ground",
-        shadow: "soft", lines: false, attach: "floating", anim: "fade", glass: true,
+        name: "Glass", hint: "Frosted menu bar and a floating Dock, as on a Mac",
+        frame: "single", modules: "bare", mark: "ground",
+        shadow: "soft", lines: false, attach: "floating", anim: "scale", glass: true, layout: "menubar",
         settings: {
-            radius: 10,
-            workspaceStyle: "dots", windowStyle: "icons", clockStyle: "time", launcherLayout: "grid",
+            radius: 12, fontFamily: "Liberation Sans", fontSize: 14,
+            barHeight: 28, barIconSize: 16, modulePad: 5, windowIconSize: 22,
+            workspaceStyle: "dots", windowStyle: "icons", clockStyle: "long", launcherLayout: "spotlight", launcherPosition: "top",
             notifStyle: "compact", altTabStyle: "previews", overviewLayout: "strip", overviewBackdrop: "clear",
-            powerStyle: "full", windowAnim: "zoom",
+            powerStyle: "full", windowAnim: "zoom", windowRounding: "own", windowRadius: 12,
         },
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
+        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
         options: [
+            { id: "menubar", label: "Menu bar layout", hint: "Status and the clock packed at the right, apps in the Dock", on: true },
+            { id: "dock", label: "Dock", hint: "A floating Dock of pinned and open apps along the bottom", on: true },
             { id: "blur", label: "Heavy blur", hint: "Grounds a further step see-through", on: true },
             { id: "tint", label: "Accent-tinted glass", hint: "The frost takes a little of the accent", on: false },
             { id: "glow", label: "Glow on accents", hint: "Lit switches, thumbs and chips glow", on: true },
         ],
-        windows: { focusedOpacity: 95, unfocusedOpacity: 85, terminalOpacity: 75 },
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 80 },
     },
     flat: {
         name: "Flat", hint: "Square and flat; a taskbar along the bottom",
@@ -103,7 +109,7 @@ var styles = {
             levelStyle: "edge", windowAnim: "rise", animShell: 75, animWindows: 75,
         },
         frame: "single", modules: "taskbar", mark: "pill",
-        shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true,
+        shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true, layout: "taskbar",
         finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
         options: [
             // Settings.widgetLayout() rearranges the bar while this is on
@@ -130,12 +136,22 @@ var styles = {
         options: [],
     },
     ledger: {
-        name: "Ledger", hint: "Ruled sections, square switches and segmented levels",
-        frame: "ruled", modules: "grouped", mark: "pill",
-        shadow: "none", lines: true, attach: "floating", anim: "fade", square: true,
-        settings: { workspaceStyle: "numbers", windowStyle: "inset", clockStyle: "day", vizStyle: "line" },
-        finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "", clockIsland: true },
-        options: [],
+        name: "Ledger", hint: "Windows 10: a square taskbar along the bottom, flat tiles",
+        // quicker, as a desktop OS's taskbar is
+        settings: {
+            fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 18, windowIconSize: 24, controlIcon: "windows",
+            workspaceStyle: "numbers", windowStyle: "icons", clockStyle: "stack", vizStyle: "line", altTabStyle: "previews",
+            powerStyle: "list", levelStyle: "edge", windowAnim: "rise", launcherLayout: "grid", animShell: 75, animWindows: 75,
+        },
+        frame: "single", modules: "taskbar", mark: "pill",
+        shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true, layout: "taskbar",
+        finish: { barSeparator: "none", gradient: false, headingUpper: false, headingRule: false, headingMark: "", clockIsland: false },
+        options: [
+            { id: "taskbar", label: "Taskbar layout", hint: "Status and the clock packed at the right", on: true },
+            { key: "barPosition", value: "bottom", off: "top", label: "Bar at the bottom", hint: "Along the screen's bottom edge", on: true },
+            { key: "shadows", label: "Shadows", hint: "Soft shadows under flyouts", on: true },
+        ],
+        windows: { focusedOpacity: 100, unfocusedOpacity: 100, terminalOpacity: 90 },
     },
     capsule: {
         name: "Capsule", hint: "Rounded islands, soft sections and pill controls",

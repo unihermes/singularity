@@ -363,12 +363,15 @@ Singleton {
     readonly property string clockStyle: Settings.clockStyle
     // one format per clock style; thin spaces around the divider (a mono
     // space is too wide)
+    // the two-line clock's text, a size under the bar's labels
+    readonly property int stackLabelSize: Math.round(barLabelSize * 0.82)
     readonly property var clockFormats: ({
         stamp: "HH:mm:ss\u2009|\u2009MM/dd/yy",
         time:  "HH:mm",
         day:   "ddd d MMM\u2002HH:mm",
         long:  "dddd, MMMM d\u2002\u00b7\u2002HH:mm",
         seconds: "HH:mm:ss",
+        stack: "HH:mm\nd/M/yyyy",
         iso:   "yyyy-MM-dd\u2002HH:mm",
         custom: Settings.clockFormat || "HH:mm",
     })
@@ -377,7 +380,7 @@ Singleton {
         arch: "󰣇", menu: "󰍜", dashboard: "󰕮", cog: "󰒓", home: "󰋜", star: "󰓎",
         vortex: "󰢘", horizon: "󰺕", blackhole: "󰀘", atom: "󰝨", rocket: "󰑣", ghost: "󰊠",
         planet: "󰇧", sparkle: "󰙴", infinity: "󰛤",
-        radar: "󰐷", moon: "󰖔",
+        radar: "󰐷", moon: "󰖔", apple: "󰀵", windows: "󰖳",
     })
     readonly property string controlGlyph: controlGlyphs[Settings.controlIcon] || "󰣇"
     // the open-windows strip and app icons in the bar -- see Looks.js

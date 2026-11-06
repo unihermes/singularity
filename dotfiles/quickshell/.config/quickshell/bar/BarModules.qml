@@ -27,7 +27,7 @@ Item {
 
     readonly property var widgetItems: ({
         controlcentre: ccBtn, workspaces: wsFrame,
-        windows: windowIcons, clock: clock, bluetooth: btBtn,
+        windows: windowIcons, activeapp: activeApp, clock: clock, bluetooth: btBtn,
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
@@ -62,6 +62,19 @@ Item {
     WindowsModule {
         id: windowIcons
         host: barModules
+    }
+
+    // The Menu bar's app name: the focused window's app, beside the menu
+    // button; pointing at the workspaces flyout lists every window.
+    BarModule {
+        id: activeApp
+        readonly property var focused: Hyprland.activeToplevel
+        readonly property var info: focused ? focused.lastIpcObject : null
+        visible: Settings.widgetVisible("activeapp") && !!info && !!info.class && !Apps.isShellWindow(focused)
+        label: info && info.class ? Apps.nameForWindow(info.class, info.title) : ""
+        labelMaxWidth: Theme.sp(180)
+        active: screenScope.openFlyout === "workspaces"
+        onActivated: screenScope.toggleFlyout("workspaces", activeApp)
     }
 
     // Time and date in one chip, which briefly shows volume, brightness and

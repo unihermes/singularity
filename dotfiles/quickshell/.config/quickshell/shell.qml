@@ -160,6 +160,13 @@ ShellRoot {
         function isDefault(): bool { return Settings.isDefault }
     }
 
+    // `qs ipc call style set <name>` / `... get`
+    IpcHandler {
+        target: "style"
+        function set(name: string): void { Settings.setStyle(name) }
+        function get(): string { return Settings.style }
+    }
+
     // `qs ipc call theme css`: the live tokens as a CSS :root block, for HTML mockups
     IpcHandler {
         target: "theme"
@@ -658,6 +665,11 @@ ShellRoot {
             screenScope: screenScope
             shellRoot: root
             trayMenu: trayMenu
+        }
+
+        // Glass's Dock along the bottom
+        Dock {
+            screenScope: screenScope
         }
 
         // clock, weather, music and stats on the desktop, under the windows

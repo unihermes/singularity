@@ -54,7 +54,7 @@ roundness and slider thumb. Plain suppresses the custom frame treatment.
 |---|---|---|---|---|---|
 | Rail | accent leading spine / neutral leading rule | ruled groups | title case, bar mark, no rule | drop | Roundness 3 |
 | Notch | opposite cut corners | outlined notched chips | upper, brackets, no rule | drop | angular corners; Blocks, Segmented windows, Rising visualizer |
-| Ledger | square outer stroke / top rule | ruled groups | upper, no mark or rule | fade | square corners; Numbers, Inset windows, Day + time, One line visualizer |
+| Ledger | the Windows 10 take, as Flat: hairline panels, flush on a bottom taskbar | taskbar slots, 40px | sentence case, no mark or rule | drop | square corners; Noto Sans, Windows button, stacked time over date, 24px task icons |
 | Capsule | rounded grounds, soft shadow | independent islands, filled chips | title case, no mark or rule | scale | Roundness 14; Dots, Time, Grid launcher, Preview switcher |
 | Bevel | raised outer edge / recessed sections, hard offset shadow | raised chips | upper, `::`, rule | drop | Roundness 2; Blocks, Segmented windows, Rising visualizer |
 
@@ -82,6 +82,15 @@ comparison tables below describe the original five styles.
   the option off (or leaving Flat) brings the usual arrangement back. Its
   `barPosition` option puts the bar at the bottom (an option's `off` is
   the value it takes when off).
+- Glass is the macOS take (`menubar` and `dock` options): a 28px frosted menu
+  bar with bare chips, the Apple button, the focused app's name (the
+  `activeapp` module, menu bar only) and the status icons and clock packed at
+  the right; the open windows move to the Dock (`bar/Dock.qml`), a frosted
+  pill along the bottom of pinned and open apps that swell toward the pointer,
+  a dot under each running one. The Dock reserves its own strip. Liberation
+  Sans, 12px corners, Spotlight launcher at the top.
+- Ledger's `taskbar` and Glass's `menubar` options (Styles' `layout`) rearrange
+  the bar like Flat's; each style keeps its own arrangement in `styleLayouts`.
 - Glass's `blur` and `tint` change its frost.
 
 Across every style, a chosen segment, tab or chip fills with the accent

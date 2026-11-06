@@ -40,3 +40,5 @@ eval "$(starship init bash)"
 # and a missing file would leave $? at 1 for the first prompt, which starship
 # draws as a failed command (the prompt character in the alert colour).
 if [[ -r ~/.bashrc.local ]]; then . ~/.bashrc.local; fi
+
+export PATH="$HOME/.local/bin:$PATH"
