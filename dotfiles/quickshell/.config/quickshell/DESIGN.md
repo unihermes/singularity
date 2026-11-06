@@ -12,7 +12,7 @@ double-lined, with one indigo accent (`#5555c8`) for marks.
 
 How the chrome is drawn is one setting, `style` (`services/Styles.js`):
 Channel, Double, Solid, Glass (settled 2026-10-08 from two rounds of
-mockups), Flat (2026-10-16), and Rail, Notch, Ledger, Capsule and Bevel
+mockups), Flat (2026-10-16), and Rail, Notch, Pane, Capsule and Bevel
 (2026-11-01, from the interactive style studies). A style sets the frame,
 bar modules, hover, level chips, focused window mark and where flyouts sit,
 all at once, and starts the Finish switches and the heading mark off its
@@ -40,7 +40,7 @@ part of its default (see Styles and settings).
 | Flat | pill outlined in the text colour; on, accent with a white knob | thin line, upright rounded thumb | separate flat blocks, 2px apart | flat block, heavy outline on hover | tick |
 | Rail | accent underline when on | slim track, upright marker | separate ruled choices | underlined action | tick |
 | Notch | filled cut-corner box | bar, angled marker | notched strip and choices | cut-corner action | tick |
-| Ledger | square box with a check | segmented bar | separate ruled choices | ruled action | tick |
+| Pane | square box with a check | segmented bar | separate ruled choices | ruled action | tick |
 | Capsule | pill with a white knob | rounded thick bar, round thumb | pill track and chosen pill | rounded filled action | accent-tinted ground |
 | Bevel | recessed well, accent when on | recessed filled track | recessed strip, pressed choice | raised, pressed when selected | tick |
 
@@ -54,11 +54,11 @@ roundness and slider thumb. Plain suppresses the custom frame treatment.
 |---|---|---|---|---|---|
 | Rail | accent leading spine / neutral leading rule | ruled groups | title case, bar mark, no rule | drop | Roundness 3 |
 | Notch | opposite cut corners | outlined notched chips | upper, brackets, no rule | drop | angular corners; Blocks, Segmented windows, Rising visualizer |
-| Ledger | the Windows 10 take, as Flat: hairline panels, flush on a bottom taskbar | taskbar slots, 40px | sentence case, no mark or rule | drop | square corners; Noto Sans, Windows button, stacked time over date, 24px task icons |
+| Pane | the Windows 10 take, as Flat: hairline panels, flush on a bottom taskbar | taskbar slots, 40px | sentence case, no mark or rule | drop | square corners; Noto Sans, Windows button, stacked time over date, 24px task icons |
 | Capsule | rounded grounds, soft shadow | independent islands, filled chips | title case, no mark or rule | scale | Roundness 14; Dots, Time, Grid launcher, Preview switcher |
 | Bevel | raised outer edge / recessed sections, hard offset shadow | raised chips | upper, `::`, rule | drop | Roundness 2; Blocks, Segmented windows, Rising visualizer |
 
-These inherit the shared stock unless listed above. Notch and Ledger keep their
+These inherit the shared stock unless listed above. Notch and Pane keep their
 angular corners regardless of Roundness. Bevel's shell shadows are hard offsets;
 its application-window shadow uses the compositor's Small preset. The stock
 comparison tables below describe the original five styles.
@@ -89,8 +89,9 @@ comparison tables below describe the original five styles.
   pill along the bottom of pinned and open apps,
   a dot under each running one. The Dock reserves its own strip. Liberation
   Sans, 12px corners, Spotlight launcher a fifth down.
-- Ledger's `taskbar` and Glass's `menubar` options (Styles' `layout`) arrange the
-  bar: Ledger as the Windows taskbar (Start, a light search box, Task View,
+- Pane's `taskbar` and Glass's `menubar` options (Styles' `layout`) arrange the
+  bar: Pane as the Windows taskbar (Start, which opens the Start-menu launcher
+  layout with the Control Centre on its right-click, a light search box, Task View,
   open windows; tray, stacked clock, Action Centre, Show Desktop), Glass as the
   menu bar (logo, app name, workspaces; status items, search, clock last). Their
   `bar` orders are in Styles.js, each module named. Search, Task View and
@@ -298,7 +299,7 @@ Style: `channel` (frame `channel` in `Styles.js`).
   that outline instead of drawing a second track inside it. Fills respect
   Channel’s inner stroke and the raised edge of Bevel; Tint reaches
   Double’s outer stroke, with the inner stroke drawn above the fill;
-  Rail and Ledger keep their open rules. Tint follows the same slot shape.
+  Rail and Pane keep their open rules. Tint follows the same slot shape.
 - **Plain** (Shape, a switch over any style, from a classic text bar):
   the bar full width whatever Bar shape says, flat, no hairline, chips Bare
   unless Bar chips says otherwise; the levels (volume, brightness, battery)

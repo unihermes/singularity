@@ -35,7 +35,7 @@ Item {
         failed: failedBtn, updates: updatesBtn, drives: drivesBtn,
         cooling: coolingBtn, desktop: desktopBtn })
 
-    // Control centre. Sits left of the workspaces, where a
+    // Control centre (the Start button under the taskbar). Sits left of the workspaces, where a
     // distro/menu button conventionally lives.
     BarModule {
         id: ccBtn
@@ -43,8 +43,11 @@ Item {
         // one size whichever glyph is chosen, a little over the other modules'
         iconSize: Math.min(Theme.moduleHeight - 4, Theme.iconSize + 4)
         fixedWidth: Theme.moduleWidth
-        active: screenScope.openFlyout === "controlcentre"
-        onActivated: screenScope.toggleFlyout("controlcentre", ccBtn)
+        active: screenScope.openFlyout === (Theme.moduleTaskbar ? "launcher" : "controlcentre")
+        // the taskbar's Start button opens the Start menu; the Control Centre
+        // is its right-click
+        onActivated: if (Theme.moduleTaskbar) barModules.shellRoot.launcherToggled("apps")
+                     else screenScope.toggleFlyout("controlcentre", ccBtn)
         // straight to Power, or there from whichever page is open
         onRightClicked: {
             screenScope.controlPage = "power"

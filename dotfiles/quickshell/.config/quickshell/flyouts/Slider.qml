@@ -53,7 +53,7 @@ Item {
 
         Rectangle {
             id: customTrack
-            visible: ["rail", "notch", "ledger", "bevel"].indexOf(track.kind) !== -1
+            visible: ["rail", "notch", "pane", "bevel"].indexOf(track.kind) !== -1
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: track.kind === "rail" ? Theme.meterHeight : Theme.switchHeight
@@ -69,7 +69,7 @@ Item {
 
             Repeater {
                 id: divisions
-                model: track.kind === "ledger" ? Math.max(1, Math.floor(customTrack.width / Theme.sp(12))) : 0
+                model: track.kind === "pane" ? Math.max(1, Math.floor(customTrack.width / Theme.sp(12))) : 0
                 Rectangle {
                     required property int index
                     x: (index + 1) * customTrack.width / (divisions.count + 1) - width / 2

@@ -37,7 +37,7 @@
 
 .pragma library
 
-var order = ["channel", "double", "solid", "glass", "flat", "rail", "notch", "ledger", "capsule", "bevel"]
+var order = ["channel", "double", "solid", "glass", "flat", "rail", "notch", "pane", "capsule", "bevel"]
 
 var styles = {
     channel: {
@@ -148,13 +148,13 @@ var styles = {
         finish: { barSeparator: "none", gradient: false, headingUpper: true, headingRule: false, headingMark: "shape-brackets", clockIsland: true },
         options: [],
     },
-    ledger: {
-        name: "Ledger", hint: "Windows 10: a square taskbar along the bottom, flat tiles",
+    pane: {
+        name: "Pane", hint: "A desktop taskbar: Start menu, search box, square flat tiles along the bottom",
         // quicker, as a desktop OS's taskbar is
         settings: {
             fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 18, windowIconSize: 24, windowIconPadding: 16, modulePad: 1, controlIcon: "windows",
             workspaceStyle: "numbers", windowStyle: "icons", clockStyle: "stack", vizStyle: "line", altTabStyle: "previews",
-            powerStyle: "list", levelStyle: "edge", windowAnim: "rise", launcherLayout: "grid", animShell: 75, animWindows: 75,
+            powerStyle: "list", levelStyle: "edge", windowAnim: "rise", launcherLayout: "start", animShell: 75, animWindows: 75,
         },
         frame: "single", modules: "taskbar", mark: "pill",
         shadow: "soft", lines: true, attach: "auto", anim: "drop", square: true, layout: "taskbar",

@@ -102,11 +102,11 @@ test("Format picks units from the number", () => {
     assert.equal(F.pct(0.456), "46%")
 })
 
-test("Styles: leaving Flat or Ledger puts the bar back at the top", () => {
+test("Styles: leaving Flat or Pane puts the bar back at the top", () => {
     const S = load("Styles.js")
     assert.equal(S.finish("flat").barPosition, "bottom")
-    assert.equal(S.finish("ledger").barPosition, "bottom")
-    for (const name of S.order.filter(n => n !== "flat" && n !== "ledger")) {
+    assert.equal(S.finish("pane").barPosition, "bottom")
+    for (const name of S.order.filter(n => n !== "flat" && n !== "pane")) {
         assert.equal(S.finish(name).barPosition, "top", name)
         assert.equal(S.finish(name).heavyLines, false, name)
     }
@@ -192,12 +192,12 @@ test("Styles: new defaults reset layout and retain their frame and control famil
         assert.equal(overridden.shadow, "none", name)
     }
     assert.equal(S.resolve(S.stockOf("notch")).radius, 0)
-    // Ledger is the Windows 10 take: a square taskbar along the bottom
-    const ledger = S.stockOf("ledger"), win10 = S.resolve(ledger)
+    // Pane is the Windows 10 take: a square taskbar along the bottom
+    const pane = S.stockOf("pane"), win10 = S.resolve(pane)
     assert.equal(win10.radius, 0)
     assert.equal(win10.moduleStyle, "taskbar")
-    assert.equal(ledger.barPosition, "bottom")
-    assert.equal(ledger.styleOptions, "taskbar")
+    assert.equal(pane.barPosition, "bottom")
+    assert.equal(pane.styleOptions, "taskbar")
     // Glass is the macOS take: a menu bar with a Dock
     const mac = S.stockOf("glass")
     assert.equal(S.resolve(mac).moduleStyle, "bare")

@@ -58,7 +58,7 @@ Item {
     //   flat       separate flat blocks
     readonly property string kind: Theme.controlStyle
     // drawn as a row of separate choices rather than one strip
-    readonly property bool loose: kind === "flat" || kind === "rail" || kind === "ledger"
+    readonly property bool loose: kind === "flat" || kind === "rail" || kind === "pane"
     readonly property int gap: loose ? Theme.spaceXs : 0
     readonly property int edge: loose ? 0
         : kind === "solid" || kind === "glass" ? Theme.spaceXs : Theme.borderWidth

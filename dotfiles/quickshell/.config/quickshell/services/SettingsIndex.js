@@ -126,7 +126,7 @@ var entries = [
     { page: "appearance", section: "Colour", label: "Folder", keywords: "wallpaper folder directory images open add" },
     { page: "appearance", section: "Colour", label: "Fit", keywords: "wallpaper fill fit centre center tile scale swaybg" },
 
-    { page: "appearance", section: "Shape", label: "Style", keywords: "theme frames macos mac apple dock menu bar windows 10 win10 channel double solid glass flat rail notch ledger capsule bevel lined modules windows 10 square taskbar spines ruled cut corners islands raised recessed" },
+    { page: "appearance", section: "Shape", label: "Style", keywords: "theme frames macos mac apple dock menu bar windows 10 win10 taskbar start menu ledger channel double solid glass flat rail notch pane capsule bevel lined modules windows 10 square taskbar spines ruled cut corners islands raised recessed" },
     { page: "appearance", section: "Shape", label: "Roundness", keywords: "rounding corners radius panels windows hyprland bar chips" },
     { page: "appearance", section: "Shape", label: "Bar chips", keywords: "modules frame outline outlined bare strip grouped border chip" },
     { page: "appearance", section: "Shape", label: "Finish", keywords: "style options touches tint glow lit inner stroke taskbar heavy blur" },

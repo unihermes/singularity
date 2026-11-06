@@ -275,7 +275,7 @@ SettingsTab {
 
                         Rectangle {
                             anchors.fill: parent
-                            visible: ["channel", "flat", "rail", "notch", "ledger", "bevel"].indexOf(ya.v) === -1
+                            visible: ["channel", "flat", "rail", "notch", "pane", "bevel"].indexOf(ya.v) === -1
                             radius: ya.r
                             color: ya.v === "glass" ? (chip.lit ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.7) : Qt.rgba(1, 1, 1, 0.08))
                                 : ya.v === "double" ? (chip.lit ? Theme.overlay : Theme.panel)
@@ -293,7 +293,7 @@ SettingsTab {
                             }
                         }
                         StyleFrame {
-                            visible: ["rail", "notch", "ledger", "bevel"].indexOf(ya.v) !== -1
+                            visible: ["rail", "notch", "pane", "bevel"].indexOf(ya.v) !== -1
                             kind: Styles.get(ya.v) ? Styles.get(ya.v).frame : "none"
                             ground: chip.lit ? Theme.overlay : Theme.surface
                             stroke: chip.lit ? Theme.accent : Theme.muted

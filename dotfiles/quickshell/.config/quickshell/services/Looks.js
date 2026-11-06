@@ -202,7 +202,7 @@ var fonts = [
     "CaskaydiaCove Nerd Font", "SauceCodePro Nerd Font", "BlexMono Nerd Font", "VictorMono Nerd Font",
     "GeistMono Nerd Font", "CommitMono Nerd Font", "SpaceMono Nerd Font", "MartianMono Nerd Font",
     "Mononoki Nerd Font", "Terminess Nerd Font", "Iosevka Nerd Font",
-    // proportional faces, for the styles that follow a desktop OS (Glass, Ledger)
+    // proportional faces, for the styles that follow a desktop OS (Glass, Pane)
     "Liberation Sans", "Noto Sans",
 ]
 // the fonts' own names, not the Nerd Fonts' renamed families

@@ -552,7 +552,7 @@ Singleton {
         return Object.keys(own).length > 0 ? resolveLayout(own) : taskbarOf(resolveLayout(adapter.barLayout))
     }
 
-    // A style's own bar arrangement (Styles' `layout`: Flat's and Ledger's
+    // A style's own bar arrangement (Styles' `layout`: Flat's and Pane's
     // taskbar, Glass's menu bar) while its option of that name is on: nothing
     // in the centre. Until rearranged (into styleLayouts) it's the usual
     // one with the centre moved right.
@@ -918,6 +918,24 @@ Singleton {
         if (moved) adapter.userDefaults = all
     }
 
+    // Ledger became Pane: the style, its saved default and its bar layout move over
+    function foldLedger() {
+        if (adapter.style === "ledger") adapter.style = "pane"
+        var u = adapter.userDefaults || {}, l = adapter.styleLayouts || {}
+        if (u.ledger !== undefined) {
+            var all = Object.assign({}, u)
+            if (all.pane === undefined) all.pane = all.ledger
+            delete all.ledger
+            adapter.userDefaults = all
+        }
+        if (l.ledger !== undefined) {
+            var lay = Object.assign({}, l)
+            if (lay.pane === undefined) lay.pane = lay.ledger
+            delete lay.ledger
+            adapter.styleLayouts = lay
+        }
+    }
+
     // A bar shape arrives with its edge gap: the default's when it's the
     // default's shape, the shape's usual one otherwise.
     function setBarStyle(v) {
@@ -987,6 +1005,7 @@ Singleton {
             if (!Looks.looks[adapter.look]) adapter.look = Looks.fallback
             root.foldMedia()
             root.foldPlain()
+            root.foldLedger()
             root.normalizeStored()
         }
         onLoadFailed: root.ready = true
@@ -1148,7 +1167,7 @@ Singleton {
             property var barLayout: ({})
             // Flat's Taskbar layout, once rearranged (widgetLayout)
             property var taskbarLayout: ({})
-            // the same per style (Ledger's, Glass's), keyed by its name
+            // the same per style (Pane's, Glass's), keyed by its name
             property var styleLayouts: ({})
             property var barHidden: []
             // Bar Widgets' arrangement, held while a look with its own
