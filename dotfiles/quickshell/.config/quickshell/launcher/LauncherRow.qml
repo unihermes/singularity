@@ -6,7 +6,8 @@
 // is, what the syntax does) under it, or at the right end when `oneLine`.
 // The current row is lit as Settings' search hits are. `number` puts a key
 // label before the icon; `large` is Spotlight's top hit; `apple` draws the
-// current row as an accent-filled capsule with the kind of result at the right; `hug` sizes the
+// current row as an accent-filled capsule with the kind of result at the right, and a pin to keep an app in the Dock
+// and launcher (right-click or Ctrl+P too); `hug` sizes the
 // row to its name (One line) with no chevron.
 
 import Quickshell
@@ -108,7 +109,7 @@ Item {
     Column {
         anchors.left: iconCell.right
         anchors.leftMargin: Theme.spaceM
-        anchors.right: row.hug ? parent.right : inlineNote.visible ? inlineNote.left : chevron.left
+        anchors.right: row.hug ? parent.right : pin.visible ? pin.left : inlineNote.visible ? inlineNote.left : chevron.left
         anchors.rightMargin: row.hug ? Theme.spaceL : Theme.spaceS
         anchors.verticalCenter: parent.verticalCenter
         spacing: 1
@@ -159,6 +160,30 @@ Item {
         font.pixelSize: Theme.fontCaption
     }
 
+    // keep the app: lit while it's pinned, shown on the current or pointed-at row
+    Text {
+        id: pin
+        z: 2
+        readonly property bool pinned: row.kind === "app" && Apps.isPinned(row.item)
+        visible: row.apple && row.kind === "app" && (pinned || row.current || mouse.containsMouse)
+        anchors.right: inlineNote.visible ? inlineNote.left : chevron.left
+        anchors.rightMargin: Theme.spaceM
+        anchors.verticalCenter: parent.verticalCenter
+        text: pinned ? "󰐃" : "󰐄"
+        color: row.apple && row.current ? Theme.textOnAccent : pinned ? Theme.accent : Theme.subtext
+        opacity: pinned || pinMouse.containsMouse ? 1 : 0.7
+        font.family: Theme.fontIcon
+        font.pixelSize: Theme.fontIconSize
+        MouseArea {
+            id: pinMouse
+            anchors.fill: parent
+            anchors.margins: -Theme.spaceS
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Apps.togglePin(row.item)
+        }
+    }
+
     Text {
         id: chevron
         anchors.right: parent.right
@@ -180,6 +205,10 @@ Item {
         onPositionChanged: m => {
             if (row.launcher.pointerMoved(mouse, m.x, m.y)) row.hovered()
         }
-        onClicked: row.clicked()
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: m => {
+            if (m.button === Qt.RightButton) { if (row.apple && row.kind === "app") Apps.togglePin(row.item) }
+            else row.clicked()
+        }
     }
 }

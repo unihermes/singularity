@@ -73,6 +73,7 @@ Item {
         visible: Settings.widgetVisible("activeapp") && !!info && !!info.class && !Apps.isShellWindow(focused)
         label: info && info.class ? Apps.nameForWindow(info.class, info.title) : ""
         labelMaxWidth: Theme.sp(180)
+        labelBold: true
         active: screenScope.openFlyout === "workspaces"
         onActivated: screenScope.toggleFlyout("workspaces", activeApp)
     }

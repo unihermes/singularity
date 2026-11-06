@@ -999,6 +999,8 @@ Scope {
         "window-opacity": (Settings.focusedOpacity / 100) + " " + (Settings.unfocusedOpacity / 100),
         // the bar's extent at the top (0 at the bottom), for the Notes rule
         "bar-top": String(Theme.barPosition === "top" ? Theme.barExtent : 0),
+        // the blur behind see-through surfaces: size, passes and vibrancy; Glass's is heavier, as a frost
+        "blur": Theme.glass ? "22 3 0.25" : "12 2 0",
         // the windows' border width and shadow, from the style
         "window-frame": Theme.windowBorderWidth + " " + Theme.windowShadow,
     })

@@ -33,6 +33,8 @@ Item {
     // caps the label and elides it, for text of unbounded length (a track
     // title); 0 lets the label take whatever width it needs
     property int labelMaxWidth: 0
+    // the label in the strong weight (the menu bar's app name)
+    property bool labelBold: false
     // overrides the lightness-based colour, for the few modules whose whole
     // point is to be noticed (privacy, failed units)
     property color iconColor: "transparent"
@@ -153,7 +155,7 @@ Item {
             color: root.levelText && !Qt.colorEqual(root.fillColor, Theme.gaugeFill) ? root.fillColor : root.fg
             font.family: Theme.fontText
             font.pixelSize: root.stacked ? Theme.stackLabelSize : Theme.barLabelSize
-            font.weight: Theme.weightBody
+            font.weight: root.labelBold ? Theme.weightStrong : Theme.weightBody
             horizontalAlignment: Text.AlignHCenter
             lineHeight: root.stacked ? 0.95 : 1
         }

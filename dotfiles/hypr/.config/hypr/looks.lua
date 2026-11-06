@@ -38,6 +38,9 @@ inactiveOpacity = tonumber(inactiveOpacity) or 1
 local windowBorder, windowShadow = S.state("window-frame", ""):match("^(%d+)%s+(%a+)$")
 windowBorder = tonumber(windowBorder) or 1
 windowShadow = windowShadow or "soft"
+local blurSize, blurPasses, blurVibrancy = S.state("blur", ""):match("^(%d+)%s+(%d+)%s+([%d.]+)$")
+blurSize, blurPasses, blurVibrancy = tonumber(blurSize) or 12, tonumber(blurPasses) or 2, tonumber(blurVibrancy) or 0
+
 local shadowRange = ({ small = 8, soft = 18, large = 34 })[windowShadow] or 18
 
 -- the open tab's fill with an accent line along its top, as the last stops
@@ -92,8 +95,9 @@ hl.config({
 
         blur = {
             enabled    = true,
-            size       = 12,
-            passes     = 2,
+            size       = blurSize,
+            passes     = blurPasses,
+            vibrancy   = blurVibrancy,
             noise      = 0.015,
             contrast   = 0.9,
             brightness = 0.7,

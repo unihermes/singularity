@@ -188,7 +188,7 @@ FlyoutPanel {
     HeadCard {
         visible: controlCentre.home
         glyph: "󰣇"
-        title: Quickshell.env("USER") + "@" + hostFile.text().trim()
+        title: (Theme.glass ? "" : Quickshell.env("USER") + "@") + hostFile.text().trim()
         lines: ["up " + controlCentre.uptime]
         compact: true
 
