@@ -33,19 +33,54 @@ saved_mode() {
   echo "$m"
 }
 
-# swaybg has no IPC, so changing the image means a new instance. The new one
-# is started before the old one is killed: the other way round shows a frame
-# of bare background between them.
+# Keep the old surface until the new one is mapped and fully faded in on
+# every monitor. Image decoding and layer animations can take longer than a
+# fixed delay, especially when several wallpaper changes arrive together.
 show() {
-  local old mode=${2:-$(saved_mode)}
+  local old pid mode=${2:-$(saved_mode)} ready=0
   case $mode in fill|fit|center|tile) ;; *) mode=fill ;; esac
   mkdir -p "${current_link%/*}"
-  ln -sfn "$1" "$current_link"
+  exec 9>"${XDG_RUNTIME_DIR:-/tmp}/singularity-wallpaper-${UID}.lock"
+  flock 9
   old=$(pgrep -x swaybg || true)
-  swaybg -i "$1" -m "$mode" &>/dev/null &
+  swaybg -i "$1" -m "$mode" 9>&- &>/dev/null &
+  pid=$!
   disown
+  for ((attempt = 0; attempt < 100; attempt++)); do
+    kill -0 "$pid" 2>/dev/null || break
+    if hyprctl -j monitors > "${current_link%/*}/wallpaper-monitors.$$.tmp" 2>/dev/null &&
+       hyprctl -j layers > "${current_link%/*}/wallpaper-layers.$$.tmp" 2>/dev/null &&
+       python3 - "$pid" "${current_link%/*}/wallpaper-monitors.$$.tmp" "${current_link%/*}/wallpaper-layers.$$.tmp" <<'PY'
+import json, sys
+try:
+    pid = int(sys.argv[1])
+    with open(sys.argv[2]) as f:
+        monitors = json.load(f)
+    with open(sys.argv[3]) as f:
+        layers = json.load(f)
+    names = [m['name'] for m in monitors if not m.get('disabled', False)]
+    ready = bool(names) and all(any(layer.get('pid') == pid and layer.get('namespace') == 'wallpaper'
+                                    and layer.get('alpha', 0) >= 0.99
+                                    for level in layers.get(name, {}).get('levels', {}).values()
+                                    for layer in level) for name in names)
+    sys.exit(0 if ready else 1)
+except (OSError, ValueError, KeyError, TypeError):
+    sys.exit(1)
+PY
+    then
+      ready=1
+      break
+    fi
+    sleep 0.1
+  done
+  rm -f "${current_link%/*}/wallpaper-monitors.$$.tmp" "${current_link%/*}/wallpaper-layers.$$.tmp"
+  if (( ! ready )); then
+    kill "$pid" 2>/dev/null || true
+    echo "wallpaper failed to appear on every monitor: $1" >&2
+    return 1
+  fi
+  ln -sfn "$1" "$current_link"
   if [[ -n $old ]]; then
-    sleep 0.4
     kill $old 2>/dev/null || true
   fi
 }
