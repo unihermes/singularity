@@ -8,7 +8,8 @@
  */
 
 /* Horizontal Server List 3.0.0 by Gibbu (MIT), from
- * github.com/DiscordStyles/HorizontalServerList src/main.css as it stands:
+ * github.com/DiscordStyles/HorizontalServerList src/main.css, with selectors
+ * mapped to Discord's current classes:
  * the server list turned on its side to run along the top. The rest of
  * this sheet builds on it. */
 :root {
@@ -20,21 +21,21 @@
   --serverlist-offset: var(--custom-guild-list-width);
 }
 
-.base__5e434[data-fullscreen='false'] .content__5e434 {
+.base_pog62O[data-fullscreen='false'] .content_pog62O {
   margin-top: var(--serverlist-offset);
   overflow: visible !important;
 }
 
-:fullscreen .content__5e434 {
+:fullscreen .content_pog62O {
   margin: 0 !important;
 }
 
-.sidebar__5e434 {
+.sidebar_pog62O {
   border-radius: 0;
   overflow: visible !important;
 }
 
-.guilds__5e434 {
+.guilds_pog62O {
   transform-origin: top left;
   rotate: -90deg;
   height: 100vw !important;
@@ -42,41 +43,40 @@
   position: absolute !important;
   left: 0;
 
-  .itemsContainer_ef3116,
-  .stack_dbd263 {
+  .stack_TWWX0S {
     flex-direction: var(--HSL-server-direction);
     justify-content: var(--HSL-server-alignment);
   }
 }
 
-.tree_ef3116 {
+.tree_5dqHTG {
   padding-top: var(--HSL-top-padding, var(--size-sm));
   justify-content: var(--HSL-server-alignment);
 }
 
 /* Rotate the icons back */
-.wrapper__6e9f8,
-.folderPreview__48112,
-.folderIconWrapper__48112,
-.lowerBadge_cc5dd2,
-.upperBadge_cc5dd2 {
+.wrapper_JJ-hgR,
+.folderPreview_RTMSuZ,
+.folderIconWrapper_RTMSuZ,
+.lowerBadge_hqZPsU,
+.upperBadge_hqZPsU {
   rotate: 90deg;
 }
-.childWrapper__6e9f8 {
+.childWrapper_JJ-hgR {
   rotate: 0deg;
 }
 
 /* Notices */
-.notice__6e2b9 {
+.notice_Q02kKo {
   height: var(--notices-height);
 
-  & + .content__5e434 {
+  & + .content_pog62O {
     --serverlist-offset: calc(var(--notices-height) + var(--custom-guild-list-width));
   }
 }
 
 /* BetterFolders - Vencord */
-.container__5e434 > div[style]:not(.base__5e434) {
+.container_pog62O > div[style]:not(.base_pog62O) {
   width: 100vw !important;
   height: var(--serverlist-offset) !important;
   position: absolute;
@@ -84,11 +84,11 @@
   pointer-events: none;
   z-index: 1;
 
-  .guilds__5e434 {
+  .guilds_pog62O {
     pointer-events: all;
   }
 
-  & + .base__5e434 .content__5e434 {
+  & + .base_pog62O .content_pog62O {
     margin-top: calc(var(--serverlist-offset) * 2);
   }
 }
@@ -101,7 +101,7 @@
 /* no title bar: its row folds away, and what's left of it (back,
  * forward, inbox, help) sits at the right end of the server row; no window
  * buttons, which Hyprland's keys stand in for */
-#app-mount .base__5e434 {
+#app-mount .base_pog62O {
   --custom-app-top-bar-height: 0px;
   /* the framed row's height, and where the panels below start */
   --n-row: calc(40px * var(--n-guild-zoom) + 2 * var(--n-guild-pad) + 2 * var(--n-depth));
@@ -115,7 +115,7 @@
   --n-notice: 0px;
   --serverlist-offset: calc(var(--n-gap) + var(--n-row));
 }
-#app-mount .base__5e434 > .bar_c38106 {
+#app-mount .base_pog62O > .bar_3zSH5d {
   position: absolute !important;
   top: calc(var(--n-notice) + var(--n-gap));
   right: calc(var(--n-gap) + var(--n-depth) + var(--n-gap));
@@ -125,21 +125,21 @@
   background: transparent !important;
   z-index: 3;
 }
-.base__5e434 > .bar_c38106 .title_c38106, .winButtons_c38106 {
+.base_pog62O > .bar_3zSH5d .title_3zSH5d, .winButtons_3zSH5d {
   display: none !important;
 }
 /* back/forward and inbox/help as two of the shell's bar chips */
-.base__5e434 > .bar_c38106 {
+.base_pog62O > .bar_3zSH5d {
   align-items: center;
   gap: var(--n-gap);
 }
-.base__5e434 > .bar_c38106 :is(.leading_c38106, .trailing_c38106) {
+.base_pog62O > .bar_3zSH5d :is(.leading_3zSH5d, .trailing_3zSH5d) {
   height: auto !important;
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
 }
-.base__5e434 > .bar_c38106 :is(.backForwardButtons__63abb, .trailing_c38106) {
+.base_pog62O > .bar_3zSH5d :is(.backForwardButtons_nS9Yqn, .trailing_3zSH5d) {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -149,7 +149,7 @@
   border-radius: var(--n-radius);
   box-shadow: inset 0 0 0 calc(var(--n-edge-w) + 1px) var(--n-gutter-fill);
 }
-.base__5e434 > .bar_c38106 :is(.button__63abb, .clickable__81391) {
+.base_pog62O > .bar_3zSH5d :is(.button_nS9Yqn, .clickable_Oyz7Y6) {
   width: 32px !important;
   height: 28px !important;
   display: flex;
@@ -159,29 +159,29 @@
   border-radius: var(--n-radius-inner);
   color: var(--n-subtext) !important;
 }
-.base__5e434 > .bar_c38106 :is(.button__63abb, .clickable__81391) svg {
+.base_pog62O > .bar_3zSH5d :is(.button_nS9Yqn, .clickable_Oyz7Y6) svg {
   width: 20px;
   height: 20px;
   color: inherit !important;
 }
-.base__5e434 > .bar_c38106 :is(.button__63abb:not(.disabled__63abb), .clickable__81391):hover {
+.base_pog62O > .bar_3zSH5d :is(.button_nS9Yqn:not(.disabled_nS9Yqn), .clickable_Oyz7Y6):hover {
   background: var(--n-hover) !important;
   color: var(--n-bright) !important;
 }
-.base__5e434 > .bar_c38106 .disabled__63abb {
+.base_pog62O > .bar_3zSH5d .disabled_nS9Yqn {
   color: var(--n-muted) !important;
 }
-.base__5e434 > .bar_c38106 .anchor__14d82 { text-decoration: none !important; }
+.base_pog62O > .bar_3zSH5d .anchor_n_L45- { text-decoration: none !important; }
 
 /* the empty bar UI Refresh Refresh pins over the top would catch the
  * clicks meant for the servers under it */
-.systemBar_c38106 {
+.systemBar_3zSH5d {
   display: none !important;
 }
 
 /* the server row framed as a panel like the ones below it: the frame is
  * drawn behind the list, which HSL turns on its side */
-#app-mount .base__5e434::before {
+#app-mount .base_pog62O::before {
   content: "";
   position: absolute;
   top: calc(var(--n-notice) + var(--n-gap));
@@ -197,29 +197,29 @@
   box-sizing: border-box;
   pointer-events: none;
 }
-.guilds__5e434 {
+.guilds_pog62O {
   background: transparent !important;
   zoom: var(--n-guild-zoom);
   translate: calc(var(--n-gap) + var(--n-depth) + var(--n-gap)) var(--n-guild-shift, 0px);
 }
 /* the open server's mark in the accent, tucked up under its icon */
-.guilds__5e434 .item__58105 {
+.guilds_pog62O .item__o8_Xq {
   background: var(--n-accent) !important;
   box-shadow: var(--n-glow);
 }
-.guilds__5e434 .wrapper__58105 {
+.guilds_pog62O .wrapper__o8_Xq {
   translate: var(--n-pill-shift, 0px) 0;
 }
 
 /* a notice (Equicord's update with its Restart, Discord's own) as a framed
  * strip across the top, the server row and the panels moved down under it */
-#app-mount .base__5e434:has(> .notice__6e2b9) {
+#app-mount .base_pog62O:has(> .notice_Q02kKo) {
   --n-notice: calc(var(--n-gap) + var(--notices-height));
 }
-#app-mount .notice__6e2b9 + .content__5e434 {
+#app-mount .notice_Q02kKo + .content_pog62O {
   --serverlist-offset: calc(var(--n-notice) + var(--n-gap) + var(--n-row));
 }
-#app-mount .notice__6e2b9 {
+#app-mount .notice_Q02kKo {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -234,7 +234,7 @@
   box-shadow: inset 0 0 0 var(--n-gutter) var(--n-gutter-fill) !important;
   color: var(--n-bright) !important;
 }
-#app-mount .notice__6e2b9 .button__6e2b9 {
+#app-mount .notice_Q02kKo .button_Q02kKo {
   top: 0;
   height: 24px;
   margin-left: var(--n-gap);
@@ -246,15 +246,15 @@
   color: var(--n-on-accent) !important;
   font-weight: 600;
 }
-#app-mount .notice__6e2b9 .button__6e2b9:hover {
+#app-mount .notice_Q02kKo .button_Q02kKo:hover {
   filter: brightness(1.15);
 }
-#app-mount .notice__6e2b9 .closeButton__6e2b9 {
+#app-mount .notice_Q02kKo .closeButton_Q02kKo {
   top: 50%;
   right: var(--n-gap);
   translate: 0 -50%;
 }
-#app-mount .notice__6e2b9 .closeIcon__6e2b9 path {
+#app-mount .notice_Q02kKo .closeIcon_Q02kKo path {
   fill: var(--n-subtext) !important;
 }
 
@@ -265,16 +265,16 @@
 html, body, #app-mount, #app-mount [class^="app_"], #app-mount [class^="bg_"] {
   background: transparent !important;
 }
-#app-mount .base__5e434 {
+#app-mount .base_pog62O {
   background: var(--n-base) !important;
 }
-.content__5e434 {
+.content_pog62O {
   background: transparent !important;
   padding: var(--n-gap);
   gap: var(--n-gap);
   box-sizing: border-box;
 }
-#app-mount .sidebarList__5e434, #app-mount .page__5e434, #app-mount .menu_c1e9c4 {
+#app-mount .sidebarList_pog62O, #app-mount .page_pog62O, #app-mount .menu_M3qk4j {
   background: var(--n-panel) !important;
   border: var(--n-edge-w) solid var(--n-edge) !important;
   border-radius: var(--n-radius-panel) !important;
@@ -285,22 +285,22 @@ html, body, #app-mount, #app-mount [class^="app_"], #app-mount [class^="bg_"] {
   box-sizing: border-box;
   overflow: hidden;
 }
-#app-mount .menu_c1e9c4 { background: var(--n-popup) !important; }
-.sidebar__5e434 { background: transparent !important; }
-.sidebarList__5e434 > nav, .chat_f75fb0, .chatContent_f75fb0, .container_c8ffbb,
-.members_c8ffbb, .membersWrap_c8ffbb, section.title_f75fb0, .container_f37cb1, .header_f37cb1 {
+#app-mount .menu_M3qk4j { background: var(--n-popup) !important; }
+.sidebar_pog62O { background: transparent !important; }
+.sidebarList_pog62O > nav, .chat_z_gUBg, .chatContent_z_gUBg, .container_86es0b,
+.members_86es0b, .membersWrap_86es0b, section.title_z_gUBg, .container_XFjmsP, .header_XFjmsP {
   background: transparent !important;
 }
-section.title_f75fb0, .header_f37cb1 {
+section.title_z_gUBg, .header_XFjmsP {
   border-bottom: var(--n-bw) solid var(--n-stroke) !important;
   box-shadow: none !important;
 }
-.membersWrap_c8ffbb {
+.membersWrap_86es0b {
   border-left: var(--n-bw) solid var(--n-stroke) !important;
 }
 
 /* the account panel as one of the flyouts' sections */
-.panels__5e434 {
+.panels_pog62O {
   background: var(--n-surface) !important;
   border: var(--n-edge-w) solid var(--n-section-line) !important;
   border-radius: var(--n-radius-section) !important;
@@ -309,7 +309,7 @@ section.title_f75fb0, .header_f37cb1 {
 }
 
 /* headings: the mark, caps and colour of the shell's */
-.name__29444, .name__29444 *, .membersGroup_c8ffbb .headerContainer__095fe > span:first-child {
+.name_yOdhm_, .name_yOdhm_ *, .membersGroup_86es0b .headerContainer_NnWqs2 > span:first-child {
   color: var(--n-heading) !important;
   text-transform: var(--n-heading-case);
   letter-spacing: var(--n-heading-spacing);
@@ -318,9 +318,9 @@ section.title_f75fb0, .header_f37cb1 {
 /* the mark before the label: its text, or the opening piece of its shape
  * (a bar, a bracket, the rule's start and a notch); the closing piece after
  * it (a bracket, a notch); the tag shape puts the label on an accent pill */
-.name__29444 > .overflow_b0dfc2::before,
-.membersGroup_c8ffbb .headerContainer__095fe > span:first-child::before,
-.membersGroupHeader_c8ffbb::before {
+.name_yOdhm_ > .overflow__WDjet::before,
+.membersGroup_86es0b .headerContainer_NnWqs2 > span:first-child::before,
+.membersGroupHeader_86es0b::before {
   content: var(--n-mark-text);
   display: inline-block;
   width: var(--n-mark-w);
@@ -332,9 +332,9 @@ section.title_f75fb0, .header_f37cb1 {
   border-radius: var(--n-mark-radius);
   margin-right: var(--n-mark-gap);
 }
-.name__29444 > .overflow_b0dfc2::after,
-.membersGroup_c8ffbb .headerContainer__095fe > span:first-child::after,
-.membersGroupHeader_c8ffbb::after {
+.name_yOdhm_ > .overflow__WDjet::after,
+.membersGroup_86es0b .headerContainer_NnWqs2 > span:first-child::after,
+.membersGroupHeader_86es0b::after {
   content: var(--n-mark-end);
   display: inline-block;
   height: var(--n-mark-h);
@@ -343,18 +343,18 @@ section.title_f75fb0, .header_f37cb1 {
   border-left: var(--n-mark-notch) solid var(--n-muted);
   margin-left: var(--n-mark-gap);
 }
-.name__29444 > .overflow_b0dfc2,
-.membersGroup_c8ffbb .headerContainer__095fe > span:first-child {
+.name_yOdhm_ > .overflow__WDjet,
+.membersGroup_86es0b .headerContainer_NnWqs2 > span:first-child {
   background: var(--n-tag-fill);
   padding: 0 var(--n-tag-pad);
   border-radius: var(--n-radius-inner);
 }
 /* role groups keep their role's colour */
-.membersGroupHeader_c8ffbb {
+.membersGroupHeader_86es0b {
   text-transform: var(--n-heading-case);
   letter-spacing: var(--n-heading-spacing);
 }
-.mainContent__29444::after {
+.mainContent_yOdhm_::after {
   content: "";
   flex: 1 1 auto;
   height: var(--n-rule);
@@ -363,16 +363,16 @@ section.title_f75fb0, .header_f37cb1 {
 }
 
 /* channel rows: overlay on hover; the open one filled with an accent tick */
-.link__2ea32 {
+.link_TNyK-N {
   border-radius: var(--n-radius-inner) !important;
 }
-.wrapper__2ea32:hover .link__2ea32 {
+.wrapper_TNyK-N:hover .link_TNyK-N {
   background: var(--n-hover) !important;
 }
-.wrapper__2ea32.modeSelected__2ea32 .link__2ea32 {
+.wrapper_TNyK-N.modeSelected_TNyK-N .link_TNyK-N {
   background: var(--n-selected) !important;
 }
-.wrapper__2ea32.modeSelected__2ea32 .link__2ea32::before {
+.wrapper_TNyK-N.modeSelected_TNyK-N .link_TNyK-N::before {
   content: "";
   position: absolute;
   left: 0;
@@ -383,38 +383,38 @@ section.title_f75fb0, .header_f37cb1 {
   background: var(--n-accent);
   box-shadow: var(--n-glow);
 }
-.wrapper__2ea32:is(:hover, .modeSelected__2ea32) .name__2ea32 {
+.wrapper_TNyK-N:is(:hover, .modeSelected_TNyK-N) .name_TNyK-N {
   color: var(--n-bright) !important;
 }
 
 /* a message that mentions you: tinted with the accent, its bar in it */
-.mentioned__5126c {
+.mentioned_SY_P2T {
   background: color-mix(in srgb, var(--n-accent) 10%, transparent) !important;
 }
-.mentioned__5126c:hover {
+.mentioned_SY_P2T:hover {
   background: color-mix(in srgb, var(--n-accent) 16%, transparent) !important;
 }
-.mentioned__5126c::before {
+.mentioned_SY_P2T::before {
   background: var(--n-accent) !important;
 }
 
 /* the message box as the shell's input: outer line and groove, the groove
  * the accent while typing */
-.scrollableContainer__74017 {
+.scrollableContainer_2x8-Qn {
   background: var(--n-surface) !important;
   border: var(--n-edge-w) solid var(--n-edge);
   border-radius: var(--n-radius) !important;
   box-shadow: inset 0 0 0 2px var(--n-gutter-fill) !important;
 }
-.channelTextArea__74017:focus-within .scrollableContainer__74017 {
+.channelTextArea_2x8-Qn:focus-within .scrollableContainer_2x8-Qn {
   box-shadow: inset 0 0 0 2px var(--n-accent), var(--n-glow) !important;
 }
 
 /* menus framed as flyouts (above), their rows as the shell's */
-.item_c1e9c4 {
+.item_M3qk4j {
   border-radius: var(--n-radius-inner) !important;
 }
-.item_c1e9c4.focused_c1e9c4:not(.colorDanger_c1e9c4) {
+.item_M3qk4j.focused_M3qk4j:not(.colorDanger_M3qk4j) {
   background: var(--n-hover) !important;
   color: var(--n-bright) !important;
 }
