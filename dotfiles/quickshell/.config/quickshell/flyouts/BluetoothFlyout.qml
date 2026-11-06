@@ -34,6 +34,8 @@ FlyoutPanel {
     readonly property bool radioOn: bar.btAdapterOn(adapter)
 
     FlyoutHeading {
+        settingsIcon: true
+        onSettingsClicked: scope.openSettings("bluetooth")
         text: "BLUETOOTH" + (btFlyout.radioOn && btFlyout.saved.length > 0 ? "  " + btFlyout.saved.length : "")
         control: btFlyout.adapter && !bar.btAdapterBlocked(btFlyout.adapter) ? headingControls : null
     }
@@ -172,9 +174,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: scope.openSettings("bluetooth")
-    }
 }

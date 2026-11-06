@@ -40,7 +40,11 @@ FlyoutPanel {
         onTriggered: if (mediaFlyout.player) mediaFlyout.player.positionChanged()
     }
 
-    FlyoutHeading { text: "NOW PLAYING" }
+    FlyoutHeading {
+        text: "NOW PLAYING"
+        settingsIcon: true
+        onSettingsClicked: mediaFlyout.scope.openSettings("appearance/bar")
+    }
 
     // the art across the panel in its own shape (square to 16:9, a video's
     // thumbnail wider than a cover), or a music mark in a 16:9 frame
@@ -352,9 +356,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: mediaFlyout.scope.openSettings("appearance/bar")
-    }
 }

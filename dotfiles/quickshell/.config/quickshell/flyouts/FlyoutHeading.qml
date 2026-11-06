@@ -32,6 +32,9 @@ Item {
     // the label's size, the shell's heading size unless told otherwise
     property int textSize: Theme.fontHeadingSize
 
+    // a gear at the end of the line (a flyout's first heading) for its Settings page
+    property bool settingsIcon: false
+    signal settingsClicked()
     readonly property bool isFlyoutHeading: true
     readonly property bool collapsible: mirrorOf ? mirrorOf.collapsible
         : hints.length === 0 && control === null && headingsBeside() > 0
@@ -195,7 +198,7 @@ Item {
         // a lone row past the cut isn't worth a More
         if (moving.length < 2) return
         for (var j = 0; j < moving.length; j++) moving[j].parent = trimHolder
-        untrimmedCount = 0
+        untrimmedCount = moving.length
     }
     // back after the rows still showing, in their order
     function untrim() {
@@ -205,8 +208,6 @@ Item {
         var col = parent, kids = col.children
         var end = 0
         while (end < kids.length && kids[end] !== root) end++
-        for (end++; end < kids.length; end++)
-            if (kids[end].isFlyoutHeading === true || kids[end].isSectionBreak === true) break
         var tail = []
         for (var k = end; k < kids.length; k++) tail.push(kids[k])
         // a spacer before the next heading goes after the rows too
@@ -287,7 +288,6 @@ Item {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            // smaller and unspaced, so both names fit a narrow flyout
             text: Theme.heading(root.crumb)
             color: crumbMouse.containsMouse ? Theme.headingColor : Theme.subtext
             font.family: Theme.fontHeading
@@ -329,7 +329,7 @@ Item {
         id: headingIcon
         visible: root.icon.toString() !== ""
         anchors.left: crumbRow.visible ? crumbRow.right : lead.shown ? lead.right : parent.left
-        anchors.leftMargin: (crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
+        anchors.leftMargin: (crumbRow.visible ? Theme.spaceS : lead.shown ? Theme.spaceM : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
         anchors.verticalCenter: label.verticalCenter
         width: root.textSize
@@ -413,8 +413,8 @@ Item {
     Text {
         id: more
         visible: !root.collapsed && (root.trimmed || root.untrimmedCount > 0)
-        anchors.right: chevron.visible ? chevron.left : parent.right
-        anchors.rightMargin: chevron.visible ? Theme.spaceM : 0
+        anchors.right: chevron.visible ? chevron.left : (root.gearShown ? gear.left : root.right)
+        anchors.rightMargin: chevron.visible ? Theme.spaceM : gearGap
         anchors.verticalCenter: label.verticalCenter
         z: 1
         text: root.trimmed ? "More (" + trimHolder.children.length + ") 󰅀" : "Less 󰅃"
@@ -435,7 +435,8 @@ Item {
     Text {
         id: chevron
         visible: root.collapsible
-        anchors.right: parent.right
+        anchors.right: root.gearShown ? gear.left : root.right
+        anchors.rightMargin: gearGap
         anchors.verticalCenter: label.verticalCenter
         text: root.collapsed ? "󰅂" : "󰅀"
         // only while the pointer is on the heading, or the section is
@@ -448,7 +449,8 @@ Item {
 
     Row {
         id: hintRow
-        anchors.right: parent.right
+        anchors.right: root.gearShown ? gear.left : root.right
+        anchors.rightMargin: gearGap
         anchors.verticalCenter: label.verticalCenter
         spacing: Theme.spaceXl
 
@@ -487,7 +489,30 @@ Item {
         id: controlBox
         active: root.control !== null
         sourceComponent: root.control
+        anchors.right: root.gearShown ? gear.left : root.right
+        anchors.rightMargin: gearGap
+        anchors.verticalCenter: label.verticalCenter
+    }
+
+    readonly property bool gearShown: settingsIcon && !mirrorOf
+    readonly property int gearGap: gearShown ? Theme.spaceM : 0
+    Text {
+        id: gear
+        visible: root.gearShown
         anchors.right: parent.right
         anchors.verticalCenter: label.verticalCenter
+        z: 2
+        text: "󰒓"
+        color: gearMouse.containsMouse ? Theme.textStrong : Theme.subtext
+        font.family: Theme.fontIcon
+        font.pixelSize: root.textSize
+        MouseArea {
+            id: gearMouse
+            anchors.fill: parent
+            anchors.margins: -Theme.spaceXs
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.settingsClicked()
+        }
     }
 }

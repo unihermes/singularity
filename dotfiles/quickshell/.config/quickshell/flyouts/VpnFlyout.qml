@@ -16,6 +16,8 @@ FlyoutPanel {
     menuWidth: Theme.flyoutMenuWidth
 
     FlyoutHeading {
+        settingsIcon: true
+        onSettingsClicked: root.scope.openSettings("vpn")
         text: "VPN"
         control: Vpn.servers.length > 0 ? headingSwitch : null
     }
@@ -103,9 +105,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: root.scope.openSettings("vpn")
-    }
 }

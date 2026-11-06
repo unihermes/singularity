@@ -48,7 +48,11 @@ FlyoutPanel {
     // accumulate so a flick doesn't fly through a year
     property real wheelAccum: 0
 
-    FlyoutHeading { text: "CLOCK" }
+    FlyoutHeading {
+        text: "CLOCK"
+        settingsIcon: true
+        onSettingsClicked: scope.openSettings("datetime")
+    }
 
     // the time large, seconds quieter, and the whole date under it
     SystemClock {
@@ -468,9 +472,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: scope.openSettings("datetime")
-    }
 }

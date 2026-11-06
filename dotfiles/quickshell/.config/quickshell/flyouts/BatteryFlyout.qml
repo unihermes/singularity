@@ -33,7 +33,11 @@ FlyoutPanel {
         return ""
     }
 
-    FlyoutHeading { text: "BATTERY" }
+    FlyoutHeading {
+        text: "BATTERY"
+        settingsIcon: true
+        onSettingsClicked: scope.openSettings("power")
+    }
 
     Item {
         width: parent.width
@@ -192,9 +196,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: scope.openSettings("power")
-    }
 }

@@ -47,7 +47,11 @@ FlyoutPanel {
         else if (act === "send") PhoneLink.pickFiles()
     }
 
-    FlyoutHeading { text: "DEVICES" }
+    FlyoutHeading {
+        text: "DEVICES"
+        settingsIcon: true
+        onSettingsClicked: root.scope.openSettings("devices")
+    }
 
     // --- the phone ---
 
@@ -343,9 +347,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: root.scope.openSettings("devices")
-    }
 }

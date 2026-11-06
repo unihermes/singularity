@@ -37,7 +37,11 @@ FlyoutPanel {
         // stays open so the row can show it connecting
     }
 
-    FlyoutHeading { text: netFlyout.browsing ? "NETWORK" : "PASSPHRASE" }
+    FlyoutHeading {
+        text: netFlyout.browsing ? "NETWORK" : "PASSPHRASE"
+        settingsIcon: netFlyout.browsing
+        onSettingsClicked: scope.openSettings("network")
+    }
 
     // --- passphrase prompt ---
     FlyoutRow {
@@ -221,11 +225,4 @@ FlyoutPanel {
         onActivated: scope.openSettings("network")
     }
 
-    FlyoutDivider { visible: netFlyout.browsing }
-
-    FlyoutChipLine {
-        visible: netFlyout.browsing
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: scope.openSettings("network")
-    }
 }

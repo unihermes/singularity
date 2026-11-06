@@ -41,7 +41,11 @@ FlyoutPanel {
 
     // --- output: the level large, the device beside it --------------------------
 
-    FlyoutHeading { text: "VOLUME" }
+    FlyoutHeading {
+        text: "VOLUME"
+        settingsIcon: true
+        onSettingsClicked: scope.openSettings("audio")
+    }
 
     Item {
         width: parent.width
@@ -405,9 +409,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: scope.openSettings("audio")
-    }
 }

@@ -45,6 +45,8 @@ FlyoutPanel {
     }
 
     FlyoutHeading {
+        settingsIcon: true
+        onSettingsClicked: scope.openSettings("display")
         text: "BRIGHTNESS  " + (brightnessFlyout.controls.length > 0
             ? brightnessFlyout.levelOf(brightnessFlyout.controls[0].output) + "%" : "—")
     }
@@ -119,9 +121,4 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
-
-    FlyoutChipLine {
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: scope.openSettings("display")
-    }
 }

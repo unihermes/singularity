@@ -95,6 +95,7 @@ FlyoutPanel {
 
         Column {
             id: group
+            required property int index
             required property var modelData
             readonly property int n: modelData.windows.length
             readonly property bool isDropTarget: panel.dropTarget !== null && panel.dropTarget === modelData.target
@@ -119,6 +120,8 @@ FlyoutPanel {
                 text: group.modelData.ws < 0 ? panel.wsName(group.modelData.ws).toUpperCase()
                     : "WORKSPACE " + panel.wsName(group.modelData.ws).toUpperCase()
                 hints: [group.n + (group.n === 1 ? " window" : " windows")]
+                settingsIcon: group.index === 0
+                onSettingsClicked: panel.scope.openSettings("appearance/bar")
             }
 
             Repeater {
@@ -203,13 +206,8 @@ FlyoutPanel {
     FlyoutChipLine {
         chips: [
             { icon: "󰕰", text: "All workspaces", act: "grid" },
-            { icon: "󰒓", text: "Settings",       act: "settings" },
         ]
         onPicked: act => {
-            if (act === "settings") {
-                panel.scope.openSettings("appearance/bar")
-                return
-            }
             panel.requestClose()
             panel.shellRoot.workspaceOverlayToggled()
         }

@@ -30,6 +30,8 @@ FlyoutPanel {
         crumb: root.page === "" ? "" : "UPDATES"
         text: root.page === "" ? "UPDATES" : root.pageTitles[root.page]
         onCrumbClicked: root.page = ""
+        settingsIcon: root.page === ""
+        onSettingsClicked: scope.openSettings("updates")
     }
 
     // where things stand, with Check (and Update while there are some)
@@ -189,9 +191,4 @@ FlyoutPanel {
 
     FlyoutDivider { visible: root.page === "" }
 
-    FlyoutChipLine {
-        visible: root.page === ""
-        chips: [{ icon: "󰒓", text: "Settings", act: "settings" }]
-        onPicked: scope.openSettings("updates")
-    }
 }
