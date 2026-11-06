@@ -176,6 +176,12 @@ FlyoutPanel {
     property bool searchOpen: false
     readonly property bool searchShown: searchOpen || appQuery !== "" || browsingApps
     onKeyPressed: event => {
+        // Ctrl+P pins the highlighted app, as in the launcher
+        if (searching && event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier) && appView.count > 0) {
+            Apps.togglePin(appView.model[appView.currentIndex])
+            event.accepted = true
+            return
+        }
         if (!home || searchShown || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
                 || event.text.length !== 1 || event.text < " ") return
         searchOpen = true
@@ -303,7 +309,7 @@ FlyoutPanel {
             Text {
                 anchors.left: appIcon.right
                 anchors.leftMargin: Theme.spaceL
-                anchors.right: parent.right
+                anchors.right: pinButton.left
                 anchors.rightMargin: Theme.spaceS
                 anchors.verticalCenter: parent.verticalCenter
                 text: appRow.modelData.name
@@ -329,6 +335,29 @@ FlyoutPanel {
                     appView.currentIndex = appRow.index
                 }
                 onClicked: controlCentre.launch(appRow.modelData)
+            }
+
+            // pins the app to the launcher's Pinned list and the Dock
+            Text {
+                id: pinButton
+                readonly property bool pinned: Apps.isPinned(appRow.modelData)
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spaceS
+                anchors.verticalCenter: parent.verticalCenter
+                visible: pinned || appRow.ListView.isCurrentItem || pinMouse.containsMouse
+                text: pinned ? "󰐃" : "󰤱"
+                color: pinned || pinMouse.containsMouse ? Theme.accent : Theme.subtext
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.fontIconSize
+
+                MouseArea {
+                    id: pinMouse
+                    anchors.fill: parent
+                    anchors.margins: -Theme.spaceXs
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Apps.togglePin(appRow.modelData)
+                }
             }
         }
     }
