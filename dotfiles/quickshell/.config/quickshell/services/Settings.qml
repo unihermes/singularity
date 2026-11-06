@@ -571,9 +571,12 @@ Singleton {
         var b = taskbarLayoutOn ? Styles.get(adapter.style).bar : null
         return b ? b.left.concat(b.right) : []
     }
+    // the modules the style's arrangement leaves off the bar: its own list
+    // until a rearranged layout carries `off`, which dragging one on edits
     readonly property var styleHidden: {
         var b = taskbarLayoutOn ? Styles.get(adapter.style).bar : null
-        return b && b.hidden ? b.hidden : []
+        var own = ((adapter.styleLayouts || {})[adapter.style] || {}).off
+        return own || (b && b.hidden ? b.hidden : [])
     }
     function ownLayout() {
         var own = (adapter.styleLayouts || {})[adapter.style]
@@ -664,6 +667,16 @@ Singleton {
         var h = (adapter.barHidden || []).filter(k => k !== key)
         if (!on) h.push(key)
         adapter.barHidden = h
+        if (on && styleHidden.indexOf(key) !== -1) setStyleOff(styleHidden.filter(k => k !== key))
+    }
+
+    // the style's own layout with its `off` list replaced
+    function setStyleOff(off) {
+        var all = Object.assign({}, adapter.styleLayouts || {})
+        var own = Object.assign({}, all[adapter.style] || widgetLayout())
+        own.off = off
+        all[adapter.style] = own
+        adapter.styleLayouts = all
     }
 
     // The whole layout at once, as a fresh object (the adapter writes only on
@@ -676,6 +689,7 @@ Singleton {
         }
         if (taskbarLayoutOn) {
             var all = Object.assign({}, adapter.styleLayouts || {})
+            l.off = styleHidden.slice()
             all[adapter.style] = l
             adapter.styleLayouts = all
         } else adapter.barLayout = l
