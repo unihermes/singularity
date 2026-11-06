@@ -92,7 +92,7 @@ Singleton {
     readonly property color washActive: isLight ? Qt.rgba(0, 0, 0, 0.13) : Qt.rgba(1, 1, 1, 0.16)
     // a ground's alpha where the blur can't frost it (a display scaled under
     // 1, looks.lua), lifted so it reads as frosted as elsewhere
-    function unfrosted(a) { return a + (1 - a) * 0.4 }
+    function unfrosted(a) { return a + (1 - a) * 0.6 }
     // a smaller control under the pointer, or a chip/tab that's lit
     readonly property color hoverFillSoft: surface
     readonly property color selectedFill:  overlay
