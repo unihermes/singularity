@@ -49,10 +49,9 @@ Item {
         height: body.implicitHeight
         radius: Theme.fs(20)
         x: Math.round((parent.width - width) / 2)
-        // its top edge stays put as results come and go
-        y: !view.launcher.underBar ? Math.round(parent.height * 0.2)
-            : view.launcher.atBottom ? parent.height - Theme.flyoutOffset - height
-            : Theme.flyoutOffset
+        // as Apple's: centred, its top edge about a fifth of the way down,
+        // which stays put as results come and go, whatever the launcher position
+        y: Math.round(parent.height * 0.21)
 
         Absorber {}
 
