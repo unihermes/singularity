@@ -41,8 +41,10 @@ PanelWindow {
         if (!holdsKeys) return
         holdsKeys = false
         takingKeys = false
-        Hyprland.dispatch("hl.get_active_window() and hl.dsp.focus({ window = \"address:\" .. "
-            + "hl.get_active_window().address }) or hl.dsp.no_op()")
+        Hyprland.dispatch("(function() local w = hl.get_active_window(); local hid = false; "
+            + "if w then for _, t in ipairs(type(w.tags) == \"table\" and w.tags or { w.tags }) do "
+            + "if tostring(t):match(\"^minimized_\") then hid = true end end end; "
+            + "return (w and not hid) and hl.dsp.focus({ window = \"address:\" .. w.address }) or hl.dsp.no_op() end)()")
     }
     Timer { id: takeTimer; interval: 150; onTriggered: root.takingKeys = false }
     // the hover state and Hyprland's own focus change settle first
