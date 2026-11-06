@@ -153,6 +153,9 @@ OverlayWindow {
         })
     }
 
+    // a key press nothing in the box took
+    signal keyPressed(var event)
+
     // drop: clipped at the box's bar-side edge, so the sliding box doesn't
     // pass over its chip
     Item {
@@ -160,6 +163,7 @@ OverlayWindow {
         // Escape from anywhere in the box that doesn't take it itself
         focus: true
         Keys.onEscapePressed: root.requestClose()
+        Keys.onPressed: event => root.keyPressed(event)
         readonly property bool cuts: Theme.flyoutAnim === "drop" && !root.grown
         y: cuts && !box.atBottom ? root.topOffset : 0
         width: root.width

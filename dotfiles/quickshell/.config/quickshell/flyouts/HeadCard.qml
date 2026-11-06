@@ -22,6 +22,8 @@ Item {
     // quieter lines under the title; empty ones are left out
     property var lines: []
     property bool rule: false
+    // one line: the title with its quieter lines beside it, at body size
+    property bool compact: false
 
     default property alias actions: chips.data
 
@@ -32,12 +34,12 @@ Item {
         id: icon
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.fontTitle * 1.4
+        width: (root.compact ? Theme.fontBody : Theme.fontTitle) * 1.4
         horizontalAlignment: Text.AlignHCenter
         text: root.image === "" ? root.glyph : ""
         color: root.glyphColor
         font.family: Theme.fontIcon
-        font.pixelSize: Theme.fontTitle
+        font.pixelSize: root.compact ? Theme.fontBody + Theme.spaceS : Theme.fontTitle
 
         IconImage {
             visible: root.image !== ""
@@ -59,14 +61,17 @@ Item {
         Text {
             width: parent.width
             elide: Text.ElideRight
-            text: root.title
+            textFormat: root.compact ? Text.StyledText : Text.PlainText
+            text: !root.compact ? root.title
+                : root.title + " <font color=\"" + Theme.subtext + "\">"
+                  + root.lines.filter(l => l !== "").join(" · ") + "</font>"
             color: Theme.textStrong
             font.family: Theme.fontText
             font.weight: Theme.weightStrong
-            font.pixelSize: Theme.fontTitle
+            font.pixelSize: root.compact ? Theme.fontBody : Theme.fontTitle
         }
         Repeater {
-            model: root.lines.filter(l => l !== "")
+            model: root.compact ? [] : root.lines.filter(l => l !== "")
             Text {
                 required property string modelData
                 width: parent.width

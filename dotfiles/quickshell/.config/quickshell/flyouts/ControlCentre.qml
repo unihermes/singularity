@@ -44,11 +44,10 @@ FlyoutPanel {
         PpdProfile.refresh()
         page = scope.controlPage
         scope.controlPage = ""
-        Qt.callLater(appSearch.forceFocus)
     }
     Component.onCompleted: if (open) opened()
     onOpenChanged: if (open) opened()
-        else { page = ""; appSearch.text = ""; browsingApps = false }
+        else { page = ""; appSearch.text = ""; browsingApps = false; searchOpen = false }
     Connections {
         target: controlCentre.scope
         function onControlPageChanged() {
@@ -173,14 +172,34 @@ FlyoutPanel {
     readonly property bool searching: home && (appQuery !== "" || browsingApps)
     property string appQuery: ""
     property bool browsingApps: false
+    // the search field is out of the way until its button or a typed character opens it
+    property bool searchOpen: false
+    readonly property bool searchShown: searchOpen || appQuery !== "" || browsingApps
+    onKeyPressed: event => {
+        if (!home || searchShown || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+                || event.text.length !== 1 || event.text < " ") return
+        searchOpen = true
+        appSearch.text = event.text
+        Qt.callLater(appSearch.moveToEnd)
+        event.accepted = true
+    }
     property point lastPointer: Qt.point(-1, -1)
 
     HeadCard {
         visible: controlCentre.home
         glyph: "󰣇"
         title: Quickshell.env("USER") + "@" + hostFile.text().trim()
-        lines: ["up " + controlCentre.uptime + " · " + controlCentre.lookName]
+        lines: ["up " + controlCentre.uptime]
+        compact: true
 
+        IconButton {
+            icon: "󰍉"
+            onClicked: {
+                controlCentre.searchOpen = !controlCentre.searchOpen
+                if (controlCentre.searchOpen) Qt.callLater(appSearch.forceFocus)
+                else appSearch.text = ""
+            }
+        }
         IconButton {
             icon: "󰌾"
             onClicked: controlCentre.run("lock")
@@ -197,7 +216,7 @@ FlyoutPanel {
     // typing anywhere in the panel lands here; matches replace the tiles
     FlyoutInput {
         id: appSearch
-        visible: controlCentre.home
+        visible: controlCentre.home && controlCentre.searchShown
         glyph: "󰍉"
         actionGlyph: "󰀻"
         actionLabel: "Browse applications"
@@ -228,6 +247,7 @@ FlyoutPanel {
         onEscapePressed: {
             if (text !== "") text = ""
             else if (controlCentre.browsingApps) controlCentre.browsingApps = false
+            else if (controlCentre.searchOpen) controlCentre.searchOpen = false
             else scope.openFlyout = ""
         }
     }
