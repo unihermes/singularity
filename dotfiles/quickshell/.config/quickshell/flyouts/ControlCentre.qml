@@ -194,6 +194,9 @@ FlyoutPanel {
 
         IconButton {
             icon: "󰍉"
+            implicitWidth: Theme.controlSize + Theme.spaceS
+            implicitHeight: Theme.controlSize + Theme.spaceS
+            glyphSize: Theme.fontIconSize + Theme.spaceS
             onClicked: {
                 controlCentre.searchOpen = !controlCentre.searchOpen
                 if (controlCentre.searchOpen) Qt.callLater(appSearch.forceFocus)
@@ -202,6 +205,9 @@ FlyoutPanel {
         }
         IconButton {
             icon: "󰌾"
+            implicitWidth: Theme.controlSize + Theme.spaceS
+            implicitHeight: Theme.controlSize + Theme.spaceS
+            glyphSize: Theme.fontIconSize + Theme.spaceS
             onClicked: controlCentre.run("lock")
         }
         IconButton {
