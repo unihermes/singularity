@@ -22,12 +22,16 @@ import QtQuick
 Singleton {
     id: root
 
-    readonly property bool hosted: Quickshell.env("SINGULARITY_AI_HOST") === "1"
+    // ai_host.py names the host by pid: anything started from a sidebar session
+    // inherits the variable, a shell restarted from one included.
+    readonly property bool hosted: Quickshell.env("SINGULARITY_AI_HOST") === String(Quickshell.processId)
     property var hostStatus: ({})
     readonly property bool available: ollama(tab) || codex(tab) ? codexAvailable : probe.found
 
     // the sidebar: on which screen, and whether it's out
     property bool shown: false
+    // stays out when clicking elsewhere; for this run only
+    property bool pinned: false
     property var screen: null
     onShownChanged: save()
     onScreenChanged: if (screen) save()
@@ -203,6 +207,12 @@ Singleton {
     function modelKey(t) { return ollama(t) ? t + "Ollama" : codex(t) ? t + "Codex" : t }
     function modelChoicesFor(t) { return ollama(t) ? ollamaModels : codex(t) ? [{ value: "", text: "Default" }].concat(codexModels) : modelChoices }
 
+    property real dismissedAt: 0
+    function dismiss() {
+        dismissedAt = Date.now()
+        shown = false
+    }
+
     function toggle(screen) {
         if (!hosted) {
             Notifications.shown = false
@@ -218,6 +228,8 @@ Singleton {
             shown = true
             return
         }
+        // the press that closed it on the way to a toggle (the bar's module)
+        if (!shown && Date.now() - dismissedAt < 500) return
         if (shown && root.screen === screen) { shown = false; return }
         root.screen = screen
         used = true

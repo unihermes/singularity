@@ -47,8 +47,10 @@ hl.gesture({
     action    = "workspace",
 })
 
--- Every left click, passed on untouched, tells the shell one happened: a
--- sticky note on the desktop lets go of the keyboard when a click lands
--- off it. Hyprland leaves the keys with the note when the window clicked
--- is the one focused before it.
-hl.bind("mouse:272", hl.dsp.event("singularity-click"), { non_consuming = true })
+-- Every click, passed on untouched, tells the shell one happened: a sticky
+-- note on the desktop or the sidebar lets go of the keyboard when one lands
+-- off it. Hyprland leaves the keys with them when the window clicked is the
+-- one focused before.
+for _, button in ipairs({ "mouse:272", "mouse:273", "mouse:274" }) do
+    hl.bind(button, hl.dsp.event("singularity-click"), { non_consuming = true })
+end

@@ -90,6 +90,8 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 
 ## Running and testing
 
+- `python3 tools/test-sidebar-focus.py`: live, not in pre-commit. Clicks the real pointer on its own test
+  terminals on DP-2 to check where clicks leave the sidebar and the keyboard. Restart the AI host first.
 - `qs log` for errors (keeps old ones from earlier reloads; check order).
   `qs ipc show` lists IPC targets.
 - To open a flyout for a screenshot, add a temp `IpcHandler` inside `screenScope` in

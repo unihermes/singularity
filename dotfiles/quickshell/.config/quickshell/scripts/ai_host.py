@@ -16,10 +16,9 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX)
         probe = ['qs', 'ipc', '-p', config, 'show']
         if subprocess.run(probe, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
-            env = dict(os.environ, SINGULARITY_AI_HOST='1')
             with (runtime / 'singularity-ai-host.log').open('a') as log:
-                subprocess.Popen(['qs', '-n', '-p', config], env=env, start_new_session=True,
-                                 stdin=subprocess.DEVNULL, stdout=log, stderr=log)
+                subprocess.Popen(['sh', '-c', 'SINGULARITY_AI_HOST=$$ exec "$@"', 'sh', 'qs', '-n', '-p', config],
+                                 start_new_session=True, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
             for _ in range(100):
                 if subprocess.run(probe, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
                     break

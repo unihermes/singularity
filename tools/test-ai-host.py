@@ -33,7 +33,7 @@ class HostTests(unittest.TestCase):
     def test_start_waits_for_ipc_before_forwarding(self):
         calls, launches = self.invoke(['close'], [1, 1, 0, 0])
         self.assertEqual(len(launches), 1)
-        self.assertEqual(launches[0].kwargs['env']['SINGULARITY_AI_HOST'], '1')
+        self.assertIn('SINGULARITY_AI_HOST=$$ exec', launches[0].args[0][2])
         self.assertTrue(launches[0].kwargs['start_new_session'])
         self.assertEqual(calls[-1].args[0][-3:], ['call', 'chat', 'close'])
         self.assertTrue(calls[-1].kwargs['check'])

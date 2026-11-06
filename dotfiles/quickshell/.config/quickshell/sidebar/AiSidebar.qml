@@ -21,47 +21,48 @@ PanelWindow {
 
     readonly property bool open: Ai.shown && !Ai.capturing
     readonly property var session: Ai.current
-    property bool pinned: false
-    property var specialShown: ({})
-    readonly property bool scratchShown: Hyprland.monitors.values.some(monitor => {
-        const name = monitor.name
-        if (name in specialShown) return specialShown[name] === "special:scratchpad"
-        const special = monitor.lastIpcObject && monitor.lastIpcObject.specialWorkspace
-        return !!special && special.name === "special:scratchpad"
-    })
-    Connections {
-        target: Hyprland
-        function onRawEvent(event) {
-            if (event.name !== "activespecial") return
-            const cut = event.data.lastIndexOf(",")
-            const shown = Object.assign({}, root.specialShown)
-            shown[event.data.slice(cut + 1)] = event.data.slice(0, cut)
-            root.specialShown = shown
-        }
-    }
-    // With the scratchpad up, the sidebar keeps the keyboard until a click
-    // lands outside it. The scratchpad window stays Hyprland's active window,
-    // so that click is a no-op while a layer surface holds the keyboard; the
-    // sidebar lets go for a moment and the compositor hands the window focus.
-    property bool yieldKeyboard: false
+    // The keyboard comes on opening and on a press inside, never on hover:
+    // exclusively until it arrives (on demand alone waits for the pointer to
+    // move), then on demand. A press elsewhere closes the panel, or with the
+    // pin up hands the keys back. input.lua's click event reports it without
+    // taking it from what was clicked, on any screen and over the scratchpad.
+    property bool holdsKeys: false
+    property bool takingKeys: false
     property bool pointerInside: false
-    Timer { id: yieldTimer; interval: 150; onTriggered: root.yieldKeyboard = false }
+    function takeKeys() {
+        holdsKeys = true
+        takingKeys = true
+        takeTimer.restart()
+        composer.focusInput()
+    }
+    // Hyprland leaves the keys on a layer when the window clicked is the one
+    // it already counts as active, so ask for that window again.
+    function giveKeysBack() {
+        if (!holdsKeys) return
+        holdsKeys = false
+        takingKeys = false
+        Hyprland.dispatch("hl.get_active_window() and hl.dsp.focus({ window = \"address:\" .. "
+            + "hl.get_active_window().address }) or hl.dsp.no_op()")
+    }
+    Timer { id: takeTimer; interval: 150; onTriggered: root.takingKeys = false }
+    // the hover state and Hyprland's own focus change settle first
+    Timer {
+        id: afterClick
+        interval: 60
+        onTriggered: {
+            if (!root.open) return
+            if (root.pointerInside) root.takeKeys()
+            else if (Ai.pinned) root.giveKeysBack()
+            else Ai.dismiss()
+        }
+    }
     Connections {
         target: Hyprland
         function onRawEvent(event) {
-            if (event.name !== "custom" || event.data !== "singularity-click") return
-            console.log("DBG click scratch=" + root.scratchShown + " open=" + root.open + " inside=" + root.pointerInside)
-            if (root.scratchShown && root.open && !root.pointerInside) {
-                root.yieldKeyboard = true
-                yieldTimer.restart()
-            }
+            if (event.name === "custom" && event.data === "singularity-click") afterClick.restart()
+            // a special workspace coming or going focuses its window: the keys stay put until a click
+            else if (event.name === "activespecial" && root.open && root.holdsKeys) root.takeKeys()
         }
-    }
-    function requestClose() { if (!pinned && !scratchShown) Ai.shown = false }
-
-    DismissGrab {
-        panel: root
-        active: root.open && !root.pinned && !root.scratchShown
     }
 
     // what the middle shows: talk | past | projects
@@ -83,7 +84,8 @@ PanelWindow {
     exclusiveZone: 0
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: yieldKeyboard ? WlrKeyboardFocus.None : WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: !holdsKeys ? WlrKeyboardFocus.None
+        : takingKeys ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
     WlrLayershell.namespace: "singularity-sidebar"
 
     // 0 in, 1 out; slides in from the edge
@@ -96,13 +98,14 @@ PanelWindow {
         easing.type: Theme.ease
     }
     onOpenChanged: {
+        if (open) Qt.callLater(takeKeys)
+        else giveKeysBack()
         slide.stop()
         if (Theme.animFactor <= 0) { reveal = open ? 1 : 0; return }
         slide.to = open ? 1 : 0
         slide.start()
-        if (open) Qt.callLater(composer.focusInput)
     }
-    Component.onCompleted: if (open) { reveal = 1; Qt.callLater(composer.focusInput) }
+    Component.onCompleted: if (open) { reveal = 1; Qt.callLater(takeKeys) }
 
     readonly property int sectionGap: Theme.sectionInset - Theme.channelWidth
     readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceM
@@ -141,7 +144,7 @@ PanelWindow {
             sequence: "Ctrl+P"
             context: Qt.WindowShortcut
             enabled: root.open
-            onActivated: root.pinned = !root.pinned
+            onActivated: Ai.pinned = !Ai.pinned
         }
         Shortcut {
             sequence: "Ctrl+R"
@@ -228,9 +231,9 @@ PanelWindow {
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
                         icon: "󰐃"
-                        text: root.pinned ? "Pinned" : "Pin"
-                        selected: root.pinned
-                        onClicked: root.pinned = !root.pinned
+                        text: Ai.pinned ? "Pinned" : "Pin"
+                        selected: Ai.pinned
+                        onClicked: Ai.pinned = !Ai.pinned
                     }
                     IconButton {
                         icon: "󰅖"
