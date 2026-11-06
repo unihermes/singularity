@@ -169,7 +169,9 @@ ShellRoot {
                 overlay: Theme.overlay, border: Theme.border, muted: Theme.muted, subtext: Theme.subtext,
                 text: Theme.text, bright: Theme.bright, accent: Theme.accent, good: Theme.good, alert: Theme.alert,
                 "hover-fill": Theme.hoverFill, "selected-fill": Theme.selectedFill,
-                "selected-stroke": Theme.selectedStroke, "stroke": Theme.stroke
+                "selected-stroke": Theme.selectedStroke, "stroke": Theme.stroke,
+                "channel-outer": Theme.channelOuter, "channel-groove": Theme.channelGroove,
+                "channel-inner": Theme.channelInner
             }
             var px = {
                 "space-xs": Theme.spaceXs, "space-s": Theme.spaceS, "space-m": Theme.spaceM,
@@ -182,7 +184,11 @@ ShellRoot {
                 "bar-height": Theme.barHeight, "bar-margin": Theme.barMargin,
                 "flyout-offset": Theme.flyoutOffset, "module-height": Theme.moduleHeight,
                 "icon-size": Theme.iconSize, "row-height": Theme.rowHeight,
-                "chip-height": Theme.chipHeight, "font-size": Theme.fs(16)
+                "chip-height": Theme.chipHeight, "font-size": Theme.fs(16),
+                "font-caption": Theme.fontCaption, "font-small": Theme.fontSmall,
+                "font-body": Theme.fontBody, "font-title": Theme.fontTitle,
+                "font-icon": Theme.fontIconSize, "icon-cell": Theme.iconCell,
+                "control-size": Theme.controlSize, "channel-groove-width": Theme.channelGrooveWidth
             }
             var out = ":root {\n  --font: \"" + Theme.fontText + "\";\n"
             for (var k in v) out += "  --" + k + ": " + v[k] + ";\n"
