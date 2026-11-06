@@ -333,11 +333,17 @@ FlyoutPanel {
         }
     }
 
-    FlyoutDivider { visible: controlCentre.home && !controlCentre.searching }
+    // Glass draws the home's tiles its own way
+    ControlCentreGlass {
+        visible: controlCentre.home && !controlCentre.searching && Theme.glass
+        cc: controlCentre
+    }
+
+    FlyoutDivider { visible: controlCentre.home && !controlCentre.searching && !Theme.glass }
 
     Flow {
         id: tiles
-        visible: controlCentre.home && !controlCentre.searching
+        visible: controlCentre.home && !controlCentre.searching && !Theme.glass
         width: parent.width
         spacing: Theme.spaceS
         readonly property real cell: (width - spacing) / 2

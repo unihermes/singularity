@@ -101,6 +101,11 @@ comparison tables below describe the original five styles.
   and level fills are softened to 45%; the open Glass chip has no accent ring.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
   an `unblurred-` namespace and lift their ground (`Theme.unfrosted`).
+- Glass's Control Centre home (`flyouts/ControlCentreGlass.qml`) is Apple's: a
+  connectivity card (Wi-Fi, Bluetooth, Airplane as round switches; the label opens
+  the module's flyout) beside Quiet and Night Light, Keep Awake and Game Mode
+  tiles, thick Display (when there's a backlight) and Sound capsules, a
+  now-playing card and the pages as pills. The other styles keep the QuickTile grid.
 - Glass blurs harder (Hyprland blur 22 px, 3 passes, vibrancy 0.25, via the
   `blur` state file) so text behind a panel can't ghost through. In Spotlight a
   pin on each app row (or right-click, Ctrl+P) keeps it in the Dock.
