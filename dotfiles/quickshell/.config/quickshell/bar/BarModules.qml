@@ -33,7 +33,7 @@ Item {
         visualizer: musicFrame, weather: weatherBtn,
         notifications: notifBtn, privacy: privacyBtn, recorder: recorderBtn, phone: phoneBtn, vpn: vpnBtn, claude: claudeBtn,
         failed: failedBtn, updates: updatesBtn, drives: drivesBtn,
-        cooling: coolingBtn, desktop: desktopBtn })
+        desktop: desktopBtn })
 
     // Control centre (the Start button under the taskbar). Sits left of the workspaces, where a
     // distro/menu button conventionally lives.
@@ -155,16 +155,6 @@ Item {
         id: clock
         visible: Settings.widgetVisible("clock")
         screenScope: barModules.screenScope
-    }
-
-    // temperatures and fans, desktops only; alert colour when CPU or GPU runs hot
-    BarModule {
-        id: coolingBtn
-        visible: Cooling.available && Settings.widgetVisible("cooling")
-        icon: "󰈐"
-        iconColor: Cooling.hottest >= Cooling.hotC ? Theme.alert : "transparent"
-        active: screenScope.openFlyout === "cooling"
-        onActivated: screenScope.toggleFlyout("cooling", coolingBtn)
     }
 
     BarModule {

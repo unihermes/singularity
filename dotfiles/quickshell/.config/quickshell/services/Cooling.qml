@@ -24,9 +24,9 @@ Singleton {
     readonly property int hotC: 85
 
     readonly property bool desktop: Platform.allows("cooling")
-    // the bar's Cooling module, the desktop's stats widget (GPU load) or
-    // its sidebar
-    readonly property bool wanted: desktop && (Settings.widgetVisible("cooling") || Settings.deskWidget("stats").on
+    // The tray's Cooling item, the desktop's stats widget (GPU load) or
+    // its sidebar.
+    readonly property bool wanted: desktop && ((Settings.widgetVisible("tray") && Settings.trayHidden.indexOf("Cooling") === -1) || Settings.deskWidget("stats").on
                                                || Settings.deskSidebar)
     readonly property bool available: wanted && (cpuC >= 0 || gpuC >= 0 || fans.length > 0)
 

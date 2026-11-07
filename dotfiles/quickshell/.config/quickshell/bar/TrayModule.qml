@@ -30,11 +30,18 @@ ModuleFrame {
 
     readonly property int slotW: Theme.traySlotW
 
+    readonly property var coolingItem: ({
+        id: "singularity-cooling", title: "Cooling", tooltipTitle: "Cooling",
+        icon: "", menu: null, hasMenu: true, onlyMenu: false
+    })
+
     // the tray's items in the saved order
     readonly property var ordered: {
         var saved = Settings.trayOrder
         var hidden = Settings.trayHidden
-        var l = Array.from(SystemTray.items.values).filter(it => hidden.indexOf(host.bar.trayName(it)) === -1)
+        var l = Array.from(SystemTray.items.values)
+        if (Cooling.available) l.push(coolingItem)
+        l = l.filter(it => hidden.indexOf(host.bar.trayName(it)) === -1)
         var rank = l.map((it, i) => {
             var r = saved.indexOf(it.id)
             return r === -1 ? saved.length + i : r
@@ -90,6 +97,16 @@ ModuleFrame {
     property int showWaits: 0
     property int showRaises: 0
     function showApp(item) {
+        if (item === coolingItem) {
+            for (var i = 0; i < trayRepeater.count; i++) {
+                var icon = trayRepeater.itemAt(i)
+                if (icon && icon.modelData === coolingItem) {
+                    host.screenScope.toggleFlyout("cooling", icon)
+                    return
+                }
+            }
+            return
+        }
         showItem = item
         showTries = -1
         showWaits = 0
@@ -184,7 +201,8 @@ ModuleFrame {
             readonly property int slot: trayFrame.slots[index] === undefined ? -1 : trayFrame.slots[index]
             readonly property bool dragged: trayFrame.dragFrom !== -1 && trayFrame.dragFrom === slot
             // the icon whose menu is open is lit as if hovered
-            readonly property bool opened: host.screenScope.openFlyout === "traymenu"
+            readonly property bool opened: (modelData === trayFrame.coolingItem && host.screenScope.openFlyout === "cooling")
+                || host.screenScope.openFlyout === "traymenu"
                 && !!host.trayMenu.item && host.trayMenu.item.item === modelData
             readonly property bool hovered: trayMouse.containsMouse || opened
             // how far a neighbour steps aside for the dragged icon
@@ -230,9 +248,19 @@ ModuleFrame {
             }
 
             TintedIcon {
+                visible: trayIcon.modelData !== trayFrame.coolingItem
                 anchors.centerIn: parent
                 source: trayIcon.modelData.icon
                 implicitSize: Theme.trayIconSize
+            }
+
+            Text {
+                visible: trayIcon.modelData === trayFrame.coolingItem
+                anchors.centerIn: parent
+                text: "󰈐"
+                font.family: Theme.fontIcon
+                font.pixelSize: Theme.trayIconSize
+                color: Cooling.hottest >= Cooling.hotC ? Theme.alert : Theme.text
             }
 
             MouseArea {
@@ -271,7 +299,9 @@ ModuleFrame {
                 onClicked: mouse => {
                     if (moved) return
                     var item = trayIcon.modelData
-                    if (mouse.button === Qt.MiddleButton) {
+                    if (item === trayFrame.coolingItem && mouse.button !== Qt.RightButton) {
+                        trayFrame.showApp(item)
+                    } else if (mouse.button === Qt.MiddleButton) {
                         item.secondaryActivate()
                     } else if (mouse.button === Qt.RightButton || item.onlyMenu) {
                         if (!item.hasMenu) return

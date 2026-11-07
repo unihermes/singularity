@@ -501,7 +501,7 @@ Singleton {
         left:   ["controlcentre", "activeapp", "search", "taskview", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
         right:  ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
-                 "cooling", "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
+                 "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
     })
 
     // Every module's name and icon. A new module also needs widgetDefaults
@@ -535,7 +535,6 @@ Singleton {
         failed:        { label: "Failed Services", icon: "󰀦" },
         updates:       { label: "Updates",        icon: "󰚰" },
         claude:        { label: "Claude",         icon: "󰚩" },
-        cooling:       { label: "Cooling",        icon: "󰈐" },
         desktop:       { label: "Show Desktop",   icon: "󰇄" },
     })
 

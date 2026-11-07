@@ -677,8 +677,9 @@ Night Light.
 
 ### Cooling
 
-Desktops only (`services/Cooling.qml`). The bar module is a plain fan icon,
-as slim as Bluetooth's, with no level fill (settled 2026-10-09); it turns
+Desktops only (`services/Cooling.qml`). Cooling is a fan icon inside the system
+tray, with the same ordering, drawer, pin and hide controls as app icons. Left
+click opens the cooling flyout; right click opens its tray menu. It turns
 the alert colour only when the CPU or GPU reaches 85 °C. The flyout is as
 picked above. Fan names come from the machine's `fan-names.json` in the
 state directory, never the repo.
