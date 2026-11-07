@@ -656,21 +656,15 @@ Item {
         anchors.right: parent.right
     }
 
-    // whether a click here should keep the keys where it put them: on a
-    // reply's selectable text, or while the middle button scrolls
+    // whether a click should leave the focus where it put it: on a reply's
+    // text, which it is selecting, or while the middle button scrolls
     function holdsClick() {
         if (autoscroll.active) return true
-        if (!pointer.hovered) return false
-        var item = list, p = root.mapToItem(list, pointer.point.position.x, pointer.point.position.y)
-        while (true) {
-            if (item.selectByMouse === true && item.readOnly === true) return true
-            var c = item.childAt(p.x, p.y)
-            if (!c) return false
-            p = item.mapToItem(c, p.x, p.y)
-            item = c
-        }
+        var f = root.Window.activeFocusItem
+        if (!f || f.readOnly !== true || f.selectByMouse !== true) return false
+        for (var i = f; i; i = i.parent) if (i === root) return true
+        return false
     }
-    HoverHandler { id: pointer }
 
     // the middle button scrolls: hold and move away from where it was
     // pressed, faster the further; a click without moving keeps it scrolling

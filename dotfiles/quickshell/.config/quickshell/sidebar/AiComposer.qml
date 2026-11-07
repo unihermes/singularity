@@ -31,6 +31,11 @@ Column {
     onSessionChanged: { choosingModel = false; choosingReasoning = false }
 
     function focusInput() { input.forceActiveFocus() }
+    // typing that started elsewhere in the sidebar lands here
+    function typeInto(text) {
+        input.forceActiveFocus()
+        input.insert(input.cursorPosition, text)
+    }
 
     // --- slash commands ------------------------------------------------------
     // The sidebar's own, run here; then the CLI's, sent on as a message.

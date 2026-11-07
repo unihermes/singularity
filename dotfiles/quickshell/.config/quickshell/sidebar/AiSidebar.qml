@@ -55,11 +55,16 @@ PanelWindow {
     }
     Timer { id: takeTimer; interval: 150; onTriggered: root.takingKeys = false }
     // the hover state and Hyprland's own focus change settle first
+    // a button still held here: changing the keyboard mode now would end its
+    // press (a drag selecting text, the middle button scrolling), so the
+    // click is handled on release
+    property bool clickPending: false
     Timer {
         id: afterClick
         interval: 60
         onTriggered: {
             if (!root.open) return
+            if (pressWatch.active) { root.clickPending = true; return }
             if (root.pointerInside) root.takeKeys(transcript.visible && transcript.holdsClick())
             else if (Ai.pinned) root.giveKeysBack()
             else Ai.dismiss()
@@ -148,6 +153,13 @@ PanelWindow {
         // Escape from anywhere that doesn't take it itself
         focus: true
         Keys.onEscapePressed: Ai.shown = false
+        // typing while a reply holds the focus goes to the message box
+        Keys.onPressed: event => {
+            if (root.view === "projects" || event.text.length === 0 || event.text.charCodeAt(0) < 32
+                || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) return
+            composer.typeInto(event.text)
+            event.accepted = true
+        }
 
         // Ctrl+P pins or unpins, Ctrl+R reloads the sidebar (as its Reload chip)
         Shortcut {
@@ -380,6 +392,20 @@ PanelWindow {
                 onNewConversation: root.startOver()
                 onShowPast: root.view = "past"
                 onTogglePast: root.view = root.view === "past" ? "talk" : "past"
+            }
+        }
+    }
+
+    // above everything, watching presses without taking them
+    Item {
+        anchors.fill: parent
+        z: 1
+        PointHandler {
+            id: pressWatch
+            acceptedButtons: Qt.AllButtons
+            onActiveChanged: if (!active && root.clickPending) {
+                root.clickPending = false
+                afterClick.restart()
             }
         }
     }
