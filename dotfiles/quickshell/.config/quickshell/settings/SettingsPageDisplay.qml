@@ -31,7 +31,7 @@ SettingsPage {
     // hl.monitor() calls, as HyprTables.readMonitors gives them
     property var rules: []
 
-    readonly property var scales: [1, 1.25, 1.5, 1.75, 2]
+    readonly property var scales: [0.75, 1, 1.25, 1.5, 1.75, 2]
     readonly property var rotations: [{ value: 0, text: "Normal" }, { value: 1, text: "90°" },
         { value: 2, text: "180°" }, { value: 3, text: "270°" }]
 
