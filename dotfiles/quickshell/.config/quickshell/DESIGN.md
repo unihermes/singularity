@@ -708,14 +708,13 @@ line (one at a time, 󰅂 → 󰅀); a tile with 󰅂 at its end opens a page.
 
 - **Bar button:** left click opens home, right click opens on Power,
   middle click locks.
-- **Home:** a one-line `HeadCard` (`compact`: user@host and uptime; search,
-  lock and power buttons at its end, power opening Power; picked 2026-11-06
-  from the layout mockups). The search field is hidden until the search button
-  or a typed character opens it (`searchOpen`, `FlyoutPanel.keyPressed`); its
+- **Home:** a one-line `HeadCard` (`compact`: user@host and uptime; lock and
+  power buttons at its end, power opening Power). The search field is always
+  visible; its
   matches (most used first, Enter launches)
   replace the tiles while there's a query; its apps button shows the same
   list alphabetically without a query, and Escape clears the query, then
-  closes the field, then the flyout;
+  closes the flyout;
   the tiles: Quiet, Night
   Light (warmth slider in its details), Keep Awake, Game Mode, Airplane,
   Power (a click steps the profile, the details show all three; gone

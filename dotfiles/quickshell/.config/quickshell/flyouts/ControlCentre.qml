@@ -47,7 +47,7 @@ FlyoutPanel {
     }
     Component.onCompleted: if (open) opened()
     onOpenChanged: if (open) opened()
-        else { page = ""; appSearch.text = ""; browsingApps = false; searchOpen = false }
+        else { page = ""; appSearch.text = ""; browsingApps = false }
     Connections {
         target: controlCentre.scope
         function onControlPageChanged() {
@@ -172,9 +172,6 @@ FlyoutPanel {
     readonly property bool searching: home && (appQuery !== "" || browsingApps)
     property string appQuery: ""
     property bool browsingApps: false
-    // the search field is out of the way until its button or a typed character opens it
-    property bool searchOpen: false
-    readonly property bool searchShown: searchOpen || appQuery !== "" || browsingApps
     onKeyPressed: event => {
         // Ctrl+P pins the highlighted app, as in the launcher
         if (searching && event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier) && appView.count > 0) {
@@ -182,10 +179,9 @@ FlyoutPanel {
             event.accepted = true
             return
         }
-        if (!home || searchShown || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+        if (!home || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
                 || event.text.length !== 1 || event.text < " ") return
-        searchOpen = true
-        appSearch.text = event.text
+        appSearch.text += event.text
         Qt.callLater(appSearch.moveToEnd)
         event.accepted = true
     }
@@ -198,17 +194,6 @@ FlyoutPanel {
         lines: ["up " + controlCentre.uptime]
         compact: true
 
-        IconButton {
-            icon: "󰍉"
-            implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
-            implicitHeight: implicitWidth
-            glyphSize: Theme.glass ? Theme.fontIconSize : Theme.fontIconSize + Theme.spaceS
-            onClicked: {
-                controlCentre.searchOpen = !controlCentre.searchOpen
-                if (controlCentre.searchOpen) Qt.callLater(appSearch.forceFocus)
-                else appSearch.text = ""
-            }
-        }
         IconButton {
             icon: "󰌾"
             implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
@@ -228,7 +213,7 @@ FlyoutPanel {
     // typing anywhere in the panel lands here; matches replace the tiles
     FlyoutInput {
         id: appSearch
-        visible: controlCentre.home && controlCentre.searchShown
+        visible: controlCentre.home
         glyph: "󰍉"
         actionGlyph: "󰀻"
         actionLabel: "Browse applications"
@@ -259,7 +244,6 @@ FlyoutPanel {
         onEscapePressed: {
             if (text !== "") text = ""
             else if (controlCentre.browsingApps) controlCentre.browsingApps = false
-            else if (controlCentre.searchOpen) controlCentre.searchOpen = false
             else scope.openFlyout = ""
         }
     }
