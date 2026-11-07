@@ -25,6 +25,28 @@ mkdir -p "$HOME/.config/systemd/user/wireplumber.service.d"
 mapfile -t stow_pkgs < <(find dotfiles -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
 (( ${#stow_pkgs[@]} > 0 )) || die "no package directories found under dotfiles/"
 
+# Directories where apps write their own state next to the repo's files
+# (Floorp's profiles, the cursor theme's index.theme) are kept as real
+# directories, so stow links the files inside them and not the directory
+# itself. If a directory is already a link into the repo, it becomes a real
+# directory again, and the entries the app wrote there move out of the repo.
+unfold() {
+  local rel=$1 src=$PWD/dotfiles/$2/$1 dir=$HOME/$1 entry
+  if [[ -L $dir && $(readlink -f "$dir") == "$src" ]]; then
+    rm "$dir"
+    mkdir -p "$dir"
+    for entry in "$src"/* "$src"/.[!.]*; do
+      [[ -e $entry ]] || continue
+      [[ -z $(git ls-files -- "$entry") ]] || continue
+      mv "$entry" "$dir/"
+      log "  moved ${entry#"$PWD/"} to ${dir#"$HOME/"}"
+    done
+  fi
+  mkdir -p "$dir"
+}
+unfold .config/floorp floorp
+unfold .local/share/icons singularity
+
 # Real files in the way (an app's self-written default) are moved to a
 # timestamped backup before stowing; the safe version of `stow --adopt`.
 backup_conflicts() {
