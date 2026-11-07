@@ -82,9 +82,9 @@ PanelWindow {
             .replace(/\s+CPU @.*$/, "").trim()
     }
     function temp(c) { return c >= 0 ? Math.round(c) + "°C" : "" }
-    // "171G / 246G  [ 69% ]"
+    // "171G / 246G  69%"
     function ofTotal(used, total) {
-        return Format.bytes(used) + " / " + Format.bytes(total) + "  [ " + Math.round(used / Math.max(1, total) * 100) + "% ]"
+        return Format.bytes(used) + " / " + Format.bytes(total) + "  " + Math.round(used / Math.max(1, total) * 100) + "%"
     }
 
     // A drive's short name: the root is "Linux", a mounted volume its label,
@@ -137,22 +137,15 @@ PanelWindow {
         id: bar
         property string label: ""
         property real frac: 0
+        property string value: Math.round(frac * 100) + "%"
         width: parent.width
         spacing: Theme.fit(3)
-        KeyValue { label: bar.label; value: Math.round(bar.frac * 100) + "%" }
+        KeyValue { label: bar.label; value: bar.value }
         Meter {
             width: parent.width
             fraction: bar.frac
             fillColor: bar.frac >= 0.85 ? Theme.alert : Theme.meterFill
         }
-    }
-    // a "used / total [ n% ]" line, to the right
-    component Caption: Item {
-        id: cap
-        property string text: ""
-        width: parent.width
-        height: c.implicitHeight
-        WidgetText { id: c; card: ink; anchors.right: parent.right; text: cap.text; font.features: ({ "tnum": 1 }) }
     }
     component Section: Column {
         property string title: ""
@@ -276,11 +269,8 @@ PanelWindow {
             Bar {
                 visible: Cooling.gpuMemTotal > 0
                 label: "VRAM"
+                value: win.ofTotal(Cooling.gpuMemUsed * 1048576, Cooling.gpuMemTotal * 1048576)
                 frac: Cooling.gpuMemUsed / Math.max(1, Cooling.gpuMemTotal)
-            }
-            Caption {
-                visible: Cooling.gpuMemTotal > 0
-                text: win.ofTotal(Cooling.gpuMemUsed * 1048576, Cooling.gpuMemTotal * 1048576)
             }
             // its temperature over the last few minutes, 30 to 100 °C
             Line {
@@ -295,8 +285,11 @@ PanelWindow {
         Section {
             visible: SystemStats.memTotalKb > 0
             title: "RAM"
-            Bar { label: "RAM"; frac: SystemStats.mem }
-            Caption { text: win.ofTotal(SystemStats.memUsedKb * 1024, SystemStats.memTotalKb * 1024) }
+            Bar {
+                label: "RAM"
+                value: win.ofTotal(SystemStats.memUsedKb * 1024, SystemStats.memTotalKb * 1024)
+                frac: SystemStats.mem
+            }
             Repeater {
                 model: SystemStats.procsByMem.slice(0, 3)
                 Pair {
