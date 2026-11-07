@@ -77,4 +77,4 @@ hook that runs the checks in `tools/`.
 - **No bar:** run `quickshell` in a terminal to see the QML error.
 - **Boot menu:** hidden; hold `Space` at the firmware logo. `BOOT_VERBOSE=1 ./install.sh`
   shows boot messages.
-- **Anything else:** run `diagnose`, or open System → Health.
+- **Anything else:** run `~/.config/singularity/diagnose.sh`, or open System → Health.

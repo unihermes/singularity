@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # What state is this desktop in? Read-only, for when the shell is down (the
 # System window's Health page covers it otherwise); needs only coreutils.
-# Run as `diagnose`; -v adds the shell log and every failed unit.
+# Run as `~/.config/singularity/diagnose.sh`; -v adds the shell log and every failed unit.
 set -uo pipefail
 
 verbose=0
