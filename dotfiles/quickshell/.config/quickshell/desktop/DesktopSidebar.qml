@@ -132,19 +132,16 @@ PanelWindow {
         WidgetText { card: ink; width: parent.width - r.implicitWidth - Theme.spaceS; text: pair.label }
         WidgetText { id: r; card: ink; anchors.right: parent.right; text: pair.value; font.features: ({ "tnum": 1 }) }
     }
-    // a label with its meter filling the rest of the line
-    component Bar: Item {
+    // a label with its meter full width beneath, as the drives have
+    component Bar: Column {
         id: bar
         property string label: ""
         property real frac: 0
-        property int labelWidth: bl.implicitWidth
         width: parent.width
-        height: bl.implicitHeight
-        WidgetText { id: bl; card: ink; color: ink.fgDim; text: bar.label; font.features: ({ "tnum": 1 }) }
+        spacing: Theme.fit(3)
+        WidgetText { card: ink; color: ink.fgDim; text: bar.label; font.features: ({ "tnum": 1 }) }
         Meter {
-            x: parent.labelWidth + Theme.spaceS
-            width: parent.width - x
-            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
             fraction: bar.frac
             fillColor: bar.frac >= 0.85 ? Theme.alert : Theme.meterFill
         }
@@ -251,7 +248,6 @@ PanelWindow {
                     Bar {
                         required property int index
                         width: (coreGrid.width - coreGrid.columnSpacing) / 2
-                        labelWidth: Theme.fit(68)
                         label: (index + 1) + "  " + Math.round((SystemStats.cores[index] || 0) * 100) + "%"
                         frac: SystemStats.cores[index] || 0
                     }
