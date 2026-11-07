@@ -655,4 +655,94 @@ Item {
         flickable: list
         anchors.right: parent.right
     }
+
+    // whether a click here should keep the keys where it put them: on a
+    // reply's selectable text, or while the middle button scrolls
+    function holdsClick() {
+        if (autoscroll.active) return true
+        if (!pointer.hovered) return false
+        var item = list, p = root.mapToItem(list, pointer.point.position.x, pointer.point.position.y)
+        while (true) {
+            if (item.selectByMouse === true && item.readOnly === true) return true
+            var c = item.childAt(p.x, p.y)
+            if (!c) return false
+            p = item.mapToItem(c, p.x, p.y)
+            item = c
+        }
+    }
+    HoverHandler { id: pointer }
+
+    // the middle button scrolls: hold and move away from where it was
+    // pressed, faster the further; a click without moving keeps it scrolling
+    // until the next click
+    MouseArea {
+        id: autoscroll
+        anchors.fill: list
+        acceptedButtons: sticky ? Qt.AllButtons : Qt.MiddleButton
+        hoverEnabled: active
+        cursorShape: active ? Qt.SizeVerCursor : Qt.ArrowCursor
+        enabled: list.contentHeight > list.height || active
+
+        property bool active: false
+        property bool sticky: false
+        property bool moved: false
+        property real originX: 0
+        property real originY: 0
+
+        function stop() { active = false; sticky = false }
+
+        onPressed: mouse => {
+            if (active) { stop(); return }
+            active = true
+            moved = false
+            originX = mouse.x
+            originY = mouse.y
+        }
+        onPositionChanged: mouse => {
+            if (Math.abs(mouse.y - originY) > Theme.spaceM) moved = true
+        }
+        onReleased: {
+            if (!active) return
+            if (moved) stop()
+            else sticky = true
+        }
+        onCanceled: stop()
+
+        Timer {
+            interval: 16
+            repeat: true
+            running: autoscroll.active
+            onTriggered: {
+                var d = autoscroll.mouseY - autoscroll.originY
+                var dead = Theme.spaceM
+                if (Math.abs(d) <= dead) return
+                var step = Math.pow(Math.abs(d) - dead, 1.3) * 0.06 * Math.sign(d)
+                var top = list.originY
+                var bottom = Math.max(top, list.originY + list.contentHeight - list.height)
+                list.contentY = Math.max(top, Math.min(bottom, list.contentY + step))
+                list.follow = list.contentY >= bottom - 1
+            }
+        }
+
+        // where it was pressed: scrolling is still within this ring
+        Rectangle {
+            visible: autoscroll.active
+            x: autoscroll.originX - width / 2
+            y: autoscroll.originY - height / 2
+            width: Theme.sp(22)
+            height: width
+            radius: width / 2
+            color: Theme.surface
+            border.width: Theme.borderWidth
+            border.color: Theme.stroke
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: Theme.sp(6)
+                height: width
+                radius: width / 2
+                color: Theme.accent
+            }
+        }
+    }
 }

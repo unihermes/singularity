@@ -29,11 +29,13 @@ PanelWindow {
     property bool holdsKeys: false
     property bool takingKeys: false
     property bool pointerInside: false
-    function takeKeys() {
+    // keepFocus: the click put the focus somewhere to keep, such as a reply
+    // whose text it is selecting
+    function takeKeys(keepFocus) {
         holdsKeys = true
         takingKeys = true
         takeTimer.restart()
-        focusField()
+        if (!keepFocus) focusField()
     }
     // the folder field while the folder list shows, the message box otherwise
     function focusField() {
@@ -58,7 +60,7 @@ PanelWindow {
         interval: 60
         onTriggered: {
             if (!root.open) return
-            if (root.pointerInside) root.takeKeys()
+            if (root.pointerInside) root.takeKeys(transcript.visible && transcript.holdsClick())
             else if (Ai.pinned) root.giveKeysBack()
             else Ai.dismiss()
         }
@@ -280,6 +282,7 @@ PanelWindow {
                 height: Math.max(Theme.rowHeight * 4, col.height - col.fixedHeight)
 
                 AiTranscript {
+                    id: transcript
                     anchors.fill: parent
                     visible: root.view === "talk"
                     session: root.session
