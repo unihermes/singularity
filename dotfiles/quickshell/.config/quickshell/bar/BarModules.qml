@@ -42,7 +42,7 @@ Item {
         icon: Theme.controlGlyph
         // one size whichever glyph is chosen, a little over the other modules'
         iconSize: Math.min(Theme.moduleHeight - 4, Theme.iconSize + 4)
-        fixedWidth: Theme.buttonWidth
+        fixedWidth: Theme.moduleTaskbar ? Theme.buttonWidth : Theme.sp(42)
         active: screenScope.openFlyout === (Theme.moduleTaskbar ? "launcher" : "controlcentre")
         // the taskbar's Start button opens the Start menu; the Control Centre
         // is its right-click
