@@ -121,11 +121,16 @@ class HookTests(unittest.TestCase):
                 qs + "services/ClaudeSession.qml": {"check-unused.py", "test-processes.mjs"},
                 qs + "services/CodexSession.qml": {"check-unused.py", "test-processes.mjs"},
                 "tools/qml-harness.mjs": {"test-settings.mjs", "test-processes.mjs"},
+                qs + "scripts/ollama-agent.py": {"test-ollama-agent.py", "check-syntax.py"},
+                "tools/test-ollama-agent.py": {"test-ollama-agent.py", "check-syntax.py"},
+                "tools/ollama-status.py": {"test-ollama-status.py", "check-syntax.py"},
+                "tools/test-ollama-status.py": {"test-ollama-status.py", "check-syntax.py"},
                 "README.md": set(),
                 "tools/git-hooks/pre-commit": {"check-settings-index.py", "check-unused.py",
                                                "test-js.mjs", "test-settings.mjs", "test-processes.mjs", "test-ai-host.py",
                                                "test-notification-routing.mjs", "test-state-paths.py", "check-hardware.sh",
-                                               "test-tools.py", "test-platform.py", "check-syntax.py"},
+                                               "test-tools.py", "test-platform.py", "test-ollama-agent.py",
+                                               "test-ollama-status.py", "check-syntax.py"},
             }
             for staged, expected in cases.items():
                 with self.subTest(staged=staged):
