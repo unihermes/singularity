@@ -161,7 +161,7 @@ PanelWindow {
         property string title: ""
         width: parent.width
         spacing: Theme.fit(4)
-        FlyoutHeading { text: parent.title; textSize: Theme.fs(20) }
+        FlyoutHeading { visible: parent.title !== ""; text: parent.title; textSize: Theme.fs(20) }
     }
     component Line: Spark {
         width: parent.width
@@ -199,39 +199,14 @@ PanelWindow {
         }
 
         Section {
-            title: "INFO"
-            Row {
-                width: parent.width
-                spacing: Theme.spaceM
-                WidgetText {
-                    card: ink
-                    text: SystemSpecs.distro.indexOf("Arch") !== -1 ? "󰣇" : "󰌽"
-                    font.family: Theme.fontIcon
-                    px: Theme.fit(36)
-                    color: ink.accent
-                    elide: Text.ElideNone
-                }
-                Column {
-                    width: parent.width - x
-                    anchors.verticalCenter: parent.verticalCenter
-                    WidgetText {
-                        width: parent.width
-                        card: ink
-                        px: Theme.fs(20)
-                        text: SystemSpecs.hostname || "System"
-                    }
-                    WidgetText {
-                        width: parent.width
-                        card: ink
-                        color: ink.fgDim
-                        text: [SystemSpecs.distro, SystemSpecs.arch].filter(s => s !== "").join(" · ")
-                    }
-                }
+            WidgetText {
+                card: ink
+                text: SystemSpecs.distro.indexOf("Arch") !== -1 ? "󰣇" : "󰌽"
+                font.family: Theme.fontIcon
+                px: Theme.fit(36)
+                color: ink.accent
+                elide: Text.ElideNone
             }
-            KeyValue { visible: SystemSpecs.kernel !== ""; label: "Kernel"; value: SystemSpecs.kernel }
-            KeyValue { label: "Uptime"; value: Format.duration(SystemStats.uptimeSec) }
-            KeyValue { visible: SystemStats.uptimeSec > 0; label: "Booted"; value: Qt.formatDateTime(SystemStats.bootTime, "d MMM · HH:mm") }
-            KeyValue { visible: SystemSpecs.hyprVersion !== ""; label: "Hyprland"; value: SystemSpecs.hyprVersion }
         }
 
         Section {
