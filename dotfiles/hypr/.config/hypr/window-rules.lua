@@ -186,7 +186,15 @@ function toggleScratchpad(terminal)
     if #hl.get_windows({ class = SCRATCH_CLASS }) == 0 then
         hl.dispatch(hl.dsp.exec_cmd(terminal .. " --class " .. SCRATCH_CLASS))
     else
+        local mon = hl.get_active_monitor()
+        local closing = mon and mon.active_special_workspace
+            and mon.active_special_workspace.name == "special:scratchpad"
         hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad"))
+        if closing then
+            -- Refresh pointer focus after hiding the special workspace.
+            local pos = hl.get_cursor_pos()
+            hl.dispatch(hl.dsp.cursor.move({ x = pos.x, y = pos.y }))
+        end
     end
 end
 

@@ -436,26 +436,9 @@ ShellRoot {
             // the Control Centre page the next open lands on ("" for home)
             property string controlPage: ""
             onOpenFlyoutChanged: {
-                if (openFlyout === "" && root.specialShown[modelData.name] === "")
-                    restoreHiddenScratchpad.restart()
                 if (openFlyout !== "") root.closeFlyouts(screenScope)
                 if (root.backdropFlyouts.indexOf(openFlyout) !== -1) root.backdropScope = screenScope
                 else if (root.backdropScope === screenScope) root.backdropScope = null
-            }
-
-            // A focus grab can restore the last window even after its special
-            // workspace was hidden, reopening it when the flyout closes.
-            Timer {
-                id: restoreHiddenScratchpad
-                interval: 50
-                onTriggered: {
-                    if (screenScope.openFlyout !== "" || root.specialShown[screenScope.modelData.name] !== "special:scratchpad") return
-                    const monitor = JSON.stringify(screenScope.modelData.name)
-                    Hyprland.dispatch("(function() local m = hl.get_active_monitor(); "
-                        + "if m and m.name == " + monitor + " and m.active_special_workspace "
-                        + "and m.active_special_workspace.name == 'special:scratchpad' then "
-                        + "return hl.dsp.workspace.toggle_special('scratchpad') end return hl.dsp.no_op() end)()")
-                }
             }
 
             // every bar; a press on any isn't a click off a flyout (DismissGrab)
