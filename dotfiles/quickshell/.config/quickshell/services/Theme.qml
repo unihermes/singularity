@@ -62,7 +62,10 @@ Singleton {
     readonly property color overlay: roles.overlay
     readonly property color border:  roles.border
     readonly property color muted:   roles.muted
-    readonly property color subtext: roles.subtext
+    // under Glass the dim text is drawn over the wallpaper, so it's pulled
+    // most of the way to the main text colour to stay legible
+    readonly property color subtext: glass ? Qt.tint(roles.subtext, Qt.rgba(text.r, text.g, text.b, 0.65))
+        : roles.subtext
     readonly property color text:    roles.text
     readonly property color bright:  roles.bright
 
@@ -128,9 +131,9 @@ Singleton {
     // the dimming behind full-screen overlays
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // the ground of flyouts, windows, cards and the bar (See-through)
-    // Under Glass the frost is a step more solid than See-through alone gives,
+    // Under Glass the frost is well more solid than See-through alone gives,
     // so text reads over any wallpaper; the bar, Dock and panels share it
-    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.15) : resolved.opacity / 100
+    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.28) : resolved.opacity / 100
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
