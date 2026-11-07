@@ -62,8 +62,8 @@ hl.bind(mod .. " + M",         function() toggleLayout() end)  -- Switch between
 -- --- Scratchpad ---
 -- A terminal on its own special workspace (first press starts it). SHIFT
 -- stashes the focused window there, or puts a stashed one back.
-hl.bind(mod .. " + grave", function() toggleScratchpad(terminal) end)  -- Show or hide the scratchpad
-hl.bind(mod .. " + SHIFT + grave", function() toggleStashed() end)  -- Move window into or out of the scratchpad
+hl.bind(mod .. " + Tab", function() toggleScratchpad(terminal) end)  -- Show or hide the scratchpad
+hl.bind(mod .. " + SHIFT + Tab", function() toggleStashed() end)  -- Move window into or out of the scratchpad
 
 -- --- Show desktop ---
 -- hides every window as SUPER+C does; again brings them back
