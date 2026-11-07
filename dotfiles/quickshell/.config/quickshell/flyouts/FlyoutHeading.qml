@@ -187,12 +187,18 @@ Item {
     }
     function trim() {
         if (essentials <= 0 || keepAll || collapsed || trimmed) return
-        var items = sectionItems(), shown = 0, moving = []
+        var items = sectionItems(), shown = 0, moving = [], last = null
         for (var i = 0; i < items.length; i++) {
             // a Repeater stays put (its rows are made beside it), and so
             // does anything hidden or with no height yet
             var it = items[i]
             if (typeof it.itemAt === "function" || !it.visible || it.height <= 0) continue
+            // part of the row before it (a field's tiles): goes where that goes
+            if (it.withPrevious === true) {
+                if (last && moving.indexOf(last) >= 0) moving.push(it)
+                continue
+            }
+            last = it
             if (++shown > essentials) moving.push(it)
         }
         // a lone row past the cut isn't worth a More

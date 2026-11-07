@@ -19,6 +19,8 @@ Grid {
     property Component art: null
     property int tileHeight: Theme.fs(70)
     signal picked(var value)
+    // a section's More counts it with the field above it, and folds them together
+    readonly property bool withPrevious: true
 
     width: parent ? parent.width : 0
     columns: 4
