@@ -254,6 +254,7 @@ Column {
                 anchors.fill: parent
                 source: parent.parent.art
                 fillMode: Image.PreserveAspectCrop
+                sourceSize.width: width * 2
                 asynchronous: true
             }
         }

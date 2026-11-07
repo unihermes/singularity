@@ -30,9 +30,11 @@ hl.on("hyprland.start", function()
     -- the tray's watcher, apart from the shell so a shell restart keeps the
     -- tray up; the shell waits for it (5 s at most), or it would take the name
     hl.exec_cmd("exec ~/.config/hypr/tray-watcher.py > ~/.cache/tray-watcher.log 2>&1")
-    -- QML warnings to a log; `exec` so no idle sh is left as the parent
+    -- QML warnings to a log; `exec` so no idle sh is left as the parent.
+    -- Two malloc arenas and an early trim keep the many worker threads' freed
+    -- memory from staying resident across hot reloads.
     hl.exec_cmd("for i in $(seq 50); do busctl --user status org.kde.StatusNotifierWatcher >/dev/null 2>&1 && break;"
-        .. " sleep 0.1; done; exec quickshell -n > ~/.cache/quickshell.log 2>&1")
+        .. " sleep 0.1; done; exec env GLIBC_TUNABLES=glibc.malloc.arena_max=2:glibc.malloc.trim_threshold=131072 quickshell -n > ~/.cache/quickshell.log 2>&1")
     -- ALT+Tab's IPC relay; QT_FORCE_STDERR_LOGGING keeps it in its log
     hl.exec_cmd("exec env QT_FORCE_STDERR_LOGGING=1 ~/.config/hypr/alttab-relay > ~/.cache/alttab-relay.log 2>&1")
     -- lifts shadows on displays display-fixes.lua's toneCurves lists,
