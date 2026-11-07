@@ -938,14 +938,16 @@ hl.on("window.close", function(win) if win then menuOwner[win.address] = nil end
 -- A titled X11 menu, tooltip or dropdown (Tk's, Java's): Hyprland doesn't
 -- focus a window that says it's one, so it maps unfocused while its app's
 -- window has focus. Taken for a menu like the untitled ones, not a popout
--- to centre and block the app with. Any focused X11 window on its workspace
--- counts as the app's: an X11 window reopened at an old address keeps the
--- old process's pid. Not under a fullscreen one, which a new window can
--- open behind without focus.
+-- to centre and block the app with. A focused X11 window of the same class
+-- on its workspace counts as the app's (not by pid: an X11 window reopened
+-- at an old address keeps the old process's pid), so another X11 app's new
+-- window (Spotify opening beside Discord) isn't taken for one. Not under a
+-- fullscreen one, which a new window can open behind without focus.
 local function isX11Popup(win)
     if not win.xwayland or hasTag(win, "modal") then return false end
     local active = hl.get_active_window()
     return active ~= nil and active.address ~= win.address and active.xwayland and active.fullscreen == 0
+        and active.class == win.class
         and active.workspace ~= nil and win.workspace ~= nil and active.workspace.id == win.workspace.id
 end
 
@@ -1231,6 +1233,30 @@ local function onMonocleOpen(win)
     cascade(fresh)
 end
 hl.on("window.open", onMonocleOpen)
+
+-- An X11 app whose main window maps untitled (Spotify) is taken for a menu
+-- when it opens, so it skipped the above. When the title comes, the menu
+-- rule's tags drop; a window that size is the app's, and opens again now.
+-- Menus that gain a title stay small and are left alone.
+local untitledAtOpen = {}
+hl.on("window.open", function(win)
+    if win and win.xwayland and (win.title or "") == "" then untitledAtOpen[win.address] = true end
+end)
+hl.on("window.close", function(win) if win then untitledAtOpen[win.address] = nil end end)
+hl.on("window.title", function(win)
+    if not win or not untitledAtOpen[win.address] or (win.title or "") == "" then return end
+    untitledAtOpen[win.address] = nil
+    local addr = win.address
+    -- after the rules have dropped the untitled tags
+    hl.timer(function()
+        local w = hl.get_window("address:" .. addr)
+        if not w or not w.mapped or hasTag(w, "menu") or hasTag(w, "monocle-exempt") then return end
+        if w.size.x < 400 or w.size.y < 300 then return end
+        knownWindows[addr] = nil
+        holdPopup(w)
+        onMonocleOpen(hl.get_window("address:" .. addr) or w)
+    end, { timeout = 100, type = "oneshot" })
+end)
 
 -- An X11 app can place its own window, and some put it at the screen's
 -- corner (Java's at 0,0), under the bar. Once it has, a floater at the
