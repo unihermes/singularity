@@ -215,3 +215,9 @@ power-profiles-daemon
 # shell prompt
 starship
 
+
+# local LLM engine for the sidebar (Ollama tab); the service is enabled by install.sh
+ollama
+
+# torrents; the VPN module can restrict it to the tunnel
+qbittorrent

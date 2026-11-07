@@ -173,7 +173,7 @@ set_default codium.desktop application/json application/xml application/x-yaml
 # The shell sets theme, icons, cursor and fonts via gsettings; this is the
 # one key it doesn't: no headerbar buttons (GTK4 reads it from the portal).
 # Read back, since with no session bus gsettings writes nowhere.
-gsettings set org.gnome.desktop.wm.preferences button-layout ':'
+gsettings set org.gnome.desktop.wm.preferences button-layout ':' || true
 if [[ $(gsettings get org.gnome.desktop.wm.preferences button-layout 2>/dev/null) != "':'" ]]; then
   warn "gsettings did not stick (no session bus?). Rerun ./install.sh from a"
   warn "logged-in session or GTK4 apps will keep their headerbar buttons."
@@ -606,6 +606,15 @@ have_unit() {
 if have_unit power-profiles-daemon.service; then
   log "enabling power-profiles-daemon"
   sudo systemctl enable --now power-profiles-daemon.service
+fi
+
+# Ollama for the sidebar's local engine, with a 32768-token context (its
+# default is too small for coding tools).
+if have_unit ollama.service; then
+  log "enabling ollama"
+  put /etc/systemd/system/ollama.service.d/context.conf
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now ollama.service
 fi
 
 # CoolerControl's daemon applies the fan curves, with or without its window

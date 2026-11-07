@@ -8,3 +8,6 @@
 nvidia-open
 # VA-API on NVDEC, so browsers decode video on the GPU
 libva-nvidia-driver
+
+# Ollama on the GPU (CUDA build; the plain ollama package is CPU only)
+ollama-cuda
