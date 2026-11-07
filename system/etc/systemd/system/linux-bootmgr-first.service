@@ -1,0 +1,9 @@
+[Unit]
+Description=Keep Linux Boot Manager first in the firmware boot order
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/linux-bootmgr-first
+
+[Install]
+WantedBy=multi-user.target

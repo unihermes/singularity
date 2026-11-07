@@ -131,6 +131,8 @@ hypridle
 hyprsunset
 cava
 pacman-contrib
+# compressed swap in RAM; install.sh writes its config when none exists
+zram-generator
 # firmware updates, checked on the System window's Health page
 fwupd
 
@@ -200,6 +202,12 @@ xdg-utils
 
 # apps
 obsidian
+# mail; install.sh makes it the mailto: handler
+thunderbird
+# terminal file manager the shell themes (AppearanceSync's yazi flavor)
+yazi
+# disk usage browser, Settings > Storage's "ncdu over /"
+ncdu
 
 # power and brightness (the backlight's brightnessctl is in
 # hardware/backlight.txt, BlueZ in hardware/bluetooth.txt)

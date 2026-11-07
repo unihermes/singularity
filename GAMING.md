@@ -3,10 +3,11 @@
 Anything marked **repo** comes back
 by itself on a fresh `./install.sh`; **manual** means you redo it by hand.
 
-## Packages (manual: not in the repo lists)
-- Enable `[multilib]` in /etc/pacman.conf, then:
-  `steam gamemode lib32-gamemode gamescope mangohud lib32-mangohud lib32-nvidia-utils`
-- Games on this machine: Overwatch, No Man's Sky, Minecraft (modrinth-app), Proton Experimental.
+## Packages (repo)
+- The desktop profile's `gaming` policy enables `[multilib]` and installs packages/gaming/base.txt
+  (`steam gamemode lib32-gamemode gamescope mangohud lib32-mangohud`) plus the 32-bit driver for
+  the GPU found (gaming/nvidia.txt: `lib32-nvidia-utils`), and adds you to the `gamemode` group.
+- Games on this machine: Overwatch, No Man's Sky, Minecraft (modrinth-app, manual), Proton Experimental.
 
 ## Shader cache (the big one for Overwatch stutter)
 - **Steam > Settings > Downloads > Shader Pre-Caching: OFF** (manual). Its merged cache grew past
@@ -24,8 +25,8 @@ by itself on a fresh `./install.sh`; **manual** means you redo it by hand.
 
 ## Launch options (manual, per game in Steam)
 - Overwatch: `PROTON_ENABLE_NVAPI=1 %command%`
-- `gamemoderun` was dropped: the user isn't in the `gamemode` group, so it did nothing.
-  (Untested: adding yourself to `gamemode`, and `split_lock_mitigate`; both need root.)
+- `gamemoderun` was dropped while the user wasn't in the `gamemode` group (it did nothing);
+  install.sh now adds the group, untested since. `split_lock_mitigate` is untested.
 - Tested and no effect, reverted: tearing (allow_tearing + immediate), PROTON_ENABLE_WAYLAND=1,
   Overwatch's Reduce Buffering off. Steady state already held the 300 fps cap.
 - Never edit in-game graphics files (e.g. Overwatch Settings_v0.ini).
@@ -54,7 +55,13 @@ by itself on a fresh `./install.sh`; **manual** means you redo it by hand.
 - Keep power-profiles-daemon on **power-saver**. Idle floor is ~37 W either way, but balanced
   boosts light multi-thread work (Steam downloads, fossilize) to 85 °C; power-saver stays ~50 °C
   with the same 300 fps in OW (Tctl 52 vs 61-62).
-- Fans: see the desktop-fans notes (fan5 = pump, fixed 100%), CoolerControl daemon enabled.
+- Fans: CoolerControl's daemon is installed and enabled (repo), but its curves are not: redo them
+  in CoolerControl, or copy /etc/coolercontrol/ (config.toml, modes.json, alerts.json) from a
+  backup with the daemon stopped. fan5 is the pump, fixed at 100%.
+
+## Dual boot (repo)
+- linux-bootmgr-first.service puts systemd-boot back in front of Windows Boot Manager in the
+  firmware boot order at every boot; install.sh enables it when a Windows entry exists.
 
 ## Testing recipe (unattended)
 - /dev/uinput is writable (input group) and `hyprctl dispatch 'hl.dsp.cursor.move({x=..,y=..})'`

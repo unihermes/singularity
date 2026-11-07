@@ -805,6 +805,8 @@ Scope {
             "gsettings set " + iface + " icon-theme " + q(Settings.iconTheme) + "; " +
             "gsettings set " + iface + " cursor-theme " + q(Settings.cursorTheme) + "; " +
             "gsettings set " + iface + " cursor-size " + Settings.cursorSize + "; " +
+            // no headerbar buttons (GTK4 reads it from the portal)
+            "gsettings set org.gnome.desktop.wm.preferences button-layout ':'; " +
             // GTK on X11 reads none of that but XSETTINGS: xsettingsd serves
             // the same, started here or told to reload
             "command -v xsettingsd >/dev/null || exit 0; " +

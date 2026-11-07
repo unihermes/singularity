@@ -7,7 +7,7 @@
 # update.sh. packages/hardware/CAP.txt is installed where `has CAP`.
 #
 # The machine type (laptop or desktop) is a choice about how the machine is
-# used (hibernation, CoolerControl, the idle ladder); a capability is whether
+# used (hibernation, CoolerControl, gaming, the idle ladder); a capability is whether
 # a package or fix can do anything here. Gate on the capability wherever one
 # exists, on the machine type only for what is a matter of use.
 
@@ -15,7 +15,7 @@
 hw_caps=(battery lid touchpad backlight wifi bluetooth fingerprint nvidia intel-gpu
   intel-panel ahci ite-superio ipu6-webcam intel-ish i2c-touchpad charge-modes
   steelseries-headset gaming-mouse)
-platform_features=(lid hibernate-setup cooling early-nvidia parallel-sata)
+platform_features=(lid hibernate-setup cooling early-nvidia parallel-sata gaming)
 
 # any PCI device whose class starts with $1 (0x03 display, 0x0106 AHCI),
 # from vendor $2 when given
@@ -150,7 +150,7 @@ feature() {
     lid) has lid ;;
     early-nvidia) has nvidia ;;
     parallel-sata) has ahci ;;
-    cooling|hibernate-setup) return 0 ;;
+    cooling|hibernate-setup|gaming) return 0 ;;
     *) return 2 ;;
   esac
 }

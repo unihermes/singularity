@@ -1,0 +1,2 @@
+# 32-bit Mesa Vulkan for Steam and Proton
+lib32-vulkan-intel

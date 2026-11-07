@@ -2,7 +2,8 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../dotfiles/singularity/.config/singularity/platform.sh"
 
 # the package lists that apply here: packages/hardware/CAP.txt for each CAP
-# this machine has, then packages/MACHINE.txt when there is one
+# this machine has, packages/MACHINE.txt when there is one, then with the
+# gaming policy packages/gaming/base.txt and gaming/CAP.txt per GPU found
 machine_lists() {
   local f cap
   for f in packages/hardware/*.txt; do
@@ -11,7 +12,26 @@ machine_lists() {
     if has "$cap"; then echo "$f"; fi
   done
   [[ -f packages/$1.txt ]] && echo "packages/$1.txt"
+  if feature gaming; then
+    echo packages/gaming/base.txt
+    for f in packages/gaming/*.txt; do
+      cap=${f##*/}; cap=${cap%.txt}
+      [[ $cap != base ]] && has "$cap" && echo "$f"
+    done
+  fi
   return 0
+}
+
+# [multilib] on in pacman.conf (Steam and the lib32 drivers live there),
+# for the gaming policy; databases synced after.
+enable_multilib() {
+  feature gaming || return 0
+  grep -q '^\[multilib\]' /etc/pacman.conf && return 0
+  log "enabling [multilib] in /etc/pacman.conf"
+  [[ -f /etc/pacman.conf.singularity.bak ]] || sudo cp /etc/pacman.conf /etc/pacman.conf.singularity.bak
+  sudo sed -i '/^#\[multilib\]$/,/^#Include/ s/^#//' /etc/pacman.conf
+  grep -q '^\[multilib\]' /etc/pacman.conf || { warn "could not enable [multilib]; gaming packages will fail"; return 0; }
+  sudo pacman -Sy
 }
 
 # Splits package names into repo_pkgs (in a sync database, for pacman) and

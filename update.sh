@@ -31,6 +31,7 @@ main() {
   source ./scripts/hardware.sh
   local machine
   select_machine || return
+  enable_multilib
   local -a lists extra=() more
   local f
   mapfile -t lists < <(machine_lists "$machine")

@@ -1,0 +1,20 @@
+#!/bin/bash
+# Puts systemd-boot's firmware entry on this machine's ESP first in BootOrder
+# (Windows moves its own Boot Manager back to the front).
+set -euo pipefail
+esp=$(bootctl -p 2>/dev/null) || exit 0
+partuuid=$(lsblk -no PARTUUID "$(findmnt -no SOURCE -T "$esp")" 2>/dev/null) || exit 0
+[[ -n $partuuid ]] || exit 0
+out=$(efibootmgr)
+num=$(grep -iF "GPT,$partuuid," <<<"$out" | grep -iF 'EFI\systemd\systemd-bootx64.efi' |
+    sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\).*/\1/p' | head -n1 || true)
+[[ -n $num ]] || exit 0
+order=$(sed -n 's/^BootOrder: //p' <<<"$out")
+IFS=, read -ra entries <<<"$order"
+(( ${#entries[@]} > 0 )) && [[ ${entries[0]^^} == "${num^^}" ]] && exit 0
+new=$num
+for e in "${entries[@]}"; do
+    [[ ${e^^} == "${num^^}" ]] || new+=",$e"
+done
+efibootmgr -q -o "$new"
+echo "BootOrder: $order -> $new"

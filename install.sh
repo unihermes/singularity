@@ -44,6 +44,9 @@ command -v pacman &>/dev/null || die "this is an Arch provisioning script"
 # Ask for sudo once up front so the rest of the run is unattended.
 sudo -v
 
+# Steam and the lib32 drivers need [multilib] (gaming policy only)
+enable_multilib
+
 log "syncing and installing base tooling"
 sudo pacman -Syu --needed --noconfirm base-devel git stow
 
@@ -170,13 +173,23 @@ set_default mpv.desktop video/mp4 video/x-matroska video/webm video/quicktime \
 # structured text inherits from text/plain only, so it's named outright
 set_default codium.desktop application/json application/xml application/x-yaml
 
-# The shell sets theme, icons, cursor and fonts via gsettings; this is the
-# one key it doesn't: no headerbar buttons (GTK4 reads it from the portal).
-# Read back, since with no session bus gsettings writes nowhere.
-gsettings set org.gnome.desktop.wm.preferences button-layout ':' || true
-if [[ $(gsettings get org.gnome.desktop.wm.preferences button-layout 2>/dev/null) != "':'" ]]; then
-  warn "gsettings did not stick (no session bus?). Rerun ./install.sh from a"
-  warn "logged-in session or GTK4 apps will keep their headerbar buttons."
+# Browser and mail only when nothing has claimed them yet, so a later choice
+# survives reruns.
+unclaimed() { [[ -z $(xdg-mime query default "$1" 2>/dev/null) ]]; }
+if unclaimed x-scheme-handler/https; then
+  set_default floorp.desktop x-scheme-handler/http x-scheme-handler/https text/html \
+    application/xhtml+xml
+  [[ -f /usr/share/applications/floorp.desktop ]] && { xdg-settings set default-web-browser floorp.desktop || true; }
+fi
+if unclaimed x-scheme-handler/mailto; then
+  set_default org.mozilla.Thunderbird.desktop x-scheme-handler/mailto message/rfc822
+fi
+
+# Codex CLI for the sidebar's Codex tab: npm's package is the maintained one
+# (the AUR has only forks and stale -git builds).
+if ! command -v codex &>/dev/null; then
+  log "installing the Codex CLI"
+  sudo npm install -g @openai/codex || warn "could not install the Codex CLI (sudo npm install -g @openai/codex)"
 fi
 
 # Claude Code: selects the Singularity theme the shell writes (unless one
@@ -335,6 +348,20 @@ if [[ -n $esp ]]; then
   put /usr/share/polkit-1/actions/org.singularity.boot.policy
 fi
 
+# Dual boot: Windows moves its Boot Manager back to the front of the
+# firmware boot order; linux-bootmgr-first puts systemd-boot first again at
+# every boot.
+if [[ -n $esp && -d /sys/firmware/efi ]]; then
+  sudo pacman -S --needed --noconfirm efibootmgr >/dev/null
+  if efibootmgr 2>/dev/null | grep -q 'Windows Boot Manager'; then
+    log "keeping systemd-boot first in the firmware boot order"
+    put /usr/local/bin/linux-bootmgr-first
+    put /etc/systemd/system/linux-bootmgr-first.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable linux-bootmgr-first.service
+  fi
+fi
+
 # Shorter deferred-probe timeout (the IPU6 sensor never resolves), and async
 # probing for intel_ish_ipc, whose variable firmware handshake otherwise
 # froze everything behind it, the touchpad included.
@@ -478,6 +505,19 @@ if feature hibernate-setup; then
   setup_hibernation || warn "couldn't set up the hibernation swapfile, so hibernation won't resume"
 fi
 
+# --- zram ----------------------------------------------------------------
+# Compressed swap in RAM (zstd, half of RAM up to 4G), above any swapfile in
+# priority. zswap off, as it would compress pages on their way to zram.
+if [[ ! -f /etc/systemd/zram-generator.conf ]] && pacman -Q zram-generator &>/dev/null; then
+  log "setting up zram swap"
+  put /etc/systemd/zram-generator.conf
+  sudo systemctl daemon-reload
+  sudo systemctl start systemd-zram-setup@zram0.service || warn "zram did not start; it will from the next boot"
+fi
+if [[ -f /etc/systemd/zram-generator.conf ]]; then
+  edit_cmdline zswap.enabled "zswap.enabled=0"
+fi
+
 # Everything above that changed what the boot reads, applied once.
 if (( cmdline_changed )); then
   case $cmdline_mode in
@@ -589,6 +629,13 @@ systemctl --user enable --now pipewire pipewire-pulse wireplumber ||
 # Weekly paccache (pacman-contrib) keeps the last three versions of each
 # package, enough to downgrade from, so the cache stops growing forever.
 sudo systemctl enable --now paccache.timer
+# Weekly TRIM of mounted SSDs (util-linux's timer, off by default)
+sudo systemctl enable --now fstrim.timer
+
+# gamemoderun only reaches its CPU governor and priority tweaks for members
+if feature gaming && getent group gamemode >/dev/null; then
+  sudo usermod -aG gamemode "$USER"
+fi
 
 # Nothing enables BlueZ on a Minimal install, and the bar's Bluetooth module
 # and the pairing agent below both need its daemon.
@@ -615,6 +662,16 @@ if have_unit ollama.service; then
   put /etc/systemd/system/ollama.service.d/context.conf
   sudo systemctl daemon-reload
   sudo systemctl enable --now ollama.service
+  # One small model so the Ollama tab has something to run, only when none is
+  # there yet; OLLAMA_MODEL=name picks another, OLLAMA_MODEL=none skips it.
+  ollama_model=${OLLAMA_MODEL:-qwen3.5:4b}
+  if [[ $ollama_model != none ]] && command -v ollama &>/dev/null; then
+    for _ in {1..20}; do ollama list &>/dev/null && break; sleep 0.5; done
+    if [[ $(ollama list 2>/dev/null | tail -n +2) == "" ]]; then
+      log "downloading the $ollama_model model for the Ollama tab"
+      ollama pull "$ollama_model" || warn "could not download $ollama_model: run ollama pull $ollama_model later"
+    fi
+  fi
 fi
 
 # CoolerControl's daemon applies the fan curves, with or without its window

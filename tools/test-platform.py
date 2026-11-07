@@ -76,6 +76,10 @@ class PlatformTests(unittest.TestCase):
                     self.assertEqual(inventory['features']['hibernate-setup'], kind == 'laptop')
                     self.assertEqual(inventory['features']['early-nvidia'], kind == 'desktop' and 'nvidia' in caps.split())
                     self.assertEqual('packages/desktop.txt' in lines, kind == 'desktop')
+                    self.assertEqual(inventory['features']['gaming'], kind == 'desktop')
+                    self.assertEqual('packages/gaming/base.txt' in lines, kind == 'desktop')
+                    self.assertEqual('packages/gaming/nvidia.txt' in lines, kind == 'desktop' and 'nvidia' in caps.split())
+                    self.assertEqual('packages/gaming/intel-gpu.txt' in lines, kind == 'desktop' and 'intel-gpu' in caps.split())
                     self.assertEqual('packages/hardware/nvidia.txt' in lines, 'nvidia' in caps.split())
                     self.assertEqual('packages/hardware/backlight.txt' in lines, 'backlight' in caps.split())
 

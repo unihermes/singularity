@@ -47,6 +47,7 @@ filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`
   `binds.defaults.lua` reach existing `binds.lua` files through `tools/merge-binds.mjs` (link.sh).
 - `system/`: root-owned files (pkexec helpers, polkit actions, ly's scripts, systemd
   configs) that install.sh's `put` copies to the same path under `/`.
+- `packages/gaming/`: the `gaming` policy's lists (base.txt, then one per GPU capability).
 - `qs/DESIGN.md`: the UI design reference. Read the section you need (grep its `##`
   headings) before UI work, not the whole file.
 - `TODO.md`: the to-do list, created when needed. "Add to the to-do" means a new

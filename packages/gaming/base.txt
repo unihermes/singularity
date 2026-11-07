@@ -1,0 +1,12 @@
+# Gaming (the `gaming` policy, desktop profile). Needs [multilib], which
+# install.sh and update.sh enable. 32-bit GPU drivers are in gaming/<capability>.txt.
+steam
+# Feral's CPU governor and priority tweaks for `gamemoderun %command%`; the
+# user joins the gamemode group
+gamemode
+lib32-gamemode
+# game-keys.lua and the recorder treat gamescope windows as games
+gamescope
+# FPS / frame-time overlay (MANGOHUD=1 %command%)
+mangohud
+lib32-mangohud
