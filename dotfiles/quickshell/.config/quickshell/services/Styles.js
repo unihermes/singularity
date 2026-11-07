@@ -92,8 +92,11 @@ var styles = {
         // items running to the clock
         bar: {
             left: ["controlcentre", "activeapp", "workspaces"],
-            right: ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "tray", "cooling",
-                    "visualizer", "weather", "bluetooth", "volume", "brightness", "battery", "network", "search",
+            // as the menu bar reads: live indicators, background services,
+            // the tray, media and weather, then the system controls with the
+            // network and battery nearest the search, notifications and clock
+            right: ["privacy", "recorder", "failed", "updates", "drives", "phone", "vpn", "claude", "cooling", "tray",
+                    "visualizer", "weather", "bluetooth", "volume", "brightness", "network", "battery", "search",
                     "notifications", "clock"],
         },
         settings: {
