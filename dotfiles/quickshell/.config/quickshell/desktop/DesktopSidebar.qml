@@ -139,7 +139,7 @@ PanelWindow {
         property real frac: 0
         width: parent.width
         spacing: Theme.fit(3)
-        WidgetText { card: ink; color: ink.fgDim; text: bar.label; font.features: ({ "tnum": 1 }) }
+        KeyValue { label: bar.label; value: Math.round(bar.frac * 100) + "%" }
         Meter {
             width: parent.width
             fraction: bar.frac
@@ -235,7 +235,7 @@ PanelWindow {
             KeyValue { label: "CPU"; value: win.shortModel(SystemSpecs.cpuModel) }
             KeyValue { visible: SystemStats.cpuMhz > 0; label: "Frequency"; value: Math.round(SystemStats.cpuMhz) + " MHz" }
             KeyValue { visible: SystemStats.tempC >= 0; label: "Temperature"; value: win.temp(SystemStats.tempC) }
-            Bar { label: "Usage " + Format.pct(SystemStats.cpu); frac: SystemStats.cpu }
+            Bar { label: "Usage"; frac: SystemStats.cpu }
             // Per-core meters stay in two columns, below total usage.
             Grid {
                 id: coreGrid
@@ -248,7 +248,7 @@ PanelWindow {
                     Bar {
                         required property int index
                         width: (coreGrid.width - coreGrid.columnSpacing) / 2
-                        label: (index + 1) + "  " + Math.round((SystemStats.cores[index] || 0) * 100) + "%"
+                        label: String(index + 1)
                         frac: SystemStats.cores[index] || 0
                     }
                 }
@@ -272,7 +272,7 @@ PanelWindow {
             KeyValue { visible: Cooling.gpuMemClock >= 0; label: "Mem clock"; value: Cooling.gpuMemClock + " MHz" }
             KeyValue { visible: Cooling.gpuC >= 0; label: "Temperature"; value: win.temp(Cooling.gpuC) }
             KeyValue { visible: Cooling.gpuWatts >= 0; label: "Power"; value: Math.round(Cooling.gpuWatts) + " W" }
-            Bar { visible: Cooling.gpuLoad >= 0; label: "Usage " + Cooling.gpuLoad + "%"; frac: Cooling.gpuLoad / 100 }
+            Bar { visible: Cooling.gpuLoad >= 0; label: "Usage"; frac: Cooling.gpuLoad / 100 }
             Bar {
                 visible: Cooling.gpuMemTotal > 0
                 label: "VRAM"
@@ -366,7 +366,7 @@ PanelWindow {
             visible: Battery.present
             title: "BATTERY"
             Bar {
-                label: (Battery.charging ? "Charging " : "On battery ") + Battery.percent + "%"
+                label: Battery.charging ? "Charging" : "On battery"
                 frac: Battery.percent / 100
             }
         }
