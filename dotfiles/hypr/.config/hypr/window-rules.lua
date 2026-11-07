@@ -183,9 +183,15 @@ hl.window_rule({ name = "scratchpad-terminal-exempt", match = { class = "^(" .. 
 
 -- Starts the scratchpad terminal, or toggles its workspace.
 function toggleScratchpad(terminal)
-    if #hl.get_windows({ class = SCRATCH_CLASS }) == 0 then
+    local terminals = hl.get_windows({ class = SCRATCH_CLASS })
+    if #terminals == 0 then
         hl.dispatch(hl.dsp.exec_cmd(terminal .. " --class " .. SCRATCH_CLASS))
     else
+        local scratch = terminals[1]
+        if scratch.workspace and scratch.workspace.name ~= "special:scratchpad" then
+            hl.dispatch(hl.dsp.window.move({ workspace = "special:scratchpad",
+                window = "address:" .. scratch.address, follow = false }))
+        end
         local mon = hl.get_active_monitor()
         local closing = mon and mon.active_special_workspace
             and mon.active_special_workspace.name == "special:scratchpad"
