@@ -303,13 +303,13 @@ PanelWindow {
         }
     }
 
-    // the pill's resting place; auto-hiding, a band
-    // across the screen's foot (a thin strip while hidden)
+    // The shown dock only takes input around the pill; while hidden,
+    // a thin strip across the screen's foot lets the pointer call it back.
     Item {
         id: hit
         readonly property real restH: pill.height + dock.margin
-        x: Settings.dockAutohide ? 0 : Math.round((dock.width - pill.width) / 2)
-        width: Settings.dockAutohide ? dock.width : pill.width
+        x: dock.shown ? Math.round((dock.width - pill.width) / 2) : 0
+        width: dock.shown ? pill.width : dock.width
         y: dock.height - (dock.shown ? restH : Theme.sp(4))
         height: dock.shown ? restH : Theme.sp(4)
 
