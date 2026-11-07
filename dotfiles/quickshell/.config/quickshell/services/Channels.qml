@@ -156,6 +156,8 @@ Singleton {
     // the dial turns, slower while the headset is on, slow while it's off
     // (its dial can't move) or nothing answers
     property bool dialBusy: false
+    // where the dial last rested; -1 until it reads
+    property int dialAnchor: -1
     Timer {
         id: dialSettle
         interval: 10000
@@ -204,7 +206,17 @@ Singleton {
                 var level = dial ? dial.chatmix : -1
                 var was = root.chatmix
                 root.chatmix = level
-                if (was >= 0 && level >= 0 && was !== level) root.turned()
+                if (level < 0) { root.dialAnchor = -1; return }
+                if (root.dialAnchor < 0) root.dialAnchor = level
+                // a turn is two reads in a row both well off where the dial
+                // last rested; a lone odd read or a notch of jitter is not
+                if (was >= 0 && Math.abs(level - root.dialAnchor) >= 3
+                        && Math.abs(was - root.dialAnchor) >= 3) {
+                    root.dialAnchor = level
+                    root.turned()
+                } else if (Math.abs(level - root.dialAnchor) < 3) {
+                    root.dialAnchor = level
+                }
             }
         }
     }
