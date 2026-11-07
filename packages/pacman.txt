@@ -19,6 +19,8 @@ alacritty
 ghostty
 stow
 git
+# gh auth login signs git in to GitHub for pushing
+github-cli
 openssh
 man-db
 unzip
