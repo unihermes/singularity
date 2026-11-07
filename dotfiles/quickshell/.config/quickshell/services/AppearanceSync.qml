@@ -16,8 +16,9 @@
 // Discord an Equicord theme (renderDiscord) and yazi a flavor in
 // ~/.config/yazi (renderYazi).
 // Zen's and Floorp's profiles get a marked block in user.js (browserPrefs)
-// and Floorp its userChrome.css (browserChrome). GTK and Qt apps also get
-// dark/light, icon and cursor themes and the system font, set only here:
+// and Floorp its userChrome.css (browserChrome); both get a userContent.css
+// that keeps a few sites' loading canvas dark (browserContent). GTK and Qt
+// apps also get dark/light, icon and cursor themes and the system font, set only here:
 // gsettings for GTK (live), xsettingsd.conf for GTK on X11 (live),
 // qt6ct.conf for Qt (next launch), the
 // XCursor fallback index.theme, and xdg/gtk-*/settings.ini for the cursor
@@ -644,6 +645,8 @@ Scope {
             pref("ui.textSelectAttentionBackground", str(found)), pref("ui.textSelectAttentionForeground", str(t)),
             pref("ui.textHighlightBackground", str(others)), pref("ui.textHighlightForeground", str(hex(Theme.text))),
             pref("zen.theme.accent-color", str(a)),
+            // a dark page's canvas before it draws: the look's base, not black or white
+            pref("browser.display.background_color.dark", str(hex(Theme.base))),
             pref("toolkit.legacyUserProfileCustomizations.stylesheets", "true"),
             // VA-API decoding (Gecko blocklists NVIDIA's driver; env.lua sets it up)
             pref("media.ffmpeg.vaapi.enabled", "true"),
@@ -766,8 +769,23 @@ Scope {
         })
     }
 
+    // Pages that paint white before their own dark theme or Dark Reader
+    // arrive (Gmail's loading screen, the Google and Microsoft sign-ins):
+    // their canvas in the look's base under a dark look. Only the root's
+    // background, which the page's own body covers once it draws.
+    readonly property var darkCanvasSites: ["mail.google.com", "accounts.google.com",
+        "onedrive.live.com", "login.live.com", "login.microsoftonline.com",
+        "outlook.live.com", "outlook.office.com"]
+    function browserContent() {
+        if (Theme.isLight) return []
+        var sites = ["url(about:blank)"].concat(darkCanvasSites.map(d => "domain(" + d + ")"))
+        return ["@-moz-document " + sites.join(", ") + " {",
+            "  html { background-color: " + hex(Theme.base) + " !important; }",
+            "}"]
+    }
+
     function renderBrowsers() {
-        var prefs = browserPrefs(), chrome = browserChrome()
+        var prefs = browserPrefs(), chrome = browserChrome(), content = browserContent()
         for (var i = 0; i < browsers.length; i++) {
             var b = browsers[i]
             var profile = activeProfile(b.base, b.installs.text(), b.profiles.text())
@@ -775,6 +793,7 @@ Scope {
             writeProfileFile(profile + "/user.js", b.userJs, "// ", "", prefs)
             if (b.chrome)
                 writeProfileFile(profile + "/chrome/userChrome.css", b.chrome, "/* ", " */", chrome)
+            writeProfileFile(profile + "/chrome/userContent.css", null, "/* ", " */", content)
         }
     }
 
