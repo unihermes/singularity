@@ -87,6 +87,15 @@ PanelWindow {
         return Format.bytes(used) + " / " + Format.bytes(total) + "  [ " + Math.round(used / Math.max(1, total) * 100) + "% ]"
     }
 
+    // A drive's short name: the root is "System", a mounted volume its label,
+    // and one with no label (mounted under its UUID) its size, "2TB".
+    function diskName(fs) {
+        if (fs.target === "/") return "System"
+        var name = String(fs.target).split("/").pop()
+        if (!/^[0-9A-Fa-f-]{8,}$/.test(name)) return name
+        var tb = fs.size / 1e12
+        return tb >= 0.95 ? Math.round(tb) + "TB" : Math.round(fs.size / 1e9) + "GB"
+    }
     // the real filesystems, largest first, three at most
     readonly property var disks: SystemStats.filesystems.filter(f => f.size >= 1073741824).slice(0, 3)
     readonly property bool hasGpu: Cooling.gpuLoad >= 0 || Cooling.gpuC >= 0
@@ -310,9 +319,17 @@ PanelWindow {
                 Column {
                     required property var modelData
                     width: parent.width
-                    spacing: Theme.fit(2)
-                    Bar { label: modelData.target; frac: modelData.used / modelData.size }
-                    Caption { text: win.ofTotal(modelData.used, modelData.size) }
+                    spacing: Theme.fit(3)
+                    KeyValue {
+                        label: win.diskName(modelData)
+                        value: Format.bytes(modelData.used) + " / " + Format.bytes(modelData.size)
+                            + "  " + Math.round(modelData.used / Math.max(1, modelData.size) * 100) + "%"
+                    }
+                    Meter {
+                        width: parent.width
+                        fraction: modelData.used / Math.max(1, modelData.size)
+                        fillColor: fraction >= 0.85 ? Theme.alert : Theme.meterFill
+                    }
                 }
             }
             KeyValue {
