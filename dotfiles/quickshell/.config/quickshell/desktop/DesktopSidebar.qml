@@ -87,12 +87,13 @@ PanelWindow {
         return Format.bytes(used) + " / " + Format.bytes(total) + "  [ " + Math.round(used / Math.max(1, total) * 100) + "% ]"
     }
 
-    // A drive's short name: the root is "System", a mounted volume its label,
-    // and one with no label (mounted under its UUID) its size, "2TB".
+    // A drive's short name: the root is "Linux", a mounted volume its label,
+    // an unlabelled NTFS one (mounted under its UUID) "Windows", any other its size.
     function diskName(fs) {
-        if (fs.target === "/") return "System"
+        if (fs.target === "/") return "Linux"
         var name = String(fs.target).split("/").pop()
         if (!/^[0-9A-Fa-f-]{8,}$/.test(name)) return name
+        if (/ntfs/.test(fs.fstype)) return "Windows"
         var tb = fs.size / 1e12
         return tb >= 0.95 ? Math.round(tb) + "TB" : Math.round(fs.size / 1e9) + "GB"
     }
