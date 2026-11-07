@@ -143,7 +143,7 @@ SettingsPage {
     // an icon name or path from a desktop entry, as an image source
     function iconSource(icon) {
         if (!icon) return ""
-        return icon.startsWith("/") ? "file://" + icon : Quickshell.iconPath(icon, true)
+        return icon.startsWith("/") ? "file://" + icon : Apps.iconPath(icon, true)
     }
 
     // the user units that are enabled, to say which package entries one of

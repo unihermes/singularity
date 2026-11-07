@@ -379,8 +379,8 @@ Singleton {
         if (entry.icon) return entry.icon
         if (entry.phone && entry.picture) return entry.picture
         const app = desktopFor(entry)
-        if (app && app.icon) return Quickshell.iconPath(app.icon, true)
-        if (isClaude(entry)) return Quickshell.iconPath("claude-desktop", true)
+        if (app && app.icon) return Apps.iconPath(app.icon, true)
+        if (isClaude(entry)) return Apps.iconPath("claude-desktop", true)
         return ""
     }
 
@@ -404,7 +404,7 @@ Singleton {
         if (!i) return ""
         if (i.startsWith("/")) return "file://" + i
         if (i.indexOf("://") > 0) return i
-        return Quickshell.iconPath(i, true)
+        return Apps.iconPath(i, true)
     }
 
     // The attached picture: image data as Quickshell serves it, or a file

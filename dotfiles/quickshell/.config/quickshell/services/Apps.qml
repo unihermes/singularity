@@ -220,6 +220,12 @@ Singleton {
             run(entry)
     }
 
+    // Equicord uses Discord's icon throughout the shell.
+    function iconPath(name, allowMissing) {
+        var icon = /^equicord$/i.test(String(name)) ? "discord" : name
+        return Quickshell.iconPath(icon, allowMissing)
+    }
+
     // The icon for a window class: via desktop entries (heuristicLookup),
     // then the class as an icon name, then its last segment lowercased. A
     // Steam game (steam_app_ID) takes the steam_icon_ID Steam installs with
@@ -234,16 +240,16 @@ Singleton {
             var scratch = String(cls) === "singularity.scratch"
             if (scratch) c.entry = terminalEntry()
             var steamApp = String(cls).match(/^steam_app_(\d+)$/)
-            var path = steamApp ? Quickshell.iconPath("steam_icon_" + steamApp[1], true) : ""
+            var path = steamApp ? root.iconPath("steam_icon_" + steamApp[1], true) : ""
             // one installed after the shell started isn't in Qt's icon cache:
             // Steam always writes a 256px copy
             if (path === "" && steamApp)
                 path = "file://" + Quickshell.env("HOME") + "/.local/share/icons/hicolor/256x256/apps/steam_icon_"
                     + steamApp[1] + ".png"
-            if (path === "" && known) path = Quickshell.iconPath(known.icon, true)
-            if (path === "" && c.entry && c.entry.icon) path = Quickshell.iconPath(c.entry.icon, true)
-            if (path === "" && !scratch) path = Quickshell.iconPath(cls, true)
-            if (path === "" && !scratch) path = Quickshell.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
+            if (path === "" && known) path = root.iconPath(known.icon, true)
+            if (path === "" && c.entry && c.entry.icon) path = root.iconPath(c.entry.icon, true)
+            if (path === "" && !scratch) path = root.iconPath(cls, true)
+            if (path === "" && !scratch) path = root.iconPath(cls.replace(/^.*\./, "").toLowerCase(), true)
             c.icon = path
         }
         return c.icon

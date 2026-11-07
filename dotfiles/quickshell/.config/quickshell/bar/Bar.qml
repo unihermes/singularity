@@ -313,7 +313,7 @@ PanelWindow {
             if (!it) {
                 it = {
                     key: "pin/" + e.id,
-                    source: e.icon ? Quickshell.iconPath(e.icon, true) : "",
+                    source: e.icon ? Apps.iconPath(e.icon, true) : "",
                     glyph: "󰖯", name: e.name, address: "", toplevel: null,
                     main: true, windows: [],
                 }

@@ -303,7 +303,7 @@ FlyoutPanel {
                 anchors.leftMargin: Theme.spaceXs
                 anchors.verticalCenter: parent.verticalCenter
                 implicitSize: Theme.fs(18)
-                source: Quickshell.iconPath(appRow.modelData.icon, true)
+                source: Apps.iconPath(appRow.modelData.icon, true)
             }
 
             Text {

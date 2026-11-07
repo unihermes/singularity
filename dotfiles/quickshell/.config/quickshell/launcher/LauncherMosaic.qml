@@ -157,7 +157,7 @@ Item {
                     x: Theme.spaceL
                     y: Theme.spaceL
                     implicitSize: tile.big ? Theme.fs(56) : Theme.fs(28)
-                    source: visible ? Quickshell.iconPath(tile.modelData.item.icon || "", true) : ""
+                    source: visible ? Apps.iconPath(tile.modelData.item.icon || "", true) : ""
                 }
 
                 Text {

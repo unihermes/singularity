@@ -199,7 +199,7 @@ Singleton {
     // by its binary (Floorp names none); "" for neither
     function appIcon(n) {
         var p = (n && n.properties) || {}
-        return p["application.icon-name"] ? Quickshell.iconPath(p["application.icon-name"], true)
+        return p["application.icon-name"] ? Apps.iconPath(p["application.icon-name"], true)
             : Apps.iconForClass(p["application.process.binary"] || p["application.name"] || "")
     }
 

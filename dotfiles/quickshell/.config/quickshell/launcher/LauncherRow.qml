@@ -91,7 +91,7 @@ Item {
             visible: row.kind === "app"
             anchors.centerIn: parent
             implicitSize: iconCell.width
-            source: visible ? Quickshell.iconPath(row.item.icon || "", true) : ""
+            source: visible ? Apps.iconPath(row.item.icon || "", true) : ""
         }
 
         Text {

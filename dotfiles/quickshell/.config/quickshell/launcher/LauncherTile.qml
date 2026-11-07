@@ -34,7 +34,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         y: Math.round(parent.height * 0.16)
         implicitSize: Math.round(Math.min(parent.width, parent.height) * tile.iconScale)
-        source: Quickshell.iconPath(tile.entry.icon || "", true)
+        source: Apps.iconPath(tile.entry.icon || "", true)
     }
 
     Text {

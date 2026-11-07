@@ -90,7 +90,7 @@ SettingsPage {
 
     function appIcon(id) {
         var i = icons[id] || ""
-        return i === "" ? "" : i.startsWith("/") ? "file://" + i : Quickshell.iconPath(i, true)
+        return i === "" ? "" : i.startsWith("/") ? "file://" + i : Apps.iconPath(i, true)
     }
 
     // "Markdown document", or the type itself when the database has no words
