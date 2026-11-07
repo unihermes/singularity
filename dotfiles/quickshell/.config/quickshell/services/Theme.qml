@@ -488,8 +488,8 @@ Singleton {
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare
     readonly property int moduleWidth:  54
-    // the taskbar's Start, search and Task View buttons, snug round the glyph
-    readonly property int buttonWidth:  moduleTaskbar ? iconSize + sp(18) : moduleWidth
+    // the taskbar's Start, search and Task View buttons, square
+    readonly property int buttonWidth:  moduleTaskbar ? moduleHeight : moduleWidth
     // the space inside the chip's frame, capped to it
     readonly property int iconSize:     Math.min(moduleHeight - 8, barFs(Settings.barIconSize))
     // one size for every bar label (clock, media, counts), capped the same way
