@@ -274,9 +274,24 @@ Item {
         anchors.fill: parent
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        // a drag selects text instead of flicking; the wheel scrolls below
+        interactive: false
         model: root.session.entries
 
         property bool follow: true
+
+        // a wheel notch moves a fixed step, a touchpad twice its own distance
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => {
+                const dy = event.pixelDelta.y !== 0 ? event.pixelDelta.y * 2
+                    : event.angleDelta.y / 120 * Theme.sp(160)
+                const top = list.originY
+                const bottom = Math.max(top, list.originY + list.contentHeight - list.height)
+                list.contentY = Math.max(top, Math.min(bottom, list.contentY - dy))
+                list.follow = list.contentY >= bottom - 1
+            }
+        }
         onMovementEnded: follow = atYEnd
         onCountChanged: if (follow) Qt.callLater(positionViewAtEnd)
         onContentHeightChanged: if (follow && !moving) Qt.callLater(positionViewAtEnd)
