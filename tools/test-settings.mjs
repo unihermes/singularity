@@ -34,6 +34,14 @@ test('Settings public setters keep density, schedules, bounds and refusal behavi
     s.set('missing', 1)
     assert.equal(a.missing, undefined)
     s.cycle('missing', 1)
+    s.setRecordFolder('recordDir', '/data/Clips/')
+    assert.equal(a.recordDir, '/data/Clips')
+    s.setRecordFolder('replayDir', 'relative/path')
+    assert.equal(a.replayDir, '')
+    s.setRecordFolder('vpnServer', '/x')
+    assert.equal(a.vpnServer, '')
+    s.setRecordFolder('recordDir', '')
+    assert.equal(a.recordDir, '')
 })
 
 test('Hand edits and imported defaults are normalized before use', () => {

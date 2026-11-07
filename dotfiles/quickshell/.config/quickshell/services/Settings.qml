@@ -364,6 +364,15 @@ Singleton {
     function setRecordCodec(c) { adapter.recordCodec = c === "h264" ? "h264" : "av1" }
     function setReplayOn(on) { adapter.replayOn = !!on }
     function setReplaySeconds(s) { set("replaySeconds", s) }
+    // where recordings and replays are saved: an absolute folder, or "" for
+    // the defaults under ~/Videos (Recorder)
+    readonly property alias recordDir: adapter.recordDir
+    readonly property alias replayDir: adapter.replayDir
+    function setRecordFolder(key, path) {
+        if (key !== "recordDir" && key !== "replayDir") return
+        var p = String(path || "").trim().replace(/\/+$/, "")
+        adapter[key] = p.charAt(0) === "/" ? p : ""
+    }
     // VPN: the server to use, whether it carries everything or only
     // qBittorrent, the kill switch (everything only), reconnecting at login
     // to what was on when last left, and qBittorrent kept on the tunnel
@@ -1169,6 +1178,8 @@ Singleton {
             property bool replayOn: Values.defaults.replayOn
             property int replaySeconds: Values.defaults.replaySeconds
             property string recordCodec: Values.defaults.recordCodec
+            property string recordDir: Values.defaults.recordDir
+            property string replayDir: Values.defaults.replayDir
             property string vpnServer: Values.defaults.vpnServer
             property bool vpnFull: Values.defaults.vpnFull
             property bool vpnKillSwitch: Values.defaults.vpnKillSwitch

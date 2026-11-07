@@ -25,8 +25,11 @@ Singleton {
     id: root
 
     readonly property bool available: probe.found
-    readonly property string recordDir: Quickshell.env("HOME") + "/Videos/Recordings"
-    readonly property string replayDir: Quickshell.env("HOME") + "/Videos/Replays"
+    // the folders set in Settings, else these under ~/Videos
+    readonly property string defaultRecordDir: Quickshell.env("HOME") + "/Videos/Recordings"
+    readonly property string defaultReplayDir: Quickshell.env("HOME") + "/Videos/Replays"
+    readonly property string recordDir: Settings.recordDir || defaultRecordDir
+    readonly property string replayDir: Settings.replayDir || defaultReplayDir
 
     readonly property bool recording: recordProc.running
     // seconds since the recording started, ticking while it runs
@@ -71,7 +74,7 @@ Singleton {
     onGameMonitorChanged: if (gameMonitor !== "" && gameMonitor !== replayMonitor) restartReplay()
     onWantReplayChanged: wantReplay ? armReplay() : stopReplay()
     onAnyGameChanged: if (!anyGame) stopReplay()
-    // a new length, codec or screen takes a fresh buffer
+    // a new length, codec, screen or folder takes a fresh buffer
     function restartReplay() {
         if (!replayProc.running) return
         replayProc.rearm = true
@@ -82,6 +85,7 @@ Singleton {
         function onReplaySecondsChanged() { root.restartReplay() }
     }
     onCodecChanged: restartReplay()
+    onReplayDirChanged: restartReplay()
 
     // a replay length as Settings names it: "30 s", "1:30", "2 min"
     function lengthLabel(s) {

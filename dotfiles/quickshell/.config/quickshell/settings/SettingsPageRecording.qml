@@ -3,9 +3,10 @@
 //
 // Screen recording and instant replay (services/Recorder.qml): whether a
 // replay is held while a game has focus, how long it is, and where the
-// files go.
+// files go (folders picked with zenity).
 
 import Quickshell
+import Quickshell.Io
 import QtQuick
 import "../services"
 import "../flyouts"
@@ -84,29 +85,81 @@ SettingsPage {
         }
     }
 
-    SettingsField {
+    // a folder row: where its files go, Change (a folder dialog), Default
+    // once moved, and Open
+    component FolderField: SettingsField {
+        id: folderRow
+        required property string key
+        required property string dir
+        required property string defaultDir
+        required property string grouping
+        hint: dir.replace(Quickshell.env("HOME"), "~") + " · " + grouping
+
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceS
+
+            FlyoutChip {
+                visible: folderRow.dir !== folderRow.defaultDir
+                icon: "󰑓"
+                text: "Default"
+                onClicked: {
+                    Settings.setRecordFolder(folderRow.key, "")
+                    page.say(folderRow.label + " go to " + folderRow.defaultDir.replace(Quickshell.env("HOME"), "~"), false)
+                }
+            }
+            FlyoutChip {
+                visible: zenityProbe.found
+                enabled: !picker.running
+                icon: "󰉖"
+                text: "Change"
+                onClicked: {
+                    picker.key = folderRow.key
+                    picker.label = folderRow.label
+                    picker.command = ["sh", "-c", 'cd "$1" 2>/dev/null || cd; exec zenity --file-selection --directory --title="$2"',
+                                      "sh", folderRow.dir, folderRow.label + " folder"]
+                    picker.running = true
+                }
+            }
+            FlyoutChip {
+                icon: "󰉋"
+                text: "Open"
+                onClicked: Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && xdg-open "$1"', "sh", folderRow.dir])
+            }
+        }
+    }
+
+    FolderField {
         label: "Recordings"
-        hint: Recorder.recordDir.replace(Quickshell.env("HOME"), "~") + " · Grouped by app"
-
-        FlyoutChip {
-            anchors.right: parent.right
-            icon: "󰉋"
-            text: "Open"
-            onClicked: Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && xdg-open "$1"', "sh", Recorder.recordDir])
-        }
+        key: "recordDir"
+        dir: Recorder.recordDir
+        defaultDir: Recorder.defaultRecordDir
+        grouping: "Grouped by app"
     }
 
-    SettingsField {
+    FolderField {
         label: "Replays"
-        hint: Recorder.replayDir.replace(Quickshell.env("HOME"), "~") + " · Grouped by game"
+        key: "replayDir"
+        dir: Recorder.replayDir
+        defaultDir: Recorder.defaultReplayDir
+        grouping: "Grouped by game"
+    }
 
-        FlyoutChip {
-            anchors.right: parent.right
-            icon: "󰉋"
-            text: "Open"
-            onClicked: Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && xdg-open "$1"', "sh", Recorder.replayDir])
+    // the folder dialog for whichever row asked; a cancel prints nothing
+    Process {
+        id: picker
+        property string key: ""
+        property string label: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var path = text.trim()
+                if (path === "") return
+                Settings.setRecordFolder(picker.key, path)
+                page.say(picker.label + " go to " + path.replace(Quickshell.env("HOME"), "~"), false)
+            }
         }
     }
+    CommandProbe { id: zenityProbe; name: "zenity" }
 
     SettingsNote {
         text: "SUPER+R saves the replay, SUPER+SHIFT+S records"

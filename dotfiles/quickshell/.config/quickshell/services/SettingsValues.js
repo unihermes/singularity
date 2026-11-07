@@ -120,6 +120,8 @@ var defaults = {
     replayOn: true,
     replaySeconds: 60,
     recordCodec: "av1",
+    recordDir: "",
+    replayDir: "",
     vpnServer: "",
     vpnFull: false,
     vpnKillSwitch: false,
