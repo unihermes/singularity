@@ -281,7 +281,55 @@ PanelWindow {
         // the app's own windows ahead of its popouts
         for (var k = 0; k < icons.length; k++)
             icons[k].windows.sort((x, y) => (x.popout ? 1 : 0) - (y.popout ? 1 : 0))
-        return icons
+        return Apps.taskbarOn ? taskbarIcons(icons) : icons
+    }
+
+    // Pane's taskbar: the pinned apps first in pin order, running or not (one
+    // icon each, however many workspaces it has windows on), then the other
+    // open apps as they came. An icon is { ..., entry, pinned }.
+    function taskbarIcons(icons) {
+        var pins = Apps.taskbarPinned
+        var out = []
+        var taken = {}
+        for (var p = 0; p < pins.length; p++) {
+            var e = pins[p]
+            var it = null
+            for (var i = 0; i < icons.length; i++) {
+                var cls = icons[i].key.split("/").slice(1).join("/")
+                if (taken[i] || Apps.byClass(cls).entry !== e) continue
+                taken[i] = true
+                if (!it) {
+                    it = icons[i]
+                    it.windows = it.windows.slice()
+                } else {
+                    it.windows = it.windows.concat(icons[i].windows)
+                    if (!it.main && icons[i].main) {
+                        it.address = icons[i].address
+                        it.toplevel = icons[i].toplevel
+                        it.main = true
+                    }
+                }
+            }
+            if (!it) {
+                it = {
+                    key: "pin/" + e.id,
+                    source: e.icon ? Quickshell.iconPath(e.icon, true) : "",
+                    glyph: "󰖯", name: e.name, address: "", toplevel: null,
+                    main: true, windows: [],
+                }
+            }
+            it.entry = e
+            it.pinned = true
+            it.groupStart = false
+            out.push(it)
+        }
+        for (var j = 0; j < icons.length; j++) {
+            if (taken[j]) continue
+            icons[j].pinned = false
+            icons[j].groupStart = false
+            out.push(icons[j])
+        }
+        return out
     }
 
     // The app icon whose windows AppWindowsFlyout lists: its key.

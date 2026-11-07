@@ -204,6 +204,10 @@ ModuleFrame {
             }
         }
 
+        // Pane's taskbar: a pinned icon being dragged, and the place it would land
+        property int dragFrom: -1
+        property int dragTo: -1
+
         Row {
             id: stripRow
             anchors.verticalCenter: parent.verticalCenter
@@ -281,6 +285,26 @@ ModuleFrame {
                     readonly property real fillWidth: width - fillX + (last ? (strip.rightEnd ? strip.endBleed : strip.framed ? windowsModule.padH : 0) : 0)
                     // viewfinder's and tint's box round the icon
                     readonly property int boxPx: Theme.windowIconSize + 6
+
+                    // Pane's taskbar: a pinned icon can be dragged along the pinned ones
+                    readonly property bool pinned: !!modelData.pinned
+                    property bool dragging: false
+                    property real dragDx: 0
+                    readonly property real shiftX: {
+                        var f = strip.dragFrom, t = strip.dragTo
+                        if (f < 0 || index === f) return 0
+                        if (f < t && index > f && index <= t) return -iconRepeater.itemAt(f).width
+                        if (f > t && index >= t && index < f) return iconRepeater.itemAt(f).width
+                        return 0
+                    }
+                    z: dragging ? 10 : 0
+                    transform: Translate {
+                        x: winIcon.dragging ? winIcon.dragDx : winIcon.shiftX
+                        Behavior on x {
+                            enabled: !winIcon.dragging
+                            NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
+                        }
+                    }
 
                     anchors.verticalCenter: parent.verticalCenter
                     // a little wider than the icon, so neighbours' pips
@@ -725,7 +749,41 @@ ModuleFrame {
                         hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                         cursorShape: Qt.PointingHandCursor
+                        property real pressX: 0
+                        property bool dragged: false
+                        function pointerX() { return mapToItem(stripRow, mouseX, 0).x }
+                        onPressed: mouse => { pressX = pointerX(); dragged = false }
+                        onPositionChanged: {
+                            if (!(pressedButtons & Qt.LeftButton) || !winIcon.pinned) return
+                            var dx = pointerX() - pressX
+                            if (!winIcon.dragging && Math.abs(dx) < Theme.sp(8)) return
+                            var pins = iconRepeater.model.filter(m => m.pinned).length
+                            winIcon.dragging = true
+                            winIcon.dragDx = dx
+                            strip.dragFrom = winIcon.index
+                            strip.dragTo = Math.max(0, Math.min(pins - 1, Math.round(winIcon.index + dx / winIcon.width)))
+                        }
+                        onReleased: {
+                            if (!winIcon.dragging) return
+                            dragged = true
+                            winIcon.dragging = false
+                            var to = strip.dragTo
+                            strip.dragFrom = -1
+                            strip.dragTo = -1
+                            if (to !== winIcon.index) Apps.moveTaskbarPin(winIcon.modelData.entry, to)
+                        }
                         onClicked: mouse => {
+                            if (dragged) return
+                            // a pinned app with no window: start it
+                            if (winIcon.modelData.windows.length === 0 && mouse.button !== Qt.RightButton) {
+                                if (winIcon.modelData.entry) Apps.launch(winIcon.modelData.entry)
+                                return
+                            }
+                            // Pane's taskbar: middle click starts another window
+                            if (mouse.button === Qt.MiddleButton && Apps.taskbarOn && winIcon.modelData.entry) {
+                                Apps.launch(winIcon.modelData.entry)
+                                return
+                            }
                             // the app's window in focus, or its main one
                             var target = winIcon.shown.address
                             var addr = "address:0x" + target

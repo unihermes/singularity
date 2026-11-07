@@ -34,12 +34,12 @@ FlyoutPanel {
     }
     readonly property var windows: app ? app.windows : []
     // no windows left: nothing to show
-    onWindowsChanged: if (open && windows.length === 0) requestClose()
+    onWindowsChanged: if (open && windows.length === 0 && !(app && app.pinned)) requestClose()
 
     // the app's class (its strip key is "<workspace>/<class>"), its desktop
     // entry for New window
     readonly property string cls: app ? app.key.split("/").slice(1).join("/") : ""
-    readonly property var entry: cls !== "" ? Apps.byClass(cls).entry : null
+    readonly property var entry: app && app.entry ? app.entry : cls !== "" ? Apps.byClass(cls).entry : null
 
     function focusWin(w) {
         var addr = "address:0x" + w.address
@@ -320,14 +320,20 @@ FlyoutPanel {
         FlyoutRow {
             visible: !!root.entry
             leadingIcon: "󰖯"
-            label: "New window"
+            label: root.windows.length === 0 ? "Open" : "New window"
             onActivated: root.newWindow()
         }
         FlyoutRow {
             visible: !!root.entry
             leadingIcon: "󰐃"
-            label: root.entry && Apps.isPinned(root.entry) ? "Unpin" : "Pin"
-            onActivated: { Apps.togglePin(root.entry); root.requestClose() }
+            label: !root.entry ? "" : Apps.taskbarOn
+                ? (Apps.isTaskbarPinned(root.entry) ? "Unpin from taskbar" : "Pin to taskbar")
+                : (Apps.isPinned(root.entry) ? "Unpin" : "Pin")
+            onActivated: {
+                if (Apps.taskbarOn) Apps.toggleTaskbarPin(root.entry)
+                else Apps.togglePin(root.entry)
+                root.requestClose()
+            }
         }
         FlyoutRow {
             visible: root.windows.length > 1

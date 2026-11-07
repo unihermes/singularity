@@ -116,6 +116,46 @@ Singleton {
         pinsFile.setText(JSON.stringify(ids))
     }
 
+    // Pane's taskbar keeps pins of its own, apart from the launcher's: desktop
+    // entry ids in taskbar order. None until one is pinned.
+    readonly property bool taskbarOn: Settings.style === "pane"
+    property var taskbarIds: []
+    FileView {
+        id: taskbarFile
+        path: Settings.stateDir + "/taskbar-pins.json"
+        preload: true
+        printErrors: false
+        onLoaded: {
+            try { root.taskbarIds = JSON.parse(text()) || [] } catch (e) { root.taskbarIds = [] }
+        }
+    }
+    readonly property var taskbarPinned: {
+        var byId = {}
+        var all = list("")
+        for (var i = 0; i < all.length; i++) byId[all[i].id] = all[i]
+        return taskbarIds.map(id => byId[id]).filter(e => !!e)
+    }
+    function isTaskbarPinned(entry) { return taskbarIds.indexOf(entry.id) !== -1 }
+    function saveTaskbar(ids) {
+        taskbarIds = ids
+        taskbarFile.setText(JSON.stringify(ids))
+    }
+    function toggleTaskbarPin(entry) {
+        var ids = taskbarIds.slice()
+        var i = ids.indexOf(entry.id)
+        if (i === -1) ids.push(entry.id)
+        else ids.splice(i, 1)
+        saveTaskbar(ids)
+    }
+    function moveTaskbarPin(entry, to) {
+        var ids = taskbarIds.slice()
+        var from = ids.indexOf(entry.id)
+        if (from === -1) return
+        ids.splice(from, 1)
+        ids.splice(Math.max(0, Math.min(ids.length, to)), 0, entry.id)
+        saveTaskbar(ids)
+    }
+
     // the Start menu's groups, in its order: the first freedesktop main
     // category an entry has that maps to one, else "other"
     readonly property var groups: [
