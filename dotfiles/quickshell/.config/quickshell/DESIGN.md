@@ -722,6 +722,13 @@ line (one at a time, 󰅂 → 󰅀); a tile with 󰅂 at its end opens a page.
   while PPD isn't answering, Airplane then runs the width), Appearance
   and Bar Widgets as pages; then the screen tools and the windows as
   icon-only buttons, sized and styled like the tiles.
+- **Glass home** (`ControlCentreGlass`) has three layouts, set in
+  Appearance › Panels (`controlLayout`, shown only under Glass): **Full**
+  (connectivity card and tiles, titled Display and Sound capsules),
+  **Compact** (every toggle a labelled disc, four to a line, in one card;
+  both sliders in a second card; right click on Wi-Fi or Bluetooth opens
+  its details) and **Mini** (the discs alone, in one row). Compact and
+  Mini shrink the media card; the pages and tools are the same.
 - **Pages** have no Back row: the heading reads
   `CONTROL CENTRE › APPEARANCE`, the first part clickable as the way
   back (`FlyoutHeading.crumb`); what the page sums up sits in its hints.

@@ -20,9 +20,13 @@ Column {
     readonly property bool btOn: !!bar && bar.btAdapterOn(adapter)
     readonly property real cell: (width - spacing) / 2
     readonly property int tileH: Theme.fs(92)
+    // compact packs the toggles into one grid of labelled discs; mini keeps
+    // the discs alone in a single row
+    readonly property bool compact: Theme.controlLayout !== "full"
+    readonly property bool mini: Theme.controlLayout === "mini"
 
     width: parent.width
-    spacing: Theme.spaceL
+    spacing: compact ? Theme.spaceM : Theme.spaceL
 
     // opens a module's own flyout in place of this one
     function details(name) { cc.scope.toggleFlyout(name, bar.widgetItem(name)) }
@@ -82,7 +86,160 @@ Column {
         }
     }
 
+    // a round toggle with its name under it (compact) or alone (mini);
+    // a right click opens its details where it has any
+    component Toggle: Item {
+        id: tg
+        property string icon: ""
+        property string title: ""
+        property bool lit: false
+        property bool usable: true
+        signal toggled()
+        signal opened()
+        height: dot.height + (root.mini ? 0 : name.implicitHeight + Theme.spaceXs)
+        GlassDot {
+            id: dot
+            anchors.horizontalCenter: parent.horizontalCenter
+            icon: tg.icon
+            lit: tg.lit
+            usable: tg.usable
+            implicitWidth: Theme.fs(root.mini ? 36 : 38)
+        }
+        Text {
+            id: name
+            visible: !root.mini
+            anchors.top: dot.bottom
+            anchors.topMargin: Theme.spaceXs
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            text: tg.title
+            elide: Text.ElideRight
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontCaption
+        }
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            cursorShape: tg.usable ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: m => {
+                if (!tg.usable) return
+                if (m.button === Qt.RightButton) tg.opened()
+                else tg.toggled()
+            }
+        }
+    }
+
+    // compact and mini: every toggle in one frosted card
+    Rectangle {
+        visible: root.compact
+        width: parent.width
+        height: grid.height + Theme.spaceL * 2
+        radius: Theme.fs(16)
+        color: Theme.washHover
+        border.width: 1
+        border.color: Theme.stroke
+
+        Flow {
+            id: grid
+            x: Theme.spaceL
+            y: Theme.spaceL
+            width: parent.width - Theme.spaceL * 2
+            spacing: Theme.spaceM
+            // four to a line; mini runs them all along one
+            readonly property int perLine: root.mini ? visibleChildren.length : 4
+            readonly property real cellW: (width - spacing * (perLine - 1)) / Math.max(1, perLine)
+
+            Toggle {
+                width: grid.cellW
+                icon: "󰤨"
+                title: "Wi-Fi"
+                lit: Network.powered
+                onToggled: Network.setPowered(!Network.powered)
+                onOpened: root.details("network")
+            }
+            Toggle {
+                visible: !!root.adapter
+                width: grid.cellW
+                icon: "󰂯"
+                title: "Bluetooth"
+                lit: root.btOn
+                onToggled: root.bar.setBtPowered(root.adapter, !root.btOn)
+                onOpened: root.details("bluetooth")
+            }
+            Toggle {
+                width: grid.cellW
+                icon: "󰀝"
+                title: "Airplane"
+                lit: root.cc.airplane
+                onToggled: root.cc.setAirplane(!root.cc.airplane)
+            }
+            Toggle {
+                width: grid.cellW
+                icon: Notifications.dnd ? "󰂛" : "󰂚"
+                title: "Quiet"
+                lit: Notifications.dnd
+                onToggled: Notifications.toggleDnd()
+            }
+            Toggle {
+                width: grid.cellW
+                icon: root.cc.shellRoot.nightLight ? "󰖔" : "󰖙"
+                title: "Night"
+                lit: root.cc.shellRoot.nightLight
+                usable: root.cc.shellRoot.hasHyprsunset
+                onToggled: root.cc.shellRoot.nightLight = !root.cc.shellRoot.nightLight
+            }
+            Toggle {
+                width: grid.cellW
+                icon: root.cc.shellRoot.keepAwake ? "󰅶" : "󰾪"
+                title: "Awake"
+                lit: root.cc.shellRoot.keepAwake
+                onToggled: root.cc.shellRoot.keepAwake = !root.cc.shellRoot.keepAwake
+            }
+            Toggle {
+                width: grid.cellW
+                icon: "󰊴"
+                title: "Game"
+                lit: GameMode.active
+                onToggled: GameMode.toggle()
+            }
+        }
+    }
+
+    // compact and mini: both levels in one card, no titles
+    Rectangle {
+        visible: root.compact
+        width: parent.width
+        height: levels.height + Theme.spaceL * 2
+        radius: Theme.fs(16)
+        color: Theme.washHover
+        border.width: 1
+        border.color: Theme.stroke
+        Column {
+            id: levels
+            x: Theme.spaceL
+            y: Theme.spaceL
+            width: parent.width - Theme.spaceL * 2
+            spacing: Theme.spaceM
+            GlassSlider {
+                visible: Brightness.available
+                width: parent.width
+                icon: "󰃠"
+                value: Brightness.level
+                onMoved: v => Brightness.set(v)
+            }
+            GlassSlider {
+                width: parent.width
+                icon: Audio.muted ? "󰖁" : "󰕾"
+                value: Audio.percent
+                dimmed: Audio.muted
+                onMoved: v => Audio.setVolume(v)
+            }
+        }
+    }
+
     Row {
+        visible: !root.compact
         width: parent.width
         spacing: root.spacing
 
@@ -154,6 +311,7 @@ Column {
     }
 
     Row {
+        visible: !root.compact
         width: parent.width
         spacing: root.spacing
         GlassTile {
@@ -177,7 +335,7 @@ Column {
     }
 
     Rectangle {
-        visible: Brightness.available
+        visible: !root.compact && Brightness.available
         width: parent.width
         height: Theme.fs(66)
         radius: Theme.fs(16)
@@ -204,6 +362,7 @@ Column {
     }
 
     Rectangle {
+        visible: !root.compact
         width: parent.width
         height: Theme.fs(66)
         radius: Theme.fs(16)
@@ -234,7 +393,7 @@ Column {
     Rectangle {
         visible: !!Media.player
         width: parent.width
-        height: Theme.fs(66)
+        height: Theme.fs(root.compact ? 52 : 66)
         radius: Theme.fs(16)
         color: Theme.washHover
         border.width: 1
@@ -245,7 +404,7 @@ Column {
             id: artBox
             x: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fs(48)
+            width: Theme.fs(root.compact ? 38 : 48)
             height: width
             radius: Theme.fs(10)
             color: Theme.surface

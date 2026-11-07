@@ -155,6 +155,7 @@ Singleton {
     readonly property alias gradient:    adapter.gradient
     readonly property alias levelStyle:  adapter.levelStyle
     readonly property alias powerStyle:  adapter.powerStyle
+    readonly property alias controlLayout: adapter.controlLayout
     readonly property alias overviewBackdrop: adapter.overviewBackdrop
     readonly property alias overviewLayout: adapter.overviewLayout
     readonly property alias altTabStyle: adapter.altTabStyle
@@ -236,7 +237,7 @@ Singleton {
         "wallpaper": "Wallpaper", "dark": "Dark", "light": "Light", "scheme-neutral": "Subtle",
         "scheme-tonal-spot": "Balanced", "scheme-vibrant": "Vivid",
         "scheme-expressive": "Expressive", "double": "Double", "accent": "Accent", "none": "None",
-        "compact": "Compact", "roomy": "Roomy", "pill": "Pill", "full": "Full",
+        "compact": "Compact", "roomy": "Roomy", "pill": "Pill", "full": "Full", "mini": "Mini",
         "floating": "Floating", "islands": "Islands", "pills": "Pills", "dots": "Dots",
         "lines": "Lines", "numbers": "Numbers", "blocks": "Blocks", "roman": "Roman",
         "names": "Names", "apps": "App icons", "popin": "Pop", "zoom": "Zoom", "fade": "Fade",
@@ -279,6 +280,7 @@ Singleton {
                           "drawer": "Drawer", "bar": "In the bar", "mosaic": "Mosaic" },
         launcherPosition: { "top": "Under the bar", "full": "Full screen" },
         powerStyle: { "full": "Full screen" },
+        controlLayout: { "full": "Full", "compact": "Compact", "mini": "Mini" },
         overviewLayout: { "strip": "One row" },
     })
 
@@ -1117,6 +1119,7 @@ Singleton {
             property bool gradient: Values.defaults.gradient
             property string levelStyle: Values.defaults.levelStyle
             property string powerStyle: Values.defaults.powerStyle
+            property string controlLayout: Values.defaults.controlLayout
             property string overviewBackdrop: Values.defaults.overviewBackdrop
             property string overviewLayout: Values.defaults.overviewLayout
             property string altTabStyle: Values.defaults.altTabStyle

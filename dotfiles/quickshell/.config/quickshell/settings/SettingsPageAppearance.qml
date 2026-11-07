@@ -88,7 +88,7 @@ SettingsPage {
         launcherDetails: "Launcher details", notifStyle: "Notification popups",
         altTabStyle: "Window switcher", altTabScope: "Switcher windows",
         overviewLayout: "Workspace overview",
-        overviewBackdrop: "Backdrop", powerStyle: "Power menu", levelStyle: "Level popup",
+        overviewBackdrop: "Backdrop", powerStyle: "Power menu", controlLayout: "Control Centre layout", levelStyle: "Level popup",
         accent: "Accent", levelColour: "Level colour", accentText: "Text on the accent",
         colourGood: "Good", colourAlert: "Alert",
         paletteBase: "Base", paletteBar: "Bar", palettePanel: "Panel", paletteSurface: "Surface",

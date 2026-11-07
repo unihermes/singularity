@@ -201,6 +201,7 @@ var entries = [
     { page: "appearance", section: "Panels", label: "Switcher windows", keywords: "alt tab switcher all workspaces every workspace current scope" },
     { page: "appearance", section: "Panels", label: "Workspace overview", keywords: "super w overview grid row strip expose" },
     { page: "appearance", section: "Panels", label: "Power menu", keywords: "power menu shutdown reboot logout tiles list fullscreen" },
+    { page: "appearance", section: "Panels", label: "Control Centre layout", keywords: "control centre glass compact mini small dense tiles quick settings" },
     { page: "appearance", section: "Panels", label: "Backdrop", keywords: "super w overview alt tab switcher launcher power menu background dim solid clear" },
     { page: "appearance", section: "Panels", label: "Clock", keywords: "desktop widgets clock time date week wallpaper" },
     { page: "appearance", section: "Panels", label: "Weather", keywords: "desktop widgets weather forecast temperature wallpaper" },
