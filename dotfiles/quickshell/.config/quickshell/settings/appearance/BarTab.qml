@@ -105,7 +105,7 @@ SettingsTab {
 
     Tiles {
         visible: barTab.picked === "controlcentre"
-        key: "controlIcon"; label: "Control Centre icon"; art: iconArt; columns: 6; tileHeight: Theme.fs(58)
+        key: "controlIcon"; label: "Control Centre icon"; art: iconArt; columns: 4; tileHeight: Theme.fs(58)
     }
 
     // --- workspaces --------------------------------------------------------

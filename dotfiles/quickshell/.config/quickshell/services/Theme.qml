@@ -393,10 +393,7 @@ Singleton {
     })
     // the Control Centre button's glyph
     readonly property var controlGlyphs: ({
-        arch: "󰣇", menu: "󰍜", dashboard: "󰕮", cog: "󰒓", home: "󰋜", star: "󰓎",
-        vortex: "󰢘", horizon: "󰺕", blackhole: "󰀘", atom: "󰝨", rocket: "󰑣", ghost: "󰊠",
-        planet: "󰇧", sparkle: "󰙴", infinity: "󰛤",
-        radar: "󰐷", moon: "󰖔", apple: "󰀵", windows: "󰖳",
+        arch: "󰣇", menu: "󰍜", apple: "󰀵", windows: "󰖳",
     })
     readonly property string controlGlyph: controlGlyphs[Settings.controlIcon] || "󰣇"
     // the open-windows strip and app icons in the bar -- see Looks.js
