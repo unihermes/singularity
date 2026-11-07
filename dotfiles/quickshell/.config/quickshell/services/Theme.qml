@@ -376,8 +376,8 @@ Singleton {
     readonly property string clockStyle: Settings.clockStyle
     // one format per clock style; thin spaces around the divider (a mono
     // space is too wide)
-    // the two-line clock's text, a little under the bar's labels
-    readonly property int stackLabelSize: Math.round(barLabelSize * 0.93)
+    // the two-line clock's text, a little over the bar's labels
+    readonly property int stackLabelSize: Math.round(barLabelSize * 1.1)
     readonly property var clockFormats: ({
         stamp: "HH:mm:ss\u2009|\u2009MM/dd/yy",
         time:  "HH:mm",
