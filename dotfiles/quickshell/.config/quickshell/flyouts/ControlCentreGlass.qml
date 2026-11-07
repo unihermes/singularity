@@ -24,6 +24,17 @@ Column {
     // the discs alone in a single row
     readonly property bool compact: Theme.controlLayout !== "full"
     readonly property bool mini: Theme.controlLayout === "mini"
+    // mini keeps the pages and tools behind its gear
+    property bool more: false
+    function toggleMore() { more = !more }
+    readonly property var pageActs: [
+        { icon: "󰏘", act: "", page: "appearance" },
+        { icon: "󰕮", act: "", page: "widgets" },
+    ]
+    function footRun(a) {
+        if (a.page) cc.page = a.page
+        else cc.run(a.act)
+    }
 
     width: parent.width
     spacing: compact ? Theme.spaceM : Theme.spaceL
@@ -130,6 +141,25 @@ Column {
         }
     }
 
+    // mini: the gear in the media chip (or alone with no player) shows the pages and tools
+    component MoreButton: Item {
+        implicitWidth: Theme.fs(26)
+        implicitHeight: Theme.fs(26)
+        width: implicitWidth
+        height: implicitHeight
+        GlassDot {
+            anchors.fill: parent
+            implicitWidth: Theme.fs(26)
+            icon: "󰒓"
+            lit: root.more
+        }
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.toggleMore()
+        }
+    }
+
     // compact and mini: every toggle in one frosted card
     Rectangle {
         visible: root.compact
@@ -203,6 +233,14 @@ Column {
                 lit: GameMode.active
                 onToggled: GameMode.toggle()
             }
+            // steps the power profile; mini keeps it as a pill under its gear
+            Toggle {
+                visible: !root.mini && PpdProfile.profile !== ""
+                width: grid.cellW
+                icon: "󰓅"
+                title: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text
+                onToggled: PpdProfile.set(root.cc.nextOf(PpdProfile.choices.map(c => c.value), PpdProfile.profile))
+            }
         }
     }
 
@@ -210,13 +248,36 @@ Column {
     Rectangle {
         visible: root.compact
         width: parent.width
-        height: levels.height + Theme.spaceL * 2
+        height: (root.mini ? levelsRow.height : levels.height) + (root.mini ? Theme.spaceM : Theme.spaceL) * 2
         radius: Theme.fs(16)
         color: Theme.washHover
         border.width: 1
         border.color: Theme.stroke
+        Row {
+            id: levelsRow
+            visible: root.mini
+            x: Theme.spaceM
+            y: Theme.spaceM
+            width: parent.width - Theme.spaceM * 2
+            spacing: Theme.spaceM
+            GlassSlider {
+                visible: Brightness.available
+                width: Brightness.available ? (parent.width - parent.spacing) / 2 : 0
+                icon: "󰃠"
+                value: Brightness.level
+                onMoved: v => Brightness.set(v)
+            }
+            GlassSlider {
+                width: Brightness.available ? (parent.width - parent.spacing) / 2 : parent.width
+                icon: Audio.muted ? "󰖁" : "󰕾"
+                value: Audio.percent
+                dimmed: Audio.muted
+                onMoved: v => Audio.setVolume(v)
+            }
+        }
         Column {
             id: levels
+            visible: !root.mini
             x: Theme.spaceL
             y: Theme.spaceL
             width: parent.width - Theme.spaceL * 2
@@ -334,58 +395,83 @@ Column {
         }
     }
 
-    Rectangle {
-        visible: !root.compact && Brightness.available
-        width: parent.width
-        height: Theme.fs(66)
-        radius: Theme.fs(16)
-        color: Theme.washHover
-        border.width: 1
-        border.color: Theme.stroke
-        Text {
-            x: Theme.spaceL + 4
-            y: Theme.spaceM
-            text: "Display"
-            color: Theme.textStrong
-            font.family: Theme.fontText
-            font.weight: Theme.weightStrong
-            font.pixelSize: Theme.fontBody
-        }
-        GlassSlider {
-            x: Theme.spaceL
-            y: parent.height - height - Theme.spaceL
-            width: parent.width - Theme.spaceL * 2
-            icon: "󰃠"
-            value: Brightness.level
-            onMoved: v => Brightness.set(v)
-        }
-    }
-
+    // full: tall Display and Sound capsules, the power profile beside them
     Rectangle {
         visible: !root.compact
         width: parent.width
-        height: Theme.fs(66)
+        height: Theme.fs(120) + Theme.spaceL * 2 + Theme.fs(18)
         radius: Theme.fs(16)
         color: Theme.washHover
         border.width: 1
         border.color: Theme.stroke
-        Text {
-            x: Theme.spaceL + 4
-            y: Theme.spaceM
-            text: "Sound"
-            color: Theme.textStrong
-            font.family: Theme.fontText
-            font.weight: Theme.weightStrong
-            font.pixelSize: Theme.fontBody
-        }
-        GlassSlider {
+
+        Row {
             x: Theme.spaceL
-            y: parent.height - height - Theme.spaceL
-            width: parent.width - Theme.spaceL * 2
-            icon: Audio.muted ? "󰖁" : "󰕾"
-            value: Audio.percent
-            dimmed: Audio.muted
-            onMoved: v => Audio.setVolume(v)
+            y: Theme.spaceL
+            spacing: Theme.spaceL
+            Column {
+                visible: Brightness.available
+                spacing: Theme.spaceXs
+                GlassVSlider {
+                    icon: "󰃠"
+                    value: Brightness.level
+                    onMoved: v => Brightness.set(v)
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Display"
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontCaption
+                }
+            }
+            Column {
+                spacing: Theme.spaceXs
+                GlassVSlider {
+                    icon: Audio.muted ? "󰖁" : "󰕾"
+                    value: Audio.percent
+                    dimmed: Audio.muted
+                    onMoved: v => Audio.setVolume(v)
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "Sound"
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.pixelSize: Theme.fontCaption
+                }
+            }
+            // the profiles, one lit
+            Column {
+                visible: PpdProfile.profile !== ""
+                width: Math.max(Theme.fs(80), parent.parent.width - Theme.spaceL * 2 - x - Theme.spaceL)
+                height: Theme.fs(120)
+                spacing: Theme.spaceXs
+                Repeater {
+                    model: PpdProfile.choices
+                    Rectangle {
+                        required property var modelData
+                        width: parent.width
+                        height: (Theme.fs(120) - Theme.spaceXs * (PpdProfile.choices.length - 1)) / PpdProfile.choices.length
+                        radius: height / 2
+                        readonly property bool on: PpdProfile.profile === modelData.value
+                        color: on ? (Theme.isLight ? "#2a2a2a" : "#f2f2f2") : Theme.isLight ? Qt.rgba(0, 0, 0, 0.08) : Qt.rgba(1, 1, 1, 0.12)
+                        Text {
+                            anchors.centerIn: parent
+                            text: parent.modelData.text
+                            color: parent.on ? (Theme.isLight ? "#f2f2f2" : "#222222") : Theme.text
+                            font.family: Theme.fontText
+                            font.weight: Theme.weightStrong
+                            font.pixelSize: Theme.fontCaption
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: PpdProfile.set(parent.modelData.value)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -393,7 +479,7 @@ Column {
     Rectangle {
         visible: !!Media.player
         width: parent.width
-        height: Theme.fs(root.compact ? 52 : 66)
+        height: Theme.fs(root.mini ? 44 : root.compact ? 52 : 66)
         radius: Theme.fs(16)
         color: Theme.washHover
         border.width: 1
@@ -404,7 +490,7 @@ Column {
             id: artBox
             x: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            width: Theme.fs(root.compact ? 38 : 48)
+            width: Theme.fs(root.mini ? 30 : root.compact ? 38 : 48)
             height: width
             radius: Theme.fs(10)
             color: Theme.surface
@@ -433,6 +519,7 @@ Column {
                 font.pixelSize: Theme.fontBody
             }
             Text {
+                visible: !root.mini
                 width: parent.width
                 text: Media.artistOf(Media.player)
                 elide: Text.ElideRight
@@ -441,10 +528,16 @@ Column {
                 font.pixelSize: Theme.fontCaption
             }
         }
+        MoreButton {
+            visible: root.mini
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+        }
         Row {
             id: transport
             anchors.right: parent.right
-            anchors.rightMargin: Theme.spaceL
+            anchors.rightMargin: root.mini ? Theme.spaceL * 2 + Theme.fs(26) : Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spaceM
             Repeater {
@@ -473,12 +566,13 @@ Column {
     // the pages, as capsules
     Row {
         id: pages
+        visible: !root.compact || (root.mini && root.more)
         width: parent.width
         spacing: Theme.spaceM
         readonly property var shown: [
             { text: "Appearance", page: "appearance" },
             { text: "Widgets", page: "widgets" },
-        ].concat(PpdProfile.profile === "" ? [] : [{
+        ].concat(PpdProfile.profile === "" || (root.compact && !root.mini) || !root.compact ? [] : [{
             text: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text,
             page: "", profile: true }])
         readonly property real total: shown.reduce((a, p) => a + p.text.length + (p.profile ? 3 : 0) + 5, 0)
@@ -537,6 +631,7 @@ Column {
 
     // the tools, as round buttons spread along the foot
     Row {
+        visible: !root.compact || (root.mini && root.more)
         width: parent.width
         readonly property var acts: root.cc.toolActions
         spacing: (width - acts.length * Theme.fs(34)) / Math.max(1, acts.length - 1)
@@ -550,6 +645,50 @@ Column {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.cc.run(parent.modelData.act)
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        visible: root.mini && !Media.player
+        width: parent.width
+        height: Theme.fs(44)
+        radius: Theme.fs(16)
+        color: Theme.washHover
+        border.width: 1
+        border.color: Theme.stroke
+        Text {
+            x: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            text: "More"
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.pixelSize: Theme.fontBody
+        }
+        MoreButton {
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+        }
+    }
+
+    // compact: the tools and both pages as one row of round buttons
+    Row {
+        visible: root.compact && !root.mini
+        width: parent.width
+        readonly property var acts: root.cc.toolActions.concat(root.pageActs)
+        spacing: (width - acts.length * Theme.fs(34)) / Math.max(1, acts.length - 1)
+        Repeater {
+            model: parent.acts
+            GlassDot {
+                required property var modelData
+                icon: modelData.icon
+                lit: modelData.act === "record" && Recorder.recording
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.footRun(parent.modelData)
                 }
             }
         }
