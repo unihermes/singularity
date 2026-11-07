@@ -37,8 +37,8 @@ PanelWindow {
     }
     // the folder field while the folder list shows, the message box otherwise
     function focusField() {
-        if (view === "projects") dirInput.forceFocus()
-        else composer.focusInput()
+        if (view !== "projects") composer.focusInput()
+        else if (!dirInput.focused) dirInput.forceFocus()
     }
     // Hyprland leaves the keys on a layer when the window clicked is the one
     // it already counts as active, so ask for that window again.
