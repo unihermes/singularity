@@ -32,6 +32,7 @@ PanelWindow {
     // keepFocus: the click put the focus somewhere to keep, such as a reply
     // whose text it is selecting
     function takeKeys(keepFocus) {
+        giveTimer.stop()
         holdsKeys = true
         takingKeys = true
         takeTimer.restart()
@@ -44,14 +45,26 @@ PanelWindow {
     }
     // Hyprland leaves the keys on a layer when the window clicked is the one
     // it already counts as active, so ask for that window again.
-    function giveKeysBack() {
+    function giveKeysBack(address) {
         if (!holdsKeys) return
         holdsKeys = false
         takingKeys = false
-        Hyprland.dispatch("(function() local w = hl.get_active_window(); local hid = false; "
-            + "if w then for _, t in ipairs(type(w.tags) == \"table\" and w.tags or { w.tags }) do "
-            + "if tostring(t):match(\"^minimized_\") then hid = true end end end; "
-            + "return (w and not hid) and hl.dsp.focus({ window = \"address:\" .. w.address }) or hl.dsp.no_op() end)()")
+        giveTimer.address = address || ""
+        giveTimer.restart()
+    }
+    // Let the layer release its keyboard mode and workspace activation settle
+    // before asking Hyprland to focus the destination window.
+    Timer {
+        id: giveTimer
+        interval: 60
+        property string address: ""
+        onTriggered: {
+            const window = address ? 'hl.get_window("address:0x' + address + '")' : "hl.get_active_window()"
+            Hyprland.dispatch("(function() local w = " + window + "; local hid = false; "
+                + "if w then for _, t in ipairs(type(w.tags) == \"table\" and w.tags or { w.tags }) do "
+                + "if tostring(t):match(\"^minimized_\") then hid = true end end end; "
+                + "return (w and not hid) and hl.dsp.focus({ window = \"address:\" .. w.address }) or hl.dsp.no_op() end)()")
+        }
     }
     Timer { id: takeTimer; interval: 150; onTriggered: root.takingKeys = false }
     // the hover state and Hyprland's own focus change settle first
@@ -70,13 +83,27 @@ PanelWindow {
             else Ai.dismiss()
         }
     }
+    function handleHyprEvent(event) {
+        if (event.name === "custom" && event.data === "singularity-click") afterClick.restart()
+        // A layer can prevent a new window from activating at all. Hand it
+        // the keys explicitly when it opens on the current workspace.
+        else if (event.name === "openwindow" && root.open && root.holdsKeys) {
+            const fields = event.data.split(",")
+            const workspace = Hyprland.focusedWorkspace
+            if (/^[0-9a-f]+$/i.test(fields[0]) && workspace
+                && (fields[1] === workspace.name || fields[1] === String(workspace.id)))
+                root.giveKeysBack(fields[0])
+        }
+        // An activated window or a newly shown scratchpad takes the keyboard,
+        // while the sidebar stays open until explicitly closed or clicked away.
+        else if (root.open && root.holdsKeys
+            && ((event.name === "activewindowv2" && event.data.length > 0)
+                || (event.name === "activespecial" && event.data.split(",")[0].length > 0)))
+            root.giveKeysBack()
+    }
     Connections {
         target: Hyprland
-        function onRawEvent(event) {
-            if (event.name === "custom" && event.data === "singularity-click") afterClick.restart()
-            // a special workspace coming or going focuses its window: the keys stay put until a click
-            else if (event.name === "activespecial" && root.open && root.holdsKeys) root.takeKeys()
-        }
+        function onRawEvent(event) { root.handleHyprEvent(event) }
     }
 
     // what the middle shows: talk | past | projects

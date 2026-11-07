@@ -7,6 +7,58 @@ import vm from 'node:vm'
 import { spawnSync } from 'node:child_process'
 import { source, functions, handler } from './qml-harness.mjs'
 
+test('Sidebar yields the keyboard to activated windows and scratchpad without closing', () => {
+    const text = fs.readFileSync(new URL('../dotfiles/quickshell/.config/quickshell/sidebar/AiSidebar.qml', import.meta.url), 'utf8')
+    for (const open of [true, false]) {
+        for (const holdsKeys of [true, false]) {
+            for (const [name, data, yieldsKeys] of [
+                ['activewindowv2', 'abc123', true],
+                ['activewindowv2', '', false],
+                ['activespecial', 'special:scratchpad,DP-2', true],
+                ['activespecial', ',DP-2', false],
+                ['openwindow', 'abc123,1,app,title', true],
+                ['openwindow', 'abc123,2,app,title', false],
+                ['openwindow', 'invalid,1,app,title', false],
+                ['custom', 'singularity-click', false],
+            ]) {
+                let released = 0, clicks = 0
+                const root = { open, holdsKeys, giveKeysBack(address) {
+                    released++
+                    this.holdsKeys = false
+                    assert.equal(address, name === 'openwindow' ? 'abc123' : undefined)
+                } }
+                const s = functions(text, { root, Hyprland: { focusedWorkspace: { id: 1, name: "1" } },
+                    afterClick: { restart() { clicks++ } } })
+                s.handleHyprEvent({ name, data })
+                assert.equal(released, Number(open && holdsKeys && yieldsKeys), `${name}: ${data}`)
+                assert.equal(clicks, Number(name === 'custom'))
+                assert.equal(root.open, open)
+            }
+        }
+    }
+})
+
+test('Sidebar releases its layer before focusing a new window and cancels stale handoffs', () => {
+    const text = fs.readFileSync(new URL('../dotfiles/quickshell/.config/quickshell/sidebar/AiSidebar.qml', import.meta.url), 'utf8')
+    let pending = false, command = '', fields = 0
+    const giveTimer = { address: '', restart() { pending = true }, stop() { pending = false } }
+    const s = functions(text, { holdsKeys: true, takingKeys: true, giveTimer,
+        takeTimer: { restart() {} }, view: 'talk', composer: { focusInput() { fields++ } },
+        Hyprland: { dispatch(value) { command = value } } })
+    s.giveKeysBack('abc123')
+    assert.equal(s.holdsKeys, false)
+    assert.equal(s.takingKeys, false)
+    assert.equal(pending, true)
+    assert.equal(command, '')
+    s.address = giveTimer.address
+    handler(text.split('id: giveTimer')[1], 'onTriggered', s)()
+    assert.match(command, /hl\.get_window\("address:0xabc123"\)/)
+    s.takeKeys()
+    assert.equal(pending, false)
+    assert.equal(s.holdsKeys, true)
+    assert.equal(fields, 1)
+})
+
 test('Sidebar reload waits for saved state and excludes active sessions and failed writes', () => {
     for (const blocked of ['busy', 'asking', 'unhosted', 'write failure', '']) {
         const events = []

@@ -117,6 +117,7 @@ class HookTests(unittest.TestCase):
                 qs + "services/Ai.qml": {"check-unused.py", "test-processes.mjs", "test-ai-host.py", "test-notification-routing.mjs"},
                 qs + "services/Settings.qml": {"check-unused.py", "test-settings.mjs"},
                 qs + "services/SettingsValues.js": {"check-unused.py", "test-js.mjs", "test-settings.mjs"},
+                qs + "sidebar/AiSidebar.qml": {"check-unused.py", "test-processes.mjs"},
                 qs + "services/AtomicFileWrite.qml": {"check-unused.py", "test-processes.mjs"},
                 qs + "services/ClaudeSession.qml": {"check-unused.py", "test-processes.mjs"},
                 qs + "services/CodexSession.qml": {"check-unused.py", "test-processes.mjs"},

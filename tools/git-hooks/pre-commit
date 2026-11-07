@@ -50,7 +50,7 @@ if changed 'services/(Settings\.qml|SettingsValues\.js)$|tools/(test-settings|qm
 fi
 
 # Process callbacks, queued writes and reset/resume ordering.
-if changed 'services/(AtomicFileWrite|Ai|AiSession|ClaudeSession|CodexSession)\.qml$|tools/(test-processes|qml-harness)\.mjs$'; then
+if changed 'quickshell/sidebar/AiSidebar\.qml$|services/(AtomicFileWrite|Ai|AiSession|ClaudeSession|CodexSession)\.qml$|tools/(test-processes|qml-harness)\.mjs$'; then
     node --test tools/test-processes.mjs
 fi
 

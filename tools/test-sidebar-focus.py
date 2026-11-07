@@ -171,10 +171,11 @@ class Desk:
             lua('hl.dispatch(hl.dsp.window.move({ workspace = "special:scratchpad", '
                 f'window = "address:{address}", follow = false }}))')
 
-    def spawn(self, name, x, y):
+    def spawn(self, name, x, y, activate=False):
         cls = f'singularity.focus-test-{name}'
+        workspace = str(self.workspace) + ("" if activate else " silent")
         lua(f'hl.window_rule({{ name = "focus-test-{name}", tag = "-monocle", match = {{ class = "^({cls})$" }}, '
-            f'workspace = "{self.workspace} silent", float = true, size = "400 280", move = "{x} {y}" }})')
+            f'workspace = "{workspace}", float = true, size = "400 280", move = "{x} {y}" }})')
         log = self.dir / name
         self.probes[name] = log
         subprocess.Popen(['alacritty', '--class', cls, '-e', 'python3', '-I', str(self.script), str(log)],
@@ -268,7 +269,12 @@ CASES = [
     ('pinned: other screen, click then back inside', False, True, OTHER, 'A', 'B,inside', True, None),
     ('stays: click inside', False, False, MAIN, 'A', 'inside', True, None),
     ('stays: click inside with the scratchpad up', True, False, MAIN, 'S', 'inside', True, None),
-    ('stays: the scratchpad comes up by key', False, False, MAIN, 'A', 'scratch', True, None),
+    ('stays: the scratchpad comes up by key', False, False, MAIN, 'A', 'scratch', True, 'S'),
+    ('pinned: the scratchpad comes up by key', False, True, MAIN, 'A', 'scratch', True, 'S'),
+    ('stays: another window activates by key', False, False, MAIN, 'A', 'focus:B', True, 'B'),
+    ('pinned: another window activates by key', False, True, MAIN, 'A', 'focus:B', True, 'B'),
+    ('stays: a new window opens', False, False, MAIN, 'A', 'spawn', True, 'N'),
+    ('pinned: a new window opens', False, True, MAIN, 'A', 'spawn', True, 'N'),
 ]
 
 
@@ -281,6 +287,15 @@ def steady(desk, want, shown):
 def run_case(desk, case):
     name, scratch, pinned, screen, first, action, stays, keys = case
     desk.close_sidebar()
+    if 'N' in desk.windows():
+        lua(f'hl.dispatch(hl.dsp.window.close({{ window = "address:{desk.windows()["N"]["address"]}" }}))')
+        wait(lambda: 'N' not in desk.windows())
+        desk.probes.pop('N', None)
+    if 'scratch' in action.split(','):
+        desk.set_scratch(True)
+        desk.click_window('S')
+        if not wait(lambda: desk.holder() == 'S'):
+            return 'setup: scratchpad probe never took the keyboard'
     desk.set_scratch(scratch)
     desk.click_window(first)
     if not wait(lambda: desk.holder() == first):
@@ -303,6 +318,12 @@ def run_case(desk, case):
             desk.pointer.move(box['x'] + box['w'] // 2, box['y'] + box['h'] // 2)
         elif step == 'scratch':
             desk.set_scratch(True)
+        elif step.startswith('focus:'):
+            address = desk.windows()[step.split(':')[1]]['address']
+            lua(f'hl.dispatch(hl.dsp.focus({{ window = "address:{address}" }}))')
+        elif step == 'spawn':
+            desk.spawn('N', 480, 390, activate=True)
+            wait(lambda: 'N' in desk.windows())
         elif step == 'toggle':
             subprocess.run(['qs', 'ipc', 'call', 'claude', 'toggle'], check=True, capture_output=True)
         else:

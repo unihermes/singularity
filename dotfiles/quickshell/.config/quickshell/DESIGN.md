@@ -586,6 +586,8 @@ panel down the right edge of the focused screen, under the bar, in the
 panel's frame with sections. It stays out until SUPER+I, its ×, Escape or
 a click off it, the bars included, unless pinned. Pin releases the focus grab
 so other windows can be used while it stays open; explicit close still works.
+Opening the scratchpad or activating another window hands it keyboard focus,
+leaving the sidebar open. Clicking inside the sidebar takes the keyboard back.
 It runs in its own Quickshell process
 (`AiHost.qml`), so a shell reload leaves a conversation running and the
 grab can't take the shell's bars in. It slides in from the edge and fades.
