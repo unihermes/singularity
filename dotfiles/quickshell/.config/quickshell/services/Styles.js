@@ -152,7 +152,7 @@ var styles = {
         name: "Pane", hint: "A desktop taskbar: Start menu, search box, square flat tiles along the bottom",
         // quicker, as a desktop OS's taskbar is
         settings: {
-            fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 18, windowIconSize: 24, windowIconPadding: 10, modulePad: 1, controlIcon: "windows",
+            fontFamily: "Noto Sans", fontSize: 14, barHeight: 40, barIconSize: 22, windowIconSize: 28, windowIconPadding: 6, modulePad: 1, controlIcon: "windows",
             workspaceStyle: "numbers", windowStyle: "icons", clockStyle: "stack", vizStyle: "line", altTabStyle: "previews",
             powerStyle: "list", levelStyle: "edge", windowAnim: "rise", launcherLayout: "start", animShell: 75, animWindows: 75,
         },

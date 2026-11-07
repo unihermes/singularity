@@ -42,7 +42,7 @@ Item {
         icon: Theme.controlGlyph
         // one size whichever glyph is chosen, a little over the other modules'
         iconSize: Math.min(Theme.moduleHeight - 4, Theme.iconSize + 4)
-        fixedWidth: Theme.moduleWidth
+        fixedWidth: Theme.buttonWidth
         active: screenScope.openFlyout === (Theme.moduleTaskbar ? "launcher" : "controlcentre")
         // the taskbar's Start button opens the Start menu; the Control Centre
         // is its right-click
@@ -91,7 +91,7 @@ Item {
         signal activated()
         onActivated: barModules.shellRoot.launcherToggled("apps")
 
-        implicitWidth: box ? Theme.sp(240) : Theme.moduleWidth
+        implicitWidth: box ? Theme.sp(240) : Theme.buttonWidth
         implicitHeight: Theme.barHeight
 
         // the box is a light field on the dark bar, as Windows draws it
@@ -144,7 +144,7 @@ Item {
         id: taskViewBtn
         visible: Settings.widgetVisible("taskview")
         icon: "󰕮"
-        fixedWidth: Theme.moduleWidth
+        fixedWidth: Theme.buttonWidth
         active: screenScope.openFlyout === "workspaceoverlay"
         onActivated: barModules.shellRoot.workspaceOverlayToggled()
     }

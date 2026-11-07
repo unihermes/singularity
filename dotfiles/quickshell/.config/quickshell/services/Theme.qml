@@ -482,12 +482,14 @@ Singleton {
     readonly property int iconHoverHeight: moduleStyle === "grouped" ? groupHeight - channelWidth * 2
         : moduleTaskbar ? moduleHeight : moduleHeight - 2
     // a tray icon's slot, tighter than a window's
-    readonly property int trayIconSize: barFs(16)
+    readonly property int trayIconSize: barFs(moduleTaskbar ? 20 : 16)
     readonly property int traySlotW:    trayIconSize + Math.round(spaceS / 2) * 2
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare
     readonly property int moduleWidth:  54
+    // the taskbar's Start, search and Task View buttons, snug round the glyph
+    readonly property int buttonWidth:  moduleTaskbar ? iconSize + sp(18) : moduleWidth
     // the space inside the chip's frame, capped to it
     readonly property int iconSize:     Math.min(moduleHeight - 8, barFs(Settings.barIconSize))
     // one size for every bar label (clock, media, counts), capped the same way
