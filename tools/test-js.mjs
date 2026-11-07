@@ -168,6 +168,16 @@ test("Styles resolve every style, and Flat is square", () => {
     assert.equal(S.resolve(Object.assign({ style: "glass" }, base)).opacity, 70)
 })
 
+test("All styles default to window previews across workspaces", () => {
+    const S = load("Styles.js"), V = load("SettingsValues.js")
+    assert.equal(V.defaults.altTabStyle, "previews")
+    assert.equal(V.defaults.altTabScope, "all")
+    for (const name of S.order) {
+        assert.equal(S.stockOf(name).altTabStyle, "previews", name)
+        assert.equal(S.stockOf(name).altTabScope, "all", name)
+    }
+})
+
 test("Styles: new defaults reset layout and retain their frame and control families", () => {
     const S = load("Styles.js")
     const expected = { rail: ["rail", "grouped"], notch: ["notch", "outline"],

@@ -190,7 +190,7 @@ Each style also starts the Bar, Panels and Motion tabs its own way (its
 | Visualizer | Mirrored | Rising | Rising | | One line |
 | Launcher | List | | Grid | Grid | |
 | Notification popups | Full | Compact | | Compact | |
-| Window switcher | Icons | With titles | Previews | Previews | Previews |
+| Window switcher | Previews, all workspaces | | | | |
 | Workspace overview | Grid | | | Strip | |
 | Backdrop (overview, ALT+Tab, full launcher, power menu) | Dimmed | | | Clear | |
 | Power menu | Row | List | Full | Full | List |
