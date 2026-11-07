@@ -741,12 +741,15 @@ Singleton {
     property var procsByMem: []
     Process {
         id: memProcs
-        command: ["sh", "-c", "ps -eo rss=,comm= --sort=-rss | head -n 4"]
+        command: ["sh", "-c", "ps -eo rss=,comm="]
         stdout: StdioCollector {
-            onStreamFinished: root.procsByMem = text.trim().split("\n").map(l => {
-                var m = l.trim().match(/^(\d+)\s+(.+)$/)
-                return m ? { name: m[2], memKb: Number(m[1]) } : null
-            }).filter(p => p)
+            onStreamFinished: {
+                var rows = text.trim().split("\n").map(l => {
+                    var m = l.trim().match(/^(\d+)\s+(.+)$/)
+                    return m ? { name: m[2], memKb: Number(m[1]), cpu: 0, pid: 0 } : null
+                }).filter(p => p)
+                root.procsByMem = root.groupProcs(rows, "memKb").slice(0, 4)
+            }
         }
     }
     Timer {
@@ -755,6 +758,36 @@ Singleton {
         running: Settings.deskSidebar
         triggeredOnStart: true
         onTriggered: if (!memProcs.running) memProcs.running = true
+    }
+
+    // Firefox-family helpers (content, extension, GPU... processes) count
+    // towards the browser they belong to
+    readonly property var procAliases: ({
+        "Isolated Web Co": "floorp", "Web Content": "floorp", "WebExtensions": "floorp",
+        "RDD Process": "floorp", "Socket Process": "floorp", "Privileged Cont": "floorp",
+        "Utility Process": "floorp", "Isolated Servic": "floorp", "GPU Process": "floorp",
+        "forkserver": "floorp"
+    })
+
+    // rows folded by (aliased) name, summing memory and CPU; a group keeps the
+    // pid of its heaviest member so the kill button still has a target
+    function groupProcs(rows, key) {
+        var by = {}, heavy = {}
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i]
+            var n = procAliases[r.name] || r.name
+            var g = by[n]
+            if (!g) {
+                g = by[n] = { pid: r.pid, user: r.user, name: n, cpu: 0, memKb: 0 }
+                heavy[n] = -1
+            }
+            g.cpu += r.cpu
+            g.memKb += r.memKb
+            if (r.memKb > heavy[n]) { heavy[n] = r.memKb; g.pid = r.pid }
+        }
+        var out = Object.keys(by).map(k => by[k])
+        out.sort((a, b) => b[key] - a[key])
+        return out
     }
 
     // top's RES in KiB, which it still shortens past its column ("1.9g")
@@ -771,7 +804,7 @@ Singleton {
             "top -b -n 2 -d 1 -o " + (root.procSort === "mem" ? "%MEM" : "%CPU")
             + " -e k -w 512 | awk '/^top -/{f++} f==2 && /^ *[0-9]+ /{"
             + "c=$12; for(i=13;i<=NF;i++) c=c\" \"$i; if (c==\"top\") next; "
-            + "print $1\"|\"$2\"|\"$9\"|\"$6\"|\"c; if(++n==" + root.procLimit + ") exit}'"]
+            + "print $1\"|\"$2\"|\"$9\"|\"$6\"|\"c}'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 // held while the pointer is over the list, so a row can't
@@ -787,11 +820,10 @@ Singleton {
                     out.push({ pid: Number(f[0]), user: f[1], cpu: Number(f[2]),
                                memKb: root.kbOf(f[3]), name: f[4] })
                 }
-                // top already sorted, but by its own rounding of the column;
-                // this keeps ties and near-ties in a stable, visible order
-                var key = root.procSort === "mem" ? "memKb" : "cpu"
-                out.sort((a, b) => b[key] - a[key])
-                root.procs = out
+                // top sorts by its own rounding of the column; grouping re-sorts
+                // on the exact sums, in a stable, visible order
+                root.procs = root.groupProcs(out, root.procSort === "mem" ? "memKb" : "cpu")
+                    .slice(0, root.procLimit)
             }
         }
     }
