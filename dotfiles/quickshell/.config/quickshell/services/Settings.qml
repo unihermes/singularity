@@ -888,7 +888,23 @@ Singleton {
     // A style arrives as its default, keeping the look's colours.
     function setStyle(v) {
         if (Styles.order.indexOf(v) === -1) return
+        if (v !== adapter.style) reinstateModules(v)
         applyValues(styleDefaultOf(v))
+    }
+
+    // Modules taken off the bar come back with a different style: the hidden
+    // list empties, and the incoming style's own `off` list goes back to its
+    // arrangement's stock.
+    function reinstateModules(st) {
+        adapter.barHidden = []
+        var all = adapter.styleLayouts || {}
+        if (all[st] && all[st].off !== undefined) {
+            var next = Object.assign({}, all)
+            var own = Object.assign({}, all[st])
+            delete own.off
+            next[st] = own
+            adapter.styleLayouts = next
+        }
     }
 
     // one of the current style's own options (Styles.js), on or off
