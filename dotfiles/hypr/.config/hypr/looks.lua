@@ -199,6 +199,13 @@ hl.layer_rule({
     ignore_alpha = 0.2,
 })
 
+-- the launcher appears at once, without the layers' fade
+hl.layer_rule({
+    name  = "launcher-instant",
+    match = { namespace = "^(singularity-launcher|unblurred-singularity-launcher)$" },
+    no_anim = true,
+})
+
 -- Hyprland blurs a see-through window on a display scaled under 1 over
 -- only its pixel size (its top-left 75% at 0.75), leaving that part darker
 -- than the rest, so windows there aren't blurred: still see-through, just

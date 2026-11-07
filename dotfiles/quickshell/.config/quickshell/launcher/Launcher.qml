@@ -212,7 +212,7 @@ OverlayWindow {
 
     visible: open
     focusMode: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    layerNamespace: "singularity-flyout"
+    layerNamespace: "singularity-launcher"
 
     Rectangle {
         anchors.fill: parent
