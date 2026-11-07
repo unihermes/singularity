@@ -26,7 +26,6 @@ greeter. Every step is idempotent, so rerunning is safe.
 - `./install.sh --plan [profile]` previews the selection without changing anything.
 - `./link.sh` links the dotfiles only (no packages, services or sudo).
 - `./update.sh` pulls, relinks and installs newly listed packages.
-- Gaming fixes and tweaks for the desktop, with what to redo by hand: `GAMING.md`.
 - Packages: `packages/pacman.txt`, `aur.txt`, `desktop.txt`, `laptop.txt`,
   `hardware/<capability>.txt`. Root-owned files: `system/`.
 
