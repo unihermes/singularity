@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Space+Grotesk:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Outfit:wght@100..900&family=Space+Grotesk:wght@300..700&display=swap');
+
+:root {
+--Chat-Font-Used: "Ubuntu Nerd Font", sans-serif !important;
+--Chat-Font-Size: 5px;
+}
+:not([class="hljs"]):not(code){
+font-family: var(--Chat-Font-Used)!important;
+}
+
+[data-vc-collapsible-ui-sidebar-channel-list-expanded]:not([data-vc-collapsible-ui-sidebar-user-area-detached]) [data-vc-collapsible-ui-user-area] {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+/* Same physical size on both monitors. Discord runs at a fixed
+ * --force-device-scale-factor=0.67, so the screen it's on is told apart by
+ * its width in CSS px: DP-2 (1440p) is 2560/0.67 = 3821, DP-3 (1080p) is
+ * 1920/0.67 = 2866. On DP-2 everything is drawn 1440/1080 = 1.333x bigger,
+ * matching DP-3. Change the 3300px threshold if the scale factor changes. */
+@media (min-device-width: 3300px) {
+  html { zoom: 1.3333; }
+  [role="dialog"]:not([class*="carouselModal"]):not(:has([class*="imageWrapper"])) { height: 65vh !important; max-height: 65vh !important; min-height: 0 !important; translate: 0 -8vh; overflow: hidden; }
+  [role="dialog"]:not([class*="carouselModal"]):not(:has([class*="imageWrapper"])) > * { max-height: 100%; min-height: 0; }
+  /* The image viewer opens at a normal size, not filling the window */
+  [class*="carouselModal"] { max-height: 70vh; max-width: 60vw; margin: auto; }
+  [class*="imageWrapper"] img, [class*="imageWrapper"] video { max-height: 65vh !important; max-width: 60vw !important; width: auto !important; height: auto !important; object-fit: contain; }
+  /* Popouts, menus and tooltips are placed at the anchor's on-screen
+   * position, which the zoom would scale again: their layers sit unzoomed
+   * and only the popout inside is zoomed. */
+  :is([class^="layerContainer_"], [class*=" layerContainer_"]) { zoom: 0.75; }
+  [class*="layerContainer_"] [class*="layer_"] > * { zoom: 1.3333; }
+  /* Right-click menus sit in their own fixed layer outside the layer
+   * containers, moved to the cursor by a transform: the same treatment. */
+  [class*="layer_"][style*="position: fixed"]:not([class*="layerContainer_"] *) { zoom: 0.75; }
+  [class*="layer_"][style*="position: fixed"]:not([class*="layerContainer_"] *) > * { zoom: 1.3333; }
+}
