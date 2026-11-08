@@ -296,6 +296,11 @@ PanelWindow {
                         selected: Ai.pinned
                         onClicked: Ai.pinned = !Ai.pinned
                     }
+                    FlyoutChip {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.centered ? "Dock" : "Center"
+                        onClicked: Settings.set("aiPlacement", root.centered ? "sidebar" : "center")
+                    }
                     IconButton {
                         icon: "󰅖"
                         onClicked: Ai.shown = false

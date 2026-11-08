@@ -592,8 +592,9 @@ It runs in its own Quickshell process
 (`AiHost.qml`), so a shell reload leaves a conversation running and the
 grab can't take the shell's bars in. It slides in from the edge and fades.
 
-Appearance > Panels > LLM window offers Sidebar (the default) or Centered
-window. The centered panel is wider, stays within the screen's usable area,
+The header's Center button moves the sidebar into a centered window; Dock
+returns it to the right edge. The choice is remembered. The centered panel
+is wider, stays within the screen's usable area,
 and fades with a short vertical motion. Both placements keep the same
 conversation, keyboard shortcuts, pin and click-away behavior.
 
@@ -607,7 +608,7 @@ conversation, keyboard shortcuts, pin and click-away behavior.
   network, so they can commit and push; Auto never asking); Chat's
   Codex only reads. The heading reads CODEX while it's on.
 - **Ollama** uses the Codex app server with its local Ollama provider. The heading cycles through all three engines, and the model picker lists locally installed models. Chat and Code retain separate local conversations; Code uses the same modes and approvals as Codex. Local models vary in tool and image support, and Ollama needs enough context for the agent instructions and attachments.
-- **Heading** CLAUDE, CODEX or OLLAMA, with Reload, Pin and × for the sidebar. Chat
+- **Heading** CLAUDE, CODEX or OLLAMA, with Reload, Pin, Center/Dock and × for the sidebar. Chat
   and Code follow as a segmented strip, a ● on a tab with something unread.
   New and History sit above the composer. Reload saves state and reloads the
   sidebar when all sessions are idle.

@@ -129,12 +129,6 @@ SettingsTab {
         }
         SettingsField {
             labelWidth: parent.labelWidth
-            label: "LLM window"
-            hint: "Chat and Code · SUPER+I"
-            Choices { key: "aiPlacement" }
-        }
-        SettingsField {
-            labelWidth: parent.labelWidth
             label: "Workspace overview"
             hint: "SUPER+W"
             Choices { key: "overviewLayout" }

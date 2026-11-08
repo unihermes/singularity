@@ -284,7 +284,6 @@ Singleton {
         powerStyle: { "full": "Full screen" },
         controlLayout: { "full": "Full", "compact": "Compact", "mini": "Mini" },
         overviewLayout: { "strip": "One row" },
-        aiPlacement: { "sidebar": "Sidebar", "center": "Centered window" },
     })
 
     // a choice's display name: the table above, then the look's or font's
