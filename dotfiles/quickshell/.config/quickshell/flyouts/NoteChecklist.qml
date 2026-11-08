@@ -53,6 +53,9 @@ ListView {
             if (r.text !== src[k].text) rows.setProperty(k, "text", src[k].text)
             if (r.done !== src[k].done) rows.setProperty(k, "done", src[k].done)
         }
+        // a row inserted mid-list shifts the others down, so its delegate
+        // already exists and never runs its completion
+        if (wantFocus >= 0) Qt.callLater(() => root.focusRow(root.wantFocus))
     }
     onSlotChanged: sync()
     Component.onCompleted: sync()
