@@ -197,9 +197,14 @@ function toggleScratchpad(terminal)
             and mon.active_special_workspace.name == "special:scratchpad"
         hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad"))
         if closing then
-            -- Refresh pointer focus after hiding the special workspace.
+            -- A pointer refresh without keyboard following leaves focus on
+            -- the hidden terminal. A flyout then restores it and reopens the
+            -- scratchpad. Refocus the visible surface before restoring policy.
             local pos = hl.get_cursor_pos()
+            local follow = hl.get_config("input:follow_mouse")
+            hl.config({ input = { follow_mouse = 1 } })
             hl.dispatch(hl.dsp.cursor.move({ x = pos.x, y = pos.y }))
+            hl.config({ input = { follow_mouse = follow } })
         end
     end
 end
