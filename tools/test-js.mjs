@@ -514,6 +514,7 @@ local function section(first, last)
     return source:sub(a, b - 1)
 end
 local active, state, dispatched, borderChecks
+local timers = {}
 local env = setmetatable({ G = G, S = { GROUPBAR_HEIGHT = 24 } }, { __index = _G })
 env.popupOpts, env.sizes = { remember = true }, {}
 env.screenKind = function() return "normal" end
@@ -527,6 +528,7 @@ env.setShape = function(_, shape) state.shape = shape end
 env.captureShape = function() end
 env.unflagFloating = function(w) return w end
 env.hl = {
+    timer = function(fn) timers[#timers + 1] = fn end,
     get_active_window = function() return active end,
     get_active_monitor = function() return active.monitor end,
     get_window = function() return active end,
@@ -548,14 +550,17 @@ end
 local code = section("local function usableArea(mon)", "local function isAlreadyFull")
     .. section("local function applyRect(win, r)", '-- also kept as a "shape_')
     .. section("local function placeMonocle(win, mon)", "-- Takes a monocle window's shape")
+    .. section("local REFILL_TICK, REFILL_SETTLE", "-- REMEMBERED SIZES.")
     .. section("local function fillFloating(win)", "local function unflagFloating(win)")
     .. section("local function rememberPopout(win)", "-- Makes a popout a main window")
     .. "local function fillByHand(win) return fillFloating(win) end\n"
     .. section("local function toggleMaximizeWin(win)", "-- SUPER+C: hides a window")
-    .. "return { toggle = toggleMaximizeWin, step = stepWindowSize, apply = applyRect, shape = shapeOf, remember = rememberPopout }"
+    .. "return { toggle = toggleMaximizeWin, step = stepWindowSize, apply = applyRect, shape = shapeOf, remember = rememberPopout, refit = refitMoved }"
 local commands = assert(load(code, "window-sizing", "t", env))()
 local function reset(floating, monocle)
     state, dispatched, borderChecks = {}, {}, 0
+    env.windowState = { test = state }
+    timers = {}
     active = { address = "test", class = "test", floating = floating, fullscreen = 0,
         monitor = mon, tags = { monocle = monocle }, at = { x = -1500, y = 300 }, size = { x = 600, y = 500 } }
 end
@@ -582,6 +587,24 @@ for _, monocle in ipairs({ false, true }) do
     local restored = G.rect(target, initial)
     assert(math.abs(active.size.x - restored.w) <= 1)
     assert(math.abs(active.size.y - restored.h) <= 1)
+end
+-- The compositor keeps moving a dragged window after the workspace event.
+-- Both filled types must re-fit again once that movement settles.
+for _, monocle in ipairs({ false, true }) do
+    reset(true, monocle)
+    active.tags.filled = true
+    active.monitor = { id = 2, x = 0, y = 0, width = 2560, height = 1440, scale = 1.25 }
+    commands.refit(active)
+    assert(state.refilling)
+    active.at = { x = 120, y = 200 }
+    for _ = 1, 6 do
+        local pending = timers
+        timers = {}
+        for _, fn in ipairs(pending) do fn() end
+    end
+    assert(not state.refilling)
+    local area = G.area(active.monitor, env.edgeGaps())
+    assert(G.fitted({ x = active.at.x, y = active.at.y, w = active.size.x, h = active.size.y }, area))
 end
 reset(true, false)
 local target = { x = active.at.x, y = active.at.y, w = active.size.x, h = active.size.y }

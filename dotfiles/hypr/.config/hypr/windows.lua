@@ -378,7 +378,7 @@ local function captureShape(win)
     if not (win and win.floating and hasTag(win, "monocle") and win.fullscreen == 0) then return end
     local st = stateOf(win.address)
     local mon = win.monitor
-    if not mon or st.minimized or st.parked or st.settling then return end
+    if not mon or st.minimized or st.parked or st.settling or st.refilling then return end
     local moved = st.placedOn ~= mon.id
     if moved and not st.shape then return end
     if not moved and isFitted(win, shapeRect(win, mon, st.shape)) then return end
@@ -397,9 +397,12 @@ local function refitMoved(win, mon)
     mon = mon or win.monitor
     local st = stateOf(win.address)
     if not mon or st.minimized or st.parked then return end
-    if hasTag(win, "monocle") then return placeMonocle(win, mon) end
-    if not (hasTag(win, "filled") or st.refilling) then return end
-    sizeToFullFloat(win, mon)
+    local monocle = hasTag(win, "monocle")
+    if not (monocle or hasTag(win, "filled") or st.refilling) then return end
+    local function place(w, target)
+        if monocle then placeMonocle(w, target) else sizeToFullFloat(w, target) end
+    end
+    place(win, mon)
     if st.refilling then return end
     st.refilling = true
     local addr, last, still = "address:" .. win.address, nil, 0
@@ -416,7 +419,7 @@ local function refitMoved(win, mon)
             return hl.timer(tick, { timeout = REFILL_TICK, type = "oneshot" })
         end
         st.refilling = nil
-        if w.monitor and not isFitted(w, fillArea(w, w.monitor)) then sizeToFullFloat(w, w.monitor) end
+        if w.monitor then place(w, w.monitor) end
     end
     hl.timer(tick, { timeout = REFILL_TICK, type = "oneshot" })
 end
