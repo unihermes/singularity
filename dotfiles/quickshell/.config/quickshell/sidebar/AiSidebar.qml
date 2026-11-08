@@ -21,6 +21,7 @@ PanelWindow {
 
     readonly property bool open: Ai.shown && !Ai.capturing
     readonly property var session: Ai.current
+    readonly property bool centered: Settings.aiPlacement === "center"
     // The keyboard comes on opening and on a press inside, never on hover:
     // exclusively until it arrives (on demand alone waits for the pointer to
     // move), then on demand. A press elsewhere closes the panel, or with the
@@ -119,9 +120,17 @@ PanelWindow {
     }
 
     screen: Ai.screen
-    anchors { top: true; bottom: true; right: true }
-    margins { top: Theme.edgeMargin; bottom: Theme.edgeMargin; right: Theme.edgeMargin }
-    implicitWidth: Theme.fit(440) + (padX - Theme.panelPad) * 2
+    anchors { top: !root.centered; bottom: !root.centered; right: !root.centered }
+    margins {
+        top: Theme.edgeMargin
+        bottom: Theme.edgeMargin
+        left: root.centered ? Theme.edgeMargin : 0
+        right: Theme.edgeMargin
+    }
+    implicitWidth: Math.min((screen ? screen.width : 1920) - Theme.edgeMargin * 2,
+        Theme.fit(centered ? 760 : 440) + (padX - Theme.panelPad) * 2)
+    implicitHeight: Math.min(Theme.sp(860),
+        (screen ? screen.height : 1080) - Theme.barHeight - Theme.edgeMargin * 2)
     // kept clear of the bar's strip, without pushing windows aside
     exclusiveZone: 0
     color: "transparent"
@@ -173,7 +182,10 @@ PanelWindow {
         height: parent.height
         ground: Theme.surface
         opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
-        transform: Translate { x: (1 - root.reveal) * Theme.sp(24) }
+        transform: Translate {
+            x: root.centered ? 0 : (1 - root.reveal) * Theme.sp(24)
+            y: root.centered ? (1 - root.reveal) * Theme.sp(12) : 0
+        }
 
         HoverHandler { onHoveredChanged: root.pointerInside = hovered }
 

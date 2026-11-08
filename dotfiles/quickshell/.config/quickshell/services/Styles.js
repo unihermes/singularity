@@ -243,6 +243,7 @@ var stock = {
     altTabStyle: "previews",
     altTabScope: "all",
     altTabBlur: false,
+    aiPlacement: "sidebar",
     overviewLayout: "grid",
     overviewBackdrop: "dim",
     powerStyle: "row",

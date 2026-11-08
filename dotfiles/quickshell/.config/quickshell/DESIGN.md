@@ -592,6 +592,11 @@ It runs in its own Quickshell process
 (`AiHost.qml`), so a shell reload leaves a conversation running and the
 grab can't take the shell's bars in. It slides in from the edge and fades.
 
+Appearance > Panels > LLM window offers Sidebar (the default) or Centered
+window. The centered panel is wider, stays within the screen's usable area,
+and fades with a short vertical motion. Both placements keep the same
+conversation, keyboard shortcuts, pin and click-away behavior.
+
 - **Codex** (`services/CodexSession.qml`, `codex app-server`): Chat and
   Code can run on Codex instead, the Claude/Codex heading with its icon
   switching the tab (each engine keeps its own conversation, model and
