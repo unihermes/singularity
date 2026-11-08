@@ -5,7 +5,7 @@
 // and type in. Its title in the accent, + for a new note beside it and ×
 // to take it off the desktop (it stays in the Notes window). Typing here
 // and in the window lands in the same tab (Notes.edited). 󰄬 turns it into a
-// checklist and back.
+// checklist and back. Double-click the title to rename it.
 
 import QtQuick
 import "../services"
@@ -22,6 +22,7 @@ WidgetCard {
 
     readonly property int index: Notes.indexOf(noteId)
     readonly property var tab: Notes.tabs[index] || { title: "", text: "", kind: "text" }
+    property bool renaming: false
     readonly property bool list: tab.kind === "list"
 
     // set rather than bound, so typing doesn't fight a binding
@@ -51,6 +52,44 @@ WidgetCard {
             width: parent.width - tools.width - Theme.fit(8)
             card: root
             text: root.tab.title
+            visible: !renaming
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.IBeamCursor
+                onDoubleClicked: {
+                    root.renaming = true
+                    renameField.text = root.tab.title
+                    renameField.selectAll()
+                    renameField.forceActiveFocus()
+                }
+            }
+        }
+
+        TextInput {
+            id: renameField
+            visible: root.renaming
+            anchors.verticalCenter: title.verticalCenter
+            width: title.width
+            color: root.accent
+            selectionColor: root.accent
+            selectedTextColor: Theme.textOnAccent
+            font.family: root.font
+            font.pixelSize: root.textCaption
+            font.weight: root.weightStrong
+            font.letterSpacing: 1
+            font.capitalization: Font.AllUppercase
+            maximumLength: 40
+            clip: true
+            function finish(keep) {
+                if (!root.renaming) return
+                root.renaming = false
+                if (keep) Notes.rename(root.index, text)
+            }
+            Keys.onReturnPressed: finish(true)
+            Keys.onEnterPressed: finish(true)
+            Keys.onEscapePressed: { finish(false); root.letGo() }
+            onActiveFocusChanged: if (!activeFocus) finish(true)
         }
         Row {
             id: tools
