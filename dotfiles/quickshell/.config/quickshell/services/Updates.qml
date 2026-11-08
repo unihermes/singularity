@@ -2,7 +2,7 @@
 // ~/.config/quickshell/services/Updates.qml
 //
 // Pending updates, repo (checkupdates: a throwaway db copy, no partial
-// upgrade) and AUR (yay -Qua), for the bar module. First check a minute
+// upgrade) and AUR (yay -Qua --devel), for the bar module. First check a minute
 // after startup, then every Settings.updateInterval minutes, minus
 // Settings.updateIgnore. Also fetches the Singularity clone and counts
 // commits upstream; updateRepo() runs its update.sh.
@@ -81,6 +81,14 @@ Singleton {
         })
     }
 
+    // Shell snippet: prints the installed quickshell package when Qt was
+    // upgraded after it was built (its ABI is tied to Qt's minor version).
+    readonly property string staleQuickshell:
+        "qsp=$(pacman -Qq quickshell-git quickshell 2>/dev/null | head -n1); "
+        + "if [ -n \"$qsp\" ]; then "
+        + "d() { LC_ALL=C pacman -Qi \"$1\" | sed -n 's/^Install Date *: //p' | xargs -I{} date -d {} +%s; }; "
+        + "[ \"$(d qt6-base)\" -gt \"$(d \"$qsp\")\" ] || qsp=; fi"
+
     function refresh() {
         refreshRepo()
         if (!available || checkProc.running) return
@@ -97,8 +105,11 @@ Singleton {
         var flags = " --noconfirm --answerdiff None" + (Settings.updateAur ? "" : " --repo")
             + (Settings.updateIgnore.length > 0 ? " --ignore " + Settings.updateIgnore.join(",") : "")
         updateProc.command = [Settings.terminal, "--class", "singularity.update", "-e", "sh", "-c",
-            "yay -Syu" + flags + " --sudoloop --answerclean None --answeredit None --removemake; "
-            + "if [ $? -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "
+            "yay -Syu --devel" + flags + " --sudoloop --answerclean None --answeredit None --removemake; rc=$?; "
+            + (Settings.updateAur ? root.staleQuickshell + "; "
+                + "if [ $rc -eq 0 ] && [ -n \"$qsp\" ]; then yay -S --rebuild --noconfirm --answerdiff None "
+                + "--answerclean None --answeredit None --removemake \"$qsp\"; rc=$?; fi; " : "")
+            + "if [ $rc -eq 0 ]; then notify-send -a Updates 'System updated' 'All packages are up to date'; "
             + "else echo; echo 'Update failed -- see above.'; read -rsn1 -p 'press any key to close'; fi"]
         updateProc.running = true
     }
@@ -114,9 +125,12 @@ Singleton {
             + "printf '%s\\n' \"$out\" | sed '/^$/d;s/^/repo /'; "
             + "echo \"REPO_STATUS $rc\"; "
             + "if [ \"$AUR\" = 1 ] && command -v yay >/dev/null; then "
-            + "err=$(mktemp); out=$(yay -Qua 2>\"$err\"); rc=$?; "
+            + "err=$(mktemp); out=$(yay -Qua --devel 2>\"$err\"); rc=$?; "
             + "[ $rc -eq 1 ] && [ -z \"$out\" ] && [ ! -s \"$err\" ] && rc=2; rm -f \"$err\"; "
             + "printf '%s\\n' \"$out\" | sed '/^$/d;s/^/aur /'; "
+            + root.staleQuickshell + "; "
+            + "if [ -n \"$qsp\" ] && ! printf '%s\\n' \"$out\" | grep -q \"^$qsp \"; then "
+            + "echo \"aur $qsp $(pacman -Q $qsp | cut -d' ' -f2) -> rebuild\"; fi; "
             + "echo \"AUR_STATUS $rc\"; "
             + "else echo 'AUR_STATUS skip'; fi"]
         environment: ({ AUR: Settings.updateAur ? "1" : "0" })
