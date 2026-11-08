@@ -1,0 +1,32 @@
+#!/bin/bash
+# Copies Windows Boot Manager (EFI/Microsoft) from another disk's ESP onto
+# systemd-boot's ESP, where systemd-boot lists it as auto-windows. Run at
+# every boot so Windows updates to its own copy reach this one.
+set -euo pipefail
+esp=$(bootctl -p 2>/dev/null) || exit 0
+esp_dev=$(findmnt -no SOURCE -T "$esp")
+[[ -f $esp/EFI/Microsoft/Boot/bootmgfw.efi && ! -L $esp/EFI/Microsoft ]] && own=1 || own=0
+
+mnt=$(mktemp -d)
+trap 'mountpoint -q "$mnt" && umount "$mnt"; rmdir "$mnt"' EXIT
+while read -r dev type; do
+    [[ $type == c12a7328-f81f-11d2-ba4b-00a0c93ec93b && /dev/$dev != "$esp_dev" ]] || continue
+    src=$(findmnt -no TARGET "/dev/$dev" | head -n1 || true)
+    if [[ -z $src ]]; then
+        mount -o ro "/dev/$dev" "$mnt" 2>/dev/null || continue
+        src=$mnt
+    fi
+    if [[ -f $src/EFI/Microsoft/Boot/bootmgfw.efi && -f $src/EFI/Microsoft/Boot/BCD ]]; then
+        # A copy this script did not make (Windows on this ESP too) is left alone.
+        if (( own )) && [[ ! -f $esp/EFI/Microsoft/.singularity-sync ]]; then
+            echo "$esp/EFI/Microsoft is Windows' own; not syncing" >&2
+            exit 0
+        fi
+        mkdir -p "$esp/EFI/Microsoft"
+        cp -rT --preserve=timestamps "$src/EFI/Microsoft" "$esp/EFI/Microsoft"
+        echo "/dev/$dev" >"$esp/EFI/Microsoft/.singularity-sync"
+        echo "synced Windows Boot Manager from /dev/$dev"
+        exit 0
+    fi
+    mountpoint -q "$mnt" && umount "$mnt"
+done < <(lsblk -rno NAME,PARTTYPE)

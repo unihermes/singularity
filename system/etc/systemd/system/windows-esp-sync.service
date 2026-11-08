@@ -1,0 +1,10 @@
+[Unit]
+Description=Copy Windows Boot Manager onto systemd-boot's ESP
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/singularity/windows-esp-sync
+
+[Install]
+WantedBy=multi-user.target

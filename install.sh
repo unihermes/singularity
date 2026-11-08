@@ -366,6 +366,13 @@ if [[ -n $esp && -d /sys/firmware/efi ]]; then
     put /etc/systemd/system/linux-bootmgr-first.service
     sudo systemctl daemon-reload
     sudo systemctl enable linux-bootmgr-first.service
+    # systemd-boot only lists Windows found on its own ESP; windows-esp-sync
+    # copies it over from another disk's ESP, again at every boot.
+    log "making Windows bootable from systemd-boot"
+    put /usr/local/lib/singularity/windows-esp-sync
+    put /etc/systemd/system/windows-esp-sync.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now windows-esp-sync.service
   fi
 fi
 
