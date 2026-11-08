@@ -7,6 +7,7 @@
 -- here, as are the ones Quickshell runs through `hyprctl eval`
 -- (singularityShowDesktop, markLaunch).
 
+local G = require("window-geometry")
 local S = require("shared")
 local animOff, animFactor = S.animOff, S.animFactor * S.windowsFactor
 local windowAnim, windowSlides, windowShrink = S.windowAnim, S.windowSlides, S.windowShrink
@@ -103,14 +104,13 @@ end
 --   shape     -- a monocle window's size and place (shapeRect)
 --   placedOn  -- the monitor placeMonocle() last fitted it to
 --   refilling -- filled, moved to another monitor, not yet settled there
---   lastShape -- the shape SUPER+equal brings a filled window back to
+--   lastShape -- any floater's custom shape before filling
 --   parked    -- moved off-screen while covered (PARKING)
 --   settling  -- coming back from SUPER+C, still animating
 --   small     -- a tiled window unmaximized on purpose (toggleMaximize)
 --   minimized -- where SUPER+C hid it from, whether it was tiled/fullscreen,
 --                and in monocle
 --   hideGen   -- bumped by every hide and restore, so stale steps skip
---   restore   -- a non-monocle floater's rect before it was filled
 --   ruleRect  -- a Window Rules floater's rect before dwindle tiled it
 -- Cleared on close: Hyprland reuses addresses.
 local windowState = {}
@@ -257,36 +257,20 @@ end
 
 -- The monitor's usable rect (minus reserved edges), in layout coordinates.
 local function usableArea(mon)
-    local reserved = mon.reserved or { left = 0, top = 0, right = 0, bottom = 0 }
-    return {
-        x = (mon.x or 0) + reserved.left,
-        y = (mon.y or 0) + reserved.top,
-        w = mon.width / mon.scale - reserved.left - reserved.right,
-        h = mon.height / mon.scale - reserved.top - reserved.bottom,
-    }
+    return G.area(mon)
 end
 
--- The rect a monocle window fills: the usable area inside the edge gaps,
--- less the tab bar for a grouped window.
+-- Available space after reserved bars, edge gaps and the window's tab bar.
 local function fillArea(win, mon)
-    local area = usableArea(mon)
-    local g = edgeGaps()
-    area.x = area.x + g.left
-    area.y = area.y + g.top
-    area.w = area.w - g.left - g.right
-    area.h = area.h - g.top - g.bottom
-    if win.group then
-        local bar = S.GROUPBAR_HEIGHT
-        area.y = area.y + bar
-        area.h = area.h - bar
-    end
-    return area
+    return G.area(mon, edgeGaps(), win.group and S.GROUPBAR_HEIGHT or 0)
 end
 
--- Fills the monitor: position as well as size (unlike isAlreadyFull).
+local function windowRect(win)
+    return { x = win.at.x, y = win.at.y, w = win.size.x, h = win.size.y }
+end
+
 local function isFitted(win, area)
-    return math.abs(win.size.x - area.w) <= 4 and math.abs(win.size.y - area.h) <= 4
-        and math.abs(win.at.x - area.x) <= 4 and math.abs(win.at.y - area.y) <= 4
+    return G.fitted(windowRect(win), area)
 end
 
 local function isAlreadyFull(win, mon)
@@ -324,32 +308,33 @@ local function syncFillBorder(addr)
     end
 end
 
--- Fills the usable rect without touching floating state.
-local function sizeToFullFloat(win, mon)
-    mon = mon or win.monitor or hl.get_active_monitor()
-    if not mon then return end
-    local area = fillArea(win, mon)
+-- Apply managed geometry once, skipping dimensions that already match.
+local function applyRect(win, r)
     local addr = "address:" .. win.address
-    hl.dispatch(hl.dsp.window.resize({ x = math.floor(area.w), y = math.floor(area.h), window = addr }))
-    hl.dispatch(hl.dsp.window.move({ x = math.floor(area.x), y = math.floor(area.y), window = addr }))
+    local x, y, w, h = math.floor(r.x), math.floor(r.y), math.floor(r.w), math.floor(r.h)
+    local fresh = win
+    if math.abs(win.size.x - w) > 1 or math.abs(win.size.y - h) > 1 then
+        hl.dispatch(hl.dsp.window.resize({ x = w, y = h, window = addr }))
+        fresh = hl.get_window(addr) or win
+    end
+    if math.abs(fresh.at.x - x) > 1 or math.abs(fresh.at.y - y) > 1 then
+        hl.dispatch(hl.dsp.window.move({ x = x, y = y, window = addr }))
+    end
     syncFillBorder(win.address)
 end
 
--- A monocle window's shape: nil fills the area, else {fx, fy, fw, fh} in
--- fractions of fillArea(). Within SNAP_FILL of the whole counts as filled.
-local SNAP_FILL = 0.94
+local function sizeToFullFloat(win, mon)
+    mon = mon or win.monitor or hl.get_active_monitor()
+    if mon then applyRect(win, fillArea(win, mon)) end
+end
 
+-- nil means filled; custom shapes retain both dimensions.
 local function shapeRect(win, mon, shape)
-    local area = fillArea(win, mon)
-    if not shape then return area end
-    return {
-        x = area.x + shape.fx * area.w, y = area.y + shape.fy * area.h,
-        w = shape.fw * area.w, h = shape.fh * area.h,
-    }
+    return G.rect(fillArea(win, mon), shape)
 end
 
 local function centredShape(share)
-    return { fx = (1 - share) / 2, fy = (1 - share) / 2, fw = share, fh = share }
+    return G.centred(share)
 end
 
 -- also kept as a "shape_…" tag (per mille) to survive a reload
@@ -375,24 +360,15 @@ local function placeMonocle(win, mon)
     st.placedOn = mon.id
     local r = shapeRect(win, mon, st.shape)
     if isFitted(win, r) then return syncFillBorder(win.address) end
-    local addr = "address:" .. win.address
-    hl.dispatch(hl.dsp.window.resize({ x = math.floor(r.w), y = math.floor(r.h), window = addr }))
-    hl.dispatch(hl.dsp.window.move({ x = math.floor(r.x), y = math.floor(r.y), window = addr }))
-    syncFillBorder(win.address)
+    applyRect(win, r)
 end
 
 -- The shape a floater's geometry makes on `mon` (nil: fills it). With
 -- `keep`, keeps that shape's size where it now is.
 local function shapeOf(win, mon, keep)
     local area = fillArea(win, mon)
-    local fw = keep and keep.fw or math.min(win.size.x / area.w, 1)
-    local fh = keep and keep.fh or math.min(win.size.y / area.h, 1)
-    if fw >= SNAP_FILL and fh >= SNAP_FILL then return nil end
-    return {
-        fx = math.max(0, math.min((win.at.x - area.x) / area.w, 1 - fw)),
-        fy = math.max(0, math.min((win.at.y - area.y) / area.h, 1 - fh)),
-        fw = fw, fh = fh,
-    }
+    if isFitted(win, area) then return nil end
+    return G.shape(windowRect(win), area, keep)
 end
 
 -- Takes a monocle window's shape from where it is, so a hand move or
@@ -598,13 +574,11 @@ end
 local function fillFloating(win)
     local addr = "address:" .. win.address
     local st = stateOf(win.address)
+    if win.monitor and not st.lastShape then st.lastShape = shapeOf(win, win.monitor) end
     if hasTag(win, "monocle") then
         setShape(win, nil)
         placeMonocle(win)
     else
-        if not st.restore then
-            st.restore = { x = win.at.x, y = win.at.y, w = win.size.x, h = win.size.y }
-        end
         sizeToFullFloat(win)
     end
     hl.dispatch(hl.dsp.window.bring_to_top())
@@ -651,7 +625,7 @@ function setWindowMonocle(w, on, mon)
             st.ruleRect = { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y }
             hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
             hl.dispatch(hl.dsp.window.tag({ tag = "-filled", window = addr }))
-            st.restore = nil
+            st.lastShape = nil
         end
         return
     end
@@ -1059,7 +1033,7 @@ holdPopup = function(win)
     -- window filling this one, the cursor rect kept for SUPER+X
     if ownerArea and (owner.fullscreen ~= 0 or isFitted(owner, ownerArea)) then
         local st = stateOf(win.address)
-        st.restore, st.placedFromOwner = rect, true
+        st.lastShape, st.placedFromOwner = G.shape(rect, area), true
         fillByHand(hl.get_window(addr) or win)
         return
     end
@@ -1077,7 +1051,7 @@ local function rememberPopout(win)
     if not (hasTag(win, "popout") or hasTag(win, "app-held")) then return end
     local area = fillArea(win, win.monitor)
     local fw, fh = math.min(win.size.x / area.w, 1), math.min(win.size.y / area.h, 1)
-    if fw >= SNAP_FILL and fh >= SNAP_FILL then return end
+    if isFitted(win, area) then return end
     local entry = type(sizes[key]) == "table" and sizes[key] or {}
     local kind = screenKind(area)
     local old = entry[kind]
@@ -1111,13 +1085,7 @@ end
 -- Fills a floater the user asked to fill, promoting it if it's a popout.
 fillByHand = function(win)
     win = promotePopout(win)
-    if hasTag(win, "monocle") then
-        setShape(win, nil)
-        placeMonocle(win)
-        hl.dispatch(hl.dsp.window.bring_to_top())
-    else
-        fillFloating(win)
-    end
+    fillFloating(win)
 end
 
 -- The window strip's "make main window": promoted where it is, and filled
@@ -1682,52 +1650,31 @@ hl.on("window.close", function()
     end, { timeout = 50, type = "oneshot" })
 end)
 
--- SUPER+X. A tiled window uses Hyprland's maximize toggle (deliberate
--- shrinks are recorded so maximizeFocused() leaves them). A monocle floater
--- switches between filled and its last shape (70% centred at first).
+-- SUPER+X: every floater restores the same proportional custom shape.
+-- Tiled windows retain Hyprland's maximize state and deliberate shrink flag.
 local function toggleMaximizeWin(win)
-    if win.floating and hasTag(win, "monocle") then
-        captureShape(win)
-        local st = stateOf(win.address)
-        if st.shape then
-            st.lastShape = st.shape
-            setShape(win, nil)
-        else
-            setShape(win, st.lastShape or centredShape(0.7))
-        end
-        placeMonocle(win)
-        return
-    end
-
-    -- any other floater: fill it, or put back what filling replaced (70%
-    -- centred if it opened full)
     if win.floating then
         win = unflagFloating(win)
-        local st = stateOf(win.address)
-        local addr = "address:" .. win.address
         local mon = win.monitor or hl.get_active_monitor()
-        if not mon then return end
-        local area = fillArea(win, mon)
-        if not isFitted(win, area) then
-            -- whatever size it is now is the one to come back to
-            st.restore = nil
+        if not mon or win.fullscreen ~= 0 then return end
+        local monocle = hasTag(win, "monocle")
+        if monocle then
+            captureShape(win)
+            win = hl.get_window("address:" .. win.address) or win
+        end
+        local st = stateOf(win.address)
+        local cur = shapeOf(win, mon)
+        if cur then
+            st.lastShape = cur
             fillByHand(win)
-        elseif st.restore then
-            local r = st.restore
-            st.restore = nil
-            -- saved on another monitor: brought over, centred, at most the area
-            local cx, cy = r.x + r.w / 2, r.y + r.h / 2
-            if cx < area.x or cx > area.x + area.w or cy < area.y or cy > area.y + area.h then
-                local w, h = math.min(r.w, area.w), math.min(r.h, area.h)
-                r = { x = math.floor(area.x + (area.w - w) / 2), y = math.floor(area.y + (area.h - h) / 2), w = w, h = h }
-            end
-            hl.dispatch(hl.dsp.window.resize({ x = r.w, y = r.h, window = addr }))
-            hl.dispatch(hl.dsp.window.move({ x = r.x, y = r.y, window = addr }))
-            syncFillBorder(win.address)
         else
-            hl.dispatch(hl.dsp.window.resize({
-                x = math.floor(area.w * 0.7), y = math.floor(area.h * 0.7), window = addr }))
-            hl.dispatch(hl.dsp.window.center({ window = addr }))
+            local shape = st.lastShape or centredShape(0.7)
+            if monocle then
+                setShape(win, shape)
+                placeMonocle(win, mon)
+            else
+                applyRect(win, shapeRect(win, mon, shape))
+            end
         end
         return
     end
@@ -1752,12 +1699,13 @@ end
 
 -- SUPER+equal/minus: a floater steps through 55%, 70%, 85%, filled, about
 -- its centre. A tiled window maximizes or restores.
-local LADDER = { 0.55, 0.7, 0.85 }
 function stepWindowSize(dir)
     local win = hl.get_active_window()
     if not win or win.class == "org.quickshell" then return end
     if not win.floating then
-        if dir > 0 or win.fullscreen ~= 0 then toggleMaximizeWin(win) end
+        if (dir > 0 and win.fullscreen == 0) or (dir < 0 and win.fullscreen == 1) then
+            toggleMaximizeWin(win)
+        end
         return
     end
     win = unflagFloating(win)
@@ -1768,40 +1716,18 @@ function stepWindowSize(dir)
         captureShape(win)
         win = hl.get_window("address:" .. win.address) or win
     end
-    local cur = monocle and stateOf(win.address).shape or shapeOf(win, mon)
-    local size = cur and math.max(cur.fw, cur.fh) or 1
-    local share = nil
-    if dir > 0 then
-        for _, step in ipairs(LADDER) do
-            if step > size + 0.01 then share = step break end
-        end
-        if not cur then return end
-    else
-        for i = #LADDER, 1, -1 do
-            if LADDER[i] < size - 0.01 then share = LADDER[i] break end
-        end
-        if not share then return end
-    end
-    local shape = nil
-    if share then
-        local cx = cur and cur.fx + cur.fw / 2 or 0.5
-        local cy = cur and cur.fy + cur.fh / 2 or 0.5
-        shape = {
-            fx = math.max(0, math.min(cx - share / 2, 1 - share)),
-            fy = math.max(0, math.min(cy - share / 2, 1 - share)),
-            fw = share, fh = share,
-        }
-    end
-    if monocle then
-        if not shape then stateOf(win.address).lastShape = cur end
+    local cur = shapeOf(win, mon)
+    local shape, changed = G.step(cur, dir)
+    if not changed then return end
+    if not shape then
+        stateOf(win.address).lastShape = cur
+        fillByHand(win)
+    elseif monocle then
         setShape(win, shape)
         placeMonocle(win, mon)
-    elseif not shape then
-        fillByHand(win)
     else
-        moveTo("address:" .. win.address, shapeRect(win, mon, shape))
+        applyRect(win, shapeRect(win, mon, shape))
     end
-    syncFillBorder(win.address)
 end
 
 -- SUPER+C: hides a window below the screen, animated per windowAnim (slide,

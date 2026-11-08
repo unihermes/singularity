@@ -13,6 +13,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import vm from "node:vm"
+import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
@@ -462,3 +463,158 @@ test("Settings reject invalid numeric edits and repair invalid stored values", (
     assert.equal(V.stored('fontFamily', 'A font currently uninstalled'), 'A font currently uninstalled')
     assert.equal(V.stored('cursorTheme', 'A theme currently uninstalled'), 'A theme currently uninstalled')
 })
+
+
+test("Window sizing keeps geometry, restore and directional commands consistent", () => {
+    const result = spawnSync("lua", ["-"], { cwd: repo, encoding: "utf8", input: String.raw`
+package.path = "dotfiles/hypr/.config/hypr/?.lua;" .. package.path
+local G = require("window-geometry")
+local function near(a, b) assert(math.abs(a - b) < 0.00001, tostring(a) .. " != " .. tostring(b)) end
+local function same(a, b)
+    for k, v in pairs(b) do near(a[k], v) end
+end
+local mon = { x = -1920, y = 100, width = 3840, height = 2160, scale = 2,
+    reserved = { top = 32, bottom = 8 } }
+local area = G.area(mon, { left = 10, right = 10, top = 10, bottom = 10 }, 24)
+same(area, { x = -1910, y = 166, w = 1900, h = 996 })
+local custom = { fx = 0.2, fy = 0.1, fw = 0.3, fh = 0.7 }
+same(G.shape(G.rect(area, custom), area), custom)
+local other = G.area({ x = 0, y = -200, width = 1440, height = 2560, scale = 1.25 })
+same(G.shape(G.rect(other, custom), other), custom)
+local bounded = G.rect(other, { fx = -1, fy = 3, fw = 2, fh = 0.5 })
+near(bounded.x, other.x)
+near(bounded.y + bounded.h, other.y + other.h)
+near(bounded.w, other.w)
+assert(G.area(mon, { left = 9000, bottom = 9000 }).w == 1)
+local nextShape, changed = G.step(custom, 1)
+assert(changed)
+near(nextShape.fh, 0.85)
+near(nextShape.fw / nextShape.fh, custom.fw / custom.fh)
+near(nextShape.fx + nextShape.fw / 2, custom.fx + custom.fw / 2)
+local filled, didFill = G.step(nextShape, 1)
+assert(filled == nil and didFill)
+local _, didGrow = G.step(nil, 1)
+assert(not didGrow)
+local smallest = G.centred(0.55)
+local _, didShrink = G.step(smallest, -1)
+assert(not didShrink)
+near(G.step(nil, -1).fw, 0.85)
+local edge = G.step({ fx = 0.7, fy = 0.3, fw = 0.3, fh = 0.7 }, 1)
+near(edge.fx + edge.fw, 1)
+near(edge.fy + edge.fh, 1)
+
+-- Run the real sizing functions with a synchronous compositor double.
+-- Other lifecycle hooks are excluded so this cannot move desktop windows.
+local file = assert(io.open("dotfiles/hypr/.config/hypr/windows.lua"))
+local source = file:read("a")
+file:close()
+local function section(first, last)
+    local a = assert(source:find(first, 1, true))
+    local b = assert(source:find(last, a + #first, true))
+    return source:sub(a, b - 1)
+end
+local active, state, dispatched, borderChecks
+local env = setmetatable({ G = G, S = { GROUPBAR_HEIGHT = 24 } }, { __index = _G })
+env.popupOpts, env.sizes = { remember = true }, {}
+env.screenKind = function() return "normal" end
+env.num = function(n) return string.format("%.4f", n) end
+env.saveSizes = function() end
+env.edgeGaps = function() return { left = 10, right = 10, top = 10, bottom = 10 } end
+env.stateOf = function() return state end
+env.hasTag = function(w, tag) return w.tags[tag] end
+env.syncFillBorder = function() borderChecks = borderChecks + 1 end
+env.setShape = function(_, shape) state.shape = shape end
+env.captureShape = function() end
+env.unflagFloating = function(w) return w end
+env.hl = {
+    get_active_window = function() return active end,
+    get_active_monitor = function() return active.monitor end,
+    get_window = function() return active end,
+    dsp = { window = {} },
+}
+for _, name in ipairs({ "resize", "move", "fullscreen", "bring_to_top" }) do
+    env.hl.dsp.window[name] = function(args) return { name = name, args = args } end
+end
+env.hl.dispatch = function(command)
+    dispatched[#dispatched + 1] = command.name
+    local args = command.args
+    if command.name == "resize" then
+        active.size = { x = args.x, y = args.y }
+        -- Resizing may move the origin: applyRect must read it again.
+        active.at.x = active.at.x + 7
+    elseif command.name == "move" then active.at = { x = args.x, y = args.y }
+    elseif command.name == "fullscreen" then active.fullscreen = active.fullscreen == 0 and 1 or 0 end
+end
+local code = section("local function usableArea(mon)", "local function isAlreadyFull")
+    .. section("local function applyRect(win, r)", '-- also kept as a "shape_')
+    .. section("local function placeMonocle(win, mon)", "-- Takes a monocle window's shape")
+    .. section("local function fillFloating(win)", "local function unflagFloating(win)")
+    .. section("local function rememberPopout(win)", "-- Makes a popout a main window")
+    .. "local function fillByHand(win) return fillFloating(win) end\n"
+    .. section("local function toggleMaximizeWin(win)", "-- SUPER+C: hides a window")
+    .. "return { toggle = toggleMaximizeWin, step = stepWindowSize, apply = applyRect, shape = shapeOf, remember = rememberPopout }"
+local commands = assert(load(code, "window-sizing", "t", env))()
+local function reset(floating, monocle)
+    state, dispatched, borderChecks = {}, {}, 0
+    active = { address = "test", class = "test", floating = floating, fullscreen = 0,
+        monitor = mon, tags = { monocle = monocle }, at = { x = -1500, y = 300 }, size = { x = 600, y = 500 } }
+end
+for _, monocle in ipairs({ false, true }) do
+    reset(true, monocle)
+    local initial = commands.shape(active, mon)
+    commands.step(1)
+    local stepped = commands.shape(active, mon)
+    assert(math.abs(stepped.fw / stepped.fh - initial.fw / initial.fh) < 0.002)
+    initial = stepped
+    commands.toggle(active)
+    same(state.lastShape, initial)
+    assert(G.fitted({ x = active.at.x, y = active.at.y, w = active.size.x, h = active.size.y },
+        G.area(mon, env.edgeGaps())))
+    commands.toggle(active)
+    local back = commands.shape(active, mon)
+    for k, v in pairs(initial) do assert(math.abs(back[k] - v) < 0.002) end
+    -- Fill, change monitor, restore: both types preserve fractional geometry.
+    commands.toggle(active)
+    active.monitor = { x = 0, y = 0, width = 2560, height = 1440, scale = 1 }
+    local target = G.area(active.monitor, env.edgeGaps())
+    commands.apply(active, target)
+    commands.toggle(active)
+    local restored = G.rect(target, initial)
+    assert(math.abs(active.size.x - restored.w) <= 1)
+    assert(math.abs(active.size.y - restored.h) <= 1)
+end
+reset(true, false)
+local target = { x = active.at.x, y = active.at.y, w = active.size.x, h = active.size.y }
+commands.apply(active, target)
+assert(#dispatched == 0 and borderChecks == 1)
+target.w = target.w + 100
+commands.apply(active, target)
+assert(dispatched[1] == "resize" and dispatched[2] == "move")
+near(active.at.x, target.x)
+-- Near-full custom geometry stays custom instead of snapping at 94%.
+local nearFull = G.rect(G.area(mon, env.edgeGaps()), G.centred(0.96))
+commands.apply(active, nearFull)
+assert(commands.shape(active, mon) ~= nil)
+state.popoutKey, active.tags.popout = "test-popup", true
+commands.remember(active)
+assert(env.sizes["test-popup"].normal.fw > 0.95)
+env.sizes = {}
+commands.apply(active, G.area(mon, env.edgeGaps()))
+commands.remember(active)
+assert(next(env.sizes) == nil)
+reset(false, false)
+commands.step(1)
+assert(active.fullscreen == 1)
+commands.step(1)
+assert(active.fullscreen == 1 and #dispatched == 1)
+commands.step(-1)
+assert(active.fullscreen == 0 and state.small)
+commands.step(-1)
+assert(active.fullscreen == 0 and #dispatched == 2)
+active.fullscreen = 2
+commands.step(1)
+commands.step(-1)
+assert(active.fullscreen == 2 and #dispatched == 2)
+` });
+    assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
+});

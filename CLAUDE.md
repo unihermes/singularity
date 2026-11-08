@@ -41,7 +41,8 @@ filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`
   `CodexSession.qml` handles Codex; both inherit state/transcript helpers from `AiSession.qml`.
 - `dotfiles/hypr/.config/hypr/`: `hyprland.lua` requires `shared`, `platform`, `displays`, `env`,
   `autostart`, `looks`, `input`, `overrides`, `game-keys`, `binds`, `alttab`, `windows`
-  (which requires `window-rules` for the static rules and `window-keys` for the arrow keys).
+  (which requires `window-rules` for static rules, `window-keys` for arrow keys,
+  and `window-geometry` for pure sizing and placement maths).
 - `dotfiles/singularity/.config/singularity/*.defaults.*`: templates `link.sh` copies
   to the user's real files; Settings edits the copies, never the repo. Binds added to
   `binds.defaults.lua` reach existing `binds.lua` files through `tools/merge-binds.mjs` (link.sh).
@@ -62,7 +63,8 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `node --test tools/test-processes.mjs`: write queue and AI lifecycle ordering;
   includes an isolated native QML smoke test when `qs` is installed.
 - `node --test tools/test-settings.mjs`: settings public setters and stored-value repair.
-- `node --test tools/test-js.mjs`: plain-JS modules and the Hyprland Lua readers/writers.
+- `node --test tools/test-js.mjs`: plain-JS modules, Hyprland Lua readers/writers,
+  and window geometry/commands in an isolated Lua harness (requires `lua`).
 - `tools/check-hardware.sh`: `packages/hardware/*.txt` against `scripts/hardware.sh`'s capabilities.
 - `python3 tools/test-state-paths.py`: XDG migration, conflicts and compatibility paths.
 - `python3 tools/test-tools.py`: compact inventory, syntax detection and pre-commit check selection.
