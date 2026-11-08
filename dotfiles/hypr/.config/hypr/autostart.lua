@@ -5,6 +5,7 @@
 -- the XDG autostart entries managed from Settings > Startup.
 
 local S = require("shared")
+require("autostart-tray")
 
 hl.on("hyprland.start", function()
     -- Complete XDG migration before the shell or wallpaper reads persisted state.

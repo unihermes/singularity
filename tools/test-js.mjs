@@ -644,3 +644,103 @@ assert(active.fullscreen == 2 and #dispatched == 2)
 ` });
     assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
 });
+
+test("autostart tray holds expire, recover refused closes, and leave existing windows alone", () => {
+    const script = `
+local windows, timers, rules, moves = {}, {}, {}, {}
+local workspace = { id = 2 }
+hl = {
+    get_windows = function() return windows end,
+    get_active_workspace = function() return workspace end,
+    window_rule = function(spec)
+        spec.enabled = true
+        function spec:set_enabled(on) self.enabled = on end
+        table.insert(rules, spec)
+        return spec
+    end,
+    timer = function(fn, opts) table.insert(timers, { fn = fn, delay = opts.timeout }) end,
+    dsp = { window = { move = function(opts) return opts end } },
+    dispatch = function(opts) table.insert(moves, opts) end,
+}
+local function loadModule()
+${hypr("autostart-tray.lua")}
+end
+local tray = loadModule()
+tray.start("unknown")
+assert(#rules == 0)
+windows = {{ class = "Spotify" }}
+tray.start("spotify")
+assert(#rules == 0)
+windows = {}
+tray.start("spotify")
+assert(#rules == 1 and rules[1].workspace == "special:autostart-spotify silent")
+assert(rules[1].no_focus and timers[1].delay == 65000)
+tray.start("spotify")
+assert(#rules == 1)
+windows = {
+    { address = "0x1", workspace = { name = "special:autostart-spotify" } },
+    { address = "0x2", workspace = { name = "2" } },
+}
+tray.finish("spotify")
+assert(not rules[1].enabled and #moves == 0)
+assert(timers[2].delay == 1000)
+workspace = { id = 3 }
+timers[2].fn()
+assert(#moves == 1 and moves[1].workspace == 3 and moves[1].window == "address:0x1")
+assert(moves[1].follow == false)
+-- The old timeout cannot release a subsequent startup hold.
+windows = {}
+tray.start("spotify")
+timers[1].fn()
+assert(rules[2].enabled)
+-- A launcher that dies still gets automatic recovery.
+timers[3].fn()
+assert(not rules[2].enabled)
+windows = {{ address = "0x3", workspace = { name = "special:autostart-spotify" } }}
+workspace = { special = true }
+timers[4].fn()
+assert(moves[2].workspace == 3)
+-- A config reload recovers stale special workspaces, without touching others.
+workspace = { id = 4 }
+loadModule()
+assert(#moves == 3 and moves[3].workspace == 4)
+`
+    const result = spawnSync("lua", ["-"], { input: script, encoding: "utf8" })
+    assert.equal(result.status, 0, result.stderr || result.error?.message)
+})
+
+test("autostart releases holds after a tray close, native hidden startup, or timeout", () => {
+    const source = fs.readFileSync(path.join(repo, "dotfiles/singularity/.config/singularity/autostart.sh"), "utf8")
+        .split('case ${1:-run} in')[0]
+    for (const mode of ["window", "hidden", "timeout"]) {
+        const script = source + `
+declare -A tray_keys=([10]=spotify)
+sleep() { :; }
+sid() { printf 10; }
+busctl() {
+    [[ '${mode}' == timeout ]] && return 1
+    if [[ $* == *GetConnectionUnixProcessID* ]]; then printf 'u %s' "$$"
+    else printf 'as 1 ":1.77/Item"'; fi
+}
+hyprctl() {
+    if [[ $1 == clients ]]; then
+        [[ '${mode}' != window ]] || printf 'Window abc -> test:\\n\\tpid: %s\\n' "$$"
+    else printf '%s\\n' "$*" >> "$TEST_CALLS"; fi
+}
+to_tray 10
+`
+        const dir = fs.mkdtempSync("/tmp/singularity-autostart-test-")
+        try {
+            const calls = path.join(dir, "calls")
+            const result = spawnSync("bash", ["-s"], {
+                input: script, encoding: "utf8", env: { ...process.env, TEST_CALLS: calls },
+            })
+            assert.equal(result.status, 0, result.stderr)
+            const output = fs.readFileSync(calls, "utf8")
+            assert.match(output, /finish\("spotify"\)/)
+            assert.equal(output.includes("window.close"), mode === "window")
+        } finally {
+            fs.rmSync(dir, { recursive: true, force: true })
+        }
+    }
+})

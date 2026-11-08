@@ -32,7 +32,7 @@ fi
 
 # The plain-JS modules' tests, when one of them or the tests are staged
 # (test-js.mjs also reads the Hyprland modules, so they count too).
-if changed 'quickshell/services/.*\.js$|tools/(test-js|merge-binds)\.mjs$|hypr/\.config/hypr/.*\.lua$|binds\.defaults\.lua$'; then
+if changed 'quickshell/services/.*\.js$|tools/(test-js|merge-binds)\.mjs$|hypr/\.config/hypr/.*\.lua$|binds\.defaults\.lua$|singularity/autostart\.sh$'; then
     test_log=$(mktemp "${TMPDIR:-/tmp}/singularity-test-js.XXXXXX")
     trap 'rm -f -- "$test_log"' EXIT
     if ! node --test tools/test-js.mjs >"$test_log" 2>&1; then

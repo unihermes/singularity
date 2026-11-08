@@ -65,6 +65,21 @@ sid() {
 	printf '%s' "$sid"
 }
 
+# Only known tray applications get an off-screen startup hold. Keys are
+# fixed literals, never desktop-entry text interpolated into Lua.
+tray_hold() {
+	local action=$1 key=$2
+	case $key in spotify|equicord|discord|steam) ;;
+		*) return ;;
+	esac
+	hyprctl eval "require(\"autostart-tray\").$action(\"$key\")" >/dev/null 2>&1
+}
+
+release_tray() {
+	local s=$1
+	tray_hold finish "${tray_keys[$s]:-}"
+}
+
 # Starts an entry in the tray by closing its window once its tray icon is up
 # (closing earlier would quit it or abort a splash). An app with its icon up
 # 5 s and no window started hidden itself; nothing is watched past 60 s.
@@ -92,13 +107,18 @@ to_tray() {
 			[[ -n ${watching[$s]:-} && -n ${iconed[$s]:-} ]] || continue
 			printf 'tray %s: closing its window\n' "$(</proc/"$pid"/comm)"
 			hyprctl dispatch "hl.dsp.window.close({ window = \"address:0x$addr\" })" >/dev/null
+			release_tray "$s"
 			unset "watching[$s]"
 		done < <(hyprctl clients | awk '/^Window /{ a = $2 } /^\tpid:/{ print a, $2 }')
 
 		for s in "${!iconed[@]}"; do
-			(( t - iconed[$s] >= 10 )) && unset "watching[$s]" "iconed[$s]"
+			if (( t - iconed[$s] >= 10 )); then
+				release_tray "$s"
+				unset "watching[$s]" "iconed[$s]"
+			fi
 		done
 	done
+	for s in "${!watching[@]}"; do release_tray "$s"; done
 }
 
 case ${1:-run} in
@@ -118,6 +138,7 @@ run)
 
 	shopt -s nullglob
 	sessions=()
+	declare -A tray_keys=()
 	for file in "$user_dir"/*.desktop; do
 		name=${file##*/}
 		enabled "$file" || { printf 'skip %s (disabled)\n' "$name" >>"$log"; continue; }
@@ -127,8 +148,12 @@ run)
 		[[ -n $cmd ]] || { printf 'skip %s (no Exec)\n' "$name" >>"$log"; continue; }
 
 		printf 'run  %s: %s\n' "$name" "$cmd" >>"$log"
+		key=${name%.desktop}
+		tray_hold start "$key"
 		setsid sh -c "$cmd" >>"$log" 2>&1 &
-		sessions+=($!)
+		pid=$!
+		sessions+=("$pid")
+		tray_keys[$pid]=$key
 	done
 
 	(( ${#sessions[@]} )) && to_tray "${sessions[@]}" >>"$log" 2>&1 &
