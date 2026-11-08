@@ -44,6 +44,8 @@ OverlayWindow {
     visible: open
     focusMode: root.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     layerNamespace: "singularity-overlay"
+    // The power menu uses the same frosted backdrop at every display scale.
+    WlrLayershell.namespace: layerNamespace
 
     Rectangle {
         anchors.fill: parent
