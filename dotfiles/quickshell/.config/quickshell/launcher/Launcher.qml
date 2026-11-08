@@ -1,11 +1,12 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/launcher/Launcher.qml
 //
-// The search-first launcher. Four modes, cycled with Tab (Shift+Tab back):
-//   apps       CTRL+SPACE   -- desktop entries (services/Apps.qml)
-//   files      SUPER+S      -- names under $HOME via fd (services/Files.qml)
-//   clipboard  SUPER+H      -- cliphist history (services/Clipboard.qml)
-//   calc       SUPER+slash  -- arithmetic (services/Calc.js), Enter copies
+// The search-first launcher, opened with CTRL+SPACE. Four modes, cycled with
+// Tab (Shift+Tab back):
+//   apps       desktop entries (services/Apps.qml)
+//   files      names under $HOME via fd (services/Files.qml)
+//   clipboard  cliphist history (services/Clipboard.qml)
+//   calc       arithmetic (services/Calc.js), Enter copies
 // Opened via `qs ipc call launcher toggle <mode>`. In apps, a leading / ; or
 // = switches to files, clipboard or calc. calc lists its result then the
 // syntax, filtered as you type; Enter acts on the current row.

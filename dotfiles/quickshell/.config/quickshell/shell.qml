@@ -767,7 +767,7 @@ ShellRoot {
         // battery
         LazyFlyout { name: "battery"; scope: screenScope; BatteryFlyout { scope: screenScope } }
 
-        // CTRL+SPACE / SUPER+H: the launcher, centred like the workspace grid
+        // CTRL+SPACE: the launcher, centred like the workspace grid
         LazyFlyout { name: "launcher"; scope: screenScope; Launcher { scope: screenScope } }
 
         // tray menu: the app's own menu as flyout rows

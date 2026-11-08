@@ -124,14 +124,6 @@ end
 hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })  -- Move window by dragging
 hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })  -- Resize window by dragging
 
--- --- Clipboard ---
-hl.bind(mod .. " + H", hl.dsp.exec_cmd("qs ipc call launcher toggle clipboard"))  -- Clipboard history
-
--- --- Calculator and file search ---
--- two more launcher modes; Tab cycles through all four
-hl.bind(mod .. " + slash", hl.dsp.exec_cmd("qs ipc call launcher toggle calc"))   -- Calculator
-hl.bind(mod .. " + S",     hl.dsp.exec_cmd("qs ipc call launcher toggle files"))  -- Search files
-
 -- --- Claude ---
 -- the Claude sidebar (sidebar/AiSidebar.qml)
 hl.bind(mod .. " + I", hl.dsp.exec_cmd("qs ipc call claude toggle"))  -- Open or close the Claude sidebar
