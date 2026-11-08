@@ -1306,7 +1306,13 @@ end)
 -- A window moved to another workspace takes on its layout, or re-fits to
 -- its monitor if it filled the old one.
 hl.on("window.move_to_workspace", function(win, ws)
-    if not win or not ws or ws.special or hasTag(win, "menu") then return end
+    if not win or not ws or hasTag(win, "menu") then return end
+    -- A drag onto a monitor with the scratchpad open lands in that special
+    -- workspace. Keep its filled geometry without changing either layout.
+    if ws.special then
+        refitMoved(win, ws.monitor)
+        return
+    end
     local on = monocleOn(ws)
     if on ~= inMonocleState(win) then
         setWindowMonocle(win, on, ws.monitor or win.monitor)

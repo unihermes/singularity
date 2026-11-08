@@ -514,7 +514,7 @@ local function section(first, last)
     return source:sub(a, b - 1)
 end
 local active, state, dispatched, borderChecks
-local timers = {}
+local timers, hooks = {}, {}
 local env = setmetatable({ G = G, S = { GROUPBAR_HEIGHT = 24 } }, { __index = _G })
 env.popupOpts, env.sizes = { remember = true }, {}
 env.screenKind = function() return "normal" end
@@ -528,6 +528,7 @@ env.setShape = function(_, shape) state.shape = shape end
 env.captureShape = function() end
 env.unflagFloating = function(w) return w end
 env.hl = {
+    on = function(event, fn) hooks[event] = fn end,
     timer = function(fn) timers[#timers + 1] = fn end,
     get_active_window = function() return active end,
     get_active_monitor = function() return active.monitor end,
@@ -551,6 +552,7 @@ local code = section("local function usableArea(mon)", "local function isAlready
     .. section("local function applyRect(win, r)", '-- also kept as a "shape_')
     .. section("local function placeMonocle(win, mon)", "-- Takes a monocle window's shape")
     .. section("local REFILL_TICK, REFILL_SETTLE", "-- REMEMBERED SIZES.")
+    .. section("-- A window moved to another workspace takes on its layout", "-- Focuses the most recently used window")
     .. section("local function fillFloating(win)", "local function unflagFloating(win)")
     .. section("local function rememberPopout(win)", "-- Makes a popout a main window")
     .. "local function fillByHand(win) return fillFloating(win) end\n"
@@ -594,7 +596,8 @@ for _, monocle in ipairs({ false, true }) do
     reset(true, monocle)
     active.tags.filled = true
     active.monitor = { id = 2, x = 0, y = 0, width = 2560, height = 1440, scale = 1.25 }
-    commands.refit(active)
+    -- Floorp is natural + filled, and can land in an open scratchpad.
+    hooks["window.move_to_workspace"](active, { special = true, monitor = active.monitor })
     assert(state.refilling)
     active.at = { x = 120, y = 200 }
     for _ = 1, 6 do
