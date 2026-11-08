@@ -160,6 +160,7 @@ Singleton {
     readonly property alias overviewLayout: adapter.overviewLayout
     readonly property alias altTabStyle: adapter.altTabStyle
     readonly property alias altTabScope: adapter.altTabScope
+    readonly property alias altTabBlur: adapter.altTabBlur
     readonly property alias lockNotifs:  adapter.lockNotifs
     readonly property alias lockMedia:   adapter.lockMedia
     readonly property alias lockDate:    adapter.lockDate
@@ -1124,6 +1125,7 @@ Singleton {
             property string overviewLayout: Values.defaults.overviewLayout
             property string altTabStyle: Values.defaults.altTabStyle
             property string altTabScope: Values.defaults.altTabScope
+            property bool altTabBlur: Values.defaults.altTabBlur
             property bool lockNotifs: Values.defaults.lockNotifs
             property bool lockMedia: Values.defaults.lockMedia
             property bool lockDate: Values.defaults.lockDate

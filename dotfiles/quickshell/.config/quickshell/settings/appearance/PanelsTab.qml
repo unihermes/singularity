@@ -122,6 +122,13 @@ SettingsTab {
         }
         SettingsField {
             labelWidth: parent.labelWidth
+            label: "Switcher blur"
+            defaultKey: "altTabBlur"
+            hint: "Frosted backdrop behind ALT+Tab"
+            OnChip { on: Settings.altTabBlur; onClicked: Settings.set("altTabBlur", !Settings.altTabBlur) }
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
             label: "Workspace overview"
             hint: "SUPER+W"
             Choices { key: "overviewLayout" }

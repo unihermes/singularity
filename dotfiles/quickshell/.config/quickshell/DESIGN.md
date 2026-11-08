@@ -660,6 +660,9 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
 
 ### Power menu and workspace grid
 
+Appearance > Panels > Switcher blur adds the power menu's dimmed, frosted
+backdrop behind ALT+Tab on every monitor. It is off by default.
+
 Picked 2026-10-11. The power menu's list style is large rows: the icon at
 title size, the action over a line saying what it does, the key in a
 keycap at the end. The workspace grid (SUPER+W, picked 2026-10-21) is a

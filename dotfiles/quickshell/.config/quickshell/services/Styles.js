@@ -242,6 +242,7 @@ var stock = {
     notifStyle: "full",
     altTabStyle: "previews",
     altTabScope: "all",
+    altTabBlur: false,
     overviewLayout: "grid",
     overviewBackdrop: "dim",
     powerStyle: "row",

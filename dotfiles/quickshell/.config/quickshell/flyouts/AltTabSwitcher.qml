@@ -118,6 +118,15 @@ OverlayWindow {
     // alttab.lua's key-state poll catches a release before the grab.
     focusMode: WlrKeyboardFocus.Exclusive
     layerNamespace: "singularity-alttab"
+    // The optional full-screen frost matches the power menu on every display.
+    WlrLayershell.namespace: (Settings.altTabBlur || !monitor || monitor.scale >= 1
+        ? "" : "unblurred-") + layerNamespace
+
+    Rectangle {
+        anchors.fill: parent
+        visible: Settings.altTabBlur
+        color: Theme.scrim
+    }
 
     // focus the item once the window is up, or the grab does nothing
     onVisibleChanged: if (visible) keyHandler.forceActiveFocus()

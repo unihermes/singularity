@@ -70,6 +70,7 @@ var defaults = {
     overviewLayout: "grid",
     altTabStyle: "previews",
     altTabScope: "all",
+    altTabBlur: false,
     lockNotifs: false,
     lockMedia: false,
     lockDate: false,

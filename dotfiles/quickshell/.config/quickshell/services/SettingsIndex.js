@@ -198,6 +198,7 @@ var entries = [
     { page: "appearance", section: "Panels", label: "Launcher details", keywords: "launcher description comment hints keys" },
     { page: "appearance", section: "Panels", label: "Rows shown", keywords: "launcher results rows count height" },
     { page: "appearance", section: "Panels", label: "Window switcher", keywords: "alt tab switcher previews thumbnails icons titles" },
+    { page: "appearance", section: "Panels", label: "Switcher blur", keywords: "alt tab background backdrop frosted blur dim" },
     { page: "appearance", section: "Panels", label: "Switcher windows", keywords: "alt tab switcher all workspaces every workspace current scope" },
     { page: "appearance", section: "Panels", label: "Workspace overview", keywords: "super w overview grid row strip expose" },
     { page: "appearance", section: "Panels", label: "Power menu", keywords: "power menu shutdown reboot logout tiles list fullscreen" },
