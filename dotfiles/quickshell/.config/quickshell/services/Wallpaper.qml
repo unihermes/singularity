@@ -110,10 +110,7 @@ Singleton {
     onWantedChanged: refresh()
     onSchemeChanged: refresh()
     onVariantChanged: refresh()
-    onCurrentChanged: {
-        refresh()
-        if (rotate.running) rotate.restart()
-    }
+    onCurrentChanged: refresh()
 
     Connections {
         target: Settings
@@ -125,14 +122,15 @@ Singleton {
         }
     }
 
-    // a random wallpaper every Settings.wallpaperInterval minutes; any change
-    // restarts the wait
-    Timer {
-        id: rotate
-        interval: Math.max(1, Settings.wallpaperInterval) * 60000
-        running: Settings.wallpaperInterval > 0 && root.images.length > 1
-        repeat: true
-        onTriggered: root.shuffle()
+    // Align rotation to local clock boundaries, counting from midnight.
+    SystemClock {
+        precision: SystemClock.Minutes
+        onDateChanged: {
+            var interval = Settings.wallpaperInterval
+            var minute = date.getHours() * 60 + date.getMinutes()
+            if (interval > 0 && minute % interval === 0)
+                root.shuffle()
+        }
     }
 
     Process {
