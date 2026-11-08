@@ -79,7 +79,7 @@ Singleton {
     }
 
     function freeTitle() {
-        let n = tabs.length + 1
+        let n = 2
         while (tabs.some(t => t.title === "Note " + n)) n++
         return "Note " + n
     }
@@ -133,6 +133,14 @@ Singleton {
         }
         current = Math.min(current > i ? current - 1 : current, tabs.length - 1)
         saveTimer.restart()
+    }
+
+    // Closing a sticky: an empty one is removed outright, one with text
+    // stays as a tab in the window.
+    function closeDesk(i) {
+        if (!tabs[i]) return
+        if (hasContent(tabs[i])) setDesk(i, null)
+        else remove(i)
     }
 
     function select(i) {

@@ -65,7 +65,7 @@ WidgetCard {
                 card: root
                 px: Theme.fit(15)
                 text: "󰅖"
-                onClicked: Notes.setDesk(root.index, null)
+                onClicked: Notes.closeDesk(root.index)
             }
         }
     }
