@@ -744,3 +744,42 @@ to_tray 10
         }
     }
 })
+
+test("process memory and CPU belong to the helper's actual browser", () => {
+    const P = load("ProcessGroups.js")
+    const rows = P.memoryRows(`10 1 100 zen-bin
+11 10 20 forkserver
+12 11 600 Isolated Web Co
+20 1 200 floorp
+21 20 300 WebExtensions
+30 1 50 firefox
+31 30 70 GPU Process
+40 999 40 Isolated Web Co
+50 51 5 Web Content
+51 50 5 forkserver
+12|user|50|600|Isolated Web Co`)
+    assert.equal(rows.length, 10)
+    const groups = P.group(rows, "memKb")
+    const memory = Object.fromEntries(groups.map(r => [r.name, r.memKb]))
+    assert.equal(memory.zen, 720)
+    assert.equal(memory.floorp, 500)
+    assert.equal(memory.firefox, 120)
+    assert.equal(memory["Isolated Web Co"], 40)
+    assert.equal(memory["Web Content"], 5)
+    assert.equal(groups[0].pid, 12)
+    // Closing Floorp must remove its group even while Zen keeps running.
+    const zenOnly = rows.filter(r => r.pid !== 20 && r.pid !== 21)
+    assert.equal(P.group(zenOnly, "memKb").some(r => r.name === "floorp"), false)
+    const floorpOnly = rows.filter(r => r.pid === 20 || r.pid === 21)
+    assert.equal(P.group(floorpOnly, "memKb")[0].memKb, 500)
+    // top's CPU sample uses the separate ps ancestry, including forkservers.
+    const sample = [{ pid: 12, user: "user", name: "Isolated Web Co", memKb: 650, cpu: 42 },
+        { pid: 21, user: "user", name: "WebExtensions", memKb: 310, cpu: 7 }]
+    const cpu = P.group(sample, "cpu", rows)
+    assert.equal(cpu[0].name, "zen")
+    assert.equal(cpu[0].cpu, 42)
+    assert.equal(cpu[0].memKb, 650)
+    assert.equal(cpu[1].name, "floorp")
+    // A vanished parent must leave an honest helper label, not guess a browser.
+    assert.equal(P.group(sample, "cpu", [rows[2]])[0].name, "Isolated Web Co")
+})
