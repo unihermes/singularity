@@ -95,6 +95,6 @@ if changed '^tools/(context|check-syntax|check-unused|test-tools)\.py$'; then
     python3 tools/test-tools.py
 fi
 
-if changed '\.(sh|py|lua)$|^system/usr/local/bin/'; then
+if changed '\.(sh|py|lua)$|^system/usr/local/lib/singularity/'; then
     python3 tools/check-syntax.py
 fi

@@ -75,7 +75,7 @@ SettingsPage {
 
     // --- charging ------------------------------------------------------------
 
-    readonly property string chargeHelper: "/usr/local/bin/singularity-charge"
+    readonly property string chargeHelper: "/usr/local/lib/singularity/singularity-charge"
     // the kernel's charge_types name, "" until read or on a battery without one
     property string chargeMode: ""
     property int chargeStart: 0

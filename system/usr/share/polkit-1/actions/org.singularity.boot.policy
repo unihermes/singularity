@@ -10,6 +10,6 @@
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>yes</allow_active>
     </defaults>
-    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/singularity-boot</annotate>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/lib/singularity/singularity-boot</annotate>
   </action>
 </policyconfig>

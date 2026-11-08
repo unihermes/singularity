@@ -30,7 +30,7 @@ SettingsPage {
 
     // --- boot ------------------------------------------------------------------
 
-    readonly property string bootHelper: "/usr/local/bin/singularity-boot"
+    readonly property string bootHelper: "/usr/local/lib/singularity/singularity-boot"
     // [{ id, text }]: the entries an OS boots from, in menu order -- not the
     // firmware setup, the EFI default loader or the power entries
     property var bootEntries: []
@@ -87,7 +87,7 @@ SettingsPage {
 
     // --- signing in at boot ---------------------------------------------------
 
-    readonly property string autologinHelper: "/usr/local/bin/singularity-autologin"
+    readonly property string autologinHelper: "/usr/local/lib/singularity/singularity-autologin"
     // whether the helper is there at all, so the switch only shows with ly
     property bool autologinAvailable: false
     // ly logs this user in at boot -- you, or someone else ("" when off)

@@ -69,7 +69,7 @@ Singleton {
         portError = ""
         var args = [Settings.vpnFull ? "full" : "split", id]
         if (Settings.vpnFull && Settings.vpnKillSwitch) args.push("killswitch")
-        run(["sh", "-c", 'exec pkexec /usr/local/bin/singularity-vpn up "$@" < "$0"',
+        run(["sh", "-c", 'exec pkexec /usr/local/lib/singularity/singularity-vpn up "$@" < "$0"',
             dir + "/" + id + ".conf"].concat(args))
     }
 
@@ -77,7 +77,7 @@ Singleton {
         if (busy) return
         Settings.setVpnWanted(false)
         error = ""
-        run(["pkexec", "/usr/local/bin/singularity-vpn", "down"])
+        run(["pkexec", "/usr/local/lib/singularity/singularity-vpn", "down"])
     }
 
     function toggle() {
@@ -94,7 +94,7 @@ Singleton {
     function setKillSwitch(on) {
         Settings.setVpnKillSwitch(on)
         if (up && mode === "full" && !busy)
-            run(["pkexec", "/usr/local/bin/singularity-vpn", "killswitch", on ? "on" : "off"])
+            run(["pkexec", "/usr/local/lib/singularity/singularity-vpn", "killswitch", on ? "on" : "off"])
     }
 
     function run(cmd) {

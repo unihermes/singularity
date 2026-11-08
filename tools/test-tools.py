@@ -113,7 +113,7 @@ class HookTests(unittest.TestCase):
                 "scripts/hardware.sh": {"check-hardware.sh", "test-platform.py", "check-syntax.py"},
                 "tools/context.py": {"test-tools.py", "check-syntax.py"},
                 "tools/check-syntax.py": {"test-tools.py", "check-syntax.py"},
-                "system/usr/local/bin/singularity-charge": {"check-syntax.py"},
+                "system/usr/local/lib/singularity/singularity-charge": {"check-syntax.py"},
                 qs + "services/Ai.qml": {"check-unused.py", "test-processes.mjs", "test-ai-host.py", "test-notification-routing.mjs"},
                 qs + "services/Settings.qml": {"check-unused.py", "test-settings.mjs"},
                 qs + "services/SettingsValues.js": {"check-unused.py", "test-js.mjs", "test-settings.mjs"},

@@ -326,25 +326,32 @@ if [[ -e /sys/firmware/efi/efivars/LoaderConfigTimeout-4a67b082-0a4c-41cf-b6c7-4
   sudo bootctl set-timeout "" || true
 fi
 
+# The pkexec helpers live in /usr/local/lib/singularity, off PATH, so they
+# don't turn up in shell completion; remove copies from the old location.
+for old in singularity-remove singularity-vpn singularity-boot singularity-charge \
+           singularity-autologin linux-bootmgr-first; do
+  [[ -e /usr/local/bin/$old ]] && sudo rm -f "/usr/local/bin/$old"
+done
+
 # singularity-remove: removes packages the user installed, with their unused
 # dependencies, for Settings > Software Update, through pkexec.
 log "installing the package removal helper"
-put /usr/local/bin/singularity-remove
+put /usr/local/lib/singularity/singularity-remove
 put /usr/share/polkit-1/actions/org.singularity.remove.policy
 
 # singularity-vpn: brings the WireGuard tunnel up or down and sets the kill
 # switch, for the VPN module through pkexec. Keeps only a config's tunnel
 # keys, so nothing in one runs as root.
 log "installing the VPN helper"
-put /usr/local/bin/singularity-vpn
+put /usr/local/lib/singularity/singularity-vpn
 put /usr/share/polkit-1/actions/org.singularity.vpn.policy
 
 # singularity-boot: lists systemd-boot's entries and sets the default
 # (LoaderEntryDefault) for Settings > Startup, through pkexec with a polkit
-# action for the local session. Root-owned in /usr/local/bin.
+# action for the local session. Root-owned in /usr/local/lib/singularity, off PATH.
 if [[ -n $esp ]]; then
   log "installing the boot entry helper"
-  put /usr/local/bin/singularity-boot
+  put /usr/local/lib/singularity/singularity-boot
   put /usr/share/polkit-1/actions/org.singularity.boot.policy
 fi
 
@@ -355,7 +362,7 @@ if [[ -n $esp && -d /sys/firmware/efi ]]; then
   sudo pacman -S --needed --noconfirm efibootmgr >/dev/null
   if efibootmgr 2>/dev/null | grep -q 'Windows Boot Manager'; then
     log "keeping systemd-boot first in the firmware boot order"
-    put /usr/local/bin/linux-bootmgr-first
+    put /usr/local/lib/singularity/linux-bootmgr-first
     put /etc/systemd/system/linux-bootmgr-first.service
     sudo systemctl daemon-reload
     sudo systemctl enable linux-bootmgr-first.service
@@ -565,10 +572,10 @@ fi
 
 # singularity-charge: the Dell BIOS's charge mode and Custom limits, via
 # dell_laptop, for Settings > Power & Idle through pkexec. Takes only a mode
-# and two numbers; root-owned in /usr/local/bin.
+# and two numbers; root-owned in /usr/local/lib/singularity, off PATH.
 if has charge-modes; then
   log "installing the battery charge helper"
-  put /usr/local/bin/singularity-charge
+  put /usr/local/lib/singularity/singularity-charge
   put /usr/share/polkit-1/actions/org.singularity.charge.policy
 fi
 
@@ -812,7 +819,7 @@ if [[ -n $dm_unit ]]; then
 
     # singularity-autologin: ly's autologin on/off for Settings > Startup,
     # for the pkexec caller only (PKEXEC_UID), never an argument.
-    put /usr/local/bin/singularity-autologin
+    put /usr/local/lib/singularity/singularity-autologin
     put /usr/share/polkit-1/actions/org.singularity.autologin.policy
   fi
 else

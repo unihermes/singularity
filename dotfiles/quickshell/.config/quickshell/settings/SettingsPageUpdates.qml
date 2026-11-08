@@ -114,7 +114,7 @@ SettingsPage {
 
     // --- removing --------------------------------------------------------------
 
-    readonly property string removeHelper: "/usr/local/bin/singularity-remove"
+    readonly property string removeHelper: "/usr/local/lib/singularity/singularity-remove"
     property bool removeHelperFound: false
     Process {
         id: removeHelperProbe
