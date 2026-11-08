@@ -181,6 +181,28 @@ hl.window_rule({
 })
 hl.window_rule({ name = "scratchpad-terminal-exempt", match = { class = "^(" .. SCRATCH_CLASS .. ")$" }, tag = "+monocle-exempt" })
 
+-- A layer grab ending over the bar can refocus Hyprland's last window,
+-- including one on a hidden special workspace. Hidden scratchpad windows
+-- must not accept that fallback; showing the workspace makes them focusable.
+local hiddenScratchpad = hl.window_rule({
+    name = "hidden-scratchpad-no-focus",
+    match = { workspace = "special:scratchpad" },
+    no_focus = true,
+})
+local function syncScratchpadFocus()
+    local shown = false
+    for _, mon in ipairs(hl.get_monitors()) do
+        if mon.active_special_workspace and mon.active_special_workspace.name == "special:scratchpad" then
+            shown = true
+            break
+        end
+    end
+    hiddenScratchpad:set_enabled(not shown)
+    hl.exec_scheduled_prop_refresh_immediately()
+end
+syncScratchpadFocus()
+hl.on("workspace.special_active", syncScratchpadFocus)
+
 -- Starts the scratchpad terminal, or toggles its workspace.
 function toggleScratchpad(terminal)
     local terminals = hl.get_windows({ class = SCRATCH_CLASS })
@@ -195,16 +217,13 @@ function toggleScratchpad(terminal)
         local mon = hl.get_active_monitor()
         local closing = mon and mon.active_special_workspace
             and mon.active_special_workspace.name == "special:scratchpad"
+        if not closing then
+            hiddenScratchpad:set_enabled(false)
+            hl.exec_scheduled_prop_refresh_immediately()
+        end
         hl.dispatch(hl.dsp.workspace.toggle_special("scratchpad"))
-        if closing then
-            -- A pointer refresh without keyboard following leaves focus on
-            -- the hidden terminal. A flyout then restores it and reopens the
-            -- scratchpad. Refocus the visible surface before restoring policy.
-            local pos = hl.get_cursor_pos()
-            local follow = hl.get_config("input:follow_mouse")
-            hl.config({ input = { follow_mouse = 1 } })
-            hl.dispatch(hl.dsp.cursor.move({ x = pos.x, y = pos.y }))
-            hl.config({ input = { follow_mouse = follow } })
+        if not closing then
+            hl.dispatch(hl.dsp.focus({ window = "address:" .. scratch.address }))
         end
     end
 end
