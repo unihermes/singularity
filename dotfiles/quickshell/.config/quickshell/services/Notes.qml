@@ -5,7 +5,8 @@
 // a moment after typing, flush() at once. Shown by the Notes window
 // (SUPER+N), where every tab lives, and on the desktop, where a tab shows
 // as a sticky while it has a place there (desk). The editors follow each
-// other's typing through edited().
+// other's typing through edited(). A tab is either text or a checklist
+// (kind); switching keeps what the other side holds.
 
 pragma Singleton
 
@@ -16,7 +17,8 @@ import QtQuick
 Singleton {
     id: root
 
-    // each tab: id (fixed, for the desktop), title, text, and desk: where
+    // each tab: id (fixed, for the desktop), title, text, kind ("text" or
+    // "list"), items (the checklist's { text, done } rows), and desk: where
     // it sits on the desktop (fx, fy, size, w and h, and screen, as a desktop
     // widget's place) or null when it's only in the window. Never empty
     // once loaded.
@@ -30,7 +32,7 @@ Singleton {
     signal edited(int index)
 
     function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }
-    function blank(title) { return { id: newId(), title: title, text: "", format: "html", desk: null } }
+    function blank(title) { return { id: newId(), title: title, text: "", format: "html", kind: "text", items: [], desk: null } }
     function indexOf(id) { return tabs.findIndex(t => t.id === id) }
 
     function editorText(tab) {
@@ -40,10 +42,68 @@ Singleton {
             .replace(/>/g, "&gt;").replace(/\n/g, "<br>")
     }
 
+    // the words of an editor's html (its head and style are not words)
+    function plainOf(tab) {
+        if (tab.format !== "html") return tab.text
+        return tab.text.replace(/<head>[\s\S]*?<\/head>|<style[\s\S]*?<\/style>/gi, "")
+            .replace(/<br\s*\/?>|<\/(p|div|li|h\d)>/gi, "\n").replace(/<[^>]*>/g, "")
+            .replace(/&nbsp;|&#160;/gi, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
+    }
+
     function hasContent(tab) {
         if (!tab) return false
-        const text = tab.format === "html" ? tab.text.replace(/<[^>]*>/g, "") : tab.text
-        return text.replace(/&nbsp;|&#160;/gi, " ").trim() !== ""
+        return plainOf(tab).trim() !== "" || (tab.items || []).some(it => it.text.trim() !== "")
+    }
+
+    // --- checklists --------------------------------------------------------
+
+    // typing in a row: no new array, so the editors keep their place
+    function setItemText(i, k, text) {
+        const it = tabs[i] && tabs[i].items[k]
+        if (!it || it.text === text) return
+        it.text = text
+        saveTimer.restart()
+        edited(i)
+    }
+
+    function setItems(i, items) { if (tabs[i]) patch(i, { items: items }) }
+
+    function toggleItem(i, k) {
+        const items = tabs[i].items.map(it => ({ text: it.text, done: it.done }))
+        items[k].done = !items[k].done
+        setItems(i, items)
+    }
+
+    // a new empty row after row k (-1 for the top)
+    function addItem(i, k) {
+        const items = tabs[i].items.slice()
+        items.splice(k + 1, 0, { text: "", done: false })
+        setItems(i, items)
+    }
+
+    function removeItem(i, k) {
+        const items = tabs[i].items.slice()
+        items.splice(k, 1)
+        setItems(i, items)
+    }
+
+    function clearDone(i) { setItems(i, tabs[i].items.filter(it => !it.done)) }
+
+    // A list made from text takes its lines, and text made from a list its
+    // rows (struck when done), but only into an empty side.
+    function setKind(i, kind) {
+        const t = tabs[i]
+        if (!t || t.kind === kind) return
+        const f = { kind: kind }
+        if (kind === "list" && t.items.length === 0) {
+            f.items = plainOf(t).split("\n").map(l => l.trim()).filter(l => l !== "")
+                .map(l => ({ text: l, done: false }))
+        } else if (kind === "text" && !plainOf(t).trim()) {
+            const esc = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            f.text = t.items.map(it => it.done ? "<s>" + esc(it.text) + "</s>" : esc(it.text)).join("<br>")
+            f.format = "html"
+        }
+        patch(i, f)
     }
 
     function toggleFormat(editor, kind) {
@@ -190,6 +250,9 @@ Singleton {
                 .map(x => ({ id: typeof x.id === "string" && x.id !== "" ? x.id : root.newId(),
                              title: x.title, text: typeof x.text === "string" ? x.text : "",
                              format: x.format === "html" ? "html" : "plain",
+                             kind: x.kind === "list" ? "list" : "text",
+                             items: (Array.isArray(x.items) ? x.items : []).filter(it => it && typeof it.text === "string")
+                                 .map(it => ({ text: it.text, done: it.done === true })),
                              desk: x.desk ? root.deskOf(x.desk) : null }))
             if (t.length === 0) return
             const fresh = (d.tabs || []).some(x => x && typeof x.title === "string" && !x.id)

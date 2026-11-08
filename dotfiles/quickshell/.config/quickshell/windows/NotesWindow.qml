@@ -7,12 +7,15 @@
 //
 //   click a tab           switch to it
 //   double-click a tab    rename it (Enter keeps, Escape drops)
-//   󰐃  on the open tab    put it on the desktop, or take it off (lit there)
-//   󰅖  on the open tab    delete it; a second click confirms when it has text
+//   Text / List           the open note as free text or a checklist
+//   Pin                   put it on the desktop, or take it off (lit there)
+//   Delete                delete it; a second click confirms when it has text
 //   Ctrl+T / Ctrl+W       new tab / delete the open one
+//   Ctrl+L                text or checklist
 //   Ctrl+Tab, Ctrl+PgDn   next tab (Shift / PgUp for the previous)
 //   Ctrl+B / Ctrl+I       bold / italic selection
 //   Ctrl+Shift+X          strike through selection
+//   a checklist:          Enter adds a row, Backspace on an empty one removes it
 //   Escape                hide the window
 
 import Quickshell
@@ -27,8 +30,8 @@ FloatingWindow {
     title: "Notes"
     color: "transparent"
 
-    implicitWidth: Theme.fit(400)
-    implicitHeight: Theme.fit(480)
+    implicitWidth: Theme.fit(440)
+    implicitHeight: Theme.fit(520)
 
     function open() { visible = true }
     function close() {
@@ -38,7 +41,7 @@ FloatingWindow {
     function toggle() { visible ? close() : open() }
 
     onClosed: close()
-    onVisibleChanged: if (visible) editor.forceActiveFocus()
+    onVisibleChanged: if (visible) root.focusNote()
 
     // the tab being renamed, -1 for none
     property int renaming: -1
@@ -60,6 +63,21 @@ FloatingWindow {
         id: disarm
         interval: 3000
         onTriggered: root.armed = -1
+    }
+
+    readonly property var tab: Notes.tabs[Notes.current] || Notes.blank("")
+    readonly property bool list: tab.kind === "list"
+    readonly property int doneCount: tab.items.filter(it => it.done).length
+
+    // the open note's editor takes the keys
+    function focusNote() {
+        if (list) { if (checklist.count > 0) checklist.focusRow(checklist.count - 1); else checklist.insertAfter(-1) }
+        else editor.forceActiveFocus()
+    }
+
+    function setKind(kind) {
+        Notes.setKind(Notes.current, kind)
+        Qt.callLater(focusNote)
     }
 
     // the editor follows the open tab; set rather than bound, so typing
@@ -173,7 +191,7 @@ FloatingWindow {
                             if (root.renaming !== tab.index) return
                             if (keep) Notes.rename(tab.index, text)
                             root.renaming = -1
-                            editor.forceActiveFocus()
+                            root.focusNote()
                         }
                         Keys.onReturnPressed: finish(true)
                         Keys.onEnterPressed: finish(true)
@@ -181,47 +199,24 @@ FloatingWindow {
                         onActiveFocusChanged: if (!activeFocus) finish(true)
                     }
 
-                    // on the desktop: a pin, lit while it's there; the open
-                    // tab's puts it there or takes it off
+                    // a checklist
                     Text {
-                        visible: !tab.editing && (tab.open || !!tab.modelData.desk)
+                        visible: !tab.editing && tab.modelData.kind === "list"
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "󰐃"
-                        color: tab.modelData.desk ? Theme.accent
-                            : pinMouse.containsMouse ? Theme.textStrong : Theme.subtext
+                        text: "󰄬"
+                        color: tab.open ? Theme.accent : Theme.subtext
                         font.family: Theme.fontIcon
                         font.pixelSize: Theme.fontSmall
-
-                        MouseArea {
-                            id: pinMouse
-                            anchors.fill: parent
-                            anchors.margins: -Theme.spaceS
-                            enabled: tab.open
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Notes.toggleDesk(tab.index)
-                        }
                     }
 
-                    // delete, on the open tab only
-                    Text {
-                        visible: tab.open && !tab.editing
+                    // on the desktop
+                    Rectangle {
+                        visible: !tab.editing && !!tab.modelData.desk
                         anchors.verticalCenter: parent.verticalCenter
-                        // armed, the alert check every confirm-twice button shows
-                        text: root.armed === tab.index ? "󰄬" : "󰅖"
-                        color: root.armed === tab.index ? Theme.alert
-                            : closeMouse.containsMouse ? Theme.textStrong : Theme.subtext
-                        font.family: Theme.fontIcon
-                        font.pixelSize: Theme.fontSmall
-
-                        MouseArea {
-                            id: closeMouse
-                            anchors.fill: parent
-                            anchors.margins: -Theme.spaceS
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.removeTab(tab.index)
-                        }
+                        width: Theme.fit(6)
+                        height: width
+                        radius: width / 2
+                        color: Theme.accent
                     }
                 }
             }
@@ -235,7 +230,7 @@ FloatingWindow {
             text: "+"
             onClicked: {
                 Notes.add()
-                editor.forceActiveFocus()
+                root.focusNote()
             }
         }
     }
@@ -249,22 +244,93 @@ FloatingWindow {
         width: root.width - Theme.windowPad * 2
         height: root.height - y - Theme.windowPad
 
-        Row {
-            id: formatTools
+        Item {
+            id: tools
             x: Theme.panelPad
             y: Theme.spaceS
-            spacing: Theme.spaceS
-            FlyoutChip { text: "B"; selected: editor.cursorSelection.font.bold; onClicked: Notes.toggleFormat(editor, "bold") }
-            FlyoutChip { text: "I"; selected: editor.cursorSelection.font.italic; onClicked: Notes.toggleFormat(editor, "italic") }
-            FlyoutChip { text: "S̶"; selected: editor.cursorSelection.font.strikeout; onClicked: Notes.toggleFormat(editor, "strikeout") }
+            width: parent.width - Theme.panelPad * 2
+            height: Theme.chipHeight
+
+            Row {
+                spacing: Theme.spaceS
+                FlyoutChip { text: "Text"; selected: !root.list; onClicked: root.setKind("text") }
+                FlyoutChip { text: "List"; selected: root.list; onClicked: root.setKind("list") }
+            }
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceS
+                FlyoutChip { visible: !root.list; text: "B"; selected: editor.cursorSelection.font.bold; onClicked: Notes.toggleFormat(editor, "bold") }
+                FlyoutChip { visible: !root.list; text: "I"; selected: editor.cursorSelection.font.italic; onClicked: Notes.toggleFormat(editor, "italic") }
+                FlyoutChip { visible: !root.list; text: "S̶"; selected: editor.cursorSelection.font.strikeout; onClicked: Notes.toggleFormat(editor, "strikeout") }
+                FlyoutChip {
+                    visible: root.list
+                    text: "Clear done"
+                    enabled: root.doneCount > 0
+                    onClicked: Notes.clearDone(Notes.current)
+                }
+            }
+        }
+
+        Rectangle {
+            id: rule
+            x: Theme.panelPad
+            y: tools.y + tools.height + Theme.spaceS
+            width: tools.width
+            height: Theme.borderWidth
+            color: Theme.stroke
+        }
+
+        NoteChecklist {
+            id: checklist
+            visible: root.list
+            x: Theme.panelPad
+            y: rule.y + rule.height + Theme.spaceM
+            width: tools.width
+            height: footer.y - y - Theme.spaceS
+            slot: Notes.current
+            onEscaped: root.close()
+        }
+
+        // pin and delete, and the checklist's tally
+        Item {
+            id: footer
+            x: Theme.panelPad
+            y: parent.height - height - Theme.spaceM
+            width: tools.width
+            height: Theme.chipHeight
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.list ? (root.tab.items.length === 0 ? "" : root.doneCount + " of " + root.tab.items.length + " done") : ""
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontSmall
+            }
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceS
+                FlyoutChip {
+                    text: root.tab.desk ? "Pinned" : "Pin"
+                    icon: "󰐃"
+                    selected: !!root.tab.desk
+                    onClicked: Notes.toggleDesk(Notes.current)
+                }
+                FlyoutChip {
+                    text: root.armed === Notes.current ? "Sure?" : "Delete"
+                    icon: "󰅖"
+                    selected: root.armed === Notes.current
+                    onClicked: root.removeTab(Notes.current)
+                }
+            }
         }
 
         Flickable {
             id: flick
+            visible: !root.list
             x: Theme.panelPad
-            y: formatTools.y + formatTools.height + Theme.spaceS
-            width: parent.width - Theme.panelPad * 2
-            height: parent.height - y - Theme.panelPad
+            y: rule.y + rule.height + Theme.spaceM
+            width: tools.width
+            height: footer.y - y - Theme.spaceS
             contentWidth: width
             contentHeight: editor.implicitHeight
             clip: true
@@ -310,6 +376,7 @@ FloatingWindow {
                     else if (event.key === Qt.Key_I) Notes.toggleFormat(editor, "italic")
                     else if (event.key === Qt.Key_X && (event.modifiers & Qt.ShiftModifier)) Notes.toggleFormat(editor, "strikeout")
                     else if (event.key === Qt.Key_T) Notes.add()
+                    else if (event.key === Qt.Key_L) root.setKind(root.list ? "text" : "list")
                     else if (event.key === Qt.Key_W) root.removeTab(Notes.current)
                     else if (event.key === Qt.Key_Tab || event.key === Qt.Key_PageDown) Notes.step(1)
                     else if (event.key === Qt.Key_Backtab || event.key === Qt.Key_PageUp) Notes.step(-1)
@@ -320,6 +387,7 @@ FloatingWindow {
         }
 
         ScrollBar {
+            visible: !root.list
             anchors.right: parent.right
             anchors.rightMargin: 2
             flickable: flick

@@ -843,6 +843,12 @@ Panels > Desktop Widgets.
   under the stats. Notes support bold, italic and struck text; the Notes
   window has formatting chips and both editors accept Ctrl+B, Ctrl+I and
   Ctrl+Shift+X. Existing plain notes are converted when edited.
+  A note is text or a checklist (`NoteChecklist`: a box to tick, rows to
+  type in, Enter for a new row, Backspace on an empty one removes it). The
+  window's Text / List chips and the sticky's 󰄬 switch it; the other side's
+  content is kept, and a list made from text takes its lines. The window
+  keeps Pin and Delete (two clicks when it has text) under the note, and
+  tabs only show the title, a 󰄬 for a list and a dot while pinned.
 - **System info:** a head of the distro's mark in the accent beside the
   host (bold) and a dimmed line, over a hairline rule. Medium: the system
   and kernel under the host, then uptime, packages and local IP as three

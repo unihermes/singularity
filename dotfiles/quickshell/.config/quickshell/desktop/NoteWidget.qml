@@ -4,10 +4,12 @@
 // A sticky note on the desktop: one of the Notes tabs (SUPER+N), to read
 // and type in. Its title in the accent, + for a new note beside it and ×
 // to take it off the desktop (it stays in the Notes window). Typing here
-// and in the window lands in the same tab (Notes.edited).
+// and in the window lands in the same tab (Notes.edited). 󰄬 turns it into a
+// checklist and back.
 
 import QtQuick
 import "../services"
+import "../flyouts"
 
 WidgetCard {
     id: root
@@ -19,7 +21,8 @@ WidgetCard {
     signal letGo()
 
     readonly property int index: Notes.indexOf(noteId)
-    readonly property var tab: Notes.tabs[index] || { title: "", text: "" }
+    readonly property var tab: Notes.tabs[index] || { title: "", text: "", kind: "text" }
+    readonly property bool list: tab.kind === "list"
 
     // set rather than bound, so typing doesn't fight a binding
     // (not while it's going: its tab already gone)
@@ -57,6 +60,13 @@ WidgetCard {
             WidgetGlyph {
                 card: root
                 px: Theme.fit(15)
+                text: "󰄬"
+                opacity: root.list ? 1 : 0.55
+                onClicked: Notes.setKind(root.index, root.list ? "text" : "list")
+            }
+            WidgetGlyph {
+                card: root
+                px: Theme.fit(15)
                 text: "󰐕"
                 active: !!root.desk
                 onClicked: root.desk.newNoteBeside("note:" + root.noteId)
@@ -70,8 +80,28 @@ WidgetCard {
         }
     }
 
+    NoteChecklist {
+        visible: root.list
+        anchors.top: top.bottom
+        anchors.topMargin: Theme.fit(8)
+        width: parent.width
+        height: parent.height - y
+        slot: root.index
+        textColor: root.fg
+        dimColor: root.fgFaint
+        accentColor: root.accent
+        tickColor: Theme.textOnAccent
+        selectionColor: root.accent
+        selectedTextColor: Theme.textOnAccent
+        fontFamily: root.font
+        fontWeight: root.weightBody
+        fontPixel: root.textBody
+        onEscaped: root.letGo()
+    }
+
     Flickable {
         id: flick
+        visible: !root.list
         anchors.top: top.bottom
         anchors.topMargin: Theme.fit(6)
         width: parent.width
