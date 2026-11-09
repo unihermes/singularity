@@ -133,6 +133,12 @@ Singleton {
         history.filter(e => e.phoneId === nid).forEach(e => remove(e, true))
     }
 
+    // After a reconnect, nids is everything still on the phone: the rest
+    // was dismissed or read there while it was away
+    function keepPhone(nids) {
+        history.filter(e => e.phoneId && nids.indexOf(e.phoneId) < 0).forEach(e => remove(e, true))
+    }
+
     function dismissOnPhone(entries) {
         new Set(entries.map(e => e.phoneId).filter(id => id)).forEach(id => PhoneLink.dismiss({ id: id }))
     }

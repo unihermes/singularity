@@ -64,6 +64,7 @@ Singleton {
                 else if (m.event === "ready") { root.hostName = m.name; root.error = "" }
                 else if (m.event === "error") root.error = m.text
                 else if (m.event === "cancelled") Notifications.removePhone(m.nid)
+                else if (m.event === "current") Notifications.keepPhone(m.nids)
             }
         }
         onRunningChanged: if (!running) root.devices = []

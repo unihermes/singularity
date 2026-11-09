@@ -18,6 +18,7 @@
 #        {"event": "state", "devices": [...]}      after every change
 #        {"event": "error", "text": ...}
 #        {"event": "cancelled", "nid": ...}       the phone dropped a notification
+#        {"event": "current", "nids": [...]}      all the phone has, after a reconnect
 #
 # The phone always connects to us: it answers our UDP identity (broadcast,
 # or sent back to its own broadcast) over TCP, and we take the TLS client's
@@ -51,6 +52,9 @@ PROTOCOL = 8
 PAIR_TIMEOUT = 30
 MAX_NOTIFICATIONS = 50
 CARRY_FOR = 300
+# quiet seconds after the last notification a reconnected phone resends,
+# before the ones it didn't resend count as gone
+SYNC_QUIET = 3
 # how often a paired phone that's away is asked, by its last address, and
 # everyone is, by broadcast
 ASK_EVERY = 10
@@ -187,6 +191,9 @@ class Link:
         self.battery = -1
         self.charging = False
         self.notifications = []
+        # ids the phone resent since linking, until SYNC_QUIET passes
+        self.sync = None
+        self.sync_timer = None
 
     def send(self, kind, body, extra=None):
         p = packet(kind, body)
@@ -198,6 +205,8 @@ class Link:
             pass
 
     def close(self):
+        if self.sync_timer:
+            self.sync_timer.cancel()
         try:
             self.writer.close()
         except (OSError, RuntimeError):
@@ -442,9 +451,25 @@ class Daemon:
                 self.emit()
 
     def linked(self, link):
-        """A paired phone's link is up: catch up on what it has."""
+        """A paired phone's link is up: catch up on what it has, and drop what
+        it dismissed while away."""
         link.send("kdeconnect.notification.request", {"request": True})
+        link.sync = set()
+        self.settle(link)
         self.clipboard_watch()
+
+    def settle(self, link):
+        if link.sync_timer:
+            link.sync_timer.cancel()
+        link.sync_timer = asyncio.get_running_loop().call_later(SYNC_QUIET, self.synced, link)
+
+    def synced(self, link):
+        present, link.sync, link.sync_timer = link.sync, None, None
+        if present is None or self.links.get(link.id) is not link:
+            return
+        link.notifications = [n for n in link.notifications if n["id"] in present]
+        self.out({"event": "current", "nids": [str(nid) for nid in present]})
+        self.emit()
 
     def set_paired(self, link):
         self.pairing.pop(link.id, None)
@@ -515,10 +540,15 @@ class Daemon:
         if nid is None:
             return
         if b.get("isCancel"):
+            if link.sync is not None:
+                link.sync.discard(nid)
             link.notifications = [n for n in link.notifications if n["id"] != nid]
             self.out({"event": "cancelled", "nid": str(nid)})
             self.emit()
             return
+        if link.sync is not None:
+            link.sync.add(nid)
+            self.settle(link)
         icon = ""
         if b.get("payloadHash") and p.get("payloadTransferInfo"):
             icon = os.path.join(ICONS, re.sub(r"[^A-Za-z0-9]", "", str(b["payloadHash"])) + ".png")
