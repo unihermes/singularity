@@ -313,11 +313,11 @@ local function applyRect(win, r)
     local addr = "address:" .. win.address
     local x, y, w, h = math.floor(r.x), math.floor(r.y), math.floor(r.w), math.floor(r.h)
     local fresh = win
-    if math.abs(win.size.x - w) > 1 or math.abs(win.size.y - h) > 1 then
+    if math.abs(win.size.x - w) > 0 or math.abs(win.size.y - h) > 0 then
         hl.dispatch(hl.dsp.window.resize({ x = w, y = h, window = addr }))
         fresh = hl.get_window(addr) or win
     end
-    if math.abs(fresh.at.x - x) > 1 or math.abs(fresh.at.y - y) > 1 then
+    if math.abs(fresh.at.x - x) > 0 or math.abs(fresh.at.y - y) > 0 then
         hl.dispatch(hl.dsp.window.move({ x = x, y = y, window = addr }))
     end
     syncFillBorder(win.address)
