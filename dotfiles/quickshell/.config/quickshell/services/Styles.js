@@ -338,8 +338,9 @@ function resolve(s) {
         flyoutAttach: attach,
         flyoutAnim: !s.flyoutAnim || s.flyoutAnim === "auto" ? st.anim : s.flyoutAnim,
         barHeight: s.barHeight,
-        // the gap between bar modules follows Spacing, never closing up
-        moduleGap: modules === "taskbar" ? 0 : Math.max(1, Math.round(2 * s.spacing / 100)),
+        // the gap between bar modules follows Spacing, never closing up;
+        // Glass's square chips sit flush
+        moduleGap: modules === "taskbar" || st.glass ? 0 : Math.max(1, Math.round(2 * s.spacing / 100)),
         opacity: Math.round(s.seeThrough * see),
         glass: !!st.glass,
     }

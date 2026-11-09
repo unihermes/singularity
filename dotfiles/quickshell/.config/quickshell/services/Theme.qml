@@ -474,7 +474,7 @@ Singleton {
     readonly property real barOpacity: panelOpacity
     // chips follow the bar's height, floored so the frame doesn't eat them
     readonly property int moduleHeight: moduleTaskbar ? barHeight : Math.max(18, barHeight - 6)
-    readonly property int modulePadH:   sp(Settings.modulePad + (moduleTaskbar ? 4 : 0))
+    readonly property int modulePadH:   sp(Math.max(0, Settings.modulePad + (moduleTaskbar ? 4 : glass ? -1 : 0)))
     // One open window's slot in the bar's strip, and the hover box's
     // height there and in the tray; slots sit flush, so neighbouring boxes
     // meet
@@ -489,11 +489,11 @@ Singleton {
     // gap between adjacent modules, the same on both sides of the bar
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare
-    readonly property int moduleWidth:  54
+    readonly property int moduleWidth:  glass ? 40 : 54
     // the taskbar's Start, search and Task View buttons, square
-    readonly property int buttonWidth:  moduleTaskbar ? moduleHeight : moduleWidth
+    readonly property int buttonWidth:  moduleTaskbar ? moduleHeight : glass ? moduleHeight + modulePadH * 2 : moduleWidth
     // the space inside the chip's frame, capped to it
-    readonly property int iconSize:     Math.min(moduleHeight - 8, barFs(Settings.barIconSize))
+    readonly property int iconSize:     Math.min(moduleHeight - (glass ? 4 : 8), barFs(Settings.barIconSize))
     // one size for every bar label (clock, media, counts), capped the same way
     readonly property int barLabelSize: Math.min(moduleHeight - 8, barFs(15))
 }
