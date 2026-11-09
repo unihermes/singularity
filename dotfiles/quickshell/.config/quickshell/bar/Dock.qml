@@ -82,7 +82,7 @@ PanelWindow {
         onTriggered: Quickshell.execDetached(["hyprctl", "eval", "singularityRefitWindows()"])
     }
     // only the pill takes the pointer
-    mask: Region { item: hit }
+    mask: Region { item: hit; Region { item: edge } }
 
     // Pinned apps first, then the other open ones; each as { key, name,
     // source, entry, windows, pinned }, windows being Hyprland toplevels.
@@ -303,15 +303,22 @@ PanelWindow {
         }
     }
 
-    // The shown dock only takes input around the pill; while hidden,
-    // a thin strip across the screen's foot lets the pointer call it back.
+    // The shown dock takes input around the pill; a thin strip across the
+    // screen's foot, there whether the Dock is shown or not, calls it back
+    // and keeps it out while the pointer rests on the edge.
     Item {
         id: hit
         readonly property real restH: pill.height + dock.margin
-        x: dock.shown ? Math.round((dock.width - pill.width) / 2) : 0
-        width: dock.shown ? pill.width : dock.width
-        y: dock.height - (dock.shown ? restH : Theme.sp(4))
-        height: dock.shown ? restH : Theme.sp(4)
+        x: Math.round((dock.width - pill.width) / 2)
+        width: pill.width
+        y: dock.height - (dock.shown ? restH : 0)
+        height: dock.shown ? restH : 0
+    }
+    Item {
+        id: edge
+        width: dock.width
+        y: dock.height - height
+        height: Theme.sp(4)
 
         HoverHandler { id: edgeHover }
     }
