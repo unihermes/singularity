@@ -116,14 +116,29 @@ fi
 log "linking dotfiles"
 ./link.sh
 
+# needs_build OUT KEY SRC...: true when OUT is missing, older than a source, or
+# was built under a different KEY (compiler/Qt version, recorded in the cache).
+build_stamps="${XDG_CACHE_HOME:-$HOME/.cache}/singularity/build-stamps"
+needs_build() {
+  local out=$1 key=$2 src; shift 2
+  [[ -x $out && "$(cat "$build_stamps/${out##*/}" 2>/dev/null)" == "$key" ]] || return 0
+  for src; do [[ $src -nt $out ]] && return 0; done
+  return 1
+}
+record_build() { mkdir -p "$build_stamps" && printf '%s' "$2" > "$build_stamps/${1##*/}"; }
+
 log "building alttab-relay"
 # alttab-relay: ALT+Tab's fast path to Quickshell (alttab-relay.cpp). It
 # depends on an unversioned wire format and -mno-direct-extern-access, so a
 # failure only warns: alttab-ipc.sh falls back to `qs ipc call`.
 alttab_dir="dotfiles/hypr/.config/hypr"
-if g++ -std=c++20 -O2 -mno-direct-extern-access \
+alttab_key="$(g++ -dumpfullversion) qt$(pkg-config --modversion Qt6Core)"
+if ! needs_build "$alttab_dir/alttab-relay" "$alttab_key" "$alttab_dir/alttab-relay.cpp"; then
+  log "alttab-relay is up to date"
+elif g++ -std=c++20 -O2 -mno-direct-extern-access \
     "$alttab_dir/alttab-relay.cpp" -o "$alttab_dir/alttab-relay" \
     $(pkg-config --cflags --libs Qt6Core Qt6Network); then
+  record_build "$alttab_dir/alttab-relay" "$alttab_key"
   log "alttab-relay built"
 else
   warn "alttab-relay failed to build -- alttab-ipc.sh will fall back to \`qs ipc call\` (slower, but works)"
@@ -133,12 +148,17 @@ log "building display-curve"
 # display-curve: a lifted tone curve for the displays display-fixes.lua lists;
 # a failure only warns.
 curve_dir="dotfiles/hypr/.config/hypr"
+curve_key="$(cc -dumpfullversion) wayland$(pkg-config --modversion wayland-client)"
 curve_gen=$(mktemp -d)
-if wayland-scanner client-header "$curve_dir/wlr-gamma-control-unstable-v1.xml" \
+if ! needs_build "$curve_dir/display-curve" "$curve_key" \
+    "$curve_dir/display-curve.c" "$curve_dir/wlr-gamma-control-unstable-v1.xml"; then
+  log "display-curve is up to date"
+elif wayland-scanner client-header "$curve_dir/wlr-gamma-control-unstable-v1.xml" \
       "$curve_gen/wlr-gamma-control-unstable-v1-client-protocol.h" \
     && wayland-scanner private-code "$curve_dir/wlr-gamma-control-unstable-v1.xml" "$curve_gen/protocol.c" \
     && cc -O2 -I"$curve_gen" "$curve_dir/display-curve.c" "$curve_gen/protocol.c" \
       -o "$curve_dir/display-curve" -lwayland-client -lm; then
+  record_build "$curve_dir/display-curve" "$curve_key"
   log "display-curve built"
 else
   warn "display-curve failed to build -- displays listed in display-fixes.lua keep their own tone curve"
