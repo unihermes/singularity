@@ -502,11 +502,9 @@ Singleton {
         + "substantial standalone content, not for snippets or code meant for a file. For mockups, "
         + "always use self-contained interactive HTML artifacts with working local controls. To change "
         + "one, write it again in full."
-    // for the local models, which skip long guides: the short recipe, with the
-    // live tokens a command away
+    // the live tokens a command away, for mockups
     readonly property string mockupPrompt: " For a mockup of the shell, first run `qs ipc call theme css` "
-        + "and paste its :root block unchanged; use only those variables and its font. Then read the "
-        + "\"Quick recipe\" section of " + home + "/singularity/MOCKUPS.md and follow it."
+        + "and paste its :root block unchanged; use only those variables and its font."
     property var artifactQueue: []
     function openArtifact(part, browser) {
         artifactQueue = artifactQueue.concat([{ part: part, browser: browser }])
