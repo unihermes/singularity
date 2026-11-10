@@ -435,6 +435,8 @@ ShellRoot {
             property string openFlyout: ""
             // the Control Centre page the next open lands on ("" for home)
             property string controlPage: ""
+            // what's typed into the taskbar's search box (BarSearchFlyout)
+            property string searchQuery: ""
             onOpenFlyoutChanged: {
                 if (openFlyout !== "") root.closeFlyouts(screenScope)
                 if (root.backdropFlyouts.indexOf(openFlyout) !== -1) root.backdropScope = screenScope
@@ -815,6 +817,12 @@ ShellRoot {
         LazyFlyout { name: "updates"; scope: screenScope; UpdatesFlyout { scope: screenScope } }
 
         // notification history
+
+        // the taskbar's search, typed into the bar's box
+        LazyFlyout {
+            name: "barsearch"; scope: screenScope
+            BarSearchFlyout { scope: screenScope; settingsWin: settingsWindow }
+        }
 
         // control centre
         LazyFlyout {

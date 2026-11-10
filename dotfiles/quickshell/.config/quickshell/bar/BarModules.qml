@@ -81,26 +81,40 @@ Item {
         onActivated: screenScope.toggleFlyout("workspaces", activeApp)
     }
 
-    // Search: the Windows taskbar's search box, or the menu bar's magnifier;
-    // either opens the launcher.
+    // Search: the Windows taskbar's search box, or the menu bar's magnifier
+    // (which opens the launcher). The box is typed into: a click opens
+    // BarSearchFlyout, whose keys show here as the box's text.
     Item {
         id: searchBtn
         visible: Settings.widgetVisible("search")
         readonly property bool box: Theme.moduleTaskbar
+        readonly property bool typing: box && screenScope.openFlyout === "barsearch"
         property bool slideX: false
         signal activated()
-        onActivated: barModules.shellRoot.launcherToggled("apps")
+        onActivated: {
+            if (!box) barModules.shellRoot.launcherToggled("apps")
+            else if (!typing) screenScope.toggleFlyout("barsearch", searchBtn)
+        }
 
         implicitWidth: box ? Theme.sp(240) : Theme.buttonWidth
         implicitHeight: Theme.barHeight
 
-        // the box is a light field on the dark bar, as Windows draws it
+        // the box is a light field on the dark bar, as Windows draws it;
+        // white with an accent edge while it's being typed into
         Rectangle {
             visible: searchBtn.box
             anchors.fill: parent
-            color: searchMouse.containsMouse ? Theme.bright : Qt.darker(Theme.bright, 1.08)
+            color: searchBtn.typing ? "white" : searchMouse.containsMouse ? Theme.bright : Qt.darker(Theme.bright, 1.08)
             border.width: Theme.borderWidth
-            border.color: searchMouse.containsMouse ? Theme.accent : "transparent"
+            border.color: searchMouse.containsMouse && !searchBtn.typing ? Theme.accent : "transparent"
+            Rectangle {
+                visible: searchBtn.typing
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 2
+                color: Theme.accent
+            }
         }
         Rectangle {
             visible: !searchBtn.box && searchMouse.containsMouse
@@ -122,19 +136,40 @@ Item {
                 font.pixelSize: Theme.iconSize
             }
             Text {
+                id: boxText
                 visible: searchBtn.box
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Type here to search"
-                color: Qt.lighter(Theme.base, 2.2)
+                width: Math.min(implicitWidth, searchBtn.width - Theme.sp(12) * 2 - Theme.iconSize - Theme.sp(10) - caret.width)
+                elide: Text.ElideLeft
+                text: searchBtn.typing && screenScope.searchQuery !== "" ? screenScope.searchQuery : "Type here to search"
+                color: searchBtn.typing && screenScope.searchQuery !== "" ? Theme.base : Qt.lighter(Theme.base, 2.2)
                 font.family: Theme.fontText
                 font.pixelSize: Theme.barLabelSize
+            }
+        }
+        // the caret, after the typed text (before the hint)
+        Rectangle {
+            id: caret
+            visible: searchBtn.typing
+            x: searchBtn.typing && screenScope.searchQuery !== ""
+                ? Theme.sp(12) + Theme.iconSize + Theme.sp(10) + boxText.width + 1
+                : Theme.sp(12) + Theme.iconSize + Theme.sp(10) - 1
+            anchors.verticalCenter: parent.verticalCenter
+            width: 1
+            height: Theme.barLabelSize + Theme.spaceS
+            color: Theme.base
+            SequentialAnimation on opacity {
+                running: caret.visible
+                loops: Animation.Infinite
+                NumberAnimation { to: 0; duration: 500; easing.type: Easing.InOutQuad }
+                NumberAnimation { to: 1; duration: 500; easing.type: Easing.InOutQuad }
             }
         }
         MouseArea {
             id: searchMouse
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: searchBtn.box ? Qt.IBeamCursor : Qt.PointingHandCursor
             onClicked: searchBtn.activated()
         }
     }

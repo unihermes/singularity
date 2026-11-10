@@ -12,6 +12,7 @@
 
 import Quickshell
 import Quickshell.Bluetooth
+import Quickshell.Widgets
 import Quickshell.Services.Pipewire
 import QtQuick
 import "../services"
@@ -171,8 +172,63 @@ Column {
 
     // --- Connectivity -----------------------------------------
 
+    // Pane: every toggle as a button, three to a line, the name under it;
+    // a split one has a chevron part that opens its details under the grid
+    readonly property bool quick: Theme.style === "pane"
+    readonly property var quickItems: [
+        { key: "wifi", shown: Network.device !== "", icon: !Network.powered ? "󰤭" : "󰤨", title: "Wi-Fi",
+          lit: Network.powered, split: true, toggle: () => Network.setPowered(!Network.powered) },
+        { key: "bluetooth", shown: !!root.adapter, icon: root.btOn ? "󰂯" : "󰂲", title: "Bluetooth",
+          lit: root.btOn, split: true, toggle: () => { if (root.bar) root.bar.setBtPowered(root.adapter, !root.btOn) } },
+        { key: "vpn", shown: Vpn.servers.length > 0, icon: Vpn.up ? "󰦝" : "󰖂", title: "VPN",
+          lit: Vpn.up, split: true, usable: Vpn.available, toggle: () => Vpn.toggle() },
+        { key: "airplane", shown: true, icon: root.cc.airplane ? "󰀝" : "󰀞", title: "Airplane",
+          lit: root.cc.airplane, toggle: () => root.cc.setAirplane(!root.cc.airplane) },
+        { key: "quiet", shown: true, icon: Notifications.dnd ? "󰂛" : "󰂚", title: "Quiet",
+          lit: Notifications.dnd, toggle: () => Notifications.toggleDnd() },
+        { key: "night", shown: true, icon: root.cc.shellRoot.nightLight ? "󰖔" : "󰖙", title: "Night Light",
+          lit: root.cc.shellRoot.nightLight, split: true, usable: root.cc.shellRoot.hasHyprsunset,
+          toggle: () => root.cc.shellRoot.nightLight = !root.cc.shellRoot.nightLight },
+        { key: "awake", shown: true, icon: root.cc.shellRoot.keepAwake ? "󰅶" : "󰾪", title: "Keep Awake",
+          lit: root.cc.shellRoot.keepAwake, toggle: () => root.cc.shellRoot.keepAwake = !root.cc.shellRoot.keepAwake },
+        { key: "game", shown: true, icon: "󰊴", title: "Game Mode", lit: GameMode.active, toggle: () => GameMode.toggle() },
+        { key: "profile", shown: PpdProfile.profile !== "", icon: "󰓅",
+          title: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "Power" }).text,
+          lit: false, split: true,
+          toggle: () => PpdProfile.set(root.cc.nextOf(PpdProfile.choices.map(c => c.value), PpdProfile.profile)) },
+    ].filter(q => q.shown)
+
+    Grid {
+        id: quickGrid
+        visible: root.quick
+        width: parent.width
+        columns: 3
+        columnSpacing: Theme.spaceL
+        rowSpacing: Theme.spaceL
+        readonly property real cell: (width - columnSpacing * (columns - 1)) / columns
+
+        Repeater {
+            model: root.quick ? root.quickItems : []
+            QuickButton {
+                required property var modelData
+                width: quickGrid.cell
+                icon: modelData.icon
+                title: modelData.title
+                lit: modelData.lit
+                split: modelData.split === true
+                usable: modelData.usable !== false
+                expanded: root.open === modelData.key
+                onClicked: modelData.toggle()
+                onMoreClicked: {
+                    root.cc.expand(modelData.key)
+                    if (modelData.key === "wifi" && root.open === "wifi") Network.refreshList()
+                }
+            }
+        }
+    }
+
     ControlRow {
-        visible: Network.device !== ""
+        visible: !root.quick && (Network.device !== "")
         icon: !Network.powered ? "󰤭" : Network.ssid !== "" ? "󰤨" : "󰤯"
         title: "Wi-Fi"
         caption: !Network.powered ? "Off"
@@ -236,7 +292,7 @@ Column {
     readonly property var btConnected: btSaved.filter(d => d.connected)
 
     ControlRow {
-        visible: !!root.adapter
+        visible: !root.quick && (!!root.adapter)
         icon: !root.btOn ? "󰂲" : root.btConnected.length > 0 ? "󰂱" : "󰂯"
         title: "Bluetooth"
         caption: !root.btOn ? (root.bar && root.bar.btAdapterBlocked(root.adapter) ? "Blocked" : "Off")
@@ -270,7 +326,7 @@ Column {
     }
 
     ControlRow {
-        visible: Vpn.servers.length > 0
+        visible: !root.quick && (Vpn.servers.length > 0)
         icon: Vpn.up ? "󰦝" : "󰖂"
         title: "VPN"
         caption: Vpn.busy ? "…" : Vpn.stalled ? "No answer"
@@ -307,6 +363,7 @@ Column {
     }
 
     ControlRow {
+        visible: !root.quick
         icon: root.cc.airplane ? "󰀝" : "󰀞"
         title: "Airplane"
         caption: root.cc.airplane ? "Radios off" : "Off"
@@ -314,11 +371,12 @@ Column {
         onClicked: root.cc.setAirplane(!root.cc.airplane)
     }
 
-    FlyoutDivider {}
+    FlyoutDivider { visible: !root.quick }
 
     // --- Quick settings ---------------------------------------
 
     ControlRow {
+        visible: !root.quick
         icon: Notifications.dnd ? "󰂛" : "󰂚"
         title: "Quiet"
         caption: Notifications.dnd ? "Banners held" : "Off"
@@ -327,6 +385,7 @@ Column {
     }
 
     ControlRow {
+        visible: !root.quick
         icon: root.cc.shellRoot.nightLight ? "󰖔" : "󰖙"
         title: "Night Light"
         caption: root.cc.shellRoot.nightLight ? Settings.nightLightKelvin + " K" : "Off"
@@ -350,6 +409,7 @@ Column {
     }
 
     ControlRow {
+        visible: !root.quick
         icon: root.cc.shellRoot.keepAwake ? "󰅶" : "󰾪"
         title: "Keep Awake"
         caption: root.cc.shellRoot.keepAwake ? "No sleep" : "Off"
@@ -358,6 +418,7 @@ Column {
     }
 
     ControlRow {
+        visible: !root.quick
         icon: "󰊴"
         title: "Game Mode"
         caption: GameMode.active ? "On" : "Off"
@@ -367,7 +428,7 @@ Column {
 
     // a click steps the profile; the chevron shows all three
     ControlRow {
-        visible: PpdProfile.profile !== ""
+        visible: !root.quick && (PpdProfile.profile !== "")
         icon: "󰓅"
         title: "Power"
         caption: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "" }).text
@@ -455,13 +516,14 @@ Column {
     // --- Tools and pages --------------------------------------
 
     // the hovered button's name, shown in the header card
-    readonly property var stripActs: cc.toolActions.concat([
+    readonly property var stripActs: quick ? cc.toolActions : cc.toolActions.concat([
         { icon: "󰏘", page: "appearance", name: "Appearance" },
         { icon: "󰕮", page: "widgets", name: "Bar Widgets" },
     ])
 
     Row {
         id: strip
+        visible: !root.quick || root.cc.toolsShown
         width: parent.width
         spacing: Theme.spaceS
 
@@ -483,6 +545,67 @@ Column {
                     }
                 }
             }
+        }
+    }
+
+    // Pane: the account bar -- your face or initial and name, then the
+    // tools (…), Appearance, Settings and Power
+    Item {
+        visible: root.quick
+        width: parent.width
+        height: Theme.fieldHeight + Theme.spaceL
+
+        ClippingRectangle {
+            id: account
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fs(30)
+            height: width
+            radius: width / 2
+            color: Theme.accent
+            Text {
+                anchors.centerIn: parent
+                visible: face.status !== Image.Ready
+                text: Quickshell.env("USER").charAt(0).toUpperCase()
+                color: Theme.textOnAccent
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fontBody
+            }
+            Image {
+                id: face
+                anchors.fill: parent
+                source: root.cc.faceUrl
+                fillMode: Image.PreserveAspectCrop
+                sourceSize.width: width * 2
+                asynchronous: true
+            }
+        }
+        Text {
+            anchors.left: account.right
+            anchors.leftMargin: Theme.spaceL
+            anchors.right: accountActs.left
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            text: Quickshell.env("USER")
+            elide: Text.ElideRight
+            color: Theme.textStrong
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontBody
+        }
+        Row {
+            id: accountActs
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceXs
+            IconButton {
+                icon: "󰇘"
+                lit: root.cc.toolsShown
+                onClicked: root.cc.toolsShown = !root.cc.toolsShown
+            }
+            IconButton { icon: "󰏘"; onClicked: root.cc.page = "appearance" }
+            IconButton { icon: "󰒓"; onClicked: root.cc.run("settings") }
+            IconButton { icon: "󰐥"; onClicked: root.cc.page = "power" }
         }
     }
 }

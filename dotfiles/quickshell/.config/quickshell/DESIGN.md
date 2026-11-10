@@ -720,7 +720,7 @@ a glyph, its name and its state in words, accent-filled while on.
 - **Header:** a `HeadCard`: the Arch mark, user@host over the system's name
   and uptime ("Arch Linux · up 21h 27m"; the hovered strip button's name in
   its place), Settings, Lock and Power at its end, Power opening Power. The
-  search field is always under it; its matches (most used first, Enter
+  search field is always under it (not under Pane, whose taskbar box is the search); its matches (most used first, Enter
   launches) replace the rest while there's a query; its apps button shows
   the same list alphabetically without a query, and Escape clears the query,
   then closes the flyout.
@@ -739,16 +739,27 @@ a glyph, its name and its state in words, accent-filled while on.
   playing** line while there is a track (title · artist, the controls, a
   click on the title opening Media), and **the strip**: the screen tools,
   the windows, then Appearance and Bar Widgets as square buttons.
-- **Glass home** (`ControlCentreGlass`) has three layouts, set in
-  Appearance > Panels (`controlLayout`, shown only under Glass): **Full**
-  (connectivity card beside Quiet and Night Light, Keep Awake and Game Mode,
-  then a card of tall Display and Sound capsules (`GlassVSlider`) with the
-  power profiles beside them), **Compact** (every toggle a labelled disc,
-  four to a line, the power profile as the last disc; both sliders in one
-  card; the tools and the two pages as one row of discs) and **Mini** (the
-  discs alone in one row, the sliders side by side, a one-line media chip;
-  its gear shows the pages, power pill and tools). A right click on Wi-Fi or
-  Bluetooth opens its details in Compact and Mini.
+- **Glass home** (`ControlCentreGlass`, picked 2026-11-09) is Apple's, under a
+  profile card (your `~/.face` or initial, your name over host and uptime, Lock
+  and Power as round buttons) and the search field: a connectivity card (Wi-Fi,
+  Bluetooth, Airplane as round switches; a row's words open its details in a
+  card under it) beside Quiet and Night Light, Keep Awake and Game Mode under
+  them, the three power profiles, a Display card and a Sound card (the device
+  named at the end, Sound's chevron picking the output), a now-playing chip
+  while a track is up, the tools as round buttons and Appearance and Bar
+  Widgets as capsules.
+- **Pane home** (`ControlCentreHome`, picked 2026-11-09): the header card (no
+  search field), volume and brightness as segmented bars, then every toggle as a
+  button (`QuickButton`), three to a line with its name under it; a split
+  button's chevron part opens its details under the grid. A now-playing line,
+  then the account bar: your face and name, and … (the tool strip), Appearance,
+  Settings and Power. Typing in the panel goes to the taskbar's search.
+- **Taskbar search** (Pane, `BarSearchFlyout`): the taskbar's box is typed into.
+  A click on it (or the first letter typed anywhere in the Control Centre)
+  opens a panel from the box while the text shows in the box with a caret; it
+  lists the best match large, then more apps and Settings pages, or your top
+  apps while the box is empty. Arrows walk it, Enter opens, Escape clears then
+  closes. Other styles' search buttons still open the launcher.
 - **Pages** have no Back row: the heading reads
   `CONTROL CENTRE › APPEARANCE`, the first part clickable as the way
   back (`FlyoutHeading.crumb`); what the page sums up sits in its hints.
@@ -762,10 +773,10 @@ a glyph, its name and its state in words, accent-filled while on.
   hints), every module a square, dim while hidden; a click hides or shows
   it, hover names it in the page heading. Arrange on the bar (the bar's
   edit mode, where order and the centre anchor are set) and Reset.
-- **Power:** the power menu's actions and Restart Shell as tiles with a
-  short line each; Log Out, Reboot and Shut Down take a second click
-  ("Click again", alert-filled for 3 s). Reboot's chevron shows the
-  one-off reboots (Windows, BIOS) as a chip region under the tiles.
+- **Power:** the power menu's actions and Restart Shell as full-width rows with a
+  short note each; Log Out, Reboot and Shut Down take a second click
+  ("Click again", alert text for 3 s). Reboot's chevron shows the
+  one-off reboots (Windows, BIOS) as a chip region under the list.
 
 ## Desktop widgets
 

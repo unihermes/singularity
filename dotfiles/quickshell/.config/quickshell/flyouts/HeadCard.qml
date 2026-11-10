@@ -69,6 +69,9 @@ Item {
             font.family: Theme.fontText
             font.weight: Theme.weightStrong
             font.pixelSize: root.compact ? Theme.fontBody : Theme.fontTitle
+            // a long name shrinks to body size before it elides
+            fontSizeMode: root.compact ? Text.FixedSize : Text.HorizontalFit
+            minimumPixelSize: Theme.fontBody
         }
         Repeater {
             model: root.compact ? [] : root.lines.filter(l => l !== "")

@@ -139,13 +139,6 @@ SettingsTab {
             Choices { key: "powerStyle" }
         }
         SettingsField {
-            visible: Theme.glass
-            labelWidth: parent.labelWidth
-            label: "Control Centre"
-            hint: "Glass's home"
-            Choices { key: "controlLayout" }
-        }
-        SettingsField {
             labelWidth: parent.labelWidth
             label: "Backdrop"
             hint: "Behind the overlays"

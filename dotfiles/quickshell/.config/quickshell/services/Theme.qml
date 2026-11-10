@@ -419,8 +419,6 @@ Singleton {
     readonly property string levelStyle: Settings.levelStyle
     // the power menu -- see Looks.js and PowerMenu
     readonly property string powerStyle: Settings.powerStyle
-    // Glass's Control Centre home: full, compact or mini -- see ControlCentreGlass
-    readonly property string controlLayout: Settings.controlLayout
     // behind the full-screen overlays (overview, ALT+Tab, the full
     // launcher, the power menu's row and list): dimmed, clear or solid
     readonly property color backdrop: Settings.overviewBackdrop === "solid" ? base

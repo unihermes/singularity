@@ -247,7 +247,6 @@ var stock = {
     overviewLayout: "grid",
     overviewBackdrop: "dim",
     powerStyle: "row",
-    controlLayout: "full",
     levelStyle: "pill",
 }
 

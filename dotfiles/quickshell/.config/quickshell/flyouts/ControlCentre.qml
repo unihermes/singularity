@@ -46,7 +46,7 @@ FlyoutPanel {
     }
     Component.onCompleted: if (open) opened()
     onOpenChanged: if (open) opened()
-        else { page = ""; appSearch.text = ""; browsingApps = false; toolHover = "" }
+        else { page = ""; appSearch.text = ""; browsingApps = false; toolHover = ""; toolsShown = false }
     Connections {
         target: controlCentre.scope
         function onControlPageChanged() {
@@ -109,6 +109,9 @@ FlyoutPanel {
     readonly property string lookName: (Looks.looks[Settings.look] || {}).name || Settings.look
 
     FileView { id: hostFile; path: "/proc/sys/kernel/hostname"; blockLoading: true }
+    // your face for the Glass profile card and Pane's account bar, when ~/.face exists
+    FileView { id: faceFile; path: Quickshell.env("HOME") + "/.face"; printErrors: false }
+    readonly property url faceUrl: faceFile.loaded ? "file://" + Quickshell.env("HOME") + "/.face" : ""
     FileView { id: osFile; path: "/etc/os-release"; blockLoading: true }
     readonly property string osName: {
         var m = osFile.text().match(/^NAME="?([^"\n]*)"?$/m)
@@ -116,6 +119,8 @@ FlyoutPanel {
     }
     // the strip button under the pointer, named in the header card
     property string toolHover: ""
+    // Pane: the tools strip, shown from the account bar's … button
+    property bool toolsShown: false
 
     // the next of a list after `now`, round to the first
     function nextOf(list, now) {
@@ -175,6 +180,8 @@ FlyoutPanel {
     // --- Home -------------------------------------------------
 
     readonly property bool home: page === ""
+    // Pane keeps no search field here: the taskbar's box is the search
+    readonly property bool paneSearch: Theme.style === "pane"
     readonly property bool searching: home && (appQuery !== "" || browsingApps)
     property string appQuery: ""
     property bool browsingApps: false
@@ -187,6 +194,16 @@ FlyoutPanel {
         }
         if (!home || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
                 || event.text.length !== 1 || event.text < " ") return
+        // Pane searches from the taskbar's box: the first letter goes there
+        if (paneSearch) {
+            var box = scope.barWindow ? scope.barWindow.widgetItem("search") : null
+            if (box && box.visible) {
+                scope.searchQuery = event.text
+                scope.toggleFlyout("barsearch", box)
+                event.accepted = true
+            }
+            return
+        }
         appSearch.text += event.text
         Qt.callLater(appSearch.moveToEnd)
         event.accepted = true
@@ -194,18 +211,15 @@ FlyoutPanel {
     property point lastPointer: Qt.point(-1, -1)
 
     HeadCard {
-        visible: controlCentre.home
+        visible: controlCentre.home && !Theme.glass
         glyph: "󰣇"
-        title: (Theme.glass ? "" : Quickshell.env("USER") + "@") + hostFile.text().trim()
-        // under Glass one line; elsewhere the system and uptime under the
-        // name, or the name of the strip button under the pointer
-        lines: Theme.glass ? ["up " + controlCentre.uptime]
-            : [controlCentre.toolHover !== "" ? controlCentre.toolHover
-                : [controlCentre.osName, "up " + controlCentre.uptime].filter(s => s !== "").join(" · ")]
-        compact: Theme.glass
+        title: Quickshell.env("USER") + "@" + hostFile.text().trim()
+        // the system and uptime under the name, or the name of the strip
+        // button under the pointer
+        lines: [controlCentre.toolHover !== "" ? controlCentre.toolHover
+            : [controlCentre.osName, "up " + controlCentre.uptime].filter(s => s !== "").join(" · ")]
 
         IconButton {
-            visible: !Theme.glass
             icon: "󰒓"
             implicitWidth: Theme.controlSize + Theme.spaceS
             implicitHeight: implicitWidth
@@ -214,24 +228,101 @@ FlyoutPanel {
         }
         IconButton {
             icon: "󰌾"
-            implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
+            implicitWidth: Theme.controlSize + Theme.spaceS
             implicitHeight: implicitWidth
-            glyphSize: Theme.glass ? Theme.fontIconSize : Theme.fontIconSize + Theme.spaceS
+            glyphSize: Theme.fontIconSize + Theme.spaceS
             onClicked: controlCentre.run("lock")
         }
         IconButton {
             icon: "󰐥"
-            implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
+            implicitWidth: Theme.controlSize + Theme.spaceS
             implicitHeight: implicitWidth
-            glyphSize: Theme.glass ? Theme.fontIconSize : Theme.fontIconSize + Theme.spaceS
+            glyphSize: Theme.fontIconSize + Theme.spaceS
             onClicked: controlCentre.page = "power"
+        }
+    }
+
+    // Glass: a profile card -- your face (~/.face) or initial, your name
+    // over the host and uptime, Lock and Power as round buttons
+    Item {
+        visible: controlCentre.home && Theme.glass
+        width: parent.width
+        height: Theme.fs(46)
+
+        ClippingRectangle {
+            id: avatar
+            anchors.verticalCenter: parent.verticalCenter
+            width: Theme.fs(38)
+            height: width
+            radius: width / 2
+            color: Theme.accent
+            Text {
+                anchors.centerIn: parent
+                visible: face.status !== Image.Ready
+                text: Quickshell.env("USER").charAt(0).toUpperCase()
+                color: Theme.textOnAccent
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fs(17)
+            }
+            Image {
+                id: face
+                anchors.fill: parent
+                source: controlCentre.faceUrl
+                fillMode: Image.PreserveAspectCrop
+                sourceSize.width: width * 2
+                asynchronous: true
+            }
+        }
+        Column {
+            anchors.left: avatar.right
+            anchors.leftMargin: Theme.spaceL
+            anchors.right: profileButtons.left
+            anchors.rightMargin: Theme.spaceL
+            anchors.verticalCenter: parent.verticalCenter
+            Text {
+                width: parent.width
+                text: Quickshell.env("USER")
+                elide: Text.ElideRight
+                color: Theme.textStrong
+                font.family: Theme.fontText
+                font.weight: Theme.weightStrong
+                font.pixelSize: Theme.fontBody
+            }
+            Text {
+                width: parent.width
+                text: hostFile.text().trim() + " · up " + controlCentre.uptime
+                elide: Text.ElideRight
+                color: Theme.subtext
+                font.family: Theme.fontText
+                font.pixelSize: Theme.fontCaption
+            }
+        }
+        Row {
+            id: profileButtons
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spaceM
+            Repeater {
+                model: [{ icon: "󰌾", act: "lock" }, { icon: "󰐥", act: "power" }]
+                GlassDot {
+                    required property var modelData
+                    implicitWidth: Theme.fs(30)
+                    icon: modelData.icon
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: parent.modelData.act === "power" ? controlCentre.page = "power" : controlCentre.run("lock")
+                    }
+                }
+            }
         }
     }
 
     // typing anywhere in the panel lands here; matches replace the tiles
     FlyoutInput {
         id: appSearch
-        visible: controlCentre.home
+        visible: controlCentre.home && !controlCentre.paneSearch
         glyph: "󰍉"
         actionGlyph: "󰀻"
         actionLabel: "Browse applications"
@@ -769,7 +860,7 @@ FlyoutPanel {
     }
 
     // --- Power ----------------------------------------------
-    // the power menu's actions as tiles, then Restart shell; the ones
+    // the power menu's actions as rows, then Restart shell; the ones
     // that end the session take a second click. Reboot's chevron offers
     // the one-off reboots (Windows, BIOS), which the power menu leaves out.
 
@@ -778,34 +869,36 @@ FlyoutPanel {
         logout: "To the login screen", reboot: "Restarts", poweroff: "Powers off"
     })
     readonly property var confirmed: ["logout", "reboot", "poweroff"]
-    readonly property var powerTiles: Session.actions.concat([
+    readonly property var powerActions: Session.actions.concat([
         { act: "restartshell", label: "Restart Shell", icon: "󰑓", detail: "Reloads Quickshell" }
     ])
 
-    Flow {
-        id: powerGrid
+    Column {
         visible: controlCentre.page === "power"
         width: parent.width
-        spacing: Theme.spaceS
-        readonly property real cell: (width - spacing) / 2
 
         Repeater {
-            model: controlCentre.powerTiles
+            model: controlCentre.powerActions
 
-            QuickTile {
+            FlyoutRow {
+                id: powerRow
                 required property var modelData
-                required property int index
-                readonly property bool odd: controlCentre.powerTiles.length % 2 === 1
-                // an odd one out runs the width
-                width: odd && index === controlCentre.powerTiles.length - 1 ? powerGrid.width : powerGrid.cell
-                icon: modelData.icon
-                title: modelData.label
-                caption: controlCentre.shortDetail[modelData.act] || modelData.detail || ""
+                readonly property bool hasTargets: modelData.act === "reboot" && Session.rebootTargets.length > 0
+                leadingIcon: modelData.icon
+                label: modelData.label
+                note: armed ? "" : controlCentre.shortDetail[modelData.act] || modelData.detail || ""
                 confirmText: controlCentre.confirmed.indexOf(modelData.act) !== -1 ? "Click again" : ""
-                split: modelData.act === "reboot" && Session.rebootTargets.length > 0
-                expanded: controlCentre.expanded === "reboot"
-                onClicked: controlCentre.run(modelData.act)
-                onMoreClicked: controlCentre.expand("reboot")
+                reserve: hasTargets ? rebootOptions.width + Theme.spaceS : 0
+                onActivated: controlCentre.run(modelData.act)
+
+                IconButton {
+                    id: rebootOptions
+                    visible: powerRow.hasTargets
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: controlCentre.expanded === "reboot" ? "󰅀" : "󰅂"
+                    onClicked: controlCentre.expand("reboot")
+                }
             }
         }
     }
