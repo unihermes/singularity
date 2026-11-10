@@ -1,14 +1,13 @@
 // Singularity - Quickshell
 // ~/.config/quickshell/flyouts/ControlCentre.qml
 //
-// The control centre flyout, as quick-settings tiles. Home: who and how
-// long up (with lock and power), an app search whose matches take the
-// tiles' place, the tiles (each says its state; a split chevron opens its
-// details in place, a 󰅂 a page), then the screen tools and the windows as
-// one row of buttons. Pages: Appearance, Bar Widgets and Power, each tiles
-// too. Root's state and the standalone windows come in as required
-// properties; the bar button's right click asks for Power through
-// scope.controlPage.
+// The control centre flyout. Home: who, on what and how long up (with
+// settings, lock and power), an app search whose matches take the rest's
+// place, then the home itself: ControlCentreGlass under Glass,
+// ControlCentreHome (switch rows, sliders, the tool strip) elsewhere.
+// Pages: Appearance, Bar Widgets and Power, as tiles. Root's state and the
+// standalone windows come in as required properties; the bar button's
+// right click asks for Power through scope.controlPage.
 
 import Quickshell
 import Quickshell.Widgets
@@ -47,7 +46,7 @@ FlyoutPanel {
     }
     Component.onCompleted: if (open) opened()
     onOpenChanged: if (open) opened()
-        else { page = ""; appSearch.text = ""; browsingApps = false }
+        else { page = ""; appSearch.text = ""; browsingApps = false; toolHover = "" }
     Connections {
         target: controlCentre.scope
         function onControlPageChanged() {
@@ -110,6 +109,13 @@ FlyoutPanel {
     readonly property string lookName: (Looks.looks[Settings.look] || {}).name || Settings.look
 
     FileView { id: hostFile; path: "/proc/sys/kernel/hostname"; blockLoading: true }
+    FileView { id: osFile; path: "/etc/os-release"; blockLoading: true }
+    readonly property string osName: {
+        var m = osFile.text().match(/^NAME="?([^"\n]*)"?$/m)
+        return m ? m[1] : ""
+    }
+    // the strip button under the pointer, named in the header card
+    property string toolHover: ""
 
     // the next of a list after `now`, round to the first
     function nextOf(list, now) {
@@ -191,9 +197,21 @@ FlyoutPanel {
         visible: controlCentre.home
         glyph: "󰣇"
         title: (Theme.glass ? "" : Quickshell.env("USER") + "@") + hostFile.text().trim()
-        lines: ["up " + controlCentre.uptime]
-        compact: true
+        // under Glass one line; elsewhere the system and uptime under the
+        // name, or the name of the strip button under the pointer
+        lines: Theme.glass ? ["up " + controlCentre.uptime]
+            : [controlCentre.toolHover !== "" ? controlCentre.toolHover
+                : [controlCentre.osName, "up " + controlCentre.uptime].filter(s => s !== "").join(" · ")]
+        compact: Theme.glass
 
+        IconButton {
+            visible: !Theme.glass
+            icon: "󰒓"
+            implicitWidth: Theme.controlSize + Theme.spaceS
+            implicitHeight: implicitWidth
+            glyphSize: Theme.fontIconSize + Theme.spaceS
+            onClicked: controlCentre.run("settings")
+        }
         IconButton {
             icon: "󰌾"
             implicitWidth: Theme.glass ? Theme.fs(34) : Theme.controlSize + Theme.spaceS
@@ -354,107 +372,10 @@ FlyoutPanel {
 
     FlyoutDivider { visible: controlCentre.home && !controlCentre.searching && !Theme.glass }
 
-    Flow {
-        id: tiles
+    ControlCentreHome {
         visible: controlCentre.home && !controlCentre.searching && !Theme.glass
-        width: parent.width
-        spacing: Theme.spaceS
-        readonly property real cell: (width - spacing) / 2
-
-        QuickTile {
-            width: tiles.cell
-            icon: Notifications.dnd ? "󰂛" : "󰂚"
-            title: "Quiet"
-            caption: Notifications.dnd ? "Banners held" : "Off"
-            lit: Notifications.dnd
-            onClicked: Notifications.toggleDnd()
-        }
-        QuickTile {
-            width: tiles.cell
-            icon: shellRoot.nightLight ? "󰖔" : "󰖙"
-            title: "Night Light"
-            caption: shellRoot.nightLight ? Settings.nightLightKelvin + " K" : "Off"
-            lit: shellRoot.nightLight
-            usable: shellRoot.hasHyprsunset
-            split: true
-            expanded: controlCentre.expanded === "night"
-            onClicked: shellRoot.nightLight = !shellRoot.nightLight
-            onMoreClicked: controlCentre.expand("night")
-        }
-        FlyoutSliderRow {
-            visible: controlCentre.expanded === "night"
-            width: tiles.width
-            label: "Warmth"
-            suffix: "K"
-            step: 250
-            value: Settings.nightLightKelvin
-            minimum: Settings.limits.nightLightKelvin.min
-            maximum: Settings.limits.nightLightKelvin.max
-            onMoved: v => Settings.set("nightLightKelvin", v)
-        }
-        QuickTile {
-            width: tiles.cell
-            icon: shellRoot.keepAwake ? "󰅶" : "󰾪"
-            title: "Keep Awake"
-            caption: shellRoot.keepAwake ? "No sleep" : "Off"
-            lit: shellRoot.keepAwake
-            onClicked: shellRoot.keepAwake = !shellRoot.keepAwake
-        }
-        QuickTile {
-            width: tiles.cell
-            icon: "󰊴"
-            title: "Game Mode"
-            caption: GameMode.active ? "On" : "Off"
-            lit: GameMode.active
-            onClicked: GameMode.toggle()
-        }
-        // alone on its line while power-profiles-daemon isn't answering
-        QuickTile {
-            width: PpdProfile.profile !== "" ? tiles.cell : tiles.width
-            icon: controlCentre.airplane ? "󰀝" : "󰀞"
-            title: "Airplane"
-            caption: controlCentre.airplane ? "Radios off" : "Off"
-            lit: controlCentre.airplane
-            onClicked: controlCentre.setAirplane(!controlCentre.airplane)
-        }
-        // a click steps to the next profile; the chevron shows all three
-        QuickTile {
-            visible: PpdProfile.profile !== ""
-            width: tiles.cell
-            icon: "󰓅"
-            title: "Power"
-            caption: (PpdProfile.choices.find(c => c.value === PpdProfile.profile) || { text: "" }).text
-            split: true
-            expanded: controlCentre.expanded === "profile"
-            onClicked: PpdProfile.set(controlCentre.nextOf(PpdProfile.choices.map(c => c.value), PpdProfile.profile))
-            onMoreClicked: controlCentre.expand("profile")
-        }
-        FlyoutSegmented {
-            visible: controlCentre.expanded === "profile" && PpdProfile.profile !== ""
-            width: tiles.width
-            model: PpdProfile.choices
-            current: PpdProfile.profile
-            onPicked: v => PpdProfile.set(v)
-        }
-        QuickTile {
-            width: tiles.cell
-            icon: "󰏘"
-            title: "Appearance"
-            caption: controlCentre.lookName + (Wallpaper.title !== "" ? " · " + Wallpaper.title : "")
-            goes: true
-            onClicked: controlCentre.page = "appearance"
-        }
-        QuickTile {
-            width: tiles.cell
-            icon: "󰕮"
-            title: "Bar Widgets"
-            caption: controlCentre.widgetsShown + " of " + controlCentre.widgetKeys.length + " shown"
-            goes: true
-            onClicked: controlCentre.page = "widgets"
-        }
+        cc: controlCentre
     }
-
-    FlyoutDivider { visible: controlCentre.home && !controlCentre.searching && !Theme.glass }
 
     // the screen tools, then the windows
     readonly property var toolActions: [
@@ -468,27 +389,6 @@ FlyoutPanel {
         { icon: "󰍛", act: "system", name: "System" },
         { icon: "󰌌", act: "keybinds", name: "Keybinds" },
     ])
-    Row {
-        id: toolsRow
-        visible: controlCentre.home && !controlCentre.searching && !Theme.glass
-        width: parent.width
-        spacing: Theme.spaceS
-        readonly property var actions: controlCentre.toolActions
-
-        Repeater {
-            model: toolsRow.actions
-
-            FlyoutChip {
-                required property var modelData
-                width: (toolsRow.width - toolsRow.spacing * (toolsRow.actions.length - 1)) / toolsRow.actions.length
-                height: Theme.fieldHeight + Theme.spaceS
-                glyph: true
-                text: modelData.icon
-                onClicked: controlCentre.run(modelData.act)
-            }
-        }
-    }
-
     // --- Appearance -------------------------------------------
     // every look as a palette card, every wallpaper, then the rest as
     // tiles (details in place) and two controls; the whole of it is a chip

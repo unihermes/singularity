@@ -106,7 +106,7 @@ comparison tables below describe the original five styles.
   connectivity card (Wi-Fi, Bluetooth, Airplane as round switches; the label opens
   the module's flyout) beside Quiet and Night Light, Keep Awake and Game Mode
   tiles, thick Display (when there's a backlight) and Sound capsules, a
-  now-playing card, the pages as capsules and the tools as round buttons. The other styles keep the QuickTile grid.
+  now-playing card, the pages as capsules and the tools as round buttons. The other styles share `ControlCentreHome` (see Control Centre).
 - Glass blurs harder (Hyprland blur 22 px, 3 passes, vibrancy 0.25, via the
   `blur` state file) so text behind a panel can't ghost through. In Spotlight a
   pin on each app row (or right-click, Ctrl+P) keeps it in the Dock.
@@ -709,27 +709,36 @@ state directory, never the repo.
 
 ### Control Centre
 
-Redesigned 2026-11-01 as quick-settings tiles (`QuickTile`, two to a
-line in a `Flow`): each tile is a glyph, its name and its state in words
-("4500 K", "Radios off"), accent-filled while on. A tile with a split
-chevron end toggles on its face and opens its details in place under its
-line (one at a time, 󰅂 → 󰅀); a tile with 󰅂 at its end opens a page.
+Redesigned 2026-11-09 from the mockup's picks (two-line header, rows with
+switches, connectivity and sliders in, a one-line now playing, one strip for
+tools and pages). Every style but Glass draws the same home
+(`ControlCentreHome`); the pages keep the quick-settings tiles (`QuickTile`):
+a glyph, its name and its state in words, accent-filled while on.
 
 - **Bar button:** left click opens home, right click opens on Power,
   middle click locks.
-- **Home:** a one-line `HeadCard` (`compact`: user@host and uptime; lock and
-  power buttons at its end, power opening Power). The search field is always
-  visible; its
-  matches (most used first, Enter launches)
-  replace the tiles while there's a query; its apps button shows the same
-  list alphabetically without a query, and Escape clears the query, then
-  closes the flyout;
-  the tiles: Quiet, Night
-  Light (warmth slider in its details), Keep Awake, Game Mode, Airplane,
-  Power (a click steps the profile, the details show all three; gone
-  while PPD isn't answering, Airplane then runs the width), Appearance
-  and Bar Widgets as pages; then the screen tools and the windows as
-  icon-only buttons, sized and styled like the tiles.
+- **Header:** a `HeadCard`: the Arch mark, user@host over the system's name
+  and uptime ("Arch Linux · up 21h 27m"; the hovered strip button's name in
+  its place), Settings, Lock and Power at its end, Power opening Power. The
+  search field is always under it; its matches (most used first, Enter
+  launches) replace the rest while there's a query; its apps button shows
+  the same list alphabetically without a query, and Escape clears the query,
+  then closes the flyout.
+- **Rows** (`ControlRow`): glyph, name, the state in words, then the style's
+  switch; the face toggles. A split row has a chevron after a hairline that
+  opens its details in place, indented under a rule, one at a time
+  (󰅂 → 󰅀); Power has no switch and a click steps the profile.
+- **Home**, one section each: **Sound** (volume, whose glyph mutes and
+  chevron lists the outputs; this screen's brightness, its DDC monitor or
+  the backlight, the glyph opening Brightness), **Connectivity** (Wi-Fi:
+  the first six networks, a known one connecting on a click and the rest
+  going to Network; Bluetooth: the paired devices as `BtDeviceRow`s and Pair
+  a device; VPN while servers are imported: the servers; Airplane),
+  **Quick settings** (Quiet, Night Light with Warmth in its details, Keep
+  Awake, Game Mode, Power with the three profiles in its details), a **now
+  playing** line while there is a track (title · artist, the controls, a
+  click on the title opening Media), and **the strip**: the screen tools,
+  the windows, then Appearance and Bar Widgets as square buttons.
 - **Glass home** (`ControlCentreGlass`) has three layouts, set in
   Appearance > Panels (`controlLayout`, shown only under Glass): **Full**
   (connectivity card beside Quiet and Night Light, Keep Awake and Game Mode,
