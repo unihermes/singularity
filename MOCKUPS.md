@@ -209,9 +209,6 @@ choices are **separate axes**, not bundled variants.
 - **Show the options side by side as well.** A small strip of each axis's
   options (all drawn with the other axes held at the current choice) helps
   compare, but the strip never replaces the composed preview.
-- **Whole-design presets are extras.** Named bundles ("A system", "B system")
-  are fine as shortcuts that set every axis at once, but the user must be
-  able to change any axis afterward.
 - **Record picks per axis, per page.** Save `{axis: choice}` plus a note for
   each page or subpage, with a "use this for every page" shortcut, and a
   Copy picks button at the top and bottom (keep large bottom padding so
