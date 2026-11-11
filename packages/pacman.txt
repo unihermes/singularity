@@ -87,6 +87,7 @@ sound-theme-freedesktop
 thunar
 thunar-volman
 thunar-archive-plugin
+dolphin
 gvfs
 gvfs-mtp
 tumbler

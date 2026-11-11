@@ -164,6 +164,9 @@ if [[ ! -e $bookmarks ]]; then
   log "wrote ${bookmarks#"$HOME/"}"
 fi
 
+# Dolphin: per-folder views for the usual folders, written where missing
+bash scripts/dolphin-defaults.sh
+
 # the repo's pre-commit hooks, and pulls that rebase onto the other
 # machine's commits instead of merging (local changes stashed round it,
 # fixup! commits folded in, deleted remote branches pruned)
