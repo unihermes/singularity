@@ -377,7 +377,6 @@ Item {
 
     BarModule {
         id: weatherBtn
-        padH: Theme.modulePadH + Theme.sp(6)
         visible: Weather.ready && Settings.widgetVisible("weather")
         icon: Weather.iconFor(Weather.code, Weather.isNight)
         label: Weather.temp(Weather.tempF, Weather.tempC)
