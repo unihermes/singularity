@@ -153,29 +153,44 @@ Item {
             border.color: Theme.stroke
 
             Rectangle {
+                visible: !Theme.glass
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                // Glass keeps its rounded left edge and a clear level boundary.
                 width: root.fillValue <= 0
                     ? 0
-                    : Theme.glass ? parent.width * Math.min(1, root.fillValue)
                     : Math.max(radius * 2, parent.width * Math.min(1, root.fillValue))
                 radius: parent.radius
-                topLeftRadius: Theme.glass ? Math.min(parent.radius, width) : radius
-                bottomLeftRadius: topLeftRadius
-                topRightRadius: Theme.glass && root.fillValue < 1 ? 0 : radius
-                bottomRightRadius: topRightRadius
                 // softened on Flat's bare taskbar, where a full-strength
                 // fill would outweigh everything round it
-                color: Theme.glass ? Qt.alpha(root.fillColor, 1)
-                    : frame.taskbar || Theme.washed ? Qt.alpha(root.fillColor, 0.45) : root.fillColor
+                color: frame.taskbar || Theme.washed ? Qt.alpha(root.fillColor, 0.45) : root.fillColor
 
                 Behavior on width {
                     NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
                 }
                 Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
+            }
+
+            // Clip a full-size rounded fill so its left edge always matches
+            // the track, even when the level is narrower than the corner.
+            Item {
+                visible: Theme.glass
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: parent.width * Math.max(0, Math.min(1, root.fillValue))
+                clip: true
+
+                Rectangle {
+                    width: track.width
+                    height: track.height
+                    radius: track.radius
+                    color: Qt.alpha(root.fillColor, 1)
+                    Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
+                }
+
+                Behavior on width { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
             }
         }
 
