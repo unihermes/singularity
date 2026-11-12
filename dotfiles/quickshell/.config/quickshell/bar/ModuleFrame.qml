@@ -156,13 +156,16 @@ Item {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                // Other styles keep a rounded stub at low levels; Glass lets
-                // the width follow the level and reduces its corner radius.
+                // Glass keeps its rounded left edge and a clear level boundary.
                 width: root.fillValue <= 0
                     ? 0
                     : Theme.glass ? parent.width * Math.min(1, root.fillValue)
                     : Math.max(radius * 2, parent.width * Math.min(1, root.fillValue))
-                radius: Theme.glass ? Math.min(parent.radius, width / 2) : parent.radius
+                radius: parent.radius
+                topLeftRadius: Theme.glass ? Math.min(parent.radius, width) : radius
+                bottomLeftRadius: topLeftRadius
+                topRightRadius: Theme.glass && root.fillValue < 1 ? 0 : radius
+                bottomRightRadius: topRightRadius
                 // softened on Flat's bare taskbar, where a full-strength
                 // fill would outweigh everything round it
                 color: Theme.glass ? Qt.alpha(root.fillColor, 1)
