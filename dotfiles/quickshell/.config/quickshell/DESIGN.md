@@ -99,7 +99,7 @@ comparison tables below describe the original five styles.
   that names them. Each style keeps its own rearranging in `styleLayouts`.
 - Hover and open states of bare chips (Glass, the taskbar) are washes of the
   foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
-  and level fills are softened to 70% for Glass and 45% for taskbars; the open
+  and level fills are opaque for Glass and softened to 45% for taskbars; the open
   Glass chip has no accent ring.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
   an `unblurred-` namespace and lift their ground (`Theme.unfrosted`).
