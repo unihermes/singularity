@@ -167,13 +167,23 @@ Item {
             radius: track.kind === "glass" ? Theme.pill(height) : 0
             color: track.kind === "glass" ? (Theme.isLight ? Qt.rgba(0, 0, 0, 0.08) : Qt.rgba(1, 1, 1, 0.1))
                 : track.hot ? Theme.subtext : Theme.muted
+            border.width: track.kind === "glass" ? 1 : 0
+            border.color: Theme.stroke
 
             // the part up to the value, in the level colour
             Rectangle {
+                visible: track.kind !== "glass"
                 width: line.width * track.frac
                 height: parent.height
                 radius: parent.radius
                 color: root.fillColor
+            }
+            GlassLevelFill {
+                visible: track.kind === "glass"
+                fraction: track.frac
+                corner: line.radius
+                fillColor: root.fillColor
+                animated: !drag.pressed
             }
         }
 

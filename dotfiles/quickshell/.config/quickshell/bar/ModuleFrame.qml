@@ -146,16 +146,17 @@ Item {
             anchors.margins: frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
             radius: frame.flush ? frame.radius : Theme.radiusSmall
-            color: frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
+            color: Theme.glass && frame.flush && !root.active && !hover.hovered ? frame.restFill
+                : frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
-
+            border.width: Theme.glass ? 1 : 0
+            border.color: Theme.stroke
 
             Rectangle {
+                visible: !Theme.glass
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                // clamped to its own diameter so a nearly-empty bar is still
-                // a rounded stub rather than a sliver with clipped corners
                 width: root.fillValue <= 0
                     ? 0
                     : Math.max(radius * 2, parent.width * Math.min(1, root.fillValue))
@@ -169,6 +170,15 @@ Item {
                 }
                 Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
 
+            }
+
+            // Clip a full-size rounded fill so its left edge always matches
+            // the track, even when the level is narrower than the corner.
+            GlassLevelFill {
+                visible: Theme.glass
+                fraction: root.fillValue
+                corner: track.radius
+                fillColor: Qt.alpha(root.fillColor, 1)
             }
         }
 

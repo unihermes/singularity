@@ -87,7 +87,8 @@ comparison tables below describe the original five styles.
   `activeapp` module, menu bar only) and the status icons and clock packed at
   the right; the open windows move to the Dock (`bar/Dock.qml`), a frosted
   pill along the bottom of pinned and open apps,
-  a dot under each running one. The Dock reserves its own strip. Liberation
+  a dot under each running one. The focused app name opens the workspace overview,
+  so the workspace marks omit its grid button. The Dock reserves its own strip. Liberation
   Sans, 12px corners, Spotlight launcher a fifth down.
 - Pane's `taskbar` and Glass's `menubar` options (Styles' `layout`) arrange the
   bar: Pane as the Windows taskbar (Start, which opens the Start-menu launcher
@@ -99,7 +100,10 @@ comparison tables below describe the original five styles.
   that names them. Each style keeps its own rearranging in `styleLayouts`.
 - Hover and open states of bare chips (Glass, the taskbar) are washes of the
   foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
-  and level fills are softened to 45%; the open Glass chip has no accent ring.
+  and level fills are opaque for Glass and softened to 45% for taskbars; the open
+  Glass chip has no accent ring. Glass level chips have a faint outlined track,
+  and the fill's width follows the level even near zero. Glass meters and sliders
+  use the same outlined track and preserve its rounded end as the fill changes.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
   an `unblurred-` namespace and lift their ground (`Theme.unfrosted`).
 - Glass's Control Centre home (`flyouts/ControlCentreGlass.qml`) is Apple's: a

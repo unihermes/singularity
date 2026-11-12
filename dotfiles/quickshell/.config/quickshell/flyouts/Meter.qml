@@ -26,6 +26,7 @@ Rectangle {
     border.color: Theme.meterStroke
 
     Rectangle {
+        visible: !Theme.glass
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -41,5 +42,13 @@ Rectangle {
             NumberAnimation { duration: Theme.durSlow; easing.type: Theme.ease }
         }
         Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
+    }
+
+    GlassLevelFill {
+        visible: Theme.glass
+        fraction: root.fraction
+        corner: root.radius
+        fillColor: root.fillColor
+        animated: root.animated
     }
 }

@@ -132,7 +132,7 @@ Singleton {
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // the ground of flyouts, windows, cards and the bar (See-through)
     // Under Glass the frost is well more solid than See-through alone gives,
-    // so text reads over any wallpaper; the bar, Dock and panels share it
+    // so text reads over any wallpaper; the Dock and panels share it
     readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.28) : resolved.opacity / 100
     // Glass's accent-tinted option takes a little of the accent into it
     readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
