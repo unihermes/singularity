@@ -146,20 +146,23 @@ Item {
             anchors.margins: frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
             radius: frame.flush ? frame.radius : Theme.radiusSmall
-            color: frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
+            color: Theme.glass && frame.flush && !root.active && !hover.hovered ? frame.restFill
+                : frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
-
+            border.width: Theme.glass ? 1 : 0
+            border.color: Theme.stroke
 
             Rectangle {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                // clamped to its own diameter so a nearly-empty bar is still
-                // a rounded stub rather than a sliver with clipped corners
+                // Other styles keep a rounded stub at low levels; Glass lets
+                // the width follow the level and reduces its corner radius.
                 width: root.fillValue <= 0
                     ? 0
+                    : Theme.glass ? parent.width * Math.min(1, root.fillValue)
                     : Math.max(radius * 2, parent.width * Math.min(1, root.fillValue))
-                radius: parent.radius
+                radius: Theme.glass ? Math.min(parent.radius, width / 2) : parent.radius
                 // softened on Flat's bare taskbar, where a full-strength
                 // fill would outweigh everything round it
                 color: Theme.glass ? Qt.alpha(root.fillColor, 1)
