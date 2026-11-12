@@ -162,7 +162,8 @@ Item {
                 radius: parent.radius
                 // softened on Flat's bare taskbar, where a full-strength
                 // fill would outweigh everything round it
-                color: frame.taskbar || Theme.washed ? Qt.alpha(root.fillColor, 0.45) : root.fillColor
+                color: Theme.glass ? Qt.alpha(root.fillColor, 0.7)
+                    : frame.taskbar || Theme.washed ? Qt.alpha(root.fillColor, 0.45) : root.fillColor
 
                 Behavior on width {
                     NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
