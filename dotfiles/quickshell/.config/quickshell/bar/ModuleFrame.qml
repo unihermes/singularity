@@ -174,23 +174,11 @@ Item {
 
             // Clip a full-size rounded fill so its left edge always matches
             // the track, even when the level is narrower than the corner.
-            Item {
+            GlassLevelFill {
                 visible: Theme.glass
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: parent.width * Math.max(0, Math.min(1, root.fillValue))
-                clip: true
-
-                Rectangle {
-                    width: track.width
-                    height: track.height
-                    radius: track.radius
-                    color: Qt.alpha(root.fillColor, 1)
-                    Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
-                }
-
-                Behavior on width { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
+                fraction: root.fillValue
+                corner: track.radius
+                fillColor: Qt.alpha(root.fillColor, 1)
             }
         }
 

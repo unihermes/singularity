@@ -101,7 +101,8 @@ comparison tables below describe the original five styles.
   foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
   and level fills are opaque for Glass and softened to 45% for taskbars; the open
   Glass chip has no accent ring. Glass level chips have a faint outlined track,
-  and the fill's width follows the level even near zero.
+  and the fill's width follows the level even near zero. Glass meters and sliders
+  use the same outlined track and preserve its rounded end as the fill changes.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
   an `unblurred-` namespace and lift their ground (`Theme.unfrosted`).
 - Glass's Control Centre home (`flyouts/ControlCentreGlass.qml`) is Apple's: a

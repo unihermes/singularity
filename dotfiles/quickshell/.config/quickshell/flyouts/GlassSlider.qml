@@ -18,14 +18,15 @@ Rectangle {
     implicitHeight: Theme.fs(30)
     radius: height / 2
     color: Theme.isLight ? Qt.rgba(0, 0, 0, 0.12) : Qt.rgba(1, 1, 1, 0.16)
+    border.width: 1
+    border.color: Theme.stroke
     clip: true
 
-    Rectangle {
-        height: parent.height
-        width: Math.max(height, parent.width * Math.max(0, Math.min(100, root.value)) / 100)
-        radius: height / 2
-        color: root.dimmed ? Theme.subtext : Theme.isLight ? "#2a2a2a" : "#f2f2f2"
-        Behavior on width { enabled: !mouse.pressed; NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
+    GlassLevelFill {
+        fraction: root.value / 100
+        corner: root.radius
+        fillColor: root.dimmed ? Theme.subtext : Theme.isLight ? "#2a2a2a" : "#f2f2f2"
+        animated: !mouse.pressed
     }
 
     Text {

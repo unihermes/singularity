@@ -118,12 +118,20 @@ OverlayWindow {
                 border.color: Theme.stroke
 
                 Rectangle {
+                    visible: !Theme.glass
                     anchors.bottom: parent.bottom
                     width: parent.width
                     height: parent.height * Math.max(0, Math.min(1, root.level / 100))
                     radius: parent.radius
                     color: root.mode === "volume" && Audio.muted ? Theme.textDisabled : Theme.meterFill
                     Behavior on height { NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
+                }
+                GlassLevelFill {
+                    visible: Theme.glass
+                    vertical: true
+                    fraction: root.level / 100
+                    corner: parent.radius
+                    fillColor: root.mode === "volume" && Audio.muted ? Theme.textDisabled : Theme.meterFill
                 }
             }
         }
