@@ -234,7 +234,7 @@ ModuleFrame {
     // chip's last mark after a divider: the selector and the
     // pips it expands on read as one control
     Rectangle {
-        visible: !Theme.moduleTaskbar
+        visible: !Theme.moduleTaskbar && !Theme.glass
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.borderWidth
         height: Theme.moduleHeight - 12
@@ -243,8 +243,8 @@ ModuleFrame {
 
     Item {
         id: wsOverviewBtn
-        // the taskbar has Task View for this
-        visible: !Theme.moduleTaskbar
+        // the taskbar has Task View; Glass uses the focused app name
+        visible: !Theme.moduleTaskbar && !Theme.glass
         readonly property bool open: host.screenScope.openFlyout === "workspaces"
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: overviewGlyph.implicitWidth + 4

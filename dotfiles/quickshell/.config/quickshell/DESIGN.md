@@ -87,7 +87,8 @@ comparison tables below describe the original five styles.
   `activeapp` module, menu bar only) and the status icons and clock packed at
   the right; the open windows move to the Dock (`bar/Dock.qml`), a frosted
   pill along the bottom of pinned and open apps,
-  a dot under each running one. The Dock reserves its own strip. Liberation
+  a dot under each running one. The focused app name opens the workspace overview,
+  so the workspace marks omit its grid button. The Dock reserves its own strip. Liberation
   Sans, 12px corners, Spotlight launcher a fifth down.
 - Pane's `taskbar` and Glass's `menubar` options (Styles' `layout`) arrange the
   bar: Pane as the Windows taskbar (Start, which opens the Start-menu launcher
