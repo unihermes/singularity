@@ -14,7 +14,7 @@
 //   lines    whether it has strokes (Heavy lines)
 //   attach   flyouts "grown", "floating", or "auto" (flush on a full bar)
 //   anim     how flyouts open when left to the style
-//   glass    more see-through grounds, light hairline
+//   glass    grounds 30% more see-through, light hairline
 //   square   every corner square
 //   finish   the Finish switches picking it sets
 //   options  its own switches { id, label, hint, on }; one with `key` stands
@@ -323,7 +323,7 @@ function resolve(s) {
     var attach = s.plain ? "flush"
         : st.attach === "auto" ? (s.barStyle === "full" ? "flush" : "floating") : st.attach
     var radius = st.square ? 0 : s.radius
-    var see = st.glass ? (has(s.styleOptions, "blur") ? 0.55 : 0.65) : 1
+    var see = st.glass ? (has(s.styleOptions, "blur") ? 0.6 : 0.7) : 1
     return {
         styleName: s.style,
         controlStyle: st.controls || s.style,

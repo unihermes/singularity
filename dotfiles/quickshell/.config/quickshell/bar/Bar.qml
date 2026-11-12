@@ -85,8 +85,9 @@ PanelWindow {
     readonly property bool unblurred: !!monitor && monitor.scale < 1
     WlrLayershell.namespace: unblurred ? "unblurred-quickshell" : "quickshell"
     readonly property color barBase: unblurred ? Theme.unfrostedTone(bar.barTone) : bar.barTone
+    readonly property real groundOpacity: Theme.barOpacity * (Theme.glass ? 0.94 : 1)
     readonly property color barGround: Qt.rgba(barBase.r, barBase.g, barBase.b,
-        unblurred ? Theme.unfrosted(Theme.barOpacity) : Theme.barOpacity)
+        unblurred ? Theme.unfrosted(groundOpacity) : groundOpacity)
     property Gradient barShading: Gradient {
         GradientStop { position: 0; color: Theme.shadeTop(bar.barGround) }
         GradientStop { position: 1; color: Theme.shadeBottom(bar.barGround) }

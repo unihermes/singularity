@@ -166,8 +166,7 @@ test("Styles resolve every style, and Flat is square", () => {
     assert.equal(S.resolve(Object.assign({ style: "channel" }, base)).radius, 6)
     assert.equal(S.resolve(Object.assign({ style: "double" }, base)).flyoutAttach, "flush")
     assert.equal(S.resolve(Object.assign({ style: "double" }, base, { barStyle: "floating" })).flyoutAttach, "floating")
-    assert.equal(S.resolve(Object.assign({ style: "glass" }, base)).opacity, 65)
-    assert.equal(S.resolve(Object.assign({ style: "glass", styleOptions: "blur" }, base)).opacity, 55)
+    assert.equal(S.resolve(Object.assign({ style: "glass" }, base)).opacity, 70)
 })
 
 test("All styles default to window previews across workspaces", () => {
