@@ -27,6 +27,7 @@ Column {
     property bool choosingReasoning: false
     onSessionChanged: { choosingModel = false; choosingReasoning = false }
 
+    function modelValues() { return Ai.modelChoicesFor(Ai.tab).map(c => c.value) }
     function focusInput() { input.forceActiveFocus() }
     // typing that started elsewhere in the sidebar lands here
     function typeInto(text) {
@@ -436,6 +437,20 @@ Column {
                     else root.escapePressed()
                 }
                 Keys.onPressed: event => {
+                    var list = root.choosingModel ? root.modelValues() : []
+                    if (list.length > 0) {
+                        if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                            var at = Math.max(0, list.indexOf(Ai.models[Ai.modelKey(Ai.tab)] || ""))
+                            Ai.setModel(Ai.modelKey(Ai.tab), list[(at + (event.key === Qt.Key_Down ? 1 : list.length - 1)) % list.length])
+                            event.accepted = true
+                            return
+                        }
+                        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !(event.modifiers & Qt.ShiftModifier)) {
+                            root.choosingModel = false
+                            event.accepted = true
+                            return
+                        }
+                    }
                     if (!root.suggestionsDismissed && root.suggestions.length > 0) {
                         var n = root.suggestions.length
                         if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {

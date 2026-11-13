@@ -107,6 +107,14 @@ PanelWindow {
     // what the middle shows: talk | past | projects
     property string view: "talk"
     property bool choosingEngine: false
+    readonly property var engineChoices: ["claude", "codex", "ollama"]
+    function stepEngine(d) {
+        if (session.busy) return
+        var n = engineChoices.length
+        var e = engineChoices[(engineChoices.indexOf(Ai.engines[Ai.tab]) + d + n) % n]
+        Ai.setEngine(Ai.tab, e)
+        if (e === "ollama") Ai.refreshOllama()
+    }
     onViewChanged: {
         if (view === "past") Ai.listPast()
         else if (view === "projects") Ai.listProjects()
@@ -229,6 +237,28 @@ PanelWindow {
             context: Qt.WindowShortcut
             enabled: root.open
             onActivated: if (Ai.codexAvailable && !root.session.busy) root.choosingEngine = !root.choosingEngine
+        }
+
+        // Up and Down move through the open provider list; Enter closes it
+        Repeater {
+            model: [{ key: "Up", step: -1 }, { key: "Down", step: 1 }]
+            Shortcut {
+                required property var modelData
+                sequence: modelData.key
+                context: Qt.WindowShortcut
+                enabled: root.open && root.choosingEngine && Ai.codexAvailable
+                onActivated: root.stepEngine(modelData.step)
+            }
+        }
+        Repeater {
+            model: ["Return", "Enter"]
+            Shortcut {
+                required property string modelData
+                sequence: modelData
+                context: Qt.WindowShortcut
+                enabled: root.open && root.choosingEngine
+                onActivated: root.choosingEngine = false
+            }
         }
 
         Absorber {}
