@@ -25,6 +25,11 @@ import QtQuick
 ShellRoot {
     id: root
 
+    IpcHandler {
+        target: "brightness"
+        function quietNext(): void { Brightness.quietNext() }
+    }
+
     // read here so Wallpaper (a lazily built singleton) runs from startup
     readonly property string wallpaper: Wallpaper.current
     // and BtBattery, so the AirPods' battery channel opens as they connect:

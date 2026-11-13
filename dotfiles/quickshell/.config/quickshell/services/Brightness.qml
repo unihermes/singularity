@@ -11,6 +11,8 @@ Singleton {
     id: root
 
     property int level: 0
+    signal adjusted()
+    property bool quiet: false
     readonly property bool available: backlightDir !== "" && maxRaw > 0
 
     property string backlightDir: ""
@@ -22,10 +24,20 @@ Singleton {
     property int pendingWrite: -1
     property bool echo: false
 
+    function quietNext() { quiet = true; quietGuard.restart() }
+
+    onLevelChanged: {
+        if (quiet) quiet = false
+        else adjusted()
+    }
+
+    Timer { id: quietGuard; interval: 1500; onTriggered: root.quiet = false }
+
     function set(pct) {
         // clamped at 1, not 0: brightnessctl will happily set a laptop panel
         // to fully black and leave you guessing
         var v = Math.max(1, Math.min(100, Math.round(pct)))
+        quiet = false
         level = v
         echo = true
         echoGuard.restart()

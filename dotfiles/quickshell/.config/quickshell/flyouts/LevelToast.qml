@@ -55,7 +55,7 @@ OverlayWindow {
 
     Connections {
         target: Brightness
-        function onLevelChanged() { root.show("brightness") }
+        function onAdjusted() { root.show("brightness") }
     }
 
     Timer {
