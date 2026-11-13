@@ -410,7 +410,8 @@ Singleton {
     readonly property alias deskSidebar: adapter.deskSidebar
     // "edge": flush down the edge; "floating": a card like the widgets
     readonly property alias deskSidebarStyle: adapter.deskSidebarStyle
-    readonly property var deskWidgetKeys: ["clock", "weather", "music", "stats", "sysinfo"]
+    readonly property var deskWidgetNames: ({ clock: "Clock", weather: "Weather", music: "Now playing", stats: "System", sysinfo: "System info" })
+    readonly property var deskWidgetKeys: Object.keys(deskWidgetNames)
     readonly property var deskWidgetSizes: ["s", "m", "l"]
     function deskWidget(key) {
         var w = (adapter.desktopWidgets || {})[key] || {}
