@@ -38,6 +38,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         onPressed: root.dismissed()
+        onWheel: wheel => wheel.accepted = true
     }
 
     PanelFrame {
