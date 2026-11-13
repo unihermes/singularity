@@ -4,22 +4,12 @@
 
 local S = require("shared")
 
+-- XWayland apps are scaled with the display, never drawn at native pixels.
+hl.config({ xwayland = { force_zero_scaling = false } })
+
 -- The built-in panel off while the lid is shut on a docked laptop: lid.sh
 -- writes its name here and reloads. After the rules, so it wins.
 local function panelOffWhileLidShut()
-
--- XWayland apps are drawn at native pixels, not scaled and resampled, while
--- any display is scaled under 1 (they blur otherwise).
-local function zeroScaleXwayland()
-    local under = false
-    for _, m in ipairs(hl.get_monitors()) do
-        if m.scale < 1 then under = true end
-    end
-    hl.config({ xwayland = { force_zero_scaling = under } })
-end
-zeroScaleXwayland()
-hl.on("monitor.added", zeroScaleXwayland)
-hl.on("monitor.layout_changed", zeroScaleXwayland)
     if not S.allows("lid") then return end
     local f = io.open((os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/singularity-lid-docked")
     if not f then return end
