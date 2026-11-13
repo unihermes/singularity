@@ -16,8 +16,12 @@ ModuleFrame {
     visible: Settings.widgetVisible("workspaces")
     anchors.verticalCenter: parent.verticalCenter
     spacing: Theme.spaceS
-    readonly property color activeMark: Qt.tint(Theme.accent, Qt.rgba(Theme.textStrong.r, Theme.textStrong.g, Theme.textStrong.b, 0.35))
-    readonly property color emptyMark: Qt.tint(Theme.muted, Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.25))
+    // Glass lifts marks for contrast over wallpaper; other styles keep the palette.
+    readonly property color activeMark: Theme.glass
+        ? Qt.tint(Theme.accent, Qt.rgba(Theme.textStrong.r, Theme.textStrong.g, Theme.textStrong.b, 0.35)) : Theme.accent
+    readonly property color emptyMark: Theme.glass
+        ? Qt.tint(Theme.muted, Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.25)) : Theme.muted
+    readonly property color occupiedMark: Theme.glass ? Theme.text : Theme.subtext
     // each mark already sits in a slot 2px wider on either side
     padH: Theme.modulePadH - 2
 
@@ -98,8 +102,8 @@ ModuleFrame {
                 // at any width, and a circle at the stub size
                 radius: blocks ? Math.min(2, Theme.radiusSmall) : Theme.pill(height)
                 color: parent.current ? wsFrame.activeMark
-                    : blocks ? (parent.occupied ? Theme.text : "transparent")
-                    : (parent.occupied ? Theme.text : wsFrame.emptyMark)
+                    : blocks ? (parent.occupied ? wsFrame.occupiedMark : "transparent")
+                    : (parent.occupied ? wsFrame.occupiedMark : wsFrame.emptyMark)
                 border.width: blocks && !parent.current && !parent.occupied ? Theme.borderWidth : 0
                 border.color: wsFrame.emptyMark
 
@@ -136,7 +140,7 @@ ModuleFrame {
                 anchors.centerIn: parent
                 width: Theme.barFs(15)
                 height: Theme.barFs(15)
-                opacity: parent.current ? 1 : 0.85
+                opacity: parent.current ? 1 : Theme.glass ? 0.85 : 0.6
 
                 TintedIcon {
                     anchors.fill: parent
