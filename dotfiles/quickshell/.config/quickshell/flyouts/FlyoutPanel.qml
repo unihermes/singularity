@@ -103,6 +103,22 @@ OverlayWindow {
     readonly property int padNear: grown ? padY - Theme.channelWidth : padY
     readonly property int padTop: (atBottom ? padY : padNear) - (compactMenu ? 0 : Theme.spaceXs)
 
+    // Trailing section breaks separate rows but do not add a bottom gutter.
+    readonly property Item lastContent: {
+        var kids = contentColumn.children
+        for (var i = kids.length - 1; i >= 0; i--) {
+            var child = kids[i]
+            if (child.visible && child.height > 0 && child.isSectionBreak !== true) return child
+        }
+        return null
+    }
+    readonly property real contentHeight: compactMenu ? contentColumn.implicitHeight
+        : lastContent ? lastContent.y + lastContent.height : 0
+    // Button regions have no row padding inside their section frame.
+    readonly property real padBottom: (atBottom ? padNear : padY)
+        - (!compactMenu && lastContent && lastContent.isChipRegion === true
+            ? Theme.channelWidth + sectionPadY - Theme.sectionDepth : 0)
+
     visible: open || reveal > 0
     // one focus mode while the surface is up (a change while mapped doesn't
     // take, and a step to Exclusive would end DismissGrab's grab)
@@ -199,7 +215,7 @@ OverlayWindow {
             width: root.grown && root.section !== "centre"
                     && Math.abs(ownWidth - (root.group.x1 - root.group.x0)) < root.snapReach
                 ? root.group.x1 - root.group.x0 : ownWidth
-            height: contentColumn.implicitHeight + root.padTop + (atBottom ? root.padNear : root.padY)
+            height: root.contentHeight + root.padTop + root.padBottom
 
             readonly property bool atBottom: Theme.barPosition === "bottom"
             opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal

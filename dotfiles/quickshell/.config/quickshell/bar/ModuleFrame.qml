@@ -131,8 +131,8 @@ Item {
             border.color: root.active || Theme.opt("lit") ? Theme.frameStroke : Theme.surface
         }
 
-        // flush inside the double border (3 is the first clear pixel)
-        readonly property int barInset: flush || taskbar ? 0 : 3
+        // Clear the current frame rather than reserving a double border in every style.
+        readonly property int barInset: flush || taskbar ? 0 : Theme.sectionDepth
 
         // The bar is the whole interior now, with the icon sitting on top of
         // it rather than beside it.
@@ -141,8 +141,7 @@ Item {
             visible: frame.track
             anchors.fill: parent
             anchors.margins: frame.barInset
-        // one less than the inner stroke's radius, concentric, floored at 0
-            radius: frame.flush ? frame.radius : Theme.radiusSmall
+            radius: Math.max(0, frame.radius - frame.barInset)
             color: Theme.glass && frame.flush && !root.active && !hover.hovered ? frame.restFill
                 : frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
