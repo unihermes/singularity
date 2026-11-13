@@ -613,9 +613,9 @@ function setWindowMonocle(w, on, mon)
     if w.pinned or hasTag(w, "menu") then return end
     local addr = "address:" .. w.address
     local popup = hasTag(w, "app-held") or hasTag(w, "popout")
+    if popup or hasTag(w, "modal") or isPrompt(w.class) then return end
     local st = stateOf(w.address)
     if hasTag(w, "rule-float") then
-        if popup then return end
         if on and not w.floating then
             hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
             if st.ruleRect then moveTo(addr, st.ruleRect) else hl.dispatch(hl.dsp.window.center({ window = addr })) end
@@ -632,7 +632,7 @@ function setWindowMonocle(w, on, mon)
         end
         return
     end
-    local full = hasTag(w, "rule-full") and not popup
+    local full = hasTag(w, "rule-full")
     if on then
         if full then
             if not w.floating then hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr })) end
@@ -644,7 +644,7 @@ function setWindowMonocle(w, on, mon)
                 hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = addr }))
             end
             hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
-            if hasTag(w, "rule-fill") and not popup then
+            if hasTag(w, "rule-fill") then
                 hl.dispatch(hl.dsp.window.tag({ tag = "+monocle", window = addr }))
                 -- filling: not a shape captureShape() took while it floated
                 setShape(w, nil)
@@ -660,7 +660,7 @@ function setWindowMonocle(w, on, mon)
     if full and w.fullscreen ~= 0 then
         hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "unset", window = addr }))
     end
-    if w.floating and not popup then
+    if w.floating then
         hl.dispatch(hl.dsp.window.float({ action = "disable", window = addr }))
     end
     hl.dispatch(hl.dsp.window.tag({ tag = "-monocle", window = addr }))
@@ -948,7 +948,12 @@ holdPopup = function(win)
         return
     end
     win = followOwner(win)
-    if not win.floating or win.pinned or not monocleOn(win.workspace) then return end
+    if not win.floating or win.pinned then return end
+    -- In dwindle, native floaters and tagged dialogs remain popouts; ordinary
+    -- new windows (including torn-off browser tabs) keep tiling.
+    if not monocleOn(win.workspace) and (hasTag(win, "app-opened")
+            or (BROWSER_CLASSES[win.class] and not hasTag(win, "popout")
+                and not hasTag(win, "modal"))) then return end
     -- a Window Rules entry's window places itself; a popout entry still blocks
     if hasTag(win, "rule-full") then return end
     local ruled = hasTag(win, "rule-float")
@@ -984,7 +989,7 @@ holdPopup = function(win)
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
     local area = fillArea(win, mon)
-    local browser = BROWSER_CLASSES[win.class]
+    local browser = BROWSER_CLASSES[win.class] and not hasTag(win, "modal")
     local key = not browser and popoutKey(win) or nil
     stateOf(win.address).popoutKey = key
     local w, h = win.size.x, win.size.y
@@ -1450,13 +1455,13 @@ hl.on("window.close", function(win)
     windowState[win.address] = nil
 end)
 
--- Modal dialogs and prompts stay over the window they came from: focusing
+-- Dialogs and popouts stay over the window they came from: focusing
 -- a window raises them over it, and focusing one raises its owner under it.
 -- Other windows of the app stack by focus, so the one dragged or switched
 -- to is on top. Lua isn't told a Wayland dialog's parent, so the owner is
 -- the window focused just before it opened, if they share a process or the
 -- dialog is a prompt (file chooser, polkit).
-local dialogOwner = {}   -- modal dialog or prompt address -> owner address
+local dialogOwner = {}   -- dialog or popout address -> owner address
 
 local function adoptDialog(addr)
     local win = hl.get_window("address:" .. addr)
@@ -1470,7 +1475,17 @@ local function adoptDialog(addr)
     if not owner or owner.address == addr then return end
     if owner.pid ~= win.pid and not prompt then return end
     local modal = hasTag(win, "modal") or prompt
-    if modal then dialogOwner[addr] = owner.address end
+    if modal or hasTag(win, "popout") then dialogOwner[addr] = owner.address end
+    if prompt and popupOpts.over and owner.monitor and win.monitor
+            and owner.monitor.id == win.monitor.id and owner.workspace and win.workspace
+            and owner.workspace.id == win.workspace.id then
+        local area = usableArea(win.monitor)
+        hl.dispatch(hl.dsp.window.move({ window = "address:" .. addr,
+            x = math.floor(math.max(area.x, math.min(owner.at.x + (owner.size.x - win.size.x) / 2,
+                area.x + area.w - win.size.x))),
+            y = math.floor(math.max(area.y, math.min(owner.at.y + (owner.size.y - win.size.y) / 2,
+                area.y + area.h - win.size.y))) }))
+    end
     -- as a dialog it's no natural window for SUPER+M to tile
     hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = "address:" .. addr }))
     -- the window strip lists popouts under the window they came from
@@ -2016,6 +2031,7 @@ local function applyLayoutRules(announce)
     local ws = hl.get_active_workspace()
     if ws and ws.special then return end
     local on = monocleOn(ws)
+    hl.config({ input = { follow_mouse = on and 0 or 1 } })
     monocleRule:set_enabled(on)
     naturalRule:set_enabled(on)
     for _, f in ipairs(fullscreenRules) do f.rule:set_enabled(on and (not f.app or f.app.on)) end

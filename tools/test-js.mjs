@@ -783,3 +783,72 @@ test("process memory and CPU belong to the helper's actual browser", () => {
     // A vanished parent must leave an honest helper label, not guess a browser.
     assert.equal(P.group(sample, "cpu", [rows[2]])[0].name, "Isolated Web Co")
 })
+
+
+test("Dwindle enables hover focus and preserves child popouts across layout changes", () => {
+    const result = spawnSync("lua", ["-"], { cwd: repo, encoding: "utf8", input: String.raw`
+local f = assert(io.open("dotfiles/hypr/.config/hypr/windows.lua"))
+local source = f:read("a")
+f:close()
+local function section(first, last)
+    local a = assert(source:find(first, 1, true))
+    local b = assert(source:find(last, a + #first, true))
+    return source:sub(a, b - 1)
+end
+local calls, config, on = {}, nil, false
+local rule = { set_enabled = function() end }
+local env = setmetatable({
+    SCRATCH_CLASS = "scratch", BROWSER_CLASSES = { firefox = true }, knownWindows = {},
+    hasTag = function(w, t) return w.tags[t] end,
+    isPrompt = function(c) return c == "prompt" end,
+    stateOf = function() return {} end,
+    monocleOn = function() return on end,
+    monocleRule = rule, naturalRule = rule, fullscreenRules = {},
+    followOwner = function(w) return w end,
+    isX11Popup = function() return false end,
+    popoutOwnerOf = function() return { address = "owner" }, true end,
+    hl = {
+        get_active_workspace = function() return { id = 1 } end,
+        config = function(c) config = c end,
+        on = function() end,
+        dispatch = function(c) calls[#calls + 1] = c end,
+        dsp = { window = {} },
+    },
+}, { __index = _G })
+for _, name in ipairs({ "float", "tag", "fullscreen" }) do
+    env.hl.dsp.window[name] = function(args) return { name = name, args = args } end
+end
+assert(load(section("function setWindowMonocle(w, on, mon)", "-- In monocle right now:"), "layout", "t", env))()
+for _, tag in ipairs({ "popout", "app-held", "modal" }) do
+    for _, target in ipairs({ false, true }) do
+        env.setWindowMonocle({ class = "app", address = "child", floating = true,
+            tags = { [tag] = true, ["rule-float"] = true } }, target)
+    end
+end
+env.setWindowMonocle({ class = "prompt", address = "child", floating = true, tags = {} }, false)
+assert(#calls == 0, "dialogs must keep floating through layout switches")
+env.setWindowMonocle({ class = "app", address = "main", floating = true,
+    fullscreen = 0, tags = { ["rule-float"] = true }, at = { x = 0, y = 0 }, size = { x = 500, y = 400 } }, false)
+assert(calls[1].name == "float" and calls[1].args.action == "disable")
+assert(load(section("local rulesMonocle = nil", "-- The app rules' switch:"), "focus", "t", env))()
+assert(config.input.follow_mouse == 1)
+on = true
+assert(load(section("local rulesMonocle = nil", "-- The app rules' switch:"), "focus", "t", env))()
+assert(config.input.follow_mouse == 0)
+-- Exercise the real popup gates without running placement or desktop hooks.
+local gates = section("holdPopup = function(win)", "    local addr = \"address:\" .. win.address\n    -- the window strip lists it")
+assert(load(gates .. " return true end", "popup-gates", "t", env))()
+on = false
+local function popup(class, floating, tags)
+    env.knownWindows = {}
+    return env.holdPopup({ address = "child", class = class, floating = floating, tags = tags or {} })
+end
+assert(popup("app", true))
+assert(popup("app", false) == nil)
+assert(popup("firefox", false) == nil)
+assert(popup("firefox", true) == nil)
+assert(popup("firefox", true, { modal = true, popout = true }))
+assert(popup("app", true, { ["app-opened"] = true }) == nil)
+` });
+    assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
+});
