@@ -13,6 +13,24 @@ Item {
     property bool above: false
     signal picked(string value)
     signal dismissed()
+    property point origin: Qt.point(0, 0)
+
+    function place() { if (visible && target) origin = target.mapToItem(root, 0, 0) }
+    function showCurrent() {
+        var i = choices.findIndex(choice => choice.value === current)
+        if (i >= 0) list.positionViewAtIndex(i, ListView.Contain)
+    }
+    onVisibleChanged: if (visible) { Qt.callLater(place); Qt.callLater(showCurrent) }
+    onCurrentChanged: if (visible) Qt.callLater(showCurrent)
+    onWidthChanged: place()
+    onHeightChanged: place()
+
+    Timer {
+        running: root.visible
+        repeat: true
+        interval: 100
+        onTriggered: root.place()
+    }
 
     anchors.fill: parent
     z: 40
@@ -23,19 +41,18 @@ Item {
     }
 
     PanelFrame {
-        readonly property point origin: root.target.mapToItem(root, 0, 0)
         width: Math.min(root.width, root.menuWidth)
-        height: Math.min(list.contentHeight, Theme.rowHeight * 5) + Theme.spaceXs * 2
-        x: Math.max(0, Math.min(root.width - width, origin.x))
+        height: Math.min(list.contentHeight, Theme.rowHeight * 5) + Theme.spaceM * 2
+        x: Math.max(0, Math.min(root.width - width, root.origin.x))
         y: Math.max(0, Math.min(root.height - height,
-            root.above ? origin.y - height - Theme.spaceXs
-                : origin.y + root.target.height + Theme.spaceXs))
-        ground: Theme.surface
+            root.above ? root.origin.y - height - Theme.spaceXs
+                : root.origin.y + root.target.height + Theme.spaceXs))
+        ground: Theme.panelFill
 
         ListView {
             id: list
             anchors.fill: parent
-            anchors.margins: Theme.spaceXs
+            anchors.margins: Theme.spaceM
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             model: root.choices
