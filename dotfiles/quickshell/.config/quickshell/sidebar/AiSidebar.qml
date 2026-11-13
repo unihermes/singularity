@@ -125,7 +125,7 @@ PanelWindow {
         right: Theme.edgeMargin
     }
     implicitWidth: Math.min((screen ? screen.width : 1920) - Theme.edgeMargin * 2,
-        Theme.fit(centered ? 760 : 440) + (padX - Theme.panelPad) * 2)
+        Theme.fit(centered ? 1040 : 440) + (padX - Theme.panelPad) * 2)
     implicitHeight: Math.min(Theme.sp(860),
         (screen ? screen.height : 1080) - Theme.barHeight - Theme.edgeMargin * 2)
     // kept clear of the bar's strip, without pushing windows aside

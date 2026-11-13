@@ -648,6 +648,20 @@ Item {
         }
     }
 
+    FlyoutChip {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.spaceM
+        visible: !root.session.empty && !list.follow && !list.atYEnd
+        text: "Latest"
+        icon: "󰅀"
+        onClicked: {
+            autoscroll.stop()
+            list.follow = true
+            list.positionViewAtEnd()
+        }
+    }
+
     ScrollBar {
         flickable: list
         anchors.right: parent.right

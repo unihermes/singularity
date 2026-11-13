@@ -140,7 +140,9 @@ Column {
                 id: att
                 required property var modelData
                 required property int index
-                width: attRow.implicitWidth + Theme.spaceM * 2
+                width: Math.min(parent.width, attachmentLabel.implicitWidth
+                    + (preview.visible ? preview.width : attachmentGlyph.implicitWidth)
+                    + attRow.spacing + Theme.spaceM * 2)
                 height: Theme.fit(36)
                 radius: Theme.radiusInner
                 color: attMouse.containsMouse ? Theme.hoverFill : Theme.fieldFill
@@ -154,6 +156,7 @@ Column {
                     spacing: Theme.spaceM
 
                     Image {
+                        id: preview
                         visible: att.modelData.kind === "image"
                         anchors.verticalCenter: parent.verticalCenter
                         height: att.height - Theme.spaceS * 2
@@ -164,6 +167,7 @@ Column {
                         asynchronous: true
                     }
                     Text {
+                        id: attachmentGlyph
                         visible: att.modelData.kind !== "image"
                         anchors.verticalCenter: parent.verticalCenter
                         text: "󰅌"
@@ -172,7 +176,11 @@ Column {
                         font.pixelSize: Theme.fontIconSize
                     }
                     Text {
+                        id: attachmentLabel
                         anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(0, Math.min(implicitWidth, att.width - Theme.spaceM * 2
+                            - x))
+                        elide: Text.ElideMiddle
                         text: attMouse.containsMouse ? "Remove"
                             : att.modelData.label + (att.modelData.kind === "text"
                                 ? "  " + att.modelData.text.split("\n").length
@@ -462,11 +470,11 @@ Column {
     // attach, model, reasoning, mode, send or stop
     Item {
         width: parent.width
-        height: Theme.controlSize
+        height: Math.max(Theme.controlSize, composerControls.implicitHeight)
 
-        Row {
-            width: Math.min(implicitWidth, parent.width - send.width - Theme.spaceM)
-            clip: true
+        Flow {
+            id: composerControls
+            width: Math.max(0, parent.width - send.width - Theme.spaceM)
             spacing: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
 
@@ -477,6 +485,7 @@ Column {
                 onClicked: root.attaching = !root.attaching
             }
             FlyoutChip {
+                width: Math.min(implicitWidth, composerControls.width)
                 text: Ai.modelText(Ai.tab) + (root.choosingModel ? " ▴" : " ▾")
                 onClicked: { if (Ai.ollama(Ai.tab)) Ai.refreshOllama(); root.choosingModel = !root.choosingModel; root.choosingReasoning = false }
             }
@@ -497,7 +506,7 @@ Column {
         IconButton {
             id: send
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top: parent.top
             icon: root.session.busy ? "󰓛" : "󰒊"
             lit: !root.session.busy && (input.text.trim() !== "" || root.session.attachments.length > 0)
             enabled: Ai.available
