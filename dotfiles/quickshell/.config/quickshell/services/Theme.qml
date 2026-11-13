@@ -96,8 +96,8 @@ Singleton {
     function unfrostedTone(c) { return Qt.darker(c, 1.2) }
     function unfrosted(a) { return a + (1 - a) * 0.6 }
     // a smaller control under the pointer, or a chip/tab that's lit
-    readonly property color hoverFillSoft: surface
-    readonly property color selectedFill:  overlay
+    readonly property color hoverFillSoft: glass ? washHover : surface
+    readonly property color selectedFill:  glass ? washActive : overlay
     readonly property color selectedStroke: hasAccent ? accent : muted
     // text on an accent fill: white unless the accent is too bright (by
     // perceived brightness), or as Appearance pins it. Not named onAccent:
@@ -108,7 +108,7 @@ Singleton {
     // the inner half of a double frame
     readonly property color frameStroke:   muted
     // a field's ground: inputs, key-capture boxes
-    readonly property color fieldFill:     surface
+    readonly property color fieldFill:     glass ? washHover : surface
     // Glass draws one light hairline instead of the ramp's border
     readonly property bool glass: resolved.glass
     readonly property color stroke: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.14) : Qt.rgba(1, 1, 1, 0.14))
