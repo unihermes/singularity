@@ -117,6 +117,9 @@ comparison tables below describe the original five styles.
 - Glass's `autohide` slides the Dock away over the windows (it reserves no
   strip); pointing at the screen's bottom edge brings it back.
 - Glass's `blur` and `tint` change its frost.
+- Glass flyouts and other shared panel frames use the same tinted frost as the
+  Dock, with a soft top highlight. Their inner sections and row hovers are
+  translucent washes, keeping the frost visible behind the content.
 
 Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.textOnAccent`) unless its row in the table says otherwise.

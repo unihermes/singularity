@@ -14,7 +14,7 @@ Item {
     // the gap kept between a run's first and last child and its channel
     property int padY: Theme.spaceS
     property real radius: Theme.sectionRadius
-    property color fill: Theme.panelFill
+    property color fill: Theme.sectionFill
 
     // [{ y0, y1, flush }] in the column's coordinates. A child marked
     // isSectionGroup (a Repeater's Column of heading and rows) is walked
