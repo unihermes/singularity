@@ -84,10 +84,11 @@ OverlayWindow {
         Column {
             visible: root.edge
             anchors.fill: parent
-            anchors.margins: Theme.spaceM
+            anchors.margins: Theme.spaceXl
             spacing: Theme.spaceM
 
             Text {
+                id: edgeIcon
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.icon
                 color: Theme.text
@@ -99,7 +100,7 @@ OverlayWindow {
                 visible: root.chatmix
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Theme.fs(8)
-                height: parent.height - Theme.fontIconSize - parent.spacing
+                height: Math.max(0, parent.height - edgeIcon.height - parent.spacing)
                 vertical: true
                 balance: Channels.balance
             }
@@ -108,7 +109,7 @@ OverlayWindow {
                 visible: !root.chatmix
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Theme.fs(8)
-                height: parent.height - Theme.fontIconSize - parent.spacing
+                height: Math.max(0, parent.height - edgeIcon.height - parent.spacing)
                 radius: Math.min(width / 2, Theme.radiusSmall)
                 color: Theme.meterTrack
                 border.width: Theme.borderWidth

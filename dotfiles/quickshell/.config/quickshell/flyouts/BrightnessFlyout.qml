@@ -54,8 +54,6 @@ FlyoutPanel {
         FlyoutSliderRow {
             required property var modelData
             label: modelData.label
-            // Match the slider's bottom clearance to the section's side inset.
-            bottomPadding: Theme.spaceM - brightnessFlyout.sectionPadY
             suffix: "%"
             value: brightnessFlyout.levelOf(modelData.output)
             onMoved: v => brightnessFlyout.setOf(modelData.output, v)
