@@ -271,11 +271,12 @@ PanelWindow {
                 width: parent.width - Theme.spaceXs * 2
                 height: contentHeight
                 interactive: false
-                model: [{ value: "claude", text: "Claude" }, { value: "codex", text: "Codex" }, { value: "ollama", text: "Ollama" }]
+                model: [{ value: "claude", text: "Claude", icon: "icons/claude.svg" }, { value: "codex", text: "Codex", icon: "icons/codex.svg" }, { value: "ollama", text: "Ollama", icon: "icons/ollama.svg" }]
                 delegate: FlyoutRow {
                     required property var modelData
                     width: ListView.view.width
                     label: modelData.text
+                    leadingImage: Qt.resolvedUrl(modelData.icon)
                     highlighted: Ai.engines[Ai.tab] === modelData.value
                     onActivated: {
                         root.choosingEngine = false
