@@ -21,6 +21,7 @@ Singleton {
     property var bookmarked: []
     property bool searching: false
     property string query: ""
+    property bool searchPending: false
 
     readonly property string home: Quickshell.env("HOME")
     // shown, and asked of fd: the gap is what makes ranking possible
@@ -38,28 +39,39 @@ Singleton {
 
     function search(q) {
         query = q
-        if (q.trim() === "") {
-            results = []
-            searching = false
-            debounce.stop()
-            finder.running = false
-            return
-        }
-        searching = true
-        debounce.restart()
+        searchPending = q.trim() !== ""
+        searching = searchPending
+        if (searchPending) debounce.restart()
+        else { results = []; debounce.stop() }
+        finder.running = false
     }
 
-    function clear() {
-        query = ""
-        results = []
-        searching = false
-        debounce.stop()
-        finder.running = false
+    function clear() { search("") }
+
+    // Wait for both process exit and collected stdout before reusing finder.
+    function startSearch() {
+        if (finder.running || finder.awaitingOutput || debounce.running) return
+        if (!searchPending) { searching = false; return }
+        searchPending = false
+        finder.searchQuery = query
+        var command = ["fd", "--hidden", "--fixed-strings", "--ignore-case", "--follow",
+            "--max-results", String(fetchLimit), "--print0"]
+        for (var excluded of excludes) command.push("--exclude", excluded)
+        finder.command = command.concat(["--", query.trim(), home])
+        finder.awaitingOutput = true
+        finder.running = true
+    }
+
+    function finishSearch(text) {
+        if (!searchPending && finder.searchQuery === query && query.trim() !== "")
+            results = rankResults(text, query)
+        finder.awaitingOutput = false
+        startSearch()
     }
 
     // ~/Documents/report.pdf -> "~/Documents", for the second line of a row
     function pretty(path) {
-        return path.indexOf(root.home) === 0 ? "~" + path.slice(root.home.length) : path
+        return (path === root.home || path.startsWith(root.home + "/")) ? "~" + path.slice(root.home.length) : path
     }
 
     // open-file.sh, not xdg-open, which silently does nothing for files with
@@ -89,7 +101,30 @@ Singleton {
         }
     }
 
-    // the .xbel read with a regex (two attributes matter)
+    function recentEntries(xml) {
+        var out = [], seen = new Set(), bookmark
+        var bookmarks = /<bookmark\b([^>]*)>/g
+        while ((bookmark = bookmarks.exec(xml)) !== null) {
+            var attrs = {}, attr
+            var attributes = /\s(href|modified)\s*=\s*(["'])(.*?)\2/g
+            while ((attr = attributes.exec(bookmark[1])) !== null) attrs[attr[1]] = attr[3]
+            if (!attrs.href || !attrs.modified) continue
+            // Decode XML before URI escapes: %26amp; is a literal "&amp;" filename.
+            var uri = attrs.href.replace(/&(amp|lt|gt|quot|apos);/g,
+                (_, key) => ({ amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" })[key])
+            if (!/^file:\/\/(?:localhost)?\//.test(uri)) continue
+            var path
+            try { path = decodeURIComponent(uri.replace(/^file:\/\/(?:localhost)?/, "")) }
+            catch (e) { continue }
+            if (seen.has(path)) continue
+            seen.add(path)
+            var item = entry(path, false)
+            item.modified = attrs.modified
+            out.push(item)
+        }
+        return out.sort((a, b) => a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0)
+    }
+
     FileView {
         path: root.home + "/.local/share/recently-used.xbel"
         preload: true
@@ -97,24 +132,7 @@ Singleton {
         printErrors: false
         onFileChanged: reload()
         onLoaded: {
-            var out = [], seen = ({})
-            var re = /<bookmark[^>]*\shref="([^"]+)"[^>]*\smodified="([^"]*)"/g
-            var m
-            while ((m = re.exec(text())) !== null) {
-                if (m[1].indexOf("file://") !== 0) continue
-                var p
-                try { p = decodeURIComponent(m[1].slice(7)) } catch (e) { continue }
-                // it's XML: a & in a file name is stored as &amp;
-                p = p.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-                     .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
-                if (seen[p]) continue
-                seen[p] = true
-                var e2 = root.entry(p, false)
-                e2.modified = m[2]
-                out.push(e2)
-            }
-            out.sort(function (a, b) { return a.modified < b.modified ? 1 : -1 })
-            root.bookmarked = out
+            root.bookmarked = root.recentEntries(text())
             root.refreshRecent()
         }
     }
@@ -142,53 +160,32 @@ Singleton {
     Timer {
         id: debounce
         interval: 140
-        onTriggered: {
-            // a search already running is killed rather than queued: its
-            // results are for a query the user has moved on from
-            finder.running = false
-            finder.command = [
-                "fd", "--hidden", "--fixed-strings", "--ignore-case", "--follow",
-                "--max-results", String(root.fetchLimit),
-            ].concat(root.excludes.reduce(function (acc, e) {
-                return acc.concat(["--exclude", e])
-            // "--" so a query starting with a dash isn't read as an option
-            }, [])).concat(["--", root.query.trim(), root.home])
-            finder.running = true
-        }
+        onTriggered: root.startSearch()
+    }
+
+    function rankResults(text, query) {
+        var q = query.trim().toLowerCase()
+        var rows = text.split("\0").filter(p => p !== "").map(p => {
+            var isDir = p.endsWith("/")
+            var item = entry(isDir ? p.slice(0, -1) : p, isDir)
+            var name = item.name.toLowerCase()
+            return { item: item,
+                score: (name === q ? 0 : name.startsWith(q) ? 1 : 2)
+                    + (item.path.slice(home.length).includes("/.") ? 4 : 0),
+                depth: item.path.split("/").length }
+        })
+        rows.sort((a, b) => a.score - b.score || a.depth - b.depth
+            || a.item.name.localeCompare(b.item.name))
+        return rows.slice(0, maxResults).map(row => row.item)
     }
 
     Process {
         id: finder
+        property bool awaitingOutput: false
+        property string searchQuery: ""
         stdout: StdioCollector {
-            onStreamFinished: {
-                var out = []
-                var lines = text.split("\n")
-                for (var i = 0; i < lines.length; i++) {
-                    var p = lines[i]
-                    if (p === "") continue
-                    var isDir = p.charAt(p.length - 1) === "/"
-                    if (isDir) p = p.slice(0, -1)
-                    out.push(root.entry(p, isDir))
-                }
-                // ranked: prefix matches, then outside dot directories, then
-                // shallowest
-                var q = root.query.trim().toLowerCase()
-                function score(f) {
-                    var n = f.name.toLowerCase()
-                    var s = n === q ? 0 : n.indexOf(q) === 0 ? 1 : 2
-                    if (f.path.slice(root.home.length).indexOf("/.") !== -1) s += 4
-                    return s
-                }
-                out.sort(function (a, b) {
-                    var sa = score(a), sb = score(b)
-                    if (sa !== sb) return sa - sb
-                    var da = a.path.split("/").length, db = b.path.split("/").length
-                    if (da !== db) return da - db
-                    return a.name.localeCompare(b.name)
-                })
-                root.results = out.slice(0, root.maxResults)
-            }
+            onStreamFinished: root.finishSearch(text)
         }
-        onExited: root.searching = false
+        onRunningChanged: if (!running) root.startSearch()
     }
 }

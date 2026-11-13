@@ -990,3 +990,78 @@ assert(child.size.x == area.w and not child.tags["browser-popup"])
 ` });
     assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
 });
+
+test('App search preserves prefix priority, usage order, metadata matches and hidden entries', () => {
+    const S = load('AppSearch.js')
+    const entries = [
+        { id: 'b', name: 'Beta', keywords: ['EDITOR'] },
+        { id: 'a', name: 'Alpha', genericName: 'Editor' },
+        { id: 'e', name: 'Editor', startupClass: 'Code' },
+        { id: 'hide', name: 'Hidden' }, { id: 'nodisplay', name: 'Hidden too', noDisplay: true }
+    ]
+    const index = S.index(entries, ['hide'])
+    const frequent = S.order(index, { b: 20, a: 10 })
+    const ids = (rows, query) => Array.from(S.search(rows, query), e => e.id)
+    assert.deepEqual(ids(frequent, ''), ['b', 'a', 'e'])
+    assert.deepEqual(ids(frequent, ' EDIT '), ['e', 'b', 'a'])
+    assert.deepEqual(ids(frequent, 'code'), ['e'])
+    assert.deepEqual(ids(S.order(index, null), ''), ['a', 'b', 'e'])
+    assert.deepEqual(ids(S.order(index, { e: 99 }), ''), ['e', 'a', 'b'])
+    assert.deepEqual(ids(frequent, 'hidden'), [])
+    assert.equal(S.search(frequent, 'beta')[0], entries[0])
+})
+
+test('File ranking preserves embedded newlines, directory flags, limits and home boundaries', () => {
+    const s = functions(qmlSource('Files.qml'), { home: '/home/me', maxResults: 3 })
+    s.root = s
+    const rows = s.rankResults('/home/me/.cache/report\0/home/me/docs/report\0/home/me/report\0/home/me/report\nnotes/\0', 'report')
+    assert.deepEqual(Array.from(rows, e => e.path), ['/home/me/report', '/home/me/docs/report', '/home/me/report\nnotes'])
+    assert.equal(rows[2].isDir, true)
+    assert.equal(s.pretty('/home/me'), '~')
+    assert.equal(s.pretty('/home/me/docs'), '~/docs')
+    assert.equal(s.pretty('/home/medusa/docs'), '/home/medusa/docs')
+})
+
+test('Process grouping handles prototype-like names and shared deep ancestry', () => {
+    const P = load('ProcessGroups.js')
+    const rows = P.memoryRows('1 0 10 constructor\n2 0 10 toString\n3 0 10 __proto__')
+    assert.deepEqual(Array.from(P.group(rows, 'memKb'), r => r.name), ['constructor', 'toString', '__proto__'])
+    const chain = [{ pid: 1, ppid: 0, name: 'zen', cpu: 0, memKb: 1 }]
+    for (let i = 2; i <= 1000; i++) chain.push({ pid: i, ppid: i - 1, name: 'Web Content', cpu: 1, memKb: 1 })
+    const groups = P.group(chain.slice().reverse(), 'cpu')
+    assert.equal(groups.length, 1)
+    assert.equal(groups[0].name, 'zen')
+    assert.equal(groups[0].memKb, 1000)
+    assert.equal(groups[0].cpu, 999)
+})
+
+test('Sensor sweep reads labels, fallback labels and stopped fans without child commands', () => {
+    const text = qmlSource('SystemStats.qml').split('id: sensorProc')[1]
+    const command = vm.runInNewContext(text.match(/command: (\[[\s\S]*?\])\s+stdout:/)[1])
+    const dir = fs.mkdtempSync('/tmp/singularity-sensors-')
+    try {
+        const chip = path.join(dir, 'hwmon0')
+        fs.mkdirSync(chip)
+        for (const [name, value] of Object.entries({ name: 'coretemp', temp1_input: '42000',
+            temp1_label: 'Package id 0', temp2_input: '38000', fan1_input: '0' }))
+            fs.writeFileSync(path.join(chip, name), value + '\n')
+        const run = spawnSync('/bin/sh', ['-c', command[2].replace('/sys/class/hwmon', dir)],
+            { encoding: 'utf8', env: { PATH: '/nonexistent' } })
+        assert.equal(run.status, 0, run.stderr)
+        assert.equal(run.stderr, '')
+        assert.deepEqual(run.stdout.trim().split('\n'), [
+            'T|coretemp|Package id 0|42000', 'T|coretemp|temp2|38000', 'F|coretemp|fan1|0'])
+    } finally { fs.rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('Recent-file XML accepts attribute order and decodes URI and XML in the right order', () => {
+    const s = functions(qmlSource('Files.qml'), {})
+    const rows = s.recentEntries(`<xbel>
+<bookmark modified='2026-11-12' href='file:///home/me/%26amp%3B.txt'/>
+<bookmark href="file://localhost/home/me/A&amp;B.txt" modified="2026-11-11"/>
+<bookmark href="file:///home/me/%26amp%3B.txt" modified="2026-11-10"/>
+<bookmark href="file://remote/home/me/wrong" modified="2026-11-13"/>
+<bookmark href="file:///bad%escape" modified="2026-11-13"/>
+</xbel>`)
+    assert.deepEqual(Array.from(rows, e => e.path), ['/home/me/&amp;.txt', '/home/me/A&B.txt'])
+})

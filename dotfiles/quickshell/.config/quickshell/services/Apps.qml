@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
+import "AppSearch.js" as AppSearch
 
 Singleton {
     id: root
@@ -40,32 +41,18 @@ Singleton {
         "thunar-bulk-rename",
     ]
 
-    // Every launchable entry, most launched first then A-Z (or A-Z with
-    // `alphabetical`), case-insensitive. With a query, prefix matches first;
-    // genericName, keywords and the window class are searched too (Equicord's
-    // class is discord).
+    // Rebuild only when desktop entries or usage change, not on each keystroke.
+    readonly property var searchIndex: AppSearch.index(DesktopEntries.applications.values, hidden)
+    readonly property var alphabeticalApps: AppSearch.order(searchIndex, null)
+    readonly property var frequentApps: AppSearch.order(searchIndex, counts)
+    readonly property var appsById: {
+        var byId = Object.create(null)
+        for (var row of searchIndex) byId[row.entry.id] = row.entry
+        return byId
+    }
+
     function list(query, alphabetical) {
-        var all = DesktopEntries.applications.values
-        var q = (query || "").trim().toLowerCase()
-        var starts = [], rest = []
-        for (var i = 0; i < all.length; i++) {
-            var e = all[i]
-            if (e.noDisplay || hidden.indexOf(e.id) !== -1) continue
-            var name = e.name.toLowerCase()
-            if (q === "") { rest.push(e); continue }
-            if (name.startsWith(q)) starts.push(e)
-            else if (name.indexOf(q) !== -1
-                || (e.genericName || "").toLowerCase().indexOf(q) !== -1
-                || (e.startupClass || "").toLowerCase().indexOf(q) !== -1
-                || Array.from(e.keywords || []).some(k => k.toLowerCase().indexOf(q) !== -1)) rest.push(e)
-        }
-        var c = counts
-        var byName = (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-        var order = alphabetical ? byName
-            : (a, b) => (c[b.id] || 0) - (c[a.id] || 0) || byName(a, b)
-        starts.sort(order)
-        rest.sort(order)
-        return starts.concat(rest)
+        return AppSearch.search(alphabetical ? alphabeticalApps : frequentApps, query)
     }
 
     // --- pinned and grouped, for the launcher's Home and Start menu --------
@@ -84,11 +71,8 @@ Singleton {
         }
     }
     readonly property var pinned: {
-        var all = list("")
-        if (!pinsSaved) return all.slice(0, 12)
-        var byId = {}
-        for (var i = 0; i < all.length; i++) byId[all[i].id] = all[i]
-        return pinnedIds.map(id => byId[id]).filter(e => !!e)
+        if (!pinsSaved) return list("").slice(0, 12)
+        return pinnedIds.map(id => appsById[id]).filter(e => !!e)
     }
     function isPinned(entry) { return pinned.indexOf(entry) !== -1 }
     function togglePin(entry) {
@@ -127,10 +111,7 @@ Singleton {
         }
     }
     readonly property var taskbarPinned: {
-        var byId = {}
-        var all = list("")
-        for (var i = 0; i < all.length; i++) byId[all[i].id] = all[i]
-        return taskbarIds.map(id => byId[id]).filter(e => !!e)
+        return taskbarIds.map(id => appsById[id]).filter(e => !!e)
     }
     function isTaskbarPinned(entry) { return taskbarIds.indexOf(entry.id) !== -1 }
     function saveTaskbar(ids) {
@@ -266,7 +247,7 @@ Singleton {
 
     // class -> { entry, icon }, cached (heuristicLookup walks every entry);
     // cleared when the entries, icon theme or terminal app change
-    property var classCache: ({})
+    property var classCache: Object.create(null)
     function byClass(cls) {
         var cache = classCache
         if (!cache[cls]) cache[cls] = { entry: DesktopEntries.heuristicLookup(cls) }
@@ -274,12 +255,12 @@ Singleton {
     }
     Connections {
         target: DesktopEntries.applications
-        function onValuesChanged() { root.classCache = {} }
+        function onValuesChanged() { root.classCache = Object.create(null) }
     }
     Connections {
         target: Settings
-        function onIconThemeChanged() { root.classCache = {} }
-        function onTerminalAppChanged() { root.classCache = {} }
+        function onIconThemeChanged() { root.classCache = Object.create(null) }
+        function onTerminalAppChanged() { root.classCache = Object.create(null) }
     }
 
     // The shell's own windows (one shared class): listed in the strip and
