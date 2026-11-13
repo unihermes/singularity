@@ -422,8 +422,28 @@ Singleton {
         nextResume()
     }
 
+    // folders added by hand, kept until the state file is cleared
+    property var pinnedDirs: [home + "/Git/LBSZUI"]
     // the folders Claude Code has worked in: [{ path, name, used }]
-    property var projects: []
+    property var recentProjects: []
+    // pinned folders first, then the recent ones
+    readonly property var projects: {
+        var seen = {}, rows = []
+        pinnedDirs.forEach(p => {
+            seen[p] = true
+            rows.push({ path: p, name: p.split("/").pop() || p, used: 0, pinned: true })
+        })
+        recentProjects.forEach(r => { if (!seen[r.path]) rows.push(r) })
+        return rows
+    }
+
+    function pinDir(dir) {
+        dir = dir.replace(/\/+$/, "")
+        if (dir.indexOf("~") === 0) dir = home + dir.slice(1)
+        if (dir === "" || pinnedDirs.indexOf(dir) !== -1) return
+        pinnedDirs = pinnedDirs.concat([dir])
+        save()
+    }
 
     function listProjects() { projectsProc.running = true }
 
@@ -474,7 +494,7 @@ Singleton {
         command: [root.py, "projects"]
         stdout: StdioCollector {
             onStreamFinished: {
-                try { root.projects = JSON.parse(text) || [] } catch (e) { root.projects = [] }
+                try { root.recentProjects = JSON.parse(text) || [] } catch (e) { root.recentProjects = [] }
             }
         }
     }
@@ -737,7 +757,7 @@ Singleton {
 
     function writeState() {
         view.setText(JSON.stringify({
-            tab: root.tab, codeDir: root.codeDir, models: root.models, reasoning: root.reasoning, codeMode: root.codeMode,
+            tab: root.tab, codeDir: root.codeDir, pinnedDirs: root.pinnedDirs, models: root.models, reasoning: root.reasoning, codeMode: root.codeMode,
             engines: root.engines, commandHistory: root.commandHistory, shown: root.shown, screen: root.screen ? root.screen.name : "",
             sessions: { chat: root.chat.sessionId, code: root.code.sessionId,
                         chatCodex: root.chatCodex.sessionId, codeCodex: root.codeCodex.sessionId,
@@ -781,6 +801,8 @@ Singleton {
             try { d = JSON.parse(text()) } catch (e) { return }
             if (root.tabs.indexOf(d.tab) !== -1) root.tab = d.tab
             if (typeof d.codeDir === "string" && d.codeDir !== "") root.codeDir = d.codeDir
+            if (Array.isArray(d.pinnedDirs))
+                root.pinnedDirs = d.pinnedDirs.filter(p => typeof p === "string" && p !== "")
             if (Array.isArray(d.commandHistory))
                 root.commandHistory = d.commandHistory.filter(c => typeof c === "string" && c.trim() !== "").slice(0, 100)
             if (d.models && typeof d.models === "object")

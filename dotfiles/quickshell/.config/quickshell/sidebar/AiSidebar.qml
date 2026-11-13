@@ -445,6 +445,7 @@ PanelWindow {
                         glyph: "󰉋"
                         placeholder: "A folder, like ~/Git/app"
                         onAccepted: {
+                            Ai.pinDir(text.trim())
                             Ai.setCodeDir(text.trim())
                             text = ""
                             root.view = "talk"
