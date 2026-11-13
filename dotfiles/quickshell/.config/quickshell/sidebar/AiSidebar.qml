@@ -242,6 +242,50 @@ PanelWindow {
             padY: Theme.spaceXs
         }
 
+        // the provider list, drawn over what is below the heading
+        MouseArea {
+            anchors.fill: parent
+            z: 40
+            visible: root.choosingEngine && Ai.codexAvailable
+            onPressed: root.choosingEngine = false
+        }
+
+        Rectangle {
+            id: engineMenu
+            visible: root.choosingEngine && Ai.codexAvailable
+            z: 41
+            x: col.x + engineHeading.x
+            y: col.y + engineHeading.y + engineHeading.height + Theme.spaceXs
+            width: Theme.fit(150)
+            height: engineList.contentHeight + Theme.spaceXs * 2
+            radius: Theme.radiusInner
+            color: Theme.surface
+            border.width: Theme.controlBorder(Theme.stroke)
+            border.color: Theme.controlStroke(Theme.stroke)
+            ControlEdge { radius: engineMenu.radius }
+
+            ListView {
+                id: engineList
+                x: Theme.spaceXs
+                y: Theme.spaceXs
+                width: parent.width - Theme.spaceXs * 2
+                height: contentHeight
+                interactive: false
+                model: [{ value: "claude", text: "Claude" }, { value: "codex", text: "Codex" }, { value: "ollama", text: "Ollama" }]
+                delegate: FlyoutRow {
+                    required property var modelData
+                    width: ListView.view.width
+                    label: modelData.text
+                    highlighted: Ai.engines[Ai.tab] === modelData.value
+                    onActivated: {
+                        root.choosingEngine = false
+                        Ai.setEngine(Ai.tab, modelData.value)
+                        if (modelData.value === "ollama") Ai.refreshOllama()
+                    }
+                }
+            }
+        }
+
         Column {
             id: col
             x: root.padX
@@ -265,6 +309,7 @@ PanelWindow {
             }
 
             FlyoutHeading {
+                id: engineHeading
                 text: Ai.ollama(Ai.tab) ? "OLLAMA" : Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
                 icon: Ai.ollama(Ai.tab)
                     ? Qt.resolvedUrl("icons/ollama.svg")
@@ -274,25 +319,6 @@ PanelWindow {
                 control: headControls
                 labelClickable: Ai.codexAvailable && !root.session.busy
                 onLabelClicked: root.choosingEngine = !root.choosingEngine
-            }
-
-            ListView {
-                visible: root.choosingEngine && Ai.codexAvailable
-                width: parent.width
-                height: visible ? contentHeight : 0
-                interactive: false
-                model: [{ value: "claude", text: "Claude" }, { value: "codex", text: "Codex" }, { value: "ollama", text: "Ollama" }]
-                delegate: FlyoutRow {
-                    required property var modelData
-                    width: ListView.view.width
-                    label: modelData.text
-                    highlighted: Ai.engines[Ai.tab] === modelData.value
-                    onActivated: {
-                        root.choosingEngine = false
-                        Ai.setEngine(Ai.tab, modelData.value)
-                        if (modelData.value === "ollama") Ai.refreshOllama()
-                    }
-                }
             }
 
             Component {
