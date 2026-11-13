@@ -64,6 +64,9 @@ Item {
 
     // Gauge icons are always bright: they sit on top of the fill, and the
     // fill sweeps under them, so anything dimmer loses contrast as it passes.
+    readonly property color glassLevelFill: Qt.colorEqual(fillColor, Theme.gaugeFill) ? Theme.textStrong : fillColor
+    readonly property color glassLevelInk: 0.299 * glassLevelFill.r + 0.587 * glassLevelFill.g + 0.114 * glassLevelFill.b > 0.65
+        ? "#111111" : "#ffffff"
     readonly property color fg: active && fillValue < 0 && Theme.moduleOpenFill ? Theme.textOnAccent
         : (active || fillValue >= 0)
         ? Theme.textStrong
@@ -79,7 +82,7 @@ Item {
         active: root.active
         padH: root.padH
         fillValue: root.levelText ? -1 : root.fillValue
-        fillColor: root.fillColor
+        fillColor: Theme.glass && !root.levelText ? root.glassLevelFill : root.fillColor
         fixedWidth: root.levelText ? 0 : root.fixedWidth
 
         Text {
@@ -155,6 +158,27 @@ Item {
             font.weight: root.labelBold ? Theme.weightStrong : Theme.weightBody
             horizontalAlignment: Text.AlignHCenter
             lineHeight: root.stacked ? 0.95 : 1
+        }
+    }
+
+    // Draw the part of the glyph over the fill in contrasting ink, including
+    // while the animated fill edge passes through it.
+    Item {
+        readonly property point iconAt: iconText.mapToItem(root, 0, 0)
+        readonly property real leftEdge: Math.max(iconAt.x, frame.x + frame.levelStart)
+        readonly property real rightEdge: Math.min(iconAt.x + iconText.width, frame.x + frame.levelEnd)
+        visible: Theme.glass && !root.levelText && root.fillValue >= 0 && iconText.visible
+        x: leftEdge
+        y: iconAt.y
+        width: Math.max(0, rightEdge - leftEdge)
+        height: iconText.height
+        clip: true
+
+        Text {
+            x: parent.iconAt.x - parent.x
+            text: root.icon
+            color: root.glassLevelInk
+            font: iconText.font
         }
     }
 

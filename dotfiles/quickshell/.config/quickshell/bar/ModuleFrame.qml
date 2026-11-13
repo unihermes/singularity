@@ -36,6 +36,8 @@ Item {
     readonly property int chrome: padH * 2
     // the drawn chip's height, which can be less than the item's
     readonly property real chipHeight: frame.height
+    readonly property real levelStart: track.mapToItem(root, 0, 0).x
+    readonly property real levelEnd: levelStart + glassFill.width
 
     default property alias content: contentRow.children
 
@@ -142,7 +144,7 @@ Item {
             anchors.fill: parent
             anchors.margins: frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
-            radius: frame.flush ? frame.radius : Theme.radiusSmall
+            radius: Theme.glass ? Theme.pill(height) : frame.flush ? frame.radius : Theme.radiusSmall
             color: Theme.glass && frame.flush && !root.active && !hover.hovered ? frame.restFill
                 : frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
@@ -172,6 +174,7 @@ Item {
             // Clip a full-size rounded fill so its left edge always matches
             // the track, even when the level is narrower than the corner.
             GlassLevelFill {
+                id: glassFill
                 visible: Theme.glass
                 fraction: root.fillValue
                 corner: track.radius
