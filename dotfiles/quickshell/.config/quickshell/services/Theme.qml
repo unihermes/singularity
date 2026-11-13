@@ -488,6 +488,7 @@ Singleton {
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare
     readonly property int moduleWidth:  glass ? 40 : 54
+    readonly property int levelChipWidth: glass && !plain ? sp(64) : moduleWidth
     // the taskbar's Start, search and Task View buttons, square
     readonly property int buttonWidth:  moduleTaskbar ? moduleHeight : glass ? moduleHeight + modulePadH * 2 : moduleWidth
     // the space inside the chip's frame, capped to it
