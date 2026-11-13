@@ -117,8 +117,8 @@ Singleton {
     readonly property color strokeFocus:   hasAccent ? accent : subtext
     // dim text, kept legible over a see-through ground
     readonly property color textDisabled:  glass ? subtext : muted
-    readonly property color meterTrack:    base
-    readonly property color meterStroke:   surface
+    readonly property color meterTrack:    glass ? washHover : base
+    readonly property color meterStroke:   glass ? stroke : surface
     // level colour: meters, sliders and the bar's level chips
     readonly property color meterFill:     Settings.levelColour === "good" ? good
         : Settings.levelColour === "text" ? text : accent

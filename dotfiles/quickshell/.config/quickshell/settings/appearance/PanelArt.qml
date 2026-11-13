@@ -19,7 +19,7 @@ ClippingRectangle {
     readonly property var apps: ["#e66a3c", "#3c8ee6", "#5ac36e", "#c8a23c", "#9a6ad6", "#d6409f"]
 
     radius: Theme.radiusInner
-    color: Theme.base
+    color: Theme.glass ? Theme.panelTone : Theme.base
     border.width: Theme.borderWidth
     border.color: Theme.stroke
 
@@ -32,7 +32,7 @@ ClippingRectangle {
     }
 
     // a panel's ground, and a line of text as a bar
-    component Ground: Rectangle { radius: 4 * art.u; color: Theme.panel; border.width: 1; border.color: Theme.stroke }
+    component Ground: Rectangle { radius: 4 * art.u; color: Theme.glass ? Theme.barTone : Theme.panel; border.width: 1; border.color: Theme.stroke }
     component Line: Rectangle { height: 3 * art.u; radius: height / 2; color: Theme.overlay }
     component AppDot: Rectangle { width: 7 * art.u; height: width; radius: 2 * art.u }
 
@@ -47,7 +47,7 @@ ClippingRectangle {
     Rectangle {
         width: parent.width
         height: art.barH
-        color: Theme.bar
+        color: Theme.glass ? Theme.barTone : Theme.bar
         Row {
             x: 5 * art.u
             anchors.verticalCenter: parent.verticalCenter
