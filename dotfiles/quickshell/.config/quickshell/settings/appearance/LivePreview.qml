@@ -60,7 +60,7 @@ ClippingRectangle {
                 width: parent.width
                 height: Theme.barHeight
                 radius: Theme.barFloating ? Theme.barRadius : Theme.radiusSmall
-                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                color: Qt.rgba(Theme.barTone.r, Theme.barTone.g, Theme.barTone.b, Theme.barOpacity)
                 border.width: Theme.barFloating ? Theme.borderWidth : 0
                 border.color: Theme.stroke
             }

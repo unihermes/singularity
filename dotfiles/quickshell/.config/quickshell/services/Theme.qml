@@ -128,11 +128,15 @@ Singleton {
     // the dimming behind full-screen overlays
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // the ground of flyouts, windows, cards and the bar (See-through)
-    // Under Glass the frost is well more solid than See-through alone gives,
-    // so text reads over any wallpaper; the Dock and panels share it
-    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.28) : resolved.opacity / 100
-    // Glass's accent-tinted option takes a little of the accent into it
-    readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
+    // Glass lifts dark palette colours into a neutral frost, leaving enough
+    // opacity for text while letting the blurred background colour through.
+    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.12) : resolved.opacity / 100
+    function glassTone(c) {
+        var frost = isLight ? c : Qt.tint(c, Qt.rgba(1, 1, 1, 0.20))
+        return opt("tint") ? Qt.tint(frost, Qt.rgba(accent.r, accent.g, accent.b, 0.14)) : frost
+    }
+    readonly property color barTone: glass ? glassTone(bar) : bar
+    readonly property color panelTone: glass ? glassTone(panel) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
     readonly property color flyoutFill: glass ? panelFill : Qt.rgba(surface.r, surface.g, surface.b, panelOpacity)
     // Inner groups are a light wash over the frost, rather than another
