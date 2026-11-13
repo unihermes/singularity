@@ -20,6 +20,10 @@ Column {
     // /past
     signal showPast()
     signal togglePast()
+    // the sidebar's provider list: while open, Up and Down step it, Enter or Escape close it
+    property bool engineListOpen: false
+    signal engineStep(int d)
+    signal engineListClosed()
     property bool historyShown: false
 
     property bool attaching: false
@@ -433,10 +437,20 @@ Column {
                 }
 
                 Keys.onEscapePressed: {
+                    if (root.engineListOpen) { root.engineListClosed(); return }
                     if (!root.suggestionsDismissed && root.suggestions.length > 0) root.suggestionsDismissed = true
                     else root.escapePressed()
                 }
                 Keys.onPressed: event => {
+                    if (root.engineListOpen) {
+                        var up = event.key === Qt.Key_Up, down = event.key === Qt.Key_Down
+                        if (up || down) root.engineStep(down ? 1 : -1)
+                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) root.engineListClosed()
+                        if (up || down || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            event.accepted = true
+                            return
+                        }
+                    }
                     var list = root.choosingModel ? root.modelValues() : []
                     if (list.length > 0) {
                         if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {

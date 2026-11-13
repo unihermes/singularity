@@ -236,28 +236,9 @@ PanelWindow {
             sequence: "Ctrl+M"
             context: Qt.WindowShortcut
             enabled: root.open
-            onActivated: if (Ai.codexAvailable && !root.session.busy) root.choosingEngine = !root.choosingEngine
-        }
-
-        // Up and Down move through the open provider list; Enter closes it
-        Repeater {
-            model: [{ key: "Up", step: -1 }, { key: "Down", step: 1 }]
-            Shortcut {
-                required property var modelData
-                sequence: modelData.key
-                context: Qt.WindowShortcut
-                enabled: root.open && root.choosingEngine && Ai.codexAvailable
-                onActivated: root.stepEngine(modelData.step)
-            }
-        }
-        Repeater {
-            model: ["Return", "Enter"]
-            Shortcut {
-                required property string modelData
-                sequence: modelData
-                context: Qt.WindowShortcut
-                enabled: root.open && root.choosingEngine
-                onActivated: root.choosingEngine = false
+            onActivated: if (Ai.codexAvailable && !root.session.busy) {
+                root.choosingEngine = !root.choosingEngine
+                composer.focusInput()
             }
         }
 
@@ -349,7 +330,10 @@ PanelWindow {
                         : Qt.resolvedUrl("icons/claude.svg")
                 control: headControls
                 labelClickable: Ai.codexAvailable && !root.session.busy
-                onLabelClicked: root.choosingEngine = !root.choosingEngine
+                onLabelClicked: {
+                    root.choosingEngine = !root.choosingEngine
+                    composer.focusInput()
+                }
             }
 
             Component {
@@ -510,6 +494,9 @@ PanelWindow {
                 onNewConversation: root.startOver()
                 onShowPast: root.view = "past"
                 onTogglePast: root.view = root.view === "past" ? "talk" : "past"
+                engineListOpen: root.choosingEngine && Ai.codexAvailable
+                onEngineStep: d => root.stepEngine(d)
+                onEngineListClosed: root.choosingEngine = false
             }
         }
     }
