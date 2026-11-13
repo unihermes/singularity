@@ -321,6 +321,7 @@ PanelWindow {
 
             FlyoutHeading {
                 id: engineHeading
+                centerOffset: -Theme.spaceS
                 text: Ai.ollama(Ai.tab) ? "OLLAMA" : Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
                 icon: Ai.ollama(Ai.tab)
                     ? Qt.resolvedUrl("icons/ollama.svg")
@@ -342,7 +343,6 @@ PanelWindow {
                     height: Math.max(Theme.chipHeight, Theme.controlSize)
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: -Math.round(Theme.spaceXs / 2)
                         icon: "󰑓"
                         text: "Reload"
                         enabled: !Ai.busy && !Ai.asking
@@ -350,7 +350,6 @@ PanelWindow {
                     }
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: -Math.round(Theme.spaceXs / 2)
                         icon: "󰐃"
                         text: Ai.pinned ? "Pinned" : "Pin"
                         selected: Ai.pinned
@@ -358,7 +357,6 @@ PanelWindow {
                     }
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: -Math.round(Theme.spaceXs / 2)
                         text: root.centered ? "Dock" : "Center"
                         onClicked: Settings.set("aiPlacement", root.centered ? "sidebar" : "center")
                     }

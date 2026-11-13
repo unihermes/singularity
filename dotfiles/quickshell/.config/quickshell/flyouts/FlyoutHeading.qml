@@ -28,6 +28,8 @@ Item {
     property Component control: null
     // the label's size, the shell's heading size unless told otherwise
     property int textSize: Theme.fontHeadingSize
+    // Move the heading's contents within its reserved row.
+    property real centerOffset: 0
 
     // a gear at the end of the line (a flyout's first heading) for its Settings page
     property bool settingsIcon: false
@@ -354,7 +356,7 @@ Item {
         anchors.leftMargin: (headingIcon.visible ? Theme.spaceS : crumbRow.visible ? Theme.spaceXs : lead.shown ? Theme.spaceM : 0)
             + (root.shape === "tag" ? Theme.spaceS : 0)
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: root.lift
+        anchors.verticalCenterOffset: root.lift + root.centerOffset
         text: Theme.heading(root.text) + (root.asWritten !== "" ? "  " + root.asWritten : "") + (root.labelClickable ? "  ▾" : "")
         color: root.shape === "tag" ? Theme.textOnAccent : Theme.headingColor
         font.family: Theme.fontHeading

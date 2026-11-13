@@ -17,6 +17,7 @@ ModuleFrame {
     anchors.verticalCenter: parent.verticalCenter
     spacing: Theme.spaceS
     readonly property color activeMark: Qt.tint(Theme.accent, Qt.rgba(Theme.textStrong.r, Theme.textStrong.g, Theme.textStrong.b, 0.35))
+    readonly property color emptyMark: Qt.tint(Theme.muted, Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.25))
     // each mark already sits in a slot 2px wider on either side
     padH: Theme.modulePadH - 2
 
@@ -90,17 +91,17 @@ ModuleFrame {
                 readonly property bool lines: Theme.workspaceStyle === "lines"
                 visible: !parent.textual && !parent.appMark
                 anchors.centerIn: parent
-                height: blocks ? 10 : lines ? 3 : 7
-                width: blocks ? 10 : lines ? 14 : Theme.workspaceStyle === "dots" || Theme.workspaceStyle === "apps" ? 7
+                height: blocks ? 10 : lines ? 3 : Theme.workspaceStyle === "dots" && (parent.current || parent.occupied) ? 9 : 7
+                width: blocks ? 10 : lines ? 14 : Theme.workspaceStyle === "dots" ? height : Theme.workspaceStyle === "apps" ? 7
                     : parent.current && !parent.joinsPrevious ? 22 : (parent.occupied ? 11 : 7)
                 // fully rounded: half the height makes a pill
                 // at any width, and a circle at the stub size
                 radius: blocks ? Math.min(2, Theme.radiusSmall) : Theme.pill(height)
                 color: parent.current ? wsFrame.activeMark
                     : blocks ? (parent.occupied ? Theme.text : "transparent")
-                    : (parent.occupied ? Theme.text : Theme.subtext)
+                    : (parent.occupied ? Theme.text : wsFrame.emptyMark)
                 border.width: blocks && !parent.current && !parent.occupied ? Theme.borderWidth : 0
-                border.color: Theme.subtext
+                border.color: wsFrame.emptyMark
 
                 Behavior on width {
                     NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
@@ -121,7 +122,7 @@ ModuleFrame {
                     : Theme.workspaceStyle === "names" ? Theme.workspaceNames[parent.wsId - 1] || parent.wsId
                     : parent.wsId
                 color: parent.current ? wsFrame.activeMark
-                    : parent.occupied ? Theme.text : Theme.subtext
+                    : parent.occupied ? Theme.text : wsFrame.emptyMark
                 font.family: Theme.fontText
                 font.pixelSize: Theme.barLabelSize
                 font.weight: parent.current ? Theme.weightStrong : Theme.weightBody
