@@ -332,29 +332,32 @@ Item {
 
                 Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width
+                    anchors.left: parent.left
+                    anchors.right: dividerText.left
+                    anchors.rightMargin: Theme.spaceL
                     height: Theme.sp(1)
                     color: Theme.strokeHover
                 }
                 Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: dividerText.right
+                    anchors.leftMargin: Theme.spaceL
+                    anchors.right: parent.right
+                    height: Theme.sp(1)
+                    color: Theme.strokeHover
+                }
+                Text {
+                    id: dividerText
                     anchors.centerIn: parent
-                    visible: dividerText.text !== ""
-                    width: dividerText.implicitWidth + Theme.spaceL * 2
-                    height: dividerText.implicitHeight
-                    color: Theme.surface
-                    Text {
-                        id: dividerText
-                        anchors.centerIn: parent
-                        text: {
-                            if (!entry.timestamp) return ""
-                            var time = new Date(entry.timestamp)
-                            return isNaN(time.getTime()) ? "" : Qt.formatTime(time, "h:mm AP")
-                        }
-                        color: Theme.subtext
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightBody
-                        font.pixelSize: Theme.fontCaption
+                    text: {
+                        if (!entry.timestamp) return ""
+                        var time = new Date(entry.timestamp)
+                        return isNaN(time.getTime()) ? "" : Qt.formatTime(time, "h:mm AP")
                     }
+                    color: Theme.subtext
+                    font.family: Theme.fontText
+                    font.weight: Theme.weightBody
+                    font.pixelSize: Theme.fontCaption
                 }
             }
 
@@ -473,7 +476,6 @@ Item {
                             textFormat: TextEdit.PlainText
                             text: entry.text
                             color: Theme.text
-                            opacity: 0.75
                             selectionColor: Theme.selectedStroke
                             selectedTextColor: Theme.hasAccent ? Theme.textOnAccent : Theme.textStrong
                             font.family: Theme.fontText
@@ -513,7 +515,6 @@ Item {
                             x: Theme.spaceL
                             width: parent.width - x
                             spacing: Theme.spaceM
-                            opacity: entry.final ? 1 : 0.78
                             Repeater {
                                 model: Markdown.split(entry.text)
                                 Loader {
@@ -555,7 +556,7 @@ Item {
                                 : entry.phase === "stopped" ? "󰓛"
                                 : entry.name === "TodoWrite" ? "󰄵" : "󰄬"
                             color: entry.phase === "error" ? Theme.alert
-                                : entry.phase === "running" ? Theme.accent : Theme.muted
+                                : entry.phase === "running" ? Theme.accent : Theme.subtext
                             font.family: Theme.fontIcon
                             font.pixelSize: Theme.fontSmall
                         }
@@ -579,7 +580,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: entry.body !== "" || entry.result !== ""
                             text: entry.open ? "󰅀" : "󰅂"
-                            color: Theme.muted
+                            color: Theme.subtext
                             font.family: Theme.fontIcon
                             font.pixelSize: Theme.fontSmall
                         }

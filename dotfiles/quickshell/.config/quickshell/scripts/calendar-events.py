@@ -133,6 +133,9 @@ def main():
     except (OSError, ValueError):
         fetched = {}
 
+    if not isinstance(fetched, dict):
+        fetched = {}
+
     today = dt.date.today()
     start = today - dt.timedelta(days=PAST_DAYS)
     end = today + dt.timedelta(days=FUTURE_DAYS)
@@ -143,21 +146,28 @@ def main():
         path = raw_path(feed["url"])
         key = os.path.basename(path)
         ok = True
+        expanded = None
         if not offline:
             try:
-                write_private(path, fetch(feed["url"]))
+                data = fetch(feed["url"])
+                expanded = expand(feed["name"], data, start, end)
+                write_private(path, data)
                 fetched[key] = int(dt.datetime.now().timestamp() * 1000)
             except Exception:
+                expanded = None
                 ok = False
                 failed = True
         try:
-            with open(path, "rb") as f:
-                events += expand(feed["name"], f.read(), start, end)
+            if expanded is None:
+                with open(path, "rb") as f:
+                    expanded = expand(feed["name"], f.read(), start, end)
+            events += expanded
         except OSError:
             ok = False
         except Exception as e:
             ok = False
             print(f"{feed['name']}: couldn't read the feed ({type(e).__name__})", file=sys.stderr)
+        failed = failed or not ok
         feeds.append({"name": feed["name"], "ok": ok, "fetched": fetched.get(key, 0)})
 
     # the same meeting from two invitations shows once, with a location if

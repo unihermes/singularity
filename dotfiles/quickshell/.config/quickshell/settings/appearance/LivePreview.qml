@@ -31,7 +31,7 @@ ClippingRectangle {
     width: parent ? parent.width : 0
     height: Math.round(stage.height * sc) + Theme.spaceL * 2
     radius: Theme.sectionRadius
-    color: Theme.base
+    color: Theme.glass ? Theme.panelTone : Theme.base
 
     Image {
         anchors.fill: parent
@@ -60,7 +60,7 @@ ClippingRectangle {
                 width: parent.width
                 height: Theme.barHeight
                 radius: Theme.barFloating ? Theme.barRadius : Theme.radiusSmall
-                color: Qt.rgba(Theme.bar.r, Theme.bar.g, Theme.bar.b, Theme.barOpacity)
+                color: Qt.rgba(Theme.barTone.r, Theme.barTone.g, Theme.barTone.b, Theme.barOpacity)
                 border.width: Theme.barFloating ? Theme.borderWidth : 0
                 border.color: Theme.stroke
             }
@@ -178,7 +178,7 @@ ClippingRectangle {
             y: lp.atBottom ? 0 : Theme.barHeight + Theme.spaceS
             width: Theme.fit(260 * Settings.flyoutWidth / 100) + padX * 2
             height: flyCol.implicitHeight + padY * 2
-            ground: Theme.surface
+            ground: Theme.glass ? Theme.panelFill : Theme.surface
 
             SectionRuns {
                 x: Theme.channelWidth + 2
@@ -219,7 +219,7 @@ ClippingRectangle {
             y: lp.atBottom ? 0 : Theme.barHeight + Theme.spaceS
             width: Math.min(parent.width, Theme.fit(Theme.launcherPosition === "full" ? 760 : 600))
             height: lCol.implicitHeight + pad * 2
-            ground: Theme.panel
+            ground: Theme.glass ? Theme.panelFill : Theme.panel
 
             Column {
                 id: lCol
@@ -337,7 +337,7 @@ ClippingRectangle {
                     width: (desk.width - desk.gapOut * 2 - desk.gapIn * 2) / 2
                     height: desk.height - y - desk.gapOut
                     radius: Theme.windowRadius
-                    color: Theme.panel
+                    color: Theme.glass ? Theme.panelTone : Theme.panel
                     opacity: (focused ? Settings.focusedOpacity : Settings.unfocusedOpacity) / 100
                     border.width: Theme.windowBorderWidth
                     border.color: focused ? Theme.windowBorderActive : Theme.windowBorderInactive

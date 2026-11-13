@@ -64,6 +64,7 @@ Item {
 
     // Gauge icons are always bright: they sit on top of the fill, and the
     // fill sweeps under them, so anything dimmer loses contrast as it passes.
+    readonly property color glassLevelFill: Qt.colorEqual(fillColor, Theme.gaugeFill) ? Theme.textStrong : fillColor
     readonly property color fg: active && fillValue < 0 && Theme.moduleOpenFill ? Theme.textOnAccent
         : (active || fillValue >= 0)
         ? Theme.textStrong
@@ -79,7 +80,7 @@ Item {
         active: root.active
         padH: root.padH
         fillValue: root.levelText ? -1 : root.fillValue
-        fillColor: root.fillColor
+        fillColor: Theme.glass && !root.levelText ? root.glassLevelFill : root.fillColor
         fixedWidth: root.levelText ? 0 : root.fixedWidth
 
         Text {

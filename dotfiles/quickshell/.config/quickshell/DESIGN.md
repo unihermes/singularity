@@ -101,7 +101,9 @@ comparison tables below describe the original five styles.
 - Hover and open states of bare chips (Glass, the taskbar) are washes of the
   foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
   and level fills are opaque for Glass and softened to 45% for taskbars; the open
-  Glass chip has no accent ring. Glass level chips have a faint outlined track,
+  Glass chip has no accent ring. Glass level chips are wider than the status
+  icons, with a rounded frosted track and a translucent foreground-coloured fill;
+  charging and low-battery colours take precedence,
   and the fill's width follows the level even near zero. Glass meters and sliders
   use the same outlined track and preserve its rounded end as the fill changes.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
@@ -117,6 +119,9 @@ comparison tables below describe the original five styles.
 - Glass's `autohide` slides the Dock away over the windows (it reserves no
   strip); pointing at the screen's bottom edge brings it back.
 - Glass's `blur` and `tint` change its frost.
+- Glass flyouts and other shared panel frames use the same tinted frost as the
+  Dock, with a soft top highlight. Their inner sections and row hovers are
+  translucent washes, keeping the frost visible behind the content.
 
 Across every style, a chosen segment, tab or chip fills with the accent
 (text in `Theme.textOnAccent`) unless its row in the table says otherwise.
@@ -614,6 +619,7 @@ conversation, keyboard shortcuts, pin and click-away behavior.
 - **Ollama** uses the Codex app server with its local Ollama provider. Clicking the heading opens a list of the three engines, and the model picker lists locally installed models. Chat and Code retain separate local conversations; Code uses the same modes and approvals as Codex. Local models vary in tool and image support, and Ollama needs enough context for the agent instructions and attachments.
 - **Heading** CLAUDE, CODEX or OLLAMA, with Reload, Pin, Center/Dock and × for the sidebar. Chat
   and Code follow as a segmented strip, a ● on a tab with something unread.
+  Provider, model and reasoning choices open in floating, styled menus beside their controls.
   New and History sit above the composer. Reload saves state and reloads the
   sidebar when all sessions are idle.
 - **Usage** under the tabs: a meter each for the

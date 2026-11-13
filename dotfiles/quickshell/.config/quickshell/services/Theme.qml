@@ -96,8 +96,8 @@ Singleton {
     function unfrostedTone(c) { return Qt.darker(c, 1.2) }
     function unfrosted(a) { return a + (1 - a) * 0.6 }
     // a smaller control under the pointer, or a chip/tab that's lit
-    readonly property color hoverFillSoft: surface
-    readonly property color selectedFill:  overlay
+    readonly property color hoverFillSoft: glass ? washHover : surface
+    readonly property color selectedFill:  glass ? washActive : overlay
     readonly property color selectedStroke: hasAccent ? accent : muted
     // text on an accent fill: white unless the accent is too bright (by
     // perceived brightness), or as Appearance pins it. Not named onAccent:
@@ -108,7 +108,7 @@ Singleton {
     // the inner half of a double frame
     readonly property color frameStroke:   muted
     // a field's ground: inputs, key-capture boxes
-    readonly property color fieldFill:     surface
+    readonly property color fieldFill:     glass ? washHover : surface
     // Glass draws one light hairline instead of the ramp's border
     readonly property bool glass: resolved.glass
     readonly property color stroke: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.14) : Qt.rgba(1, 1, 1, 0.14))
@@ -117,8 +117,8 @@ Singleton {
     readonly property color strokeFocus:   hasAccent ? accent : subtext
     // dim text, kept legible over a see-through ground
     readonly property color textDisabled:  glass ? subtext : muted
-    readonly property color meterTrack:    base
-    readonly property color meterStroke:   surface
+    readonly property color meterTrack:    glass ? washHover : base
+    readonly property color meterStroke:   glass ? stroke : surface
     // level colour: meters, sliders and the bar's level chips
     readonly property color meterFill:     Settings.levelColour === "good" ? good
         : Settings.levelColour === "text" ? text : accent
@@ -128,13 +128,20 @@ Singleton {
     // the dimming behind full-screen overlays
     readonly property color scrim:         Qt.rgba(0, 0, 0, Settings.scrim / 100)
     // the ground of flyouts, windows, cards and the bar (See-through)
-    // Under Glass the frost is well more solid than See-through alone gives,
-    // so text reads over any wallpaper; the Dock and panels share it
-    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.28) : resolved.opacity / 100
-    // Glass's accent-tinted option takes a little of the accent into it
-    readonly property color panelTone: glass && opt("tint") ? Qt.tint(panel, Qt.rgba(accent.r, accent.g, accent.b, 0.18)) : panel
+    // Glass lifts dark palette colours into a neutral frost, leaving enough
+    // opacity for text while letting the blurred background colour through.
+    readonly property real panelOpacity: Math.min(1, resolved.opacity / 100 + (resolved.opacity < 100 ? (glass ? 0.18 : 0.06) : 0))
+    function glassTone(c) {
+        var frost = isLight ? c : Qt.tint(c, Qt.rgba(1, 1, 1, 0.14))
+        return opt("tint") ? Qt.tint(frost, Qt.rgba(accent.r, accent.g, accent.b, 0.14)) : frost
+    }
+    readonly property color barTone: glass ? glassTone(bar) : bar
+    readonly property color panelTone: glass ? glassTone(panel) : panel
     readonly property color panelFill:     Qt.rgba(panelTone.r, panelTone.g, panelTone.b, panelOpacity)
-    readonly property color flyoutFill: Qt.rgba(surface.r, surface.g, surface.b, panelOpacity)
+    readonly property color flyoutFill: glass ? panelFill : Qt.rgba(surface.r, surface.g, surface.b, panelOpacity)
+    // Inner groups are a light wash over the frost, rather than another
+    // opaque panel obscuring the wallpaper and the optional accent tint.
+    readonly property color sectionFill: glass ? (isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.07)) : panelFill
     // Glass's glow option: lit things glow in the accent
     readonly property bool glow: glass && opt("glow") && !plain
 
@@ -404,7 +411,7 @@ Singleton {
     // the bar's audio visualizer -- see Looks.js
     readonly property string vizStyle: Settings.vizStyle
     // a top-to-bottom shading on grounds -- see Looks.js
-    readonly property bool gradient: Settings.gradient && !plain
+    readonly property bool gradient: Settings.gradient && !plain && !glass
     function shadeTop(c) { return Qt.tint(c, Qt.rgba(1, 1, 1, isLight ? 0.35 : 0.06)) }
     function shadeBottom(c) { return Qt.tint(c, Qt.rgba(0, 0, 0, isLight ? 0.06 : 0.12)) }
     // the weights text and its emphasis are set in -- see Looks.js
@@ -485,6 +492,7 @@ Singleton {
     readonly property int moduleGap:    resolved.moduleGap
     // the gauge modules' shared width, so their fills compare
     readonly property int moduleWidth:  glass ? 40 : 54
+    readonly property int levelChipWidth: glass && !plain ? sp(64) : moduleWidth
     // the taskbar's Start, search and Task View buttons, square
     readonly property int buttonWidth:  moduleTaskbar ? moduleHeight : glass ? moduleHeight + modulePadH * 2 : moduleWidth
     // the space inside the chip's frame, capped to it

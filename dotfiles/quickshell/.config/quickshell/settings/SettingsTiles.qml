@@ -34,7 +34,8 @@ Grid {
             width: (root.width - root.spacing * (root.columns - 1)) / root.columns
             height: root.tileHeight
             radius: Theme.radius > 0 ? Theme.radius + 3 : 0
-            color: on ? Theme.overlay : tileMouse.containsMouse ? Theme.surface : Theme.panel
+            color: Theme.glass ? (on ? Theme.washActive : tileMouse.containsMouse ? Theme.washHover : Theme.sectionFill)
+                : on ? Theme.overlay : tileMouse.containsMouse ? Theme.surface : Theme.panel
             border.width: Theme.borderWidth
             border.color: on ? Theme.channelOuter : tileMouse.containsMouse ? Theme.subtext : Theme.border
 

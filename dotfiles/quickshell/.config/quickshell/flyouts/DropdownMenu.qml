@@ -64,7 +64,7 @@ Item {
         height: root.menuHeight
         id: menuBox
         radius: Theme.radiusInner
-        color: Theme.surface
+        color: Theme.glass ? Theme.glassTone(Theme.surface) : Theme.surface
         border.width: Theme.controlBorder(Theme.stroke)
         border.color: Theme.controlStroke(Theme.stroke)
 

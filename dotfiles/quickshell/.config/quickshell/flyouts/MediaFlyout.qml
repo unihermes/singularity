@@ -89,7 +89,9 @@ FlyoutPanel {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: spectrum.bandH + Theme.spaceXl + Theme.spaceM
-            gradient: Gradient {
+            color: Theme.captionScrim
+            gradient: Theme.glass ? null : spectrumFade
+            property Gradient spectrumFade: Gradient {
                 GradientStop { position: 0; color: "transparent" }
                 GradientStop { position: 1; color: Theme.captionScrim }
             }

@@ -107,7 +107,7 @@ Item {
         anchors.rightMargin: -Theme.spaceS
         radius: Theme.radiusInner
         color: root.highlighted && mark === "tint" ? Qt.tint(Theme.panel, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.24))
-            : mouse.containsMouse ? Theme.hoverFill : "transparent"
+            : mouse.containsMouse ? (Theme.glass ? Theme.washHover : Theme.hoverFill) : "transparent"
     }
 
     // left edge tick on the active entry, instead of a fill: a filled row

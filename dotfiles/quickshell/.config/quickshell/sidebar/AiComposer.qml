@@ -14,6 +14,7 @@ Column {
     id: root
 
     required property var session
+    required property Item popupLayer
     signal escapePressed()
     // Ctrl+L (or Ctrl+N, from AiSidebar), or /clear or /new sent on its own
     signal newConversation()
@@ -32,6 +33,7 @@ Column {
     onSessionChanged: { choosingModel = false; choosingReasoning = false }
 
     function modelValues() { return Ai.modelChoicesFor(Ai.tab).map(c => c.value) }
+    function reasoningValues() { return Ai.codex(Ai.tab) ? ["", "low", "medium", "high", "xhigh", "max", "ultra"] : ["", "low", "medium", "high", "xhigh", "max"] }
     function focusInput() { input.forceActiveFocus() }
     // typing that started elsewhere in the sidebar lands here
     function typeInto(text) {
@@ -281,45 +283,37 @@ Column {
         }
     }
 
-    ListView {
+    AiPicker {
+        parent: root.popupLayer
         visible: root.choosingModel
-        width: parent.width
-        height: visible ? Math.min(contentHeight, Theme.rowHeightDense * 5) : 0
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        model: Ai.modelChoicesFor(Ai.tab)
-        delegate: FlyoutRow {
-            required property var modelData
-            width: ListView.view.width - Theme.scrollGutter
-            label: modelData.text
-            highlighted: modelData.value === (Ai.models[Ai.modelKey(Ai.tab)] || "")
-            onActivated: {
-                Ai.setModel(Ai.modelKey(Ai.tab), modelData.value)
-                root.choosingModel = false
-                root.focusInput()
-            }
+        target: modelButton
+        above: true
+        menuWidth: Theme.fit(230)
+        choices: Ai.modelChoicesFor(Ai.tab)
+        current: Ai.models[Ai.modelKey(Ai.tab)] || ""
+        onDismissed: { root.choosingModel = false; root.focusInput() }
+        onPicked: value => {
+            Ai.setModel(Ai.modelKey(Ai.tab), value)
+            root.choosingModel = false
+            root.focusInput()
         }
-        ScrollBar { flickable: parent; anchors.right: parent.right }
     }
 
-    ListView {
+    AiPicker {
+        parent: root.popupLayer
         visible: root.choosingReasoning
-        width: parent.width
-        height: visible ? Math.min(contentHeight, Theme.rowHeightDense * 5) : 0
-        clip: true
-        model: Ai.codex(Ai.tab) ? ["", "low", "medium", "high", "xhigh", "max", "ultra"] : ["", "low", "medium", "high", "xhigh", "max"]
-        delegate: FlyoutRow {
-            required property string modelData
-            width: ListView.view.width - Theme.scrollGutter
-            label: modelData === "" ? "Default" : modelData[0].toUpperCase() + modelData.slice(1)
-            highlighted: modelData === (Ai.reasoning[Ai.modelKey(Ai.tab)] || "")
-            onActivated: {
-                Ai.setReasoning(Ai.modelKey(Ai.tab), modelData)
-                root.choosingReasoning = false
-                root.focusInput()
-            }
+        target: reasoningButton
+        above: true
+        menuWidth: Theme.fit(150)
+        choices: root.reasoningValues()
+            .map(v => ({ value: v, text: v === "" ? "Default" : v[0].toUpperCase() + v.slice(1) }))
+        current: Ai.reasoning[Ai.modelKey(Ai.tab)] || ""
+        onDismissed: { root.choosingReasoning = false; root.focusInput() }
+        onPicked: value => {
+            Ai.setReasoning(Ai.modelKey(Ai.tab), value)
+            root.choosingReasoning = false
+            root.focusInput()
         }
-        ScrollBar { flickable: parent; anchors.right: parent.right }
     }
 
     // Status and conversation actions share the line above the input.
@@ -438,6 +432,7 @@ Column {
 
                 Keys.onEscapePressed: {
                     if (root.engineListOpen) { root.engineListClosed(); return }
+                    if (root.choosingModel || root.choosingReasoning) { root.choosingModel = false; root.choosingReasoning = false; return }
                     if (!root.suggestionsDismissed && root.suggestions.length > 0) root.suggestionsDismissed = true
                     else root.escapePressed()
                 }
@@ -452,8 +447,8 @@ Column {
                         }
                     }
                     var list = root.choosingModel ? root.modelValues() : []
-                    if (list.length > 0) {
-                        if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                    if (root.choosingModel) {
+                        if (list.length > 0 && (event.key === Qt.Key_Down || event.key === Qt.Key_Up)) {
                             var at = Math.max(0, list.indexOf(Ai.models[Ai.modelKey(Ai.tab)] || ""))
                             Ai.setModel(Ai.modelKey(Ai.tab), list[(at + (event.key === Qt.Key_Down ? 1 : list.length - 1)) % list.length])
                             event.accepted = true
@@ -461,6 +456,20 @@ Column {
                         }
                         if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !(event.modifiers & Qt.ShiftModifier)) {
                             root.choosingModel = false
+                            event.accepted = true
+                            return
+                        }
+                    }
+                    if (root.choosingReasoning) {
+                        if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                            var levels = root.reasoningValues()
+                            var levelAt = Math.max(0, levels.indexOf(Ai.reasoning[Ai.modelKey(Ai.tab)] || ""))
+                            Ai.setReasoning(Ai.modelKey(Ai.tab), levels[(levelAt + (event.key === Qt.Key_Down ? 1 : levels.length - 1)) % levels.length])
+                            event.accepted = true
+                            return
+                        }
+                        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !(event.modifiers & Qt.ShiftModifier)) {
+                            root.choosingReasoning = false
                             event.accepted = true
                             return
                         }
@@ -514,15 +523,17 @@ Column {
                 onClicked: root.attaching = !root.attaching
             }
             FlyoutChip {
+                id: modelButton
                 width: Math.min(implicitWidth, composerControls.width)
                 text: Ai.modelText(Ai.tab) + (root.choosingModel ? " ▴" : " ▾")
-                onClicked: { if (Ai.ollama(Ai.tab)) Ai.refreshOllama(); root.choosingModel = !root.choosingModel; root.choosingReasoning = false }
+                onClicked: { if (Ai.ollama(Ai.tab)) Ai.refreshOllama(); root.choosingModel = !root.choosingModel; root.choosingReasoning = false; root.focusInput() }
             }
             FlyoutChip {
+                id: reasoningButton
                 visible: !Ai.ollama(Ai.tab)
                 text: "Reasoning: " + (Ai.reasoning[Ai.modelKey(Ai.tab)] || "Default") + " ▾"
                 enabled: !root.session.busy
-                onClicked: { root.choosingReasoning = !root.choosingReasoning; root.choosingModel = false }
+                onClicked: { root.choosingReasoning = !root.choosingReasoning; root.choosingModel = false; root.focusInput() }
             }
             FlyoutChip {
                 visible: Ai.tab === "code"

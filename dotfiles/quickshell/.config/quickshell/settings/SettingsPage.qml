@@ -372,7 +372,7 @@ Item {
                     width: tabRow.implicitWidth + Theme.spaceL * 2
                     height: Theme.rowHeightTall
                     radius: Theme.radiusInner
-                    color: current ? Theme.selectedFill : tabMouse.containsMouse ? Theme.overlay : "transparent"
+                    color: current ? Theme.selectedFill : tabMouse.containsMouse ? (Theme.glass ? Theme.washHover : Theme.overlay) : "transparent"
                     border.width: current ? Theme.borderWidth : 0
                     border.color: Theme.selectedStroke
 

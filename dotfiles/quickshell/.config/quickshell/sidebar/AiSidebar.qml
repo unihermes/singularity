@@ -186,7 +186,6 @@ PanelWindow {
         id: box
         width: parent.width
         height: parent.height
-        ground: Theme.surface
         opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
         transform: Translate {
             x: root.centered ? 0 : (1 - root.reveal) * Theme.sp(24)
@@ -253,48 +252,17 @@ PanelWindow {
             padY: Theme.spaceXs
         }
 
-        // the provider list, drawn over what is below the heading
-        MouseArea {
-            anchors.fill: parent
-            z: 40
+        AiPicker {
             visible: root.choosingEngine && Ai.codexAvailable
-            onPressed: root.choosingEngine = false
-        }
-
-        Rectangle {
-            id: engineMenu
-            visible: root.choosingEngine && Ai.codexAvailable
-            z: 41
-            x: col.x + engineHeading.x
-            y: col.y + engineHeading.y + engineHeading.height + Theme.spaceXs
-            width: Theme.fit(150)
-            height: engineList.contentHeight + Theme.spaceXs * 2
-            radius: Theme.radiusInner
-            color: Theme.surface
-            border.width: Theme.controlBorder(Theme.stroke)
-            border.color: Theme.controlStroke(Theme.stroke)
-            ControlEdge { radius: engineMenu.radius }
-
-            ListView {
-                id: engineList
-                x: Theme.spaceXs
-                y: Theme.spaceXs
-                width: parent.width - Theme.spaceXs * 2
-                height: contentHeight
-                interactive: false
-                model: [{ value: "claude", text: "Claude", icon: "icons/claude.svg" }, { value: "codex", text: "Codex", icon: "icons/codex.svg" }, { value: "ollama", text: "Ollama", icon: "icons/ollama.svg" }]
-                delegate: FlyoutRow {
-                    required property var modelData
-                    width: ListView.view.width
-                    label: modelData.text
-                    leadingImage: Qt.resolvedUrl(modelData.icon)
-                    highlighted: Ai.engines[Ai.tab] === modelData.value
-                    onActivated: {
-                        root.choosingEngine = false
-                        Ai.setEngine(Ai.tab, modelData.value)
-                        if (modelData.value === "ollama") Ai.refreshOllama()
-                    }
-                }
+            target: engineHeading.labelItem
+            menuWidth: Theme.fit(150)
+            choices: [{ value: "claude", text: "Claude", icon: Qt.resolvedUrl("icons/claude.svg") }, { value: "codex", text: "Codex", icon: Qt.resolvedUrl("icons/codex.svg") }, { value: "ollama", text: "Ollama", icon: Qt.resolvedUrl("icons/ollama.svg") }]
+            current: Ai.engines[Ai.tab]
+            onDismissed: root.choosingEngine = false
+            onPicked: value => {
+                root.choosingEngine = false
+                Ai.setEngine(Ai.tab, value)
+                if (value === "ollama") Ai.refreshOllama()
             }
         }
 
@@ -322,6 +290,7 @@ PanelWindow {
 
             FlyoutHeading {
                 id: engineHeading
+                centerOffset: -Theme.spaceS
                 text: Ai.ollama(Ai.tab) ? "OLLAMA" : Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
                 icon: Ai.ollama(Ai.tab)
                     ? Qt.resolvedUrl("icons/ollama.svg")
@@ -340,6 +309,7 @@ PanelWindow {
                 id: headControls
                 Row {
                     spacing: Theme.spaceXs
+                    height: Math.max(Theme.chipHeight, Theme.controlSize)
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
                         icon: "󰑓"
@@ -360,6 +330,7 @@ PanelWindow {
                         onClicked: Settings.set("aiPlacement", root.centered ? "sidebar" : "center")
                     }
                     IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
                         icon: "󰅖"
                         onClicked: Ai.shown = false
                     }
@@ -489,6 +460,7 @@ PanelWindow {
 
             AiComposer {
                 id: composer
+                popupLayer: box
                 session: root.session
                 historyShown: root.view === "past"
                 onEscapePressed: Ai.shown = false

@@ -17,4 +17,6 @@ The pre-commit hook runs these when relevant files are staged; run them before c
 - `node --test tools/test-notification-routing.mjs`: sidebar and desktop notification routing.
 - `python3 tools/test-ollama-agent.py`: the Ollama proxy's request adaptation and empty-reply retries.
 - `python3 tools/test-ollama-status.py`: model capability discovery and GPU offload reporting.
-
+- `python3 tools/test-calendar-events.py`: calendar cache fallback, refresh failures and state repair
+  (requires `icalendar` and `recurring_ical_events`).
+- `python3 tools/test-phone-link.py`: large clipboard changes and failed payload cleanup.

@@ -222,6 +222,7 @@ Item {
                         width: parent.width
                         text: tile.modelData.kind === "clip" ? "Image"
                             : tile.modelData.kind === "calc" ? tile.modelData.item.text
+                            : tile.modelData.kind === "app" ? Apps.displayName(tile.modelData.item)
                             : tile.modelData.item.name || ""
                         elide: Text.ElideRight
                         color: tile.current ? Theme.textStrong : Theme.text

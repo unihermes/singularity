@@ -30,7 +30,7 @@ Item {
     readonly property bool isResult: kind === "calc" && item.kind === "result"
     // `|| ""`: switching mode can briefly hand a row the other mode's data
     readonly property string name: (kind === "clip" ? (item.isImage ? "Image" : item.preview)
-        : kind === "calc" ? item.text : item.name) || ""
+        : kind === "calc" ? item.text : kind === "app" ? Apps.displayName(item) : item.name) || ""
     readonly property string note: !launcher.details ? ""
         : (kind === "file" ? Files.pretty(item.dir || "")
             : kind === "calc" ? item.hint

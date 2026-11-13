@@ -127,7 +127,7 @@ BarModule {
 
     Connections {
         target: Brightness
-        function onLevelChanged() {
+        function onAdjusted() {
             root.show("brightness", "󰃠", Brightness.level + "%", Brightness.level / 100, 1600)
         }
     }

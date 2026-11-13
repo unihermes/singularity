@@ -74,8 +74,7 @@ PanelWindow {
 
     // See-through fades the ground only (chips stay solid); shaded under
     // Theme.gradient, tinted under Glass's tint option
-    readonly property color barTone: Theme.glass && Theme.opt("tint")
-        ? Qt.tint(Theme.bar, Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25)) : Theme.bar
+    readonly property color barTone: Theme.barTone
     // a display scaled under 1 can't use the blur (looks.lua): no frost
     // there, so the ground is lifted to read as frosted as the others'
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
@@ -312,7 +311,7 @@ PanelWindow {
                 it = {
                     key: "pin/" + e.id,
                     source: e.icon ? Apps.iconPath(e.icon, true) : "",
-                    glyph: "󰖯", name: e.name, address: "", toplevel: null,
+                    glyph: "󰖯", name: Apps.displayName(e), address: "", toplevel: null,
                     main: true, windows: [],
                 }
             }

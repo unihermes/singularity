@@ -178,7 +178,9 @@ WidgetCard {
                         width: Math.max(parent.height, (parent.parent.hi - parent.parent.lo) / parent.span * parent.width)
                         height: parent.height
                         radius: parent.radius
-                        gradient: Gradient {
+                        color: "#7fb0e8"
+                        gradient: Theme.glass ? null : temperatureFade
+                        property Gradient temperatureFade: Gradient {
                             orientation: Gradient.Horizontal
                             GradientStop { position: 0; color: "#7fb0e8" }
                             GradientStop { position: 1; color: "#f2c14e" }

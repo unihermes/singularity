@@ -142,7 +142,7 @@ Item {
             anchors.fill: parent
             anchors.margins: frame.barInset
         // one less than the inner stroke's radius, concentric, floored at 0
-            radius: frame.flush ? frame.radius : Theme.radiusSmall
+            radius: Theme.glass ? Theme.pill(height) : frame.flush ? frame.radius : Theme.radiusSmall
             color: Theme.glass && frame.flush && !root.active && !hover.hovered ? frame.restFill
                 : frame.flush || frame.taskbar ? (Theme.washed ? frame.wash : root.active || hover.hovered ? Theme.overlay : "transparent")
                 : Theme.meterTrack
@@ -175,7 +175,7 @@ Item {
                 visible: Theme.glass
                 fraction: root.fillValue
                 corner: track.radius
-                fillColor: Qt.alpha(root.fillColor, 1)
+                fillColor: Qt.alpha(root.fillColor, 0.28)
             }
         }
 

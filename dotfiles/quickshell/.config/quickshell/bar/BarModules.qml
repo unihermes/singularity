@@ -221,7 +221,7 @@ Item {
     BarModule {
         id: volBtn
         visible: Settings.widgetVisible("volume")
-        fixedWidth: Theme.moduleWidth
+        fixedWidth: Theme.levelChipWidth
         // the bar shows the level; the icon says muted, else where the
         // sound goes: headphones or speakers. Headphones whose headset is
         // switched off (its dongle still there) show crossed out and dim.
@@ -243,7 +243,7 @@ Item {
         readonly property bool ddc: DdcBrightness.has(output)
         readonly property int level: ddc ? DdcBrightness.level(output) : Brightness.level
         visible: (ddc ? level >= 0 : Brightness.available) && Settings.widgetVisible("brightness")
-        fixedWidth: Theme.moduleWidth
+        fixedWidth: Theme.levelChipWidth
         // the moon while Night Light is on
         icon: shellRoot.nightLight ? "󰖔" : "󰃠"
         fillValue: level / 100
@@ -255,7 +255,7 @@ Item {
 
     BarModule {
         id: battBtn
-        fixedWidth: Theme.moduleWidth
+        fixedWidth: Theme.levelChipWidth
         visible: Battery.present && Settings.widgetVisible("battery")
         // charging is all the glyph still needs to say; the
         // level is the bar's job

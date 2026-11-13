@@ -52,8 +52,8 @@ Use `--largest` on a directory to rank its files recursively by size.
 - `packages/gaming/`: the `gaming` policy's lists (base.txt, then one per GPU capability).
 - `qs/DESIGN.md`: the UI design reference. Read the section you need (grep its `##`
   headings) before UI work, not the whole file.
-- `TODO.md`: the to-do list, created when needed. "Add to the to-do" means a new
-  numbered item there; remove completed items and delete the file when it is empty.
+- `TODO.md`: the to-do list. "Add to the to-do" means a new numbered item there;
+  remove completed items and keep the file when it is empty.
 
 ## Reference docs (read only when relevant)
 

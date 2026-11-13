@@ -18,7 +18,7 @@ Item {
     width: Theme.fs(112)
     height: Theme.fs(63)
 
-    component Box: Rectangle { radius: 2 * art.u; color: Theme.panel; border.width: 1; border.color: Theme.stroke }
+    component Box: Rectangle { radius: 2 * art.u; color: Theme.glass ? Theme.panelTone : Theme.panel; border.width: 1; border.color: Theme.stroke }
     component Ln: Rectangle { height: 2 * art.u; radius: height / 2; color: Theme.overlay }
     component Field: Rectangle { height: 5 * art.u; radius: 1.5 * art.u; color: "transparent"; border.width: 1; border.color: Theme.accent }
     component Dot: Rectangle { property int n: 0; width: 6 * art.u; height: width; radius: 1.5 * art.u; color: art.apps[n % 6] }
@@ -42,7 +42,7 @@ Item {
         visible: art.screen
         anchors.fill: parent
         radius: 3 * art.u
-        color: Theme.base
+        color: Theme.glass ? Theme.barTone : Theme.base
         border.width: 1
         border.color: Theme.stroke
     }
@@ -52,7 +52,7 @@ Item {
         width: parent.width - 2
         height: art.barH
         radius: 3 * art.u
-        color: Theme.bar
+        color: Theme.glass ? Theme.barTone : Theme.bar
     }
 
     // list, grid, line, home: a centred box
@@ -203,7 +203,7 @@ Item {
             width: modelData[2] * 10 * art.u - 1.5 * art.u
             height: modelData[3] * 12 * art.u - 1.5 * art.u
             radius: 1.5 * art.u
-            color: Theme.panel
+            color: Theme.glass ? Theme.panelTone : Theme.panel
             border.width: 1
             border.color: index === 0 ? Theme.accent : Theme.stroke
             Dot { x: 1.5 * art.u; y: 1.5 * art.u; n: parent.index; width: parent.modelData[3] > 1 ? 7 * art.u : 4 * art.u }

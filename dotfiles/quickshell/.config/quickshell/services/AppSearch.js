@@ -1,5 +1,9 @@
 .pragma library
 
+function displayName(name) {
+    return String(name || "").replace(/\s+(?:web\s+)?browser\s*$/i, "")
+}
+
 function index(entries, hidden) {
     var excluded = new Set(hidden)
     return entries.filter(e => !e.noDisplay && !excluded.has(e.id)).map(e => ({

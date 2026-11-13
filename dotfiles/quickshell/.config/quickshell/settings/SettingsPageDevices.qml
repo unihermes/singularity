@@ -514,7 +514,7 @@ SettingsPage {
     }
 
     SettingsNote {
-        text: "Low battery alerts at 15% and 5%"
+        text: "Low battery alerts at " + Battery.lowLevel + "% and " + Battery.criticalLevel + "%"
     }
 
     // --- drives --------------------------------------------------------------

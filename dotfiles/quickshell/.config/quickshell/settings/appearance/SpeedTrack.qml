@@ -49,7 +49,7 @@ SettingsField {
             anchors.verticalCenter: parent.verticalCenter
             height: Theme.controlSize
             radius: Theme.radiusInner
-            color: Theme.base
+            color: Theme.glass ? Theme.meterTrack : Theme.base
             border.width: Theme.borderWidth
             border.color: Theme.stroke
             opacity: tr.off ? 0.4 : 1

@@ -599,6 +599,7 @@ class Daemon:
             return False
         os.makedirs(os.path.dirname(path), exist_ok=True)
         part = path + ".part"
+        writer = None
         try:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_connection(link.addr, port, ssl=self.me.client_tls(), server_hostname=""), 10)
@@ -610,7 +611,6 @@ class Daemon:
                         break
                     f.write(chunk)
                     got += len(chunk)
-            writer.close()
             if size >= 0 and got != size:
                 raise OSError("short")
             os.replace(part, path)
@@ -621,6 +621,9 @@ class Daemon:
             except OSError:
                 pass
             return False
+        finally:
+            if writer is not None:
+                writer.close()
 
     async def send_file(self, link, path):
         """A file to the phone: a port opened for it, named in the packet, and served once."""
@@ -677,6 +680,8 @@ class Daemon:
             # a line per change: the text as base64 (empty for a picture)
             proc = await asyncio.create_subprocess_exec(
                 "wl-paste", "--no-newline", "--type", "text", "--watch", "sh", "-c", "head -c 1048576 | base64 -w0; echo",
+                # One base64 line can encode the full 1 MiB clipboard cap.
+                limit=2 << 20,
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL, preexec_fn=die_with_parent)
             first = True
             while line := await proc.stdout.readline():

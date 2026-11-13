@@ -33,7 +33,9 @@ Singleton {
     // discharge; plugging in re-arms them. Checked on every level change, so
     // waking from sleep already below one warns straight away.
     readonly property bool discharging: present && device.state === UPowerDeviceState.Discharging
-    readonly property var warnLevels: [15, 5]
+    readonly property int lowLevel: 15
+    readonly property int criticalLevel: 5
+    readonly property var warnLevels: [lowLevel, criticalLevel]
     // the lowest level warned about since the charger was last in
     property int warned: 101
 
@@ -45,7 +47,7 @@ Singleton {
         var hit = warnLevels.filter(l => percent <= l && l < warned)
         if (hit.length === 0) return
         warned = hit[hit.length - 1]
-        var critical = warned <= 5
+        var critical = warned <= criticalLevel
         var left = device.timeToEmpty > 0 ? ", about " + Format.duration(device.timeToEmpty) + " left" : ""
         var cmd = ["notify-send", "-a", "Battery", "-u", critical ? "critical" : "normal",
                    "-i", critical ? "battery-empty" : "battery-caution",

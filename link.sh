@@ -119,6 +119,8 @@ sed -i -e 's#~/.config/hypr/lid.sh sleep#~/.config/hypr/sleep.sh sleep#g' \
   -e 's#~/.config/hypr/lid.sh resume#~/.config/hypr/sleep.sh resume#g' \
   -e 's#= brightnessctl -s set 1%#= [ -n "$(ls -A /sys/class/backlight)" ] \&\& brightnessctl -c backlight -s set 1%#' \
   -e 's#= brightnessctl -r#= [ -n "$(ls -A /sys/class/backlight)" ] \&\& brightnessctl -c backlight -r#' "$idle"
+# Preserve existing idle timings while making the standard dim and restore quiet.
+sed -i -E '/brightnessctl -c backlight (-s set 1%|-r)/ { /qs ipc call brightness quietNext/! s#(=[[:space:]]*)#\1qs ipc call brightness quietNext >/dev/null 2>\&1; #; }' "$idle"
 sed -i 's#= grep -qsx 1 /sys/class/power_supply/\*/online || ~/.config/hypr/idle-suspend.sh$#= ~/.config/singularity/platform.sh has battery \&\& { grep -qsx 1 /sys/class/power_supply/*/online || ~/.config/hypr/idle-suspend.sh; }#' "$idle"
 if ! grep -q 'systemctl hibernate' "$idle"; then
   sed -i -E 's#^([[:space:]]*(\#~ ?)?[[:space:]]*on-timeout[[:space:]]*=.*)systemctl suspend$#\1~/.config/hypr/idle-suspend.sh#' "$idle"

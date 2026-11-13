@@ -2126,7 +2126,7 @@ browserOpenedThunar = function(win)
     local previous = active and active.address ~= win.address and active
         or hl.get_window("address:" .. (focusedNow == win.address and focusedBefore or focusedNow or ""))
     local class = previous and previous.class and previous.class:lower()
-    if class ~= "floorp" and class ~= "zen" and class ~= "zen-browser" then return win end
+    if not BROWSER_CLASSES[class] then return win end
     for _, app in ipairs(appRules) do
         if hasTag(win, app.tag) then
             local addr = "address:" .. win.address
