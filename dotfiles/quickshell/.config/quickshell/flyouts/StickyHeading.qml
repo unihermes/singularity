@@ -44,7 +44,7 @@ Item {
         y: root.slide
         width: parent.width
         height: root.height
-        color: Theme.panel
+        color: Theme.glass ? Theme.panelTone : Theme.panel
 
         FlyoutHeading {
             id: copy
