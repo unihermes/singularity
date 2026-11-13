@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsDropdown.qml
-//
 // A Settings dropdown: a box with the current value and a DropdownMenu of
 // every choice (above when near the bottom), in a window-wide overlay so
 // the page's Flickable can't cut it off.

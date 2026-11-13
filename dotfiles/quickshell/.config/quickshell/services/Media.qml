@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Media.qml
-//
 // The MPRIS player the bar's media module follows: whichever is playing,
 // else the last one that was, else the first one there is. One picked in
 // the flyout wins over all of those until another player starts playing. Browsers expose

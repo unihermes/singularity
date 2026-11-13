@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutChipLine.qml
-//
 // Chips sharing one line in equal widths: a flyout's tools, its windows,
 // its way out. Each entry is { icon, text, act }, with spinning: true to
 // turn the icon (a refresh running); a click emits picked(act).

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/HyprPercent.qml
-//
 // A 0-1 opacity, shown and stepped as a percentage
 
 import Quickshell

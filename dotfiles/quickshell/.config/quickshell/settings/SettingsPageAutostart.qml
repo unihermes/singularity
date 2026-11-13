@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageAutostart.qml
-//
 // Which OS boots (systemd-boot's default, via install.sh's singularity-boot
 // helper and pkexec; shown only with a second OS), a one-off restart into
 // another OS or the BIOS, ly's autologin (singularity-autologin, asks for

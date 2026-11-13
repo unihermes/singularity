@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/OverlayWindow.qml
-//
 // A transparent layer surface over one whole screen, the base for flyouts,
 // ALT+Tab, the workspace overlay and the toasts.
 //

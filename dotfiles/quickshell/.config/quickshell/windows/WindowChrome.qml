@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/WindowChrome.qml
-//
 // The ground of a standalone window (Settings, System) and Escape to go
 // back or close it. Declared first in the window so the content draws over it; the title
 // row is WindowHeader.qml.

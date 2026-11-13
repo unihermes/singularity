@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsField.qml
-//
 // One setting on a Settings page: a label with an optional hint under it on
 // the left, and whatever controls it on the right (chips, a stepper's
 // buttons, a slider, a field). Rows grow to fit a hint or a wrapping Flow of

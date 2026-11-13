@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/input.lua
---
 -- Keyboard, mouse, touchpad and gestures. Settings > Input reads the plain
 -- fields of the input table here, and writes its own changes to
 -- hyprland.json (see overrides.lua).

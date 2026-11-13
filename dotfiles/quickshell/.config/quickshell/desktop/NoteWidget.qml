@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/NoteWidget.qml
-//
 // A sticky note on the desktop: one of the Notes tabs (SUPER+N), to read
 // and type in. Its title in the accent, + for a new note beside it and ×
 // to take it off the desktop (it stays in the Notes window). Typing here

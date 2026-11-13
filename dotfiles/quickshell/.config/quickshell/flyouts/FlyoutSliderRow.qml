@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutSliderRow.qml
-//
 // A number setting as a slider, label and value over it. `step` snaps;
 // Slider's 0..100 maps onto minimum..maximum. `live: false` commits on
 // release (Font Size, which rescales the panel mid-drag).

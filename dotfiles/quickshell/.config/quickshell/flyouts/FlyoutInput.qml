@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutInput.qml
-//
 // A single-line text field sized like a FlyoutRow. `bleed` runs the frame
 // past its edges so text lines up with row labels in a flyout; `glyph` and
 // `hints` make it a search box. Its panel must hold keyboard focus, or a

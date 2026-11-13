@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/QuickButton.qml
-//
 // Pane's quick-settings button: a framed button with the glyph, accent-
 // filled while on (`lit`), and the name under it. `split` gives it a
 // chevron part of its own, after a hairline, that opens its details

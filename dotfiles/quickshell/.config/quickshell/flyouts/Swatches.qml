@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Swatches.qml
-//
 // A look's palette as a strip of colour blocks, beside its name in a
 // dropdown. Empty, it takes no width.
 

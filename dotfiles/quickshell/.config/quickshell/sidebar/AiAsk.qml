@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/AiAsk.qml
-//
 // A permission prompt from Claude Code or Codex (their sessions' asks):
 // what it wants to do and the command or plan in full, then Allow, the
 // CLI's own "don't ask again" (all edits, that command, or Codex's for this

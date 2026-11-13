@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ChannelDrop.qml
-//
 // Lays over a channel's row and takes an app dragged there (AppDrag),
 // outlined in the accent while one hovers. Dropped, it says which streams
 // came; the row's owner moves them (Audio.moveApp).

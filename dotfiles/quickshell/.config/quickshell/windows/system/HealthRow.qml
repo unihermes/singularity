@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/HealthRow.qml
-//
 // A Health check: a status dot (filled for a problem, hollow for a pass, so
 // it reads in grayscale), the check, the finding, and its fix buttons.
 

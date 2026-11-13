@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/HomeRow.qml
-//
 // A Home tile: accent icon, name and blurb, `status` and optional `history`
 // on the right, a chevron; `current` lights it for the arrow keys.
 

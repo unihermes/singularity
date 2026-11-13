@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/BarModules.qml
-//
 // The bar's modules and the widgetItems registry Bar Widgets keys off. The
 // big ones have files of their own (WorkspacesModule, WindowsModule,
 // TrayModule), each handed this item as `host`. Bar.qml reparents every

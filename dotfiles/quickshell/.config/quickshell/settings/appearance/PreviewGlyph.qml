@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/PreviewGlyph.qml
-//
 
 import Quickshell
 import QtQuick

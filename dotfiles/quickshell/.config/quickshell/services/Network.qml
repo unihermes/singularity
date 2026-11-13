@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Network.qml
-//
 // Wi-Fi through iwd and the wired link through systemd-networkd, for the
 // bar, its flyout and the Settings page (Quickshell.Networking needs
 // NetworkManager). Status reads strip iwctl's table formatting; the network

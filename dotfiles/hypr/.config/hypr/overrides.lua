@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/overrides.lua
---
 -- This machine's changes over the repo's settings, then Game Mode over
 -- everything.
 

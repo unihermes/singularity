@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Settings.qml
-//
 // The settings the user changes at runtime, persisted as JSON. Written only
 // through set() from Settings, the Control Centre and a few flyouts; Theme
 // reads them. FileView + JsonAdapter save on every change and pick up edits

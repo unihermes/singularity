@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Calendar.qml
-//
 // Events from calendars.conf's feeds ("Name = URL"), expanded by
 // calendar-events.py into a watched cache (so they show offline). Refreshed
 // hourly, every 2 minutes while failing, and after waking; runs capped by

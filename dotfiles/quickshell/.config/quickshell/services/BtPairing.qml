@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/BtPairing.qml
-//
 // Pairing started from the shell, and what follows it: the new device is
 // trusted and connected once the bond exists. Done here, once per device,
 // rather than in each row showing it -- the flyout and the Settings page

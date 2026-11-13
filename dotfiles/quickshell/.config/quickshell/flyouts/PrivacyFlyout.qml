@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/PrivacyFlyout.qml
-//
 // The microphone, camera and screen as three tiles, lit while in use with
 // the apps using them, then the microphone's mute.
 

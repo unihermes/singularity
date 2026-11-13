@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/windows.lua
---
 -- How windows behave: monocle and SUPER+M, popouts, the scratchpad, tabs,
 -- SUPER+X/C/D. The static rules are in window-rules.lua and the arrow keys
 -- in window-keys.lua. The functions binds.lua calls are globals defined

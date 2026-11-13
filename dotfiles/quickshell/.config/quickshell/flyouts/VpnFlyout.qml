@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/VpnFlyout.qml
-//
 // The VPN's switch on the heading; the tunnel as a card (the server, what
 // goes through it, the forwarded port, Copy port at its end); Route
 // everything and, with it, the kill switch; every imported server as a row,

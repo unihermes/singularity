@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/AppearanceSync.qml
-//
 // Carries the appearance out to the other apps. Everything lands in
 // ~/.local/state/singularity/ (never ~/.config, which links into the repo):
 //   alacritty.toml   colours and opacity, imported (alacritty watches it)

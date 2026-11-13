@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ModeToast.qml
-//
 // A self-dismissing toast at the top centre naming a mode just switched
 // (SUPER+M, lock keys, lid) or what the recorder did. scope.modeToastSeq
 // restarts it, even when the text repeats. Over a fullscreen window (a

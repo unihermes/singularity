@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/DevicesFlyout.qml
-//
 // DEVICES: one section, a row per device (its glyph and name, its level
 // as a meter and a number, red when it runs low). The phone's row comes
 // first with a Mirror button before its level (Stop while it's on screen), and

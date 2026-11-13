@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/IconButton.qml
-//
 // A bare glyph button, framed only on hover, for small actions in rows and
 // headers. `confirm` makes it two clicks (armed for 3s; or the caller sets
 // `armed`); `lit` shows it in the accent, `warn` in the alert colour (a

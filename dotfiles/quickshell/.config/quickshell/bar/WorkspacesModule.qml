@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/WorkspacesModule.qml
-//
 // One frame around the whole set, with visible workspaces
 // shown as widened pills rather than numbers.
 // Three states read by size and weight alone: current is a

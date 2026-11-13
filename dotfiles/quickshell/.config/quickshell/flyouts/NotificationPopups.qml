@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/NotificationPopups.qml
-//
 // Notifications as they arrive, stacked from Settings' chosen corner on the
 // primary display (Notifications.popupScreen). Each leaves after its timeout (stripe running down, held
 // while hovered) and stays in the history. Grouped (notifGroup), an app's

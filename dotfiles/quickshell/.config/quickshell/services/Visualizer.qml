@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Visualizer.qml
-//
 // Spectrum bars from cava (raw mode, 0-100 per bar, Settings.vizBars of
 // them), run only while the Music module and its visualizer are on and
 // there's something to hear (`sounding`). It hears only the app of the player the module

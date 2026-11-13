@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ControlEdge.qml
-//
 // The frame style inside a control's own stroke: double adds an inset inner
 // stroke; channel a groove (accent and wider when lit); single and none
 // nothing. `sunken` marks a field or a pressed button.

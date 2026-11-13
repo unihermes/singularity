@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Apps.qml
-//
 // The launchable desktop entries, shared by the Control Centre's
 // Applications page and the launcher (Launcher.qml).
 

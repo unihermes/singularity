@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/ConnHero.qml
-//
 // The card a connection page opens on (Bluetooth, VPN), pinned above its
 // rows: the big glyph, a spaced-out line over the state in large type, a
 // line on what that means, the page's chips (`actions`) and the round

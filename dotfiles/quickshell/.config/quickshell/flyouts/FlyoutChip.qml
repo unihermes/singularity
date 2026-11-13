@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutChip.qml
-//
 // A small button for inline actions in a row, drawn per style.
 // `confirmText` makes it two clicks (armed for 3s, alert-red).
 

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassCard.qml
-//
 // Glass's frosted card: a washed ground with a hairline, holding a
 // Control Centre group.
 

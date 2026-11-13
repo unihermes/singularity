@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/DesktopMenu.qml
-//
 // Right-click menu for the bare desktop, at the pointer: edit the widgets
 // in place, a new sticky note where the click was, the next wallpaper, or
 // the Desktop settings.

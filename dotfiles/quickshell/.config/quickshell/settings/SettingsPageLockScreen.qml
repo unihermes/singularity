@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageLockScreen.qml
-//
 // The lock screen's look and unlocking, in two of this machine's files and
 // fprintd (the lid is Battery & Idle's, LidConfig.qml):
 //   hyprlock.conf   background (path, blur, brightness), the clock text and

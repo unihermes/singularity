@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPage.qml
-//
 // The frame every Settings page shares: heading, a one-line description,
 // a scrolling column, and toasts (success fades, errors stay). Pages are
 // built fresh each visit. `highlight` scrolls to and rings a searched field;

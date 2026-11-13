@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/PanelsTab.qml
-//
 // Appearance's Panels tab: POPUPS (notifications, the level popup, the
 // flyouts' size), LAUNCHER, OVERLAYS (the switcher, the overview, the power
 // menu, the backdrop behind them) and DESKTOP WIDGETS. Each section is a

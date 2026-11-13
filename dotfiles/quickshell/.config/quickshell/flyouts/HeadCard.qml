@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/HeadCard.qml
-//
 // The card at the top of a System or Settings page: a glyph (or an app's
 // icon, `image`), the answer
 // large, a line or two of what's behind it, and the page's own actions at

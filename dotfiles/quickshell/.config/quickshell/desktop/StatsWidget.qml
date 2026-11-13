@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/StatsWidget.qml
-//
 // A bar each for the CPU, the GPU (NVIDIA's load, from Cooling, on
 // desktops), memory, the CPU's temperature and the root disk, with its
 // label and value; large adds the last minute of CPU and the memory and

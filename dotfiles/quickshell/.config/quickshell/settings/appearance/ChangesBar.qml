@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/ChangesBar.qml
-//
 // The bar at the foot of the Appearance page while anything differs: how
 // many settings differ from the defaults (the style's default for the
 // style's settings, the look as designed for its colours), with Save as

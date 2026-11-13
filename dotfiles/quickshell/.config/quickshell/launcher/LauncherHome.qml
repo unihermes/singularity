@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherHome.qml
-//
 // The Home layout: the List box, but before you type it's a home screen.
 // Apps: the pinned apps (Ctrl+P pins and unpins) as a grid, then recent
 // files and the last few copies. Files: the main folders as chips above

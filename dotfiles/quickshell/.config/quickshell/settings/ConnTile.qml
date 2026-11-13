@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/ConnTile.qml
-//
 // A tile on a connection page (a VPN server, what goes through the
 // tunnel): a FlyoutTile a click acts on, with small items in its top
 // right corner (`corner`) and the search ring, as a field has, when

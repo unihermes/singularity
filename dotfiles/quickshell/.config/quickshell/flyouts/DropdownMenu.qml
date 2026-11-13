@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/DropdownMenu.qml
-//
 // A dropdown's open list (SettingsDropdown's): every choice, the
 // current one ticked, scrolling past `maxRows`. Drawn in an overlay over
 // `overlayHost` (escaping z-order and Flickable clipping), placed once at

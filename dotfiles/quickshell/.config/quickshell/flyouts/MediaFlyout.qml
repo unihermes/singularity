@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/MediaFlyout.qml
-//
 // The Music module's flyout, one page. The art across the panel with the
 // spectrum (the bar's style) rising from its foot while something sounds,
 // then the title, artist and player; the progress (click to seek) and the

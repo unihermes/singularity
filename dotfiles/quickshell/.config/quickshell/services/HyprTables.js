@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/HyprTables.js
-//
 // Reads plain `key = value` fields in Hyprland config tables for Settings:
 // hl.config's tables (changes go to hyprland.json) and hl.monitor()'s, in
 // monitors.lua, which it also rewrites. Uses HyprBinds.js's tokenizer. Only

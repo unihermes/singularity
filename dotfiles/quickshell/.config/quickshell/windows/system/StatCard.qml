@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/StatCard.qml
-//
 // A headline figure on System's Home: caption, big number, optional meter
 // (`fraction` -1 drops it), a line of detail, and with `history` the last
 // minute over the meter.

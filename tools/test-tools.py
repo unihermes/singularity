@@ -35,8 +35,18 @@ class ContextTests(unittest.TestCase):
         self.assertIn("services/:", result.stdout)
         self.assertNotIn("settings/:", result.stdout)
 
+    def test_largest_files(self):
+        result = self.run_context("qs/services", "--largest", "--match", r"\.qml:", "--limit", "3")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = result.stdout.splitlines()[1:4]
+        sizes = [int(row.rsplit(": ", 1)[1].split()[0]) for row in rows]
+        self.assertEqual(len(sizes), 3)
+        self.assertEqual(sizes, sorted(sizes, reverse=True))
+        self.assertTrue(all(".qml:" in row for row in rows))
+
     def test_invalid_arguments(self):
-        for args in [("/tmp",), ("--limit", "0"), ("--match", "["), ("missing-directory",)]:
+        for args in [("/tmp",), ("--limit", "0"), ("--match", "["), ("missing-directory",),
+                     ("missing-directory", "--largest")]:
             with self.subTest(args=args):
                 result = self.run_context(*args)
                 self.assertEqual(result.returncode, 2)
@@ -115,6 +125,7 @@ class HookTests(unittest.TestCase):
                 "tools/check-syntax.py": {"test-tools.py", "check-syntax.py"},
                 "system/usr/local/lib/singularity/singularity-charge": {"check-syntax.py"},
                 qs + "services/Ai.qml": {"check-unused.py", "test-processes.mjs", "test-ai-host.py", "test-notification-routing.mjs"},
+                qs + "services/SystemStats.qml": {"check-unused.py", "test-js.mjs"},
                 qs + "services/Settings.qml": {"check-unused.py", "test-settings.mjs"},
                 qs + "services/SettingsValues.js": {"check-unused.py", "test-js.mjs", "test-settings.mjs"},
                 qs + "sidebar/AiSidebar.qml": {"check-unused.py", "test-processes.mjs"},
@@ -142,6 +153,16 @@ class HookTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 0, result.stderr)
                     actual = {Path(p).name for p in (root / "calls").read_text().splitlines()}
                     self.assertEqual(actual, expected)
+
+            (root / "staged").write_text(qs + "services/Settings.qml\n")
+            (root / "calls").write_text("")
+            (root / "bin/python3").write_text('#!/bin/sh\necho "failure detail" >&2\nexit 7\n')
+            result = subprocess.run(["bash", str(ROOT / "tools/git-hooks/pre-commit")],
+                                    env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("failure detail", result.stdout)
+            self.assertIn("FAIL python3 tools/check-unused.py", result.stderr)
+            self.assertEqual((root / "calls").read_text(), "")
 
 
 if __name__ == "__main__":

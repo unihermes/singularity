@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/SysInfoWidget.qml
-//
 // The machine at a glance. A head of the distro's mark in the accent
 // beside the host and a line under it. Medium: the system and kernel under
 // the host, then uptime, packages and local IP as three captioned figures.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/shell.qml
-//
 // The shell's entry point: session-wide state (Keep Awake, Night Light,
 // lock keys), the IPC targets binds and scripts call, and one Scope per
 // screen holding its bar and flyouts. Only one flyout is open at a time:

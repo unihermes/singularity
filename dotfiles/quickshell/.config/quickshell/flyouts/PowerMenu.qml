@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/PowerMenu.qml
-//
 // SUPER+SHIFT+E: lock, suspend, log out, reboot or shut down, centred on the
 // focused monitor -- as a row of tiles, or a list of large rows each saying
 // what it does (Theme.powerStyle). Arrows and Enter pick one, each action's letter runs it

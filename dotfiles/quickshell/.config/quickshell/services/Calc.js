@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Calc.js
-//
 // The launcher's calculator: Calc.evaluate("2 + 2 * 3"). A hand-written
 // parser, never eval() (the launcher is a hotkey away). Supports + - * / ^,
 // parentheses, unary minus, `mod` (% is the percent suffix, /100), pi/e/tau,

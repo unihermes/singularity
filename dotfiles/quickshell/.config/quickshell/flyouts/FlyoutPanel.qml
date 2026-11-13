@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutPanel.qml
-//
 // Shared shell for every bar flyout: a full-screen transparent layer surface
 // with the box (PanelFrame) on it. It closes on a press elsewhere (Backdrop,
 // DismissGrab on other screens), Escape, or a workspace change. The bar

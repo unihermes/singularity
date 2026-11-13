@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/TimeWindow.js
-//
 // Daily windows given as minutes after midnight, for the Night Light and
 // Do Not Disturb schedules. A window whose end is before its start runs
 // overnight (22:00 to 07:00).

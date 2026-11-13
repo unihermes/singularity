@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/FinishSwitch.qml
-//
 // A Settings boolean as a switch, resting while the style gives it
 // nothing to do
 

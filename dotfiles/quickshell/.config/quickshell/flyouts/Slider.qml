@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Slider.qml
-//
 // Hand-rolled (Controls' Slider brings its own style), drawn per style:
 //   channel    a level chip, the fill in a dark groove, a bright marker
 //   double     a stroked well with the fill inside

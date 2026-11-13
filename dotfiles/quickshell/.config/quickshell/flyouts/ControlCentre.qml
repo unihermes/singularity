@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ControlCentre.qml
-//
 // The control centre flyout. Home: who, on what and how long up (with
 // settings, lock and power), an app search whose matches take the rest's
 // place, then the home itself: ControlCentreGlass under Glass,

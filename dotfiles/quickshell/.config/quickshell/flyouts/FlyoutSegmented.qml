@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutSegmented.qml
-//
 // Two to five short choices as one joined strip, the current one lit.
 //
 //   FlyoutSegmented {

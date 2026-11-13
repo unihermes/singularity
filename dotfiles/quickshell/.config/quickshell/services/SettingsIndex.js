@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/SettingsIndex.js
-//
 // What Settings' search looks through: one entry per setting with its page
 // and heading. Kept by hand (pages load lazily, so there's nothing to walk):
 // a new SettingsField wants a line, `label` matching the field's exactly.

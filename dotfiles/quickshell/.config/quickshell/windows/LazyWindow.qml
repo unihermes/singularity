@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/LazyWindow.qml
-//
 // Builds a window on first open; callers use open() on this.
 //
 //   LazyWindow { id: system; System {} }

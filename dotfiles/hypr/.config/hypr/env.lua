@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/env.lua
---
 -- The session's environment variables.
 
 local S = require("shared")

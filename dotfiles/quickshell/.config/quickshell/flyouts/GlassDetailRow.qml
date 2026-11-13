@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassDetailRow.qml
-//
 // A line in a Glass details card: glyph, name, then words or a tick (the current one).
 
 import QtQuick

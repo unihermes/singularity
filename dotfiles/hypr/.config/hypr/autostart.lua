@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/autostart.lua
---
 -- What starts with the session: the shell, its helpers and daemons, and
 -- the XDG autostart entries managed from Settings > Startup.
 

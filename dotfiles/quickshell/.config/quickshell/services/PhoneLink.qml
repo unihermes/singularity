@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/PhoneLink.qml
-//
 // The phone through the KDE Connect app on it: scripts/phone-link.py, run
 // only while Phone link is on in Settings (Settings.phoneLinkOn), so it
 // costs nothing when off. It finds and pairs the phone, and brings its

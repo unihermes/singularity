@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/ModuleSeparators.qml
-//
 // The marks between one bar module and the next in a section, as
 // Theme.barSeparator says: a thin line, two lines, a dot, a column of three
 // dots, or a line capped with a dot at each end.

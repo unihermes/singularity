@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherRow.qml
-//
 // One launcher result as a row, for any kind (app, file, clip, calc): its
 // icon or glyph, the name, and the details (what the app is, where the file
 // is, what the syntax does) under it, or at the right end when `oneLine`.

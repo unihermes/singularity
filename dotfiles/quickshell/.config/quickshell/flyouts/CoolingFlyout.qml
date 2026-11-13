@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/CoolingFlyout.qml
-//
 // Temperatures and fans, from the Cooling singleton: the last three
 // minutes of CPU and GPU as one graph on a °C scale under a key with
 // their readings (and the drive's), the fans as rows with their level and

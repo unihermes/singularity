@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Phone.qml
-//
 // An Android phone over adb: which one is connected (USB), or offers
 // wireless debugging over mDNS once paired, its battery, and the phone on
 // screen through scrcpy with its sound, its clipboard shared and its own

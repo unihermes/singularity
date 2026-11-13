@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Health.qml
-//
 // What's wrong with this desktop and the command that fixes it. The checks
 // are scripts/health-scan.sh (runnable while the shell is down); this runs
 // the repairs: systemctl directly (polkit prompts), anything else in a

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Ai.qml
-//
 // The Claude sidebar (SUPER+I): two conversations through the claude CLI
 // on the user's own subscription, one a tab.
 //   Chat     plain chat, no tools, in a folder of its own

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/LockPreview.qml
-//
 // A small picture of the lock screen, for the Lock Screen page's tiles. It's
 // laid out in a 1920×1200 screen and scaled down, with the clock, the info
 // line and the password field where hyprlock puts them (AppearanceSync.qml

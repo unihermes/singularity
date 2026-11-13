@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/HyprBinds.js
-//
 // Reads and rewrites the hl.bind() calls in Hyprland's Lua config, for the
 // Keybinds window. Plain functions over the source text, no QML, so the
 // parsing can be exercised outside the shell.

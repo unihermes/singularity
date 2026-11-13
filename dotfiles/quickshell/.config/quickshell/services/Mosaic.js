@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Mosaic.js
-//
 // The launcher's Mosaic layout: tiles of a few sizes packed into a grid of
 // columns, and the arrow keys' walk between them.
 //   pack(spans, columns)   [[w, h], ...] in cells -> [{ x, y, w, h }], each

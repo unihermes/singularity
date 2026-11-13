@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageVpn.qml
-//
 // Proton VPN over WireGuard (services/Vpn.qml). A card pinned on top says
 // whether it's up, where it comes out and what goes through it, with the
 // round power button. Then tiles: what goes through it (qBittorrent only

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BarSearchFlyout.qml
-//
 // The taskbar's search: what you type shows in the bar's search box
 // (scope.searchQuery) while this panel rises from it with the results --
 // the best match large, then more apps and Settings pages. Empty, it shows

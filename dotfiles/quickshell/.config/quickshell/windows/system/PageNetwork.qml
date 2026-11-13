@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageNetwork.qml
-//
 // The link in use, then every interface the kernel knows about. The
 // default route decides which one is "the" connection -- not the name, not
 // whether it has an address -- so a VPN taking over shows up here as the

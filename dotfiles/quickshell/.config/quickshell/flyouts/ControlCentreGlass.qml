@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ControlCentreGlass.qml
-//
 // Glass's Control Centre home, Apple's way, under the profile card and the
 // search: a connectivity card (Wi-Fi, Bluetooth, Airplane as round
 // switches; a row's name opens its details here) beside Quiet and Night

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BrightnessFlyout.qml
-//
 // A labelled slider per display it can set, this bar's own first, then
 // Night Light (root's state; its schedule runs in shell.qml).
 

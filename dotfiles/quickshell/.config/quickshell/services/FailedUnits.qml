@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/FailedUnits.qml
-//
 // Failed systemd units, system and user, for a bar module shown only when
 // there are any. Polled every 30s.
 

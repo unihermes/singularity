@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageFileTypes.qml
-//
 // Which app opens what: common kinds (browser, images, ...) under four
 // subheads, every other shared-mime-info type searchable (the full list
 // behind a button).

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Files.qml
-//
 // The launcher's file search: names under $HOME from fd (fixed strings,
 // --hidden, debounced), with EXCLUDES for app data dumps and more matches
 // fetched than shown, then ranked here. With nothing typed, recent files

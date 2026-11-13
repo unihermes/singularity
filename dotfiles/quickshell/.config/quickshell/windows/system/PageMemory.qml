@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageMemory.qml
-//
 // RAM, broken down the way the kernel actually accounts for it. The one
 // figure people get wrong is "used": free memory looks alarmingly low on a
 // healthy machine because the page cache holds everything it can, and the

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Switch.qml
-//
 // The one on/off control (named choices are FlyoutSegmented).
 //
 // Each style draws its own (Theme.style):

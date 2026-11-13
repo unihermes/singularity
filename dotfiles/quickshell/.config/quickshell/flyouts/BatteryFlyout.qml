@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BatteryFlyout.qml
-//
 // The level large with the time left and the draw beside it, the charge
 // through the day as a graph, then the power profile as one strip and the
 // battery's health, then Settings.

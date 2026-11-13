@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/SpeedTrack.qml
-//
 // One part's speed on the Motion tab's timeline: a lane from 0 to
 // `scale` ms with a bar as long as the part's animations take (its `base`
 // ms, scaled by Animations and by its own Settings[key] percent). Dragging

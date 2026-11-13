@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PagePower.qml
-//
 // The battery as the pack reports it: charge, draw in watts, and health
 // against design capacity, all from its uevent (SystemStats, in Wh).
 

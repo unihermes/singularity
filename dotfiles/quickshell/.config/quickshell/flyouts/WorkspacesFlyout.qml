@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/WorkspacesFlyout.qml
-//
 // Every window on every workspace in one frame, under a heading per
 // workspace with its count: the app's icon and name, the title quieter
 // after, the focused one ticked. A click focuses, close on hover, and a

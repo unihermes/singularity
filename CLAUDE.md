@@ -9,6 +9,7 @@ file counts/sizes; files show imports and declarations with line numbers. Paths
 accept `qs/` and `hypr/` aliases. Read relevant ranges instead of entire modules.
 Use `--match function` to skip properties in large QML outlines, or any regex to
 filter names. Markdown files show headings (e.g. `qs/DESIGN.md --match controls`).
+Use `--largest` on a directory to rank its files recursively by size.
 
 ## Where things are
 

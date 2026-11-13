@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/WindowPageTitle.qml
-//
 // An open page's icon (the accent, lightened) and name, large, over the page
 // beside the sidebar.
 

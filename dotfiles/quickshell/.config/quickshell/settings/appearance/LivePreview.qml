@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/LivePreview.qml
-//
 // The Appearance page's preview, drawn by the shell's own pieces at a
 // reduced scale over the wallpaper. `kind` is what the tab showing changes:
 //   flyout    the bar and a volume flyout off it

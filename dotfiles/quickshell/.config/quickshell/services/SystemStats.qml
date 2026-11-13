@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/SystemStats.qml
-//
 // Everything live the System window shows: CPU (overall, per core, clocks),
 // memory, swap, filesystems, disk throughput, sensors, network, battery and
 // the heaviest processes. Read from procfs/sysfs with FileView where it can
@@ -245,6 +242,8 @@ Singleton {
                     cpuHistory = pushHistory(cpuHistory, cpu)
                 }
                 cpuPrev = all.sample
+                // The lightweight desktop widget only displays aggregate CPU.
+                if (!sampling) break
             } else if (/^cpu\d+$/.test(f[0])) {
                 var n = nextPrev.length
                 var c = busy(f, corePrev[n])

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageHardware.qml
-//
 // What this machine physically is: board and firmware, graphics, the
 // displays and the input devices attached to it, and every temperature and
 // fan the kernel exposes.

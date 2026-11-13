@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Markdown.js
-//
 // Claude's replies for the sidebar (AiTranscript): markdown split into
 // prose and fenced code blocks, the prose turned into the rich text a Text
 // renders. Covers what replies use: headings, paragraphs, lists (nested by

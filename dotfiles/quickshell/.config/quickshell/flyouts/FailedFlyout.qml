@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FailedFlyout.qml
-//
 // A row per failed unit (system or user, and when it failed); a click
 // opens it in place with its last log lines and Full log, Restart and
 // Clear. Clear all (two clicks) after them. Self-contained: only needs

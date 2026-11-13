@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/AiSidebar.qml
-//
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar. Pinning keeps it open when clicking elsewhere;
 // SUPER+I, its × and Escape still close it. Ctrl+P toggles the pin, Ctrl+R

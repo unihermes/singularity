@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/BtBattery.qml
-//
 // Battery levels of connected Bluetooth devices, for the flyout and the
 // Settings page. BlueZ's Battery1 covers most devices; AirPods only report over
 // Apple's own protocol, read by scripts/airpods-battery.py, which is started

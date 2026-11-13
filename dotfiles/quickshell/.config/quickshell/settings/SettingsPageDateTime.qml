@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageDateTime.qml
-//
 // Time zone and network time via timedatectl (polkit asks), and the shell's
 // 12/24-hour and first-weekday preferences. A zone change calls
 // Date.timeZoneUpdated() so the shell follows.

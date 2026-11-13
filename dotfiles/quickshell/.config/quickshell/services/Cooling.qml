@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Cooling.qml
-//
 // Temperatures and fans for the desktop's Cooling module: CPU package, GPU,
 // hottest drive, every fan with a tacho. Desktops only (install.sh's record,
 // via Platform). hwmon nodes probed once, then re-read by FileView;

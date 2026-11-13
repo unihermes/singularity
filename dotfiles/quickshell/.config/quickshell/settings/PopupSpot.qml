@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/PopupSpot.qml
-//
 // Where notification popups appear, picked on a small screen: six spots,
 // top or bottom by left, centre or right, with a popup card drawn in the
 // one chosen. The bar is drawn where it sits, since the popups clear it.

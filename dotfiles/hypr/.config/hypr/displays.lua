@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/displays.lua
---
 -- Displays: the per-machine rules the Display page saves, the lid's docked
 -- mode, the primary display, and laying the workspaces out across them.
 -- Settings > Display copies the default rule here to start monitors.lua.

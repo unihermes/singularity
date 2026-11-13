@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/TimeGraph.qml
-//
 // A line over clock time, from `from` to `to` (ms) across the full width,
 // with hour labels along the foot. Optional faint bars under it (rain
 // chance), shaded spans behind it (charging) and value labels over it.

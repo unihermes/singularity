@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/NoteChecklist.qml
-//
 // A sticky note's checklist (Notes tab kind "list"), shared by the Notes
 // window and the desktop's sticky. Click the box to tick a row, type in it.
 //

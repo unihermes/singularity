@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BluetoothFlyout.qml
-//
 // One heading with the paired count, Scan and the radio switch, then
 // each connected device as a card (its kind, battery and Disconnect, an
 // earbuds' left, right and case as tiles under it), the other paired ones

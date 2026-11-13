@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageDevices.qml
-//
 // Everything plugged in or linked, a section each. PHONE: the Android
 // phone in a card with what it can do now, then pairing adb for Wi-Fi
 // through a QR code the phone scans (services/Phone.qml), then the phone

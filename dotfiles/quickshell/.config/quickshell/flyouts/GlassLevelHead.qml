@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassLevelHead.qml
-//
 // A Glass level card's title line; the words at its end (a device) may open a list.
 
 import QtQuick

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageUpdates.qml
-//
 // Software updates: check interval, AUR, ignored packages (Settings.qml);
 // pending updates, the upgrade and the Singularity clone from Updates.qml;
 // removing installed packages through singularity-remove and pkexec;

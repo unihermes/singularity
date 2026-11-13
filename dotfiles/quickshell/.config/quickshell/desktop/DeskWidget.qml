@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/DeskWidget.qml
-//
 // One desktop widget by key, at its size: "s", "m" or "l" (WidgetCard's
 // grid). Sized to its card. A key "note:" and an id is that sticky note,
 // which can have its own size instead, in card units.

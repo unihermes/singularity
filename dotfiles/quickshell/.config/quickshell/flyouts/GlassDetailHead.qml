@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassDetailHead.qml
-//
 // A Glass details card's heading, with the way to the module's own flyout at its end.
 
 import QtQuick

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Wallpaper.qml
-//
 // The wallpaper and its colours. hypr/wallpaper.sh shows it (a new swaybg
 // each change) and restores it at login; this keeps the list and the saved
 // choice. In wallpaper colour mode matugen's palette is mapped onto the

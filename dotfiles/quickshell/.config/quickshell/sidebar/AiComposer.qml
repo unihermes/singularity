@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/AiComposer.qml
-//
 // Where a message is written: what's attached to it (a click takes one
 // off), the slash commands matching a / typed at the start (the sidebar's
 // own: /clear, /new, /model, /mode, /past, /compact; then the CLI's), the

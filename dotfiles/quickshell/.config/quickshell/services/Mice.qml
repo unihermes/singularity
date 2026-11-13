@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Mice.qml
-//
 // Mice that keep their own settings (DPI, report rate, what each button
 // does), through libratbag's ratbagd (scripts/ratbag.py), for the Devices
 // page. Read when asked; each change is written to the mouse in turn, then

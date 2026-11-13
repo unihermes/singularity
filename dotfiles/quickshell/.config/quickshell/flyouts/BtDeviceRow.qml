@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BtDeviceRow.qml
-//
 // A Bluetooth device row (extends FlyoutRow): type icon, state in words,
 // battery when connected. A paired device offers and does
 // Connect/Disconnect, a new one pairs.

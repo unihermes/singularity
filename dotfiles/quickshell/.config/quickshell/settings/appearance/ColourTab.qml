@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/ColourTab.qml
-//
 // Appearance's Colour tab, laid out round the palette itself (the
 // "palette workshop"). SCHEME: where the colours come from, the looks as
 // a carousel each with its own strip, then the palette in use as a ramp of

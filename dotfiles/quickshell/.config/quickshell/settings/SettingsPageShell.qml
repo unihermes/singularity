@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageShell.qml
-//
 // The terminal (Alacritty or Ghostty), its look with a preview, and
 // ~/.bash_aliases; this machine's own copies (link.sh). Font size and cursor
 // go to both terminals' configs. Terminal changes show at once (Alacritty

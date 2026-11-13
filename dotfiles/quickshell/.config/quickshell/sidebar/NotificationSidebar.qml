@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/NotificationSidebar.qml
-//
 // The notification history (services/Notifications.qml) as a panel down
 // the right edge of one screen, under the bar, as the Claude sidebar is:
 // out until the bell, its ×, Escape or a click off it (DismissGrab, the bars

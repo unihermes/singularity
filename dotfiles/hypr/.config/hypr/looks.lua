@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/looks.lua
---
 -- How windows look and move: gaps, borders, rounding, shadows, blur, the
 -- grouped windows' tab bar, animations. Values mostly come from state files
 -- Appearance writes; its own field changes go to hyprland.json

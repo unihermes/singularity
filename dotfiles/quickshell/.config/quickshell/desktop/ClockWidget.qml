@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/ClockWidget.qml
-//
 // The day in the accent over the time, its seconds small beside it.
 // Small adds the date; medium the month and ISO week, and this week as a
 // strip with today lit; large the whole month.

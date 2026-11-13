@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsAdvanced.qml
-//
 // A section's rarely changed rows, folded behind one "Advanced (n)" row at
 // its foot; a search for one of them opens it (SettingsPage.scrollTo). The
 // rows stay visible while folded, clipped to nothing, so their own

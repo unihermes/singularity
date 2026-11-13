@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/shared.lua
---
 -- What several modules need: the Settings state files, read once per load,
 -- and constants. binds.lua adds maxWorkspaces, tabBinds and appClasses.
 

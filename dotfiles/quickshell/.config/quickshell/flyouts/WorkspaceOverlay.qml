@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/WorkspaceOverlay.qml
-//
 // SUPER+W: a miniature of every workspace, its windows drawn where they sit
 // on its monitor with the app's icon in each. Click a miniature to jump, a
 // window to focus it, drag a window onto another miniature to move it.

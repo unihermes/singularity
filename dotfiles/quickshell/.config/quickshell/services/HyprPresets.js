@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/HyprPresets.js
-//
 // The Keybinds window's suggested binds, as data: combo, action (a shell
 // command or a Lua dispatcher), hl.bind options and section. HyprBinds.js
 // writes them; every one is grounded in Hyprland's Lua stubs, this config,

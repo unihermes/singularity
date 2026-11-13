@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/LinkLine.qml
-//
 // An opened notification's buttons as links in the accent, a dot between,
 // wrapping onto more lines. `links`: [{ text, primary, run }], the primary
 // one in the strong weight.

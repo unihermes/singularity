@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherMosaic.qml
-//
 // The Mosaic layout: full screen over the dimmed desktop, the field at the
 // top and everything as tiles packed below it (services/Mosaic.js). Apps
 // are sized by use, the two most launched largest and the next four wide;

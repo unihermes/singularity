@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/MotionTab.qml
-//
 // Appearance's Motion tab, as a timeline. SPEED is the one dial for
 // everything. ANIMATIONS is a track per part (windows, workspaces, the
 // shell) over a ruler in ms, each bar as long as that part's animations

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Spark.qml
-//
 // A history line graph. Newest sample at the right edge; while history is
 // still filling, the line starts partway across rather than stretching a
 // few seconds over the whole width. Used by the System window.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/DesktopThemes.qml
-//
 // The cursor and icon themes installed, for the Appearance page's pickers.
 // A cursor theme has a cursors/ folder, an icon theme Directories in its
 // index.theme; `default` and `hicolor` are never offered.

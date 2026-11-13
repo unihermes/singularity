@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherField.qml
-//
 // The launcher's search field, in whichever layout: the mode's glyph, the
 // query, and the keys, handed to `view` (the layout): the arrows to
 // move(dx, dy), Enter and its variants to current(). Ctrl+P pins the

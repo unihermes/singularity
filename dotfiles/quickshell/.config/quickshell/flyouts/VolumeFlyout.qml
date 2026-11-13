@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/VolumeFlyout.qml
-//
 // Sound on one panel, the level first: the output's level large with the
 // device beside it (a click there opens the outputs in place to switch),
 // its slider, the microphone's level, the Game, Chat and Media channels'

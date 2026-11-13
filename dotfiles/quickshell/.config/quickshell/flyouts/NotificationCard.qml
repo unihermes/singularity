@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/NotificationCard.qml
-//
 // One notification, title first: the app's icon beside a large title, its
 // age and a close at the right; under the title (never back at the edge)
 // the text, picture and what it can do. Buttons: Copy for a one-time code,

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageBluetooth.qml
-//
 // The adapter, paired devices and what's in range, straight on Quickshell's
 // Bluetooth service (BlueZ keeps the bonds). The adapter is a card pinned
 // on top with Discoverable and Pairable chips and the round power button.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Channels.qml
-//
 // Game, Chat and Media: the outputs pipewire.conf.d/channels.conf makes,
 // each mixing into the real output. New playback lands on Media, games' on
 // Game. Each has an EQ, its gains set live from Settings. A headset's ChatMix dial (read with headsetcontrol) sets Game and

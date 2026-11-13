@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/HexColour.qml
-//
 // Settings[key] as any colour, #rrggbb (or #rgb, with or without the
 // #), applied on Enter. The swatch beside it previews what's typed while
 // it parses; a value set elsewhere (a swatch, a slider, a reset) replaces

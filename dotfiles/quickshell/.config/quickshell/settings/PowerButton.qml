@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/PowerButton.qml
-//
 // A round on/off button for a connection's radio or tunnel: an accent
 // disc with a ring round it while on, a dark well while off. `busy` dims
 // it while the change is under way.

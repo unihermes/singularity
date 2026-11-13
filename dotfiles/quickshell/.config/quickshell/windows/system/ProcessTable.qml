@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/ProcessTable.qml
-//
 // The heaviest processes, with a two-step kill on your own. Shared by the
 // CPU and Memory pages (a five-row summary) and the Processes page (the
 // full table, sortable, with the pid and owner shown).

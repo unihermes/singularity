@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/QuickTile.qml
-//
 // A quick-settings tile: a glyph, a name and its state in words, filled
 // with the accent while on (`lit`). `split` gives it a chevron end of its
 // own that opens the tile's details in place (moreClicked; 󰅀 while

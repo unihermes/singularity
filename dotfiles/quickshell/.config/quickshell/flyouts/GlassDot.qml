@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassDot.qml
-//
 // Glass's round control button: a frosted disc with a glyph, the accent
 // (and its glow) while lit. Used by the Control Centre's tiles and rows.
 

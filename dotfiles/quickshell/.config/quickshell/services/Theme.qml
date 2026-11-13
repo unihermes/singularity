@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Theme.qml
-//
 // The one stylesheet: colour, type, shape, spacing and motion for the whole
 // shell. Layers, most specific wins: the look (Looks.js), what Appearance
 // sets (Settings, the style in Styles.js), and the semantic roles here.

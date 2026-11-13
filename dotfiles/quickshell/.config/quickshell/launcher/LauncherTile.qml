@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherTile.qml
-//
 // An app as a large icon over its name, for the launcher's grids (Grid,
 // Home's pinned apps, the Start menu, Spotlight's most used). Lit when
 // current; a pin mark in the corner when `pinMark` and it's pinned.

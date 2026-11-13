@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Looks.js
-//
 // The shell's looks: named sets of colours Theme hands out. Components
 // never read this file; they ask Theme for a role. Switch with the
 // Appearance page, the Control Centre or `qs ipc call look set <name>`.

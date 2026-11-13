@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/ClockIsland.qml
-//
 // The clock chip as a Dynamic Island: briefly shows a level (volume,
 // brightness, the ChatMix dial), a mode (SUPER+M, lock keys) or the lid
 // instead of the time, keeping its width. A running timer (Timers.qml) leaves the clock be: a

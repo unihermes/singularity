@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/SystemSpecs.qml
-//
 // The System window's static facts (OS, hardware, displays, disks, input
 // devices, packages, boot time, versions) and the copy summary. Probed once
 // per session; a singleton like SystemStats.

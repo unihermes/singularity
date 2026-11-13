@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageCpu.qml
-//
 // The processor: what it is, how it's being scheduled, and what every
 // thread is doing right now. The per-core bars are the point of the page --
 // an average of 25% across eight threads is a very different machine from

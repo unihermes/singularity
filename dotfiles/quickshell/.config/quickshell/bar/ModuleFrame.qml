@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/ModuleFrame.qml
-//
 // The bar's chip, wrapped around whatever you put in it. Children are laid
 // out in a centred Row. How it's drawn is Theme.moduleStyle:
 //   outline  an outer stroke, plus an inset inner one when frames are

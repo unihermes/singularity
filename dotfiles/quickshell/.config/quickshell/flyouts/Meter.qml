@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Meter.qml
-//
 // A horizontal level bar: a track, and a fill from the left edge. Every
 // meter in the shell is one of these -- gauges, the media progress bar, the
 // volume/brightness toast, sliders -- so they share a height, stroke and

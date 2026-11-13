@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/WindowsModule.qml
-//
 // The open windows after the workspaces, in one frame: the focused
 // workspace's or every workspace's (Theme.windowScope), drawn per
 // Theme.windowStyle (icons, glide, lift, inset, segmented, rings, fade,

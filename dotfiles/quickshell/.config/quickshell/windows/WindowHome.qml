@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/WindowHome.qml
-//
 // A window's Home: every page as a full-width tile (HomeRow) in framed
 // groups under headings, in a centred column; `header` goes above.
 //

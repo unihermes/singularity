@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/AiTranscript.qml
-//
 // A conversation's rows (ClaudeSession.entries): what you sent in a field
 // with its attachments under it, Claude's replies as markdown you can
 // select (Markdown.js; fenced code in a box of its own with Copy, an

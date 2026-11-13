@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Privacy.qml
-//
 // Which apps are recording the mic, camera or screen, for a bar indicator.
 // From Pipewire's node list: audio/video input streams and xdph-streaming-*
 // screen shares. Audio input streams are bound to read stream.capture.sink,

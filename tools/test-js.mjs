@@ -15,6 +15,34 @@ import path from "node:path"
 import vm from "node:vm"
 import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { source as qmlSource, functions } from './qml-harness.mjs'
+
+test('Lightweight CPU sampling skips cores and full sampling primes fresh deltas', () => {
+    let tick = 0
+    const s = functions(qmlSource('SystemStats.qml'), {
+        sampling: false, cpuPrev: null, corePrev: [], cores: [], cpuHistory: [],
+        recent: {}, smoothLength: 5, historyLength: 60,
+        statFile: { reload() { tick++ }, text() {
+            return `cpu ${tick * 20} 0 0 ${tick * 80} 0 0 0 0\n`
+                + `cpu0 ${tick * 20} 0 0 ${tick * 80} 0 0 0 0\nintr 999\n`
+        } },
+    })
+    s.sampleCpu()
+    s.sampleCpu()
+    assert.ok(Math.abs(s.cpu - 0.2) < 1e-10)
+    assert.equal(s.corePrev.length, 0)
+    assert.equal(s.recent.cpu0, undefined)
+    s.sampling = true
+    s.sampleCpu()
+    assert.equal(s.corePrev.length, 1)
+    assert.equal(s.cores.length, 0)
+    s.sampleCpu()
+    assert.equal(s.cores.length, 1)
+    assert.ok(s.cores[0] > 0)
+    s.sampling = false
+    s.sampleCpu()
+    assert.equal(s.corePrev.length, 0)
+})
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 const services = path.join(repo, "dotfiles/quickshell/.config/quickshell/services")
