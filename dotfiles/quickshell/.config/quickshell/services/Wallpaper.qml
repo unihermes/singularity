@@ -38,11 +38,28 @@ Singleton {
     // "dark" or "light": which of matugen's two schemes the ramp is built from
     readonly property string variant: Settings.colourVariant
 
+    // The image being faded out over the new one, and a count of fades
+    // started (WallpaperFade restarts on each). hypr/wallpaper.sh swaps the
+    // image at once; the fade is the shell's, drawn over it.
+    property string fadeFrom: ""
+    property int fadeCount: 0
+    // a change waiting for the script's current run to finish
+    property string queued: ""
+    property string shown: ""
+
     function set(path) {
         if (!path || path === current) return
         current = path
-        Quickshell.execDetached([script, "set", path, Settings.wallpaperFill])
         saveState()
+        if (setter.running) { queued = path; return }
+        run(path)
+    }
+
+    function run(path) {
+        queued = ""
+        setter.from = shown
+        setter.command = [script, "set", path, Settings.wallpaperFill]
+        setter.running = true
     }
 
     function step(d) {
@@ -131,6 +148,21 @@ Singleton {
     }
 
     Process {
+        id: setter
+        property string from: ""
+        onExited: code => {
+            if (code !== 0) return
+            var done = command[2]
+            if (from !== "" && from !== done) {
+                root.fadeFrom = from
+                root.fadeCount++
+            }
+            root.shown = done
+            if (root.queued !== "") root.run(root.queued)
+        }
+    }
+
+    Process {
         running: true
         command: [root.script, "list"]
         stdout: StdioCollector {
@@ -142,7 +174,10 @@ Singleton {
         running: true
         command: [root.script, "current"]
         stdout: StdioCollector {
-            onStreamFinished: root.current = text.trim()
+            onStreamFinished: {
+                root.current = text.trim()
+                root.shown = root.current
+            }
         }
     }
 

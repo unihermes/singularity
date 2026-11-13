@@ -33,28 +33,16 @@ saved_mode() {
   echo "$m"
 }
 
-fade_secs=1.7
-
-# The slow fade-in is set only while a change is in progress, so flyouts and
-# menus keep looks.lua's short one. Same values as looks.lua's fadeLayersIn.
-fade_slow() {
-  hyprctl eval 'hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 15, bezier = "wallpaper" })' >/dev/null 2>&1 || true
-}
-fade_normal() {
-  hyprctl eval 'hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "linear" })' >/dev/null 2>&1 || true
-}
-
-# Keep the old surface until the new one is mapped and fully faded in on
-# every monitor, then for the fade-in to finish. Image decoding can take longer
-# than a fixed delay, especially when several wallpaper changes arrive together.
+# Keep the old surface until the new one is mapped on
+# every monitor. Image decoding can take longer than a fixed delay, especially
+# when several wallpaper changes arrive together. The swap itself is instant
+# (looks.lua); Wallpaper.qml fades the old image out over it.
 show() {
   local old pid mode=${2:-$(saved_mode)} ready=0
   case $mode in fill|fit|center|tile) ;; *) mode=fill ;; esac
   mkdir -p "${current_link%/*}"
   exec 9>"${XDG_RUNTIME_DIR:-/tmp}/singularity-wallpaper-${UID}.lock"
   flock 9
-  fade_slow
-  trap fade_normal RETURN
   old=$(pgrep -x swaybg || true)
   swaybg -i "$1" -m "$mode" 9>&- &>/dev/null &
   pid=$!
@@ -94,9 +82,6 @@ PY
   fi
   ln -sfn "$1" "$current_link"
   if [[ -n $old ]]; then
-    # the layer's reported alpha is 1 from the first frame, so wait out the
-    # fade-in (looks.lua's fadeLayersIn, 1.5s) before removing the old one
-    sleep "$fade_secs"
     kill $old 2>/dev/null || true
   fi
 }

@@ -11,6 +11,9 @@ FlyoutPanel {
     flyout: "desktopmenu"
     menuWidth: 190
     compactMenu: true
+    // no fade, in the shell or from Hyprland (looks.lua's layer rule)
+    instant: true
+    layerNamespace: "singularity-desktopmenu"
 
     // this screen's DesktopWidgets, which keeps where the click was
     required property var layer

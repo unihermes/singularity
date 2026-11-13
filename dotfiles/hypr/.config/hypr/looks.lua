@@ -184,10 +184,6 @@ animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowS
 -- layers (flyouts) faster than global, fading
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
--- A short, even fade for layers. wallpaper.sh slows it (and uses this
--- "wallpaper" curve) for the length of a wallpaper change.
-hl.curve("wallpaper", { type = "bezier", points = { {0.4, 0}, {0.2, 1} } })
-animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "linear" })
 -- the shell's surfaces blur what's behind (Glass, See-through);
 -- ignore_alpha leaves fully transparent parts unblurred. Overlays on a
 -- display scaled under 1 are "unblurred-..." (OverlayWindow.qml), outside it
@@ -196,6 +192,15 @@ hl.layer_rule({
     match = { namespace = "^(quickshell|singularity-.*)$" },
     blur  = true,
     ignore_alpha = 0.2,
+})
+
+-- The wallpaper changes at once, and the shell's fade-out image over it
+-- (WallpaperFade.qml) is its crossfade. The desktop's right-click menu
+-- also appears at once.
+hl.layer_rule({
+    name  = "wallpaper-instant",
+    match = { namespace = "^(wallpaper|(unblurred-)?wallpaper-fade|(unblurred-)?singularity-desktopmenu)$" },
+    no_anim = true,
 })
 
 -- the launcher appears at once, without the layers' fade

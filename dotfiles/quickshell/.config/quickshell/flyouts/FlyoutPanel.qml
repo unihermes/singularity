@@ -42,7 +42,9 @@ OverlayWindow {
     // 0 shut, 1 open: Theme.flyoutAnim plays over it both ways, and the
     // surface stays up until it has played out shut
     property real reveal: 0
-    readonly property bool animated: Theme.flyoutAnim !== "none" && Theme.animFactor > 0
+    // a panel that opens and shuts at once whatever the animation settings
+    property bool instant: false
+    readonly property bool animated: !instant && Theme.flyoutAnim !== "none" && Theme.animFactor > 0
     NumberAnimation {
         id: revealAnim
         target: root

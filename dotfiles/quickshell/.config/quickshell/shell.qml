@@ -742,6 +742,8 @@ ShellRoot {
             }
         }
 
+        WallpaperFade { scope: screenScope }
+
         // workspaces / windows
         LazyFlyout { name: "workspaces"; scope: screenScope; WorkspacesFlyout { scope: screenScope; bar: screenScope.barWindow; shellRoot: root } }
 
