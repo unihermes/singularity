@@ -186,9 +186,9 @@ animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 -- The incoming wallpaper eases in over the old one, which stays opaque
 -- underneath until wallpaper.sh removes it, so no gap shows. Layers' fade
--- (flyouts too) shares this; 6 = 600ms.
+-- (flyouts too) shares this; 15 = 1.5s.
 hl.curve("wallpaper", { type = "bezier", points = { {0.4, 0}, {0.2, 1} } })
-animation({ leaf = "fadeLayersIn", enabled = true, speed = 6, bezier = "wallpaper" })
+animation({ leaf = "fadeLayersIn", enabled = true, speed = 15, bezier = "wallpaper" })
 -- the shell's surfaces blur what's behind (Glass, See-through);
 -- ignore_alpha leaves fully transparent parts unblurred. Overlays on a
 -- display scaled under 1 are "unblurred-..." (OverlayWindow.qml), outside it
