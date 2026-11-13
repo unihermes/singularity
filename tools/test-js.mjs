@@ -1011,6 +1011,16 @@ test('App search preserves prefix priority, usage order, metadata matches and hi
     assert.equal(S.search(frequent, 'beta')[0], entries[0])
 })
 
+test('Browser app labels omit the trailing browser description', () => {
+    const S = load('AppSearch.js')
+    assert.equal(S.displayName('Zen Browser'), 'Zen')
+    assert.equal(S.displayName('Helium Web Browser'), 'Helium')
+    assert.equal(S.displayName('Browser'), 'Browser')
+    assert.equal(S.displayName('Browser Tools'), 'Browser Tools')
+    const entry = { id: 'zen', name: 'Zen Browser' }
+    assert.equal(S.search(S.index([entry], []), 'browser')[0], entry)
+})
+
 test('File ranking preserves embedded newlines, directory flags, limits and home boundaries', () => {
     const s = functions(qmlSource('Files.qml'), { home: '/home/me', maxResults: 3 })
     s.root = s

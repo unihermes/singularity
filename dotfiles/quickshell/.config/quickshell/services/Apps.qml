@@ -306,6 +306,8 @@ Singleton {
         return null
     }
 
+    function displayName(entry) { return AppSearch.displayName(entry && entry.name) }
+
     // a short app name: a knownApp's, the desktop entry's, else the class's
     // last segment; the shell's windows go by title
     function nameForWindow(cls, title) {
@@ -313,7 +315,7 @@ Singleton {
         var known = knownApp(cls)
         if (known) return known.name
         var entry = cls ? byClass(cls).entry : null
-        if (entry && entry.name) return entry.name
+        if (entry && entry.name) return displayName(entry)
         var bare = String(cls || "").replace(/^.*\./, "")
         return bare.charAt(0).toUpperCase() + bare.slice(1)
     }

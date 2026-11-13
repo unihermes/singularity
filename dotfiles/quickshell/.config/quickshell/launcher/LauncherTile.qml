@@ -51,7 +51,7 @@ Item {
         x: Theme.spaceS
         width: parent.width - Theme.spaceS * 2
         horizontalAlignment: Text.AlignHCenter
-        text: tile.entry.name || ""
+        text: Apps.displayName(tile.entry)
         elide: Text.ElideRight
         color: tile.current ? Theme.textStrong : Theme.text
         font.family: Theme.fontText

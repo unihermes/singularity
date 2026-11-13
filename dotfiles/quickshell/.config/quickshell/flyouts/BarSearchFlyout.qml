@@ -173,7 +173,7 @@ FlyoutPanel {
             anchors.verticalCenter: parent.verticalCenter
             Text {
                 width: parent.width
-                text: !best.r ? "" : best.r.app ? best.r.app.name : best.r.setting.label
+                text: !best.r ? "" : best.r.app ? Apps.displayName(best.r.app) : best.r.setting.label
                 elide: Text.ElideRight
                 color: Theme.textStrong
                 font.family: Theme.fontText
@@ -211,7 +211,7 @@ FlyoutPanel {
             required property int index
             leadingIcon: modelData.setting ? modelData.setting.icon : ""
             leadingImage: modelData.app ? Apps.iconPath(modelData.app.icon, true) : ""
-            label: modelData.app ? modelData.app.name : modelData.setting.label
+            label: modelData.app ? Apps.displayName(modelData.app) : modelData.setting.label
             trailing: modelData.app ? "App" : modelData.setting.pageLabel
             highlighted: root.cursor === index + 1
             onActivated: root.activate(modelData)

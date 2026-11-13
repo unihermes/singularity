@@ -88,7 +88,7 @@ PanelWindow {
         var pins = Apps.pinned
         for (var i = 0; i < pins.length; i++) {
             var e = pins[i]
-            byId[e.id] = { key: "p:" + e.id, name: e.name, source: e.icon ? Apps.iconPath(e.icon, true) : "",
+            byId[e.id] = { key: "p:" + e.id, name: Apps.displayName(e), source: e.icon ? Apps.iconPath(e.icon, true) : "",
                            entry: e, windows: [], pinned: true }
             out.push(byId[e.id])
         }

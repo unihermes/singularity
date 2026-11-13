@@ -311,7 +311,7 @@ PanelWindow {
                 it = {
                     key: "pin/" + e.id,
                     source: e.icon ? Apps.iconPath(e.icon, true) : "",
-                    glyph: "󰖯", name: e.name, address: "", toplevel: null,
+                    glyph: "󰖯", name: Apps.displayName(e), address: "", toplevel: null,
                     main: true, windows: [],
                 }
             }
