@@ -33,9 +33,11 @@ saved_mode() {
   echo "$m"
 }
 
+fade_secs=1.7
+
 # Keep the old surface until the new one is mapped and fully faded in on
-# every monitor. Image decoding and layer animations can take longer than a
-# fixed delay, especially when several wallpaper changes arrive together.
+# every monitor, then for the fade-in to finish. Image decoding can take longer
+# than a fixed delay, especially when several wallpaper changes arrive together.
 show() {
   local old pid mode=${2:-$(saved_mode)} ready=0
   case $mode in fill|fit|center|tile) ;; *) mode=fill ;; esac
@@ -81,6 +83,9 @@ PY
   fi
   ln -sfn "$1" "$current_link"
   if [[ -n $old ]]; then
+    # the layer's reported alpha is 1 from the first frame, so wait out the
+    # fade-in (looks.lua's fadeLayersIn, 1.5s) before removing the old one
+    sleep "$fade_secs"
     kill $old 2>/dev/null || true
   fi
 }
