@@ -38,26 +38,37 @@ Singleton {
     // "dark" or "light": which of matugen's two schemes the ramp is built from
     readonly property string variant: Settings.colourVariant
 
-    // The image being faded out over the new one, and a count of fades
-    // started (WallpaperFade restarts on each). hypr/wallpaper.sh swaps the
-    // image at once; the fade is the shell's, drawn over it.
-    property string fadeFrom: ""
+    // A change fades the new image in over the old (WallpaperFade, on the
+    // shell's animation time) and only then has hypr/wallpaper.sh put it up,
+    // under the finished fade, so the swap is never seen.
+    property bool fading: false
+    property string fadeTo: ""
     property int fadeCount: 0
+    // the fade's image is up from a change starting to the script finishing
+    property bool overlayUp: false
     // a change waiting for the script's current run to finish
     property string queued: ""
-    property string shown: ""
 
     function set(path) {
         if (!path || path === current) return
         current = path
         saveState()
-        if (setter.running) { queued = path; return }
-        run(path)
+        fadeTo = path
+        overlayUp = true
+        fading = true
+        fadeCount++
+    }
+
+    // the fade numbered n has played: swap the real wallpaper
+    function commit(n) {
+        if (n !== fadeCount || !fading) return
+        fading = false
+        if (setter.running) queued = fadeTo
+        else run(fadeTo)
     }
 
     function run(path) {
         queued = ""
-        setter.from = shown
         setter.command = [script, "set", path, Settings.wallpaperFill]
         setter.running = true
     }
@@ -149,16 +160,9 @@ Singleton {
 
     Process {
         id: setter
-        property string from: ""
         onExited: code => {
-            if (code !== 0) return
-            var done = command[2]
-            if (from !== "" && from !== done) {
-                root.fadeFrom = from
-                root.fadeCount++
-            }
-            root.shown = done
             if (root.queued !== "") root.run(root.queued)
+            else if (!root.fading) root.overlayUp = false
         }
     }
 
@@ -174,10 +178,7 @@ Singleton {
         running: true
         command: [root.script, "current"]
         stdout: StdioCollector {
-            onStreamFinished: {
-                root.current = text.trim()
-                root.shown = root.current
-            }
+            onStreamFinished: root.current = text.trim()
         }
     }
 
