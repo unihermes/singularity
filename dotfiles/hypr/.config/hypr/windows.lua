@@ -2104,7 +2104,8 @@ local function applyLayoutRules(announce)
     local ws = hl.get_active_workspace()
     if ws and ws.special then return end
     local on = monocleOn(ws)
-    hl.config({ input = { follow_mouse = on and 0 or 1 } })
+    -- Monocle routes pointer input on hover while keyboard focus waits for a click.
+    hl.config({ input = { follow_mouse = on and 2 or 1 } })
     monocleRule:set_enabled(on)
     naturalRule:set_enabled(on)
     for _, f in ipairs(fullscreenRules) do f.rule:set_enabled(on and (not f.app or f.app.on)) end

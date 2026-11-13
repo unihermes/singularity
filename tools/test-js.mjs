@@ -835,7 +835,7 @@ assert(load(section("local rulesMonocle = nil", "-- The app rules' switch:"), "f
 assert(config.input.follow_mouse == 1)
 on = true
 assert(load(section("local rulesMonocle = nil", "-- The app rules' switch:"), "focus", "t", env))()
-assert(config.input.follow_mouse == 0)
+assert(config.input.follow_mouse == 2)
 -- Exercise the real popup gates without running placement or desktop hooks.
 local gates = section("holdPopup = function(win)", "    local addr = \"address:\" .. win.address\n    -- the window strip lists it")
 assert(load(gates .. " return true end", "popup-gates", "t", env))()

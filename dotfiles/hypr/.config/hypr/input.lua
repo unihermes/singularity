@@ -8,7 +8,7 @@
 hl.config({
     input = {
         kb_layout     = "us",
-        follow_mouse  = 0,
+        follow_mouse  = 2,
         sensitivity   = 0.1,
         accel_profile = "adaptive",
         left_handed = false,
