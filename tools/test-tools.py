@@ -126,6 +126,8 @@ class HookTests(unittest.TestCase):
                 "system/usr/local/lib/singularity/singularity-charge": {"check-syntax.py"},
                 qs + "services/Ai.qml": {"check-unused.py", "test-processes.mjs", "test-ai-host.py", "test-notification-routing.mjs"},
                 qs + "services/Files.qml": {"check-unused.py", "test-js.mjs", "test-processes.mjs"},
+                qs + "services/Media.qml": {"check-unused.py", "test-js.mjs"},
+                qs + "sidebar/NotificationSidebar.qml": {"check-unused.py", "test-processes.mjs"},
                 qs + "services/Apps.qml": {"check-unused.py", "test-js.mjs"},
                 qs + "AiHost.qml": {"check-unused.py", "test-processes.mjs", "test-ai-host.py", "test-notification-routing.mjs"},
                 qs + "services/SystemStats.qml": {"check-unused.py", "test-js.mjs"},

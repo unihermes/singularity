@@ -26,7 +26,7 @@ if changed 'quickshell/.*\.(qml|js)$|^tools/check-unused\.py$'; then
     run python3 tools/check-unused.py
 fi
 
-if changed 'quickshell/services/.*\.js$|services/(SystemStats|Files|Apps)\.qml$|tools/(test-js|merge-binds)\.mjs$|hypr/\.config/hypr/.*\.lua$|binds\.defaults\.lua$|singularity/autostart\.sh$'; then
+if changed 'quickshell/services/.*\.js$|services/(SystemStats|Files|Apps|Media)\.qml$|tools/(test-js|merge-binds)\.mjs$|hypr/\.config/hypr/.*\.lua$|binds\.defaults\.lua$|singularity/autostart\.sh$'; then
     run node --test tools/test-js.mjs
 fi
 
@@ -34,7 +34,7 @@ if changed 'services/(Settings\.qml|SettingsValues\.js)$|tools/(test-settings|qm
     run node --test tools/test-settings.mjs
 fi
 
-if changed 'quickshell/(sidebar/AiSidebar|AiHost)\.qml$|services/(AtomicFileWrite|Files|Ai|AiSession|ClaudeSession|CodexSession)\.qml$|tools/(test-processes|qml-harness)\.mjs$'; then
+if changed 'quickshell/(sidebar/(AiSidebar|NotificationSidebar)|AiHost)\.qml$|services/(AtomicFileWrite|Files|Ai|AiSession|ClaudeSession|CodexSession)\.qml$|tools/(test-processes|qml-harness)\.mjs$'; then
     run node --test tools/test-processes.mjs
 fi
 

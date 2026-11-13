@@ -59,3 +59,23 @@ costs remain when source data changes; the app benchmark measures repeated queri
   switching, reconnect and child-process shutdown coverage.
 - The independently running AI host disables file watching. Its status optimization
   takes effect on the next host restart; active conversations were not interrupted.
+
+## RAM follow-up
+
+- Release the notification sidebar's scene after its closing animation. Reopening
+  before deferred destruction cancels unloading. History remains in Notifications;
+  the sidebar already resets scroll and expansion on each open.
+- Prune media stream bindings/start timestamps when streams disappear, and player
+  length caches/references when players disappear. Track positions retain only the
+  twenty recent tracks plus tracks bound to live streams. A 500-track regression
+  checks that cache size stays bounded and live playback metadata survives.
+- Existing LazyWindow already destroys settings/system/notes windows on close.
+- Spotify/Steam startup uses real close requests after tray registration, not
+  permanently hidden mapped windows. Their private UI heaps are outside the shell's
+  control. No renderer-killing, forced garbage collection, allocator flags or app
+  shutdown policy was introduced. Tray/background memory retention is also reported
+  in [Valve's tracker](https://github.com/ValveSoftware/steam-for-linux/issues/6802).
+  No safe, verified tray-preserving memory reduction was established for either app.
+- These changes release retained objects; they do not establish an RSS/PSS saving
+  in MiB. Host processes are outside the command sandbox's PID namespace, and Qt's
+  allocator/image caches may retain freed pages for reuse.

@@ -40,6 +40,9 @@ PanelWindow {
     // 0 in, 1 out; slides in from the edge
     property real reveal: 0
     visible: open || reveal > 0
+    onVisibleChanged: if (!visible && !open) Qt.callLater(() => {
+        if (!root.open && !root.visible) Notifications.used = false
+    })
     NumberAnimation on reveal {
         id: slide
         running: false

@@ -299,7 +299,7 @@ ShellRoot {
 
     // The chat sidebar runs in AiHost.qml, independently of this shell.
 
-    // built on first open, then kept, so its scroll stays
+    // Release the notification scene after its closing animation.
     LazyLoader {
         active: Notifications.used
         NotificationSidebar { bars: screens.instances.map(s => s.barWindow) }

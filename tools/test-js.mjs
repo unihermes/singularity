@@ -1065,3 +1065,30 @@ test('Recent-file XML accepts attribute order and decodes URI and XML in the rig
 </xbel>`)
     assert.deepEqual(Array.from(rows, e => e.path), ['/home/me/&amp;.txt', '/home/me/A&B.txt'])
 })
+
+test('Media caches release departed streams and players while preserving recent/live tracks', () => {
+    const s = functions(qmlSource('Media.qml'), { outStreams: [{id: 7}], seenTracks: [{title: 'recent'}],
+        tabTrack: {7: {title: 'playing'}, 8: {title: 'gone'}}, startedAt: {7: 1, 8: 2},
+        trackPos: {recent: {pos: 1}, playing: {pos: 2}, gone: {pos: 3}},
+        players: [{dbusName: 'live'}], knownLength: {live: {length: 10}, dead: {length: 20}},
+        picked: {dbusName: 'dead'}, lastPlaying: {dbusName: 'dead'} })
+    s.pruneTracks()
+    assert.deepEqual(Object.keys(s.tabTrack), ['7'])
+    assert.deepEqual(Object.keys(s.startedAt), ['7'])
+    assert.deepEqual(Object.keys(s.trackPos), ['recent', 'playing'])
+    s.prunePlayers()
+    assert.deepEqual(Object.keys(s.knownLength), ['live'])
+    assert.equal(s.picked, null)
+    assert.equal(s.lastPlaying, null)
+    for (let i = 0; i < 500; i++) {
+        s.trackPos['track'+i] = {pos: 0}
+        s.rememberTrack({trackTitle: 'track'+i, metadata: {}})
+    }
+    assert.equal(s.seenTracks.length, 20)
+    assert.equal(Object.keys(s.trackPos).length, 21) // 20 recent plus still-playing stream
+    s.outStreams = []
+    s.pruneTracks()
+    assert.equal(Object.keys(s.tabTrack).length, 0)
+    assert.equal(Object.keys(s.startedAt).length, 0)
+    assert.equal(Object.keys(s.trackPos).length, 20)
+})

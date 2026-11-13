@@ -34,6 +34,17 @@ Singleton {
         return ps.length > 0 ? ps[0] : null
     }
 
+    function prunePlayers() {
+        var live = new Set(players.map(p => p.dbusName))
+        var kept = Object.create(null)
+        for (var name of Object.keys(knownLength || {}))
+            if (live.has(name)) kept[name] = knownLength[name]
+        knownLength = kept
+        if (picked && players.indexOf(picked) === -1) picked = null
+        if (lastPlaying && players.indexOf(lastPlaying) === -1) lastPlaying = null
+    }
+    onPlayersChanged: prunePlayers()
+
     // a browser's tab, by its desktop entry or name
     function isBrowser(p) {
         return /floorp|firefox|zen|librewolf|chrom|brave|vivaldi/
@@ -98,6 +109,22 @@ Singleton {
         // a tab starting drops a picked tab, like a player starting
         if (fresh) pickedTab = -1
     }
+
+    // Forget vanished streams and positions no longer reachable from recent/live tracks.
+    function pruneTracks() {
+        var alive = new Set(outStreams.map(n => String(n.id)))
+        var bound = Object.create(null)
+        for (var id of Object.keys(tabTrack || {}))
+            if (alive.has(id)) bound[id] = tabTrack[id]
+        tabTrack = bound
+        for (var id of Object.keys(startedAt || {}))
+            if (!alive.has(id)) delete startedAt[id]
+        var titles = new Set((seenTracks || []).map(t => t.title))
+        Object.values(bound).forEach(t => titles.add(t.title))
+        for (var title of Object.keys(trackPos || {}))
+            if (!titles.has(title)) delete trackPos[title]
+    }
+    onOutStreamsChanged: pruneTracks()
 
     // a player's tabs: [{ id, name, running }], none for a non-browser
     function tabsOf(p) {
@@ -200,6 +227,7 @@ Singleton {
         var kept = seenTracks.filter(x => x.title !== t.title).slice(-19)
         kept.push(t)
         seenTracks = kept
+        pruneTracks()
     }
     // title -> { pos, at, len } of each browser track when last seen
     // playing, written each second (in place: only read through clock)

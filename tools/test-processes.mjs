@@ -623,3 +623,20 @@ ShellRoot {
         assert.match(run.stdout + run.stderr, /NATIVE_OVERHEAD_CHECK_PASSED/)
     } finally { fs.rmSync(dir, { recursive: true, force: true }) }
 })
+
+test('Notification scene unload waits for close and cancels when reopened', () => {
+    const text = fs.readFileSync(new URL('../dotfiles/quickshell/.config/quickshell/sidebar/NotificationSidebar.qml', import.meta.url), 'utf8')
+    for (const reopen of [true, false]) {
+        const callbacks = []
+        const root = { open: false, visible: false }
+        const notifications = { used: true }
+        const ctx = vm.createContext({root, open: false, visible: false, Notifications: notifications,
+            Qt: { callLater: fn => callbacks.push(fn) }})
+        // Statement handler: run it once as the visibility signal would.
+        vm.runInContext(text.match(/onVisibleChanged: ([\s\S]*?\n    \}\))/)[1], ctx)
+        assert.equal(notifications.used, true)
+        root.open = root.visible = reopen
+        callbacks.forEach(fn => fn())
+        assert.equal(notifications.used, reopen)
+    }
+})
