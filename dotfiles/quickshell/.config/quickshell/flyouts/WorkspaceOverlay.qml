@@ -306,7 +306,7 @@ OverlayWindow {
                             elide: Text.ElideRight
                             text: cell.card.title + (cell.card.windows.length > 0
                                 ? " · " + cell.card.windows.length + (cell.card.windows.length === 1 ? " window" : " windows") : "")
-                            color: cell.isFocused ? Theme.textStrong : cell.card.windows.length > 0 ? Theme.text : Theme.muted
+                            color: cell.isFocused ? Theme.textStrong : cell.card.windows.length > 0 ? Theme.text : Theme.subtext
                             font.family: Theme.fontText
                             font.weight: cell.isFocused ? Theme.weightStrong : Theme.weightBody
                             font.pixelSize: Theme.fontSmall

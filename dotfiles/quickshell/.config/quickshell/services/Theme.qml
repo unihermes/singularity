@@ -130,9 +130,9 @@ Singleton {
     // the ground of flyouts, windows, cards and the bar (See-through)
     // Glass lifts dark palette colours into a neutral frost, leaving enough
     // opacity for text while letting the blurred background colour through.
-    readonly property real panelOpacity:   glass ? Math.min(1, resolved.opacity / 100 + 0.12) : resolved.opacity / 100
+    readonly property real panelOpacity: Math.min(1, resolved.opacity / 100 + (resolved.opacity < 100 ? (glass ? 0.18 : 0.06) : 0))
     function glassTone(c) {
-        var frost = isLight ? c : Qt.tint(c, Qt.rgba(1, 1, 1, 0.20))
+        var frost = isLight ? c : Qt.tint(c, Qt.rgba(1, 1, 1, 0.14))
         return opt("tint") ? Qt.tint(frost, Qt.rgba(accent.r, accent.g, accent.b, 0.14)) : frost
     }
     readonly property color barTone: glass ? glassTone(bar) : bar
