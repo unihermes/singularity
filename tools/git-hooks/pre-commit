@@ -47,6 +47,14 @@ if changed 'quickshell/scripts/ollama-agent\.py$|^tools/test-ollama-agent\.py$';
     run python3 tools/test-ollama-agent.py
 fi
 
+if changed 'quickshell/scripts/calendar-events\.py$|^tools/test-calendar-events\.py$'; then
+    run python3 tools/test-calendar-events.py
+fi
+
+if changed 'quickshell/scripts/phone-link\.py$|^tools/test-phone-link\.py$'; then
+    run python3 tools/test-phone-link.py
+fi
+
 if changed '^tools/(ollama-status|test-ollama-status)\.py$'; then
     run python3 tools/test-ollama-status.py
 fi

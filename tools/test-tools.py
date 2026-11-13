@@ -142,12 +142,16 @@ class HookTests(unittest.TestCase):
                 "tools/test-ollama-agent.py": {"test-ollama-agent.py", "check-syntax.py"},
                 "tools/ollama-status.py": {"test-ollama-status.py", "check-syntax.py"},
                 "tools/test-ollama-status.py": {"test-ollama-status.py", "check-syntax.py"},
+                qs + "scripts/calendar-events.py": {"test-calendar-events.py", "check-syntax.py"},
+                "tools/test-calendar-events.py": {"test-calendar-events.py", "check-syntax.py"},
+                qs + "scripts/phone-link.py": {"test-phone-link.py", "check-syntax.py"},
+                "tools/test-phone-link.py": {"test-phone-link.py", "check-syntax.py"},
                 "README.md": set(),
                 "tools/git-hooks/pre-commit": {"check-settings-index.py", "check-unused.py",
                                                "test-js.mjs", "test-settings.mjs", "test-processes.mjs", "test-ai-host.py",
                                                "test-notification-routing.mjs", "test-state-paths.py", "check-hardware.sh",
                                                "test-tools.py", "test-platform.py", "test-ollama-agent.py",
-                                               "test-ollama-status.py", "check-syntax.py"},
+                                               "test-ollama-status.py", "test-calendar-events.py", "test-phone-link.py", "check-syntax.py"},
             }
             for staged, expected in cases.items():
                 with self.subTest(staged=staged):
