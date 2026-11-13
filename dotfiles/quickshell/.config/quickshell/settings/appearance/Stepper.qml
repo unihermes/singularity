@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/Stepper.qml
-//
 // A Settings integer, stepped by `step` and clamped by Settings.limits;
 // `slider` shows it as a slider, written when the drag ends.
 

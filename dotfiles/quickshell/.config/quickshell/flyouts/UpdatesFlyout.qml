@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/UpdatesFlyout.qml
-//
 // A card saying where things stand with Check and Update at its end, then
 // a row per kind (Repositories, AUR, Singularity's commits, Clean up), each
 // opening a page of its own with its list and its action, then Settings.

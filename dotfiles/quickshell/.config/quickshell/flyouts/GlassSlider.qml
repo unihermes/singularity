@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassSlider.qml
-//
 // Glass's level control: a thick capsule filled from the left with a glyph
 // inside. Drag, click or scroll; `moved` carries the new 0-100 value.
 

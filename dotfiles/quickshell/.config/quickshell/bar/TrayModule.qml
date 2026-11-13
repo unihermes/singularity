@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/TrayModule.qml
-//
 // The system tray, one frame around every app's icon. Left raises the app's
 // window, else showApp (its menu's Show entry, else its desktop entry), right
 // opens its menu in a flyout, middle is its secondary action. Drag to

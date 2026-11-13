@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/PreviewGroup.qml
-//
 // The shell's own bar chips and a flyout, scaled down over the wallpaper,
 // so every change on the visual tabs shows as it's made. Built from the
 // real components, which read Theme, so it can't drift from the shell.

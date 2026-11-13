@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/looks.lua
---
 -- How windows look and move: gaps, borders, rounding, shadows, blur, the
 -- grouped windows' tab bar, animations. Values mostly come from state files
 -- Appearance writes; its own field changes go to hyprland.json
@@ -187,8 +184,6 @@ animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowS
 -- layers (flyouts) faster than global, fading
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
--- A short, even fade lets the incoming wallpaper blend over the old one.
-animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "linear" })
 -- the shell's surfaces blur what's behind (Glass, See-through);
 -- ignore_alpha leaves fully transparent parts unblurred. Overlays on a
 -- display scaled under 1 are "unblurred-..." (OverlayWindow.qml), outside it
@@ -197,6 +192,15 @@ hl.layer_rule({
     match = { namespace = "^(quickshell|singularity-.*)$" },
     blur  = true,
     ignore_alpha = 0.2,
+})
+
+-- The wallpaper changes at once, and the shell's fade-out image over it
+-- (WallpaperFade.qml) is its crossfade. The desktop's right-click menu
+-- also appears at once.
+hl.layer_rule({
+    name  = "wallpaper-instant",
+    match = { namespace = "^(wallpaper|(unblurred-)?wallpaper-fade|(unblurred-)?singularity-desktopmenu)$" },
+    no_anim = true,
 })
 
 -- the launcher appears at once, without the layers' fade

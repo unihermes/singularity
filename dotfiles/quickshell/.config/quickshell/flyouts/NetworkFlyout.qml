@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/NetworkFlyout.qml
-//
 // The connection first, as a card: the cable when it's up, else the joined
 // network. Under it what's moving now, down and up, and the last minute of
 // it; then the five strongest other networks under WI-FI, with Rescan and

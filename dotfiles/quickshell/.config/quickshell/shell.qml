@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/shell.qml
-//
 // The shell's entry point: session-wide state (Keep Awake, Night Light,
 // lock keys), the IPC targets binds and scripts call, and one Scope per
 // screen holding its bar and flyouts. Only one flyout is open at a time:
@@ -41,7 +38,33 @@ ShellRoot {
     // Night Light, from the Control Centre: on while hyprsunset runs (stopping it
     // restores normal gamma). Session-only, like Keep Awake.
     property bool nightLight: false
-    readonly property int nightLightKelvin: Settings.nightLightKelvin
+    // the temperature in force: eases from a slight tint (NIGHT_START_K) down to
+    // Settings.nightLightKelvin over Settings.nightLightRamp minutes after it
+    // turns on, in steps of 50 K so each retune is a visible change
+    readonly property int nightStartK: 5500
+    property double nightLightSince: 0
+    property int nightLightKelvin: nightStartK
+    function updateNightKelvin() {
+        const target = Settings.nightLightKelvin
+        const ramp = Settings.nightLightRamp * 60000
+        const frac = !nightLight || ramp <= 0 ? 1 : Math.min(1, (Date.now() - nightLightSince) / ramp)
+        const start = Math.max(target, nightStartK)
+        nightLightKelvin = Math.round((start + (target - start) * frac) / 50) * 50
+    }
+    onNightLightChanged: { nightLightSince = nightLight ? Date.now() : 0; updateNightKelvin() }
+    Connections {
+        target: Settings
+        function onNightLightKelvinChanged() { root.updateNightKelvin() }
+        function onNightLightRampChanged() { root.updateNightKelvin() }
+    }
+    // one cheap check a minute, only while the light is on and still deepening
+    Timer {
+        interval: 60000
+        repeat: true
+        running: root.nightLight && Settings.nightLightRamp > 0
+            && root.nightLightKelvin > Settings.nightLightKelvin
+        onTriggered: root.updateNightKelvin()
+    }
     // retuned in place: a restart would flash the screen cold
     onNightLightKelvinChanged: if (nightLightProc.running)
         Quickshell.execDetached(["hyprctl", "hyprsunset", "temperature", String(nightLightKelvin)])
@@ -302,7 +325,7 @@ ShellRoot {
 
     // The chat sidebar runs in AiHost.qml, independently of this shell.
 
-    // built on first open, then kept, so its scroll stays
+    // Release the notification scene after its closing animation.
     LazyLoader {
         active: Notifications.used
         NotificationSidebar { bars: screens.instances.map(s => s.barWindow) }
@@ -744,6 +767,8 @@ ShellRoot {
                 color: Theme.backdrop
             }
         }
+
+        WallpaperFade { scope: screenScope }
 
         // workspaces / windows
         LazyFlyout { name: "workspaces"; scope: screenScope; WorkspacesFlyout { scope: screenScope; bar: screenScope.barWindow; shellRoot: root } }

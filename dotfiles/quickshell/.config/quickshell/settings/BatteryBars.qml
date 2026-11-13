@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/BatteryBars.qml
-//
 // A Bluetooth device's battery as level bars, one a line: Battery for most
 // devices, L, R and Case for earbuds (BtBattery.parts), each with its
 // percent; alert-red at 20% and under. Empty while it reports nothing.

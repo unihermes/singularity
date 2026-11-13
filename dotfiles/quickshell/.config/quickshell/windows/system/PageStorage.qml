@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageStorage.qml
-//
 // Every mounted filesystem, the disks under them, and what is being read
 // and written right now. The old window showed one bar for / and nothing
 // else, which answers the wrong question on a machine with a separate home,

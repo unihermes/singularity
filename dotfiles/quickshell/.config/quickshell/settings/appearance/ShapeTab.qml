@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/ShapeTab.qml
-//
 // Appearance's Shape tab, how everything is drawn and spaced: STYLE (with
 // its finish), SPACE (the shell's and the windows' gaps), GLASS (opacity,
 // dim and blur) and WINDOWS (corners, shadow, the rules a click away).

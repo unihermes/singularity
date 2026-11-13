@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/SystemPage.qml
-//
 // The frame every System page shares: a one-line subtitle and a scrolling
 // column, sectioned like a Settings page. Built fresh each visit; no status
 // line, as these pages only read.

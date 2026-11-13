@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsNote.qml
-//
 // One line of small print on a Settings page, under a heading or a field:
 // what a section is for, or a problem (`alert`) that stops it working.
 // Kept to one line, as the hints are.

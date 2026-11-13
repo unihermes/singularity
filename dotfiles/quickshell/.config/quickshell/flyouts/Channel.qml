@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Channel.qml
-//
 // The channel frame (Theme.frameStyle "channel"): an outer line, a dark
 // groove, an inner line, then the ground. Drawn as nested fills, outside in,
 // so every band follows the corners. `lit` turns the groove the accent: an

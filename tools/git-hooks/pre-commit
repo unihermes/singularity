@@ -1,100 +1,72 @@
 #!/usr/bin/env bash
-# Enabled by link.sh (git config core.hooksPath tools/git-hooks).
-#
-# Settings search is a hand-written index; when a Settings page or the index
-# itself is part of a commit, make sure the two still agree.
+# Enabled by link.sh. Run relevant checks; keep successful output compact.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 staged=$(git diff --cached --name-only)
 changed() { grep -Eq "^tools/git-hooks/pre-commit$|$1" <<< "$staged"; }
+log=$(mktemp "${TMPDIR:-/tmp}/singularity-check.XXXXXX")
+trap 'rm -f -- "$log"' EXIT
+
+run() {
+    if "$@" >"$log" 2>&1; then
+        echo "PASS $*"
+    else
+        cat "$log"
+        echo "FAIL $*" >&2
+        exit 1
+    fi
+}
 
 if changed 'quickshell/settings/|services/SettingsIndex\.js$|^tools/check-settings-index\.py$'; then
-    if ! python3 tools/check-settings-index.py; then
-        echo
-        echo "Settings search index is out of step with the pages (above)."
-        echo "Fix services/SettingsIndex.js, or add a reasoned ALLOW entry in"
-        echo "tools/check-settings-index.py. git commit --no-verify skips this."
-        exit 1
-    fi
+    run python3 tools/check-settings-index.py
 fi
 
-# Declarations nothing reads, in the shell's QML and JS (check-unused.py).
 if changed 'quickshell/.*\.(qml|js)$|^tools/check-unused\.py$'; then
-    if ! python3 tools/check-unused.py; then
-        echo
-        echo "Something in the shell is declared and never read (above)."
-        echo "Remove it, or add a reasoned ALLOW entry in tools/check-unused.py."
-        echo "git commit --no-verify skips this."
-        exit 1
-    fi
+    run python3 tools/check-unused.py
 fi
 
-# The plain-JS modules' tests, when one of them or the tests are staged
-# (test-js.mjs also reads the Hyprland modules, so they count too).
-if changed 'quickshell/services/.*\.js$|tools/(test-js|merge-binds)\.mjs$|hypr/\.config/hypr/.*\.lua$|binds\.defaults\.lua$|singularity/autostart\.sh$'; then
-    test_log=$(mktemp "${TMPDIR:-/tmp}/singularity-test-js.XXXXXX")
-    trap 'rm -f -- "$test_log"' EXIT
-    if ! node --test tools/test-js.mjs >"$test_log" 2>&1; then
-        cat "$test_log"
-        echo
-        echo "JS module tests failed (full output above)."
-        echo "git commit --no-verify skips this."
-        exit 1
-    fi
+if changed 'quickshell/services/.*\.js$|services/(SystemStats|Files|Apps|Media)\.qml$|tools/(test-js|merge-binds)\.mjs$|hypr/\.config/hypr/.*\.lua$|binds\.defaults\.lua$|singularity/autostart\.sh$'; then
+    run node --test tools/test-js.mjs
 fi
 
-# Settings value boundaries and their public QML setters.
 if changed 'services/(Settings\.qml|SettingsValues\.js)$|tools/(test-settings|qml-harness)\.mjs$'; then
-    node --test tools/test-settings.mjs
+    run node --test tools/test-settings.mjs
 fi
 
-# Process callbacks, queued writes and reset/resume ordering.
-if changed 'quickshell/sidebar/AiSidebar\.qml$|services/(AtomicFileWrite|Ai|AiSession|ClaudeSession|CodexSession)\.qml$|tools/(test-processes|qml-harness)\.mjs$'; then
-    node --test tools/test-processes.mjs
+if changed 'quickshell/(sidebar/(AiSidebar|NotificationSidebar)|AiHost)\.qml$|services/(AtomicFileWrite|Files|Ai|AiSession|ClaudeSession|CodexSession)\.qml$|tools/(test-processes|qml-harness)\.mjs$'; then
+    run node --test tools/test-processes.mjs
 fi
 
-# The sidebar host's launcher and the notification routing to it.
 if changed 'quickshell/(scripts/ai_host\.py|AiHost\.qml|services/(Ai|Notifications)\.qml)$|^tools/test-(ai-host\.py|notification-routing\.mjs)$'; then
-    python3 tools/test-ai-host.py
-    node --test tools/test-notification-routing.mjs
+    run python3 tools/test-ai-host.py
+    run node --test tools/test-notification-routing.mjs
 fi
 
-# Local Ollama helpers use fake servers; no installed model is required.
 if changed 'quickshell/scripts/ollama-agent\.py$|^tools/test-ollama-agent\.py$'; then
-    python3 tools/test-ollama-agent.py
+    run python3 tools/test-ollama-agent.py
 fi
 
 if changed '^tools/(ollama-status|test-ollama-status)\.py$'; then
-    python3 tools/test-ollama-status.py
+    run python3 tools/test-ollama-status.py
 fi
 
-# XDG migration must preserve persisted data and compatibility paths.
 if changed 'state-paths\.py$|^link\.sh$|hypr/autostart\.lua$|quickshell/services/Paths\.qml$'; then
-    python3 tools/test-state-paths.py
+    run python3 tools/test-state-paths.py
 fi
 
-# The package lists against scripts/hardware.sh's capabilities (check-hardware.sh).
 if changed '^(packages/|scripts/(hardware|lib)\.sh$|install\.sh$|update\.sh$|tools/check-hardware\.sh$)|singularity/(platform\.sh|profiles/)'; then
-    if ! tools/check-hardware.sh; then
-        echo
-        echo "packages/ and scripts/hardware.sh disagree (above). A list in packages/hardware/"
-        echo "needs a capability of the same name in the platform resolver's has() and hw_caps."
-        echo "git commit --no-verify skips this."
-        exit 1
-    fi
+    run tools/check-hardware.sh
 fi
 
-# Selection and runtime gates share a policy and hardware resolver.
 if changed '^(scripts/hardware\.sh|install\.sh|link\.sh|update\.sh|tools/test-platform\.py)$|singularity/(platform\.sh|profiles/)|hypr/platform\.lua$'; then
-    python3 tools/test-platform.py
+    run python3 tools/test-platform.py
 fi
 
-# Repository discovery and check selection.
 if changed '^tools/(context|check-syntax|check-unused|test-tools)\.py$'; then
-    python3 tools/test-tools.py
+    run python3 tools/test-tools.py
 fi
 
 if changed '\.(sh|py|lua)$|^system/usr/local/lib/singularity/'; then
-    python3 tools/check-syntax.py
+    run python3 tools/check-syntax.py
 fi

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/SystemStats.qml
-//
 // Everything live the System window shows: CPU (overall, per core, clocks),
 // memory, swap, filesystems, disk throughput, sensors, network, battery and
 // the heaviest processes. Read from procfs/sysfs with FileView where it can
@@ -245,6 +242,8 @@ Singleton {
                     cpuHistory = pushHistory(cpuHistory, cpu)
                 }
                 cpuPrev = all.sample
+                // The lightweight desktop widget only displays aggregate CPU.
+                if (!sampling) break
             } else if (/^cpu\d+$/.test(f[0])) {
                 var n = nextPrev.length
                 var c = busy(f, corePrev[n])
@@ -592,15 +591,19 @@ Singleton {
 
     Process {
         id: sensorProc
-        command: ["sh", "-c",
-            "for d in /sys/class/hwmon/hwmon*; do "
-            + "n=$(cat $d/name 2>/dev/null) || continue; "
-            + "for t in $d/temp*_input; do [ -r \"$t\" ] || continue; "
-            + "l=$(cat \"${t%_input}_label\" 2>/dev/null); b=${t##*/}; "
-            + "echo \"T|$n|${l:-${b%_input}}|$(cat \"$t\")\"; done; "
-            + "for f in $d/fan*_input; do [ -r \"$f\" ] || continue; "
-            + "l=$(cat \"${f%_input}_label\" 2>/dev/null); b=${f##*/}; "
-            + "echo \"F|$n|${l:-${b%_input}}|$(cat \"$f\")\"; done; done"]
+        command: ["sh", "-c", `
+            for d in /sys/class/hwmon/hwmon*; do
+                IFS= read -r n 2>/dev/null < "$d/name" || continue
+                for kind in temp fan; do
+                    for f in "$d"/"$kind"*_input; do
+                        IFS= read -r v 2>/dev/null < "$f" || continue
+                        l=; IFS= read -r l 2>/dev/null < "\${f%_input}_label"
+                        b=\${f##*/}; l=\${l:-\${b%_input}}
+                        case $kind in temp) tag=T;; fan) tag=F;; esac
+                        printf '%s|%s|%s|%s\n' "$tag" "$n" "$l" "$v"
+                    done
+                done
+            done`]
         stdout: StdioCollector {
             onStreamFinished: {
                 var temps = [], fans = []

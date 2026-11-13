@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/Launcher.qml
-//
 // The search-first launcher, opened with CTRL+SPACE. Four modes, cycled with
 // Tab (Shift+Tab back):
 //   apps       desktop entries (services/Apps.qml)

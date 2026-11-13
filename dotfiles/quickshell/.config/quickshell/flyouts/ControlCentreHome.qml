@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ControlCentreHome.qml
-//
 // The Control Centre's home under every style but Glass, under the header
 // card and search: Sound (volume, whose chevron picks the output, and this
 // screen's brightness), Connectivity (Wi-Fi, Bluetooth, VPN, Airplane),

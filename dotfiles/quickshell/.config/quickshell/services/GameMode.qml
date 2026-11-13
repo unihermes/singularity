@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/GameMode.qml
-//
 // Game Mode: Hyprland without animations, blur, shadows, gaps or rounding.
 // The switch is a state file, game-mode ("on" or "off"), that the Hyprland
 // config reads on load and lays over everything else it sets (overrides.lua), so turning it off

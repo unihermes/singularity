@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/WidgetGlyph.qml
-//
 // A Nerd Font glyph on a WidgetCard that acts as a button: dims under the
 // pointer, faint while it can't act.
 

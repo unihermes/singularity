@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Ai.qml
-//
 // The Claude sidebar (SUPER+I): two conversations through the claude CLI
 // on the user's own subscription, one a tab.
 //   Chat     plain chat, no tools, in a folder of its own
@@ -53,11 +50,6 @@ Singleton {
     property var engines: ({ chat: "claude", code: "claude" })
     function codex(t) { return engines[t] === "codex" }
     function ollama(t) { return engines[t] === "ollama" }
-    function cycleEngine(t) {
-        var choices = ["claude"].concat(codexAvailable ? ["codex", "ollama"] : [])
-        setEngine(t, choices[(choices.indexOf(engines[t]) + 1) % choices.length])
-        if (ollama(t)) refreshOllama()
-    }
     readonly property bool codexAvailable: codexProbe.found
     onCodexAvailableChanged: if (hosted && codexAvailable && shown) readUsage()
     function setEngine(t, e) {

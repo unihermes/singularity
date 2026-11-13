@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/LevelToast.qml
-//
 // Volume/brightness OSD on every screen (both are system-wide), fading on
 // its own, per Theme.levelStyle: a bar under the bar, a vertical bar at the
 // right edge, or the number. The ChatMix dial too, as Game against Chat.

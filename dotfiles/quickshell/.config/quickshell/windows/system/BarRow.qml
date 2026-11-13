@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/BarRow.qml
-//
 // A label and its figure on one line with a full-width meter under them,
 // for anything with a name of its own: a filesystem's mount point and
 // device, a sensor, the battery's capacity left.

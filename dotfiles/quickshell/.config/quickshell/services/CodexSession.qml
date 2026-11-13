@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/CodexSession.qml
-//
 // One conversation with Codex, the same shape as ClaudeSession so the
 // sidebar draws either: `codex app-server` kept running, JSON-RPC a line
 // each way. It starts on the first message (or a resume); a thread is made

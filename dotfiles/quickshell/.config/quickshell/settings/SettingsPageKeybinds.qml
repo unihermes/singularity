@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageKeybinds.qml
-//
 // The Keybinds editor (KeybindsBody.qml). It keeps its own list scrolling,
 // and reports through this page's toast.
 

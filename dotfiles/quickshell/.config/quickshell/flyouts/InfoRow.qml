@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/InfoRow.qml
-//
 // A label on the left and its value on the right, elided to fit. Used by
 // the System window.
 

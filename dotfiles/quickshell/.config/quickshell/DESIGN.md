@@ -598,7 +598,7 @@ grab can't take the shell's bars in. It slides in from the edge and fades.
 
 The header's Center button moves the sidebar into a centered window; Dock
 returns it to the right edge. The choice is remembered. The centered panel
-is wider, stays within the screen's usable area,
+uses a 1040px base width, stays within the screen's usable area,
 and fades with a short vertical motion. Both placements keep the same
 conversation, keyboard shortcuts, pin and click-away behavior.
 
@@ -611,7 +611,7 @@ conversation, keyboard shortcuts, pin and click-away behavior.
   Accept edits and Auto writing in the folder, its git directory and the
   network, so they can commit and push; Auto never asking); Chat's
   Codex only reads. The heading reads CODEX while it's on.
-- **Ollama** uses the Codex app server with its local Ollama provider. The heading cycles through all three engines, and the model picker lists locally installed models. Chat and Code retain separate local conversations; Code uses the same modes and approvals as Codex. Local models vary in tool and image support, and Ollama needs enough context for the agent instructions and attachments.
+- **Ollama** uses the Codex app server with its local Ollama provider. Clicking the heading opens a list of the three engines, and the model picker lists locally installed models. Chat and Code retain separate local conversations; Code uses the same modes and approvals as Codex. Local models vary in tool and image support, and Ollama needs enough context for the agent instructions and attachments.
 - **Heading** CLAUDE, CODEX or OLLAMA, with Reload, Pin, Center/Dock and × for the sidebar. Chat
   and Code follow as a segmented strip, a ● on a tab with something unread.
   New and History sit above the composer. Reload saves state and reloads the
@@ -634,7 +634,8 @@ conversation, keyboard shortcuts, pin and click-away behavior.
   block in a darker box of its own with its language and Copy; each
   tool call a quiet line (spinner, tick, ✗; a multi-line command shows
   its first line), a run of them close together, that opens in place to
-  its diff or command and its output.
+  its diff or command and its output. Scrolling up reveals a Latest chip to
+  return to the end and resume following replies.
 - **Files dropped** anywhere on the panel (from a file manager) attach to
   the next message: an image scaled like a screenshot, text as text,
   anything else as its path; the panel shows "Drop to attach" while one
@@ -653,7 +654,8 @@ conversation, keyboard shortcuts, pin and click-away behavior.
   start over), then 󰐕 (Area, Window, Screen, Paste, Selected), the model
   (the one running when left on Default) as a dropdown, Code's mode as a
   chip a click steps through, what it's doing (pulsing) or the context used, Send or
-  Stop.
+  Stop. The controls wrap onto another line when space is tight; Send and
+  Stop stay at the right, and long model and attachment names elide.
 - **Mockups:** both engines receive the same instruction to return self-contained
   interactive HTML artifacts; the transcript shows a card that opens a standalone
   window, opens the browser or copies the source.

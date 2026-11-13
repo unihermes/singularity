@@ -9,27 +9,31 @@ function memoryRows(text) {
 }
 
 function group(rows, key, ancestry) {
-    var browsers = { "floorp": "floorp", "floorp-bin": "floorp",
+    var browsers = Object.assign(Object.create(null), { "floorp": "floorp", "floorp-bin": "floorp",
         "zen": "zen", "zen-bin": "zen", "zen-browser": "zen",
-        "firefox": "firefox", "firefox-bin": "firefox", "firefox-esr": "firefox" }
+        "firefox": "firefox", "firefox-bin": "firefox", "firefox-esr": "firefox" })
     var helpers = /^(Isolated Web Co|Web Content|WebExtensions|RDD Process|Socket Process|Privileged Cont|Utility Process|Isolated Servic|GPU Process|forkserver)$/
     var parents = Object.create(null)
     ;(ancestry || rows).forEach(function(row) { parents[row.pid] = row })
+    // Shared ancestors are resolved once per snapshot; cache misses too.
+    var owners = Object.create(null)
+    function owner(process) {
+        var trail = [], seen = new Set(), name = ""
+        while (process && !seen.has(process.pid)) {
+            if (owners[process.pid] !== undefined) { name = owners[process.pid]; break }
+            if (browsers[process.name]) { name = browsers[process.name]; break }
+            seen.add(process.pid)
+            trail.push(process.pid)
+            process = parents[process.ppid]
+        }
+        trail.forEach(pid => owners[pid] = name)
+        return name
+    }
     var by = Object.create(null), heavy = Object.create(null)
     rows.forEach(function(row) {
         var process = parents[row.pid] || row
         var name = browsers[process.name] || row.name
-        if (helpers.test(process.name)) {
-            var seen = Object.create(null)
-            while (process && !seen[process.pid]) {
-                seen[process.pid] = true
-                if (browsers[process.name]) {
-                    name = browsers[process.name]
-                    break
-                }
-                process = parents[process.ppid]
-            }
-        }
+        if (helpers.test(process.name)) name = owner(process) || row.name
         var bucket = by[name]
         if (!bucket) {
             bucket = by[name] = { pid: row.pid, user: row.user, name: name, cpu: 0, memKb: 0 }

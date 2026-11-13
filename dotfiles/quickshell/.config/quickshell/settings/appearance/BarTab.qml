@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/BarTab.qml
-//
 // Appearance's Bar tab, worked from the bar itself: the live preview over
 // the tab draws the bar with every module as it's set, and a click on one
 // picks it (page.barModule). BAR is the bar's own settings; under it, the

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageAudio.qml
-//
 // Output and input: the default device as a card with its level, the
 // others under it (a click makes one the default; outputs with nothing
 // plugged in are left out). CHANNELS: Game, Chat and Media's levels and

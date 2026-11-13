@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsTab.qml
-//
 // One tab's content on a tabbed SettingsPage, showing while it's the page's
 // `tab`. List the tab in the page's `tabs` and point `stickyColumn` at it.
 

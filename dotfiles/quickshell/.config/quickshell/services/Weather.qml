@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Weather.qml
-//
 // Conditions, the next hours and a 3-day forecast from wttr.in (no key,
 // IP-located), every 30 minutes, then a week of days from Open-Meteo for
 // the place wttr.in found (its 3 days stand in when that fails); a failure

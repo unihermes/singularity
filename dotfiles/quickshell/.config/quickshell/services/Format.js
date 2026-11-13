@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Format.js
-//
 // Number formatting for readouts: percentages, sizes, rates, durations.
 // Pulled out of the System window so anything else showing the same kind of
 // number (a battery history graph, a disk flyout) says it the same way.

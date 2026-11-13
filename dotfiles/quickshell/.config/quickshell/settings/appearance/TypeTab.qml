@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/TypeTab.qml
-//
 // Appearance's Type tab: the shell's font and size (SHELL FONT), how
 // headings are set (HEADINGS, all behind its Advanced), then how apps
 // outside the shell look (APPS): their font, icons (a few shown beside the

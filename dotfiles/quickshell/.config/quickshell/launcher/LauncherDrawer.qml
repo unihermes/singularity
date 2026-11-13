@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherDrawer.qml
-//
 // The Drawer layout: a panel the height of the screen under the bar, on the
 // side the Control Centre is on. The modes as tabs along its top, the
 // field, then one-line rows. Apps before typing run A to Z under letter

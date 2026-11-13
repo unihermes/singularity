@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/TrayMenuFlyout.qml
-//
 // The system tray's own D-Bus menu, drawn as flyout rows so it matches
 // everything else rather than popping a native Qt menu. Submenus drill down
 // in place, like the control centre. Split out of shell.qml; `item` and

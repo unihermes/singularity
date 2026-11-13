@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/LidConfig.qml
-//
 // The lid's settings in lid.conf (lid.sh reads it): what closing it does
 // and for Suspend how long after, locking right away, and hibernating after
 // an hour shut. Battery & Idle draws them (its LID section, hidden without

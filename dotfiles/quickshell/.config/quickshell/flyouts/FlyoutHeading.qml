@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutHeading.qml
-//
 // A section heading: the label, then a rule to the right edge. `hints`
 // puts key hints at the rule's end; `control` a control (such a heading
 // doesn't fold); `crumb` the page above, quieter, clickable as the way

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageConfig.qml
-//
 // Every file this desktop is configured by, each a click from an editor;
 // missing ones greyed, checked once in one process. The repo root is found
 // by following ~/.config/quickshell's link.

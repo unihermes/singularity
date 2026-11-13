@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/alttab.lua
---
 -- Windows-style ALT+Tab, drawn by Quickshell (AltTabSwitcher.qml); nothing
 -- is focused until ALT comes up, so stepping is free and SHIFT+Tab works.
 --

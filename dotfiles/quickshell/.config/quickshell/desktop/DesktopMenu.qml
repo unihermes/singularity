@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/DesktopMenu.qml
-//
 // Right-click menu for the bare desktop, at the pointer: edit the widgets
 // in place, a new sticky note where the click was, the next wallpaper, or
 // the Desktop settings.
@@ -14,6 +11,9 @@ FlyoutPanel {
     flyout: "desktopmenu"
     menuWidth: 190
     compactMenu: true
+    // no fade, in the shell or from Hyprland (looks.lua's layer rule)
+    instant: true
+    layerNamespace: "singularity-desktopmenu"
 
     // this screen's DesktopWidgets, which keeps where the click was
     required property var layer

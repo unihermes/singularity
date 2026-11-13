@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/AiUsage.qml
-//
 // The plan's limits under the sidebar's heading, for the engine on this
 // tab (Claude or Codex): the five-hour and weekly windows, each a meter with
 // how much is used and when it resets. A limit with no reading is left out.

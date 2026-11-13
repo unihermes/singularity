@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/Dock.qml
-//
 // Glass's Dock: a frosted pill floating along the screen's bottom with the
 // pinned apps and whatever else is open, a dot under each running one. Click raises an app's window (again for the
 // next), or starts it; middle click starts another; dragging a pinned app moves it among the

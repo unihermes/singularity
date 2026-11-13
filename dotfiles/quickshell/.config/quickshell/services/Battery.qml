@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Battery.qml
-//
 // The machine's battery, shared by the bar, its flyout and the System
 // window so they all agree on which device that is; and its level through
 // the day, for the flyout.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BalanceMeter.qml
-//
 // A Meter's track whose fill runs from the middle out to one side: the
 // ChatMix dial, Game on the left and Chat on the right. Upright, Game is
 // at the top.

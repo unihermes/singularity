@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/Choice.qml
-//
 // A Settings choice as a dropdown (Choices is the chip row, for four values
 // or fewer). Marks the field it sits in as holding a look's setting.
 

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/WidgetCard.qml
-//
 // A desktop widget's card: a hairline edge, rounded like the panels, round an evenly
 // see-through dark ground, the same under every style, its content in the palette's inks
 // with a tight halo of the base colour round every mark. Sizes sit on one grid so they line up: small is one unit square,

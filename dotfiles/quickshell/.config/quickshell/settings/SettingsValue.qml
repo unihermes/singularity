@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsValue.qml
-//
 // A Settings row that only reports: the label and hint on the left, the
 // value right-aligned where a control would sit, at the weight every
 // readout in the shell uses.

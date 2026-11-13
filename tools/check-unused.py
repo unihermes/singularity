@@ -41,9 +41,9 @@ def find_unused(src):
             if unused(n) and count("on" + n[0].upper() + n[1:]) == 0:
                 found.append((f, n, "signal"))
         # ids only reach their own file; `root` is kept by habit
-        bare = re.sub(r"//[^\n]*", "", s)
+        local_words = collections.Counter(re.findall(r"\w+", re.sub(r"//[^\n]*", "", s)))
         for n in re.findall(r"^\s*id:\s*(\w+)", s, re.M):
-            if n != "root" and len(re.findall(r"\b" + n + r"\b", bare)) <= 1:
+            if n != "root" and local_words[n] <= 1:
                 found.append((f, n, "id"))
 
     return [x for x in found if (x[0], x[1]) not in ALLOW]

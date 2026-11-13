@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPagePower.qml
-//
 // One POWER section (the battery card and its charge, the power profile,
 // remembered by PPD, and charging), then the idle ladder: a timeline whose
 // dots drag to set each step's time, and a row per step with its time or

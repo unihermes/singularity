@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageProcesses.qml
-//
 // The full table: eighteen rows with pids and owners, sortable, with the
 // two-step kill on anything you own. The window asks `top` for the longer
 // list only while this page is up (see the procLimit binding in

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/SlideControl.qml
-//
 // A number as a slider with its value at the end, in `step`s from
 // `minimum` to `maximum`. The value follows the drag; `committed` fires
 // once, when it ends, so a write to a file happens once per drag.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Settings.qml
-//
 // The settings the user changes at runtime, persisted as JSON. Written only
 // through set() from Settings, the Control Centre and a few flyouts; Theme
 // reads them. FileView + JsonAdapter save on every change and pick up edits
@@ -335,6 +332,8 @@ Singleton {
     readonly property bool islandActive: clockIsland && widgetVisible("clock")
     // Night Light's temperature in kelvin; not Appearance, so reset() leaves it
     readonly property alias nightLightKelvin: adapter.nightLightKelvin
+    // minutes Night Light takes to deepen from a slight tint to that temperature; 0 is at once
+    readonly property alias nightLightRamp: adapter.nightLightRamp
     // Night Light's schedule: "off", "sun" (sunset to sunrise, from the
     // weather) or "custom" (the two times below, minutes after midnight)
     readonly property alias nightLightSchedule: adapter.nightLightSchedule
@@ -1174,6 +1173,7 @@ Singleton {
             property string nightLightSchedule: Values.defaults.nightLightSchedule
             property int nightLightFrom: Values.defaults.nightLightFrom
             property int nightLightTo: Values.defaults.nightLightTo
+            property int nightLightRamp: Values.defaults.nightLightRamp
             property string weatherUnits: Values.defaults.weatherUnits
             property bool clock24: Values.defaults.clock24
             property int weekStart: Values.defaults.weekStart

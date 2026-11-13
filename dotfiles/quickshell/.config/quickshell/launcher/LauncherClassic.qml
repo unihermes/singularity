@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherClassic.qml
-//
 // The launcher's List, Grid and One line layouts: a box (centred, under
 // the bar, or full screen per Theme.launcherPosition) holding the mode's
 // heading, the field, and the results as rows, as an icon grid (apps

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/PackageList.qml
-//
 // Pending package updates, a dense line each: the name, and the version
 // it goes to. Scrolls past eight.
 

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/DisplayLayout.qml
-//
 // The Display page's arrangement picture: displays to scale, dragged into
 // place, snapping edge to edge (and to start, centre or end); `moved` hands
 // the page the new position. An off display is dashed and fixed. A click is

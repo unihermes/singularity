@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/HomeFigures.qml
-//
 // The four headline figures over System's Home: CPU, memory, temperature
 // and the battery (the root disk on a machine without one), each with its
 // last minute, each opening the page it summarises.

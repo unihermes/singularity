@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/AppDrag.qml
-//
 // Lays over an app's row in the volume flyout so it can
 // be dragged onto a channel (ChannelDrop): a chip with the app's icon and
 // name follows the pointer while it's held. A click still reaches what's

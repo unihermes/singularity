@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/System.qml
-//
 // System: what this machine is and is doing. Home: four headline figures
 // with their last minute, then a tile per page with a live figure; a page
 // opens beside the pages (each with its live figure), and the name or

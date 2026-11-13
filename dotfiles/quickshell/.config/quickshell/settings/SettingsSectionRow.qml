@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsSectionRow.qml
-//
 // A row of Settings' sidebar: a page's name over what it's set to, or a
 // search hit's name over the page and heading it lives on (`blurb`), with
 // the page's icon.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/WidgetText.qml
-//
 // Text on a WidgetCard, in its type and full ink unless told otherwise.
 
 import QtQuick

@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/hyprland.lua
---
 -- The Lua config. It only runs the modules beside it, in order:
 --
 --   shared     the Settings state files and constants the others share

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/WindowHeader.qml
-//
 // The standalone windows' one-line title bar: accent bar, name and subtitle,
 // `slot` (Settings' search), Close; drags the window. While `linked` (a page
 // is open), the name is a link `back` to Home.

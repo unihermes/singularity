@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Fonts.qml
-//
 // Which of Looks.fonts Qt can draw: Qt reads fonts once at startup, so
 // `available` is what it knows and newly installed ones are `pending` until
 // a restart. Anything unavailable resolves to the first.

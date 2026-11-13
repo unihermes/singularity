@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsSubhead.qml
-//
 // A small label splitting one section into groups (the touchpad's Clicking,
 // then Scrolling and typing), quieter than a heading and with no rule, so
 // the rows under it stay in the same channel.

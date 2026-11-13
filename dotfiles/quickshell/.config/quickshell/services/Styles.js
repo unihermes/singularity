@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Styles.js
-//
 // The Styles: each a complete way of drawing the chrome. resolve() turns
 // Settings.style and its dials into everything Theme hands out (the look
 // cards use it too). Each style:

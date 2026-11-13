@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/Tiles.qml
-//
 // A choice judged by eye: one tile per value, each drawing what it does,
 // the current one lit. `art` is a Component reading `parent.value`.
 

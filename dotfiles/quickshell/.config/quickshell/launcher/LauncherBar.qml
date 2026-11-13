@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherBar.qml
-//
 // The In the bar layout: the field takes the clock's place on the bar and
 // the results drop from it like a flyout (upward from a bottom bar). Rows
 // are one line, the first nine numbered: Alt+1-9 opens one without moving

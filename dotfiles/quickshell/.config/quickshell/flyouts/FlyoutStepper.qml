@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutStepper.qml
-//
 // An integer setting: label, minus, value, plus, for small exact ranges
 // where a slider would be fiddly; the range is shown.
 

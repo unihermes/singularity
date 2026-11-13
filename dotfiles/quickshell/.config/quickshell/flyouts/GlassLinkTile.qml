@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassLinkTile.qml
-//
 // A Glass card holding one GlassLink: a round switch with its name and
 // state. The disc toggles, the words open the details.
 

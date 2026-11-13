@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/FingerHands.qml
-//
 // Two hands seen from the back, their fingers buttons named as fprintd names
 // them (left-thumb, right-index-finger, ...): lit when enrolled, alert-red
 // while armed to remove, and filling from the palm while one is enrolled.

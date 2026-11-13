@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Shadow.qml
-//
 // The shadow under a panel or chip, when Theme.shadow asks for one: a
 // blurred drop shadow. Put it inside the shape it shadows; it fills its parent and draws behind
 // it. `opaque` false hides it, since a shadow showing through a

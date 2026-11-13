@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutPanel.qml
-//
 // Shared shell for every bar flyout: a full-screen transparent layer surface
 // with the box (PanelFrame) on it. It closes on a press elsewhere (Backdrop,
 // DismissGrab on other screens), Escape, or a workspace change. The bar
@@ -45,7 +42,9 @@ OverlayWindow {
     // 0 shut, 1 open: Theme.flyoutAnim plays over it both ways, and the
     // surface stays up until it has played out shut
     property real reveal: 0
-    readonly property bool animated: Theme.flyoutAnim !== "none" && Theme.animFactor > 0
+    // a panel that opens and shuts at once whatever the animation settings
+    property bool instant: false
+    readonly property bool animated: !instant && Theme.flyoutAnim !== "none" && Theme.animFactor > 0
     NumberAnimation {
         id: revealAnim
         target: root

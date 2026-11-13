@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/StickyHeading.qml
-//
 // Pins the current section's heading to the top of a scrolling page: a
 // copy, on the panel's colour at full strength, pushed out by the next
 // heading. Only `column`'s own headings count. The copy folds its section

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Recorder.qml
-//
 // Screen recording and instant replay, both through gpu-screen-recorder
 // (encoded on the GPU) in AV1 where the GPU encodes it and Settings asks
 // for it, else H.264, with the sound mixed into one track:

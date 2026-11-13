@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageRecording.qml
-//
 // Screen recording and instant replay (services/Recorder.qml): whether a
 // replay is held while a game has focus, how long it is, and where the
 // files go (folders picked with zenity).

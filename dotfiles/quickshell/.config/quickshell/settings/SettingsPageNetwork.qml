@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageNetwork.qml
-//
 // LINKS: the cable and Wi-Fi as rows (In use on the one carrying the
 // traffic, Wi-Fi's power button on its row), the picked one's readings as
 // chips under them (from `ip`, `iw` and sysfs, read while the page is

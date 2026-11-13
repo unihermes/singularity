@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/WindowSidebar.qml
-//
 // The pages beside an open page (Settings, System): each group under its
 // heading, a row per page (its icon and name over what it's set to or
 // reading now), the open one with the fill and tick.

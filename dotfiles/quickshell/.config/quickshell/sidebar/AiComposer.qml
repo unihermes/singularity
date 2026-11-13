@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/AiComposer.qml
-//
 // Where a message is written: what's attached to it (a click takes one
 // off), the slash commands matching a / typed at the start (the sidebar's
 // own: /clear, /new, /model, /mode, /past, /compact; then the CLI's), the
@@ -23,6 +20,10 @@ Column {
     // /past
     signal showPast()
     signal togglePast()
+    // the sidebar's provider list: while open, Up and Down step it, Enter or Escape close it
+    property bool engineListOpen: false
+    signal engineStep(int d)
+    signal engineListClosed()
     property bool historyShown: false
 
     property bool attaching: false
@@ -30,6 +31,7 @@ Column {
     property bool choosingReasoning: false
     onSessionChanged: { choosingModel = false; choosingReasoning = false }
 
+    function modelValues() { return Ai.modelChoicesFor(Ai.tab).map(c => c.value) }
     function focusInput() { input.forceActiveFocus() }
     // typing that started elsewhere in the sidebar lands here
     function typeInto(text) {
@@ -143,7 +145,9 @@ Column {
                 id: att
                 required property var modelData
                 required property int index
-                width: attRow.implicitWidth + Theme.spaceM * 2
+                width: Math.min(parent.width, attachmentLabel.implicitWidth
+                    + (preview.visible ? preview.width : attachmentGlyph.implicitWidth)
+                    + attRow.spacing + Theme.spaceM * 2)
                 height: Theme.fit(36)
                 radius: Theme.radiusInner
                 color: attMouse.containsMouse ? Theme.hoverFill : Theme.fieldFill
@@ -157,6 +161,7 @@ Column {
                     spacing: Theme.spaceM
 
                     Image {
+                        id: preview
                         visible: att.modelData.kind === "image"
                         anchors.verticalCenter: parent.verticalCenter
                         height: att.height - Theme.spaceS * 2
@@ -167,6 +172,7 @@ Column {
                         asynchronous: true
                     }
                     Text {
+                        id: attachmentGlyph
                         visible: att.modelData.kind !== "image"
                         anchors.verticalCenter: parent.verticalCenter
                         text: "󰅌"
@@ -175,7 +181,11 @@ Column {
                         font.pixelSize: Theme.fontIconSize
                     }
                     Text {
+                        id: attachmentLabel
                         anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(0, Math.min(implicitWidth, att.width - Theme.spaceM * 2
+                            - x))
+                        elide: Text.ElideMiddle
                         text: attMouse.containsMouse ? "Remove"
                             : att.modelData.label + (att.modelData.kind === "text"
                                 ? "  " + att.modelData.text.split("\n").length
@@ -427,10 +437,34 @@ Column {
                 }
 
                 Keys.onEscapePressed: {
+                    if (root.engineListOpen) { root.engineListClosed(); return }
                     if (!root.suggestionsDismissed && root.suggestions.length > 0) root.suggestionsDismissed = true
                     else root.escapePressed()
                 }
                 Keys.onPressed: event => {
+                    if (root.engineListOpen) {
+                        var up = event.key === Qt.Key_Up, down = event.key === Qt.Key_Down
+                        if (up || down) root.engineStep(down ? 1 : -1)
+                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) root.engineListClosed()
+                        if (up || down || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            event.accepted = true
+                            return
+                        }
+                    }
+                    var list = root.choosingModel ? root.modelValues() : []
+                    if (list.length > 0) {
+                        if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                            var at = Math.max(0, list.indexOf(Ai.models[Ai.modelKey(Ai.tab)] || ""))
+                            Ai.setModel(Ai.modelKey(Ai.tab), list[(at + (event.key === Qt.Key_Down ? 1 : list.length - 1)) % list.length])
+                            event.accepted = true
+                            return
+                        }
+                        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !(event.modifiers & Qt.ShiftModifier)) {
+                            root.choosingModel = false
+                            event.accepted = true
+                            return
+                        }
+                    }
                     if (!root.suggestionsDismissed && root.suggestions.length > 0) {
                         var n = root.suggestions.length
                         if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
@@ -465,11 +499,11 @@ Column {
     // attach, model, reasoning, mode, send or stop
     Item {
         width: parent.width
-        height: Theme.controlSize
+        height: Math.max(Theme.controlSize, composerControls.implicitHeight)
 
-        Row {
-            width: Math.min(implicitWidth, parent.width - send.width - Theme.spaceM)
-            clip: true
+        Flow {
+            id: composerControls
+            width: Math.max(0, parent.width - send.width - Theme.spaceM)
             spacing: Theme.spaceS
             anchors.verticalCenter: parent.verticalCenter
 
@@ -480,6 +514,7 @@ Column {
                 onClicked: root.attaching = !root.attaching
             }
             FlyoutChip {
+                width: Math.min(implicitWidth, composerControls.width)
                 text: Ai.modelText(Ai.tab) + (root.choosingModel ? " ▴" : " ▾")
                 onClicked: { if (Ai.ollama(Ai.tab)) Ai.refreshOllama(); root.choosingModel = !root.choosingModel; root.choosingReasoning = false }
             }
@@ -500,7 +535,7 @@ Column {
         IconButton {
             id: send
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top: parent.top
             icon: root.session.busy ? "󰓛" : "󰒊"
             lit: !root.session.busy && (input.text.trim() !== "" || root.session.attachments.length > 0)
             enabled: Ai.available

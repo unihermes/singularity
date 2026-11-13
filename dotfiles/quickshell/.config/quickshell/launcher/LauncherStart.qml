@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherStart.qml
-//
 // The Start menu layout: a menu hung from the bar under the Control Centre
 // button. The field across the top; down the side, Pinned, All apps and
 // the app groups (Apps.groups) with their counts, then Files, Clipboard and

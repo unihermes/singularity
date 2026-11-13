@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageAppearance.qml
-//
 // Appearance: one page, six tabs by what they change (Colour, Shape,
 // Type, Bar, Panels, Motion), each under a preview of what it changes;
 // every section's rarely changed rows fold behind its Advanced. While

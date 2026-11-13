@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BarEditFlyout.qml
-//
 // The edit shelf: open, the bar is in edit mode (BarEditor). It holds the
 // hidden modules as chips, a drop zone for taking one off the bar, Reset
 // and Done. Its chips' drags go through the bar's editor, so a chip can be

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Notes.qml
-//
 // The sticky notes' tabs and the last open one, in notes.json; edits save
 // a moment after typing, flush() at once. Shown by the Notes window
 // (SUPER+N), where every tab lives, and on the desktop, where a tab shows

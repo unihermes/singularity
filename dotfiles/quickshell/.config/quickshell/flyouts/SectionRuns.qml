@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/SectionRuns.qml
-//
 // A frame behind each run of a column's children (ending at a heading,
 // divider or bare spacer), in Theme.frameStyle; none under Flat. Put it
 // beside the column, under it, with the column's top as columnY.

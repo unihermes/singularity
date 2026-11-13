@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/CalendarFlyout.qml
-//
 // The clock's calendar, under the time large with the whole date: Month
 // (arrows or wheel page; neighbour days dimmed
 // and clickable; footer back to today; weeks start on Settings.weekStart),

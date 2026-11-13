@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/BarModule.qml
-//
 // A clickable bar module: icon, optional readout, and the click that opens
 // its flyout, in a full-height Item so the whole bar height clicks.
 

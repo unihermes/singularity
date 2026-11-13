@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Brightness.qml
-//
 // Backlight level, 0..100, once for the whole shell. Read from sysfs and
 // watched (so the brightness keys show); written with brightnessctl.
 

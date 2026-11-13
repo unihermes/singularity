@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ScrollBar.qml
-//
 // The thin position marker beside a scrolling list -- not draggable, just a
 // thumb sized and placed from the Flickable it watches. Anchor it to the
 // Flickable's right edge; it hides itself when there's nothing to scroll.

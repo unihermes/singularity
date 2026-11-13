@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutRow.qml
-//
 // One line in a flyout: a label, an optional right-aligned value, and a
 // click. Rows that are pure readout (battery health, time remaining) set
 // `enabled: false` -- that drops the hover highlight and the pointer

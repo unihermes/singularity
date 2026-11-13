@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/window-keys.lua
---
 -- The window keys, as globals for binds.lua. Takes the windows.lua helpers
 -- it needs.
 

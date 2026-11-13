@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/DismissGrab.qml
-//
 // Closes a panel on a press anywhere outside it, other monitors and windows
 // included, via Hyprland's focus grab (hyprland_focus_grab_v1): the first
 // outside press ends the grab, isn't passed on, and sends `cleared`.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GlassLink.qml
-//
 // A round switch with its name and state beside it: a click on the disc toggles, one on the words opens the details.
 
 import QtQuick

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/TintedIcon.qml
-//
 // An app icon in the bar, drawn as Theme.iconTint says: as it is, greyed,
 // or recoloured to the accent's hue. The effect layer only exists while a
 // tint is on.

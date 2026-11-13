@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/DrivesFlyout.qml
-//
 // Each removable drive as a heading, its filesystems as rows: a click
 // mounts one and opens it, or opens one already mounted. Eject after each
 // drive's rows unmounts it all and powers it off. Self-contained: only

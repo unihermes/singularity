@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/LauncherArt.qml
-//
 // A small screen with the launcher drawn in one layout (`value`, else the
 // tile's `parent.value`): the Launcher layout tiles, and PanelArt's picture
 // for the layouts it doesn't draw itself. `screen: false` leaves out the

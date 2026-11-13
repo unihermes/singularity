@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Spectrum.qml
-//
 // The audio spectrum (Visualizer), in the meter colour unless `color` says, drawn per `style`
 // (Theme.vizStyle): mirror, rise, dots or one line through every band. At
 // rest in the same look while nothing sounds. No easing, so it redraws

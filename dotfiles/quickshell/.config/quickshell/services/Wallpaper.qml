@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Wallpaper.qml
-//
 // The wallpaper and its colours. hypr/wallpaper.sh shows it (a new swaybg
 // each change) and restores it at login; this keeps the list and the saved
 // choice. In wallpaper colour mode matugen's palette is mapped onto the
@@ -41,11 +38,39 @@ Singleton {
     // "dark" or "light": which of matugen's two schemes the ramp is built from
     readonly property string variant: Settings.colourVariant
 
+    // A change fades the new image in over the old (WallpaperFade, on the
+    // shell's animation time) and only then has hypr/wallpaper.sh put it up,
+    // under the finished fade, so the swap is never seen.
+    property bool fading: false
+    property string fadeTo: ""
+    property int fadeCount: 0
+    // the fade's image is up from a change starting to the script finishing
+    property bool overlayUp: false
+    // a change waiting for the script's current run to finish
+    property string queued: ""
+
     function set(path) {
         if (!path || path === current) return
         current = path
-        Quickshell.execDetached([script, "set", path, Settings.wallpaperFill])
         saveState()
+        fadeTo = path
+        overlayUp = true
+        fading = true
+        fadeCount++
+    }
+
+    // the fade numbered n has played: swap the real wallpaper
+    function commit(n) {
+        if (n !== fadeCount || !fading) return
+        fading = false
+        if (setter.running) queued = fadeTo
+        else run(fadeTo)
+    }
+
+    function run(path) {
+        queued = ""
+        setter.command = [script, "set", path, Settings.wallpaperFill]
+        setter.running = true
     }
 
     function step(d) {
@@ -130,6 +155,14 @@ Singleton {
             var minute = date.getHours() * 60 + date.getMinutes()
             if (interval > 0 && minute % interval === 0)
                 root.shuffle()
+        }
+    }
+
+    Process {
+        id: setter
+        onExited: code => {
+            if (root.queued !== "") root.run(root.queued)
+            else if (!root.fading) root.overlayUp = false
         }
     }
 

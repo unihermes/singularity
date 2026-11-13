@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageInput.qml
-//
 // Keyboard, mouse and touchpad: input.lua's `input` table, changes kept in
 // hyprland.json through HyprLuaWrite and applied by a reload (`hyprctl
 // keyword` refuses under Lua). Values are read from the file; an unset key

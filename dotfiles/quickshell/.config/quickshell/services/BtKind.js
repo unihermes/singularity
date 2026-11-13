@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/BtKind.js
-//
 // What a Bluetooth device is, from the icon name BlueZ derives from its
 // device class ("audio-headphones", "input-mouse"): a glyph and a word for
 // the Settings page's rows. Also the battery glyph for a level.

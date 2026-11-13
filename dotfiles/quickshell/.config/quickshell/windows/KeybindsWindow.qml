@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/KeybindsWindow.qml
-//
 // Keybinds in its own window (SUPER+K): the header over the same
 // SettingsPageKeybinds Settings shows; floats by window-rules.lua's
 // "quickshell-windows" rule.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/StatChip.qml
-//
 // One reading of a link (IP address, Gateway, Speed) as a small framed
 // chip: its name spaced out over the value. A `copyable` one fills on
 // hover, copies on a click and reads Copied for a moment. Rings when

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Updates.qml
-//
 // Pending updates, repo (checkupdates: a throwaway db copy, no partial
 // upgrade) and AUR (yay -Qua --devel), for the bar module. First check a minute
 // after startup, then every Settings.updateInterval minutes, minus

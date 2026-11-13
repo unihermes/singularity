@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/PageHealth.qml
-//
 // What's wrong with this machine, worst first, each with its fix
 // (services/Health.qml); passes sink to the bottom. Scans while the page
 // is open.

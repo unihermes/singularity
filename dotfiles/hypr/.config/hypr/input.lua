@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/input.lua
---
 -- Keyboard, mouse, touchpad and gestures. Settings > Input reads the plain
 -- fields of the input table here, and writes its own changes to
 -- hyprland.json (see overrides.lua).
@@ -8,7 +5,7 @@
 hl.config({
     input = {
         kb_layout     = "us",
-        follow_mouse  = 0,
+        follow_mouse  = 2,
         sensitivity   = 0.1,
         accel_profile = "adaptive",
         left_handed = false,

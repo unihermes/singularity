@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsIndent.qml
-//
 // What a row opens under itself (a passphrase, a saved network's or a
 // device's settings), set in by a rule down its left side.
 

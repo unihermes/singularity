@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherEmpty.qml
-//
 // What a launcher layout says when it has no rows (No matches, Searching…),
 // lined up with a row's name.
 

@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/binds.lua
---
 -- Every keybind. The Keybinds window (SUPER+K) reads and rewrites this file
 -- only; link.sh copies the repo's default where there's none yet. Sections
 -- are `-- --- Name ---` markers; plain one-line binds are editable (see

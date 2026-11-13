@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/WeatherWidget.qml
-//
 // Where, the temperature large, and the sky with today's high and low.
 // Medium adds five days as columns; large the next day's temperature as a
 // curve, then five days as rows with their range drawn against the week's.

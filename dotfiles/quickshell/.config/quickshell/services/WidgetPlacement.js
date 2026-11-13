@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/WidgetPlacement.js
-//
 // Where the desktop widgets sit (desktop/). A rect is { x, y, w, h } in
 // screen pixels; the area is the screen less the bar's strip. A placed
 // widget is stored as fractions of the room the area leaves it, so it

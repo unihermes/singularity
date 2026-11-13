@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/AppStyle.js
-//
 // qss(): the Qt stylesheet for qt6ct's Fusion (AppearanceSync writes it).
 // One flat look whatever the shell's style, like adw-gtk3 and libadwaita
 // give GTK apps; only the colours come from the look. Takes t:

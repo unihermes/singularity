@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/Bar.qml
-//
 // One screen's bar window: its ground, the three groups' channels, and the
 // slots the modules (BarModules.qml) are laid out in. shell.qml makes one
 // per screen and hands it that screen's scope.

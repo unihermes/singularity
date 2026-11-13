@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/HyprLuaWrite.qml
-//
 // The write path into binds.lua (Keybinds) and the state directory's
 // monitors.lua and hyprland.json (Display, Input, Appearance), on
 // AtomicFileWrite's shared queue. A singleton so pages can't overwrite

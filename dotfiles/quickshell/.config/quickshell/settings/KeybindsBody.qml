@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/KeybindsBody.qml
-//
 // The Keybinds editor: every hl.bind() in binds.lua, grouped by its
 // `-- --- Section ---` markers, each opening in place to edit, with Add a
 // bind… per group; then SUGGESTED, presets from HyprPresets.js to tick and

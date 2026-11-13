@@ -33,9 +33,10 @@ saved_mode() {
   echo "$m"
 }
 
-# Keep the old surface until the new one is mapped and fully faded in on
-# every monitor. Image decoding and layer animations can take longer than a
-# fixed delay, especially when several wallpaper changes arrive together.
+# Keep the old surface until the new one is mapped on
+# every monitor. Image decoding can take longer than a fixed delay, especially
+# when several wallpaper changes arrive together. The swap itself is instant
+# (looks.lua); Wallpaper.qml fades the old image out over it.
 show() {
   local old pid mode=${2:-$(saved_mode)} ready=0
   case $mode in fill|fit|center|tile) ;; *) mode=fill ;; esac

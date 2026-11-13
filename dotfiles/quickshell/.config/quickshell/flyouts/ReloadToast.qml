@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ReloadToast.qml
-//
 // Replaces Quickshell's reload popup with a card at the bar's left end: a
 // good reload fades, a failure stays longer with the error. The inhibit
 // only works from inside the reload handlers (the old shell's, on failure).

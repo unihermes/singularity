@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/Backdrop.qml
-//
 // The click-off catcher behind a flyout or overlay: any press (not click)
 // dismisses; the wheel is swallowed. The panel needs an Absorber of its own,
 // or presses its rows don't take fall through to this.

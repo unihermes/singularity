@@ -522,3 +522,121 @@ test('Codex initialization failure clears old work and restarts for the next sen
     c.read({ id: c.writes.at(-1).id, result: {} })
     assert.equal(c.writes.at(-1).method, 'thread/resume')
 })
+
+test('File search waits for exit and stdout, rejects stale results and stays cleared', () => {
+    for (const outputFirst of [true, false]) {
+        const finder = { running: false, awaitingOutput: false }
+        const debounce = { running: false, restart() { this.running = true }, stop() { this.running = false } }
+        const s = functions(source('Files.qml'), { finder, debounce, home: '/home/me', maxResults: 60,
+            fetchLimit: 400, excludes: ['.git'], results: [] })
+        s.search('old'); debounce.running = false; s.startSearch()
+        assert.equal(finder.running, true)
+        assert.ok(finder.command.includes('--print0'))
+        s.search('new'); debounce.running = false; s.startSearch()
+        assert.equal(finder.searchQuery, 'old')
+        // Model the two independent signals, including both delivery orders.
+        finder.running = outputFirst
+        if (outputFirst) {
+            s.finishSearch('/home/me/old\0')
+            assert.equal(finder.searchQuery, 'old')
+            finder.running = false; s.startSearch()
+        } else {
+            s.startSearch()
+            assert.equal(finder.searchQuery, 'old')
+            s.finishSearch('/home/me/old\0')
+        }
+        assert.equal(finder.searchQuery, 'new')
+        assert.equal(s.results.length, 0)
+        assert.equal(s.searching, true)
+        s.clear()
+        s.finishSearch('/home/me/new\0')
+        assert.equal(s.results.length, 0)
+        assert.equal(s.searching, false)
+        assert.equal(finder.running, false)
+    }
+})
+
+test('Native Qt updates cached app ordering and publishes host status only on changes', {
+    skip: spawnSync('qs', ['--version']).error?.code === 'ENOENT'
+}, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'singularity-overhead-'))
+    try {
+        const host = fs.readFileSync(new URL('../dotfiles/quickshell/.config/quickshell/AiHost.qml', import.meta.url), 'utf8')
+        const statusBindings = host.slice(host.indexOf('    readonly property string statusText:'), host.indexOf('    Component.onCompleted:')).replaceAll('Ai.', 'ai.')
+        const publisher = host.slice(host.indexOf('    Timer {'), host.lastIndexOf('}'))
+        const apps = source('Apps.qml')
+        const appBindings = apps.slice(apps.indexOf('    readonly property var searchIndex:'), apps.indexOf('    // --- pinned'))
+            .replace('DesktopEntries.applications.values', 'entries')
+        fs.writeFileSync(path.join(dir, 'AppSearch.js'), source('AppSearch.js'))
+        fs.writeFileSync(path.join(dir, 'Files.qml'), source('Files.qml'))
+        fs.writeFileSync(path.join(dir, 'qmldir'), 'singleton Files 1.0 Files.qml\n')
+        fs.writeFileSync(path.join(dir, 'report\nnotes'), 'fixture')
+        fs.writeFileSync(path.join(dir, 'shell.qml'), `import Quickshell
+import QtQuick
+import "AppSearch.js" as AppSearch
+import "."
+ShellRoot {
+    id: root
+    Component.onCompleted: Files.search("report")
+    ${statusBindings}
+    ${publisher}
+    QtObject { id: ai
+        property bool shown: false
+        property var screen: null
+        property bool busy: false
+        property bool asking: false
+        property bool unseen: false
+    }
+    QtObject { id: status
+        property int writes: 0
+        property string value: ""
+        function setText(text) { value = text; writes++ }
+    }
+    QtObject { id: apps
+        property var entries: [{id: "b", name: "Beta"}, {id: "a", name: "Alpha"}]
+        property var hidden: []
+        property var counts: ({b: 10})
+        ${appBindings}
+    }
+    Timer { interval: 450; running: true; onTriggered: {
+        if (status.writes !== 1 || apps.list("")[0].id !== "b") throw Error("initial state")
+        if (Files.searching || Files.results.length !== 1 || Files.results[0].name !== "report\\nnotes") throw Error("file search")
+        Files.clear()
+        apps.counts = {a: 20}
+        ai.shown = true; ai.busy = true
+    }}
+    Timer { interval: 900; running: true; onTriggered: {
+        if (status.writes !== 2 || !JSON.parse(status.value).busy) throw Error("status updates")
+        if (apps.list("")[0].id !== "a") throw Error("stale usage order")
+        apps.entries = [{id: "c", name: "Code"}]
+    }}
+    Timer { interval: 1200; running: true; onTriggered: {
+        if (status.writes !== 2 || apps.list("code")[0].id !== "c") throw Error("stale entries or idle write")
+        console.log("NATIVE_OVERHEAD_CHECK_PASSED"); Qt.quit()
+    }}
+}`)
+        fs.mkdirSync(path.join(dir, 'runtime'), { mode: 0o700 })
+        const env = { ...process.env, HOME: dir, QT_QPA_PLATFORM: 'offscreen', XDG_CACHE_HOME: path.join(dir, 'cache'), XDG_RUNTIME_DIR: path.join(dir, 'runtime') }
+        delete env.WAYLAND_DISPLAY
+        const run = spawnSync('qs', ['-p', dir, '--no-color'], { env, encoding: 'utf8', timeout: 5000 })
+        assert.equal(run.status, 0, run.stdout + run.stderr)
+        assert.match(run.stdout + run.stderr, /NATIVE_OVERHEAD_CHECK_PASSED/)
+    } finally { fs.rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('Notification scene unload waits for close and cancels when reopened', () => {
+    const text = fs.readFileSync(new URL('../dotfiles/quickshell/.config/quickshell/sidebar/NotificationSidebar.qml', import.meta.url), 'utf8')
+    for (const reopen of [true, false]) {
+        const callbacks = []
+        const root = { open: false, visible: false }
+        const notifications = { used: true }
+        const ctx = vm.createContext({root, open: false, visible: false, Notifications: notifications,
+            Qt: { callLater: fn => callbacks.push(fn) }})
+        // Statement handler: run it once as the visibility signal would.
+        vm.runInContext(text.match(/onVisibleChanged: ([\s\S]*?\n    \}\))/)[1], ctx)
+        assert.equal(notifications.used, true)
+        root.open = root.visible = reopen
+        callbacks.forEach(fn => fn())
+        assert.equal(notifications.used, reopen)
+    }
+})

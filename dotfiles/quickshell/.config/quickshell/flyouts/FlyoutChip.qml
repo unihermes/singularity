@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutChip.qml
-//
 // A small button for inline actions in a row, drawn per style.
 // `confirmText` makes it two clicks (armed for 3s, alert-red).
 
@@ -28,7 +25,8 @@ Item {
     readonly property string kind: Theme.controlStyle
     readonly property bool hot: root.enabled && mouse.containsMouse
 
-    implicitWidth: content.implicitWidth + Theme.spaceM * 2 + (glyph && !armed ? 2 : 0)
+    implicitWidth: label.implicitWidth + (iconText.visible ? iconText.implicitWidth + content.spacing : 0)
+        + Theme.spaceM * 2 + (glyph && !armed ? 2 : 0)
     implicitHeight: Theme.chipHeight
 
     Rectangle {
@@ -66,6 +64,7 @@ Item {
     Row {
         id: content
         anchors.centerIn: parent
+        width: Math.max(0, root.width - Theme.spaceM * 2)
         spacing: Theme.spaceS
 
         Text {
@@ -90,6 +89,9 @@ Item {
         Text {
             id: label
             anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, Math.min(implicitWidth, content.width
+                - (iconText.visible ? iconText.width + content.spacing : 0)))
+            elide: Text.ElideRight
             text: root.armed ? root.confirmText : root.text
             color: !root.enabled ? Theme.textDisabled
                 : root.armed ? Theme.base

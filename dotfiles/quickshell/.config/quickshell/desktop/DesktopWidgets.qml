@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/DesktopWidgets.qml
-//
 // One screen's desktop widgets, each its own surface on the layer under
 // every window, where its place puts it (WidgetPlacement.js): the built-in
 // ones' from Settings.deskWidget, each sticky note's ("note:" and its id)

@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/json.lua
---
 -- JSON decoder (Hyprland's Lua has none), loaded by shared.lua for
 -- window-rules.json and hyprland.json. All of JSON but null in arrays;
 -- returns nil on bad input instead of raising.

@@ -6,6 +6,10 @@ import "services"
 import "sidebar"
 
 ShellRoot {
+    id: root
+    readonly property string statusText: JSON.stringify({ shown: Ai.shown,
+        screen: Ai.screen ? Ai.screen.name : "", busy: Ai.busy, asking: Ai.asking, unseen: Ai.unseen })
+    onStatusTextChanged: publish.restart()
     Component.onCompleted: Quickshell.watchFiles = false
     IpcHandler {
         target: "chat"
@@ -27,14 +31,9 @@ ShellRoot {
         printErrors: false
     }
     Timer {
+        id: publish
         interval: 200
         running: true
-        repeat: true
-        property string last: ""
-        onTriggered: {
-            var value = JSON.stringify({ shown: Ai.shown, screen: Ai.screen ? Ai.screen.name : "",
-                busy: Ai.busy, asking: Ai.asking, unseen: Ai.unseen })
-            if (value !== last) { status.setText(value); last = value }
-        }
+        onTriggered: status.setText(root.statusText)
     }
 }

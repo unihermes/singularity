@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/ClaudeSession.qml
-//
 // One conversation with Claude Code: `claude -p` kept running with
 // stream-json both ways, so follow-ups, Stop, a model or mode change and the
 // answers to its permission prompts all go in over stdin. It starts on the

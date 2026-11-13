@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/launcher/LauncherSpotlight.qml
-//
 // The Spotlight layout, after Apple's: a large rounded search field and
 // nothing else until you type. Apps mode searches apps, files, clipboard and
 // sums together (Launcher.blendedItems), under small section titles with the

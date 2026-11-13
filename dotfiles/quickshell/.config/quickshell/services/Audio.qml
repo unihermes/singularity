@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Audio.qml
-//
 // The default sink's volume and mute, bound live so the OSD and bar catch
 // any change; plus the device and stream lists and names the volume flyout
 // and Audio page share (tracked while those are open). The Game, Chat and

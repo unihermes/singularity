@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Notifications.qml
-//
 // The notification daemon, for the popups, the history sidebar, the bar
 // module and Settings. The history ($XDG_RUNTIME_DIR, gone at logout) keeps
 // each entry until cleared by hand, except transient ones; `live` holds the
@@ -43,7 +40,7 @@ Singleton {
     // the history sidebar: on which screen, and whether it's out
     property bool shown: false
     property var screen: null
-    // built on first open, then kept
+    // Kept through the closing animation, then released by the sidebar.
     property bool used: false
 
     // Entries showing as popups, newest first

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Timers.qml
-//
 // One timer at a time, shown in the clock island and run from the calendar
 // flyout or `qs ipc call timer ...`:
 //   countdown  n minutes, then a notification and a chime

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/ChannelPath.js
-//
 // SVG path data for a channel frame round a stack of touching rectangles:
 // a bar group with its grown flyout below (or above) it. Each rect is
 // { x0, x1, y0, y1, r }, top to bottom, each one's y1 the next one's y0.

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutTile.qml
-//
 // A tile in a flyout's grid: a glyph, a value or name, and a caption under
 // it, framed as a control. `lit` (a toggle that's on, a sensor in use)
 // lights its edge and glyph; a tile with `clickable` takes the pointer.

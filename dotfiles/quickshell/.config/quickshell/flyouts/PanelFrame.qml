@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/PanelFrame.qml
-//
 // The panel ground every flyout and window shares, framed per
 // Theme.frameStyle (double, single, none, or channel via Channel.qml).
 // ModuleFrame is the bar chip's version.

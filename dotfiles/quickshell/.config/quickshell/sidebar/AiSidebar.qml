@@ -1,10 +1,7 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/AiSidebar.qml
-//
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar. Pinning keeps it open when clicking elsewhere;
 // SUPER+I, its × and Escape still close it. Ctrl+P toggles the pin, Ctrl+R
-// reloads, Ctrl+N starts over, Ctrl+H toggles history and Ctrl+M switches provider.
+// reloads, Ctrl+N starts over, Ctrl+H toggles history and Ctrl+M opens the provider list.
 // Chat and Code are tabs over one shape: Code's folder, the
 // conversation or a list in its place (past sessions, folders), a prompt
 // waiting for an answer, and the composer. Files dropped anywhere on it attach to the next message.
@@ -109,6 +106,15 @@ PanelWindow {
 
     // what the middle shows: talk | past | projects
     property string view: "talk"
+    property bool choosingEngine: false
+    readonly property var engineChoices: ["claude", "codex", "ollama"]
+    function stepEngine(d) {
+        if (session.busy) return
+        var n = engineChoices.length
+        var e = engineChoices[(engineChoices.indexOf(Ai.engines[Ai.tab]) + d + n) % n]
+        Ai.setEngine(Ai.tab, e)
+        if (e === "ollama") Ai.refreshOllama()
+    }
     onViewChanged: {
         if (view === "past") Ai.listPast()
         else if (view === "projects") Ai.listProjects()
@@ -128,7 +134,7 @@ PanelWindow {
         right: Theme.edgeMargin
     }
     implicitWidth: Math.min((screen ? screen.width : 1920) - Theme.edgeMargin * 2,
-        Theme.fit(centered ? 760 : 440) + (padX - Theme.panelPad) * 2)
+        Theme.fit(centered ? 1040 : 440) + (padX - Theme.panelPad) * 2)
     implicitHeight: Math.min(Theme.sp(860),
         (screen ? screen.height : 1080) - Theme.barHeight - Theme.edgeMargin * 2)
     // kept clear of the bar's strip, without pushing windows aside
@@ -230,7 +236,10 @@ PanelWindow {
             sequence: "Ctrl+M"
             context: Qt.WindowShortcut
             enabled: root.open
-            onActivated: Ai.cycleEngine(Ai.tab)
+            onActivated: if (Ai.codexAvailable && !root.session.busy) {
+                root.choosingEngine = !root.choosingEngine
+                composer.focusInput()
+            }
         }
 
         Absorber {}
@@ -242,6 +251,51 @@ PanelWindow {
             column: col
             columnY: col.y
             padY: Theme.spaceXs
+        }
+
+        // the provider list, drawn over what is below the heading
+        MouseArea {
+            anchors.fill: parent
+            z: 40
+            visible: root.choosingEngine && Ai.codexAvailable
+            onPressed: root.choosingEngine = false
+        }
+
+        Rectangle {
+            id: engineMenu
+            visible: root.choosingEngine && Ai.codexAvailable
+            z: 41
+            x: col.x + engineHeading.x
+            y: col.y + engineHeading.y + engineHeading.height + Theme.spaceXs
+            width: Theme.fit(150)
+            height: engineList.contentHeight + Theme.spaceXs * 2
+            radius: Theme.radiusInner
+            color: Theme.surface
+            border.width: Theme.controlBorder(Theme.stroke)
+            border.color: Theme.controlStroke(Theme.stroke)
+            ControlEdge { radius: engineMenu.radius }
+
+            ListView {
+                id: engineList
+                x: Theme.spaceXs
+                y: Theme.spaceXs
+                width: parent.width - Theme.spaceXs * 2
+                height: contentHeight
+                interactive: false
+                model: [{ value: "claude", text: "Claude", icon: "icons/claude.svg" }, { value: "codex", text: "Codex", icon: "icons/codex.svg" }, { value: "ollama", text: "Ollama", icon: "icons/ollama.svg" }]
+                delegate: FlyoutRow {
+                    required property var modelData
+                    width: ListView.view.width
+                    label: modelData.text
+                    leadingImage: Qt.resolvedUrl(modelData.icon)
+                    highlighted: Ai.engines[Ai.tab] === modelData.value
+                    onActivated: {
+                        root.choosingEngine = false
+                        Ai.setEngine(Ai.tab, modelData.value)
+                        if (modelData.value === "ollama") Ai.refreshOllama()
+                    }
+                }
+            }
         }
 
         Column {
@@ -267,6 +321,7 @@ PanelWindow {
             }
 
             FlyoutHeading {
+                id: engineHeading
                 text: Ai.ollama(Ai.tab) ? "OLLAMA" : Ai.codex(Ai.tab) ? "CODEX" : "CLAUDE"
                 icon: Ai.ollama(Ai.tab)
                     ? Qt.resolvedUrl("icons/ollama.svg")
@@ -275,7 +330,10 @@ PanelWindow {
                         : Qt.resolvedUrl("icons/claude.svg")
                 control: headControls
                 labelClickable: Ai.codexAvailable && !root.session.busy
-                onLabelClicked: Ai.cycleEngine(Ai.tab)
+                onLabelClicked: {
+                    root.choosingEngine = !root.choosingEngine
+                    composer.focusInput()
+                }
             }
 
             Component {
@@ -436,6 +494,9 @@ PanelWindow {
                 onNewConversation: root.startOver()
                 onShowPast: root.view = "past"
                 onTogglePast: root.view = root.view === "past" ? "talk" : "past"
+                engineListOpen: root.choosingEngine && Ai.codexAvailable
+                onEngineStep: d => root.stepEngine(d)
+                onEngineListClosed: root.choosingEngine = false
             }
         }
     }

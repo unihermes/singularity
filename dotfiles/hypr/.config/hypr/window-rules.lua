@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/window-rules.lua
---
 -- The static window rules windows.lua builds on: the monocle rule, square
 -- and borderless filled windows, Notes and the scratchpad, prompts, and the
 -- per-app entries from Settings > Window Rules. Returns the pieces

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsTiles.qml
-//
 // A visual picker: one tile per value, each drawing what it does, the
 // current one lit with the accent groove (DESIGN.md, Visual pickers). Goes
 // under a SettingsField that names the choice.

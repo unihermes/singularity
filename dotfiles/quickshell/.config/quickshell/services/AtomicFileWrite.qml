@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/AtomicFileWrite.qml
-//
 // The one way the shell writes a config file. Writes queue one at a time;
 // the transform runs on the file as it is when the write runs (and may
 // refuse with null, so hand edits survive); optional syntax check (bash -n,

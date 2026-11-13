@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/TileGrid.qml
-//
 // Equal tiles across a flyout's column: `columns` of them a line, each
 // FlyoutTile sizing itself with `width: parent.cell`.
 

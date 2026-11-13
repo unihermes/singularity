@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/sidebar/NotificationSidebar.qml
-//
 // The notification history (services/Notifications.qml) as a panel down
 // the right edge of one screen, under the bar, as the Claude sidebar is:
 // out until the bell, its ×, Escape or a click off it (DismissGrab, the bars
@@ -43,6 +40,9 @@ PanelWindow {
     // 0 in, 1 out; slides in from the edge
     property real reveal: 0
     visible: open || reveal > 0
+    onVisibleChanged: if (!visible && !open) Qt.callLater(() => {
+        if (!root.open && !root.visible) Notifications.used = false
+    })
     NumberAnimation on reveal {
         id: slide
         running: false

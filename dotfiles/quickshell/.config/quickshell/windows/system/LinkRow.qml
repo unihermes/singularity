@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/system/LinkRow.qml
-//
 // A Config page entry: name, path, a click that opens it (open-file.sh), a
 // hover button revealing its folder. A missing file is greyed and inert.
 

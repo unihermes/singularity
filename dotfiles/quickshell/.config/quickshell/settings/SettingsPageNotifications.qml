@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageNotifications.qml
-//
 // The shell's own notifications (services/Notifications.qml): STATUS
 // (whether popups show, the history, quiet hours), POPUPS (where, grouping,
 // how long they stay) and APPS, each with its own popups switch.

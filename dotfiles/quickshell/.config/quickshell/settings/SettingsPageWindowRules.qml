@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageWindowRules.qml
-//
 // How each app's windows open, and its popups. Apps: every app with a rule
 // or a remembered size (window-sizes.json), grouped by whether it fills,
 // floats or keeps a size of its own: As left, Float, Fullscreen or On top. Popups and dialogs: popups.json's switches and title rules.

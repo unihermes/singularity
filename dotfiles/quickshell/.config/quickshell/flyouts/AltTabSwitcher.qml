@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/AltTabSwitcher.qml
-//
 // The ALT+Tab switcher: the open windows, most recently used first. The
 // selection lives here, so nothing is focused until ALT comes up. Tab and
 // SHIFT+Tab arrive over IPC (Hyprland's binds win); the ALT release and

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Peripherals.qml
-//
 // Battery levels of the things plugged into the machine rather than its
 // own: what UPower reports that isn't a power supply (a wireless mouse or
 // keyboard through its receiver, a Bluetooth device with a battery) and a

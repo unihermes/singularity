@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/bar/BarEditor.qml
-//
 // Edit mode on the bar itself, while the edit shelf (BarEditFlyout) is open:
 // takes the bar's presses, outlines every module, and drags them. A dragged
 // module is written to Settings at every step, so the bar slides round it,

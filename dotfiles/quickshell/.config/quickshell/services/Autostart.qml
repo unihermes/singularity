@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Autostart.qml
-//
 // What starts at login, from ~/.config/autostart. Reading is autostart.sh's
 // `list` (the same code that runs them, so the two can't drift); writing goes
 // through AtomicFileWrite, deleting is a plain rm. System entries are opt-in

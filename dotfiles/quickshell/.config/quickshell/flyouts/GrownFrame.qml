@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/GrownFrame.qml
-//
 // A grown flyout's frame (Theme.flyoutGrown): one channel round the bar
 // group it opened from and the flyout itself, so the group's lines run on
 // into the panel. Drawn over the bar, with the group's interior left open

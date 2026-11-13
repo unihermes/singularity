@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BrightnessFlyout.qml
-//
 // A labelled slider per display it can set, this bar's own first, then
 // Night Light (root's state; its schedule runs in shell.qml).
 
@@ -89,6 +86,18 @@ FlyoutPanel {
         minimum: Settings.limits.nightLightKelvin.min
         maximum: Settings.limits.nightLightKelvin.max
         onStepped: d => Settings.step("nightLightKelvin", d * 250)
+    }
+
+    FlyoutStepper {
+        visible: shellRoot.nightLight
+        label: "Ramp"
+        labelInset: Theme.iconCell + Theme.spaceL
+        valueWidth: 52
+        suffix: " min"
+        value: Settings.nightLightRamp
+        minimum: Settings.limits.nightLightRamp.min
+        maximum: Settings.limits.nightLightRamp.max
+        onStepped: d => Settings.step("nightLightRamp", d * 15)
     }
 
     function time(m) { return TimeWindow.format(m, Theme.hours("HH:mm")) }

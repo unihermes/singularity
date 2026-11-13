@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/DesktopSidebar.qml
-//
 // A passive system overview on the primary display's desktop. Machine
 // identity leads the live CPU, GPU, memory, storage and network readings;
 // unavailable readings are omitted and the column fits the screen height.

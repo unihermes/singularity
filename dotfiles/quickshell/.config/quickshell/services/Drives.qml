@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Drives.qml
-//
 // Removable drives (USB sticks and disks, SD cards: lsblk's hotplug ones)
 // and their filesystems, for the Drives module. Read again whenever udev
 // reports a block device coming or going. Mount, unmount and eject go

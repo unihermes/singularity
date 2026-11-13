@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/DdcBrightness.qml
-//
 // External monitors' brightness over DDC/CI (VCP 0x10) via ddcutil, keyed on
 // DRM connector, so each bar drives its own monitor. Detected at startup
 // and when screens change. One write in flight per display (monitors drop

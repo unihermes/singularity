@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/MusicWidget.qml
-//
 // What the bar's Music module follows. Small: the art with play/pause
 // on its corner, the title and artist under; the progress bar and transport
 // are the media flyout's (the shell's Meter and chips). Medium: the art down the left,

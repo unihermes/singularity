@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/WeatherCurve.qml
-//
 // The temperature over the next day as a curve, the chance of rain as
 // faint bars under it, and the sky and temperature at each labelled hour.
 // Open-Meteo's 24 hours, else wttr.in's 3-hour slots. The Weather flyout's

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/PanelArt.qml
-//
 // The Panels tab's pictures, one beside each section: the wallpaper under
 // a strip of bar, and the section's panels drawn small as they're set, in
 // the theme's colours. `kind`:

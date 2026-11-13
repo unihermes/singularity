@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Vpn.qml
-//
 // Proton VPN over WireGuard, without NetworkManager: Proton's own WireGuard
 // files (imported from Downloads into the state dir, as they hold the key),
 // brought up as the interface "proton" by singularity-vpn through pkexec.

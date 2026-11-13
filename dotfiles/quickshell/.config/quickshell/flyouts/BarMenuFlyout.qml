@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/BarMenuFlyout.qml
-//
 // Right-click menu for the bar's empty space: edit the bar in place, move
 // it, open the Appearance or System windows, or restart the shell.
 

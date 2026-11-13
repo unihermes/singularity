@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/SettingsPageDisplay.qml
-//
 // Connected displays (`hyprctl monitors all -j`) and the hl.monitor() rule
 // each falls under, written to monitors.lua in the state directory and
 // applied by a reload. A display matching only the catch-all gets a rule

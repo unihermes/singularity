@@ -15,6 +15,34 @@ import path from "node:path"
 import vm from "node:vm"
 import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { source as qmlSource, functions } from './qml-harness.mjs'
+
+test('Lightweight CPU sampling skips cores and full sampling primes fresh deltas', () => {
+    let tick = 0
+    const s = functions(qmlSource('SystemStats.qml'), {
+        sampling: false, cpuPrev: null, corePrev: [], cores: [], cpuHistory: [],
+        recent: {}, smoothLength: 5, historyLength: 60,
+        statFile: { reload() { tick++ }, text() {
+            return `cpu ${tick * 20} 0 0 ${tick * 80} 0 0 0 0\n`
+                + `cpu0 ${tick * 20} 0 0 ${tick * 80} 0 0 0 0\nintr 999\n`
+        } },
+    })
+    s.sampleCpu()
+    s.sampleCpu()
+    assert.ok(Math.abs(s.cpu - 0.2) < 1e-10)
+    assert.equal(s.corePrev.length, 0)
+    assert.equal(s.recent.cpu0, undefined)
+    s.sampling = true
+    s.sampleCpu()
+    assert.equal(s.corePrev.length, 1)
+    assert.equal(s.cores.length, 0)
+    s.sampleCpu()
+    assert.equal(s.cores.length, 1)
+    assert.ok(s.cores[0] > 0)
+    s.sampling = false
+    s.sampleCpu()
+    assert.equal(s.corePrev.length, 0)
+})
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 const services = path.join(repo, "dotfiles/quickshell/.config/quickshell/services")
@@ -782,4 +810,285 @@ test("process memory and CPU belong to the helper's actual browser", () => {
     assert.equal(cpu[1].name, "floorp")
     // A vanished parent must leave an honest helper label, not guess a browser.
     assert.equal(P.group(sample, "cpu", [rows[2]])[0].name, "Isolated Web Co")
+})
+
+
+test("Dwindle enables hover focus and preserves child popouts across layout changes", () => {
+    const result = spawnSync("lua", ["-"], { cwd: repo, encoding: "utf8", input: String.raw`
+local f = assert(io.open("dotfiles/hypr/.config/hypr/windows.lua"))
+local source = f:read("a")
+f:close()
+local function section(first, last)
+    local a = assert(source:find(first, 1, true))
+    local b = assert(source:find(last, a + #first, true))
+    return source:sub(a, b - 1)
+end
+local calls, config, on = {}, nil, false
+local rule = { set_enabled = function() end }
+local env = setmetatable({
+    SCRATCH_CLASS = "scratch", BROWSER_CLASSES = { firefox = true }, knownWindows = {},
+    isBrowserPopup = function() return false end, browserOpening = {},
+    hasTag = function(w, t) return w.tags[t] end,
+    isPrompt = function(c) return c == "prompt" end,
+    stateOf = function() return {} end,
+    monocleOn = function() return on end,
+    monocleRule = rule, naturalRule = rule, fullscreenRules = {},
+    followOwner = function(w) return w end,
+    isX11Popup = function() return false end,
+    popoutOwnerOf = function() return { address = "owner" }, true end,
+    hl = {
+        get_active_workspace = function() return { id = 1 } end,
+        config = function(c) config = c end,
+        on = function() end,
+        dispatch = function(c) calls[#calls + 1] = c end,
+        dsp = { window = {} },
+    },
+}, { __index = _G })
+for _, name in ipairs({ "float", "tag", "fullscreen" }) do
+    env.hl.dsp.window[name] = function(args) return { name = name, args = args } end
+end
+assert(load(section("function setWindowMonocle(w, on, mon)", "-- In monocle right now:"), "layout", "t", env))()
+for _, tag in ipairs({ "popout", "app-held", "modal" }) do
+    for _, target in ipairs({ false, true }) do
+        env.setWindowMonocle({ class = "app", address = "child", floating = true,
+            tags = { [tag] = true, ["rule-float"] = true } }, target)
+    end
+end
+env.setWindowMonocle({ class = "prompt", address = "child", floating = true, tags = {} }, false)
+assert(#calls == 0, "dialogs must keep floating through layout switches")
+env.setWindowMonocle({ class = "app", address = "main", floating = true,
+    fullscreen = 0, tags = { ["rule-float"] = true }, at = { x = 0, y = 0 }, size = { x = 500, y = 400 } }, false)
+assert(calls[1].name == "float" and calls[1].args.action == "disable")
+assert(load(section("local rulesMonocle = nil", "-- The app rules' switch:"), "focus", "t", env))()
+assert(config.input.follow_mouse == 1)
+on = true
+assert(load(section("local rulesMonocle = nil", "-- The app rules' switch:"), "focus", "t", env))()
+assert(config.input.follow_mouse == 2)
+-- Exercise the real popup gates without running placement or desktop hooks.
+local gates = section("holdPopup = function(win)", "    local addr = \"address:\" .. win.address\n    -- the window strip lists it")
+assert(load(gates .. " return true end", "popup-gates", "t", env))()
+on = false
+local function popup(class, floating, tags)
+    env.knownWindows = {}
+    return env.holdPopup({ address = "child", class = class, floating = floating, tags = tags or {} })
+end
+assert(popup("app", true))
+assert(popup("app", false) == nil)
+assert(popup("firefox", false) == nil)
+assert(popup("firefox", true) == nil)
+assert(popup("firefox", true, { modal = true, popout = true }))
+assert(popup("app", true, { ["app-opened"] = true }) == nil)
+` });
+    assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
+});
+
+
+test("Browser sign-in popups keep dialog geometry with a filled monocle parent and late titles", () => {
+    const result = spawnSync("lua", ["-"], { cwd: repo, encoding: "utf8", input: String.raw`
+local f = assert(io.open("dotfiles/hypr/.config/hypr/windows.lua"))
+local source = f:read("a")
+f:close()
+local function section(first, last)
+    local a = assert(source:find(first, 1, true))
+    local b = assert(source:find(last, a + #first, true))
+    return source:sub(a, b - 1)
+end
+local area = { x = 0, y = 32, w = 1920, h = 1048 }
+local mon = { id = 1 }
+local owner = { address = "parent", pid = 1, monitor = mon, workspace = { id = 1 },
+    at = { x = 0, y = 32 }, size = { x = 1920, y = 1048 }, fullscreen = 0 }
+local child, state, filled, blocked, timers, hooks
+local env = setmetatable({
+    BROWSER_CLASSES = { firefox = true }, SCRATCH_CLASS = "scratch", POPOUT_SHARE = { 0.5, 0.6 },
+    TEAR_GRAB = { 48, 16 }, CASCADE = 32, popupOpts = { over = true, block = true }, sizes = {},
+    hasTag = function(w, tag) return w.tags and w.tags[tag] end,
+    tagsOf = function() return {} end,
+    monocleOn = function() return true end,
+    stateOf = function() return state end,
+    isX11Popup = function() return false end,
+    followOwner = function(w) return w end,
+    popoutOwnerOf = function() return owner, true end,
+    notifyShell = function() end,
+    popoutKey = function() return "auth" end,
+    fillArea = function() return area end,
+    screenKind = function() return "normal" end,
+    isFitted = function() return true end,
+    onActiveWorkspace = function() return true end,
+    blockOwner = function() blocked = true end,
+    setShape = function(_, shape) state.shape = shape end,
+    G = { shape = function() return {} end },
+    fillByHand = function(w)
+        filled = true
+        w.tags.popout, w.tags["app-held"] = nil, nil
+        w.tags.promoted, w.tags.monocle = true, true
+        w.size = { x = area.w, y = area.h }
+    end,
+    moveTo = function(_, r)
+        child.at, child.size = { x = r.x, y = r.y }, { x = r.w, y = r.h }
+    end,
+    hl = {
+        on = function(event, fn) hooks[event] = fn end,
+        timer = function(fn) timers[#timers + 1] = fn end,
+        get_window = function(addr) return addr == "address:parent" and owner or child end,
+        get_windows = function() return { owner, child } end,
+        get_cursor_pos = function() return { x = 1800, y = 900 } end,
+        dsp = { window = {}, focus = function(args) return { name = "focus", args = args } end },
+    },
+}, { __index = _G })
+for _, name in ipairs({ "tag", "fullscreen", "bring_to_top" }) do
+    env.hl.dsp.window[name] = function(args) return { name = name, args = args } end
+end
+env.hl.dispatch = function(cmd)
+    if cmd.name == "tag" then
+        child.tags[cmd.args.tag:sub(2)] = cmd.args.tag:sub(1, 1) == "+" or nil
+    elseif cmd.name == "fullscreen" then child.fullscreen = 0 end
+end
+local function reset(title, tags)
+    state, filled, blocked, timers, hooks = {}, false, false, {}, {}
+    env.knownWindows = {}
+    child = { address = "child", pid = 1, class = "firefox", title = title, tags = tags or {},
+        floating = true, fullscreen = 0, monitor = mon, workspace = { id = 1 },
+        at = { x = 0, y = 0 }, size = { x = 640, y = 520 } }
+    assert(load(section("local function browserPopupTitle", "local function unflagFloating")
+        .. section("local function unflagFloating(win)", "-- Moves a window into or out of monocle")
+        .. section("holdPopup = function(win)", "-- Records a popout's size"), "browser-popup", "t", env))()
+end
+for _, title in ipairs({ "Sign in – Google accounts — Mozilla Firefox", "Log in to GitHub", "Extension: Password Manager" }) do
+    reset(title)
+    child.fullscreen = 2
+    env.holdPopup(child)
+    assert(not filled and child.size.x == 640 and child.size.y == 520)
+    assert(child.fullscreen == 0 and child.tags["browser-popup"] and blocked)
+    assert(child.at.x == 640 and child.at.y == 296, "center over parent, not at cursor")
+    for _, mode in ipairs({ 1, 2 }) do
+        child.fullscreen = mode
+        hooks["window.fullscreen"](child)
+        assert(child.fullscreen == 0 and child.size.x == 640, "startup requests must not fill a popup")
+    end
+end
+-- Explicit about:blank popup rules also bypass the browser tab sizing path.
+reset("about:blank", { popout = true, ["rule-float"] = true })
+env.holdPopup(child)
+assert(not filled and child.size.x == 640 and child.tags["browser-popup"])
+-- Generic titles can become auth titles after the window has been filled.
+reset("Mozilla Firefox")
+env.holdPopup(child)
+assert(filled and child.size.x == area.w)
+child.title = "Sign in to your account"
+hooks["window.title"](child)
+assert(child.tags["browser-popup"] and not child.tags.promoted and not child.tags.monocle)
+assert(child.size.x == 640 and child.size.y == 520 and not state.placedFromOwner)
+-- A normal torn-off tab retains its parent's filled geometry.
+reset("Project documentation — Mozilla Firefox")
+env.holdPopup(child)
+assert(filled and not child.tags["browser-popup"])
+-- Navigating an old window to a login page must not turn it into a dialog.
+for _, fn in ipairs(timers) do fn() end
+child.title = "Sign in to GitHub"
+hooks["window.title"](child)
+assert(child.size.x == area.w and not child.tags["browser-popup"])
+` });
+    assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
+});
+
+test('App search preserves prefix priority, usage order, metadata matches and hidden entries', () => {
+    const S = load('AppSearch.js')
+    const entries = [
+        { id: 'b', name: 'Beta', keywords: ['EDITOR'] },
+        { id: 'a', name: 'Alpha', genericName: 'Editor' },
+        { id: 'e', name: 'Editor', startupClass: 'Code' },
+        { id: 'hide', name: 'Hidden' }, { id: 'nodisplay', name: 'Hidden too', noDisplay: true }
+    ]
+    const index = S.index(entries, ['hide'])
+    const frequent = S.order(index, { b: 20, a: 10 })
+    const ids = (rows, query) => Array.from(S.search(rows, query), e => e.id)
+    assert.deepEqual(ids(frequent, ''), ['b', 'a', 'e'])
+    assert.deepEqual(ids(frequent, ' EDIT '), ['e', 'b', 'a'])
+    assert.deepEqual(ids(frequent, 'code'), ['e'])
+    assert.deepEqual(ids(S.order(index, null), ''), ['a', 'b', 'e'])
+    assert.deepEqual(ids(S.order(index, { e: 99 }), ''), ['e', 'a', 'b'])
+    assert.deepEqual(ids(frequent, 'hidden'), [])
+    assert.equal(S.search(frequent, 'beta')[0], entries[0])
+})
+
+test('File ranking preserves embedded newlines, directory flags, limits and home boundaries', () => {
+    const s = functions(qmlSource('Files.qml'), { home: '/home/me', maxResults: 3 })
+    s.root = s
+    const rows = s.rankResults('/home/me/.cache/report\0/home/me/docs/report\0/home/me/report\0/home/me/report\nnotes/\0', 'report')
+    assert.deepEqual(Array.from(rows, e => e.path), ['/home/me/report', '/home/me/docs/report', '/home/me/report\nnotes'])
+    assert.equal(rows[2].isDir, true)
+    assert.equal(s.pretty('/home/me'), '~')
+    assert.equal(s.pretty('/home/me/docs'), '~/docs')
+    assert.equal(s.pretty('/home/medusa/docs'), '/home/medusa/docs')
+})
+
+test('Process grouping handles prototype-like names and shared deep ancestry', () => {
+    const P = load('ProcessGroups.js')
+    const rows = P.memoryRows('1 0 10 constructor\n2 0 10 toString\n3 0 10 __proto__')
+    assert.deepEqual(Array.from(P.group(rows, 'memKb'), r => r.name), ['constructor', 'toString', '__proto__'])
+    const chain = [{ pid: 1, ppid: 0, name: 'zen', cpu: 0, memKb: 1 }]
+    for (let i = 2; i <= 1000; i++) chain.push({ pid: i, ppid: i - 1, name: 'Web Content', cpu: 1, memKb: 1 })
+    const groups = P.group(chain.slice().reverse(), 'cpu')
+    assert.equal(groups.length, 1)
+    assert.equal(groups[0].name, 'zen')
+    assert.equal(groups[0].memKb, 1000)
+    assert.equal(groups[0].cpu, 999)
+})
+
+test('Sensor sweep reads labels, fallback labels and stopped fans without child commands', () => {
+    const text = qmlSource('SystemStats.qml').split('id: sensorProc')[1]
+    const command = vm.runInNewContext(text.match(/command: (\[[\s\S]*?\])\s+stdout:/)[1])
+    const dir = fs.mkdtempSync('/tmp/singularity-sensors-')
+    try {
+        const chip = path.join(dir, 'hwmon0')
+        fs.mkdirSync(chip)
+        for (const [name, value] of Object.entries({ name: 'coretemp', temp1_input: '42000',
+            temp1_label: 'Package id 0', temp2_input: '38000', fan1_input: '0' }))
+            fs.writeFileSync(path.join(chip, name), value + '\n')
+        const run = spawnSync('/bin/sh', ['-c', command[2].replace('/sys/class/hwmon', dir)],
+            { encoding: 'utf8', env: { PATH: '/nonexistent' } })
+        assert.equal(run.status, 0, run.stderr)
+        assert.equal(run.stderr, '')
+        assert.deepEqual(run.stdout.trim().split('\n'), [
+            'T|coretemp|Package id 0|42000', 'T|coretemp|temp2|38000', 'F|coretemp|fan1|0'])
+    } finally { fs.rmSync(dir, { recursive: true, force: true }) }
+})
+
+test('Recent-file XML accepts attribute order and decodes URI and XML in the right order', () => {
+    const s = functions(qmlSource('Files.qml'), {})
+    const rows = s.recentEntries(`<xbel>
+<bookmark modified='2026-11-12' href='file:///home/me/%26amp%3B.txt'/>
+<bookmark href="file://localhost/home/me/A&amp;B.txt" modified="2026-11-11"/>
+<bookmark href="file:///home/me/%26amp%3B.txt" modified="2026-11-10"/>
+<bookmark href="file://remote/home/me/wrong" modified="2026-11-13"/>
+<bookmark href="file:///bad%escape" modified="2026-11-13"/>
+</xbel>`)
+    assert.deepEqual(Array.from(rows, e => e.path), ['/home/me/&amp;.txt', '/home/me/A&B.txt'])
+})
+
+test('Media caches release departed streams and players while preserving recent/live tracks', () => {
+    const s = functions(qmlSource('Media.qml'), { outStreams: [{id: 7}], seenTracks: [{title: 'recent'}],
+        tabTrack: {7: {title: 'playing'}, 8: {title: 'gone'}}, startedAt: {7: 1, 8: 2},
+        trackPos: {recent: {pos: 1}, playing: {pos: 2}, gone: {pos: 3}},
+        players: [{dbusName: 'live'}], knownLength: {live: {length: 10}, dead: {length: 20}},
+        picked: {dbusName: 'dead'}, lastPlaying: {dbusName: 'dead'} })
+    s.pruneTracks()
+    assert.deepEqual(Object.keys(s.tabTrack), ['7'])
+    assert.deepEqual(Object.keys(s.startedAt), ['7'])
+    assert.deepEqual(Object.keys(s.trackPos), ['recent', 'playing'])
+    s.prunePlayers()
+    assert.deepEqual(Object.keys(s.knownLength), ['live'])
+    assert.equal(s.picked, null)
+    assert.equal(s.lastPlaying, null)
+    for (let i = 0; i < 500; i++) {
+        s.trackPos['track'+i] = {pos: 0}
+        s.rememberTrack({trackTitle: 'track'+i, metadata: {}})
+    }
+    assert.equal(s.seenTracks.length, 20)
+    assert.equal(Object.keys(s.trackPos).length, 21) // 20 recent plus still-playing stream
+    s.outStreams = []
+    s.pruneTracks()
+    assert.equal(Object.keys(s.tabTrack).length, 0)
+    assert.equal(Object.keys(s.startedAt).length, 0)
+    assert.equal(Object.keys(s.trackPos).length, 20)
 })

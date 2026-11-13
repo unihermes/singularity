@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/WeatherFlyout.qml
-//
 // Three tabs. Now: the sky, the temperature large, what it feels like and
 // where, the next day's temperature as a curve, then humidity, wind and rain as
 // tiles. Hours: every hour of the next day with its chance of rain. Week:

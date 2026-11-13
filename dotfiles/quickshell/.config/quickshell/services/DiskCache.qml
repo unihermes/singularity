@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/DiskCache.qml
-//
 // A service's last results, kept as JSON in ~/.cache/singularity/<name>.json,
 // so a restart or reload of the shell shows them at once instead of nothing
 // until the next fetch comes back. The service saves after each good fetch

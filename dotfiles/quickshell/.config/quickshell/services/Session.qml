@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/Session.qml
-//
 // Lock, suspend, log out and the rest, for the Control Centre and power
 // menu, plus one-off reboots into another OS or the firmware. `resumed()`
 // for services that keep time (Qt's timers stop during sleep).

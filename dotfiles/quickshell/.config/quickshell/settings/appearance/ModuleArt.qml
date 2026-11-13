@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/appearance/ModuleArt.qml
-//
 // The Bar and Motion tabs' tile pictures: each draws one value of a
 // setting the way the shell draws it, small, in the theme's colours.
 // `kind` names the setting (workspaceStyle, windowStyle, clockStyle,

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/scripts/ArtifactViewer.qml
-//
 // A sidebar artifact's page in a window of its own, run by artifact.py
 // through Qt's qml tool (not the shell): qml ArtifactViewer.qml -- URL TITLE BG
 // Links open in the browser. Ctrl+R reloads, Ctrl+W or Escape closes.

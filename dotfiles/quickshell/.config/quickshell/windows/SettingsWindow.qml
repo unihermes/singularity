@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/windows/SettingsWindow.qml
-//
 // Settings: one flat sidebar of short pages under headings (each with what
 // it's set to now), the search box at its top, and the open page beside it,
 // split by a hairline. It opens on the last page used (Appearance the first

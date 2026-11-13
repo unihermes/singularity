@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/AppWindowsFlyout.qml
-//
 // An app's windows from the strip, as a menu: a row a window with its
 // workspace, popouts indented under their owner and a blocked owner dimmed
 // with a lock, then New window, Bring all here and Close all. A row raises

@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/FlyoutDivider.qml
-//
 // A plain rule between groups of rows (FlyoutHeading is the labelled one),
 // bleeding past the column as FlyoutRow's hover does; in a sectioned
 // column it splits the frames instead.

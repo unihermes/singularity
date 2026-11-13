@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/settings/Keycaps.qml
-//
 // A Hyprland combo ("SUPER + SHIFT + Return") drawn as a row of keycaps,
 // with each key under the name a person would give it: Enter, not Return;
 // Left click, not mouse:272.

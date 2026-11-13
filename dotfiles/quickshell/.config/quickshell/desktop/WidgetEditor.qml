@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/desktop/WidgetEditor.qml
-//
 // Edit mode for one screen's desktop widgets, over everything (the screen
 // scope's "widgetedit"): drag a widget anywhere and it lines up with the
 // screen's middle, its thirds, the margin in from each edge and the other

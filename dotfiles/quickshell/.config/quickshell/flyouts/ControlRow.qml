@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/flyouts/ControlRow.qml
-//
 // A Control Centre row: a glyph, the name, its state in words, then the
 // style's switch (a click anywhere on the face toggles; `checkable: false`
 // leaves the words alone, for a row whose click steps a value). `split`

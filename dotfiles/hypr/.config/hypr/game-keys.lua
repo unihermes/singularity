@@ -1,6 +1,3 @@
--- Singularity - Hyprland
--- ~/.config/hypr/game-keys.lua
---
 -- While a game has focus, fullscreen or windowed, every SUPER bind,
 -- CTRL+SPACE and the bare right-hand modifiers (media taps) are off, so a
 -- stray key can't pull up the launcher, move the game or skip the music;

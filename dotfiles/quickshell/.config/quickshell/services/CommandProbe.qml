@@ -1,6 +1,3 @@
-// Singularity - Quickshell
-// ~/.config/quickshell/services/CommandProbe.qml
-//
 // Whether a command is on PATH (cava, claude, checkupdates): checked at
 // startup, then after each pacman transaction (tailing pacman's log) while
 // missing. Installed another way: seen on the next reload.
