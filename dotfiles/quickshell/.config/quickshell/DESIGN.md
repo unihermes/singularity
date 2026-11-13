@@ -102,8 +102,8 @@ comparison tables below describe the original five styles.
   foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
   and level fills are opaque for Glass and softened to 45% for taskbars; the open
   Glass chip has no accent ring. Glass level chips are wider than the status
-  icons, with a rounded frosted track and a foreground-coloured fill; charging
-  and low-battery colours take precedence, and the icon contrasts with the fill,
+  icons, with a rounded frosted track and a translucent foreground-coloured fill;
+  charging and low-battery colours take precedence,
   and the fill's width follows the level even near zero. Glass meters and sliders
   use the same outlined track and preserve its rounded end as the fill changes.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use

@@ -36,8 +36,6 @@ Item {
     readonly property int chrome: padH * 2
     // the drawn chip's height, which can be less than the item's
     readonly property real chipHeight: frame.height
-    readonly property real levelStart: track.mapToItem(root, 0, 0).x
-    readonly property real levelEnd: levelStart + glassFill.width
 
     default property alias content: contentRow.children
 
@@ -174,11 +172,10 @@ Item {
             // Clip a full-size rounded fill so its left edge always matches
             // the track, even when the level is narrower than the corner.
             GlassLevelFill {
-                id: glassFill
                 visible: Theme.glass
                 fraction: root.fillValue
                 corner: track.radius
-                fillColor: Qt.alpha(root.fillColor, 1)
+                fillColor: Qt.alpha(root.fillColor, 0.28)
             }
         }
 
