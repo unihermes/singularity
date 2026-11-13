@@ -619,6 +619,7 @@ conversation, keyboard shortcuts, pin and click-away behavior.
 - **Ollama** uses the Codex app server with its local Ollama provider. Clicking the heading opens a list of the three engines, and the model picker lists locally installed models. Chat and Code retain separate local conversations; Code uses the same modes and approvals as Codex. Local models vary in tool and image support, and Ollama needs enough context for the agent instructions and attachments.
 - **Heading** CLAUDE, CODEX or OLLAMA, with Reload, Pin, Center/Dock and × for the sidebar. Chat
   and Code follow as a segmented strip, a ● on a tab with something unread.
+  Provider, model and reasoning choices open in floating, styled menus beside their controls.
   New and History sit above the composer. Reload saves state and reloads the
   sidebar when all sessions are idle.
 - **Usage** under the tabs: a meter each for the

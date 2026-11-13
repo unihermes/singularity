@@ -28,6 +28,7 @@ Item {
     property Component control: null
     // the label's size, the shell's heading size unless told otherwise
     property int textSize: Theme.fontHeadingSize
+    readonly property alias labelItem: label
     // Move the heading's contents within its reserved row.
     property real centerOffset: 0
 
