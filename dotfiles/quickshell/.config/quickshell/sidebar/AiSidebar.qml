@@ -1,7 +1,7 @@
 // The Claude sidebar (services/Ai.qml): a panel down the right edge of one
 // screen, under the bar. Pinning keeps it open when clicking elsewhere;
 // SUPER+I, its × and Escape still close it. Ctrl+P toggles the pin, Ctrl+R
-// reloads, Ctrl+N starts over, Ctrl+H toggles history and Ctrl+M switches provider.
+// reloads, Ctrl+N starts over, Ctrl+H toggles history and Ctrl+M opens the provider list.
 // Chat and Code are tabs over one shape: Code's folder, the
 // conversation or a list in its place (past sessions, folders), a prompt
 // waiting for an answer, and the composer. Files dropped anywhere on it attach to the next message.
@@ -106,6 +106,7 @@ PanelWindow {
 
     // what the middle shows: talk | past | projects
     property string view: "talk"
+    property bool choosingEngine: false
     onViewChanged: {
         if (view === "past") Ai.listPast()
         else if (view === "projects") Ai.listProjects()
@@ -227,7 +228,7 @@ PanelWindow {
             sequence: "Ctrl+M"
             context: Qt.WindowShortcut
             enabled: root.open
-            onActivated: Ai.cycleEngine(Ai.tab)
+            onActivated: if (Ai.codexAvailable && !root.session.busy) root.choosingEngine = !root.choosingEngine
         }
 
         Absorber {}
@@ -272,7 +273,26 @@ PanelWindow {
                         : Qt.resolvedUrl("icons/claude.svg")
                 control: headControls
                 labelClickable: Ai.codexAvailable && !root.session.busy
-                onLabelClicked: Ai.cycleEngine(Ai.tab)
+                onLabelClicked: root.choosingEngine = !root.choosingEngine
+            }
+
+            ListView {
+                visible: root.choosingEngine && Ai.codexAvailable
+                width: parent.width
+                height: visible ? contentHeight : 0
+                interactive: false
+                model: [{ value: "claude", text: "Claude" }, { value: "codex", text: "Codex" }, { value: "ollama", text: "Ollama" }]
+                delegate: FlyoutRow {
+                    required property var modelData
+                    width: ListView.view.width
+                    label: modelData.text
+                    highlighted: Ai.engines[Ai.tab] === modelData.value
+                    onActivated: {
+                        root.choosingEngine = false
+                        Ai.setEngine(Ai.tab, modelData.value)
+                        if (modelData.value === "ollama") Ai.refreshOllama()
+                    }
+                }
             }
 
             Component {
