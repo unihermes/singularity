@@ -88,6 +88,18 @@ FlyoutPanel {
         onStepped: d => Settings.step("nightLightKelvin", d * 250)
     }
 
+    FlyoutStepper {
+        visible: shellRoot.nightLight
+        label: "Ramp"
+        labelInset: Theme.iconCell + Theme.spaceL
+        valueWidth: 52
+        suffix: " min"
+        value: Settings.nightLightRamp
+        minimum: Settings.limits.nightLightRamp.min
+        maximum: Settings.limits.nightLightRamp.max
+        onStepped: d => Settings.step("nightLightRamp", d * 15)
+    }
+
     function time(m) { return TimeWindow.format(m, Theme.hours("HH:mm")) }
 
     // the schedule: off, sunset to sunrise (from the weather; 19:00 to
