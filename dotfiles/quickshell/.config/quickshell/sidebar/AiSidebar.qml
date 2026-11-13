@@ -186,7 +186,6 @@ PanelWindow {
         id: box
         width: parent.width
         height: parent.height
-        ground: Theme.surface
         opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
         transform: Translate {
             x: root.centered ? 0 : (1 - root.reveal) * Theme.sp(24)
@@ -340,6 +339,7 @@ PanelWindow {
                 id: headControls
                 Row {
                     spacing: Theme.spaceXs
+                    height: Math.max(Theme.chipHeight, Theme.controlSize)
                     FlyoutChip {
                         anchors.verticalCenter: parent.verticalCenter
                         icon: "󰑓"
@@ -360,6 +360,7 @@ PanelWindow {
                         onClicked: Settings.set("aiPlacement", root.centered ? "sidebar" : "center")
                     }
                     IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
                         icon: "󰅖"
                         onClicked: Ai.shown = false
                     }
