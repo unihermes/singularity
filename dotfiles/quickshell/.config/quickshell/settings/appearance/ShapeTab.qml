@@ -74,7 +74,7 @@ SettingsTab {
             onClicked: Settings.set("shadows", !Settings.shadows)
         }
         FlyoutChip {
-            visible: shapeTab.optionKeys.indexOf("gradient") === -1
+            visible: shapeTab.optionKeys.indexOf("gradient") === -1 && !Theme.glass
             text: "Shaded grounds"
             icon: Settings.gradient ? "󰄬" : ""
             selected: Settings.gradient
@@ -237,11 +237,7 @@ SettingsTab {
                 visible: ya.v === "glass"
                 anchors.fill: parent
                 radius: ya.r
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0; color: Qt.darker(Theme.accent, 2.6) }
-                    GradientStop { position: 1; color: Theme.surface }
-                }
+                color: Theme.barTone
             }
             // Channel: one grooved band round both chips
             Item {

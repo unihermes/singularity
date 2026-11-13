@@ -35,7 +35,9 @@ Rectangle {
         anchors.margins: Theme.borderWidth
         radius: Math.max(0, root.radius - Theme.borderWidth)
         opacity: root.on ? 1 : 0
-        gradient: Gradient {
+        color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.12)
+        gradient: Theme.glass ? null : accentFade
+        property Gradient accentFade: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0; color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.22) }
             GradientStop { position: 0.6; color: "transparent" }

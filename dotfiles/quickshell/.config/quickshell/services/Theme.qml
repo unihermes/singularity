@@ -411,7 +411,7 @@ Singleton {
     // the bar's audio visualizer -- see Looks.js
     readonly property string vizStyle: Settings.vizStyle
     // a top-to-bottom shading on grounds -- see Looks.js
-    readonly property bool gradient: Settings.gradient && !plain
+    readonly property bool gradient: Settings.gradient && !plain && !glass
     function shadeTop(c) { return Qt.tint(c, Qt.rgba(1, 1, 1, isLight ? 0.35 : 0.06)) }
     function shadeBottom(c) { return Qt.tint(c, Qt.rgba(0, 0, 0, isLight ? 0.06 : 0.12)) }
     // the weights text and its emphasis are set in -- see Looks.js

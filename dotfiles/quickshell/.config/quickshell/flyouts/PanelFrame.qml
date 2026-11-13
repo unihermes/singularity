@@ -50,21 +50,6 @@ Rectangle {
         sunken: root.section && Theme.frameStyle === "bevel"
     }
 
-    // A restrained highlight gives frosted surfaces depth without changing
-    // their opacity or covering the content drawn over the frame.
-    Rectangle {
-        anchors.fill: parent
-        visible: Theme.glass && !root.bare && !root.section
-        topLeftRadius: root.topLeftRadius
-        topRightRadius: root.topRightRadius
-        bottomLeftRadius: root.bottomLeftRadius
-        bottomRightRadius: root.bottomRightRadius
-        gradient: Gradient {
-            GradientStop { position: 0; color: Theme.isLight ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.06) }
-            GradientStop { position: 1; color: "transparent" }
-        }
-    }
-
     Rectangle {
         anchors.fill: parent
         visible: Theme.frameDouble && !root.bare
