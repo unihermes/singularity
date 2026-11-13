@@ -184,8 +184,11 @@ animation({ leaf = "specialWorkspace", enabled = windowsAnimate, speed = windowS
 -- layers (flyouts) faster than global, fading
 animation({ leaf = "layersIn",  enabled = true, speed = 1, bezier = "singularity", style = "fade" })
 animation({ leaf = "layersOut", enabled = true, speed = 1, bezier = "singularity", style = "fade" })
--- A short, even fade lets the incoming wallpaper blend over the old one.
-animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.5, bezier = "linear" })
+-- The incoming wallpaper eases in over the old one, which stays opaque
+-- underneath until wallpaper.sh removes it, so no gap shows. Layers' fade
+-- (flyouts too) shares this; 6 = 600ms.
+hl.curve("wallpaper", { type = "bezier", points = { {0.4, 0}, {0.2, 1} } })
+animation({ leaf = "fadeLayersIn", enabled = true, speed = 6, bezier = "wallpaper" })
 -- the shell's surfaces blur what's behind (Glass, See-through);
 -- ignore_alpha leaves fully transparent parts unblurred. Overlays on a
 -- display scaled under 1 are "unblurred-..." (OverlayWindow.qml), outside it
