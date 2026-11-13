@@ -19,7 +19,7 @@ local monocleRule, edgeGaps, SCRATCH_CLASS, isPrompt, fullscreenRules, appRules,
 
 -- Popouts (holdPopup below), hooked ahead of monocle's hooks, which would
 -- fill the window. Windows already open at load (a reload) are left alone.
-local holdPopup, fillByHand, browserOpenedThunar
+local holdPopup, fillByHand, browserOpenedThunar, adoptDialog
 local focusedNow, focusedBefore = nil, nil
 local launchWaiting = false
 local knownWindows = {}
@@ -589,13 +589,39 @@ local function fillFloating(win)
     return hl.get_window(addr) or win
 end
 
+-- Browser popup titles often arrive after map; existing tabs are never
+-- reclassified just because they navigate to a sign-in page.
+local function browserPopupTitle(title)
+    title = (title or ""):lower()
+    for _, prefix in ipairs({ "sign in", "sign-in", "signin", "log in", "login", "sign up", "signup",
+            "authentication", "authenticate", "authorize", "authorization", "verify", "connect account",
+            "select account", "choose an account", "choose a profile", "password", "reset password",
+            "extension:", "permission", "allow access" }) do
+        if title:sub(1, #prefix) == prefix then
+            local nextChar = title:sub(#prefix + 1, #prefix + 1)
+            if prefix:sub(-1) == ":" or nextChar == "" or nextChar:match("[%s%p]") then return true end
+        end
+    end
+    return false
+end
+local browserOpening = {}
+local function isBrowserPopup(win)
+    return BROWSER_CLASSES[win.class] and (hasTag(win, "browser-popup") or hasTag(win, "modal")
+        or (hasTag(win, "popout") and not hasTag(win, "app-held")) or browserPopupTitle(win.title))
+end
+
 local function unflagFloating(win)
+    -- Ignore startup fullscreen requests from identified browser dialogs.
+    if win and win.fullscreen == 2 and browserOpening[win.address] and hasTag(win, "browser-popup") then
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "fullscreen", action = "unset", window = "address:" .. win.address }))
+        return hl.get_window("address:" .. win.address) or win
+    end
     if not (win and win.floating and win.fullscreen == 1) then return win end
     local addr = "address:" .. win.address
     hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "unset", window = addr }))
     win = hl.get_window(addr) or win
     -- Quickshell's own windows size themselves in QML; just unflag them
-    if win.class == "org.quickshell" then return win end
+    if win.class == "org.quickshell" or hasTag(win, "browser-popup") then return win end
     return fillFloating(win)
 end
 hl.on("window.fullscreen", function(win) unflagFloating(win) end)
@@ -948,6 +974,21 @@ holdPopup = function(win)
         return
     end
     win = followOwner(win)
+    local browserPopup = monocleOn(win.workspace) and isBrowserPopup(win) and popoutOwnerOf(win) ~= nil
+    if BROWSER_CLASSES[win.class] and monocleOn(win.workspace) and not browserOpening[win.address] then
+        local owner = popoutOwnerOf(win)
+        if owner and not launchWaiting then
+            local opening = { owner = owner.address, w = win.size.x, h = win.size.y }
+            browserOpening[win.address] = opening
+            hl.timer(function()
+                if browserOpening[win.address] == opening then browserOpening[win.address] = nil end
+            end, { timeout = 15000, type = "oneshot" })
+        end
+    end
+    if browserPopup then
+        hl.dispatch(hl.dsp.window.tag({ tag = "+browser-popup", window = "address:" .. win.address }))
+        hl.dispatch(hl.dsp.window.tag({ tag = "+popout", window = "address:" .. win.address }))
+    end
     if not win.floating or win.pinned then return end
     -- In dwindle, native floaters and tagged dialogs remain popouts; ordinary
     -- new windows (including torn-off browser tabs) keep tiling.
@@ -955,20 +996,24 @@ holdPopup = function(win)
             or (BROWSER_CLASSES[win.class] and not hasTag(win, "popout")
                 and not hasTag(win, "modal"))) then return end
     -- a Window Rules entry's window places itself; a popout entry still blocks
-    if hasTag(win, "rule-full") then return end
+    if hasTag(win, "rule-full") and not browserPopup then return end
     local ruled = hasTag(win, "rule-float")
-    if ruled and not hasTag(win, "popout") then return end
-    if launchWaiting and not ruled then
+    if ruled and not hasTag(win, "popout") and not browserPopup then return end
+    if launchWaiting and not ruled and not browserPopup then
         launchWaiting = false
         return
     end
     local owner, ownerMain = popoutOwnerOf(win)
+    local opening = browserOpening[win.address]
+    if browserPopup and opening then
+        owner = hl.get_window("address:" .. opening.owner) or owner
+    end
     if not owner then return end
 
     local addr = "address:" .. win.address
     -- the window strip lists it under the window it came from
     hl.dispatch(hl.dsp.window.tag({ tag = "+from_" .. owner.address, window = addr }))
-    if ruled then
+    if ruled and not browserPopup then
         notifyShell()
         local mon = win.monitor or hl.get_active_monitor()
         local area = mon and fillArea(win, mon)
@@ -989,11 +1034,16 @@ holdPopup = function(win)
     local mon = win.monitor or hl.get_active_monitor()
     if not mon then return end
     local area = fillArea(win, mon)
-    local browser = BROWSER_CLASSES[win.class] and not hasTag(win, "modal")
+    local browser = BROWSER_CLASSES[win.class] and not browserPopup
     local key = not browser and popoutKey(win) or nil
     stateOf(win.address).popoutKey = key
     local w, h = win.size.x, win.size.y
-    local dialogSized = w <= area.w * 0.85 and h <= area.h * 0.85
+    if browserPopup and opening then w, h = opening.w, opening.h end
+    if browserPopup and win.fullscreen ~= 0 then
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = win.fullscreen == 1 and "maximized" or "fullscreen",
+            action = "unset", window = addr }))
+    end
+    local dialogSized = browserPopup or (w <= area.w * 0.85 and h <= area.h * 0.85)
     local m = popupOpts.remember and key and type(sizes[key]) == "table" and sizes[key][screenKind(area)]
     local ownerArea = browser and owner.monitor and fillArea(owner, owner.monitor)
     if ownerArea then
@@ -1005,6 +1055,9 @@ holdPopup = function(win)
     elseif type(m) == "table" and tonumber(m.fw) and tonumber(m.fh) then
         w, h = math.min(m.fw, 1) * area.w, math.min(m.fh, 1) * area.h
     elseif w > area.w * 0.85 or h > area.h * 0.85 then
+        w, h = area.w * POPOUT_SHARE[1], area.h * POPOUT_SHARE[2]
+    end
+    if browserPopup and (w > area.w * 0.85 or h > area.h * 0.85) then
         w, h = area.w * POPOUT_SHARE[1], area.h * POPOUT_SHARE[2]
     end
     -- over its owner when that's on the same monitor, else the screen's centre
@@ -1028,7 +1081,7 @@ holdPopup = function(win)
         x = math.min(x + CASCADE, area.x + area.w - w)
         y = math.min(y + CASCADE, area.y + area.h - h)
     end
-    -- A browser's new window is a window (a torn-off tab), never a dialog: its
+    -- An ordinary browser child is a torn-off tab: its
     -- owner's size, its corner at the cursor (TEAR_GRAB in), its centre kept
     -- on the screen, and the owner stays a drop target for dragging the tab back.
     local cur = browser and hl.get_cursor_pos()
@@ -1051,6 +1104,24 @@ holdPopup = function(win)
         if onActiveWorkspace(win) then hl.dispatch(hl.dsp.focus({ window = addr })) end
     end
 end
+
+-- Re-run placement once a new browser window reveals its popup title.
+-- The opening geometry is retained even if it was initially filled as a tab.
+hl.on("window.title", function(win)
+    if not win or not browserOpening[win.address] or hasTag(win, "browser-popup")
+            or not monocleOn(win.workspace) or not isBrowserPopup(win) then return end
+    local addr = "address:" .. win.address
+    hl.dispatch(hl.dsp.window.tag({ tag = "-promoted", window = addr }))
+    hl.dispatch(hl.dsp.window.tag({ tag = "-monocle", window = addr }))
+    hl.dispatch(hl.dsp.window.tag({ tag = "-natural", window = addr }))
+    local st = stateOf(win.address)
+    st.placedFromOwner, st.lastShape = nil, nil
+    setShape(win, nil)
+    knownWindows[win.address] = nil
+    holdPopup(hl.get_window(addr) or win)
+    hl.timer(function() adoptDialog(addr) end, { timeout = 1, type = "oneshot" })
+end)
+hl.on("window.close", function(win) if win then browserOpening[win.address] = nil end end)
 
 -- Records a popout's size, as a share of the screen, under its key.
 local function rememberPopout(win)
@@ -1075,7 +1146,7 @@ local function promotePopout(win)
     releasePopout(win.address)
     local addr = "address:" .. win.address
     -- "promoted" makes isMonocleExempt() look past the held rule's tag
-    for _, t in ipairs({ "popout", "app-held", "monocle-exempt" }) do
+    for _, t in ipairs({ "popout", "app-held", "monocle-exempt", "browser-popup" }) do
         hl.dispatch(hl.dsp.window.tag({ tag = "-" .. t, window = addr }))
     end
     hl.dispatch(hl.dsp.window.tag({ tag = "+promoted", window = addr }))
@@ -1463,14 +1534,16 @@ end)
 -- dialog is a prompt (file chooser, polkit).
 local dialogOwner = {}   -- dialog or popout address -> owner address
 
-local function adoptDialog(addr)
+adoptDialog = function(addr)
     local win = hl.get_window("address:" .. addr)
     if not win or not win.floating or win.class == "org.quickshell" or hasTag(win, "menu")
             or hasTag(win, "place-left") or hasTag(win, "place-right") then return end
     -- an app rule's window is the app's own, unless it's a prompt
     local prompt = isPrompt(win.class)
-    if hasTag(win, "monocle") or (hasTag(win, "app-opened") and not prompt) or win.pinned then return end
-    local ownerAddr = focusedNow == addr and focusedBefore or focusedNow
+    if hasTag(win, "monocle") or (hasTag(win, "app-opened") and not prompt
+            and not hasTag(win, "browser-popup")) or win.pinned then return end
+    local opening = browserOpening[addr]
+    local ownerAddr = opening and opening.owner or (focusedNow == addr and focusedBefore or focusedNow)
     local owner = ownerAddr and hl.get_window("address:" .. ownerAddr)
     if not owner or owner.address == addr then return end
     if owner.pid ~= win.pid and not prompt then return end

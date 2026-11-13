@@ -799,6 +799,7 @@ local calls, config, on = {}, nil, false
 local rule = { set_enabled = function() end }
 local env = setmetatable({
     SCRATCH_CLASS = "scratch", BROWSER_CLASSES = { firefox = true }, knownWindows = {},
+    isBrowserPopup = function() return false end, browserOpening = {},
     hasTag = function(w, t) return w.tags[t] end,
     isPrompt = function(c) return c == "prompt" end,
     stateOf = function() return {} end,
@@ -849,6 +850,115 @@ assert(popup("firefox", false) == nil)
 assert(popup("firefox", true) == nil)
 assert(popup("firefox", true, { modal = true, popout = true }))
 assert(popup("app", true, { ["app-opened"] = true }) == nil)
+` });
+    assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
+});
+
+
+test("Browser sign-in popups keep dialog geometry with a filled monocle parent and late titles", () => {
+    const result = spawnSync("lua", ["-"], { cwd: repo, encoding: "utf8", input: String.raw`
+local f = assert(io.open("dotfiles/hypr/.config/hypr/windows.lua"))
+local source = f:read("a")
+f:close()
+local function section(first, last)
+    local a = assert(source:find(first, 1, true))
+    local b = assert(source:find(last, a + #first, true))
+    return source:sub(a, b - 1)
+end
+local area = { x = 0, y = 32, w = 1920, h = 1048 }
+local mon = { id = 1 }
+local owner = { address = "parent", pid = 1, monitor = mon, workspace = { id = 1 },
+    at = { x = 0, y = 32 }, size = { x = 1920, y = 1048 }, fullscreen = 0 }
+local child, state, filled, blocked, timers, hooks
+local env = setmetatable({
+    BROWSER_CLASSES = { firefox = true }, SCRATCH_CLASS = "scratch", POPOUT_SHARE = { 0.5, 0.6 },
+    TEAR_GRAB = { 48, 16 }, CASCADE = 32, popupOpts = { over = true, block = true }, sizes = {},
+    hasTag = function(w, tag) return w.tags and w.tags[tag] end,
+    tagsOf = function() return {} end,
+    monocleOn = function() return true end,
+    stateOf = function() return state end,
+    isX11Popup = function() return false end,
+    followOwner = function(w) return w end,
+    popoutOwnerOf = function() return owner, true end,
+    notifyShell = function() end,
+    popoutKey = function() return "auth" end,
+    fillArea = function() return area end,
+    screenKind = function() return "normal" end,
+    isFitted = function() return true end,
+    onActiveWorkspace = function() return true end,
+    blockOwner = function() blocked = true end,
+    setShape = function(_, shape) state.shape = shape end,
+    G = { shape = function() return {} end },
+    fillByHand = function(w)
+        filled = true
+        w.tags.popout, w.tags["app-held"] = nil, nil
+        w.tags.promoted, w.tags.monocle = true, true
+        w.size = { x = area.w, y = area.h }
+    end,
+    moveTo = function(_, r)
+        child.at, child.size = { x = r.x, y = r.y }, { x = r.w, y = r.h }
+    end,
+    hl = {
+        on = function(event, fn) hooks[event] = fn end,
+        timer = function(fn) timers[#timers + 1] = fn end,
+        get_window = function(addr) return addr == "address:parent" and owner or child end,
+        get_windows = function() return { owner, child } end,
+        get_cursor_pos = function() return { x = 1800, y = 900 } end,
+        dsp = { window = {}, focus = function(args) return { name = "focus", args = args } end },
+    },
+}, { __index = _G })
+for _, name in ipairs({ "tag", "fullscreen", "bring_to_top" }) do
+    env.hl.dsp.window[name] = function(args) return { name = name, args = args } end
+end
+env.hl.dispatch = function(cmd)
+    if cmd.name == "tag" then
+        child.tags[cmd.args.tag:sub(2)] = cmd.args.tag:sub(1, 1) == "+" or nil
+    elseif cmd.name == "fullscreen" then child.fullscreen = 0 end
+end
+local function reset(title, tags)
+    state, filled, blocked, timers, hooks = {}, false, false, {}, {}
+    env.knownWindows = {}
+    child = { address = "child", pid = 1, class = "firefox", title = title, tags = tags or {},
+        floating = true, fullscreen = 0, monitor = mon, workspace = { id = 1 },
+        at = { x = 0, y = 0 }, size = { x = 640, y = 520 } }
+    assert(load(section("local function browserPopupTitle", "local function unflagFloating")
+        .. section("local function unflagFloating(win)", "-- Moves a window into or out of monocle")
+        .. section("holdPopup = function(win)", "-- Records a popout's size"), "browser-popup", "t", env))()
+end
+for _, title in ipairs({ "Sign in – Google accounts — Mozilla Firefox", "Log in to GitHub", "Extension: Password Manager" }) do
+    reset(title)
+    child.fullscreen = 2
+    env.holdPopup(child)
+    assert(not filled and child.size.x == 640 and child.size.y == 520)
+    assert(child.fullscreen == 0 and child.tags["browser-popup"] and blocked)
+    assert(child.at.x == 640 and child.at.y == 296, "center over parent, not at cursor")
+    for _, mode in ipairs({ 1, 2 }) do
+        child.fullscreen = mode
+        hooks["window.fullscreen"](child)
+        assert(child.fullscreen == 0 and child.size.x == 640, "startup requests must not fill a popup")
+    end
+end
+-- Explicit about:blank popup rules also bypass the browser tab sizing path.
+reset("about:blank", { popout = true, ["rule-float"] = true })
+env.holdPopup(child)
+assert(not filled and child.size.x == 640 and child.tags["browser-popup"])
+-- Generic titles can become auth titles after the window has been filled.
+reset("Mozilla Firefox")
+env.holdPopup(child)
+assert(filled and child.size.x == area.w)
+child.title = "Sign in to your account"
+hooks["window.title"](child)
+assert(child.tags["browser-popup"] and not child.tags.promoted and not child.tags.monocle)
+assert(child.size.x == 640 and child.size.y == 520 and not state.placedFromOwner)
+-- A normal torn-off tab retains its parent's filled geometry.
+reset("Project documentation — Mozilla Firefox")
+env.holdPopup(child)
+assert(filled and not child.tags["browser-popup"])
+-- Navigating an old window to a login page must not turn it into a dialog.
+for _, fn in ipairs(timers) do fn() end
+child.title = "Sign in to GitHub"
+hooks["window.title"](child)
+assert(child.size.x == area.w and not child.tags["browser-popup"])
 ` });
     assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
 });
