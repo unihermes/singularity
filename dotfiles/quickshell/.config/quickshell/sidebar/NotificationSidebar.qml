@@ -29,7 +29,8 @@ PanelWindow {
     screen: Notifications.screen
     anchors { top: true; bottom: true; right: true }
     margins { top: Theme.edgeMargin; bottom: Theme.edgeMargin; right: Theme.edgeMargin }
-    implicitWidth: Theme.fit(400) + (padX - Theme.panelPad) * 2
+    implicitWidth: Math.min((screen ? screen.width : 1920) - Theme.edgeMargin * 2,
+        Theme.fit(400) + (padX - Theme.panelPad) * 2)
     // kept clear of the bar's strip, without pushing windows aside
     exclusiveZone: 0
     color: "transparent"
@@ -68,6 +69,8 @@ PanelWindow {
     readonly property int sectionGap: Theme.sectionInset - Theme.channelWidth
     readonly property int padX: Theme.channelWidth * 2 + sectionGap + Theme.spaceM
     readonly property int padY: Theme.channelWidth * 2 + sectionGap + Theme.spaceXs
+    readonly property int padTop: padY - Theme.spaceXs
+    readonly property int padBottom: padY - (Theme.channelWidth + Theme.spaceXs - Theme.sectionDepth)
 
     // Today, Yesterday, else the weekday and date
     function dayOf(t) {
@@ -82,7 +85,7 @@ PanelWindow {
         id: box
         width: parent.width
         height: parent.height
-        ground: Theme.surface
+        ground: Theme.flyoutFill
         opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
         transform: Translate { x: (1 - root.reveal) * Theme.sp(24) }
 
@@ -103,9 +106,9 @@ PanelWindow {
         Column {
             id: col
             x: root.padX
-            y: root.padY
+            y: root.padTop
             width: parent.width - root.padX * 2
-            height: parent.height - root.padY * 2
+            height: parent.height - root.padTop - root.padBottom
             spacing: Theme.flyoutSpacing
             readonly property bool sectioned: true
             readonly property bool isFlyoutPage: true
@@ -123,7 +126,8 @@ PanelWindow {
             }
 
             FlyoutHeading {
-                text: "NOTIFICATIONS" + (Notifications.count > 0 ? "  " + Notifications.count : "")
+                text: "Notifications"
+                asWritten: Notifications.count > 0 ? String(Notifications.count) : ""
                 control: headControls
             }
 
