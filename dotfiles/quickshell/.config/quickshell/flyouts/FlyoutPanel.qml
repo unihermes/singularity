@@ -21,7 +21,8 @@ OverlayWindow {
     readonly property bool open: scope.openFlyout === flyout
     // screen-local x (relative to this panel, which spans the whole
     // screen) that the box centres itself under
-    readonly property real anchorX: scope.flyoutAnchorX
+    readonly property real anchorX: glassAttached
+        ? sourceItem.mapToItem(null, sourceItem.width / 2, 0).x : scope.flyoutAnchorX
     // backdrop click, and content that wants to dismiss the flyout
     function requestClose() { scope.openFlyout = "" }
 
@@ -30,7 +31,7 @@ OverlayWindow {
     // Exclusive keyboard focus instead of OnDemand; fixed while it's up
     property bool keyboardExclusive: false
     // distance from the bar's screen edge to the near edge of the box
-    property real topOffset: Theme.flyoutOffset + (glassAttached ? Theme.spaceL + Theme.borderWidth : 0)
+    property real topOffset: Theme.flyoutOffset + (glassAttached ? Theme.spaceXs + Theme.borderWidth : 0)
 
     // how close the box may come to a screen edge (0 for the end panels, so
     // they run into the corner)
@@ -240,7 +241,7 @@ OverlayWindow {
             // Glass grows about the source, including its neck. Other styles
             // scale from the bar-side midpoint; grown channels only fade.
             readonly property var attachment: GlassFlyout.attachment(width, height,
-                root.anchorX - x, Math.min(root.sourceItem ? root.sourceItem.width : 0, Theme.levelChipWidth),
+                root.anchorX - x, root.sourceItem ? root.sourceItem.width : 0,
                 Math.max(Theme.borderWidth, root.atBottom ? root.sourceNear - (y + height) : y - root.sourceNear),
                 radius, Theme.channelFillet, root.atBottom)
             readonly property bool flowMotion: root.glassAttached

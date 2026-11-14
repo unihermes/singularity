@@ -335,10 +335,12 @@ Style: `channel` (frame `channel` in `Styles.js`).
   for instance). It only fades in, since its frame is joined to the bar.
 - **Glass from the module** (picked 2026-11-14): bar module flyouts share one
   frosted surface with a short neck and curved shoulders leading from the clicked
-  chip. The neck follows that module, including when the wider panel is clamped
-  against a screen edge; wide labels are capped at the level-chip width. The
-  panel scales from the module's edge, with the connection fixed throughout the
-  opening and closing motion. Bottom bars reflect the shape upward. Fade and
+  chip. The panel clears the bar by one extra-small spacing step (2 px stock).
+  The neck uses the actual module width, bounded only by the panel width, and
+  follows its centre as labels resize. It stays aligned when the wider panel
+  is clamped against a screen edge. The panel scales from the module's edge,
+  with the connection fixed throughout opening and closing. Bottom bars reflect
+  the shape upward. Fade and
   None still follow the Motion setting. The neck takes clicks as part of the
   panel; the module itself stays clickable to close or switch flyouts. Plain
   keeps its flush frame, and menus without a bar module keep their usual frame.
