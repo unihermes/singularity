@@ -1,10 +1,5 @@
-// Glass's Control Centre home, Apple's way, under the profile card and the
-// search: a connectivity card (Wi-Fi, Bluetooth, Airplane as round
-// switches; a row's name opens its details here) beside Quiet and Night
-// Light, Keep Awake and Game Mode under them, the power profiles, then
-// Display and Sound cards (the device named at the end; Sound's picks the
-// output), a now-playing chip while a track is up, the tools as round
-// buttons and the two pages as capsules.
+// Glass home: compact connectivity mosaic, capsule levels and media.
+// Labels open focused detail sheets in the same flyout.
 
 import Quickshell
 import Quickshell.Bluetooth
@@ -22,17 +17,9 @@ Column {
     readonly property bool btOn: !!bar && bar.btAdapterOn(adapter)
     readonly property real cell: (width - spacing) / 2
     readonly property int tileH: Theme.fs(60)
-    // the one card whose details are open, "" for none
-    readonly property string open: cc.expanded
 
     width: parent.width
     spacing: Theme.spaceL
-
-    // opens a module's own flyout in place of this one
-    function details(name) {
-        var item = bar ? bar.widgetItem(name) : null
-        if (item) cc.scope.toggleFlyout(name, item)
-    }
 
     // --- Toggles ----------------------------------------------
 
@@ -59,8 +46,7 @@ Column {
                     lit: Network.powered
                     onToggled: Network.setPowered(!Network.powered)
                     onOpened: {
-                        root.cc.expand("wifi")
-                        if (root.open === "wifi") Network.refreshList()
+                        root.cc.page = "network"
                     }
                 }
                 GlassLink {
@@ -72,15 +58,17 @@ Column {
                         : root.btConnected.length > 1 ? root.btConnected.length + " connected" : "On"
                     lit: root.btOn
                     onToggled: if (root.bar) root.bar.setBtPowered(root.adapter, !root.btOn)
-                    onOpened: root.cc.expand("bluetooth")
+                    onOpened: root.cc.page = "bluetooth"
                 }
                 GlassLink {
-                    icon: "󰀝"
-                    title: "Airplane"
-                    caption: root.cc.airplane ? "Radios off" : "Off"
-                    lit: root.cc.airplane
-                    onToggled: root.cc.setAirplane(!root.cc.airplane)
-                    onOpened: root.cc.setAirplane(!root.cc.airplane)
+                    icon: Vpn.servers.length > 0 ? "󰖂" : "󰀝"
+                    title: Vpn.servers.length > 0 ? "VPN" : "Airplane"
+                    caption: Vpn.servers.length > 0 ? (Vpn.busy ? "Connecting…" : Vpn.up ? Vpn.currentName : "Off")
+                        : root.cc.airplane ? "Radios off" : "Off"
+                    lit: Vpn.servers.length > 0 ? Vpn.up : root.cc.airplane
+                    usable: Vpn.servers.length === 0 || Vpn.available
+                    onToggled: Vpn.servers.length > 0 ? Vpn.toggle() : root.cc.setAirplane(!root.cc.airplane)
+                    onOpened: root.cc.page = "network"
                 }
             }
         }
@@ -91,11 +79,11 @@ Column {
             GlassLinkTile {
                 width: parent.width
                 icon: Notifications.dnd ? "󰂛" : "󰂚"
-                title: "Quiet"
+                title: "Focus"
                 caption: Notifications.dnd ? "Banners held" : "Off"
                 lit: Notifications.dnd
                 onToggled: Notifications.toggleDnd()
-                onOpened: Notifications.toggleDnd()
+                onOpened: root.cc.page = "focus"
             }
             GlassLinkTile {
                 width: parent.width
@@ -105,7 +93,7 @@ Column {
                 lit: root.cc.shellRoot.nightLight
                 usable: root.cc.shellRoot.hasHyprsunset
                 onToggled: root.cc.shellRoot.nightLight = !root.cc.shellRoot.nightLight
-                onOpened: root.cc.expand("night")
+                onOpened: root.cc.page = "display"
             }
         }
     }
@@ -116,77 +104,6 @@ Column {
         .sort((x, y) => x.connected !== y.connected ? (x.connected ? -1 : 1)
             : (x.deviceName || "").localeCompare(y.deviceName || ""))
     readonly property var btConnected: btSaved.filter(d => d.connected)
-
-    // the open card's details
-    GlassCard {
-        visible: root.open === "wifi" || root.open === "bluetooth" || root.open === "night"
-        width: parent.width
-        height: detailCol.height + Theme.spaceM * 2
-
-        Column {
-            id: detailCol
-            x: Theme.spaceS
-            y: Theme.spaceM
-            width: parent.width - Theme.spaceS * 2
-
-            GlassDetailHead {
-                visible: root.open === "wifi"
-                text: "Networks"
-                more: "Wi-Fi Settings…"
-                onMoreClicked: root.details("network")
-            }
-            Repeater {
-                model: ScriptModel { values: root.open === "wifi" && Network.powered ? Network.networks.slice(0, 5) : [] }
-                GlassDetailRow {
-                    required property var modelData
-                    icon: Network.strengthGlyphs[Math.max(1, modelData.bars) - 1]
-                    label: modelData.ssid
-                    current: modelData.connected
-                    trailing: Network.connecting === modelData.ssid ? "connecting"
-                        : !modelData.known && modelData.security !== "open" ? "󰌾" : ""
-                    // one that needs a passphrase asks for it in the Network flyout
-                    onActivated: {
-                        if (modelData.connected) return
-                        if (modelData.known || modelData.security === "open") Network.connect(modelData.ssid, "")
-                        else root.details("network")
-                    }
-                }
-            }
-
-            GlassDetailHead {
-                visible: root.open === "bluetooth"
-                text: "Devices"
-                more: "Bluetooth Settings…"
-                onMoreClicked: root.details("bluetooth")
-            }
-            Repeater {
-                model: ScriptModel { values: root.open === "bluetooth" && root.btOn ? root.btSaved : [] }
-                GlassDetailRow {
-                    required property var modelData
-                    icon: "󰂯"
-                    label: modelData.deviceName || modelData.name
-                    trailing: modelData.connected ? "Connected" : "Not connected"
-                    onActivated: modelData.connected ? modelData.disconnect() : modelData.connect()
-                }
-            }
-
-            GlassDetailHead {
-                visible: root.open === "night"
-                text: "Warmth"
-                more: Settings.nightLightKelvin + " K"
-            }
-            GlassSlider {
-                readonly property var lim: Settings.limits.nightLightKelvin
-                visible: root.open === "night"
-                x: Theme.spaceS
-                width: parent.width - Theme.spaceS * 2
-                icon: "󰔏"
-                // warmer to the right: the fill grows as the kelvins drop
-                value: Math.round((lim.max - Settings.nightLightKelvin) / (lim.max - lim.min) * 100)
-                onMoved: v => Settings.set("nightLightKelvin", Math.round((lim.max - v / 100 * (lim.max - lim.min)) / 250) * 250)
-            }
-        }
-    }
 
     Row {
         width: parent.width
@@ -202,50 +119,11 @@ Column {
         }
         GlassLinkTile {
             width: root.cell
-            icon: "󰊴"
-            title: "Game Mode"
-            caption: GameMode.active ? "On" : "Off"
-            lit: GameMode.active
-            onToggled: GameMode.toggle()
-            onOpened: GameMode.toggle()
-        }
-    }
-
-    // the power profiles, one lit
-    Row {
-        id: profiles
-        visible: PpdProfile.profile !== ""
-        width: parent.width
-        spacing: Theme.spaceM
-        Repeater {
-            model: PpdProfile.choices
-            Rectangle {
-                required property var modelData
-                readonly property bool on: PpdProfile.profile === modelData.value
-                width: (profiles.width - profiles.spacing * (PpdProfile.choices.length - 1)) / Math.max(1, PpdProfile.choices.length)
-                height: Theme.fs(32)
-                radius: height / 2
-                color: on ? Theme.accent : profMouse.containsMouse ? Theme.washActive : Theme.washHover
-                border.width: on ? 0 : 1
-                border.color: Theme.stroke
-                Text {
-                    anchors.centerIn: parent
-                    width: Math.min(implicitWidth, parent.width - Theme.spaceL * 2)
-                    elide: Text.ElideRight
-                    text: parent.modelData.text
-                    color: parent.on ? Theme.textOnAccent : Theme.textStrong
-                    font.family: Theme.fontText
-                    font.weight: Theme.weightStrong
-                    font.pixelSize: Theme.fontCaption
-                }
-                MouseArea {
-                    id: profMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: PpdProfile.set(parent.modelData.value)
-                }
-            }
+            icon: "󰹑"
+            title: "Capture"
+            caption: "Screen tools"
+            onToggled: root.cc.page = "tools"
+            onOpened: root.cc.page = "tools"
         }
     }
 
@@ -279,6 +157,8 @@ Column {
             GlassLevelHead {
                 title: "Display"
                 device: root.ddc ? ((root.ddcDisplay && root.ddcDisplay.model) || root.output) : "Built-in display"
+                chevron: true
+                onDeviceClicked: root.cc.page = "display"
             }
             GlassSlider {
                 width: parent.width
@@ -288,8 +168,6 @@ Column {
             }
         }
     }
-
-    readonly property var sinks: Audio.sinks.filter(n => Audio.unplugged.indexOf(n.id) < 0 || n === Audio.sink)
 
     GlassCard {
         width: parent.width
@@ -303,9 +181,8 @@ Column {
             GlassLevelHead {
                 title: "Sound"
                 device: Audio.sink ? Audio.plainName(Audio.sink) : ""
-                chevron: root.sinks.length > 1
-                expanded: root.open === "output"
-                onDeviceClicked: root.cc.expand("output")
+                chevron: true
+                onDeviceClicked: root.cc.page = "sound"
             }
             GlassSlider {
                 width: parent.width
@@ -314,19 +191,7 @@ Column {
                 dimmed: Audio.muted
                 onMoved: v => Audio.setVolume(v)
             }
-            Repeater {
-                model: ScriptModel { values: root.open === "output" ? root.sinks : [] }
-                GlassDetailRow {
-                    required property var modelData
-                    icon: Audio.glyph(modelData)
-                    label: Audio.plainName(modelData)
-                    current: modelData === Audio.sink
-                    onActivated: {
-                        Pipewire.preferredDefaultAudioSink = modelData
-                        root.cc.expanded = ""
-                    }
-                }
-            }
+
         }
     }
 
@@ -379,7 +244,7 @@ Column {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.details("media")
+                onClicked: root.cc.openModule("media")
             }
         }
         Row {
@@ -411,72 +276,28 @@ Column {
         }
     }
 
-    // --- Tools and pages --------------------------------------
-
     Row {
         width: parent.width
-        readonly property var acts: root.cc.toolActions
-        spacing: (width - acts.length * Theme.fs(34)) / Math.max(1, acts.length - 1)
-        Repeater {
-            model: parent.acts
-            GlassDot {
-                required property var modelData
-                icon: modelData.icon
-                lit: modelData.act === "record" && Recorder.recording
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.cc.run(parent.modelData.act)
-                }
-            }
+        spacing: Theme.spaceS
+        Text {
+            width: parent.width - appearanceButton.width - powerButton.width - parent.spacing * 2
+            anchors.verticalCenter: parent.verticalCenter
+            text: Battery.present ? "Battery · " + Battery.percent + "%" : "Control Centre"
+            elide: Text.ElideRight
+            color: Theme.subtext
+            font.family: Theme.fontText
+            font.weight: Theme.weightBody
+            font.pixelSize: Theme.fontCaption
         }
-    }
-
-    Row {
-        id: pages
-        width: parent.width
-        spacing: Theme.spaceM
-        Repeater {
-            model: [
-                { icon: "󰏘", text: "Appearance", page: "appearance" },
-                { icon: "󰕮", text: "Bar Widgets", page: "widgets" },
-            ]
-            Rectangle {
-                required property var modelData
-                width: (pages.width - pages.spacing) / 2
-                height: Theme.fs(32)
-                radius: height / 2
-                color: pillMouse.containsMouse ? Theme.washActive : Theme.washHover
-                border.width: 1
-                border.color: Theme.stroke
-                Behavior on color { ColorAnimation { duration: Theme.durFast; easing.type: Theme.ease } }
-                Row {
-                    anchors.centerIn: parent
-                    spacing: Theme.spaceS
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: parent.parent.modelData.icon
-                        color: Theme.textStrong
-                        font.family: Theme.fontIcon
-                        font.pixelSize: Theme.fontIconSize
-                    }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: parent.parent.modelData.text
-                        color: Theme.textStrong
-                        font.family: Theme.fontText
-                        font.weight: Theme.weightStrong
-                        font.pixelSize: Theme.fontCaption
-                    }
-                }
-                MouseArea {
-                    id: pillMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.cc.page = parent.modelData.page
-                }
-            }
+        FlyoutChip {
+            id: appearanceButton
+            text: "Appearance"
+            onClicked: root.cc.page = "appearance"
+        }
+        IconButton {
+            id: powerButton
+            icon: "󰐥"
+            onClicked: root.cc.page = "power"
         }
     }
 }

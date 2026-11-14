@@ -108,11 +108,10 @@ comparison tables below describe the original five styles.
   use the same outlined track and preserve its rounded end as the fill changes.
   A display scaled under 1 can't blur (looks.lua), so the bar and Dock there use
   an `unblurred-` namespace and lift their ground (`Theme.unfrosted`).
-- Glass's Control Centre home (`flyouts/ControlCentreGlass.qml`) is Apple's: a
-  connectivity card (Wi-Fi, Bluetooth, Airplane as round switches; the label opens
-  the module's flyout) beside Quiet and Night Light, Keep Awake and Game Mode
-  tiles, thick Display (when there's a backlight) and Sound capsules, a
-  now-playing card, the pages as capsules and the tools as round buttons. The other styles share `ControlCentreHome` (see Control Centre).
+- Glass's Control Centre home (`flyouts/ControlCentreGlass.qml`) is a compact
+  Apple-style mosaic: connectivity, Focus and Night Light, Keep Awake and Capture,
+  capsule Display and Sound sliders, and a media card. Disc buttons toggle;
+  labels open focused pages in the same flyout. No profile banner or app search.
 - Glass blurs harder (Hyprland blur 22 px, 3 passes, vibrancy 0.25, via the
   `blur` state file) so text behind a panel can't ghost through. In Spotlight a
   pin on each app row (or right-click, Ctrl+P) keeps it in the Dock.
@@ -334,6 +333,17 @@ Style: `channel` (frame `channel` in `Styles.js`).
   outline around both. Rounded inside corners join them where the widths
   differ, and the sides are straight where they line up (at the screen edge,
   for instance). It only fades in, since its frame is joined to the bar.
+- **Glass from the module** (picked 2026-11-14): bar module flyouts share one
+  frosted surface with a short neck and curved shoulders leading from the clicked
+  chip. The panel clears the bar by one extra-small spacing step (2 px stock).
+  The neck uses the actual module width, bounded only by the panel width, and
+  follows its centre as labels resize. It stays aligned when the wider panel
+  is clamped against a screen edge. The panel scales from the module's edge,
+  with the connection fixed throughout opening and closing. Bottom bars reflect
+  the shape upward. Fade and
+  None still follow the Motion setting. The neck takes clicks as part of the
+  panel; the module itself stays clickable to close or switch flyouts. Plain
+  keeps its flush frame, and menus without a bar module keep their usual frame.
 - **Frame:** a channel with a surface ground using the shared panel opacity
   (Glass and See-through), and radius `panelFrameRadius`
   (15px at Roundness 6).
@@ -721,60 +731,47 @@ state directory, never the repo.
 
 ### Control Centre
 
-Redesigned 2026-11-09 from the mockup's picks (two-line header, rows with
-switches, connectivity and sliders in, a one-line now playing, one strip for
-tools and pages). Every style but Glass draws the same home
-(`ControlCentreHome`); the pages keep the quick-settings tiles (`QuickTile`):
-a glyph, its name and its state in words, accent-filled while on.
+Redesigned 2026-11-14 from the interactive mockups: Dashboard for the
+Linux styles, Split for Pane, and an Apple-style mosaic for Glass. Device
+controls share `ControlCentreDetails`; Appearance, Bar Widgets and Power
+remain in `ControlCentre`. Detail content scrolls when it cannot fit below
+the bar, resets to the top on page changes, and keeps Pane's navigation visible.
 
 - **Bar button:** left click opens home, right click opens on Power,
-  middle click locks.
-- **Header:** a `HeadCard`: the Arch mark, user@host over the system's name
-  and uptime ("Arch Linux · up 21h 27m"; the hovered strip button's name in
-  its place), Settings, Lock and Power at its end, Power opening Power. The
-  search field is always under it (not under Pane, whose taskbar box is the search); its matches (most used first, Enter
-  launches) replace the rest while there's a query; its apps button shows
-  the same list alphabetically without a query, and Escape clears the query,
-  then closes the flyout.
-- **Rows** (`ControlRow`): glyph, name, the state in words, then the style's
-  switch; the face toggles. A split row has a chevron after a hairline that
-  opens its details in place, indented under a rule, one at a time
-  (󰅂 → 󰅀); Power has no switch and a click steps the profile.
-- **Home**, one section each: **Sound** (volume, whose glyph mutes and
-  chevron lists the outputs; this screen's brightness, its DDC monitor or
-  the backlight, the glyph opening Brightness), **Connectivity** (Wi-Fi:
-  the first six networks, a known one connecting on a click and the rest
-  going to Network; Bluetooth: the paired devices as `BtDeviceRow`s and Pair
-  a device; VPN while servers are imported: the servers; Airplane),
-  **Quick settings** (Quiet, Night Light with Warmth in its details, Keep
-  Awake, Game Mode, Power with the three profiles in its details), a **now
-  playing** line while there is a track (title · artist, the controls, a
-  click on the title opening Media), and **the strip**: the screen tools,
-  the windows, then Appearance and Bar Widgets as square buttons.
-- **Glass home** (`ControlCentreGlass`, picked 2026-11-09) is Apple's, under a
-  profile card (your `~/.face` or initial, your name over host and uptime, Lock
-  and Power as round buttons) and the search field: a connectivity card (Wi-Fi,
-  Bluetooth, Airplane as round switches; a row's words open its details in a
-  card under it) beside Quiet and Night Light, Keep Awake and Game Mode under
-  them, the three power profiles, a Display card and a Sound card (the device
-  named at the end, Sound's chevron picking the output), a now-playing chip
-  while a track is up, the tools as round buttons and Appearance and Bar
-  Widgets as capsules.
-- **Pane home** (`ControlCentreHome`, picked 2026-11-09): the header card (no
-  search field), volume and brightness as segmented bars, then every toggle as a
-  button (`QuickButton`), three to a line with its name under it; a split
-  button's chevron part opens its details under the grid. A now-playing line,
-  then the account bar: your face and name, and … (the tool strip), Appearance,
-  Settings and Power. Typing in the panel goes to the taskbar's search.
-- **Taskbar search** (Pane, `BarSearchFlyout`): the taskbar's box is typed into.
-  A click on it (or the first letter typed anywhere in the Control Centre)
-  opens a panel from the box while the text shows in the box with a caret; it
-  lists the best match large, then more apps and Settings pages, or your top
-  apps while the box is empty. Arrows walk it, Enter opens, Escape clears then
-  closes. Other styles' search buttons still open the launcher.
-- **Pages** have no Back row: the heading reads
-  `CONTROL CENTRE › APPEARANCE`, the first part clickable as the way
-  back (`FlyoutHeading.crumb`); what the page sums up sits in its hints.
+  middle click locks. Opening directly on Power retains that initial page.
+- **Header (Linux and Pane):** the Arch mark, user@host over the system's
+  name and uptime, then Settings, Lock and Power. It remains above the pages.
+  Application search belongs to the launcher (Pane also has taskbar search).
+- **Linux Dashboard** (`ControlCentreHome`): Network and Bluetooth cards open
+  their pages, followed by volume and this display's brightness with detail
+  chevrons. Session has Quiet, Night Light and Keep Awake switches, then Focus
+  and Power links. Now playing appears only with a track. Appearance and Bar
+  Widgets are paired tiles; Screen tools and Settings finish the dashboard.
+- **Pane Split:** the same quick controls on Overview, beside persistent
+  navigation for Overview, Network, Bluetooth, Sound, Display, Focus, Power,
+  Appearance, Bar Widgets and Screen tools. The selected row has the style's
+  tick. Category changes replace only the right-hand content.
+- **Glass mosaic** (`ControlCentreGlass`): no account banner or search.
+  Connectivity has Wi-Fi, Bluetooth and VPN (Airplane when no VPN is imported),
+  beside Focus and Night Light. Keep Awake and Capture sit below; Display and
+  Sound have capsule sliders and device links. A media card appears with a
+  track. Battery, Appearance and Power form a quiet footer. Discs toggle;
+  labels open focused detail pages in the same flyout. Game Mode is in Focus,
+  profiles are in Power, and Bar Widgets is reachable through Appearance.
+- **Pages:** the breadcrumb reads `CONTROL CENTRE › NETWORK` (or the relevant
+  page); its first part returns home. Network includes radio, networks,
+  passphrase entry for new secured networks, rescan, disconnect, Ethernet, VPN
+  servers and Airplane. The first eight networks show initially; Show all reveals
+  the rest. Bluetooth lists paired devices and can scan and pair;
+  scans started here stop when leaving the page or closing. Sound has volume,
+  mute, output and input selection and microphone mute. Display controls this
+  monitor's DDC brightness or the backlight, with Night Light and Warmth.
+  Unsupported hardware has an empty state or disabled control. Device pages
+  finish with a link to their Settings page. Focus has Quiet, Keep Awake and
+  Game Mode. Screen tools lists capture tools and the standalone windows.
+- **Taskbar search** (Pane, `BarSearchFlyout`): the taskbar's box opens its
+  app and Settings results. Arrows walk it, Enter opens, Escape clears then
+  closes. Other styles use the launcher for app search.
 - **Appearance:** every look as a palette card, four to a line, the
   current one outlined; every wallpaper as a thumbnail, four to a line,
   shuffle last; Colours (details: Look · Wallpaper, intensity), Style

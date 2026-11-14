@@ -795,6 +795,7 @@ ModuleFrame {
                                 if (host.screenScope.openFlyout === "appwindows"
                                         && bar.appWindowsKey !== winIcon.modelData.key) {
                                     bar.appWindowsKey = winIcon.modelData.key
+                                    host.screenScope.flyoutAnchorItem = winIcon
                                     host.screenScope.flyoutAnchorX = winIcon.mapToItem(null, winIcon.width / 2, 0).x
                                     return
                                 }
