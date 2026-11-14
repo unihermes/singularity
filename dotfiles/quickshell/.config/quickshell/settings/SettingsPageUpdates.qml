@@ -53,7 +53,7 @@ SettingsPage {
             : behind + (behind === 1 ? " commit" : " commits") + " behind " + Updates.repoUpstream]
         if (ahead > 0)
             parts.push(ahead + (ahead === 1 ? " local commit" : " local commits")
-                + (behind > 0 ? ": merge by hand" : " not pushed"))
+                + (behind > 0 ? ": merge them in" : " not pushed"))
         if (Updates.repoState === "fetch") parts.push("couldn't reach the remote")
         return parts.join(" · ")
     }
@@ -327,12 +327,24 @@ SettingsPage {
         label: "Repository"
         hint: page.repoHint
 
-        FlyoutChip {
+        Row {
             anchors.right: parent.right
-            text: Updates.repoUpdating ? "Updating…" : "Update"
-            icon: "󰚰"
-            enabled: Updates.repoBehind > 0 && Updates.repoAhead === 0 && !Updates.repoUpdating
-            onClicked: Updates.updateRepo()
+            spacing: Theme.spaceXs
+
+            FlyoutChip {
+                visible: Updates.repoBehind > 0 && Updates.repoAhead > 0
+                text: Updates.repoMerging ? "Merging…" : "Merge"
+                icon: "󰘬"
+                spinning: Updates.repoMerging
+                enabled: !Updates.repoMerging
+                onClicked: Updates.mergeRepo()
+            }
+            FlyoutChip {
+                text: Updates.repoUpdating ? "Updating…" : "Update"
+                icon: "󰚰"
+                enabled: Updates.repoBehind > 0 && Updates.repoAhead === 0 && !Updates.repoUpdating
+                onClicked: Updates.updateRepo()
+            }
         }
     }
 

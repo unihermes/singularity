@@ -68,6 +68,24 @@ Singleton {
             "bash", repoPath])
     }
 
+    readonly property bool repoMerging: mergeProc.running
+
+    // Diverged from upstream: a merge commit of it into the local branch. A
+    // dirty tree or a conflict aborts the merge and leaves the clone as it was.
+    function mergeRepo() {
+        if (repoMerging || repoPath === "" || repoBehind === 0 || repoAhead === 0) return
+        mergeProc.running = true
+    }
+
+    Process {
+        id: mergeProc
+        workingDirectory: root.repoPath
+        command: ["sh", "-c",
+            "if out=$(git merge --no-edit '@{u}' 2>&1); then notify-send -a Updates 'Singularity merged' \"$(git log -1 --format=%s)\"; "
+            + "else git merge --abort 2>/dev/null; notify-send -u critical -a Updates 'Merge failed' \"$(printf '%s' \"$out\" | head -n3)\"; fi"]
+        onExited: root.refreshRepo()
+    }
+
     function saveCache() {
         cache.save({
             found: root.found,
