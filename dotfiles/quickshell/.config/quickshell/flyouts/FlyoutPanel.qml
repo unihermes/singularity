@@ -10,6 +10,7 @@ import Quickshell.Hyprland
 import QtQuick
 import "../services"
 import "../services/ChannelPath.js" as ChannelPath
+import "../services/GlassFlyout.js" as GlassFlyout
 
 OverlayWindow {
     id: root
@@ -29,7 +30,7 @@ OverlayWindow {
     // Exclusive keyboard focus instead of OnDemand; fixed while it's up
     property bool keyboardExclusive: false
     // distance from the bar's screen edge to the near edge of the box
-    property real topOffset: Theme.flyoutOffset
+    property real topOffset: Theme.flyoutOffset + (glassAttached ? Theme.spaceL + Theme.borderWidth : 0)
 
     // how close the box may come to a screen edge (0 for the end panels, so
     // they run into the corner)
@@ -59,18 +60,35 @@ OverlayWindow {
         revealAnim.start()
     }
     onOpenChanged: {
-        if (open) section = scope.flyoutSection
+        if (open) { section = scope.flyoutSection; sourceItem = scope.flyoutAnchorItem }
         play(open ? 1 : 0)
     }
     Component.onCompleted: if (open) {
         section = scope.flyoutSection
+        sourceItem = scope.flyoutAnchorItem
         play(1)
     }
 
-    // Grown (Theme.flyoutGrown): the bar group it hangs off, in this window's
-    // coordinates, or null. The section is kept from opening.
+    // Keep the source while fading out. Another module may already be opening.
     property string section: ""
+    property Item sourceItem: null
+    Connections {
+        target: root.scope
+        function onFlyoutAnchorItemChanged() { if (root.open) root.sourceItem = root.scope.flyoutAnchorItem }
+    }
+    readonly property bool glassAttached: Theme.glass && !Theme.plain && sourceItem !== null && section !== ""
+    // Source coordinates are in the bar window; bottom bars start near the
+    // screen's far edge. Stop at the chip's drawn edge rather than its hit box.
+    readonly property real sourceNear: {
+        if (!sourceItem || !scope.barWindow) return 0
+        var point = sourceItem.mapToItem(null, 0, 0)
+        var inset = Math.max(0, (sourceItem.height - Theme.moduleHeight) / 2)
+        return atBottom ? root.height - scope.barWindow.implicitHeight + point.y + inset
+            : point.y + sourceItem.height - inset
+    }
+
     readonly property bool atBottom: Theme.barPosition === "bottom"
+    // Grown (Channel): the whole bar group in this window's coordinates.
     readonly property var group: {
         if (!Theme.flyoutGrown || section === "" || !scope.barWindow) return null
         var g = scope.barWindow.groupRect(section)
@@ -179,7 +197,7 @@ OverlayWindow {
         focus: true
         Keys.onEscapePressed: root.requestClose()
         Keys.onPressed: event => root.keyPressed(event)
-        readonly property bool cuts: Theme.flyoutAnim === "drop" && !root.grown
+        readonly property bool cuts: Theme.flyoutAnim === "drop" && !root.grown && !root.glassAttached
         y: cuts && !box.atBottom ? root.topOffset : 0
         width: root.width
         height: cuts ? root.height - root.topOffset : root.height
@@ -187,7 +205,7 @@ OverlayWindow {
 
         PanelFrame {
             id: box
-            bare: root.grown
+            bare: root.grown || root.glassAttached
             ground: Theme.flyoutFill
             x: {
                 var free = Math.max(root.edgeMargin,
@@ -219,16 +237,37 @@ OverlayWindow {
 
             readonly property bool atBottom: Theme.barPosition === "bottom"
             opacity: Theme.flyoutAnim === "none" ? 1 : root.reveal
-            // drop slides out from under the bar, scale grows from it; grown
-            // only fades
-            transform: Translate {
-                y: Theme.flyoutAnim === "drop" && !root.grown ? (1 - root.reveal) * Theme.sp(10) * (box.atBottom ? 1 : -1) : 0
-            }
-            scale: Theme.flyoutAnim === "scale" && !root.grown ? 0.9 + 0.1 * root.reveal : 1
+            // Glass grows about the source, including its neck. Other styles
+            // scale from the bar-side midpoint; grown channels only fade.
+            readonly property var attachment: GlassFlyout.attachment(width, height,
+                root.anchorX - x, Math.min(root.sourceItem ? root.sourceItem.width : 0, Theme.levelChipWidth),
+                Math.max(Theme.borderWidth, root.atBottom ? root.sourceNear - (y + height) : y - root.sourceNear),
+                radius, Theme.channelFillet, root.atBottom)
+            readonly property bool flowMotion: root.glassAttached
+                && (Theme.flyoutAnim === "scale" || Theme.flyoutAnim === "drop")
+            transform: [
+                Translate {
+                    y: Theme.flyoutAnim === "drop" && !root.grown && !root.glassAttached
+                        ? (1 - root.reveal) * Theme.sp(10) * (box.atBottom ? 1 : -1) : 0
+                },
+                Scale {
+                    origin.x: box.attachment.originX
+                    origin.y: box.attachment.originY
+                    xScale: box.flowMotion ? 0.85 + 0.15 * root.reveal : 1
+                    yScale: box.flowMotion ? 0.85 + 0.15 * root.reveal : 1
+                }
+            ]
+            scale: Theme.flyoutAnim === "scale" && !root.grown && !root.glassAttached ? 0.9 + 0.1 * root.reveal : 1
             transformOrigin: atBottom ? Item.Bottom : Item.Top
 
             Behavior on height {
                 NumberAnimation { duration: Theme.durFast; easing.type: Theme.ease }
+            }
+
+            GlassFlyoutFrame {
+                anchors.fill: parent
+                visible: root.glassAttached
+                attachment: box.attachment
             }
 
             Absorber {}

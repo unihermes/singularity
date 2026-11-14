@@ -480,6 +480,8 @@ ShellRoot {
 
             // screen-local x the open flyout centres itself under
             property real flyoutAnchorX: 0
+            // The actual source module, for Glass's neck and opening origin.
+            property Item flyoutAnchorItem: null
             // the bar section ("left", "centre", "right") of the module it
             // opened from, "" when none; a grown flyout hangs off its group
             property string flyoutSection: ""
@@ -502,6 +504,8 @@ ShellRoot {
                     screenScope.openFlyout = ""
                     return
                 }
+                if (!item) return
+                screenScope.flyoutAnchorItem = item
                 screenScope.flyoutAnchorX = item.mapToItem(null, item.width / 2, 0).x
                 screenScope.flyoutSection = screenScope.barWindow.sectionOf(item)
                 screenScope.openFlyout = name
