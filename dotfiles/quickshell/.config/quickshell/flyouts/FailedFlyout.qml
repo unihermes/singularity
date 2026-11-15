@@ -1,6 +1,6 @@
 // A row per failed unit (system or user, and when it failed); a click
 // opens it in place with its last log lines and Full log, Restart and
-// Clear. Clear all (two clicks) after them. Self-contained: only needs
+// Clear; the row's note says why it failed. Clear all (two clicks) after them. Self-contained: only needs
 // FailedUnits.
 
 import Quickshell.Io
@@ -60,7 +60,7 @@ FlyoutPanel {
                 width: parent.width
                 leadingIcon: "󰀦"
                 label: unit.modelData.name
-                note: unit.modelData.user ? "user" : "system"
+                note: (unit.modelData.user ? "user" : "system") + (unit.modelData.reason ? " · " + unit.modelData.reason : "")
                 trailing: unit.isOpen ? "󰅀" : "󰅂"
                 onActivated: root.toggle(unit.modelData)
             }
@@ -127,6 +127,7 @@ FlyoutPanel {
         width: parent.width
         icon: "󰅖"
         text: "Clear all"
+        danger: true
         confirmText: "Clear " + FailedUnits.count + "?"
         onClicked: FailedUnits.units.slice().forEach(u => FailedUnits.clear(u))
     }

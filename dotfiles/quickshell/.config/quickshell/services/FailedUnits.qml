@@ -10,7 +10,7 @@ import QtQuick
 Singleton {
     id: root
 
-    // [{ name, user }]
+    // [{ name, user, reason }]; reason is systemd's Result (exit-code, timeout…)
     property var units: []
     readonly property int count: units.length
 
@@ -73,17 +73,18 @@ Singleton {
         id: probe
         // the user units follow a "--user" line
         command: ["sh", "-c",
-            "systemctl --failed --plain --no-legend 2>/dev/null; echo --user; "
-            + "systemctl --user --failed --plain --no-legend 2>/dev/null"]
+            "for s in '' --user; do [ -n \"$s\" ] && echo --user; "
+            + "systemctl $s --failed --plain --no-legend 2>/dev/null | while read -r u _; do "
+            + "echo \"$u $(systemctl $s show -p Result --value -- \"$u\" 2>/dev/null)\"; done; done"]
         stdout: StdioCollector {
             onStreamFinished: {
                 var out = []
                 var user = false
                 var lines = text.split("\n")
                 for (var i = 0; i < lines.length; i++) {
-                    var name = lines[i].trim().split(/\s+/)[0]
-                    if (name === "--user") user = true
-                    else if (name !== "") out.push({ name: name, user: user })
+                    var f = lines[i].trim().split(/\s+/)
+                    if (f[0] === "--user") user = true
+                    else if (f[0] !== "") out.push({ name: f[0], user: user, reason: f[1] || "" })
                 }
                 root.notifyNew(out)
                 // only on a change: a new array rebuilds the flyout's rows,

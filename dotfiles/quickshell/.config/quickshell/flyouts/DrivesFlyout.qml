@@ -1,5 +1,6 @@
 // Each removable drive as a heading, its filesystems as rows: a click
-// mounts one and opens it, or opens one already mounted. Eject after each
+// mounts one and opens it, or opens one already mounted; a mounted one shows
+// how full it is. Eject after each
 // drive's rows unmounts it all and powers it off. Self-contained: only
 // needs Drives.
 
@@ -60,6 +61,8 @@ FlyoutPanel {
                     note: mounted && modelData.used > 0
                         ? Format.bytes(modelData.used) + " of " + Format.bytes(modelData.size)
                         : Format.bytes(modelData.size)
+                    level: mounted && modelData.size > 0 ? Math.round(100 * modelData.used / modelData.size) : -1
+                    trailingAlert: level >= 90
                     trailing: Drives.busyPath === modelData.path ? "" : mounted ? "Open" : "Mount"
                     trailingIsValue: true
                     busy: Drives.busyPath === modelData.path

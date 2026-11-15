@@ -18,6 +18,8 @@ Item {
     // a glyph before the text, turning while `spinning` (a scan running)
     property string icon: ""
     property bool spinning: false
+    // a destructive action: alert-red text and edge before it is armed
+    property bool danger: false
     readonly property bool armed: disarm.running
 
     signal clicked()
@@ -31,7 +33,7 @@ Item {
 
     Rectangle {
         id: box
-        readonly property color edge: root.armed ? Theme.alert
+        readonly property color edge: root.armed || root.danger ? Theme.alert
             : root.selected ? Theme.selectedStroke
             : root.hot ? Theme.strokeHover : Theme.stroke
         readonly property color frost: Theme.isLight ? Qt.rgba(0, 0, 0, 0.05) : Qt.rgba(1, 1, 1, 0.06)
@@ -96,6 +98,7 @@ Item {
             color: !root.enabled ? Theme.textDisabled
                 : root.armed ? Theme.base
                 : root.selected ? Theme.textOnAccent
+                : root.danger ? Theme.alert
                 : mouse.containsMouse ? Theme.textStrong : Theme.text
 
             font.family: root.glyph && !root.armed ? Theme.fontIcon : Theme.fontText
