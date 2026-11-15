@@ -253,6 +253,7 @@ FlyoutPanel {
                     width: parent.width
                     spacing: Theme.flyoutSpacing
                     FlyoutHeading {
+                        id: pageHeading
                         visible: controlCentre.page !== ""
                         crumb: "CONTROL CENTRE"
                         text: controlCentre.pageTitles[controlCentre.page] || ""
@@ -269,6 +270,7 @@ FlyoutPanel {
                     }
 
                     ControlCentreGlass {
+                        id: glassHome
                         visible: controlCentre.home && Theme.glass
                         cc: controlCentre
                     }
@@ -663,6 +665,9 @@ FlyoutPanel {
                     Column {
                         visible: controlCentre.page === "power"
                         width: parent.width
+                        // Glass: as tall as the home mosaic, so the box doesn't shrink
+                        height: Theme.glass ? Math.max(implicitHeight,
+                            glassHome.height - pageHeading.height - pageBody.spacing) : implicitHeight
 
                         FlyoutRow {
                             visible: Battery.present
