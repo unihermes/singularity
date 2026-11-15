@@ -71,13 +71,14 @@ FloatingWindow {
     onClosed: visible = false
     onVisibleChanged: if (visible) { chrome.keySink.forceActiveFocus(); Platform.refresh() }
 
-    // the sidebar's groups, in order: connections, the machine itself, how
-    // the desktop looks and behaves, apps, then the clock and updates
+    // the sidebar's groups, in order: how the desktop looks first, the
+    // machine itself (the keys beside the keyboard), connections, apps, then
+    // the clock and updates
     readonly property var groups: [
-        { heading: "Connections", ids: ["network", "bluetooth", "vpn"] },
-        { heading: "Device",      ids: ["display", "audio", "input", "devices", "power", "recording"] },
         { heading: "Look",        ids: ["appearance", "lockscreen", "notifications"] },
-        { heading: "Apps",        ids: ["autostart", "filetypes", "shell", "keybinds"] },
+        { heading: "Device",      ids: ["display", "audio", "input", "keybinds", "devices", "power", "recording"] },
+        { heading: "Connections", ids: ["network", "bluetooth", "vpn"] },
+        { heading: "Apps",        ids: ["autostart", "filetypes", "shell"] },
         { heading: "System",      ids: ["datetime", "updates"] },
     ]
     // pages reached from another page, with the sidebar showing that one
@@ -245,12 +246,20 @@ FloatingWindow {
         }
     }
 
-    // this machine's name, for the subtitle, as System shows it
-    FileView {
-        id: hostFile
-        path: "/proc/sys/kernel/hostname"
-        printErrors: false
-        blockLoading: true
+    // where the open page sits, for the title bar: its group, the page (a
+    // sub-page under its parent) and the tab it's on
+    readonly property string crumbs: {
+        var g = groups.find(g => g.ids.indexOf(navCurrent) >= 0)
+        var parts = g ? [g.heading] : []
+        var nav = pages.find(p => p.id === navCurrent)
+        if (nav) parts.push(nav.label)
+        if (navCurrent !== currentPage && openPage) parts.push(openPage.label)
+        var it = pane.item
+        if (it && it.tabs && it.tabs.length > 0) {
+            var t = it.tabs.find(x => x.id === it.tab)
+            if (t) parts.push(t.label)
+        }
+        return parts.join(" › ")
     }
 
     WindowChrome {
@@ -279,7 +288,7 @@ FloatingWindow {
         id: header
         window: root
         title: "Settings"
-        subtitle: hostFile.text().trim()
+        subtitle: root.crumbs
         linked: !!root.subpages[root.currentPage]
         onBack: root.select(root.subpages[root.currentPage])
     }

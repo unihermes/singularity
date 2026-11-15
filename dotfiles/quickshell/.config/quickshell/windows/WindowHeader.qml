@@ -64,7 +64,7 @@ Item {
         anchors.leftMargin: Theme.spaceM
         anchors.baseline: titleText.baseline
         // as much as fits beside a search field, all of it without one
-        width: Math.min(implicitWidth, slot.children.length > 0 ? Theme.fit(160) : closeBtn.x - x - Theme.spaceL)
+        width: Math.min(implicitWidth, slot.children.length > 0 ? Theme.fit(280) : closeBtn.x - x - Theme.spaceL)
         elide: Text.ElideRight
         text: root.subtitle
         color: Theme.subtext
