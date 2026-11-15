@@ -376,7 +376,7 @@ Item {
         id: weatherBtn
         visible: Weather.ready && Settings.widgetVisible("weather")
         icon: Weather.iconFor(Weather.code, Weather.isNight)
-        label: Weather.temp(Weather.tempF, Weather.tempC)
+        label: Weather.temp(Weather.tempF, Weather.tempC) + (Weather.rainChance >= 30 ? "  󰖗 " + Weather.rainChance + "%" : "")
         active: screenScope.openFlyout === "weather"
         onActivated: screenScope.toggleFlyout("weather", weatherBtn)
     }

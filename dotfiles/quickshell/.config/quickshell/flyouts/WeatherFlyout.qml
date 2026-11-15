@@ -1,8 +1,7 @@
-// Three tabs. Now: the sky, the temperature large, what it feels like and
-// where, the next day's temperature as a curve, then humidity, wind and rain as
-// tiles. Hours: every hour of the next day with its chance of rain. Week:
-// each day's low and high, drawn as a range on the week's one scale. Then
-// Refresh and the units. Self-contained: only needs the Weather singleton.
+// One page. The sky, the temperature large, what it feels like and where,
+// the next day's temperature as a curve with its chance of rain, then
+// humidity, wind and rain as tiles, then each day's low and high drawn as a
+// range on the week's one scale. Then Refresh and the units. Self-contained: only needs the Weather singleton.
 
 import QtQuick
 import "../services"
@@ -12,25 +11,13 @@ FlyoutPanel {
     flyout: "weather"
     menuWidth: Theme.flyoutMenuWidth
 
-    property string tab: "now"
-    onOpenChanged: if (!open) tab = "now"
-
     FlyoutHeading {
         text: "WEATHER"
         hints: Weather.updated ? ["Updated " + Qt.formatTime(Weather.updated, Theme.timeFormat)] : []
     }
 
-    FlyoutSegmented {
-        model: [{ value: "now", text: "Now" }, { value: "hours", text: "Hours" }, { value: "week", text: "Week" }]
-        current: weatherFlyout.tab
-        onPicked: v => weatherFlyout.tab = v
-    }
-
-    FlyoutDivider {}
-
     // now, large: the sky, the temperature, and what it's like
     Item {
-        visible: weatherFlyout.tab === "now"
         width: parent.width
         implicitHeight: Math.max(bigTemp.implicitHeight, nowText.implicitHeight)
 
@@ -94,14 +81,13 @@ FlyoutPanel {
 
     // the next day's temperature and rain
     WeatherCurve {
-        visible: weatherFlyout.tab === "now" && slots.length > 1
+        visible: slots.length > 1
         graphHeight: Theme.row(84)
     }
 
-    FlyoutDivider { visible: weatherFlyout.tab === "now" }
+    FlyoutDivider {}
 
     TileGrid {
-        visible: weatherFlyout.tab === "now"
         columns: 3
         FlyoutTile { width: parent.cell; glyph: "󰖎"; title: Weather.humidity + "%"; caption: "Humidity" }
         FlyoutTile {
@@ -113,90 +99,9 @@ FlyoutPanel {
         FlyoutTile { width: parent.cell; glyph: "󰖗"; title: Weather.rainChance + "%"; caption: "Rain today" }
     }
 
-    // --- Hours: the next day, an hour a row ---
-
-    ListView {
-        id: hourList
-        visible: weatherFlyout.tab === "hours"
-        width: parent.width
-        // the next 24 from Open-Meteo, else wttr.in's 3-hour slots
-        model: visible ? (Weather.hours.length > 0 ? Weather.hours : Weather.hourly) : []
-        height: visible ? Math.min(contentHeight, 10 * Theme.rowHeight) : 0
-        clip: true
-        interactive: contentHeight > height
-        boundsBehavior: Flickable.StopAtBounds
-        onVisibleChanged: if (visible) positionViewAtBeginning()
-
-        delegate: Item {
-            required property var modelData
-            readonly property int min: modelData.at.getHours() * 60
-            width: hourList.width
-            height: Theme.rowHeight
-
-            Text {
-                id: hourText
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(48)
-                text: Qt.formatTime(modelData.at, Theme.hours("HH:00"))
-                color: Theme.text
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-            Item {
-                id: hourIcon
-                anchors.left: hourText.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.iconCell
-                height: parent.height
-                Text {
-                    anchors.centerIn: parent
-                    text: Weather.iconFor(modelData.code, Weather.sunriseMin >= 0 && (min < Weather.sunriseMin || min >= Weather.sunsetMin))
-                    color: Theme.text
-                    font.family: Theme.fontIcon
-                    font.pixelSize: Theme.fontIconSize
-                }
-            }
-            // the chance of rain, as a figure and a short level
-            Meter {
-                anchors.left: hourIcon.right
-                anchors.leftMargin: Theme.spaceL
-                anchors.right: rainText.left
-                anchors.rightMargin: Theme.spaceS
-                anchors.verticalCenter: parent.verticalCenter
-                fraction: modelData.rain / 100
-                animated: false
-            }
-            Text {
-                id: rainText
-                anchors.right: hourTemp.left
-                anchors.rightMargin: Theme.spaceL
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.fit(34)
-                horizontalAlignment: Text.AlignRight
-                text: modelData.rain + "%"
-                color: Theme.subtext
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontSmall
-            }
-            Text {
-                id: hourTemp
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: Math.ceil(tempMetrics.advanceWidth)
-                horizontalAlignment: Text.AlignRight
-                text: Weather.temp(modelData.tempF, modelData.tempC)
-                color: Theme.textStrong
-                font.family: Theme.fontText
-                font.weight: Theme.weightBody
-                font.pixelSize: Theme.fontBody
-            }
-        }
-    }
-
     // --- Week: each day's range on the week's scale ---
+
+    FlyoutDivider {}
 
     // the week's coldest and warmest, in the units shown
     readonly property real weekLo: Weather.forecast.reduce((m, d) => Math.min(m, Weather.metric ? d.loC : d.loF), Infinity)
@@ -214,7 +119,7 @@ FlyoutPanel {
     }
 
     Repeater {
-        model: weatherFlyout.tab === "week" ? Weather.forecast : []
+        model: Weather.forecast
 
         Item {
             required property var modelData
