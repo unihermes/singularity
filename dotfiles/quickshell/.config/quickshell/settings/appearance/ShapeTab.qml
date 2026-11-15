@@ -1,6 +1,8 @@
 // Appearance's Shape tab, how everything is drawn and spaced: STYLE (with
 // its finish), SPACE (the shell's and the windows' gaps), GLASS (opacity,
-// dim and blur) and WINDOWS (corners, shadow, the rules a click away).
+// dim and blur), WINDOW BORDERS (the focused and other windows' colours,
+// each with the colour it comes to, and the width) and WINDOWS (corners,
+// shadow, the rules a click away).
 // Numbers are sliders, written when the drag ends; a slider that doesn't
 // apply (Dim strength with Dim off) rests rather than hiding. The finish
 // is a line of toggle chips. Nothing folds away.
@@ -162,6 +164,70 @@ SettingsTab {
     }
     HyprInt { slider: true; enabled: page.blurOn; label: "Blur size"; note: page.blurOn ? "Each pass's spread" : "With Blur"; path: ["decoration", "blur"]; key: "size"; min: 1; max: 20; suffix: "" }
     HyprInt { slider: true; enabled: page.blurOn; label: "Blur passes"; note: page.blurOn ? "More is smoother" : "With Blur"; path: ["decoration", "blur"]; key: "passes"; min: 1; max: 4; suffix: "" }
+
+    // --- window borders: the colours and width beside the corners ------
+
+    Item { width: 1; height: Theme.spaceM }
+    FlyoutHeading { text: "WINDOW BORDERS" }
+
+    // what each takes, the colour it comes to beside the choice
+    component BorderSwatch: Rectangle {
+        width: Theme.chipHeight
+        height: Theme.chipHeight
+        radius: Theme.radiusSmall
+        border.width: Theme.borderWidth
+        border.color: Theme.stroke
+    }
+
+    SettingsField {
+        label: "Focused border"
+        hint: "The window with focus"
+        Choices { id: focusedChoice; key: "windowBorderFocused" }
+        BorderSwatch {
+            anchors.right: focusedChoice.left
+            anchors.rightMargin: Theme.spaceM
+            y: (focusedChoice.height - height) / 2
+            color: Settings.windowBorderFocused === "text" ? Theme.text
+                : Settings.windowBorderFocused === "custom" ? (Settings.windowBorderFocusedHex || Theme.strokeFocus)
+                : Theme.strokeFocus
+        }
+    }
+
+    HexColour {
+        visible: Settings.windowBorderFocused === "custom"
+        label: "Focused colour"
+        key: "windowBorderFocusedHex"
+        fallback: Theme.strokeFocus
+        grayscaleOnly: false
+    }
+
+    SettingsField {
+        label: "Unfocused border"
+        hint: "Every other window"
+        Choices { id: unfocusedChoice; key: "windowBorderUnfocused" }
+        BorderSwatch {
+            anchors.right: unfocusedChoice.left
+            anchors.rightMargin: Theme.spaceM
+            y: (unfocusedChoice.height - height) / 2
+            color: Settings.windowBorderUnfocused === "none" ? "transparent"
+                : Settings.windowBorderUnfocused === "custom" ? (Settings.windowBorderUnfocusedHex || Theme.border)
+                : Theme.border
+        }
+    }
+
+    HexColour {
+        visible: Settings.windowBorderUnfocused === "custom"
+        label: "Unfocused colour"
+        key: "windowBorderUnfocusedHex"
+        fallback: Theme.border
+        grayscaleOnly: false
+    }
+
+    SettingsField {
+        label: "Border width"
+        hint: Settings.windowBorderWidth === "style" ? "As thick as the shell's strokes" : "Every window's border"
+        Choices { key: "windowBorderWidth" }
+    }
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "WINDOWS" }

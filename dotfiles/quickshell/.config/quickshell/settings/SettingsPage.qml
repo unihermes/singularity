@@ -212,6 +212,56 @@ Item {
         }
 
         // the tabs: icon and name, the one showing lit and underlined
+        // tabs that name a `group`: its name over its run of tabs, with a
+        // rule out to the next group
+        Item {
+            id: tabGroups
+            readonly property var runs: {
+                var out = []
+                for (var i = 0; i < root.tabs.length; i++) {
+                    var g = root.tabs[i].group
+                    if (!g) continue
+                    var last = out[out.length - 1]
+                    if (last && last.name === g) last.count++
+                    else out.push({ name: g, start: i, count: 1 })
+                }
+                return out
+            }
+            readonly property real cell: (tabStrip.width - Theme.borderWidth * 2) / Math.max(1, root.tabs.length)
+            visible: root.sectioned && runs.length > 0
+            width: parent.width
+            height: visible ? Theme.fontCaption + Theme.spaceM : 0
+
+            Repeater {
+                model: tabGroups.runs
+
+                Item {
+                    id: run
+                    required property var modelData
+                    x: Theme.borderWidth + modelData.start * tabGroups.cell
+                    width: modelData.count * tabGroups.cell - Theme.spaceM
+                    height: parent.height
+
+                    Text {
+                        id: groupLabel
+                        text: Theme.heading(run.modelData.name)
+                        color: Theme.headingMarkColor
+                        font.family: Theme.fontHeading
+                        font.pixelSize: Theme.fontCaption
+                        font.weight: Theme.weightStrong
+                    }
+                    Rectangle {
+                        anchors.left: groupLabel.right
+                        anchors.leftMargin: Theme.spaceM
+                        anchors.right: parent.right
+                        anchors.verticalCenter: groupLabel.verticalCenter
+                        height: Theme.borderWidth
+                        color: Theme.stroke
+                    }
+                }
+            }
+        }
+
         // sectioned: the tabs as one segmented strip, the one showing filled
         Rectangle {
             id: tabStrip

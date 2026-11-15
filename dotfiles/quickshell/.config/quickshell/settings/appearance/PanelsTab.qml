@@ -1,7 +1,8 @@
-// Appearance's Panels tab: POPUPS (notifications, the level popup, the
-// flyouts' size), LAUNCHER, OVERLAYS (the switcher, the overview, the power
-// menu, the backdrop behind them) and DESKTOP WIDGETS. Each section is a
-// picture of its panels as they're set (PanelArt) beside its settings:
+// Appearance's Panels tab: POPUPS (the level popup, the flyouts' size, and
+// the way to the notification popups' own settings), LAUNCHER and OVERLAYS
+// (the switcher, the overview, the power menu, the backdrop behind them).
+// Each section is a picture of its panels as they're set (PanelArt) beside
+// its settings:
 // choices as segments, sizes as sliders, on/off as lit chips. A size that
 // doesn't apply rests dimmed. Nothing folds away.
 
@@ -14,38 +15,6 @@ import ".."
 SettingsTab {
     tabId: "panels"
 
-    // a section's picture on the left, its settings beside it
-    component Beside: Item {
-        id: bs
-        property string kind: ""
-        default property alias rows: col.data
-        width: parent ? parent.width : 0
-        height: Math.max(pic.height, col.implicitHeight)
-
-        PanelArt {
-            id: pic
-            kind: bs.kind
-            width: Theme.fit(220)
-            height: Math.round(width * 0.72)
-        }
-        Column {
-            id: col
-            readonly property real labelWidth: Theme.fit(178)
-            x: pic.width + Theme.spaceXl
-            width: bs.width - x
-            spacing: Theme.spaceM
-        }
-    }
-
-    // a Settings boolean as a lit chip, On or Off
-    component OnChip: FlyoutChip {
-        property bool on: false
-        anchors.right: parent ? parent.right : undefined
-        text: on ? "On" : "Off"
-        icon: on ? "󰄬" : ""
-        selected: on
-    }
-
     FlyoutHeading { text: "POPUPS" }
 
     Beside {
@@ -54,13 +23,12 @@ SettingsTab {
         SettingsField {
             labelWidth: parent.labelWidth
             label: "Notification popups"
-            Choices { key: "notifStyle" }
-        }
-        Stepper {
-            slider: true; labelWidth: parent.labelWidth
-            label: "Popup width"; key: "notifWidth"; step: 20; suffix: " px"
-            enabled: Settings.notifStyle !== "banner"
-            hint: enabled ? "Each notification popup" : "Banners span the top"
+            hint: "Set on Notifications"
+            FlyoutChip {
+                anchors.right: parent.right
+                text: "Open Notifications"
+                onClicked: page.goTo("notifications")
+            }
         }
         SettingsField {
             labelWidth: parent.labelWidth
@@ -146,63 +114,6 @@ SettingsTab {
             label: "Overlay dimming"; key: "scrim"; step: 5; suffix: "%"
             enabled: Settings.overviewBackdrop === "dim"
             hint: enabled ? "How dark Dim is" : "With the Dim backdrop"
-        }
-    }
-
-    Item { width: 1; height: Theme.spaceM }
-    FlyoutHeading { text: "DESKTOP WIDGETS" }
-
-    Beside {
-        kind: "widgets"
-
-        Repeater {
-            model: [{ key: "clock", label: "Clock", hint: "The day, the time and the week" },
-                    { key: "weather", label: "Weather", hint: "Now and the next five days" },
-                    { key: "music", label: "Now playing", hint: "The Music module's player" },
-                    { key: "stats", label: "System", hint: "CPU, GPU, memory, temperature" },
-                    { key: "sysinfo", label: "System info", hint: "Distro, kernel, uptime, IP" }]
-
-            SettingsField {
-                id: widget
-                required property var modelData
-                readonly property bool on: Settings.deskWidget(modelData.key).on
-                labelWidth: parent.labelWidth
-                label: modelData.label
-                hint: modelData.hint
-                OnChip { on: widget.on; onClicked: Settings.setDeskWidget(widget.modelData.key, { on: !widget.on }) }
-            }
-        }
-
-        SettingsField {
-            labelWidth: parent.labelWidth
-            label: "Sidebar"
-            hint: "System readings down the right edge"
-            OnChip { on: Settings.deskSidebar; onClicked: Settings.set("deskSidebar", !Settings.deskSidebar) }
-        }
-
-        SettingsField {
-            visible: Settings.deskSidebar
-            labelWidth: parent.labelWidth
-            label: "Sidebar style"
-            hint: Settings.deskSidebarStyle === "floating" ? "A card like the widgets, clear of the edges" : "Flush down the screen's edge"
-            FlyoutSegmented {
-                anchors.right: parent.right
-                fill: false
-                model: [{ value: "edge", text: "Edge" }, { value: "floating", text: "Floating" }]
-                current: Settings.deskSidebarStyle
-                onPicked: v => Settings.set("deskSidebarStyle", v)
-            }
-        }
-
-        SettingsField {
-            labelWidth: parent.labelWidth
-            label: "Placement"
-            hint: "Drag them about on the desktop"
-            FlyoutChip {
-                anchors.right: parent.right
-                text: "Edit placement"
-                onClicked: Quickshell.execDetached(["qs", "ipc", "call", "widgets", "edit"])
-            }
         }
     }
 

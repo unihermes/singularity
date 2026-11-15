@@ -1,5 +1,6 @@
-// Appearance: one page, six tabs by what they change (Colour, Shape,
-// Type, Bar, Panels, Motion), each under a preview of what it changes;
+// Appearance: one page, seven tabs in three groups by what they change
+// (LOOK: Colour, Desktop, Type; LAYOUT: Shape, Bar, Panels; BEHAVIOUR:
+// Motion), each under a preview of what it changes;
 // every row shows. While
 // anything differs from the baseline, ChangesBar floats at the page's foot
 // (Review, Save as default, Reset), whose Show opens the tab a change is
@@ -25,19 +26,21 @@ SettingsPage {
     footer: ChangesBar {}
     footerVisible: !Settings.isDefault
 
+    // grouped by what they change: how it looks, how it is laid out, how it moves
     tabs: [
-        { id: "colour", label: "Colour", icon: "󰏘", file: "ColourTab" },
-        { id: "shape",  label: "Shape",  icon: "󰠲", file: "ShapeTab" },
-        { id: "bar",    label: "Bar",    icon: "󰕰", file: "BarTab" },
-        { id: "panels", label: "Panels", icon: "󰕮", file: "PanelsTab" },
-        { id: "motion", label: "Motion", icon: "󰗘", file: "MotionTab" },
-        { id: "type",   label: "Type",   icon: "󰛖", file: "TypeTab" },
+        { id: "colour",  label: "Colour",  icon: "󰏘", file: "ColourTab",  group: "LOOK" },
+        { id: "desktop", label: "Desktop", icon: "󰸉", file: "DesktopTab", group: "LOOK" },
+        { id: "type",    label: "Type",    icon: "󰛖", file: "TypeTab",    group: "LOOK" },
+        { id: "shape",   label: "Shape",   icon: "󰠲", file: "ShapeTab",   group: "LAYOUT" },
+        { id: "bar",     label: "Bar",     icon: "󰕰", file: "BarTab",     group: "LAYOUT" },
+        { id: "panels",  label: "Panels",  icon: "󰕮", file: "PanelsTab",  group: "LAYOUT" },
+        { id: "motion",  label: "Motion",  icon: "󰗘", file: "MotionTab",  group: "BEHAVIOUR" },
     ]
 
     // a small bar, flyout, launcher or windows, drawn by the shell's own
     // pieces, showing what the tab changes
     pinned: LivePreview {
-        kind: ({ colour: "flyout", shape: "windows", type: "flyout", bar: "bar", panels: "launcher", motion: "windows" })[page.tab]
+        kind: ({ colour: "flyout", desktop: "windows", shape: "windows", type: "flyout", bar: "bar", panels: "launcher", motion: "windows" })[page.tab]
         picked: page.barModule
         onPick: id => page.barModule = id
     }
