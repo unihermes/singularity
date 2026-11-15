@@ -1,5 +1,6 @@
 // A labelled slider per display it can set, this bar's own first, then
-// Night Light (root's state; its schedule runs in shell.qml).
+// Night Light as one switch row, its warmth, ramp and schedule folded under
+// "Schedule and warmth" (root's state; its schedule runs in shell.qml).
 
 import "../services"
 import "../services/TimeWindow.js" as TimeWindow
@@ -11,6 +12,9 @@ FlyoutPanel {
     menuWidth: Theme.flyoutMenuWidth
 
     required property var shellRoot
+
+    // the warmth, ramp and schedule under Night Light, folded each time this opens
+    property bool nightOpen: false
 
     // the backlight and each DDC monitor (this bar's first), built from who
     // has answered so reads and drags don't rebuild the sliders
@@ -33,7 +37,7 @@ FlyoutPanel {
     // Read once the box is up, not as it opens: while a DDC read is on the
     // wire the panel's first frame waits for it, and the flyout appeared
     // half a second late.
-    onOpenChanged: if (open) refreshLater.restart(); else refreshLater.stop()
+    onOpenChanged: { nightOpen = false; if (open) refreshLater.restart(); else refreshLater.stop() }
     Component.onCompleted: if (open) refreshLater.restart()
     Timer {
         id: refreshLater
@@ -74,10 +78,17 @@ FlyoutPanel {
         onActivated: shellRoot.nightLight = !shellRoot.nightLight
     }
 
+    FlyoutRow {
+        leadingIcon: "󰔎"
+        label: "Schedule and warmth"
+        trailing: brightnessFlyout.nightOpen ? "󰅀" : "󰅂"
+        onActivated: brightnessFlyout.nightOpen = !brightnessFlyout.nightOpen
+    }
+
     // Same reasoning as the Control Centre's Warmth: only shown while there's an
     // effect to see.
     FlyoutStepper {
-        visible: shellRoot.nightLight
+        visible: brightnessFlyout.nightOpen && shellRoot.nightLight
         label: "Warmth"
         labelInset: Theme.iconCell + Theme.spaceL
         valueWidth: 52
@@ -89,7 +100,7 @@ FlyoutPanel {
     }
 
     FlyoutStepper {
-        visible: shellRoot.nightLight
+        visible: brightnessFlyout.nightOpen && shellRoot.nightLight
         label: "Ramp"
         labelInset: Theme.iconCell + Theme.spaceL
         valueWidth: 52
@@ -105,6 +116,7 @@ FlyoutPanel {
     // the schedule: off, sunset to sunrise (from the weather; 19:00 to
     // 07:00 until it loads), or two set times
     FlyoutSegmented {
+        visible: brightnessFlyout.nightOpen
         enabled: shellRoot.hasHyprsunset
         model: [{ value: "off", text: "Manual" }, { value: "sun", text: "Sunset" }, { value: "custom", text: "Custom" }]
         current: Settings.nightLightSchedule
@@ -112,7 +124,7 @@ FlyoutPanel {
     }
 
     Repeater {
-        model: Settings.nightLightSchedule === "custom"
+        model: brightnessFlyout.nightOpen && Settings.nightLightSchedule === "custom"
             ? [{ key: "nightLightFrom", label: "From" }, { key: "nightLightTo", label: "To" }] : []
 
         FlyoutStepper {
