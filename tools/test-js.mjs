@@ -260,29 +260,21 @@ test("ChannelPath snaps near edges and closes its outline", () => {
     assert.doesNotMatch(d, /NaN/)
 })
 
-test("Glass flyouts stay attached to their source at either screen edge", () => {
-    const G = load("GlassFlyout.js"), C = load("ChannelPath.js")
-    for (const anchor of [14, 180, 346]) {
-        const top = G.attachment(360, 240, anchor, 40, 15, 18, 7, false)
-        const bottom = G.attachment(360, 240, anchor, 40, 15, 18, 7, true)
-        for (const a of [top, bottom]) {
-            assert.equal((a.neck.x0 + a.neck.x1) / 2, anchor)
-            assert.equal(a.originX, anchor)
-            assert.equal(a.rects[0].y1, a.rects[1].y0)
-            const path = C.outline(a.rects, a.fillet, 0)
-            assert.match(path, /^M.* Z$/)
-            assert.doesNotMatch(path, /NaN|Infinity/)
-        }
-        assert.equal(top.neck.y0, -15)
-        assert.equal(bottom.neck.y1, 255)
-        assert.equal(top.originY, -15)
-        assert.equal(bottom.originY, 255)
-        assert.equal(bottom.neck.y0, 240 - top.neck.y1)
+test("Glass tabs flare into the bar except at a screen edge", () => {
+    const G = load("GlassFlyout.js")
+    const mid = G.attachment(360, 240, 100, 1920, 30, 18, 18, false)
+    assert.equal(mid.flareLeft, 18)
+    assert.equal(mid.flareRight, 18)
+    assert.equal(mid.originY, 0)
+    const edge = G.attachment(360, 240, 0, 360, 30, 18, 18, true)
+    assert.equal(edge.flareLeft, 0)
+    assert.equal(edge.flareRight, 0)
+    assert.equal(edge.originY, 240)
+    for (const a of [mid, edge]) {
+        for (const closed of [true, false]) assert.doesNotMatch(G.path(a, closed), /NaN|Infinity/)
+        assert.match(G.path(a, true), / Z$/)
     }
-    const tight = G.attachment(40, 20, 20, 64, 2, 18, 7, false)
-    assert.equal(tight.neck.x1 - tight.neck.x0, 40)
-    assert.equal(tight.fillet, 2)
-    assert.equal(tight.rects[1].r, 10)
+    assert.equal(G.attachment(40, 20, 0, 400, 20, 18, 7, false).radius, 10)
 })
 
 test("HyprTables reads hl.config fields", () => {

@@ -83,16 +83,6 @@ OverlayWindow {
         function onFlyoutAnchorItemChanged() { if (root.open) root.sourceItem = root.scope.flyoutAnchorItem }
     }
     readonly property bool glassAttached: Theme.glass && !Theme.plain && sourceItem !== null && section !== ""
-    // Source coordinates are in the bar window; bottom bars start near the
-    // screen's far edge. Stop at the chip's drawn edge rather than its hit box.
-    readonly property real sourceNear: {
-        if (!sourceItem || !scope.barWindow) return 0
-        var point = sourceItem.mapToItem(null, 0, 0)
-        var inset = Math.max(0, (sourceItem.height - Theme.moduleHeight) / 2)
-        return atBottom ? root.height - scope.barWindow.implicitHeight + point.y + inset
-            : point.y + sourceItem.height - inset
-    }
-
     readonly property bool atBottom: Theme.barPosition === "bottom"
     // Grown (Channel): the whole bar group in this window's coordinates.
     readonly property var group: {
@@ -253,9 +243,7 @@ OverlayWindow {
             // Glass grows about the source, including its neck. Other styles
             // scale from the bar-side midpoint; grown channels only fade.
             readonly property var attachment: GlassFlyout.attachment(width, height,
-                root.anchorX - x, root.sourceItem ? root.sourceItem.width : 0,
-                Math.max(Theme.borderWidth, root.atBottom ? root.sourceNear - (y + height) : y - root.sourceNear),
-                radius, 0, root.atBottom)
+                x, root.width, root.anchorX - x, radius, Math.max(radius, Theme.channelFillet), root.atBottom)
             readonly property bool flowMotion: root.glassAttached
                 && (Theme.flyoutAnim === "scale" || Theme.flyoutAnim === "drop")
             transform: [
@@ -281,6 +269,7 @@ OverlayWindow {
                 anchors.fill: parent
                 visible: root.glassAttached
                 attachment: box.attachment
+                atBottom: root.atBottom
             }
 
             Absorber {}

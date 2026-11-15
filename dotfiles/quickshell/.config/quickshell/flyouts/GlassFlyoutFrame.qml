@@ -1,31 +1,31 @@
-// One frosted surface around the body and its curved connection to the module.
+// One frosted surface: the flyout body, running into the bar's edge on
+// concave flares, with the outline stroked everywhere but along the bar.
 import QtQuick
 import QtQuick.Shapes
 import "../services"
-import "../services/ChannelPath.js" as ChannelPath
+import "../services/GlassFlyout.js" as GlassFlyout
 
 Shape {
     id: root
     required property var attachment
+    property bool atBottom: false
 
     preferredRendererType: Shape.CurveRenderer
-
-    // The neck is part of the panel, so pressing it does not dismiss it.
-    Item {
-        x: root.attachment.neck.x0
-        y: root.attachment.neck.y0
-        width: root.attachment.neck.x1 - x
-        height: root.attachment.neck.y1 - y
-        Absorber {}
-    }
+    // a bottom bar mirrors the whole shape upward
+    transform: Scale { yScale: root.atBottom ? -1 : 1; origin.y: root.attachment.height / 2 }
 
     Shadow { radius: Theme.panelFrameRadius; opaque: Theme.panelOpacity >= 1 }
 
     ShapePath {
         fillColor: Theme.flyoutFill
+        strokeWidth: -1
+        PathSvg { path: GlassFlyout.path(root.attachment, true) }
+    }
+    ShapePath {
+        fillColor: "transparent"
         strokeColor: Theme.stroke
         strokeWidth: Theme.borderWidth
         joinStyle: ShapePath.RoundJoin
-        PathSvg { path: ChannelPath.outline(root.attachment.rects, root.attachment.fillet, 0) }
+        PathSvg { path: GlassFlyout.path(root.attachment, false) }
     }
 }
