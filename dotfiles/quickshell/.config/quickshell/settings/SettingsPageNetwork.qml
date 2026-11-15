@@ -1,9 +1,9 @@
 // LINKS: the cable and Wi-Fi as rows (In use on the one carrying the
 // traffic, Wi-Fi's power button on its row), the picked one's readings as
 // chips under them (from `ip`, `iw` and sysfs, read while the page is
-// open). Then one list of what's in range (joined and saved first), hidden
-// networks, and every saved network with Auto-join and Forget as chips on
-// its row; on Network.qml shared with the bar.
+// open). Then one list of networks: every saved one (joined, in range, not
+// nearby) with Join, Auto-join and Forget as chips on its row, then the
+// rest in range and hidden networks; on Network.qml shared with the bar.
 
 import Quickshell
 import Quickshell.Io
@@ -47,9 +47,13 @@ SettingsPage {
     readonly property bool listening: Network.device !== "" && Network.powered
     // the joined network's own entry in the scan, for its security and bars
     readonly property var joined: Network.networks.find(n => n.connected) || null
-    // the joined network first, then the other saved ones
-    readonly property var savedNear: Network.networks.filter(n => n.known)
-        .sort((a, b) => (b.connected ? 1 : 0) - (a.connected ? 1 : 0))
+    // every saved network with its scan entry (null when not nearby): the
+    // joined one first, then those in range strongest first, then the rest
+    readonly property var savedList: Network.knownNetworks
+        .map(k => ({ ssid: k.ssid, security: k.security, hidden: k.hidden, last: k.last, auto: k.auto,
+                     near: Network.networks.find(n => n.ssid === k.ssid) || null }))
+        .sort((a, b) => (b.near && b.near.connected ? 2 : b.near ? 1 : 0) - (a.near && a.near.connected ? 2 : a.near ? 1 : 0)
+                        || (b.near ? b.near.bars : 0) - (a.near ? a.near.bars : 0))
     readonly property var others: Network.networks.filter(n => !n.known && !n.connected)
 
     function barsOf(dbm) { return dbm >= -60 ? 4 : dbm >= -67 ? 3 : dbm >= -75 ? 2 : 1 }
@@ -293,7 +297,7 @@ SettingsPage {
         }
     }
 
-    // --- networks in range ----------------------------------------------
+    // --- networks: saved, then what else is in range -----------------------
 
     Item { width: 1; height: Theme.spaceM }
 
@@ -311,7 +315,7 @@ SettingsPage {
             anchors.right: rescan.left
             anchors.rightMargin: Theme.spaceL
             anchors.verticalCenter: parent.verticalCenter
-            text: "IN RANGE  " + (page.savedNear.length + page.others.length)
+            text: "NETWORKS  " + (page.savedList.length + page.others.length)
         }
 
         FlyoutChip {
@@ -391,14 +395,56 @@ SettingsPage {
         }
     }
 
-    // One list, saved networks first, each strongest first. Matched by
-    // SSID: each list refresh brings new objects, and rebuilding the rows
-    // would drop a passphrase being typed into one
+    // Every saved network, the joined one first, then the ones in range
+    // strongest first, then those not nearby: where it is and when it last
+    // joined, with Join (in range), Auto-join (lit while on) and Forget (two
+    // clicks) as chips. Matched by SSID, so a scan doesn't rebuild the rows.
     Repeater {
-        model: ScriptModel { values: page.listening ? page.savedNear : []; objectProp: "ssid" }
-        NetworkRow {}
+        model: ScriptModel { values: page.savedList; objectProp: "ssid" }
+
+        SettingsField {
+            id: saved
+            required property var modelData
+            readonly property var near: modelData.near
+            readonly property string where: near && near.connected ? "Joined" : near ? "In range" : "Not nearby"
+
+            label: modelData.ssid
+            hint: [where, near ? page.strengthWord(Math.max(1, near.bars)) : "", page.securityWord(modelData.security),
+                   modelData.hidden ? "Hidden" : "",
+                   where === "Joined" ? "" : "last " + page.lastJoined(modelData.last)].filter(t => t).join("  ·  ")
+
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceS
+
+                FlyoutChip {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: saved.near !== null && !saved.near.connected && page.listening
+                    text: Network.connecting === saved.modelData.ssid ? "Joining…" : "Join"
+                    enabled: Network.connecting !== saved.modelData.ssid
+                    onClicked: page.joinOrPrompt(saved.near)
+                }
+                FlyoutChip {
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: saved.modelData.auto ? "󰄬" : ""
+                    text: "Auto-join"
+                    selected: saved.modelData.auto
+                    onClicked: Network.setAutoConnect(saved.modelData.ssid, !saved.modelData.auto)
+                }
+                FlyoutChip {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Forget"
+                    confirmText: "Forget it?"
+                    onClicked: {
+                        Network.forget(saved.modelData.ssid)
+                        page.say("Forgot " + saved.modelData.ssid, false)
+                    }
+                }
+            }
+        }
     }
 
+    // the rest in range, strongest first
     Repeater {
         model: ScriptModel {
             objectProp: "ssid"
@@ -410,12 +456,12 @@ SettingsPage {
     }
 
     FlyoutRow {
-        visible: !page.listening || page.savedNear.length + page.others.length === 0
+        visible: !page.listening || page.savedList.length + page.others.length === 0
         enabled: false
         label: Network.device === "" ? "No wireless device"
             : !Network.powered ? "The radio is off"
             : Network.listError !== "" ? Network.listError
-            : Network.scanning ? "Scanning…" : "Nothing in range"
+            : Network.scanning ? "Scanning…" : "No saved networks and nothing in range"
     }
 
     FlyoutRow {
@@ -497,58 +543,6 @@ SettingsPage {
                 onClicked: page.hiddenOpen = false
             }
         }
-    }
-
-    // --- saved ----------------------------------------------------------
-
-    Item { width: 1; height: Theme.spaceM }
-
-    FlyoutHeading { text: "SAVED" + "  " + Network.knownNetworks.length }
-
-    // each on one row: where it is and when it last joined, then Auto-join
-    // (lit while on) and Forget (two clicks) as chips
-    Repeater {
-        model: Network.knownNetworks
-
-        SettingsField {
-            id: saved
-            required property var modelData
-            readonly property string where: Network.ssid === modelData.ssid ? "Joined"
-                : Network.networks.some(n => n.ssid === modelData.ssid) ? "In range"
-                : "Not nearby"
-
-            label: modelData.ssid
-            hint: [where, page.securityWord(modelData.security), modelData.hidden ? "Hidden" : "",
-                   where === "Joined" ? "" : "last " + page.lastJoined(modelData.last)].filter(t => t).join("  ·  ")
-
-            Row {
-                anchors.right: parent.right
-                spacing: Theme.spaceS
-
-                FlyoutChip {
-                    anchors.verticalCenter: parent.verticalCenter
-                    icon: saved.modelData.auto ? "󰄬" : ""
-                    text: "Auto-join"
-                    selected: saved.modelData.auto
-                    onClicked: Network.setAutoConnect(saved.modelData.ssid, !saved.modelData.auto)
-                }
-                FlyoutChip {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Forget"
-                    confirmText: "Forget it?"
-                    onClicked: {
-                        Network.forget(saved.modelData.ssid)
-                        page.say("Forgot " + saved.modelData.ssid, false)
-                    }
-                }
-            }
-        }
-    }
-
-    FlyoutRow {
-        visible: Network.knownNetworks.length === 0
-        enabled: false
-        label: "No saved networks"
     }
 
     // re-read a moment after a connect, once DHCP has given an address

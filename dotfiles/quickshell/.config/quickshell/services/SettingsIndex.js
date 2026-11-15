@@ -16,10 +16,9 @@ var entries = [
     { page: "network", section: "Links", label: "Speed",      keywords: "bitrate link rate mbit" },
     { page: "network", section: "Links", label: "Signal",     keywords: "strength dbm rssi" },
     { page: "network", section: "Links", label: "Band",       keywords: "frequency ghz 2.4 5 6 channel" },
-    { page: "network", section: "In range", label: "In range", keywords: "wifi scan rescan ssid connect join passphrase saved nearby other networks strength" },
-    { page: "network", section: "In range", label: "Other network…", keywords: "hidden ssid connect join passphrase wifi" },
-    { page: "network", section: "Saved", label: "Saved",       keywords: "known networks forget remove passphrase" },
-    { page: "network", section: "Saved", label: "Auto-join",   keywords: "autoconnect automatic connect known network" },
+    { page: "network", section: "Networks", label: "Networks", keywords: "wifi scan rescan ssid connect join passphrase saved known nearby in range other networks strength forget remove" },
+    { page: "network", section: "Networks", label: "Other network…", keywords: "hidden ssid connect join passphrase wifi" },
+    { page: "network", section: "Networks", label: "Auto-join",   keywords: "autoconnect automatic connect known network" },
 
     // --- Bluetooth ---------------------------------------------------------
     { page: "bluetooth", section: "Adapter",  label: "Adapter",      keywords: "bt radio bluez power on off rfkill name hci interface" },
