@@ -2,7 +2,8 @@
 // (arrows or wheel page; neighbour days dimmed
 // and clickable; footer back to today; weeks start on Settings.weekStart),
 // the picked day's events (only with feeds in calendars.conf; days with
-// events get a dot), and the clock island's timer (Timers.qml).
+// events get a dot), and the clock island's timer (Timers.qml), which stays
+// on top as a row while it runs and another tab is open.
 
 import Quickshell
 import QtQuick
@@ -90,6 +91,16 @@ FlyoutPanel {
     }
 
     FlyoutDivider {}
+
+    // a running timer, kept on top while another tab is open; a click goes to it
+    FlyoutRow {
+        visible: Timers.active && !calendarFlyout.onTimer
+        leadingIcon: "󰔛"
+        label: Timers.title + (Timers.paused ? " · paused" : "")
+        trailing: Timers.text
+        trailingIsValue: true
+        onActivated: calendarFlyout.tab = "timer"
+    }
 
     FlyoutSegmented {
         model: (Calendar.configured ? [
