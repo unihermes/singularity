@@ -65,6 +65,16 @@ SettingsTab {
             label: "Rows shown"; key: "launcherRows"
             hint: "Before it scrolls"
         }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Try it"
+            hint: "Opens it as set; SUPER+Space shuts it"
+            FlyoutChip {
+                anchors.right: parent.right
+                text: "Open launcher"
+                onClicked: Quickshell.execDetached(["qs", "ipc", "call", "launcher", "toggle", "apps"])
+            }
+        }
     }
 
     Item { width: 1; height: Theme.spaceM }
@@ -114,6 +124,23 @@ SettingsTab {
             label: "Overlay dimming"; key: "scrim"; step: 5; suffix: "%"
             enabled: Settings.overviewBackdrop === "dim"
             hint: enabled ? "How dark Dim is" : "With the Dim backdrop"
+        }
+        SettingsField {
+            labelWidth: parent.labelWidth
+            label: "Try it"
+            hint: "Each opens as set; its key shuts it"
+            Row {
+                anchors.right: parent.right
+                spacing: Theme.spaceS
+                FlyoutChip {
+                    text: "Overview"
+                    onClicked: Quickshell.execDetached(["qs", "ipc", "call", "overlay", "toggle"])
+                }
+                FlyoutChip {
+                    text: "Power menu"
+                    onClicked: Quickshell.execDetached(["qs", "ipc", "call", "power", "menu"])
+                }
+            }
         }
     }
 
