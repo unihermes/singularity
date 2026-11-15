@@ -1,6 +1,6 @@
-// The level large with the time left and the draw beside it, the charge
-// through the day as a graph, then the power profile as one strip and the
-// battery's health, then Settings.
+// The level large with the time left and the draw beside it, the charge as
+// a graph (this discharge while on battery, else the last 24 hours), then the
+// power profile as one strip and readout rows (draw, energy, health).
 
 import Quickshell.Services.UPower
 import QtQuick
@@ -78,7 +78,7 @@ FlyoutPanel {
         id: historyChart
         width: parent.width
         spacing: Theme.spaceS
-        visible: Battery.discharging
+        visible: Battery.discharging || Battery.history.length > 1
         property real now: Date.now()
 
         Timer {
@@ -90,7 +90,8 @@ FlyoutPanel {
         }
 
         Text {
-            text: "Current discharge · " + Format.duration((chargeGraph.to - chargeGraph.from) / 1000)
+            text: Battery.discharging ? "Current discharge · " + Format.duration((chargeGraph.to - chargeGraph.from) / 1000)
+                : "Last 24 hours"
             color: Theme.subtext
             font.family: Theme.fontText
             font.pixelSize: Theme.fontCaption
@@ -131,9 +132,11 @@ FlyoutPanel {
                 bare: true
                 showTicks: false
                 fill: false
-                from: Battery.dischargeHistory.length > 0 ? Battery.dischargeHistory[0].t : to
+                from: Battery.discharging ? (Battery.dischargeHistory.length > 0 ? Battery.dischargeHistory[0].t : to)
+                    : Battery.history.length > 0 ? Battery.history[0].t : to
                 to: Math.max(historyChart.now, Battery.history.length > 0 ? Battery.history[Battery.history.length - 1].t : 0)
                 points: {
+                    if (!Battery.discharging) return Battery.history
                     var readings = Battery.dischargeHistory.slice()
                     if (readings.length > 0 && to > readings[readings.length - 1].t)
                         readings.push({ t: to, v: Battery.percent / 100 })
@@ -182,6 +185,24 @@ FlyoutPanel {
         model: PpdProfile.choices
         current: PpdProfile.profile
         onPicked: v => PpdProfile.set(v)
+    }
+
+    FlyoutRow {
+        visible: Battery.present && Battery.device.changeRate !== 0
+        leadingIcon: "󱐋"
+        label: "Power draw"
+        trailing: visible ? Math.abs(Battery.device.changeRate).toFixed(1) + " W" : ""
+        trailingIsValue: true
+        enabled: false
+    }
+
+    FlyoutRow {
+        visible: Battery.present && Battery.device.energyCapacity > 0
+        leadingIcon: "󰁹"
+        label: "Energy"
+        trailing: visible ? Battery.device.energy.toFixed(1) + " of " + Battery.device.energyCapacity.toFixed(1) + " Wh" : ""
+        trailingIsValue: true
+        enabled: false
     }
 
     FlyoutRow {
