@@ -35,9 +35,10 @@ Column {
                 anchors.fill: parent
                 anchors.margins: Theme.spaceL
                 // the rows spread down the card
-                spacing: Math.max(Theme.spaceS, (height - visibleChildren.length * Theme.fs(38)) / Math.max(1, visibleChildren.length - 1))
+                spacing: Math.max(Theme.spaceS, (height - visibleChildren.length * Theme.fs(34)) / Math.max(1, visibleChildren.length - 1))
 
                 GlassLink {
+                    height: Theme.fs(34)
                     visible: Network.device !== ""
                     icon: Network.powered ? "󰤨" : "󰤭"
                     title: "Wi-Fi"
@@ -50,6 +51,7 @@ Column {
                     }
                 }
                 GlassLink {
+                    height: Theme.fs(34)
                     visible: !!root.adapter
                     icon: "󰂯"
                     title: "Bluetooth"
@@ -61,6 +63,7 @@ Column {
                     onOpened: root.cc.page = "bluetooth"
                 }
                 GlassLink {
+                    height: Theme.fs(34)
                     icon: Vpn.servers.length > 0 ? "󰖂" : "󰀝"
                     title: Vpn.servers.length > 0 ? "VPN" : "Airplane"
                     caption: Vpn.servers.length > 0 ? (Vpn.busy ? "Connecting…" : Vpn.up ? Vpn.currentName : "Off")
