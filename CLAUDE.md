@@ -21,6 +21,8 @@ Use `--largest` on a directory to rank its files recursively by size.
   `Looks.js` / `Styles.js`: looks and styles.
 - `qs/bar/`: `Bar.qml` (window, `widgetItem(key)`), `BarModules.qml` (every module; the big ones in
   `WorkspacesModule`, `WindowsModule`, `TrayModule`).
+  The menu bar's app menus: `AppMenuModule` + `flyouts/AppMenuFlyout.qml`, fed by `services/AppMenus.qml`
+  (D-Bus menus via `scripts/appmenu.py`, else shortcut tables in `AppMenuTables.js`).
 - `qs/flyouts/`: `FlyoutPanel.qml` (shared flyout shell: padding, position, grown mode),
   `PanelFrame.qml`, `SectionRuns.qml` (section frames), shared rows/controls
   (`FlyoutRow`, `FlyoutHeading`, `FlyoutSegmented`, ...), one `*Flyout.qml` per module,

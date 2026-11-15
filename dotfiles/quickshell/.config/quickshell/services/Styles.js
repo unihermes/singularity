@@ -85,10 +85,10 @@ var styles = {
         name: "Glass", hint: "Frosted menu bar and a floating Dock, as on a Mac",
         frame: "single", modules: "bare", mark: "ground",
         shadow: "soft", lines: false, attach: "floating", anim: "scale", glass: true, layout: "menubar",
-        // as the macOS menu bar: the app's name by the logo, then status
-        // items running to the clock
+        // as the macOS menu bar: the app's name and menus by the logo, then
+        // status items running to the clock
         bar: {
-            left: ["controlcentre", "activeapp", "workspaces"],
+            left: ["controlcentre", "activeapp", "appmenu", "workspaces"],
             // as the menu bar reads: live indicators, background services,
             // the tray, media and weather, then the system controls with the
             // network and battery nearest the search, notifications and clock

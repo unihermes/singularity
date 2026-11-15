@@ -500,7 +500,7 @@ Singleton {
     // modules added since.
 
     readonly property var widgetDefaults: ({
-        left:   ["controlcentre", "activeapp", "search", "taskview", "workspaces", "windows"],
+        left:   ["controlcentre", "activeapp", "appmenu", "search", "taskview", "workspaces", "windows"],
         centre: ["visualizer", "clock", "weather"],
         right:  ["recorder", "privacy", "drives", "phone", "vpn", "failed", "updates", "claude", "notifications", "tray",
                  "bluetooth", "network", "volume", "brightness", "battery", "desktop"],
@@ -513,6 +513,7 @@ Singleton {
         workspaces:    { label: "Workspaces",     icon: "󰇘" },
         windows:       { label: "Open Windows",   icon: "󰀻" },
         activeapp:     { label: "Focused App",    icon: "󰀵" },
+        appmenu:       { label: "App Menus",      icon: "󰍜" },
         search:        { label: "Search",         icon: "󰍉" },
         taskview:      { label: "Task View",      icon: "󰕮" },
         clock:         { label: "Clock",          icon: "󰅐" },
@@ -576,7 +577,7 @@ Singleton {
     readonly property bool dockOn: adapter.style === "glass" && Styles.has(adapter.styleOptions, "dock")
     // modules only a style's own arrangement (Styles' `bar`) brings, and the
     // ones the current style names
-    readonly property var styleOnlyWidgets: ["activeapp", "search", "taskview"]
+    readonly property var styleOnlyWidgets: ["activeapp", "appmenu", "search", "taskview"]
     readonly property var styleModules: {
         var b = taskbarLayoutOn ? Styles.get(adapter.style).bar : null
         return b ? b.left.concat(b.right) : []

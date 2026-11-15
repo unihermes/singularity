@@ -813,6 +813,9 @@ ShellRoot {
             TrayMenuFlyout { scope: screenScope }
         }
 
+        // the menu bar's application menus (File, Edit, View…)
+        LazyFlyout { name: "appmenu"; scope: screenScope; AppMenuFlyout { scope: screenScope } }
+
         // right-click menu for the bar's empty space
         LazyFlyout { name: "barmenu"; scope: screenScope; BarMenuFlyout { scope: screenScope } }
 

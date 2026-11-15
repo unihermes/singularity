@@ -24,7 +24,7 @@ Item {
 
     readonly property var widgetItems: ({
         controlcentre: ccBtn, workspaces: wsFrame,
-        windows: windowIcons, activeapp: activeApp, search: searchBtn, taskview: taskViewBtn, clock: clock, bluetooth: btBtn,
+        windows: windowIcons, activeapp: activeApp, appmenu: appMenus, search: searchBtn, taskview: taskViewBtn, clock: clock, bluetooth: btBtn,
         network: netBtn, volume: volBtn, brightness: brightBtn,
         battery: battBtn, tray: trayFrame,
         visualizer: musicFrame, weather: weatherBtn,
@@ -76,6 +76,12 @@ Item {
         labelBold: true
         active: screenScope.openFlyout === "workspaces"
         onActivated: screenScope.toggleFlyout("workspaces", activeApp)
+    }
+
+    // the focused app's menus after its name
+    AppMenuModule {
+        id: appMenus
+        host: barModules
     }
 
     // Search: the Windows taskbar's search box, or the menu bar's magnifier

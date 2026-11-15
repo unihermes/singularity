@@ -84,8 +84,8 @@ comparison tables below describe the original five styles.
   the value it takes when off).
 - Glass is the macOS take (`menubar` and `dock` options): a 28px frosted menu
   bar with bare chips, the Apple button, the focused app's name (the
-  `activeapp` module, menu bar only) and the status icons and clock packed at
-  the right; the open windows move to the Dock (`bar/Dock.qml`), a frosted
+  `activeapp` module, menu bar only) and its menus (`appmenu`, below) and the
+  status icons and clock packed at the right; the open windows move to the Dock (`bar/Dock.qml`), a frosted
   pill along the bottom of pinned and open apps,
   a dot under each running one. The focused app name opens the workspace overview,
   so the workspace marks omit its grid button. The Dock reserves its own strip. Liberation
@@ -94,10 +94,21 @@ comparison tables below describe the original five styles.
   bar: Pane as the Windows taskbar (Start, which opens the Start-menu launcher
   layout with the Control Centre on its right-click, a light search box, Task View,
   open windows; tray, stacked clock, Action Centre, Show Desktop), Glass as the
-  menu bar (logo, app name, workspaces; status items, search, clock last). Their
-  `bar` orders are in Styles.js, each module named. Search, Task View and
-  Focused App (`Settings.styleOnlyWidgets`) exist only under an arrangement
-  that names them. Each style keeps its own rearranging in `styleLayouts`.
+  menu bar (logo, app name, app menus, workspaces; status items, search, clock
+  last). Their `bar` orders are in Styles.js, each module named. Search, Task
+  View, Focused App and App Menus (`Settings.styleOnlyWidgets`) exist only under
+  an arrangement that names them. Each style keeps its own rearranging in `styleLayouts`.
+- App Menus (2026-11-15, built without a mockup round on the user's "hybrid"
+  ask): the focused app's File, Edit, View… as plain bare-chip titles after its
+  name, then the shell's Window menu (before the app's Help). A click opens the
+  menu as a compact flyout like the tray's (shortcuts as values, checked
+  entries lit, submenus drill down); while one is open, pointing at another
+  title switches to it. The menus are the app's own when it exports them over
+  D-Bus (`scripts/appmenu.py` is the registrar; only XWayland apps do under
+  Hyprland, matched to windows by pid), else per-class tables in
+  `AppMenuTables.js` whose entries send the app its shortcuts, else a common
+  Edit menu. Window entries that can't apply (pin on a tiled window, a second
+  display) are left out, not greyed.
 - Hover and open states of bare chips (Glass, the taskbar) are washes of the
   foreground (`Theme.washHover`, `washActive`), never the opaque overlay grey,
   and level fills are opaque for Glass and softened to 45% for taskbars; the open
