@@ -1,5 +1,5 @@
 // A card saying where things stand with Check and Update at its end, then
-// a row per kind (Repositories, AUR, Singularity's commits, Clean up), each
+// a tile per kind (Repositories, AUR, Singularity's commits, Clean up), each
 // opening a page of its own with its list and its action, then Settings.
 
 import QtQuick
@@ -72,24 +72,32 @@ FlyoutPanel {
 
     FlyoutDivider { visible: root.page === "" }
 
-    // a row per kind, its count at the end; each opens its page
-    Repeater {
-        model: root.page === "" ? [
-            { page: "repo", icon: "󰏖", label: "Repositories", value: String(root.repoPackages.length) },
-            { page: "aur", icon: "󰏗", label: "AUR", value: String(root.aurPackages.length) },
-            { page: "singularity", icon: "󰜘", label: "Singularity",
-              value: Updates.repoBehind > 0 ? Updates.repoBehind + (Updates.repoBehind === 1 ? " commit" : " commits") : "Current" },
-            { page: "clean", icon: "󰃢", label: "Clean up",
-              value: Health.busyRepair === "reclaim" ? "Cleaning…" : root.reclaimParts ? root.reclaimParts[1] : "Nothing" },
-        ] : []
+    // a tile per kind, its count big; each opens its page
+    TileGrid {
+        visible: root.page === ""
+        columns: 2
+        Repeater {
+            model: root.page === "" ? [
+                { page: "repo", icon: "󰏖", label: "Repositories", value: String(root.repoPackages.length), lit: root.repoPackages.length > 0 },
+                { page: "aur", icon: "󰏗", label: "AUR", value: String(root.aurPackages.length), lit: root.aurPackages.length > 0 },
+                { page: "singularity", icon: "󰜘", label: "Singularity",
+                  value: Updates.repoBehind > 0 ? Updates.repoBehind + (Updates.repoBehind === 1 ? " commit" : " commits") : "Current",
+                  lit: Updates.repoBehind > 0 },
+                { page: "clean", icon: "󰃢", label: "Clean up",
+                  value: Health.busyRepair === "reclaim" ? "Cleaning…" : root.reclaimParts ? root.reclaimParts[1] : "Nothing", lit: false },
+            ] : []
 
-        FlyoutRow {
-            required property var modelData
-            leadingIcon: modelData.icon
-            label: modelData.label
-            trailing: modelData.value + "  󰅂"
-            trailingIsValue: true
-            onActivated: root.page = modelData.page
+            FlyoutTile {
+                required property var modelData
+                width: parent.cell
+                big: true
+                clickable: true
+                glyph: modelData.icon
+                title: modelData.value
+                caption: modelData.label
+                lit: modelData.lit
+                onClicked: root.page = modelData.page
+            }
         }
     }
 
