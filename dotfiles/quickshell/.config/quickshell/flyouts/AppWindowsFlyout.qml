@@ -351,14 +351,16 @@ FlyoutPanel {
             label: "Close"
             onActivated: root.closeWin(one.win)
         }
-        // for a window that ignores the polite one
-        FlyoutRow {
-            visible: one.visible
-            leadingIcon: "󰚌"
-            label: "Kill"
-            alert: true
-            confirmText: "Kill it?"
-            onActivated: root.kill(one.win)
-        }
+    }
+
+    // for a window that ignores the polite one, in a section of its own
+    FlyoutDivider { visible: one.visible }
+    FlyoutRow {
+        visible: one.visible
+        leadingIcon: "󰚌"
+        label: "Kill"
+        alert: true
+        confirmText: "Kill it?"
+        onActivated: root.kill(one.win)
     }
 }
