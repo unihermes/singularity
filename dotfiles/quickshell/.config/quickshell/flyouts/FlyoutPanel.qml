@@ -23,6 +23,9 @@ OverlayWindow {
     // screen) that the box centres itself under
     readonly property real anchorX: glassAttached
         ? sourceItem.mapToItem(null, sourceItem.width / 2, 0).x : scope.flyoutAnchorX
+    // the glass tab's source module, in the same coordinates
+    readonly property real sourceX0: glassAttached ? sourceItem.mapToItem(null, 0, 0).x : 0
+    readonly property real sourceX1: glassAttached ? sourceX0 + sourceItem.width : 0
     // backdrop click, and content that wants to dismiss the flyout
     function requestClose() { scope.openFlyout = "" }
 
@@ -31,11 +34,13 @@ OverlayWindow {
     // Exclusive keyboard focus instead of OnDemand; fixed while it's up
     property bool keyboardExclusive: false
     // distance from the bar's screen edge to the near edge of the box
-    property real topOffset: Theme.flyoutOffset + (glassAttached ? Theme.spaceXs + Theme.borderWidth : 0)
+    property real topOffset: Theme.flyoutOffset
 
     // how close the box may come to a screen edge (0 for the end panels, so
     // they run into the corner)
     property int edgeMargin: Theme.edgeMargin
+    // a glass tab runs to the screen edge like the bar does
+    readonly property int sideMargin: glassAttached ? 0 : edgeMargin
 
     // data, not children, so non-visual helpers can sit among the rows
     default property alias content: contentColumn.data
@@ -209,6 +214,13 @@ OverlayWindow {
             bare: root.grown || root.glassAttached
             ground: Theme.flyoutFill
             x: {
+                // a glass tab grows out of its module: one side runs straight
+                // down from the module's, the body reaching toward screen centre
+                if (root.glassAttached) {
+                    var towardsLeft = root.anchorX > root.width / 2
+                    var tab = towardsLeft ? root.sourceX1 - width : root.sourceX0
+                    return Math.round(Math.max(root.sideMargin, Math.min(tab, root.width - width - root.sideMargin)))
+                }
                 var free = Math.max(root.edgeMargin,
                                     Math.min(root.anchorX - width / 2,
                                              root.width - width - root.edgeMargin))
@@ -243,7 +255,7 @@ OverlayWindow {
             readonly property var attachment: GlassFlyout.attachment(width, height,
                 root.anchorX - x, root.sourceItem ? root.sourceItem.width : 0,
                 Math.max(Theme.borderWidth, root.atBottom ? root.sourceNear - (y + height) : y - root.sourceNear),
-                radius, Theme.channelFillet, root.atBottom)
+                radius, 0, root.atBottom)
             readonly property bool flowMotion: root.glassAttached
                 && (Theme.flyoutAnim === "scale" || Theme.flyoutAnim === "drop")
             transform: [

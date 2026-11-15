@@ -333,17 +333,17 @@ Style: `channel` (frame `channel` in `Styles.js`).
   outline around both. Rounded inside corners join them where the widths
   differ, and the sides are straight where they line up (at the screen edge,
   for instance). It only fades in, since its frame is joined to the bar.
-- **Glass from the module** (picked 2026-11-14): bar module flyouts share one
-  frosted surface with a short neck and curved shoulders leading from the clicked
-  chip. The panel clears the bar by one extra-small spacing step (2 px stock).
-  The neck uses the actual module width, bounded only by the panel width, and
-  follows its centre as labels resize. It stays aligned when the wider panel
-  is clamped against a screen edge. The panel scales from the module's edge,
-  with the connection fixed throughout opening and closing. Bottom bars reflect
-  the shape upward. Fade and
-  None still follow the Motion setting. The neck takes clicks as part of the
-  panel; the module itself stays clickable to close or switch flyouts. Plain
-  keeps its flush frame, and menus without a bar module keep their usual frame.
+- **Glass tab** (reworked 2026-11-15): a bar module's flyout is one frosted
+  surface that grows straight out of the module like a tab. It sits flush
+  under the bar and runs to the screen edge, with no gap, no shoulders and no
+  fillets. A short neck as wide as the module bridges to the panel; one side of
+  the panel lines up with the module's side, and the panel reaches toward the
+  screen centre. The panel scales from the module's edge, with the
+  connection fixed throughout opening and closing. Bottom bars reflect the
+  shape upward. Fade and None still follow the Motion setting. The neck takes
+  clicks as part of the panel; the module itself stays clickable to close or
+  switch flyouts. Plain keeps its flush frame, and menus without a bar module
+  keep their usual frame.
 - **Frame:** a channel with a surface ground using the shared panel opacity
   (Glass and See-through), and radius `panelFrameRadius`
   (15px at Roundness 6).
