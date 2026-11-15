@@ -18,7 +18,7 @@ Singleton {
     readonly property int historyLength: 60
 
     // a reading at or over this is drawn in the alert colour
-    readonly property int hotC: 85
+    readonly property int hotC: 80
 
     readonly property bool desktop: Platform.allows("cooling")
     // The tray's Cooling item, the desktop's stats widget (GPU load) or
