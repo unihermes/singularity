@@ -1,8 +1,8 @@
-// Sound on one panel, the level first: the output's level large with the
-// device beside it (a click there opens the outputs in place to switch),
-// its slider, the microphone's level, the Game, Chat and Media channels'
-// levels (a click on a name mutes it) and the ChatMix dial, then each app playing right now with
-// a level of its own (an app with several streams, like a browser's tabs,
+// Sound in three tabs. Output: the level large with the device beside it (a
+// click there opens the outputs in place to switch), its slider and mute,
+// the Game, Chat and Media channels' levels (a click on a name mutes it)
+// and the ChatMix dial. Input: the microphone's level and mute. Apps: each
+// app playing right now with a level of its own (an app with several streams, like a browser's tabs,
 // gets one level for them all; drag its name onto a channel to move it
 // there, for good). Outputs with nothing plugged in are left out. The Audio page in Settings has the rest: those outputs, recording
 // apps, and moving an app to another output.
@@ -19,7 +19,9 @@ FlyoutPanel {
 
     // the outputs list, opened from the device under the level
     property bool picking: false
-    onOpenChanged: picking = false
+    // Output (the level, the outputs, the channels), Input or Apps
+    property string tab: "output"
+    onOpenChanged: { picking = false; tab = "output" }
     Binding { target: Audio; property: "flyoutWatching"; value: volumeFlyout.open }
 
     readonly property var sink: Pipewire.defaultAudioSink
@@ -44,7 +46,15 @@ FlyoutPanel {
         onSettingsClicked: scope.openSettings("audio")
     }
 
+    FlyoutSegmented {
+        model: [{ value: "output", text: "Output" }, { value: "input", text: "Input" },
+                { value: "apps", text: "Apps" + (Audio.playingApps.length > 0 ? "  " + Audio.playingApps.length : "") }]
+        current: volumeFlyout.tab
+        onPicked: v => volumeFlyout.tab = v
+    }
+
     Item {
+        visible: volumeFlyout.tab === "output"
         width: parent.width
         implicitHeight: Math.max(level.implicitHeight, device.implicitHeight)
 
@@ -120,7 +130,7 @@ FlyoutPanel {
     }
 
     Repeater {
-        model: ScriptModel { values: volumeFlyout.picking ? volumeFlyout.sinksShown : [] }
+        model: ScriptModel { values: volumeFlyout.tab === "output" && volumeFlyout.picking ? volumeFlyout.sinksShown : [] }
         FlyoutRow {
             required property var modelData
             leadingIcon: Audio.glyph(modelData)
@@ -135,6 +145,7 @@ FlyoutPanel {
 
     // muted keeps the level on show, dimmed, as the volume toast does
     Slider {
+        visible: volumeFlyout.tab === "output"
         width: parent.width
         value: Audio.percent
         opacity: Audio.muted ? 0.5 : 1
@@ -142,6 +153,7 @@ FlyoutPanel {
     }
 
     FlyoutAction {
+        visible: volumeFlyout.tab === "output"
         icon: Audio.muted ? "󰖁" : "󰕾"
         label: "Mute"
         checked: Audio.muted
@@ -150,13 +162,14 @@ FlyoutPanel {
 
     // --- the microphone ----------------------------------------------------------
 
-    FlyoutHeading {
-        visible: volumeFlyout.sourceReady
-        text: "MICROPHONE"
+    FlyoutRow {
+        visible: volumeFlyout.tab === "input" && !volumeFlyout.sourceReady
+        enabled: false
+        label: "No microphone"
     }
 
     Row {
-        visible: volumeFlyout.sourceReady
+        visible: volumeFlyout.tab === "input" && volumeFlyout.sourceReady
         width: parent.width
         spacing: Theme.spaceS
         Slider {
@@ -180,7 +193,7 @@ FlyoutPanel {
     }
 
     FlyoutAction {
-        visible: volumeFlyout.sourceReady
+        visible: volumeFlyout.tab === "input" && volumeFlyout.sourceReady
         icon: volumeFlyout.micMuted ? "󰍭" : "󰍬"
         label: "Mute microphone"
         checked: volumeFlyout.micMuted
@@ -190,12 +203,12 @@ FlyoutPanel {
     // --- channels -----------------------------------------------------------------
 
     FlyoutHeading {
-        visible: Channels.sinks.length > 0
+        visible: volumeFlyout.tab === "output" && Channels.sinks.length > 0
         text: "CHANNELS"
     }
 
     Repeater {
-        model: ScriptModel { values: Channels.sinks }
+        model: ScriptModel { values: volumeFlyout.tab === "output" ? Channels.sinks : [] }
 
         Item {
             id: channel
@@ -260,7 +273,7 @@ FlyoutPanel {
 
     // the ChatMix dial, Game against Chat, while a headset reports one
     Item {
-        visible: Channels.chatmix >= 0 && Channels.sinks.length > 0
+        visible: volumeFlyout.tab === "output" && Channels.chatmix >= 0 && Channels.sinks.length > 0
         width: parent.width
         implicitHeight: Theme.rowHeight
 
@@ -314,12 +327,8 @@ FlyoutPanel {
 
     // --- apps ----------------------------------------------------------------------
 
-    FlyoutHeading {
-        text: "APPS" + (Audio.playingApps.length > 0 ? "  " + Audio.playingApps.length : "")
-    }
-
     Repeater {
-        model: ScriptModel { values: Audio.playingApps }
+        model: ScriptModel { values: volumeFlyout.tab === "apps" ? Audio.playingApps : [] }
 
         Item {
             id: app
@@ -400,7 +409,7 @@ FlyoutPanel {
     }
 
     FlyoutRow {
-        visible: Audio.playingApps.length === 0
+        visible: volumeFlyout.tab === "apps" && Audio.playingApps.length === 0
         enabled: false
         label: "Nothing is playing"
     }
