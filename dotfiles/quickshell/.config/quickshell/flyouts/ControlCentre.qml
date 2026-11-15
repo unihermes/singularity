@@ -662,12 +662,15 @@ FlyoutPanel {
                         }
                     }
 
+                    ControlCentrePowerGlass {
+                        visible: controlCentre.page === "power" && Theme.glass
+                        cc: controlCentre
+                        fillHeight: glassHome.height - pageHeading.height - pageBody.spacing
+                    }
+
                     Column {
-                        visible: controlCentre.page === "power"
+                        visible: controlCentre.page === "power" && !Theme.glass
                         width: parent.width
-                        // Glass: as tall as the home mosaic, so the box doesn't shrink
-                        height: Theme.glass ? Math.max(implicitHeight,
-                            glassHome.height - pageHeading.height - pageBody.spacing) : implicitHeight
 
                         FlyoutRow {
                             visible: Battery.present
