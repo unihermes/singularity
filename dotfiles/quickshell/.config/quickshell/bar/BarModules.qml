@@ -361,6 +361,34 @@ Item {
         }
     }
 
+    // the track's progress as a thin line along the module's foot; MPRIS
+    // doesn't push the position while playing, so it's nudged each second
+    Item {
+        parent: musicFrame
+        readonly property real length: Media.lengthOf(musicFrame.player)
+        visible: length > 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: Theme.spaceS
+        anchors.rightMargin: Theme.spaceS
+        anchors.bottomMargin: Theme.spaceXs
+        height: Theme.borderWidth
+
+        Timer {
+            interval: 1000
+            repeat: true
+            running: parent.visible && Media.shownPlaying && !!musicFrame.player
+            onTriggered: musicFrame.player.positionChanged()
+        }
+        Rectangle { anchors.fill: parent; color: Theme.meterTrack }
+        Rectangle {
+            height: parent.height
+            width: parent.width * Math.max(0, Math.min(1, Media.positionOf(musicFrame.player) / Math.max(1, parent.length)))
+            color: Theme.meterFill
+        }
+    }
+
     MouseArea {
         parent: musicFrame
         anchors.fill: parent
