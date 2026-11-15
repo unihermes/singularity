@@ -80,3 +80,21 @@ Use `--largest` on a directory to rank its files recursively by size.
 - Comments describe the code as it is, briefly. History and reasons go in commit messages.
 - Commit messages: `Area: what changed, in plain words`.
 
+## Shipped defaults
+
+The repo ships one fixed default; the user's own choices stay on their machine.
+Change a shipped default only when the user asks for that default to change
+(e.g. "make X the default"). A change they make in Settings or the bar, or a
+request to change their own setup, is not such a request.
+
+- Shipped defaults are: the stock values in `services/Styles.js` (each style's `bar`
+  layout, `stockOf`), the adapter's initial values in `services/Settings.qml`,
+  `services/Looks.js`, `dotfiles/singularity/.config/singularity/*.defaults.*`, and the
+  other tracked app configs under `dotfiles/`.
+- The user's values live in `~/.local/state/singularity/` (`appearance.json`, including
+  `barLayout` and Save as default's `userDefaults`; `style-defaults.json` for this
+  machine's own stock) and in link.sh's gitignored copies. Never copy them into the repo,
+  and never "sync" a shipped default to what the running shell shows.
+- To change the user's own setup, edit those state files (or use `qs ipc`), not the repo.
+- Before committing, check the staged diff for default-value changes nobody asked for.
+
