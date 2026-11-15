@@ -269,34 +269,35 @@ FlyoutPanel {
         }
     }
 
+    // the transport as plain icons; previous and next only where the player has them,
+    // none at all for a tab that takes no transport
     Row {
-        visible: !!mediaFlyout.player
+        visible: Media.controllable(mediaFlyout.player)
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: Theme.spaceL
+        spacing: Theme.spaceXl
 
-        FlyoutChip {
-            width: Theme.fit(56)
-            glyph: true
-            text: "󰒮"
-            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoPrevious
+        IconButton {
+            visible: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoPrevious
+            anchors.verticalCenter: parent.verticalCenter
+            icon: "󰒮"
+            glyphSize: Theme.fontIconSize + Theme.spaceM
             onClicked: mediaFlyout.player.previous()
         }
-        FlyoutChip {
-            width: Theme.fit(56)
-            glyph: true
-            text: Media.shownPlaying ? "󰏤" : "󰐊"
+        IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            icon: Media.shownPlaying ? "󰏤" : "󰐊"
+            glyphSize: Theme.fontIconSize + Theme.spaceXl
             enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canTogglePlaying
             onClicked: mediaFlyout.player.togglePlaying()
         }
-        FlyoutChip {
-            width: Theme.fit(56)
-            glyph: true
-            text: "󰒭"
-            enabled: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoNext
+        IconButton {
+            visible: Media.controllable(mediaFlyout.player) && mediaFlyout.player.canGoNext
+            anchors.verticalCenter: parent.verticalCenter
+            icon: "󰒭"
+            glyphSize: Theme.fontIconSize + Theme.spaceM
             onClicked: mediaFlyout.player.next()
         }
     }
-
 
     // with several sources: a row each, the shown one marked; a click picks which the module follows
     function sourceLabel(src) {
