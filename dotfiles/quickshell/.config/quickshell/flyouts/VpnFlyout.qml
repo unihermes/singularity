@@ -1,7 +1,8 @@
 // The VPN's switch on the heading; the tunnel as a card (the server, what
-// goes through it, the forwarded port, Copy port at its end); Route
-// everything and, with it, the kill switch; every imported server as a row,
-// a click connecting to it; Settings. Self-contained: only needs Vpn.
+// goes through it, the forwarded port, Copy port and a Connect / Disconnect
+// button at its end); then two tabs: Servers (every imported server as a row,
+// a click connecting to it) and Settings (Route everything and, with it, the
+// kill switch). Self-contained: only needs Vpn.
 
 import Quickshell
 import QtQuick
@@ -11,6 +12,9 @@ FlyoutPanel {
     id: root
     flyout: "vpn"
     menuWidth: Theme.flyoutMenuWidth
+
+    property string tab: "servers"
+    onOpenChanged: if (!open) tab = "servers"
 
     FlyoutHeading {
         settingsIcon: true
@@ -47,6 +51,14 @@ FlyoutPanel {
                     : Vpn.portError]
 
         FlyoutChip {
+            visible: Vpn.available && !Vpn.busy
+            icon: Vpn.up ? "󰅖" : "󰐦"
+            text: Vpn.up ? "Disconnect" : "Connect"
+            danger: Vpn.up
+            selected: !Vpn.up
+            onClicked: Vpn.toggle()
+        }
+        FlyoutChip {
             visible: Vpn.port > 0
             icon: "󰆏"
             text: "Copy port"
@@ -54,8 +66,15 @@ FlyoutPanel {
         }
     }
 
-    FlyoutAction {
+    FlyoutSegmented {
         visible: Vpn.servers.length > 0
+        model: [{ value: "servers", text: "Servers  " + Vpn.servers.length }, { value: "settings", text: "Settings" }]
+        current: root.tab
+        onPicked: v => root.tab = v
+    }
+
+    FlyoutAction {
+        visible: Vpn.servers.length > 0 && root.tab === "settings"
         icon: "󰇧"
         label: "Route everything"
         status: Settings.vpnFull ? "" : "Only qBittorrent uses it"
@@ -65,7 +84,7 @@ FlyoutPanel {
     }
 
     FlyoutAction {
-        visible: Vpn.servers.length > 0 && Settings.vpnFull
+        visible: Vpn.servers.length > 0 && root.tab === "settings" && Settings.vpnFull
         icon: "󰒃"
         label: "Kill switch"
         status: Settings.vpnKillSwitch ? "Blocks the internet if it drops" : ""
@@ -74,12 +93,8 @@ FlyoutPanel {
         onActivated: Vpn.setKillSwitch(!Settings.vpnKillSwitch)
     }
 
-    FlyoutHeading {
-        text: "SERVERS" + (Vpn.servers.length > 0 ? "  " + Vpn.servers.length : "")
-    }
-
     Repeater {
-        model: Vpn.servers
+        model: root.tab === "servers" ? Vpn.servers : []
 
         FlyoutRow {
             required property var modelData
