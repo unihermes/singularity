@@ -1,8 +1,9 @@
 # Mockups
 
 How UI choices get made here: mock first, in the real look, let the user pick, then
-build and record. `docs/mockups/template.html` is the starting point; copy it, fill in
-the modules, and deliver it as an artifact in chat (not a file in Downloads).
+build and record. The starter template is a local file, kept out of the repo (mockups and their
+supporting files are never committed): `~/.claude/projects/-home-giordano-Singularity/memory/mockup-template.html`.
+Copy it, fill in the modules, and deliver it as an artifact in chat (not a file in Downloads).
 
 ## The loop
 
