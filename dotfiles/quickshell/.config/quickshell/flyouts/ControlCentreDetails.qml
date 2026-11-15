@@ -66,7 +66,11 @@ Column {
     Column {
         visible: root.page === "network"
         width: parent.width
-        spacing: Theme.spaceS
+        spacing: Theme.glass ? Theme.spaceL : Theme.spaceS
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         ControlRow {
             visible: Network.device !== ""
             icon: "󰤨"; title: "Wi-Fi"
@@ -130,6 +134,12 @@ Column {
             FlyoutChip { text: "Rescan"; enabled: Network.powered && !Network.scanning; onClicked: Network.scan() }
             FlyoutChip { visible: Network.ssid !== ""; text: "Disconnect"; onClicked: Network.disconnect() }
         }
+            }
+        }
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         FlyoutHeading { text: "CONNECTIONS" }
         FlyoutRow {
             label: "Ethernet"
@@ -160,18 +170,30 @@ Column {
             onClicked: root.cc.setAirplane(!root.cc.airplane)
         }
         FlyoutChip { text: "Network settings  󰁔"; onClicked: root.cc.scope.openSettings("network") }
+            }
+        }
     }
 
     Column {
         visible: root.page === "bluetooth"
         width: parent.width
-        spacing: Theme.spaceS
+        spacing: Theme.glass ? Theme.spaceL : Theme.spaceS
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         ControlRow {
             icon: "󰂯"; title: "Bluetooth"
             caption: !root.adapter ? "No adapter" : root.bar && root.bar.btAdapterBlocked(root.adapter) ? "Blocked" : root.btOn ? "On" : "Off"
             usable: !!root.adapter; checked: root.btOn
             onClicked: if (root.bar) root.bar.setBtPowered(root.adapter, !root.btOn)
         }
+            }
+        }
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         FlyoutHeading { text: "YOUR DEVICES" }
         Repeater {
             model: ScriptModel { values: root.page === "bluetooth" && root.btOn ? root.saved : [] }
@@ -200,12 +222,18 @@ Column {
             label: "Looking for devices…"; enabled: false
         }
         FlyoutChip { text: "Bluetooth settings  󰁔"; onClicked: root.cc.scope.openSettings("bluetooth") }
+            }
+        }
     }
 
     Column {
         visible: root.page === "sound"
         width: parent.width
-        spacing: Theme.spaceS
+        spacing: Theme.glass ? Theme.spaceL : Theme.spaceS
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         FlyoutSliderRow { visible: !Theme.glass; label: "Volume"; suffix: "%"; value: Audio.percent; onMoved: v => Audio.setVolume(v) }
         GlassLevelHead { visible: Theme.glass; title: "Volume"; device: Audio.percent + "%" }
         GlassSlider {
@@ -217,6 +245,12 @@ Column {
             onMoved: v => Audio.setVolume(v)
         }
         ControlRow { icon: "󰖁"; title: "Mute"; checked: Audio.muted; onClicked: Audio.toggleMute() }
+            }
+        }
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         FlyoutHeading { text: "OUTPUT" }
         Repeater {
             model: ScriptModel { values: root.page === "sound" ? root.sinks : [] }
@@ -228,6 +262,12 @@ Column {
             }
         }
         FlyoutRow { visible: root.sinks.length === 0; label: "No output devices"; enabled: false }
+            }
+        }
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         FlyoutHeading { text: "INPUT" }
         Repeater {
             model: ScriptModel { values: root.page === "sound" ? Audio.sources : [] }
@@ -246,12 +286,18 @@ Column {
             onClicked: if (root.sourceReady) root.source.audio.muted = !root.source.audio.muted
         }
         FlyoutChip { text: "Sound settings  󰁔"; onClicked: root.cc.scope.openSettings("audio") }
+            }
+        }
     }
 
     Column {
         visible: root.page === "display"
         width: parent.width
-        spacing: Theme.spaceS
+        spacing: Theme.glass ? Theme.spaceL : Theme.spaceS
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         FlyoutRow { label: root.output; trailing: "This display"; enabled: false }
         FlyoutSliderRow {
             visible: !Theme.glass && (root.ddc || Brightness.available)
@@ -271,6 +317,12 @@ Column {
             visible: !root.ddc && !Brightness.available
             label: "Brightness control unavailable"; enabled: false
         }
+            }
+        }
+        GlassPage {
+            Column {
+                width: parent.width
+                spacing: Theme.spaceS
         ControlRow {
             icon: "󰖔"; title: "Night Light"; checked: root.cc.shellRoot.nightLight
             usable: root.cc.shellRoot.hasHyprsunset
@@ -285,6 +337,8 @@ Column {
             onMoved: v => Settings.set("nightLightKelvin", v)
         }
         FlyoutChip { text: "Display settings  󰁔"; onClicked: root.cc.scope.openSettings("display") }
+            }
+        }
     }
 
     Column {

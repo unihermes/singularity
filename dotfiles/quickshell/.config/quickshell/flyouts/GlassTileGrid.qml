@@ -24,7 +24,7 @@ Item {
 
     readonly property int rows: Math.ceil(model.length / 2)
     readonly property real cell: (width - spacing) / 2
-    readonly property real tileH: Math.max(Theme.fs(56), rows > 0 ? (fillHeight - spacing * (rows - 1)) / rows : 0)
+    readonly property real tileH: Math.max(Theme.fs(60), rows > 0 ? (fillHeight - spacing * (rows - 1)) / rows : 0)
     // the tile waiting for its second click
     property string armed: ""
 

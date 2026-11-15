@@ -253,7 +253,6 @@ FlyoutPanel {
                     width: parent.width
                     spacing: Theme.flyoutSpacing
                     FlyoutHeading {
-                        id: pageHeading
                         visible: controlCentre.page !== ""
                         crumb: "CONTROL CENTRE"
                         text: controlCentre.pageTitles[controlCentre.page] || ""
@@ -270,7 +269,6 @@ FlyoutPanel {
                     }
 
                     ControlCentreGlass {
-                        id: glassHome
                         visible: controlCentre.home && Theme.glass
                         cc: controlCentre
                     }
@@ -280,25 +278,20 @@ FlyoutPanel {
                         cc: controlCentre
                     }
 
-                    GlassPage {
+                    ControlCentreDetails {
                         readonly property var pages: Theme.glass ? ["network", "bluetooth", "sound", "display"]
                             : ["network", "bluetooth", "sound", "display", "focus", "tools"]
                         visible: pages.indexOf(controlCentre.page) >= 0
-                        fillHeight: glassHome.height - pageHeading.height - pageBody.spacing
-                        ControlCentreDetails {
-                            cc: controlCentre
-                        }
+                        cc: controlCentre
                     }
 
                     ControlCentreTilesGlass {
                         visible: Theme.glass && (controlCentre.page === "focus" || controlCentre.page === "tools")
                         cc: controlCentre
-                        fillHeight: glassHome.height - pageHeading.height - pageBody.spacing
                     }
 
                     GlassPage {
                         visible: controlCentre.page === "appearance"
-                        fillHeight: glassHome.height - pageHeading.height - pageBody.spacing
                     Column {
                         id: appearancePage
                         visible: controlCentre.page === "appearance"
@@ -596,7 +589,6 @@ FlyoutPanel {
 
                     GlassPage {
                         visible: controlCentre.page === "widgets"
-                        fillHeight: glassHome.height - pageHeading.height - pageBody.spacing
                     Column {
                         visible: controlCentre.page === "widgets"
                         width: parent.width
@@ -684,7 +676,6 @@ FlyoutPanel {
                     ControlCentrePowerGlass {
                         visible: controlCentre.page === "power" && Theme.glass
                         cc: controlCentre
-                        fillHeight: glassHome.height - pageHeading.height - pageBody.spacing
                     }
 
                     Column {

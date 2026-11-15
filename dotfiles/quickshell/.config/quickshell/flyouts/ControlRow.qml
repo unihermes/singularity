@@ -25,13 +25,14 @@ Item {
     signal moreClicked()
 
     width: parent ? parent.width : 0
-    implicitHeight: Theme.rowHeightTall
+    implicitHeight: Theme.glass ? Theme.fs(44) : Theme.rowHeightTall
 
     // where the state's words end: before the switch, else the chevron
     readonly property real wordsEnd: toggle.visible ? toggle.x - Theme.spaceL
         : end.visible ? end.x - Theme.spaceL : width
 
     Rectangle {
+        visible: !Theme.glass
         anchors.fill: parent
         anchors.leftMargin: -Theme.spaceS
         anchors.rightMargin: -Theme.spaceS
@@ -41,6 +42,7 @@ Item {
 
     Text {
         id: glyph
+        visible: !Theme.glass
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.iconCell
@@ -54,6 +56,7 @@ Item {
 
     Text {
         id: name
+        visible: !Theme.glass
         anchors.left: glyph.right
         anchors.leftMargin: Theme.spaceL
         anchors.verticalCenter: parent.verticalCenter
@@ -68,6 +71,7 @@ Item {
 
     Text {
         id: words
+        visible: !Theme.glass
         anchors.right: toggle.visible ? toggle.left : end.left
         anchors.rightMargin: toggle.visible || end.visible ? Theme.spaceL : 0
         anchors.verticalCenter: parent.verticalCenter
@@ -84,7 +88,7 @@ Item {
 
     Switch {
         id: toggle
-        visible: root.checkable && !root.goes
+        visible: !Theme.glass && root.checkable && !root.goes
         anchors.right: end.visible ? end.left : parent.right
         anchors.rightMargin: end.visible ? Theme.spaceS : 0
         anchors.verticalCenter: parent.verticalCenter
@@ -96,7 +100,7 @@ Item {
     // the chevron end, set off by a hairline when it is a part of its own
     Item {
         id: end
-        visible: root.split || root.goes
+        visible: !Theme.glass && (root.split || root.goes)
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -142,5 +146,18 @@ Item {
         hoverEnabled: enabled
         cursorShape: Qt.PointingHandCursor
         onClicked: root.clicked()
+    }
+
+    // Glass: the round switch with its words, as on the home page
+    GlassLink {
+        visible: Theme.glass
+        anchors.verticalCenter: parent.verticalCenter
+        icon: root.icon
+        title: root.title
+        caption: root.caption
+        lit: root.checkable && root.checked
+        usable: root.usable
+        onToggled: root.clicked()
+        onOpened: root.clicked()
     }
 }

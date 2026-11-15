@@ -44,6 +44,7 @@ Item {
         }
         Text {
             width: parent.width
+            visible: link.caption !== ""
             text: link.caption
             elide: Text.ElideRight
             color: Theme.subtext
