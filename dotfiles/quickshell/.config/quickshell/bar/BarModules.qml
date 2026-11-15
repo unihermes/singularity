@@ -399,7 +399,7 @@ Item {
     // the peripherals with a battery. The devices glyph while the phone's
     // connected, the mouse without it; a word while the phone waits to be
     // allowed over USB or asks to pair; a red dot while one runs low, else
-    // a green one while the phone's on screen.
+    // a green one while the phone's on screen, else an accent one while it has notifications.
     BarModule {
         id: phoneBtn
         readonly property bool phoneOn: Phone.connected || PhoneLink.connected
@@ -410,8 +410,9 @@ Item {
         label: PhoneLink.request ? "Pair" : Phone.unauthorized ? "Allow" : ""
         iconColor: Phone.unauthorized ? Theme.alert : PhoneLink.request ? Theme.accent : "transparent"
         readonly property bool low: Peripherals.low || phoneLow
-        dot: low || Phone.mirroring
-        dotColor: low ? Theme.alert : Theme.good
+        readonly property bool notified: PhoneLink.connected && PhoneLink.device.notifications.length > 0
+        dot: low || Phone.mirroring || notified
+        dotColor: low ? Theme.alert : Phone.mirroring ? Theme.good : Theme.accent
         active: screenScope.openFlyout === "devices"
         onActivated: screenScope.toggleFlyout("devices", phoneBtn)
         onMiddleClicked: Phone.toggleMirror()

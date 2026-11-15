@@ -1,8 +1,9 @@
 // DEVICES: one section, a row per device (its glyph and name, its level
 // as a meter and a number, red when it runs low). The phone's row comes
 // first with a Mirror button before its level (Stop while it's on screen), and
-// opens a tray under its label, an accent rail down from its icon: Screenshot over adb, which joins a phone on Wi-Fi just for it;
-// Ring and Send file through the phone link; the phone's notifications,
+// opens a tray under its label, an accent rail down from its icon: its actions as tiles
+// (Screenshot over adb, which joins a phone on Wi-Fi just for it; Ring and Send file
+// through the phone link); the phone's notifications,
 // a click on one opening it in place as an opened history card: the
 // larger title, its app and age, its text in full, its reply field, and
 // Open (its app, here or on the mirror) and its actions as links.
@@ -109,13 +110,21 @@ FlyoutPanel {
             width: parent.width - x
             spacing: Theme.flyoutSpacing
 
-            Repeater {
-                model: root.trayOpen ? root.actions : []
-                FlyoutRow {
-                    required property var modelData
-                    leadingIcon: modelData.glyph
-                    label: modelData.text
-                    onActivated: root.phoneAct(modelData.act)
+            // the actions as tiles, up to three across
+            TileGrid {
+                visible: root.trayOpen && root.actions.length > 0
+                columns: Math.max(1, Math.min(3, root.actions.length))
+                Repeater {
+                    model: root.trayOpen ? root.actions : []
+                    FlyoutTile {
+                        required property var modelData
+                        width: parent.cell
+                        centred: true
+                        clickable: true
+                        glyph: modelData.glyph
+                        title: modelData.text
+                        onClicked: root.phoneAct(modelData.act)
+                    }
                 }
             }
 
