@@ -3,8 +3,9 @@
 // on top with Discoverable and Pairable chips and the round power button.
 // Each paired device is a card: its icon, name, kind and state, the
 // battery as bars, Connect / Disconnect, and behind its ⋯ Rename, Reconnect
-// by itself, the address and Remove. Pair a new device starts a scan;
-// devices in range are pills with Pair, unnamed ones behind a last pill.
+// by itself, the address and Remove. Pair a new device starts a scan, and
+// only then does In range appear: devices as pills with Pair, unnamed ones
+// behind a last pill.
 
 import Quickshell
 import Quickshell.Bluetooth
@@ -67,6 +68,9 @@ SettingsPage {
         !d.paired && !d.connected && !page.named(d)).length
     readonly property int connectedCount: paired.filter(d => d.connected).length
     readonly property bool scanning: poweredOn && adapter.discovering
+    // In range waits for Pair a new device: it shows while a scan runs, or
+    // while a device found by it is still pairing
+    readonly property bool rangeShown: scanning || (poweredOn && nearby.some(d => d.pairing))
 
     // BlueZ turns discoverable off by itself after discoverableTimeout
     // seconds (0: never), so the chip counts down to it.
@@ -304,10 +308,11 @@ SettingsPage {
 
     // --- in range ---------------------------------------------------------
 
-    Item { width: 1; height: Theme.spaceM }
+    Item { visible: page.rangeShown; width: 1; height: Theme.spaceM }
 
     // the heading shares its line with Scan
     Item {
+        visible: page.rangeShown
         readonly property bool isSectionBreak: true
         readonly property bool sectioned: true
         width: parent.width
@@ -325,7 +330,6 @@ SettingsPage {
 
         FlyoutChip {
             id: scan
-            visible: page.poweredOn
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: rangeHeading.lift
@@ -391,7 +395,7 @@ SettingsPage {
     }
 
     Flow {
-        visible: page.poweredOn && (page.nearby.length > 0 || page.unnamedCount > 0)
+        visible: page.rangeShown && (page.nearby.length > 0 || page.unnamedCount > 0)
         width: parent.width
         spacing: Theme.spaceS
 
@@ -422,10 +426,8 @@ SettingsPage {
     }
 
     FlyoutRow {
-        visible: !page.poweredOn || page.nearby.length === 0
+        visible: page.rangeShown && page.nearby.length === 0
         enabled: false
-        label: !page.poweredOn ? "The radio is off"
-            : page.scanning ? "Nothing found yet"
-            : "Nothing in range; scan to look"
+        label: "Nothing found yet"
     }
 }
