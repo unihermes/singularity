@@ -200,8 +200,7 @@ FloatingWindow {
         ? pages.map(p => ({ page: p.id, label: p.label, blurb: p.blurb, icon: p.icon, isPage: true }))
         : SettingsIndex.search(index, query, 30).map(e => ({
             page: e.page, label: e.label, icon: e.icon, isPage: e.isPage,
-            blurb: e.isPage ? "Section"
-                : e.section === "" ? e.pageLabel : e.pageLabel + " · " + e.section,
+            blurb: SettingsIndex.path(e),
             entry: e }))
     // the hit the arrow keys are on; only drawn while the bar has focus
     property int cursor: 0
@@ -478,7 +477,10 @@ FloatingWindow {
                 function onGoTo(pageId) { root.select(pageId) }
                 // a changed Appearance setting, on whichever tab
                 function onShowSetting(label) {
+                    // an Appearance setting; the few that moved to another
+                    // page (the notification popups) are found by name
                     var e = root.index.find(x => !x.isPage && x.label === label && x.page === "appearance")
+                        || root.index.find(x => !x.isPage && x.label === label)
                     if (e) root.reveal(e)
                 }
             }

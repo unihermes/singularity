@@ -1,6 +1,6 @@
 // The shell's own notifications (services/Notifications.qml): STATUS
-// (whether popups show, the history, quiet hours), POPUPS (where, grouping,
-// how long they stay) and APPS, each with its own popups switch.
+// (whether popups show, the history, quiet hours), POPUPS (their style and
+// width, where, grouping, how long they stay) and APPS, each with its own popups switch.
 
 import Quickshell
 import Quickshell.Io
@@ -8,6 +8,7 @@ import QtQuick
 import "../services"
 import "../flyouts"
 import "../services/TimeWindow.js" as TimeWindow
+import "appearance"
 
 SettingsPage {
     id: page
@@ -238,6 +239,38 @@ SettingsPage {
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "POPUPS" }
+
+    // how a popup is drawn: a card in the corner or a banner across the top
+    SettingsField {
+        label: "Notification popups"
+        hint: Settings.notifStyle === "banner" ? "A banner across the top" : "A card at the spot below"
+
+        FlyoutSegmented {
+            anchors.right: parent.right
+            fill: false
+            model: Settings.choices.notifStyle || []
+            labelFor: v => Settings.choiceLabel(v, "notifStyle")
+            current: Settings.notifStyle
+            onPicked: v => Settings.set("notifStyle", v)
+        }
+    }
+
+    SettingsField {
+        label: "Popup width"
+        enabled: Settings.notifStyle !== "banner"
+        hint: enabled ? "Each notification popup" : "Banners span the top"
+
+        SlideControl {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            value: Settings.notifWidth
+            minimum: Settings.limits.notifWidth.min
+            maximum: Settings.limits.notifWidth.max
+            step: 20
+            suffix: " px"
+            onCommitted: v => Settings.set("notifWidth", v)
+        }
+    }
 
     // the spot picker beside where it is, grouping and a test
     Row {

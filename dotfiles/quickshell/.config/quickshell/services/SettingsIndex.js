@@ -113,14 +113,14 @@ var entries = [
     { page: "appearance", section: "Colour", label: "Level colour", keywords: "meters levels volume brightness battery fill green second accent" },
     { page: "appearance", section: "Colour", label: "Good", keywords: "status good alert green charging success colour color" },
     { page: "appearance", section: "Colour", label: "Alert", keywords: "status red critical error warning colour color" },
-    { page: "appearance", section: "Colour", label: "Border width", keywords: "window border thickness hyprland px" },
-    { page: "appearance", section: "Colour", label: "Focused border", keywords: "window active border colour color accent" },
-    { page: "appearance", section: "Colour", label: "Unfocused border", keywords: "window inactive border colour color none" },
-    { page: "appearance", section: "Colour", label: "Focused colour", keywords: "window active border custom hex" },
-    { page: "appearance", section: "Colour", label: "Unfocused colour", keywords: "window inactive border custom hex" },
-    { page: "appearance", section: "Colour", label: "New wallpaper", keywords: "current background image previous next wallpaper shuffle random login rotate slideshow interval timer" },
-    { page: "appearance", section: "Colour", label: "Folder", keywords: "wallpaper folder directory images open add" },
-    { page: "appearance", section: "Colour", label: "Fit", keywords: "wallpaper fill fit centre center tile scale swaybg" },
+    { page: "appearance", section: "Shape", label: "Border width", keywords: "window border thickness hyprland px" },
+    { page: "appearance", section: "Shape", label: "Focused border", keywords: "window active border colour color accent" },
+    { page: "appearance", section: "Shape", label: "Unfocused border", keywords: "window inactive border colour color none" },
+    { page: "appearance", section: "Shape", label: "Focused colour", keywords: "window active border custom hex" },
+    { page: "appearance", section: "Shape", label: "Unfocused colour", keywords: "window inactive border custom hex" },
+    { page: "appearance", section: "Desktop", label: "New wallpaper", keywords: "current background image previous next wallpaper shuffle random login rotate slideshow interval timer" },
+    { page: "appearance", section: "Desktop", label: "Folder", keywords: "wallpaper folder directory images open add" },
+    { page: "appearance", section: "Desktop", label: "Fit", keywords: "wallpaper fill fit centre center tile scale swaybg" },
 
     { page: "appearance", section: "Shape", label: "Style", keywords: "theme frames macos mac apple dock menu bar windows 10 win10 taskbar start menu ledger channel double solid glass flat rail notch pane capsule bevel lined modules windows 10 square taskbar spines ruled cut corners islands raised recessed" },
     { page: "appearance", section: "Shape", label: "Roundness", keywords: "rounding corners radius panels windows hyprland bar chips" },
@@ -186,7 +186,6 @@ var entries = [
 
     { page: "appearance", section: "Panels", label: "Notification popups", keywords: "notifications cards compact banner style" },
     { page: "appearance", section: "Panels", label: "Level popup", keywords: "osd volume brightness popup toast edge number" },
-    { page: "appearance", section: "Panels", label: "Popup width", keywords: "notifications popups wider narrower width px" },
     { page: "appearance", section: "Panels", label: "Flyout width", keywords: "flyouts menus wider narrower width percent" },
     { page: "appearance", section: "Panels", label: "Overlay dimming", keywords: "scrim dark backdrop" },
     { page: "appearance", section: "Panels", label: "Launcher layout", keywords: "launcher apps grid list dmenu spotlight home start menu drawer bar mosaic tiles pinned" },
@@ -199,14 +198,14 @@ var entries = [
     { page: "appearance", section: "Panels", label: "Workspace overview", keywords: "super w overview grid row strip expose" },
     { page: "appearance", section: "Panels", label: "Power menu", keywords: "power menu shutdown reboot logout tiles list fullscreen" },
     { page: "appearance", section: "Panels", label: "Backdrop", keywords: "super w overview alt tab switcher launcher power menu background dim solid clear" },
-    { page: "appearance", section: "Panels", label: "Clock", keywords: "desktop widgets clock time date week wallpaper" },
-    { page: "appearance", section: "Panels", label: "Weather", keywords: "desktop widgets weather forecast temperature wallpaper" },
-    { page: "appearance", section: "Panels", label: "Now playing", keywords: "desktop widgets music media player spotify wallpaper" },
-    { page: "appearance", section: "Panels", label: "System", keywords: "desktop widgets stats cpu gpu ram memory temperature disk storage monitor wallpaper" },
-    { page: "appearance", section: "Panels", label: "System info", keywords: "desktop widgets fastfetch neofetch distro kernel uptime host ip packages cpu gpu hardware" },
-    { page: "appearance", section: "Panels", label: "Sidebar", keywords: "desktop conky system monitor column right edge cpu gpu memory disks network processes fans battery" },
-    { page: "appearance", section: "Panels", label: "Sidebar style", keywords: "desktop conky sidebar edge attached floating card rounded" },
-    { page: "appearance", section: "Panels", label: "Placement", keywords: "desktop widgets edit move drag place position size small medium large right-click menu sticky notes" },
+    { page: "appearance", section: "Desktop", label: "Clock", keywords: "desktop widgets clock time date week wallpaper" },
+    { page: "appearance", section: "Desktop", label: "Weather", keywords: "desktop widgets weather forecast temperature wallpaper" },
+    { page: "appearance", section: "Desktop", label: "Now playing", keywords: "desktop widgets music media player spotify wallpaper" },
+    { page: "appearance", section: "Desktop", label: "System", keywords: "desktop widgets stats cpu gpu ram memory temperature disk storage monitor wallpaper" },
+    { page: "appearance", section: "Desktop", label: "System info", keywords: "desktop widgets fastfetch neofetch distro kernel uptime host ip packages cpu gpu hardware" },
+    { page: "appearance", section: "Desktop", label: "Sidebar", keywords: "desktop conky system monitor column right edge cpu gpu memory disks network processes fans battery" },
+    { page: "appearance", section: "Desktop", label: "Sidebar style", keywords: "desktop conky sidebar edge attached floating card rounded" },
+    { page: "appearance", section: "Desktop", label: "Placement", keywords: "desktop widgets edit move drag place position size small medium large right-click menu sticky notes" },
 
     { page: "appearance", section: "Motion", label: "Animations", keywords: "motion transitions speed" },
     { page: "appearance", section: "Motion", label: "Window speed", keywords: "animation speed windows open close hyprland timeline track" },
@@ -246,6 +245,8 @@ var entries = [
     { page: "notifications", section: "Status", label: "Quiet hours",     keywords: "schedule dnd do not disturb night automatic time" },
     { page: "notifications", section: "Status", label: "Starts",          keywords: "quiet hours schedule dnd from begin time" },
     { page: "notifications", section: "Status", label: "Ends",            keywords: "quiet hours schedule dnd until finish time" },
+    { page: "notifications", section: "Popups", label: "Notification popups", keywords: "cards compact banner style look" },
+    { page: "notifications", section: "Popups", label: "Popup width",          keywords: "wider narrower width px size" },
     { page: "notifications", section: "Popups", label: "Position",              keywords: "corner where popups appear" },
     { page: "notifications", section: "Popups", label: "Normal",  keywords: "how long timeout duration" },
     { page: "notifications", section: "Popups", label: "Low", keywords: "low priority how long timeout duration" },
@@ -346,6 +347,7 @@ function build(pages, capabilities) {
             pageLabel: pg.label,
             icon: pg.icon,
             section: "",
+            heading: "",
             label: pg.label,
             isPage: true,
             haystack: (pg.label + " " + (pg.blurb || "")).toLowerCase(),
@@ -366,12 +368,58 @@ function build(pages, capabilities) {
             pageLabel: p.page.label,
             icon: p.page.icon,
             section: e.section,
+            heading: headingOf(e.page, e.section, e.label),
             label: e.label,
             isPage: false,
             haystack: (e.label + " " + e.section + " " + p.page.label + " " + (e.keywords || "")).toLowerCase(),
         })
     }
     return out
+}
+
+// Appearance's headings, by tab: what a tab's setting sits under, for the
+// path a search hit shows (Page › Tab › Section). A tab with one section
+// (Colour, Motion's Speed) needs none.
+var appearanceHeadings = {
+    Shape: { "Style": ["Style", "Roundness", "Bar chips", "Finish", "Plain", "Shadows", "Shaded grounds", "Heavy lines"],
+             "Space": ["Density", "Spacing", "Row height", "Window gaps", "Edge gaps"],
+             "Glass": ["See-through", "Focused opacity", "Unfocused opacity", "Dim unfocused", "Dim strength", "Blur", "Blur size", "Blur passes"],
+             "Window borders": ["Border width", "Focused border", "Unfocused border", "Focused colour", "Unfocused colour"],
+             "Windows": ["Window corners", "Window rounding", "Window shadow", "Tab bar"] },
+    Type: { "Shell font": ["Font", "Font size"],
+            "Headings": ["Mark", "Case", "Heading rule", "Heading size"],
+            "Apps": ["System font", "Icons", "Cursor"] },
+    Bar: { "Bar": ["Position", "Bar shape", "Height", "Separators", "Icon size", "Module padding", "Centre anchor"],
+           "Workspaces": ["Workspaces", "Workspace names"],
+           "Open windows": ["Open windows", "Window icon size", "Window icon padding", "Windows shown"],
+           "Clock": ["Clock", "Clock format", "Clock island"],
+           "Control Centre": ["Control Centre icon"],
+           "Music": ["Music visualizer", "Music title", "Visualizer", "Visualizer bars", "Hide when silent"],
+           "Tray": ["Tray drawer", "Hidden tray icons", "App icons"] },
+    Panels: { "Popups": ["Notification popups", "Level popup", "Flyout width"],
+              "Launcher": ["Launcher layout", "Launcher position", "Launcher details", "Rows shown"],
+              "Overlays": ["Window switcher", "Switcher blur", "Switcher windows", "Workspace overview", "Power menu", "Backdrop", "Overlay dimming"] },
+    Desktop: { "Wallpaper": ["New wallpaper", "Folder", "Fit"],
+               "Desktop widgets": ["Clock", "Weather", "Now playing", "System", "System info", "Sidebar", "Sidebar style", "Placement"] },
+    Motion: { "Animations": ["Window speed", "Workspace speed", "Shell speed", "Window animation"] }
+}
+
+// the heading an Appearance setting sits under ("" when its tab has one)
+function headingOf(page, section, label) {
+    if (page !== "appearance" || !appearanceHeadings[section]) return ""
+    var groups = appearanceHeadings[section]
+    for (var h in groups)
+        if (groups[h].indexOf(label) >= 0) return h
+    return ""
+}
+
+// where a hit lives, for the line under its name: Page › Section (› Heading)
+function path(entry) {
+    if (entry.isPage) return "Section"
+    var parts = [entry.pageLabel]
+    if (entry.section !== "") parts.push(entry.section)
+    if (entry.heading !== "") parts.push(entry.heading)
+    return parts.join(" › ")
 }
 
 // every query word must appear; ranked by the best score against the label
