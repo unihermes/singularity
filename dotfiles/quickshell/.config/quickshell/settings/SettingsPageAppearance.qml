@@ -1,6 +1,6 @@
 // Appearance: one page, six tabs by what they change (Colour, Shape,
 // Type, Bar, Panels, Motion), each under a preview of what it changes;
-// every section's rarely changed rows fold behind its Advanced. While
+// every row shows. While
 // anything differs from the baseline, ChangesBar floats at the page's foot
 // (Review, Save as default, Reset), whose Show opens the tab a change is
 // on; a changed field is marked and its mark resets it. Shell settings are

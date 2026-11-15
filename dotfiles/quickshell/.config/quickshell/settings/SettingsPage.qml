@@ -35,7 +35,7 @@ Item {
     readonly property bool isSettingsPage: true
     property bool sectioned: false
     // the rows a section shows before its More (FlyoutHeading); 0 shows
-    // them all (Appearance folds its rarely changed rows in SettingsAdvanced)
+    // them all
     property int essentialRows: 3
     property string status: ""
     property string statusDetail: ""
@@ -168,10 +168,6 @@ Item {
                     }
                     if (p.isFlyoutHeading === true) {
                         p.reveal()
-                        return false
-                    }
-                    if (p.isAdvancedFold === true && !p.open) {
-                        p.open = true
                         return false
                     }
                 }

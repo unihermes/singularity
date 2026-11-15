@@ -1,5 +1,5 @@
 // Appearance's Type tab: the shell's font and size (SHELL FONT), how
-// headings are set (HEADINGS, all behind its Advanced), then how apps
+// headings are set (HEADINGS), then how apps
 // outside the shell look (APPS): their font, icons (a few shown beside the
 // label) and cursor with its size.
 
@@ -71,58 +71,57 @@ SettingsTab {
         return keys.indexOf(Settings.headingMark) === -1 ? keys.concat([Settings.headingMark]) : keys
     }
 
-    SettingsAdvanced {
-        SettingsField {
-            label: "Mark"
-            defaultKey: "headingMark"
-            hint: "Drawn before every heading, in its colour"
+    SettingsField {
+        label: "Mark"
+        defaultKey: "headingMark"
+        hint: "Drawn before every heading, in its colour"
 
-            Row {
-                anchors.right: parent.right
-                spacing: Theme.spaceM
+        Row {
+            anchors.right: parent.right
+            spacing: Theme.spaceM
 
-                SettingsDropdown {
-                    width: Theme.fit(160)
-                    model: typeTab.markChoices
-                    maxRows: model.length
-                    labelFor: v => typeTab.markNames[v] || v
-                    current: Settings.headingMark
-                    onPicked: v => Settings.set("headingMark", v)
-                }
-                // the mark's colour
-                Choices { key: "headingMarkColour"; anchors.right: undefined }
+            SettingsDropdown {
+                width: Theme.fit(160)
+                model: typeTab.markChoices
+                maxRows: model.length
+                labelFor: v => typeTab.markNames[v] || v
+                current: Settings.headingMark
+                onPicked: v => Settings.set("headingMark", v)
             }
-        }
-
-        // Case, the rule and the size, two to a line
-        Grid {
-            width: parent.width
-            columns: 2
-            columnSpacing: Theme.spaceXl * 2
-
-            SettingsField {
-                width: typeTab.half; labelWidth: typeTab.half / 2
-                label: "Case"
-                defaultKey: "headingUpper"
-                FlyoutSegmented {
-                    anchors.right: parent.right
-                    fill: false
-                    model: [{ value: true, text: "VOLUME" }, { value: false, text: "Volume" }]
-                    current: Settings.headingUpper
-                    onPicked: v => Settings.set("headingUpper", v)
-                }
-            }
-
-            FinishSwitch { width: typeTab.half; labelWidth: typeTab.switchLabel; label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
-
-            SettingsField {
-                width: typeTab.half; labelWidth: typeTab.half / 2
-                label: "Heading size"
-                hint: "Relative to body text"
-                Choices { key: "headingSize" }
-            }
+            // the mark's colour
+            Choices { key: "headingMarkColour"; anchors.right: undefined }
         }
     }
+
+    // Case, the rule and the size, two to a line
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: Theme.spaceXl * 2
+
+        SettingsField {
+            width: typeTab.half; labelWidth: typeTab.half / 2
+            label: "Case"
+            defaultKey: "headingUpper"
+            FlyoutSegmented {
+                anchors.right: parent.right
+                fill: false
+                model: [{ value: true, text: "VOLUME" }, { value: false, text: "Volume" }]
+                current: Settings.headingUpper
+                onPicked: v => Settings.set("headingUpper", v)
+            }
+        }
+
+        FinishSwitch { width: typeTab.half; labelWidth: typeTab.switchLabel; label: "Heading rule"; key: "headingRule"; hint: "A line out to the panel's edge" }
+
+        SettingsField {
+            width: typeTab.half; labelWidth: typeTab.half / 2
+            label: "Heading size"
+            hint: "Relative to body text"
+            Choices { key: "headingSize" }
+        }
+    }
+
 
     Item { width: 1; height: Theme.spaceM }
     FlyoutHeading { text: "APPS" }
