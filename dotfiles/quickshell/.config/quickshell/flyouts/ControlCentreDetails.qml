@@ -206,7 +206,16 @@ Column {
         visible: root.page === "sound"
         width: parent.width
         spacing: Theme.spaceS
-        FlyoutSliderRow { label: "Volume"; suffix: "%"; value: Audio.percent; onMoved: v => Audio.setVolume(v) }
+        FlyoutSliderRow { visible: !Theme.glass; label: "Volume"; suffix: "%"; value: Audio.percent; onMoved: v => Audio.setVolume(v) }
+        GlassLevelHead { visible: Theme.glass; title: "Volume"; device: Audio.percent + "%" }
+        GlassSlider {
+            visible: Theme.glass
+            width: parent.width
+            icon: Audio.muted ? "󰖁" : "󰕾"
+            value: Audio.percent
+            dimmed: Audio.muted
+            onMoved: v => Audio.setVolume(v)
+        }
         ControlRow { icon: "󰖁"; title: "Mute"; checked: Audio.muted; onClicked: Audio.toggleMute() }
         FlyoutHeading { text: "OUTPUT" }
         Repeater {
@@ -245,8 +254,16 @@ Column {
         spacing: Theme.spaceS
         FlyoutRow { label: root.output; trailing: "This display"; enabled: false }
         FlyoutSliderRow {
-            visible: root.ddc || Brightness.available
+            visible: !Theme.glass && (root.ddc || Brightness.available)
             label: "Brightness"; suffix: "%"
+            value: root.ddc ? DdcBrightness.level(root.output) : Brightness.level
+            onMoved: v => root.ddc ? DdcBrightness.set(root.output, v) : Brightness.set(v)
+        }
+        GlassLevelHead { visible: Theme.glass && (root.ddc || Brightness.available); title: "Brightness" }
+        GlassSlider {
+            visible: Theme.glass && (root.ddc || Brightness.available)
+            width: parent.width
+            icon: "󰃠"
             value: root.ddc ? DdcBrightness.level(root.output) : Brightness.level
             onMoved: v => root.ddc ? DdcBrightness.set(root.output, v) : Brightness.set(v)
         }
