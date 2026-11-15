@@ -23,9 +23,6 @@ OverlayWindow {
     // screen) that the box centres itself under
     readonly property real anchorX: glassAttached
         ? sourceItem.mapToItem(null, sourceItem.width / 2, 0).x : scope.flyoutAnchorX
-    // the glass tab's source module, in the same coordinates
-    readonly property real sourceX0: glassAttached ? sourceItem.mapToItem(null, 0, 0).x : 0
-    readonly property real sourceX1: glassAttached ? sourceX0 + sourceItem.width : 0
     // backdrop click, and content that wants to dismiss the flyout
     function requestClose() { scope.openFlyout = "" }
 
@@ -204,16 +201,9 @@ OverlayWindow {
             bare: root.grown || root.glassAttached
             ground: Theme.flyoutFill
             x: {
-                // a glass tab grows out of its module: one side runs straight
-                // down from the module's, the body reaching toward screen centre
-                if (root.glassAttached) {
-                    var towardsLeft = root.anchorX > root.width / 2
-                    var tab = towardsLeft ? root.sourceX1 - width : root.sourceX0
-                    return Math.round(Math.max(root.sideMargin, Math.min(tab, root.width - width - root.sideMargin)))
-                }
-                var free = Math.max(root.edgeMargin,
+                var free = Math.max(root.sideMargin,
                                     Math.min(root.anchorX - width / 2,
-                                             root.width - width - root.edgeMargin))
+                                             root.width - width - root.sideMargin))
                 // the centre group's flyouts stay centred on their module (the
                 // clock's on the clock), however close a group edge comes
                 if (!root.grown || root.section === "centre") return Math.round(free)

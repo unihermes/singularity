@@ -337,9 +337,8 @@ Style: `channel` (frame `channel` in `Styles.js`).
   surface that grows straight out of the bar like a tab. It sits flush under
   the bar and runs into its edge on a concave flare at each top corner (the
   panel's radius, at least `channelFillet`), like the channel connectors; a
-  side that touches the screen edge has no flare and no gap. One side of the
-  panel lines up with the module's side, and the panel reaches toward the
-  screen centre. The outline is stroked everywhere but along the bar. The
+  side that touches the screen edge has no flare and no gap. It is centred on its
+  module, clamped to the screen edge. The outline is stroked everywhere but along the bar. The
   panel scales from the module's edge. Bottom bars mirror the shape upward.
   Fade and None still follow the Motion setting. Plain keeps its flush frame,
   and menus without a bar module keep their usual frame.
