@@ -2,7 +2,8 @@
 // workspace with its count: the app's icon and name, the title quieter
 // after, the focused one ticked. A click focuses, close on hover, and a
 // window dragged onto another workspace's heading or windows, or onto an
-// empty one's number, moves there. Then the workspace grid and Settings.
+// empty one's number (shown only while dragging), moves there. Then the
+// workspace grid and Settings.
 
 import "../services"
 import Quickshell.Hyprland
@@ -43,6 +44,8 @@ FlyoutPanel {
 
     // where a dragged window would land, null for nowhere
     property var dropTarget: null
+    // a window is being dragged: only then do the empty numbers show, as drop targets
+    property bool dragActive: false
 
     // the target under a point in window coordinates
     function targetAt(p) {
@@ -138,6 +141,7 @@ FlyoutPanel {
                     actionHint: "Close"
                     draggable: true
                     opacity: dragging ? 0.5 : 1
+                    onDraggingChanged: panel.dragActive = dragging
                     onDragMoved: at => {
                         var t = panel.targetAt(at)
                         panel.dropTarget = t === group.modelData.target ? null : t
@@ -167,9 +171,10 @@ FlyoutPanel {
         visible: panel.groups.length === 0
     }
 
-    // the empty numbers: a click goes there, a window dropped on one moves
+    // the empty numbers, out of sight until a window is dragged: a window
+    // dropped on one moves there
     Row {
-        visible: panel.empty.length > 0
+        visible: panel.empty.length > 0 && panel.dragActive
         spacing: Theme.spaceS
 
         Text {
