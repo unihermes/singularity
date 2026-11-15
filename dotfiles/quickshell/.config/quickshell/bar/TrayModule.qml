@@ -3,7 +3,8 @@
 // opens its menu in a flyout, middle is its secondary action. Drag to
 // reorder, saved by app id (Settings.trayOrder) once dropped (mid-drag would
 // rebuild the delegates and drop the grab). With the drawer on, only pinned
-// icons show until the chevron opens it. Apps hidden from the tray
+// icons show until the chevron opens it, which carries a dot while one of
+// those asks for attention. Apps hidden from the tray
 // (Settings.trayHidden) never show, not even in the drawer.
 
 import Quickshell
@@ -24,6 +25,9 @@ ModuleFrame {
     visible: trayRepeater.count > 0 && Settings.widgetVisible("tray")
 
     property bool drawerOpen: false
+    // an icon tucked in the closed drawer is asking for attention
+    readonly property bool drawerAttention: Settings.trayDrawer && !drawerOpen
+        && ordered.some(it => it !== coolingItem && !shown(it) && it.status === Status.NeedsAttention)
 
     readonly property int slotW: Theme.traySlotW
 
@@ -339,6 +343,16 @@ ModuleFrame {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: trayFrame.drawerOpen = !trayFrame.drawerOpen
+        }
+
+        Rectangle {
+            visible: trayFrame.drawerAttention
+            anchors.top: parent.top
+            anchors.right: parent.right
+            width: Theme.spaceM
+            height: width
+            radius: width / 2
+            color: Theme.accent
         }
     }
 }
