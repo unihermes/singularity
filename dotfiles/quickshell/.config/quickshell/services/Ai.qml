@@ -437,9 +437,72 @@ Singleton {
         return rows
     }
 
+    // "~", "~/x" and "~x" (a missed slash) are under home; a bare "x" is too
+    function expandDir(dir, keepSlash) {
+        var slash = keepSlash && /\/$/.test(dir.trim())
+        dir = dir.trim().replace(/\/+$/, "")
+        if (dir === "") return slash ? "/" : ""
+        return expandBare(dir) + (slash ? "/" : "")
+    }
+    function expandBare(dir) {
+        if (dir.charAt(0) === "~") dir = dir.slice(1).replace(/^\/+/, "")
+        else if (dir.charAt(0) === "/") return dir
+        return dir === "" ? home : home + "/" + dir
+    }
+
+    // Folder entry: the folders the typed text completes to, and the problem
+    // with it as a whole ("" when it is a folder). dirQuery is the text asked
+    // about, so a late answer for older text is dropped.
+    property var dirMatches: []
+    property string dirProblem: ""
+    property string dirQuery: ""
+    // set while Enter waits on the check
+    property bool dirOpening: false
+
+    function completeDir(text) {
+        dirQuery = text
+        dirOpening = false
+        if (text.trim() === "") { dirMatches = []; dirProblem = ""; dirProc.running = false; return }
+        dirProc.running = false
+        dirProc.command = [py, "dirs", expandDir(text, true)]
+        dirProc.running = true
+    }
+
+    // Enter: use the folder if it exists, else say what is wrong
+    signal dirOpened()
+    function openDir(text) {
+        if (text.trim() === "") return
+        dirOpening = true
+        dirQuery = text
+        dirProc.running = false
+        dirProc.command = [py, "dirs", expandDir(text)]
+        dirProc.running = true
+    }
+
+    Process {
+        id: dirProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var r
+                try { r = JSON.parse(text) } catch (e) { return }
+                var asked = root.expandDir(root.dirQuery, !root.dirOpening)
+                if (r.query !== asked) return
+                root.dirMatches = r.matches
+                root.dirProblem = r.problem
+                if (root.dirOpening) {
+                    root.dirOpening = false
+                    if (r.problem === "") {
+                        root.pinDir(root.dirQuery)
+                        root.setCodeDir(root.dirQuery)
+                        root.dirOpened()
+                    }
+                }
+            }
+        }
+    }
+
     function pinDir(dir) {
-        dir = dir.replace(/\/+$/, "")
-        if (dir.indexOf("~") === 0) dir = home + dir.slice(1)
+        dir = expandDir(dir)
         if (dir === "" || pinnedDirs.indexOf(dir) !== -1) return
         pinnedDirs = pinnedDirs.concat([dir])
         save()
@@ -448,8 +511,7 @@ Singleton {
     function listProjects() { projectsProc.running = true }
 
     function setCodeDir(dir) {
-        dir = dir.replace(/\/+$/, "")
-        if (dir.indexOf("~") === 0) dir = home + dir.slice(1)
+        dir = expandDir(dir)
         if (dir === "" || dir === codeDir) return
         code.reset()
         codeCodex.reset()

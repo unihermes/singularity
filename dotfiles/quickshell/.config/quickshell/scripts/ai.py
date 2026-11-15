@@ -14,6 +14,8 @@
 #   ai.py sessions DIR                       Claude Code's past sessions there
 #   ai.py history DIR ID                     one session as transcript rows
 #   ai.py projects                           the folders Claude Code has run in
+#   ai.py dirs PATH                          whether PATH is a folder, and the
+#                                            folders its last part completes to
 #   ai.py usage                              the plans' limits: Claude's
 #                                            five-hour and weekly windows
 #
@@ -278,6 +280,28 @@ def projects():
     return rows
 
 
+# PATH is absolute. A trailing slash lists that folder's children; otherwise
+# the last part is a prefix of the siblings to complete.
+def dirs(path):
+    whole = path.rstrip("/") or "/"
+    if os.path.isdir(whole):
+        problem = "" if os.access(whole, os.R_OK | os.X_OK) else "No permission to open that folder"
+    elif os.path.exists(whole):
+        problem = "That's a file, not a folder"
+    else:
+        problem = "No such folder"
+    parent, prefix = (whole, "") if path.endswith("/") else os.path.split(whole)
+    rows = []
+    try:
+        for e in sorted(os.scandir(parent or "/"), key=lambda e: e.name.lower()):
+            if e.name.lower().startswith(prefix.lower()) and (prefix.startswith(".") or not e.name.startswith(".")) \
+                    and e.is_dir():
+                rows.append({"path": e.path, "name": e.name})
+    except OSError:
+        pass
+    return {"query": path, "problem": problem, "matches": rows[:40]}
+
+
 def iso_epoch(t):
     try:
         from datetime import datetime
@@ -327,6 +351,8 @@ def main():
         out(history(a[1], a[2]))
     elif cmd == "projects":
         out(projects())
+    elif cmd == "dirs" and len(a) >= 2:
+        out(dirs(a[1]))
     elif cmd == "usage":
         out(usage())
     else:

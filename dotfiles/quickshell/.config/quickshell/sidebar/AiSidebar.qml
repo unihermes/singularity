@@ -411,17 +411,44 @@ PanelWindow {
 
                     FlyoutInput {
                         id: dirInput
+                        property bool submitted: false
+                        // the match the arrow keys are on, -1 for none
+                        property int pick: -1
+                        readonly property bool typing: text.trim() !== ""
                         bleed: true
                         echoPassword: false
                         glyph: "󰉋"
                         placeholder: "A folder, like ~/Git/app"
-                        onAccepted: {
-                            Ai.pinDir(text.trim())
-                            Ai.setCodeDir(text.trim())
-                            text = ""
-                            root.view = "talk"
+                        onTextChanged: { submitted = false; pick = -1; Ai.completeDir(text) }
+                        onAccepted: { submitted = true; Ai.openDir(text) }
+                        onUpPressed: pick = Math.max(-1, pick - 1)
+                        onDownPressed: pick = Math.min(Ai.dirMatches.length - 1, pick + 1)
+                        // complete to the picked folder (else the first) and carry on inside it
+                        onTabPressed: {
+                            var m = Ai.dirMatches[Math.max(pick, 0)]
+                            if (!m) return
+                            text = (Ai.expandDir(text).indexOf(Ai.home) === 0 && text.charAt(0) !== "/"
+                                    ? "~" + m.path.slice(Ai.home.length) : m.path) + "/"
+                            moveToEnd()
                         }
                         onEscapePressed: root.view = "talk"
+                    }
+
+                    Connections {
+                        target: Ai
+                        function onDirOpened() { dirInput.text = ""; root.view = "talk" }
+                    }
+
+                    // why Enter did nothing
+                    Text {
+                        visible: dirInput.submitted && !Ai.dirOpening && Ai.dirProblem !== ""
+                        width: parent.width
+                        text: Ai.dirProblem
+                        color: Theme.alert
+                        wrapMode: Text.WordWrap
+                        font.family: Theme.fontText
+                        font.weight: Theme.weightBody
+                        font.pixelSize: Theme.fontCaption
                     }
 
                     ListView {
@@ -430,15 +457,17 @@ PanelWindow {
                         height: parent.height - dirInput.height - parent.spacing
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
-                        model: Ai.projects
+                        // the folders the text completes to while typing, else the usual ones
+                        model: dirInput.typing ? Ai.dirMatches : Ai.projects
                         delegate: FlyoutRow {
                             required property var modelData
+                            required property int index
                             width: projList.width - Theme.scrollGutter
                             leadingIcon: "󰉋"
                             label: modelData.name
                             note: modelData.path.indexOf(Ai.home) === 0 ? "~" + modelData.path.slice(Ai.home.length) : modelData.path
-                            highlighted: modelData.path === Ai.codeDir
-                            onActivated: { Ai.setCodeDir(modelData.path); root.view = "talk" }
+                            highlighted: dirInput.typing ? index === dirInput.pick : modelData.path === Ai.codeDir
+                            onActivated: { Ai.pinDir(modelData.path); Ai.setCodeDir(modelData.path); dirInput.text = ""; root.view = "talk" }
                         }
                         ScrollBar { flickable: projList; anchors.right: parent.right }
                     }
